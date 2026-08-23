@@ -15,7 +15,7 @@ import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { downloadBracketPDF } from '@/lib/export/bracket-pdf';
 import ExportMenu from '@/components/admin/ExportMenu';
@@ -155,8 +155,6 @@ export default function AdminSchedulePage() {
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   // ── Real-time venue conflict check for the Add/Edit modal ────────────────
   // Pure computation from already-loaded state — no extra fetch required.
@@ -311,11 +309,9 @@ export default function AdminSchedulePage() {
   }, [refresh]);
 
   useEffect(() => {
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    fetch(`/api/admin/org/pdf-settings${orgQuery}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(data => setPdfSettings(data as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
+    // D4: server-resolved — org-name header fallback + the org's uploaded logo, print-ready.
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}&resolve=1` : '?resolve=1';
+    void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${orgQuery}`).then(setPdfSettings);
   }, [orgSlug]);
 
   // Switching tournaments exits bracket-edit mode (the frozen editor division would
@@ -1187,9 +1183,6 @@ export default function AdminSchedulePage() {
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-      // Schedule always exports landscape + compact regardless of org default
-      orientation: 'landscape',
-      reportDensity: 'compact',
     };
     const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
     const rows    = serializeRows(buildScheduleRows(), SCHEDULE_EXPORT_COLS);
@@ -1197,7 +1190,12 @@ export default function AdminSchedulePage() {
       { org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') },
       'pdf',
     );
-    await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, rows, settings);
+    await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, rows, settings, {
+      identity: currentOrg?.name,
+      // The schedule is a wide many-game grid: landscape + compact is the report's own
+      // shape (D2), not an org preference.
+      shape: { orientation: 'landscape', density: 'compact' },
+    });
   }
 
   async function handleExportPDF() {
@@ -1207,15 +1205,8 @@ export default function AdminSchedulePage() {
       await handleExportBracketPDF();
       return;
     }
-    if (
-      canUsePDF &&
-      pdfSettings !== null &&
-      Object.keys(pdfSettings).length === 0 &&
-      !localStorage.getItem('flhq-pdf-setup-warned')
-    ) {
-      setPdfWarningOpen(true);
-      return;
-    }
+    // The "set up your PDF template" nudge is gone: resolved settings always carry the org's
+    // name and logo now (D1/D4), so an untouched org's export is already presentable.
     await doPdfExport();
   }
 
@@ -2492,16 +2483,6 @@ export default function AdminSchedulePage() {
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
-      />
-      <FeedbackModal
-        isOpen={pdfWarningOpen}
-        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
-        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
-        title="PDF settings not configured"
-        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
-        confirmText="Download anyway"
-        cancelText="Not now"
-        type="info"
       />
     </div>
   );

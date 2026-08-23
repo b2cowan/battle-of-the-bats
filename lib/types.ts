@@ -1095,6 +1095,14 @@ export interface RepTeam {
    * server-side, never in the client). Lives on the TEAM, not the season: a book spans years.
    */
   shareClubBook: boolean;
+  /**
+   * The team layer of document branding (mig 259, PDF Export Quality decision 7): the look the
+   * "How your documents look" card writes. Every key optional — an absent key inherits the
+   * club's (organizations.pdf_settings) at resolve time. Lives on the TEAM, not the season: a
+   * crest outlasts a program year. Resolution happens server-side only
+   * (lib/export/resolve-pdf-settings.ts); nothing should read this raw to build a document.
+   */
+  pdfLook: { logoDataUrl?: string; accentColor?: string; footerText?: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -2191,14 +2199,31 @@ export interface RepPlayerDuesInstallment {
   createdAt: string;
 }
 
-export type DuesPaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'other';
+export type DuesPaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'other';
 /**
  * The accepted methods, as a value — so the record door and the correct-a-receipt door validate
  * against ONE list. They each carried their own copy, with a comment on the second promising it
  * mirrored the first and nothing enforcing it; a fifth method added to one and not the other
  * would have been accepted by one door and refused by the other, silently.
+ *
+ * ⚠ 'card' joined 2026-08-22 (mig 260, one-method-list ruling): the product's one shared method
+ * list is E-Transfer · Cash · Cheque · Card · Other, and dues was the surface that couldn't say
+ * Card. The DB CHECKs on payments AND payouts widened with it — they share this type.
  */
-export const DUES_PAYMENT_METHODS: readonly DuesPaymentMethod[] = ['etransfer', 'cash', 'cheque', 'other'];
+export const DUES_PAYMENT_METHODS: readonly DuesPaymentMethod[] = ['etransfer', 'cash', 'cheque', 'card', 'other'];
+/**
+ * What each stored token is CALLED on screen — one map, every reader (2026-08-22). The payout
+ * sheet and the dues panel each carried their own copy; the recording conversation would have
+ * been the third. Casing follows the product's established method vocabulary
+ * (`lib/payment-methods.ts`): 'E-Transfer', as the club's payment-request list has always spelled it.
+ */
+export const DUES_PAYMENT_METHOD_LABEL: Record<DuesPaymentMethod, string> = {
+  etransfer: 'E-Transfer',
+  cash:      'Cash',
+  cheque:    'Cheque',
+  card:      'Card',
+  other:     'Other',
+};
 
 /** A dues payment FACT (mig 232): what arrived, when, how much. Installments are the plan;
  *  coverage is derived (lib/dues-payments.ts) and projected onto installment paidAt. */

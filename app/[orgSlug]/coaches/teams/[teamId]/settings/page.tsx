@@ -5,6 +5,7 @@ import { Archive, Settings } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
+import TeamDocumentsLookCard from '@/components/coaches/TeamDocumentsLookCard';
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
 import DuesMoneySettingRows from '@/components/coaches/DuesMoneySettingRows';
 import { canViewMoney, canWriteMoney, canConfigureTeam, type CoachCapabilities } from '@/lib/coach-capabilities';
@@ -422,6 +423,19 @@ export default function TeamSettingsPage({
               )}
             </form>
           </CoachCollapseSection>
+        )}
+
+        {/* ── How your documents look ──────────────────────────────────────
+            The team layer of document branding (PDF Export Quality decisions 7–8; approved
+            mockup 2026-08-22 is the spec). Self-contained: fetches its own data, renders
+            NOTHING on plans without PDF customization — absent, never a locked tease. */}
+        {showTeamGroups && (
+          <TeamDocumentsLookCard
+            orgSlug={orgSlug}
+            teamId={teamId}
+            teamName={team.name}
+            seasonName={season.name}
+          />
         )}
 
         {/* ── Season ───────────────────────────────────────────────────────── */}

@@ -172,12 +172,6 @@ export default function ProgramYearOverviewPage({
     downloadCSVBlob(filename, generateCSV(headers, data));
   }
 
-  function handleExportPDF() {
-    setFeedbackType('info');
-    setFeedbackMsg('PDF roster export is coming soon. It will include your org logo, header, and privacy settings configured in Org Settings → PDF Settings.');
-    setFeedbackOpen(true);
-  }
-
   if (loading || fetching) return <p className={styles.muted}>Loading…</p>;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
@@ -306,13 +300,14 @@ export default function ProgramYearOverviewPage({
           <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f0f0f0' }}>
             Roster
           </h2>
+          {/* No 'pdf' until it downloads (PDF Export Quality decision 2): the old menu item
+              opened an info modal promising a PDF that did not exist. The real rep roster PDF
+              is built in the Phase 2 Rosters pass. */}
           <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
+            formats={['xlsx', 'csv']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
             planId={currentOrg?.planId}
-            pdfFeatureKey="pdf_exports"
             disabled={players.length === 0}
           />
         </div>

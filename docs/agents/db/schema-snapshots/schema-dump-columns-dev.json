@@ -15021,6 +15021,15 @@
     "ordinal_position": 18
   },
   {
+    "table_name": "rep_teams",
+    "column_name": "pdf_settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 19
+  },
+  {
     "table_name": "rep_tryout_evaluator_sessions",
     "column_name": "id",
     "data_type": "uuid",

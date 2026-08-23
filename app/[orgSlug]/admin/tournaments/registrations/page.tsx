@@ -22,7 +22,7 @@ import {
 import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
 import { calendarDaysBetween, tournamentToday } from '@/lib/timezone';
 import { Division } from '@/lib/types';
-import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
+import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -946,7 +946,7 @@ export default function UnifiedTeamsPage() {
     window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=csv${orgParam}`;
   }
 
-  async function doPdfExport() {
+  async function handleExportPDF() {
     if (!guardExport()) return;
 
     const settings: OrgPdfSettings = {
@@ -998,21 +998,8 @@ export default function UnifiedTeamsPage() {
       headers,
       flatRows,
       settings,
-      groups.length > 0 ? groups : undefined,
+      { groups: groups.length > 0 ? groups : undefined, identity: currentOrg?.name },
     );
-  }
-
-  async function handleExportPDF() {
-    if (
-      canUsePDF &&
-      pdfSettings !== null &&
-      Object.keys(pdfSettings).length === 0 &&
-      !localStorage.getItem('flhq-pdf-setup-warned')
-    ) {
-      setPdfWarningOpen(true);
-      return;
-    }
-    await doPdfExport();
   }
 
   function toggleRegistrationSelection(id: string) {
@@ -1209,14 +1196,11 @@ export default function UnifiedTeamsPage() {
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings${orgQuery}`, SAME_ORIGIN_FETCH)
-      .then(r => r.ok ? r.json() : {})
-      .then(data => setPdfSettings(data as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
+    // D4: server-resolved — org-name header fallback + the org's uploaded logo, print-ready.
+    const q = orgQuery ? `${orgQuery}&resolve=1` : '?resolve=1';
+    void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${q}`).then(setPdfSettings);
   }, [orgQuery]);
 
   // Restore view settings from localStorage when tournament changes.
@@ -2943,16 +2927,6 @@ export default function UnifiedTeamsPage() {
       )}
 
       <FeedbackModal {...feedback} onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined, items: undefined, confirmText: undefined }))} />
-      <FeedbackModal
-        isOpen={pdfWarningOpen}
-        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
-        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
-        title="PDF settings not configured"
-        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
-        confirmText="Download anyway"
-        cancelText="Not now"
-        type="info"
-      />
     </div>
   );
 }

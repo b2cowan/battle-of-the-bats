@@ -10,7 +10,7 @@ import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import {
-  buildFilename, downloadPracticeSheet, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -203,13 +203,15 @@ export default function CoachPracticePlanPage({
   useOverlayOpen(copyOpen || saveTemplateOpen);
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
-  // Org PDF settings (branding) — optional; the sheet falls back to defaults.
+  // Team-resolved PDF settings (D4: team look → club look → defaults) — optional; the
+  // sheet falls back to defaults. Cleanup-guarded so a slow response for a previous team
+  // can never land as this team's branding.
   useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => (r.ok ? r.json() : {}))
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
+    let cancelled = false;
+    void fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`)
+      .then(s => { if (!cancelled) setPdfSettings(s); });
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
 
   // Sequence guard: a slow earlier response must not stomp a newer one.
   const loadSeqRef = useRef(0);

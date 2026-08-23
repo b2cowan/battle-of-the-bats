@@ -79,7 +79,10 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const { data: urlData } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-  const logoUrl = urlData.publicUrl;
+  // Version stamp: the storage path is stable across re-uploads, so without this the URL
+  // never changes — browsers keep the old image cached, and the PDF pipeline's derived-logo
+  // cache (keyed by this URL) would keep printing the OLD logo forever after a replacement.
+  const logoUrl = `${urlData.publicUrl}?v=${Date.now()}`;
 
   const { error: dbError } = await supabaseAdmin
     .from('organizations')

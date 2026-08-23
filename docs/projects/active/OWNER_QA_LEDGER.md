@@ -10371,6 +10371,59 @@ no composer; those are stage B and C, and stage B is where all the risk lives.
 
 ---
 
+## §73 · The three open questions, answered — and every subscription line comes off the pitch
+
+**BUILT 2026-08-21 (dev).** Closes the riders open since §67 and §69. Mockup that produced the
+answers: `claude.ai/code/artifact/a41cb126-e200-4e4d-bc8f-31e9bdb25c0a`.
+
+### Part A — no plan, tier or price anywhere on a pitch surface (**the big one**)
+
+- [ ] **Nine plan chips are gone** — six on the coach walkthrough, three on the tournament one —
+      plus a "(the free portal keeps its Fees tool…)" aside inside a panel's own copy. Read both
+      pages top to bottom and confirm nothing reads as a gate, a tier or a comparison.
+- [ ] ⚠ **This overturned half of a standing ruling**, so it is worth a deliberate look: the
+      2026-08-20 decision deliberately KEPT a plan line on the unattended page "because nobody is
+      standing there to answer *is that included?*". Your call replaces that with a split by
+      surface — **the walkthrough creates desire, the pricing page qualifies, you answer in the
+      room.** If a prospect ever comes back surprised, this is the row that predicted it.
+- [ ] The bare product name ("the Coaches Portal") is deliberately still allowed — that is what
+      the thing is called. Say if you want that gone too.
+- [ ] A build check now reads the pages' own copy, not just the slides, so a plan line cannot creep
+      back into either. Proved by deliberately re-adding one and watching it fail.
+
+### Part B — lime
+
+- [ ] **"See this screen live →" is gone from the panels** (six of them). The hero and the closing
+      still carry the same door twice, so nothing is lost but the repetition.
+- [ ] The rule is now split by surface: **strict in the app**, where a wrong click costs a coach
+      money; **brand accent on marketing**, where an accent appearing once per page would read as
+      an accident. Confirm the page still feels like ours with six fewer lime elements.
+
+### Part C — Season Wrapped is a photograph again, and it reads
+
+- [ ] **The card alone, not the card plus the four shelves.** Measured on the real page:
+
+| | before (card + shelves) | now (card alone) |
+|---|---|---|
+| Laptop | 100% | **88%** |
+| Phone | **34% — unreadable** | **70% — readable** |
+
+- [ ] ⚠ **Your instinct was the lever nobody had tried:** every previous attempt cropped ROWS or
+      re-shot at phone width. Cropping to ONE element instead of two side by side doubled it. The
+      deck keeps a real screen shown whole AND the picture reads on a phone.
+- [ ] The drawing that briefly replaced it has been deleted rather than left unused.
+- [ ] ⚠ The claim still names all four shelves while the picture shows only the front of that page.
+      Deliberate — the caption carries the rest — but say if you want the claim narrowed.
+
+### Also worth knowing
+
+- [ ] The Deck Studio session, running in parallel, **picked this up mid-flight**: it had built a
+      plan-line column into its library view, and removed it the same hour with a note explaining
+      why it must not come back. Nothing to do — recorded because that coordination is the thing
+      most likely to go wrong when sessions overlap.
+
+---
+
 ## §74 · The map goes on both pitch pages — and the studio followed it without being told
 
 **BUILT 2026-08-21 (dev).** Your call from the decision brief
@@ -10529,3 +10582,118 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
       "not found", never an error page.
 - [ ] **A deck with nothing left to render** (every slide removed or rotted) also answers
       "not found" on its link — and the studio card says why, in words.
+
+## §79 · Every PDF knows whose paper it is — and a coach can make it theirs
+
+**BUILT 2026-08-23 (dev).** PDF Export Quality Phase 1 (D1–D4 + honest menus). Plan:
+`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4. Approved mockup:
+https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93. Migration 259 dev-only.
+
+- [ ] **An untouched org's PDF is presentable with zero configuration.** Export any admin report
+      from an org that never opened PDF Settings: the header carries the org's NAME once (the
+      doubled title is dead), and if a logo is uploaded in Org Settings it prints — the first
+      logo any org has ever had on paper. Footer page counts are TRUE ("Page 2 of 6", never
+      "Page 2 of 2" mid-document).
+- [ ] **Team paper carries the team's name, not the club's.** Print the roster, dues, practice
+      sheet, development summary, or tryout report from a coach portal: the header names the
+      TEAM; the club's look (logo, colour, footer) shows underneath it until the team sets its
+      own. The board summary no longer repeats the team name on two lines.
+- [ ] **"How your documents look" is in coaches-portal Team settings** (after the Team group,
+      collapsed, its state on the closed header). Three states to walk: a club-owned team shows
+      "Your club's look" with the live paper preview; setting a crest/colour/footer flips it to
+      "Your own crest and colour" and adds a "Back to your club's look" row; a standalone team
+      gets the blank slate ("Standard look — add your crest"). The preview updates as you type;
+      "Use your team colour" borrows the team's screen colour in one tap. Head coach edits;
+      assistants see it read-only. Standalone Premium portals now include this (packaging change,
+      logged 2026-08-21).
+- [ ] **A crest prints in its own proportions.** Upload a square crest: it renders square in the
+      header, never squashed into the wide slot. Oversized uploads are downscaled automatically.
+- [ ] **Wide reports own their shape.** Results, Team Roster, and Tryout full-detail now print
+      landscape regardless of the org default; Schedule (landscape+compact) and admin Budget vs.
+      Actual (landscape) unchanged but now declared. Rows never split across a page break.
+- [ ] **A table that still can't fit says so instead of shredding.** The coach month-grid budget
+      (the document this project was raised on) prints its early months with one quiet line —
+      "…didn't fit this page — the spreadsheet export carries every column" — instead of 7 pages
+      of one-character-per-line confetti. The tryout report gives up rubric categories, never the
+      Decision column. Fixed-column reports should never show this line — seeing it on one is a
+      bug to report.
+- [ ] **No export menu lies.** House League season registrations, Rep program-year roster, and
+      Rep tryout applicants no longer offer a PDF button that answers "coming soon" (once as a
+      green success toast). Their real PDFs arrive with their Phase 2 group passes; xlsx/csv are
+      untouched.
+- [ ] **PDF Settings page tells the truth**: the header hint explains the admin/team split, the
+      logo section states what actually happens (no more disabled "coming soon" upload), and the
+      pre-export "settings not configured" warning is gone everywhere — the default paper no
+      longer needs apologising for.
+
+## §80 · One door for money that moved — the recording conversation (P1)
+
+**BUILT 2026-08-23 (dev).** Money centralization P1 — the one conversation. Plan:
+`docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md`; build prompt carries the amended spec
+(dropdown-first frames A–D, approved with the P1 go). Migration 260 (dev-applied): dues methods
+gained `card` — the one-method-list ruling. ⚠ **The sweep cannot see any of this** — the
+conversation lives in a modal; owner QA is the coverage (build prompt §2.10 says exactly this).
+
+- [ ] **The one door exists on every Money tab.** A green **+ Record** button sits at the end of
+      the Money tab row — every tab, desktop AND phone (the header's Import stays desktop-only;
+      Record must not). Read-only money assistants never see it.
+- [ ] **Cold open is the eight sentences.** Press Record from Overview: the form opens with
+      "What happened?" already expanded — two groups (money came in / went out), each answer a
+      coach sentence with its sub-line. Live hints show where the product knows something:
+      families owing/overdue with dollars, drives running, club dollars owed, families in credit.
+      A standalone team (no club) must NOT see "We settled up with the club".
+- [ ] **A family paid their dues, from the hub.** Pick the answer → player list shows who owes
+      what → amount, date, How (a DROPDOWN — E-Transfer · Cash · Cheque · Card · Other), note.
+      The consequence line names the player and the new bill figure before saving; an overpayment
+      says the extra becomes a family credit. After save: the child's bill on Player Dues, the
+      register row, and Budget vs. Actual all read exactly as if it were recorded from the Dues
+      tab — including when the Dues tab was already open in the background (it must refresh).
+      **Card must save** (it 400'd before migration 260).
+- [ ] **Fundraiser money, from the hub.** Only running drives are offered; only players without
+      an amount logged are offered (a note says the logged ones are edited from the leaderboard);
+      the consequence names the drive total AND the family's credit at the drive's own percent.
+      The leaderboard row and the family's dues credit after save match the drive's own door
+      exactly. ⚠ No date field — the drive's own door has none either (writer stamps today);
+      flagged as a deviation from the drawn frame 03, owner to confirm or overrule.
+- [ ] **We settled up with the club — fieldless.** The branch lists owed installments (one owed =
+      pre-picked); picking one shows only the consequence ("$X moves from the team to the club")
+      and Save. No amount/date/method fields exist — deliberately (the Club tab's Mark paid takes
+      none either). After save the installment reads paid on the Club tab and the register.
+- [ ] **We paid a family back.** Only families the team holds money for are offered, with the
+      held figure; picking one pre-fills the amount (editable); typing more warns it will be
+      refused, and the server does refuse it. The consequence names the family and the credit
+      remaining. After save, Player Dues' payout record matches the sheet's own door.
+- [ ] **A sponsor came through = a hand-off.** Picking it closes the conversation and lands on
+      Fundraising with the sponsor form OPEN and pre-set to sponsor; refreshing the page there
+      must NOT reopen the form (the one-shot key strips). Cancel the form: no sponsor exists.
+- [ ] **"We paid for something" asks paid-or-owed INSIDE.** The old Expense/Income pills and the
+      "This is a refund" tick are gone from the add form; refund is the "Money back on something
+      we paid" answer. The paid/owed fork replaces the tab choice: "Not yet — we owe it" shows
+      the schedule editor and lands the commitment on Payables. The per-tab Add doors still work
+      and now open the same form pre-answered (the field shows their answer, changeable).
+- [ ] **Switching the answer mid-entry keeps the typed work.** Enter an amount and a note on the
+      dues branch, flip "What happened?" to "We paid for something": amount, date and note
+      survive; the player selection does NOT carry anywhere. Cancel after picking only a branch
+      answer: the discard guard asks with the RIGHT noun (payment / settlement / payout — never
+      "expense" over a dues receipt).
+- [ ] **The dues panel's own doors are untouched.** "Record payment", "Record as paid" /
+      "Record rest as paid" one-taps, the payout sheet, the drive's "Log amount", club "Mark
+      paid" — all still exist and work exactly as before (they re-point in P2, not now).
+- [ ] **The one method list, everywhere it shows.** Dues + payout forms (panel and conversation)
+      offer five methods ending in Card; the free-text combobox on costs/payments now SUGGESTS
+      exactly those five (a club's own past values still appear; typing anything still saves).
+
+**Known deviations raised for ruling (not defects):** (1) drive branch has no Date field — the
+writer has none; add one only by widening the fundraiser-entry writer, owner's call. (2) The
+dues consequence names the bill-level outcome ("bill drops to $X"), not the drawn per-installment
+sentence — deriving installment landings client-side would be a second arithmetic beside the
+server's, which the money guards exist to forbid. (3) The chooser's drive hint says "1 drive
+running" without the drive's name — the hub summary carries counts, not names; naming it means
+widening the summary payload, owner's call. (4) The Record button sits in the TAB ROW (approved
+mockup 05 draws it there), not the page header the build prompt named — the header's action row
+is phone-hidden by rule 11, and the Sunday-night door must survive at 390px.
+
+**Release-check rider (per the demo-drift rule):** before this promotes, decide whether the coach
+tour's money steps should NAME the one Record button — the tour walks Transactions and BvA where
+the button is now visible but un-narrated. `check:demos` passes today; that check proves
+rendering, not story.

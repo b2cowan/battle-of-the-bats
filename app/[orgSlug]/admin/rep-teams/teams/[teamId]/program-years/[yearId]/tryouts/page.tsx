@@ -397,12 +397,6 @@ export default function TryoutsPage({
     );
   }
 
-  function handleExportPDF() {
-    setFeedbackType('success');
-    setFeedbackMsg('PDF export is coming soon.');
-    setFeedbackOpen(true);
-  }
-
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
@@ -445,16 +439,17 @@ export default function TryoutsPage({
         </div>
         {canWrite && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {/* No 'pdf' until it downloads (PDF Export Quality decision 2): the old menu item
+                answered "coming soon" as a green success toast. The real PDF is built in the
+                Phase 2 Registers pass. */}
             <ExportMenu
-              formats={['xlsx', 'csv', 'pdf']}
+              formats={['xlsx', 'csv']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
-              onExportPDF={handleExportPDF}
               hasSensitiveOption={true}
               sensitiveOptionLabel="Excel with contact details"
               onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
               planId={currentOrg?.planId}
-              pdfFeatureKey="pdf_exports"
               disabled={filtered.length === 0}
             />
             <button

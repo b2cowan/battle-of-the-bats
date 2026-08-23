@@ -69,8 +69,11 @@ export const GET = withObservability(async (req: Request) => {
         .eq('status', 'pending_review'),
     ]);
     const activeYear = years?.[0] ?? null;
+    // pdfLook can carry a base64 crest (~hundreds of KB per team) and nothing on the admin
+    // list reads it — stripped so a many-team club's listing doesn't ship megabytes of images.
+    const teamJson = { ...team, pdfLook: undefined };
     return {
-      team, activeYear,
+      team: teamJson, activeYear,
       rosterCount: rosterCount ?? 0,
       pendingTryouts: pendingCount ?? 0,
       family: familyByTeam.get(team.id) ?? { repTeamId: team.id, ...EMPTY_TEAM_FAMILY_ROLLUP },

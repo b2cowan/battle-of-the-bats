@@ -112,7 +112,6 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({
     seasonName: programYear.name,
     teamName: team.name,
-    orgName: ctx.org.name,
     // Board-summary PDF roster list — first-initial + surname, the only per-player content the
     // board-safe document carries (R1). These are roster names, not candidate evaluations.
     rosterNames: roster.map(p =>

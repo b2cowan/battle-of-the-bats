@@ -662,10 +662,12 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
     await downloadPDF(
       filename,
       spec.title,
-      [spec.teamName, spec.scopeLabel].filter(Boolean).join(' · ') || undefined,
+      // D1: the header carries the team's name (the identity); the subtitle keeps the season.
+      spec.scopeLabel || undefined,
       spec.columns.map(c => c.label),
       spec.pdfRows ? spec.pdfRows(spec.rows) : serializeRows(spec.rows, spec.columns),
       { ...DEFAULT_PDF_SETTINGS, ...(spec.pdfSettings ?? {}) },
+      { identity: spec.teamName },
     );
     return;
   }

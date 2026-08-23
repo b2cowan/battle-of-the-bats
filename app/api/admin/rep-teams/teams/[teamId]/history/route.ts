@@ -28,5 +28,7 @@ export const GET = withObservability(async (_req: Request,
   if (groupErr) return groupErr;
 
   const history = await getRepTeamHistory(teamId);
-  return NextResponse.json({ team, history });
+  // pdfLook (a base64 crest) is coach-portal data nothing on this screen reads — stripped.
+  const teamJson = { ...team, pdfLook: undefined };
+  return NextResponse.json({ team: teamJson, history });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/history' });

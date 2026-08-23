@@ -1,9 +1,9 @@
 {
-  "generated": "2026-08-21",
-  "total": 166,
+  "generated": "2026-08-23",
+  "total": 167,
   "counts": {
     "tables": 8,
-    "columns": 76,
+    "columns": 77,
     "indexes": 35,
     "constraints": 37,
     "rls": 10
@@ -347,6 +347,10 @@
     },
     {
       "key": "column:only-dev:rep_roster_players.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_teams.pdf_settings",
       "sig": ""
     },
     {

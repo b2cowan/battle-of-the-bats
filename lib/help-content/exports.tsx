@@ -14,9 +14,9 @@ const exportsHelp: HelpPageContent = {
       id: 'formats',
       heading: 'Export formats — which one to choose',
       summary: 'Excel, CSV, Calendar (.ics), and PDF — when to use each.',
-      keywords: ['xlsx', 'csv', 'ical', 'ics', 'pdf', 'format', 'spreadsheet', 'calendar', 'google sheets', 'excel'],
+      keywords: ['xlsx', 'csv', 'ical', 'ics', 'pdf', 'format', 'spreadsheet', 'calendar', 'google sheets', 'excel', 'logo', 'branding', 'team crest', 'columns missing'],
       searchText:
-        'xlsx csv excel spreadsheet google sheets apple numbers calendar ics ical pdf report print format choose download',
+        'xlsx csv excel spreadsheet google sheets apple numbers calendar ics ical pdf report print format choose download logo branding org name team name crest accent colour color footer how your documents look columns didn\'t fit missing columns page didn\'t fit spreadsheet carries every column premium coaches portal',
       content: (
         <p>
           Four formats, and the choice comes down to what happens to the file next. When you
@@ -91,16 +91,26 @@ const exportsHelp: HelpPageContent = {
             <>
               <p>
                 A PDF export produces a formatted, ready-to-share document. Use it when the output is
-                going to a printer, a parent's inbox, an insurance body, or the board. PDF exports use
-                your organization's branding — your logo and colours in the header, your name, and
-                optional footer text.
+                going to a printer, a parent's inbox, an insurance body, or the board. Every PDF
+                carries its owner's identity automatically: documents printed from admin screens show
+                your <strong>organization's name and uploaded logo</strong>; documents printed from a
+                team's Coaches Portal show the <strong>team's name</strong>, with the team's own crest
+                and colours if the coach has set them (in the portal's Team settings, under{' '}
+                <em>How your documents look</em>) — or the club's look until they do. Header text,
+                accent colour and footer are configured in <strong>Org Settings → PDF Settings</strong>.
               </p>
-              <HelpNote variant="warning" title="PDF needs Tournament Plus or above">
+              <HelpNote variant="warning" title="PDF needs a paid plan">
                 <p>
-                  Tournament Plus, League Plus, and Club include it. The free Tournament plan does
-                  not — on the free plan the PDF option is disabled.
+                  Tournament Plus, League Plus, Club, and the Premium Coaches Portal include PDF
+                  export and document customization. The free Tournament plan and the Basic Coaches
+                  Portal do not.
                 </p>
               </HelpNote>
+              <p>
+                If a very wide table can't fit every column on the page, the PDF keeps the columns
+                that fit and says which ones it left out, in a line under the document's title — the
+                Excel and CSV exports always carry every column.
+              </p>
               <p>
                 <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
                 association submissions, budget vs. actual for the board, dues statements for parents.
@@ -161,7 +171,7 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>House League</strong></td>
                 <td>Season Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>✓</td><td>✓</td><td>—</td><td>—</td>
                 <td>League Plus</td>
               </tr>
               <tr>
@@ -185,13 +195,13 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>Rep Teams</strong></td>
                 <td>Tryout Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>✓</td><td>✓</td><td>—</td><td>—</td>
                 <td>Club</td>
               </tr>
               <tr>
                 <td><strong>Rep Teams</strong></td>
                 <td>Roster (admin view)</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>✓</td><td>✓</td><td>—</td><td>—</td>
                 <td>Club</td>
               </tr>
               <tr>
@@ -441,18 +451,19 @@ const exportsHelp: HelpPageContent = {
         {
           id: 'faq-pdf-greyed',
           question: 'The PDF option is greyed out — why?',
-          keywords: ['pdf', 'greyed', 'locked', 'upgrade', 'plan'],
+          keywords: ['pdf', 'greyed', 'locked', 'upgrade', 'plan', 'premium coaches portal'],
           popular: true,
           answer: (
             <p>
-              PDF exports are available on Tournament Plus, League Plus, and Club plans. If the PDF
-              option is disabled, your organization is on the free Tournament plan.{' '}
-              <strong>Upgrade to Tournament Plus</strong> for PDF exports and template
-              customization.
+              PDF exports are available on Tournament Plus, League Plus, Club, and the Premium
+              Coaches Portal. If the PDF option is disabled, your organization is on the free
+              Tournament plan (or the team is on the Basic Coaches Portal).{' '}
+              <strong>Upgrade to Tournament Plus</strong> — or to the Premium portal for a
+              standalone team — for PDF exports and document customization.
             </p>
           ),
           answerText:
-            'PDF exports require Tournament Plus, League Plus, or Club. The free Tournament plan does not include PDF exports.',
+            'PDF exports require Tournament Plus, League Plus, Club, or the Premium Coaches Portal. The free Tournament plan and the Basic Coaches Portal do not include PDF exports.',
         },
         {
           id: 'faq-who-can-export',

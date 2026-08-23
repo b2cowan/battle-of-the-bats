@@ -3244,9 +3244,27 @@ function mapRepTeam(r: any): RepTeam {
     scheduleVisibility: r.schedule_visibility ?? 'families',
     // Club Shared Book (mig 227) — same fail-closed default as the org flag above.
     shareClubBook: r.share_club_book === true,
+    // Team paper look (mig 259) — {} and null both mean "fully inherited".
+    pdfLook: r.pdf_settings && Object.keys(r.pdf_settings).length > 0 ? r.pdf_settings : null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+/**
+ * Replace the team's paper look (mig 259). Whole-object write, like the org's pdf_settings:
+ * the card saves all three fields at once, and "Use club look" writes {} to return the team
+ * to full inheritance.
+ */
+export async function updateRepTeamPdfLook(
+  teamId: string,
+  look: { logoDataUrl?: string; accentColor?: string; footerText?: string },
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_teams')
+    .update({ pdf_settings: look })
+    .eq('id', teamId);
+  if (error) throw error;
 }
 
 export async function getRepTeams(orgId: string, groupId?: string | null, scopeGroupIds?: string[]): Promise<RepTeam[]> {

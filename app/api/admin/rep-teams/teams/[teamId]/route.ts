@@ -46,7 +46,9 @@ export const GET = withObservability(async (_req: Request,
     return { ...py, rosterCount: rosterCount ?? 0, coachCount: coachCount ?? 0 };
   }));
 
-  return NextResponse.json({ team, programYears: yearsWithCounts });
+  // pdfLook (a base64 crest) is coach-portal data nothing on this screen reads — stripped.
+  const teamJson = { ...team, pdfLook: undefined };
+  return NextResponse.json({ team: teamJson, programYears: yearsWithCounts });
 }, { route: '/api/admin/rep-teams/teams/[teamId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -95,5 +97,6 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const updated = await updateRepTeam(teamId, fields);
-  return NextResponse.json({ team: updated });
+  // pdfLook (a base64 crest) is coach-portal data nothing on this screen reads — stripped.
+  return NextResponse.json({ team: { ...updated, pdfLook: undefined } });
 }, { route: '/api/admin/rep-teams/teams/[teamId]' });

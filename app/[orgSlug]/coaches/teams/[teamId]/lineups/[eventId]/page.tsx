@@ -15,7 +15,7 @@ import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import type { PositionPolicy } from '@/lib/lineup-generator';
 import {
   downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, buildFilename,
-  DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer,
+  fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -130,13 +130,15 @@ export default function CoachLineupBuilderPage({
   const lineupSigRef = useRef('');
   useEffect(() => { lineupSigRef.current = lineupSig(); }, [lineupRows, lineupMode, lineupInningCount, lineupNotes, gameRules]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Org PDF settings (poster branding) — optional; poster falls back to defaults.
+  // Team-resolved PDF settings (D4: team accent/branding win over the club's) — optional;
+  // poster falls back to defaults. Cleanup-guarded so a slow response for a previous team
+  // can never land as this team's branding.
   useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
+    let cancelled = false;
+    void fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`)
+      .then(s => { if (!cancelled) setPdfSettings(s); });
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
 
   // Saved lineup templates (team + active-program-year scoped, not per event).
   const reloadTemplates = useCallback(async () => {

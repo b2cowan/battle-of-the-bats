@@ -126,10 +126,14 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
  * Per-plan feature grants that bypass the rank ladder.
  * The per-team Premium "team" plan ranks at the free tier for tournament
  * features, but the paid Coaches Portal explicitly includes PDF exports
- * (roster, schedule, lineup cards, etc.).
+ * (roster, schedule, lineup cards, etc.) — and, since the 2026-08-21 packaging
+ * decision (BUSINESS_DECISIONS.md), PDF customization too: a standalone team's
+ * identity IS its team brand, so the plan that includes the paper includes the
+ * "How your documents look" card that brands it. Free Basic coaches are
+ * unchanged — no PDF export, so no customization surface.
  */
 const PLAN_FEATURE_GRANTS: Partial<Record<OrgPlan, PlanFeature[]>> = {
-  team: ['pdf_exports', 'coach_peer_chat'],
+  team: ['pdf_exports', 'pdf_template_settings', 'coach_peer_chat'],
 };
 
 export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {

@@ -1,69 +1,78 @@
 # PM Brief — PDF Export Quality
 
-**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** proposed, not started
-**Raised:** owner, 2026-08-21 · **Priority:** medium — nothing is broken, but what customers hand to
-other people looks amateur
+**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 BUILT on dev 2026-08-23** (QA §79)
+— the shared plumbing: one title, the right name for the layer, real logos, true page counts,
+per-report shape, the no-shred fit contract, the coaches "How your documents look" card, and the
+three lying menu buttons removed. Phases 2–3 (group passes, rendered CI check) remain. Owner
+planning session held 2026-08-21; every structural decision made against rendered evidence
+**Evidence gallery:** https://claude.ai/code/artifact/834cdd89-8c24-416f-acd8-c1930ff76dd1
+**Priority:** medium-high — these documents are seen by treasurers, boards and parents who are not
+our customers, and two of them are shipping unreadable
 
-## The problem in one sentence
+## The problem, now with proof
 
-The documents our customers print and email are the parts of the product we have never looked at.
+The documents our customers print and hand to other people had never been looked at. In the planning
+session every one of them was generated with the product's real code and looked at. The verdict: the
+engine is capable — the schedule, dues sheet, dugout poster, batting card, tryout board summary and
+bracket already look respectable or better — but five pieces of shared plumbing betray everything,
+and the two widest reports come out genuinely unreadable.
 
-## What a customer sees today
+## What a customer gets today
 
-Exporting **Budget vs. Actual** by month produces a six-page PDF in which every column heading is
-printed one letter per line, stacked vertically, and the report's own title appears twice at the top.
-It is legible only in the sense that the characters are present.
+- **A brand-new org's every PDF prints its own title twice** and carries no club identity — while
+  the settings screen claims blank fields "default to your org name."
+- **No organization has ever had its logo on a PDF.** The "Use org logo" setting stores nothing;
+  the alternative is marked coming soon; nothing connects the uploaded logo to any document.
+- **The coach's month-view budget PDF is 7 pages of vertical confetti** — column headings and
+  dollar amounts printed one character per line. The tournament Results report is 9 pages for 24
+  games, with children's names shredded the same way and rows split mid-cell across page breaks.
+- **The page counter lies:** a 9-page report's footers read "Page 1 of 1", "Page 2 of 2"…
+- **Three export menus offer a PDF that doesn't exist** — clicking shows "coming soon", once as a
+  green success message.
 
-That document is not for the coach — it is what a coach sends to a club treasurer or a board. It is
-one of the few artefacts of ours that a stranger sees, and it is the worst-looking thing we produce.
+## What was decided (owner, 2026-08-21)
 
-## What changed about the plan once the code was read
+- **Six groups**, by what the paper is for: registers · statements & handouts · rosters · schedules
+  · working sheets · posters/cards/brackets. Each has its own definition of good.
+- **Every report declares its own shape** (landscape/portrait); the org-wide preference applies only
+  where either fits. This is what the three hand-fixed screens already do — it becomes the rule.
+- **The month grid stops pretending to be a PDF.** Its PDF button produces the one-page category
+  statement a treasurer actually reads; the month-by-month detail stays in Excel (evidence: even
+  landscape made the grid *worse* — 7 pages became 11).
+- **The lying menu buttons come out now**; each missing PDF gets built properly in its group's pass.
+- **Content fixes approved:** the Results handout drops its internal audit columns; dues gains a
+  per-family statement (today's sheet shows every family's balance to whoever it's handed to); the
+  tryout check-in sheet — the first paper a trying-out family ever sees — finally carries the club's
+  name; the drawn documents get the logo once logos are real.
+- **A standing rule for what deserves a PDF:** read, handed, or pinned → PDF; data someone works in
+  → spreadsheet. The ~20 spreadsheet-only exports all pass today; nothing new is owed.
+- **Branding becomes two layers, and every coach gets one** (follow-up decision, same day). Each
+  team — standalone or club-owned — gets a "How your documents look" card in its own portal: team
+  logo, colour, footer. Club settings stay for club paper and are the inherited default, so a team
+  that sets nothing shows the club's look. Standalone coaches, who today can reach no design
+  settings at all, get the full card — the standalone Team plan now includes customization (a
+  packaging inclusion to be logged and reflected in the pricing facts when it ships). No club
+  brand-lock in v1.
+- **The practice sheet is held out of the restyle passes** (follow-up decision, same day). A
+  practice plan is mostly sentences and point-form notes; the chart form flattens and disorients
+  them. It gets its own structure deep-dive session — same method as this one: real rendered
+  alternatives, owner picks. General fixes (single title, identity, page counts) still reach it;
+  its form changes only through that session.
 
-It was raised as *"review the PDFs one by one, they each have their own formatting."* **Nine of them
-share one renderer.** Only six are genuinely bespoke — the practice sheet, development summary,
-tryout board summary, lineup poster, batting-order card and tournament bracket.
+## The shape of the work
 
-**That makes this cheaper than it looked.** Two defects in the one shared renderer explain what the
-owner saw, and fixing them improves nine exports in a single change:
-
-- **The title is printed twice** on any organization that has not customised its export header —
-  which is the default.
-- **Page orientation is an organization-wide setting, and no report can say it needs landscape.**
-  Budget vs. Actual's month grid is seventeen columns wide and gets portrait letter regardless.
-
-Budget vs. Actual is not specially broken. It is the widest table we ship, so it is where a shared
-weakness showed up first.
-
-## Why it matters
-
-- **It is seen by people who are not customers** — treasurers, boards, parents. It is a sales surface
-  we do not control the impression of.
-- **It undercuts a paid feature.** Exports sit behind the Export button on nine screens and are part
-  of what a club is paying for.
-- **Nothing tests it.** No check renders a PDF, so this got worse invisibly and was found by an owner
-  looking at a file.
-
-## Proposed sequencing
-
-1. **The shared renderer** — one unit of work, nine exports better. Includes deciding what a table
-   too wide for the page should do, since "silently unreadable" is the current answer.
-2. **The six bespoke documents, one at a time** — as originally proposed. These are handed out
-   physically and deserve individual attention.
-3. **Decide which screens should offer a PDF at all.** Twenty exports offer none today, including
-   Transactions and the Budget Plan — possibly right, but currently unexamined.
+1. **Fix the shared plumbing once** — title/identity default, per-report shape, true page counts,
+   a real logo pipeline, honest menus. Twelve documents improve in one pass.
+2. **Walk the six groups, worst first** (registers first — both unreadable documents live there),
+   applying the approved content calls.
+3. **Add a check that renders the widest documents and fails when one stops fitting** — every defect
+   here survived every existing gate and was caught only by looking at the paper.
 
 ## Success criteria
 
-- No PDF prints its own title twice.
-- The widest table we ship is readable on the page, and a coach can hand it to a treasurer without
-  apologising for it.
-- A report can declare the shape it needs; the organization's preference stays a preference.
-- A check renders the widest export and fails if headings wrap or the page count explodes — so this
-  cannot rot unseen again.
-
-## Open questions the planning session must answer
-
-- Who is each PDF actually for, and does that change what "does not fit" should do?
-- Should a wide month grid be a PDF at all, or should the PDF carry the statement shape and the
-  spreadsheet carry the months?
-- Can a coach override the organization's PDF settings for one report, and where?
+- An untouched org's first PDF carries the club's name once, its logo if one is uploaded, a true
+  page count, and no shredded columns — with zero configuration.
+- The widest report we ship is readable, and a coach can email any PDF to a treasurer without
+  apologising.
+- No export menu offers a format that doesn't download.
+- A failing check, not an owner's eye, is what catches the next document that stops fitting.

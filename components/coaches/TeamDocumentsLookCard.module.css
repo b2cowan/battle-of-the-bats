@@ -1,0 +1,132 @@
+/* "How your documents look" — the team layer of document branding (PDF Export Quality
+   Phase 1, decision 7; mockup approved 2026-08-22).
+
+   The paper preview is deliberately NOT themed: it depicts a printed page, which is white
+   in every theme, so its colors are fixed document colors — the same values the PDF engine
+   draws with — never portal tokens. Everything around the preview uses the shared portal
+   classes from coaches.module.css. */
+
+.prevWrap { margin: 0 0 0.9rem; }
+
+.prevLabelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.4rem;
+}
+.prevLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.prevTag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+}
+
+.paper {
+  background: #ffffff; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+  border: 1px solid rgba(40, 30, 10, 0.25);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(40, 30, 10, 0.12);
+  overflow: hidden;
+}
+.paperBar { height: 7px; }
+.paperHead { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.8rem 0.5rem; }
+.paperLogo {
+  max-width: 40px;
+  max-height: 34px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.paperName { font-weight: 800; font-size: 0.92rem; color: #14141f; line-height: 1.25; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperSub { font-size: 0.68rem; color: #5c5c70; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperDivide { border-top: 1px solid #d6d6de; margin: 0 0.8rem; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTitle { padding: 0.45rem 0.8rem 0.1rem; font-weight: 700; font-size: 0.8rem; color: #14141f; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTable {
+  margin: 0.4rem 0.8rem 0.6rem;
+  border: 1px solid #e2e2ea; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+  border-radius: 2px;
+  overflow: hidden;
+}
+.paperTr { display: flex; font-size: 0.62rem; color: #2a2a38; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTr > span {
+  flex: 1;
+  padding: 0.22rem 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.paperTrAlt { background: #f8f8fc; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTh { font-weight: 700; }
+.paperFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.3rem 0.8rem 0.5rem;
+  font-size: 0.6rem;
+  color: #8c8c9b; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+  flex-wrap: wrap;
+}
+
+/* Controls that have no shared-portal equivalent */
+.crestThumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  background: #ffffff; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.fromClub { font-size: 0.7rem; color: var(--text-tertiary); font-style: italic; }
+.swatchInput {
+  width: 34px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.hexInput {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 0.8rem;
+  width: 92px;
+}
+.chipBtn {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--home-card, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  min-height: 34px;
+}
+.chipBtn:hover { background: var(--home-olive-soft, rgba(255, 255, 255, 0.09)); }
+.chipDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: -1px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}

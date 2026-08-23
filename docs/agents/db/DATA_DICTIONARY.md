@@ -130,7 +130,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **`club_book_sharing_enabled`** (bool, NOT NULL, default false; **mig 227**) — Club Shared Book: the **club admin's half of a two-key switch** (owner ruling 2026-08-04 §8 Q1). Off = the per-team switch (`rep_teams.share_club_book`) does not render for any head coach and no club layer is assembled anywhere. **A column, not a `coach_settings` key, deliberately**: every jsonb write is a read-modify-write of one shared bag, and the sibling lookup filters teams on the matching `rep_teams` column. **Gated on the `club_shared_book` plan feature** (Club / Club · Association only) at both read and write — a non-Club org sees no switch at all (absent, never locked). Mapped onto `Organization.clubBookSharingEnabled` as `=== true`, so a row predating the migration reads FALSE and the gate **fails closed**. _Reads/writes:_ [app/api/admin/org/coach-settings/route.ts](../../../app/api/admin/org/coach-settings/route.ts). The book's own three tables are **untouched** by this feature — the club layer is a read-time overlay, not an entity.
 
 <!-- dict:col:organizations.pdf_settings -->
-**`pdf_settings`** (jsonb, nullable, default `'{}'`) — org-level PDF report template config. **Key catalog** (`OrgPdfSettings`, [lib/export/pdf.ts:19-46](../../../lib/export/pdf.ts#L19)): `headerLine1`/`headerLine2`, `footerText`, `showDateStamp`/`showPageNumbers`/`showBranding` (free plan forces branding on), `orientation`, `accentColor`, `logoDataUrl`, `reportDensity`, `includeGuardianContacts`/`includePlayerNotes`/`includeInternalNotes`. _Reads/writes:_ [app/api/admin/org/pdf-settings/route.ts](../../../app/api/admin/org/pdf-settings/route.ts). **Not on the `Organization` type.**
+**`pdf_settings`** (jsonb, nullable, default `'{}'`) — org-level PDF report template config, and (since PDF Export Quality Phase 1, 2026-08-22) the **inherited default for team paper** (see `rep_teams.pdf_settings`). **Key catalog** (`OrgPdfSettings`, [lib/export/pdf.ts](../../../lib/export/pdf.ts)): `headerLine1`/`headerLine2`, `footerText`, `showDateStamp`/`showPageNumbers`/`showBranding` (plans without `pdf_template_settings` force branding on — enforced in the resolver, not just claimed), `orientation` (the default for reports that don't declare their own shape), `accentColor`, `logoDataUrl`, `reportDensity`, `includeGuardianContacts`/`includePlayerNotes`/`includeInternalNotes`. **Plus one internal key never shown in the form:** `logoDerived` (`{ source, dataUrl }`) — the org's uploaded `logo_url` fetched, sharp-normalized to ≤256px PNG and cached here by [lib/export/resolve-pdf-settings.ts](../../../lib/export/resolve-pdf-settings.ts) so exports don't re-derive per document; invalidated by `source` mismatch, and wiped harmlessly by any settings save (the POST replaces the whole object — it re-derives on next export). _Reads/writes:_ [app/api/admin/org/pdf-settings/route.ts](../../../app/api/admin/org/pdf-settings/route.ts) — GET raw for the form (strips `logoDerived`), GET `?resolve=1` for export surfaces (`{ settings, configured }`, org-name header fallback + derived logo). **Not on the `Organization` type.**
 
 <!-- dict:col:organizations.account_kind -->
 **`account_kind`** (text, NOT NULL, default `'organization'`; CHECK `organization|team_workspace`) — real org vs team-workspace shadow org (gotcha 4). _Writes:_ `createOrganization` ([lib/db.ts:2422](../../../lib/db.ts#L2422)).
@@ -1874,6 +1874,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_teams.share_club_book -->
 **`share_club_book`** (bool, NOT NULL, default false; **mig 227**; partial index `idx_rep_teams_org_share_club_book ON (org_id) WHERE share_club_book`) — Club Shared Book: the **head coach's half of the two-key switch** (`notes`-gated), and also the **RECIPROCITY key** — a team reads its siblings' shared books only while this is true for **itself** (owner ruling §8 Q2, enforced server-side in `resolveClubBookAccess`, never in the client). True = this team's book line, observations and per-opponent record become readable by the org's OTHER sharing teams, labelled with team + writer. **Read-only in both directions**: no cross-team edit or delete exists anywhere (`lib/coach-club-book*.ts` contain no mutation; asserted by `tests/unit/coach-history-endpoint-guard.test.ts`). Turning it off hides this team's content from siblings on their **next read** — nothing was ever copied. **Lives on the team, not the season**: a book spans years, exactly like `schedule_visibility` above. **Never crosses `org_id`** — every club-layer read is org-filtered, with an adversarial two-org fixture in `tests/unit/coach-club-book.test.ts`. Mapped as `=== true` so a pre-migration row reads FALSE (fails closed). _Writes:_ the `shareClubBook` branch of [app/api/coaches/[orgSlug]/teams/[teamId]/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/route.ts) PATCH, which re-checks the org switch + plan on every call.
+
+<!-- dict:col:rep_teams.pdf_settings -->
+**`pdf_settings`** (jsonb, NOT NULL, default `'{}'`; **mig 259**) — the **team layer of document branding** (PDF Export Quality decision 7, owner 2026-08-21): `{ logoDataUrl?, accentColor?, footerText? }`, written by the coaches-portal "How your documents look" card. Every key optional — **an absent key inherits the club's** (`organizations.pdf_settings`) at resolve time; `{}` = fully inherited ("Use club look" writes `{}` back). `logoDataUrl` is a **pre-normalized PNG/JPEG data URL** (client downscales to ≤256px; server re-validates format + ~300 KB cap in the PUT). Resolution is server-side ONLY ([lib/export/resolve-pdf-settings.ts](../../../lib/export/resolve-pdf-settings.ts)): team field → club field → default; team crest → club logo → none; the NAME on team paper is always the team's name and is **not stored here** (not a setting). **Lives on the team, not the season** — a crest outlasts a program year, like `schedule_visibility`/`share_club_book` above. Mapped as `RepTeam.pdfLook` (null when `{}`). _Writes:_ head coach only, on plans with `pdf_template_settings` (Tournament Plus+ orgs and the standalone Premium portal), via [app/api/coaches/[orgSlug]/teams/[teamId]/pdf-settings/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/pdf-settings/route.ts) PUT (whole-object replace).
 
 <!-- dict:col:rep_teams.family_link_token_hash -->
 <!-- dict:col:rep_teams.family_link_created_at -->
@@ -3655,7 +3658,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 2. **`source='migrated_mark_paid'` rows are the one-time ruling-2 backfill:** one synthetic payment per installment stamped paid before this table existed — full installment amount, `received_date` = the stamp's America/Toronto day, `created_at` = the stamp instant, **adopting the installment's existing ledger entry**. Never written by the app post-232. Dev backfill verified 159 stamps → 159 payments, sums equal to the cent.
 3. **Payments are (program_year, player)-scoped like credits — NOT schedule-scoped.** A bulk dues re-run can rewrite the schedule without touching receipts; coverage re-derives against whatever installments exist afterwards.
 4. **Overpayment beyond the whole schedule auto-creates an `overpayment` credit** carrying `rep_dues_credits.payment_id` (CASCADE — see that table's gotcha 6). The payment row keeps its FULL amount (the ledger got the full amount); balance math caps paid at the schedule total so the excess isn't double-counted.
-5. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|other`; RLS enabled with NO policies** (service-role only — migs 225/228/231 treatment; deliberately unlike `rep_dues_credits`' legacy auth policies).
+5. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|card|other` (mig 260 added `card` — the one-method-list ruling, 2026-08-22); RLS enabled with NO policies** (service-role only — migs 225/228/231 treatment; deliberately unlike `rep_dues_credits`' legacy auth policies).
 
 **Fields** (boilerplate `id` omitted):
 
@@ -3674,7 +3677,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 **`received_date`** (date, NOT NULL) — the day the money ARRIVED (org-timezone date, coach-typed, UI defaults to today). The ledger entry takes this date (gotcha 1).
 
 <!-- dict:col:rep_dues_payments.method -->
-**`method`** (text, NOT NULL, default `other`; CHECK `etransfer|cash|cheque|other`).
+**`method`** (text, NOT NULL, default `other`; CHECK `etransfer|cash|cheque|card|other` — `card` since mig 260, the one-method-list ruling: E-Transfer · Cash · Cheque · Card · Other product-wide; `DUES_PAYMENT_METHODS`/`DUES_PAYMENT_METHOD_LABEL` in `lib/types.ts` are the app-side pair).
 
 <!-- dict:col:rep_dues_payments.note -->
 **`note`** (text, nullable) — free text ("from Dana's account").
@@ -3702,7 +3705,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 3. **Paying out puts the family's bills BACK UP.** A paid-out dollar is settled, so it stops lowering installments — the drawer, reminders and the payables lane all re-derive on the next read. This is the model working, not a defect.
 4. **Payouts are (program_year, player)-scoped like payments and credits** — not credit-scoped, not schedule-scoped.
 5. **Forgiveness can never be paid out** (`rep_dues_credits.credit_type='forgiven'` is debt relief, not the family's money) — enforced in the app's payout ceiling, which reads non-forgiven credits only.
-6. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|other`; RLS enabled with NO policies** (service-role only — the `rep_dues_payments` treatment exactly).
+6. **CHECK `amount > 0`; `method` CHECK `etransfer|cash|cheque|card|other` (mig 260, with `rep_dues_payments` — the two share `DuesPaymentMethod`, so the CHECKs move together); RLS enabled with NO policies** (service-role only — the `rep_dues_payments` treatment exactly).
 
 **Fields** (boilerplate `id` omitted):
 
@@ -3721,7 +3724,7 @@ record can differ, and changing it is **never** applied retroactively — the sa
 **`paid_date`** (date, NOT NULL) — the day the money LEFT (org-timezone date, coach-typed, UI defaults to today). The ledger entry takes this date (gotcha 2).
 
 <!-- dict:col:rep_dues_payouts.method -->
-**`method`** (text, NOT NULL, default `etransfer`; CHECK `etransfer|cash|cheque|other`).
+**`method`** (text, NOT NULL, default `etransfer`; CHECK `etransfer|cash|cheque|card|other` — `card` since mig 260, in step with `rep_dues_payments.method`).
 
 <!-- dict:col:rep_dues_payouts.note -->
 **`note`** (text, nullable) — free text ("sent to Dana").

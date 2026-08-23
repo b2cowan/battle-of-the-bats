@@ -29,9 +29,8 @@ import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
-import { hasPlanFeature } from '@/lib/plan-features';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
@@ -142,8 +141,6 @@ export default function RosterPage({
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -180,11 +177,14 @@ export default function RosterPage({
   }, [view, assignmentsLoading, load]);
 
   useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
+    // D4: team paper resolves its identity server-side — team look → club look → defaults,
+    // with the TEAM's name as the header identity. Cleanup-guarded so a slow response for a
+    // previous team can never land as this team's branding.
+    let cancelled = false;
+    void fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`)
+      .then(s => { if (!cancelled) setPdfSettings(s); });
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
 
   async function handleToggleStatus(player: RepRosterPlayer) {
     const newStatus = player.status === 'active' ? 'inactive' : 'active';
@@ -376,7 +376,7 @@ export default function RosterPage({
     );
   }
 
-  async function doPdfExport() {
+  async function handleExportPDF() {
     if (!players.length) return;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
@@ -408,24 +408,18 @@ export default function RosterPage({
     await downloadPDF(
       buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster', scope: teamName }, 'pdf'),
       'Team Roster',
-      `${teamName} — ${programYearName}`,
+      // D1: the header carries the team's name; the subtitle keeps only the season.
+      programYearName || undefined,
       pdfHeaders,
       pdfRows,
       settings,
+      {
+        identity: teamName,
+        // 10 columns with guardians: landscape is the report's own shape (D2) — names
+        // stopped shredding here. The wall-copy column diet is a Phase 2 Rosters-pass call.
+        shape: { orientation: 'landscape' },
+      },
     );
-  }
-
-  async function handleExportPDF() {
-    if (
-      canUsePDF &&
-      pdfSettings !== null &&
-      Object.keys(pdfSettings).length === 0 &&
-      !localStorage.getItem('flhq-pdf-setup-warned')
-    ) {
-      setPdfWarningOpen(true);
-      return;
-    }
-    await doPdfExport();
   }
 
   if (assignmentsLoading) return <p className={styles.muted}>Loading…</p>;
@@ -820,16 +814,6 @@ export default function RosterPage({
         title={feedbackType === 'success' ? 'Done' : 'Error'}
         message={feedbackMsg}
         type={feedbackType}
-      />
-      <FeedbackModal
-        isOpen={pdfWarningOpen}
-        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
-        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
-        title="PDF settings not configured"
-        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
-        confirmText="Download anyway"
-        cancelText="Not now"
-        type="info"
       />
     </div>
   );

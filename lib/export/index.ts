@@ -16,7 +16,7 @@ export type { ICSEventInput } from './ics';
 export { downloadICS } from './ics';
 
 export type { OrgPdfSettings, LineupPosterOptions, LineupPosterPlayer, DevelopmentSummaryOptions, PracticeSheetOptions, TryoutBoardSummaryOptions } from './pdf';
-export { DEFAULT_PDF_SETTINGS, downloadPDF, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary } from './pdf';
+export { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary } from './pdf';
 
 export type { ExportCatalogEntry } from './catalog';
 export {

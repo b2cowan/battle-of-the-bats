@@ -1,12 +1,12 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { Download, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { downloadMoneyExport, type MoneyDownload, type MoneyExportFormat } from '@/lib/coach-money-exports';
-import type { OrgPdfSettings } from '@/lib/export';
+import { fetchResolvedPdfSettings, type OrgPdfSettings } from '@/lib/export';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './MoneyExportButton.module.css';
 
@@ -81,22 +81,19 @@ export default function MoneyExportButton({
   useEffect(() => { closeDialog(); }, [navKey, closeDialog]);
 
   /**
-   * Org PDF branding, fetched on FIRST PDF export and then remembered — not on mount. There is
-   * one of these buttons per Money tab and they all stay mounted once visited, so a mount-time
-   * fetch would be several requests for a file most coaches never ask for.
+   * Team-resolved PDF branding (D4: team look → club look → defaults), fetched AT EXPORT
+   * TIME — never on mount (one of these buttons sits on every Money tab and they all stay
+   * mounted once visited), and deliberately uncached: those tabs live for a whole session,
+   * and a remembered copy would keep printing a look the coach has since changed in
+   * "How your documents look". An export is a click; one small GET is nothing. The button
+   * always lives under /teams/[teamId], so the route params carry the team.
    */
-  const pdfSettingsRef = useRef<OrgPdfSettings | null>(null);
+  const { teamId } = useParams<{ teamId: string }>();
   async function loadPdfSettings(): Promise<OrgPdfSettings | null> {
-    if (pdfSettingsRef.current || !currentOrg) return pdfSettingsRef.current;
-    try {
-      const res = await fetch(`/api/admin/org/pdf-settings?orgSlug=${currentOrg.slug}`);
-      pdfSettingsRef.current = res.ok ? ((await res.json()) as OrgPdfSettings) : null;
-    } catch {
-      // Branding is a nicety — a failed fetch falls back to the shared defaults rather than
-      // denying the coach the document they asked for.
-      pdfSettingsRef.current = null;
-    }
-    return pdfSettingsRef.current;
+    if (!currentOrg || !teamId) return null;
+    // Branding is a nicety — a failed fetch resolves null and the document falls back to
+    // the shared defaults rather than being denied.
+    return fetchResolvedPdfSettings(`/api/coaches/${currentOrg.slug}/teams/${teamId}/pdf-settings`);
   }
 
   if (available.length === 0) return null;

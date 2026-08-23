@@ -15023,6 +15023,15 @@
         "column_default": "false"
       },
       {
+        "table_name": "rep_teams",
+        "pos": 19,
+        "column_name": "pdf_settings",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
         "table_name": "rep_tryout_evaluator_sessions",
         "pos": 1,
         "column_name": "id",
@@ -26450,7 +26459,7 @@
         "kind": "CHECK",
         "table_name": "rep_dues_payments",
         "detail": "rep_dues_payments_method_check",
-        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'other'::text]))"
+        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text]))"
       },
       {
         "kind": "CHECK",
@@ -26474,7 +26483,7 @@
         "kind": "CHECK",
         "table_name": "rep_dues_payouts",
         "detail": "rep_dues_payouts_method_check",
-        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'other'::text]))"
+        "check_clause": "(method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text]))"
       },
       {
         "kind": "CHECK",

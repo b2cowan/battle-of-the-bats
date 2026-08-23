@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { FileText, Save, Eye, AlertTriangle, Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { DEFAULT_PDF_SETTINGS, downloadPDF, type OrgPdfSettings } from '@/lib/export/pdf';
+import { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, type OrgPdfSettings } from '@/lib/export/pdf';
 import HelpCallout from '@/components/help/HelpCallout';
 import FeedbackModal from '@/components/FeedbackModal';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
@@ -93,13 +93,25 @@ export default function PdfSettingsPage() {
     if (!form || previewing) return;
     setPreviewing(true);
     try {
+      // The form edits stored values; the org's logo arrives through the server-side
+      // resolution (D4). Borrow the resolved logo so the preview shows the real header.
+      let logoDataUrl = form.logoDataUrl;
+      if (!logoDataUrl) {
+        const resolved = await fetchResolvedPdfSettings(
+          `/api/admin/org/pdf-settings${orgQuery}${orgQuery ? '&' : '?'}resolve=1`,
+        );
+        logoDataUrl = resolved?.logoDataUrl;
+      }
       await downloadPDF(
         'pdf-settings-preview.pdf',
-        form.headerLine1 || currentOrg?.name || 'Preview',
+        'Sample report',
         form.headerLine2,
         PREVIEW_HEADERS,
         PREVIEW_ROWS,
-        form,
+        { ...form, logoDataUrl },
+        // D1: the header carries the org's name when the header line is blank — the preview
+        // shows exactly what a real export shows.
+        { identity: currentOrg?.name },
       );
     } catch {
       setFeedback({ isOpen: true, title: 'Preview Error', message: 'Could not generate preview PDF. Please try again.', type: 'danger' });
@@ -200,7 +212,10 @@ export default function PdfSettingsPage() {
               placeholder={currentOrg?.name ?? 'Your Organization'}
               onChange={e => set('headerLine1', e.target.value)}
             />
-            <p style={hint}>Shown at the top of every PDF. Defaults to your org name if left blank.</p>
+            <p style={hint}>
+              Shown at the top of every admin PDF. Left blank, it defaults to your org name.
+              Documents printed from a team&apos;s coaches portal carry the team&apos;s name instead.
+            </p>
           </div>
           <div className="form-group">
             <label className="form-label">Second header line <span style={{ color: 'var(--white-30)' }}>(optional)</span></label>
@@ -215,34 +230,23 @@ export default function PdfSettingsPage() {
         </section>
 
         {/* ── Logo ────────────────────────────────────────────────────────── */}
+        {/* No controls, deliberately (D4 as shipped): the org's uploaded logo prints
+            automatically — there is nothing to configure, so nothing pretends otherwise.
+            The old "PDF-specific logo override — coming soon" dead radio is gone. */}
         <section>
           <h2 style={sectionTitle}>Logo</h2>
-          <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
-            <label style={radioLabel(form.logoDataUrl == null)}>
-              <input
-                type="radio"
-                checked={form.logoDataUrl == null}
-                onChange={() => set('logoDataUrl', undefined)}
-                style={{ flexShrink: 0, marginTop: '2px' }}
-              />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>Use org logo</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.15rem' }}>
-                  Use the logo uploaded in Org Settings. If none is set, the header shows text only.
-                </div>
+          <div style={radioLabel(true)}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>
+                {currentOrg?.logoUrl ? 'Your org logo prints on every PDF' : 'No org logo uploaded yet'}
               </div>
-            </label>
-            <label style={{ ...radioLabel(false), opacity: 0.5, cursor: 'not-allowed' }}>
-              <input type="radio" disabled style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  Upload PDF-specific logo override <span style={planBadge}>Coming soon</span>
-                </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.15rem' }}>
-                  Upload a separate logo optimized for print — higher resolution or different crop.
-                </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.15rem' }}>
+                {currentOrg?.logoUrl
+                  ? 'The logo uploaded in Org Settings appears in the header of every document, sized for print automatically.'
+                  : 'Upload a logo in Org Settings and it will appear in the header of every document. Until then, the header shows your org name as text.'}
+                {' '}A team that sets its own crest in its coaches portal shows that crest on its own documents.
               </div>
-            </label>
+            </div>
           </div>
         </section>
 
@@ -338,7 +342,10 @@ export default function PdfSettingsPage() {
               <option value="portrait">Portrait (default)</option>
               <option value="landscape">Landscape</option>
             </select>
-            <p style={hint}>Schedule exports always use landscape; this sets the default for other reports.</p>
+            <p style={hint}>
+              Some documents own their shape — the schedule, results, rosters and brackets always
+              print landscape. This sets the default for reports that fit either way.
+            </p>
           </div>
           <div className="form-group">
             <label className="form-label">Report density</label>
@@ -460,14 +467,6 @@ const hint: React.CSSProperties = {
   color: 'var(--white-40)',
   marginTop: '0.35rem',
   lineHeight: 1.45,
-};
-
-const planBadge: React.CSSProperties = {
-  fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em',
-  color: 'var(--blueprint-blue)',
-  background: 'rgba(var(--blueprint-blue-rgb),0.12)',
-  border: '1px solid rgba(var(--blueprint-blue-rgb),0.25)',
-  padding: '1px 6px', borderRadius: '2px',
 };
 
 function radioLabel(active: boolean): React.CSSProperties {

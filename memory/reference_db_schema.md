@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-08-21 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-08-23 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-08-21
+# DB Schema Reference — 2026-08-23
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -336,7 +336,7 @@ id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) �
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_link_token_hash, family_link_created_at, family_link_created_by (uuid), family_calendar_token_hash, schedule_visibility, share_club_book (boolean)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_link_token_hash, family_link_created_at, family_link_created_by (uuid), family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb)
 - Indexes: idx_rep_teams_org_share_club_book, rep_teams_family_calendar_token_uniq, rep_teams_family_link_token_uniq, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions

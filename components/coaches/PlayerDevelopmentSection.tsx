@@ -11,7 +11,8 @@ import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
 import {
-  buildFilename, DEFAULT_PDF_SETTINGS, downloadDevelopmentSummary, type OrgPdfSettings,
+  buildFilename, DEFAULT_PDF_SETTINGS, downloadDevelopmentSummary, fetchResolvedPdfSettings,
+  type OrgPdfSettings,
 } from '@/lib/export';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
@@ -418,12 +419,9 @@ export default function PlayerDevelopmentSection({
     setPrintBusy(true);
     setError('');
     try {
-      const settingsRes = await fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`).catch(() => null);
-      const fetched = settingsRes?.ok ? await settingsRes.json().catch(() => null) : null;
-      const settings: OrgPdfSettings = {
-        ...DEFAULT_PDF_SETTINGS,
-        ...(fetched && typeof fetched === 'object' ? fetched : {}),
-      };
+      // Team-resolved (D4): team look → club look → defaults, team name as the header identity.
+      const fetched = await fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`);
+      const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(fetched ?? {}) };
       const measurableRows: { test: string; reading: string; date: string; note: string | null }[] = [];
       for (const t of data.types) {
         // Library order; each test's readings oldest→newest — a dated log, never a computed trend.

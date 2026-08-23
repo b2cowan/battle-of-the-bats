@@ -238,14 +238,18 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
       'Server-side export of early access lead data including contact info, interest level, status, consent, and notes. Supports format=xlsx|csv query param.',
   },
 
-  // ── Planned: Phase D1 (P0 new table exports) ────────────────────────────
   {
+    // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been
+    // live on this page all along — the entry wrongly claimed the whole export was unbuilt.
+    // The PDF stub ("coming soon" as a success toast) came OUT of the menu (decision 2:
+    // no menu may lie); the real PDF is built in the Phase 2 Registers pass and joins
+    // `formats` when it downloads.
     id: 'house-league-season-registrations',
     label: 'House League Season Registrations',
     module: 'house_league',
     page: 'Season Registrations',
     file: 'app/[orgSlug]/admin/house-league/seasons/[id]/registrations/page.tsx',
-    formats: ['xlsx', 'csv', 'pdf'],
+    formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
     moduleGate: 'league_exports',
@@ -256,8 +260,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     serverSide: false,
     helpSummary:
       'Export season registrations with player info, guardian contacts, division, status, and preferences.',
-    omittedReason: 'Not yet implemented — planned Phase D1.',
-    plannedPhase: 'Phase D1',
   },
   {
     // Catalog true-up 2026-08-02 (Tryout Insights Phase 1): this export shipped in Phase D1 but
@@ -539,12 +541,17 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     plannedPhase: 'Phase D2',
   },
   {
+    // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been
+    // live on this page all along — the entry wrongly claimed the whole export was unbuilt,
+    // and pointed at a path that never existed. The PDF stub (an info modal promising org
+    // branding no org had ever printed) came OUT of the menu (decision 2); the real rep
+    // roster PDF is built in the Phase 2 Rosters pass and joins `formats` when it downloads.
     id: 'rep-teams-roster-admin',
     label: 'Rep Teams Roster (admin view)',
     module: 'rep_teams',
     page: 'Program Year Roster',
-    file: 'app/[orgSlug]/admin/rep-teams/program-years/[id]/page.tsx',
-    formats: ['xlsx', 'csv', 'pdf'],
+    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx',
+    formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
     moduleGate: 'club_exports',
@@ -554,8 +561,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary: 'Export rep team roster with player names, numbers, DOB, and status.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
   },
 
   // ── Planned: Phase D3 (P2 new table exports) ────────────────────────────

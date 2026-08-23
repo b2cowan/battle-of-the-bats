@@ -7,9 +7,8 @@ import { hasCapability } from '@/lib/roles';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
-import { hasPlanFeature } from '@/lib/plan-features';
 import ExportMenu from '@/components/admin/ExportMenu';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './bva.module.css';
@@ -82,8 +81,6 @@ export default function OrgBudgetVsActualPage() {
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
@@ -127,13 +124,11 @@ export default function OrgBudgetVsActualPage() {
     );
   }
 
-  async function doPdfExport() {
+  async function handleExportPDF() {
     if (!data) return;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-      // 7 columns — always export landscape regardless of org default
-      orientation: 'landscape',
     };
 
     const pdfHeaders = ['Category', 'Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
@@ -163,25 +158,18 @@ export default function OrgBudgetVsActualPage() {
     await downloadPDF(
       buildFilename({ org: currentOrg?.slug, dataset: 'budget-vs-actual', scope: String(year) }, 'pdf'),
       'Budget vs. Actual',
-      `${currentOrg?.name} — ${year} Season`,
+      // D1: the header carries the org's name; the subtitle keeps only the season.
+      `${year} Season`,
       pdfHeaders,
       [], // not used when groups is provided
       settings,
-      groups,
+      {
+        groups,
+        identity: currentOrg?.name,
+        // 7 columns — landscape is the report's own shape (D2), not an org preference.
+        shape: { orientation: 'landscape' },
+      },
     );
-  }
-
-  async function handleExportPDF() {
-    if (
-      canUsePDF &&
-      pdfSettings !== null &&
-      Object.keys(pdfSettings).length === 0 &&
-      !localStorage.getItem('flhq-pdf-setup-warned')
-    ) {
-      setPdfWarningOpen(true);
-      return;
-    }
-    await doPdfExport();
   }
 
   const orgSlug = currentOrg?.slug;
@@ -210,11 +198,9 @@ export default function OrgBudgetVsActualPage() {
   }, [currentOrg]);
 
   useEffect(() => {
-    const pdfOrgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    fetch(`/api/admin/org/pdf-settings${pdfOrgQuery}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
+    // D4: server-resolved — org-name header fallback + the org's uploaded logo, print-ready.
+    const pdfOrgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}&resolve=1` : '?resolve=1';
+    void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${pdfOrgQuery}`).then(setPdfSettings);
   }, [orgSlug]);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
@@ -629,16 +615,6 @@ export default function OrgBudgetVsActualPage() {
         title="Coming Soon"
         message={feedbackMsg}
         type="success"
-      />
-      <FeedbackModal
-        isOpen={pdfWarningOpen}
-        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
-        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
-        title="PDF settings not configured"
-        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
-        confirmText="Download anyway"
-        cancelText="Not now"
-        type="info"
       />
     </div>
   );

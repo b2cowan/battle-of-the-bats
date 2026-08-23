@@ -8,7 +8,7 @@ import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import {
   downloadXLSX, buildFilename, downloadPDF, downloadTryoutBoardSummary,
-  DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { fairnessReceiptLines, type TryoutReport } from '@/lib/tryout-report';
 import day from './TryoutDayCard.module.css';
@@ -24,7 +24,6 @@ import styles from './TryoutReportCard.module.css';
 interface ReportPayload {
   seasonName: string;
   teamName: string;
-  orgName: string;
   rosterNames: string[];
   report: TryoutReport;
 }
@@ -33,13 +32,14 @@ interface Props {
   /** `/api/coaches/{orgSlug}/teams/{teamId}/tryout-report` */
   apiBase: string;
   orgSlug: string;
+  teamId: string;
   rosterHref: string;
   /** True while the Build tab is the visible panel — triggers a refresh so decisions just made show up. */
   active: boolean;
   onError?: (msg: string) => void;
 }
 
-export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active, onError }: Props) {
+export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref, active, onError }: Props) {
   const confirm = useConfirm();
   const { currentOrg } = useOrg();
   const [data, setData] = useState<ReportPayload | null>(null);
@@ -47,10 +47,6 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
   const [exporting, setExporting] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  // Settings are only needed at export time — fetched lazily then cached (the PlayerDevelopmentSection
-  // pattern), not on mount: every visit to the Tryouts page mounts this card whether or not the
-  // coach ever opens Build or exports.
-  const pdfSettingsRef = useRef<OrgPdfSettings | null>(null);
 
   useDismissable(menuOpen, rootRef, () => setMenuOpen(false));
   const menuStyle = useAnchoredMenu(menuOpen, rootRef, menuRef, { minWidth: 260, narrowMinWidth: 200, align: 'end' });
@@ -68,17 +64,13 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
   useEffect(() => { if (active) load(); }, [active, load]);
 
   const loadPdfSettings = useCallback(async (): Promise<OrgPdfSettings> => {
-    if (!pdfSettingsRef.current) {
-      try {
-        const res = await fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`);
-        pdfSettingsRef.current = res.ok ? ((await res.json()) as OrgPdfSettings) : ({} as OrgPdfSettings);
-      } catch {
-        pdfSettingsRef.current = {} as OrgPdfSettings;
-      }
-    }
-    const stored = pdfSettingsRef.current;
-    return { ...DEFAULT_PDF_SETTINGS, ...(stored && Object.keys(stored).length > 0 ? stored : {}) };
-  }, [orgSlug]);
+    // Team-resolved (D4): team look → club look → defaults, team name as the identity.
+    // Fetched PER EXPORT, deliberately uncached: an export is a click, one small GET is
+    // nothing — and this hub stays mounted for a whole session, so a cached copy would keep
+    // printing a look the coach has since changed in "How your documents look".
+    const fetched = await fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`);
+    return { ...DEFAULT_PDF_SETTINGS, ...(fetched ?? {}) };
+  }, [orgSlug, teamId]);
 
   if (!data) return null;
   const { report } = data;
@@ -145,8 +137,8 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
       await downloadTryoutBoardSummary(
         buildFilename({ org: data.teamName, dataset: 'tryout-report', scope: 'board-summary' }, 'pdf'),
         {
-          orgName: data.orgName,
-          teamName: data.teamName,
+          // D1: team paper — same identity contract as the table engine.
+          identity: data.teamName,
           seasonName: data.seasonName,
           finalized: report.finalized,
           stats: {
@@ -181,10 +173,18 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
     if (!ok) return;
     const rows = report.candidateRows;
     const catCols = profile ? profile.categories : [];
-    const headers = [
-      'Player', 'Bib', 'Composite', 'Evaluators',
-      ...catCols.map(c => c.label),
-      'Decision',
+    // Headers and drop priorities come from ONE list, so they can never disagree about
+    // which index is which. The full ladder is declared — rubric categories yield
+    // rightmost-first, then Evaluators, Composite, Bib — so Player and Decision are the
+    // last columns standing on ANY paper (without this, the engine's last-first default
+    // would take Decision, the one column the whole report exists to record, first).
+    const FIXED_LEAD = ['Player', 'Bib', 'Composite', 'Evaluators'];
+    const headers = [...FIXED_LEAD, ...catCols.map(c => c.label), 'Decision'];
+    const rubricDropOrder = [
+      ...catCols.map((_, i) => FIXED_LEAD.length + i).reverse(),
+      3, // Evaluators
+      2, // Composite
+      1, // Bib
     ];
     const body = rows.map(r => [
       r.name,
@@ -203,8 +203,17 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
         await downloadPDF(
           filename,
           'Tryout report — full detail',
-          `${data.teamName}  ·  ${data.seasonName}  ·  Coaching staff only`,
+          // D1: the header carries the team's name; the subtitle keeps season + audience.
+          `${data.seasonName}  ·  Coaching staff only`,
           headers, body, settings,
+          {
+            identity: data.teamName,
+            // 5+N columns where N is the org's own rubric: landscape is the report's shape
+            // (D2). The rubric can still out-grow any paper — that's what the fit contract's
+            // drop-and-say-so is for. Column diet is a Phase 2 Registers-pass call.
+            shape: { orientation: 'landscape' },
+            fit: { dropOrder: rubricDropOrder },
+          },
         );
       }
     });

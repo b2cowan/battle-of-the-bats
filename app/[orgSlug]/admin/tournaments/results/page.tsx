@@ -9,7 +9,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { Game, Team, Division, Venue } from '@/lib/types';
@@ -18,7 +18,6 @@ import s from '../../admin-common.module.css';
 import styles from './results-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
-import { hasPlanFeature } from '@/lib/plan-features';
 import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tournament-score-audit';
 import {
   StatusLegendPopover,
@@ -109,8 +108,6 @@ export default function AdminResultsPage() {
 
   // PDF settings — fetched once; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (tournamentLoading) return;
@@ -163,11 +160,9 @@ export default function AdminResultsPage() {
   }, [refresh]);
 
   useEffect(() => {
-    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    fetch(`/api/admin/org/pdf-settings${orgQuery}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(data => setPdfSettings(data as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
+    // D4: server-resolved — org-name header fallback + the org's uploaded logo, print-ready.
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}&resolve=1` : '?resolve=1';
+    void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${orgQuery}`).then(setPdfSettings);
   }, [orgSlug]);
 
   // Restore filter state from localStorage when the tournament changes.
@@ -363,7 +358,7 @@ export default function AdminResultsPage() {
     );
   }
 
-  async function doPdfExport() {
+  async function handleExportPDF() {
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
@@ -436,21 +431,14 @@ export default function AdminResultsPage() {
       headers,
       flatRows,
       settings,
-      groups.length > 0 ? groups : undefined,
+      {
+        groups: groups.length > 0 ? groups : undefined,
+        identity: currentOrg?.name,
+        // 11 columns incl. the score-audit trail: landscape is the report's own shape
+        // (D2). The audit-column diet is a Phase 2 Registers-pass call — shape only here.
+        shape: { orientation: 'landscape' },
+      },
     );
-  }
-
-  async function handleExportPDF() {
-    if (
-      canUsePDF &&
-      pdfSettings !== null &&
-      Object.keys(pdfSettings).length === 0 &&
-      !localStorage.getItem('flhq-pdf-setup-warned')
-    ) {
-      setPdfWarningOpen(true);
-      return;
-    }
-    await doPdfExport();
   }
 
   const statusFilterOptions = [
@@ -802,16 +790,6 @@ export default function AdminResultsPage() {
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
-      />
-      <FeedbackModal
-        isOpen={pdfWarningOpen}
-        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
-        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
-        title="PDF settings not configured"
-        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
-        confirmText="Download anyway"
-        cancelText="Not now"
-        type="info"
       />
     </div>
   );

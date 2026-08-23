@@ -177,6 +177,7 @@ export default function CoachTryoutsPage({
         <TryoutReportCard
           apiBase={`${base}/tryout-report`}
           orgSlug={orgSlug}
+          teamId={teamId}
           rosterHref={rosterHref}
           active={activeTab === 'build'}
           onError={fail}
