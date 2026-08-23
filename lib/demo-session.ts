@@ -39,15 +39,6 @@ export async function attachDemoSession(
     throw new Error('refused to establish a session for an address that is not on the demo allow-list');
   }
 
-  const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'magiclink',
-    email: organizerEmail,
-  });
-  const tokenHash = link?.properties?.hashed_token;
-  if (linkError || !tokenHash) {
-    throw new Error(linkError?.message ?? 'generateLink returned no hashed_token');
-  }
-
   const sessionWriter = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -63,11 +54,30 @@ export async function attachDemoSession(
     },
   );
 
-  const { error: verifyError } = await sessionWriter.auth.verifyOtp({
-    token_hash: tokenHash,
-    type: 'magiclink',
-  });
-  if (verifyError) throw new Error(verifyError.message);
+  // GoTrue keeps ONE live token per user: a concurrent press for the same shared demo account
+  // invalidates the token minted here before it is redeemed — GoTrue reports that as
+  // `otp_expired` ("Email link is invalid or has expired", seen on prod 2026-08-22). One retry
+  // re-mints after losing that race; only a third overlapping press within milliseconds can lose
+  // twice. Every OTHER verify failure throws immediately: a re-mint cannot cure it, and retrying
+  // a rate-limit response would add to the very pressure that caused it.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: organizerEmail,
+    });
+    const tokenHash = link?.properties?.hashed_token;
+    if (linkError || !tokenHash) {
+      throw new Error(linkError?.message ?? 'generateLink returned no hashed_token');
+    }
+    const { error: verifyError } = await sessionWriter.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'magiclink',
+    });
+    if (!verifyError) return;
+    const lostTokenRace =
+      verifyError.code === 'otp_expired' || /invalid or has expired/i.test(verifyError.message);
+    if (!lostTokenRace || attempt === 1) throw new Error(verifyError.message);
+  }
 }
 
 /**

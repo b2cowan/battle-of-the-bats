@@ -66,7 +66,10 @@ export async function GET(request: NextRequest) {
   try {
     seeded = (await demoOrgIdForSlug(demo.slug)) !== null;
   } catch (err) {
-    await captureError(err, { route: '/see-it-live/coaches', method: 'GET', severity: 'critical' });
+    await captureError(err, {
+      route: '/see-it-live/coaches', method: 'GET', severity: 'critical',
+      ip, userAgent: request.headers.get('user-agent'),
+    });
     return NextResponse.redirect(new URL(FALLBACK_PATH, origin));
   }
   if (!seeded) {
@@ -95,7 +98,10 @@ export async function GET(request: NextRequest) {
       try {
         await attachDemoSession(request, response, demo.organizerEmail);
       } catch (err) {
-        await captureError(err, { route: '/see-it-live/coaches', method: 'GET', severity: 'critical' });
+        await captureError(err, {
+          route: '/see-it-live/coaches', method: 'GET', severity: 'critical',
+          ip, userAgent: request.headers.get('user-agent'),
+        });
         return NextResponse.redirect(new URL(FALLBACK_PATH, origin));
       }
       return response;
@@ -109,7 +115,10 @@ export async function GET(request: NextRequest) {
     await attachDemoSession(request, response, demo.organizerEmail);
   } catch (err) {
     // No anonymous half to degrade to here: land on the marketing page, get paged.
-    await captureError(err, { route: '/see-it-live/coaches', method: 'GET', severity: 'critical' });
+    await captureError(err, {
+      route: '/see-it-live/coaches', method: 'GET', severity: 'critical',
+      ip, userAgent: request.headers.get('user-agent'),
+    });
     return NextResponse.redirect(new URL(FALLBACK_PATH, origin));
   }
 

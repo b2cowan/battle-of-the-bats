@@ -120,7 +120,10 @@ export async function GET(request: NextRequest) {
   try {
     seeded = (await demoOrgIdForSlug(demo.slug)) !== null;
   } catch (err) {
-    await captureError(err, { route: '/see-it-live', method: 'GET', severity: 'critical' });
+    await captureError(err, {
+      route: '/see-it-live', method: 'GET', severity: 'critical',
+      ip, userAgent: request.headers.get('user-agent'),
+    });
     return NextResponse.redirect(new URL(FALLBACK_PATH, origin));
   }
   if (!seeded) {
@@ -154,7 +157,10 @@ export async function GET(request: NextRequest) {
       try {
         await attachDemoSession(request, response, demo.organizerEmail);
       } catch (err) {
-        await captureError(err, { route: '/see-it-live', method: 'GET', severity: 'critical' });
+        await captureError(err, {
+          route: '/see-it-live', method: 'GET', severity: 'critical',
+          ip, userAgent: request.headers.get('user-agent'),
+        });
         return NextResponse.redirect(landing);
       }
       return response;
@@ -169,7 +175,10 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     // Graceful degradation, on purpose: the fan side is anonymous and is the half that proves the
     // demo is live within seconds. A prospect gets the tournament; we get paged.
-    await captureError(err, { route: '/see-it-live', method: 'GET', severity: 'critical' });
+    await captureError(err, {
+      route: '/see-it-live', method: 'GET', severity: 'critical',
+      ip, userAgent: request.headers.get('user-agent'),
+    });
     return NextResponse.redirect(landing);
   }
 
