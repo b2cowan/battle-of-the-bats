@@ -10585,7 +10585,7 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
 
 ## §79 · Every PDF knows whose paper it is — and a coach can make it theirs
 
-**BUILT 2026-08-23 (dev).** PDF Export Quality Phase 1 (D1–D4 + honest menus). Plan:
+**BUILT 2026-08-23, committed `d2b1e469` (dev; incl. /simplify + /review passes and the help-guide sync).** PDF Export Quality Phase 1 (D1–D4 + honest menus). Plan:
 `docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4. Approved mockup:
 https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93. Migration 259 dev-only.
 
