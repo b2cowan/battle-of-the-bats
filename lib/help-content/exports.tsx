@@ -16,7 +16,7 @@ const exportsHelp: HelpPageContent = {
       summary: 'Excel, CSV, Calendar (.ics), and PDF — when to use each.',
       keywords: ['xlsx', 'csv', 'ical', 'ics', 'pdf', 'format', 'spreadsheet', 'calendar', 'google sheets', 'excel', 'logo', 'branding', 'team crest', 'columns missing'],
       searchText:
-        'xlsx csv excel spreadsheet google sheets apple numbers calendar ics ical pdf report print format choose download logo branding org name team name crest accent colour color footer how your documents look columns didn\'t fit missing columns page didn\'t fit spreadsheet carries every column premium coaches portal',
+        'xlsx csv excel spreadsheet google sheets apple numbers calendar ics ical pdf report print format choose download logo branding org name team name crest accent colour color footer how your documents look columns didn\'t fit missing columns page didn\'t fit spreadsheet carries every column premium coaches portal short codes abbreviated headings legend key tryout scorecard categories',
       content: (
         <p>
           Four formats, and the choice comes down to what happens to the file next. When you
@@ -107,9 +107,12 @@ const exportsHelp: HelpPageContent = {
                 </p>
               </HelpNote>
               <p>
-                If a very wide table can't fit every column on the page, the PDF keeps the columns
-                that fit and says which ones it left out, in a line under the document's title — the
-                Excel and CSV exports always carry every column.
+                Most PDFs are built to fit the page, so nothing is left off. The exception is a
+                table whose columns come from your own setup — a tryout scorecard's categories, for
+                instance. There the PDF shortens the column headings to short codes and prints a key
+                under the title, so a long scorecard still fits. If a table still can't fit every
+                column, the PDF keeps the columns that fit and says which ones it left out, in a
+                line under the document's title. Excel and CSV always carry every column, in full.
               </p>
               <p>
                 <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
@@ -126,9 +129,9 @@ const exportsHelp: HelpPageContent = {
       id: 'availability',
       heading: 'Where exports are available',
       summary: 'Every module and page that has an Export button, and which formats are supported.',
-      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings'],
+      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings', 'tryout applicants pdf', 'registrations pdf'],
       searchText:
-        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout coaches portal dues accounting ledger budget org members data tools download where bracket pdf',
+        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout applicants coaches portal dues budget vs actual accounting ledger budget org members data tools download where bracket pdf season registrations pdf tryout applicants pdf',
       content: (
         <>
           <p>
@@ -171,7 +174,7 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>House League</strong></td>
                 <td>Season Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
+                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
                 <td>League Plus</td>
               </tr>
               <tr>
@@ -195,7 +198,7 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>Rep Teams</strong></td>
                 <td>Tryout Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
+                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
                 <td>Club</td>
               </tr>
               <tr>
@@ -213,6 +216,12 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>Coaches Portal</strong></td>
                 <td>Player Dues</td>
+                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>Club</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Budget vs. Actual</td>
                 <td>✓</td><td>✓</td><td>—</td><td>✓</td>
                 <td>Club</td>
               </tr>
@@ -301,9 +310,9 @@ const exportsHelp: HelpPageContent = {
       id: 'privacy',
       heading: 'Sensitive data and privacy',
       summary: 'How guardian contacts, player notes, and internal notes are handled in exports.',
-      keywords: ['sensitive', 'privacy', 'contact', 'guardian', 'email', 'phone', 'notes', 'internal notes', 'opt-in'],
+      keywords: ['sensitive', 'privacy', 'contact', 'guardian', 'email', 'phone', 'notes', 'internal notes', 'opt-in', 'pdf contact details', 'printed register'],
       searchText:
-        'sensitive privacy guardian contact email phone notes internal notes opt-in excluded default confidential',
+        'sensitive privacy guardian contact email phone notes internal notes opt-in excluded default confidential pdf leaves out contact details printed register registrations tryout applicants date of birth excel with contact details',
       content: (
         <>
           <p>
@@ -328,6 +337,13 @@ const exportsHelp: HelpPageContent = {
           <p>
             These are deliberate choices that require you to select them explicitly. They are never
             the default. Choose only what you need for the task at hand.
+          </p>
+          <p>
+            <strong>Printed lists leave contact details out.</strong> The PDF of House League season
+            registrations and of rep-team tryout applicants gives you players, dates and status —
+            never a date of birth, a guardian name, an email or a phone number. A printed page gets
+            forwarded and left on tables, so those columns stay in the spreadsheet exports,
+            including <em>Excel with contact details</em>.
           </p>
           <p>
             PDF privacy defaults can be configured in <strong>Org Settings → PDF Settings</strong>

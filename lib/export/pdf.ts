@@ -84,18 +84,79 @@ export interface ReportFit {
   dropOrder?: number[];
 }
 
+/**
+ * Shorten customer-named column headings to codes, and say what they mean.
+ *
+ * The fit contract's last resort is dropping a whole column and admitting it. For a table
+ * whose columns are the CUSTOMER'S words — a tryout rubric, where the club decides both how
+ * many categories there are and how long each name is — there is a better move first: print
+ * a code and explain it under the title. A club running ten categories then keeps all ten
+ * (owner ruling, Phase 2 Registers pass, chosen from rendered options).
+ *
+ * The rule has to be predictable, because a coach reads the same club's report every year:
+ * a multi-word name becomes its initials ("Game Sense" → GS, "Base Running IQ" → BRI), a
+ * single word its first four letters ("Coachability" → Coac), and anything already short
+ * enough is left alone — and left out of the legend, because "Bib = Bib" is noise. Two
+ * categories that shorten to the same thing get a number, so no two columns share a heading.
+ *
+ * Returns the codes in the order given, plus the legend line (empty when nothing shortened).
+ */
+export function abbreviateHeadings(labels: string[]): { codes: string[]; legend: string } {
+  const KEEP_AS_IS = 4;
+  const used = new Set<string>();
+  const explained: string[] = [];
+
+  const codes = labels.map(label => {
+    const name = label.trim();
+    // A blank heading stays blank and claims nothing: numbering it would print a bare "2" that
+    // reads as data, and it would earn a legend entry with nothing after the equals sign.
+    if (!name) return '';
+    const words = name.split(/\s+/).filter(Boolean);
+    let code = name.length <= KEEP_AS_IS
+      ? name
+      : words.length > 1
+        ? words.map(w => w[0].toUpperCase()).join('').slice(0, KEEP_AS_IS)
+        : name.slice(0, KEEP_AS_IS);
+
+    // Two categories can legitimately shorten to the same code ("Hitting"/"Hit and run").
+    // Numbering the later one keeps every heading unique — an ambiguous heading on a scoring
+    // sheet is worse than an ugly one.
+    if (used.has(code)) {
+      let n = 2;
+      while (used.has(`${code}${n}`)) n++;
+      code = `${code}${n}`;
+    }
+    used.add(code);
+    if (code !== name) explained.push(`${code} = ${name}`);
+    return code;
+  });
+
+  return { codes, legend: explained.join('  ·  ') };
+}
+
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 /**
  * Fit contract floors: a column's floor is measured from its real content — the longest
  * single word across header + sampled cells, because linebreak overflow wraps legibly at
  * spaces and degenerates into one-character-per-line confetti exactly when a column is
- * narrower than its tokens. One token's demand is CAPPED: a long email or URL wrapping
+ * narrower than its tokens. One CELL token's demand is CAPPED: a long email or URL wrapping
  * onto a second line is legible (the approved gallery shows exactly that), so it may not
  * force other columns off the page. The absolute minimum keeps an empty column readable.
+ *
+ * ⚠ A HEADING'S LONGEST WORD IS NEVER CAPPED, AND IS MEASURED IN THE FACE IT PRINTS IN
+ * (bold, half a point up — see `headStyles`). Both halves of that sentence were wrong until
+ * the Phase 2 Registers pass, and the two errors compounded: headings were measured in the
+ * regular face, so bold ones asked for ~2mm more than was set aside, and the cell cap then
+ * held them below even that. Real reports with room to spare printed "Divisio n",
+ * "Composit e", "Submitte d At". A heading broken mid-word is never legible and a heading is
+ * short by nature — there are only ever as many as there are columns, and the widest word in
+ * this product's vocabulary measures under 20mm. If the floors genuinely cannot all fit, a
+ * whole column is dropped and the document says so; that is the honest outcome, and a
+ * shredded heading is not.
  */
 const COL_FLOOR_MIN_MM = 8;
-const TOKEN_DEMAND_CAP_MM = 14;
+const CELL_TOKEN_CAP_MM = 14;
 /** How many rows to sample per column when measuring the floor. */
 const FIT_SAMPLE_ROWS = 60;
 
@@ -283,8 +344,13 @@ export function buildTablePDF(
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(90, 90, 110);
-        doc.text(subtitle, MARGIN, y + 10);
-        y += 14;
+        // ⚠ WRAPPED, not drawn as one line. A subtitle is caller-supplied prose — a champions
+        // callout listing every division, or the tryout report's rubric legend — and the
+        // single-line version ran clean off the right edge of the paper with no clue that
+        // anything was missing. Anything that can grow with the customer's data has to wrap.
+        const lines: string[] = doc.splitTextToSize(subtitle, contentWidth);
+        doc.text(lines, MARGIN, y + 10);
+        y += 10 + lines.length * 4;
       } else {
         y += 8;
       }
@@ -315,16 +381,23 @@ export function buildTablePDF(
   }
 
   function columnFloors(hdrs: (string | number)[], rws: Cell[][]): number[] {
+    // Headings first, in the face they PRINT in — bold, half a point up.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(fontSize + 0.5);
+    const headDemand = hdrs.map(h => longestTokenWidth(h));
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(fontSize);
     const step = Math.max(1, Math.ceil(rws.length / FIT_SAMPLE_ROWS));
-    return hdrs.map((h, i) => {
-      let demand = longestTokenWidth(h);
+    return hdrs.map((_, i) => {
+      let cellDemand = 0;
       for (let r = 0; r < rws.length; r += step) {
         const w = longestTokenWidth(rws[r]?.[i]);
-        if (w > demand) demand = w;
+        if (w > cellDemand) cellDemand = w;
       }
-      return Math.max(COL_FLOOR_MIN_MM, Math.min(demand, TOKEN_DEMAND_CAP_MM) + padH + 1);
+      // The heading is uncapped; a cell token is not (a long email may wrap, a heading may not).
+      const demand = Math.max(headDemand[i], Math.min(cellDemand, CELL_TOKEN_CAP_MM));
+      return Math.max(COL_FLOOR_MIN_MM, demand + padH + 1);
     });
   }
 
@@ -665,6 +738,19 @@ export async function downloadPracticeSheet(filename: string, opts: PracticeShee
   await downloadPDF(filename, 'Practice plan', subtitle, [], [], opts.settings, {
     groups,
     identity: opts.teamName,
+    /* ⚠ COMPACT IS A REGRESSION GUARD, NOT A DESIGN CHOICE (Phase 2 Registers pass) — the same
+       one the team roster carries, for the same reason. A rotation grid's headings are the
+       coach's own GROUP NAMES, up to twelve of them across a portrait page, and once headings
+       were measured honestly (bold, uncapped) a coach who had renamed a group to one long word
+       started losing a whole station column that used to print. Measured at 6 / 8 / 12 groups,
+       compact restores the exact column count this sheet had before that fix, at every size,
+       while keeping the names unbroken.
+
+       ⚠ It deliberately stops there. Abbreviating station names, or anything else about how this
+       document is SHAPED, belongs to the Working-sheets pass that rebuilds it as the run sheet —
+       whose approved spec already puts rotation grids "compact inside their owning blocks", so
+       this guard points the same way rather than pre-empting it. */
+    shape: { density: 'compact' },
   });
 }
 

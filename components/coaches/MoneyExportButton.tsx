@@ -38,14 +38,23 @@ export default function MoneyExportButton({
    * Built at CLICK TIME from what is on screen — never earlier, or a coach who changed view after
    * the tab loaded would get the file they were looking at ten minutes ago. The tab supplies its
    * own team and season names too: it has them, and they land in the filename and a PDF's title.
+   *
+   * ⚠ IT IS HANDED THE FORMAT, because one view legitimately produces a different DOCUMENT on
+   * paper than in a spreadsheet: the month grid is a spreadsheet shape and its PDF is the
+   * whole-season statement instead (owner ruling 2026-08-21). A caller that uses the argument
+   * owes the coach `pdfHint` below — the swap must be readable before they pick, never a
+   * surprise in the downloads folder.
    */
   build,
+  /** Overrides the PDF row's hint in the file-type dialog. Required when `build` varies by format. */
+  pdfHint,
   disabled = false,
   className,
 }: {
   label: string;
   formats: MoneyExportFormat[];
-  build: () => Omit<MoneyDownload, 'orgLabel' | 'pdfSettings'>;
+  build: (format: MoneyExportFormat) => Omit<MoneyDownload, 'orgLabel' | 'pdfSettings'>;
+  pdfHint?: string;
   disabled?: boolean;
   className?: string;
 }) {
@@ -103,7 +112,7 @@ export default function MoneyExportButton({
     setError('');
     try {
       await downloadMoneyExport(format, {
-        ...build(),
+        ...build(format),
         orgLabel: currentOrg?.slug ?? '',
         pdfSettings: format === 'pdf' ? await loadPdfSettings() : null,
       });
@@ -141,6 +150,7 @@ export default function MoneyExportButton({
         <ExportFormatDialog
           label={label}
           formats={available}
+          pdfHint={pdfHint}
           busy={busy}
           error={error}
           onPick={f => { void run(f); }}
@@ -174,6 +184,7 @@ const FORMATS: Record<MoneyExportFormat, { label: string; hint: string; ext: str
 function ExportFormatDialog({
   label,
   formats,
+  pdfHint,
   busy,
   error,
   onPick,
@@ -181,6 +192,7 @@ function ExportFormatDialog({
 }: {
   label: string;
   formats: MoneyExportFormat[];
+  pdfHint?: string;
   busy: MoneyExportFormat | null;
   error: string;
   onPick: (format: MoneyExportFormat) => void;
@@ -227,7 +239,12 @@ function ExportFormatDialog({
                   <span className={styles.ext}>{spec.ext}</span>
                 </span>
                 <span className={styles.hint}>
-                  {busy === f ? 'Preparing your file…' : spec.hint}
+                  {busy === f
+                    ? 'Preparing your file…'
+                    /* A view whose PDF is a DIFFERENT document says so here, before the coach
+                       picks — the one place they are asked to choose is the only honest place
+                       to tell them. */
+                    : (f === 'pdf' && pdfHint) || spec.hint}
                 </span>
               </button>
             );

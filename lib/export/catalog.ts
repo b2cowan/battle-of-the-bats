@@ -179,7 +179,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export game results with scores, division, and status. PDF produces a post-event summary report grouped by division (PDF coming in Phase F3).',
+      'Export game results with scores, division, and status. The PDF is the printed register — one section per division, landscape. It deliberately OMITS the three score-audit columns (submitted by / at / source), which are working data and stay in xlsx and csv.',
   },
   {
     id: 'tournament-results-legacy',
@@ -239,17 +239,15 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
 
   {
-    // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been
-    // live on this page all along — the entry wrongly claimed the whole export was unbuilt.
-    // The PDF stub ("coming soon" as a success toast) came OUT of the menu (decision 2:
-    // no menu may lie); the real PDF is built in the Phase 2 Registers pass and joins
-    // `formats` when it downloads.
+    // The PDF is the printed REGISTER (Phase 2 Registers pass): division sections with their
+    // own counts, and player / registered / status / fee paid. It deliberately carries none of
+    // the sensitive columns the spreadsheets do — a printed page gets left on tables.
     id: 'house-league-season-registrations',
     label: 'House League Season Registrations',
     module: 'house_league',
     page: 'Season Registrations',
-    file: 'app/[orgSlug]/admin/house-league/seasons/[id]/registrations/page.tsx',
-    formats: ['xlsx', 'csv'],
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx',
+    formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
     moduleGate: 'league_exports',
@@ -259,7 +257,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export season registrations with player info, guardian contacts, division, status, and preferences.',
+      'Export season registrations with player info, guardian contacts, division, status, and preferences. The PDF prints a division-grouped register with counts — names, dates and fees only, no contact details.',
   },
   {
     // Catalog true-up 2026-08-02 (Tryout Insights Phase 1): this export shipped in Phase D1 but
@@ -269,8 +267,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     module: 'rep_teams',
     page: 'Program Year — Tryout Applicants',
     file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx',
-    // PDF appears in the menu but is a "coming soon" stub — not listed here until it downloads.
-    formats: ['xlsx', 'csv'],
+    // The PDF is the printed REGISTER (Phase 2 Registers pass): status sections with counts, and
+    // the consent record. No contact details, no notes, no consent IP — those stay in the sheets.
+    formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
     moduleGate: 'club_exports',
@@ -280,7 +279,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export tryout applicants with player info, guardian contacts, consent audit columns, and application status.',
+      'Export tryout applicants with player info, guardian contacts, consent audit columns, and application status. The PDF prints a status-grouped register with counts and the consent record — no contact details.',
   },
   {
     id: 'coaches-tryout-report',
@@ -361,9 +360,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export budget vs. actual report by category and line item. PDF produces a board-ready financial report.',
-    omittedReason: 'Not yet implemented — planned Phase D1.',
-    plannedPhase: 'Phase D1',
+      'Export budget vs. actual report by category and line item. The PDF prints one section per category, so it carries no Category column — the heading is the category.',
   },
 
   // ── Coaches Portal: the Money hub's Export ▾ menu ────────────────────────

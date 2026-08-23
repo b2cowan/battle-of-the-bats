@@ -7,7 +7,7 @@ import { useOrg } from '@/lib/org-context';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import {
-  downloadXLSX, buildFilename, downloadPDF, downloadTryoutBoardSummary,
+  downloadXLSX, buildFilename, downloadPDF, downloadTryoutBoardSummary, abbreviateHeadings,
   fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { fairnessReceiptLines, type TryoutReport } from '@/lib/tryout-report';
@@ -173,11 +173,13 @@ export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref,
     if (!ok) return;
     const rows = report.candidateRows;
     const catCols = profile ? profile.categories : [];
-    // Headers and drop priorities come from ONE list, so they can never disagree about
-    // which index is which. The full ladder is declared — rubric categories yield
-    // rightmost-first, then Evaluators, Composite, Bib — so Player and Decision are the
-    // last columns standing on ANY paper (without this, the engine's last-first default
-    // would take Decision, the one column the whole report exists to record, first).
+    // Headers, body and drop priorities are all built from FIXED_LEAD + catCols in that one
+    // order, so nothing can disagree about which index is which — including the PDF's
+    // shortened headings below, which are the same columns wearing shorter names.
+    // The full ladder is declared — rubric categories yield rightmost-first, then Evaluators,
+    // Composite, Bib — so Player and Decision are the last columns standing on ANY paper
+    // (without this, the engine's last-first default would take Decision, the one column the
+    // whole report exists to record, first).
     const FIXED_LEAD = ['Player', 'Bib', 'Composite', 'Evaluators'];
     const headers = [...FIXED_LEAD, ...catCols.map(c => c.label), 'Decision'];
     const rubricDropOrder = [
@@ -200,18 +202,32 @@ export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref,
         await downloadXLSX(filename, headers, body, 'Tryout report');
       } else {
         const settings = await loadPdfSettings();
+        /* The PDF's column diet (owner's pick from rendered options, Phase 2 Registers pass).
+           Two moves, and neither touches the spreadsheet above — a coach opening the xlsx gets
+           the club's own category names, in full, as they always did.
+
+           1. HEADINGS SHORTEN TO CODES with a legend under the title, because the columns after
+              Player are the customer's words and a club running ten categories used to lose
+              three of them to the fit contract. Codes keep all ten on the page.
+           2. THE ROWS PRINT COMPACT — the density the tournament schedule already declares.
+              Full-width rows spent 12mm of padding on a two-character score, wrapped every
+              candidate's name onto two lines, and put eight candidates on a page. Compact puts
+              twenty on a page and holds every name on one line.
+
+           `Decision` is never abbreviated: it is the column this report exists to record. */
+        const { codes, legend } = abbreviateHeadings([...FIXED_LEAD.slice(2), ...catCols.map(c => c.label)]);
+        const pdfHeaders = [...FIXED_LEAD.slice(0, 2), ...codes, 'Decision'];
         await downloadPDF(
           filename,
           'Tryout report — full detail',
-          // D1: the header carries the team's name; the subtitle keeps season + audience.
-          `${data.seasonName}  ·  Coaching staff only`,
-          headers, body, settings,
+          // D1: the header carries the team's name; the subtitle keeps season + audience,
+          // and now the legend — which is why the engine wraps a subtitle rather than
+          // running it off the edge of the paper.
+          `${data.seasonName}  ·  Coaching staff only${legend ? `\n${legend}` : ''}`,
+          pdfHeaders, body, settings,
           {
             identity: data.teamName,
-            // 5+N columns where N is the org's own rubric: landscape is the report's shape
-            // (D2). The rubric can still out-grow any paper — that's what the fit contract's
-            // drop-and-say-so is for. Column diet is a Phase 2 Registers-pass call.
-            shape: { orientation: 'landscape' },
+            shape: { orientation: 'landscape', density: 'compact' },
             fit: { dropOrder: rubricDropOrder },
           },
         );

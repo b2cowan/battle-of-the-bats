@@ -41,7 +41,7 @@ function emitScorePublished(detail: { gameId: string; orgSlug: string; tournamen
 }
 
 // ── Export column definitions ─────────────────────────────────────────────
-// Admin-only export now includes score submission audit metadata for review.
+// Admin-only export includes score submission audit metadata for review.
 const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Date',       key: 'date'      },
   { label: 'Time',       key: 'time'      },
@@ -55,6 +55,24 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Submitted At', key: 'submittedAt' },
   { label: 'Submission Source', key: 'submissionSource' },
 ];
+
+/**
+ * What the PDF prints — the same report on a diet (PDF Export Quality decision 5, owner
+ * 2026-08-21, built in the Phase 2 Registers pass).
+ *
+ * ⚠ THE THREE AUDIT COLUMNS ARE GONE FROM PAPER FOR GOOD. Who submitted a score, when, and
+ * through which door is working data an admin reconciles a dispute with — it belongs in a
+ * spreadsheet, and `RESULTS_EXPORT_COLS` above still carries all three into xlsx and csv.
+ * On paper they cost more than they were worth: an email address was the widest thing on the
+ * page, the report ran to four landscape pages for 24 games, and one audit column was dropped
+ * with an apology anyway.
+ *
+ * ⚠ WITH THE DIET THIS IS A FIXED-COLUMN REPORT, so the standing rule applies: it must fit by
+ * construction, and the fit contract's "didn't fit this page" line appearing on it is a BUG,
+ * not a shrug. Adding a column here means re-proving that on rendered paper.
+ */
+const RESULTS_AUDIT_KEYS = new Set(['submittedBy', 'submittedAt', 'submissionSource']);
+const RESULTS_PDF_COLS: ExportColumnDef[] = RESULTS_EXPORT_COLS.filter(c => !RESULTS_AUDIT_KEYS.has(c.key));
 
 type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
@@ -376,7 +394,7 @@ export default function AdminResultsPage() {
       if (divGames.length > 0) groupMap.set(ag.id, divGames);
     }
 
-    const headers = serializeHeaders(RESULTS_EXPORT_COLS);
+    const headers = serializeHeaders(RESULTS_PDF_COLS);
 
     // Champions callout: find winner of the last completed game per division
     const champLines: string[] = [];
@@ -410,9 +428,6 @@ export default function AdminResultsPage() {
           getTeamName(g.awayTeamId),
           g.awayScore != null ? g.awayScore : '—',
           g.status,
-          g.scoreSubmittedByEmail ?? '',
-          formatScoreSubmittedAt(g.scoreSubmittedAt),
-          g.scoreSubmissionSource ? scoreSubmissionSourceLabel(g.scoreSubmissionSource) : '',
         ]),
       }));
 
@@ -421,8 +436,9 @@ export default function AdminResultsPage() {
       'pdf',
     );
 
-    // Flat fallback if no groups resolved
-    const flatRows = serializeRows(buildResultsRows(), RESULTS_EXPORT_COLS);
+    // Flat fallback if no groups resolved — the SAME diet, or the two shapes of this one
+    // document would disagree about what the PDF contains.
+    const flatRows = serializeRows(buildResultsRows(), RESULTS_PDF_COLS);
 
     await downloadPDF(
       filename,
@@ -434,8 +450,9 @@ export default function AdminResultsPage() {
       {
         groups: groups.length > 0 ? groups : undefined,
         identity: currentOrg?.name,
-        // 11 columns incl. the score-audit trail: landscape is the report's own shape
-        // (D2). The audit-column diet is a Phase 2 Registers-pass call — shape only here.
+        // 8 columns after the audit diet: landscape is the report's own shape (D2), and at
+        // that width every column clears its legible floor with room to spare — which is what
+        // makes the "didn't fit" line a bug here rather than a possibility.
         shape: { orientation: 'landscape' },
       },
     );

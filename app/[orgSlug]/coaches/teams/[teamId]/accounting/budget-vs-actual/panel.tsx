@@ -14,7 +14,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
-import { BVA_EXPORT_COLUMNS, bvaCategoryRows } from '@/lib/coach-money-exports';
+import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
@@ -699,14 +699,16 @@ export function BudgetVsActualPanel({
   }
 
   const inMonthView = view === 'months' && !!data?.monthGrid;
-  const exportCols = inMonthView ? monthExportColumns() : BVA_EXPORT_COLUMNS;
-  const exportTitle = inMonthView
-    ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
-    : 'Budget vs. Actual';
 
-  function buildRows(): Array<Record<string, string | number>> {
-    return inMonthView ? buildMonthExportRows() : buildExportRows();
-  }
+  /**
+   * ⚠ THE MONTH VIEW'S **PDF** IS THE CATEGORY STATEMENT, NOT THE MONTH GRID (owner ruling
+   * 2026-08-21, built in the Phase 2 Registers pass). The grid's columns are one per month of
+   * the season, so on paper it could only ever leave months off and admit it — which is what it
+   * did. A treasurer reads the whole-season statement anyway, so that is what the PDF button
+   * produces; Excel and CSV still carry every month, which is where a month-by-month reading
+   * belongs. The swap is announced in the file-type dialog (`pdfHint`) — never silent.
+   */
+  const monthGridInFormat = (format: MoneyExportFormat) => inMonthView && format !== 'pdf';
 
   function buildExportRows() {
     // The category table comes from the SHARED builder, so this page's export and the Money hub's
@@ -721,12 +723,16 @@ export function BudgetVsActualPanel({
    * header: none of it is visible from up there, and pretending otherwise is what gave this
    * screen two Export buttons producing different files (owner ruling 2026-08-13).
    */
-  function buildExport() {
+  function buildExport(format: MoneyExportFormat) {
+    const asMonthGrid = monthGridInFormat(format);
+    const exportCols = asMonthGrid ? monthExportColumns() : BVA_EXPORT_COLUMNS;
     return {
-      dataset: inMonthView ? `budget-by-month-${lens}` : 'budget-vs-actual',
-      title: exportTitle,
+      dataset: asMonthGrid ? `budget-by-month-${lens}` : 'budget-vs-actual',
+      title: asMonthGrid
+        ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
+        : 'Budget vs. Actual',
       columns: exportCols,
-      rows: buildRows(),
+      rows: asMonthGrid ? buildMonthExportRows() : buildExportRows(),
       // The month grid's columns depend on the season, so its PDF rows are formatted from the
       // same column definitions rather than a hand-written list — that is what keeps the three
       // formats in step when the month range or the reading changes.
@@ -742,7 +748,7 @@ export function BudgetVsActualPanel({
       })),
       scopeLabel: assignment?.programYearName ?? '',
       teamName: assignment?.teamName ?? '',
-      emptyMessage: inMonthView
+      emptyMessage: asMonthGrid
         ? 'There is nothing in this month view to export yet.'
         : 'Budget vs. Actual has nothing to report yet — it needs a budget plan.',
     };
@@ -791,6 +797,9 @@ export function BudgetVsActualPanel({
       label={inMonthView ? 'Budget by month' : 'Budget vs. actual'}
       formats={['xlsx', 'csv', 'pdf']}
       build={buildExport}
+      pdfHint={inMonthView
+        ? 'The whole-season statement — month-by-month detail is in Excel and CSV'
+        : undefined}
       disabled={!data || (data.effectiveBudget === 0 && data.totalActual === 0)}
     />
   );

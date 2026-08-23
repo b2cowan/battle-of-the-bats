@@ -131,12 +131,16 @@ export default function OrgBudgetVsActualPage() {
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
 
-    const pdfHeaders = ['Category', 'Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
+    /* ⚠ NO `Category` COLUMN — the PDF prints one section PER category, with the category as the
+       section heading, so a Category column repeated it on every single row: "Field & Facilities"
+       four times under a heading that already said Field & Facilities. A whole column of paper
+       saying nothing (found by rendering, Phase 2 Registers pass). The spreadsheet exports keep
+       theirs — a flat sheet has no headings to repeat. */
+    const pdfHeaders = ['Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
 
     // Build groups: one per category + optional Uncategorized
-    const buildGroupRows = (lines: BudgetLine[], catName: string) =>
+    const buildGroupRows = (lines: BudgetLine[]) =>
       lines.map(line => [
-        catName,
         line.description,
         fmt(line.estimated),
         line.allocated > 0 ? fmt(line.allocated) : '—',
@@ -148,10 +152,10 @@ export default function OrgBudgetVsActualPage() {
     const groups = [
       ...data.categories.map(cat => ({
         label: cat.name,
-        rows: buildGroupRows(cat.lines, cat.name),
+        rows: buildGroupRows(cat.lines),
       })),
       ...(data.uncategorized.length > 0
-        ? [{ label: 'Uncategorized', rows: buildGroupRows(data.uncategorized, 'Uncategorized') }]
+        ? [{ label: 'Uncategorized', rows: buildGroupRows(data.uncategorized) }]
         : []),
     ];
 
@@ -166,7 +170,7 @@ export default function OrgBudgetVsActualPage() {
       {
         groups,
         identity: currentOrg?.name,
-        // 7 columns — landscape is the report's own shape (D2), not an org preference.
+        // 6 columns — landscape is the report's own shape (D2), not an org preference.
         shape: { orientation: 'landscape' },
       },
     );

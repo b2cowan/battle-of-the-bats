@@ -10697,3 +10697,83 @@ is phone-hidden by rule 11, and the Sunday-night door must survive at 390px.
 tour's money steps should NAME the one Record button — the tour walks Transactions and BvA where
 the button is now visible but un-narrated. `check:demos` passes today; that check proves
 rendering, not story.
+
+## §82 · Every register survives being emailed to a treasurer
+
+**BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 1 of 6: Registers**. Plan:
+`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`PDF_EXPORT_QUALITY_P2_REGISTERS_BUILD_PROMPT.md`. Decision gallery (rendered options + the two
+defects rendering turned up): https://claude.ai/code/artifact/d77e4b37-6c6e-4b2e-8a5e-c38f08234fdf
+— owner picked the tryout diet (short codes + legend) and approved both plumbing fixes. No migration.
+
+- [ ] **Tournament Results prints eight columns and no fine print.** Export the PDF from Results
+      & Scoring: Submitted By, Submitted At and Submission Source are gone from paper for good —
+      check both spreadsheet formats still carry all three. Every heading sits on one line, every
+      game on one line, one division to a page. ⚠ This is now a fixed-column report, so the
+      "didn't fit this page" line appearing on it is a **bug to report**, not a shrug.
+- [ ] **The month view's PDF button produces the season statement, and says so first.** Money →
+      Budget vs. Actual → View: Months → Export. The file-type box's PDF row reads *"The
+      whole-season statement — month-by-month detail is in Excel and CSV"*. Pick it: the file is
+      the category statement, titled Budget vs. Actual and named for the season, not the month
+      grid. Excel and CSV from the same box still carry every month. From the category view the
+      PDF row reads normally and nothing changed.
+- [ ] **A ten-category tryout scorecard keeps every category.** Tryouts → Build your team →
+      Tryout report → Export → Full detail (PDF). Headings print as short codes (Hitt, Fiel, GS,
+      Coac) with a key under the title, rows print tighter, and nothing is dropped — where a wide
+      rubric used to lose its last three categories to the fine print. Player and Decision are
+      never abbreviated. The Excel version is unchanged and still carries the club's full
+      category names.
+- [ ] **House League registrations print a real register** (League Plus, as its Excel is).
+      Season Registrations → Export → PDF: one section per division, each heading carrying its
+      own player count; columns Player / Registered / Status / Fee paid. Registrations with no
+      division land in a "No division yet" section rather than vanishing. The subtitle names the
+      season, which list you were on, and the total. ⚠ **No date of birth, guardian name, email
+      or phone anywhere on it** — those stay in the two Excel exports.
+- [ ] **Rep tryout applicants print a real register** (Club). Program year → Tryouts → Export →
+      PDF: grouped by status with counts; columns Player / Submitted / Consent / Consent date /
+      Emails OK. Same privacy rule — no contacts, no notes, no consent IP.
+- [ ] **The club's Budget vs. Actual stops repeating itself.** Accounting → Budget vs. Actual →
+      Export → PDF: the Category column is gone, because each section heading *is* the category.
+      The spreadsheet exports keep theirs.
+- [ ] **No heading breaks mid-word anywhere.** Column widths now reserve room using the bold face
+      headings actually print in, and a heading is never trimmed. Spot-check Results, the roster
+      and the tryout report: no more "Divisio n", "Composit e", "Submitte d At". ⚠ **The team
+      roster now prints compact as a consequence** — measuring headings honestly pushed it past
+      landscape and it began dropping the Status column. Compact keeps all ten columns and fits
+      fourteen players on one page instead of two. The Rosters pass still owns this document's
+      real diet.
+- [ ] **A long subtitle wraps instead of running off the page.** The tryout report's legend and
+      the Results champions callout both wrap onto a second line and push the table down.
+- [ ] **A searched registrations PDF says it was searched** (/review finding). Season
+      Registrations → type a name in the search box → stay on **All** → Export → PDF. The
+      subtitle must read *"… · matching “smith” · 3 players"*, NOT *"every registration"*. On a
+      named tab it reads *"active, matching “smith”"*. Clear the box and "every registration"
+      comes back. The spreadsheet exports take the same narrowed rows, deliberately — only the
+      PDF made a sentence out of it, so only the PDF could lie.
+- [ ] ⚠ **The practice sheet now prints compact, and it is the one document outside this pass
+      that changed** (/review finding). A rotation grid's headings are the coach's own group
+      names; once headings were measured honestly, a coach who had renamed a group to one long
+      word started losing a whole station column. Compact restores exactly the column count the
+      sheet had before — measured at 6, 8 and 12 groups — and fits more on a page (a four-group
+      sheet is now one page, was two). Print a practice plan with renamed groups and confirm no
+      station column is missing. Its real rebuild is still the Working-sheets pass.
+
+**Verified by rendering, not by gates:** eleven registers re-rendered through the real export
+code and read as paper — all with true "Page X of Y" footers and no dropped columns. The scanner
+that proves it (page count · true totals · dropped-column detection) is the seed of the Phase 3
+check.
+
+**Confirmed unchanged, having been looked at:** the COACH Budget vs. Actual category statement
+(the document the month view's PDF button now produces) — one page, categories with their items
+indented beneath, total, season net and what players fund, on team paper. Structurally sound as
+judged in planning; nothing was altered. Tournament Registrations was read at the same time and
+needs nothing. Only the CLUB admin Budget vs. Actual turned out to carry a defect.
+
+**Demo question asked and answered:** the coach sandbox's money narration never mentions exports
+or PDFs, so no dock line or tour step is falsified by the month-view swap, and no new moment is
+owed — a printable register is not a story beat for a three-minute walk.
+
+**Not in this pass, on purpose:** the other five document groups (statements & handouts, rosters,
+working sheets including the practice run-sheet, schedules, posters/cards/brackets). Each gets its
+own rendered sign-off session.
+

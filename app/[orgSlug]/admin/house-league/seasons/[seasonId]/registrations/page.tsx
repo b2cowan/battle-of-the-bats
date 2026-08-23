@@ -10,6 +10,7 @@ import HelpCallout from '@/components/help/HelpCallout';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
@@ -18,6 +19,16 @@ import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, Leag
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type Tab = 'pending_review' | 'active' | 'waitlisted' | 'declined_withdrawn' | 'all';
+
+/** The list strip — module scope so the PDF's subtitle names the list from the SAME source the
+ *  registrar tapped, rather than a second copy that can drift from it. */
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'pending_review',     label: 'Pending Review' },
+  { key: 'active',             label: 'Active' },
+  { key: 'waitlisted',         label: 'Waitlist' },
+  { key: 'declined_withdrawn', label: 'Declined / Withdrawn' },
+  { key: 'all',                label: 'All' },
+];
 
 interface SeasonInfo {
   id: string;
@@ -88,6 +99,27 @@ const HL_REG_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Admin Notes',      key: 'adminNotes',        format: 'text',     sensitive: true },
 ];
 
+/**
+ * The season registrations REGISTER — the printed list a registrar reconciles against
+ * (PDF Export Quality decision 2, built in the Phase 2 Registers pass; this menu's PDF item
+ * used to answer "coming soon" as a green success toast).
+ *
+ * ⚠ NOTHING PRIVATE PRINTS. No date of birth, no guardian name, email or phone, no notes.
+ * A PDF is the copy that gets printed, forwarded and left on a table; contact details would
+ * turn a register into a contact list. Every one of those columns is still in the two
+ * spreadsheet exports above, including "Excel with contact details" — which is the right tool
+ * for phoning the families who haven't paid.
+ *
+ * ⚠ NO `Division` COLUMN: the PDF prints one section per division, so a column would repeat
+ * the heading on every row.
+ */
+const HL_REG_PDF_COLS: ExportColumnDef[] = [
+  { label: 'Player',     key: 'player',       format: 'text' },
+  { label: 'Registered', key: 'registeredAt', format: 'date' },
+  { label: 'Status',     key: 'status',       format: 'text' },
+  { label: 'Fee paid',   key: 'feePaid',      format: 'text' },
+];
+
 const REG_STATUS_STYLE: Record<LeagueRegistrationStatus, React.CSSProperties> = {
   pending_review: { background: 'rgba(var(--warning-rgb),0.12)', color: 'var(--warning)', border: '1px solid rgba(var(--warning-rgb),0.25)' },
   active:         { background: 'rgba(34,197,94,0.12)',  color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)' },
@@ -136,6 +168,7 @@ export default function RegistrationsPage() {
   const [activeTab,   setActiveTab]   = useState<Tab>('pending_review');
   const [search,      setSearch]      = useState('');
   const [acting,      setActing]      = useState<string | null>(null); // regId being acted on
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   // Manual add modal
   const [addOpen,     setAddOpen]     = useState(false);
@@ -202,6 +235,13 @@ export default function RegistrationsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    // D4: server-resolved — the org-name header fallback plus the org's uploaded logo,
+    // print-ready. A failed fetch leaves null and the register prints on default paper.
+    void fetchResolvedPdfSettings(`/api/admin/org/pdf-settings${orgQuery ? `${orgQuery}&resolve=1` : '?resolve=1'}`)
+      .then(setPdfSettings);
+  }, [orgQuery]);
 
   // ── Derived lists ─────────────────────────────────────────────────────────────
 
@@ -427,6 +467,66 @@ export default function RegistrationsPage() {
     );
   }
 
+  /**
+   * The register on paper — one section per division, each heading carrying its own count,
+   * because "how many in Mosquito" is the question a registrar opens this list to answer.
+   */
+  async function handleExportPDF() {
+    if (!tabRegs.length) return;
+    const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(pdfSettings ?? {}) };
+
+    const pdfRow = (r: LeagueRegistration) => [
+      `${r.playerFirstName} ${r.playerLastName}`.trim(),
+      r.registeredAt.slice(0, 10),
+      REG_STATUS_LABEL[r.status] ?? r.status,
+      r.registrationFeePaid ? 'Yes' : 'No',
+    ];
+
+    // Divisions in the season's own order, then anything not yet placed in one. A registration
+    // with no division is a real state here (manual adds can leave it blank), and a register
+    // that silently omitted those rows would be worse than useless.
+    const grouped = divisions
+      .map(d => ({ label: d.name, regs: tabRegs.filter(r => r.divisionId === d.id) }))
+      .filter(g => g.regs.length > 0);
+    const unplaced = tabRegs.filter(r => !r.divisionId || !divisions.some(d => d.id === r.divisionId));
+    if (unplaced.length > 0) grouped.push({ label: 'No division yet', regs: unplaced });
+
+    /* ⚠ THE PAGE'S SEARCH BOX NARROWS `tabRegs`, SO THE PAPER HAS TO SAY SO. This subtitle used
+       to read "every registration · 3 players" for a registrar who had typed "smith" and stayed
+       on the All tab — a document that claims completeness while holding three rows out of fifty,
+       on the one export whose whole job is being reconciled against. The spreadsheet exports take
+       the same narrowed set, deliberately (what you see is what you get), but only the PDF makes
+       a sentence out of it, so only the PDF can lie. */
+    const query = search.trim();
+    const tabLabel = activeTab === 'all'
+      ? ''
+      : (TABS.find(t => t.key === activeTab)?.label ?? '').toLowerCase();
+    const listLabel = query
+      ? [tabLabel, `matching “${query}”`].filter(Boolean).join(', ')
+      : (tabLabel || 'every registration');
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug, dataset: 'registrations', scope: activeTab }, 'pdf'),
+      'Season Registrations',
+      // D1: the header carries the org's name; the subtitle says which season, which list, and
+      // how many — the three things that make a printed page reconcilable months later.
+      [season?.name, listLabel, `${tabRegs.length} ${tabRegs.length === 1 ? 'player' : 'players'}`]
+        .filter(Boolean).join('  ·  '),
+      serializeHeaders(HL_REG_PDF_COLS),
+      grouped.flatMap(g => g.regs.map(pdfRow)), // flat fallback, same diet
+      settings,
+      {
+        groups: grouped.map(g => ({
+          label: `${g.label} — ${g.regs.length} ${g.regs.length === 1 ? 'player' : 'players'}`,
+          rows: g.regs.map(pdfRow),
+        })),
+        identity: currentOrg?.name,
+        // 4 fixed columns: portrait fits them with room to spare, so this report has no shape
+        // to declare and the org's own preference decides.
+      },
+    );
+  }
+
   // ── Render helpers ────────────────────────────────────────────────────────────
 
   const orgSlug = currentOrg?.slug ?? '';
@@ -501,13 +601,6 @@ export default function RegistrationsPage() {
     return <p className={styles.muted}>Loading registrations…</p>;
   }
 
-  const TABS: { key: Tab; label: string }[] = [
-    { key: 'pending_review',     label: 'Pending Review' },
-    { key: 'active',             label: 'Active' },
-    { key: 'waitlisted',         label: 'Waitlist' },
-    { key: 'declined_withdrawn', label: 'Declined / Withdrawn' },
-    { key: 'all',                label: 'All' },
-  ];
 
   return (
     <div className={styles.page}>
@@ -538,13 +631,17 @@ export default function RegistrationsPage() {
                 Exports · League
               </span>
             ) : (
-            // No 'pdf' until it downloads (PDF Export Quality decision 2): the old menu item
-            // answered "coming soon" as a green success toast. The real PDF is built in the
-            // Phase 2 Registers pass.
             <ExportMenu
-              formats={['xlsx', 'csv']}
+              formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              /* ⚠ THE SURFACE'S OWN GATE, NOT THE GENERIC ONE. Left to its default this would ask
+                 for `pdf_exports` (Tournament Plus), which is a LOWER bar than the exports on this
+                 page already sit behind — and a module granted by a platform-admin add-on can put
+                 an org above that bar without ever reaching League. Every legitimate plan for this
+                 page clears both keys, so naming the catalog's own gate only ever tightens it. */
+              pdfFeatureKey="league_exports"
               hasSensitiveOption={true}
               sensitiveOptionLabel="Excel with contact details"
               onExportXLSXWithSensitive={handleExportXLSXWithSensitive}

@@ -415,9 +415,18 @@ export default function RosterPage({
       settings,
       {
         identity: teamName,
-        // 10 columns with guardians: landscape is the report's own shape (D2) — names
-        // stopped shredding here. The wall-copy column diet is a Phase 2 Rosters-pass call.
-        shape: { orientation: 'landscape' },
+        /* 10 columns with guardians: landscape is the report's own shape (D2) — names stopped
+           shredding here. The wall-copy column diet is still a Phase 2 Rosters-pass call.
+
+           ⚠ COMPACT IS A REGRESSION GUARD, NOT A DESIGN CHOICE (Phase 2 Registers pass). This
+           roster clears landscape by ~3mm — and only did so while column headings were being
+           measured in the regular face and capped, i.e. while `Guardian Email` and friends were
+           allowed to shred slightly. Measuring headings honestly pushed it over and the fit
+           contract started dropping `Status` from every roster with guardian contacts on.
+           Compact buys ~47mm of headroom, keeps all ten columns, and fits more players on a
+           page. If the Rosters pass gives this document a real diet, revisit the density with
+           it. */
+        shape: { orientation: 'landscape', density: 'compact' },
       },
     );
   }

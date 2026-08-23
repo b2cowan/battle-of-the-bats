@@ -1887,7 +1887,7 @@ const tournamentsHelp: HelpPageContent = {
           <ul>
             <li><strong>Registrations</strong> — Excel and CSV of the full team list; PDF check-in or insurance sheet (Tournament Plus)</li>
             <li><strong>Schedule</strong> — Excel, CSV, or iCal to add games to Google Calendar, Apple Calendar, or Outlook; PDF field ops sheet (Tournament Plus)</li>
-            <li><strong>Results</strong> — Excel or CSV; PDF post-event board report (Tournament Plus)</li>
+            <li><strong>Results</strong> — Excel or CSV, including who submitted each score, when, and through which door; PDF post-event board report grouped by division (Tournament Plus). The PDF prints the games and scores only — the score-submission trail is working data and stays in Excel and CSV.</li>
           </ul>
           <p>
             See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,

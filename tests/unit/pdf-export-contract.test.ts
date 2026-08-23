@@ -20,7 +20,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildTablePDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '../../lib/export/pdf';
+import { buildTablePDF, abbreviateHeadings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '../../lib/export/pdf';
 import { applyTeamLook } from '../../lib/export/resolve-pdf-settings';
 
 // ── Recording fakes ──────────────────────────────────────────────────────────
@@ -43,16 +43,31 @@ class MockDoc {
     },
     getNumberOfPages: () => this.pages,
   };
-  setFillColor() {} rect() {} setFont() {} setFontSize() {} setTextColor() {}
+  setFillColor() {} rect() {} setFontSize() {} setTextColor() {}
+  setFont(_family: string, style?: string) { this.font = style === 'bold' ? 'bold' : 'normal'; }
   setDrawColor() {} setLineWidth() {} line() {}
   addPage() { this.pages += 1; this.currentPage = this.pages; }
   setPage(n: number) { this.currentPage = n; this.setPageCalls.push(n); }
   text(str: string | string[], ..._rest: unknown[]) {
     for (const s of Array.isArray(str) ? str : [str]) this.texts.push({ str: s, page: this.currentPage });
   }
-  /** Deterministic: 2mm per character. */
-  getTextWidth(s: string) { return String(s).length * 2; }
-  splitTextToSize(str: string) { return [str]; }
+  font: 'normal' | 'bold' = 'normal';
+  splitWidths: number[] = [];
+  /**
+   * Deterministic: 2mm per character, and BOLD IS WIDER — which is the whole point of the
+   * heading-floor rule. Real helvetica bold runs ~12-15% wider than regular at the same size;
+   * modelling that is what lets these tests catch a heading measured in the wrong face.
+   */
+  getTextWidth(s: string) { return String(s).length * 2 * (this.font === 'bold' ? 1.15 : 1); }
+  /**
+   * Splits on explicit newlines only. Deliberately NOT width-wrapping: the fake would then
+   * break the fit notice across runs and the assertions below would be testing the fake.
+   * The width path is covered by recording what width the caller measured against.
+   */
+  splitTextToSize(str: string, width?: number) {
+    if (width !== undefined) this.splitWidths.push(width);
+    return String(str).split(/\n/);
+  }
   getImageProperties() { return { width: 100, height: 100 }; }
   addImage(_data: string, _fmt: string, x: number, y: number, w: number, h: number) {
     this.images.push({ x, y, w, h });
@@ -194,14 +209,58 @@ describe('fit contract: drop whole columns and say so — never shred', () => {
   it('a wide-label column raises its own floor from its content, not a flat average', () => {
     const at = makeAutoTable();
     buildTablePDF(MockDoc, at, {
-      title: 'T', headers: ['Category', 'Amt'], rows: [['Extraordinarily-long-unbreakable-token', '7']],
+      // Short headings on purpose: this test is about what the CELLS demand.
+      title: 'T', headers: ['Note', 'Amt'], rows: [['Extraordinarily-long-unbreakable-token', '7']],
       settings: settings(),
     });
     const cs = at.calls[0].columnStyles;
     assert.ok(cs[0].minCellWidth > cs[1].minCellWidth, 'the label column demands more than the numeric one');
-    // One long unbreakable token is capped (14mm demand + 12mm padding + 1), not allowed to
-    // eat the page — it wraps to a second line instead, which is legible.
+    // One long unbreakable CELL token is capped (14mm demand + 12mm padding + 1), not allowed
+    // to eat the page — it wraps to a second line instead, which is legible.
     assert.equal(cs[0].minCellWidth, 27);
+  });
+
+  /* ── The heading rule (Phase 2 Registers pass) ────────────────────────────────
+     Two bugs compounded here and shipped real paper reading "Divisio n" and
+     "Composit e": headings were measured in the regular face while printing bold, and
+     the cell cap then held them below even that. Both halves are pinned below. */
+
+  it('measures a heading in the BOLD face it prints in, not the regular one', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'T', headers: ['Division', 'x'], rows: [['a', 'b']], settings: settings(),
+    });
+    // 'Division' is 8 chars: 16mm regular, 18.4mm bold in the fake. The floor must reserve
+    // the bold width plus padding — reserving the regular width is what broke the heading.
+    assert.equal(at.calls[0].columnStyles[0].minCellWidth, 8 * 2 * 1.15 + 12 + 1);
+  });
+
+  it('never caps a heading’s longest word — a heading may not be shredded', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      // 12 chars → 27.6mm bold, well past the 14mm cell cap.
+      title: 'T', headers: ['Coachability', 'x'], rows: [['1', '2']], settings: settings(),
+    });
+    const floor = at.calls[0].columnStyles[0].minCellWidth;
+    assert.equal(floor, 12 * 2 * 1.15 + 12 + 1);
+    assert.ok(floor > 14 + 12 + 1, 'the cell cap does not apply to headings');
+  });
+
+  it('a heading too wide for the page costs a COLUMN, never a broken word', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'T',
+      headers: Array.from({ length: 8 }, () => 'Coachability'),
+      rows: [Array.from({ length: 8 }, () => '1')],
+      settings: settings(),
+    });
+    const kept = at.calls[0].head[0].length;
+    assert.ok(kept < 8, 'columns yield rather than headings shredding');
+    for (let i = 0; i < kept; i++) {
+      assert.equal(at.calls[0].columnStyles[i].minCellWidth, 12 * 2 * 1.15 + 12 + 1,
+        'every kept heading still gets its whole word');
+    }
+    assert.ok(doc.texts.some(t => t.str.includes('didn’t fit this page')), 'and the document says so');
   });
 
   it('rows never split across page breaks', () => {
@@ -235,6 +294,74 @@ describe('fit contract: drop whole columns and say so — never shred', () => {
     for (const call of at.calls) assert.deepEqual(call.head[0], at.calls[0].head[0]);
     const notices = doc.texts.filter(t => t.str.includes('didn’t fit this page'));
     assert.equal(notices.length, 1, 'the admission belongs to the document, not every division');
+  });
+});
+
+// ── Subtitle: caller prose, so it wraps ──────────────────────────────────────
+
+describe('the subtitle wraps to the page instead of running off it', () => {
+  it('is measured against the content width before it is drawn', () => {
+    const doc: MockDoc = buildTablePDF(MockDoc, makeAutoTable(), {
+      title: 'T', subtitle: 'Champions — U11: Riverdale Royals · U13: Harborview Herons',
+      headers: ['A'], rows: [['1']], settings: settings(),
+    });
+    // Portrait letter, 14mm margins.
+    assert.ok(doc.splitWidths.includes(215.9 - 28), 'the subtitle is fitted to the content width');
+  });
+
+  it('prints a legend line of its own, and the table starts below it', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'T', subtitle: '2026 Season\nHitt = Hitting · Fiel = Fielding',
+      headers: ['A'], rows: [['1']], settings: settings(),
+    });
+    assert.ok(doc.texts.some(t => t.str === '2026 Season'));
+    assert.ok(doc.texts.some(t => t.str === 'Hitt = Hitting · Fiel = Fielding'));
+
+    const oneLine = makeAutoTable();
+    buildTablePDF(MockDoc, oneLine, {
+      title: 'T', subtitle: '2026 Season', headers: ['A'], rows: [['1']], settings: settings(),
+    });
+    assert.ok(at.calls[0].startY > oneLine.calls[0].startY,
+      'the extra line pushes the table down rather than being drawn over');
+  });
+});
+
+// ── Abbreviated headings: the customer-shaped-table diet ─────────────────────
+
+describe('abbreviateHeadings: shorten the customer’s columns, and say what they mean', () => {
+  it('initials a multi-word name and truncates a single word', () => {
+    const { codes } = abbreviateHeadings(['Game Sense', 'Base Running IQ', 'Coachability']);
+    assert.deepEqual(codes, ['GS', 'BRI', 'Coac']);
+  });
+
+  it('leaves an already-short name alone, and out of the legend', () => {
+    const { codes, legend } = abbreviateHeadings(['Bib', 'Hitting']);
+    assert.deepEqual(codes, ['Bib', 'Hitt']);
+    assert.equal(legend, 'Hitt = Hitting');
+  });
+
+  it('explains every name it shortened, in order', () => {
+    const { legend } = abbreviateHeadings(['Composite', 'Evaluators', 'Game Sense']);
+    assert.equal(legend, 'Comp = Composite  ·  Eval = Evaluators  ·  GS = Game Sense');
+  });
+
+  it('never gives two columns the same heading', () => {
+    const { codes } = abbreviateHeadings(['Hitting', 'Hitting for power', 'Hitt']);
+    assert.equal(new Set(codes).size, 3, 'a collision is numbered, not repeated');
+    assert.deepEqual(codes, ['Hitt', 'HFP', 'Hitt2']);
+  });
+
+  it('returns no legend when nothing needed shortening', () => {
+    assert.equal(abbreviateHeadings(['Bib', 'Run']).legend, '');
+  });
+
+  it('leaves blank headings blank — never numbers them, never legends them', () => {
+    // Two blank columns used to come out as '' and '2', printing a bare "2" that reads as data
+    // and a legend entry reading "2 = ".
+    const { codes, legend } = abbreviateHeadings(['', '   ', 'Hitting']);
+    assert.deepEqual(codes, ['', '', 'Hitt']);
+    assert.equal(legend, 'Hitt = Hitting');
   });
 });
 

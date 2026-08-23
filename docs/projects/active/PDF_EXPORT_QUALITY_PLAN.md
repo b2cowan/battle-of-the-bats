@@ -1,6 +1,7 @@
 # PDF Export Quality — plan
 
-**Status:** **PHASE 1 BUILT on dev 2026-08-23** (Owner QA Ledger §79; migration 259 dev-only;
+**Status:** **PHASE 1 + PHASE 2 PASS 1 (REGISTERS) BUILT on dev 2026-08-23** (Owner QA Ledger
+§79 and §82; migration 259 dev-only;
 approved card mockup https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93 — the
 spec for the "How your documents look" card, incl. the two owner-approved additions: the
 "Back to your club's look" reset row and the "Use your team colour" chip). Phase 1's fit
@@ -172,6 +173,14 @@ from its club's.
 
 **Phase 2 — the six group passes, worst first.** Each pass applies its decided content calls and
 judges on the group's own definition of good:
+- **Registers — BUILT 2026-08-23 (QA §82).** Owner picked the tryout diet from rendered options:
+  short codes + a legend, plus compact rows, so a ten-category rubric keeps every column. Rendering
+  the pass also turned up two shared-plumbing defects nobody was looking for — column headings were
+  measured in the regular face while printing bold (and then capped), so real reports printed
+  "Divisio n"; and a subtitle was drawn as one line, so a long legend ran off the paper. Both fixed
+  in-pass, owner-approved. ⚠ The heading fix pushed the **team roster** past landscape (it had been
+  fitting only because its headings were allowed to shred) — it now declares compact as a regression
+  guard, and the **Rosters pass still owns its real diet**. Original scope, all delivered:
 - **Registers** (first — both unreadable documents live here): Results declares landscape and drops
   audit columns; tryout full detail declares landscape with a column diet; month-view PDF becomes
   the category statement; build the two stub registers (HL registrations, tryout applicants).

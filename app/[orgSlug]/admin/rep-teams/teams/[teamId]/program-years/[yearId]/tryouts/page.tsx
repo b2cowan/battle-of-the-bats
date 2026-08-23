@@ -10,6 +10,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import TryoutAcceptDrawer, { type AcceptSuggestedDues, type AcceptPayload } from '@/components/rep-teams/TryoutAcceptDrawer';
@@ -108,6 +109,7 @@ export default function TryoutsPage({
   const [togglingOpen, setTogglingOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddForm>(BLANK);
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const [adding, setAdding] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
@@ -157,6 +159,17 @@ export default function TryoutsPage({
   }, [params.teamId, params.yearId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
+
+  useEffect(() => {
+    // D4: server-resolved — the org-name header fallback plus the org's uploaded logo,
+    // print-ready. A failed fetch leaves null and the register prints on default paper.
+    // Gated on the org like the data load above it: without a slug the route fails closed,
+    // so an ungated call is a guaranteed 401 whose late arrival could only clobber a good answer.
+    if (!currentOrg) return;
+    void fetchResolvedPdfSettings(
+      `/api/admin/org/pdf-settings${orgQuery ? `${orgQuery}&resolve=1` : '?resolve=1'}`,
+    ).then(setPdfSettings);
+  }, [currentOrg, orgQuery]);
 
   useEffect(() => { setDetailNotes(selected?.adminNotes ?? ''); }, [selected?.id]);
 
@@ -397,6 +410,56 @@ export default function TryoutsPage({
     );
   }
 
+  /**
+   * The applicants register on paper (PDF Export Quality decision 2, built in the Phase 2
+   * Registers pass; this menu's PDF item used to answer "coming soon").
+   *
+   * ⚠ NOTHING PRIVATE PRINTS — no date of birth, no guardian name, email or phone, no notes,
+   * no consent IP. All of them stay in the two spreadsheet exports above, including "Excel
+   * with contact details". What DOES print is the consent record, because that is the fact
+   * this list gets checked against.
+   *
+   * Grouped by where each applicant stands, with a count on every heading — and no Status
+   * column, because the heading already is one.
+   */
+  async function handleExportPDF() {
+    if (!filtered.length) return;
+    const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(pdfSettings ?? {}) };
+
+    const headers = ['Player', 'Submitted', 'Consent', 'Consent date', 'Emails OK'];
+    const pdfRow = (r: RepTryoutRegistration) => [
+      `${r.playerFirstName} ${r.playerLastName}`.trim(),
+      r.submittedAt.slice(0, 10),
+      r.consentAt ? 'Yes' : 'No',
+      r.consentAt ? r.consentAt.slice(0, 10) : '—',
+      r.consentAt ? (r.consentEmailComms ? 'Yes' : 'No') : '—',
+    ];
+
+    // One section per status, in the tab strip's own order — the order a coach reads them in.
+    const grouped = (Object.keys(STATUS_LABEL) as RepTryoutRegistrationStatus[])
+      .map(status => ({ label: STATUS_LABEL[status], regs: filtered.filter(r => r.status === status) }))
+      .filter(g => g.regs.length > 0);
+
+    const listLabel = activeTab === 'all' ? 'every applicant' : TAB_LABELS[activeTab].toLowerCase();
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug, dataset: 'tryouts', scope: info?.team?.name ?? params.teamId }, 'pdf'),
+      'Tryout Applicants',
+      // D1: the header carries the org's name; the subtitle says whose tryout, which list, and
+      // how many.
+      [info?.team?.name, info?.programYear?.name, listLabel, `${filtered.length} in total`]
+        .filter(Boolean).join('  ·  '),
+      headers,
+      grouped.flatMap(g => g.regs.map(pdfRow)), // flat fallback, same diet
+      settings,
+      {
+        groups: grouped.map(g => ({ label: `${g.label} — ${g.regs.length}`, rows: g.regs.map(pdfRow) })),
+        identity: currentOrg?.name,
+        // 5 fixed columns fit either shape, so the org's own preference decides (D2).
+      },
+    );
+  }
+
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
@@ -439,13 +502,14 @@ export default function TryoutsPage({
         </div>
         {canWrite && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {/* No 'pdf' until it downloads (PDF Export Quality decision 2): the old menu item
-                answered "coming soon" as a green success toast. The real PDF is built in the
-                Phase 2 Registers pass. */}
             <ExportMenu
-              formats={['xlsx', 'csv']}
+              formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              /* The surface's own gate rather than the generic `pdf_exports` default — see the
+                 same note on the House League registrations menu. Club clears both keys. */
+              pdfFeatureKey="club_exports"
               hasSensitiveOption={true}
               sensitiveOptionLabel="Excel with contact details"
               onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
