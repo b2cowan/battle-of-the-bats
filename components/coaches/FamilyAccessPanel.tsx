@@ -1,10 +1,11 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Link2, Eye, Users } from 'lucide-react';
+import CoachCollapseSection from './CoachCollapseSection';
 import styles from './FamilyAccessPanel.module.css';
 
 /**
- * "Team family access" (S5, top card) — the coach's whole control surface for Chunk D.
+ * "Team family access" — the coach's whole control surface for Chunk D.
  *
  * One link out, one visibility setting, one queue in. It renders NOTHING when the team is
  * not on a premium portal: the API answers 404 for an unentitled team, and a panel that
@@ -13,6 +14,12 @@ import styles from './FamilyAccessPanel.module.css';
  * Requests arrive as a quiet batched count on this page — the coach reads them when they
  * are already here, which is the "no new recurring coach input" rule applied to the one
  * feature that genuinely does need their attention.
+ *
+ * ⚠ IT WAS THE TOP CARD ON ROSTER UNTIL 2026-08-24 and is now a collapsed section BELOW the
+ * roster (owner call). Three always-open rows above the list pushed the roster itself under
+ * the fold on a laptop, which had a settings surface outranking the thing the page is named
+ * after. The disclosure and its summary line are owned HERE rather than by the page, because
+ * the counts that decide both — and decide whether it opens itself — are this component's.
  */
 
 interface Follower {
@@ -137,10 +144,46 @@ export default function FamilyAccessPanel({ orgSlug, teamId }: { orgSlug: string
   if (!available) return null;
   if (loading) return null;
 
-  return (
-    <div className={styles.panel}>
-      <h2 className={styles.panelTitle}>Team family access</h2>
+  /**
+   * The one line a coach reads without opening anything. Ordered by what would make them open
+   * it: someone waiting beats a follower count beats whether a link exists at all.
+   */
+  const summary = requests.length > 0
+    ? <span className={styles.badge}>{requests.length} waiting</span>
+    : followers.length > 0
+      ? `${followers.length} following`
+      : hasLink ? 'Link active' : 'No link yet';
 
+  return (
+    /**
+     * ⚠ COLLAPSED BY DEFAULT, EXCEPT WHEN SOMEONE IS WAITING (owner call, 2026-08-24).
+     *
+     * This is a settings surface — a coach mints a link once and changes visibility rarely — and
+     * as an always-open card above the roster it pushed the actual roster under the fold. Below
+     * the list and folded away, it costs one line until it is wanted.
+     *
+     * `defaultOpen` on a pending request is the load-bearing half. The queue deliberately lives
+     * on a page the coach already visits rather than sending them a notification ("no new
+     * recurring coach input"), so a fold that hid an approval would break the one thing this
+     * panel genuinely needs attention for. Safe to read counts here: the component renders
+     * nothing until its load resolves, so the first render already knows.
+     *
+     * ⚠⚠ BEING COLLAPSED MEANS `check:layout` CANNOT MEASURE WHAT IS INSIDE. The seeded fixture
+     * has no pending requests, so a normal sweep sees the summary row and nothing else. That is
+     * how a fold quietly becomes the place defects go to stop being found: the eight controls in
+     * here had measured 34px at 361/390 since they were built, and collapsing the panel would have
+     * retired those baseline entries without fixing anything. They were fixed instead (the phone
+     * tap floor at the bottom of this component's stylesheet), **verified by forcing this section
+     * open for one sweep**, and only then pruned from the baseline.
+     *
+     * Anything added in here owes the same: force it open, sweep it at 390, put it back.
+     */
+    <CoachCollapseSection
+      sectionId="family-access"
+      title="Team family access"
+      meta={summary}
+      defaultOpen={requests.length > 0}
+    >
       {/* ── The link ── */}
       <div className={styles.row}>
         <Link2 size={16} aria-hidden />
@@ -242,6 +285,6 @@ export default function FamilyAccessPanel({ orgSlug, teamId }: { orgSlug: string
       ))}
 
       {error && <p className={styles.error} role="alert">{error}</p>}
-    </div>
+    </CoachCollapseSection>
   );
 }

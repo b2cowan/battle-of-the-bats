@@ -199,21 +199,40 @@ export default function RosterBulkAddSheet({
         </CoachModalHeader>
 
         <div className={styles.formGrid}>
-          <div className={`${styles.formGridFull} ${styles.formBody}`}>
+          <div className={`${styles.formGridFull} ${styles.formBody} ${styles.bulkBody}`}>
             <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist" aria-label="How to add players">
-              <button type="button" role="tab" aria-selected={tab === 'paste'}
+              <button type="button" role="tab" id="bulk-tab-paste" aria-controls="bulk-panel-paste" aria-selected={tab === 'paste'}
                 className={`${styles.segBtn}${tab === 'paste' ? ` ${styles.segBtnActive}` : ''}`}
                 onClick={() => { void switchTab('paste'); }}>Paste a list</button>
-              <button type="button" role="tab" aria-selected={tab === 'file'}
+              <button type="button" role="tab" id="bulk-tab-file" aria-controls="bulk-panel-file" aria-selected={tab === 'file'}
                 className={`${styles.segBtn}${tab === 'file' ? ` ${styles.segBtnActive}` : ''}`}
                 onClick={() => { void switchTab('file'); }}>Upload a file</button>
             </div>
 
             {error && <p className={styles.errorText} role="alert">{error}</p>}
 
-            {/* ── Input step ─────────────────────────────────────────────── */}
-            {!reviewing && tab === 'paste' && (
-              <div className={styles.field}>
+            {/* ── Input step ─────────────────────────────────────────────────────────────
+                ⚠ BOTH PANES ARE ALWAYS RENDERED, STACKED IN ONE GRID CELL (owner call,
+                2026-08-24). They used to be swapped in and out, so the sheet resized under the
+                coach's cursor every time they touched the switch — the Upload pane is a good deal
+                taller than the paste box, and a modal that jumps when you change your mind reads
+                as something going wrong.
+
+                Stacking sizes the step to the TALLER pane at every width, with no measured
+                constant to go stale when either pane's copy changes. The inactive one is
+                `visibility: hidden`, which takes it out of the tab order and the accessibility
+                tree while it keeps its space — `display: none` would put the jump straight back.
+                The paste box then GROWS into the reserved height rather than leaving dead air
+                under it, so the taller sheet buys the coach a bigger place to paste. */}
+            {!reviewing && (
+              <div className={styles.bulkStack}>
+              <div
+                className={`${styles.bulkPaste}${tab === 'paste' ? '' : ` ${styles.bulkPaneIdle}`}`}
+                id="bulk-panel-paste"
+                role="tabpanel"
+                aria-labelledby="bulk-tab-paste"
+                aria-hidden={tab !== 'paste'}
+              >
                 <label className={styles.label} htmlFor="bulk-paste">One player per line</label>
                 <textarea
                   id="bulk-paste"
@@ -234,10 +253,14 @@ export default function RosterBulkAddSheet({
                   </p>
                 )}
               </div>
-            )}
 
-            {!reviewing && tab === 'file' && (
-              <>
+              <div
+                className={`${styles.bulkFile}${tab === 'file' ? '' : ` ${styles.bulkPaneIdle}`}`}
+                id="bulk-panel-file"
+                role="tabpanel"
+                aria-labelledby="bulk-tab-file"
+                aria-hidden={tab !== 'file'}
+              >
                 <div className={styles.bulkDrop}>
                   <FileSpreadsheet size={26} aria-hidden style={{ color: 'var(--logic-lime)' }} />
                   <p className={styles.bulkDropTitle}>Choose a spreadsheet</p>
@@ -269,7 +292,8 @@ export default function RosterBulkAddSheet({
                     name</strong> is required — anything missing is simply left blank.
                   </p>
                 </section>
-              </>
+              </div>
+              </div>
             )}
 
             {/* ── Review step ────────────────────────────────────────────── */}

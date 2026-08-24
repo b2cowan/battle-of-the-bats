@@ -1,6 +1,20 @@
-/* MoneyExportButton — the one Export control, once per Money tab (owner ruling 2026-08-13). */
+/* CoachExportButton — the coach portal's one export control, once per toolbar
+   (house rule 2, owner ruling 2026-08-23). Grew out of MoneyExportButton's stylesheet, which
+   now renders through this component. */
 
 .trigger { flex-shrink: 0; }
+
+/* ⚠ THE ICON SWAPS WITH THE ACTION, NOT JUST THE LABEL. A screen whose phone-surviving choice
+   does something other than drop a file in Downloads says so with its own mark — Schedule's
+   only phone export writes into the phone's calendar, so the download arrow would promise the
+   wrong thing. Both marks are rendered and one is hidden, for the same reason the phone rule
+   below is CSS: the server and the browser would disagree about the width on first paint. */
+.iconWide { display: inline-flex; }
+.iconPhone { display: none; }
+@media (max-width: 640px) {
+  .hasPhoneIcon .iconWide { display: none; }
+  .hasPhoneIcon .iconPhone { display: inline-flex; }
+}
 
 /* ⚠ THE PHONE RULE, IN CSS. "A phone is offered an export only where the file is something a
    coach can read, show or send" — a spreadsheet lands in a downloads folder nobody opens on a
@@ -22,21 +36,23 @@
 /* Save As, essentially: the coach has said WHAT, this asks in which file type. Inherits the
    shared modal (safe on a phone, scroll-locked, X-close) and only narrows the measure — a
    three-option list has no business being 520px wide. */
-.dialog { max-width: 400px; }
+.dialog { max-width: 360px; }
 
-.intro {
-  margin: -0.6rem 0 1rem;
-  font-size: 0.86rem;
-  color: var(--text-secondary);
-}
+/* Document picker + file-type list, stacked. The shared `.field` supplies the label gap; this
+   only sets the rhythm between the two, and tightens the first one up under the title. */
+.field { margin-top: 0.9rem; }
+.field:first-of-type { margin-top: 0.2rem; }
 
-.list { display: grid; gap: 0.5rem; }
+.list { display: grid; gap: 0.4rem; }
 
 /* Each choice is a full-width card rather than a radio: there is no Confirm step, so picking IS
    the action, and something you press should look like something you press. */
+/* ⚠ ONE LINE PER ROW since 2026-08-24. Each choice used to be a name over a sentence explaining
+   what that file type is for; three of those is a paragraph inside a box whose whole job is to be
+   quick. The row is now its name and its extension, and the dialog is about half the height. */
 .choice {
-  display: grid;
-  gap: 0.15rem;
+  display: flex;
+  align-items: center;
   width: 100%;
   min-height: var(--tap-min, 44px);
   padding: 0.7rem 0.9rem;
@@ -56,7 +72,9 @@
 .name {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 0.45rem;
+  width: 100%;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -69,7 +87,16 @@
   color: var(--text-secondary);
   opacity: 0.8;
 }
-.hint { font-size: 0.8rem; line-height: 1.4; color: var(--text-secondary); }
+/* The exception, not the rule: a few words BESIDE the name, pushed to the far end, for the one
+   row whose file is not what its name implies (the Months view PDF is the whole-season statement).
+   Wraps under the name on a narrow phone rather than squeezing the name. */
+.hint {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
 
 /* Failure is reported INSIDE the dialog — it covers the page, so a message anywhere else would
    be hidden behind it, and the coach can pick a different format without reopening anything. */

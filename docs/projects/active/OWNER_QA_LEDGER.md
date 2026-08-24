@@ -10626,7 +10626,22 @@ https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93. Migration 
       pre-export "settings not configured" warning is gone everywhere — the default paper no
       longer needs apologising for.
 
-## §80 · One door for money that moved — the recording conversation (P1)
+## §80 · One door for money that moved — the recording conversation (P1) — ✅ PASSED 2026-08-23
+
+**✅ WALKED LIVE BY THE OWNER 2026-08-23 AND CLOSED COMPLETE — the most consequential walk this
+ledger has held.** It was not a checklist pass but a working session: **seven owner rulings landed
+and were BUILT mid-walk** (Record → page header, bare "+" beside the "?" on phones · the "?"
+oval fixed portal-wide · dropdown defaults CLOSED, and its open list became a real
+viewport-anchored dropdown after two rejected shapes · stale refusals auto-clear on any edit ·
+"player" not "child" · deviation ① RULED IN: the drive branch's date field, completed honestly
+with mig 261 so the register shows the typed day · the sponsor hand-off replaced by an INLINE
+sponsor branch, then given the door's per-sponsor Credit-to-that-family control). The walk also
+caught a dev-only Dues-tab hang (fixed, plus the same latent pattern in the hub) and spawned the
+**BvA income-truth project** (the 2026-07-30 "dues only" strip ruling reversed — its own prompt).
+Deviations ② (bill-level dues sentence) and ③ (count-not-name drive hint) stand AS BUILT at
+close-out; reopen them only by owner call. The per-tab Add buttons stay until P2 retires them
+with pre-answering (owner weighed it at the walk's end and held). The checklist below is kept as
+the record of what was walked.
 
 **BUILT 2026-08-23 (dev).** Money centralization P1 — the one conversation. Plan:
 `docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md`; build prompt carries the amended spec
@@ -10634,27 +10649,40 @@ https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93. Migration 
 gained `card` — the one-method-list ruling. ⚠ **The sweep cannot see any of this** — the
 conversation lives in a modal; owner QA is the coverage (build prompt §2.10 says exactly this).
 
-- [ ] **The one door exists on every Money tab.** A green **+ Record** button sits at the end of
-      the Money tab row — every tab, desktop AND phone (the header's Import stays desktop-only;
-      Record must not). Read-only money assistants never see it.
-- [ ] **Cold open is the eight sentences.** Press Record from Overview: the form opens with
-      "What happened?" already expanded — two groups (money came in / went out), each answer a
-      coach sentence with its sub-line. Live hints show where the product knows something:
+- [ ] **The one door exists on every Money tab.** A green **Record** button sits in the Money
+      page HEADER beside Import ▾ and the "?" — visible from every tab. On phones it collapses
+      to a bare **+** sitting IN THE TITLE ROW beside the "?" (second owner adjustment same
+      walk — its own row under the title left a dead band) and Import correctly disappears. Read-only money assistants never see it —
+      and get no empty band under the title where the row would have been. *(Placement RULED by
+      the owner mid-walk 2026-08-23: the first build put it in the tab row per mockup 05's
+      drawing, and on a phone it crowded the strip to two visible tabs — deviation ④ below is
+      thereby resolved.)*
+- [ ] **Cold open asks the one question.** Press Record from Overview: the form opens with
+      "What happened?" showing **Choose…, closed** (owner ruling mid-walk 2026-08-23 — the
+      auto-open of frame A was reversed on sight). One tap opens the eight sentences IN the
+      form — two groups (money came in / went out), each answer a coach sentence with its
+      sub-line, nothing clipped. Live hints show where the product knows something:
       families owing/overdue with dollars, drives running, club dollars owed, families in credit.
       A standalone team (no club) must NOT see "We settled up with the club".
 - [ ] **A family paid their dues, from the hub.** Pick the answer → player list shows who owes
       what → amount, date, How (a DROPDOWN — E-Transfer · Cash · Cheque · Card · Other), note.
       The consequence line names the player and the new bill figure before saving; an overpayment
-      says the extra becomes a family credit. After save: the child's bill on Player Dues, the
+      says the extra becomes a family credit. After save: the player's bill on Player Dues, the
       register row, and Budget vs. Actual all read exactly as if it were recorded from the Dues
       tab — including when the Dues tab was already open in the background (it must refresh).
       **Card must save** (it 400'd before migration 260).
 - [ ] **Fundraiser money, from the hub.** Only running drives are offered; only players without
       an amount logged are offered (a note says the logged ones are edited from the leaderboard);
       the consequence names the drive total AND the family's credit at the drive's own percent.
-      The leaderboard row and the family's dues credit after save match the drive's own door
-      exactly. ⚠ No date field — the drive's own door has none either (writer stamps today);
-      flagged as a deviation from the drawn frame 03, owner to confirm or overrule.
+      **A Date received field is present** (deviation ① RULED IN by the owner mid-walk
+      2026-08-23 — treasurers log after the fact but need the record in the period it arrived):
+      back-date an entry and the REGISTER row carries THAT date (mig 261; a legacy row says
+      "Recorded on this date" instead), and the family's credit is dated the same day. ⚠ Budget
+      vs. Actual's month strip does NOT show drive money yet — that is the separately-assigned
+      BvA income-truth build (owner-ruled the same day; see
+      BVA_MONTHLY_INCOME_BUILD_AND_PLANNING_PROMPT.md), not a §80 finding. The leaderboard row and the family's dues
+      credit after save match the drive's own door exactly. ⚠ The drive's own Log-amount door
+      still stamps today — it converges with the other doors in P2.
 - [ ] **We settled up with the club — fieldless.** The branch lists owed installments (one owed =
       pre-picked); picking one shows only the consequence ("$X moves from the team to the club")
       and Save. No amount/date/method fields exist — deliberately (the Club tab's Mark paid takes
@@ -10663,9 +10691,15 @@ conversation lives in a modal; owner QA is the coverage (build prompt §2.10 say
       held figure; picking one pre-fills the amount (editable); typing more warns it will be
       refused, and the server does refuse it. The consequence names the family and the credit
       remaining. After save, Player Dues' payout record matches the sheet's own door.
-- [ ] **A sponsor came through = a hand-off.** Picking it closes the conversation and lands on
-      Fundraising with the sponsor form OPEN and pre-set to sponsor; refreshing the page there
-      must NOT reopen the form (the one-shot key strips). Cancel the form: no sponsor exists.
+- [ ] **A sponsor came through — recorded INLINE** (owner UX ruling mid-walk 2026-08-23; the
+      hand-off that navigated tabs and re-asked "what is this?" is gone). The branch asks:
+      Sponsor name · Amount · Brought in by (optional, roster) · **Credit to that family ($ or
+      %, prefilled with the team's standard share — parity with the door, owner-caught when the
+      first cut silently dropped it)** · Note, and states before saving that the money shows as
+      sponsorship income — naming the family's credit in dollars (or saying plainly that a zero
+      credit keeps it all with the team). After save: the sponsor appears on
+      Fundraising exactly as if created there (received, correct credit); the register carries
+      the income row. A quiet line says a PLEDGE is recorded on Fundraising, not here.
 - [ ] **"We paid for something" asks paid-or-owed INSIDE.** The old Expense/Income pills and the
       "This is a refund" tick are gone from the add form; refund is the "Money back on something
       we paid" answer. The paid/owed fork replaces the tab choice: "Not yet — we owe it" shows
@@ -10683,100 +10717,26 @@ conversation lives in a modal; owner QA is the coverage (build prompt §2.10 say
       offer five methods ending in Card; the free-text combobox on costs/payments now SUGGESTS
       exactly those five (a club's own past values still appear; typing anything still saves).
 
-**Known deviations raised for ruling (not defects):** (1) drive branch has no Date field — the
-writer has none; add one only by widening the fundraiser-entry writer, owner's call. (2) The
+**Known deviations raised for ruling (not defects):** (1) ✅ **RULED IN AND BUILT 2026-08-23**
+(owner, mid-walk: *"coaches/treasurers often log transactions after they happen but still want
+to log them in the period in which they occurred"*) — the fundraiser-entry writer accepts an
+optional received date; the conversation's drive branch asks it; it dates the ledger entry (the
+month placement) AND the family's credit. Omitted = today, so the drive's own door is unchanged
+until P2. (2) The
 dues consequence names the bill-level outcome ("bill drops to $X"), not the drawn per-installment
 sentence — deriving installment landings client-side would be a second arithmetic beside the
 server's, which the money guards exist to forbid. (3) The chooser's drive hint says "1 drive
 running" without the drive's name — the hub summary carries counts, not names; naming it means
-widening the summary payload, owner's call. (4) The Record button sits in the TAB ROW (approved
-mockup 05 draws it there), not the page header the build prompt named — the header's action row
-is phone-hidden by rule 11, and the Sunday-night door must survive at 390px.
+widening the summary payload, owner's call. (4) ✅ **RULED 2026-08-23 (owner, mid-walk):** the
+Record button moved to the PAGE HEADER beside Import and "?" — the tab-row placement (mockup
+05's drawing) crowded a phone's strip to two visible tabs. On phones Record is a bare "+"
+(aria-labelled) and the header row now renders at phone width for it; Import keeps rule 11's
+wide-only hiding. The tab bar's one-day action slot was removed with the move.
 
 **Release-check rider (per the demo-drift rule):** before this promotes, decide whether the coach
 tour's money steps should NAME the one Record button — the tour walks Transactions and BvA where
 the button is now visible but un-narrated. `check:demos` passes today; that check proves
 rendering, not story.
-
-## §82 · Every register survives being emailed to a treasurer
-
-**BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 1 of 6: Registers**. Plan:
-`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
-`PDF_EXPORT_QUALITY_P2_REGISTERS_BUILD_PROMPT.md`. Decision gallery (rendered options + the two
-defects rendering turned up): https://claude.ai/code/artifact/d77e4b37-6c6e-4b2e-8a5e-c38f08234fdf
-— owner picked the tryout diet (short codes + legend) and approved both plumbing fixes. No migration.
-
-- [ ] **Tournament Results prints eight columns and no fine print.** Export the PDF from Results
-      & Scoring: Submitted By, Submitted At and Submission Source are gone from paper for good —
-      check both spreadsheet formats still carry all three. Every heading sits on one line, every
-      game on one line, one division to a page. ⚠ This is now a fixed-column report, so the
-      "didn't fit this page" line appearing on it is a **bug to report**, not a shrug.
-- [ ] **The month view's PDF button produces the season statement, and says so first.** Money →
-      Budget vs. Actual → View: Months → Export. The file-type box's PDF row reads *"The
-      whole-season statement — month-by-month detail is in Excel and CSV"*. Pick it: the file is
-      the category statement, titled Budget vs. Actual and named for the season, not the month
-      grid. Excel and CSV from the same box still carry every month. From the category view the
-      PDF row reads normally and nothing changed.
-- [ ] **A ten-category tryout scorecard keeps every category.** Tryouts → Build your team →
-      Tryout report → Export → Full detail (PDF). Headings print as short codes (Hitt, Fiel, GS,
-      Coac) with a key under the title, rows print tighter, and nothing is dropped — where a wide
-      rubric used to lose its last three categories to the fine print. Player and Decision are
-      never abbreviated. The Excel version is unchanged and still carries the club's full
-      category names.
-- [ ] **House League registrations print a real register** (League Plus, as its Excel is).
-      Season Registrations → Export → PDF: one section per division, each heading carrying its
-      own player count; columns Player / Registered / Status / Fee paid. Registrations with no
-      division land in a "No division yet" section rather than vanishing. The subtitle names the
-      season, which list you were on, and the total. ⚠ **No date of birth, guardian name, email
-      or phone anywhere on it** — those stay in the two Excel exports.
-- [ ] **Rep tryout applicants print a real register** (Club). Program year → Tryouts → Export →
-      PDF: grouped by status with counts; columns Player / Submitted / Consent / Consent date /
-      Emails OK. Same privacy rule — no contacts, no notes, no consent IP.
-- [ ] **The club's Budget vs. Actual stops repeating itself.** Accounting → Budget vs. Actual →
-      Export → PDF: the Category column is gone, because each section heading *is* the category.
-      The spreadsheet exports keep theirs.
-- [ ] **No heading breaks mid-word anywhere.** Column widths now reserve room using the bold face
-      headings actually print in, and a heading is never trimmed. Spot-check Results, the roster
-      and the tryout report: no more "Divisio n", "Composit e", "Submitte d At". ⚠ **The team
-      roster now prints compact as a consequence** — measuring headings honestly pushed it past
-      landscape and it began dropping the Status column. Compact keeps all ten columns and fits
-      fourteen players on one page instead of two. The Rosters pass still owns this document's
-      real diet.
-- [ ] **A long subtitle wraps instead of running off the page.** The tryout report's legend and
-      the Results champions callout both wrap onto a second line and push the table down.
-- [ ] **A searched registrations PDF says it was searched** (/review finding). Season
-      Registrations → type a name in the search box → stay on **All** → Export → PDF. The
-      subtitle must read *"… · matching “smith” · 3 players"*, NOT *"every registration"*. On a
-      named tab it reads *"active, matching “smith”"*. Clear the box and "every registration"
-      comes back. The spreadsheet exports take the same narrowed rows, deliberately — only the
-      PDF made a sentence out of it, so only the PDF could lie.
-- [ ] ⚠ **The practice sheet now prints compact, and it is the one document outside this pass
-      that changed** (/review finding). A rotation grid's headings are the coach's own group
-      names; once headings were measured honestly, a coach who had renamed a group to one long
-      word started losing a whole station column. Compact restores exactly the column count the
-      sheet had before — measured at 6, 8 and 12 groups — and fits more on a page (a four-group
-      sheet is now one page, was two). Print a practice plan with renamed groups and confirm no
-      station column is missing. Its real rebuild is still the Working-sheets pass.
-
-**Verified by rendering, not by gates:** eleven registers re-rendered through the real export
-code and read as paper — all with true "Page X of Y" footers and no dropped columns. The scanner
-that proves it (page count · true totals · dropped-column detection) is the seed of the Phase 3
-check.
-
-**Confirmed unchanged, having been looked at:** the COACH Budget vs. Actual category statement
-(the document the month view's PDF button now produces) — one page, categories with their items
-indented beneath, total, season net and what players fund, on team paper. Structurally sound as
-judged in planning; nothing was altered. Tournament Registrations was read at the same time and
-needs nothing. Only the CLUB admin Budget vs. Actual turned out to carry a defect.
-
-**Demo question asked and answered:** the coach sandbox's money narration never mentions exports
-or PDFs, so no dock line or tour step is falsified by the month-view swap, and no new moment is
-owed — a printable register is not a story beat for a three-minute walk.
-
-**Not in this pass, on purpose:** the other five document groups (statements & handouts, rosters,
-working sheets including the practice run-sheet, schedules, posters/cards/brackets). Each gets its
-own rendered sign-off session.
-
 
 ## §81 · Tryout day is one room — and the scorer learned what a desktop is
 
@@ -10832,6 +10792,84 @@ scorer, the face flips and both redirects are owner-QA-only coverage.
 (a deliberate instrument-card look — same surface as the volunteer door, sunlight posture and
 all). If it reads as a hole in the warm theme rather than an instrument, that's a theming
 session, not a bug fix.
+## §82 · Every register survives being emailed to a treasurer
+
+**BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 1 of 6: Registers**. Plan:
+`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`PDF_EXPORT_QUALITY_P2_REGISTERS_BUILD_PROMPT.md`. Decision gallery (rendered options + the two
+defects rendering turned up): https://claude.ai/code/artifact/d77e4b37-6c6e-4b2e-8a5e-c38f08234fdf
+— owner picked the tryout diet (short codes + legend) and approved both plumbing fixes. No migration.
+
+- [x] **Tournament Results prints eight columns and no fine print.** Export the PDF from Results
+      & Scoring: Submitted By, Submitted At and Submission Source are gone from paper for good —
+      check both spreadsheet formats still carry all three. Every heading sits on one line, every
+      game on one line, one division to a page. ⚠ This is now a fixed-column report, so the
+      "didn't fit this page" line appearing on it is a **bug to report**, not a shrug.
+- [x] **The month view's PDF button produces the season statement, and says so first.** Money →
+      Budget vs. Actual → View: Months → Export. The file-type box's PDF row reads *"The
+      whole-season statement — month-by-month detail is in Excel and CSV"*. Pick it: the file is
+      the category statement, titled Budget vs. Actual and named for the season, not the month
+      grid. Excel and CSV from the same box still carry every month. From the category view the
+      PDF row reads normally and nothing changed.
+- [x] **A ten-category tryout scorecard keeps every category.** Tryouts → Build your team →
+      Tryout report → Export → Full detail (PDF). Headings print as short codes (Hitt, Fiel, GS,
+      Coac) with a key under the title, rows print tighter, and nothing is dropped — where a wide
+      rubric used to lose its last three categories to the fine print. Player and Decision are
+      never abbreviated. The Excel version is unchanged and still carries the club's full
+      category names.
+- [x] **House League registrations print a real register** (League Plus, as its Excel is).
+      Season Registrations → Export → PDF: one section per division, each heading carrying its
+      own player count; columns Player / Registered / Status / Fee paid. Registrations with no
+      division land in a "No division yet" section rather than vanishing. The subtitle names the
+      season, which list you were on, and the total. ⚠ **No date of birth, guardian name, email
+      or phone anywhere on it** — those stay in the two Excel exports.
+- [x] **Rep tryout applicants print a real register** (Club). Program year → Tryouts → Export →
+      PDF: grouped by status with counts; columns Player / Submitted / Consent / Consent date /
+      Emails OK. Same privacy rule — no contacts, no notes, no consent IP.
+- [x] **The club's Budget vs. Actual stops repeating itself.** Accounting → Budget vs. Actual →
+      Export → PDF: the Category column is gone, because each section heading *is* the category.
+      The spreadsheet exports keep theirs.
+- [x] **No heading breaks mid-word anywhere.** Column widths now reserve room using the bold face
+      headings actually print in, and a heading is never trimmed. Spot-check Results, the roster
+      and the tryout report: no more "Divisio n", "Composit e", "Submitte d At". ⚠ **The team
+      roster now prints compact as a consequence** — measuring headings honestly pushed it past
+      landscape and it began dropping the Status column. Compact keeps all ten columns and fits
+      fourteen players on one page instead of two. The Rosters pass still owns this document's
+      real diet.
+- [x] **A long subtitle wraps instead of running off the page.** The tryout report's legend and
+      the Results champions callout both wrap onto a second line and push the table down.
+- [x] **A searched registrations PDF says it was searched** (/review finding). Season
+      Registrations → type a name in the search box → stay on **All** → Export → PDF. The
+      subtitle must read *"… · matching “smith” · 3 players"*, NOT *"every registration"*. On a
+      named tab it reads *"active, matching “smith”"*. Clear the box and "every registration"
+      comes back. The spreadsheet exports take the same narrowed rows, deliberately — only the
+      PDF made a sentence out of it, so only the PDF could lie.
+- [x] ⚠ **The practice sheet now prints compact, and it is the one document outside this pass
+      that changed** (/review finding). A rotation grid's headings are the coach's own group
+      names; once headings were measured honestly, a coach who had renamed a group to one long
+      word started losing a whole station column. Compact restores exactly the column count the
+      sheet had before — measured at 6, 8 and 12 groups — and fits more on a page (a four-group
+      sheet is now one page, was two). Print a practice plan with renamed groups and confirm no
+      station column is missing. Its real rebuild is still the Working-sheets pass.
+
+**Verified by rendering, not by gates:** eleven registers re-rendered through the real export
+code and read as paper — all with true "Page X of Y" footers and no dropped columns. The scanner
+that proves it (page count · true totals · dropped-column detection) is the seed of the Phase 3
+check.
+
+**Confirmed unchanged, having been looked at:** the COACH Budget vs. Actual category statement
+(the document the month view's PDF button now produces) — one page, categories with their items
+indented beneath, total, season net and what players fund, on team paper. Structurally sound as
+judged in planning; nothing was altered. Tournament Registrations was read at the same time and
+needs nothing. Only the CLUB admin Budget vs. Actual turned out to carry a defect.
+
+**Demo question asked and answered:** the coach sandbox's money narration never mentions exports
+or PDFs, so no dock line or tour step is falsified by the month-view swap, and no new moment is
+owed — a printable register is not a story beat for a three-minute walk.
+
+**Not in this pass, on purpose:** the other five document groups (statements & handouts, rosters,
+working sheets including the practice run-sheet, schedules, posters/cards/brackets). Each gets its
+own rendered sign-off session.
 
 ## §83 · The Months cash strip tells the whole cash truth — and is chained to the register
 
@@ -10953,6 +10991,89 @@ hash) is possible future debt, not a new gap.
 the practice run-sheet, schedules, posters/cards/brackets — the roster and practice sheet keep
 their §82 regression guards untouched); the Phase 3 CI check (the harness and scanner carried
 forward, productionisation still owed).
+
+## §85 · Months becomes the season's cash statement — two bands, a Net row, a balance that stays on screen
+
+**BUILT 2026-08-23 (dev).** Option D, built from the approved mockups
+https://claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2 (owner: *"ok, this looks
+good, I agree with the build"*). Plan: `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md` §2; build
+prompt `BVA_OPTION_D_MERGED_MONTHS_BUILD_PROMPT.md`. **No migration.** This is **phase D-1**: the
+bands, the totals, the Net row and all four lenses. Per-family / per-drive / per-sponsor item rows
+and the season **opening balance** are D-2, deliberately not in this pass.
+
+Walk on a team with fundraising, a sponsor, club money, a payout and a family-paid cost — the UAT
+fixture has all five plus (new) a pledged sponsor. **`qa-money-lab` → QA Money U13 reconciles to
+the dollar with the mockup** and is the fastest confidence check: Total revenue $8,141.69, Total
+expenses $5,279.00, Net $2,862.69.
+
+- [ ] **Money → Reports → Budget vs. Actual → Months.** The grid now reads as a statement:
+      a **REVENUE** band (Player dues · Fundraising · Sponsorships · Other income · Money back &
+      reimbursements — only the ones you have), **Total revenue**, then an **EXPENSES** band (your
+      categories plus **Paid back to families**), **Total expenses**. Groups ship collapsed.
+- [ ] **Net for the month, then Running balance.** Revenue less expenses, month by month. Check one
+      month by hand: the two band totals above it must subtract to the Net cell exactly.
+- [ ] **The Running balance's Total cell carries the ENDING balance**, not an em dash — and that
+      column is pinned, so scroll the months sideways and your cash on hand stays on screen. It
+      must equal the Money overview's Cash on hand and the register's headline, to the cent.
+- [ ] **The strip's old Money in / Money out rows are gone.** The band totals are those rows now.
+      If you can find a screen where the balance no longer equals revenue − expenses, that is the
+      defect this whole build exists to make impossible.
+- [ ] **Scheduled is now the season's forward view.** Dues instalments still owed by due month,
+      **sponsor pledges** and **anything asked of the club and not yet answered**, against
+      commitments still owed. The row labels change with the lens — "Player dues" becomes
+      "Remaining dues instalments", "Sponsorships" becomes "Sponsor pledges". The running balance
+      starts from **today's real money** and the footnote names the figure.
+- [ ] **A pledge and a pending club ask sit in "No date yet"** — in the Total, in no month. Confirm
+      a pledge does NOT lift any month's balance and does NOT silence the shortfall line. (⚠ That
+      column now appears under Scheduled, where it never used to; that is deliberate.)
+- [ ] **Budget shows the plan's own net** — dues instalments due plus expected fundraising /
+      sponsorship against your cost phasing — so a plan that runs short says so months before the
+      money does.
+- [ ] **Difference: a positive number is good news on BOTH bands.** Revenue that came in ahead is
+      green; revenue that came in short is red. (Computed the naive way, a dues shortfall would
+      have printed green like an under-budget cost — worth one deliberate look.)
+- [ ] **Months' Total expenses can differ from the Statement's, and the screen says why** — it adds
+      money paid back to families, drops costs a family paid a vendor directly, and shows money back
+      as revenue rather than shrinking the cost it repaid. On QA Money U13 the gap is exactly $640
+      (the $599 and $61 family-paid costs, less the $20 payout).
+- [ ] **Export follows the screen.** Excel/CSV from the Months view now carry both bands, the band
+      totals in the lens's own words ("Budgeted revenue", "Scheduled expenses"), and the Net and
+      Running rows. PDF still gives the whole-season statement, as ruled 2026-08-21.
+- [ ] **Tapping still works.** A Budget cell opens that line's payment dates; an Actual or Scheduled
+      EXPENSE cell opens the list behind it — now a list of cash movements. Revenue cells are not
+      tappable yet (their drill-in is D-2), so check none of them look like they should be.
+- [ ] **The shortfall line changed tense under Actual** — "Your balance went below zero in
+      <month>" rather than "On this plan you go short", because under Actual the money has already
+      gone. Budget and Scheduled keep the planning wording.
+
+**Machine-checked, and the guard was rebuilt for this:** `npm run check:money-report` no longer
+holds the grid equal to the Statement (two labelled truths now). It holds **both bands equal to the
+REGISTER** — month by month, category by category, revenue group by revenue group — and proves
+opening + net = ending = Cash on hand. It refuses to call a run evidence without a payout, drive
+cash, a family-paid cost, a sponsor pledge and a pending club request in the fixture.
+
+**Not in this pass, on purpose:** item rows under each revenue group (per family, per drive, per
+sponsor) and the season **opening balance** — carried at *Start next season*, corrected in
+Team settings → Money, read on the register and in Cash on hand. Both are D-2, gated on this walk.
+
+- [ ] **The grid's own chrome, fixed after the build (owner-found over three passes, all measured).**
+      No row may render in two grounds — check a band total, a summary row and an **expanded item
+      row**: each must be one colour end to end, with no dark band between the pinned columns. The
+      row rules must line up across the pinned seam at any scroll offset and any zoom.
+- [ ] **A long row name wraps instead of stretching the column.** "Asked of the club" wraps rather
+      than widening the pinned label column, and that column tightens and hands space back to the
+      months as the window narrows.
+- [ ] **The current month is a TINTED COLUMN**, not a single left border. Check it reads as "this one
+      is now" without needing to be decoded — the old hairline read as a divider between two months.
+- [ ] **Row names no longer change with the lens, except one.** Player dues and Sponsorships read the
+      same on Budget, Scheduled and Actual; only the club row becomes **Asked of the club** under
+      Scheduled. Flip all four lenses and confirm nothing else renames itself.
+- [ ] **The Running balance row carries no inline aside** — "from today's $X" was deleted; that fact
+      lives in the footnote under the grid, on the Scheduled lens.
+
+**⚠ Found while building, NOT this build's doing:** the money hub's **Record money** button is 31px
+tall at 768px (floor 44) on Budget vs. Actual, Transactions and Payables alike — a money
+centralization P1 leftover, unbaselined. Not fixed here because it belongs to that programme.
 
 ## §86 · A coach can pin the roster up without publishing fourteen birthdates
 
@@ -11088,3 +11209,570 @@ their own copy of the header-height arithmetic rather than sharing the helper.
 run-sheet, schedules, posters/cards/brackets — the practice sheet keeps its §82 regression guard
 untouched, and the bracket keeps its own squashed logo draw for the Posters pass); the Phase 3 CI
 check (harness and scanner carried forward again, productionisation still owed).
+
+## §87 · One door for money that moved, and it is the same door everywhere (P2)
+
+**BUILT 2026-08-23 (dev).** Money centralization **P2 — the doors re-point**. Plan:
+`docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md`; the build prompt's
+**"THE GATE OUTCOME"** section carries the four owner rulings this was built to, and the approved
+drawings are `claude.ai/code/artifact/d92be400-…` (questions A, B, C). **No migration.**
+
+⚠ **TWO OF THE RULINGS REVERSE APPROVED-AND-BUILT WORK, and both were owner-initiated at the gate:**
+the pre-answers a context door arrives with are **locked** (superseding frame D's "changeable like
+any field"), and the **paid/owed fork is deleted** from the conversation — Record is for money that
+MOVED, and commitments are made on Payables (superseding mockup 02's fork, six days after §80
+passed it). Nothing below "corrects" either back.
+
+⚠ **The sweep cannot see any of this** — it is a modal, and `check:layout` renders pages. Owner QA
+is the coverage. The layout baseline was re-keyed by hand for the one renamed control it did watch
+(the drive row's button) and the retired one (Transactions' Add); a fresh finding there on the next
+sweep means the re-key was wrong, which is the safe direction.
+
+- [ ] **"We paid for something" asks ONE question about what the money paid for.** Press
+      **Record** from Transactions. The Expense/Income pills, the refund tick and — new this pass
+      — the **"Has it been paid?" fork with its schedule editor** are all gone. The field reads
+      *What did this pay for?* and its list opens with **Bills you owe** at the top, each row
+      carrying what is still owing, then Tournaments / Facilities / the rest. Type four letters of
+      a bill's name and the item half empties without the list claiming "nothing matches".
+- [ ] **Picking a bill visibly changes the form — three signals, all three required.** The
+      **Description** field disappears (the bill has one); a **For installment** row appears when
+      the bill has more than one piece, defaulting to *wherever it's owed (oldest first)*; and the
+      line above the buttons names the bill and what it drops to. Save, and the register carries
+      the payment exactly as if it had been recorded from the bill's own row — same route, same
+      oldest-first application. Over-pay it deliberately: the Amount field says how much over and
+      that it still saves, and the record reads "$X over" afterwards.
+      ⚠ **This is a thing the product could not do at all before** — from the hub's Record button
+      there was no way to pay down a commitment.
+- [ ] **Date paid is required, and a future date is refused with the right door.** Clear the date
+      and save: it refuses, and the sentence names Payables. Type next month's date: the refusal
+      offers **Put it on Payables instead**, and pressing it carries the amount, the item, the
+      description, the payee AND the tags into the commitment form (all five — the payee and tags
+      have been dropped by this hop before). ⚠ The old "clear this and it waits as an unpaid cost"
+      hint is gone with the behaviour: an unpaid cost with no due date can no longer be created.
+- [ ] **Payables keeps its own Add; Transactions' Add is gone.** The Payables toolbar still offers
+      **Add a commitment**, and it opens a form titled *Add a commitment* with no "What happened?"
+      question at all — it states its kind, the way an edit does. The Transactions toolbar has no
+      Add button; **Record** in the page header is its door. Both **empty states** keep their own
+      Add and their import/paste offers, at every width.
+- [ ] **Record is tab-aware, and a tab is only a guess.** Press Record from **Player Dues** → it
+      opens on *A family paid their dues*; from **Fundraising** → *Fundraiser money came in*; from
+      **Club** → *We settled up with the club*; from **Payables** or **Transactions** → *We paid for
+      something*. Every one of them is still **changeable** — open the dropdown and switch. From
+      **Overview**, **Budget Plan** or **Budget vs. Actual** it opens unanswered on *Choose…*, as
+      before.
+- [ ] **A door that names one RECORD locks.** On Player Dues open a family and press **Record**:
+      the form opens with a stated band — *"A family paid their dues — Jenny Alvarez"*, and beneath
+      it *"Owes $252 · opened from their record"*. **There is no dropdown and no player picker**:
+      nothing to switch, so the ghost save this ruling exists to prevent (switch to "we paid for
+      something", save, land back on a page where nothing changed) is impossible. Cancel and reopen
+      is the way out of a wrong door. Save, and the drawer behind it shows the new figures.
+- [ ] **The same lock, from three more doors.** The credit strip's **Record** (payout branch, family
+      and the held amount stated, amount pre-filled and editable); a drive leaderboard row's
+      **Record** (drive AND player stated, neither offered); a bill's / a scheduled register row's
+      **Record** (the bill stated — but **For installment** stays editable, because where the money
+      lands is allocation, not identity).
+- [ ] **"Where it lands" survived the move.** On the drive branch, with an amount typed, the form
+      lists exactly which of that family's installments the rebate lowers and by how much — the
+      same preview the leaderboard drew, from the same shared arithmetic, not a re-derivation. A
+      keep-separate team gets its own sentence instead; an over-run says how much is owed back.
+- [ ] **Editing stayed where the record lives, and says so.** The pencil on a dues receipt opens
+      the in-drawer panel, which now only ever corrects: its button reads **Save correction** and
+      its sentence says the old books entry is voided. A drive row that already has an amount says
+      **Edit amount** and opens in place — and **now carries a Date received**, so a date set from
+      the conversation can be fixed from the screen that shows it. Back-date an edit and the
+      register row and the family's credit both move with it.
+- [ ] **The one-taps are untouched, and the club's converged by name only.** Dues **Record as
+      paid** / **Record rest as paid** and the installment banknote button still do not stop to
+      ask. The Club tab's button now reads **Record as paid** instead of *Mark paid* — and is still
+      **one tap**, because a club installment has no amount, date or method to ask for.
+- [ ] **The refund branch lost its label-only field.** "Money back on something we paid" no longer
+      offers **Who paid it back**. Existing records that carry one still load, save and export
+      unchanged — this removed a way to set a label, not the label.
+- [ ] **The chooser's live hints are fresh after a save.** Record a dues payment from the hub, then
+      press Record again: the *"N families owe · $X"* hint reflects the payment just made. (The
+      bridge that does this had been written and never rendered — found while wiring these doors.)
+
+**Deviations raised, not defects:** (1) The future-date refusal converts the modal **in place** into
+Payables' commitment form rather than navigating to the Payables tab. The record still lands on
+Payables and the coach retypes nothing; the alternative would have meant carrying a whole form
+through the tab switch. (2) The drive leaderboard's own "Where it lands" preview block is now
+reachable only on the no-hub fallback path; it was kept rather than deleted so that fallback stays a
+working door.
+
+**Release-check rider:** the coach demo tour's money step now NAMES the Record button (closing the
+rider §80 left open). `check:demos` proves rendering, not story — read that sentence on the walk.
+
+---
+
+## §88 · Roster and Schedule stop looking like a different product — and Roster's Import comes out of hiding
+
+**BUILT 2026-08-23 (dev).** Page-level action consistency **Phase 2 (Roster + Schedule)**, built to
+**four house rules the owner took that day** — plan `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`
+§0. Approved drawings: https://claude.ai/code/artifact/0eac6be6-c9ea-48db-821a-7889478621b1
+(interactive — the width, view and order controls drive the bands).
+**Checkable walkthrough:** https://claude.ai/code/artifact/8d3dd827-51a6-4187-acb6-9f1b2b2428c6
+**No migration.**
+
+**The four rules, in one line each:** Import lives in the page header and never on a phone ·
+**Export lives in the toolbar above what it exports, pinned right, at every width — never in a page
+header** · on a phone words become symbols, header and toolbar alike, and the symbol changes when
+the ACTION does · the create sits in the header beside the "?" and goes first.
+
+### Walk it — Roster
+
+- [ ] **Bulk-add has a door.** With players already on the roster, **Import** is in the header. It
+      opens the same paste-your-roster sheet that until now existed only in the empty state and
+      behind a link inside Add Player. This is the defect the phase existed for: a coach entering
+      fifteen tryout graduates in September could not find it.
+- [ ] **Switch to Depth chart. The buttons stay.** All of them. They used to vanish entirely —
+      including an export whose contents are identical in both views.
+- [ ] **Export is no longer in the header.** It sits at the right end of the List / Depth chart
+      row, and it is the coach portal's control now, not the tournament admin's — no uppercase, no
+      square corners, no blue.
+- [ ] **Everything Export could produce, it still produces.** Excel · CSV · Team roster PDF, and —
+      only for a coach cleared for family contacts — Roster with contacts (PDF) and Excel with
+      contact details, still introduced as *a different document*.
+- [ ] **At 390px the header is `Roster · + · ?`.** The create is a bare "+" holding the title
+      line's corner; Import is gone. Tap the "+": it still opens Add Player.
+- [ ] **At 390px, Export offers only the PDFs.** The two spreadsheets are absent from the dialog.
+      ⚠ **On a plan without PDF export there is no export at all on a phone** — judged correct
+      (nothing to offer beats a locked button), but it is a visible change.
+- [ ] **The empty roster still offers its paste path at 390px.** This is the condition house rule 1
+      depends on, not a nicety — verify it rather than assume it.
+
+### Walk it — Schedule
+
+- [ ] **The header is the create and Import, and nothing between them.** Export has moved down to
+      the List / Week / Month row, right-pinned. Check all three views: it is in every one.
+- [ ] **At 390px the header is `Schedule · + · ?`** and the toolbar control is a **calendar mark,
+      not a download arrow** — the only file that survives a phone here writes into the phone's own
+      calendar. Tap it: the dialog offers Calendar (.ics) alone.
+- [ ] **Add Event still opens the type menu** (game / practice / tryout …) from its "+".
+- [ ] **A read-only assistant sees no action row at all** on either screen, at any width.
+
+### Also true
+
+- [ ] **Money is untouched.** Its seven tabs kept their exports, their dialog and their wording —
+      the shared control was extracted underneath them, and Money's button became a wrapper over
+      it. Spot-check one tab's Export end to end.
+- [ ] **Tap targets went the right way.** The rendered sweep's baseline **lost 18 phone entries and
+      gained none**: the admin split button's two sub-44px controls became one compliant control on
+      each screen, and the export's own new home was fixed after the sweep caught it at 30px.
+
+**Deviation raised, not a defect:** on a phone the export still opens the file-type dialog even when
+only one choice survives, so it is two taps rather than one. Money behaves the same way, the dialog
+names the file the coach is about to get, and branching on choice count would have to happen in
+JavaScript — where the server and the browser disagree about the width on first paint.
+
+**Rider:** the in-app Roster and Schedule guides name these buttons and the coach demo's tour points
+at this row — both owed a re-read before this ships.
+
+**Post-build `/review` + `/docs` (2026-08-24) — one thing to re-walk and one call to make:**
+
+- [ ] **Two teams, one dialog.** If you coach more than one team: open **Roster → Export** on team A,
+      leave the dialog open, press the browser/phone **back** button to land on team B's roster,
+      and confirm the dialog has **closed**. Before the fix it stayed open — covering the screen,
+      naming no team — and "Roster with contacts" would then have exported **team A's** birthdates
+      and guardian emails into a file titled for **team B**. Found by review, not by any gate.
+- [ ] **Your call — the upgrade nudge on Roster.** On a plan without PDF export, Roster used to show
+      the PDF rows **greyed with an upgrade tooltip**; they are now **absent**, which is the
+      portal's own "absent, not locked" rule arriving here. It is the consistent answer, but it
+      removes an in-context prompt to upgrade. Say if you want that nudge back somewhere.
+- [ ] **Help reads true.** Roster's *Adding your whole roster at once* now names **Import** and says
+      where it is; Schedule's *Bring a schedule in from a spreadsheet* no longer says "beside
+      Export" and explains where Export went.
+
+**Noted in passing, not part of this work:** Schedule's event fetch has no stale-response guard
+where Roster has one. Pre-existing; unchanged by this change; deserves its own look.
+
+## §89 · The roster leads its own page again — ✅ PASSED 2026-08-24
+
+**BUILT 2026-08-24 (dev).** Owner call, same session: the **Team family access** card was too
+dominant on Roster. **No migration.** No plan file — a placement change inside an existing feature.
+
+- [x] **The roster is the first thing on the page.** Open **Roster**: page title, then the count and
+      view toggle, then your players. The three-row family card that used to sit between the header
+      and the list — pushing the roster under the fold on a laptop — is gone from up there.
+- [x] **Team family access is now below the list, folded shut.** One line: its name, and a summary
+      on the right — *Link active*, *3 following*, or *No link yet*. Open it and everything is
+      exactly as it was: the link, schedule visibility, followers, remove.
+- [ ] **⚠ It does NOT stay quiet when someone is waiting.** With a pending follow request the
+      section **opens itself** and the summary reads **“2 waiting”** in amber. Test this one
+      properly — the queue lives here precisely because coaches aren't sent a notification for it,
+      so a fold that hid an approval would be a worse bug than the one being fixed.
+- [x] **Depth chart view is unchanged** — the section doesn't render there, same as before.
+- [x] **On a phone, every control inside it is finger-sized.** Create link, and the three
+      visibility pills, were all 34px and had been since they were built. Fixed on the way past —
+      see the note below.
+
+**Found while doing it, and worth knowing:** collapsing a surface makes the rendered sweep blind to
+everything inside it. Those eight sub-44px controls would have quietly stopped being reported the
+moment the panel folded — fixed, not inherited, and verified by forcing the section open for one
+sweep before pruning them from the baseline. Anything added inside this section owes the same.
+
+**Help updated:** the guide said the card "sits on your Roster page"; it now says it is below the
+roster, folded, and that it opens itself when someone is waiting.
+
+---
+
+## §90 · "Upload a file" stops wrapping — and two other sheets get the fix for free — ✅ PASSED 2026-08-24
+
+**BUILT 2026-08-24 (dev).** Owner call. **No migration.** CSS only.
+
+- [x] **Roster → Import → the Paste / Upload switch.** "Upload a file" sits on **one line**, and the
+      switch now spans the sheet's width instead of huddling at a third of it.
+- [x] **Same switch on Import budget and Sample budget** — both carried the identical defect and are
+      fixed by the same change. Worth one look each.
+- [x] **On a phone, nothing changes** — it already looked right there, by accident (see below).
+
+**What it actually was, because "make the label fit" was the symptom:** the full-width modifier on
+that control was declared ~240 lines **above** the base class it modifies, at equal strength. The
+base won every property, so the modifier had been doing **nothing since it shipped** — the control
+shrank to fit its content while still splitting its two halves evenly, which squeezes the longer
+label until it wraps. Below 640px a separate phone rule set the same two properties and the layout
+came out right by a different route, which is why this was a desktop-only defect nobody chased.
+
+⚠ This is the third silent cascade no-op found in this stylesheet. The pattern each time: a modifier
+class written near the feature it serves rather than beside the base class it overrides.
+
+**Same modal, second fix (2026-08-24): it no longer resizes when you switch tabs.**
+
+- [x] **Toggle Paste a list ⇄ Upload a file repeatedly.** The sheet stays exactly the same size.
+      It used to grow and shrink on every tap, because the Upload pane is a good deal taller than
+      the paste box — a dialog that changes size under the cursor reads as something going wrong.
+- [x] **The paste box is bigger than it was.** The height reserved for the taller pane goes into
+      the textarea rather than becoming dead air under the hint — so the sheet being taller buys
+      the coach a bigger place to paste.
+- [x] **Both paths still work end to end** — paste a few names → Preview players; and Choose file
+      with a spreadsheet → Preview players. Switching tabs with a reviewed list still asks before
+      discarding it.
+- [x] **Check it at 390px too.** The panes size to the taller one at every width, so a phone
+      should be steady as well.
+
+⚠ **Not machine-verified:** `check:layout` renders pages, not modals, so nothing automated has seen
+this sheet. Types, lint and CSS purity pass; the steadiness itself is an eyeball check.
+
+Also done here: the two tabs and their panels are now properly paired for screen readers — the sheet
+had tab buttons with no panels attached to them.
+
+**Same modal, third fix (2026-08-24): the band of dead air above the footer is gone.**
+
+- [x] **Open Add players.** The sheet is **~40px shorter** and the content now finishes a normal
+      gap above the footer divider, on **both** tabs, instead of leaving a measurable band of
+      nothing.
+- [x] **Toggle the tabs again** — still no resize. Shorter, and still steady.
+- [x] **Paste a long list (30+ names) and Preview.** The review table scrolls, and the last row is
+      still fully reachable above the footer — nothing hides behind it.
+
+**What it was:** the shared coach form body carries **2.5rem of bottom padding**, which reads as
+clearance for the sticky footer. It isn't needed for that — a sticky element sits in normal flow and
+settles into place at full scroll, so nothing was ever stranded behind the footer. The footer's own
+1.25rem top margin is the breathing room. The padding was simply 40px of nothing, invisible while
+the sheet resized between tabs and obvious the moment both panes ended in the same place.
+
+⚠ **DECISION OWED — the other six forms.** `.formBody` is shared by Award types, Give an award,
+Budget items, Money tags, the Award icon picker and the Schedule event form; every one of them
+carries the same 40px. This fix is **scoped to Add players on purpose** — removing it everywhere is
+probably right, but it is a portal-wide visual change and belongs to a decision rather than to a
+one-sheet fix. Owner to say whether to sweep it.
+
+## §91 · A coach can run practice off the sheet, and a volunteer has a box to tick
+
+**BUILT 2026-08-24 (dev).** PDF Export Quality **Phase 2, pass 4 of 6: Working sheets**. Plan:
+`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4 + `PRACTICE_SHEET_STRUCTURE_PLAN.md`; build
+prompt `PDF_EXPORT_QUALITY_P2_WORKING_SHEETS_BUILD_PROMPT.md`. Checkpoint-1 decisions (owner took
+all seven recommendations): https://claude.ai/code/artifact/d3675cd6-ea40-47a6-b7c9-73c1d7a90616 ·
+built gallery: https://claude.ai/code/artifact/771dd950-ab5c-40db-9b2d-79b0ab05e854. No migration.
+
+**⚠ A FIXTURE IS SEEDED FOR THIS WALK.** `node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs
+--practice` puts **six practices on QA Money U13** (`/qa-money-lab/coaches/teams/…/schedule`), one
+per shape the run sheet has to survive: *a typical night · a heavy night · a rotation I haven't
+finished · twelve groups · the coach who writes everything down · the bare minimum*. Print each from
+the practice itself. Sign in as `qa-money-head@dev.local` for the full sheet and
+`qa-money-off@dev.local` (an assistant — schedule yes, focus areas no) to confirm the focus section
+is ABSENT. Needs `--money` to have been run first; re-running rewrites the plans in place.
+
+- [x] **The practice sheet is the run sheet you approved.** Coaches Portal → Schedule → a practice
+      → **Print the sheet**. Times and lengths down a left gutter beside an accent spine; your own
+      notes at **full width**, not chopped into a third-width ribbon; each rotation grid sitting
+      **inside the block that owns it**, with its "3 rounds of 10 min" arithmetic as bullet
+      sentences underneath and the group lists right below that. Tonight's Practice / Goal /
+      Equipment are labelled prose lines — the blank dark "Tonight" band is gone. A typical night
+      is one page (a long focus list rides to page 2 as one block, never two names orphaned).
+- [x] **Nothing on it says the practice happened.** No tick box, no blank "did it" column, no
+      wording implying anything occurred — walk it looking for one. It is still a download you
+      carry, never a link you share.
+- [x] **A rotation you started but haven't finished still prints.** Build a practice with stations
+      and groups but leave the interval unset, then print: the sheet says what's missing and lists
+      the groups you did make, with no grid. ⚠ **Before this it printed nothing at all** for that
+      block's rotation — the screen told you; the paper didn't.
+- [x] **Twelve groups keeps twelve names.** Rename your rotation groups to long words (Thunderbolts,
+      Renegades…) and add enough of them: the grid **turns on its side** — groups down the left,
+      rounds across — and every name prints whole. Two or three normally-named groups keep the
+      approved shape (rounds down the side). ⚠ **This retires the squeezed-type stop-gap** the sheet
+      has carried since §82.
+- [x] **A block longer than a page prints honestly.** Write an enormous note on one block: it takes
+      a clean page and then flows, breaking only between whole lines — **a sentence never splits**
+      — and where it continues the gutter reads *"6:10 · cont'd"* and the title repeats with
+      *"(continued)"*.
+- [x] **Page 2 knows whose paper it is.** Every continuation page carries a compact band with the
+      team's name and *"Practice plan — {date} (continued)"*, and the footer page totals are true.
+- [x] **An assistant without focus-area access gets the same sheet with the section ABSENT** — not
+      an empty heading, not a redaction. Print as one and confirm.
+- [x] **The tryout check-in sheet says which club produced it.** Tryouts → Tryout day → Check-in →
+      **Print sheet**. It now carries your crest, your colour, your footer and the team's name.
+      ⚠ **Before this it had NO name on it at all** — an empty header band, in the default navy,
+      on the first piece of paper a trying-out family ever sees. It was the only document in the
+      product that had never fetched branding.
+- [x] **It names the session it is for.** With more than one session the sheet asks which before it
+      downloads (today's, or the next one still to come, is marked *Most likely*); the line under
+      the title reads *"Session 2 — Skills · Sat, Sep 12, 2026 · 9:00 AM · Riverdale Park, Diamond
+      3"*. **Two sessions on one weekend used to print identical, undated paper.** A tryout with no
+      sessions set up falls back to *"Printed {date}"* — never undated.
+- [x] **There is a box to tick, and it is easy to hit.** The column is a printed square, named
+      **Checked in** rather than "In" — which is also what earns it its width. Before this it was
+      the **narrowest column on the sheet** (a two-character heading), with no cell edges at all,
+      while the always-empty Notes column beside it got more room. Age stays: it is the one field
+      that catches a child registered in the wrong age group.
+- [x] **A blind tryout says it is blind.** Print with blind evaluation on: bib numbers only, no
+      Player column, and the line under the title says *"Blind evaluation — names hidden on
+      purpose"* so a volunteer isn't left wondering where the names went.
+- [x] **Neither sheet carries a contact detail.** No dates of birth, no guardian names, no emails,
+      no phone numbers — check both, in both blind and named states.
+- [x] **Identity defaults confirmed on paper, both documents** (scope item 4): default / inherited
+      club look / team's own crest and colour. Both are **TEAM paper** — the team's name, the club's
+      look underneath until the team sets its own — which is the layer the tryout report one stage
+      over already used, and the layer that leaves a **standalone** coach with their own name rather
+      than a blank band. **No identity defect found this pass.**
+- [x] ⚠ **Two teams, one session chooser.** If you coach more than one team: open Tryouts → Tryout
+      day → Check-in → **Print sheet** on team A with more than one session, leave the chooser open,
+      and switch to team B. The chooser must be **gone**. Caught by re-reading my own diff, not by a
+      gate: the coach portal does not remount across teams, so picking a session in a stale chooser
+      would have printed **team B's candidates under team A's session heading** — the Rosters pass's
+      standing lesson (adding an export re-severities every race already on that screen) landing on
+      a document this pass created.
+
+**Verified by rendering, not by gates:** both documents read as paper in every identity state, on a
+typical night, a heavy night, an unfinished rotation, a twelve-group rotation and a block taller
+than a page. The whole **65-document corpus was re-scanned before and after the shared-engine
+change and is identical** — page counts, true "Page X of Y" footers and dropped-column status —
+which is the only reason a change touching every table document was safe to ship. 58 renderer
+contract tests green (15 of them new), 2450 unit tests green, typecheck clean.
+
+**Decided from rendered paper at checkpoint 1, all seven owner-approved as recommended:** team
+paper · the sheet is printed FOR a session · a printed box kept fourth (box-first was rendered and
+weighed) · catalogue it · an unfinished rotation says what's missing · an oversize block takes a
+clean page then flows · the grid turns on its side rather than cutting a name.
+
+**⚠⚠ SEEDING A REAL PRACTICE CAUGHT TWO DEFECTS THE EXHIBITS COULD NOT.** Every rendered page in the
+checkpoint galleries had been built from HAND-WRITTEN fixtures, and both used values kinder than
+production. Printing the seeded practices instead found, within one page: the **clock ran straight
+through the block title**, because a real block's window reads *"6:00 p.m.–6:10 p.m."* and the
+gutter had been measured against *"6:00"*; and a block carrying the coach's own player list
+**printed its first line and stopped mid-name**, which reads as a shorter roster rather than a
+longer line. Both fixed — the clock stacks and auto-fits to any locale's format, the roster and the
+title wrap whole — and the exhibits were re-cut with production's own values so they can never again
+be easier than the real thing. A third, smaller one came from the same look: turned on its side, the
+rotation grid's column headings had lost the word *"Round"* (the caller supplies a bare ordinal
+because the upright grid's heading supplies the word), so the grid read *"Group | 1 | 2"*.
+**Standing lesson: an exhibit built from a fixture you wrote is evidence about your fixture.**
+
+**A correction to the approved spec, found in the code before building to it:** the structure plan
+asked what to do with *"a rotation with no owning block"*. That case **cannot occur** — a rotation
+is a property of the block it was configured on. The real gap was next door and was a live defect
+(the unfinished rotation above). Reported at checkpoint 1 rather than quietly built around.
+
+**One shared-engine change, and it is opt-in:** the table engine learned *"a column the reader
+fills in by hand"*, which prints an empty box in that column's body cells. Only a document that
+asks for one gets one; the corpus diff above is the proof. It went into the shared contract rather
+than the call site because "somebody writes in this column" is a property of the report, exactly
+like its shape and its column priorities. **Also retired in the same change:** the board summary and
+the family statement each hand-carried their own copy of the identity-band arithmetic (recorded as
+debt in §86) — all four documents now draw it through one helper, rather than the run sheet
+becoming a fourth copy.
+
+**Catalog + help synced in the same unit of work:** the check-in sheet gains a catalog entry (it was
+the only printed document with none) recording honestly that it takes **no plan gate** — the button
+has been ungated since it shipped, and enforcing one would take a working sheet away from teams
+printing it today, which is a packaging call rather than this pass's. The exports guide's
+availability table gains three rows that were simply missing — the check-in sheet, the tryout report
+and the practice run sheet — each naming what the code actually enforces. The practice guide now
+describes a run sheet; the tryout guide describes what the check-in sheet carries.
+
+**Found while writing the build prompt, fixed in passing:** the **Tournament Registrations** export
+still advertised *"(PDF coming in Phase F3)"* in its help summary months after that PDF shipped —
+the same stale-claim class this whole programme exists to kill.
+
+**Demo question asked and answered — re-read, not inherited:** the coach sandbox's arrival lines and
+tour narration were read again in full. They never mention printing, exporting or PDFs, and the tour
+has **no live practice-plan step** at all (its only practice sentence is the closed-season page's
+*"open the practices — one reads exactly as it was written"*, which is about the archived plan on
+screen). Nothing is falsified and no sentence changes. Of the four passes so far this is still the
+most plausible future beat — a coach printing the night's run sheet — but a file download remains a
+poor moment in a three-minute walk, so it is recorded as judgement, not built.
+
+**Not in this pass, on purpose:** the last two document groups (the tournament schedule; posters,
+cards and brackets — the bracket keeps its own squashed logo draw for that pass); the Phase 3 CI
+check (harness and scanner carried forward again, productionisation still owed).
+
+---
+
+## §92 · The Export box asks which document, then which file
+
+**BUILT 2026-08-24 (dev).** Owner ruling of the same day, from rendered mockups:
+https://claude.ai/code/artifact/8b768b64-ea8a-47a9-948b-d6637a76f03e (*"I like this option but we
+really don't need to overexplain everything… too much text on these screens"*). No migration, no
+plan file — this is a UX correction to the portal's one export control, built on top of §88.
+
+⚠ **Walk it on Roster first, as a coach WITH family-contact access.**
+
+- [x] **The box opens on the safe document, and the everyday export is still one tap.** Roster →
+      **Export**: a **Document** dropdown reading *Team roster*, then a **File type** list —
+      Excel, CSV, PDF. Tap any of them and the file arrives exactly as before.
+- [x] **The contacts sheet is now a document, not a row.** Switch the dropdown to *Roster with
+      contacts*: the file-type list changes to **PDF** and **Excel** — the two documents carry
+      DIFFERENT file types, which the old flat list could not express. Both files must be the same
+      ones the old rows produced.
+- [x] ⚠ **"Excel" no longer appears twice meaning two different files.** Before this, the list held
+      *Excel* (no private columns) and *Excel with contact details* (every child's date of birth and
+      every parent's phone number) four rows apart under the same word. Check both documents' Excel
+      rows and confirm you get the right file from each.
+- [x] **An assistant WITHOUT family contacts sees no dropdown at all.** Sign in as one and open
+      Export: just *File type* and three rows. There is only one document to give them, and a
+      dropdown with one option is worse than none.
+- [x] **Every other screen keeps a single list.** Schedule (Excel / CSV / Calendar) and every Money
+      tab except Player Dues have one document and therefore no dropdown — only a *File type* label
+      where "Choose a file type." used to be.
+- [x] **Player Dues is the other two-document screen.** Money → Player Dues → Export: the dropdown
+      offers *Team sheet* and *Family statements*, and the statements land under their own heading
+      rather than as a footnote below three file types.
+- [x] **The box is about half the height it was.** Every row is now a name and an extension. The
+      sentences under each one are gone — "Best for working with the list", "Plain text — opens in
+      any spreadsheet", "Names, numbers and positions — safe to pin up", and the "Or a different
+      document:" line the dropdown replaced.
+- [x] ⚠ **One hint survives, and it is a warning rather than an explanation.** Money → Budget vs.
+      Actual → **Months** → Export: the PDF row still says it is the whole season, because that
+      PDF is deliberately the season statement rather than the month grid (your ruling, Registers
+      pass). Confirm it reads as a short note beside the name, not a paragraph under it.
+- [x] **Nothing about picking changed.** No Confirm step; picking still starts the download, the
+      row still says *Preparing…* while it runs, and a failure still lands inside the box.
+
+**Why the dropdown rather than leaving both documents on screen:** the flat list was answering two
+questions with one control, and the cost was not only height. A sentence was doing a control's job,
+and the **privacy warning was attached to one row rather than to the document** — so the contacts
+spreadsheet, the same data and the easier of the two to forward, carried the softer description.
+Naming the document is what makes that unnecessary rather than merely shorter.
+
+**The trade, made deliberately:** reaching the contacts sheet or the family statements is now three
+taps instead of one. Every other path is unchanged. A document that carries other people's private
+data should take a deliberate act; the safe one stays the default because callers list it first.
+
+**Not changed:** the admin side's own export menu (a different control on a different surface), and
+the tournament/house-league export menus. This is the coaches portal's control only.
+
+---
+
+## §93 · The roster is the first thing on the roster page again — on a phone
+
+**BUILT 2026-08-24 (dev).** Plan `docs/projects/active/COACH_ROSTER_PHONE_CHROME_PLAN.md` + PM brief.
+Approved mockup (interactive, true 390px, self-measuring):
+https://claude.ai/code/artifact/59f76b6b-9d4a-4fb4-a7f4-b3c66b7581de
+**No migration.** Measured after the build at 390px: chrome above the first player **244px**
+(estimated ~400px before), masthead **56px**, toolbar **one row**, no sideways scroll at any width.
+
+⚠ **Walk it on a phone, or a browser window narrowed to 390px.** Two of these were defects against
+rulings you already made, so they should read as repairs, not as changes.
+
+- [x] **The team bar is two lines, and the right-hand side is empty.** Open a team → **Roster**.
+      The bar reads team name + **HEAD COACH** on line one, club · season on line two. **No
+      "Next … practice" on the right.** Confirm the club name shortens with an ellipsis rather
+      than wrapping, and that no stray "·" opens a line.
+- [x] ⚠ **Game day is not an exception — this is your 2026-08-24 ruling, and it is the one to be
+      sure about.** On a team with a game inside its live window, the bar still shows **nothing**
+      on the right. Confirm you are happy that a coach at the field sees identity only.
+- [x] ⚠ **And that nothing was lost with it.** Same team, same moment: the **Schedule** tab on the
+      bottom bar → the game's row still wears its **Game day** action, and **Overview**'s card
+      still offers **Open game day**. Those are the doors the masthead link was a third copy of.
+- [x] **The public-site link is still there.** On a team that has a public site, the bar's right
+      corner still carries **Public site** on a phone. It shares the corner with the status but is
+      a door, so it was deliberately kept — confirm it survived.
+- [x] **The count, the toggle and the export are on ONE line, export at the right edge.** Roster
+      at 390px: *12 active players* · **List / Depth chart** · the export symbol, all one row,
+      the export **hard against the right margin**. Before this it sat on a third row, on the
+      **left**, under the toggle.
+- [x] ⚠ **On a team with inactive players it may take two rows, and that is deliberate.** The count
+      takes line one and the toggle + export share line two — never three, export still right.
+      Confirm the page **never scrolls sideways** at 361px.
+- [x] **Every export it offered before is still offered.** Tap it: same documents, same file types,
+      same plan and contacts gating. Nothing about picking changed.
+- [x] **One hint above the list, not two.** Only *"11 without a position — open a player…"* leads
+      the list. The reorder tip now sits **below** the players — confirm it reads as a footnote to
+      the arrows rather than a rule you must read first.
+- [x] **Desktop is untouched.** Widen to a full window: the bar's right-hand side is back with
+      *Next …* / *Game day* exactly as before, the toolbar is one row as it always was, and the
+      reorder tip is the only thing that moved (now under the table, mentioning **drag** rather
+      than the arrows).
+- [x] **Schedule got the same toolbar for free.** Schedule at 390px: List / Week / Month and the
+      export share one row, export right-pinned.
+
+**Why the whole slot rather than shrinking it:** it was tried twice. Allowing it to shrink printed
+the practice line **over** the season line; once it did shrink, the game-day door truncated to
+*"6:30 p.m. · O…"*. A door that ends in an ellipsis is not a door, which is what turned a carve-out
+I argued for into your ruling.
+
+**Not changed, deliberately:** the **Roster** title band (~72px — the biggest remaining saving on
+that screen). Removing it would break *"all forty coach screens open the same way"* and is the shape
+of direction D; it wants its own session across all forty screens.
+
+**✅ The guides were updated in the same pass** — walk these two as well, from a phone:
+
+- [x] **Help → "The bar across the top"** now says a phone bar is your team and season only, **on
+      game day too**, and points at Overview or Schedule for what is next. Confirm it matches what
+      you just saw on screen.
+- [x] **Help → "Game day: running the bench from your phone"** no longer tells you to tap a line in
+      the top bar. It names the **Schedule tab at the bottom** as the quickest way in at the field.
+- [x] ⚠ **Search still finds it by the OLD words.** In help search type *"next event in the header"*
+      or *"where did game day go"* — both should land on the right article. Those terms were kept
+      deliberately: a coach whose phone stopped showing it searches exactly that, so deleting the
+      term would have hidden the answer instead of correcting it.
+
+## §94 · The roster's view switcher stops wrapping on a phone
+
+**BUILT 2026-08-24 (dev).** Owner ruling of the same day, from a phone screenshot. No migration.
+
+⚠⚠ **THIS SUPERSEDES TWO CHECKBOXES IN §93, WHICH REBUILT THIS SAME ROW EARLIER THE SAME DAY.**
+§93 got the count, the toggle and the export onto one line at 390px — and the way it bought that
+row was by letting the SWITCHER shrink: `min-width: 0` lets those buttons narrow past their own
+labels, so "Depth chart" broke into two lines inside its button. That is what the screenshot
+showed. Do not walk §93's *"The count, the toggle and the export are on ONE line"* or its *"on a
+team with inactive players it may take two rows"* — on a phone the count is no longer in that row
+at all, so neither describes the product any more. Everything else in §93 stands.
+
+- [x] **Roster on a phone: "Depth chart" reads on one line.** Open Roster at 390px, and again at
+      361px. The **List / Depth chart** switcher sits at the left, **Export** hard against the
+      right margin, one row, and neither label wraps inside its own button.
+- [x] **The count is gone on a phone, and only on a phone.** *"12 active players · 2 inactive"*
+      still leads the list on a tablet and on desktop, in one row with the controls exactly as §93
+      left it. ⚠ On a phone it is now nowhere — the header carries no subtitle, by the 2026-08-11
+      ruling — so a phone coach counts by looking at the list underneath. That is the trade, taken
+      deliberately: a control that looks broken costs more than a number the list already shows.
+- [x] **A team with inactive players no longer takes two rows on a phone.** §93 accepted that
+      degradation; with the count out of the row it cannot happen. Confirm one row at 361px, and
+      **no sideways scroll** at any width.
+- [x] **Nothing else lost its count.** The player page still shows *"#7 · Age 12"* under the name
+      at every width — it wears the same text style, and only Roster opts in to yielding.
+- [x] **Schedule's toolbar is untouched** at every width — List / Week / Month on the left, export
+      right-pinned, exactly as §93 left it.
+
+**§89 / §90 closed by the owner 2026-08-24**, walked live across three rounds of drawings. Two
+items deliberately left unticked, neither a blocker:
+
+- The family panel's **"someone is waiting"** behaviour needs a real pending follow request to see;
+  spot-check it the first time one arrives.
+- **The other six coach form modals** still carry the same 40px of dead air above their footers
+  (Award types, Give an award, Budget items, Money tags, the award icon picker, the Schedule event
+  form). Sweeping them is a portal-wide visual change and is the owner's call.
+
+**Housekeeping owed:** `.recordMoneyBtn` is now a transitional alias for `.headerPrimaryBtn`. The
+Money hub's Record button was left pointing at the old name because that file is carrying another
+session's in-flight work; point it at the new name and delete the alias once that lands.

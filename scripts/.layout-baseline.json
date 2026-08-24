@@ -1,6 +1,466 @@
 {
-  "generated": "2026-08-21T18:41:43.992Z",
+  "generated": "2026-08-24T14:39:25.808Z",
   "entries": {
+    "coach-roster|361|tap-floor|a·Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Avery Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Avery Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Blake Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Blake Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Casey Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Casey Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Devon Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Devon Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Emerson Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Emerson Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Frankie Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Frankie Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Gray Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Gray Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Harper Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Harper Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Indigo Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Indigo Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Jules Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Jules Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Kai Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Kai Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Logan Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Logan Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Avery Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Avery Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Blake Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Blake Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Casey Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Casey Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Devon Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Devon Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Emerson Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Emerson Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Frankie Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Frankie Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Gray Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Gray Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Harper Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Harper Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Indigo Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Indigo Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Jules Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Jules Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Kai Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Kai Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Logan Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Logan Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Add event": {
+      "reason": "As coach-roster Add player — grandfathered desktop height; clears 44 at <=640. Renamed from \"Add Event\" by the phone-symbol aria-label.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Help: Schedule": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·List": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Month": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Export": {
+      "reason": "As coach-roster Export — one coach control in place of the admin split button's two.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 4 · 6:00 p.m.vs Ridgeview6–3WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 10 · 6:00 p.m.vs Lakeside4–3WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 16 · 6:00 p.m.vs Northgate2–5LOSS": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 22 · 6:00 p.m.vs Fairhaven3–3TIE": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Apr 28 · 6:00 p.m.vs Westbrook8–2WIN": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 4 · 6:00 p.m.vs Ridgeview1–2LOSS": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 5 · 7:00 p.m.Team practice 1": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 12 · 7:00 p.m.Team practice 2": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 19 · 7:00 p.m.Team practice 3": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 26 · 7:00 p.m.Team practice 4": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·May 29 · 7:00 p.m.Team practice 5": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-schedule|768|tap-floor|button·Aug 23 · 9:34 p.m.UAT probe practice": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Add player": {
+      "reason": "Page-header primary at the portal's grandfathered desktop control height. The 44px floor is enforced at <=640, where this measures 44 (house rule 4, 2026-08-23). Renamed from \"Add Player\" when it gained an aria-label for the phone symbol.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Import": {
+      "reason": "Header secondary at the grandfathered desktop height; absent below 640 by house rule 1, so a finger never meets it.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Help: Roster": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Create link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Staff only": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Families": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Public link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·List": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Depth chart": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Export": {
+      "reason": "List-toolbar export at the grandfathered desktop height; clears 44 at <=640 via .listToolbarEnd. REPLACES two entries (\"Export as Excel\" + \"More export formats\") — the admin split button became one coach control.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Drag to reorder": {
+      "reason": null,
+      "detail": "23px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|button·Deactivate": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
     "mkt-home|361|contrast|span·HQ·rgba(148, 163, 184, 0.5)on10,10,10": {
       "reason": "The \"HQ\" of the FieldLogicHQ wordmark. WCAG 1.4.3 exempts text that is part of a logo or brand name, and this segment is deliberately the quietest of the three so the mark reads FIELD-LOGIC-hq. Accepted 2026-08-21 (QA §68 follow-up triage).",
       "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
@@ -668,10 +1128,6 @@
     "coach-transactions|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Add": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "coach-payables|768|tap-floor|button·Import": {
       "reason": null,
@@ -2017,10 +2473,6 @@
       "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-fundraiser|768|tap-floor|button·Log amount": {
-      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons.",
-      "detail": "26px tall (floor 44)"
-    },
     "coach-fundraisers|361|tap-floor|a·Bottle drive": {
       "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
       "detail": "24px tall (floor 44)"
@@ -3121,530 +3573,6 @@
       "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-roster|361|tap-floor|a·Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Create link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Avery Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Avery Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Blake Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Blake Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Casey Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Casey Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Devon Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Devon Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Emerson Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Emerson Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Frankie Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Frankie Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Gray Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Gray Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Harper Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Harper Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Indigo Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Indigo Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Jules Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Jules Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Kai Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Kai Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Logan Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Logan Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Public link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Staff only": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Create link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Avery Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Avery Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Blake Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Blake Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Casey Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Casey Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Devon Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Devon Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Emerson Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Emerson Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Frankie Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Frankie Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Gray Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Gray Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Harper Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Harper Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Indigo Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Indigo Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Jules Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Jules Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Kai Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Kai Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Logan Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Logan Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Public link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Staff only": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|a·Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Add Player": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Create link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Deactivate": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Drag to reorder": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Public link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|768|tap-floor|button·Staff only": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Add Event": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Aug 5 · 4:02 p.m.UAT probe practice": {
-      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: desktop-only (≥768) event-chip row at the portal-wide grandfathered compact control height — the same decision the migrated header controls are held to. Phones already clear the 44px floor. Reopening it is the one owner ruling still owed (plan §5b).",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Help: Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
     "coach-settings-lineups|768|tap-floor|button·Help: Team settings": {
       "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
       "detail": "34px tall (floor 44)"
@@ -3808,6 +3736,10 @@
     "coach-team-hub|361|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Record": {
+      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons. · RE-KEYED 2026-08-23 (money centralization P2): the same control, renamed \"Log amount\" → \"Record\" when every door onto the recording conversation converged on one verb. Nothing about its size or placement changed.",
+      "detail": "26px tall (floor 44)"
     }
   }
 }

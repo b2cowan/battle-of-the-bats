@@ -1,7 +1,47 @@
 # Coach Portal — Page-Level Action Consistency
 
-**Status:** approved design · **Phase 1 (Money hub) BUILT on dev 2026-08-13**, owner QA pending
-(`OWNER_QA_LEDGER.md`); Phases 2–4 not started · owner-approved 2026-08-13
+**Status:** approved design · **Phase 1 (Money hub) BUILT on dev 2026-08-13** · **Phase 2
+(Roster + Schedule) BUILT on dev 2026-08-23** — owner QA pending for both (`OWNER_QA_LEDGER.md`);
+Phases 3–4 not started · owner-approved 2026-08-13, extended by the four house rules below
+2026-08-23
+
+---
+
+## 0. THE FOUR HOUSE RULES (owner ruling 2026-08-23, binding, portal-wide)
+
+Three of these were Money-only rulings that the owner generalised on sight of the Money hub's own
+phone header. The fourth is new. **They take precedence over §3's twelve rules where they overlap**
+— specifically they replace rule 3's ordering and settle where Export lives for every screen.
+
+1. **Import lives in the page header, and never on a phone.** One right answer per screen wherever
+   you are standing; it hides below 640px because picking a file is desktop work.
+   ⚠ **Condition, not a nicety:** every empty state must keep offering its paste-a-block path at
+   390px. Both importers carry that mode *because phones have no file picker*; hiding the header
+   button without it deletes the path rather than tidying it.
+2. **Export lives in the toolbar above what it exports, pinned right, at every width — never in a
+   page header.** This is a PLACEMENT rule, not a contents one, and that distinction is the whole
+   point. Schedule's export takes the whole season in every view, so the older "does its content
+   vary with the view?" test said *header* while this rule says *toolbar*. One place to look wins:
+   a coach should never have to work out which kind of export a screen has.
+   ⚠ **Cut a phone's exports by FILE TYPE, not by width.** A spreadsheet lands in a downloads
+   folder nobody opens; a roster PDF is held up to a parent and an `.ics` syncs a season into the
+   phone in their hand. Deleting exports wholesale on phones was considered and rejected — it
+   would remove the single most useful control on Schedule at 390px.
+3. **On a phone, words become symbols — header and toolbar alike.** "+ Add Event" → "+"; Export →
+   a download arrow. The words survive as the accessible name. **The symbol changes when the
+   ACTION changes**: Schedule's phone control writes into a calendar rather than downloading a
+   file, so it wears a calendar mark. Same rule, truthful icon.
+   *(Considered and overruled: keeping one word on the toolbar control. Money already ships the
+   bare glyph on all seven tabs, and two conventions for one control is the worse outcome.)*
+4. **The create sits in the page header beside the "?", and it goes FIRST.** At every width. On a
+   phone it keeps the title line's corner rather than taking a row of its own, so the band above a
+   coach's first line of content stays one line tall. Net phone header, every screen:
+   **title · symbol · "?"** and nothing else.
+
+**Why create-first rather than §3 rule 3's "in, out, then primary":** that sequence existed to keep
+import and export paired. House rule 2 moved export out of the header, so the header holds two
+things, not three, and there is no pair left to sequence. Matching the shipped Money screen is worth
+more than preserving a rule whose reason has gone.
 **Binding visual spec:** `claude.ai/code/artifact/44162825-32ef-4744-90dc-7939ee635e9e`
 (source: `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html`)
 **PM brief:** `COACH_HEADER_ACTIONS_CONSISTENCY_PM_BRIEF.md`
@@ -342,3 +382,89 @@ sequential; each is independently shippable.
   **Not built here (correctly deferred):** the §6 guard test pins header actions per screen and
   belongs with Phase 4, once every screen is in its final shape — pinning half a portal would
   encode the state Phases 2–3 are about to change.
+
+- **2026-08-23** — **the four house rules taken** (§0), from the owner reading Money's own phone
+  header back to it. Export leaving the page header is the load-bearing change: §4.3's "Schedule is
+  already correct in placement" is **superseded**, and so is the narrower contents-vary test that
+  sentence rested on.
+
+- **2026-08-23** — **Phase 2 built on dev (Roster + Schedule).** Delivered in full:
+
+  **A shared control, not a third one.** `CoachExportButton` is now the portal's one export
+  control — the coach trigger at the 44px tap floor, the icon-only phone label, the per-choice
+  phone FILE rule, plan-gating, the Save-As dialog and the busy/error path. **`MoneyExportButton`
+  became a thin wrapper over it**, so the Money hub's seven tabs kept their money-shaped props and
+  **no Money call site moved** — the money-specific part that survives there is the format
+  vocabulary, the shape of a money download and the team-resolved PDF branding fetch. Both screens
+  dropped the tournament-admin `ExportMenu`, which is why they looked like a different product:
+  it is a different component, and it pins its trigger to 32px with `!important` at ≤760px. §5.1's
+  known conflict is now **resolved for the coach portal**.
+
+  **Roster** — gained Import in the header (the bulk-add sheet that existed only in the empty state
+  and behind a door inside Add Player; a coach entering fifteen tryout graduates in September could
+  not find it). **Header ungated from `view === 'list'`** — the whole group used to vanish in the
+  depth chart, including an export whose contents are identical in both views. Export moved to the
+  list toolbar, which is what makes that fix free: the row renders in both views.
+
+  **Schedule** — Export moved to the List/Week/Month row. On a phone it becomes a **calendar mark**
+  and the `.ics` is the only survivor; the two spreadsheets and Import drop out.
+
+  **Two shared pieces:** `.headerPrimaryBtn` (renamed from `.recordMoneyBtn` — named for the slot,
+  not the screen it was first built for; §5.2's header geometry, now carried by every page's
+  create) and `.listToolbarEnd` (§5.3's row-end slot, holding a view toggle and that list's export
+  together).
+
+  **⚠ The rendered sweep earned its keep again.** The new export landed at **30px at 390** —
+  the portal enforces its tap floor through the SURFACE a control sits on (`.pageHeaderActions`,
+  `.panelToolbarActions`), and a list toolbar was neither, so nothing reached it. Invisible to
+  typecheck, lint and every file-reading gate. Fixed on `.listToolbarEnd` so the slot carries the
+  floor for whatever lands in it. **Net baseline movement: 18 phone tap-floor entries removed, 0
+  added** (the admin split button's two controls became one, and stale toggle entries pruned).
+
+  **Not built here:** the §6 guard test still rides Phase 4. `check:layout`'s baseline gained 13
+  entries at 768 that are **fixture drift, not this change** — the sweep's signature includes a
+  schedule row's date text, and the seeded season re-anchors.
+
+- **2026-08-24** — **`/review` run** (high-risk tier, 4 lenses: correctness · security/PII ·
+  blast-radius · concurrency). **One High confirmed and fixed; no Criticals.**
+
+  **The High, and why it only appeared once Export moved:** the export dialog closed itself on a
+  URL change, a guard written for Money — where every tab lives at ONE path and moves by
+  `?section=`. Roster and Schedule move by **path** (`/teams/A/roster` → `/teams/B/roster`), where
+  the query string is identical, so the guard never fired. These pages **do not remount on a team
+  switch** (the roster page's own sequence-token comment says so, and that guard covers response
+  ordering, not this). The dialog covers the screen and names no team, so a coach could not see the
+  switch happen behind it: left open across a back-navigation, **"Roster with contacts" would have
+  run against the PREVIOUS team's players — still in state until the new fetch lands — into a file
+  already titled for the team just moved to.** A cross-team document of children's birthdates and
+  guardian emails, two ordinary taps. Fixed by watching pathname as well as query string, which is
+  correct on every surface. ⚠ The old anchored dropdown had the same blind spot; the full-screen
+  dialog is what made it both reachable and undetectable.
+
+  **Refuted (1):** that the new `.listToolbarEnd` tap floor "unreviewedly" grew Roster's
+  List / Depth-chart pills. It grew them **on purpose** — those were recorded sub-44px violations
+  and the rendered baseline lost them on this run. `.segChoice` was the instance missed by the
+  2026-08-15 ruling whose own comment claimed "every view toggle in the portal gains it". The
+  comment was rewritten to say so, since it had justified the rule only in terms of the export.
+
+  **Raised, not defects:** (1) Roster's plan-gated PDF rows changed from **shown-and-locked with an
+  upgrade tooltip** (the admin control's behaviour) to **absent** — this is the portal's own
+  "absent, not locked" ruling arriving on Roster, and it removes an in-context upgrade nudge.
+  Flagged for the owner rather than decided here. (2) Schedule's events fetch has **no
+  sequence-token guard** where Roster has one — **pre-existing**, unchanged by this work, and worth
+  its own unit of work.
+
+  **Gate:** typecheck ✓ · focused lint ✓ (0 errors; warnings all pre-existing) · `check:layout`
+  ✓ on both screens · CSS purity, token, contrast, dictionary, org-context, demos ✓ ·
+  schema parity ✗ **pre-existing** (other sessions' dev-only migrations; this change adds none).
+
+- **2026-08-24** — **`/docs` run.** Three guides named things that had moved: Roster's bulk-add
+  article called its door **"Add players"** (it is **Import**, and the article never said where it
+  was); Schedule's import article said **"tap Import (beside Export)"**, which stopped being true
+  the moment Export left the header; and Money's imports article opened by claiming Import *and*
+  Export "sit at the top of Money" before correcting itself two sentences later — now rewritten to
+  state the portal rule once. Search keywords added for the questions the move creates ("where did
+  export go", "paste your roster gone", "no import on my phone"). The roster article crossed the
+  350-word standard when it gained the phone paragraph and was tightened back under.
+  **Demo sandbox checked and clean:** the coach tour anchors nowhere near these rows and no dock
+  copy names a moved button — verified, not assumed.

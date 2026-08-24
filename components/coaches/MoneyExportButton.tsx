@@ -1,33 +1,21 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import { Download, X } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
-import { hasPlanFeature } from '@/lib/plan-features';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { downloadMoneyExport, type MoneyDownload, type MoneyExportFormat } from '@/lib/coach-money-exports';
 import { fetchResolvedPdfSettings, type OrgPdfSettings } from '@/lib/export';
-import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
-import styles from './MoneyExportButton.module.css';
+import CoachExportButton, { type CoachExportChoice } from './CoachExportButton';
 
 /**
- * The ONE Export control in the Money hub — one per tab, sitting in that tab's own control row.
+ * The Money hub's Export control — one per tab, sitting in that tab's own control row.
  *
- * ⚠ IT LIVES ON THE TAB, NOT IN THE HUB HEADER, and that is a decision with history (owner ruling
- * 2026-08-13, mockup artifact 96675523). A single hub-wide Export menu was built first and could
- * not survive the screens: Budget vs. Actual has two shapes and four readings, Budget Plan has
- * two, Expenses has three sub-tabs and a tag filter. A menu above the tab bar can see none of it,
- * so it offered a generic version and hoped — which is how Budget vs. Actual ended up with two
- * buttons both labelled "Export" producing different files.
+ * ⚠ SINCE 2026-08-23 THIS IS A THIN WRAPPER over `CoachExportButton`, which is now the portal's
+ * one export control (house rule 2). Everything about how the control LOOKS and BEHAVES — the
+ * trigger, the tap floor, the icon-only phone label, the phone file rule, the Save-As dialog, the
+ * busy/error path — lives there and is shared with Roster and Schedule. What survives here is the
+ * part that is genuinely about MONEY: the format vocabulary, the shape of a money download, and
+ * the team-resolved PDF branding fetch.
  *
- * IMPORT stayed in the header, because it genuinely is hub-wide: what you bring in does not depend
- * on anything you have arranged on screen. Export always does. **The test for any future door: if
- * the answer changes with what the coach is looking at, it belongs beside what they are looking
- * at.**
- *
- * The caller passes the rows it already has on screen. This component owns everything that must
- * not be re-decided per tab: PDF plan-gating, the phone rule, the file-type dialog, and the one
- * download path.
+ * The seven Money tabs' props are unchanged, deliberately — this rewrite moved no call site.
  */
 export default function MoneyExportButton({
   /** What is being exported, in the coach's words — titles the dialog ("Export Player dues"). */
@@ -49,14 +37,20 @@ export default function MoneyExportButton({
   /** Overrides the PDF row's hint in the file-type dialog. Required when `build` varies by format. */
   pdfHint,
   /**
-   * A DIFFERENT DOCUMENT this view can also produce on paper — offered in the same dialog,
-   * under the file types, so the tab keeps its ONE Export control (owner ruling 2026-08-13)
-   * while the dialog stays the honest place to say what each choice is. First caller: the
-   * Dues tab's per-family statements beside its team sheet. PDF-only by nature, so it is
-   * plan-gated and phone-kept exactly like the pdf row; this component still owns the
-   * settings fetch and the busy/error path.
+   * A DIFFERENT DOCUMENT this view can also produce on paper — offered in the same dialog, under
+   * the file types, so the tab keeps its ONE Export control (owner ruling 2026-08-13) while the
+   * dialog stays the honest place to say what each choice is. First caller: the Dues tab's
+   * per-family statements beside its team sheet. PDF-only by nature, so it is plan-gated and
+   * phone-kept exactly like the pdf row.
    */
   secondaryPdf,
+  /**
+   * What this view's OWN document is called in the picker, when `secondaryPdf` gives the dialog a
+   * second one to choose between — "Team sheet" beside "Family statements". Falls back to the
+   * dialog's label, which reads fine for a view whose document has no shorter name of its own.
+   * Unused when there is no second document: one document gets no picker.
+   */
+  primaryDocument,
   disabled = false,
   className,
 }: {
@@ -65,253 +59,89 @@ export default function MoneyExportButton({
   build: (format: MoneyExportFormat) => Omit<MoneyDownload, 'orgLabel' | 'pdfSettings'>;
   pdfHint?: string;
   secondaryPdf?: {
-    /** In the coach's words — "Family statements". */
+    /** In the coach's words, and now the name of a DOCUMENT — "Family statements". */
     label: string;
-    /** What it is and who it's for — this dialog is the only place the coach is told. */
-    hint: string;
     run: (pdfSettings: OrgPdfSettings | null) => Promise<void>;
   };
+  primaryDocument?: string;
   disabled?: boolean;
   className?: string;
 }) {
   const { currentOrg } = useOrg();
-  const canUsePdf = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-
-  // PDF resolves to ABSENT, not locked, on a plan without it — nothing to offer beats a button
-  // that refuses.
-  const available = formats.filter(f => f !== 'pdf' || canUsePdf);
-
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<MoneyExportFormat | 'secondary' | null>(null);
-  const [error, setError] = useState('');
 
   /**
-   * ⚠ CLOSE THE DIALOG WHENEVER THE URL MOVES — this is not tidiness, it prevents a portal-wide
-   * lock-up (/review finding, 2026-08-13).
-   *
-   * Money tabs stay MOUNTED once visited (`display:none` while inactive), so a dialog left open
-   * on a tab the coach navigates away from stays mounted too — invisible, but still registered
-   * in the portal's shared overlay counter. That counter is what pins `body { overflow: hidden }`
-   * and hides the bottom nav, and it lives at the coaches-LAYOUT level, so it survives the tab
-   * change. The result would be a coach unable to scroll anywhere in the portal, with nothing on
-   * screen explaining why, until they found their way back to that tab or reloaded.
-   *
-   * The backdrop swallows ordinary clicks, so the reachable route is the BROWSER'S BACK BUTTON
-   * (or an Android/iOS back gesture) — which changes `?section=` without touching the dialog.
-   * Watching the search params catches every such navigation.
-   */
-  const closeDialog = useCallback(() => setOpen(false), []);
-  const searchParams = useSearchParams();
-  const navKey = searchParams.toString();
-  useEffect(() => { closeDialog(); }, [navKey, closeDialog]);
-
-  /**
-   * Team-resolved PDF branding (D4: team look → club look → defaults), fetched AT EXPORT
-   * TIME — never on mount (one of these buttons sits on every Money tab and they all stay
-   * mounted once visited), and deliberately uncached: those tabs live for a whole session,
-   * and a remembered copy would keep printing a look the coach has since changed in
-   * "How your documents look". An export is a click; one small GET is nothing. The button
-   * always lives under /teams/[teamId], so the route params carry the team.
+   * Team-resolved PDF branding (D4: team look → club look → defaults), fetched AT EXPORT TIME —
+   * never on mount (one of these buttons sits on every Money tab and they all stay mounted once
+   * visited), and deliberately uncached: those tabs live for a whole session, and a remembered
+   * copy would keep printing a look the coach has since changed in "How your documents look". An
+   * export is a click; one small GET is nothing. The button always lives under /teams/[teamId], so
+   * the route params carry the team.
    */
   const { teamId } = useParams<{ teamId: string }>();
   async function loadPdfSettings(): Promise<OrgPdfSettings | null> {
     if (!currentOrg || !teamId) return null;
-    // Branding is a nicety — a failed fetch resolves null and the document falls back to
-    // the shared defaults rather than being denied.
+    // Branding is a nicety — a failed fetch resolves null and the document falls back to the
+    // shared defaults rather than being denied.
     return fetchResolvedPdfSettings(`/api/coaches/${currentOrg.slug}/teams/${teamId}/pdf-settings`);
   }
 
-  if (available.length === 0) return null;
-
-  async function run(format: MoneyExportFormat) {
-    setBusy(format);
-    setError('');
-    try {
-      await downloadMoneyExport(format, {
-        ...build(format),
+  const choices: CoachExportChoice[] = formats.map(f => ({
+    id: f,
+    name: FORMATS[f].label,
+    ext: FORMATS[f].ext,
+    /* ⚠ THE ONLY HINT LEFT IN THIS DIALOG, and it is not an explanation — it is a warning. A view
+       whose PDF is a DIFFERENT document says so before the coach picks: the Months view's PDF is
+       the whole-season statement, because a month grid does not fit paper (owner ruling
+       2026-08-21). Everything else says its name and its extension and nothing more. */
+    hint: (f === 'pdf' && pdfHint) || undefined,
+    /* One document per view, unless the view offers a second one below — then both are named so
+       the dialog can put a picker on top instead of a sentence in the middle. */
+    document: secondaryPdf ? (primaryDocument ?? label) : undefined,
+    phone: f === 'pdf' ? 'keep' : 'drop',
+    feature: f === 'pdf' ? 'pdf_exports' : undefined,
+    run: async () => {
+      await downloadMoneyExport(f, {
+        ...build(f),
         orgLabel: currentOrg?.slug ?? '',
-        pdfSettings: format === 'pdf' ? await loadPdfSettings() : null,
+        pdfSettings: f === 'pdf' ? await loadPdfSettings() : null,
       });
-      setOpen(false);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'That export could not be built.');
-    } finally {
-      setBusy(null);
-    }
-  }
+    },
+  }));
 
-  async function runSecondary() {
-    if (!secondaryPdf) return;
-    setBusy('secondary');
-    setError('');
-    try {
-      await secondaryPdf.run(await loadPdfSettings());
-      setOpen(false);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'That export could not be built.');
-    } finally {
-      setBusy(null);
-    }
+  if (secondaryPdf) {
+    choices.push({
+      id: 'secondary',
+      /* The DOCUMENT carries this view's second name; the row itself is just its file type. */
+      document: secondaryPdf.label,
+      name: 'PDF',
+      ext: '.pdf',
+      phone: 'keep',
+      feature: 'pdf_exports',
+      run: async () => { await secondaryPdf.run(await loadPdfSettings()); },
+    });
   }
 
   return (
-    <>
-      {/* ⚠ `data-phone` carries the phone rule (2026-08-13 decision 4, restated once Export moved
-          off the header): a phone is offered an export only where the file is something a coach
-          can READ, SHOW or SEND. A spreadsheet lands in a downloads folder nobody opens on a
-          phone; a PDF dues statement is held up to a parent. Enforced in CSS rather than by
-          measuring the viewport in JS, which would differ between the server and the browser on
-          first paint. */}
-      <button
-        type="button"
-        className={`${shared.btnSecondary} ${styles.trigger}${className ? ` ${className}` : ''}`}
-        data-phone={available.includes('pdf') ? 'keep' : 'drop'}
-        disabled={disabled}
-        onClick={() => { setError(''); setOpen(true); }}
-        /* Icon-only on phones like every toolbar secondary (`.headerBtnLabel`, page-header
-           ruling mechanism) — this trigger sits on all seven Money tabs, so the label rule
-           lives here once rather than per caller. */
-        aria-label="Export"
-      >
-        <Download size={14} aria-hidden /> <span className={shared.headerBtnLabel}>Export</span>
-      </button>
-
-      {open && (
-        <ExportFormatDialog
-          label={label}
-          formats={available}
-          pdfHint={pdfHint}
-          // A PDF-only document resolves to ABSENT on a plan without pdf_exports, same as the
-          // pdf row above it.
-          secondaryPdf={canUsePdf ? secondaryPdf : undefined}
-          busy={busy}
-          error={error}
-          onPick={f => { void run(f); }}
-          onPickSecondary={() => { void runSecondary(); }}
-          // Stable, so the dialog's Escape listener is attached once rather than torn down and
-          // re-added on every re-render of the panel this button lives in.
-          onClose={closeDialog}
-        />
-      )}
-    </>
+    <CoachExportButton
+      label={label}
+      choices={choices}
+      disabled={disabled}
+      className={className}
+    />
   );
 }
 
 /**
- * How each file type introduces itself. Every one says what it is FOR, because this dialog is the
- * only place a coach is asked to choose and "CSV" alone means nothing to most of them.
- */
-const FORMATS: Record<MoneyExportFormat, { label: string; hint: string; ext: string }> = {
-  xlsx: { label: 'Excel', hint: 'Best for working with the numbers', ext: '.xlsx' },
-  csv:  { label: 'CSV',   hint: 'Plain text — opens in any spreadsheet', ext: '.csv' },
-  pdf:  { label: 'PDF',   hint: 'A printable document you can share', ext: '.pdf' },
-};
-
-/**
- * "Choose a file type" — the Save As dialog, which is where picking a format belongs.
+ * What each file type is called.
  *
- * ⚠ TWO IN-MENU ATTEMPTS FAILED BEFORE THIS (owner, 2026-08-13): format chips on every row turned
- * three file types into twelve buttons, and a quieter default-label-plus-overflow still printed
- * something beside all five names. **Anything drawn beside every item in a list is drawn as many
- * times as the list is long.** A dialog has room to explain itself and repeats nothing.
+ * ⚠ THE SENTENCES ARE GONE (owner ruling 2026-08-24). Each row used to introduce itself — "Best
+ * for working with the numbers", "Plain text — opens in any spreadsheet" — on the theory that the
+ * dialog is the only place a coach is asked to choose. Three rows of that is a paragraph in a box
+ * whose whole job is to be quick, and nobody picks Excel for a reason the sentence would change.
+ * What survives is per-VIEW and only where the file is not what the row implies: `pdfHint`.
  */
-function ExportFormatDialog({
-  label,
-  formats,
-  pdfHint,
-  secondaryPdf,
-  busy,
-  error,
-  onPick,
-  onPickSecondary,
-  onClose,
-}: {
-  label: string;
-  formats: MoneyExportFormat[];
-  pdfHint?: string;
-  secondaryPdf?: { label: string; hint: string };
-  busy: MoneyExportFormat | 'secondary' | null;
-  error: string;
-  onPick: (format: MoneyExportFormat) => void;
-  onPickSecondary: () => void;
-  onClose: () => void;
-}) {
-  useOverlayOpen(true);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className={`${shared.modalOverlay} ${shared.centeredOnMobile}`}
-      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      {/* A hand-rolled title+X row, NOT CoachModalHeader — that component is for SHEET modals and
-          its own contract says a centered dialog keeps the simple row instead. */}
-      <div className={`${shared.modal} ${styles.dialog}`} role="dialog" aria-modal="true" aria-label={`Export ${label}`}>
-        <div className={shared.modalHeader}>
-          <h2 className={shared.modalTitle}>Export {label}</h2>
-          <button type="button" className={shared.modalCloseBtn} aria-label="Close without exporting" onClick={onClose}>
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-        <p className={styles.intro}>Choose a file type.</p>
-        <div className={styles.list}>
-          {formats.map(f => {
-            const spec = FORMATS[f];
-            return (
-              <button
-                key={f}
-                type="button"
-                className={styles.choice}
-                // Same phone rule, one level in: on a phone the spreadsheet formats are not
-                // offered even for a dataset that also makes a PDF.
-                data-phone={f === 'pdf' ? 'keep' : 'drop'}
-                disabled={busy !== null}
-                onClick={() => onPick(f)}
-              >
-                <span className={styles.name}>
-                  {spec.label}
-                  <span className={styles.ext}>{spec.ext}</span>
-                </span>
-                <span className={styles.hint}>
-                  {busy === f
-                    ? 'Preparing your file…'
-                    /* A view whose PDF is a DIFFERENT document says so here, before the coach
-                       picks — the one place they are asked to choose is the only honest place
-                       to tell them. */
-                    : (f === 'pdf' && pdfHint) || spec.hint}
-                </span>
-              </button>
-            );
-          })}
-          {/* A DIFFERENT document from the same view — under the file types, introduced as
-              such. A PDF by nature: same phone rule as the pdf row. */}
-          {secondaryPdf && (
-            <>
-              <p className={styles.intro} data-phone="keep" style={{ marginTop: '0.6rem' }}>Or a different document:</p>
-              <button
-                type="button"
-                className={styles.choice}
-                data-phone="keep"
-                disabled={busy !== null}
-                onClick={onPickSecondary}
-              >
-                <span className={styles.name}>
-                  {secondaryPdf.label}
-                  <span className={styles.ext}>.pdf</span>
-                </span>
-                <span className={styles.hint}>
-                  {busy === 'secondary' ? 'Preparing your file…' : secondaryPdf.hint}
-                </span>
-              </button>
-            </>
-          )}
-        </div>
-        {error && <p className={`${shared.errorText} ${styles.error}`} role="status">{error}</p>}
-      </div>
-    </div>
-  );
-}
+const FORMATS: Record<MoneyExportFormat, { label: string; ext: string }> = {
+  xlsx: { label: 'Excel', ext: '.xlsx' },
+  csv:  { label: 'CSV',   ext: '.csv' },
+  pdf:  { label: 'PDF',   ext: '.pdf' },
+};

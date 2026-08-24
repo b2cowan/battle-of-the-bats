@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle, Upload } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -32,7 +32,7 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
   ROSTER_WALL_HEADERS, rosterContactHeaders,
 } from '@/lib/export';
-import ExportMenu from '@/components/admin/ExportMenu';
+import CoachExportButton from '@/components/coaches/CoachExportButton';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
@@ -544,44 +544,100 @@ export default function RosterPage({
    * below still gates the rest of this row — so it was a door that vanished depending on
    * which toggle the coach had last pressed.
    */
-  const rosterHeaderActions = view === 'list' && (
+  /**
+   * ⚠ THE HEADER HOLDS THE CREATE AND THE IMPORT, AND NOTHING ELSE (house rules 1 and 4, owner
+   * ruling 2026-08-23). Two changes from what shipped before, both of them defects rather than
+   * drift:
+   *
+   *  - **It is no longer gated on `view === 'list'`.** The whole group used to vanish in the
+   *    depth-chart view, including an export whose contents are identical in both. A coach who
+   *    had last pressed the other toggle simply had no actions.
+   *  - **Import is here at all.** Bulk-add existed only in the empty state — gone the moment one
+   *    player exists — and behind a door inside the Add Player sheet. A coach entering fifteen
+   *    tryout graduates in September could not find it.
+   *
+   * Export is deliberately absent: it lives in the list toolbar with the list it exports.
+   */
+  const rosterHeaderActions = (
     <>
-      <ExportMenu
-        formats={['xlsx', 'csv', 'pdf']}
-        onExportXLSX={handleExportXLSX}
-        onExportCSV={handleExportCSV}
-        onExportPDF={handleExportPDF}
-        pdfLabel="Team roster (PDF)"
-        pdfHint="Names, numbers and positions — safe to pin up"
-        /* The contacts sheet is a second DOCUMENT, and only for a coach cleared for family
-           contacts. Withholding it is also what retires the old defect where an assistant
-           without that grant printed four empty columns: the wall copy has no private columns
-           to leave blank, and this row is simply absent. */
-        onExportSecondaryPDF={canSeePii ? handleExportContactsPDF : undefined}
-        secondaryPdfLabel="Roster with contacts (PDF)"
-        secondaryPdfHint="Adds dates of birth and guardian contacts — for league or insurance"
-        hasSensitiveOption={canSeePii}
-        sensitiveOptionLabel="Excel with contact details"
-        onExportXLSXWithSensitive={canSeePii ? handleExportXLSXWithSensitive : undefined}
-        /* No `sensitiveFeatureKey`: these are the coach's OWN team's families. Locking a
-           standalone coach out of their own contact list would be the wrong fix — the grant
-           above (`rosterPii`) is the right gate here. Checked alongside the rep-teams row that
-           this pass DID lock. */
-        planId={currentOrg?.planId}
-        pdfFeatureKey="pdf_exports"
-        disabled={players.length === 0}
-      />
       {canWriteRoster && (
         <button
           type="button"
-          className="btn btn-lime"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
+          className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
+          /* House rule 3: the words go on a phone and the aria-label carries them. */
+          aria-label="Add player"
           onClick={openAdd}
         >
-          <Plus size={15} aria-hidden /> Add Player
+          <Plus size={15} aria-hidden />
+          <span className={styles.headerBtnLabel}>Add Player</span>
         </button>
       )}
+      {/* House rule 1 — picking a file is desktop work, so this hides below 640px while the
+          create keeps the corner. The path is NOT lost: the empty state's own paste door stays
+          at every width, which is the condition the rule depends on. */}
+      {canWriteRoster && (
+        <span className={styles.headerActionWideOnly}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={() => setBulkOpen(true)}
+          >
+            <Upload size={14} aria-hidden /> Import
+          </button>
+        </span>
+      )}
     </>
+  );
+
+  /**
+   * House rule 2 — the export sits above the list it exports, pinned right in that list's own
+   * toolbar, at every width. Being in a row that renders in BOTH views is also what stops it
+   * disappearing into the depth chart.
+   *
+   * The phone rule is per choice: the wall copy and the contacts sheet survive (a coach shows or
+   * sends a PDF), the two spreadsheets do not.
+   */
+  const rosterExport = (
+    <CoachExportButton
+      label="Roster"
+      disabled={players.length === 0}
+      /* TWO DOCUMENTS, and the picker in the dialog is what separates them (owner ruling
+         2026-08-24). The SAFE one is listed first because the dialog opens on the first — so
+         "Export → Excel" and the wall copy stay one tap, and the contacts sheet takes a
+         deliberate change of document.
+
+         ⚠ No row carries a hint any more. The document names say what the two documents are
+         ("Team roster" / "Roster with contacts"), which is the whole reason the picker earns its
+         place; a sentence under "Excel" explaining what Excel is for never did. */
+      choices={[
+        { id: 'xlsx', document: 'Team roster', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
+        { id: 'csv', document: 'Team roster', name: 'CSV', ext: '.csv', run: handleExportCSV },
+        {
+          id: 'pdf', document: 'Team roster', name: 'PDF', ext: '.pdf',
+          phone: 'keep', feature: 'pdf_exports', run: handleExportPDF,
+        },
+        /* The contacts sheet is a second DOCUMENT, and only for a coach cleared for family
+           contacts. Withholding it is also what retires the old defect where an assistant
+           without that grant printed four empty columns: the wall copy has no private columns
+           to leave blank, and these rows are simply absent — which also means that coach gets
+           no document picker at all, because for them there is only one document. */
+        ...(canSeePii ? [
+          {
+            id: 'contacts-pdf', document: 'Roster with contacts', name: 'PDF', ext: '.pdf',
+            phone: 'keep' as const, feature: 'pdf_exports' as const,
+            run: handleExportContactsPDF,
+          },
+          /* No plan gate on this one: these are the coach's OWN team's families. Locking a
+             standalone coach out of their own contact list would be the wrong fix — the
+             `rosterPii` grant above is the right gate. Checked alongside the rep-teams row
+             that the Rosters pass DID lock. */
+          {
+            id: 'xlsx-contacts', document: 'Roster with contacts', name: 'Excel', ext: '.xlsx',
+            run: handleExportXLSXWithSensitive,
+          },
+        ] : []),
+      ]}
+    />
   );
 
   return (
@@ -596,6 +652,11 @@ export default function RosterPage({
         icon={Users}
         title="Roster"
         actions={rosterHeaderActions}
+        /* House rule 4: the one create keeps the title line's corner beside the "?" on a phone,
+           rather than taking a row of its own — Import is the only sibling and it has already
+           gone by that width. A read-only assistant has no create either, so the row drops. */
+        actionsPhoneInTitleRow
+        actionsPhoneHidden={!canWriteRoster}
         helpLabel="Roster"
         help={rosterHelpRequest}
       />
@@ -607,24 +668,30 @@ export default function RosterPage({
           card, that one goes on the player page as mocked and this stays here.
           Renders nothing for a non-premium team or a coach without guardian-contact access —
           it asks the API first and draws only on a yes. */}
-      {view === 'list' && <FamilyAccessPanel orgSlug={orgSlug} teamId={teamId} />}
 
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live
           here) — plus the counts that used to be the header subtitle (page-header ruling
           2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
       <div className={styles.listToolbar}>
-        <span className={styles.listToolbarFact}>
+        {/* ⚠ DROPS ON A PHONE (owner ruling 2026-08-24), so the view toggle and Export get the
+            whole row. At 390px this count squeezed "Depth chart" into wrapping inside its own
+            button — a control that looks broken costs more than a number the coach can see by
+            looking at the list underneath it. */}
+        <span className={`${styles.listToolbarFact} ${styles.listToolbarFactPhoneDrop}`}>
           {activeCount} active {activeCount === 1 ? 'player' : 'players'}
           {inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ''}
         </span>
-        <div className={styles.segChoice} aria-label="Roster view">
-          <button type="button" aria-pressed={view === 'list'}
-            className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
-            onClick={() => setView('list')}>List</button>
-          <button type="button" aria-pressed={view === 'depth'}
-            className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
-            onClick={() => setView('depth')}>Depth chart</button>
-        </div>
+        <span className={`${styles.listToolbarEnd} ${styles.listToolbarEndSpread}`}>
+          <div className={styles.segChoice} aria-label="Roster view">
+            <button type="button" aria-pressed={view === 'list'}
+              className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
+              onClick={() => setView('list')}>List</button>
+            <button type="button" aria-pressed={view === 'depth'}
+              className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
+              onClick={() => setView('depth')}>Depth chart</button>
+          </div>
+          {rosterExport}
+        </span>
       </div>
 
       {view === 'depth' ? (
@@ -652,19 +719,17 @@ export default function RosterPage({
         />
       ) : (
         <>
-          {(players.length >= 2 || nudge) && (
+          {/*
+            ⚠ ONLY THE NUDGE LEADS THE LIST NOW — the reorder tip moved BELOW it (design review
+            2026-08-24). The two lines were doing different jobs from the same slot: the nudge is
+            actionable STATE about this coach's data ("11 without a position"), while the tip
+            explains a control that is drawn on every row underneath it, so reading it before
+            seeing a row was premature. On a phone they never shared a line, which cost the list
+            two rows of chrome for one row of information.
+          */}
+          {nudge && (
             <div className={styles.rosterMeta}>
-              {players.length >= 2 ? (
-                <span className={styles.rosterHint}>
-                  <span className={styles.rosterHintDrag}>
-                    <GripVertical size={13} /> Drag to set the order players appear in
-                  </span>
-                  <span className={styles.rosterHintMove}>
-                    <ChevronUp size={12} /><ChevronDown size={12} /> Use the arrows to set the order players appear in
-                  </span>
-                </span>
-              ) : <span />}
-              {nudge && <span className={styles.rosterNudge}>{nudge}</span>}
+              <span className={styles.rosterNudge}>{nudge}</span>
             </div>
           )}
           <DndContext id={`rep-roster-dnd-${teamId}`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -703,8 +768,38 @@ export default function RosterPage({
               </table>
             </div>
           </DndContext>
+          {/* The reorder tip, in its new home under the rows it describes. Same copy, same two
+              variants (drag on desktop, arrows where drag is disabled) — only the position moved,
+              and it moved at EVERY width rather than only on a phone: one control, one place to
+              read about it, is worth more than the few pixels a width-gated version would save. */}
+          {players.length >= 2 && (
+            <div className={styles.rosterHintBelow}>
+              <span className={styles.rosterHint}>
+                <span className={styles.rosterHintDrag}>
+                  <GripVertical size={13} /> Drag to set the order players appear in
+                </span>
+                <span className={styles.rosterHintMove}>
+                  <ChevronUp size={12} /><ChevronDown size={12} /> Use the arrows to set the order players appear in
+                </span>
+              </span>
+            </div>
+          )}
         </>
       )}
+
+      {/*
+        ⚠ TEAM FAMILY ACCESS SITS BELOW THE ROSTER, AND IT USED TO SIT ABOVE IT (owner call,
+        2026-08-24). As a three-row card between the page header and the list, it pushed the
+        roster itself under the fold on a laptop — a settings surface a coach touches a handful
+        of times a season was outranking the thing the page is named after. Below the list, and
+        collapsed (the panel owns its own disclosure), it is available without being in the way.
+
+        ⚠ It does NOT go quiet when someone is waiting: the panel opens itself when there are
+        approval requests, because that is a real person waiting on this coach and the whole
+        reason the queue lives on a page they already visit. Moving it must never turn it into
+        a place approvals go to be missed.
+      */}
+      {view === 'list' && <FamilyAccessPanel orgSlug={orgSlug} teamId={teamId} />}
 
       {/* Add player modal */}
       <UnsavedChangesGuard active={addDirty} />

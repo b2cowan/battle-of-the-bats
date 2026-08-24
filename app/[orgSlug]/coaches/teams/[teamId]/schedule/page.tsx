@@ -1,6 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Calendar, CalendarPlus, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,7 +20,7 @@ import {
   buildFilename, serializeRows, serializeHeaders,
   type ExportColumnDef, type ICSEventInput,
 } from '@/lib/export';
-import ExportMenu from '@/components/admin/ExportMenu';
+import CoachExportButton from '@/components/coaches/CoachExportButton';
 import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
@@ -2036,42 +2036,33 @@ export default function CoachesSchedulePage({
 
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call stays
   // scannable (same shape as the Money panels' headerActions consts).
+  /**
+   * ⚠ THE HEADER HOLDS THE CREATE AND THE IMPORT (house rules 1 and 4, owner ruling 2026-08-23).
+   *
+   * Export USED to sit between them and has moved down to the view row. The reasoning is worth
+   * keeping because the obvious test gives the wrong answer here: this export takes the whole
+   * season in EVERY view, so "its contents vary with what's on screen" — the test that sent
+   * Money's exports down to their tabs — says header. House rule 2 is a PLACEMENT rule instead:
+   * exports live with their data whether or not their contents vary, so a coach never has to
+   * remember which kind of export a screen has.
+   */
   const scheduleHeaderActions = (
     <>
-      {/* Chunk C (P1 #7). Sits beside Export deliberately: the pair is one idea — a schedule
-          goes out and comes back, and the importer reads the exporter's own columns. Gated on
-          the same grant as Add Event; a read-only assistant sees neither. */}
-      {canAddEvents && (
-        <button
-          className={styles.btnSecondary}
-          onClick={() => { setImportToast(''); setImportOpen(true); }}
-          aria-label="Import"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
-        >
-          <Upload size={13} aria-hidden /> <span className={styles.headerBtnLabel}>Import</span>
-        </button>
-      )}
-      <ExportMenu
-        formats={['xlsx', 'csv', 'ics']}
-        onExportXLSX={handleExportXLSX}
-        onExportCSV={handleExportCSV}
-        onExportICS={handleExportICS}
-        disabled={events.length === 0}
-      />
-      {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
-          shared blueprint-blue .btnPrimary used by in-modal save buttons. The primary
-          keeps its words at every width. Gated on the same grant as the empty state's
-          CTA: without it the events POST 403s, so this was a button that could only
-          ever fail — and once the empty state started saying "adding events needs
-          schedule access", leaving it here contradicted that outright. */}
+      {/* Add event — coach-portal primaries take the shared header geometry (2026-08-23), not
+          hand-written sizing. Gated on the same grant as the empty state's CTA: without it the
+          events POST 403s, so this was a button that could only ever fail — and once the empty
+          state started saying "adding events needs schedule access", leaving it here contradicted
+          that outright. */}
       {canAddEvents && (
         <div className={styles.addEventWrap}>
           <button
-            className="btn btn-lime"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
+            className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
+            /* House rule 3: the words go on a phone, the aria-label carries them. */
+            aria-label="Add event"
             onClick={() => setAddTypeMenuOpen(v => !v)}
           >
-            <Plus size={13} aria-hidden /> Add Event
+            <Plus size={15} aria-hidden />
+            <span className={styles.headerBtnLabel}>Add Event</span>
           </button>
           {addTypeMenuOpen && (
             <div className={styles.addEventMenu}>
@@ -2092,7 +2083,49 @@ export default function CoachesSchedulePage({
           )}
         </div>
       )}
+      {/* House rule 1 — picking a file is desktop work, so this hides below 640px while the
+          create keeps the corner. Gated on the same grant as Add Event; a read-only assistant
+          sees neither. The path is not lost on a phone: the empty state keeps its own import
+          door at every width, which is the condition the rule depends on. */}
+      {canAddEvents && (
+        <span className={styles.headerActionWideOnly}>
+          <button
+            className={styles.btnSecondary}
+            onClick={() => { setImportToast(''); setImportOpen(true); }}
+          >
+            <Upload size={14} aria-hidden /> Import
+          </button>
+        </span>
+      )}
     </>
+  );
+
+  /**
+   * House rule 2 — the export sits above what it exports, pinned right in the view row, at every
+   * width.
+   *
+   * ⚠ ON A PHONE THE MARK IS A CALENDAR, NOT A DOWNLOAD ARROW. The two spreadsheets drop out and
+   * the only survivor writes the season into the phone's own calendar rather than dropping a file
+   * in a downloads folder — a download arrow would promise the wrong thing for the single most
+   * useful control on this screen at 390px. The rule is unchanged (a toolbar control is icon-only
+   * on a phone); the icon follows the ACTION.
+   */
+  const scheduleExport = (
+    <CoachExportButton
+      label="Schedule"
+      disabled={events.length === 0}
+      phoneIcon={<CalendarPlus size={14} />}
+      /* One document in three file types, so no document picker — just the list (owner ruling
+         2026-08-24: a dropdown with one option is worse than no dropdown). And no hints: a row
+         is its name and its extension. "Calendar .ics" is the one that does something other than
+         drop a file in Downloads, and the trigger already says so on a phone by swapping the
+         download arrow for a calendar mark. */
+      choices={[
+        { id: 'xlsx', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
+        { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
+        { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep', run: handleExportICS },
+      ]}
+    />
   );
 
   return (
@@ -2104,6 +2137,10 @@ export default function CoachesSchedulePage({
         icon={Calendar}
         title="Schedule"
         actions={scheduleHeaderActions}
+        /* House rule 4: the one create keeps the title line's corner beside the "?" on a phone.
+           A read-only assistant has no create and no import, so the row drops entirely. */
+        actionsPhoneInTitleRow
+        actionsPhoneHidden={!canAddEvents}
         helpLabel="Schedule"
         help={scheduleHelpRequest}
       />
@@ -2122,6 +2159,7 @@ export default function CoachesSchedulePage({
             </button>
           ))}
         </div>
+        <span className={styles.listToolbarEnd}>{scheduleExport}</span>
       </div>
 
       {/* Navigator for week/month */}

@@ -609,12 +609,43 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* ⚠ THE UI SANS, NOT THE DATA FACE (design review 2026-08-24). What lands here is a SENTENCE —
+   "Wed 6:00 p.m. practice", "6:30 p.m. · Open the bench ›" — and the data face is the portal's
+   voice for scores and numeric columns, per design_principles. Mono cost this line ~15% of extra
+   width on the one element competing with the team name. The KEY above it keeps the data face:
+   labels are its other job, and "NEXT" is a label. Desktop-only in effect — the whole slot is
+   gone below 640 (see `.teamHeaderStatus`). */
 .teamHeaderStackValue {
-  font-family: var(--font-data);
+  font-family: var(--font-sans);
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
+}
+
+/* ⚠⚠ THE STATUS IS NOT ON A PHONE — OWNER RULING 2026-08-24, AND IT COVERS GAME DAY TOO.
+   This wrapper exists ONLY so the ruling can hide the status without hiding the public-site flip
+   link, which shares `.teamHeaderRight` and is a door rather than a fact. `display: contents` means
+   the chip/stack stay direct flex children of that row at every width above the breakpoint — the
+   wrapper adds no box and changes nothing on desktop.
+
+   ⚠ TWO ATTEMPTS TO KEEP IT BY MAKING IT FIT BOTH FAILED, and that is the evidence for removing it
+   rather than shrinking it: allowing the stack to shrink printed it OVER the meta line (the
+   `min-width: 0` has to run the whole chain, row → right → stack → value, or a flex item refuses to
+   go below its content), and once it did shrink, the game-day door truncated to "6:30 p.m. · O…".
+   A door that ends in an ellipsis is not a door.
+
+   ⚠ NOTHING BECOMES UNREACHABLE, and that was checked before the slot was spent: the bench console
+   keeps two phone doors that are always present — the Schedule tab on the bottom bar, whose game row
+   grows its own "Game day" action inside the live window, and the Overview anchor card. The masthead
+   link was the third.
+
+   ⚠ 640, NOT 900. The masthead's other phone rules sit at ≤900 because that is where the bottom nav
+   replaces the sidebar; this one is about a 390px row running out of horizontal space, so it takes
+   the portal's phone breakpoint. A tablet has the room and keeps the status. */
+.teamHeaderStatus { display: contents; }
+@media (max-width: 640px) {
+  .teamHeaderStatus { display: none; }
 }
 
 /* A plain figure beside a chip (an archive's final record). */
@@ -673,8 +704,25 @@
      folds away with the rest of the detail rather than surviving as the only non-name content. */
   .teamHeaderCollapsed .teamHeaderNudge { display: none; }
   /* Uncollapsed on a phone there is far less room: keep the chip and the time, and let the
-     opponent's name take whatever is left rather than pushing the team name out. */
+     opponent's name take whatever is left rather than pushing the team name out.
+     ⚠ Applies to 641–900 only now — below 640 the status does not render at all
+     (`.teamHeaderStatus`, owner ruling 2026-08-24). Kept because a tablet still shows it. */
   .teamHeaderStackKey { max-width: 10ch; }
+}
+
+/* ⚠ THE SEPARATOR COULD STILL BE ORPHANED, AND THE RULE ABOVE SAYS IT CANNOT — read it again:
+   it reasons about a segment being ABSENT (drawn between siblings, never punctuated into a
+   string), which is true and is not this. When the LINE WRAPS, the second span's `::before` dot
+   begins the next line, and a phone read "· 2026 Season" under a wrapped club name. Holding the
+   meta to one row is the fix; a long club name shortens instead, which is the right thing to
+   lose. Phone only — desktop has the width and wraps for real reasons. */
+@media (max-width: 640px) {
+  .teamHeaderMeta { flex-wrap: nowrap; }
+  .teamHeaderMeta > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The season and the record are short and fixed; the club name is the variable one, so it is
+     the segment that gives way rather than all three shrinking together. */
+  .teamHeaderMeta > span:first-child { flex: 0 1 auto; }
+  .teamHeaderMeta > span + span { flex: none; }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -1089,6 +1137,13 @@
   .pageHeaderStd .pageHeaderActions a,
   .pageHeaderStd .pageHeaderHelp button {
     min-height: var(--tap-min, 44px);
+  }
+  /* The "?" is a 34×34 circle (help module); the tap floor above stretched only its HEIGHT, so
+     every coach page header showed a 34×44 oval at phone width (owner-spotted 2026-08-23, §80
+     walk). Matching min-width lets the tap target grow into a LARGER CIRCLE — min-width beats
+     the module's fixed width, radius 999 does the rest. */
+  .pageHeaderStd .pageHeaderHelp button {
+    min-width: var(--tap-min, 44px);
   }
   /* A page whose actions genuinely do not exist on a phone (the Money hub's Import/Export
      menus — rule 11, 2026-08-13) drops the WHOLE row. Hiding just the buttons would leave the
@@ -3256,6 +3311,19 @@ a.oneChip:hover { border-color: currentColor; }
   padding: 0.6rem 1rem 0.6rem 1.6rem;
   border-top: 1px solid var(--white-05);
 }
+/* A .ledgerRow drawn by a <button> (Budget Plan's multi-line item group). A button never
+   stretches on width:auto and carries UA chrome — the same trap .ledgerGroupHead already
+   strips for the category bar. Declared AFTER .ledgerRow in this file on purpose: border
+   must be re-narrowed to border-top here, and same-specificity order is what guarantees it. */
+.ledgerRowBtn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--white-05);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
 
 /* ⚠ `display: block` IS LOAD-BEARING, not tidiness. `overflow` and `text-overflow` do nothing on an
    inline box, so without it a long line name simply ran on and pushed the row past the page — 39px
@@ -3429,10 +3497,55 @@ a.oneChip:hover { border-color: currentColor; }
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum';
 }
+/* ⚠⚠ EVERY BODY CELL PAINTS THE GRID'S GROUND — THE ROOT FIX, AND IT BELONGS HERE RATHER THAN ON
+   EACH ROW TYPE (owner-found 2026-08-24, twice; measured both times).
+
+   The two end columns MUST be opaque, because a translucent pinned column lets the scrolled money
+   read straight through it (the Chunk A D3 lesson, written up twice further down this file). Every
+   other cell painted NOTHING — so any row whose own type did not happen to set a background rendered
+   in TWO grounds: card at both pinned ends, and whatever sits behind the table across the middle.
+   On a dark theme that middle reads BLACK, so the row looks like a deliberate band.
+
+   ⚠ IT WAS FIXED ONCE PER ROW TYPE FIRST, AND THAT WAS THE WRONG ALTITUDE. Patching the total and
+   summary rows left the ITEM rows still striped the moment a coach expanded a category — the same
+   defect, one row type down, reported again within the hour. The rule is not "this row needs a
+   ground", it is "the pinned columns are opaque, so the whole table must be". One declaration, and
+   no future row type can be born with the bug.
+
+   ⚠ LOW SPECIFICITY ON PURPOSE (0-1-2). The category tint, the band heading and the closing total
+   all override it with their own `background-color` + `background-image`; `.lead` and `.totalCol`
+   set the identical value, so which wins is immaterial. */
+/* ⚠ THE CHILD COMBINATOR IS NOT DECORATION — it keeps this selector from being spelled
+   `.moneyGrid tbody th`, which is the exact string `money-hierarchy-type-scale` reads to pin the
+   grid's line-name type against Budget Plan's outline. A second rule block wearing that selector
+   made the scanner find a rule with no font-size and the guard failed, correctly. Specificity is
+   unchanged for our purposes: it still beats `.lead`/`.totalCol` and still loses to the category,
+   band and total treatments that paint their own ground. */
+.moneyGrid tbody tr > th,
+.moneyGrid tbody tr > td { background-color: var(--card-bg); }
+
+/* ⚠⚠ THE ROW RULE IS AN INSET SHADOW, NOT A BORDER — AND THAT IS THE FIX FOR THE HAIRLINE THAT
+   WOULD NOT LINE UP (owner-reported twice, 2026-08-24; measured: rows were geometrically IDENTICAL
+   to the hundredth of a pixel, and the borders were declared identically, so the step was pure
+   paint).
+
+   `border-collapse: collapse` hands the border to the TABLE to paint, not to the cell. The first
+   and last columns are `position: sticky`, which promotes them into their own paint layer that
+   translates with the scroll — so the collapsed rule does not travel with them, and at this grid's
+   fractional row heights (measured 42.22px, so every boundary lands mid-device-pixel) the two
+   layers round independently. The result is a hairline that agrees at some scroll offsets and steps
+   by a pixel at others.
+
+   An inset shadow is painted by the CELL, in the cell's own layer, and takes no part in layout — so
+   the pinned columns and the scrolled ones round together, by construction, at every offset and
+   zoom. It is also why the change is safe: nothing moves, only what paints the line.
+
+   ⚠ DO NOT PUT THIS BACK ON `border-bottom`. It looks equivalent and is not, on any table with a
+   sticky column — which is both money grids. */
 .moneyGrid th,
 .moneyGrid td {
   padding: 0.42rem 0.65rem;
-  border-bottom: 1px solid var(--home-line, var(--border));
+  box-shadow: inset 0 -1px 0 var(--home-line, var(--border));
   white-space: nowrap;
   font-weight: 400;
   text-align: right;
@@ -3454,7 +3567,8 @@ a.oneChip:hover { border-color: currentColor; }
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--home-line-strong, var(--border-2));
+  /* Same reason as the body rule above — this row is sticky too. */
+  box-shadow: inset 0 -1px 0 var(--home-line-strong, var(--border-2));
 }
 /* The pinned first column outranks the sticky heading row, or the scrolled money columns slide
    over the line name at the crossing point. */
@@ -3510,8 +3624,9 @@ a.oneChip:hover { border-color: currentColor; }
 /* The closing total: the category's weight, set apart by a rule rather than by shouting. */
 .moneyGrid tbody tr.moneyGridTotal th,
 .moneyGrid tbody tr.moneyGridTotal td {
-  border-top: 2px solid var(--home-line-strong, var(--border-2));
-  border-bottom: none;
+  /* The band cap, painted the same way — and it REPLACES the inherited row rule rather than
+     adding to it, which is what keeps a closing total at 2px instead of 2px + 1px. */
+  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
   font-size: var(--money-cat-size);
   font-weight: var(--money-cat-weight);
   color: var(--text-primary);
@@ -3522,13 +3637,14 @@ a.oneChip:hover { border-color: currentColor; }
    screen, which is what the condensed-display inheritance was doing to it. */
 .moneyGrid tbody tr.moneyGridFlow th,
 .moneyGrid tbody tr.moneyGridFlow td {
-  border-bottom: none;
+  /* A projection row draws no rule of its own —  clears the inherited one. */
+  box-shadow: none;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 .moneyGridFlowFirst th,
-.moneyGridFlowFirst td { border-top: 1px solid var(--home-line-strong, var(--border-2)) !important; padding-top: 0.55rem; }
+.moneyGridFlowFirst td { box-shadow: inset 0 1px 0 var(--home-line-strong, var(--border-2)) !important; padding-top: 0.55rem; }
 
 /* The chevron that opens a category. ⚠ It appears ONLY where the category actually collapses — an
    affordance for a behaviour, never decoration. Owner ruling 2026-08-13: every hierarchy in a
@@ -3625,6 +3741,11 @@ a.oneChip:hover { border-color: currentColor; }
 /* Reorder hint: drag variant (desktop) vs arrows variant (mobile, where drag is disabled). */
 .rosterHintDrag, .rosterHintMove { display: inline-flex; align-items: center; gap: 0.3rem; }
 .rosterHintMove { display: none; }
+
+/* The reorder tip's home BELOW the list (design review 2026-08-24). Above the rows it was one of
+   two stacked chrome lines on a phone; under them it reads as a footnote to the thing it explains.
+   Margin only — it inherits `.rosterHint`'s type and ink, so the two never drift apart. */
+.rosterHintBelow { margin: 0.6rem 0 0; }
 
 .thWithHelp { display: inline-flex; align-items: center; gap: 0.3rem; }
 
@@ -4118,13 +4239,52 @@ a.oneChip:hover { border-color: currentColor; }
 .discHidden { display: none; }
 
 /* ── Bulk roster intake (Add players sheet) ────────────────────────────────── */
-/* The Paste/Upload switch reuses the portal's own .segChoice segmented control — the same one the
-   Roster page's List/Depth-chart toggle uses, so the sheet opens with a control the coach just saw.
-   This modifier only makes it span the sheet's width. */
-.segChoiceFull { display: flex; width: 100%; }
-.segChoiceFull .segBtn { flex: 1; text-align: center; }
+/* ⚠ `.segChoiceFull` USED TO LIVE HERE AND DID NOTHING — see its rules further down, beside the
+   `.segChoice` base they modify. Declared above the base at equal specificity, every property it
+   set was overridden by the very class it exists to modify. Moved 2026-08-24. */
 
 .bulkPasteArea { min-height: 130px; font-family: var(--font-data); font-size: 0.82rem; line-height: 1.6; }
+
+/* ⚠ THE SHEET MUST NOT RESIZE WHEN THE COACH TOUCHES THE PASTE/UPLOAD SWITCH (owner call,
+   2026-08-24). The two panes were swapped in and out, and the Upload pane is a good deal taller
+   than the paste box, so the modal jumped every time — a dialog that changes size under the cursor
+   reads as something going wrong, not as a tab change.
+
+   Both panes now occupy the SAME grid cell, so the step is as tall as the taller of them at every
+   width, with no measured constant to go stale when either pane's copy changes. The idle pane is
+   `visibility: hidden` — it keeps its space (which is the point) while leaving the tab order and
+   the accessibility tree. `display: none` would put the jump straight back.
+
+   ⚠ Each pane carries its OWN layout class rather than sharing one that the other overrides: the
+   two want different internal spacing (a labelled field vs. a stack of blocks), and "modifier
+   fights base" is the exact cascade trap `.segChoiceFull` sat in for months, twenty lines up. */
+.bulkStack { display: grid; }
+.bulkStack > * { grid-area: 1 / 1; min-width: 0; }
+.bulkPaneIdle { visibility: hidden; pointer-events: none; }
+
+/* Paste: a labelled field. The textarea takes the slack, so the height reserved for the taller
+   pane becomes a bigger place to paste rather than dead air under the hint. */
+.bulkPaste { display: flex; flex-direction: column; gap: 0.35rem; }
+.bulkPaste .bulkPasteArea { flex: 1; }
+
+/* Upload: a stack of blocks, at the same rhythm the form body gives its own children. */
+.bulkFile { display: flex; flex-direction: column; gap: 0.85rem; }
+
+/* ⚠ DROPS `.formBody`'s 2.5rem of bottom padding, which on this sheet was 40px of dead air above
+   the footer on BOTH panes (owner, 2026-08-24: *"this gap version looks odd"*). It was invisible
+   while the sheet resized between tabs; the moment both panes ended in the same place it became
+   a band of nothing you could measure.
+
+   That padding reads as clearance for the sticky footer, and it is not needed for it: the footer
+   is a normal flow element with `position: sticky`, so it only floats while its own position is
+   below the fold and settles into the flow at full scroll — nothing is ever left stranded behind
+   it. The footer's own 1.25rem top margin is the breathing room, and it is enough.
+
+   ⚠ SCOPED ON PURPOSE. Six other coach forms share `.formBody` and carry the same 40px; removing
+   it for all of them is the right call but it is a portal-wide visual change and belongs to a
+   decision, not to a fix for one sheet. MUST stay below `.formBody` (~70 lines up) — same
+   specificity, so source order is what makes it win. */
+.bulkBody { padding-bottom: 0; }
 
 .bulkPreview { display: flex; flex-direction: column; gap: 0.35rem; }
 .bulkPreviewHead {
@@ -4364,6 +4524,30 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .listToolbarFact { font-size: 0.85rem; color: var(--text-tertiary); }
 
+/* ⚠ THE FACT YIELDS TO THE CONTROL ON A PHONE (owner ruling 2026-08-24). Roster’s toolbar carries
+   the live count, the List/Depth-chart toggle and Export on one row; at 390px the count took
+   enough width that "Depth chart" wrapped INSIDE its own button, which reads as a broken control
+   rather than a tight one. The count is the least load-bearing thing in that row on a phone — the
+   roster it counts is directly beneath it — so it is the one that goes.
+
+   ⚠ Its own class, not `.listToolbar .listToolbarFact`: the same fact style carries "#7 · Age 12"
+   on the player page, which must not vanish, and a descendant selector would silently take any
+   future toolbar fact with it. A screen opts IN to yielding. */
+.listToolbarFactPhoneDrop { display: inline; }
+@media (max-width: 640px) {
+  .listToolbarFactPhoneDrop { display: none; }
+}
+
+/* Its partner: with the fact gone, the remaining pair would sit right-aligned as a clump with a
+   wide hole where the count used to be. On a phone they take the row instead — the switcher on
+   the left and Export on the right, which is the shape Schedule’s toolbar already has.
+
+   ⚠ Opt-in for the same reason as above: `.listToolbarEnd` also carries Schedule’s lone Export
+   button, and spreading a one-child row would push that button to the LEFT edge. */
+@media (max-width: 640px) {
+  .listToolbarEndSpread { width: 100%; justify-content: space-between; }
+}
+
 .segChoice {
   display: inline-flex;
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
@@ -4384,6 +4568,20 @@ a.oneChip:hover { border-color: currentColor; }
 .segBtn:last-child { border-right: none; }
 .segBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .segBtnActive, .segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
+
+/* The Paste/Upload switch on the intake sheets (Add players, Import budget, Sample budget) reuses
+   the portal's own segmented control — the same one Roster's List/Depth-chart toggle uses, so a
+   sheet opens with a control the coach just saw. This modifier only makes it span the sheet's
+   width.
+   ⚠ IT MUST STAY BELOW `.segChoice`, AND THAT IS THE WHOLE BUG IT CARRIES A COMMENT FOR. It sat
+   ~240 lines ABOVE the base class until 2026-08-24. Same specificity, so `.segChoice`'s
+   `display: inline-flex` and `width: fit-content` won both declarations and the modifier was a
+   silent no-op — the control shrank to fit while `flex: 1` still split its children evenly, which
+   is a recipe for squeezing the LONGER label until it wraps. "Upload a file" had been wrapping to
+   two lines on every desktop since it shipped. Invisible below 640px, where the phone rule further
+   down sets the same two properties and the layout came out right by a different route. */
+.segChoiceFull { display: flex; width: 100%; }
+.segChoiceFull .segBtn { flex: 1; text-align: center; }
 
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
@@ -6843,80 +7041,26 @@ a.oneChip:hover { border-color: currentColor; }
 /* ── The record form: kind switch, locked figures, delete confirm (owner review 2026-08-15) ───
    All three belong to the ONE form behind Add Expense and Add Payable (Q4 + Q8). */
 
-/* The Expense / Payable choice, at the top of the form when ADDING only. Segmented rather than a
-   <select> because both options have to be READ to be chosen between — the sub-line under each
-   name is the whole reason this replaced two buttons. */
-.kindSwitch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.4rem;
-  padding: 0.3rem;
-  background: var(--home-fill, var(--white-5));
-  border-radius: var(--home-radius, 12px);
-}
-/* ⚠ NAMED `kindSwitch*`, NOT `kind*` — THE SHORTER NAMES WERE ALREADY TAKEN, ~3,600 LINES UP.
-   `.kindOption` / `.kindOptionOn` belong to the fundraiser/sponsor picker (`.kindPick`, above).
-   CSS Modules scope per FILE, not per block: two rules with the same class name in one module
-   compile to the SAME generated class, so the two pickers' declarations would have merged and the
-   later one silently won every property they shared — border, background, padding, transition.
-   Neither feature would have looked broken in isolation; both would have been subtly wrong.
-   Caught by the reuse pass, 2026-08-15. See memory/reference_cascade_collisions_coach_budget.md —
-   the same class of defect, where an outranked rule reads as a no-op rather than as a conflict. */
-.kindSwitchOption {
-  text-align: left;
-  border: 1px solid transparent;
-  border-radius: var(--home-radius-sm, 9px);
-  background: none;
-  padding: 0.55rem 0.7rem;
-  cursor: pointer;
-  font: inherit;
-  transition: background 0.12s, border-color 0.12s;
-}
-.kindSwitchOption:hover { background: var(--home-card, var(--white-5)); }
-.kindSwitchOptionOn {
-  background: var(--home-card, var(--white-8));
-  border-color: var(--home-olive, rgba(var(--logic-lime-rgb), 0.5));
-}
-.kindName {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-tertiary);
-}
-.kindSwitchOptionOn .kindName { color: var(--text-primary); }
-.kindSub {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: var(--text-tertiary);
-}
+/* ⚖⚖ THE KIND SWITCH IS GONE, AND ITS RULES WITH IT (money centralization P2, 2026-08-23).
+   `.kindSwitch` / `.kindSwitchOption` / `.kindSwitchOptionOn` / `.kindName` / `.kindSub` styled the
+   segmented Expense/Payable choice at the top of the money form, and then the paid/owed fork that
+   replaced it. Record is for money that MOVED now — a commitment is made on Payables — so the
+   control has no markup left anywhere. Removed with the JSX rather than left to rot beside the
+   `.kindEgs` note below, which records the same lesson from the pass before this one.
+   ⚠ The naming warning those rules carried is worth keeping in one line, because the collision is
+   still live: `.kindOption` / `.kindOptionOn` belong to the fundraiser/sponsor picker (`.kindPick`,
+   above). CSS Modules scope per FILE, so two rules sharing a class name in one module compile to
+   ONE class and the later silently wins every property they share — see
+   memory/reference_cascade_collisions_coach_budget.md. */
 /* ⚠ `.kindEgs` IS GONE (/simplify, 2026-08-16). It styled the examples line under the money form's
    kind switch; the teaching copy moved to the empty states and the help guide (P2 §5), so
    `FORM_COPY.examples` and both its render sites went — and this rule was left behind. */
 
-/* ── "This is a refund", beside the two pills (Money form P2, 2026-08-16) ──────────────────
-   The tick sits UNDER the pill pair rather than inside it: it is not a third option — it modifies
-   the one that is chosen — and giving it a cell in the same grid would have said the opposite.
-   ⚠ The disabled state is a real state here, not an edge case: the tick has nothing to mean beside
-   Income, and its reason renders next to it. `.formCheckOff` dims the label so the control reads as
-   unavailable rather than merely unchecked; the sentence carries the WHY, because colour cannot. */
-.kindTickRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem 0.85rem;
-  margin-top: 0.6rem;
-}
-.formCheckOff { color: var(--text-tertiary); cursor: not-allowed; }
-.formCheckOff input { cursor: not-allowed; }
-.kindTickWhy {
-  margin: 0;
-  font-size: 0.74rem;
-  line-height: 1.4;
-  color: var(--warning);
-}
-.kindTickWhy strong { color: var(--warning); }
+/* ⚠ `.kindTickRow` / `.formCheckOff` / `.kindTickWhy` ARE GONE (/simplify, 2026-08-23). They
+   styled the "This is a refund" tick beside the Expense/Income pills; the money centralization
+   P1 replaced both with the "What happened?" dropdown, where refund is a first-class answer —
+   so the tick's three rules had nothing left to style. (`.formCheck` itself survives: the
+   schedule page still uses it.) */
 
 /* ⚠ A LOCKED FIGURE SHOWS ITS VALUE AND ITS REASON — it is never a greyed-out input or an absence.
    A coach has to be able to read the amount they cannot change; hiding it turns "why can't I edit
@@ -10877,3 +11021,226 @@ button.gdChip[aria-pressed='true'] {
   }
   .payDrawerDate { min-width: 4.5rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   THE ONE RECORDING CONVERSATION (money centralization P1, 2026-08-22 — approved frames A–D).
+   The hub-level Record button lives in the PAGE HEADER beside Import ▾ and the "?" (owner ruling
+   2026-08-23 — it spent one day in the tab row per mockup 05's drawing, and on a phone it crowded
+   the strip to two visible tabs). On phones the header row STAYS for it — Record shows as a bare
+   "+" (aria-labelled) while Import keeps its wide-only rule 11 hiding. The "What happened?" first
+   question is a rich dropdown — the owner's form-field convention — whose OPEN state carries
+   mockup 01's eight sentences, sub-lines and live hints.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/* The geometry every page header's PRIMARY takes — the one create, beside the "?". Named for the
+   slot rather than the screen since 2026-08-23 (it was `.recordMoneyBtn`, which is what it happened
+   to be built for first); Money's Record, Roster's Add Player and Schedule's Add Event all wear it,
+   so the row measures the same portal-wide and no caller hand-writes header sizing again. */
+/* ⚠ `.recordMoneyBtn` IS A TRANSITIONAL ALIAS, NOT A SECOND CLASS. The Money hub's Record button
+   still names it, and that file is carrying another session's in-flight work — renaming its one
+   line would have dragged ~145 lines of unrelated, unfinished change into this commit. Delete the
+   alias and point the Money hub at `.headerPrimaryBtn` once that work lands (noted in the QA
+   ledger so it does not just sit here). */
+.recordMoneyBtn,
+.headerPrimaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+/* The right end of a list toolbar: the view toggle and that list's EXPORT, together (house rule 2,
+   2026-08-23). `margin-left: auto` keeps the pair pinned right when a live fact leads the row, and
+   lets it hold the right edge on its own when nothing does. */
+.listToolbarEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+/* ⚠ THE PHONE TAP FLOOR, WHICH THIS SLOT NEEDED ITS OWN COPY OF. The portal enforces 44px at the
+   phone breakpoint through the surface a control sits on — `.pageHeaderStd .pageHeaderActions` for
+   a header, `.panelToolbarActions` for a Money tab's row. A list toolbar was neither, so the export
+   that moved down here on 2026-08-23 landed at 30px: the first thing the rendered sweep caught, and
+   invisible to every file-reading gate. Element selectors reach DESCENDANTS on purpose — the export
+   trigger is wrapped, and a menu inside it is tapped too. Desktop keeps the portal's grandfathered
+   compact control heights, which is a portal-wide decision this pass deliberately does not reopen.
+
+   ⚠ IT ALSO GROWS THE VIEW TOGGLE THAT SHARES THIS SLOT, AND THAT IS THE POINT, NOT A SIDE EFFECT
+   (/review, 2026-08-24 — the reviewer read the comment as justifying only the export). Roster's
+   List / Depth chart pills are `.segChoice`, which never carried a floor; Schedule's List / Week /
+   Month are `.viewToggleBtn`, which gained one on 2026-08-15 under a comment reading "every view
+   toggle in the portal gains it". `.segChoice` was the instance that sentence missed, and it sat
+   under the floor until this rule reached it — the rendered baseline lost `button·List` and
+   `button·Depth chart` at 361 and 390 on the same run that this slot was introduced. The two
+   toggles now measure the same on a phone, which is what that ruling asked for. */
+@media (max-width: 640px) {
+  .listToolbarEnd button,
+  .listToolbarEnd a {
+    min-height: var(--tap-min, 44px);
+  }
+
+  /* ⚠⚠ THE EXPORT WAS NOT PINNED RIGHT ON A PHONE, WHICH IS THE WHOLE OF HOUSE RULE 2
+     (design review 2026-08-24). `.listToolbarEnd` wraps, so when its contents overflowed the
+     export dropped to a SECOND line inside this box and started at the box's LEFT edge — bottom
+     -left, under the toggle. The slot holds one toggle and one export and is never a list, so
+     it has no business wrapping: nowrap keeps the pair together and the export on the right at
+     every width, which is what the rule actually asks for. `min-width: 0` is what lets the row
+     shrink instead of pushing the page sideways. */
+  .listToolbarEnd { flex-wrap: nowrap; min-width: 0; }
+
+  /* ⚠ A FORM FIELD'S RULE WAS DECIDING A TOOLBAR'S LAYOUT. The `.segChoice` block at ~640 sets
+     `display: flex; width: 100%` under a comment naming its actual subject — "equal-width
+     segmented choices (Home/Away/Neutral) go full-width rather than squashing their labels".
+     That is right for a choice inside a FORM and wrong for a view toggle riding a toolbar: at
+     390px it took the whole row, which pushed the export off the end and produced the defect
+     above. Scoped back to `fit-content` here only; every form-context `.segChoice` is untouched.
+     ⚠ Do NOT "simplify" this by editing the base rule — the sheets' Paste/Upload switch and the
+     Home/Away/Neutral field both depend on the full-width default. */
+  .listToolbarEnd .segChoice { display: inline-flex; width: fit-content; min-width: 0; }
+  /* 1rem of side padding per button is desktop generosity; 0.7 is what makes
+     fact + toggle + export one row at 361 with the tap floor above still intact. */
+  .listToolbarEnd .segBtn { padding: 0.42rem 0.7rem; }
+
+  /* The live fact yields first — it is prose, the two controls are targets. Scoped to a direct
+     child of the toolbar because `.listToolbarFact` is also worn by the player page's status row,
+     which is not a flex row and must not start ellipsizing.
+     ⚠ `.listToolbar` itself deliberately KEEPS `flex-wrap: wrap`. With a long fact (a team with
+     inactive players) the fact takes line one and the toggle+export share line two — two rows,
+     never three, and the export still right-pinned. That degradation is the point: forcing the
+     toolbar itself to nowrap is what put 30px of sideways scroll on coach-expenses at 361 (see
+     the `.panelToolbar` note beside `.viewToggle`), and no screen may scroll sideways. */
+  .listToolbar > .listToolbarFact { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* One header action that survives phones while its siblings hide: display:contents so the
+   wrapper adds nothing to the desktop flex row; gone under the header's own 640px breakpoint. */
+.headerActionWideOnly { display: contents; }
+@media (max-width: 640px) {
+  .pageHeaderStd .headerActionWideOnly { display: none; }
+  /* The corner variant (CoachPageHeader `actionsPhoneInTitleRow`, owner ruling 2026-08-23):
+     the surviving action sits ON the title row, beside the "?", instead of a right-pinned row
+     beneath — one compact control fits the corner, and the row-2 dead band goes with it. */
+  .pageHeaderStd.pageHeaderActionsCorner { grid-template-columns: 1fr auto auto; column-gap: 0.5rem; }
+  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderLeft { grid-row: 1; grid-column: 1; }
+  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderActions { grid-row: 1; grid-column: 2; }
+  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderHelp { grid-row: 1; grid-column: 3; }
+}
+
+
+/* The "What happened?" field — closed state wears the chosen sentence; open state is the
+   eight-option list. Exempt from nothing: it IS the dropdown the form-field convention asks for. */
+.convWhatWrap { position: relative; }
+.convWhatField {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-radius: 7px;
+  border: 1px solid var(--home-olive, var(--logic-lime));
+  background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 9%, transparent);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.convWhatField:focus-visible { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 1px; }
+.convWhatFieldEmpty {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.convWhatCaret { flex: 0 0 auto; color: var(--home-olive, var(--logic-lime)); }
+
+/* ── A context door's answers, STATED (owner ruling A, 2026-08-23 — treatment ii) ──────────────
+   Standing on one family's row, one drive's row or one bill, the coach did not choose an answer:
+   the row did. So this is not a disabled dropdown — it is a sentence. The owner took this shape
+   against his own "one value = a dropdown" convention, and gave the reason: the items are read-only
+   anyway, and a control that cannot be opened is a control lying about itself.
+   ⚠ NO "Change" AFFORDANCE, deliberately. Mockup 02's who-line carried one; that is exactly what
+   frame B superseded for the cold open and what ruling A forbids here — switching the question
+   under a door that named a record is the ghost save. Cancel and reopen is the escape.
+   ⚠ Same olive band as `.convWhatField` so the answered state reads identically whether the coach
+   chose it or the row did. */
+.convLockBand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 7px;
+  border: 1px solid var(--home-olive, var(--logic-lime));
+  background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 9%, transparent);
+}
+.convLockLine {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.convLockDetail {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+/* ⚠ A REAL DROPDOWN: viewport-FIXED, anchored to the field's measured rect (inline top/left/
+   width from the panel), so it floats OVER the form without resizing the modal — and fixed
+   positioning escapes the modal's scroll clipping, which is what broke the first (absolute)
+   version. In-flow was tried in between and rejected by the owner on sight (§80 walk,
+   2026-08-23): opening a field must not change the modal's size. ⚠ No ancestor of the modal may
+   gain a transform/filter, or fixed re-anchors to it and this clips again. z-index clears the
+   overlay at BOTH its tiers (200 desktop / 400 phone). */
+.convWhatList {
+  position: fixed;
+  z-index: 500;
+  border: 1px solid var(--home-olive, var(--logic-lime));
+  border-radius: 9px;
+  background: var(--home-card, var(--bg-card, var(--bg)));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  max-height: min(21rem, 55vh);
+  overflow-y: auto;
+}
+.convWhatGroup {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: color-mix(in srgb, var(--text-tertiary) 10%, transparent);
+  padding: 0.35rem 0.75rem;
+}
+.convWhatOpt {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
+  cursor: pointer;
+  min-height: 44px;
+}
+.convWhatOpt:first-of-type { border-top: 0; }
+.convWhatOpt:hover, .convWhatOpt:focus-visible {
+  background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 10%, transparent);
+  outline: none;
+}
+.convWhatOptName { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+.convWhatOptSub { display: block; font-size: 0.72rem; color: var(--text-tertiary); margin-top: 0.05rem; }
+.convWhatOptLive {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--home-olive, var(--logic-lime));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Cold open, nothing chosen yet — the rest of the form is a quiet promise, not fields. */
+.convGhostNote { font-size: 0.8rem; color: var(--text-tertiary); font-style: italic; }
+/* ⚠ The full-viewport `.convWhatBackdrop` click-catcher is GONE (/review, 2026-08-23): painted
+   over the whole modal, it swallowed the first click on Cancel/Save while the list was open.
+   Outside-press close is a capture-phase document listener in the panel now — it closes the
+   list and lets the same press land where it was aimed. */
