@@ -313,6 +313,38 @@ export function buildTablePDF(
   // passed by the caller) — never the report title, which the title block prints below.
   const nameLine = settings.headerLine1 || identity || '';
 
+  /**
+   * Height of the identity band (crest / name / second line) below `MARGIN`, measured the same
+   * way `drawHeader` draws it. Split out so a CONTINUATION page can reserve exactly what it is
+   * about to draw — see `continuationTop` below.
+   */
+  function identityBandHeight(): number {
+    // Deliberately tests "is a logo CONFIGURED", where drawHeader's old inline copy tested "did a
+    // logo actually DRAW" (`drawLogoSlot` returns 0 when an image fails to decode). Self-consistency
+    // between page 1 and its continuation pages matters more than that distinction, and the
+    // divergence is unreachable in practice: it can only show as ~8mm of dead space when a
+    // configured logo is corrupt AND there is no name line at all, but `nameLine` falls back to the
+    // caller's `identity`, which every export surface passes. Reviewed and accepted 2026-08-23.
+    const hasLogo = Boolean(settings.logoDataUrl);
+    return Math.max(
+      hasLogo ? LOGO_SLOT_H : 0,
+      nameLine || settings.headerLine2 ? (settings.headerLine2 ? 15 : 12) : 4,
+    );
+  }
+
+  /**
+   * Where a table resumes on a page it did NOT start on — below the identity band the
+   * `didDrawPage` hook redraws there, plus the divider's 4mm.
+   *
+   * ⚠ Until the Rosters pass, page 2 of any table that overflowed had NO header at all: no
+   * crest, no club or team name, nothing. Phase 1's whole promise is that every PDF knows
+   * whose paper it is, and it was true only of page 1. The grouped path already redrew the
+   * band whenever IT added a page — this makes the same thing happen when autoTable
+   * paginates on its own, which is how flat reports (and any single group longer than a
+   * page) always broke.
+   */
+  const continuationTop = MARGIN + identityBandHeight() + 4;
+
   function drawHeader(isFirstPage: boolean) {
     let y = MARGIN;
 
@@ -338,10 +370,7 @@ export function buildTablePDF(
       doc.text(settings.headerLine2, textX, y + 11);
     }
 
-    y += Math.max(
-      drawnLogoW > 0 ? LOGO_SLOT_H : 0,
-      nameLine || settings.headerLine2 ? (settings.headerLine2 ? 15 : 12) : 4,
-    );
+    y += identityBandHeight();
 
     // Divider
     doc.setDrawColor(210, 210, 220);
@@ -496,7 +525,16 @@ export function buildTablePDF(
       },
       columnStyles: {},
       tableWidth: 'auto',
-      margin: { left: MARGIN, right: MARGIN },
+      margin: { left: MARGIN, right: MARGIN, top: continuationTop },
+      // Redraw the identity band on any page this table SPILLS onto. autoTable's own page
+      // counter starts at 1 per call, so page 1 is the page the table started on — which
+      // already carries a header (drawn by `drawHeader`, or by the grouped path when it
+      // added the page itself). Anything past that is a continuation and would otherwise
+      // print a bare table with a footer and no idea whose it is.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      didDrawPage: (data: any) => {
+        if (data?.pageNumber > 1) drawHeader(false);
+      },
       tableLineColor: [220, 220, 230],
       tableLineWidth: 0.2,
       // Fit contract: a row never splits across a page break (the orphaned cell

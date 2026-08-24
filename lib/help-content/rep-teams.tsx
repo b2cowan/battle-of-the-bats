@@ -315,7 +315,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'What coaches manage (and what you see)',
       summary: 'Coaches run roster, schedule, and team finances; admins oversee allocations and can view rosters.',
       keywords: ['coach', 'team finances', 'dues', 'budget', 'who does what', 'roster'],
-      searchText: 'coach manages roster schedule team finances player dues installments expenses fundraisers budget season refund payment requests admin view roster allocations who does what',
+      searchText: 'coach manages roster schedule team finances player dues installments expenses fundraisers budget season refund payment requests admin view roster allocations who does what print the roster printable roster roster pdf export program year roster grouped by standing counts no dates of birth no guardian contacts club paper',
       links: [
         { label: 'Coaches Portal guide', href: '../help/coaches' },
       ],
@@ -327,6 +327,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Team finances — player dues and installments, expenses, fundraisers, a season budget, and payment requests to the org.</li>
           </ul>
           <p>As an admin you oversee the structure: team and program-year setup, tryouts, document templates, and program-year status. <strong>Cost allocations are owner/treasurer-only.</strong> Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
+          <p>The program-year roster exports as a spreadsheet or as a <strong>printable roster</strong> on your club&apos;s paper — numbers, names and positions, grouped by each player&apos;s standing with a count on every heading. Like the applicant list, it carries <strong>no dates of birth and no guardian contacts</strong>; those stay in the spreadsheet.</p>
         </>
       ),
     },

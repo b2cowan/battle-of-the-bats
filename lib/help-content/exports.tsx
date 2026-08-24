@@ -204,14 +204,20 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>Rep Teams</strong></td>
                 <td>Roster (admin view)</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
+                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
                 <td>Club</td>
               </tr>
               <tr>
                 <td><strong>Coaches Portal</strong></td>
                 <td>Team Roster</td>
                 <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
+                <td>Premium Coaches Portal · PDF: any plan with PDF exports</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Roster with contacts (adds dates of birth and guardian details — only for coaches with family-contact access)</td>
+                <td>—</td><td>—</td><td>—</td><td>✓</td>
+                <td>Same as Team Roster</td>
               </tr>
               <tr>
                 <td><strong>Coaches Portal</strong></td>
@@ -316,9 +322,9 @@ const exportsHelp: HelpPageContent = {
       id: 'privacy',
       heading: 'Sensitive data and privacy',
       summary: 'How guardian contacts, player notes, and internal notes are handled in exports.',
-      keywords: ['sensitive', 'privacy', 'contact', 'guardian', 'email', 'phone', 'notes', 'internal notes', 'opt-in', 'pdf contact details', 'printed register'],
+      keywords: ['sensitive', 'privacy', 'contact', 'guardian', 'email', 'phone', 'notes', 'internal notes', 'opt-in', 'pdf contact details', 'printed register', 'roster with contacts', 'wall copy', 'pin up the roster', 'birthdates on the roster', 'which roster pdf'],
       searchText:
-        'sensitive privacy guardian contact email phone notes internal notes opt-in excluded default confidential pdf leaves out contact details printed register registrations tryout applicants date of birth excel with contact details',
+        'sensitive privacy guardian contact email phone notes internal notes opt-in excluded default confidential pdf leaves out contact details printed register registrations tryout applicants program year roster date of birth excel with contact details team roster two documents wall copy pin up dugout rink board roster with contacts league insurance submission birthdates hidden from the printed roster which roster pdf do i print safe to pin family contacts access assistant coach cannot see contacts guardian contacts switched off',
       content: (
         <>
           <p>
@@ -346,10 +352,21 @@ const exportsHelp: HelpPageContent = {
           </p>
           <p>
             <strong>Printed lists leave contact details out.</strong> The PDF of House League season
-            registrations and of rep-team tryout applicants gives you players, dates and status —
-            never a date of birth, a guardian name, an email or a phone number. A printed page gets
-            forwarded and left on tables, so those columns stay in the spreadsheet exports,
-            including <em>Excel with contact details</em>.
+            registrations, of rep-team tryout applicants and of the rep program-year roster gives you
+            players, dates and status — never a date of birth, a guardian name, an email or a phone
+            number. A printed page gets forwarded and left on tables, so those columns stay in the
+            spreadsheet exports, including <em>Excel with contact details</em>.
+          </p>
+          <p>
+            <strong>The team roster prints as two different documents, and the safe one is the
+            default.</strong> In the Coaches Portal, <em>Team roster (PDF)</em> gives you numbers,
+            names and positions — the copy you pin to a dugout wall or a rink board, with nothing on
+            it a passer-by should not read. <em>Roster with contacts (PDF)</em> sits below it in the
+            same Export menu and adds dates of birth and guardian details, for a league or insurance
+            submission. It appears only for coaches who have been granted family contacts, so an
+            assistant without that access simply doesn&apos;t see it. If your club has switched
+            guardian contacts off in PDF Settings, the contacts sheet keeps dates of birth and drops
+            the guardian columns.
           </p>
           <p>
             PDF privacy defaults can be configured in <strong>Org Settings → PDF Settings</strong>

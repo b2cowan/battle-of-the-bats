@@ -8,6 +8,42 @@
 
 ---
 
+### 2026-08-23 — Roster export is an inclusion of the Premium Coaches Portal (standalone coaches export their own roster)
+
+**Status:** Decided (owner, 2026-08-23, on a finding raised by the PDF Export Quality Rosters pass review). **Already true in the shipped product** — this ratifies behaviour rather than changing it.
+
+**Decision:** A coach on the **standalone Premium Coaches Portal** ($29/mo; Founding Season $0) can export their own team's roster in **Excel, CSV and PDF** — including the two roster PDFs the Rosters pass introduced (the wall copy, and the contacts sheet for coaches with family-contact access). This is an **inclusion of the Premium Coaches Portal**, not a Club-only capability. **Basic (free) Coaches Portal is unchanged** and is untouched by this ruling.
+
+**Rationale:**
+- **A coach's own roster is the coach's own data.** The standalone portal is sold as a single team's operating system; a customer who can enter a roster and cannot get it back out again does not have their own records. Withholding it would be the least defensible thing on the plan's feature list.
+- **Gating it would have been a takeaway, not a fix.** The capability ships today and standalone coaches have it. The alternative on the table was to enforce a Club-only claim found in an internal catalog — which would have *removed* Excel and CSV export from paying customers to satisfy a line of documentation. Ratifying is the correct direction of travel.
+- **Consistent with the standing posture for this plan** — the 2026-08-21 ruling moved PDF *customization* down to the Premium Coaches Portal on the same logic (a standalone team's identity is its own, and the plan that includes the paper should include control of it). Roster export is the same argument one step earlier: the plan that includes the roster should include getting it out.
+- **Zero marginal cost, real retention value.** No new SKU, no price change, no capacity implication.
+
+**⚠ The premise was verified in code before logging, and the verification changed the shape of the answer.** The claim that reached me was "roster export has no plan check." That is true of the feature-key layer and misleading on its own: **the gate is architectural.** The coaches-portal roster is reachable only through a rep-team staff membership, which exists only for a Premium Coaches Portal team or a club-owned Club team. Free Basic coaches operate on a separate, org-less surface and cannot reach this page at all. So there was never an open door — there was an internal catalog entry (`minPlan: 'club'` / `moduleGate: 'club_exports'` on the `coaches-roster` export) asserting a **policy that no code implemented, and that the product had never behaved as.** This decision makes the record match the product.
+
+**⚠ Structural cause worth generalising, in the spirit of the 2026-08-20 entry.** The export catalog carries fields that *look* like gates (`minPlan`, `moduleGate`) but are **documentation only — nothing reads them at runtime.** A field shaped like an enforcement mechanism, which enforces nothing, will drift silently and then be discovered by someone who reasonably assumes it is load-bearing. Two consequences to carry forward: **(1)** never infer a plan's inclusions from the export catalog — `lib/plan-features.ts` and the surface's own guard are the truth; **(2)** when a future pass touches these fields, either make them enforced or mark them plainly as descriptive. This is the second time in four days that a *typed* claim about availability was found to have drifted while a *computed* one had not.
+
+**Affects:** packaging inclusions (a capability is confirmed at the standalone premium tier) · the plan-facts inclusions list · the export catalog's descriptive metadata for the coaches' roster · in-app help availability copy (already corrected in the same unit of work as the finding). **No price, plan name, capacity band, SKU, feature key or gate value moves; `lib/plan-config.ts` and `lib/plan-features.ts` are untouched** — no gate is being added or removed.
+
+**Handoff:**
+```
+HANDOFF → /billing — NO gate change. Do not add a feature key for this.
+- The only code action is to correct the DESCRIPTIVE catalog metadata on the `coaches-roster`
+  export entry so it stops asserting Club-only, and to keep the explanatory note that these
+  fields are documentation rather than enforcement.
+HANDOFF → /marketing — nothing owed today.
+- No live customer-facing surface currently claims roster export is Club-only (verified across
+  /pricing, /for-coaches and the persona pages). OPTIONAL forward brief, only if a coach-facing
+  surface is being rewritten anyway: the Premium Coaches Portal may say a coach can take their
+  roster with them — wording is /marketing's.
+HANDOFF → /plan — none. The build shipped with the Rosters pass (Owner QA Ledger §86).
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-08-21 (PDF customization moved to the Premium Coaches Portal — same inclusion-over-gate posture for the same plan) · 2026-08-20 (the typed-vs-computed availability lesson this entry repeats in a new place).
+
+---
+
 ### 2026-08-20 — `/for-leagues` STAYS LIVE, but every word implying an imminent launch comes out
 
 **Status:** Decided (owner, 2026-08-20, during the persona-page claim audit).

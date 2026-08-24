@@ -1372,9 +1372,9 @@ export default function AdminSchedulePage() {
               onExportPDF={handleExportPDF}
               pdfLabel={layout === 'bracket' ? 'Bracket PDF' : 'PDF report'}
               pdfHint={layout === 'bracket' ? 'Printable visual bracket sheet' : 'Formatted, print-ready document'}
-              onExportBlankPDF={layout === 'bracket' ? () => handleExportBracketPDF(true) : undefined}
-              blankPdfLabel="Blank bracket PDF"
-              blankPdfHint="Empty bracket to print and fill in by hand"
+              onExportSecondaryPDF={layout === 'bracket' ? () => handleExportBracketPDF(true) : undefined}
+              secondaryPdfLabel="Blank bracket PDF"
+              secondaryPdfHint="Empty bracket to print and fill in by hand"
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />

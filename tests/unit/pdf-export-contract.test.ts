@@ -22,6 +22,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildTablePDF, abbreviateHeadings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '../../lib/export/pdf';
 import { applyTeamLook } from '../../lib/export/resolve-pdf-settings';
+import { ROSTER_WALL_HEADERS, ROSTER_PRIVATE_HEADINGS, rosterContactHeaders } from '../../lib/export/roster-columns';
 
 // ── Recording fakes ──────────────────────────────────────────────────────────
 
@@ -522,5 +523,119 @@ describe('family dues statements: one household per page, page counts per FAMILY
       settings: settings(),
     });
     assert.equal(at.calls.length, 2, 'schedule + payments only — no credits table, no payouts table');
+  });
+});
+
+// ── Continuation pages carry the identity (Phase 2, Rosters pass) ────────────
+
+describe('a page a table SPILLS onto still knows whose paper it is', () => {
+  it('redraws the identity band on continuation pages, never on the first', () => {
+    // The fake reports a table that ran onto two more pages.
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Team Roster', headers: ['A'], rows: [['1']],
+      settings: settings({ headerLine1: 'Riverdale Ridge Baseball Association' }),
+    });
+    const opts = at.calls[0];
+    assert.equal(typeof opts.didDrawPage, 'function',
+      'the table hands the engine a per-page hook — without it page 2 printed a bare table');
+
+    // Page 1 is the page the table STARTED on: it already has a header, so the hook must not
+    // draw a second one.
+    const before = count(doc, 'Riverdale Ridge Baseball Association');
+    opts.didDrawPage({ pageNumber: 1 });
+    assert.equal(count(doc, 'Riverdale Ridge Baseball Association'), before,
+     'page 1 must not get a doubled identity band');
+
+    // Every page after it does.
+    opts.didDrawPage({ pageNumber: 2 });
+    opts.didDrawPage({ pageNumber: 3 });
+    assert.equal(count(doc, 'Riverdale Ridge Baseball Association'), before + 2);
+  });
+
+  it('reserves room for the band it is about to draw, so it cannot land on the table', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Team Roster', headers: ['A'], rows: [['1']],
+      settings: settings({ headerLine1: 'Club', headerLine2: '2026 Season' }),
+    });
+    const { top } = at.calls[0].margin;
+    assert.ok(top > 14, 'a continuation page starts BELOW the top margin, not at it');
+    // The band is the taller of the logo slot and the two name lines, plus the divider gap.
+    assert.equal(top, 14 + 15 + 4);
+  });
+
+  it('a report with no identity at all still reserves the minimum', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Report', headers: ['A'], rows: [['1']], settings: settings(),
+    });
+    assert.equal(at.calls[0].margin.top, 14 + 4 + 4);
+  });
+
+  it('the reserved room grows for a crest, matching what the band actually draws', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Report', headers: ['A'], rows: [['1']],
+      // One name line (12mm) is SHORTER than the logo slot (12mm) — a crest plus a second
+      // line is the case that must reserve 15, not 12.
+      settings: settings({ headerLine1: 'Club', logoDataUrl: 'data:image/png;base64,AAA' }),
+    });
+    assert.equal(at.calls[0].margin.top, 14 + 12 + 4);
+  });
+});
+
+// ── The roster's two documents (Phase 2, Rosters pass) ───────────────────────
+
+describe('the roster prints two documents, and only one of them is private', () => {
+  // ⚠ THE PRODUCTION LISTS, imported — not a copy. A test that asserts its own literal
+  // proves nothing: the page could go back to printing birthdates and it would still pass.
+  const WALL = [...ROSTER_WALL_HEADERS];
+  const CONTACTS = rosterContactHeaders(true);
+
+  it('the wall copy carries nothing a passer-by should not read', () => {
+    for (const forbidden of ROSTER_PRIVATE_HEADINGS) {
+      assert.ok(!ROSTER_WALL_HEADERS.includes(forbidden as never),
+        `${forbidden} must never appear on the copy a coach pins to a wall`);
+    }
+    // And the contacts sheet is the one that DOES carry them — otherwise this assertion could
+    // be satisfied by a wall copy that is simply empty.
+    for (const expected of ROSTER_PRIVATE_HEADINGS) {
+      assert.ok(rosterContactHeaders(true).includes(expected),
+        `${expected} belongs on the submission sheet`);
+    }
+  });
+
+  it('the club’s guardian switch drops the guardian columns and KEEPS the date of birth', () => {
+    const off = rosterContactHeaders(false);
+    assert.ok(off.includes('Date of Birth'), 'DOB is the fact this document exists for');
+    for (const gone of ['Guardian', 'Email', 'Phone']) assert.ok(!off.includes(gone));
+  });
+
+  it('the wall copy fits portrait without giving up a column', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Team Roster', headers: WALL,
+      rows: Array.from({ length: 20 }, (_, i) => [
+        String(i + 1), 'Nathaniel Whitfield-Desjardins', 'SS', '3B', 'Active',
+      ]),
+      settings: settings(), shape: { orientation: 'portrait' },
+    });
+    assert.equal(at.calls[0].head[0].length, WALL.length,
+      'every column survives — the wall copy is a fixed-column report and must fit by construction');
+  });
+
+  it('the contacts sheet fits landscape at READABLE density with every column', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Team Roster — with contacts', headers: CONTACTS,
+      rows: Array.from({ length: 20 }, (_, i) => [
+        String(i + 1), 'Nathaniel Whitfield', '2013-01-10', 'SS',
+        'Jordan Whitfield', 'whitfield.family@example.ca', '(555) 013-3324', 'Active',
+      ]),
+      settings: settings(), shape: { orientation: 'landscape' },
+    });
+    assert.equal(at.calls[0].head[0].length, CONTACTS.length,
+      'no column yields — this is why Secondary is not on this sheet');
   });
 });

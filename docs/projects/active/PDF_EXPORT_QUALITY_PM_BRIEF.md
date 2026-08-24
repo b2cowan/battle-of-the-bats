@@ -1,6 +1,6 @@
 # PM Brief — PDF Export Quality
 
-**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 + PHASE 2 PASSES 1–2 OF 6 BUILT on dev 2026-08-23** (QA §79, §82, §84)
+**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 + PHASE 2 PASSES 1–3 OF 6 BUILT on dev 2026-08-23** (QA §79, §82, §84, §86)
 — the shared plumbing: one title, the right name for the layer, real logos, true page counts,
 per-report shape, the no-shred fit contract, the coaches "How your documents look" card, and the
 three lying menu buttons removed. Phases 2–3 (group passes, rendered CI check) remain. Owner
@@ -40,9 +40,31 @@ real answer. The tryout board summary also gained the club's crest, and all thre
 their identity states confirmed on paper. This also makes true the marketing page's standing
 promise — *"player dues statements formatted for parent distribution."*
 
-**Four group passes remain** — rosters, working sheets, schedules, posters
-and brackets — each with its own rendered sign-off, then the Phase 3 check that renders documents
-in CI so this class of rot cannot return unseen.
+**Phase 2 pass 3 — Rosters** answered a question the group had been carrying: *who is standing in
+front of this paper?* A roster is the one thing this product prints that gets **pinned where
+strangers walk past** — a dugout, a rink board, a check-in table — and the only roster we could
+print carried every child's date of birth and every parent's email and phone. Worse, the switch
+that controls guardian contacts lives in **club** admin settings, so a **standalone coach — the
+exact customer the standalone Premium Coaches Portal is sold to — had no way anywhere in the product to turn it off.**
+
+So the roster is now **two documents in one Export menu**, the safe one first. *Team roster* gives
+numbers, names and positions: pin it anywhere. *Roster with contacts* adds dates of birth and
+guardian details for a league or insurance submission, and appears **only** for a coach granted
+family contacts — which also retires a defect where an assistant without that access printed four
+empty columns across 40% of the page. The club's guardian-contacts switch keeps working on the
+second sheet. The **rep program-year roster** now prints too — on the club's paper, grouped by each
+player's standing with counts, at the same no-contacts floor the new registers took.
+
+Two things rendering caught that nobody was hunting for. **Page 2 of any long report had no idea
+whose it was** — no crest, no club or team name, on every document in the product that ever ran past
+one page; Phase 1's identity promise had only ever been true of page 1. Fixed for everything, and
+proved free by re-reading all 54 documents before and after to identical page counts. And a
+guardian-contacts spreadsheet on the rep tryouts screen had **no plan check at all** while the
+contact-free PDF above it was locked — now corrected.
+
+**Three group passes remain** — working sheets, schedules, posters and brackets — each with its own
+rendered sign-off, then the Phase 3 check that renders documents in CI so this class of rot cannot
+return unseen.
 
 ## The problem, now with proof
 

@@ -10953,3 +10953,138 @@ hash) is possible future debt, not a new gap.
 the practice run-sheet, schedules, posters/cards/brackets — the roster and practice sheet keep
 their §82 regression guards untouched); the Phase 3 CI check (the harness and scanner carried
 forward, productionisation still owed).
+
+## §86 · A coach can pin the roster up without publishing fourteen birthdates
+
+**BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 3 of 6: Rosters**. Plan:
+`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`PDF_EXPORT_QUALITY_P2_ROSTERS_BUILD_PROMPT.md`. Checkpoint-1 decisions (owner took all four
+recommendations): https://claude.ai/code/artifact/c189810f-c10f-468a-ab14-7efd1fca0c9a · built
+gallery: https://claude.ai/code/artifact/eaa601d4-0438-4046-947c-99b24d957ec5. No migration.
+
+- [ ] **The roster PDF is now the copy you can pin up.** Coaches Portal → Roster → Export →
+      *Team roster (PDF)*: number, player, primary, secondary, status. One page, portrait,
+      nothing wraps. ⚠ **No date of birth and no guardian contacts anywhere on it** — that is the
+      whole point. First Name and Last Name are one **Player** column now, on every roster.
+- [ ] **The submission sheet is a second document in the same Export box.** Under it,
+      *Roster with contacts (PDF)*: player, date of birth, primary, guardian, email, phone,
+      status — landscape, and every value prints whole (this is why Secondary is not on it; with
+      it, every date of birth broke across two lines). Two pages for fourteen players is correct
+      and costs nothing on a sheet nobody pins.
+- [ ] **An assistant coach without family-contact access no longer prints four empty columns.**
+      Sign in as an assistant who has *not* been granted family contacts and export the roster:
+      the wall copy, and **no "Roster with contacts" row at all**. Before this pass they got
+      *Date of Birth, Guardian Name, Guardian Email* and *Guardian Phone* as headings with
+      nothing under them, across about 40% of the page.
+- [ ] **The club's guardian-contacts switch still means what it means.** Org Settings → PDF
+      Settings → turn guardian contacts off → export *Roster with contacts*: the three guardian
+      columns are gone, dates of birth remain (that is the fact the document exists for).
+- [ ] **The rep program-year roster PDF exists** (Club). Rep Teams → team → program year →
+      Roster → Export → PDF. On the **club's** paper — org name, org logo, club look — grouped by
+      each player's standing with a count on every heading ("Active · 11"), and **no Status
+      column**, because the heading already is one. ⚠ Same privacy floor as the two new registers:
+      no dates of birth, no guardian contacts. Check a program year with released or inactive
+      players — each standing gets its own section, so nobody released is mixed into the active list.
+- [ ] ⚠ **Page 2 of a long report now knows whose paper it is, and this reaches documents
+      OUTSIDE this pass.** Any table running past one page used to print its continuation pages
+      with no crest and no club or team name at all — Phase 1's promise was only ever true of
+      page 1. Walk it on the **Tournament Schedule** PDF (nothing to do with rosters): page 2
+      carries the club's crest and name. Then a long roster, a long registrations list, a long
+      results file. **Page counts must not have moved** — the whole 54-document corpus was
+      re-scanned before and after and is byte-identical.
+- [ ] **The unlocked contacts spreadsheet is locked.** Rep Teams → Tryouts → Export →
+      *"Excel with contact details"* now takes the same plan bar as everything beside it. It had
+      **no plan check at all** while the PDF above it — which prints no contact details — was
+      locked to Club. On a plan without it the row shows a lock and its upgrade line rather than
+      downloading. ⚠ **Deliberately not changed:** the coaches' own roster contact spreadsheet.
+      Those are the coach's own team's families; the family-contacts grant is the right gate and
+      already applies. Locking a standalone coach out of their own contact list would be the wrong fix.
+
+**Verified by rendering, not by gates:** every roster document read as paper in all three team
+identity states (default / inherited club look / team's own crest and colour) and the rep roster on
+both an untouched and a branded club. **No identity defect found this pass** (unlike the Registers
+pass's club Budget vs. Actual). The whole corpus re-scanned after the engine change: page counts,
+true "Page X of Y" footers and dropped-column status identical everywhere — the only scanner flag
+remains the family-statement batch file's per-family page restart, designed in §84. 42 renderer
+contract tests green (four of them new, covering continuation-page identity and both roster diets);
+typecheck clean.
+
+**Decided from rendered paper at checkpoint 1, all four owner-approved as recommended:** two
+documents rather than one · no birthdates on the wall copy (a birth-*year* option was rendered and
+rejected — on a single-age team the column is the same value fourteen times) · the rep roster
+wall-shaped rather than submission-shaped · lock the spreadsheet. The framing that drove it was
+found in the code, not the plan: the guardian-contacts switch lives in **club** admin settings, so a
+**standalone** coach — the exact customer the Premium Coaches Portal is sold to — had no way anywhere in the
+product to stop their roster printing every child's birthdate and every parent's phone number.
+
+**Looked at and deliberately left alone,** so neither is mistaken for an oversight: a phone number
+wraps at its own internal space on the contacts sheet ("(555)" / "013-3324") — the engine allows a
+cell to wrap by design, a long email must be able to, and this is not the broken-mid-word class the
+Registers pass killed; widening that rule would move column widths on every table in the product to
+fix a cosmetic wrap. And a one-player group can land on its own page on the rep roster when the
+group before it ends near the bottom — correct pagination with an unlucky roster, and the
+alternative is reshaping page breaks for every grouped document.
+
+**Demo question asked and answered:** the coach sandbox's dock lines and tour narration never mention
+exports, printing or PDFs (re-confirmed from §82 and §84 by reading the copy again, not by
+assuming), so nothing is falsified and no sentence changes. The tour does visit the roster, so
+"print the roster for the dugout wall" is a more plausible future story beat than a register was —
+recorded here as a judgement, not built, because a file download is a poor beat in a three-minute walk.
+
+**Catalog + help synced in the same unit of work:** the export catalog gains the rep roster PDF and
+loses a stale "not yet implemented — planned Phase D1" note the coaches' roster had carried since it
+shipped, plus the "travel/insurance sheet" line that described the one document that used to exist.
+The exports guide's availability table gains both new rows, and its privacy section now explains
+which of the two roster PDFs a coach is choosing between.
+
+**/review (5 lenses, high-risk tier) caught + fixed 5, and the sharpest one was about a document
+this pass created:**
+
+- ⚠ **A coach of two teams could have exported one team's roster carrying the OTHER team's
+  families.** The coach portal does not remount when a coach switches team, and the roster fetch
+  had no sequence token — so a slow response for the previous team could land after the new one and
+  overwrite the player list. Until this pass that was a momentary on-screen flicker. The moment the
+  roster became a downloadable *"Roster with contacts"*, it became a file titled for Team B holding
+  Team A's children's birthdates and guardian emails. **The same file already guarded its BRANDING
+  fetch against exactly this, with a comment explaining why — and left the families unguarded.**
+  Now sequence-tokened. Walk it: open Team A's roster on a slow connection, switch to Team B before
+  it finishes, export — Team B's players, every time.
+- The rep program-year roster got the same treatment (its own new export is the first thing on that
+  page to produce a shareable file), plus a cleanup guard on its branding fetch.
+- ⚠ **The rep roster could have silently dropped a player.** It grouped by a hardcoded list of the
+  three standings, so anyone in a fourth would have vanished from a roster a club submits to its
+  association — this repo has already been bitten once by a status set quietly gaining a member.
+  Unknown standings now get their own section under their own name; **every player prints, always.**
+- **A privacy test that proved nothing.** The assertion that the wall copy carries no birthdates was
+  checking the test's own copy of the column list — production could have gone back to printing them
+  and it would still have passed. Both documents' column lists now have one home that the page and
+  the test share, and the test was verified to FAIL when production is deliberately regressed.
+- **A plan claim I wrote that the code does not enforce.** The exports guide's new row said Excel/CSV
+  on the team roster needs Club; there is no plan check on those formats at all. Corrected to what
+  the product actually does.
+
+**Raised, deliberately NOT fixed — an owner decision, not a bug:** the export catalog records the
+coaches' roster as Club-only (`minPlan: 'club'`, `moduleGate: 'club_exports'`) and **nothing enforces
+it** — the PDF takes the generic PDF-exports bar, and Excel/CSV take none. Enforcing it would take
+Excel away from standalone coaches who have it today, which is a packaging call. The code now says
+so where the claim lives, and the help guide describes reality. Same shape, same page: the catalog's
+`respectsCurrentFilters: true` is vacuous — that roster has no filter to respect.
+
+**Adjudicated and accepted, not defects:** the continuation-page hook was traced through the table
+library's own source (its page counter is per-table, and the hook fires while the finishing page is
+still current) — no page can get two headers or none, in flat or grouped mode. The band-height
+helper tests whether a logo is *configured* rather than whether it *drew*; page 1 and its
+continuations stay consistent with each other, and the divergence can only surface as ~8mm of dead
+space when a corrupt logo meets a document with no name at all, which no export surface produces.
+Plan gates in this export menu are interface-level throughout, consistently — the roster split's
+real boundary is server-side redaction, which was confirmed intact: a coach without family-contact
+access could not extract contacts even by forcing the call, because the fields arrive null.
+
+**Standing debt recorded, not this diff's:** the tryouts page keeps an unguarded copy of the
+branding fetch (same shape, pre-existing); the board summary and family statement still hand-carry
+their own copy of the header-height arithmetic rather than sharing the helper.
+
+**Not in this pass, on purpose:** the other three document groups (working sheets incl. the practice
+run-sheet, schedules, posters/cards/brackets — the practice sheet keeps its §82 regression guard
+untouched, and the bracket keeps its own squashed logo draw for the Posters pass); the Phase 3 CI
+check (harness and scanner carried forward again, productionisation still owed).

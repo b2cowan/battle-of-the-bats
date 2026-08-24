@@ -39,11 +39,16 @@ export interface ExportMenuProps {
   pdfLabel?: string;
   /** Override the PDF item helper text. Default: 'Formatted, print-ready document'. */
   pdfHint?: string;
-  /** Optional second PDF item — a blank / fill-in variant (e.g. an empty bracket).
-   *  Shown under the PDF item, gated the same way. */
-  onExportBlankPDF?: () => void | Promise<void>;
-  blankPdfLabel?: string;
-  blankPdfHint?: string;
+  /**
+   * Optional second PDF item — a different DOCUMENT built from the same rows, shown under the
+   * PDF item and gated the same way. Two shipped uses: the schedule's blank fill-in bracket, and
+   * the team roster's contacts sheet beside its wall copy. It is a second document, never a
+   * second FORMAT — the one-Export-control-per-surface ruling holds by putting the choice inside
+   * this menu (the same move `MoneyExportButton.secondaryPdf` makes for the dues statement).
+   */
+  onExportSecondaryPDF?: () => void | Promise<void>;
+  secondaryPdfLabel?: string;
+  secondaryPdfHint?: string;
   /**
    * When true, a second opt-in export item appears:
    * "Excel with contact details" (or "Excel with internal notes" if both are set).
@@ -53,6 +58,18 @@ export interface ExportMenuProps {
   sensitiveOptionLabel?: string;
   /** Called when user selects the sensitive opt-in export. */
   onExportXLSXWithSensitive?: () => void | Promise<void>;
+  /**
+   * PlanFeature key gating the sensitive opt-in. Optional BY DESIGN — this row carries real
+   * guardian PII, but "who may see it" is not always a plan question. Two shapes ship:
+   *  - A surface whose exports are a PAID capability names its own key here (rep tryouts →
+   *    `club_exports`). Before the Rosters pass that row had NO plan check while the PDF above
+   *    it — which prints no contacts at all — was locked to Club: exactly backwards, and
+   *    reachable because a module can be granted as an add-on without the org reaching Club.
+   *  - A surface where the data is the caller's OWN (the coaches' team roster) leaves it unset
+   *    and gates on the ROLE grant instead. Locking a standalone coach out of their own team's
+   *    contact list would be the wrong fix.
+   */
+  sensitiveFeatureKey?: PlanFeature;
   /**
    * When true, a "full dataset" server-side export option appears.
    * Use for paginated tables where client state is a subset of all records.
@@ -106,12 +123,13 @@ export default function ExportMenu({
   onExportPDF,
   pdfLabel = 'PDF report',
   pdfHint = 'Formatted, print-ready document',
-  onExportBlankPDF,
-  blankPdfLabel = 'Blank PDF',
-  blankPdfHint = 'Empty template to print and fill in',
+  onExportSecondaryPDF,
+  secondaryPdfLabel = 'Blank PDF',
+  secondaryPdfHint = 'Empty template to print and fill in',
   hasSensitiveOption = false,
   sensitiveOptionLabel = 'Excel with contact details',
   onExportXLSXWithSensitive,
+  sensitiveFeatureKey,
   hasServerExport = false,
   onServerExport,
   planId,
@@ -147,6 +165,13 @@ export default function ExportMenu({
   const pdfAccessible =
     !planId || hasPlanFeature(planId, pdfFeatureKey);
   const pdfUpgradeCopy = pdfAccessible ? '' : requiresPlanCopy(pdfFeatureKey);
+
+  // Sensitive opt-in gate. Unset key = no plan question on this surface (see the prop's note);
+  // the row is then governed by whatever role/grant decided `hasSensitiveOption`.
+  const sensitiveAccessible =
+    !sensitiveFeatureKey || !planId || hasPlanFeature(planId, sensitiveFeatureKey);
+  const sensitiveUpgradeCopy =
+    sensitiveAccessible || !sensitiveFeatureKey ? '' : requiresPlanCopy(sensitiveFeatureKey);
 
   async function run(action: () => void | Promise<void>) {
     setOpen(false);
@@ -290,30 +315,30 @@ export default function ExportMenu({
             </button>
           )}
 
-          {/* Blank / fill-in PDF variant (same gate as PDF) */}
-          {includesPDF && onExportBlankPDF && (
+          {/* Second PDF document (same gate as PDF) */}
+          {includesPDF && onExportSecondaryPDF && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
               onClick={() => {
                 if (!pdfAccessible || exportDisabled) return;
-                runExport(onExportBlankPDF);
+                runExport(onExportSecondaryPDF);
               }}
               aria-disabled={!pdfAccessible || exportDisabled}
-              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : blankPdfHint) : pdfUpgradeCopy}
+              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : secondaryPdfHint) : pdfUpgradeCopy}
             >
               <FileText size={14} className={styles.menuIcon} aria-hidden />
               {!pdfAccessible && (
                 <Lock size={12} className={styles.lockIcon} aria-hidden />
               )}
               <span>
-                <span className={styles.menuItemLabel}>{blankPdfLabel}</span>
+                <span className={styles.menuItemLabel}>{secondaryPdfLabel}</span>
                 <span className={styles.menuItemHint}>
                   {!pdfAccessible
                     ? pdfUpgradeCopy
                     : exportDisabled
                       ? 'No rows available to export'
-                      : blankPdfHint}
+                      : secondaryPdfHint}
                 </span>
               </span>
             </button>
@@ -328,14 +353,27 @@ export default function ExportMenu({
           {hasSensitiveOption && onExportXLSXWithSensitive && (
             <button
               role="menuitem"
-              className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
-              onClick={() => runExport(onExportXLSXWithSensitive!)}
-              aria-disabled={exportDisabled}
+              className={`${styles.menuItem}${!sensitiveAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => {
+                if (!sensitiveAccessible || exportDisabled) return;
+                runExport(onExportXLSXWithSensitive!);
+              }}
+              aria-disabled={!sensitiveAccessible || exportDisabled}
+              title={sensitiveAccessible ? undefined : sensitiveUpgradeCopy}
             >
               <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
+              {!sensitiveAccessible && (
+                <Lock size={12} className={styles.lockIcon} aria-hidden />
+              )}
               <span>
                 <span className={styles.menuItemLabel}>{sensitiveOptionLabel}</span>
-                <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Includes additional contact columns'}</span>
+                <span className={styles.menuItemHint}>
+                  {!sensitiveAccessible
+                    ? sensitiveUpgradeCopy
+                    : exportDisabled
+                      ? 'No rows available to export'
+                      : 'Includes additional contact columns'}
+                </span>
               </span>
             </button>
           )}

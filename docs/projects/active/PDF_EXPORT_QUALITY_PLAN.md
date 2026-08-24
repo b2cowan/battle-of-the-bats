@@ -1,8 +1,11 @@
 # PDF Export Quality — plan
 
-**Status:** **PHASE 1 + PHASE 2 PASSES 1–2 (REGISTERS, STATEMENTS & HANDOUTS) BUILT on dev
-2026-08-23** (Owner QA Ledger §79, §82 and §84; migration 259 dev-only; the Statements pass added
-no migration. Statements checkpoint-1 mockups
+**Status:** **PHASE 1 + PHASE 2 PASSES 1–3 (REGISTERS, STATEMENTS & HANDOUTS, ROSTERS) BUILT on dev
+2026-08-23** (Owner QA Ledger §79, §82, §84 and §86; migration 259 dev-only; the Statements and
+Rosters passes added no migration. Rosters checkpoint-1 decisions — owner took all four
+recommendations: https://claude.ai/code/artifact/c189810f-c10f-468a-ab14-7efd1fca0c9a; built
+gallery https://claude.ai/code/artifact/eaa601d4-0438-4046-947c-99b24d957ec5. Statements
+checkpoint-1 mockups
 https://claude.ai/code/artifact/43b20053-b0d5-4f8c-8f33-9f82c9855da8 — owner picked the drawn
 one-pager, both doors, coach-hands-it-over; built gallery
 https://claude.ai/code/artifact/dc3a8252-41bd-4050-9e2a-c6417426d557;
@@ -133,6 +136,15 @@ does exactly this). Per decision 7, the fallback follows the layer: **coach-port
 back to the team name, admin documents to the org name.** Also kill the practice sheet's empty dark
 header band (its "Tonight" section has blank column headers).
 
+⚠ **D1 was only ever true of PAGE 1 — found in the Rosters pass (§86), fixed there.** Any table
+spilling past one page printed its continuation pages with no identity band at all: no crest, no
+club or team name, nothing but a table and a footer. The grouped path already redrew the band
+whenever IT added a page; autoTable's own pagination did not, which is how every flat multi-page
+report (schedule, month grid, a long roster) shipped anonymous back pages. The fix makes the
+grouped path's behaviour universal and was proved free by re-scanning the whole corpus to
+byte-identical page counts. **Lesson for the remaining passes: a guarantee checked only on the
+first rendered page is not checked.**
+
 **D2 · No report owns its shape.** Reports declare orientation (and density where it matters) in the
 export contract; the org preference applies only where either shape fits. With it comes a **fit
 contract**: a declared minimum column width, per-column priorities for what drops first on narrow
@@ -205,9 +217,27 @@ judges on the group's own definition of good:
   helper shared with the table engine (the bracket's own squashed version is the Posters pass's).
   Identity defaults confirmed on paper for all three handouts, no defect found. *Good = the
   club's face; one page; a stranger would think well of the club.*
-- **Rosters:** roster declares landscape (or the wall copy sheds guardian columns — decide in-pass
-  with the fit contract's per-column priorities); build the rep roster PDF the stub promised.
-  *Good = readable pinned to a wall; privacy-aware.*
+- **Rosters — BUILT 2026-08-23 (QA §86).** The in-pass decision went to **two content variants of
+  one document**, owner-picked from rendered options: the **wall copy** (number / player /
+  positions / status, portrait) is what "Export → PDF" now gives you, and a **contacts sheet**
+  (adds date of birth + guardian columns, landscape) is a second document row in the same Export
+  menu — offered only to a coach granted family contacts, which is also what retired the
+  four-empty-columns defect. ⚠ **Not a renderer fork** (§5 holds): one engine call, two column
+  lists. The §82 compact regression guard is retired with it; merging First/Last into one `Player`
+  column bought the width back. Also decided on paper: **no birthdates on the wall copy** (a
+  birth-*year* variant was rendered and rejected — one value fourteen times on a single-age team).
+  The **rep program-year roster PDF** exists on ADMIN paper, grouped by standing with counts, at
+  the registers' privacy floor. The framing came from the CODE, not this plan: the
+  guardian-contacts switch is club-admin-only, so a **standalone** coach had no way anywhere to
+  stop their roster printing every child's birthdate — which is why "one document, everything"
+  could not win. Two things rendering found that nobody was looking for: ⚠⚠ **every table
+  spilling past one page printed its continuation pages with NO identity band at all** — no crest,
+  no club or team name — so Phase 1's guarantee held only on page 1; fixed in the shared engine
+  (`didDrawPage` + a reserved `margin.top`, the grouped path's behaviour made universal) and proved
+  free by re-scanning the whole 54-document corpus to byte-identical page counts. And the
+  rep-teams **"Excel with contact details"** export, raised in §82 and left then, had no plan check
+  at all while the PDF above it carried one — now gated; the coaches' own roster spreadsheet was
+  checked and deliberately left on its role grant. *Good = readable pinned to a wall; privacy-aware.*
 - **Working sheets:** check-in sheet branded + tick-box column widened; **the practice sheet is
   rebuilt as the decided run sheet** (decision 9 resolved 2026-08-22 — build to
   `PRACTICE_SHEET_STRUCTURE_PLAN.md` and its approved exhibits, not to the old table form).

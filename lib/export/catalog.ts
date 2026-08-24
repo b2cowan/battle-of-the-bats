@@ -311,20 +311,35 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Coaches Portal — Team Roster',
     module: 'coaches',
     page: 'Team Roster',
-    file: 'app/[orgSlug]/coaches/teams/[id]/roster/page.tsx',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
-    minPlan: 'club',
-    moduleGate: 'club_exports',
+    // ⚠ NO PLAN GATE, AND THAT IS THE RULING — not an omission.
+    // This entry asserted `minPlan: 'club'` / `moduleGate: 'club_exports'` for months while the
+    // product never behaved that way: the PDF takes the generic `pdf_exports` key (which the
+    // standalone Premium Coaches Portal clears by explicit grant) and xlsx/csv take no plan check
+    // at all. Owner ruling 2026-08-23 (`BUSINESS_DECISIONS.md`): **roster export is an inclusion
+    // of the Premium Coaches Portal** — a coach's own roster is the coach's own data, and
+    // enforcing the stale claim would have TAKEN Excel away from paying standalone coaches.
+    // The real gate is architectural, not a feature key: a coaches-portal roster exists only for
+    // a Premium or club-owned team, so there is no open door to close. Do not add one.
+    //
+    // ⚠⚠ `minPlan`/`moduleGate` ARE DESCRIPTIVE ONLY — nothing reads them at runtime. That is
+    // precisely how this drifted. Never infer a plan's inclusions from this file;
+    // `lib/plan-features.ts` and the surface's own guard are the truth.
     audiences: ['coach'],
     includesSensitiveFields: true,
     sensitiveFieldPolicy: 'excluded_by_default',
     respectsCurrentFilters: true,
     serverSide: false,
+    // Catalog true-up 2026-08-23 (PDF Export Quality, Phase 2 Rosters pass): all three formats
+    // have shipped for a long time — the "not yet implemented" note below was stale, and the
+    // "travel/insurance sheet" sentence described the ONE roster PDF that used to exist. There
+    // are now TWO documents behind the PDF option (owner ruling, decided on rendered paper):
+    // the wall copy is the default and carries nothing private; the contacts sheet is a second
+    // document row, offered only to a coach cleared for family contacts.
     helpSummary:
-      'Export team roster with player names, numbers, DOB, guardian contacts, and status. PDF format produces a travel/insurance sheet.',
-    omittedReason: 'Not yet implemented — planned Phase D1.',
-    plannedPhase: 'Phase D1',
+      'Export team roster to Excel or CSV, or as two PDFs: the team roster (names, numbers and positions — safe to pin up) and, for coaches cleared for family contacts, a roster with contacts adding dates of birth and guardian details for league or insurance submissions.',
   },
   {
     id: 'coaches-player-dues',
@@ -556,14 +571,14 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been
     // live on this page all along — the entry wrongly claimed the whole export was unbuilt,
     // and pointed at a path that never existed. The PDF stub (an info modal promising org
-    // branding no org had ever printed) came OUT of the menu (decision 2); the real rep
-    // roster PDF is built in the Phase 2 Rosters pass and joins `formats` when it downloads.
+    // branding no org had ever printed) came OUT of the menu (decision 2). The real rep roster
+    // PDF shipped in the Phase 2 Rosters pass (2026-08-23) and joins `formats` here with it.
     id: 'rep-teams-roster-admin',
     label: 'Rep Teams Roster (admin view)',
     module: 'rep_teams',
     page: 'Program Year Roster',
     file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx',
-    formats: ['xlsx', 'csv'],
+    formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
     moduleGate: 'club_exports',
@@ -572,7 +587,8 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     sensitiveFieldPolicy: 'excluded_by_default',
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export rep team roster with player names, numbers, DOB, and status.',
+    helpSummary:
+      'Export rep team roster with player names, numbers, DOB, and status. The PDF prints on the club’s paper, grouped by each player’s standing with a count on every heading — names, numbers and positions only, with no dates of birth or guardian contacts.',
   },
 
   // ── Planned: Phase D3 (P2 new table exports) ────────────────────────────

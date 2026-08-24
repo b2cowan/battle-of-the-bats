@@ -30,6 +30,7 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  ROSTER_WALL_HEADERS, rosterContactHeaders,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
@@ -146,21 +147,36 @@ export default function RosterPage({
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
 
+  /**
+   * ⚠ Sequence-tokened, and the reason is the EXPORTS (Rosters pass, /review finding). The coach
+   * portal does NOT remount when the coach switches team — this page keeps its state across a
+   * `[teamId]` change — so a slow response for the previous team could land after the new team's
+   * and overwrite `players`. That used to be a transient on-screen glitch; it stops being one the
+   * moment the roster can be exported, because "Roster with contacts" turns the wrong team's
+   * children's birthdates and guardian emails into a downloaded file titled for THIS team.
+   *
+   * The pdf-settings effect below already guards its own fetch for exactly this reason (branding).
+   * The roster itself — the part that carries the families — did not.
+   */
+  const loadSeq = useRef(0);
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
     setFetching(true);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`);
       // A failure that isn't JSON (an HTML 404/error page, a gateway timeout) must not surface as a
       // raw parser message — parse defensively and let the status decide what the coach is told.
       const data = await res.json().catch(() => null);
+      if (seq !== loadSeq.current) return;
       if (!res.ok) throw new Error(data?.error ?? 'Failed to load roster');
       if (!data) throw new Error('Failed to load roster');
       setPlayers(data.players ?? []);
       setProgramYear(data.programYear ?? null);
     } catch (e: unknown) {
+      if (seq !== loadSeq.current) return;
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
-      setFetching(false);
+      if (seq === loadSeq.current) setFetching(false);
     }
   }, [orgSlug, teamId]);
 
@@ -376,58 +392,86 @@ export default function RosterPage({
     );
   }
 
-  async function handleExportPDF() {
-    if (!players.length) return;
-    const settings: OrgPdfSettings = {
+  /**
+   * The roster prints as TWO DOCUMENTS with two readers (owner ruling, Phase 2 Rosters pass,
+   * 2026-08-23 — decided from rendered options).
+   *
+   * A roster is the one document this product prints that gets PINNED where strangers walk past:
+   * a dugout, a rink board, a check-in table. Until this pass there was only one roster PDF and
+   * it carried every child's full date of birth plus every guardian's email and phone — and a
+   * STANDALONE coach could not turn any of it off, because the guardian-contacts switch lives in
+   * club admin settings and a standalone team has no club. So:
+   *
+   *  - `handleExportPDF` — the WALL COPY, the default. Number, player, positions, status.
+   *    Nothing on it is private. Portrait, readable density, one page for a normal roster.
+   *  - `handleExportContactsPDF` — the CONTACTS SHEET, a second document row in the same Export
+   *    menu (never a second format). Date of birth + guardian columns; the sheet a club submits
+   *    to an association or insurer. Offered ONLY to a coach cleared for family contacts.
+   *
+   * ⚠ Two content variants of ONE engine call, per plan §5 — never a per-report renderer fork.
+   */
+  const rosterPdfMeta = () => ({
+    settings: {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-    };
-    const includeGuardian = settings.includeGuardianContacts;
-    const teamName = assignment?.teamName ?? teamId;
-    const programYearName = programYear?.name ?? assignment?.programYearName ?? '';
+    } as OrgPdfSettings,
+    teamName: assignment?.teamName ?? teamId,
+    // D1: the header carries the team's name; the subtitle keeps only the season.
+    programYearName: programYear?.name ?? assignment?.programYearName ?? '',
+  });
 
-    // Build PDF-specific headers — DOB always included; guardian columns conditional
-    const pdfHeaders = [
-      '#', 'First Name', 'Last Name', 'Primary', 'Secondary', 'Date of Birth',
-      ...(includeGuardian ? ['Guardian Name', 'Guardian Email', 'Guardian Phone'] : []),
-      'Status',
-    ];
-
-    const src = buildRosterExportSrc();
-    const pdfRows = src.map(r => [
-      r.playerNumber,
-      r.playerFirstName,
-      r.playerLastName,
-      r.primaryPosition,
-      r.secondaryPosition,
-      r.playerDateOfBirth,
-      ...(includeGuardian ? [r.guardianName, r.guardianEmail, r.guardianPhone] : []),
-      r.status,
-    ]);
+  async function handleExportPDF() {
+    if (!players.length) return;
+    const { settings, teamName, programYearName } = rosterPdfMeta();
 
     await downloadPDF(
       buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster', scope: teamName }, 'pdf'),
       'Team Roster',
-      // D1: the header carries the team's name; the subtitle keeps only the season.
       programYearName || undefined,
-      pdfHeaders,
-      pdfRows,
+      [...ROSTER_WALL_HEADERS],
+      buildRosterExportSrc().map(r => [
+        r.playerNumber,
+        [r.playerFirstName, r.playerLastName].filter(Boolean).join(' '),
+        r.primaryPosition,
+        r.secondaryPosition,
+        r.status,
+      ]),
       settings,
-      {
-        identity: teamName,
-        /* 10 columns with guardians: landscape is the report's own shape (D2) — names stopped
-           shredding here. The wall-copy column diet is still a Phase 2 Rosters-pass call.
+      // Five columns fit portrait at readable density with room to spare — the shape a coach
+      // actually pins up. (The big-type dugout document is the lineup poster; this is the list.)
+      { identity: teamName, shape: { orientation: 'portrait' } },
+    );
+  }
 
-           ⚠ COMPACT IS A REGRESSION GUARD, NOT A DESIGN CHOICE (Phase 2 Registers pass). This
-           roster clears landscape by ~3mm — and only did so while column headings were being
-           measured in the regular face and capped, i.e. while `Guardian Email` and friends were
-           allowed to shred slightly. Measuring headings honestly pushed it over and the fit
-           contract started dropping `Status` from every roster with guardian contacts on.
-           Compact buys ~47mm of headroom, keeps all ten columns, and fits more players on a
-           page. If the Rosters pass gives this document a real diet, revisit the density with
-           it. */
-        shape: { orientation: 'landscape', density: 'compact' },
-      },
+  async function handleExportContactsPDF() {
+    if (!players.length || !canSeePii) return;
+    const { settings, teamName, programYearName } = rosterPdfMeta();
+    // The club's guardian-contacts switch keeps meaning exactly what it means: off drops the
+    // three guardian columns from this sheet. Date of birth stays — it is the submission fact
+    // this document exists for, and this sheet is never the one pinned to a wall.
+    const includeGuardian = settings.includeGuardianContacts;
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster-with-contacts', scope: teamName }, 'pdf'),
+      'Team Roster — with contacts',
+      programYearName || undefined,
+      rosterContactHeaders(includeGuardian),
+      buildRosterExportSrc().map(r => [
+        r.playerNumber,
+        [r.playerFirstName, r.playerLastName].filter(Boolean).join(' '),
+        r.playerDateOfBirth,
+        r.primaryPosition,
+        ...(includeGuardian ? [r.guardianName, r.guardianEmail, r.guardianPhone] : []),
+        r.status,
+      ]),
+      settings,
+      /* Landscape, READABLE — not compact. The §82 compact guard on the old ten-column sheet is
+         retired with this: merging First/Last into one `Player` column and dropping `Secondary`
+         (which no association asks for) buys back enough width that eight columns print at
+         honest widths with every value whole. Rendered before it was written: nine columns at
+         this density shredded every date of birth across two lines ("2013-01-1 / 0"), which is
+         why Secondary is not here. A second page costs nothing on a sheet nobody pins. */
+      { identity: teamName, shape: { orientation: 'landscape' } },
     );
   }
 
@@ -507,9 +551,22 @@ export default function RosterPage({
         onExportXLSX={handleExportXLSX}
         onExportCSV={handleExportCSV}
         onExportPDF={handleExportPDF}
+        pdfLabel="Team roster (PDF)"
+        pdfHint="Names, numbers and positions — safe to pin up"
+        /* The contacts sheet is a second DOCUMENT, and only for a coach cleared for family
+           contacts. Withholding it is also what retires the old defect where an assistant
+           without that grant printed four empty columns: the wall copy has no private columns
+           to leave blank, and this row is simply absent. */
+        onExportSecondaryPDF={canSeePii ? handleExportContactsPDF : undefined}
+        secondaryPdfLabel="Roster with contacts (PDF)"
+        secondaryPdfHint="Adds dates of birth and guardian contacts — for league or insurance"
         hasSensitiveOption={canSeePii}
         sensitiveOptionLabel="Excel with contact details"
         onExportXLSXWithSensitive={canSeePii ? handleExportXLSXWithSensitive : undefined}
+        /* No `sensitiveFeatureKey`: these are the coach's OWN team's families. Locking a
+           standalone coach out of their own contact list would be the wrong fix — the grant
+           above (`rosterPii`) is the right gate here. Checked alongside the rep-teams row that
+           this pass DID lock. */
         planId={currentOrg?.planId}
         pdfFeatureKey="pdf_exports"
         disabled={players.length === 0}

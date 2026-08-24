@@ -513,6 +513,13 @@ export default function TryoutsPage({
               hasSensitiveOption={true}
               sensitiveOptionLabel="Excel with contact details"
               onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+              /* ⚠ Guardian names, emails and phones for every applicant. This row carried NO plan
+                 check at all until the Rosters pass, while the PDF directly above it — which
+                 prints no contact details whatsoever — was locked to Club: exactly backwards, and
+                 reachable in practice because the Rep Teams module can be granted as an add-on
+                 without the org ever reaching Club. Same key as its neighbours; every legitimate
+                 plan for this page clears it. */
+              sensitiveFeatureKey="club_exports"
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />
