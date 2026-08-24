@@ -26,7 +26,10 @@ export interface FamilyDuesPlayer {
   playerId: string;
   /** Display name for the player, e.g. "Maya R." — roster basics, never PII. */
   playerName: string;
-  /** Normalized guardian email = the family key. null when no contact is recorded. */
+  /** The family key — the normalized guardian email, or any opaque token derived 1:1 from it
+   *  (the dues payload sends a hash so a browser-side caller can group siblings without the
+   *  email itself travelling to a coach who lacks the PII grant). null when no contact is
+   *  recorded. */
   guardianKey: string | null;
   /** Guardian surname, or null when absent OR when the caller may not see it. */
   guardianLastName: string | null;
@@ -73,6 +76,9 @@ export interface FamilyDuesGroup {
 export interface FamilyDuesRollup {
   /** Families that still owe, most owed first. */
   owing: FamilyDuesGroup[];
+  /** Families with a dues schedule and nothing left to pay, alphabetical — the family dues
+   *  statement prints these too (as receipts), so they are groups, not just a count. */
+  paidUp: FamilyDuesGroup[];
   /** Families with a dues schedule and nothing left to pay. */
   paidUpCount: number;
   /** Families with any dues arrangement at all — the honest denominator. */
@@ -207,10 +213,14 @@ export function computeFamilyDues(input: FamilyDuesInput): FamilyDuesRollup {
   const owing = all
     .filter(g => g.outstanding > 0)
     .sort((a, b) => b.outstanding - a.outstanding || a.label.localeCompare(b.label));
+  const paidUp = all
+    .filter(g => !(g.outstanding > 0))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   return {
     owing,
-    paidUpCount: all.length - owing.length,
+    paidUp,
+    paidUpCount: paidUp.length,
     familyCount: all.length,
     totalOutstanding: Math.round(owing.reduce((s, g) => s + g.outstanding, 0) * 100) / 100,
   };

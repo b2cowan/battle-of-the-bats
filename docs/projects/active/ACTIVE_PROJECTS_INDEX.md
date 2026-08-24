@@ -231,7 +231,10 @@ Each program doc carries its own decision table. Counting across all 11: **48 op
 The ones that block other work, in priority order:
 
 1. **CH-8** — is the Coach Chat program (Projects 2–4) still wanted? Answering "no" closes 7 other decisions.
-2. **CP-7** — two-guardian dues/announcement recipient rule (gates the guardian-model work).
+2. ~~**CP-7** — two-guardian dues/announcement recipient rule~~ — ✅ **DECIDED 2026-07-30 (owner,
+   recorded in `PROGRAM_COACH_PORTAL.md`): one guardian per player stays; the multi-guardian
+   expansion is declined.** This line had drifted stale against the program doc (caught by the
+   Statements PDF pass, 2026-08-23) — the program doc's decision table is the authority.
 3. **CP-1** — retire the Coach Nav Rebuild plan.
 4. **BL-2** — schedule the live-card smoke test ahead of the January conversion.
 5. **TE-8** — schedule the Standings Remodel, the largest unbuilt fan-facing item.

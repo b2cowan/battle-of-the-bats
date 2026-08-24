@@ -10867,3 +10867,89 @@ cost — the UAT fixture has all five; a dues-only team proves nothing here.
 
 **Not in this pass, on purpose:** income rows in the month GRID itself (Phase 2 — its own mockup
 session, owner-ruled from drawings, separately gated build).
+
+## §84 · A coach can hand one family their own money — and nobody else's
+
+**BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 2 of 6: Statements & handouts**.
+Plan: `docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`PDF_EXPORT_QUALITY_P2_STATEMENTS_BUILD_PROMPT.md`. Checkpoint-1 mockups (owner picked the drawn
+one-pager, both doors, coach-hands-it-over):
+https://claude.ai/code/artifact/43b20053-b0d5-4f8c-8f33-9f82c9855da8 · built gallery:
+https://claude.ai/code/artifact/dc3a8252-41bd-4050-9e2a-c6417426d557. No migration.
+
+- [ ] **The family dues statement exists, and it is PER-FAMILY.** Money → Player Dues → open a
+      player with siblings on the roster → **Family statement**: ONE page covering both children —
+      billed, received (with a thank-you), credits, left to send, "What's next" in sentences, each
+      child's schedule, every payment with date and method, credits with their provenance. Open the
+      sibling's drawer: the same page. ⚠ **No other family's name, balance or status appears
+      anywhere on it** — that is the whole point of the document.
+- [ ] **The print run: every family, one file, one page each.** Money → Player Dues → Export →
+      under the file types, *"Family statements"*: one PDF, families alphabetical, each starting on
+      its own page and footed **"Page 1 of 1" per family** — a page handed to the Nguyens never
+      reads "Page 5 of 12". The dialog's hint says the whole file is for your printer.
+- [ ] **The figures are the Dues tab's own arithmetic.** A part-paid installment quotes its
+      remainder, never its face value; credits show on the installment they lowered; "Due now" and
+      "next payment" match the By-installment lens. A family with credit **set aside**
+      (keep-separate teams) reads "set aside — your coach can hand it back or apply it", never a
+      false "applied"; money handed back gets its own "Handed back to you" section, only when it
+      happened.
+- [ ] **A paid-up family gets a receipt, not a bill.** "What's next: Nothing — Maya's dues are
+      fully paid. Thank you!" Nobody is thanked for $0.00 received.
+- [ ] **The PII seam holds.** A coach with money access but no guardian-names grant still gets one
+      statement per household (grouping rides an opaque server-made token, never the guardian's
+      email), addressed by the children's names ("Prepared for Isla and Emmett's family").
+- [ ] **The board summary carries the club's crest** — aspect-fit, in the same header slot as
+      every table document, drawn by the same shared code. Nothing else about the page moved.
+- [ ] **Identity defaults confirmed on paper, all three handouts** (scope item 3): dues team
+      sheet, development summary and board summary each read in default / inherited-club-look /
+      team's-own-look states — right name for the layer, right look for the state. **No defect
+      found this pass** (unlike the Registers pass's club BvA). The statement inherits the same
+      layers.
+- [ ] **Plan gating**: both doors take the generic `pdf_exports` bar (the same one the Export
+      dialog's PDF row takes — per the §82 finding about menus naming lower gates); on a plan
+      without it the doors are absent, not locked. The drawer door renders for read-only money
+      assistants too — reading is not writing.
+
+**Verified by rendering, not by gates:** the whole 90+-document corpus re-scanned after the build —
+page counts, true footers and dropped-column status identical to the §82 baseline everywhere; the
+only scanner flag is the batch statement file's per-family page restart, which is the designed
+behaviour and was probed page by page. Building on real code caught two defects the approved drafts
+missed (the closing line spilling to a second page by a fraction of a millimetre; "thank you" under
+$0.00 received) — both fixed and re-rendered. 74 unit tests green (statement assembler, family
+rollup, renderer contract), typecheck clean.
+
+**Two prior decisions, kept visibly intact:** the per-installment EXPORT sheet
+(`DUES_BY_INSTALLMENT_PLAN.md`) stays deliberately not built — a one-household statement is a
+different document with a different reader, not that spreadsheet. And **email attachment is
+deliberately not built**: no FieldLogicHQ email has ever carried an attachment, and the dues
+reminders' settled rules (bills ignore unsubscribe, owner 2026-08-18) stay untouched; the reminder
+emails still end "contact your coach directly" — this statement is what the coach now hands over
+when that happens.
+
+**Demo question asked and answered:** the coach sandbox's money narration never mentions exports or
+PDFs (re-confirmed from §82), so nothing is falsified and no dock/tour sentence changes. A "hand a
+family their statement" moment is a plausible future story beat for the money walk, but it is not
+owed by this pass — recorded here so the judgement is visible, per the CLAUDE.md demo rule.
+
+**Marketing claim now true:** `/platform/rep-teams` advertises *"Player dues statements formatted
+for parent distribution — one click from the coaches portal"* — this pass makes that sentence true.
+The page's "Coming soon" banner is about the Rep Teams module's self-serve signup, not this
+feature, so no copy change is owed; flag to `/marketing` only when that module opens.
+
+**/review (4 lenses, high-risk tier) caught + fixed 3:** a slow statement build's failure message
+could land under a DIFFERENT family's drawer (now stamped to the drawer it was started from, the
+same stamp-and-drop discipline as the panel's data loads — walk it by opening a player, tapping
+Family statement, and switching drawers before it finishes: no stray error, and "Building…" shows
+only on the originating drawer) · the "Handed back to you" table said "How it arrived" about money
+going OUT (now "How it was sent") · a dead leftover line from the board-summary header rework.
+Adjudicated as intentional, not regressions: the board summary's header is ~3mm tighter for an
+unbranded club because it now shares the exact header geometry of every table document (rendered
+and read); the statement's catalog entry carries the same plan declaration as every sibling coach
+export. Standing advisory, pre-existing pattern shared with the settlement sheet: the sibling
+grouping token is a plain hash of the guardian email — hardening both call sites together (keyed
+hash) is possible future debt, not a new gap.
+
+**Not in this pass, on purpose:** the other four document groups (rosters, working sheets incl.
+the practice run-sheet, schedules, posters/cards/brackets — the roster and practice sheet keep
+their §82 regression guards untouched); the Phase 3 CI check (the harness and scanner carried
+forward, productionisation still owed).

@@ -341,9 +341,24 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export player dues summary with total fee, amount paid, outstanding balance, and installment status.',
-    omittedReason: 'Not yet implemented — planned Phase D1.',
-    plannedPhase: 'Phase D1',
+      'Export player dues summary with total fee, amount paid, outstanding balance, and installment status. It is a TEAM SHEET — one row per player, every balance on one page — so it is a coach document, not something to hand a family.',
+  },
+  {
+    id: 'coaches-family-dues-statement',
+    label: 'Coaches Portal — Family Dues Statement',
+    module: 'coaches',
+    page: 'Player Dues',
+    file: 'app/[orgSlug]/coaches/teams/[id]/accounting/dues/panel.tsx',
+    formats: ['pdf'],
+    defaultFormat: 'pdf',
+    minPlan: 'club',
+    moduleGate: 'club_exports',
+    audiences: ['coach'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'The dues document a coach can HAND ONE FAMILY: what that household was billed, payments received (with a thank-you), credits earned, what is left, and when the next payment falls due. Siblings share one statement; no other family appears. Two doors: a single family from the player’s drawer, or one PDF with every family on its own page for handing out.',
   },
   {
     id: 'accounting-budget-vs-actual',

@@ -430,3 +430,97 @@ describe('applyTeamLook: team field → club field → default; the name is not 
     assert.equal(s.headerLine1, 'Hawks U13');
   });
 });
+
+// ── Family dues statement (Phase 2 — Statements & handouts) ──────────────────
+
+import { buildFamilyDuesStatementsDoc, type FamilyDuesStatementRender } from '../../lib/export/pdf';
+
+function family(over: Partial<FamilyDuesStatementRender> & { receiptLabel: string }): FamilyDuesStatementRender {
+  return {
+    label: `the ${over.receiptLabel.replace(' family', '')}s`,
+    childrenLine: 'Isla and Emmett',
+    stats: { billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', leftToSend: '$1,075.00' },
+    next: ['The last payment falls due Oct 1, 2026.'],
+    schedules: [{ label: 'Isla', rows: [['1 of 3', 'Jun 1, 2026', '$500.00', '$500.00', '-', '-', 'Paid May 28']] }],
+    payments: [['May 28, 2026', 'Isla', '$500.00', 'E-Transfer', '']],
+    credits: [],
+    payouts: [],
+    ...over,
+  };
+}
+
+describe('family dues statements: one household per page, page counts per FAMILY', () => {
+  it('every family starts on its own page and is footed "Page 1 of 1", never "of N families"', () => {
+    const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, makeAutoTable(), {
+      families: [family({ receiptLabel: 'Chen family' }), family({ receiptLabel: 'Marchand family' })],
+      teamName: 'Riverdale Ridge U13 AA',
+      seasonLabel: '2026 Season',
+      preparedLabel: 'Aug 23, 2026',
+      settings: settings(),
+    });
+    assert.equal(doc.pages, 2);
+    const stamps = doc.texts.filter(t => /^Page \d+ of \d+$/.test(t.str));
+    assert.equal(stamps.length, 2);
+    for (const s of stamps) assert.equal(s.str, 'Page 1 of 1', 'each statement is its own document');
+    assert.ok(!doc.texts.some(t => t.str === 'Page 1 of 2' || t.str === 'Page 2 of 2'),
+      'the print run never numbers across households');
+  });
+
+  it('falls back to the team identity when headerLine1 is blank (D1), on every family', () => {
+    const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, makeAutoTable(), {
+      families: [family({ receiptLabel: 'Chen family' }), family({ receiptLabel: 'Marchand family' })],
+      teamName: 'Riverdale Ridge U13 AA',
+      preparedLabel: 'Aug 23, 2026',
+      settings: settings(),
+    });
+    assert.equal(count(doc, 'Riverdale Ridge U13 AA'), 2);
+  });
+
+  it('draws the crest aspect-fit via the shared slot', () => {
+    const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, makeAutoTable(), {
+      families: [family({ receiptLabel: 'Chen family' })],
+      teamName: 'T',
+      preparedLabel: 'Aug 23, 2026',
+      settings: settings({ logoDataUrl: 'data:image/png;base64,x' }),
+    });
+    assert.equal(doc.images.length, 1);
+    assert.equal(doc.images[0].w, 12, 'square crest renders square in the 24×12 slot');
+    assert.equal(doc.images[0].h, 12);
+  });
+
+  it('a table that overflows onto a new page names the household on that page', () => {
+    // An autoTable fake that spills onto a fresh page and fires the didDrawPage hook the way
+    // the real library does — once per page it drew on.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const spillingAutoTable = (doc: any, opts: any) => {
+      opts.didDrawPage?.({});
+      doc.addPage();
+      opts.didDrawPage?.({});
+      doc.lastAutoTable = { finalY: (opts.startY ?? 0) + 10 };
+    };
+    const doc: MockDoc = buildFamilyDuesStatementsDoc(MockDoc, spillingAutoTable, {
+      // One table only, so the spill arithmetic below stays readable: pages 1 → 2.
+      families: [family({ receiptLabel: 'Marchand family', payments: [] })],
+      teamName: 'T',
+      preparedLabel: 'Aug 23, 2026',
+      settings: settings(),
+    });
+    const cont = doc.texts.find(t => t.str === 'Dues statement — Marchand family (continued)');
+    assert.ok(cont, 'the continuation header names whose money the loose page describes');
+    assert.equal(cont!.page, 2);
+    // And the family's own footer range covers both pages.
+    assert.ok(doc.texts.some(t => t.str === 'Page 1 of 2' && t.page === 1));
+    assert.ok(doc.texts.some(t => t.str === 'Page 2 of 2' && t.page === 2));
+  });
+
+  it('sections that are empty are absent, not empty tables', () => {
+    const at = makeAutoTable();
+    buildFamilyDuesStatementsDoc(MockDoc, at, {
+      families: [family({ receiptLabel: 'Chen family', credits: [], payouts: [] })],
+      teamName: 'T',
+      preparedLabel: 'Aug 23, 2026',
+      settings: settings(),
+    });
+    assert.equal(at.calls.length, 2, 'schedule + payments only — no credits table, no payouts table');
+  });
+});

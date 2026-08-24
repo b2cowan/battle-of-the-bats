@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -21,7 +22,20 @@ import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { tournamentToday } from '@/lib/timezone';
+import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+
+/**
+ * The family identity, made safe to send. Siblings share a guardian email (the platform's
+ * de-facto family key — lib/coach-family-dues.ts), but the dues payload redacts that email for
+ * a money-cleared coach without the PII grant — and the family dues STATEMENT must still roll
+ * siblings into one household for them, or it asks the same parent twice. A one-way hash keeps
+ * the grouping without the address: same email ⇒ same token, and the token says nothing.
+ */
+function familyKeyFor(guardianEmail: string | null | undefined): string | null {
+  const email = normalizeGuardianEmail(guardianEmail);
+  return email ? createHash('sha256').update(email).digest('hex').slice(0, 16) : null;
+}
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -177,6 +191,9 @@ export const GET = withObservability(async (_req: Request,
         // Money access and guardian-PII access are independent grants — redact PII/notes for a
         // money-cleared coach who lacks the PII grant (the dues table shows a guardian identifier).
         player: redactRosterPlayer(p, capabilities),
+        // Read from the UNredacted row, deliberately: the statement's sibling grouping must
+        // survive the PII redaction above, and the hash is what makes that safe.
+        familyKey: familyKeyFor(p.guardianEmail),
         schedule,
         installments: installmentsOut,
         payments,

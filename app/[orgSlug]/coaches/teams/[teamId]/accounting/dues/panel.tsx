@@ -8,6 +8,13 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { DUES_EXPORT_COLUMNS, duesExportRows, duesPdfRows } from '@/lib/coach-money-exports';
+import { buildFamilyDuesStatements, type StatementPlayerInput } from '@/lib/coach-dues-statement';
+import {
+  buildFilename, downloadFamilyDuesStatements, fetchResolvedPdfSettings,
+  DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
@@ -63,6 +70,10 @@ type InstallmentWithCredit = RepPlayerDuesInstallment & {
 
 interface PlayerWithDues {
   player: RepRosterPlayer;
+  /** Opaque household token (a hash of the normalized guardian email, made server-side) — how
+   *  the family statement rolls siblings into ONE page even when guardian PII is redacted.
+   *  null when no guardian contact is recorded: that player is their own household. */
+  familyKey: string | null;
   schedule: RepPlayerDuesSchedule | null;
   installments: InstallmentWithCredit[];
   /** Payment FACTS (mig 232) — each row is a receipt with its own date, method and ledger line. */
@@ -459,6 +470,12 @@ export function PlayerDuesPanel({
   // PDF branding and its plan gate both live in MoneyExportButton now — one place for every
   // Money tab, and the branding is fetched on the first PDF export rather than on every mount.
 
+  // The drawer's "Family statement" door carries the SAME plan gate as the Export dialog's pdf
+  // row (pdf_exports — the generic bar every coach PDF takes, per the §82 review finding about
+  // menus naming lower gates). Absent, not locked, on a plan without it.
+  const { currentOrg } = useOrg();
+  const canUsePdfStatement = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+
   // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with dues).
   const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
   const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
@@ -637,6 +654,99 @@ export function PlayerDuesPanel({
       teamName: assignment?.teamName ?? '',
       emptyMessage: 'There are no player dues to export yet.',
     };
+  }
+
+  // ── The family dues statement (Statements & handouts pass, owner picks 2026-08-23) ─────────
+  // ⚠ PER-FAMILY, NOT PER-PLAYER: siblings roll into ONE page via the payload's familyKey, so a
+  // two-child household gets one ask, never two. Two doors, one builder: the drawer's single
+  // download (this family's conversation) and the Export dialog's whole-team print run.
+
+  /** The dues payload, projected onto the statement assembler's input shape. */
+  function toStatementInput(): StatementPlayerInput[] {
+    return players.map(p => ({
+      playerId: p.player.id,
+      playerFirstName: p.player.playerFirstName,
+      playerLastName: p.player.playerLastName ?? null,
+      familyKey: p.familyKey ?? null,
+      // Already redacted by the route for a coach without the PII grant — the statement then
+      // addresses the household by the children's names, automatically.
+      guardianLastName: p.player.guardianLastName ?? null,
+      schedule: p.schedule ? { totalAmount: p.schedule.totalAmount } : null,
+      installments: p.installments.map(i => ({
+        id: i.id, dueDate: i.dueDate, amount: i.amount, paidAt: i.paidAt,
+        remainingAmount: i.remainingAmount, creditApplied: i.creditApplied, creditSettled: i.creditSettled,
+      })),
+      coverage: p.coverage.map(c => ({ installmentId: c.installmentId, allocated: c.allocated })),
+      payments: p.payments.map(pay => ({
+        amount: pay.amount, receivedDate: pay.receivedDate, method: pay.method, note: pay.note,
+      })),
+      credits: p.credits.map(c => ({ amount: c.amount, creditDate: c.creditDate, description: c.description })),
+      payouts: p.payouts.map(po => ({
+        amount: po.amount, paidDate: po.paidDate, method: po.method, note: po.note,
+      })),
+      paidAmount: p.paidAmount,
+      outstanding: p.outstanding,
+      totalCredits: p.totalCredits,
+      leftToSend: p.leftToSend,
+      creditApplied: p.creditApplied,
+      owedBack: p.owedBack,
+    }));
+  }
+
+  async function saveStatements(
+    families: ReturnType<typeof buildFamilyDuesStatements>,
+    filenameBase: string,
+    pdfSettings: OrgPdfSettings | null,
+  ) {
+    await downloadFamilyDuesStatements(
+      buildFilename({ org: orgSlug, dataset: filenameBase, scope: assignment?.programYearName ?? '' }, 'pdf'),
+      {
+        families,
+        teamName: assignment?.teamName ?? '',
+        seasonLabel: assignment?.programYearName ?? null,
+        preparedLabel: fmtDate(tournamentToday()),
+        settings: pdfSettings ?? DEFAULT_PDF_SETTINGS,
+      },
+    );
+  }
+
+  /** Door B — the print run: every billed household, one PDF, each family starting on its own
+   *  page. The file is for the COACH'S PRINTER; the dialog's hint says so. */
+  async function runFamilyStatements(pdfSettings: OrgPdfSettings | null) {
+    const families = buildFamilyDuesStatements({ players: toStatementInput(), todayISO: tournamentToday() });
+    if (families.length === 0) throw new Error('No family has a dues schedule yet.');
+    await saveStatements(families, 'family-dues-statements', pdfSettings);
+  }
+
+  /** Door A — one household, from that player's drawer. Siblings' rows produce the same page. */
+  // ⚠ Stamped to the player the build was STARTED for (/review finding) — the same stamp-and-drop
+  // discipline as `loadSeq` above. Without it, a slow build's failure landed under whichever
+  // drawer the coach had open by the time it settled, attributing family A's error to family B.
+  const [statementBusyFor, setStatementBusyFor] = useState<string | null>(null);
+  const [statementError, setStatementError] = useState('');
+  // A failed build's message belongs to the drawer it happened in — not to the next player's.
+  const statementErrorFor = selected?.player.id ?? null;
+  const selectedPlayerIdRef = useRef<string | null>(null);
+  useEffect(() => { selectedPlayerIdRef.current = statementErrorFor; setStatementError(''); }, [statementErrorFor]);
+  async function downloadFamilyStatement(p: PlayerWithDues) {
+    if (statementBusyFor) return; // one build at a time — the disabled attribute alone races a fast double-tap
+    const forPlayer = p.player.id;
+    setStatementBusyFor(forPlayer);
+    setStatementError('');
+    try {
+      const settings = await fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`);
+      const families = buildFamilyDuesStatements({ players: toStatementInput(), todayISO: tournamentToday() });
+      const fam = families.find(f => f.key === (p.familyKey ?? `player:${p.player.id}`));
+      if (!fam) throw new Error('This player has no dues to put on a statement yet.');
+      await saveStatements([fam], `dues-statement-${fam.fileSlug}`, settings);
+    } catch (e: unknown) {
+      // Dropped unless the coach is still looking at the drawer this build belongs to.
+      if (selectedPlayerIdRef.current === forPlayer) {
+        setStatementError(e instanceof Error ? e.message : 'That statement could not be built.');
+      }
+    } finally {
+      setStatementBusyFor(null);
+    }
   }
 
   // Keep selected player data fresh after reload
@@ -1265,6 +1375,14 @@ export function PlayerDuesPanel({
       label="Player dues"
       formats={['xlsx', 'csv', 'pdf']}
       build={buildExport}
+      /* The print run (Statements pass, 2026-08-23): a DIFFERENT document from the same view —
+         one page per family, for handing out. The hint carries the privacy rule: the whole file
+         is the coach's; a single family's page is what gets handed over. */
+      secondaryPdf={{
+        label: 'Family statements',
+        hint: 'One page per family, for handing out — each family sees only their own money. Keep the whole file with you.',
+        run: runFamilyStatements,
+      }}
       disabled={players.length === 0}
     />
   );
@@ -2324,7 +2442,23 @@ export function PlayerDuesPanel({
                         than on a duplicated chase list above the table — this is where the coach is
                         already looking at that one family, and it keeps the page from naming the
                         same players twice. Offered only when there is something to chase. */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                      {/* The family statement (Statements pass, 2026-08-23): the page a coach can
+                          HAND THIS FAMILY — their children, their schedule, their receipts, and
+                          nobody else's. Siblings share one statement, so either child's drawer
+                          produces the same page. Read-level like Export: reading is not writing. */}
+                      {canUsePdfStatement && (
+                        <button
+                          className={styles.btnSecondary}
+                          onClick={() => { void downloadFamilyStatement(selected); }}
+                          disabled={statementBusyFor !== null}
+                          style={{ fontSize: '0.78rem', opacity: statementBusyFor !== null ? 0.6 : 1 }}
+                        >
+                          {/* "Building…" only on the drawer that started the build — another
+                              player's drawer stays labelled normally (just briefly disabled). */}
+                          {statementBusyFor === selected.player.id ? 'Building…' : 'Family statement'}
+                        </button>
+                      )}
                       {moneyCanWrite && isNeverPaidPlayer(selected) && (
                         <button
                           className={styles.btnSecondary}
@@ -2349,6 +2483,11 @@ export function PlayerDuesPanel({
                         </button>
                       )}
                     </div>
+                    {statementError && (
+                      <p className={styles.errorText} role="status" style={{ marginBottom: '0.75rem', textAlign: 'right' }}>
+                        {statementError}
+                      </p>
+                    )}
 
                     {/* Record a payment — three facts (how much, when it arrived, how) and a
                         statement of where it lands BEFORE saving. Amounts spread oldest-first;

@@ -1,7 +1,11 @@
 # PDF Export Quality — plan
 
-**Status:** **PHASE 1 + PHASE 2 PASS 1 (REGISTERS) BUILT on dev 2026-08-23** (Owner QA Ledger
-§79 and §82; migration 259 dev-only;
+**Status:** **PHASE 1 + PHASE 2 PASSES 1–2 (REGISTERS, STATEMENTS & HANDOUTS) BUILT on dev
+2026-08-23** (Owner QA Ledger §79, §82 and §84; migration 259 dev-only; the Statements pass added
+no migration. Statements checkpoint-1 mockups
+https://claude.ai/code/artifact/43b20053-b0d5-4f8c-8f33-9f82c9855da8 — owner picked the drawn
+one-pager, both doors, coach-hands-it-over; built gallery
+https://claude.ai/code/artifact/dc3a8252-41bd-4050-9e2a-c6417426d557;
 approved card mockup https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93 — the
 spec for the "How your documents look" card, incl. the two owner-approved additions: the
 "Back to your club's look" reset row and the "Use your team colour" chip). Phase 1's fit
@@ -185,8 +189,22 @@ judges on the group's own definition of good:
   audit columns; tryout full detail declares landscape with a column diet; month-view PDF becomes
   the category statement; build the two stub registers (HL registrations, tryout applicants).
   *Good = complete, reconcilable, survives being emailed to a treasurer.*
-- **Statements & handouts:** per-family dues statement built; identity defaults verified on all
-  three. *Good = the club's face; one page; a stranger would think well of the club.*
+- **Statements & handouts — BUILT 2026-08-23 (QA §84).** The per-family dues statement exists: a
+  DRAWN one-pager (owner-picked from three rendered forms — the engine sections form ran to two
+  pages on a sibling family, the minimal form lost the plan ahead) in the board summary's drawn
+  family, on the shared identity/logo/footer plumbing, never a renderer fork. One household's
+  children and nobody else's; siblings collapse via a server-made opaque family key that survives
+  PII redaction (`lib/coach-family-dues.ts` reused as the one grouping-and-naming home, its rollup
+  gaining a `paidUp` list); every figure is the dues payload's own arithmetic. Two doors, one
+  builder: a "Family statement" action in the player's drawer, and "Family statements" as a
+  second-document row in the Dues tab's existing Export dialog (`MoneyExportButton` gained
+  `secondaryPdf` — the one-Export-control ruling holds). The batch file restarts page numbers per
+  family and names the household on overflow pages. Delivery is coach-hands-it-over; **email
+  attachment deliberately not built** (no attachment support exists in the email stack; the
+  reminder path's rules stay settled). The board summary now draws the crest via a logo slot
+  helper shared with the table engine (the bracket's own squashed version is the Posters pass's).
+  Identity defaults confirmed on paper for all three handouts, no defect found. *Good = the
+  club's face; one page; a stranger would think well of the club.*
 - **Rosters:** roster declares landscape (or the wall copy sheds guardian columns — decide in-pass
   with the fit contract's per-column priorities); build the rep roster PDF the stub promised.
   *Good = readable pinned to a wall; privacy-aware.*

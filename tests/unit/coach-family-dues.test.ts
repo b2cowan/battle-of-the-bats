@@ -215,3 +215,34 @@ describe('computeFamilyDues', () => {
     assert.equal(r.totalOutstanding, 0.3);
   });
 });
+
+describe('paidUp groups (the family statement prints receipts too)', () => {
+  const run = (players: FamilyDuesPlayer[]) => computeFamilyDues({ players, todayISO: TODAY });
+
+  it('a settled family appears as a full group, named, in paidUp', () => {
+    const r = run([
+      player('p1', 'Maya Chen', { guardianKey: 'j@x.com', guardianLastName: 'Chen', installments: [inst('2026-07-25', 150, '2026-07-20')] }),
+      player('p2', 'Liam Ng', { guardianKey: 'k@x.com', guardianLastName: 'Ng', installments: [inst('2026-09-01', 100)] }),
+    ]);
+    assert.equal(r.paidUp.length, 1);
+    assert.equal(r.paidUp[0].label, 'the Chens');
+    assert.equal(r.paidUp[0].unpaid.length, 0);
+    assert.equal(r.paidUpCount, 1, 'the count and the list agree by construction');
+    assert.equal(r.owing.length, 1, 'an owing family never appears in paidUp');
+  });
+
+  it('paidUp is alphabetical — the hand-out order', () => {
+    const r = run([
+      player('p1', 'Ava Zhou', { guardianKey: 'z@x.com', guardianLastName: 'Zhou', installments: [inst('2026-07-01', 50, '2026-06-30')] }),
+      player('p2', 'Ben Adler', { guardianKey: 'a@x.com', guardianLastName: 'Adler', installments: [inst('2026-07-01', 50, '2026-06-30')] }),
+    ]);
+    assert.deepEqual(r.paidUp.map(g => g.label), ['the Adlers', 'the Zhous']);
+  });
+
+  it('a never-billed player is in neither list', () => {
+    const r = run([player('p1', 'Maya', { guardianKey: 'j@x.com' })]);
+    assert.equal(r.paidUp.length, 0);
+    assert.equal(r.owing.length, 0);
+    assert.equal(r.familyCount, 0);
+  });
+});

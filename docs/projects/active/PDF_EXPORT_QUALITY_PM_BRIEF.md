@@ -1,6 +1,6 @@
 # PM Brief — PDF Export Quality
 
-**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 BUILT on dev 2026-08-23** (QA §79)
+**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 + PHASE 2 PASSES 1–2 OF 6 BUILT on dev 2026-08-23** (QA §79, §82, §84)
 — the shared plumbing: one title, the right name for the layer, real logos, true page counts,
 per-report shape, the no-shred fit contract, the coaches "How your documents look" card, and the
 three lying menu buttons removed. Phases 2–3 (group passes, rendered CI check) remain. Owner
@@ -8,6 +8,41 @@ planning session held 2026-08-21; every structural decision made against rendere
 **Evidence gallery:** https://claude.ai/code/artifact/834cdd89-8c24-416f-acd8-c1930ff76dd1
 **Priority:** medium-high — these documents are seen by treasurers, boards and parents who are not
 our customers, and two of them are shipping unreadable
+
+## Where it has got to
+
+**Phase 1** fixed the plumbing every document shares. **Phase 2 pass 1 — the Registers group** then
+judged the documents a treasurer or registrar reconciles against, one at a time on rendered paper:
+tournament results now fits with no fine print; the coach month view's PDF button produces the
+whole-season statement a board actually reads, and says so before you pick it; a ten-category tryout
+scorecard keeps every category; and House League registrations and rep tryout applicants print the
+real registers their removed "coming soon" buttons had promised — neither carrying a date of birth
+or a guardian contact, because a printed page gets forwarded and left on tables.
+
+Two defects nobody was hunting for surfaced by looking at the paper: column headings were being
+measured in the wrong typeface and then trimmed, so real reports printed broken words; and the
+club's Budget vs. Actual spent a whole column repeating the heading directly above it. Both fixed,
+and two documents outside the pass (the team roster and the practice sheet) needed a guard so the
+heading fix did not cost them a column.
+
+**Phase 2 pass 2 — Statements & handouts** built the document this whole group existed for: a
+**dues statement a coach can hand one family**. Until now the only dues paper was the team sheet —
+every family's balance on one page — so a coach chasing one household had nothing to send that
+didn't disclose the neighbours'. The statement is one page per household (siblings share it):
+what they were billed, what they've sent (thanked), credits earned from fundraising, what's left,
+and what's next in plain sentences. Every money state has honest words — a paid-up family gets a
+receipt, credit set aside is never claimed as "applied", money handed back has its own section.
+Two ways to get one: from the player's own drawer (one family, one conversation) or a whole-team
+print run — one file, every family on its own page, page numbers restarting per family so a page
+handed out never says how many statements exist. Delivery is deliberately the coach's own hand:
+email attachment stayed unbuilt, and the reminder emails' "contact your coach" ending now has a
+real answer. The tryout board summary also gained the club's crest, and all three handouts had
+their identity states confirmed on paper. This also makes true the marketing page's standing
+promise — *"player dues statements formatted for parent distribution."*
+
+**Four group passes remain** — rosters, working sheets, schedules, posters
+and brackets — each with its own rendered sign-off, then the Phase 3 check that renders documents
+in CI so this class of rot cannot return unseen.
 
 ## The problem, now with proof
 

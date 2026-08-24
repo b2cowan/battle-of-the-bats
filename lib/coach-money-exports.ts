@@ -48,6 +48,9 @@ function money(n: number): string {
   const str = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return n < 0 ? `-$${str}` : `$${str}`;
 }
+/** The same formatter for the family dues statement (lib/coach-dues-statement.ts) — one spelling
+ *  of a dollar amount across every Money document, sign included. */
+export { money as formatMoneyCell };
 
 // ── Budget lines ────────────────────────────────────────────────────────────────────────────
 

@@ -129,9 +129,9 @@ const exportsHelp: HelpPageContent = {
       id: 'availability',
       heading: 'Where exports are available',
       summary: 'Every module and page that has an Export button, and which formats are supported.',
-      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings', 'tryout applicants pdf', 'registrations pdf'],
+      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings', 'tryout applicants pdf', 'registrations pdf', 'family statement', 'family dues statement', 'dues statement pdf'],
       searchText:
-        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout applicants coaches portal dues budget vs actual accounting ledger budget org members data tools download where bracket pdf season registrations pdf tryout applicants pdf',
+        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout applicants coaches portal dues budget vs actual accounting ledger budget org members data tools download where bracket pdf season registrations pdf tryout applicants pdf family dues statement family statements parent statement',
       content: (
         <>
           <p>
@@ -217,6 +217,12 @@ const exportsHelp: HelpPageContent = {
                 <td><strong>Coaches Portal</strong></td>
                 <td>Player Dues</td>
                 <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>Club</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Family dues statements (per-family page — from a player&apos;s record, or every family in one file from the Player Dues Export dialog)</td>
+                <td>—</td><td>—</td><td>—</td><td>✓</td>
                 <td>Club</td>
               </tr>
               <tr>

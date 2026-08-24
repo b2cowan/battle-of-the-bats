@@ -48,6 +48,15 @@ export default function MoneyExportButton({
   build,
   /** Overrides the PDF row's hint in the file-type dialog. Required when `build` varies by format. */
   pdfHint,
+  /**
+   * A DIFFERENT DOCUMENT this view can also produce on paper — offered in the same dialog,
+   * under the file types, so the tab keeps its ONE Export control (owner ruling 2026-08-13)
+   * while the dialog stays the honest place to say what each choice is. First caller: the
+   * Dues tab's per-family statements beside its team sheet. PDF-only by nature, so it is
+   * plan-gated and phone-kept exactly like the pdf row; this component still owns the
+   * settings fetch and the busy/error path.
+   */
+  secondaryPdf,
   disabled = false,
   className,
 }: {
@@ -55,6 +64,13 @@ export default function MoneyExportButton({
   formats: MoneyExportFormat[];
   build: (format: MoneyExportFormat) => Omit<MoneyDownload, 'orgLabel' | 'pdfSettings'>;
   pdfHint?: string;
+  secondaryPdf?: {
+    /** In the coach's words — "Family statements". */
+    label: string;
+    /** What it is and who it's for — this dialog is the only place the coach is told. */
+    hint: string;
+    run: (pdfSettings: OrgPdfSettings | null) => Promise<void>;
+  };
   disabled?: boolean;
   className?: string;
 }) {
@@ -66,7 +82,7 @@ export default function MoneyExportButton({
   const available = formats.filter(f => f !== 'pdf' || canUsePdf);
 
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<MoneyExportFormat | null>(null);
+  const [busy, setBusy] = useState<MoneyExportFormat | 'secondary' | null>(null);
   const [error, setError] = useState('');
 
   /**
@@ -124,6 +140,20 @@ export default function MoneyExportButton({
     }
   }
 
+  async function runSecondary() {
+    if (!secondaryPdf) return;
+    setBusy('secondary');
+    setError('');
+    try {
+      await secondaryPdf.run(await loadPdfSettings());
+      setOpen(false);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'That export could not be built.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <>
       {/* ⚠ `data-phone` carries the phone rule (2026-08-13 decision 4, restated once Export moved
@@ -151,9 +181,13 @@ export default function MoneyExportButton({
           label={label}
           formats={available}
           pdfHint={pdfHint}
+          // A PDF-only document resolves to ABSENT on a plan without pdf_exports, same as the
+          // pdf row above it.
+          secondaryPdf={canUsePdf ? secondaryPdf : undefined}
           busy={busy}
           error={error}
           onPick={f => { void run(f); }}
+          onPickSecondary={() => { void runSecondary(); }}
           // Stable, so the dialog's Escape listener is attached once rather than torn down and
           // re-added on every re-render of the panel this button lives in.
           onClose={closeDialog}
@@ -185,17 +219,21 @@ function ExportFormatDialog({
   label,
   formats,
   pdfHint,
+  secondaryPdf,
   busy,
   error,
   onPick,
+  onPickSecondary,
   onClose,
 }: {
   label: string;
   formats: MoneyExportFormat[];
   pdfHint?: string;
-  busy: MoneyExportFormat | null;
+  secondaryPdf?: { label: string; hint: string };
+  busy: MoneyExportFormat | 'secondary' | null;
   error: string;
   onPick: (format: MoneyExportFormat) => void;
+  onPickSecondary: () => void;
   onClose: () => void;
 }) {
   useOverlayOpen(true);
@@ -249,6 +287,28 @@ function ExportFormatDialog({
               </button>
             );
           })}
+          {/* A DIFFERENT document from the same view — under the file types, introduced as
+              such. A PDF by nature: same phone rule as the pdf row. */}
+          {secondaryPdf && (
+            <>
+              <p className={styles.intro} data-phone="keep" style={{ marginTop: '0.6rem' }}>Or a different document:</p>
+              <button
+                type="button"
+                className={styles.choice}
+                data-phone="keep"
+                disabled={busy !== null}
+                onClick={onPickSecondary}
+              >
+                <span className={styles.name}>
+                  {secondaryPdf.label}
+                  <span className={styles.ext}>.pdf</span>
+                </span>
+                <span className={styles.hint}>
+                  {busy === 'secondary' ? 'Preparing your file…' : secondaryPdf.hint}
+                </span>
+              </button>
+            </>
+          )}
         </div>
         {error && <p className={`${shared.errorText} ${styles.error}`} role="status">{error}</p>}
       </div>
