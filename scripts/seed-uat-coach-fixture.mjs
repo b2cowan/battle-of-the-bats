@@ -895,6 +895,25 @@ if (!existingCredit?.length && ids.length >= 2) {
   ok('dues credit already present (or roster too small)');
 }
 
+/* A payout — cash handed BACK to a family (mig 234). `check:money-report`'s strip↔register
+   identity (2026-08-23) lists this as a required breaking shape: it was the stream missing from
+   the BvA cash strip entirely, so a fixture without one cannot fail the claim and a green run is
+   not evidence. Sized UNDER the $150 credit above so "owed back" stays coherent with the payout
+   writer's own ceiling ($50 remains owed). Guarded separately so existing fixtures gain it. */
+const { data: existingPayout } = await db.from('rep_dues_payouts')
+  .select('id').eq('program_year_id', py.id).limit(1);
+if (!existingPayout?.length && ids.length >= 2) {
+  const po = await db.from('rep_dues_payouts').insert({
+    program_year_id: py.id, player_id: ids[1], org_id: org.id, team_id: team.id,
+    amount: 100, paid_date: new Date().toISOString().slice(0, 10),
+    method: 'etransfer', note: 'Partial credit paid back — Bottle Drive', source: 'recorded',
+  });
+  if (po.error) { console.error('✗ dues payout insert', po.error.message); process.exit(1); }
+  ok('dues payout seeded (cash back to a family — the strip↔register identity can now fail)');
+} else {
+  ok('dues payout already present (or roster too small)');
+}
+
 // Expenses AND payables live in the same table, told apart by `expense_type`. Both sub-tabs need
 // a row or half the Expenses screen is still an empty state.
 const { data: existingExp } = await db.from('rep_team_expenses')

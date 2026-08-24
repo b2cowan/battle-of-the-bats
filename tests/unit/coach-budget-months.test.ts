@@ -112,6 +112,25 @@ describe('buildMonthGrid', () => {
     assert.equal(uniforms.cells.reduce((s, c) => s + c.budget, 0), 0);
   });
 
+  it('grows a column for a month where only CASH moved — and puts no money in its cells', () => {
+    // Owner ruling 2026-08-23 (Exhibit C): dues received in January, two months before the first
+    // budgeted month, must have a column for the strip to land on — silently dropping it fails
+    // the register identity by exactly the hidden amount. The grid's own rows stay empty there.
+    const g = buildMonthGrid({
+      lines, actuals, scheduled, todayMonth: TODAY,
+      cashDates: ['2026-01-14'],
+    });
+    const jan = g.months.indexOf('2026-01');
+    assert.notEqual(jan, -1);
+    // Contiguity holds: February exists between the cash month and the first budgeted month.
+    assert.notEqual(g.months.indexOf('2026-02'), -1);
+    // The column exists for the STRIP; the grid's money cells show nothing there.
+    const cat = g.categories[0];
+    assert.equal(cat.cells[jan].budget, 0);
+    assert.equal(cat.cells[jan].actual, 0);
+    assert.equal(cat.cells[jan].scheduled, 0);
+  });
+
   it('keeps scheduled and actual on their own tracks — they never merge into budget', () => {
     const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY });
     const cat = g.categories[0];

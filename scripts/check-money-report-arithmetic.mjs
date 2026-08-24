@@ -1,5 +1,9 @@
 /**
- * THE MONEY REPORT'S ONE BUILD-BLOCKING CLAIM: **its three feeds describe ONE season.**
+ * THE MONEY REPORT'S BUILD-BLOCKING CLAIMS: **its three feeds describe ONE season** — and, since
+ * 2026-08-23, **its Actual cash strip IS the register bucketed by month** (claim 5 below; the
+ * owner's whole-cash ruling, `memory/design_decisions.md` 2026-08-23). The strip and the register
+ * derive the season's cash independently from the same records, which is the same
+ * derive-twice-plus-checker license `check-register-balance.mjs` runs on register↔money-summary.
  *
  * Budget vs. Actual answers "what did we actually spend?" in three places a coach reads together —
  * the statement, the Months grid, and the cumulative chart rendered directly above the statement.
@@ -122,15 +126,23 @@ async function main() {
     storageState: JSON.parse(readFileSync(SESSION, 'utf8')),
     baseURL: BASE,
   });
-  const res = await context.request.get(
-    `${BASE}/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`);
-  if (!res.ok()) {
-    console.error(`✗ Could not read the report (${res.status()}).`);
+  /* ⚠ THE REGISTER RIDES ALONG (2026-08-23, the whole-cash strip). The report's cash strip and the
+     register derive the season's cash INDEPENDENTLY from the same records — the exact
+     derive-twice-plus-checker pattern `check-register-balance.mjs` runs on register↔money-summary —
+     and this script is where the two derivations are held equal, month by month. */
+  const api = `${BASE}/api/coaches/${orgSlug}/teams/${teamId}`;
+  const [res, regRes] = await Promise.all([
+    context.request.get(`${api}/budget-vs-actual`),
+    context.request.get(`${api}/register`),
+  ]);
+  if (!res.ok() || !regRes.ok()) {
+    console.error(`✗ Could not read both endpoints (report ${res.status()}, register ${regRes.status()}).`);
     console.error('  Is the dev server up, and is the session stale?');
     await browser.close();
     process.exit(1);
   }
   const data = await res.json();
+  const register = await regRes.json();
   await browser.close();
 
   const grid = data.monthGrid ?? { months: [], categories: [], totals: { cells: [], total: {} } };
@@ -240,6 +252,49 @@ async function main() {
       + ' columns (dated beyond the window). In the row totals, in no cell.');
   }
 
+  /* ── 5. THE CASH STRIP IS THE REGISTER, BUCKETED BY MONTH (owner ruling 2026-08-23) ─────────────
+     The Actual strip's two maps are assembled from the primitive records inside the report route;
+     the register assembles the same season from the same records in its own route. If a source is
+     added to one and not the other — which is exactly how payouts and drive money went missing from
+     the strip for weeks — the two disagree here, by month and by direction, to the cent.
+     ⚠ The register's settled cash rows are the reference: `!scheduled && movesCash` is the set
+     whose sum `check:register` already proves IS Cash on hand, so strip = register transitively
+     pins the strip's running balance to Cash on hand too. */
+  const stripIn = data.moneyIn?.actual ?? {};
+  const stripOut = data.moneyOut?.actual ?? {};
+  const regRows = (register.book ?? []).filter(r => !r.scheduled && r.movesCash);
+  const regIn = new Map();
+  const regOut = new Map();
+  const undatedSettled = [];
+  for (const r of regRows) {
+    const m = typeof r.date === 'string' ? r.date.slice(0, 7) : null;
+    if (!m) { undatedSettled.push(r.description); continue; }
+    if (cents(r.moneyIn) !== 0) regIn.set(m, (regIn.get(m) ?? 0) + cents(r.moneyIn));
+    if (cents(r.moneyOut) !== 0) regOut.set(m, (regOut.get(m) ?? 0) + cents(r.moneyOut));
+  }
+  if (undatedSettled.length > 0) {
+    problems.push(`${undatedSettled.length} settled cash row(s) on the register carry no date and can reach no month: ${undatedSettled.slice(0, 3).join(', ')}`);
+  }
+  for (const [label, strip, reg] of [['Money in', stripIn, regIn], ['Money out', stripOut, regOut]]) {
+    const months = [...new Set([...Object.keys(strip), ...reg.keys()])].sort();
+    for (const m of months) {
+      const s = cents(strip[m]);
+      const g = reg.get(m) ?? 0;
+      if (s !== g) {
+        problems.push(`${m} ${label}: THE STRIP AND THE REGISTER DISAGREE — strip ${money(s)} vs register ${money(g)} (out by ${money(s - g)})`);
+      }
+      // The Exhibit C ruling, asserted: a month where cash moved has a grid column to land on.
+      if (g !== 0 && !gridByMonth.has(m) && !grid.truncated) {
+        problems.push(`${m}: cash moved (${label} ${money(g)}) but the grid grew no column for it — the strip is silently dropping it`);
+      }
+    }
+  }
+  const stripNet = Object.values(stripIn).reduce((s, v) => s + cents(v), 0)
+    - Object.values(stripOut).reduce((s, v) => s + cents(v), 0);
+  if (stripNet !== cents(register.cashOnHand)) {
+    problems.push(`the strip's season net ${money(stripNet)} is not Cash on hand ${money(cents(register.cashOnHand))} — the running balance ends on the wrong number`);
+  }
+
   if (problems.length > 0) {
     console.error('\n✗ The report tells more than one story about one season:\n');
     for (const p of problems) console.error(`  · ${p}`);
@@ -251,6 +306,7 @@ async function main() {
   console.log(`\n  statement = Months grid = chart = ${money(statement)}  ✓`);
   console.log(`  and equal in every one of the ${gridByMonth.size} months they share  ✓`);
   console.log(`  and in every one of the ${byName.size} categories a coach can read  ✓`);
+  console.log(`  cash strip = register in every month, both directions; net = Cash on hand ${money(cents(register.cashOnHand))}  ✓`);
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
      ⚠ A SKIPPED CLAIM MUST NEVER READ AS A PASS. These used to be `console.log` notes above a green
@@ -276,6 +332,19 @@ async function main() {
   if (refundCount === 0) missing.push('money back netting into a cost (the chart used not to net it)');
   if (splitCommitments === 0) missing.push('a commitment paid across two months (the chart and the statement put both halves in the earlier one)');
   if (clubRows === 0) missing.push('club money on the report (it reached two feeds of three)');
+  /* The strip↔register identity (claim 5) has its own breaking shapes — each is a source that WAS
+     missing from the strip, or a spend the strip must exclude. A fixture without them cannot fail
+     the claim, so a green run over one is not evidence. Detected on the REGISTER's rows: caveat 4's
+     lesson applies — if a detector reads empty, the code may have stopped emitting the row. */
+  if (!regRows.some(r => String(r.id).startsWith('dues-payout-'))) {
+    missing.push('a dues payout (cash back to a family — absent from the strip until 2026-08-23)');
+  }
+  if (!regRows.some(r => r.kind === 'fundraising')) {
+    missing.push('realised fundraising cash (drive/sponsor money — absent from the strip until 2026-08-23)');
+  }
+  if (!(register.book ?? []).some(r => !r.scheduled && !r.movesCash)) {
+    missing.push('a family-paid-direct cost (spending that moves no cash — the strip must EXCLUDE it)');
+  }
   if (missing.length > 0) {
     console.error('\n⚠ THIS RUN PROVES LESS THAN IT LOOKS LIKE. This report shows no:');
     for (const m of missing) console.error(`  · ${m}`);

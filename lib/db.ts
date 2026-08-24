@@ -9239,6 +9239,11 @@ export interface SeasonFundraiserEntry {
   sponsorStatus: 'pledged' | 'received' | null;
   /** Has this money actually landed? `isRealisedRecord` applied once, here. */
   realised: boolean;
+  /** The day the money ARRIVED (mig 261) — null on legacy rows and on rows whose door never asks
+   *  (the drive's own Log-amount door, until money-centralization P2). Dated readings fall back to
+   *  `createdAt`'s org-day, exactly as the register does. */
+  receivedDate: string | null;
+  createdAt: string;
 }
 
 /**
@@ -9259,7 +9264,7 @@ export async function getSeasonFundraiserEntries(
 ): Promise<SeasonFundraiserEntry[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_fundraiser_entries')
-    .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, rep_fundraisers!inner(program_year_id, kind, sponsor_status)')
+    .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, received_date, created_at, rep_fundraisers!inner(program_year_id, kind, sponsor_status)')
     .eq('rep_fundraisers.program_year_id', programYearId);
   if (error) throw error;
   return (data ?? [])
@@ -9278,6 +9283,8 @@ export async function getSeasonFundraiserEntries(
         // THE rule, from lib/coach-fundraising.ts — not a second copy of it here, so a change to
         // what "realised" means reaches this query and the client rollup together.
         realised: isRealisedRecord({ kind: parent.kind, sponsorStatus: parent.sponsor_status }),
+        receivedDate: (r.received_date as string | null) ?? null,
+        createdAt: r.created_at as string,
       };
     });
 }

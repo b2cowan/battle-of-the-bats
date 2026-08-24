@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
-  getRepDuesPaymentsByProgramYear,
+  getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear,
   getRealisedFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
   getRepAllocationSplitsForTeam, getCommitmentStandings,
 } from '@/lib/db';
@@ -20,6 +20,7 @@ import {
   type RollupLine, type RollupSpend, type RollupRefund, type ItemRow,
 } from '@/lib/coach-budget-rollup';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
+import { buildActualCashStrip } from '@/lib/coach-cash-strip';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
@@ -110,7 +111,10 @@ export const GET = withObservability(async (req: Request,
          commitment owes, what it has paid and when are all in `standings`; this query is down to
          what a cost IS and where it files. Naming a paid stamp here again would be caught by
          `tests/unit/money-one-arithmetic-guard.test.ts`, which is the point. */
-      .select('id, description, category, budget_item_id, budget_category_id, amount, expense_type, created_at, budget_items(name, category_id, budget_categories(name))')
+      /* ⚠ `paid_by_player_id` rides for the CASH STRIP only. The report counts a family-paid cost
+         as spending (the season spent it); cash must not (no team money moved — the register marks
+         it `movesCash: false`). The rollup below never reads it. */
+      .select('id, description, category, budget_item_id, budget_category_id, amount, expense_type, created_at, paid_by_player_id, budget_items(name, category_id, budget_categories(name))')
       .eq('program_year_id', programYear.id)
       .order('created_at'),
     /* The plan, the payments, and what that adds up to — feeding both the actuals (what moved, and
@@ -323,14 +327,21 @@ export const GET = withObservability(async (req: Request,
          taxonomy as the claiming lines actually agree.
      ⚠ AND MONEY BACK, which is none of the three: it nets into the row it repaid, on either side,
      and never appears as income (COACH_MONEY_BACK_ON_A_COST_PLAN §4.3). */
-  /* ⚠ ALL THREE IN ONE TRIP. This route already runs a long serial chain of awaits, and the
-     realised-entries read below needs nothing these two produce — whether to make it at all is
-     decided by `fundingLines`, which was known before this line. Left sequential it was one more
-     round trip on every request from a team that budgets any fundraising, which is most of them. */
-  const [moneyInRecords, derivedClaims, realisedEntries] = await Promise.all([
+  /* ⚠ ALL FIVE IN ONE TRIP. This route already runs a long serial chain of awaits, and none of
+     these reads needs anything the others produce.
+     ⚠⚠ THE REALISED-ENTRIES READ IS NO LONGER GATED ON `fundingLines` (2026-08-23, the whole-cash
+     strip). The REPORT still only derives income rows when funding lines exist (its own gate,
+     below, unchanged) — but cash arrives whether or not it was budgeted, and the strip missing
+     every drive dollar on a team that never budgeted fundraising is exactly the silent subset the
+     owner's ruling reversed. Dues PAYMENTS and PAYOUTS ride here for the same reason: both are
+     cash facts of the season, needed by the strip regardless of whether a dues schedule exists
+     (the register reads both unconditionally, and the guard holds this route to the register). */
+  const [moneyInRecords, derivedClaims, realisedEntries, duesPayments, duesPayouts] = await Promise.all([
     getRepTeamMoneyIn(programYear.id),
     getDerivedIncomeClaims(programYear.id),
-    fundingLines.length > 0 ? getRealisedFundraiserEntries(programYear.id) : Promise.resolve([]),
+    getRealisedFundraiserEntries(programYear.id),
+    getRepDuesPaymentsByProgramYear(programYear.id),
+    getRepDuesPayoutsByProgramYear(programYear.id),
   ]);
 
   for (const line of fundingLines) {
@@ -526,20 +537,17 @@ export const GET = withObservability(async (req: Request,
   // the same figure the dues table's Paid column shows, so this card and that screen can never
   // disagree. Installments stay fetched for the SCHEDULED half of the cash-flow strip ("what
   // lands in July if everyone pays on time").
+  // Payments arrive with the money-in wave above (the strip needs them schedule or no schedule);
+  // only the INSTALLMENTS still hinge on schedules existing, because they hang off them.
   let collectedDues = 0;
   let duesInstallments: Array<{ amount: number; due_date: string | null; paid_at: string | null }> = [];
-  let duesPayments: Array<{ playerId: string; amount: number; receivedDate: string | null }> = [];
   if (scheduleIds.length > 0) {
-    const [{ data: inst }, pays] = await Promise.all([
-      supabaseAdmin
-        .from('rep_player_dues_installments')
-        .select('amount, due_date, paid_at')
-        .in('schedule_id', scheduleIds),
-      getRepDuesPaymentsByProgramYear(programYear.id),
-    ]);
+    const { data: inst } = await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .select('amount, due_date, paid_at')
+      .in('schedule_id', scheduleIds);
     duesInstallments = (inst ?? []) as typeof duesInstallments;
-    duesPayments = pays;
-    const paymentsByPlayer = paymentsTotalByPlayer(pays);
+    const paymentsByPlayer = paymentsTotalByPlayer(duesPayments);
     for (const s of (schedules ?? []) as Array<{ player_id: string; total_amount: number }>) {
       collectedDues += duesPaidAmount(paymentsByPlayer.get(s.player_id) ?? 0, s.total_amount ?? 0);
     }
@@ -845,12 +853,43 @@ export const GET = withObservability(async (req: Request,
   // and a negative pseudo-row in a month grid would read as a refund.
   const buffer = Math.max(0, budgetTotals.difference);
 
+  /* ══ THE CASH STRIP — every dollar that MOVED, gross, from the primitive records ══════════════
+     ⚠⚠ NEVER FROM THE GRID'S CELLS (owner ruling 2026-08-23, reversing 2026-07-30's dues-only
+     strip — memory/design_decisions.md). The cells are the REPORT: netted (money back and club
+     reimbursements shrink the costs they repaid) and including spending that never touched team
+     cash (a family paying a vendor direct). Cash is gross both directions and team-cash only.
+     The inclusion and dating rules live in lib/coach-cash-strip.ts, pinned by its unit tests;
+     `check:money-report` proves the result equals the register month-by-month, to the cent. */
+  const cashStrip = buildActualCashStrip({
+    duesPayments,
+    moneyInRecords,
+    realisedEntries,
+    clubRequests: clubApprovedRequests.map(r => ({
+      amount: r.amount,
+      isReimbursement: clubRequestIsReimbursement(r.requestType),
+      reviewedAt: r.reviewedAt,
+      createdAt: r.createdAt,
+    })),
+    expensePayments: expenses.flatMap(exp =>
+      (standings[exp.id as string]?.payments ?? []).map(p => ({
+        amount: p.amount,
+        paidDate: p.paidDate,
+        familyPaidDirect: !!exp.paid_by_player_id,
+      }))),
+    duesPayouts,
+    clubInstallments: clubSplits.flatMap(s =>
+      s.installments.map(i => ({ amount: i.amount, paidAt: i.paidAt }))),
+  });
+
   const monthGrid = buildMonthGrid({
     lines: gridLines,
     actuals: gridActuals,
     scheduled: gridScheduled,
     todayMonth,
     bufferAmount: buffer,
+    // A month where only cash moved still gets a column (Exhibit C ruling, 2026-08-23) — the
+    // strip renders on the grid's months, so a missing column is silently dropped money.
+    cashDates: cashStrip.dates,
   });
 
   /* ── 9. What players still have to fund ──────────────────────────────────────────────────────
@@ -869,26 +908,16 @@ export const GET = withObservability(async (req: Request,
     fundedByPlayers: budgetTotals.fundedByPlayers,
   };
 
-  // Money IN by month, both bases. The cash-flow strip pairs whichever of these matches the lens
-  // the coach is reading with that lens's money-out — never a blend of plan and commitment.
-  // Dues only, deliberately: fundraiser rebates CREDIT dues, so counting both would double-count
-  // the same dollar. The strip says so on screen.
+  // Money IN's SCHEDULED base — dues installments by due month, the only income with a schedule.
+  // The ACTUAL base is `cashStrip` above (every dollar that arrived — owner ruling 2026-08-23;
+  // the dues-only actual map this block used to also build retired with the ruling it enacted).
+  // The strip pairs whichever base matches the lens with that lens's money-out — never a blend.
   const duesInScheduled: Record<string, number> = {};
-  const duesInActual: Record<string, number> = {};
   for (const i of duesInstallments) {
     const amt = i.amount ?? 0;
     if (!amt) continue;
     const due = monthKeyOf(i.due_date);
     if (due) duesInScheduled[due] = Math.round(((duesInScheduled[due] ?? 0) + amt) * 100) / 100;
-  }
-  // ACTUAL is the receipt book, not the stamp: each payment lands in the month the money ARRIVED
-  // (mig 232, owner ruling 3). Under the old model a coach catching up on a month of e-transfers
-  // put them all in "today's" month, and a part-payment appeared in no month at all.
-  for (const p of duesPayments) {
-    const amt = p.amount ?? 0;
-    if (!amt) continue;
-    const m = monthKeyOf(p.receivedDate);
-    if (m) duesInActual[m] = Math.round(((duesInActual[m] ?? 0) + amt) * 100) / 100;
   }
 
   // ── 10. Headroom ──────────────────────────────────────────────────────
@@ -967,7 +996,11 @@ export const GET = withObservability(async (req: Request,
     // ── chunk H ──
     monthGrid,
     cellDetails,
-    moneyIn: { scheduled: duesInScheduled, actual: duesInActual },
+    /* The strip's two IN bases and its ACTUAL out. Scheduled/Budget money-out stays the lens's own
+       grid cells (projections are the plan's business) — only ACTUAL carries a server-assembled
+       out-map, because only cash diverges from the cells (gross vs netted, and team-cash only). */
+    moneyIn: { scheduled: duesInScheduled, actual: cashStrip.in },
+    moneyOut: { actual: cashStrip.out },
     todayMonth,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual' });

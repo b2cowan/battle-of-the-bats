@@ -10832,3 +10832,38 @@ scorer, the face flips and both redirects are owner-QA-only coverage.
 (a deliberate instrument-card look — same surface as the volunteer door, sunlight posture and
 all). If it reads as a hole in the warm theme rather than an instrument, that's a theming
 session, not a bug fix.
+
+## §83 · The Months cash strip tells the whole cash truth — and is chained to the register
+
+**BUILT 2026-08-23 (dev).** Owner ruling of the same day (reversing 2026-07-30's "Money in is
+player dues only"), go given on the mockup artifact
+https://claude.ai/code/artifact/f0598811-0ac6-4235-8cdc-2cf805a6c2d7 (Exhibit C ruled: the grid
+GROWS a column for a cash-only month). Plan:
+`docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`. No migration.
+
+Walk on a team with fundraising, a sponsor, club money, a payout, and (ideally) a family-paid
+cost — the UAT fixture has all five; a dues-only team proves nothing here.
+
+- [ ] **Money → Reports → Budget vs. Actual → Months, Actual lens.** The bottom strip's Money in
+      now moves when you record a drive amount, a sponsor receipt, income or money back, or the
+      club approves a reimbursement — each in the month the money arrived (a drive logged late
+      with a received date lands in its real month). Before this, only dues moved it.
+- [ ] **Money out includes money paid back to families** (it was missing entirely) and club
+      payments — and a cost marked "a family paid the vendor directly" does NOT move it, while
+      still counting in the grid's spending rows above. The strip and the grid's Total row can now
+      legitimately differ; the footnote under the grid says which is which.
+- [ ] **The running balance's last settled month equals Cash on hand to the cent** — same number
+      as the Money overview card and the register's headline. This is also machine-checked:
+      `npm run check:money-report` now proves strip = register month-by-month, both directions
+      (needs the dev server + UAT session, same as `check:register`).
+- [ ] **The footnote changed with the ruling.** The "Money in is player dues only… same dollar
+      twice" sentence is gone; Actual states the whole-cash basis, Budget/Scheduled say dues
+      installments are the only scheduled income. The help guide's Months section says the same.
+- [ ] **A month where only cash moved grows a column** (Exhibit C): record dues received before
+      the first budgeted month — the grid gains that month's column, its spending rows show an
+      em dash there, and the strip carries the money. No other layout change anywhere.
+- [ ] **Budget and Scheduled lenses are unchanged** — plan and commitments, dues installments as
+      money in, same figures as before this build.
+
+**Not in this pass, on purpose:** income rows in the month GRID itself (Phase 2 — its own mockup
+session, owner-ruled from drawings, separately gated build).

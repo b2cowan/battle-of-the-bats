@@ -56,7 +56,16 @@ export const MONTH_WINDOW = 12;
 export interface MonthGridPayload {
   monthGrid: MonthGrid;
   cellDetails: Record<string, CellDetailItem[]>;
+  /** Scheduled = dues installments by due month (the only income with a schedule).
+   *  Actual = EVERY dollar that arrived, by the month it arrived (owner ruling 2026-08-23 —
+   *  dues, drives and sponsors, recorded income and money back, club reimbursements). */
   moneyIn: { scheduled: Record<string, number>; actual: Record<string, number> };
+  /** Actual cash OUT — server-assembled from the primitive records, gross, team-cash only.
+   *  Only the Actual lens has one: under Budget/Scheduled, money out IS the lens's cells, but
+   *  cash diverges from the cells (the report nets refunds into costs and counts family-paid
+   *  spending that moved no team cash). `check:money-report` holds these maps equal to the
+   *  register, month by month — reading the cells instead re-opens the gap it closed. */
+  moneyOut: { actual: Record<string, number> };
   todayMonth: MonthKey;
 }
 
@@ -109,7 +118,7 @@ export default function MoneyMonthGrid({
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
-  const { monthGrid: grid, cellDetails, moneyIn, todayMonth } = data;
+  const { monthGrid: grid, cellDetails, moneyIn, moneyOut, todayMonth } = data;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{ title: string; items: CellDetailItem[]; href: string; hrefLabel: string } | null>(null);
   /** "Which line's dates?" — only ever open for a row standing for two or more budget lines. */
@@ -143,15 +152,18 @@ export default function MoneyMonthGrid({
   const showUndated = undatedLive && grid.totals.undatedBudget > 0.005;
 
   // Cash flow follows the lens on screen — the plan under Budget, the commitments under Scheduled,
-  // real spending under Actual — and never blends them, which is what keeps a planned estimate and
+  // real cash under Actual — and never blends them, which is what keeps a planned estimate and
   // a commitment for the same cost from being counted twice. Meaningless under Difference.
+  // ⚠ ACTUAL reads BOTH server maps, never the grid's cells: cash is gross and team-cash only,
+  // while the cells are the report (netted, and counting family-paid spending) — the payload's
+  // own note carries the rule and the guard that enforces it.
   const cash = useMemo(() => {
     if (lens === 'difference') return null;
+    if (lens === 'actual') return buildCashFlow(grid.months, moneyIn.actual, moneyOut.actual);
     const outByMonth: Record<string, number> = {};
     grid.months.forEach((m, i) => { outByMonth[m] = grid.totals.cells[i][lens]; });
-    const inByMonth = lens === 'actual' ? moneyIn.actual : moneyIn.scheduled;
-    return buildCashFlow(grid.months, inByMonth, outByMonth);
-  }, [grid, lens, moneyIn]);
+    return buildCashFlow(grid.months, moneyIn.scheduled, outByMonth);
+  }, [grid, lens, moneyIn, moneyOut]);
 
   function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
@@ -398,11 +410,18 @@ export default function MoneyMonthGrid({
 
       {/* Every claim the grid makes about its own basis, in one place under it. */}
       <div className={styles.notes}>
+        {/* ⚠⚠ THE "player dues only… same dollar twice" SENTENCE RETIRED HERE (owner ruling
+            2026-08-23, reversing 2026-07-30 — memory/design_decisions.md). Its rationale survived
+            three model changes it was no longer true under, restated on screen the whole time; the
+            durable lesson is that a footnote explaining a rule is also that rule's expiry
+            checklist. Each lens now states its own basis, because they genuinely differ. */}
         {cash && (
           <p className={styles.note}>
             Cash flow is projected with the <strong>{MONEY_LENSES.find(l => l.id === lens)?.label}</strong> lens
             {lens === 'budget' ? ' — your plan, not your commitments.' : lens === 'scheduled' ? ' — what you’ve committed to, not your plan.' : ' — money actually received and actually paid.'}
-            {' '}Money in is player dues only; fundraiser rebates already credit dues, so counting both would count the same dollar twice.
+            {lens === 'actual'
+              ? ' Money in is every dollar that arrived — dues, fundraising and sponsor money received, income and money back you recorded, and anything the club sent. Money out is every dollar that left — bills paid, money paid back to families, and payments to the club. A cost a family paid a vendor directly stays out: no team cash moved.'
+              : ' Money in here is player dues installments — the only income with a schedule.'}
             {showUndated && ` ${fmt(grid.totals.undatedBudget)} with no date yet isn’t in this projection.`}
           </p>
         )}

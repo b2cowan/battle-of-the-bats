@@ -277,6 +277,15 @@ export function buildMonthGrid(input: {
    * lines has nothing unallocated to stand in for, and a negative row here would read as a refund.
    */
   bufferAmount?: number;
+  /**
+   * Days CASH moved (the Actual strip's events) — they widen the month RANGE and nothing else.
+   * A month where money arrived but nothing was budgeted or spent must still have a column, or
+   * the strip silently drops that money and `check:money-report`'s register identity fails by
+   * exactly the hidden amount (owner ruling 2026-08-23, Exhibit C: the grid GROWS the column;
+   * folding off-range cash into an edge month was rejected). No cell reads these — the grid's
+   * rows stay money-out only, which is Phase 2's question, not this parameter's.
+   */
+  cashDates?: Array<string | null>;
 }): MonthGrid {
   const { lines, actuals, scheduled, todayMonth } = input;
   const bufferAmount = round2(input.bufferAmount ?? 0);
@@ -286,6 +295,7 @@ export function buildMonthGrid(input: {
       ...lines.flatMap(l => l.periods.map(p => p.date)),
       ...actuals.map(a => a.date),
       ...scheduled.map(s => s.date),
+      ...(input.cashDates ?? []),
     ],
     todayMonth,
     { max: input.maxMonths ?? MAX_MONTH_COLUMNS },
