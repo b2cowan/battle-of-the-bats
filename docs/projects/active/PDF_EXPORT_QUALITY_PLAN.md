@@ -238,9 +238,16 @@ judges on the group's own definition of good:
   rep-teams **"Excel with contact details"** export, raised in §82 and left then, had no plan check
   at all while the PDF above it carried one — now gated; the coaches' own roster spreadsheet was
   checked and deliberately left on its role grant. *Good = readable pinned to a wall; privacy-aware.*
-- **Working sheets:** check-in sheet branded + tick-box column widened; **the practice sheet is
-  rebuilt as the decided run sheet** (decision 9 resolved 2026-08-22 — build to
-  `PRACTICE_SHEET_STRUCTURE_PLAN.md` and its approved exhibits, not to the old table form).
+- **Working sheets — NEXT, prompt written 2026-08-23**
+  (`PDF_EXPORT_QUALITY_P2_WORKING_SHEETS_BUILD_PROMPT.md`, ready for a fresh chat). **The practice
+  sheet is rebuilt as the decided run sheet** (decision 9 resolved 2026-08-22 — build to
+  `PRACTICE_SHEET_STRUCTURE_PLAN.md` and its approved exhibits, not to the old table form; its §82
+  compact guard retires with it). The check-in sheet's line here said "branded + tick-box column
+  widened"; **re-reading the builder for the prompt found it is longer than that** — the sheet
+  passes NO settings, NO identity and NO subtitle, so it carries no club name, no crest and **no
+  session date at all**, and it is absent from the export catalog entirely. Verify in code, don't
+  trust this bullet. ⚠ Unusually for a Phase 2 pass, the main document's STRUCTURE is already
+  owner-approved, so checkpoint 1 is small and is mostly about the check-in sheet.
   *Good = works in a coach's hand, in weather.*
 - **Schedules:** already the model; verify against the gallery, nothing structural.
 - **Posters, cards & brackets:** logo on the drawn documents; bracket vertical centring. *Good = big
