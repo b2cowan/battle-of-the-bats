@@ -268,24 +268,33 @@ function CoachTeamHeaderInner({
             the one thing that changes day to day, which is also what stops a standalone team's bar
             being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
         <div className={styles.teamHeaderRight}>
-          {seasonFinished ? (
-            <>
-              {/* Presentational, and the ONE place a finished season is named (see docblock). No
-                  status on a season that has ended: it has no next thing, and nothing live may be
-                  read for it. */}
-              <span className={styles.seasonChip}>Complete</span>
-              {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
-            </>
-          ) : gameDayLine ? (
-            consoleHref
-              ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
-              : gameDayLine
-          ) : status ? (
-            <span className={styles.teamHeaderStack}>
-              <span className={styles.teamHeaderStackKey}>Next</span>
-              <span className={styles.teamHeaderStackValue}>{nextLabel(status)}</span>
-            </span>
-          ) : null}
+          {/* ⚠ THE STATUS DOES NOT RENDER AT PHONE WIDTH — owner ruling 2026-08-24, game day
+              included. This wrapper is `display: contents` above 640 (so the chip/stack stay
+              direct flex children of the row and desktop is byte-identical) and `display: none`
+              below it. It exists for ONE reason: the public-site flip beneath is a DOOR, not a
+              fact, and hiding `.teamHeaderRight` wholesale would have taken it too — the kind of
+              thing a width rule removes silently. See `.teamHeaderStatus` for why the slot is
+              removed rather than shrunk, and where the bench console's other phone doors are. */}
+          <span className={styles.teamHeaderStatus}>
+            {seasonFinished ? (
+              <>
+                {/* Presentational, and the ONE place a finished season is named (see docblock). No
+                    status on a season that has ended: it has no next thing, and nothing live may be
+                    read for it. */}
+                <span className={styles.seasonChip}>Complete</span>
+                {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
+              </>
+            ) : gameDayLine ? (
+              consoleHref
+                ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
+                : gameDayLine
+            ) : status ? (
+              <span className={styles.teamHeaderStack}>
+                <span className={styles.teamHeaderStackKey}>Next</span>
+                <span className={styles.teamHeaderStackValue}>{nextLabel(status)}</span>
+              </span>
+            ) : null}
+          </span>
 
           {publicHref && (
             <Link href={publicHref} className={styles.teamHeaderFlip}>
