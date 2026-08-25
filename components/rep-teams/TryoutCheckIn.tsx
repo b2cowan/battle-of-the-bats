@@ -3,8 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Plus, EyeOff, Printer } from 'lucide-react';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { downloadPDF, buildFilename } from '@/lib/export';
-import type { RepTryoutRegistration } from '@/lib/types';
+import {
+  downloadPDF, buildFilename, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { checkinSheetHeadings, checkinTickColumn } from '@/lib/export/tryout-checkin-columns';
+import { tournamentToday } from '@/lib/timezone';
+import { describeTryoutSession, tryoutSessionDay } from '@/lib/tryout-session-label';
+import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
 import styles from './TryoutCheckIn.module.css';
 
 const BLANK_WALKUP = { first: '', last: '', email: '' };
@@ -12,6 +17,16 @@ const BLANK_WALKUP = { first: '', last: '', email: '' };
 interface Props {
   /** The candidate API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-candidates`. */
   apiBase: string;
+  /** The tryout-sessions API base — read at PRINT time so the sheet can name its session. */
+  sessionsBase?: string;
+  /** For the printed sheet's branding: resolved team → club → defaults at print time. */
+  orgSlug?: string;
+  teamId?: string;
+  /**
+   * Whose paper the printed sheet is (D1). The TEAM layer, matching the tryout report on the
+   * same screen: the team's name, over the club's crest/colour until the team sets its own.
+   */
+  teamName?: string | null;
   /** Check-in face of the tryouts hub (One-Room build, 2026-08-23): no back link — the hub's
    *  face row owns navigation — and the desktop layout caps its width and goes two-column. */
   embedded?: boolean;
@@ -26,6 +41,23 @@ interface Props {
 
 const fullName = (c: RepTryoutRegistration) => `${c.playerFirstName} ${c.playerLastName ?? ''}`.trim();
 
+/**
+ * Which session the sheet is most likely for: the one running TODAY, else the next one still to
+ * come, else the last one held. Only a hint on the chooser — the coach still picks.
+ *
+ * ⚠ "Today" is the CLUB's calendar day, not the device's — a coach travelling with the team must
+ * still be offered the session the club is running today (the standing date rule in this repo).
+ */
+function suggestSession(sessions: RepTryoutSession[]): string | null {
+  if (sessions.length === 0) return null;
+  const todayKey = tournamentToday();
+  const today = sessions.find(s => tryoutSessionDay(s.startsAt) === todayKey);
+  if (today) return today.id;
+  const now = Date.now();
+  const upcoming = sessions.find(s => Date.parse(s.startsAt) >= now);
+  return (upcoming ?? sessions[sessions.length - 1]).id;
+}
+
 function ageFromDob(dob: string | null): string {
   if (!dob) return '';
   const d = new Date(dob);
@@ -37,7 +69,10 @@ function ageFromDob(dob: string | null): string {
   return age >= 0 && age < 100 ? String(age) : '';
 }
 
-export default function TryoutCheckIn({ apiBase, embedded, active = true, onError, onChanged }: Props) {
+export default function TryoutCheckIn({
+  apiBase, sessionsBase, orgSlug, teamId, teamName,
+  embedded, active = true, onError, onChanged,
+}: Props) {
   const [candidates, setCandidates] = useState<RepTryoutRegistration[]>([]);
   /** Chunk F: which candidates were here before, keyed by registration id (server-matched). */
   const [returning, setReturning] = useState<Record<string, { priorProgramYearName: string; kind: string }> | null>(null);
@@ -50,8 +85,11 @@ export default function TryoutCheckIn({ apiBase, embedded, active = true, onErro
   const [walkupOpen, setWalkupOpen] = useState(false);
   const [walkup, setWalkup] = useState(BLANK_WALKUP);
   const [savingWalkup, setSavingWalkup] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  /** Non-null while the coach is choosing WHICH session this sheet is for. */
+  const [sessionChoices, setSessionChoices] = useState<RepTryoutSession[] | null>(null);
 
-  useOverlayOpen(walkupOpen);
+  useOverlayOpen(walkupOpen || sessionChoices !== null);
   const guardedWalkupClose = useDiscardGuard({
     dirty: touched(walkup, BLANK_WALKUP),
     close: () => setWalkupOpen(false),
@@ -86,6 +124,15 @@ export default function TryoutCheckIn({ apiBase, embedded, active = true, onErro
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => () => { if (recentTimer.current) clearTimeout(recentTimer.current); }, []);
+
+  /**
+   * ⚠ The coach portal does NOT remount when a coach switches team, so a chooser left open on
+   * team A would still be on screen for team B — and picking a session there would print team B's
+   * candidates under team A's session heading. The moment this became a downloadable FILE it
+   * stopped being a cosmetic leftover (the standing lesson from the Rosters pass: adding an export
+   * re-severities every pre-existing race on the screen). The chooser closes with the team.
+   */
+  useEffect(() => { setSessionChoices(null); setPrinting(false); }, [apiBase]);
 
   // Check-ins keep landing from other devices and evaluators — re-sync quietly on window
   // refocus and when this face comes back on screen (/review 2026-08-23: once mounted inside
@@ -164,20 +211,92 @@ export default function TryoutCheckIn({ apiBase, embedded, active = true, onErro
     }
   }
 
+  /**
+   * Build the printed sheet.
+   *
+   * ⚠ Everything it prints is read at PRINT TIME — the branding and the sessions are fetched on
+   * the click, and the candidate list is whatever is on screen. Nothing is cached across the
+   * morning: this surface stays mounted for a whole tryout, and a cached copy would go on
+   * printing a look the coach has since changed or a session that has since moved.
+   */
+  const buildSheet = useCallback(async (session: RepTryoutSession | null) => {
+    const blind = isAnonymous;
+    // ⚠ The columns live in ONE place the contract test also imports — a privacy promise that
+    // checks a test's own copy of a column list proves nothing (QA §86).
+    const headers = checkinSheetHeadings(blind);
+    const tickColumn = checkinTickColumn(blind);
+    const rows = candidates.map(c => {
+      const age = ageFromDob(c.playerDateOfBirth);
+      return blind
+        ? [c.bibNumber ?? '', age, '', '']
+        : [c.bibNumber ?? '', fullName(c) || `Bib ${c.bibNumber ?? ''}`, age, '', ''];
+    });
+
+    // The line under the title. A tryout with sessions names the one this paper is FOR — two
+    // sessions on one weekend used to print identical sheets. Without sessions it still says
+    // when it was printed, so the paper is never undated.
+    const printedOn = new Date().toLocaleDateString('en-CA', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+    });
+    const subtitle = [
+      session ? describeTryoutSession(session) : `Printed ${printedOn}`,
+      // A volunteer handed a sheet of bib numbers should not have to wonder where the names went.
+      blind ? 'Blind evaluation — names hidden on purpose' : '',
+    ].filter(Boolean).join('  ·  ');
+
+    // Team paper (D1/D4): team name, team look over the club's. Fetched per export, never cached.
+    const fetched = orgSlug && teamId
+      ? await fetchResolvedPdfSettings(`/api/coaches/${orgSlug}/teams/${teamId}/pdf-settings`)
+      : null;
+    const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(fetched ?? {}) };
+
+    await downloadPDF(
+      buildFilename({ org: orgSlug, dataset: 'tryout-check-in' }, 'pdf'),
+      'Tryout check-in', subtitle, headers, rows, settings,
+      {
+        identity: teamName ?? undefined,
+        // It is a list of people down a page — portrait, whatever the org's default is.
+        shape: { orientation: 'portrait' },
+        // The one column somebody fills in by hand gets a box to fill in.
+        penColumns: [tickColumn],
+      },
+    );
+  }, [candidates, isAnonymous, orgSlug, teamId, teamName]);
+
   async function printSheet() {
+    if (printing) return;
+    setPrinting(true);
     try {
-      const blind = isAnonymous;
-      const headers = blind ? ['Bib', 'Age', 'In', 'Notes'] : ['Bib', 'Player', 'Age', 'In', 'Notes'];
-      const rows = candidates.map(c => {
-        const age = ageFromDob(c.playerDateOfBirth);
-        return blind
-          ? [c.bibNumber ?? '', age, '', '']
-          : [c.bibNumber ?? '', fullName(c) || `Bib ${c.bibNumber ?? ''}`, age, '', ''];
-      });
-      // FieldLogicHQ-branded default; org-branded settings are a later polish.
-      await downloadPDF(buildFilename({ dataset: 'tryout-check-in' }, 'pdf'), 'Tryout — Check-in Sheet', undefined, headers, rows);
+      let sessions: RepTryoutSession[] = [];
+      if (sessionsBase) {
+        const res = await fetch(sessionsBase);
+        if (res.ok) sessions = (await res.json()).sessions ?? [];
+      }
+      const live = sessions.filter(s => s.status !== 'cancelled');
+      if (live.length > 1) {
+        // More than one session: the coach says which morning this paper is for. Today's, or
+        // the next one still to come, is pre-selected — the answer on all but one tryout day.
+        setSessionChoices(live);
+        return;
+      }
+      await buildSheet(live[0] ?? null);
     } catch (e: any) {
       fail(e.message ?? 'Failed to build the sheet.');
+    } finally {
+      setPrinting(false);
+    }
+  }
+
+  /** Pick one session from the chooser and print it. */
+  async function printForSession(session: RepTryoutSession | null) {
+    setSessionChoices(null);
+    setPrinting(true);
+    try {
+      await buildSheet(session);
+    } catch (e: any) {
+      fail(e.message ?? 'Failed to build the sheet.');
+    } finally {
+      setPrinting(false);
     }
   }
 
@@ -203,8 +322,8 @@ export default function TryoutCheckIn({ apiBase, embedded, active = true, onErro
           <button type="button" className={styles.addBtn} onClick={() => { setWalkup(BLANK_WALKUP); setWalkupOpen(true); }}>
             <Plus size={15} /> Add walk-up
           </button>
-          <button type="button" className={styles.addBtn} onClick={printSheet} disabled={candidates.length === 0}>
-            <Printer size={15} /> Print sheet
+          <button type="button" className={styles.addBtn} onClick={printSheet} disabled={candidates.length === 0 || printing}>
+            <Printer size={15} /> {printing ? 'Building…' : 'Print sheet'}
           </button>
         </div>
       </div>
@@ -295,6 +414,39 @@ export default function TryoutCheckIn({ apiBase, embedded, active = true, onErro
               <button type="button" className="btn btn-ghost" onClick={() => guardedWalkupClose()} disabled={savingWalkup}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={addWalkup} disabled={savingWalkup || !walkup.first.trim()}>
                 {savingWalkup ? 'Adding…' : 'Add & check in'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Which morning is this paper for? Only asked when the tryout has more than one session —
+          two sessions on one weekend used to print identical, undated sheets. */}
+      {sessionChoices && (
+        <div className={styles.scrim} onClick={() => setSessionChoices(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Which session is this sheet for?</h3>
+            <div className={styles.sessionList}>
+              {sessionChoices.map(s => {
+                const suggested = s.id === suggestSession(sessionChoices);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={styles.sessionBtn}
+                    autoFocus={suggested}
+                    onClick={() => printForSession(s)}
+                  >
+                    <span className={styles.sessionWhen}>{describeTryoutSession(s)}</span>
+                    {suggested && <span className={styles.sessionHint}>Most likely</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className="btn btn-ghost" onClick={() => setSessionChoices(null)}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={() => printForSession(null)}>
+                No session — just today’s date
               </button>
             </div>
           </div>

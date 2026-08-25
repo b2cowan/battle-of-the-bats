@@ -16,6 +16,10 @@
  *                  deliberately data-rich and in its second season (months view, phone), one
  *                  deliberately EMPTY (the budget starter's first-run card). Four sign-ins
  *                  covering head coach, money-read, money-off and money-without-contacts.
+ *   --practice    QA §89 — six practice plans on QA Money U13, one per shape the printed RUN
+ *                  SHEET has to survive: a typical night, a heavy night with two rotations, a
+ *                  rotation the coach hasn't finished, twelve customer-named groups, a block
+ *                  taller than a page, and a bare-minimum plan. Needs --money to have been run.
  *   --book         Group 1D / §1.12–§1.14 + §1.16 — opponent book lines and observations on
  *                  `toronto blue jays5`, a SECOND SPELLING of one opponent so the merge has
  *                  something to merge, lineups vs one opponent across wins and losses, and a
@@ -34,7 +38,7 @@
  *     is the check, so the fixture must start from nothing. You set the cap during the test.
  *   · §1.16's two sharing switches are left OFF on purpose — turning them on IS steps 1 and 2.
  *
- * Run: node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs [--cancel-lab|--game-day|--book]
+ * Run: node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs [--cancel-lab|--game-day|--money|--book|--practice]
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
@@ -869,6 +873,27 @@ const MONEY = {
   admin: { email: 'qa-money-admin@dev.local', name: 'QA Money Club Admin' },
 };
 
+/**
+ * A wall clock in the CLUB's zone → the UTC instant it actually is, DST-correct.
+ *
+ * ⚠ Mirrors `zonedWallClockToUtc` in lib/timezone.ts, which this plain-JS script cannot import.
+ * Seeding a time any other way is what produced the mismatch the 2026-08-24 tryout fix corrected —
+ * a fixture written one way and read another proves nothing about either.
+ */
+function orgWallClockToUtc(date, time, timeZone = 'America/Toronto') {
+  const pretendUtc = new Date(`${date}T${time}:00Z`);
+  const asUtc = new Date(pretendUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const asZone = new Date(pretendUtc.toLocaleString('en-US', { timeZone }));
+  return new Date(pretendUtc.getTime() + (asUtc.getTime() - asZone.getTime())).toISOString();
+}
+
+/** The next Saturday on or after today, plus `extraDays`, as `YYYY-MM-DD`. */
+function nextSaturday(extraDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7) + extraDays);
+  return isoDate(d);
+}
+
 /** Month boundary helpers — every date a month-grid column will be compared against. */
 const monthStart = (offset) => {
   const d = new Date();
@@ -1662,10 +1687,468 @@ async function seedMoneyLab() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════
+// PRACTICE RUN SHEETS — the fixture the printed practice plan is judged on (QA §89)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+//
+// Six practices on QA Money U13, one per case the run-sheet design has to survive. They exist
+// because the sheet's failures are all SHAPE failures — a grid that shreds a name, a block that
+// runs off the bottom, a rotation that silently disappears — and none of them are visible on a
+// tidy three-block practice. Every one of these is a state a real coach can reach.
+//
+//   1 · a typical night      the everyday case: one rotation, focus areas, fits a page
+//   2 · a heavy night        seven blocks, TWO rotations, long prose → pages 2+ and the
+//                            honest-arithmetic sentences ("Group A won't reach…")
+//   3 · unfinished rotations two ways for a rotation to be half-built — the case that used to
+//                            print NOTHING AT ALL for that block
+//   4 · twelve groups        the coach's own group names are the widest headings in the product;
+//                            the grid has to turn on its side rather than cut one
+//   5 · one enormous block   a block taller than a whole page: it cannot move whole to a page it
+//                            still won't fit, so it flows — and must not split a sentence
+//   6 · the bare minimum     no goal, no equipment, no notes: the facts block must be ABSENT,
+//                            not an empty band, and empty notes must cost no vertical space
+//
+// ⚠ Print each one from Schedule → the practice → "Print the sheet". Sign in as the head coach
+// for the full sheet; sign in as `qa-money-off@dev.local` (an assistant, whose defaults include
+// schedule but NOT notes) to see the same sheets with "What everyone's working on" ABSENT.
+//
+// Idempotent: every practice is looked up by name and its plan rewritten in place.
+async function seedPracticeSheets() {
+  head('Practice run sheets — QA Money U13');
+
+  const org = (await db.from('organizations').select('id, slug').eq('slug', MONEY.slug).maybeSingle()).data;
+  if (!org) {
+    console.error(`✗ ${MONEY.slug} does not exist yet — run this script with --money first.`);
+    process.exit(1);
+  }
+  const team = (await db.from('rep_teams').select('id, name').eq('org_id', org.id).eq('name', 'QA Money U13').maybeSingle()).data;
+  if (!team) {
+    console.error('✗ QA Money U13 does not exist yet — run this script with --money first.');
+    process.exit(1);
+  }
+  const year = (await db.from('rep_program_years').select('id, name')
+    .eq('team_id', team.id).eq('status', 'active').maybeSingle()).data;
+  if (!year) { console.error('✗ QA Money U13 has no active program year.'); process.exit(1); }
+
+  const { data: roster } = await db.from('rep_roster_players')
+    .select('id, player_first_name, player_last_name')
+    .eq('program_year_id', year.id)
+    .eq('status', 'active')
+    .order('display_order');
+  if (!roster?.length) { console.error('✗ QA Money U13 has no roster.'); process.exit(1); }
+  const pid = (n) => roster[n % roster.length].id;
+  const some = (from, count) => Array.from({ length: count }, (_, k) => pid(from + k));
+
+  // ── Focus areas, so "What everyone's working on" has something to print ──────────────────
+  //
+  // ⚠ Deliberately UNEVEN lengths. The section lays a name against wrapped prose, so a fixture
+  // where every line is the same width proves nothing about the one that wraps to three.
+  // ⚠ Capped at 80 characters by the column itself, so the long line on the sheet comes from a
+  // player holding TWO focus areas — which is also how a real roster produces one. Deliberately
+  // uneven: a fixture where every line is the same width proves nothing about the one that wraps.
+  const FOCUS = [
+    [0, 'Backhand pickups — glove out front, working through the ball'],
+    [0, 'Two-strike approach: put it in play rather than drive it'],
+    [1, 'First-step quickness on steals; read the pitcher\u2019s front heel'],
+    [2, 'Changeup command — same arm speed, don\u2019t baby it'],
+    [3, 'Tracking fly balls over the shoulder: drop step, run to the spot'],
+    [4, 'Bunt placement up the first-base line'],
+    [5, 'Staying down on backhand plays'],
+    [5, 'Steal jumps against a live catcher, not a coach'],
+  ];
+  {
+    const { data: have } = await db.from('rep_player_development_goals')
+      .select('id').eq('team_id', team.id).limit(1);
+    if (have?.length) {
+      note('focus areas already present — left as they are');
+    } else {
+      const rows = FOCUS.map(([who, focusArea]) => ({
+        org_id: org.id, team_id: team.id, player_id: pid(who),
+        focus_area: focusArea, status: 'working',
+      }));
+      die('focus areas', (await db.from('rep_player_development_goals').insert(rows)).error);
+      ok(`${rows.length} focus areas across ${new Set(FOCUS.map(f => f[0])).size} players (two hold two, so one line wraps)`);
+    }
+  }
+
+  // ── Plan-building helpers ────────────────────────────────────────────────────────────────
+  let seq = 0;
+  const uid = (p) => `${p}${++seq}`;
+  const station = (name, extra = {}) => ({ id: uid('s'), name, ...extra });
+  const groups = (names, per) => names.map((name, i) => ({
+    id: uid('g'), name, playerIds: some(i * per, per),
+  }));
+  const rotation = (interval, gs) => ({ intervalMinutes: interval, groups: gs, groupSource: 'manual' });
+  const block = (title, minutes, extra = {}) => ({
+    id: uid('b'), title, duration: { minutes }, ...extra,
+  });
+
+  /** Create-or-update one practice and stamp its plan. */
+  async function practice(name, { dayOffset, startHour, minutes, location, field, arrive, plan }) {
+    const start = new Date();
+    start.setDate(start.getDate() + dayOffset);
+    start.setHours(startHour, 0, 0, 0);
+    const end = new Date(start.getTime() + minutes * 60_000);
+    const fields = {
+      program_year_id: year.id, team_id: team.id, org_id: org.id,
+      event_type: 'practice', name,
+      starts_at: start.toISOString(), ends_at: end.toISOString(),
+      location, field_number: field, arrival_time: arrive,
+      practice_plan: plan,
+    };
+    const existing = (await db.from('rep_team_events').select('id')
+      .eq('program_year_id', year.id).eq('name', name).maybeSingle()).data;
+    if (existing) {
+      die(`${name} refresh`, (await db.from('rep_team_events').update(fields).eq('id', existing.id)).error);
+      ok(`${name} — re-anchored and plan rewritten`);
+      return existing.id;
+    }
+    const ins = await db.from('rep_team_events').insert(fields).select('id').single();
+    die(`${name} insert`, ins.error);
+    ok(`${name} — created`);
+    return ins.data.id;
+  }
+
+  const WHERE = { location: 'Riverdale Park', field: 'Diamond 2', arrive: '5:45 PM' };
+
+  // ── 1 · A TYPICAL NIGHT ──────────────────────────────────────────────────────────────────
+  await practice('Practice — a typical night', {
+    dayOffset: 2, startHour: 18, minutes: 90, ...WHERE,
+    plan: {
+      version: 1,
+      goal: 'Sharper two-strike at-bats; defensive communication loud enough to hear from the fence.',
+      practiceTypes: ['Hitting', 'Baserunning'],
+      equipment: ['Tees (4)', 'Bucket of game balls', 'Cones', 'Stopwatch'],
+      blocks: [
+        block('Dynamic warm-up & arm care', 10, {
+          staff: ['Coach Dana'], playerIds: some(0, 12),
+          description: 'Bands before anyone touches a ball. Throwing starts at 30 ft — anyone who pitched Sunday caps at 60 ft, no long toss.',
+        }),
+        // ⚠ Deliberately empty: an untouched block must cost NO vertical space on the sheet.
+        block('Throwing progression', 10, { staff: ['Coach Dana'], playerIds: some(0, 12) }),
+        block('Hitting circuit — 3 stations', 30, {
+          staff: ['All staff'],
+          description: 'Rotate on the whistle, ten minutes a station.',
+          coachingPoints: ['Contact point out front on the tee', 'Two-strike approach on front toss'],
+          stations: [
+            station('Tee work', { description: 'Inside pitch only; top hand drives through.', setup: 'Two tees down the line', equipment: ['Tees (4)'] }),
+            station('Front toss', { description: 'Choke up, shorten up, anything close gets a swing.', goal: 'Contact rate over exit speed' }),
+            station('Live BP', { description: 'Runners on first; contact swings only.', staff: ['Coach Priya'] }),
+          ],
+          // 30 min ÷ 10 = three rounds, three stations: every group reaches every station.
+          rotation: rotation(10, groups(['Group A', 'Group B', 'Group C'], 4)),
+        }),
+        block('First-to-third reads', 20, {
+          staff: ['Coach Priya'], playerIds: some(0, 12),
+          description: 'Live reads off front toss. Freeze on a line drive; on a ground ball read the outfielder’s angle, not the coach.',
+        }),
+        block('Scrimmage innings', 20, {
+          staff: ['All staff'], playerIds: some(0, 12),
+          description: 'Situations: runner on 2nd, one out, infield in.',
+        }),
+      ],
+    },
+  });
+
+  // ── 2 · A HEAVY NIGHT ────────────────────────────────────────────────────────────────────
+  //
+  // ⚠ The SECOND rotation is the point: 20 minutes over three stations at a 10-minute interval
+  // is TWO rounds, so one group never reaches the third station. The sheet has to say so in a
+  // sentence under the grid — that statement is the artifact a plain document cannot produce.
+  await practice('Practice — a heavy night', {
+    dayOffset: 4, startHour: 18, minutes: 115, ...WHERE,
+    plan: {
+      version: 1,
+      goal: 'Two-strike at-bats, and defensive communication loud enough to hear from the fence.',
+      practiceTypes: ['Hitting', 'Baserunning', 'Defense'],
+      equipment: ['Tees (4)', 'Bucket of game balls', 'Soft-toss bucket', 'Cones (12)', 'L-screen', 'Stopwatch', 'Catcher gear ×2', 'First-aid kit'],
+      blocks: [
+        block('Dynamic warm-up & arm care', 10, {
+          staff: ['Coach Dana'], playerIds: some(0, 12),
+          description: 'Bands before anyone touches a ball. Throwing starts at 30 ft — anyone who pitched Sunday caps at 60 ft, no long toss.',
+          coachingPoints: ['Bands before gloves', 'Nobody skips the last two throws'],
+        }),
+        block('Throwing progression', 10, {
+          staff: ['Coach Dana'], playerIds: some(0, 12),
+          description: 'Quick feet into the throw. Watch the arm slot when anyone rushes — one cue tonight, not a rebuild.',
+        }),
+        block('Hitting circuit — 3 stations', 30, {
+          staff: ['All staff'],
+          description: 'Rotate on the whistle, ten minutes a station. Every station is a different question, so nobody gets thirty minutes of the same swing.',
+          coachingPoints: ['Contact point out front', 'Two-strike approach means shorten up', 'Catchers throw down every third pitch'],
+          stations: [
+            station('Tee work', { description: 'Inside pitch only, contact point out front, top hand drives through.', setup: 'Two tees down the line', equipment: ['Tees (4)'] }),
+            station('Front toss', { description: 'Two-strike approach — choke up, shorten up, anything close gets a swing.', goal: 'Contact rate, not exit speed' }),
+            station('Live BP', { description: 'Start runners on first, contact swings only.', staff: ['Coach Priya'], note: 'Chloe and Owen are working steal jumps against a live catcher.' }),
+          ],
+          rotation: rotation(10, groups(['Group A', 'Group B', 'Group C'], 4)),
+        }),
+        block('First-to-third reads', 20, {
+          staff: ['Coach Priya'], playerIds: some(0, 12),
+          description: 'Live reads off front toss. Freeze on a line drive; on a ground ball read the outfielder’s angle, not the coach. Walk it through twice at half speed before it goes live — last time we skipped that and got three runners thrown out standing up.',
+        }),
+        block('Defensive stations', 20, {
+          staff: ['All staff'],
+          description: 'Station coaches stay put; the groups move.',
+          stations: [
+            station('Infield hands', { description: 'Short hops, glove out front, feet doing the work.' }),
+            station('Outfield reads', { description: 'Drop step first, run to the spot, glove up late.' }),
+            station('Bullpen & catching', { description: 'Fastball command to both corners; catchers frame, no stabbing.', equipment: ['Catcher gear ×2'] }),
+          ],
+          // Two rounds over three stations — one group will not reach the bullpen tonight.
+          rotation: rotation(10, groups(['Group A', 'Group B', 'Group C'], 4)),
+        }),
+        block('Situational scrimmage', 15, {
+          staff: ['All staff'], playerIds: some(0, 12),
+          description: 'Runner on second, one out, infield in. I want to HEAR the play called before every pitch. Offense: contact swing — the job is moving the runner.',
+        }),
+        block('Huddle', 5, {
+          staff: ['Coach Dana'], playerIds: some(0, 12),
+          description: 'Two sentences per coach, max. Name one thing that got better tonight — about the group, not one kid.',
+        }),
+      ],
+    },
+  });
+
+  // ── 3 · UNFINISHED ROTATIONS ─────────────────────────────────────────────────────────────
+  //
+  // ⚠ THE DEFECT THIS FIXTURE EXISTS FOR: until the run sheet, a rotation the coach had started
+  // but not finished printed NOTHING for its block — the screen said what was missing, the paper
+  // stayed silent, and the assistant carrying it had no idea a station plan was ever intended.
+  //
+  // Two ways to be half-built, and they print differently on purpose:
+  //   · stations and a length, but the team not split yet → the sentence, and no group lines
+  //   · stations and groups, but no length decided        → the sentence AND the group lines
+  // The no-length block is LAST because a block with no length does not advance the clock, so
+  // everything after it would show the same start time.
+  await practice('Practice — a rotation I haven’t finished', {
+    dayOffset: 6, startHour: 18, minutes: 75, ...WHERE,
+    plan: {
+      version: 1,
+      goal: 'Get the circuit written before Thursday.',
+      practiceTypes: ['Hitting'],
+      equipment: ['Tees (4)', 'Cones'],
+      blocks: [
+        block('Dynamic warm-up & arm care', 10, {
+          staff: ['Coach Dana'], playerIds: some(0, 12), description: 'Bands first.',
+        }),
+        block('Hitting circuit — team not split yet', 30, {
+          staff: ['All staff'],
+          description: 'Stations are set; I still have to decide who is in which group.',
+          stations: [station('Tee work'), station('Front toss'), station('Live BP')],
+          rotation: rotation(null, []),
+        }),
+        block('First-to-third reads', 20, {
+          staff: ['Coach Priya'], playerIds: some(0, 12),
+          description: 'Live reads off front toss.',
+        }),
+        block('Defensive stations — no length decided', null, {
+          staff: ['All staff'],
+          description: 'Groups are drawn; I haven’t worked out how long this runs.',
+          stations: [station('Infield hands'), station('Outfield reads'), station('Bullpen & catching')],
+          rotation: rotation(null, groups(['Group A', 'Group B', 'Group C'], 4)),
+        }),
+      ],
+    },
+  });
+
+  // ── 4 · TWELVE GROUPS ────────────────────────────────────────────────────────────────────
+  //
+  // ⚠ Group names are the CUSTOMER'S OWN WORDS — the widest headings anywhere in the product,
+  // and the exact shape that cost the roster and the tryout report whole columns earlier in this
+  // programme. Twelve long names cannot fit across a portrait page at a readable size, so the
+  // grid turns on its side (groups down the left, rounds across) rather than cutting one.
+  // MAX_GROUPS is 12, so this is the widest a coach can legally make it.
+  await practice('Practice — twelve groups', {
+    dayOffset: 8, startHour: 18, minutes: 60, ...WHERE,
+    plan: {
+      version: 1,
+      goal: 'Skills carnival — everybody moves, nobody queues.',
+      practiceTypes: ['Skills'],
+      equipment: ['Cones (12)', 'Stopwatch'],
+      blocks: [
+        block('Warm-up', 10, { staff: ['Coach Dana'], playerIds: some(0, 12), description: 'Two laps, then bands.' }),
+        block('Twelve-group carnival', 40, {
+          staff: ['All staff'],
+          description: 'Every player is their own group tonight — one name each, so the grid has to carry twelve of the coach’s own words.',
+          stations: [station('Tee work'), station('Front toss'), station('Ground balls'), station('Baserunning')],
+          rotation: rotation(20, groups(
+            ['Thunderbolts', 'Renegades', 'Hurricanes', 'Wolfpack', 'Mustangs', 'Cyclones',
+              'Titans', 'Rockets', 'Comets', 'Ospreys', 'Badgers', 'Falcons'], 1)),
+        }),
+        block('Huddle', 10, { staff: ['Coach Dana'], playerIds: some(0, 12), description: 'One thing that got better.' }),
+      ],
+    },
+  });
+
+  // ── 5 · ONE ENORMOUS BLOCK ───────────────────────────────────────────────────────────────
+  //
+  // ⚠ A block is ATOMIC — one that doesn't fit moves whole to the next page. This one is taller
+  // than a whole page, so it CANNOT move whole to a page it still won't fit: it takes a clean
+  // page and then flows, breaking only between whole lines. A SENTENCE MUST NEVER SPLIT, and
+  // where it continues the gutter must read "cont'd" and the title "(continued)".
+  //
+  // Built from a station-by-station teardown rather than one giant paragraph, because that is
+  // how a plan actually gets long: every field the coach filled in prints.
+  const teach = (what, watch, setup) => ({
+    description: what, goal: watch, setup,
+    coachingPoints: [
+      'Call it out loud before the rep so the whole field hears the play.',
+      'If the feet are wrong the hands cannot save it — fix the feet first.',
+      'Two reps at half speed before anything goes live, every single time.',
+      'Nobody moves to the next progression until the group in front is clear.',
+    ],
+  });
+  await practice('Practice — the coach who writes everything down', {
+    dayOffset: 10, startHour: 18, minutes: 105, ...WHERE,
+    plan: {
+      version: 1,
+      goal: 'Everything I have been meaning to say, said once, on paper, so the station coaches do not have to ask me.',
+      practiceTypes: ['Defense', 'Hitting'],
+      equipment: ['Tees (4)', 'Bucket of game balls', 'L-screen', 'Cones (12)', 'Catcher gear ×2'],
+      blocks: [
+        block('Dynamic warm-up & arm care', 10, {
+          staff: ['Coach Dana'], playerIds: some(0, 12), description: 'Bands first.',
+        }),
+        block('The whole defensive teardown', 90, {
+          rotates: false,     // separate stations, each keeping its own players
+          staff: ['All staff'],
+          description: 'This is the block I keep meaning to write down properly. Every station below runs for the whole ninety minutes with its own group — nobody rotates, because the point tonight is depth rather than variety. Station coaches: read your own paragraph before we start, and do not improvise the progression.',
+          coachingPoints: [
+            'Feet before hands, at every station, without exception.',
+            'A rep called out loud is worth two done silently.',
+            'If a player asks the same question twice, the cue is wrong — change the cue, not the player.',
+            'Water break at the halfway whistle whether anyone asks or not.',
+            'Nobody throws through pain. Not once, not to finish a drill.',
+            'The last five minutes are for cleaning up equipment, not one more rep.',
+            'If a group finishes early they help the group beside them; nobody stands.',
+            'Anything you change tonight, tell me before you change it.',
+          ],
+          stations: [
+            station('Infield hands', {
+              ...teach(
+                'Short hops from forty feet, glove out front, working through the ball rather than at it. Start on knees for the first ten so the hands cannot cheat, then up onto the feet for the rest.',
+                'The glove arriving late. If it arrives late the ball plays them.',
+                'Two buckets, one screen, forty feet apart on the infield grass.'),
+              equipment: ['Bucket of game balls', 'Cones (12)'],
+              staff: ['Coach Priya'], playerIds: some(0, 3),
+            }),
+            station('Outfield reads', {
+              ...teach(
+                'Drop step first, run to the spot, glove up late. Balls over the shoulder both ways, then in front, then the one nobody practises — the ball that dies in front of them on a wet outfield.',
+                'Drifting. A drifting outfielder is a fielder who has already given up two steps.',
+                'Cones marking the spot, thrower at the warning track.'),
+              equipment: ['Bucket of game balls'],
+              staff: ['Coach Dana'], playerIds: some(3, 3),
+            }),
+            station('Bullpen & catching', {
+              ...teach(
+                'Fastball command to both corners, then the changeup with the same arm speed. Catchers frame rather than stab, and receive the low strike from underneath.',
+                'Arm speed dropping on the changeup. It tells the hitter everything.',
+                'Full catcher gear, L-screen, one bucket.'),
+              equipment: ['Catcher gear ×2', 'L-screen'],
+              staff: ['Coach Sam'], playerIds: some(6, 3),
+            }),
+            station('Framing & blocking', {
+              ...teach(
+                'Receiving from underneath so the low strike stays a strike, then blocking: chest over the ball, chin down, smother rather than catch. Ten of each, then live from the L-screen.',
+                'The glove turning over on the low pitch. It turns a strike into a ball every time.',
+                'Full gear, L-screen at thirty feet, one bucket.'),
+              equipment: ['Catcher gear ×2', 'L-screen'],
+              staff: ['Coach Sam'], playerIds: some(0, 3),
+            }),
+            station('Rundowns', {
+              ...teach(
+                'The play nobody practises and everybody botches. Full speed at the runner, one throw, tag on the glove side. Rotate every player through both bases and the runner spot.',
+                'Too many throws. One throw ends it; three throws is a run.',
+                'Two bases at game distance, helmets on for the runners.'),
+              equipment: ['Cones (12)'],
+              staff: ['Coach Dana'], playerIds: some(3, 3),
+            }),
+            station('Situational baserunning', {
+              ...teach(
+                'First-to-third reads off a live outfielder, then the tag from second, then the delayed steal we have never once executed in a game. Walk every one at half speed before it goes live.',
+                'Watching the coach instead of the ball. Read the outfielder’s angle.',
+                'Bases at game distance, one coach at third.'),
+              equipment: ['Cones (12)', 'Stopwatch'],
+              staff: ['Coach Priya'], playerIds: some(9, 3),
+            }),
+          ],
+        }),
+        block('Huddle', 5, {
+          staff: ['Coach Dana'], playerIds: some(0, 12),
+          description: 'Two sentences per coach, max.',
+        }),
+      ],
+    },
+  });
+
+  // ── 6 · THE BARE MINIMUM ─────────────────────────────────────────────────────────────────
+  //
+  // ⚠ No goal, no practice types, no equipment, no notes on any block. The facts block must be
+  // ABSENT rather than an empty band (the defect the old sheet had: a dark header row with blank
+  // columns), and empty notes must take no vertical space at all.
+  await practice('Practice — the bare minimum', {
+    dayOffset: 12, startHour: 18, minutes: 60, ...WHERE,
+    plan: {
+      version: 1,
+      blocks: [
+        block('Warm-up', 15, { playerIds: some(0, 12) }),
+        block('Batting practice', 30, { playerIds: some(0, 12) }),
+        block('Conditioning', 15, { playerIds: some(0, 12) }),
+      ],
+    },
+  });
+
+  // ── Tryout sessions, stored as REAL INSTANTS ─────────────────────────────────────────────
+  //
+  // ⚠⚠ Two of them, because the printed check-in sheet only asks WHICH SESSION when there is more
+  // than one — with a single session there is nothing to choose and the sheet prints straight away.
+  // A one-session fixture cannot test the chooser at all.
+  //
+  // ⚠ Written through the wall-clock→UTC conversion the app itself now uses (owner ruling
+  // 2026-08-24). Before that fix the app stored the typed clock uncorrected and every screen read
+  // it back by slicing, so the two errors cancelled — and the correctly-written demo sandbox
+  // displayed FOUR HOURS LATE. These rows are what a coach typing "9:00 a.m." should produce.
+  {
+    const tryout = (await db.from('rep_tryouts').select('id').eq('program_year_id', year.id).maybeSingle()).data
+      ?? (await db.from('rep_tryouts').insert({
+        program_year_id: year.id, team_id: team.id, org_id: org.id, is_anonymous: true,
+      }).select('id').single()).data;
+
+    const SESSIONS = [
+      { label: 'Session 1 — Skills', date: nextSaturday(0), start: '09:00', end: '12:00' },
+      { label: 'Session 2 — Games',  date: nextSaturday(7), start: '09:00', end: '12:00' },
+    ];
+    // Replace rather than accumulate: re-running must not leave a coach eight sessions to choose from.
+    die('clear tryout sessions', (await db.from('rep_tryout_sessions').delete().eq('tryout_id', tryout.id)).error);
+    die('tryout sessions', (await db.from('rep_tryout_sessions').insert(SESSIONS.map(x => ({
+      tryout_id: tryout.id, program_year_id: year.id, team_id: team.id, org_id: org.id,
+      starts_at: orgWallClockToUtc(x.date, x.start),
+      ends_at: orgWallClockToUtc(x.date, x.end),
+      location: 'Riverdale Park', field_number: 'Diamond 3',
+      label: x.label, status: 'scheduled',
+    })))).error);
+    ok(`2 tryout sessions (${SESSIONS[0].date} + ${SESSIONS[1].date}, 9:00 a.m. club time) — the check-in sheet's session chooser needs two`);
+  }
+
+  console.log('');
+  console.log(`  Team           QA Money U13  → /${MONEY.slug}/coaches/teams/${team.id}/schedule`);
+  console.log('  Six practices, next two weeks. Open one → Print the sheet.');
+  console.log('     1 · a typical night                    one rotation, focus areas, the everyday page');
+  console.log('     2 · a heavy night                      two rotations; one group never reaches the bullpen');
+  console.log('     3 · a rotation I haven’t finished      the block that used to print NOTHING');
+  console.log('     4 · twelve groups                      the grid turns on its side');
+  console.log('     5 · the coach who writes everything…   a block taller than a page');
+  console.log('     6 · the bare minimum                   no facts block, no empty notes');
+  console.log(`  Head coach ${MONEY.people[0].email} sees focus areas; ${MONEY.people[2].email} (assistant) must NOT.`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════
 if (wants('cancel-lab')) await seedCancelLab();
 if (wants('game-day')) await seedGameDay();
 if (wants('book')) await seedBook();
 if (wants('money')) await seedMoneyLab();
+if (wants('practice')) await seedPracticeSheets();
 
 console.log('\n✓ Done.\n');
 console.log('⚠ Restart the dev server before testing — this run added events and lineups.');

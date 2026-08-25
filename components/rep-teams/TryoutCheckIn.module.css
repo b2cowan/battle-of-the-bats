@@ -218,3 +218,36 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
   background: rgba(var(--home-line-rgb), 0.50);
 }
+
+/* Session chooser — "which morning is this paper for?" (Working-sheets pass, 2026-08-24).
+   Rows, not a dropdown: each choice is a full sentence (label · date · time · place), which is
+   exactly what a one-line select would truncate. */
+.sessionList { display: flex; flex-direction: column; gap: 0.5rem; }
+.sessionBtn {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  width: 100%; text-align: left; cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 0.7rem 0.85rem;
+  color: var(--white-90); font-size: 0.9rem; font-weight: 600;
+}
+.sessionBtn:hover { border-color: var(--logic-lime); }
+.sessionWhen { min-width: 0; }
+.sessionHint {
+  flex: none; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+/* Warm portal: the chooser is paper like every other surface here (flat additive, never editing
+   a dark declaration — the dark portal stays byte-identical). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionBtn {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionBtn:hover {
+  border-color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionHint {
+  color: var(--home-olive);
+}

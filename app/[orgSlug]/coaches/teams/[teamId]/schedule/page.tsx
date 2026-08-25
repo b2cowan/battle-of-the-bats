@@ -44,6 +44,7 @@ import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
+import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
   needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName,
@@ -417,17 +418,30 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-// A tryout session projected onto the calendar — read-only, visually distinct from a game (dashed,
-// clipboard, "Tryout" label), links to the Tryouts tab rather than opening the event editor.
-function TryoutChip({ session, href }: { session: RepTryoutSession; href: string }) {
-  const start = new Date(session.startsAt.slice(0, 19)); // wall-clock, no TZ shift
-  const time = isNaN(start.getTime()) ? '' : start.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+// A tryout session projected onto the calendar — read-only, visually distinct from a game (dashed
+// rail, clipboard, muted text), links to the Tryouts tab rather than opening the event editor.
+//
+// ⚠ THE DISTINCTNESS IS THE DASHED RAIL AND THE MUTED TEXT — NOT A DIFFERENT ROW SHAPE. This row
+// was built on its own and drifted from its two siblings in two ways a coach reads as breakage
+// (owner, 2026-08-24, from a screenshot):
+//   · it never took `dayKey`, so the flat LIST view showed a bare "5:00 p.m." where every row
+//     around it read "Aug 30 · 6:00 p.m." — the one view with no date anywhere else on the row;
+//   · its clipboard sat INSIDE the title text with hand-rolled spacing, where `EventChip` and
+//     `TournamentGameChip` both put their mark in the leading icon slot before the time.
+// Both are fixed here; the dashed rail and the muted name stay exactly as they were.
+function TryoutChip({ session, dayKey, href }: { session: RepTryoutSession; dayKey?: string; href: string }) {
+  // ⚠ A session is a real moment now, read in the CLUB's zone like every event beside it — see
+  // lib/tryout-session-label for why it used to be sliced, and why that was wrong.
+  const time = formatTryoutSessionTime(session.startsAt);
+  // Same rule as the other two chips: a day-scoped view already carries the date in its column
+  // header, the flat list does not.
+  const lead = dayKey ? time : [shortDate(tryoutSessionDay(session.startsAt)), time].filter(Boolean).join(' · ');
   const place = [session.label, session.location, session.fieldNumber && `Field ${session.fieldNumber}`].filter(Boolean).join(' · ');
   return (
     <Link href={href} className={`${styles.eventChip} ${styles.tryoutChip}`} title="Tryout — opens your Tryouts tab">
-      <span className={styles.eventChipTime}>{time}</span>
+      <ClipboardList size={12} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} aria-hidden />
+      <span className={styles.eventChipTime}>{lead}</span>
       <span className={styles.eventChipName}>
-        <ClipboardList size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} aria-hidden />
         Tryout{place ? <span className={styles.eventChipOpp}> · {place}</span> : null}
       </span>
     </Link>
@@ -1837,7 +1851,7 @@ export default function CoachesSchedulePage({
     }
     const tryByMonth: Record<string, RepTryoutSession[]> = {};
     for (const s of tryoutSessions) {
-      const mk = s.startsAt.slice(0, 7); // wall-clock YYYY-MM (consistent with the week/month day slice)
+      const mk = tryoutSessionDay(s.startsAt).slice(0, 7); // the club's calendar month, like every event
       (tryByMonth[mk] ??= []).push(s);
     }
     // WI-2B: group the real tournament games by month too, so they list alongside self-entered
@@ -1858,19 +1872,41 @@ export default function CoachesSchedulePage({
       const label = new Date(mk + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
       const trys = (tryByMonth[mk] ?? []).slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
       const games = (gamesByMonth[mk] ?? []).slice().sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
+      /**
+       * ⚠ ONE CHRONOLOGICAL LIST, NOT THREE STACKED BLOCKS (owner, 2026-08-24).
+       *
+       * This month used to render every self-entered event, then every tournament game, then
+       * every tryout — so a tryout on the 27th sat BELOW a practice on the 30th and the month
+       * simply was not in date order. It reads as a styling quirk and is actually the schedule
+       * lying about when things happen.
+       *
+       * Sorted on the club-local day and clock every row DISPLAYS, built as a comparable
+       * `YYYY-MM-DDTHH:mm`. Every kind is a real instant read in the club’s zone — including a
+       * tryout session, since 2026-08-24 (it used to be stored AND read as a bare wall clock,
+       * which is why sorting was the first thing to need a true ordering, and how that surfaced).
+       * Undated rows sort last rather than jumping to the top.
+       */
+      const clock24 = (iso: string) => formatInOrgZone(iso, { hour: '2-digit', minute: '2-digit', hour12: false });
+      const shownAt = (day: string, time: string) => `${day || '9999-12-31'}T${time || '99:99'}`;
+      const rows = [
+        ...(grouped[mk] ?? []).map(e => ({
+          at: shownAt(e.startsAt ? orgDayKey(e.startsAt) : '', e.startsAt ? clock24(e.startsAt) : ''),
+          node: <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />,
+        })),
+        ...games.map(g => ({
+          at: shownAt(g.gameDate ?? '', g.startsAt ? clock24(g.startsAt) : ''),
+          node: <TournamentGameChip key={`g-${g.id}`} game={g} />,
+        })),
+        ...trys.map(s => ({
+          at: shownAt(tryoutSessionDay(s.startsAt), clock24(s.startsAt)),
+          node: <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />,
+        })),
+      ].sort((a, b) => a.at.localeCompare(b.at));
       return (
         <div key={mk} className={styles.calMonthGroup}>
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
-            {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />
-            ))}
-            {games.map(g => (
-              <TournamentGameChip key={`g-${g.id}`} game={g} />
-            ))}
-            {trys.map(s => (
-              <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
-            ))}
+            {rows.map(r => r.node)}
           </div>
         </div>
       );
@@ -1904,7 +1940,7 @@ export default function CoachesSchedulePage({
         {days.map(day => {
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
-          const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
+          const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
           const dayGames = unmirroredGames
             .filter(g => g.gameDate === key)
             .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
@@ -1925,7 +1961,7 @@ export default function CoachesSchedulePage({
                         <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
                       ))}
                       {dayTryouts.map(s => (
-                        <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
+                        <TryoutChip key={s.id} session={s} dayKey={key} href={`${base}/tryouts`} />
                       ))}
                     </>
                   )
@@ -1960,7 +1996,7 @@ export default function CoachesSchedulePage({
           // locally-constructed Date reads the UTC day and can name the wrong cell (C0).
           const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
-          const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
+          const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
           const dayGames = unmirroredGames.filter(g => g.gameDate === key);
           const isToday = key === tournamentToday();
           return (

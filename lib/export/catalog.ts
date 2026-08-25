@@ -106,7 +106,10 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: true,
     helpSummary:
-      'Export the registered team list with coach names, emails, division, payment status, and slot assignments. PDF format produces a check-in / insurance sheet (PDF coming in Phase F3).',
+      // The "(PDF coming in Phase F3)" this sentence used to carry outlived the PDF's arrival by
+      // months — the same stale-claim class this whole export-quality programme exists to kill.
+      // Found while writing the Working-sheets prompt; fixed in passing 2026-08-24.
+      'Export the registered team list with coach names, emails, division, payment status, and slot assignments. The PDF prints a division-grouped register of the registered teams.',
   },
   {
     id: 'tournament-registrations-legacy',
@@ -280,6 +283,33 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     serverSide: false,
     helpSummary:
       'Export tryout applicants with player info, guardian contacts, consent audit columns, and application status. The PDF prints a status-grouped register with counts and the consent record — no contact details.',
+  },
+  {
+    id: 'coaches-tryout-check-in',
+    label: 'Coaches Portal — Tryout Check-in Sheet',
+    module: 'coaches',
+    page: 'Tryouts — Tryout day (Check-in)',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/tryouts/page.tsx',
+    formats: ['pdf'],
+    defaultFormat: 'pdf',
+    // ⚠ NOT an Export menu — a "Print sheet" button on the check-in face, because it is the
+    // paper equivalent of the screen beside it rather than a data extract. Catalogued anyway:
+    // it is a document a customer produces, and it was the only one missing from the list that
+    // tells customers what this product prints (Working-sheets pass, owner-approved 2026-08-24).
+    //
+    // ⚠ NO PLAN GATE, and that is a statement of fact, not an aspiration. The button has been
+    // ungated since it shipped; adding `pdf_exports` here would be a claim the code does not
+    // make, and enforcing it would take a working sheet away from teams that print one today.
+    // A packaging call, not this pass's.
+    audiences: ['coach'],
+    requiredCapabilities: ['tryouts'],
+    // Bib, first/last name and age. No date of birth, no guardian, no contact details — the
+    // same privacy floor as the two tryout registers.
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'Print the day-of check-in sheet: every candidate with their bib number and age, a box to tick as each one arrives, and room for a note. Named for the session it is for, on your team’s paper. In a blind tryout it prints bib numbers only and says so.',
   },
   {
     id: 'coaches-tryout-report',

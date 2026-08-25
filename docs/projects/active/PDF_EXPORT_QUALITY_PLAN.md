@@ -1,8 +1,11 @@
 # PDF Export Quality — plan
 
-**Status:** **PHASE 1 + PHASE 2 PASSES 1–3 (REGISTERS, STATEMENTS & HANDOUTS, ROSTERS) BUILT on dev
-2026-08-23** (Owner QA Ledger §79, §82, §84 and §86; migration 259 dev-only; the Statements and
-Rosters passes added no migration. Rosters checkpoint-1 decisions — owner took all four
+**Status:** **PHASE 1 + PHASE 2 PASSES 1–4 (REGISTERS, STATEMENTS & HANDOUTS, ROSTERS, WORKING
+SHEETS) BUILT on dev** — passes 1–3 on 2026-08-23, Working sheets on 2026-08-24 (Owner QA Ledger
+§79, §82, §84, §86 and §91; migration 259 dev-only; the Statements, Rosters and Working-sheets
+passes added no migration. Working-sheets checkpoint-1 decisions — owner took all seven
+recommendations: https://claude.ai/code/artifact/d3675cd6-ea40-47a6-b7c9-73c1d7a90616; built
+gallery https://claude.ai/code/artifact/771dd950-ab5c-40db-9b2d-79b0ab05e854. Rosters checkpoint-1 decisions — owner took all four
 recommendations: https://claude.ai/code/artifact/c189810f-c10f-468a-ab14-7efd1fca0c9a; built
 gallery https://claude.ai/code/artifact/eaa601d4-0438-4046-947c-99b24d957ec5. Statements
 checkpoint-1 mockups
@@ -15,7 +18,7 @@ spec for the "How your documents look" card, incl. the two owner-approved additi
 contract sharpened one rule in build (owner-agreed 2026-08-22): **fixed-column reports are
 guaranteed to fit by construction; only customer-shaped tables (rubric categories,
 settings-driven columns, coach-sized grids) may ever fall back to the drop-and-say-so note.**
-Phases 2–3 remain. Every structural decision below is **Decided**, made by the
+The last two Phase-2 groups (schedules; posters, cards & brackets) and Phase 3 remain. Every structural decision below is **Decided**, made by the
 owner in the 2026-08-21 planning session against rendered evidence, not descriptions.
 **Evidence gallery (approved exhibits):** https://claude.ai/code/artifact/834cdd89-8c24-416f-acd8-c1930ff76dd1
 — every document rendered by the real export code with realistic fictional data, in untouched-org and
@@ -238,17 +241,28 @@ judges on the group's own definition of good:
   rep-teams **"Excel with contact details"** export, raised in §82 and left then, had no plan check
   at all while the PDF above it carried one — now gated; the coaches' own roster spreadsheet was
   checked and deliberately left on its role grant. *Good = readable pinned to a wall; privacy-aware.*
-- **Working sheets — NEXT, prompt written 2026-08-23**
-  (`PDF_EXPORT_QUALITY_P2_WORKING_SHEETS_BUILD_PROMPT.md`, ready for a fresh chat). **The practice
-  sheet is rebuilt as the decided run sheet** (decision 9 resolved 2026-08-22 — build to
-  `PRACTICE_SHEET_STRUCTURE_PLAN.md` and its approved exhibits, not to the old table form; its §82
-  compact guard retires with it). The check-in sheet's line here said "branded + tick-box column
-  widened"; **re-reading the builder for the prompt found it is longer than that** — the sheet
-  passes NO settings, NO identity and NO subtitle, so it carries no club name, no crest and **no
-  session date at all**, and it is absent from the export catalog entirely. Verify in code, don't
-  trust this bullet. ⚠ Unusually for a Phase 2 pass, the main document's STRUCTURE is already
-  owner-approved, so checkpoint 1 is small and is mostly about the check-in sheet.
-  *Good = works in a coach's hand, in weather.*
+- **Working sheets — BUILT 2026-08-24 (QA §91).** The practice sheet is rebuilt as the decided
+  **run sheet** (decision 9): a drawn layout — times in a left gutter beside an accent spine, the
+  coach’s prose at full width, each rotation grid inside the block that owns it with its
+  honest-arithmetic statements as sentences and its group lists beneath — on the shared
+  identity/logo/footer/page-total plumbing, never a fork of the table renderer. Its §82 compact
+  stop-gap retired with it. Three edges the spec left open were decided from rendered pages, all
+  seven checkpoint-1 recommendations taken: an **unfinished** rotation prints what is missing and
+  the groups that exist (it used to print nothing at all); a block **taller than a page** takes a
+  clean page and then flows, breaking only between whole lines and re-labelling itself
+  “(continued)”; and a rotation whose customer-named groups cannot print whole **turns the grid
+  on its side** rather than shredding a name. ⚠ The spec’s “rotation with no owning block” case
+  was found in the CODE to be impossible — a rotation is a property of its block — and was
+  reported rather than built around. The **check-in sheet** turned out worse than this plan
+  recorded and is fixed whole: it now fetches branding (it was the only document in the product
+  that never had), carries the team identity (its header band had **no name on it at all**), names
+  the **session** it is printed for with date, time and place (two sessions on one weekend printed
+  identical undated paper), prints a real **box** in a column named “Checked in” rather than a
+  two-character “In” that earned it less width than the always-empty Notes column, declares
+  portrait, says so when a tryout is blind, and is **in the export catalog** — recording honestly
+  that it takes no plan gate, because the button never has. One shared-engine addition, opt-in and
+  proved free across the 65-document corpus: a report may declare **a column the reader fills in by
+  hand**. *Good = works in a coach’s hand, in weather.*
 - **Schedules:** already the model; verify against the gallery, nothing structural.
 - **Posters, cards & brackets:** logo on the drawn documents; bracket vertical centring. *Good = big
   type, high contrast, one job.*

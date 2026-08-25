@@ -5,6 +5,8 @@ import HelpCallout from '@/components/help/HelpCallout';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
+import { utcToZonedInputs } from '@/lib/timezone';
+import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
 import { getSportPack } from '@/lib/sports';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
@@ -42,39 +44,26 @@ interface SessionForm {
 
 const BLANK: SessionForm = { startsAt: '', endsAt: '', location: '', fieldNumber: '', label: '' };
 
-/** Stored value → a `YYYY-MM-DDTHH:mm` value for <input type="datetime-local">.
- *  We store the naive wall-clock (matches rep_team_events), so SLICE it — never TZ-convert. */
+/**
+ * Stored instant → the `YYYY-MM-DDTHH:mm` value `<input type="datetime-local">` wants, read in
+ * the CLUB's zone.
+ *
+ * ⚠ It used to SLICE the stored string, back when a session was written as a bare wall clock.
+ * Both halves changed together on 2026-08-24 (see the create route): a session is a real moment
+ * now, so re-opening one has to convert it back — slicing would put the UTC clock in the field,
+ * and a coach who saved without touching it would move their own tryout by the zone offset.
+ */
 function toInputValue(stored: string | null): string {
-  return stored ? stored.slice(0, 16) : '';
-}
-
-/** Parse a stored wall-clock string as LOCAL (strip any trailing timezone) so display never shifts. */
-function wallClock(stored: string): Date {
-  return new Date(stored.slice(0, 19));
-}
-
-function formatTime(stored: string): string {
-  const d = wallClock(stored);
-  return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatWhen(session: RepTryoutSession): string {
-  const start = wallClock(session.startsAt);
-  if (isNaN(start.getTime())) return session.startsAt;
-  const date = start.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
-  let s = `${date} · ${formatTime(session.startsAt)}`;
-  if (session.endsAt) {
-    const end = formatTime(session.endsAt);
-    if (end) s += `–${end}`;
-  }
-  return s;
+  if (!stored) return '';
+  const { date, time } = utcToZonedInputs(stored);
+  return date && time ? `${date}T${time}` : '';
 }
 
 /** The row receipt: both sessions when there are two, "+N more" past that. */
 function receipt(sessions: RepTryoutSession[]): string | null {
   if (sessions.length === 0) return null;
-  if (sessions.length <= 2) return sessions.map(formatWhen).join('  +  ');
-  return `${formatWhen(sessions[0])} + ${sessions.length - 1} more`;
+  if (sessions.length <= 2) return sessions.map(formatTryoutSessionWhen).join('  +  ');
+  return `${formatTryoutSessionWhen(sessions[0])} + ${sessions.length - 1} more`;
 }
 
 /** Local wall-clock `YYYY-MM-DDTHH:mm` for a Date — the shape datetime-local wants. */
@@ -109,7 +98,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     dirty: touched(dirtyForm, formBaseline),
     close: () => setModalOpen(false),
     noun: 'tryout session',
-    detail: form.startsAt ? `a session on ${formatWhen({ startsAt: form.startsAt, endsAt: form.endsAt || null } as RepTryoutSession)}` : undefined,
+    detail: form.startsAt ? `a session on ${formatTryoutSessionWhen({ startsAt: form.startsAt, endsAt: form.endsAt || null } as RepTryoutSession)}` : undefined,
   });
 
   // Latest-ref for onError so `load` never re-arms on a parent re-render (the siblings' pattern).
@@ -152,12 +141,19 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     // end = start + 2h — never the current wall-clock minutes. Seeding sets the BASELINE too: our
     // prefill is not the coach's work, so an untouched seeded form still closes silently (the
     // Chunk G rider).
+    // ⚠ Seeded from the CLUB's clock, not the device's: what the coach types is interpreted as
+    // club-local when it saves, so prefilling a travelling coach's own next hour would hand them
+    // a time that means something different from what it says.
     const start = new Date();
     start.setMinutes(0, 0, 0);
     start.setHours(start.getHours() + 1);
     const end = new Date(start);
     end.setHours(end.getHours() + 2);
-    const seeded: SessionForm = { ...BLANK, startsAt: toLocalInput(start), endsAt: toLocalInput(end) };
+    const seeded: SessionForm = {
+      ...BLANK,
+      startsAt: toInputValue(start.toISOString()),
+      endsAt: toInputValue(end.toISOString()),
+    };
     setEditingId(null);
     setForm(seeded);
     setFormBaseline(seeded);
@@ -253,7 +249,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
               {sessions.map(s => (
                 <div key={s.id} className={styles.sessionRow}>
                   <div className={styles.sessionMain}>
-                    <div className={styles.sessionWhen}>{formatWhen(s)}</div>
+                    <div className={styles.sessionWhen}>{formatTryoutSessionWhen(s)}</div>
                     {(s.location || s.fieldNumber || s.label) && (
                       <div className={styles.sessionMeta}>
                         {[s.label, s.location, s.fieldNumber && `Field ${s.fieldNumber}`].filter(Boolean).join(' · ')}

@@ -10,7 +10,8 @@ import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import {
-  buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS,
+  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetRotation,
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -529,7 +530,15 @@ export default function CoachPracticePlanPage({
       return p ? playerDisplayName(p) : '';
     };
 
-    const blocks = plan.blocks.map(block => {
+    // ⚠ ONE PASS, ONE BLOCK AT A TIME. The run sheet prints each rotation INSIDE the block it
+    // was configured on (owner-approved structure, 2026-08-22), so the grid, its honest-arithmetic
+    // statements and its group membership are assembled here beside that block's own prose —
+    // never flattened into document-level lists that the sheet then has to re-associate.
+    //
+    // Each block's start comes from the SAME clock walk as the time column (`clock.startMs`),
+    // never a second copy of the arithmetic — an earlier duplicate had already drifted on how a
+    // "rest of practice" block advances the cursor, so the sheet and the screen disagreed.
+    const blocks: PracticeSheetBlock[] = plan.blocks.map(block => {
       const clock = clockByBlock.get(block.id);
       const time = clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : '';
       const notes = [
@@ -564,6 +573,32 @@ export default function CoachPracticePlanPage({
           ].filter(Boolean).join(' · ');
         }),
       ].filter(Boolean).join('\n');
+
+      // The rotation of THIS block, when it has one.
+      //
+      // ⚠ An UNFINISHED rotation still prints. `computeRotation` returns no rounds but a
+      // statement saying what is missing ("Add how often groups move…") — the sheet used to
+      // drop the whole thing, so a coach reading only the paper had no idea a station plan was
+      // ever intended. It now prints the statement and whatever groups exist, with no grid.
+      let rotation: PracticeSheetRotation | null = null;
+      if (blockRotates(block) && block.rotation) {
+        const grid = computeRotation(
+          block.rotation, block.stations, block.duration.minutes ?? null, clock?.startMs,
+        );
+        rotation = {
+          groupNames: grid.roundsList[0]?.cells.map(c => c.groupName) ?? [],
+          rounds: grid.roundsList.map(r => ({
+            round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
+            stations: r.cells.map(c => c.stationName || '—'),
+          })),
+          notes: grid.notes,
+          groups: block.rotation.groups.map(g => ({
+            name: g.name,
+            players: g.playerIds.map(nameOf).filter(Boolean).join(', '),
+          })),
+        };
+      }
+
       return {
         time,
         title: block.title || '(untitled)',
@@ -571,38 +606,9 @@ export default function CoachPracticePlanPage({
         staff: (block.staff ?? []).join(', '),
         players: (block.playerIds ?? []).map(nameOf).filter(Boolean).join(', '),
         notes,
+        rotation,
       };
     });
-
-    // One grid per rotation, plus its plain statements — the artifact a document can't produce.
-    // Each block's start comes from the SAME clock walk as the time column above (`clock.startMs`),
-    // never a second copy of the arithmetic — an earlier duplicate had already drifted on how a
-    // "rest of practice" block advances the cursor, so the sheet and the screen disagreed.
-    const rotations: NonNullable<Parameters<typeof downloadPracticeSheet>[1]['rotations']> = [];
-    const groupRows: { label: string; group: string; players: string }[] = [];
-    for (const block of plan.blocks) {
-      if (!blockRotates(block) || !block.rotation) continue;
-      const grid = computeRotation(block.rotation, block.stations, block.duration.minutes ?? null, clockByBlock.get(block.id)?.startMs);
-      const label = `Rotation — ${block.title || 'Untitled'}`;
-      if (grid.roundsList.length > 0) {
-        rotations.push({
-          label,
-          groupNames: grid.roundsList[0].cells.map(c => c.groupName),
-          rounds: grid.roundsList.map(r => ({
-            round: `${r.round}${r.startLabel ? ` (${r.startLabel})` : ''}`,
-            stations: r.cells.map(c => c.stationName || '—'),
-          })),
-          notes: grid.notes,
-        });
-      }
-      for (const group of block.rotation.groups) {
-        groupRows.push({
-          label: block.title || 'Rotation',
-          group: group.name,
-          players: group.playerIds.map(nameOf).filter(Boolean).join(', '),
-        });
-      }
-    }
 
     // ⚠ Focus areas print ONLY when the person generating the sheet can see them. An assistant
     // without `notes` gets the same sheet with the section absent — and the data never reached
@@ -610,7 +616,10 @@ export default function CoachPracticePlanPage({
     const focus = canViewFocus
       ? roster.map(p => ({
           player: playerDisplayName(p),
-          focusAreas: goals.filter(g => g.playerId === p.id && g.status === 'working').map(g => g.focusArea).join(', '),
+          // Separated by a middot, not a comma: a focus area is a SENTENCE ("Backhand pickups —
+          // glove out front, working through the ball"), and joining two of them with a comma made
+          // one player’s two goals read as a single run-on line on the printed sheet.
+          focusAreas: goals.filter(g => g.playerId === p.id && g.status === 'working').map(g => g.focusArea).join('  ·  '),
         })).filter(row => row.focusAreas)
       : [];
 
@@ -636,7 +645,7 @@ export default function CoachPracticePlanPage({
           ...(plan.practiceTypes ?? []),
         ],
         equipment: plan.equipment ?? [],
-        blocks, rotations, groups: groupRows, focus, settings,
+        blocks, focus, settings,
       },
     );
   }

@@ -1,6 +1,6 @@
 # PM Brief — PDF Export Quality
 
-**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 + PHASE 2 PASSES 1–3 OF 6 BUILT on dev 2026-08-23** (QA §79, §82, §84, §86)
+**Plan:** `PDF_EXPORT_QUALITY_PLAN.md` · **Status:** **PHASE 1 + PHASE 2 PASSES 1–4 OF 6 BUILT on dev** — passes 1–3 on 2026-08-23, working sheets on 2026-08-24 (QA §79, §82, §84, §86, §91)
 — the shared plumbing: one title, the right name for the layer, real logos, true page counts,
 per-report shape, the no-shred fit contract, the coaches "How your documents look" card, and the
 three lying menu buttons removed. Phases 2–3 (group passes, rendered CI check) remain. Owner
@@ -62,9 +62,32 @@ proved free by re-reading all 54 documents before and after to identical page co
 guardian-contacts spreadsheet on the rep tryouts screen had **no plan check at all** while the
 contact-free PDF above it was locked — now corrected.
 
-**Three group passes remain** — working sheets, schedules, posters and brackets — each with its own
-rendered sign-off, then the Phase 3 check that renders documents in CI so this class of rot cannot
-return unseen.
+**Phase 2 pass 4 — Working sheets** covered the two documents that are used *while something is
+happening*: the practice plan a coach carries onto a field, and the check-in sheet a volunteer marks
+while thirty families arrive at once. The practice plan stops being a table and becomes a **run
+sheet** — times down the left like a clock, the coach’s own sentences at full width instead of
+chopped into a narrow ribbon, and each rotation grid sitting inside the block it belongs to with the
+group lists underneath, so an assistant reads one region and has everything. Nothing on it implies
+the practice happened, which is the standing rule for that document.
+
+The check-in sheet was in worse shape than the plan recorded, and it matters because it is **the
+first piece of paper a trying-out family ever sees**: it had no club name on it at all — an empty
+header band, in the default colours — no crest, and **no date**, so two tryout sessions on one
+weekend printed identical paper. The column a volunteer actually marks was the narrowest on the
+sheet and had no box to aim a pen at. All of that is fixed: the club’s look, the team’s name, the
+session it is for (the coach picks which, when there is more than one), and a real printed box in a
+column named plainly. A blind tryout now says on the page that names are hidden on purpose.
+
+Three judgement calls were settled from rendered pages rather than argued: an unfinished rotation
+now says what is missing instead of vanishing from the paper; a block longer than a page takes a
+clean page and then flows, never splitting a sentence; and a rotation with more groups than fit
+across the page turns its grid on its side rather than cutting anybody’s group name. One shared
+change — a report can now declare a column the reader fills in by hand — was proved to cost every
+other document nothing by re-rendering all 65 and comparing them line by line.
+
+**Two group passes remain** — schedules, and posters and brackets — each with its own rendered
+sign-off, then the Phase 3 check that renders documents in CI so this class of rot cannot return
+unseen.
 
 ## The problem, now with proof
 

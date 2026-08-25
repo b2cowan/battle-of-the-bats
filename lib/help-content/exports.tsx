@@ -215,7 +215,7 @@ const exportsHelp: HelpPageContent = {
               </tr>
               <tr>
                 <td><strong>Coaches Portal</strong></td>
-                <td>Roster with contacts (adds dates of birth and guardian details — only for coaches with family-contact access)</td>
+                <td>Roster with contacts (the Document dropdown in the same Export box — adds dates of birth and guardian details, only for coaches with family-contact access)</td>
                 <td>—</td><td>—</td><td>—</td><td>✓</td>
                 <td>Same as Team Roster</td>
               </tr>
@@ -242,6 +242,24 @@ const exportsHelp: HelpPageContent = {
                 <td>Team Schedule</td>
                 <td>✓</td><td>✓</td><td>✓</td><td>—</td>
                 <td>Club</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Tryout report (board summary, or full detail behind a staff-only confirmation)</td>
+                <td>✓</td><td>—</td><td>—</td><td>✓</td>
+                <td>Head coach with tryouts access · PDF: any plan with PDF exports</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Tryout check-in sheet (the paper backup for the day — bib, name, age, a box to tick)</td>
+                <td>—</td><td>—</td><td>—</td><td>✓</td>
+                <td>Head coach with tryouts access</td>
+              </tr>
+              <tr>
+                <td><strong>Coaches Portal</strong></td>
+                <td>Practice run sheet (the night&apos;s plan, from the practice itself)</td>
+                <td>—</td><td>—</td><td>—</td><td>✓</td>
+                <td>Coach with schedule access</td>
               </tr>
               <tr>
                 <td><strong>Accounting</strong></td>
@@ -355,16 +373,18 @@ const exportsHelp: HelpPageContent = {
             registrations, of rep-team tryout applicants and of the rep program-year roster gives you
             players, dates and status — never a date of birth, a guardian name, an email or a phone
             number. A printed page gets forwarded and left on tables, so those columns stay in the
-            spreadsheet exports, including <em>Excel with contact details</em>.
+            spreadsheet exports, which live under the <em>Roster with contacts</em> document.
           </p>
           <p>
             <strong>The team roster prints as two different documents, and the safe one is the
             default.</strong> In the Coaches Portal, <em>Team roster (PDF)</em> gives you numbers,
             names and positions — the copy you pin to a dugout wall or a rink board, with nothing on
-            it a passer-by should not read. <em>Roster with contacts (PDF)</em> sits below it in the
-            same Export menu and adds dates of birth and guardian details, for a league or insurance
-            submission. It appears only for coaches who have been granted family contacts, so an
-            assistant without that access simply doesn&apos;t see it. If your club has switched
+            it a passer-by should not read, and the Export box opens on it. Switch the{' '}
+            <strong>Document</strong> dropdown at the top to <em>Roster with contacts</em> and you
+            get dates of birth and guardian details as well, for a league or insurance submission —
+            as a PDF or a spreadsheet. That choice appears only for coaches who have been granted
+            family contacts; for anyone else there is no dropdown at all, because there is only one
+            document to give them. If your club has switched
             guardian contacts off in PDF Settings, the contacts sheet keeps dates of birth and drops
             the guardian columns.
           </p>

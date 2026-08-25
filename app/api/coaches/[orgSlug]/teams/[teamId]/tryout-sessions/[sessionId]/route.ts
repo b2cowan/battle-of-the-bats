@@ -9,6 +9,7 @@ import {
 } from '@/lib/db';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
+import { wallClockStringToUtc } from '@/lib/timezone';
 import type { RepTryoutSession } from '@/lib/types';
 
 type Owned = { ok: false; res: Response } | { ok: true; session: RepTryoutSession; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
@@ -48,8 +49,10 @@ export const PATCH = withObservability(async (req: Request,
     if (isNaN(new Date(body.startsAt).getTime())) {
       return NextResponse.json({ errors: { startsAt: 'A valid date and time is required' } }, { status: 400 });
     }
-    // Store the naive wall-clock string as-is (matches rep_team_events) — no UTC conversion.
-    patch.startsAt = body.startsAt;
+    // ⚠ Converted to a real instant in the CLUB's zone — see the create route for why this
+    // stopped being a naive passthrough (owner ruling 2026-08-24). Both ends go through it, or a
+    // partial patch would leave one half on the old convention and the other on the new.
+    patch.startsAt = wallClockStringToUtc(body.startsAt) ?? body.startsAt;
   }
   if (body.endsAt !== undefined) {
     // Parseability first (/review): NaN <= x is false, so an unparseable endsAt would sail past
@@ -57,7 +60,7 @@ export const PATCH = withObservability(async (req: Request,
     if (body.endsAt && isNaN(new Date(body.endsAt).getTime())) {
       return NextResponse.json({ errors: { startsAt: 'A valid end time is required' } }, { status: 400 });
     }
-    patch.endsAt = body.endsAt || null;
+    patch.endsAt = body.endsAt ? (wallClockStringToUtc(body.endsAt) ?? body.endsAt) : null;
   }
   // A session can't end before it starts — validate the EFFECTIVE pair, since a partial patch
   // may move either end of it against the stored other half.

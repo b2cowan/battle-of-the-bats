@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
+import { wallClockStringToUtc } from '@/lib/timezone';
 import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
@@ -85,10 +86,24 @@ export const POST = withObservability(async (req: Request,
     programYearId: r.programYear.id,
     teamId: r.teamId,
     orgId: r.orgId,
-    // Store the naive wall-clock string as-is (matches rep_team_events) — never UTC-convert, so the
-    // time is server-/viewer-timezone independent. Display reads it by slicing the wall clock.
-    startsAt: body.startsAt,
-    endsAt: body.endsAt || null,
+    /**
+     * ⚠⚠ CONVERTED TO A REAL INSTANT IN THE CLUB'S ZONE (owner ruling 2026-08-24).
+     *
+     * This used to store the browser's naive `datetime-local` string as-is, into a `timestamptz`
+     * column — so Postgres labelled a typed "17:00" as 17:00 UTC, which is 1 p.m. in Toronto. Every
+     * tryout screen then read it back by SLICING the raw text, which un-did the error and showed
+     * 5 p.m. again. Self-consistent, and four hours from the moment it recorded.
+     *
+     * It only stayed invisible while both halves were wrong together. The coach demo sandbox writes
+     * its sessions through the platform's normal wall-clock→UTC helper — correctly — and the
+     * slicing readers displayed those **four hours late** on a public page: a 9:00 a.m. tryout read
+     * 1:00 p.m. That is what turned this from a latent trap into a defect.
+     *
+     * Now: one convention, the same one `rep_team_events` has always used. Stored as an instant,
+     * read through `formatInOrgZone`. Never re-introduce a slicing reader.
+     */
+    startsAt: wallClockStringToUtc(body.startsAt) ?? body.startsAt,
+    endsAt: body.endsAt ? (wallClockStringToUtc(body.endsAt) ?? body.endsAt) : null,
     location: body.location?.trim() || null,
     locationAddress: body.locationAddress?.trim() || null,
     fieldNumber: body.fieldNumber?.trim() || null,

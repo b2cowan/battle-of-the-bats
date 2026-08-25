@@ -244,6 +244,13 @@ export default function CoachTryoutsPage({
           <div style={{ display: activeFace === 'check-in' ? 'block' : 'none' }}>
             <TryoutCheckIn
               apiBase={`${base}/tryout-candidates`}
+              sessionsBase={`${base}/tryout-sessions`}
+              // Whose paper the printed sheet is (PDF plan decision 7): the TEAM layer, same as
+              // the tryout report one stage over — team name, club look inherited until the team
+              // sets its own. A standalone coach then gets their own name rather than a blank band.
+              orgSlug={orgSlug}
+              teamId={teamId}
+              teamName={assignment?.teamName ?? null}
               embedded
               active={activeTab === 'tryout-day' && activeFace === 'check-in'}
               onError={fail}

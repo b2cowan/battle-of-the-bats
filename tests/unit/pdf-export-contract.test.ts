@@ -20,7 +20,13 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildTablePDF, abbreviateHeadings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '../../lib/export/pdf';
+import {
+  buildTablePDF, buildPracticeRunSheetDoc, abbreviateHeadings, DEFAULT_PDF_SETTINGS,
+  type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetOptions,
+} from '../../lib/export/pdf';
+import {
+  checkinSheetHeadings, checkinTickColumn, CHECKIN_TICK_HEADING, CHECKIN_FORBIDDEN_HEADINGS,
+} from '../../lib/export/tryout-checkin-columns';
 import { applyTeamLook } from '../../lib/export/resolve-pdf-settings';
 import { ROSTER_WALL_HEADERS, ROSTER_PRIVATE_HEADINGS, rosterContactHeaders } from '../../lib/export/roster-columns';
 
@@ -35,6 +41,8 @@ class MockDoc {
   texts: TextCall[] = [];
   images: { x: number; y: number; w: number; h: number }[] = [];
   setPageCalls: number[] = [];
+  /** Hand-marked pen boxes (Working-sheets pass) — the only roundedRect this engine draws. */
+  boxes: { x: number; y: number }[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(opts: any) { this.orientation = opts.orientation; }
   internal = {
@@ -46,7 +54,8 @@ class MockDoc {
   };
   setFillColor() {} rect() {} setFontSize() {} setTextColor() {}
   setFont(_family: string, style?: string) { this.font = style === 'bold' ? 'bold' : 'normal'; }
-  setDrawColor() {} setLineWidth() {} line() {}
+  setDrawColor() {} setLineWidth() {} line() {} circle() {}
+  roundedRect(x: number, y: number) { this.boxes.push({ x, y }); }
   addPage() { this.pages += 1; this.currentPage = this.pages; }
   setPage(n: number) { this.currentPage = n; this.setPageCalls.push(n); }
   text(str: string | string[], ..._rest: unknown[]) {
@@ -637,5 +646,231 @@ describe('the roster prints two documents, and only one of them is private', () 
     });
     assert.equal(at.calls[0].head[0].length, CONTACTS.length,
       'no column yields — this is why Secondary is not on this sheet');
+  });
+});
+
+// ── Working sheets (Phase 2, pass 4) ─────────────────────────────────────────
+
+/**
+ * Fire an autoTable call's `didDrawCell` hook once per cell of a fake grid and report which
+ * cells actually drew a box. The hook draws through the doc it closed over, so this watches the
+ * doc's own recorder rather than asserting on a stub.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function boxesDrawnBy(doc: MockDoc, opts: any, columns: number, bodyRows: number): { column: number; section: string }[] {
+  const drawn: { column: number; section: string }[] = [];
+  for (const section of ['head', 'body']) {
+    for (let r = 0; r < (section === 'head' ? 1 : bodyRows); r++) {
+      for (let c = 0; c < columns; c++) {
+        const before = doc.boxes.length;
+        opts.didDrawCell?.({
+          section, column: { index: c },
+          cell: { x: 10 + c * 20, y: 20 + r * 8, height: 8, width: 20 },
+        });
+        if (doc.boxes.length > before) drawn.push({ column: c, section });
+      }
+    }
+  }
+  return drawn;
+}
+
+describe('a hand-marked column prints a box to mark', () => {
+  it('draws one box per BODY cell of the declared column, and nowhere else', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Tryout check-in', headers: ['Bib', 'Player', 'Checked in', 'Notes'],
+      rows: Array.from({ length: 5 }, (_, i) => [String(i + 1), 'Maya Chen', '', '']),
+      settings: settings(), penColumns: [2],
+    });
+    const drawn = boxesDrawnBy(doc, at.calls[0], 4, 5);
+    assert.equal(drawn.length, 5, 'one box per row');
+    assert.ok(drawn.every(b => b.column === 2), 'only the declared column');
+    assert.ok(drawn.every(b => b.section === 'body'), 'never in the heading row');
+  });
+
+  it('draws nothing at all when no column is declared — every other document is untouched', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Team Roster', headers: ['#', 'Player'], rows: [['1', 'Maya Chen']],
+      settings: settings(),
+    });
+    assert.equal(boxesDrawnBy(doc, at.calls[0], 2, 1).length, 0);
+  });
+
+  it('a column dropped by the fit contract takes its box with it', () => {
+    const at = makeAutoTable();
+    // Ten wide customer-shaped headings on portrait: the fit contract must give some up.
+    const headers = Array.from({ length: 10 }, (_, i) => `ExtremelyLongHeading${i}`);
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Wide', headers, rows: [headers.map(() => 'x')],
+      settings: settings(), shape: { orientation: 'portrait' }, penColumns: [9],
+      fit: { dropOrder: [9, 8, 7] },
+    });
+    const kept: string[] = at.calls[0].head[0];
+    assert.ok(!kept.includes(headers[9]), 'precondition: the pen column was the one dropped');
+    assert.equal(boxesDrawnBy(doc, at.calls[0], kept.length, 1).length, 0,
+      'no surviving column inherits the dropped column’s box');
+  });
+});
+
+describe('the tryout check-in sheet', () => {
+  // ⚠ THE PRODUCTION VALUES, imported. A promise checked against the test's own copy of a
+  // column list proves nothing — production can regress freely and the test still passes.
+  it('carries no contact details in either state', () => {
+    for (const blind of [false, true]) {
+      for (const forbidden of CHECKIN_FORBIDDEN_HEADINGS) {
+        assert.ok(!checkinSheetHeadings(blind).includes(forbidden),
+          `${forbidden} must never appear on the first paper a trying-out family sees`);
+      }
+    }
+  });
+
+  it('hides the player’s name in a blind tryout, and the bib carries the identity', () => {
+    assert.ok(!checkinSheetHeadings(true).includes('Player'));
+    assert.ok(checkinSheetHeadings(true).includes('Bib'));
+    assert.ok(checkinSheetHeadings(false).includes('Player'));
+  });
+
+  it('the box lands on the column a volunteer marks, in either state', () => {
+    for (const blind of [false, true]) {
+      assert.equal(checkinSheetHeadings(blind)[checkinTickColumn(blind)], CHECKIN_TICK_HEADING);
+    }
+  });
+
+  it('names that column rather than abbreviating it — which is what earns it its width', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Tryout check-in', headers: checkinSheetHeadings(false),
+      rows: [['1', 'Maya Chen', '12', '', '']],
+      settings: settings(), shape: { orientation: 'portrait' },
+    });
+    const styles = at.calls[0].columnStyles;
+    const tick = checkinTickColumn(false);
+    const notes = checkinSheetHeadings(false).indexOf('Notes');
+    assert.ok(styles[tick].minCellWidth > styles[notes].minCellWidth,
+      'the column somebody marks must not be narrower than the one nobody fills in');
+  });
+});
+
+describe('the practice run sheet', () => {
+  const RUN_SETTINGS = settings({ accentColor: '#2F6B3C' });
+  const block = (over: Partial<PracticeSheetBlock> = {}): PracticeSheetBlock => ({
+    time: '6:00–6:10', title: 'Warm-up', duration: '10 min',
+    staff: 'Coach Dana', players: 'Everyone', notes: 'Bands first.', ...over,
+  });
+  const sheet = (over: Partial<PracticeSheetOptions> = {}): PracticeSheetOptions => ({
+    teamName: 'Riverdale Ridge U13 AA', dateLabel: 'Tue, Aug 25, 2026',
+    whereLabel: '6:00 PM · Riverdale Park', goal: 'Two-strike at-bats',
+    practiceTypes: ['Hitting'], equipment: ['Tees'],
+    blocks: [block()], focus: [], settings: RUN_SETTINGS, ...over,
+  });
+
+  it('is team paper: the team’s name, once, and never the document title as the name', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet());
+    assert.equal(count(doc, 'Riverdale Ridge U13 AA'), 1);
+    assert.equal(count(doc, 'Practice plan'), 1);
+  });
+
+  it('NEVER says the practice happened — planned, never done', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      focus: [{ player: 'Maya Chen', focusAreas: 'Backhand pickups' }],
+      blocks: [block(), block({ time: '6:10–6:40', title: 'Circuit', rotation: {
+        groupNames: ['Group A', 'Group B'],
+        rounds: [{ round: 'Round 1', stations: ['Tee', 'Toss'] }],
+        notes: ['1 round of 30 min.'],
+        groups: [{ name: 'Group A', players: 'Maya' }, { name: 'Group B', players: 'Liam' }],
+      } })],
+    }));
+    const printed = doc.texts.map(t => t.str.toLowerCase()).join(' | ');
+    for (const word of ['done', 'completed', 'did it', 'attended', 'finished', 'actual']) {
+      assert.ok(!printed.includes(word), `"${word}" must never appear on a sheet about what is PLANNED`);
+    }
+  });
+
+  it('prints an UNFINISHED rotation’s statements instead of dropping it silently', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ rotation: {
+        groupNames: [], rounds: [],
+        notes: ['Add how often groups move to see the rotation.'],
+        groups: [{ name: 'Group A', players: 'Maya, Liam' }],
+      } })],
+    }));
+    const printed = doc.texts.map(t => t.str);
+    assert.ok(printed.some(s => s.includes('Add how often groups move')),
+      'a coach reading only the paper must learn the rotation is not set');
+    assert.ok(printed.some(s => s.includes('Group A')), 'the groups the coach DID make still print');
+  });
+
+  it('turns the grid on its side rather than cutting a coach’s own group name', () => {
+    const names = ['Thunderbolts', 'Renegades', 'Hurricanes', 'Wolfpack', 'Mustangs', 'Cyclones',
+      'Titans', 'Rockets', 'Comets', 'Ospreys', 'Badgers', 'Falcons'];
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ rotation: {
+        groupNames: names,
+        rounds: [
+          { round: 'Round 1', stations: names.map(() => 'Station 1') },
+          { round: 'Round 2', stations: names.map(() => 'Station 2') },
+        ],
+        notes: [], groups: [],
+      } })],
+    }));
+    const printed = doc.texts.map(t => t.str);
+    for (const n of names) assert.ok(printed.includes(n), `${n} prints whole`);
+    assert.ok(printed.includes('Group'), 'groups became the rows');
+    assert.ok(!printed.includes('Round'), 'rounds became the columns, so "Round" is not the row head');
+    // ⚠ Turned sideways, the round label IS the column heading, and the caller's label is a bare
+    // ordinal — without the word the grid reads "Group | 1 | 2" and never says what the columns
+    // are. Found by seeding a real practice and looking at the paper.
+    assert.ok(printed.includes('Round 1') && printed.includes('Round 2'),
+      'each column still says which round it is');
+  });
+
+  it('keeps the approved shape when the names DO fit — rounds down the side', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ rotation: {
+        groupNames: ['A', 'B', 'C'],
+        rounds: [{ round: 'Round 1', stations: ['Tee', 'Toss', 'BP'] }],
+        notes: [], groups: [],
+      } })],
+    }));
+    const printed = doc.texts.map(t => t.str);
+    assert.ok(printed.includes('Round'), 'the row-label heading is Round — the approved orientation');
+    assert.ok(!printed.includes('Group'));
+  });
+
+  it('every page names whose paper it is, and the page total is true', () => {
+    const long = Array.from({ length: 14 },
+      (_, i) => `Call the play out loud before every rep, point ${i + 1}.`).join('\n');
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: Array.from({ length: 12 }, (_, i) =>
+        block({ time: `6:${String(i).padStart(2, '0')}`, title: `Block ${i}`, notes: long })),
+    }));
+    assert.ok(doc.pages > 1, 'precondition: this fixture spills');
+    for (let p = 1; p <= doc.pages; p++) {
+      const onPage = doc.texts.filter(t => t.page === p).map(t => t.str);
+      assert.ok(onPage.some(s => s.includes('Riverdale Ridge U13 AA')),
+        `page ${p} must say whose paper it is — the guarantee that was only ever true of page 1`);
+      assert.ok(onPage.some(s => s === `Page ${p} of ${doc.pages}`),
+        `page ${p} must carry a TRUE page total`);
+    }
+  });
+
+  it('a block taller than a page flows, keeps every line, and says it continues', () => {
+    const essay = Array.from({ length: 90 }, (_, i) => `Coaching point number ${i + 1}.`).join('\n');
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({
+      blocks: [block({ title: 'Everything block', notes: essay })],
+    }));
+    const printed = doc.texts.map(t => t.str);
+    for (let i = 1; i <= 90; i++) {
+      assert.ok(printed.includes(`Coaching point number ${i}.`), `line ${i} survived the page break`);
+    }
+    assert.ok(printed.includes('Everything block (continued)'),
+      'where it continues, it says so — a page picked up alone still names what it is');
+  });
+
+  it('leaves the focus section ABSENT, not redacted-looking, without the grant', () => {
+    const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ focus: [] }));
+    const printed = doc.texts.map(t => t.str.toUpperCase());
+    assert.ok(!printed.some(s => s.includes('WORKING ON')));
   });
 });

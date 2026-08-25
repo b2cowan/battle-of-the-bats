@@ -374,7 +374,10 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
 
             {/* Everything inside is inert while a confirm dialog is up. FeedbackModal does not
                 trap Tab, so without this the coach could keyboard past the dialog and edit the
-                very rows it was quoting — or trigger the OTHER confirm and strand this one. */}
+                very rows it was quoting — or trigger the OTHER confirm and strand this one.
+                Scrolling lives on this wrapping div, not the fieldset — fieldsets don't reliably
+                clip overflow, so the fieldset stays a plain inert wrapper. */}
+            <div className={styles.bodyScroll}>
             <fieldset className={styles.body} disabled={awaitingConfirm}>
               <div className={styles.grid}>
                 <div>
@@ -572,6 +575,7 @@ export default function TryoutRubricCard({ apiBase, canWrite = true, onError, on
                 </div>
               </div>
             </fieldset>
+            </div>
 
             <div className={styles.foot}>
               <span className={styles.summary}>
