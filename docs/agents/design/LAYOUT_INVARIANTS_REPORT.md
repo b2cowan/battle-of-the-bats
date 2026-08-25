@@ -1,0 +1,583 @@
+# Layout invariants — inventory
+
+> Auto-generated: `node scripts/check-layout-invariants.mjs --report`. Read-only analysis.
+
+59 screens · 118 screen-width pairs · **275** open finding(s).
+
+## The house rules
+
+| Rule | What it holds |
+|---|---|
+| `page-overflow` | The page never scrolls sideways. |
+| `tap-floor` | Every control clears 44px — at touch widths (≤768px) only. |
+| `control-offscreen` | Every control sits inside the screen, or inside something that scrolls to reveal it. |
+| `content-overflow` | Wide content scrolls inside its own box. |
+| `sticky-no-travel` | Anything sticky can actually stick. |
+| `contrast` | Text is readable against what is painted behind it. |
+| `hidden-behind-chrome` | Nothing usable hides under a fixed bar. |
+
+## `tap-floor` — 175
+
+- **coach-overview** @361 · a·Season insights →
+  - 21px tall (floor 44)
+- **coach-team-hub** @361 · a·Season insights →
+  - 21px tall (floor 44)
+- **coach-notifications** @361 · a·Notification settings
+  - 33px tall (floor 44)
+- **coach-notifications** @361 · button·Mark all read
+  - 28px tall (floor 44)
+- **coach-notifications** @361 · button·All
+  - 26px tall (floor 44)
+- **coach-notifications** @361 · button·Needs attention
+  - 26px tall (floor 44)
+- **coach-notifications** @361 · button·Activity
+  - 26px tall (floor 44)
+- **coach-notifications** @361 · button·Unread
+  - 22px tall (floor 44)
+- **coach-help** @361 · a·What’s New
+  - 19px tall (floor 44)
+- **coach-help** @361 · input·Search this guide
+  - 42px tall (floor 44)
+- **coach-schedule** @361 · button·Export as Excel
+  - 32px tall (floor 44)
+- **coach-schedule** @361 · button·More export formats
+  - 32px tall (floor 44)
+- **coach-attendance** @361 · a·Take attendance
+  - 34px tall (floor 44)
+- **coach-attendance-receipts** @361 · a·Take attendance
+  - 34px tall (floor 44)
+- **coach-roster** @361 · button·Export as Excel
+  - 32px tall (floor 44)
+- **coach-roster** @361 · button·More export formats
+  - 32px tall (floor 44)
+- **coach-roster** @361 · button·Create link
+  - 34px tall (floor 44)
+- **coach-roster** @361 · button·Staff only
+  - 34px tall (floor 44)
+- **coach-roster** @361 · button·Families
+  - 34px tall (floor 44)
+- **coach-roster** @361 · button·Public link
+  - 34px tall (floor 44)
+- **coach-roster** @361 · button·List
+  - 29px tall (floor 44)
+- **coach-roster** @361 · button·Depth chart
+  - 29px tall (floor 44)
+- **coach-roster** @361 · a·Avery Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Avery Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Avery Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Blake Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Blake Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Blake Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Casey Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Casey Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Casey Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Devon Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Devon Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Devon Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Emerson Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Emerson Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Emerson Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Frankie Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Frankie Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Frankie Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Gray Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Gray Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Gray Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Harper Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Harper Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Harper Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Indigo Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Indigo Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Indigo Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Jules Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Jules Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Jules Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Kai Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Kai Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Kai Test down
+  - 30px tall (floor 44)
+- **coach-roster** @361 · a·Logan Test
+  - 24px tall (floor 44)
+- **coach-roster** @361 · button·Move Logan Test up
+  - 30px tall (floor 44)
+- **coach-roster** @361 · button·Move Logan Test down
+  - 30px tall (floor 44)
+- **coach-lineups** @361 · button·Games
+  - 40px tall (floor 44)
+- **coach-lineups** @361 · button·Templates
+  - 40px tall (floor 44)
+- **coach-depth-chart** @361 · button·List
+  - 29px tall (floor 44)
+- **coach-depth-chart** @361 · button·Depth chart
+  - 29px tall (floor 44)
+- **coach-depth-chart** @361 · a·Edit in Settings →
+  - 19px tall (floor 44)
+- **coach-depth-chart** @361 · button·Undo
+  - 40px tall (floor 44)
+- **coach-depth-chart** @361 · button·Redo
+  - 40px tall (floor 44)
+- **coach-depth-chart** @361 · a·Prepare a game lineup →
+  - 37px tall (floor 44)
+- **coach-development** @361 · input·e.g. 60-yd sprint
+  - 35px tall (floor 44)
+- **coach-development** @361 · input·seconds
+  - 35px tall (floor 44)
+- **coach-development** @361 · button·Add test
+  - 36px tall (floor 44)
+- **coach-development** @361 · button·New session
+  - 27px tall (floor 44)
+- **coach-development** @361 · a·Schedule →
+  - 35px tall (floor 44)
+- **coach-development-drills** @361 · button·All 1
+  - 21px tall (floor 44)
+- **coach-development-drills** @361 · button·No tags 1
+  - 21px tall (floor 44)
+- **coach-development-templates** @361 · button·All 15
+  - 21px tall (floor 44)
+- **coach-development-templates** @361 · button·No tags 15
+  - 21px tall (floor 44)
+- **coach-development-templates** @361 · a·New template
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 10
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 11
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 12
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 13
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 14
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 15
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 2
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 3
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 4
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 5
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 6
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 7
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 8
+  - 22px tall (floor 44)
+- **coach-development-templates** @361 · a·New template 9
+  - 22px tall (floor 44)
+- **coach-practice-plan** @361 · a·View on schedule
+  - 23px tall (floor 44)
+- **coach-practice-plan** @361 · a·Run practice
+  - 39px tall (floor 44)
+- **coach-practice-plan** @361 · button·Start this plan from…
+  - 33px tall (floor 44)
+- **coach-practice-plan** @361 · button·Save as template…
+  - 33px tall (floor 44)
+- **coach-practice-plan** @361 · button·Print the sheet
+  - 33px tall (floor 44)
+- **coach-practice-plan** @361 · input·What the whole practice is for
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Search or add a tag
+  - 28px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove Cones
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove Bibs
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove Spare balls
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · input·Equipment
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Block 1 title
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Minutes
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·<input>
+  - 16px tall (floor 44)
+- **coach-practice-plan** @361 · input·What this is for
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove UAT Coach
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · input·Staff
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Coaching point 1
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Coaching point 2
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Block 2 title
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Minutes between moves
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · select·Draw by
+  - 37px tall (floor 44)
+- **coach-practice-plan** @361 · input·Number for the draw
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · button·Draw again
+  - 33px tall (floor 44)
+- **coach-practice-plan** @361 · button·Add a group
+  - 26px tall (floor 44)
+- **coach-practice-plan** @361 · input·Group name
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Station 1 name
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·What good looks like here
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Who runs it
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·A one-off note for this practice
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · input·Station 2 name
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove Sam Assistant
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · button·UAT Coach
+  - 21px tall (floor 44)
+- **coach-practice-plan** @361 · input·Station 3 name
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · button·Remove Jordan Helper
+  - 14px tall (floor 44)
+- **coach-practice-plan** @361 · input·Block 3 title
+  - 35px tall (floor 44)
+- **coach-practice-plan** @361 · button·Add a block
+  - 33px tall (floor 44)
+- **coach-budget** @361 · button·Review
+  - 25px tall (floor 44)
+- **coach-budget-vs-actual** @361 · button·See it by month
+  - 19px tall (floor 44)
+- **coach-transactions** @361 · input·<input>
+  - 16px tall (floor 44)
+- **coach-payables** @361 · input·<input>
+  - 16px tall (floor 44)
+- **coach-payables** @361 · a·Player Dues
+  - 15px tall (floor 44)
+- **coach-payables-schedule** @361 · input·<input>
+  - 16px tall (floor 44)
+- **coach-payables-schedule** @361 · a·Player Dues
+  - 15px tall (floor 44)
+- **coach-dues** @361 · button·Remind all 1
+  - 31px tall (floor 44)
+- **coach-dues-settlement** @361 · button·Remind all 1
+  - 31px tall (floor 44)
+- **coach-fundraisers** @361 · a·Northside Physio
+  - 24px tall (floor 44)
+- **coach-fundraisers** @361 · a·Chocolate sale
+  - 24px tall (floor 44)
+- **coach-fundraisers** @361 · a·Bottle drive
+  - 24px tall (floor 44)
+- **coach-sponsors-list** @361 · a·Northside Physio
+  - 24px tall (floor 44)
+- **coach-season-end** @361 · button·Share your season
+  - 29px tall (floor 44)
+- **coach-finished-practices** @361 · button·Share your season
+  - 29px tall (floor 44)
+- **coach-finished-results-shelf** @361 · button·Share your season
+  - 29px tall (floor 44)
+- **coach-finished-roster-shelf** @361 · button·Share your season
+  - 29px tall (floor 44)
+- **coach-finished-money-book** @361 · button·Share your season
+  - 29px tall (floor 44)
+- **coach-announcements** @361 · button·Refresh contacts
+  - 32px tall (floor 44)
+- **coach-announcements** @361 · input·Announcement subject
+  - 40px tall (floor 44)
+- **coach-announcements** @361 · button·Send announcement
+  - 42px tall (floor 44)
+- **coach-staff** @361 · input·<input>
+  - 13px tall (floor 44)
+- **coach-staff** @361 · button·Remove
+  - 25px tall (floor 44)
+- **coach-staff** @361 · button·Hidden
+  - 25px tall (floor 44)
+- **coach-staff** @361 · button·View
+  - 25px tall (floor 44)
+- **coach-staff** @361 · button·Manage
+  - 25px tall (floor 44)
+- **coach-staff** @361 · button·Hide
+  - 15px tall (floor 44)
+- **coach-staff** @361 · button·View + edit
+  - 25px tall (floor 44)
+- **coach-staff** @361 · button·Sensitive access
+  - 36px tall (floor 44)
+- **coach-staff** @361 · button·Make assistant coach
+  - 33px tall (floor 44)
+- **coach-tryouts** @361 · button·Take me there
+  - 35px tall (floor 44)
+- **coach-tryouts** @361 · button·Add session
+  - 34px tall (floor 44)
+- **coach-history-development** @361 · a·#1 Avery Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#2 Blake Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#3 Casey Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#4 Devon Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#5 Emerson Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#6 Frankie Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#7 Gray Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#8 Harper Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#9 Indigo Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#10 Jules Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#11 Kai Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · a·#12 Logan Test
+  - 24px tall (floor 44)
+- **coach-history-development** @361 · button·All 1
+  - 21px tall (floor 44)
+- **coach-history-development** @361 · button·No tags 1
+  - 21px tall (floor 44)
+- **mkt-walkthrough-coach** @361 · button·▸ Present the full deck — 15 slides, arr
+  - 28px tall (floor 44)
+- **mkt-walkthrough-tourn** @361 · button·▸ Present the full deck — 8 slides, arro
+  - 28px tall (floor 44)
+
+## `contrast` — 80
+
+- **coach-notifications** @361 · div·Today·rgba(70, 55, 30, 0.2)on255,255,255
+  - 1.44:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(255, 255, 255) at 10px
+- **coach-notifications** @361 · p·1h ago·rgba(70, 55, 30, 0.2)on244,245,241
+  - 1.43:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(244, 245, 241) at 11px
+- **coach-notifications** @361 · div·Earlier·rgba(70, 55, 30, 0.2)on255,255,255
+  - 1.44:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(255, 255, 255) at 10px
+- **coach-notifications** @361 · p·Aug 16·rgba(70, 55, 30, 0.2)on244,245,241
+  - 1.43:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(244, 245, 241) at 11px
+- **coach-development** @361 · span·→·rgba(87, 101, 30, 0.75)on255,255,255
+  - 3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px
+- **coach-notifications** @1440 · div·Today·rgba(70, 55, 30, 0.2)on255,255,255
+  - 1.44:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(255, 255, 255) at 10px
+- **coach-notifications** @1440 · p·1h ago·rgba(70, 55, 30, 0.2)on244,245,241
+  - 1.43:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(244, 245, 241) at 11px
+- **coach-notifications** @1440 · div·Earlier·rgba(70, 55, 30, 0.2)on255,255,255
+  - 1.44:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(255, 255, 255) at 10px
+- **coach-notifications** @1440 · p·Aug 16·rgba(70, 55, 30, 0.2)on244,245,241
+  - 1.43:1 (needs 4.5:1) — rgba(70, 55, 30, 0.2) on rgb(244, 245, 241) at 11px
+- **coach-depth-chart** @1440 · button·Avery A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Blake A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Casey A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Devon A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Emerson A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Frankie A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Gray A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Harper A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Indigo A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Jules A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Kai A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-depth-chart** @1440 · button·Logan A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255
+  - 2.18:1 (needs 4.5:1) — rgba(70, 55, 30, 0.4) on rgb(255, 255, 255) at 22px
+- **coach-development** @1440 · span·→·rgba(87, 101, 30, 0.75)on255,255,255
+  - 3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px
+- **mkt-home** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-home** @361 · span···rgba(148, 163, 184, 0.4)on10,10,10
+  - 2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px
+- **mkt-home** @361 · span·01·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-home** @361 · span·02·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-home** @361 · span·03·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-pricing** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-for-coaches** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-for-coaches** @361 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @361 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @361 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @361 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-for-clubs** @361 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @361 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @361 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @361 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-for-leagues** @361 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @361 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @361 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @361 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-for-tournaments** @361 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @361 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @361 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @361 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-demos** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-walkthrough-coach** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-walkthrough-tourn** @361 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px
+- **mkt-home** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-home** @1440 · span···rgba(148, 163, 184, 0.4)on10,10,10
+  - 2.12:1 (needs 4.5:1) — rgba(148, 163, 184, 0.4) on rgb(10, 10, 10) at 12px
+- **mkt-home** @1440 · span·01·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-home** @1440 · span·02·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-home** @1440 · span·03·rgba(30, 58, 138, 0.2)on10,10,10
+  - 1.08:1 (needs 3:1) — rgba(30, 58, 138, 0.2) on rgb(10, 10, 10) at 60px
+- **mkt-pricing** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-for-coaches** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-for-coaches** @1440 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @1440 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @1440 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-coaches** @1440 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-for-clubs** @1440 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @1440 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @1440 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-clubs** @1440 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-for-leagues** @1440 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @1440 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @1440 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-leagues** @1440 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-for-tournaments** @1440 · span·01·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @1440 · span·02·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @1440 · span·03·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-for-tournaments** @1440 · span·04·rgba(30, 58, 138, 0.12)on10,10,10
+  - 1.04:1 (needs 3:1) — rgba(30, 58, 138, 0.12) on rgb(10, 10, 10) at 80px
+- **mkt-demos** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-walkthrough-coach** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+- **mkt-walkthrough-tourn** @1440 · span·HQ·rgba(148, 163, 184, 0.5)on10,10,10
+  - 2.69:1 (needs 3:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 20px
+
+## `content-overflow` — 18
+
+- **coach-notifications** @361 · main·:root { --primary: #1E3A8A; --primary-li
+  - content spills 82px with overflow-x:visible — no scroller owns it
+- **coach-notifications** @361 · div·FieldLogicHQCoaches Portal2Choose a team
+  - content spills 82px with overflow-x:visible — no scroller owns it
+- **coach-notifications** @361 · main·NotificationsEverything from this organi
+  - content spills 82px with overflow-x:visible — no scroller owns it
+- **coach-notifications** @361 · div·NotificationsEverything from this organi
+  - content spills 98px with overflow-x:visible — no scroller owns it
+- **coach-practice-plans** @361 · span·Sun · 6:52 p.m. · 3 blocks · 60 min plan
+  - content spills 6px with overflow-x:visible — no scroller owns it
+- **coach-season-end** @361 · div·UAT Between SeasonsHead CoachUAT Test Or
+  - content spills 17px with overflow-x:visible — no scroller owns it
+- **coach-finished-plan** @361 · div·UAT Between SeasonsHead CoachUAT Test Or
+  - content spills 17px with overflow-x:visible — no scroller owns it
+- **coach-budget-vs-actual** @1440 · text·$1,300.00
+  - content spills 2px with overflow-x:visible — no scroller owns it
+- **coach-budget-vs-actual** @1440 · text·$2,600.00
+  - content spills 5px with overflow-x:visible — no scroller owns it
+- **coach-budget-vs-actual** @1440 · text·$3,900.00
+  - content spills 5px with overflow-x:visible — no scroller owns it
+- **coach-budget-vs-actual** @1440 · text·$5,200.00
+  - content spills 4px with overflow-x:visible — no scroller owns it
+- **coach-budget-vs-actual** @1440 · text·Budgeted (cumulative)
+  - content spills 23px with overflow-x:visible — no scroller owns it
+- **coach-season-end** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+- **coach-finished-practices** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+- **coach-finished-results-shelf** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+- **coach-finished-roster-shelf** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+- **coach-finished-plan** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+- **coach-finished-money-book** @1440 · select·Switch team
+  - content spills 60px with overflow-x:visible — no scroller owns it
+
+## `page-overflow` — 1
+
+- **coach-notifications** @361 · document
+  - page scrolls sideways by 82px · widest: div·Notification settings Mark all read (right 443px) | button·Mark all read (right 443px)
+
+## `control-offscreen` — 1
+
+- **coach-notifications** @361 · button·Mark all read
+  - 82px past the right edge (screen 361px) with no scroller to reveal it
+

@@ -11744,8 +11744,8 @@ the practice line **over** the season line; once it did shrink, the game-day doo
 *"6:30 p.m. · O…"*. A door that ends in an ellipsis is not a door, which is what turned a carve-out
 I argued for into your ruling.
 
-**Not changed, deliberately:** the **Roster** title band (~72px — the biggest remaining saving on
-that screen). Removing it would break *"all forty coach screens open the same way"* and is the shape
+**Not changed, deliberately:** the **Roster** title band (measured 60px on a phone — 116px on
+Overview — and the biggest remaining saving on that screen). Removing it would break *"all forty coach screens open the same way"* and is the shape
 of direction D; it wants its own session across all forty screens.
 
 **✅ The guides were updated in the same pass** — walk these two as well, from a phone:
@@ -11823,15 +11823,54 @@ those was not a formatting problem at all.
       left rail, muted text, and tapping it opens the **Tryouts** tab rather than the event editor.
 - [ ] **Week and Month views are unchanged** — a tryout shows the time only there, because the
       column header already carries the day.
+**⚠ The tryout's stored time was NOT the moment it claimed to be — that is fixed in §96 below,
+built the same day once you confirmed no real club has tryout sessions on production.**
 
-**⚠⚠ RAISED, NOT FIXED — a tryout's stored time is not the moment it claims to be.** Tryout
-sessions live in the same kind of column as events (a true instant), but the tryout feature reads
-and writes them by slicing the raw text: a session typed as 5:00 p.m. is stored as `17:00+00`,
-which is 1:00 p.m. Toronto, and every tryout screen slices it back to 5:00 p.m. again. Self-
-consistent, so nothing a coach sees is wrong today — the tryout card, the setup checklist and the
-schedule all agree. But it is four hours from the instant it records, so **anything that treats a
-session as a real moment would be wrong by the zone offset**. Nothing does yet: the schedule's
-calendar export takes events only, and the printed check-in sheet formats by slicing like the rest
-of the feature. Sorting was the first thing that needed a true ordering, which is how it surfaced —
-this list sorts on what each row DISPLAYS for exactly that reason. Fixing the storage is a
-write-path change plus a back-fill of existing sessions, and wants its own decision.
+## §96 · A tryout happens when it says it happens
+
+**BUILT 2026-08-24 (dev).** Owner go the same day, on the evidence below, having confirmed **no
+production club has tryout sessions** — so there is no customer data to migrate. No migration.
+
+**What was wrong, and why nobody had seen it.** A tryout session lives in the same kind of column
+as a practice or a game — a real moment. But the save path stored the clock a coach typed *without
+converting it*, so a session entered as 5:00 p.m. was recorded as 5:00 p.m. **UTC**, which is 1:00
+p.m. here. Every tryout screen then read it back by slicing the raw text, which un-did the error
+and showed 5:00 p.m. again. Two wrongs, cancelling, on every screen at once.
+
+⚠⚠ **It stopped cancelling in the one place customers can see: the coach demo sandbox.** The demo
+writes its sessions correctly, through the platform's normal conversion — and the slicing readers
+displayed them **four hours late on a public page**. A 9:00 a.m. Saturday tryout read **1:00 p.m.**;
+a 5:30 p.m. session read **9:30 p.m.** That is the shop window telling prospects the wrong time.
+
+Both halves changed together — a session is now saved as a real moment and read in the club's zone,
+the same convention every event on the schedule has always used.
+
+- [ ] ⚠ **The demo reads right again.** Open the coach sandbox → **Tryouts**. The Saturday session
+      reads **9:00 a.m.**, not 1:00 p.m. Then the team **Schedule**: the same session, same time.
+      Nothing was re-seeded to achieve this — the demo's data was always correct; the screens were
+      not.
+- [ ] **A time you type is the time you get.** Tryouts → **Get set up** → Tryout dates → add a
+      session at, say, 6:30 p.m. Save. It reads 6:30 p.m. in the card, on the **Schedule**, in the
+      setup checklist receipt, and on the printed **check-in sheet**'s session line.
+- [ ] ⚠ **Re-open it without touching anything and save again — the time must not move.** This is
+      the one that would bite hardest: the edit form now converts back out of the stored moment, and
+      if that conversion were missing, every re-save would walk the session four hours.
+- [ ] **The end time follows the start.** Move a 6:00–8:00 p.m. session to 4:00 p.m.: it becomes
+      4:00–6:00 p.m., as before.
+- [ ] **The check-in sheet's session chooser still pre-picks sensibly.** With two sessions, "Most
+      likely" lands on today's, else the next one still to come — now judged on the **club's**
+      calendar day rather than the device's, so a coach travelling with the team gets the same
+      answer as one at home.
+- [ ] **Fixture:** `--practice` now also seeds **two** tryout sessions on QA Money U13 (the next
+      two Saturdays, 9:00 a.m. club time). Two, because the printed sheet only asks *which session*
+      when there is more than one — a single-session fixture cannot exercise the chooser at all.
+
+**Nothing shipped the error.** The schedule's calendar export takes events only, and the printed
+check-in sheet formats through the same helper as every other tryout surface, so no file ever
+carried the wrong instant. Sorting the schedule into one date-ordered list (§95) was the first
+thing that needed a true ordering, which is how it surfaced.
+
+**⚠ Found in passing, NOT fixed — your call.** Development → a testing session → *"Taken at"*: the
+dropdown of events reads each event's day by slicing its stored moment, so an event that starts
+after 8 p.m. is offered under the **next day's** date. Same defect class, different feature, one
+line to correct. Say the word and it goes in.

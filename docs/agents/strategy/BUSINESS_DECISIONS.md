@@ -44,6 +44,34 @@ HANDOFF → /plan — none. The build shipped with the Rosters pass (Owner QA Le
 
 ---
 
+### 2026-08-21 — Premium Coaches Portal includes PDF document customization; document branding becomes two layers
+
+**Status:** Decided (owner, 2026-08-21, in the PDF Export Quality planning session; logged 2026-08-22). **Not yet built** — ships with PDF Export Quality Phase 1.
+
+**Decision:**
+1. **Document branding is two layers.** Every coach portal — standalone Premium and club-owned alike — gets a team-level "How your documents look" card (team logo, accent colour, footer) governing the paper that portal generates (rosters, dues, lineups, tryout documents, etc.). Club-level PDF settings remain the source for club-admin paper **and are the inherited default**: a team that sets nothing shows its club's look; a team that customizes shows its own. **No club "lock teams to our brand" control in v1** — inheritance makes uniformity the default; build a lock only when a real club asks.
+2. **The standalone Premium Coaches Portal ($29/mo; Founding Season $0) gains PDF customization as an inclusion.** Until now customization (logo/colours/footer on exports) was Tournament Plus and up, and a standalone coach could reach no design settings at all despite the plan including PDF export itself. Basic (free) Coaches Portal is unchanged — it has no PDF export, so no customization surface.
+
+**Rationale:** A standalone team's identity *is* its team brand — it has no club above it, and the evidence session established that no organization of any kind has ever successfully printed a logo on a document (the pipeline was never connected). Granting customization to the plan that already includes PDF export costs nothing marginal, strengthens the standalone value story, and composes cleanly with the Club bridge: when a standalone team's org later joins Club, the team keeps its own look while the club's becomes its inherited default. Full context and the rendered evidence: `docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` (decisions 7–8) and the session's exhibit gallery linked there.
+
+**Affects:** packaging (a feature inclusion moves down to the standalone premium plan) · the plan-facts inclusions table + plan config (when shipped, same unit) · coaches-portal team settings UI (build) · potentially the coaches persona/pricing copy once live ("your team's logo and colours on every document").
+
+**Handoff:**
+```
+HANDOFF → /billing (WITH PDF Export Quality Phase 1, same unit of work)
+- Extend the PDF-customization feature grant to the standalone premium coach plan alongside the
+  team-level settings card; update PLAN_PRICING_FACTS.md inclusions + lib/plan-config.ts in that
+  same unit and run the Facts-doc drift checklist before release.
+HANDOFF → /marketing (AFTER it ships, not before)
+- /for-coaches + pricing surfaces may then say team documents carry the team's own logo/colours;
+  brief: "your paperwork looks like your team, out of the box" — wording is /marketing's.
+HANDOFF → /plan — none needed; PDF_EXPORT_QUALITY_PLAN.md Phase 1 already carries the build.
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-06-29 (tryout suite bundled into Premium — same "inclusion over add-on" posture) and the exports/PDF gating established with the original exports program.
+
+---
+
 ### 2026-08-20 — `/for-leagues` STAYS LIVE, but every word implying an imminent launch comes out
 
 **Status:** Decided (owner, 2026-08-20, during the persona-page claim audit).

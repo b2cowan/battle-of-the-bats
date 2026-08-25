@@ -71,7 +71,7 @@ lesson, arriving on a new surface). Proved instead by injecting a probe control 
 390 / 414. **Measured after: masthead 56px, meta 1 line, toolbar 47px/1 row, first player row 244px,
 no sideways scroll at any width.**
 
-**NOT DONE, and deliberately:** the `<h1>` title band (~72px) is the single biggest remaining saving
+**NOT DONE, and deliberately:** the `<h1>` title band (measured 60px phone / 116px on Overview, and its 44px box is the tap floor on the help "?" — so the TEXT is not what costs the height) is the single biggest remaining saving
 and the word already appears in the bottom nav's active pill beneath it — but removing it breaks
 *"all forty coach screens open the same way"* (2026-08-11) and is the shape of **direction D**. A
 forty-screen ruling, not a Roster fix.

@@ -147,7 +147,7 @@ measured.
 
 ## §4 · Open, and deliberately not done
 
-**The `<h1>` title band (~72px) was NOT touched.** Deleting it saves more than anything above, and
+**The `<h1>` title band was NOT touched.** ⚠ Measured 2026-08-24: **60px** at 390px on a typical screen (44px box + 16px margin) and **116px on Overview**, where the actions wrap — NOT the ~72px first estimated here. ⚠⚠ And the 44px box **is the tap floor on the help "?"**, so deleting the title TEXT saves nothing; the saving lives in the "?" and the "+". Deleting it saves more than anything above, and
 the word "Roster" already appears in the bottom nav's active pill directly beneath it. It stays
 because it would break *"all forty coach screens open the same way"* (2026-08-11, ruled and shipped)
 — a portal-wide call across forty screens, and the shape of **direction D**, which the 2026-08-18
