@@ -104,7 +104,20 @@ variable + rebuild (job 250, code unchanged at `201ec1bd`). Prod code moved to `
 roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and the coach demo's
 marketing doors: "See it live" verified rendering live post-251 on the homepage hero (both demos),
 both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both door routes 307
-into their worlds. **Prod HEAD is now `5ae39f10` (2026-08-17, Amplify job 257 SUCCEED — 72 commits: the Money
+into their worlds. **Prod HEAD is now `2501fd4f` (2026-08-25, Amplify master job 259 SUCCEED — 90 commits,
+tag `release/2026-08-25`: money centralization P1+P2, the Payables rebuild, the PDF document set and
+working sheets, tryout day as one room, the Families Book P1+P2, seven reports and season close;
+**migrations 251–261 all applied to prod** earlier that day, leaving the queue empty and the two schemas
+byte-identical; both doors re-verified 307ing into their worlds post-259, master stream 0 ERROR, and
+`check:demos` reports both worlds presentable). ⚠⚠ **THIS RELEASE CHANGED THE COACH DEMO'S STORY AGAIN
+AND THE NARRATION WAS ONLY PARTLY FOLLOWED UP.** Recording money is now ONE button and one conversation
+from any Money screen, Transactions' own Add is GONE, and a bill can be part-paid and un-paid — the
+Transactions tour step gained a sentence for the Record button (deliberately claiming no figures, so a
+reseed cannot make it wrong), but **the dock lines and the rest of the tour were written against the
+old six-doors-to-record world**. Re-read them on the next coach-money change; this is precisely the
+surface CLAUDE.md's demo rule says goes quietly stale. ⚠ `check:demos` self-heals on dev only and never
+writes to prod — production freshness rides the cron alone, so a green local run is NOT evidence about
+the live demos. The preceding prod HEAD was `5ae39f10` (2026-08-17, Amplify job 257 SUCCEED — 72 commits: the Money
 redesign P1–P4, budget item integrity, membership + history-in-place, tryout scorecard weights and
 setup checklist; **migrations 236–250 all applied to prod** that session, leaving the queue empty
 and the two schemas byte-identical; both doors re-verified 307ing into their worlds post-257, and
