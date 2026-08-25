@@ -26,6 +26,22 @@ import { test, expect, type Page } from '@playwright/test';
 import path from 'path';
 
 /**
+ * Open a page header's create and pick one of its ways in (Phase 3, 2026-08-25).
+ *
+ * ⚠ THE CREATE IS A MENU NOW, and that is the point of the change rather than an inconvenience to
+ * work around: two buttons that made the same thing two ways folded into one button with the
+ * choice inside it (house rule 6). `.first()` takes the HEADER's create over an empty state's own,
+ * which is deliberate — these probes are about the room's permanent flow.
+ *
+ * It also proves house rule 3 in passing: at ≤640 the trigger's words are hidden and only its
+ * aria-label carries them, so a name-based lookup that keeps working at 361 IS the guarantee.
+ */
+async function openHeaderCreate(page: Page, create: RegExp | string, choice: string): Promise<void> {
+  await page.getByRole('button', { name: create }).first().click();
+  await page.getByRole('menuitem', { name: choice }).click();
+}
+
+/**
  * ⚠ THE COACH SESSION, EXPLICITLY. The `uat` project defaults every spec to the ORG-OWNER session,
  * who holds no coaching assignment — a coach-portal spec that forgets this line lands on "Not
  * assigned to any teams" and fails in a way that looks like a product bug.
@@ -135,8 +151,13 @@ test.describe('plan templates — the room', () => {
     test.skip(hasTemplates, 'this team already has templates — the empty state is not on screen');
     // ⚠ "New template" is offered at ZERO as well as at one: refusing at zero while allowing it at
     // one is an arbitrary rule rather than a principle.
-    await expect(page.getByRole('button', { name: /New template/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Add from a past season/i })).toBeVisible();
+    // ⚠ SCOPED TO THE EMPTY STATE SINCE PHASE 3 (2026-08-25). The page header now carries a create
+    // too, so an unscoped `/New template/i` matches two buttons and Playwright's strict mode fails
+    // on the ambiguity — which is the test doing its job, not a flake. This test is about the
+    // EMPTY STATE's own doors, so it asks the empty state.
+    const emptyState = page.locator('[class*="state"]').filter({ hasText: 'template' }).first();
+    await expect(emptyState.getByRole('button', { name: /New template/i })).toBeVisible();
+    await expect(emptyState.getByRole('button', { name: /Add from a past season/i })).toBeVisible();
   });
 });
 
@@ -154,7 +175,11 @@ async function ensureTemplate(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Plan templates' })).toBeVisible({ timeout: 30_000 });
   if (await page.locator('[class*="ppTemplateLink"]').count() > 0) return;
   // "New template" is offered at ZERO as well as at one, and lands straight in the editor.
-  await page.getByRole('button', { name: /New template/i }).first().click();
+  // ⚠ TWO TAPS SINCE PHASE 3 (2026-08-25): the header's create opens a MENU — "Start from blank" or
+  // "Bring one forward from a past season" — because the two ways to make a template folded into
+  // one button. `.first()` picks the header's create over the empty state's, which is what we want:
+  // this helper is the probe of the room's own flow.
+  await openHeaderCreate(page, /New template/i, 'Start from blank');
   // ⚠ The template's own Name field, not `.ppHeaderCard` — the editor legitimately renders TWO of
   // those (the template's name/tags card, and the plan editor's goal/equipment card), so a class
   // locator is ambiguous by design rather than by accident.

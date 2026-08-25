@@ -6,6 +6,7 @@ import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS,
@@ -425,9 +426,37 @@ export default function CoachDrillsPage({
       <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the blurb's promise ("write it once, four taps after
           that") is already the empty state's description, where a coach with no drills reads it. */}
+      {/* ⚠ THE CREATE MOVED TO THE HEADER AND THE TWO CREATES BECAME ONE (Phase 3, 2026-08-25) —
+          the same fold as Plan templates, for the same reason: "New drill" and "Add from a past
+          season" make the same thing two ways, and they sat competing in the filter row while the
+          page header was empty. House rule 6 folds them into one; house rule 4 puts it in the
+          header, where a phone collapses it to the bare "+" in the title-line corner. */}
       <CoachPageHeader
         icon={Library}
         title="Your drills"
+        actions={canWrite ? (
+          <CoachToolbarMenu
+            label="New drill"
+            icon={<Plus size={15} aria-hidden />}
+            variant="primary"
+            collapseOnPhone
+          >
+            <CoachToolbarMenuItem
+              icon={<Plus size={15} aria-hidden />}
+              label="Start from blank"
+              hint="Write a new drill yourself"
+              onSelect={() => { setFormError(''); setEditing({ id: null, draft: emptyDraft() }); }}
+            />
+            <CoachToolbarMenuItem
+              icon={<History size={15} aria-hidden />}
+              label="Bring one forward from a past season"
+              hint="Copy a drill you already use"
+              onSelect={openImport}
+            />
+          </CoachToolbarMenu>
+        ) : undefined}
+        actionsPhoneInTitleRow
+        actionsPhoneHidden={!canWrite}
         helpLabel="Your drills"
         help={helpRequest}
       />
@@ -462,17 +491,10 @@ export default function CoachDrillsPage({
           <div className={styles.ppDrillFilters}>
             <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
               placeholder="Search drills…" aria-label="Search drills" />
-            {canWrite && (
-              <div className={styles.ppDrillRowActions}>
-                <button type="button" className={styles.btnSecondary} onClick={openImport}>
-                  <History size={14} aria-hidden /> Add from a past season
-                </button>
-                <button type="button" className={styles.btnPrimary}
-                  onClick={() => { setFormError(''); setEditing({ id: null, draft: emptyDraft() }); }}>
-                  <Plus size={14} aria-hidden /> New drill
-                </button>
-              </div>
-            )}
+            {/* ⚠ Both creates moved into the page header and became one (Phase 3, 2026-08-25), so
+                this row is the search box alone. ⚠ Unlike Plan templates, Drills has NO tag
+                control to leave behind — the plan's §4.5 said "the tag control stays with the
+                search row" and there has never been one on this screen. */}
           </div>
 
           <div className={styles.ppSuggestWrap}>

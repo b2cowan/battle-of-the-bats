@@ -8,6 +8,7 @@ import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
@@ -339,16 +340,54 @@ export default function CoachPlanTemplatesPage({
     return <CoachNotOnTeam />;
   }
 
-  const writeActions = canWrite && (
+  /**
+   * ⚠ THE CREATE MOVED TO THE HEADER AND THE TWO CREATES BECAME ONE (Phase 3, 2026-08-25).
+   *
+   * "New template" and "Add from a past season" are two ways to make the same thing, and they were
+   * drawn as two competing buttons in the filter row while the page header sat empty above them.
+   * House rule 6 — one verb, one button, with the choice inside it; house rule 4 — the create sits
+   * in the page header. On a phone it collapses to the bare "+" in the title-line corner, like
+   * every other coach screen.
+   *
+   * "Your tags" stays down in the list row on purpose (rule 2, nearest label wins): it manages a
+   * vocabulary that outlives this page, and it belongs beside the list it filters — the same call
+   * Expenses' "Manage tags" got.
+   */
+  const headerCreate = canWrite && (
+    <CoachToolbarMenu
+      /* ⚠ A STATIC NAME (/review, 2026-08-25 — Low). The label used to flip to "Starting…" while a
+         template was being created, which put a shape-shifting accessible name on something
+         announced as a menu — a screen reader heard "Starting…, menu". The busy state belongs to
+         the item doing the work, one line down, not to the door that opens onto both routes. */
+      label="New template"
+      icon={<Plus size={15} aria-hidden />}
+      variant="primary"
+      collapseOnPhone
+    >
+      {/* ⚠ The BUSY GUARD is on this item, not on the trigger (/review, 2026-08-25 — Low).
+          Disabling the whole menu while a blank template is being created would also lock the
+          import route, which the two separate buttons this replaced never did — folding two
+          controls into one must not fold their disabled states together with them. */}
+      <CoachToolbarMenuItem
+        icon={<Plus size={15} aria-hidden />}
+        label={creating ? 'Starting…' : 'Start from blank'}
+        hint="An empty plan you build up yourself"
+        disabled={creating}
+        onSelect={newTemplate}
+      />
+      <CoachToolbarMenuItem
+        icon={<History size={15} aria-hidden />}
+        label="Bring one forward from a past season"
+        hint="Copy a plan you already ran"
+        onSelect={openImport}
+      />
+    </CoachToolbarMenu>
+  );
+
+  const listRowActions = canWrite && (
     <div className={styles.ppDrillRowActions}>
       <button type="button" className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)}>
         <Tags size={14} aria-hidden /> Your tags
-      </button>
-      <button type="button" className={styles.btnSecondary} onClick={openImport}>
-        <History size={14} aria-hidden /> Add from a past season
-      </button>
-      <button type="button" className={styles.btnPrimary} disabled={creating} onClick={newTemplate}>
-        <Plus size={14} aria-hidden /> {creating ? 'Starting…' : 'New template'}
       </button>
     </div>
   );
@@ -361,6 +400,11 @@ export default function CoachPlanTemplatesPage({
       <CoachPageHeader
         icon={BookMarked}
         title="Plan templates"
+        actions={headerCreate || undefined}
+        /* House rule 4: one compact create keeps the title line's corner on a phone rather than
+           taking a row of its own. A read-only assistant has no create, so the row drops. */
+        actionsPhoneInTitleRow
+        actionsPhoneHidden={!canWrite}
         helpLabel="Plan templates"
         help={helpRequest}
       />
@@ -391,7 +435,7 @@ export default function CoachPlanTemplatesPage({
           <div className={styles.ppDrillFilters}>
             <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
               placeholder="Search templates…" aria-label="Search templates" />
-            {writeActions}
+            {listRowActions}
           </div>
 
           {/* ⚠ ONE flat list narrowed by chips, never category headings — several tags per template

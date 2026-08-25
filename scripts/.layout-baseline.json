@@ -1,6 +1,258 @@
 {
-  "generated": "2026-08-24T14:39:25.808Z",
+  "generated": "2026-08-25T18:52:59.523Z",
   "entries": {
+    "coach-development-drills|361|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-drills|361|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|button·All 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|button·No tags 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 10": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 11": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 12": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 13": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 14": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 15": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 2": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 3": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 4": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 5": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 6": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 7": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 8": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 9": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|button·All 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|button·No tags 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 10": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 11": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 12": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 13": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 14": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 15": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 2": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 3": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 4": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 5": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 6": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 7": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 8": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 9": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|button·Help: Your drills": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|a·Skills & Goals": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|button·New drill": {
+      "reason": "As coach-development-templates New template — grandfathered desktop height, clears 44 at <=640, and replaces two filter-row buttons with one.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|button·Help: Plan templates": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·Skills & Goals": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|button·New template": {
+      "reason": "Page-header primary at the portal's grandfathered desktop control height, same as Roster's Add Player. The 44px floor is enforced at <=640, where this measures 44 (Phase 3, 2026-08-25). It REPLACES two buttons that stood in the filter row — the fold is a net reduction of one control.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|button·All 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|button·No tags 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 10": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 11": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 12": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 13": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 14": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 15": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 2": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 3": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 4": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 5": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 6": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 7": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 8": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|a·New template 9": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
     "coach-roster|361|tap-floor|a·Avery Test": {
       "reason": null,
       "detail": "24px tall (floor 44)"
@@ -2052,250 +2304,6 @@
     "coach-depth-chart|768|tap-floor|button·Undo": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|768|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 10": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 11": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 12": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 13": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 14": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 15": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 2": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 3": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 4": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 5": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 6": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 7": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 8": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 9": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 10": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 11": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 12": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 13": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 14": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 15": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 2": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 3": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 4": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 5": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 6": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 7": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 8": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 9": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 10": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 11": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 12": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 13": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 14": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 15": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 2": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 3": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 4": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 5": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 6": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 7": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 8": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|a·New template 9": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
     },
     "coach-development|1440|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,

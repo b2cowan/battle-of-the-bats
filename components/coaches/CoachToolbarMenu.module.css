@@ -91,3 +91,29 @@
   margin: 0.3rem 0.2rem;
   background: var(--home-line, var(--white-10));
 }
+
+/* The PRIMARY trigger — a page header's one create, when that create has a choice inside it
+   (house rule 6). Mirrors `.btnPrimary` + `.headerPrimaryBtn` from the portal stylesheet exactly,
+   written here rather than composed: `composes` is NON-transitive under Turbopack in this repo, so
+   a composed rule silently drops half its declarations.
+   ⚠ The lime FILL must stay true lime with dark ink in BOTH skins — the warm portal remaps the
+   lime accent to olive for TEXT, and a fill that followed it would lose its contrast. Same
+   treatment `.btnPrimary` already carries. */
+.triggerPrimary {
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  border: none;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+}
+.triggerPrimary:hover:not(:disabled),
+.triggerPrimary.triggerOpen { background: var(--logic-lime); opacity: 0.88; }
+
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .triggerPrimary {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .triggerPrimary:hover:not(:disabled) {
+  background: rgba(var(--home-lime-rgb), 0.82);
+  opacity: 1;
+}

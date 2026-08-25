@@ -258,14 +258,51 @@ false on the screen that motivated the whole pass.
 Identical shape to Plan templates; identical fold. `+ New drill ▾` (blank / from a past season);
 the tag control stays with the search row.
 
-### 4.6 Awards
+### 4.6 Awards — ⚠⚠ STRUCK 2026-08-24. DO NOT BUILD THIS.
+
+**Awards was rebuilt as a PANEL on 2026-08-18 (reports portal P1) and is already correct.** It has
+no page header at all: the Reports hub owns the `<h1>` and the "?", and its tab row is what tells a
+coach where they are. Its three controls already sit in the panel's own toolbar, which already
+carries the 44px tap floor (added when the rendered sweep caught "Give an award" at 33px and
+"Manage award types" at 15px on a 361px phone).
+
+**Building the instruction below would move a working button to the wrong place** and contradict
+house rule 2 — a tab-scoped action belongs beside the thing it names, exactly as Money's seven tabs
+do. The panel's own note reached that conclusion independently before the house rules existed.
+
+One low-stakes question survives: the certificate print sits inline after the other two controls,
+where house rule 2 would pin an export to the right of its row. Owner to say; it reads as a third
+instrument rather than an export, so leaving it is defensible.
+
+*Superseded text, kept only so nobody re-derives it:*
+
+### 4.6-OLD Awards (WRONG — see above)
 
 - **"Give an award" → header** (rule 1), as the lime primary.
 - **"Manage award types" → the list toolbar** (rule 2) — a library that outlives this page.
 - **"Print N certificates" stays in the body beside the award-type filter** (rule 12) — its content
   depends on the selection. As a PDF output it survives on a phone.
 
-### 4.7 Overview
+### 4.7 Overview — ⚠ RIGHT CONCLUSION, FALSE PREMISE (corrected 2026-08-24)
+
+The line below calls the season-setup ring "a state display, not an action". **It is not a display.**
+It is a `<button>` with `aria-expanded` that opens a checklist of setup steps — a status readout
+**and** a door.
+
+That makes it fail rule 1 twice over rather than once (a header holds what this page *does* — not
+navigation, not status), so the conclusion stands. But "stops being passed through the actions slot"
+is not a complete instruction, because **Overview has no create to put there instead** — the slot
+would simply empty. Where the chip goes is a real design decision, drawn three ways for the owner:
+`claude.ai/code/artifact/72d79e12-22fe-4b93-b121-d7ea038cc44d`.
+
+Recommendation on record: **A — move it into the body as a slim bar directly above the one-thing
+card.** Setup is temporary and empties out; body content that comes and goes is ordinary, whereas a
+header slot meaning one thing on 29 screens and something else on the 30th is the exact drift this
+project exists to end. (B — make it the one-thing card when setup is unfinished — is cleaner
+conceptually and a much bigger change, since it means teaching the card resolver about setup.
+C — document it as a named exception — is cheapest and would need a carve-out in the Phase 4 guard.)
+
+*Superseded text:*
 
 The setup progress ring is a state display, not an action. It keeps its position but stops being
 passed through the actions slot, so the slot means one thing portal-wide.
@@ -468,3 +505,179 @@ sequential; each is independently shippable.
   350-word standard when it gained the phone paragraph and was tightened back under.
   **Demo sandbox checked and clean:** the coach tour anchors nowhere near these rows and no dock
   copy names a moved button — verified, not assumed.
+
+- **2026-08-24** — **Phase 3 reconciled against the four house rules, from the live code.** Decision
+  sheet: `claude.ai/code/artifact/72d79e12-22fe-4b93-b121-d7ea038cc44d`. Phase 3 is smaller and
+  differently shaped than §4.4–§4.7 describe, and two of those four sections were wrong:
+
+  | Screen | Verdict |
+  |---|---|
+  | Plan templates | **Build** — §4.4 holds unchanged. Header carries title + "?" only today; two creates ("New template", "Add from a past season") fold into one header primary, "Your tags" stays with the search row. |
+  | Drills | **Build** — §4.5 holds. Identical shape and identical fold. |
+  | Awards | **Already done** (2026-08-18). §4.6 **struck** — building it would move a correct button to the wrong place. |
+  | Overview | **Owner decision owed.** §4.7's conclusion survives, its premise does not — the ring is a button that opens a checklist, and Overview has no create to take the slot it vacates. |
+
+  **The lesson worth carrying:** both wrong sections were wrong because the screens moved after the
+  plan was written — Awards was rebuilt as a hub panel six days later, and Overview's chip gained a
+  popover. A plan section that names a control's destination goes stale the moment that control's
+  screen is rebuilt, and neither staleness was visible from the plan itself. **Read the screen
+  before building the section** (AGENCY_RULES: argue from what the code does).
+
+  Two open items before a build prompt is written: Overview's chip (three options drawn), and a
+  low-stakes call on whether Awards' certificate print pins right in its toolbar.
+
+- **2026-08-24** — ⚠⚠ **PHASES 3 AND 4 ARE BLOCKED ON `COACH_PAGE_TITLE_BAND_PLAN.md`** (owner call,
+  on being told Phase 3 was ready to build). That plan is **ruled and unbuilt**, and it changes the
+  page header itself — so building against today's shape would encode a shape that is about to move.
+
+  **What it changes underneath this plan:**
+  1. **The help "?" leaves the page header entirely** (its option 3, approved **at every width**,
+     rendered last in the masthead corner). **House rule 4 is worded around the "?"** — *"the create
+     sits in the page header beside the '?'"*, and *"net phone header: title · symbol · '?'"*. Both
+     sentences stop being true. The phone header becomes **title · symbol**, and
+     `actionsPhoneInTitleRow`'s whole justification — *"the corner has room for one button next to
+     the ?"* — is about a neighbour that will not be there.
+  2. **The band's margin moves 16px → 12px portal-wide** (its option 1).
+  3. **Phase 2's shipped screens are in scope too.** Roster and Schedule render the "?" in the fixed
+     corner slot; when it moves, they move. Parts of QA §88's phone checks go stale with it.
+
+  **⚠ PHASE 4 IS THE ONE THAT MUST NOT JUMP THE QUEUE.** Its entire job is a guard test pinning what
+  each page header may hold. Writing it now would pin a header that is one approved-and-unbuilt plan
+  away from losing its "?" and changing its margin — the guard would fail the build on the very
+  change it was meant to protect. Sequence: title band → re-reconcile → Phase 3 → Phase 4.
+
+- **2026-08-24** — ⚠ **§4.7 IS SUPERSEDED AGAIN, AND THE OTHER WAY.** Yesterday's reconciliation
+  recommended moving Overview's setup chip **out** of the actions slot (option A, a slim bar above
+  the one-thing card). **That is withdrawn: `COACH_PAGE_TITLE_BAND_PLAN.md` §2 already ruled the
+  opposite and the owner approved it** — the chip **stays in the actions slot** and becomes
+  **ring-only on a phone** with its words in the accessible name, sitting in the title-line corner.
+  That is house rule 3 applied to the chip, and it takes Overview's band from 116px to ~56px, which
+  the body-bar option would not have.
+
+  **What that ruling does NOT settle, and Phase 4 will trip on:** rule 1 says a page header holds
+  what the page *does* — not navigation, not status. The chip is a status readout that opens a
+  checklist, and it is now staying. **The actions slot therefore means two things portal-wide, on
+  purpose.** The Phase 4 guard must carve Overview out knowingly rather than discover it, and that
+  carve-out should be written down as an exception the way Money's Record ordering is — not left as
+  a silent `if`.
+
+- **2026-08-25** — **RE-RECONCILED after the help "?" moved. Phase 3 is UNBLOCKED and is now two
+  screens with no open decisions.** Read from the live code, not from either plan.
+
+  **What actually landed:**
+  | Piece | State |
+  |---|---|
+  | Help "?" → masthead right slot, every width, rendered last | ✅ built |
+  | Overview's setup chip → ring-only on a phone, corner slot | ✅ built (its band was the 116px outlier) |
+  | Page-title band margin 16px → 12px portal-wide | ❌ **NOT built** — `.pageHeader` is still `margin-bottom: 1rem` |
+
+  **Phase 3 after the move — two screens, one fold each, nothing to decide:**
+  - **Plan templates** — two creates ("New template", "Add from a past season") fold into one header
+    create with the choice inside; "Your tags" stays with the search row. Unaffected by the help
+    move: the create still goes in the header, and on a phone it is the bare `+` in the title-line
+    corner — now *alone* there rather than beside a "?".
+  - **Drills** — identical in every respect.
+  - **Awards** — no change (§4.6 struck; it is a hub panel and was already correct).
+  - **Overview** — done (§4.7 closed by the title-band build, not by this plan).
+
+  **Two rule texts are now stale and must be corrected before Phase 4 pins anything:**
+  1. **House rule 4 is worded around a neighbour that has gone.** *"The create sits in the page
+     header beside the '?'"* and *"net phone header: title · symbol · '?'"* — inside the team layout
+     the "?" is not in the page header at all. The phone header is now **title · symbol**.
+  2. **"One findable home" is true at the top of the page, not while scrolled.** The masthead's right
+     slot folds with `.teamHeaderCollapsed` at ≤900px, so a scrolled phone loses the "?" exactly as
+     it loses the flip and the season. That is ruled and accepted — but house rule 4 promised a
+     findable corner, and this is the caveat on it.
+
+  **Two things Phase 4's guard must handle, both knowingly:**
+  - **The header has TWO legal shapes now.** Inside the team layout the masthead hosts the "?" and
+    the page header has none; outside it (team-picker hub, notifications, the portal shells, and the
+    team layout's own no-auth early return) the page still draws its own as the default fallback.
+    A guard that pins one shape fails the other.
+  - **The actions slot deliberately means two things** — a create on 29 screens, a status door on
+    Overview. Write that as a named exception, not a silent branch.
+
+  ⚠ **One thing to look at, low confidence, found by reading not measuring:** the phone grids still
+  declare a column for the help slot that is now usually empty — `.pageHeaderActionsCorner` is
+  `1fr auto auto` with a `0.5rem` column-gap, and the third track has no item once the masthead hosts
+  the "?". An empty track is 0-wide but its gap is still drawn, so the create may sit ~8px off the
+  right edge on every corner-variant screen (Money's Record, Roster's Add Player, Schedule's Add
+  Event, Overview's chip). Harmless if so, but it is unintended and worth a measured look rather
+  than a guess.
+
+  **Open question for the owner:** the 12px margin trim is unbuilt. If it is still coming, it should
+  land *before* Phase 3 rather than after — otherwise Phase 3's two screens get touched twice.
+
+- **2026-08-25** — **PHASE 3 BUILT on dev.** Two screens, one fold each. No migration.
+
+  **Plan templates** and **Drills** each had two creates competing in the filter row — *New
+  template/drill* and *Add from a past season* — while the page header sat empty above them. Both
+  now carry **one create in the page header** with the two ways inside it (house rules 4 and 6), and
+  on a phone it collapses to the bare `+` in the title-line corner (house rule 3). Plan templates
+  keeps **Your tags** in the list row (rule 2 — it manages a vocabulary that outlives the page).
+
+  **⚠ A third stale detail in this plan, found by reading the screen:** §4.5 said Drills' "tag
+  control stays with the search row". **Drills has never had a tag control.** Its filter row is now
+  the search box alone. That is three sections of §4.4–§4.7 wrong on contact — the pattern is always
+  the same, a plan describing a screen it was written before.
+
+  **Shared piece:** `CoachToolbarMenu` gained `variant="primary"` (the lime create geometry, for the
+  one create that has a choice inside it) and `collapseOnPhone` (house rule 3, with the label
+  surviving as the accessible name). Extended rather than hand-rolled — Schedule's Add Event still
+  carries its own copy of this pattern, and folding that into the shared menu is a **Phase 4**
+  migration candidate, deliberately not done here on a screen already walked at §88.
+
+  **Rendered sweep:** ✓ no new findings. **Phone tap-floor entries 38 → 38** — the new create clears
+  the floor at 361 and 390, and the fold is a net reduction of one control per screen. Two entries
+  added at 768 (grandfathered desktop height, reasons written). Two more at 768 are a back-link
+  rename from another session (`Development` → `Skills & Goals`), not this change.
+
+  **Checked and clean:** the in-app guides for both screens describe what these controls do but
+  never say *where* they are, so nothing was falsified. Empty states keep their own create doors
+  untouched (rule 7).
+
+  **Still open before Phase 4:** the two stale house-rule texts (rule 4's "beside the '?'", and the
+  scrolled-phone caveat), the guard's two legal header shapes, the Overview exception, and the
+  unbuilt 12px margin trim from the title-band plan.
+
+- **2026-08-25** — **`/review` run on Phase 3** (standard tier, 3 lenses: correctness · blast-radius ·
+  accessibility/interaction). **No Criticals, no Highs.** Two Lows fixed, one Advisory accepted, one
+  pre-existing Medium recorded.
+
+  **⚠ THE FINDING NO LENS WAS LOOKING FOR, AND THE ONE THAT MATTERED MOST: the change broke its own
+  UAT probes, and nothing in the deterministic gate could have said so.** Typecheck, lint and the
+  rendered sweep were all green while two Playwright specs asserted against buttons that no longer
+  exist. Three separate breaks:
+  1. `drill-library-layout` clicked *New drill* and expected the drill sheet — it now opens a menu.
+  2. `plan-templates-layout`'s `ensureTemplate` helper did the same and expected the editor. That
+     helper exists precisely so two rules-holding tests never silently skip, so it failing would
+     have taken those with it.
+  3. Its empty-state test asserted `/New template/i` **unscoped** — the header now carries a create
+     too, so that matches TWO buttons and Playwright's strict mode fails on the ambiguity. Scoped
+     to the empty state, which is what that test was always about.
+  Both specs gained a shared `openHeaderCreate(page, create, choice)` helper. **A behaviour change
+  owns its tests** — and a UI change that folds two controls into one should always be checked
+  against name-based selectors before it is called done.
+
+  **Fixed (2 Lows):** the busy guard moved from the menu TRIGGER to the "Start from blank" ITEM —
+  disabling the whole menu while a blank template was being created also locked the import route,
+  which the two separate buttons never did; **folding two controls into one must not fold their
+  disabled states together with them.** And the trigger's label is static again: it used to flip to
+  "Starting…", putting a shape-shifting accessible name on something announced as a menu.
+
+  **Accepted (Advisory):** "Start from blank" is now one level deeper for a keyboard user. That is
+  the explicit intent of house rule 6, remains fully keyboard-operable, and is the trade the fold
+  was approved for.
+
+  **Recorded, PRE-EXISTING, inherited not caused (Medium):** `CoachToolbarMenu` declares
+  `role="menu"` / `role="menuitem"` but implements no ARIA menu keyboard pattern — no arrow-key
+  roving focus, no Home/End, and Tab can leave an open panel while it stays on screen. Escape and
+  outside-click are handled. **This applies equally to the Money hub's Import and Export menus**, so
+  it is a portal-wide item rather than a Phase 3 one — a good candidate for Phase 4, which is
+  already touching this component.
+
+  **Verified clean:** the two new props are additive — `MoneyImportMenu` is the only pre-existing
+  caller and renders byte-identically; the new `.triggerPrimary` is declared AFTER `.trigger` so it
+  actually wins (the same cascade-order trap this stylesheet was bitten by twice this week); the
+  warm-skin lime block matches `.btnPrimary`'s convention exactly; the empty states' own doors are
+  untouched.

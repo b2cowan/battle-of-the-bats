@@ -2,6 +2,7 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachToolbarMenu.module.css';
 
 /**
@@ -25,12 +26,26 @@ export function CoachToolbarMenu({
   label,
   icon,
   disabled = false,
+  variant = 'secondary',
+  collapseOnPhone = false,
   children,
 }: {
   /** The button's words — a plain string, so it is also the accessible name. */
   label: string;
   icon?: ReactNode;
   disabled?: boolean;
+  /**
+   * `primary` wears the header's lime create geometry — for the ONE create a page offers when
+   * that create has a choice inside it (house rule 6: two ways to make the same thing is one
+   * button with a choice, not two buttons competing). Everything else stays `secondary`.
+   */
+  variant?: 'secondary' | 'primary';
+  /**
+   * House rule 3 — on a phone the words go and the symbol stays, with the label surviving as the
+   * accessible name. Only for a trigger sitting in a page header, where the title one line above
+   * says what is being created; a toolbar trigger has no such anchor and keeps its word.
+   */
+  collapseOnPhone?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -51,14 +66,20 @@ export function CoachToolbarMenu({
     <div ref={rootRef} className={styles.root}>
       <button
         type="button"
-        className={`${styles.trigger}${open ? ` ${styles.triggerOpen}` : ''}`}
+        className={
+          `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : ''}` +
+          `${open ? ` ${styles.triggerOpen}` : ''}`
+        }
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
+        /* The label is the accessible name while it is visible; once it can hide at ≤640 the
+           name has to be stated, or the phone gets a button announced as "chevron". */
+        aria-label={collapseOnPhone ? label : undefined}
         onClick={() => setOpen(v => !v)}
       >
         {icon}
-        {label}
+        {collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
         <ChevronDown size={14} aria-hidden />
       </button>
       {open && (

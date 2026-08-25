@@ -20,6 +20,22 @@ import { test, expect, type Page } from '@playwright/test';
 import path from 'path';
 
 /**
+ * Open a page header's create and pick one of its ways in (Phase 3, 2026-08-25).
+ *
+ * ⚠ THE CREATE IS A MENU NOW, and that is the point of the change rather than an inconvenience to
+ * work around: two buttons that made the same thing two ways folded into one button with the
+ * choice inside it (house rule 6). `.first()` takes the HEADER's create over an empty state's own,
+ * which is deliberate — these probes are about the room's permanent flow.
+ *
+ * It also proves house rule 3 in passing: at ≤640 the trigger's words are hidden and only its
+ * aria-label carries them, so a name-based lookup that keeps working at 361 IS the guarantee.
+ */
+async function openHeaderCreate(page: Page, create: RegExp | string, choice: string): Promise<void> {
+  await page.getByRole('button', { name: create }).first().click();
+  await page.getByRole('menuitem', { name: choice }).click();
+}
+
+/**
  * ⚠ THE COACH SESSION, EXPLICITLY. The `uat` project defaults every spec to the ORG-OWNER session,
  * who holds no coaching assignment — a coach-portal spec that forgets this line lands on "Not
  * assigned to any teams" and fails in a way that looks like a product bug.
@@ -101,7 +117,11 @@ test.describe('drill library — the room', () => {
     await page.goto(drillsUrl());
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('button', { name: /New drill/i }).first().click();
+    // ⚠ TWO TAPS SINCE PHASE 3 (2026-08-25): "New drill" is the page header's create and it opens a
+    // MENU — "Start from blank" or "Bring one forward from a past season" — because the two ways to
+    // make a drill folded into one button. At 361 its words are hidden and the aria-label is what
+    // matches here, which is exactly the guarantee house rule 3 makes.
+    await openHeaderCreate(page, 'New drill', 'Start from blank');
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
 

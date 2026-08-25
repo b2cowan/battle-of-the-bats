@@ -11235,10 +11235,23 @@ check (harness and scanner carried forward again, productionisation still owed).
 
 ## §87 · One door for money that moved, and it is the same door everywhere (P2)
 
-**BUILT 2026-08-23 (dev).** Money centralization **P2 — the doors re-point**. Plan:
+**BUILT 2026-08-23 (dev) · ✅ QA COMPLETE 2026-08-25 (owner-directed).** Money centralization
+**P2 — the doors re-point**. Plan:
 `docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md`; the build prompt's
 **"THE GATE OUTCOME"** section carries the four owner rulings this was built to, and the approved
 drawings are `claude.ai/code/artifact/d92be400-…` (questions A, B, C). **No migration.**
+
+**✅ CLOSED BY THE OWNER 2026-08-25.** ⚠ Worth recording honestly: **three items here were fixed
+by the adversarial pass AFTER the build and were walked for the first time in this close** — the
+legacy-entry date trap (editing an old fundraiser amount silently moved that money, and the
+family credit it earned, into the current month), a date-only correction that did not reach the
+books or the credit, and the Cancel button that had lost its busy guard when bill payments moved
+onto the shared form. Everything else here had been exercised during the build session.
+
+⚠ **Two riders survive this close and belong to the phases after it:** the required-asterisk
+sweep is folded into **P3** (owner ruling 2026-08-25 — plain asterisk, the red marker retires,
+portal-wide), and the money forms this project deliberately did NOT absorb get their own planning
+session **after P3 and P4** (`COACH_MONEY_FORMS_REVIEW_PLANNING_PROMPT.md`).
 
 ⚠ **TWO OF THE RULINGS REVERSE APPROVED-AND-BUILT WORK, and both were owner-initiated at the gate:**
 the pre-answers a context door arrives with are **locked** (superseding frame D's "changeable like
@@ -11251,13 +11264,13 @@ is the coverage. The layout baseline was re-keyed by hand for the one renamed co
 (the drive row's button) and the retired one (Transactions' Add); a fresh finding there on the next
 sweep means the re-key was wrong, which is the safe direction.
 
-- [ ] **"We paid for something" asks ONE question about what the money paid for.** Press
+- [x] **"We paid for something" asks ONE question about what the money paid for.** Press
       **Record** from Transactions. The Expense/Income pills, the refund tick and — new this pass
       — the **"Has it been paid?" fork with its schedule editor** are all gone. The field reads
       *What did this pay for?* and its list opens with **Bills you owe** at the top, each row
       carrying what is still owing, then Tournaments / Facilities / the rest. Type four letters of
       a bill's name and the item half empties without the list claiming "nothing matches".
-- [ ] **Picking a bill visibly changes the form — three signals, all three required.** The
+- [x] **Picking a bill visibly changes the form — three signals, all three required.** The
       **Description** field disappears (the bill has one); a **For installment** row appears when
       the bill has more than one piece, defaulting to *wherever it's owed (oldest first)*; and the
       line above the buttons names the bill and what it drops to. Save, and the register carries
@@ -11266,52 +11279,52 @@ sweep means the re-key was wrong, which is the safe direction.
       that it still saves, and the record reads "$X over" afterwards.
       ⚠ **This is a thing the product could not do at all before** — from the hub's Record button
       there was no way to pay down a commitment.
-- [ ] **Date paid is required, and a future date is refused with the right door.** Clear the date
+- [x] **Date paid is required, and a future date is refused with the right door.** Clear the date
       and save: it refuses, and the sentence names Payables. Type next month's date: the refusal
       offers **Put it on Payables instead**, and pressing it carries the amount, the item, the
       description, the payee AND the tags into the commitment form (all five — the payee and tags
       have been dropped by this hop before). ⚠ The old "clear this and it waits as an unpaid cost"
       hint is gone with the behaviour: an unpaid cost with no due date can no longer be created.
-- [ ] **Payables keeps its own Add; Transactions' Add is gone.** The Payables toolbar still offers
+- [x] **Payables keeps its own Add; Transactions' Add is gone.** The Payables toolbar still offers
       **Add a commitment**, and it opens a form titled *Add a commitment* with no "What happened?"
       question at all — it states its kind, the way an edit does. The Transactions toolbar has no
       Add button; **Record** in the page header is its door. Both **empty states** keep their own
       Add and their import/paste offers, at every width.
-- [ ] **Record is tab-aware, and a tab is only a guess.** Press Record from **Player Dues** → it
+- [x] **Record is tab-aware, and a tab is only a guess.** Press Record from **Player Dues** → it
       opens on *A family paid their dues*; from **Fundraising** → *Fundraiser money came in*; from
       **Club** → *We settled up with the club*; from **Payables** or **Transactions** → *We paid for
       something*. Every one of them is still **changeable** — open the dropdown and switch. From
       **Overview**, **Budget Plan** or **Budget vs. Actual** it opens unanswered on *Choose…*, as
       before.
-- [ ] **A door that names one RECORD locks.** On Player Dues open a family and press **Record**:
+- [x] **A door that names one RECORD locks.** On Player Dues open a family and press **Record**:
       the form opens with a stated band — *"A family paid their dues — Jenny Alvarez"*, and beneath
       it *"Owes $252 · opened from their record"*. **There is no dropdown and no player picker**:
       nothing to switch, so the ghost save this ruling exists to prevent (switch to "we paid for
       something", save, land back on a page where nothing changed) is impossible. Cancel and reopen
       is the way out of a wrong door. Save, and the drawer behind it shows the new figures.
-- [ ] **The same lock, from three more doors.** The credit strip's **Record** (payout branch, family
+- [x] **The same lock, from three more doors.** The credit strip's **Record** (payout branch, family
       and the held amount stated, amount pre-filled and editable); a drive leaderboard row's
       **Record** (drive AND player stated, neither offered); a bill's / a scheduled register row's
       **Record** (the bill stated — but **For installment** stays editable, because where the money
       lands is allocation, not identity).
-- [ ] **"Where it lands" survived the move.** On the drive branch, with an amount typed, the form
+- [x] **"Where it lands" survived the move.** On the drive branch, with an amount typed, the form
       lists exactly which of that family's installments the rebate lowers and by how much — the
       same preview the leaderboard drew, from the same shared arithmetic, not a re-derivation. A
       keep-separate team gets its own sentence instead; an over-run says how much is owed back.
-- [ ] **Editing stayed where the record lives, and says so.** The pencil on a dues receipt opens
+- [x] **Editing stayed where the record lives, and says so.** The pencil on a dues receipt opens
       the in-drawer panel, which now only ever corrects: its button reads **Save correction** and
       its sentence says the old books entry is voided. A drive row that already has an amount says
       **Edit amount** and opens in place — and **now carries a Date received**, so a date set from
       the conversation can be fixed from the screen that shows it. Back-date an edit and the
       register row and the family's credit both move with it.
-- [ ] **The one-taps are untouched, and the club's converged by name only.** Dues **Record as
+- [x] **The one-taps are untouched, and the club's converged by name only.** Dues **Record as
       paid** / **Record rest as paid** and the installment banknote button still do not stop to
       ask. The Club tab's button now reads **Record as paid** instead of *Mark paid* — and is still
       **one tap**, because a club installment has no amount, date or method to ask for.
-- [ ] **The refund branch lost its label-only field.** "Money back on something we paid" no longer
+- [x] **The refund branch lost its label-only field.** "Money back on something we paid" no longer
       offers **Who paid it back**. Existing records that carry one still load, save and export
       unchanged — this removed a way to set a label, not the label.
-- [ ] **The chooser's live hints are fresh after a save.** Record a dues payment from the hub, then
+- [x] **The chooser's live hints are fresh after a save.** Record a dues payment from the hub, then
       press Record again: the *"N families owe · $X"* hint reflects the payment just made. (The
       bridge that does this had been written and never rendered — found while wiring these doors.)
 
@@ -11892,6 +11905,10 @@ line to correct. Say the word and it goes in.
 
 **BUILT 2026-08-25 (dev), v2 the same day from the owner's rendered file.** Plan:
 `COACH_EXCEL_EXPORT_FORMATTING_PLAN.md`. No migration; CSV and PDF byte-identical throughout.
+`/review` run post-v2 (high-risk tier, 4 lenses + an ExcelJS write→read probe): 10 raw findings →
+4 fixed (the buffer row now bolds like the screen; three hardenings/doc corrections), 2 refuted,
+4 advisory-accepted and documented in the plan. The probe proved the collapsed-group XML and the
+date-header round trip against the real library, not the docs.
 
 Every Money-tab Excel file now writes real currency cells (`$2,600.04`), and the two grouped
 reports (Budget by month, Budget vs. actual) come out with bold REVENUE/EXPENSES/category/total
@@ -12093,3 +12110,362 @@ the thing to report.
 ⚠ **Known and NOT fixed here:** the **"Season insights →"** link on Overview is a 21px tap target.
 Pre-existing, recorded as touch-target debt rather than closed with a written excuse, and out of
 scope for this ruling.
+
+---
+
+## §91 · Two ways to make the same thing stop competing for space
+
+**BUILT 2026-08-25 (dev).** Page-level action consistency **Phase 3** — Plan templates and Drills.
+Plan: `COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`. Reconciliation sheet:
+https://claude.ai/code/artifact/72d79e12-22fe-4b93-b121-d7ea038cc44d · **No migration.**
+
+- [ ] **Skills & Goals → Plan templates.** The create is now **at the top of the page**, not down in
+      the filter row. Open it: **Start from blank** and **Bring one forward from a past season** —
+      the two buttons that used to sit side by side, now one button with the choice inside.
+- [ ] **Both routes still work.** Start from blank makes a new empty template and opens it; Bring
+      one forward opens the past-season picker exactly as before.
+- [ ] **"Your tags" is still in the filter row**, beside the search box — deliberately. It manages a
+      vocabulary shared with drills and player focus areas, so it belongs with the list it filters,
+      not with the create.
+- [ ] **Skills & Goals → Your drills.** Same fold, same two choices. ⚠ Its filter row is now the
+      **search box alone** — unlike templates, Drills never had a tag control (the plan claimed it
+      did).
+- [ ] **On a phone, both headers read `<page name>` · `+`.** Tap the **+** and the two choices come
+      up. Check your thumb reaches it comfortably.
+- [ ] **A read-only assistant sees no create at all** on either screen, at any width — absent, not
+      greyed.
+- [ ] **Empty states are untouched.** A team with no templates (or no drills) still gets its own
+      create and past-season doors inside the empty card.
+
+**Measured:** the rendered sweep reports **no new findings**, and phone tap-target debt is unchanged
+at 38 entries across both screens — the fold removes one control per screen rather than adding any.
+
+**Noted, not done:** Schedule's Add Event still hand-rolls this same "create with a choice inside"
+pattern instead of using the shared menu. Folding it in is a Phase 4 job — it is a screen already
+walked at §88 and not worth re-opening for tidiness alone.
+
+## §101 · Every figure on Months opens, and a season can carry money forward — BUILT, awaiting QA
+
+**BUILT ON DEV 2026-08-25.** Option D's second and final half (D-2). Plan
+`docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md` §2.2 + PM brief. Build prompt:
+`BVA_OPTION_D2_ITEMS_AND_OPENING_BALANCE_BUILD_PROMPT.md`. Drawings:
+`claude.ai/code/artifact/da5d08b9-b81e-4848-a758-35a83923a98a` (what opens behind a figure) and
+`claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2` (the opening-balance workflow).
+**Migration 262 — applied to DEV only.** ⚠ It must reach prod BEFORE this code is promoted, or every
+money screen 500s on a column that isn't there.
+
+⚠⚠ **THE DARK THEME IS AN ACCOUNT PREFERENCE, NOT A MEDIA QUERY.** Warm is the platform default and
+every fresh browser renders warm; the drawings are in dark because that is the theme you work in.
+**Walk the chrome boxes in BOTH** — the D-1 session verified the wrong one several times.
+
+⚠ **Walk on `qa-money-lab` → QA Money U13**, which reconciles to the drawings to the dollar. Its
+$599/$61 family-paid costs, its $20 payout and its pending $450 club request are the exact edge
+shapes. ⚠ **It carries NO opening balance** — for Part B you need a team that does: either roll a
+season forward on a standalone Premium team, or set one in Team settings → Money.
+
+### Part A — every revenue figure opens
+
+- [ ] **Money → Reports → Budget vs. Actual → See it by month → Actual.** Every group on the
+      **Revenue** band now has a **chevron**. Open **Player dues**: one row per family, named. ⚠
+      **Every family renders** — nothing is folded away, and the drawing's "…nine more families" was
+      drawing economy rather than a design.
+- [ ] **A family's missing month is visible at a glance**, in the month it did not arrive — that is
+      the whole point of the row existing.
+- [ ] **Tap a family's figure.** A read-only panel: each payment, its date, how it arrived. Two
+      doors — **Open Player Dues**, **Open Transactions**. ⚠ **No "Record a payment" button**,
+      deliberately: the grid reaches your forms, it never becomes a second editor.
+- [ ] **Tap the GROUP's figure instead.** The same panel for the whole team that month — every
+      family's payment, named. Same shape, wider scope.
+- [ ] **Fundraising** opens to each **drive**. Inside a drive: who raised each amount, and the
+      rebate as a **note** ("$120 credited to their dues") — ⚠ **never a second figure**. Panel
+      total reads **"Total raised"**. Second door opens **that drive** by name.
+- [ ] **Sponsorships** opens to each sponsor; the panel's second door opens **that sponsor**.
+- [ ] **Other income** opens to what it was **filed under** ("Gate takings"), with unfiled arrivals
+      on a **Not itemized** row. ⚠ **ONE door** (Transactions) — there is no "thing itself" to open,
+      the record *is* the thing.
+- [ ] **Money back & reimbursements** opens to **two rows**: *Money back you recorded* and *Repaid
+      by the club*. ⚠ **Each record NAMES WHAT IT REPAID** ("repaid Officials / Clinic fees"). The
+      club row offers **Open Club** + Transactions; the recorded row offers **Transactions only**,
+      and that asymmetry is deliberate.
+- [ ] **Paid back to families** (bottom of the Expenses band) opens **by family**, mirroring dues.
+      Each payment carries its **reason** on its own meta line ("e-transfer · overpaid installment
+      #2"). Doors: Player Dues + Transactions.
+- [ ] **Switch to Scheduled.** Player dues opens to each family **still owing**, quoting the
+      **remainder, not the face value**, and saying how much is already covered ("$100 of $317
+      already paid"). Panel total reads **"Still to come"**.
+- [ ] **Sponsorships and Asked of the club under Scheduled live entirely in "No date yet"** — and
+      that column's figures now **open**, which they never did before. ⚠ **Both panels total to
+      "Possible", never "Total"** — the one word that stops a coach banking money nobody has agreed
+      to send.
+- [ ] **Switch to Budget, then Difference.** ⚠ **No subject rows on either** — a family has no
+      per-family plan, so every row would print its whole Actual as "ahead of plan" in the colour
+      the grid uses for good news. The chevron is disabled, not a row of dashes.
+- [ ] **Expense categories still open to their items** exactly as before, and their item figures now
+      open too (same panel, filtered to that item). ⚠ **This is a small deliberate extension beyond
+      the nine drawn rows** — say so if you would rather they stayed inert.
+- [ ] ⚠ **Panel titles changed shape**: they now read *"Maya Ledger · August 2026"* (the drawing's
+      form) where the expense panel used to read *"Paid in August 2026 · Facilities"*. One form for
+      every panel. Flagging it because it changes chrome that passed §85.
+- [ ] **Export the month view (Excel/CSV).** The family/drive/sponsor rows are in the file, and
+      **the same rows the screen showed** — none under Budget or Difference.
+- [ ] **Read-only money assistant:** every panel opens; no panel offers a write.
+- [ ] **A coach WITHOUT money access still cannot reach any of it** — family names are gated exactly
+      as the Player Dues tab is, and no wider.
+
+### Part B — the season opening balance (migration 262)
+
+- [ ] **Team settings → Money.** A new **Season opening balance** row beside the two dues settings.
+      On a team that carried nothing it reads **"None carried"** and explains what it is for.
+- [ ] **Set a figure.** It is an **Edit → Save**, not a save-on-blur field like the credit split
+      beside it — deliberately, because this one moves Cash on hand.
+- [ ] **Money → Transactions.** The book's first line now reads **"Opening balance · money the team
+      was already holding"** with a **Change →** button into Team settings. Every balance down the
+      page starts from it, and **Cash on hand at the top includes it**.
+- [ ] **Money → Reports → Budget vs. Actual → Months → Actual.** A new **Opening balance** row at
+      the head of the summary block, its figure in the **season's first month** and in **Total**.
+      A note under the grid says where it came from.
+- [ ] **Switch to Scheduled.** ⚠ **NO opening-balance row** — that lens projects from today's real
+      money, which already contains the carry. Showing it again would count it twice.
+- [ ] **Switch to Budget.** The row is back, and the projected balance starts from it.
+- [ ] **Clear the figure (empty the field, Save).** Every opening line disappears — from the
+      register, the report and the settings row. ⚠ **It reads "None carried", not "$0.00"**: a
+      season that carried nothing and a season carried at exactly zero are different facts.
+- [ ] **Standalone Premium head coach → Start next season.** A new **"Carry your money forward?"**
+      block quotes **Cash on hand today** and offers three answers: carry all (default) · carry a
+      different amount · start at $0. ⚠ **Drawn as "step 2 of 3" and BUILT AS A BLOCK in the one
+      form** — turning that dialog into a wizard would have pushed the owner-placed "This closes the
+      {season} season" panel behind a Next button. Say if you want the wizard.
+- [ ] **The note says settling up happens BEFORE this step**, and nothing here blocks the roll.
+- [ ] **Roll forward with "carry all".** The success list reports what was carried — ⚠ **the
+      SERVER's figure, not the one the dialog displayed**. Open the new season: its register opens on
+      that balance, its Months report shows the row, and Team settings names the season it came from
+      ("Carried from the 2026 Season when this one was started").
+- [ ] **Edit it by hand in the new season.** The provenance line **disappears** — it was vouching
+      for a figure nobody carried any more.
+- [ ] **Roll forward with "start at $0".** No opening line anywhere in the new season.
+
+### Known, not fixed
+
+⚠ Two **pre-existing** layout findings surfaced on Budget vs. Actual at 768px and are **not this
+build's**; neither is baselined, so `check:layout` reports them:
+- **`Record money` at 31px** — fails identically on **Transactions**, which this build did not
+  touch. The same money-centralization P1 leftover §85 already identified.
+- **The Statement's cash-bridge `summary` at 28px** — the §98 disclosure line; that build did not
+  re-run the layout sweep. Both are one CSS line each if you want them taken.
+
+## §102 · The schedule reads like a weekend, not like a database — BUILT, awaiting QA
+
+*PDF Export Quality, Phase 2, pass 5 of 6 (Schedules). Built 2026-08-25 on dev. Two owner
+checkpoints walked from rendered paper; the decision gallery and the built gallery are both
+published artifacts.*
+
+**⚠ The plan was wrong about this group and the prompt was only half right.** The plan said
+"already the model; verify against the gallery, nothing structural". The prompt corrected that to
+three defects. Rendering it through the real exporter found **five**, and the two the prompt missed
+were the worst of them — because the prompt's own exhibit was hand-written and production does
+something different.
+
+### What to walk
+
+Admin → a tournament → **Schedule** → **Export → PDF report** (needs Tournament Plus). Export it
+three ways and compare:
+
+1. **Before the weekend** (filter Status to Scheduled only, or export a tournament that has not
+   started). The document should have **five columns and no Status column at all** — every game is
+   still to come, so nothing is worth saying. Each day is a section headed
+   *"Friday, July 31 · 16 games · Riverdale Memorial Park"*.
+2. **After it** (a finished tournament). Same five columns, and each day's heading gains
+   **"· all final"**. The word "Final" should not appear sixteen times down a column.
+3. **A mixed weekend** (one day still to play). The Status column comes back, and it is blank on
+   every row it has nothing to say about.
+
+Then the specific things:
+
+- **A cancelled game.** Cancel one and re-export. Its **Time cell reads `CANCELLED`**, and the row
+  ends *"was 7:00 PM"*. ⚠ This is the highest-consequence line on the paper — please satisfy
+  yourself that you cannot skim past it.
+- **A game with no time yet.** It reads **"Time TBD"** and sits at the **end** of its day, not the
+  start.
+- **A day played at two venues.** The park does NOT lift into the heading and every row carries its
+  full location. The column is headed **Location** either way.
+- **A long day that runs past one page.** Page 2 must open with the day's heading again, marked
+  **"(continued)"**. Before this pass it opened with a bare table and the reader could not tell what
+  day they were holding.
+- **The date column is gone**, and the word **Friday / Saturday / Sunday** is on the paper. It never
+  was before.
+
+⚠ **The Excel, CSV and calendar exports are deliberately unchanged** — every column, every raw
+value. The PDF is a wall copy, not a copy of the spreadsheet. If you want the PDF to carry the
+Division column's full detail or the submission trail, that is a change of mind, not a bug.
+
+### What it looked like before (all verified by rendering, not read off a plan)
+
+1. The Date column printed the **stored** `2026-07-31`, sixteen times down page 1, and the word
+   *Friday* appeared **nowhere** on the document. ⚠ The prompt described this as repeating
+   "Fri, Jul 10" — that was a hand-written exhibit; the shipping code never called the screen's own
+   date formatter at the export site.
+2. Status printed `completed` / `scheduled` — lower case, the database's words, on a customer's
+   wall. The screen's own status filter twenty lines away already said **Final / Scheduled /
+   Cancelled**.
+3. "Riverdale Memorial Park - " printed ahead of the only part that differed (the diamond number) on
+   every row.
+4. **A cancelled game was typographically identical to a live one** — same row, same weight, same
+   ink, marked only by a small grey word at the far right past six columns. ⚠ Not in the prompt's
+   list. This is somebody driving to a diamond.
+5. A game with no time printed an **empty cell** — reads as a fault in the document, not a fact
+   about the game.
+
+### The three shared-engine fixes, and what they cost
+
+These reach **every grouped document** — the division registers, the results report, the development
+summary — not just the schedule:
+
+- **A section that spills a page carries its name onto the next one**, marked "(continued)". This is
+  the §84 continuation-band defect one level down: the band was fixed, the section heading was not.
+- **A heading can no longer strand itself at the foot of a page** with two rows under it.
+- **All sections of one document share one column grid.** Each section is its own table, so section
+  two used to lay out on different widths from section one and the grid moved under a reader
+  comparing them.
+
+⚖ **THE COST, AND IT IS YOURS TO REVERSE: tournament results went 4 pages → 5.** The continued
+heading takes room at the top of every page a section spills onto, and results is a long, dense
+eleven-column document. I think three pages that say which division they belong to is worth a fifth
+page. Say the word and the continuation heading can be made opt-in per report.
+
+**Proved free across the corpus.** All 78 documents re-rendered and read back as text before and
+after. Exactly two rows moved: the results report above, and the practice run sheet's
+unfinished-rotation case (1p → 2p) which is **NOT this pass** — the run sheet is drawn by separate
+code none of these edits touch, and the baseline scan predates §99's corrections to it.
+
+### Two things found and NOT fixed here, both deliberate
+
+1. ⚠ **The product spells the clock two ways.** The tournament and admin surfaces say **"8:00 AM"**
+   (28 files, via one shared helper); the coach portal, family emails, the practice run sheet and
+   every help article say **"8:00 a.m."** One word, two spellings in a customer's hands — the exact
+   shape of the ruling of 2026-08-24, and the same shape as the `colour` / `-ise` piles that ruling
+   parked. The schedule PDF was left matching **its own screen**, because changing only the PDF
+   creates fresh paper-vs-screen drift. **Owner + `/marketing` decision, its own pass.**
+2. ⚠ **Cells break mid-word on narrow columns** — "Maplewoo / d Mustangs" on the results report.
+   **PRE-EXISTING**, not introduced here. The cause is the shared column-floor rule capping a cell's
+   longest token; changing it moves column widths on **every table in the product**, which the
+   engine rules explicitly warn against doing on the way past. Its own pass.
+
+### Decision 6 resolved — the coach and house-league schedules ARE owed PDFs
+
+The floor rule ("a document that is read, handed, or pinned gets a PDF") and Decision 6's own
+"nothing new is owed" could not both be right about a team's season on a fridge. Rendered as paper
+at checkpoint 1, the coach fridge copy was the strongest document in the set — grouped by month,
+six columns: when, when to **arrive**, who, where, what to **wear**. Owner ruling: **yes, and each
+in its own pass**, because each is a new document with its own column decisions.
+
+⚠ **The export catalog was lying about both of them** — it said "Not yet implemented — planned Phase
+D2". They ARE implemented (Excel, CSV and calendar all ship); only the PDF is missing. Corrected to
+record what is actually owed and why.
+
+### Coverage
+
+Twenty-four new unit tests: the schedule's vocabulary, its day grouping, the vanishing Status column,
+the venue lift and its no-field exception, the cancelled-game treatment, and all three engine fixes.
+**Every one was proved to fail** — each bug reintroduced in turn (twelve mutations) and the suite
+watched go red, then restored. Per §99: a test that cannot fail is not coverage. Full suite 2,502
+green; typecheck clean.
+
+⚠ **`verify:changed` reports schema parity RED** — pre-existing dev-only migrations
+(`rep_program_years.opening_balance`) from another session. This pass adds no migration.
+
+### Demo question (CLAUDE.md), answered and recorded
+
+**Nothing stale.** The tournament sandbox's guided tour step 4 stands on the Schedule screen but
+talks about drag-and-drop conflict health; no dock line or tour sentence mentions exports or
+printing, so nothing became untrue.
+
+**But a new moment is now plausible, and it is the owner's call, not mine.** The tournament sandbox
+runs on `tournament_plus`, so **a prospect can download this document today**. This is the first
+pass whose output a prospect might actually hold, and a wall copy is a persuasive artifact for a
+tournament organiser. Adding a tour beat changes the tour's shape (every step is currently one
+reversible action) — flagged rather than slipped in.
+
+### Help docs
+
+The tournaments Exporting-data article now describes the schedule PDF as a wall copy and names the
+cancelled-game treatment. The Exports & Downloads guide gained one paragraph: **a PDF is a document,
+not a copy of the spreadsheet** — some are shaped for how they get read, and Excel/CSV are where
+every column and raw value live. The availability table needed no change: no format was added.
+
+### `/simplify` then `/review` on this pass — 2026-08-25
+
+**`/simplify` (4 lenses) — six cleanups applied, all proved output-neutral.** The whole 78-document
+corpus was re-rendered and read back after the cleanup and came out **byte-identical** to the
+pre-cleanup render, which is the only reason a tidy-up touching the shared engine was allowed to
+land at all.
+
+- The pinned-grid work was measuring the sampled rows a **second time**, duplicating the font
+  switching and sample-step arithmetic the no-shred floor pass already did. Folded into ONE pass
+  that returns both numbers; the grid maths is now pure arithmetic over already-measured values.
+- A `keptFloors` field was being threaded through the fit result purely to carry numbers that
+  already sat one property away. Gone.
+- `pluralize` already existed; the module had hand-rolled its own.
+- ⚠ **The status words were a SECOND COPY of the schedule screen's own filter labels** — the exact
+  mechanism AGENCY_RULES' one-spelling rule exists to prevent. Moved to
+  `lib/tournament-schedule-status.ts`, which the filter row and the printed schedule now both read.
+  ⚠ **Deliberately NOT a canonical map for the whole product:** eight other surfaces map a game
+  status to words, and the public game page and bracket resolve `submitted` to **Unofficial** or
+  **Final** depending on whether the event requires finalization. Half-centralizing those would
+  have been worse than leaving them. Widening it is its own piece of work.
+- `formatWeekdayDate` shipped with `long`/`withYear` options **no caller used**. Trimmed to one
+  shape. The next schedule PDF adds a variant when it has a caller.
+- The group-heading height was a fourth magic number that had to agree with three drawing offsets
+  by hand; it is now built from them.
+
+⚠ **One cleanup finding was NOT acted on, deliberately.** The altitude lens is right that this
+module's column set is a fixed literal and the next caller (a league season, which carries a
+**score**) cannot add a column without editing it. Building the parameter now, with no second
+caller, is the speculative abstraction this repo keeps paying for — so the file's own doc comment
+now says plainly that it is **not** general yet and names what the first new caller must do.
+
+---
+
+**`/review` (high-risk tier, 5 lenses) — two real defects, both fixed.**
+
+1. ⚠ **A game with no date yet printed a heading with NO DAY ON IT.** Found independently by
+   **two** lenses. Playoff games exist before anyone knows when they are played, and the games API
+   returns them with a null date — a completely ordinary state. The heading built to
+   `"   ·   3 games"`: opening with the separator dots, naming no day, on the one document whose
+   entire job is weekday findability. Now **"Date TBD · 2 games · Riverdale Memorial Park"**, and
+   it lands at the end of the document (Postgres sorts a null date last), which is where an
+   organizer wants it. Rendered and looked at.
+2. **A score awaiting review printed a word the screen never uses.** Switching all three status
+   chips off passes every status through, so `submitted` and `forfeit` DO reach the paper — and
+   the vocabulary only covered the three the filter offers, so a submitted score printed the
+   generic "Submitted" while the screen says **Pending review**. Two words for one state, which is
+   this pass's whole subject. Both states are now in the shared vocabulary.
+   ⚠ **The screen still says more than the paper for one sub-case** — a submitted score that
+   arrived as a forfeit reads "Forfeit — pending" on screen, because the screen has the submission
+   source and a printed row does not. "Pending review" is the honest shared word, not a wrong one.
+
+**Refuted / cleared, and worth recording because each was a real suspicion:**
+
+- **No date is ever computed wrong.** The weekday helper was run under five timezones from UTC+14
+  to UTC−11 and produced identical output; the timestamp-vs-date-only concern was traced to the
+  schema and cleared (`games.game_date` is a plain `date`, so there is no evening-rollover risk).
+- **No race introduced.** The export reads every piece of screen state — rows, filename, title —
+  **before** its one asynchronous step, so switching tournament mid-export cannot produce a
+  mislabelled file. This was the §99 failure mode and it does not reproduce.
+- **No caller broken.** Every consumer of the shared engine, the changed fit result, the date
+  helper and the export catalog was inventoried and cleared.
+- **The spreadsheet divergence is safe.** The PDF now prints different columns from the Excel/CSV
+  of the same screen; the schedule IMPORTER reads spreadsheets only, so no round-trip contract
+  breaks, and the help copy already describes the new shape accurately.
+
+**Two PRE-EXISTING issues surfaced, neither fixed here, both the owner's call:**
+
+- ⚠ The org's PDF branding is fetched without a sequence guard, so in principle a stale org's logo
+  could land on another org's document. Untouched by this pass; reachability unconfirmed (it needs
+  the org to change without the page remounting). Worth its own look.
+- ⚠ Cells break **mid-word** on narrow columns ("Maplewoo / d Mustangs" on the results report).
+  Already recorded above — the cause is the shared column-floor rule and changing it moves widths
+  on every table in the product.
+
+**Coverage:** five more tests (89 in this file, 2,507 across the suite). Both review fixes were
+proved to fail with the defect reintroduced, same discipline as the rest of the pass. The corpus
+was re-rendered a third time after the review fixes and is unchanged.
