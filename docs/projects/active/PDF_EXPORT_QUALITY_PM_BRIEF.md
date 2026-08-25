@@ -85,9 +85,46 @@ across the page turns its grid on its side rather than cutting anybody’s group
 change — a report can now declare a column the reader fills in by hand — was proved to cost every
 other document nothing by re-rendering all 65 and comparing them line by line.
 
-**Two group passes remain** — schedules, and posters and brackets — each with its own rendered
-sign-off, then the Phase 3 check that renders documents in CI so this class of rot cannot return
-unseen.
+**Phase 2 pass 5 — Schedules** took the one document a stranger reads without being handed it:
+pinned to a fence, taped to a rink door, photographed by a parent. Nobody reads it top to bottom —
+they hunt one row — so findability beats completeness.
+
+The old one made that nearly impossible. Every row carried the stored date `2026-07-31`, sixteen
+times down the page, and the word **Friday** appeared nowhere on a document whose entire job is a
+weekend. The park's name printed ahead of the only part that changed — the diamond number — on
+every line. The status column said `completed` in lower case, the database's word rather than the
+one our own screen uses. A game with no time yet printed a blank cell that reads like a fault. And
+worst, unnoticed until it was rendered and looked at: **a cancelled game was indistinguishable from
+a live one**, marked only by a small grey word past six columns, on a page somebody reads at eight
+in the morning before driving to a diamond.
+
+It now reads as a weekend. Games are grouped by day, each section headed with the weekday, how many
+games, and the park — so the date and the venue leave the rows entirely. The status words are the
+ones the schedule screen already uses. That column now speaks only where it is an exception, and
+comes off the paper completely when there is nothing to say: a schedule printed before the weekend
+has no status column at all, and one printed after says "all final" once in each day's heading
+instead of on every line. A cancelled game **gives up its clock** — the time column reads CANCELLED,
+and the row keeps "was 7:00 p.m." so it still says when it would have been. A game not yet slotted
+says "Time TBD" and sits at the end of its day.
+
+Three things were fixed underneath, and they reach every document that prints in sections — the
+division registers and the results report included. A day (or a division) that runs past the bottom
+of a page now **carries its name onto the next one**, marked "(continued)"; before this, a reader
+holding page three of a schedule had no way to tell what day it was. A section heading can no longer
+strand itself at the foot of a page with two rows under it. And all sections of one document now
+share one column grid, so the table does not shift under a reader comparing two parts of the same
+sheet. The cost is one honest page: the tournament results report went from four pages to five,
+because the repeated heading takes room. That is reversible if it is judged the wrong trade.
+
+**One decision was settled from rendered paper: a coach's team season schedule, and a house-league
+season schedule, are owed printable versions.** Both are exactly the document that ends up on a
+fridge, and both already export everything they need to a spreadsheet. Each gets its own pass rather
+than being absorbed here, because each is a new document with its own choices about what a family
+actually needs on paper — arrival time and uniform, not eleven columns. The export catalog now
+records that they are owed.
+
+**One group pass remains** — posters and brackets — then the Phase 3 check that renders documents in
+CI so this class of rot cannot return unseen.
 
 ## The problem, now with proof
 

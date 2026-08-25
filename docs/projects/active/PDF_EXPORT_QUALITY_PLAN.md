@@ -263,7 +263,53 @@ judges on the group's own definition of good:
   that it takes no plan gate, because the button never has. One shared-engine addition, opt-in and
   proved free across the 65-document corpus: a report may declare **a column the reader fills in by
   hand**. *Good = works in a coach’s hand, in weather.*
-- **Schedules:** already the model; verify against the gallery, nothing structural.
+- **Schedules — BUILT on dev 2026-08-25** (owner QA §102; prompt
+  `PDF_EXPORT_QUALITY_P2_SCHEDULES_BUILD_PROMPT.md`). ⚠ **This bullet used to read "already the
+  model; verify against the gallery, nothing structural" — written in the 2026-08-21 planning
+  session, and WRONG.** Rendered through the real exporter it carried FIVE defects, two of them
+  worse than the prompt's own list: the Date column printed the **stored** `2026-07-31` (not the
+  prompt's assumed "Fri, Jul 10" — that was a hand-written exhibit), so the word *Friday* appeared
+  nowhere on a document whose whole job is a weekend; the Status column printed raw lower-case
+  database words; the venue name repeated ahead of the only part that differed; a game with no time
+  printed an **empty cell**; and — highest consequence, unlisted — **a cancelled game was
+  typographically identical to a live one**, marked only by a small grey word past six columns.
+
+  Shipped: games **group by day**, each heading naming the weekday, the game count and the day's
+  single park (lifted only when every game has a field to leave behind); the screen's own status
+  words (Final / Scheduled / Cancelled, sentence-cased for any future enum member); the Status
+  column **speaks only where it is an exception** and comes off the paper entirely when nothing
+  would speak, with a uniform day saying "· all final" once in its heading; a cancelled game **gives
+  up its clock** (the Time cell reads CANCELLED, the row keeps "was 7:00 PM"); "Time TBD" where a
+  time is missing. The print shape lives in `lib/export/schedule-document.ts`, shared so a league
+  season reads the same way when it gets its PDF. Spreadsheet/CSV/iCal are untouched and still
+  carry every column and every raw value.
+
+  Three shared-engine fixes, reaching every grouped document (registers, results, development
+  summary): a section that **spills a page carries its name onto the next one** marked
+  "(continued)"; a heading can no longer strand itself at the foot of a page; and all sections of
+  one document share **one column grid** — pinned only when every column can have what it wants, so
+  an over-subscribed table keeps the existing squeeze. Proved by re-rendering the **78-document
+  corpus** before and after: two rows moved, one of them not this pass's. ⚠ The cost is honest and
+  the owner's to reverse: **tournament results went 4 pages → 5**, because the continued heading
+  takes room at the top of every spilled page.
+
+  **Decision 6 resolved (owner, 2026-08-25, from rendered paper):** the floor rule stands and the
+  coach team season schedule + house-league season schedule **are owed PDFs** — each in **its own
+  pass**, not absorbed here, because each is a new document with its own column decisions. The
+  export catalog now records that rather than the stale "not yet implemented" (both ARE
+  implemented; only the PDF is missing).
+
+  ⚠ **Two things deliberately NOT done, both flagged to the owner:**
+  1. **The clock spelling.** The tournament/admin surfaces say "8:00 AM" (`formatTime`, 28 files);
+     the coach portal, family emails, run sheet and every help article say "8:00 a.m.". One word,
+     two spellings in a customer's hands — the same shape as the `colour` / `-ise` piles in
+     AGENCY_RULES. The schedule PDF was left matching its own screen; changing only the PDF would
+     have created fresh paper-vs-screen drift. Owner + `/marketing` decision, its own pass.
+  2. **Mid-word cell breaking on narrow columns** ("Maplewoo / d Mustangs" on the results report).
+     PRE-EXISTING, caused by `CELL_TOKEN_CAP_MM` in the shared floor rule; changing it moves column
+     widths on every table in the product. Its own pass.
+
+  *Good = the whole weekend, at a glance, on a wall.*
 - **Posters, cards & brackets:** logo on the drawn documents; bracket vertical centring. *Good = big
   type, high contrast, one job.*
 

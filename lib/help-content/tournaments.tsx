@@ -1886,7 +1886,7 @@ const tournamentsHelp: HelpPageContent = {
           </p>
           <ul>
             <li><strong>Registrations</strong> — Excel and CSV of the full team list; PDF check-in or insurance sheet (Tournament Plus)</li>
-            <li><strong>Schedule</strong> — Excel, CSV, or iCal to add games to Google Calendar, Apple Calendar, or Outlook; PDF field ops sheet (Tournament Plus)</li>
+            <li><strong>Schedule</strong> — Excel, CSV, or iCal to add games to Google Calendar, Apple Calendar, or Outlook; PDF wall copy (Tournament Plus). The PDF is built to be pinned up: one section per day, headed with the weekday, the number of games and the park. A cancelled game shows <strong>CANCELLED</strong> where its start time would be, so nobody reads it as a game still on.</li>
             <li><strong>Results</strong> — Excel or CSV, including who submitted each score, when, and through which door; PDF post-event board report grouped by division (Tournament Plus). The PDF prints the games and scores only — the score-submission trail is working data and stays in Excel and CSV.</li>
           </ul>
           <p>

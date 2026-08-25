@@ -874,3 +874,285 @@ describe('the practice run sheet', () => {
     assert.ok(!printed.some(s => s.includes('WORKING ON')));
   });
 });
+// ── Schedules pass (Phase 2, pass 5) ─────────────────────────────────────────
+
+import { buildScheduleDocument, type ScheduleGame } from '../../lib/export/schedule-document';
+
+const game = (over: Partial<ScheduleGame> = {}): ScheduleGame => ({
+  date: '2026-07-31', time: '8:00 AM', division: 'U11 Rookie',
+  homeTeam: 'Riverdale Royals', awayTeam: 'Harborview Hawks',
+  location: 'Riverdale Memorial Park - Diamond 1', status: 'scheduled', ...over,
+});
+
+/** Every cell the document would print, flattened — for "does this word appear at all". */
+const printedCells = (d: { groups: { rows: string[][] }[] }) => d.groups.flatMap(g => g.rows).flat();
+
+describe('the schedule speaks the coach’s words, not the database’s', () => {
+  it('never prints a stored status word on the paper', () => {
+    const d = buildScheduleDocument([
+      game({ status: 'completed' }), game({ time: '9:00 AM', status: 'cancelled' }),
+    ]);
+    const cells = printedCells(d);
+    for (const stored of ['completed', 'scheduled', 'cancelled']) {
+      assert.ok(!cells.includes(stored), `the stored word "${stored}" reached a customer's wall`);
+    }
+    assert.ok(cells.includes('Final'), 'a played game is Final — the word this screen’s filter uses');
+  });
+
+  it('sentence-cases a status it has never seen rather than printing it raw', () => {
+    // A fourth enum member must not print lower case; it must not vanish either.
+    const d = buildScheduleDocument([game({ status: 'postponed' }), game({ time: '9:00 AM' })]);
+    assert.ok(printedCells(d).includes('Postponed'));
+  });
+
+  it('names the WEEKDAY in the day heading — the thing a wall reader navigates by', () => {
+    const d = buildScheduleDocument([game()]);
+    assert.match(d.groups[0].label, /^Friday, July 31\b/);
+  });
+
+  it('groups by day and counts each one, in the order the games arrive', () => {
+    const d = buildScheduleDocument([
+      game({ date: '2026-07-31' }), game({ date: '2026-07-31', time: '9:00 AM' }),
+      game({ date: '2026-08-01' }),
+    ]);
+    assert.equal(d.groups.length, 2);
+    assert.match(d.groups[0].label, /2 games/);
+    assert.match(d.groups[1].label, /\b1 game\b/);
+  });
+});
+
+describe('every column on the schedule earns its width', () => {
+  it('drops the Status column entirely when nothing in it would speak', () => {
+    const d = buildScheduleDocument([game(), game({ time: '9:00 AM' })]);
+    assert.ok(!d.headers.includes('Status'),
+      'a pre-weekend wall copy carried a column of blank cells');
+    assert.equal(d.groups[0].rows[0].length, d.headers.length,
+      'the rows must lose the column with the heading');
+  });
+
+  it('keeps the Status column when even one row has something to say', () => {
+    const d = buildScheduleDocument([game(), game({ time: '9:00 AM', status: 'completed' })]);
+    assert.ok(d.headers.includes('Status'));
+  });
+
+  it('says "all final" once in the heading instead of on every row', () => {
+    const d = buildScheduleDocument([
+      game({ status: 'completed' }), game({ time: '9:00 AM', status: 'completed' }),
+    ]);
+    assert.match(d.groups[0].label, /all final/);
+    assert.ok(!d.headers.includes('Status'), 'the heading said it — the column is repetition');
+  });
+
+  it('never announces "all scheduled" — that is what a schedule means', () => {
+    const d = buildScheduleDocument([game(), game({ time: '9:00 AM' })]);
+    assert.ok(!/all scheduled/i.test(d.groups[0].label));
+  });
+
+  it('lifts a day’s single venue into its heading and leaves the field behind', () => {
+    const d = buildScheduleDocument([
+      game(), game({ time: '9:00 AM', location: 'Riverdale Memorial Park - Diamond 2' }),
+    ]);
+    assert.match(d.groups[0].label, /Riverdale Memorial Park/);
+    assert.deepEqual(d.groups[0].rows.map(r => r[4]), ['Diamond 1', 'Diamond 2']);
+  });
+
+  it('keeps full locations when a day is played at more than one venue', () => {
+    const d = buildScheduleDocument([
+      game(), game({ time: '9:00 AM', location: 'Harborview Sportsplex - Diamond 4' }),
+    ]);
+    assert.ok(!/Riverdale Memorial Park/.test(d.groups[0].label));
+    assert.deepEqual(d.groups[0].rows.map(r => r[4]),
+      ['Riverdale Memorial Park - Diamond 1', 'Harborview Sportsplex - Diamond 4']);
+  });
+
+  it('does not lift a venue that has no field to leave behind', () => {
+    // "The Dome" splits to nothing — lifting it printed the same name in the heading AND on
+    // every row, doubling the repetition the rule exists to remove.
+    const d = buildScheduleDocument([
+      game({ location: 'The Dome' }), game({ time: '9:00 AM', location: 'The Dome' }),
+    ]);
+    assert.ok(!/The Dome/.test(d.groups[0].label));
+    assert.deepEqual(d.groups[0].rows.map(r => r[4]), ['The Dome', 'The Dome']);
+  });
+});
+
+describe('a cancelled game cannot be read as a live one', () => {
+  it('gives up its clock, where the reader is already looking', () => {
+    const d = buildScheduleDocument([game({ status: 'cancelled', time: '7:00 PM' })]);
+    assert.equal(d.groups[0].rows[0][0], 'CANCELLED');
+    assert.ok(!d.groups[0].rows[0].includes('7:00 PM'),
+      'the clock column must not still read like a game about to start');
+  });
+
+  it('keeps the time it gave up, so the row still says when it was', () => {
+    const d = buildScheduleDocument([game({ status: 'cancelled', time: '7:00 PM' })]);
+    assert.ok(printedCells(d).includes('was 7:00 PM'));
+  });
+
+  it('says CANCELLED even on a day where every other game agrees on its status', () => {
+    const d = buildScheduleDocument([
+      game({ status: 'completed' }), game({ time: '9:00 AM', status: 'completed' }),
+      game({ time: '7:00 PM', status: 'cancelled' }),
+    ]);
+    assert.ok(printedCells(d).includes('CANCELLED'));
+  });
+
+  it('does not say it twice when there was no time to give up', () => {
+    const d = buildScheduleDocument([game({ status: 'cancelled', time: '' })]);
+    assert.deepEqual(d.groups[0].rows[0].filter(c => /cancel/i.test(c)), ['CANCELLED']);
+  });
+});
+
+describe('a game with no time yet says so', () => {
+  it('prints "Time TBD" rather than an empty cell that reads like a fault', () => {
+    const d = buildScheduleDocument([game({ time: '' })]);
+    assert.equal(d.groups[0].rows[0][0], 'Time TBD');
+  });
+});
+
+describe('a section that spills a page carries its name onto the next one', () => {
+  const grouped = () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Tournament Schedule', headers: ['Time', 'Home Team'], rows: [],
+      settings: settings({ headerLine1: 'Riverdale Minor Ball' }),
+      groups: [{ label: 'Friday, July 31', rows: [['8:00 AM', 'Royals']] }],
+    });
+    return { doc, opts: at.calls[0] };
+  };
+
+  it('re-prints the section heading, marked as a continuation', () => {
+    const { doc, opts } = grouped();
+    opts.didDrawPage({ pageNumber: 2 });
+    assert.ok(doc.texts.some(t => t.str === 'Friday, July 31   (continued)'),
+      'page 2 opened with a bare table — the reader could not tell what day it was');
+  });
+
+  it('does not re-print it on the page the section started on', () => {
+    const { doc, opts } = grouped();
+    const before = doc.texts.filter(t => t.str.includes('Friday, July 31')).length;
+    opts.didDrawPage({ pageNumber: 1 });
+    assert.equal(doc.texts.filter(t => t.str.includes('Friday, July 31')).length, before);
+  });
+
+  it('reserves the room the continued heading occupies, so it cannot land on the rows', () => {
+    const { opts } = grouped();
+    const flat = makeAutoTable();
+    buildTablePDF(MockDoc, flat, {
+      title: 'X', headers: ['A'], rows: [['1']],
+      settings: settings({ headerLine1: 'Riverdale Minor Ball' }),
+    });
+    assert.equal(opts.margin.top, flat.calls[0].margin.top + 10,
+      'a grouped continuation page must hold back exactly the heading it draws');
+  });
+
+  it('leaves an ungrouped report’s top margin alone', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'X', headers: ['A'], rows: [['1']], settings: settings({ headerLine1: 'Club' }),
+    });
+    assert.equal(at.calls[0].margin.top, 14 + 12 + 4);
+  });
+});
+
+describe('one column grid for every section of a grouped document', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const twoSections = (rows2: string[][]): any[] => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Tournament Schedule', headers: ['Time', 'Home Team'], rows: [],
+      settings: settings({ headerLine1: 'Club' }),
+      groups: [
+        { label: 'Friday', rows: [['8:00 AM', 'Royals']] },
+        { label: 'Saturday', rows: rows2 },
+      ],
+    });
+    return at.calls;
+  };
+
+  it('sizes every section from ALL the rows, so the grid does not move down the page', () => {
+    // Section 2's names are far longer. Both sections must still lay out identically.
+    const calls = twoSections([['9:00 AM', 'Riverdale Ridge Thunderbirds']]);
+    assert.deepEqual(calls[0].columnStyles, calls[1].columnStyles,
+      'two sections of one document laid out on different grids');
+    assert.ok(calls[0].columnStyles[0].cellWidth > 0, 'the grid is pinned, not merely floored');
+  });
+
+  it('fills the paper rather than ending two-thirds across it', () => {
+    const calls = twoSections([['9:00 AM', 'Rapids']]);
+    const total = (Object.values(calls[0].columnStyles) as { cellWidth: number }[])
+      .reduce((a, c) => a + c.cellWidth, 0);
+    assert.ok(Math.abs(total - (215.9 - 28)) < 0.01, 'the pinned grid must span the content width');
+  });
+
+  it('stands back when the columns already want more than the page', () => {
+    // A table wider than its paper is autoTable's squeeze to do — pinning it to the no-shred
+    // floor printed "Maplewoo / d Mustangs" down the tournament results and grew a page.
+    const at = makeAutoTable();
+    const wide = Array.from({ length: 12 }, (_, i) => `Column heading number ${i}`);
+    buildTablePDF(MockDoc, at, {
+      title: 'Results', headers: wide, rows: [], settings: settings({ headerLine1: 'Club' }),
+      groups: [{ label: 'U11', rows: [wide.map(() => 'Maplewood Mustangs')] }],
+    });
+    const styles = Object.values(at.calls[0].columnStyles) as Record<string, number>[];
+    assert.ok(styles.every(s => s.cellWidth === undefined),
+      'an over-subscribed table must keep its floors, not a pinned width');
+    assert.ok(styles.every(s => s.minCellWidth > 0));
+  });
+
+  it('leaves a section carrying its OWN headers on its own grid', () => {
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Development Summary', headers: ['A', 'B'], rows: [],
+      settings: settings({ headerLine1: 'Club' }),
+      groups: [
+        { label: 'Shared', rows: [['1', '2']] },
+        { label: 'Own', headers: ['X', 'Y', 'Z'], rows: [['1', '2', '3']] },
+      ],
+    });
+    const own = Object.values(at.calls[1].columnStyles) as Record<string, number>[];
+    assert.equal(own.length, 3);
+    assert.ok(own.every(s => s.cellWidth === undefined),
+      'a mixed-column section must not be pinned to another section’s grid');
+  });
+});
+
+// ── Schedules pass — /review corrections (2026-08-25) ────────────────────────
+
+describe('a game with no date yet still gets a heading a reader can use', () => {
+  it('names the group "Date TBD" instead of opening with bare separator dots', () => {
+    // Playoff games exist before anyone knows when they are played; the games API returns them
+    // with a null date, which the screen coerces to ''. The heading used to build to
+    // "   ·   2 games" — no day, leading dots — on a document whose job is weekday findability.
+    const d = buildScheduleDocument([game({ date: '' }), game({ date: '', time: '9:00 AM' })]);
+    assert.equal(d.groups.length, 1);
+    assert.ok(!d.groups[0].label.startsWith(' '), 'the heading opened with the separator');
+    assert.match(d.groups[0].label, /^Date TBD\b/);
+    assert.match(d.groups[0].label, /2 games/);
+  });
+
+  it('keeps the dated days named, with the undated group alongside them', () => {
+    const d = buildScheduleDocument([game({ date: '2026-07-31' }), game({ date: '' })]);
+    assert.match(d.groups[0].label, /^Friday, July 31\b/);
+    assert.match(d.groups[1].label, /^Date TBD\b/);
+  });
+});
+
+describe('a state the filter row does not offer still prints the screen’s word', () => {
+  // Switching all three status chips off passes every status through, so these DO reach paper.
+  it('calls a submitted score "Pending review", not "Submitted"', () => {
+    const d = buildScheduleDocument([game({ status: 'submitted' }), game({ time: '9:00 AM' })]);
+    assert.ok(printedCells(d).includes('Pending review'));
+    assert.ok(!printedCells(d).includes('Submitted'));
+  });
+
+  it('calls a forfeit "Forfeit"', () => {
+    const d = buildScheduleDocument([game({ status: 'forfeit' }), game({ time: '9:00 AM' })]);
+    assert.ok(printedCells(d).includes('Forfeit'));
+  });
+
+  it('still sentence-cases a state nobody has written yet', () => {
+    const d = buildScheduleDocument([game({ status: 'abandoned' }), game({ time: '9:00 AM' })]);
+    assert.ok(printedCells(d).includes('Abandoned'));
+  });
+});

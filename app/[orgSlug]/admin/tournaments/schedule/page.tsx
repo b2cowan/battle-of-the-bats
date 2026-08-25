@@ -18,6 +18,10 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { downloadBracketPDF } from '@/lib/export/bracket-pdf';
+import { buildScheduleDocument } from '@/lib/export/schedule-document';
+import {
+  SCHEDULE_STATUS_ORDER, SCHEDULE_STATUS_LABELS, type ScheduleStatusFilter as ScheduleStatus,
+} from '@/lib/tournament-schedule-status';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
@@ -53,13 +57,12 @@ import {
 } from '@/components/admin/tournament/TournamentAdminUI';
 
 type ModalMode = 'add' | 'edit' | null;
-type ScheduleStatusFilter = 'scheduled' | 'cancelled' | 'completed';
+// The filter's words and the printed schedule's words are ONE list — see
+// lib/tournament-schedule-status.ts for why this is not a canonical map for every surface.
+type ScheduleStatusFilter = ScheduleStatus;
 
-const STATUS_FILTERS: Array<{ key: ScheduleStatusFilter; label: string }> = [
-  { key: 'scheduled', label: 'Scheduled' },
-  { key: 'cancelled', label: 'Cancelled' },
-  { key: 'completed', label: 'Final'     },
-];
+const STATUS_FILTERS: Array<{ key: ScheduleStatusFilter; label: string }> =
+  SCHEDULE_STATUS_ORDER.map(key => ({ key, label: SCHEDULE_STATUS_LABELS[key] }));
 
 const STATUS_CHIP_CLASS: Record<string, string | undefined> = {
   scheduled: 'chip_scheduled',
@@ -1184,17 +1187,21 @@ export default function AdminSchedulePage() {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
-    const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
-    const rows    = serializeRows(buildScheduleRows(), SCHEDULE_EXPORT_COLS);
+    // ⚠ The PDF does NOT share the spreadsheet's rows. A wall copy is grouped by day, speaks the
+    // words this screen's own status filter uses, and drops a column that says the same thing on
+    // every row — none of which belongs in a file somebody sorts and filters. The xlsx/CSV/iCal
+    // exports above still carry every column and every raw value.
+    const { headers, groups } = buildScheduleDocument(buildScheduleRows());
     const filename = buildFilename(
       { org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') },
       'pdf',
     );
-    await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, rows, settings, {
+    await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, [], settings, {
       identity: currentOrg?.name,
       // The schedule is a wide many-game grid: landscape + compact is the report's own
       // shape (D2), not an org preference.
       shape: { orientation: 'landscape', density: 'compact' },
+      groups,
     });
   }
 

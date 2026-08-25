@@ -146,7 +146,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export the game schedule with date, time, division, teams, venue, and status. iCal format adds games directly to Google Calendar, Apple Calendar, or Outlook. PDF coming in Phase F3.',
+      'Export the game schedule with date, time, division, teams, venue, and status. iCal format adds games directly to Google Calendar, Apple Calendar, or Outlook. The PDF is a wall copy — one section per day, so a parent can find one game at a glance.',
   },
   {
     id: 'tournament-schedule-legacy',
@@ -521,9 +521,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export team schedule with date, time, event type, opponent, and location. iCal adds all events to your calendar.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
+      'Export team schedule with date, time, arrival time, event type, opponent, location and uniform. iCal adds all events to your calendar.',
+    // ⚠ A PDF is OWED here and is deliberately not built yet. Decision 6's floor rule — "a document
+    // that is read, handed, or pinned gets a PDF" — plainly covers a team's season on a fridge, and
+    // the owner agreed (2026-08-25, Schedules pass checkpoint 1) that it gets one in its OWN pass:
+    // it is a new document with its own column decisions, not a variant of the tournament schedule.
+    // See PDF_EXPORT_QUALITY_PLAN.md §4.
+    plannedPhase: 'PDF: Phase 2, its own pass',
   },
   {
     id: 'house-league-season-schedule',
@@ -539,9 +543,10 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export season schedule with date, time, teams, venue, and status.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
+    helpSummary: 'Export season schedule with date, time, teams, venue, status and score.',
+    // A PDF is owed here too, behind the coach one — a league season is pinned in a clubhouse
+    // rather than on a fridge (owner, 2026-08-25).
+    plannedPhase: 'PDF: Phase 2, after the coach schedule',
   },
   {
     id: 'house-league-season-standings',

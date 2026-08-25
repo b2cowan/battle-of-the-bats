@@ -318,6 +318,31 @@ export function formatDayMonth(value: string | null | undefined): string {
   return `${p.d} ${SHORT_MONTHS[p.m - 1]}`;
 }
 
+const LONG_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * "Friday, July 31" — a stored date WITH ITS WEEKDAY.
+ *
+ * The weekday is the thing a person navigates a weekend by, and no other formatter here carries
+ * it. Printed schedules are the first caller: a tournament schedule on a fence is read by someone
+ * who knows it is Saturday and does not know it is the 1st.
+ *
+ * Deliberately one shape, with no short/with-year options: nothing needs them today, and this file
+ * has one formatter per shape rather than one formatter with switches. Add a variant when a caller
+ * asks for it.
+ *
+ * ⚠ The weekday is derived through `Date.UTC` and read back with `getUTCDay` — constructed and
+ * read in the SAME zone, so it cannot drift. `new Date('2026-07-31').getDay()` is the trap this
+ * whole file exists to close: UTC midnight rendered in a behind-UTC zone is the previous day, and
+ * therefore the previous WEEKDAY.
+ */
+export function formatWeekdayDate(value: string | null | undefined): string {
+  const p = parseDateOnlyParts(value);
+  if (!p) return value ?? '';
+  const dow = new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay();
+  return `${LONG_DAYS[dow]}, ${LONG_MONTHS[p.m - 1]} ${p.d}`;
+}
+
 /**
  * "May 15, 2026" — the ONE formatter for a date a coach or admin reads out of a money record,
  * and it takes BOTH shapes the database stores, because the caller usually cannot tell them apart.

@@ -115,6 +115,13 @@ const exportsHelp: HelpPageContent = {
                 line under the document's title. Excel and CSV always carry every column, in full.
               </p>
               <p>
+                <strong>A PDF is a document, not a copy of the spreadsheet.</strong> Some are shaped
+                for the way they get read: the tournament schedule prints one section per day rather
+                than repeating the date down every row, and leaves off a column that would say the
+                same thing on every line. When you need every column and every raw value — for
+                sorting, filtering or importing elsewhere — use Excel or CSV.
+              </p>
+              <p>
                 <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
                 association submissions, budget vs. actual for the board, dues statements for parents.
               </p>

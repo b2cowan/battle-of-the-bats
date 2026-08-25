@@ -157,6 +157,8 @@ export function abbreviateHeadings(labels: string[]): { codes: string[]; legend:
  */
 const COL_FLOOR_MIN_MM = 8;
 const CELL_TOKEN_CAP_MM = 14;
+/** Ceiling on what ONE column may claim from the shared grid before its cells start wrapping. */
+const GRID_DEMAND_CAP_MM = 62;
 /** How many rows to sample per column when measuring the floor. */
 const FIT_SAMPLE_ROWS = 60;
 
@@ -441,34 +443,58 @@ export function buildTablePDF(
     return max;
   }
 
-  function columnFloors(hdrs: (string | number)[], rws: Cell[][]): number[] {
+  /**
+   * Both column measurements a document needs, in ONE pass over the sampled rows:
+   *
+   *  • `floors` — the no-shred minimum. The heading is measured uncapped in the face it PRINTS in;
+   *    a cell's longest token is capped (a long email may wrap, a heading may not).
+   *  • `wants` — the width at which nothing wraps at all, capped so one long cell cannot claim the
+   *    page. Only the pinned grid uses this; it costs nothing extra to take it here.
+   *
+   * ⚠ ONE PASS ON PURPOSE. These were two functions walking the same sampled cells with the same
+   * sample step and the same bold/normal font switching, differing only in what they measured —
+   * so every grouped document paid for the walk twice, and a change to the sampling or the face
+   * had to be made in two places to stay in sync.
+   */
+  function columnMetrics(hdrs: (string | number)[], rws: Cell[][]) {
     // Headings first, in the face they PRINT in — bold, half a point up.
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(fontSize + 0.5);
-    const headDemand = hdrs.map(h => longestTokenWidth(h));
+    const headToken = hdrs.map(h => longestTokenWidth(h));
+    const headWhole = hdrs.map(h => doc.getTextWidth(String(h ?? '')));
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(fontSize);
     const step = Math.max(1, Math.ceil(rws.length / FIT_SAMPLE_ROWS));
-    return hdrs.map((_, i) => {
-      let cellDemand = 0;
+    const floors: number[] = [];
+    const wants: number[] = [];
+    hdrs.forEach((_, i) => {
+      let cellToken = 0;
+      let cellWhole = 0;
       for (let r = 0; r < rws.length; r += step) {
-        const w = longestTokenWidth(rws[r]?.[i]);
-        if (w > cellDemand) cellDemand = w;
+        const cell = rws[r]?.[i];
+        const t = longestTokenWidth(cell);
+        if (t > cellToken) cellToken = t;
+        const w = doc.getTextWidth(String(cell ?? ''));
+        if (w > cellWhole) cellWhole = w;
       }
-      // The heading is uncapped; a cell token is not (a long email may wrap, a heading may not).
-      const demand = Math.max(headDemand[i], Math.min(cellDemand, CELL_TOKEN_CAP_MM));
-      return Math.max(COL_FLOOR_MIN_MM, demand + padH + 1);
+      floors.push(Math.max(
+        COL_FLOOR_MIN_MM,
+        Math.max(headToken[i], Math.min(cellToken, CELL_TOKEN_CAP_MM)) + padH + 1,
+      ));
+      wants.push(Math.max(headWhole[i], Math.min(cellWhole, GRID_DEMAND_CAP_MM)) + padH + 1);
     });
+    return { floors, wants };
   }
 
   function fitColumns(hdrs: (string | number)[], rws: Cell[][], dropOrder?: number[]) {
     const empty = {
       hdrs, kept: hdrs.map((_, i) => i), dropped: [] as string[],
       columnStyles: {} as Record<number, { minCellWidth: number }>,
+      grid: null as Record<number, { cellWidth: number }> | null,
     };
     if (hdrs.length === 0) return empty;
-    const floors = columnFloors(hdrs, rws);
+    const { floors, wants } = columnMetrics(hdrs, rws);
     // De-dupe the DECLARED order too — a repeated index would subtract its floor twice in
     // the drop loop below and let the sum lie about how much width remains.
     const order = [...new Set(
@@ -493,7 +519,41 @@ export function buildTablePDF(
       dropped: [...dropSet].sort((a, b) => a - b)
         .map(i => String(hdrs[i] ?? '').trim() || `Column ${i + 1}`),
       columnStyles,
+      grid: pinnedGrid(kept.map(i => wants[i]), kept.map(i => floors[i])),
     };
+  }
+
+  /**
+   * ONE column grid for every section of a grouped document.
+   *
+   * Each group is its own autoTable call, and autoTable sizes columns from the rows it was handed
+   * — so a division with short team names laid out narrower columns than the division below it,
+   * and a reader comparing two sections of ONE document found the grid moving under them. Widths
+   * are therefore measured once across every shared row and pinned with an exact `cellWidth`.
+   *
+   * ⚠ Applies to shared-header groups ONLY. A group carrying its own headers is a different table
+   * on purpose (the development summary's mixed sections, the practice sheet's key/value block),
+   * and pinning it to somebody else's grid would be wrong rather than tidy. Flat reports are one
+   * table and already consistent — this changes nothing for them.
+   *
+   * ⚠⚠ AND ONLY WHEN EVERY COLUMN CAN HAVE WHAT IT WANTS. Returns null on a table already wider
+   * than its paper, where autoTable's own squeeze is doing real work: the first cut of this
+   * pinned those columns to the no-shred FLOOR, which caps a cell's longest token on purpose —
+   * so "Maplewood Mustangs" printed as "Maplewoo / d Mustangs" down the tournament results, and
+   * the report grew a fifth page doing it. A grid that shreds a word is worse than a grid that
+   * shifts. Found by looking at the corpus re-render, not by any test.
+   */
+  function pinnedGrid(wants: number[], floors: number[]): Record<number, { cellWidth: number }> | null {
+    const want = wants.map((w, i) => Math.max(w, floors[i]));
+    const total = want.reduce((a, b) => a + b, 0);
+    if (total <= 0 || total > contentWidth) return null;
+
+    // Share the leftover out in proportion, so the table fills the paper rather than ending
+    // two-thirds across it.
+    const slack = contentWidth - total;
+    const styles: Record<number, { cellWidth: number }> = {};
+    want.forEach((w, i) => { styles[i] = { cellWidth: w + slack * (w / total) }; });
+    return styles;
   }
 
   /** Project rows onto the kept columns — the identity case copies nothing. */
@@ -533,8 +593,42 @@ export function buildTablePDF(
     return out;
   }
 
+  /**
+   * A grouped document's section heading — its label, and the accent rule under it.
+   *
+   * ⚠ ONE SOURCE FOR MEASURE AND DRAW. `GROUP_HEAD_H` is what this consumes, what the orphan check
+   * reserves, and what a continuation page's top margin holds back. The run sheet's page-overflow
+   * defect was two copies of the same arithmetic disagreeing (/review, 2026-08-24) — so the height
+   * is BUILT FROM the offsets the draw uses rather than being a fourth number that has to agree
+   * with them by hand.
+   */
+  const GROUP_LABEL_BASELINE = 4;   // label baseline below the heading's top
+  const GROUP_RULE_OFFSET = 6;      // the accent rule under it
+  const GROUP_RULE_GAP = 4;         // clear air between the rule and the first row
+  const GROUP_HEAD_H = GROUP_RULE_OFFSET + GROUP_RULE_GAP;
+  function drawGroupHeading(label: string, y: number): number {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20, 20, 35);
+    doc.text(label, MARGIN, y + GROUP_LABEL_BASELINE);
+    doc.setDrawColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN, y + GROUP_RULE_OFFSET, pageWidth - MARGIN, y + GROUP_RULE_OFFSET);
+    return y + GROUP_HEAD_H;
+  }
+
+  /** Roughly one body row at the current density — for reserving room, never for drawing. */
+  const estRowH = cellPadding.top + cellPadding.bottom + fontSize * 0.3528 * 1.15;
+
+  /**
+   * @param pen      hand-marked columns, mapped onto the columns that survived the fit
+   * @param continues the section label to re-print at the top of any page this table SPILLS onto.
+   *   Without it a day that ran past the bottom of a page opened the next one with a bare table:
+   *   the reader held a sheet of fifteen games that never said which day they were. Same defect
+   *   the identity band had before the Rosters pass, one level down.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function tableStyles(pen?: Set<number>): Record<string, any> {
+  function tableStyles(pen?: Set<number>, continues?: string): Record<string, any> {
     return {
       theme: 'plain',
       styles: {
@@ -555,7 +649,10 @@ export function buildTablePDF(
       },
       columnStyles: {},
       tableWidth: 'auto',
-      margin: { left: MARGIN, right: MARGIN, top: continuationTop },
+      margin: {
+        left: MARGIN, right: MARGIN,
+        top: continues ? continuationTop + GROUP_HEAD_H : continuationTop,
+      },
       // Redraw the identity band on any page this table SPILLS onto. autoTable's own page
       // counter starts at 1 per call, so page 1 is the page the table started on — which
       // already carries a header (drawn by `drawHeader`, or by the grouped path when it
@@ -563,7 +660,11 @@ export function buildTablePDF(
       // print a bare table with a footer and no idea whose it is.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       didDrawPage: (data: any) => {
-        if (data?.pageNumber > 1) drawHeader(false);
+        if (!(data?.pageNumber > 1)) return;
+        const y = drawHeader(false);
+        // The section says its own name again, and admits it is a continuation — so a reader who
+        // only ever sees this page still knows what they are holding.
+        if (continues) drawGroupHeading(`${continues}   (continued)`, y);
       },
       // A hand-marked column prints an empty box in each body cell — the volunteer's target.
       // Drawn rather than typed because the standard PDF fonts carry no box glyph, and sized
@@ -600,32 +701,24 @@ export function buildTablePDF(
     // never repeated beneath every division heading. Only a group carrying its own
     // headers (mixed-column documents like the development summary) fits individually.
     const sharedGroups = groups.filter(g => !g.headers);
+    const sharedRows = sharedGroups.flatMap(g => g.rows);
     const sharedFit = sharedGroups.length > 0
-      ? fitColumns(headers, sharedGroups.flatMap(g => g.rows), fit?.dropOrder)
+      ? fitColumns(headers, sharedRows, fit?.dropOrder)
       : null;
     if (sharedFit && sharedFit.dropped.length > 0) {
       startY = drawFitNotice(sharedFit.dropped, startY + 3);
     }
+    // A heading needs its own height plus a head row and a few body rows under it, or it is a
+    // widow announcing a section that is really on the next page.
+    const groupKeep = GROUP_HEAD_H + estRowH * 4;
 
     groups.forEach((group, idx) => {
-      // Section label
-      if (idx > 0) {
-        // Check if there's enough room; if not, add a page
-        if (startY > pageHeight - footerMargin - 30) {
-          doc.addPage();
-          startY = drawHeader(false);
-        }
+      if (idx > 0 && startY > pageHeight - footerMargin - groupKeep) {
+        doc.addPage();
+        startY = drawHeader(false);
       }
 
-      // Group heading
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(20, 20, 35);
-      doc.text(group.label, MARGIN, startY + 4);
-      doc.setDrawColor(accentRgb.r, accentRgb.g, accentRgb.b);
-      doc.setLineWidth(0.5);
-      doc.line(MARGIN, startY + 6, pageWidth - MARGIN, startY + 6);
-      startY += 10;
+      startY = drawGroupHeading(group.label, startY);
 
       // Own-header groups fit themselves (last-column-first — the declared dropOrder
       // speaks about the top-level columns only).
@@ -640,8 +733,14 @@ export function buildTablePDF(
       autoTable(doc, {
         // A group carrying its OWN headers is a different column set, so a declared pen column
         // (which addresses the top-level headers) says nothing about it — same rule as dropOrder.
-        ...tableStyles(group.headers ? undefined : penOutputColumns(fitted.kept)),
-        columnStyles: fitted.columnStyles,
+        ...tableStyles(group.headers ? undefined : penOutputColumns(fitted.kept), group.label),
+        // A shared-header section takes the ONE grid measured across every section's rows; a
+        // section carrying its own headers keeps its own floors, because it is deliberately a
+        // different table (the development summary's mixed sections, the run sheet's key/value
+        // block) and pinning it to somebody else's grid would be wrong rather than tidy.
+        columnStyles: ownFit
+          ? ownFit.columnStyles
+          : (sharedFit!.grid ?? sharedFit!.columnStyles),
         head: hasHeadRow ? [fitted.hdrs] : undefined,
         body: projectRows(group.rows, fitted.kept, totalCols),
         startY,
