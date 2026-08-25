@@ -1,6 +1,6 @@
 # PM Brief — Budget vs. Actual learns the whole income truth
 
-**Status: plan written 2026-08-23, awaiting go. Nothing built yet.**
+**Status: Phase 1 BUILT on dev 2026-08-23 (owner QA §83). Phase 2 = Option D; its first half (D-1) BUILT on dev the same day (owner QA §85). D-2 gated on that walk — see the bottom of this brief.**
 Plan: `BVA_MONTHLY_INCOME_PLAN.md` · Origin ruling: owner, 2026-08-23, mid-§80 walk.
 
 ## The problem, in the owner's words
@@ -86,3 +86,97 @@ read-only as today.
 Strip equals register month-by-month under the automated check; all existing money checks and the
 full unit suite stay green; help guide's description of the strip matches the new truth; no other
 visual change on the page.
+
+---
+
+# Phase 2 = Option D · D-1 built on dev 2026-08-23 (owner QA §85)
+
+The Phase 2 mockup session ran the same day and the owner directed a fourth shape past the three
+options drawn: **Months stops being a spending grid and becomes the season's cash statement.** Go
+given on the artifact — *"ok, this looks good, I agree with the build"* — with the opening-balance
+workflow walked and accepted separately.
+
+## What a coach sees and does differently
+
+**The Months view now reads the way a treasurer thinks.** Everything coming in, everything going
+out, and what's left:
+
+- a **REVENUE** band grouped by where the money came from — Player dues, Fundraising, Sponsorships,
+  Other income, Money back & reimbursements — showing only the groups the team actually has,
+  closed by **Total revenue**;
+- an **EXPENSES** band of the coach's own budget categories plus **Paid back to families**, closed
+  by **Total expenses**;
+- **Net for the month**, then a **Running balance** whose figure in the pinned Total column is the
+  season's closing balance — so **cash on hand stays on screen** however far sideways the months
+  are scrolled.
+
+Revenue minus expenses is the running balance, in every month, to the cent. The coach can check the
+report's own arithmetic by eye, which is the point: the old three-row strip sat *underneath* a table
+that did not contain the numbers it was made of.
+
+**All four readings became useful in their own right.**
+
+- **Scheduled** is now the season's forward view — dues instalments still owed, sponsor pledges and
+  anything asked of the club and not yet answered, against commitments still owed. Its running
+  balance starts from the money the team actually has today. Row names change with the reading, so
+  only the club row changes name — it reads "Asked of the club", because a request nobody has
+answered is a question rather than money back. Dues and sponsorships keep their names on every
+lens: an unpaid instalment is still dues, an unhonoured pledge is still sponsorship (owner,
+2026-08-24).
+- **Budget** gained its own net and projected balance, so a plan that runs short in September says
+  so months before the money does.
+- **Actual** is real cash, month by month.
+- **Difference** now reads honestly on both bands: a positive figure is good news either way —
+  revenue that came in *ahead*, or spending that came in *under*.
+
+**Two honest truths, named on the screen.** Months' Total expenses can differ from the Statement's,
+because Months is cash and the Statement is what the season spent. It adds money paid back to
+families, leaves out a cost a family paid a vendor directly, and shows money back as revenue instead
+of quietly shrinking the cost it repaid. A note under the grid says exactly that, so a coach who
+spots the gap is answered by the product rather than by support.
+
+**Money the team can't date has somewhere honest to sit.** A sponsor's pledge and a request the club
+hasn't answered appear in a **No date yet** column — counted in the total, in no month — so a pledge
+can never appear to rescue a month the team still has to get through without it.
+
+## Why it matters
+
+The question that started the whole programme was *"after logging fundraising, why don't I see
+it?"*. Phase 1 made the numbers true. This makes them **visible where the coach was already
+looking**, in the shape a treasurer, a board and a parent already know. It also collapses two
+widgets into one table: the strip's separate Money in and Money out rows are gone because the band
+totals *are* those rows.
+
+## Tradeoffs taken
+
+- **Months' figures are cash, so a per-item figure can differ from the Statement's.** Accepted by
+  the owner deliberately: the alternative kept the cells identical and broke "revenue − expenses =
+  balance", which is the defect class this programme exists to kill. Both truths are labelled, and
+  each is machine-checked against its own authority.
+- **The report's build-blocking check was rebuilt.** It no longer holds Months equal to the
+  Statement (that would now fail on any team ever refunded a dollar). It holds **both bands equal to
+  the register** — month by month, category by category, group by group — and proves the ending
+  balance is cash on hand. One genuine coverage loss is recorded in the check's own header: the
+  cumulative chart lost its per-month cross-check and now leans on a unit test.
+- **A cost a family paid a vendor directly still steps out**, footnoted, until the team pays that
+  family back — the owner's own call: *"we didn't pay anything — once we pay the player it shows up
+  at that point."*
+
+## Access / roles
+
+No change. Anyone who can view team money sees the bands; read-only coaches read them.
+
+## How to test
+
+Owner QA ledger **§85**. Fastest confidence check: `qa-money-lab` → QA Money U13 reconciles to the
+approved mockup to the dollar — Total revenue $8,141.69, Total expenses $5,279.00, Net $2,862.69,
+and the $640 gap against the Statement is exactly the two family-paid costs less the one payout.
+
+## Not in this build — D-2, gated on the §85 walk
+
+1. **Item rows under each revenue group** — the actual families, drives and sponsors behind each
+   figure (dues rows show family names, same audience as the Player Dues tab).
+2. **A season opening balance** — carried automatically at *Start next season* from the closing
+   season's own cash, corrected in Team settings → Money, and read on the register's first line, in
+   the Months summary block and inside Cash on hand. It needs a migration, and it must reach all
+   three surfaces in one go or they argue about the team's money.

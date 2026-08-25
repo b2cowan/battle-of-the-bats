@@ -29,11 +29,44 @@
      than truncate. */
   min-width: 148px;
   max-width: 208px;
-  white-space: normal;
   /* The pin must be OPAQUE — a translucent row wash lets the scrolled money columns
      read through the label (Chunk A D3). */
   background: var(--card-bg);
 }
+/* ⚠⚠ THE LABEL COLUMN WRAPS, AND IT TOOK A HIGHER-SPECIFICITY SELECTOR TO SAY SO (owner-found
+   2026-08-24). `.lead` declared `white-space: normal` at (0,1,0) while the shared
+   `.moneyGrid th, .moneyGrid td { white-space: nowrap }` sits at (0,1,1) — so the rule that let a
+   long row name wrap had been a SILENT NO-OP on every desktop since it was written, and the column
+   simply grew past its own `max-width` instead. "Asked of the club — awaiting answer" is what made
+   it visible: the widest label in the product, on the narrowest column.
+
+   ⚠ THIS FILE ALREADY WARNS ABOUT EXACTLY THIS TRAP a few hundred lines up in the shared sheet — a
+   descendant selector at (0,1,1) outranking a single class is "how a sizing rule becomes a silent
+   no-op here". It is the same bug, in the same table, a second time.
+
+   `break-word`, not `anywhere`: split a long label between words, and only chop inside a word when
+   a single word genuinely cannot fit. */
+.grid th.lead,
+.grid td.lead {
+  white-space: normal;
+  overflow-wrap: break-word;
+  /* A wrapped label needs its lines closer than the row's default, or two lines look like two rows. */
+  line-height: 1.25;
+}
+
+/* ⚠⚠ AND THE CAP HAS TO GO ON THE CONTENT, BECAUSE A TABLE CELL IGNORES `max-width`. Measured
+   2026-08-24: with wrapping finally working the column STILL came out at 261px against its own
+   208px cap — auto table layout treats a cell's max-width as a suggestion and gives the column its
+   longest label's full width anyway. Capping the child (a real block, not a cell) is what actually
+   binds, because the column can then be no wider than its widest content.
+
+   Every label sits in one of three wrappers — the category toggle, a line name, or bare text — so
+   the cap is on the universal child and the bare-text case is handled by the cell's own max-width
+   above, which does hold once nothing inside is pushing it wider. */
+.grid th.lead > * {
+  max-width: 190px;
+}
+
 .grid thead th.lead { z-index: 3; }
 
 .num { text-align: right; }
@@ -89,11 +122,82 @@
    sit at weight 600 under a 1px rule, which made the closing figure QUIETER than the rows it
    summed while Budget Plan's equivalent was the loudest thing on its screen: the same hierarchy,
    inverted on two tabs of one hub.) */
+/* ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
+   REVENUE and EXPENSES are HEADINGS, not rows of money: they name the half of the statement the
+   rows under them belong to and carry no figures at all.
+
+   ⚠ AN OPAQUE GROUND WITH THE TINT PAINTED ON IT — never a translucent `background`. The first
+   cell of this row is the PINNED column and the last is the pinned Total; a translucent pin lets
+   the scrolled money columns read straight through (the Chunk A D3 lesson, which has shipped as a
+   real defect in BOTH money grids once already — see the note beside `.moneyGridCat`).
+
+   ⚠ SELECTOR SPECIFICITY IS DELIBERATE. `.lead` and `.totalCol` each set their own opaque ground
+   at (0,1,0); this is (0,2,3), so the band tint wins on every cell of the row including both pins,
+   exactly as the shared category rule does. Written against the LOCAL `.grid` rather than the
+   shared `.moneyGrid` because a CSS module cannot select another module's class. */
+.grid tbody tr.bandRow th,
+.grid tbody tr.bandRow td {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
+  border-bottom: 1px solid var(--border-2);
+  /* ⚠ THE GUTTER IS THE SEPARATOR, NOT MORE COLOUR (design pass 2026-08-24). A band heading and a
+     category row were both tinted rows, told apart only by small uppercase type — so the heading
+     read as one more category. The table had no breathing room anywhere, which made space the
+     cheapest and clearest thing available: a band now opens with a gap above it, and the two
+     tinted row kinds stop competing. */
+  padding-top: 1.05rem;
+}
+.bandLead {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
+
+/* ⚠ `.rowHint` RETIRED with the aside it styled (2026-08-24). It put "from today's $2,862.69"
+   beside the Running balance label — inside the narrowest column in the table, competing for the
+   width the row NAMES need, and saying exactly what the Scheduled footnote under the grid already
+   says in a sentence with room for it. Do not reintroduce an aside in this column; the footnote is
+   where a basis is explained. */
+
 .lineRow .cellValue { color: var(--text-secondary); }
-.totalRow .cellValue { font-weight: 800; color: var(--text-primary); }
-.runningRow th,
-.runningRow td { padding-bottom: 0.55rem; }
-.runningRow .cellValue { font-weight: 700; }
+/* ⚠⚠ THE HIERARCHY WAS INVERTED, AND THIS IS THE FIX (design pass 2026-08-24, owner-approved).
+   The two BAND SUBTOTALS were the loudest rows in the table — 0.92rem/800, full-strength ink, a 2px
+   cap each — while the RUNNING BALANCE, the figure this whole rebuild exists to deliver and the one
+   ruled into the pinned Total column so it never scrolls away, sat at 0.82rem/600 in secondary ink
+   with no rule at all. The subtotal shouted over the answer.
+
+   Cause was inheritance, not carelessness: `.moneyGridTotal` was written when a money grid had
+   exactly ONE closing total, at the foot. Option D gave it two, mid-table, doing a different job.
+
+   ⚠ SCOPED TO THIS GRID, NEVER TO THE SHARED RECIPE. Budget Plan still has a single closing total
+   where the heavy treatment is right, and `money-hierarchy-type-scale` pins that recipe against the
+   plan outline — changing it there would move a screen nobody asked to move and fail the guard. */
+.grid tbody tr.totalRow.totalRow th,
+.grid tbody tr.totalRow.totalRow td {
+  /* A subtotal closes a band; it does not close the report. One rule, not two. */
+  box-shadow: inset 0 1px 0 var(--home-line-strong, var(--border-2));
+  font-weight: 700;
+  color: var(--text-primary);
+}
+/* ⚠⚠ NO `color` HERE, AND THAT IS A BUG FIX. This rule used to set `color: var(--text-primary)` on
+   the VALUE span at (0,2,0), which outranks the `.pos`/`.neg` classes (0,1,0) the cell puts on that
+   same span — so under the Difference lens the band totals' green/red was being overwritten to
+   plain ink, silently, on the one lens whose entire point is the sign. The colour belongs on the
+   ROW, where a direct rule on the span still beats it. */
+.totalRow .cellValue { font-weight: 700; }
+
+/* The running balance is the ANSWER — the loudest thing in the table, as it should have been. */
+.grid tbody tr.runningRow.runningRow th,
+.grid tbody tr.runningRow.runningRow td {
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--text-primary);
+  padding-bottom: 0.6rem;
+}
+/* Same rule as above: weight only, so a balance below zero still reads red. */
+.runningRow .cellValue { font-weight: var(--money-cat-weight); }
 
 /* ── special columns ─────────────────────────────────────────────────────── */
 
@@ -104,7 +208,25 @@
 .undated { border-left: 1px dashed var(--border-2); border-right: 1px dashed var(--border-2); }
 .grid thead th.undated { color: var(--warning); }
 
-.thisMonth { border-left: 1px solid rgba(var(--primary-rgb), 0.35); }
+/* ⚠⚠ THE CURRENT MONTH IS A TINTED COLUMN, NOT A SINGLE LEFT BORDER (owner ruling 2026-08-24).
+   It was one hairline on the column's left edge — which reads as a DIVIDER BETWEEN two months, not
+   as "this column is now". The owner's question was the evidence: *"why do we have a border between
+   July and August but for no other months?"* A marker nobody can decode is noise, and it also broke
+   the platform rule that colour is always paired with something readable.
+
+   A tint needs no decoding: the column is lit, the rest is not. It pairs with the header's accent
+   ink, which stays and is the label half of that rule.
+
+   ⚠ DOUBLED CLASS ON PURPOSE. A category row paints its own tint at (0,2,3); this has to win on
+   that row too or the current month would go dark exactly where the table is busiest. Doubling
+   `.thisMonth` takes it to (0,3,3) rather than relying on which stylesheet the bundler emitted
+   last — source-order luck is how a rule in this file became a silent no-op twice already.
+   ⚠ It REPLACES the row tint in this one column rather than stacking on it; that is deliberate, so
+   the column reads at one strength whatever row it crosses. */
+.grid tbody tr > td.thisMonth.thisMonth,
+.grid thead th.thisMonth.thisMonth {
+  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
+}
 .grid thead th.thisMonth { color: var(--primary-light); }
 
 /* ⚠⚠ TOTAL IS PINNED TO THE RIGHT EDGE (owner ruling 2026-08-21) — it is the figure the whole

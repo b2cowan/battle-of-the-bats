@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -389,7 +389,7 @@ test.describe('Money on a phone @360x740', () => {
     // Payables Rebuild P2: the expanded details list the plan piece by piece, each unsettled one
     // offering Record a payment as a full-width card action (Mark deposit/balance paid retired).
     await main.getByRole('button', { name: /show provincials entry's payment details/i }).click();
-    const payButtons = main.getByRole('button', { name: /record a payment/i });
+    const payButtons = main.getByRole('button', { name: /^record$/i });
     await expect(payButtons.first()).toBeVisible();
     const payBox = await payButtons.first().boundingBox();
     expect(payBox!.width, 'a stacked payable action should span the card').toBeGreaterThan(200);
@@ -491,11 +491,12 @@ test.describe('Money on a phone @360x740', () => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${base()}/accounting?section=transactions`);
 
-    /* ⚠ THE TOOLBAR BUTTON IS "Add", NOT "Add Expense" — it has been since the one-Add-button
-       ruling (2026-08-15), and this selector had gone stale against it: the fixture seeds two
-       expenses, so the empty state that DOES say "Add Expense" never renders here. The form's
-       own SAVE button names the outcome instead. */
-    await page.getByRole('button', { name: /^add$/i }).first().click();
+    /* ⚖ THE TOOLBAR "Add" IS RETIRED (money centralization P2, 2026-08-23) — the hub header's
+       **Record** is the door now, from every tab, and on Transactions it opens the same form
+       pre-answered "we paid for something". The button is aria-labelled "Record money" because
+       on a phone it collapses to a bare "+", so the accessible name is the stable selector at
+       every width. */
+    await page.getByRole('button', { name: /record money/i }).first().click();
     await expect(page.getByPlaceholder(/diamond rental/i)).toBeVisible();
     await page.getByRole('button', { name: /^back$/i }).click();
     await expect(page.getByText(/discard this expense/i)).toBeHidden();
@@ -517,9 +518,9 @@ test.describe('Money on a phone @360x740', () => {
       cells.filter(c => (c.textContent ?? '').trim() === '' && getComputedStyle(c).display !== 'none').length);
     expect(emptyCellsShown, 'an empty action cell would render as a blank card line').toBe(0);
 
-    // The action that DOES exist is a real touch target, not a chip. (Payables Rebuild P2:
-    // the door is Record a payment now — Mark paid retired with the one-boolean model.)
-    const recordPayment = wrap.getByRole('button', { name: /record a payment/i }).first();
+    // The action that DOES exist is a real touch target, not a chip. (Money centralization P2:
+    // every door that opens the recording conversation says the one word, "Record".)
+    const recordPayment = wrap.getByRole('button', { name: /^record$/i }).first();
     const box = await recordPayment.boundingBox();
     expect(box!.width, 'the card action should span the card').toBeGreaterThan(200);
   });
@@ -549,7 +550,13 @@ test.describe('Money on a phone @360x740', () => {
       const main = page.locator('main[class*="coachesMain"]');
       await expect(
         main.getByRole('button', {
-          name: /record a payment|undo|mark paid|mark deposit paid|mark balance paid|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
+          /* ⚠ The verbs converged in money centralization P2 (2026-08-23): "Record a payment",
+             "Log amount", "Mark paid" and Transactions' "Add" all became **Record** or, where
+             the act asks nothing, **Record as paid**. "Add a commitment" survives — Payables
+             keeps its own setup door — and "Edit amount" survives because editing is not
+             recording. This list is what a write-capable coach may see and a read-only one
+             may not, so a converged name has to be spelled here or the guard stops guarding. */
+          name: /record|record as paid|undo|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|edit amount|generate installments|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);
@@ -607,11 +614,12 @@ test.describe('Money forms on a desktop', () => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${base()}/accounting?section=transactions`);
 
-    /* ⚠ THE TOOLBAR BUTTON IS "Add", NOT "Add Expense" — it has been since the one-Add-button
-       ruling (2026-08-15), and this selector had gone stale against it: the fixture seeds two
-       expenses, so the empty state that DOES say "Add Expense" never renders here. The form's
-       own SAVE button names the outcome instead. */
-    await page.getByRole('button', { name: /^add$/i }).first().click();
+    /* ⚖ THE TOOLBAR "Add" IS RETIRED (money centralization P2, 2026-08-23) — the hub header's
+       **Record** is the door now, from every tab, and on Transactions it opens the same form
+       pre-answered "we paid for something". The button is aria-labelled "Record money" because
+       on a phone it collapses to a bare "+", so the accessible name is the stable selector at
+       every width. */
+    await page.getByRole('button', { name: /record money/i }).first().click();
     await page.getByPlaceholder(/diamond rental/i).fill('Bat bag');
 
     await page.locator('[class*="modalOverlay"]').first().click({ position: { x: 5, y: 5 } });
@@ -846,17 +854,40 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
 // strip, the prior-season column, and the payment schedule.
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Pick a value from one of the report strip's dropdowns ("View", "Showing").
+ *
+ * ⚠⚠ THESE WERE SEGMENTED BUTTONS AND THIS WHOLE BLOCK HAD BEEN RED SINCE THEY STOPPED BEING
+ * (found 2026-08-23). `View` and `Showing` became `SingleSelectDropdown`s under the one-control-
+ * shape instruction (2026-08-19/20) and the owner's "a field that chooses one value is a dropdown"
+ * convention (2026-08-22) — so `getByRole('button', { name: 'Months' })` stopped matching anything,
+ * and every test below failed on NAVIGATION, before reaching a single assertion. Nothing in the
+ * failure output said "the control changed shape"; it said a click timed out.
+ *
+ * ⚠ ADDRESSED BY THE PANEL'S `aria-label`, not by position or by the summary's text. The summary
+ * shows label AND current value, so matching on words would match "Months" in the View control's
+ * own value as readily as in its option list; and the panel is inside a closed `<details>`, so an
+ * ARIA-role query would not see it at all. The attribute selector works either way.
+ */
+async function chooseInStrip(main: Locator, label: string, option: string) {
+  const dropdown = main.locator(`details:has([role="group"][aria-label="${label}"])`);
+  await dropdown.locator('summary').click();
+  const choice = dropdown.getByRole('button', { name: option, exact: true });
+  /* ⚠ WAIT FOR THE PANEL, don't just click into it. `<details>` reveals its panel synchronously but
+     Playwright can resolve the option while it is still zero-height, and the click lands on
+     nothing — which showed up as one test passing only on retry. */
+  await expect(choice).toBeVisible();
+  await choice.click();
+}
+
 /** Switch Budget vs. Actual into the month grid and (optionally) a lens. */
 async function openMonths(page: Page, lens?: 'Budget' | 'Scheduled' | 'Actual' | 'Difference') {
   await open(page, `${base()}/accounting?section=budget-vs-actual`);
   const main = page.locator('main[class*="coachesMain"]');
-  await main.getByRole('button', { name: 'Months', exact: true }).click();
+  await chooseInStrip(main, 'View', 'Months');
   await expect(page.getByRole('table')).toBeVisible();
-  if (lens) {
-    // Each lens button carries a full and an abbreviated label (only one shows at a given
-    // width), so match the accessible name rather than exact visible text.
-    await main.getByRole('button', { name: new RegExp(`^${lens}`, 'i') }).click();
-  }
+  // The lens reads its FULL word now — the abbreviated "Diff." went with the segmented buttons.
+  if (lens) await chooseInStrip(main, 'Showing', lens);
   return main;
 }
 
@@ -890,8 +921,11 @@ test.describe('Money by month @360x740', () => {
     // The second seeded line has no periods at all, so its whole total is undated.
     await expect(main.getByRole('columnheader', { name: /no date yet/i })).toBeVisible();
 
-    // …and the chart on the Categories view names the same amount rather than smearing it.
-    await main.getByRole('button', { name: 'Categories', exact: true }).click();
+    /* …and the chart on the STATEMENT view names the same amount rather than smearing it.
+       ⚠ That view stopped being called "Categories" when money in gained a section of its own
+       (mig 243), and stopped being a button when the strip became dropdowns — this assertion had
+       been chasing both a dead name and a dead shape. */
+    await chooseInStrip(main, 'View', 'Statement');
     await expect(main.getByText(/has no date yet and isn/i)).toBeVisible();
   });
 
@@ -902,24 +936,37 @@ test.describe('Money by month @360x740', () => {
     // The last seeded period is ~3 months out, so the grid always has a month strictly after
     // today's. Its Difference cell must be an em dash — never a flattering "fully under".
     const headerCount = await main.getByRole('table').locator('thead th').count();
-    const totalRow = main.getByRole('table').locator('tbody tr').filter({ hasText: /^Total/ }).first();
+    /* ⚠ NAMED IN FULL, NOT `/^Total/`.first() (Option D, 2026-08-23). The table has TWO closing
+       totals now and revenue renders first, so the loose selector silently started reading
+       `Total revenue` while the comments here still described the spending row. The assertion
+       would have kept passing on the wrong row — a test that quietly changes what it tests. */
+    const totalRow = main.getByRole('table').locator('tbody tr').filter({ hasText: 'Total expenses' }).first();
     // Row cells are the <td>s after the row's own <th> label; the last td is the Total column.
     const futureCell = totalRow.locator('td').nth(headerCount - 3);
     await expect(futureCell).toHaveText('—');
   });
 
-  test('the cash-flow strip runs a balance and names the month the team goes short', async ({ page }) => {
+  /* ⚖ THE STRIP BECAME A STATEMENT (Option D, owner ruling 2026-08-23). The separate `Money in`
+     and `Money out` rows this test used to count are GONE — the two BAND TOTALS are those rows
+     now, which is the whole ruling: a coach can subtract the two figures above the balance and get
+     the balance. What survives unchanged is the claim worth testing — that the projection runs, and
+     that the page says out loud which reading it ran on, so "Budget" is never read as "committed". */
+  test('the bands close with totals, the balance runs, and it names the month the team goes short', async ({ page }) => {
     const main = await openMonths(page, 'Budget');
     const table = main.getByRole('table');
-    await expect(table.locator('tbody tr').filter({ hasText: 'Money in' })).toHaveCount(1);
-    await expect(table.locator('tbody tr').filter({ hasText: 'Money out' })).toHaveCount(1);
-    await expect(table.locator('tbody tr').filter({ hasText: 'Running balance' })).toHaveCount(1);
+    const row = (text: string) => table.locator('tbody tr').filter({ hasText: text });
+
+    // The band totals take the reading's own adjective — "Budgeted", not "Total", under Budget.
+    await expect(row('Budgeted revenue')).toHaveCount(1);
+    await expect(row('Budgeted expenses')).toHaveCount(1);
+    await expect(row('Net for the month')).toHaveCount(1);
+    await expect(row('Running balance')).toHaveCount(1);
 
     // This fixture spends and has no dues schedules, so the balance must go negative — and the
     // page must say so in words, naming the month.
     await expect(main.getByText(/you go short in \w+ \d{4}/i)).toBeVisible();
-    // It must also state which lens it projected with, so "Budget" is never read as "committed".
-    await expect(main.getByText(/cash flow is projected with the/i)).toBeVisible();
+    // Each reading now states its OWN basis rather than one sentence naming the lens.
+    await expect(main.getByText(/budget is your plan, not your commitments/i)).toBeVisible();
   });
 
   test('last season shows up as a column, and what is missing from this season shows up as a list', async ({ page }) => {
@@ -934,8 +981,15 @@ test.describe('Money by month @360x740', () => {
 
   test('a budget cell opens the budget-line form that already exists — the grid never edits', async ({ page }) => {
     const main = await openMonths(page, 'Budget');
-    // Expand the category so a LINE row (and therefore a line-level budget cell) is present.
-    await main.getByRole('table').locator('tbody th button').first().click();
+    /* Expand the category holding the $4,800 line, so a LINE row — and therefore a line-level
+       budget cell — is present.
+       ⚠ NAMED, NOT `.first()` (Option D, 2026-08-23). This clicked whatever toggle came first,
+       which was fine while the table held one band of expenses and became wrong twice over the
+       moment a REVENUE band rendered above them: the first toggle is now a revenue group, whose
+       rows do not exist yet, so it expanded nothing. Naming the category the seeded line actually
+       sits in (`Tournaments`, linked at fixture setup) makes the test independent of what else
+       lands above it — and of what order the bands are ever drawn in. */
+    await main.getByRole('table').getByRole('button', { name: /tournaments/i }).first().click();
     const drill = main.getByRole('table').locator('a[href*="section=budget&line="]').first();
     await expect(drill).toBeVisible();
     await drill.click();
@@ -949,7 +1003,11 @@ test.describe('Money by month @360x740', () => {
 
   test('an actual cell opens a read-only list of what made it up', async ({ page }) => {
     const main = await openMonths(page, 'Actual');
-    await expect(main.getByText(/not to an individual line/i)).toBeVisible();
+    /* ⚠ THE NOTE SAYS THE OPPOSITE NOW, and has since 2026-08-21. It used to warn that spending
+       matched a CATEGORY and not an individual line; once every cost started naming an item that
+       stopped being true, the sentence was rewritten, and this assertion was left chasing the
+       retired claim — a test still enforcing behaviour the product had deliberately reversed. */
+    await expect(main.getByText(/a category is what its rows add up to/i)).toBeVisible();
     const cell = main.getByRole('table').locator('tbody button[title*="See what makes up"]').first();
     await expect(cell).toBeVisible();
     await cell.click();
@@ -1037,7 +1095,7 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
     expect(await main.locator('tr[class*="payPieceRow"]').count()).toBe(0);
     await expect(main.locator('tr[class*="payBillRow"]').first()).toBeVisible();
     // Folded, the bill itself offers the payment door, aimed at its next unpaid piece.
-    await expect(main.getByRole('button', { name: /record a payment/i }).first()).toBeVisible();
+    await expect(main.getByRole('button', { name: /^record$/i }).first()).toBeVisible();
 
     // …and the dated arrangement opens the other way, because a period band is only a label.
     await main.getByText('Group by').click();
@@ -1090,7 +1148,7 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
        only this grouped list has two lines to spend. */
     await expect(sched.getByText(/provincials entry/i).first()).toBeVisible();
     await expect(sched.getByText(/installment 1 of 2/i).first()).toBeVisible();
-    expect(await sched.getByRole('button', { name: /record a payment/i }).count()).toBe(0);
+    expect(await sched.getByRole('button', { name: /^record$/i }).count()).toBe(0);
   });
 });
 

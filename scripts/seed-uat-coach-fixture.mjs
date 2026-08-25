@@ -1203,6 +1203,47 @@ if (!existingSponsor?.length) {
   ok('sponsor already present');
 }
 
+/**
+ * AND A SPONSOR WHO HAS **PLEDGED AND NOT PAID** (Option D, 2026-08-23).
+ *
+ * ⚠⚠ SEEDED FOR A CLAIM THAT CANNOT OTHERWISE BE MADE, not for coverage. The Months view's
+ * Scheduled lens is the season's forward view, and a pledge is its defining row: money the team has
+ * been promised, with **no date at all**, so it belongs in the "No date yet" column — in the Total
+ * and in no month. `check:money-report` refuses to call a run evidence without one, because every
+ * settled claim in that script passes happily on a fixture where the forward view is empty. A
+ * pending club request (the other undated forward row) is seeded just below.
+ *
+ * ⚠ ITS OWN GUARD, KEYED ON THE STATUS. The block above checks for a sponsor of ANY status, so on
+ * every fixture seeded before today this would never appear — the same trap that note records.
+ *
+ * ⚠ IT MUST NEVER REACH A SETTLED FIGURE. `sponsor_status: 'pledged'` is what keeps it out of Cash
+ * on hand, the statement and both bands' Actual — if this row starts showing up there, the guard's
+ * register identity fails, which is the point.
+ */
+const { data: existingPledge } = await db.from('rep_fundraisers')
+  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').eq('sponsor_status', 'pledged').limit(1);
+
+if (!existingPledge?.length) {
+  const pl = await db.from('rep_fundraisers').insert({
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    kind: 'sponsor', sponsor_status: 'pledged',
+    name: 'Riverbend Tire', description: 'Promised for the spring — cheque not sent yet.',
+    player_rebate_percent: 0, is_active: true,
+  }).select('id').single();
+  if (pl.error) console.log(`  ! pledged sponsor skipped (${pl.error.message})`);
+  else {
+    const en = await db.from('rep_fundraiser_entries').insert({
+      fundraiser_id: pl.data.id, org_id: org.id, team_id: team.id,
+      player_id: null,
+      amount_raised: 250, rebate_percent: 0, rebate_amount: 0,
+    });
+    if (en.error) console.log(`  ! pledged sponsor entry skipped (${en.error.message})`);
+    else ok('pledged sponsor seeded ($250 promised, never received — the forward view’s own row)');
+  }
+} else {
+  ok('pledged sponsor already present');
+}
+
 // One request per status that changes the row: pending keeps its Cancel button, denied carries a
 // reason and therefore an expandable detail row.
 const { data: existingPr } = await db.from('rep_team_payment_requests')

@@ -32,6 +32,112 @@ import {
 /** A month key, always `YYYY-MM`. */
 export type MonthKey = string;
 
+// ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
+
+/**
+ * The REVENUE band's groups, in the order the screen shows them — the Statement's own vocabulary.
+ *
+ * ⚠ FIXED, NOT DERIVED FROM THE DATA. Revenue is grouped by WHERE THE MONEY CAME FROM, not by the
+ * budget category a coach happened to file it under: a dues payment and a bottle drive are two
+ * different answers to "how does this team fund itself", and filing them both under "Fundraising"
+ * because a plan line says so would hide the distinction the band exists to draw.
+ */
+export const REVENUE_GROUPS = ['dues', 'fundraising', 'sponsorship', 'other', 'moneyback'] as const;
+export type RevenueGroupKey = (typeof REVENUE_GROUPS)[number];
+
+/**
+ * A revenue group's identity, as the grid keys a category.
+ *
+ * ⚠ AN ID, NEVER A NAME. `categoryKey` keys on the id when there is one, and a group's LABEL
+ * changes with the lens (a dues row reads "Player dues" under Actual and "Remaining dues
+ * installments" under Scheduled) — keying on the words would make one group two rows the moment a
+ * label moved.
+ */
+export const REVENUE_CATEGORY_PREFIX = 'revenue:';
+export function revenueCategoryId(group: RevenueGroupKey): string {
+  return `${REVENUE_CATEGORY_PREFIX}${group}`;
+}
+export function revenueGroupOf(categoryKeyOrId: string | null | undefined): RevenueGroupKey | null {
+  // The grid returns `id:<categoryId>`; the route holds the bare id. Both answer here.
+  const raw = (categoryKeyOrId ?? '').replace(/^id:/, '');
+  if (!raw.startsWith(REVENUE_CATEGORY_PREFIX)) return null;
+  const key = raw.slice(REVENUE_CATEGORY_PREFIX.length) as RevenueGroupKey;
+  return REVENUE_GROUPS.includes(key) ? key : null;
+}
+
+/**
+ * Money handed BACK to a family (mig 234) — its own group at the foot of the EXPENSES band.
+ *
+ * ⚠ NOT A BUDGET CATEGORY, and it never becomes one. A payout is not a cost the team planned; it is
+ * the team returning money it holds. It has no plan and no schedule, so it only ever carries an
+ * Actual figure — which is why it arrives as an event with this synthetic placement rather than
+ * being filed against the taxonomy like a bill.
+ */
+export const PAYOUT_CATEGORY_ID = 'cash:payouts';
+export const PAYOUT_CATEGORY_NAME = 'Paid back to families';
+
+/**
+ * Is this expense row the SYNTHETIC payouts group rather than a real budget category?
+ *
+ * ⚠⚠ IT IS THE ONE EXPENSE ROW ALLOWED TO DISAPPEAR (design pass 2026-08-24, owner-approved), and
+ * the distinction is worth stating because the standing rule runs the other way. A category the
+ * coach BUDGETED for stays visible on every lens even when empty — "you planned it and haven't
+ * spent it" is real information, and hiding it would hide the plan. This group has no plan and no
+ * schedule and never can, so its dashes under Budget and Scheduled say nothing at all; they are two
+ * lenses' worth of noise in the band a treasurer reads most closely.
+ */
+export function isPayoutCategory(categoryKeyOrId: string | null | undefined): boolean {
+  return (categoryKeyOrId ?? '').replace(/^id:/, '') === PAYOUT_CATEGORY_ID;
+}
+
+/**
+ * What a revenue group is CALLED under the lens on screen.
+ *
+ * ⚠⚠ A GROUP IS RENAMED ONLY WHERE THE FORWARD VIEW IS A DIFFERENT OBJECT (owner ruling
+ * 2026-08-24, narrowing the 2026-08-23 rule that let every label move with the lens).
+ *
+ * The first version renamed on principle — "Player dues" became "Remaining dues instalments" under
+ * Scheduled — and the owner rejected it on sight: a dues instalment still to come IS player dues,
+ * so the rename made one thing look like two as you flip lenses, and spent ~90px of the narrowest
+ * column saying what the lens already says. What survives is the case the rule was really for: a
+ * request the club has not answered is genuinely NOT money back, so it keeps its own name.
+ */
+export function revenueGroupLabel(group: RevenueGroupKey, lens: MoneyLens): string {
+  /* ⚠⚠ EXACTLY ONE GROUP IS RENAMED BY A LENS, AND IT IS THE ONLY ONE THAT CHANGES WHAT IT IS.
+     Player dues and Sponsorships keep their names everywhere (owner rulings 2026-08-24): an unpaid
+     instalment is still dues and an unhonoured pledge is still sponsorship — the same object, read
+     forward — so renaming them made one thing look like two as a coach flipped lenses, and spent
+     the narrowest column in the table saying what the lens already says.
+
+     A request the club has NOT ANSWERED is the genuine exception: it is not money back, it is a
+     question. That is what earns it a name of its own. */
+  if (lens === 'scheduled' && group === 'moneyback') {
+    /* ⚠ TRIMMED FROM "Asked of the club — awaiting answer" (owner, 2026-08-24) — the trailing
+       clause repeated what the lens means: everything on Scheduled is awaiting something. */
+    return 'Asked of the club';
+  }
+  switch (group) {
+    case 'dues':        return 'Player dues';
+    case 'fundraising': return 'Fundraising';
+    case 'sponsorship': return 'Sponsorships';
+    case 'other':       return 'Other income';
+    case 'moneyback':   return 'Money back & reimbursements';
+  }
+}
+
+/**
+ * The label on a band's total row, which takes the lens's own adjective.
+ *
+ * ⚠ ONE DEFINITION FOR THE SCREEN AND THE FILE. The export writes these rows into a spreadsheet
+ * that outlives the session, and "Total expenses" on screen against "Scheduled expenses" in the
+ * download is the kind of drift nobody notices until a treasurer asks which one is the season.
+ */
+export function bandTotalLabel(band: MoneyRowDirection, lens: MoneyLens): string {
+  const noun = band === 'in' ? 'revenue' : 'expenses';
+  const adjective = lens === 'budget' ? 'Budgeted' : lens === 'scheduled' ? 'Scheduled' : 'Total';
+  return `${adjective} ${noun}`;
+}
+
 export interface DatedAmount {
   /** `YYYY-MM-DD`, or null when the amount carries no date (→ the "no date yet" bucket). */
   date: string | null;
@@ -133,8 +239,16 @@ export interface GridLineResult {
   planLines: GridPlanLine[];
   /** Per-month cells, index-aligned with `months`. */
   cells: MonthCell[];
-  /** Budget the coach has not given a date to yet. */
-  undatedBudget: number;
+  /**
+   * The "no date yet" bucket, under every lens.
+   *
+   * ⚠⚠ IT USED TO BE `undatedBudget: number`, AND WIDENING IT IS THE OPTION D FORWARD VIEW
+   * (owner ruling 2026-08-23). Undated money was plan money and nothing else, so one figure said
+   * it all — but a sponsor PLEDGE and a club request awaiting an answer have no date either, and
+   * the Scheduled lens now carries both. They belong in the Total and in no month, which is
+   * exactly what this bucket has always meant; there was simply no field to put them in.
+   */
+  undated: MonthCell;
   /** Row totals, for the trailing Total column. */
   total: MonthCell;
 }
@@ -146,7 +260,8 @@ export interface GridCategoryResult {
    *  drift apart. */
   categoryKey: string;
   cells: MonthCell[];
-  undatedBudget: number;
+  /** As on the row — the bucket for money in the Total and in no month. */
+  undated: MonthCell;
   total: MonthCell;
   lines: GridLineResult[];
   /** True when this category exists only because something is scheduled or paid against it —
@@ -161,7 +276,7 @@ export interface MonthGrid {
   categories: GridCategoryResult[];
   totals: {
     cells: MonthCell[];
-    undatedBudget: number;
+    undated: MonthCell;
     total: MonthCell;
   };
 }
@@ -267,8 +382,35 @@ export function buildMonthGrid(input: {
   actuals: CategoryEvent[];
   /** Commitments, by the date they fall due (paid or not — a commitment is scheduled either way). */
   scheduled: CategoryEvent[];
+  /**
+   * BUDGET that arrives as dated events rather than as a line's periods (Option D, 2026-08-23).
+   *
+   * ⚠⚠ A PLAN IS NOT ALWAYS A BUDGET LINE, and the REVENUE band is the proof. What a season plans
+   * to collect in dues is its dues INSTALMENT SCHEDULE — real dated amounts a coach set on the
+   * Player Dues tab, never a row in the budget planner. Feeding it through the same `place()` that
+   * files spending is what lets one band builder serve both sides; the alternative was a second
+   * bucketing pass for revenue, which is the "parallel copy" this module exists not to have.
+   *
+   * ⚠ A CATEGORY IS FED ONE WAY OR THE OTHER, NEVER BOTH. Expense categories carry their plan on
+   * their lines' periods; revenue groups have no lines and carry it here. Mixing them on one row
+   * would double the plan, so the totals below deliberately read the CELLS rather than
+   * `line.totalAmount`, which makes both paths add up identically.
+   */
+  budgets?: CategoryEvent[];
   todayMonth: MonthKey;
   maxMonths?: number;
+  /**
+   * The column domain, when the CALLER owns it (Option D: the revenue and expense bands are two
+   * calls that must line up column for column, so the months are derived once over both bands'
+   * dates and handed to each).
+   *
+   * ⚠ DERIVE IT WITH `deriveMonthRange` — passing an arbitrary list here is how a band ends up
+   * with columns its sibling does not have, and every cell after the first mismatch reads the
+   * wrong month.
+   */
+  months?: MonthKey[];
+  /** Paired with `months`: whether that derivation had to cut the range. */
+  truncated?: boolean;
   /**
    * ESTIMATE dollars not yet covered by any line (`rep_program_years.budget_amount` above the
    * itemized sum). The category view already shows this as a "Not itemized yet" row; the month
@@ -277,29 +419,31 @@ export function buildMonthGrid(input: {
    * lines has nothing unallocated to stand in for, and a negative row here would read as a refund.
    */
   bufferAmount?: number;
-  /**
-   * Days CASH moved (the Actual strip's events) — they widen the month RANGE and nothing else.
-   * A month where money arrived but nothing was budgeted or spent must still have a column, or
-   * the strip silently drops that money and `check:money-report`'s register identity fails by
-   * exactly the hidden amount (owner ruling 2026-08-23, Exhibit C: the grid GROWS the column;
-   * folding off-range cash into an edge month was rejected). No cell reads these — the grid's
-   * rows stay money-out only, which is Phase 2's question, not this parameter's.
-   */
-  cashDates?: Array<string | null>;
+  /* ⚠⚠ `cashDates` LIVED HERE AND IS GONE (Option D, 2026-08-23). It existed so the grid would grow
+     a column for a month where only cash moved (owner ruling, Exhibit C) back when this function
+     derived its own month range and the route had no say. Option D made the CALLER derive the range
+     once over both bands and hand it to each — so the route feeds cash days straight into
+     `deriveMonthRange` and this parameter had no production reader left, only a unit test keeping an
+     unreachable branch alive. **The ruling is unchanged and still enforced**: `deriveMonthRange` is
+     tested directly, and `check:money-report` fails out loud if cash moved in a month the grid grew
+     no column for. */
 }): MonthGrid {
   const { lines, actuals, scheduled, todayMonth } = input;
+  const budgets = input.budgets ?? [];
   const bufferAmount = round2(input.bufferAmount ?? 0);
 
-  const { months, truncated } = deriveMonthRange(
-    [
-      ...lines.flatMap(l => l.periods.map(p => p.date)),
-      ...actuals.map(a => a.date),
-      ...scheduled.map(s => s.date),
-      ...(input.cashDates ?? []),
-    ],
-    todayMonth,
-    { max: input.maxMonths ?? MAX_MONTH_COLUMNS },
-  );
+  const { months, truncated } = input.months
+    ? { months: input.months, truncated: input.truncated ?? false }
+    : deriveMonthRange(
+      [
+        ...lines.flatMap(l => l.periods.map(p => p.date)),
+        ...actuals.map(a => a.date),
+        ...scheduled.map(s => s.date),
+        ...budgets.map(b => b.date),
+      ],
+      todayMonth,
+      { max: input.maxMonths ?? MAX_MONTH_COLUMNS },
+    );
   const monthIndex = new Map(months.map((m, i) => [m, i]));
 
   // ── categories from the budget plan ──────────────────────────────────────
@@ -318,12 +462,19 @@ export function buildMonthGrid(input: {
 
   // ── money events, bucketed to (category, month) ──────────────────────────
   const eventCells = new Map<string, MonthCell[]>();
-  const undatedActual = new Map<string, number>();
-  const undatedScheduled = new Map<string, number>();
+  /* ⚠ ONE MAP, THREE FIELDS. It was two maps keyed by field (`undatedActual`, `undatedScheduled`)
+     until budget could arrive as an event too; a third parallel map would have been three places to
+     remember on every read, and the category roll-up below already had to walk both. */
+  const undatedEvents = new Map<string, MonthCell>();
 
   function cellsFor(key: string): MonthCell[] {
     let c = eventCells.get(key);
     if (!c) { c = blankCells(months.length); eventCells.set(key, c); }
+    return c;
+  }
+  function undatedFor(key: string): MonthCell {
+    let c = undatedEvents.get(key);
+    if (!c) { c = { budget: 0, scheduled: 0, actual: 0 }; undatedEvents.set(key, c); }
     return c;
   }
 
@@ -344,7 +495,7 @@ export function buildMonthGrid(input: {
   const lineKey = (l: { categoryId?: string | null; categoryName: string | null; itemId: string | null }) =>
     `${categoryKey(l)}|${l.itemId ?? 'no-item'}`;
 
-  function place(events: CategoryEvent[], field: 'actual' | 'scheduled', undated: Map<string, number>) {
+  function place(events: CategoryEvent[], field: keyof MonthCell) {
     for (const e of events) {
       if (!e.amount) continue;
       const key = eventKey(e);
@@ -353,27 +504,29 @@ export function buildMonthGrid(input: {
       if (i === undefined) {
         // Outside the window (only possible when the range was truncated) or genuinely undated —
         // never silently dropped, never smeared.
-        undated.set(key, round2((undated.get(key) ?? 0) + e.amount));
+        const undated = undatedFor(key);
+        undated[field] = round2(undated[field] + e.amount);
         continue;
       }
       const cells = cellsFor(key);
       cells[i][field] = round2(cells[i][field] + e.amount);
     }
   }
-  place(actuals, 'actual', undatedActual);
-  place(scheduled, 'scheduled', undatedScheduled);
+  place(actuals, 'actual');
+  place(scheduled, 'scheduled');
+  place(budgets, 'budget');
 
   // A category the team spends or owes on but has never budgeted still gets a row.
   const unplannedKeys: string[] = [];
   // ⚠ The maps are keyed by row (category|item) now, so the CATEGORY has to be read back out —
   // comparing a row key against `catLines` would never match and every category would look new.
-  for (const rowKey of [...eventCells.keys(), ...undatedActual.keys(), ...undatedScheduled.keys()]) {
+  for (const rowKey of [...eventCells.keys(), ...undatedEvents.keys()]) {
     const key = catOf(rowKey);
     if (catLines.has(key) || unplannedKeys.includes(key)) continue;
     unplannedKeys.push(key);
   }
   const eventDisplay = new Map<string, string>();
-  for (const e of [...actuals, ...scheduled]) {
+  for (const e of [...actuals, ...scheduled, ...budgets]) {
     const key = categoryKey(e);
     if (!eventDisplay.has(key)) eventDisplay.set(key, displayCategoryName(e.categoryName));
   }
@@ -392,23 +545,23 @@ export function buildMonthGrid(input: {
     const claimed = new Set<string>();
     const lineResults: GridLineResult[] = ownLines.map(line => {
       const cells = blankCells(months.length);
-      let undatedBudget = 0;
+      const undated: MonthCell = { budget: 0, scheduled: 0, actual: 0 };
 
       if (line.periods.length === 0) {
-        undatedBudget = round2(line.totalAmount);
+        undated.budget = round2(line.totalAmount);
       } else {
         let placed = 0;
         for (const p of line.periods) {
           const m = monthKeyOf(p.date);
           const i = m != null ? monthIndex.get(m) : undefined;
-          if (i === undefined) { undatedBudget = round2(undatedBudget + p.amount); continue; }
+          if (i === undefined) { undated.budget = round2(undated.budget + p.amount); continue; }
           cells[i].budget = round2(cells[i].budget + p.amount);
           placed = round2(placed + p.amount);
         }
         // Periods are validated to sum to the line total (±$0.02) on write, but a line edited
         // after its periods were set can drift. Anything unaccounted for is undated, not lost.
-        const remainder = round2(line.totalAmount - placed - undatedBudget);
-        if (remainder > 0.005) undatedBudget = round2(undatedBudget + remainder);
+        const remainder = round2(line.totalAmount - placed - undated.budget);
+        if (remainder > 0.005) undated.budget = round2(undated.budget + remainder);
       }
 
       /* ⚠⚠ THE ROW'S OWN MONEY, which it never used to get (owner-found 2026-08-21). Spending was
@@ -416,26 +569,29 @@ export function buildMonthGrid(input: {
          "no money here" on the exact row the money belonged to, while the Statement view of the
          same report itemised it correctly. ⚠ Keyed by `lineKey(line)` — what the row IS —
          never by `line.id`; see the rule above `eventKey`. */
-      const own = claimed.has(lineKey(line)) ? undefined : eventCells.get(lineKey(line));
+      const mine = claimed.has(lineKey(line)) ? null : lineKey(line);
       claimed.add(lineKey(line));
-      if (own) {
-        for (let i = 0; i < months.length; i++) {
-          cells[i].scheduled = round2(cells[i].scheduled + own[i].scheduled);
-          cells[i].actual = round2(cells[i].actual + own[i].actual);
-        }
-      }
+      const own = mine ? eventCells.get(mine) : undefined;
+      if (own) for (let i = 0; i < months.length; i++) addCell(cells[i], own[i]);
+      const ownUndated = mine ? undatedEvents.get(mine) : undefined;
+      if (ownUndated) addCell(undated, ownUndated);
+
+      /* ⚠⚠ THE TOTAL READS THE CELLS, NOT `line.totalAmount` (Option D, 2026-08-23). It is the same
+         number — the loop above places the whole total, sending anything undated or off-window to
+         the undated bucket — and reading it this way is what lets a row whose plan arrived as
+         EVENTS (a revenue group's dues schedule) total correctly instead of reporting zero. */
+      const sum = (field: keyof MonthCell) =>
+        round2(cells.reduce((t, c) => t + c[field], 0) + undated[field]);
       const total: MonthCell = {
-        budget: round2(line.totalAmount),
         // Undated money is in the total but in no column — the same shape the category uses.
-        scheduled: round2(cells.reduce((t, c) => t + c.scheduled, 0) + (undatedScheduled.get(lineKey(line)) ?? 0)),
-        actual: round2(cells.reduce((t, c) => t + c.actual, 0) + (undatedActual.get(lineKey(line)) ?? 0)),
+        budget: sum('budget'), scheduled: sum('scheduled'), actual: sum('actual'),
       };
       return {
         id: line.id,
         description: line.description,
         planLines: line.planLines ?? [],
         cells,
-        undatedBudget,
+        undated,
         total,
       };
     });
@@ -452,29 +608,35 @@ export function buildMonthGrid(input: {
     for (const lr of lineResults) {
       for (let i = 0; i < months.length; i++) addCell(cells[i], lr.cells[i]);
     }
+    /* Every undated entry belonging to this category, whether or not it found a row — the rows'
+       own buckets, plus anything orphaned. The cells above already hold all the DATED money, so
+       these two together are the whole remainder. */
+    const undated: MonthCell = { budget: 0, scheduled: 0, actual: 0 };
+    for (const lr of lineResults) addCell(undated, lr.undated);
+
     const rowKeys = new Set(ownLines.map(lineKey));
     for (const [rowKey, ev] of eventCells) {
       if (catOf(rowKey) !== key || rowKeys.has(rowKey)) continue;
-      for (let i = 0; i < months.length; i++) {
-        cells[i].scheduled = round2(cells[i].scheduled + ev[i].scheduled);
-        cells[i].actual = round2(cells[i].actual + ev[i].actual);
-      }
+      for (let i = 0; i < months.length; i++) addCell(cells[i], ev[i]);
     }
-    /* Every undated entry belonging to this category, whether or not it found a row. The cells
-       above already hold all of its DATED money, so these two are the whole remainder. */
-    const undatedIn = (m: Map<string, number>) => round2(
-      [...m].reduce((t, [rowKey, v]) => (catOf(rowKey) === key ? t + v : t), 0));
+    for (const [rowKey, u] of undatedEvents) {
+      if (catOf(rowKey) !== key || rowKeys.has(rowKey)) continue;
+      addCell(undated, u);
+    }
 
-    const undatedBudget = round2(lineResults.reduce((s, l) => s + l.undatedBudget, 0));
     const total: MonthCell = {
-      budget: round2(lineResults.reduce((s, l) => s + l.total.budget, 0)),
-      scheduled: round2(cells.reduce((s, c) => s + c.scheduled, 0) + undatedIn(undatedScheduled)),
-      actual: round2(cells.reduce((s, c) => s + c.actual, 0) + undatedIn(undatedActual)),
+      budget: round2(cells.reduce((s, c) => s + c.budget, 0) + undated.budget),
+      scheduled: round2(cells.reduce((s, c) => s + c.scheduled, 0) + undated.scheduled),
+      actual: round2(cells.reduce((s, c) => s + c.actual, 0) + undated.actual),
     };
 
+    /* ⚠ BUDGET COUNTS AS SOMETHING TO SHOW. It could not before — an unplanned category is by
+       definition one with no budget — but a REVENUE group carries its plan as events, so a group
+       that is only ever budgeted (a sponsorship line with nothing raised yet) would have been
+       dropped from the Budget lens it exists to appear on. */
     if (
       unplanned
-      && total.scheduled === 0 && total.actual === 0
+      && total.budget === 0 && total.scheduled === 0 && total.actual === 0
     ) continue; // nothing to show
 
     categories.push({
@@ -484,7 +646,7 @@ export function buildMonthGrid(input: {
       categoryName: catDisplay.get(key) ?? eventDisplay.get(key) ?? NO_CATEGORY_LABEL,
       categoryKey: key,
       cells,
-      undatedBudget,
+      undated,
       total,
       lines: lineResults,
       unplanned,
@@ -496,7 +658,7 @@ export function buildMonthGrid(input: {
       categoryName: 'Not itemized yet',
       categoryKey: '__buffer__',
       cells: blankCells(months.length),
-      undatedBudget: bufferAmount,
+      undated: { budget: bufferAmount, scheduled: 0, actual: 0 },
       total: { budget: bufferAmount, scheduled: 0, actual: 0 },
       lines: [],
       unplanned: false,
@@ -507,8 +669,8 @@ export function buildMonthGrid(input: {
   const totalCells = blankCells(months.length);
   for (const c of categories) for (let i = 0; i < months.length; i++) addCell(totalCells[i], c.cells[i]);
   const grandTotal: MonthCell = { budget: 0, scheduled: 0, actual: 0 };
-  for (const c of categories) addCell(grandTotal, c.total);
-  const undatedBudgetTotal = round2(categories.reduce((s, c) => s + c.undatedBudget, 0));
+  const grandUndated: MonthCell = { budget: 0, scheduled: 0, actual: 0 };
+  for (const c of categories) { addCell(grandTotal, c.total); addCell(grandUndated, c.undated); }
 
   return {
     months,
@@ -516,7 +678,7 @@ export function buildMonthGrid(input: {
     categories,
     totals: {
       cells: totalCells,
-      undatedBudget: undatedBudgetTotal,
+      undated: grandUndated,
       total: grandTotal,
     },
   };
@@ -528,20 +690,41 @@ export interface CashFlowRow {
   month: MonthKey;
   moneyIn: number;
   moneyOut: number;
+  /** Revenue less expenses for this month alone — the "Net for the month" row. */
+  net: number;
   running: number;
 }
 
 export interface CashFlowResult {
   rows: CashFlowRow[];
+  /** Where the running balance starts: a carried opening balance, or today's cash under Scheduled. */
+  opening: number;
+  /**
+   * Money the lens knows about but cannot date — a sponsor pledge, a club request awaiting an
+   * answer. It reaches the TOTAL and no month (owner ruling 2026-08-23, drawn): counted as
+   * possible, never as arrived.
+   */
+  undated: { moneyIn: number; moneyOut: number; net: number };
+  /** The season's own net — every month plus the undated bucket. The `Net for the month` Total. */
+  net: number;
+  /**
+   * Where the balance ENDS: opening + net.
+   *
+   * ⚠⚠ THIS IS WHAT THE RUNNING BALANCE'S TOTAL CELL CARRIES (owner ruling 2026-08-23), where it
+   * used to print an em dash on the reasoning that a running balance has no sum. True, and beside
+   * the point: the figure a treasurer is looking for is where the balance ENDED, the Total column
+   * is pinned, and so Cash on hand is now on screen whatever month you have scrolled to.
+   */
+  ending: number;
   /** The first month the running balance goes negative — the whole point of the strip. */
   shortfall: { month: MonthKey; amount: number } | null;
 }
 
 /**
- * Running balance across the grid's months.
+ * The season's net and running balance across the grid's months.
  *
- * Money OUT comes from whichever lens the coach is reading — the plan under Budget, the
- * commitments under Scheduled, real spending under Actual. Never a blend: mixing a planned
+ * Both sides come from whichever lens the coach is reading — the plan under Budget, what is still
+ * owed and still expected under Scheduled, real cash under Actual. Never a blend: mixing a planned
  * estimate with a commitment for the same cost is exactly the double-count the "Scheduled is a
  * separate lens" ruling exists to prevent.
  */
@@ -550,25 +733,88 @@ export function buildCashFlow(
   moneyInByMonth: Record<string, number>,
   moneyOutByMonth: Record<string, number>,
   openingBalance = 0,
+  undatedFlow: { moneyIn?: number; moneyOut?: number } = {},
 ): CashFlowResult {
-  let running = round2(openingBalance);
+  const opening = round2(openingBalance);
+  let running = opening;
   let shortfall: CashFlowResult['shortfall'] = null;
 
   const rows = months.map(month => {
     const moneyIn = round2(moneyInByMonth[month] ?? 0);
     const moneyOut = round2(moneyOutByMonth[month] ?? 0);
-    running = round2(running + moneyIn - moneyOut);
+    const net = round2(moneyIn - moneyOut);
+    running = round2(running + net);
     if (running < -0.005 && !shortfall) shortfall = { month, amount: round2(Math.abs(running)) };
-    return { month, moneyIn, moneyOut, running };
+    return { month, moneyIn, moneyOut, net, running };
   });
 
-  return { rows, shortfall };
+  const undatedIn = round2(undatedFlow.moneyIn ?? 0);
+  const undatedOut = round2(undatedFlow.moneyOut ?? 0);
+  const undated = { moneyIn: undatedIn, moneyOut: undatedOut, net: round2(undatedIn - undatedOut) };
+  /* ⚠ THE UNDATED NET IS IN THE TOTALS AND IN NO MONTH — so it never moves a month's running
+     balance and never triggers the shortfall sentence. A pledge cannot rescue a February the team
+     has to get through without it. */
+  const net = round2(rows.reduce((s, r) => s + r.net, 0) + undated.net);
+
+  return { rows, opening, undated, net, ending: round2(opening + net), shortfall };
+}
+
+/**
+ * The season's net and running balance, read off the two BANDS on screen.
+ *
+ * ⚠⚠ THE ASSEMBLY IS THE PART WORTH SHARING, not the sum underneath it (`/simplify`, 2026-08-23).
+ * The screen and the export both had to answer the same three questions — which cells feed which
+ * side, where the balance STARTS, and what happens to money nobody can date — and both had written
+ * their own answer. `buildCashFlow` being shared was not enough: a change to the opening-balance
+ * rule would have had two call sites, and a spreadsheet whose Net and Running rows disagreed with
+ * the screen it was exported from is the exact failure the Option D ruling exists to prevent.
+ *
+ * ⚠ THE OPENING IS THE LENS'S OWN. Actual and Budget start from the season's opening balance
+ * (nothing carried yet — the carry-forward is its own build item); Scheduled starts from TODAY'S
+ * REAL MONEY, because a forward view projected from zero would be fiction.
+ *
+ * ⚠ BOTH BANDS MUST SHARE A MONTH DOMAIN — `buildMonthGrid`'s `months` input is how the caller
+ * guarantees it. Index `i` addresses the same month on both sides here, so a mismatch would
+ * subtract April's costs from May's revenue.
+ */
+export function buildBandCashFlow(
+  revenue: MonthGrid,
+  expenses: MonthGrid,
+  lens: Exclude<MoneyLens, 'difference'>,
+  cashOnHand: number,
+): CashFlowResult {
+  const moneyInByMonth: Record<string, number> = {};
+  const moneyOutByMonth: Record<string, number> = {};
+  /* ⚠ NO `?? 0` ON THE REVENUE SIDE, DELIBERATELY. The two bands share a month domain by
+     construction, so a missing cell here is not a case to absorb — it means a caller built the
+     bands over different ranges, and every figure below it would be wrong money quietly. Let that
+     throw. A defensive zero would turn a broken caller into a silently understated balance. */
+  expenses.months.forEach((m, i) => {
+    moneyInByMonth[m] = revenue.totals.cells[i][lens];
+    moneyOutByMonth[m] = expenses.totals.cells[i][lens];
+  });
+  return buildCashFlow(
+    expenses.months, moneyInByMonth, moneyOutByMonth,
+    lens === 'scheduled' ? cashOnHand : 0,
+    { moneyIn: revenue.totals.undated[lens], moneyOut: expenses.totals.undated[lens] },
+  );
 }
 
 // ── lenses ───────────────────────────────────────────────────────────────────
 
 /** What a cell shows. One payload serves all four, so flipping a lens never refetches. */
 export type MoneyLens = 'budget' | 'scheduled' | 'actual' | 'difference';
+
+/**
+ * Which way a row's money moves — the REVENUE band or the EXPENSES band (Option D, 2026-08-23).
+ *
+ * ⚠⚠ IT EXISTS FOR ONE REASON: THE SIGN OF "DIFFERENCE" FLIPS. Under budget on a cost is good news;
+ * under budget on dues is a shortfall. Computed the same way for both, a revenue row that came in
+ * $900 light would print a positive figure in the same colour the grid uses for "you saved money".
+ * So costs read plan − actual and revenue reads actual − plan: on both bands, a positive number is
+ * the season going well, which is the only rule a reader can hold in their head.
+ */
+export type MoneyRowDirection = 'in' | 'out';
 
 /** Has this month already happened? Drives the Difference lens blanking future months. */
 export function isElapsed(month: MonthKey, todayMonth: MonthKey): boolean {
@@ -585,20 +831,77 @@ export function isElapsed(month: MonthKey, todayMonth: MonthKey): boolean {
  */
 export function lensCell(
   cell: MonthCell, lens: MoneyLens, month: MonthKey, todayMonth: MonthKey,
+  direction: MoneyRowDirection = 'out',
 ): number | null {
   if (lens !== 'difference') return cell[lens];
   if (!isElapsed(month, todayMonth)) return null;
-  return round2(cell.budget - cell.actual);
+  return lensDifference(cell, direction);
 }
 
 /** The same for a ROW total, where every month has already been rolled in. */
-export function lensTotal(total: MonthCell, lens: MoneyLens): number {
-  return lens === 'difference' ? round2(total.budget - total.actual) : total[lens];
+export function lensTotal(
+  total: MonthCell, lens: MoneyLens, direction: MoneyRowDirection = 'out',
+): number {
+  return lens === 'difference' ? lensDifference(total, direction) : total[lens];
 }
 
-/** Does this lens read the PLAN? Only those two can say anything about undated budget. */
+/** Plan against reality, signed so that positive is good news on either band — see `MoneyRowDirection`. */
+function lensDifference(cell: MonthCell, direction: MoneyRowDirection): number {
+  return direction === 'in'
+    ? round2(cell.actual - cell.budget)
+    : round2(cell.budget - cell.actual);
+}
+
+/**
+ * The "no date yet" figure a lens can show, or null when it has nothing to put there.
+ *
+ * ⚠ THE COLUMN APPEARS ONLY WHERE IT CAN HOLD SOMETHING (owner ruling 2026-08-21) — which used to
+ * mean "the plan lenses", because undated money was plan money. Option D's forward view gave
+ * Scheduled its own undated bucket (a sponsor pledge, a club request awaiting an answer), so the
+ * rule is now enforced on the FIGURE rather than on the lens's name. Difference stays plan-only:
+ * comparing an undated plan against an undated arrival is not a comparison anyone asked for.
+ */
+export function lensUndated(undated: MonthCell, lens: MoneyLens): number {
+  return lens === 'difference' ? undated.budget : undated[lens];
+}
+
+/** Does this lens read the PLAN? */
 export function lensReadsPlan(lens: MoneyLens): boolean {
   return lens === 'budget' || lens === 'difference';
+}
+
+/**
+ * Has this row anything to say under the lens on screen?
+ *
+ * ⚠⚠ ONE PREDICATE, TWO READERS, AND THAT IS THE WHOLE REASON IT IS HERE. The screen filters the
+ * REVENUE band with it (a bottle drive has no forward record, so "Fundraising" is absent from the
+ * Scheduled view rather than a row of dashes) and the EXPORT has to filter identically — a file
+ * listing a row the screen never showed gives a reader no way to tell an empty row from a missing
+ * one. Written out twice it was one edit away from the two disagreeing, which is the defect class
+ * this whole report has been consolidated twice to remove.
+ *
+ * ⚠ THE EXPENSE BAND DOES NOT USE THIS. A category the coach budgeted for stays visible whether or
+ * not the lens has anything in it, because its emptiness is itself the answer.
+ */
+export function categoryHasFigure(total: MonthCell, lens: MoneyLens): boolean {
+  if (lens === 'difference') {
+    return Math.abs(total.budget) > 0.005 || Math.abs(total.actual) > 0.005;
+  }
+  return Math.abs(total[lens]) > 0.005;
+}
+
+/**
+ * Is there anything for the "No date yet" column to hold under this lens, on either band?
+ *
+ * ⚠⚠ THE SCREEN AND THE FILE HAD TWO DIFFERENT FORMULAS FOR THIS, and they were not equivalent
+ * (`/simplify`, 2026-08-23): the screen asked "is EITHER band's figure over a cent?" and the export
+ * asked "is the SUM of both over a cent?" — so two bands holding three-tenths of a cent each gave a
+ * column in the download and none on screen. Nobody would ever have seen it, and that is exactly
+ * why it is worth deleting: the rule is *"the column appears only where it can hold something"*
+ * (owner ruling 2026-08-21), and a rule with two spellings has already started drifting.
+ */
+export function hasUndated(bands: MonthGrid[], lens: MoneyLens): boolean {
+  return bands.some(b => Math.abs(lensUndated(b.totals.undated, lens)) > 0.005);
 }
 
 /** "2026-03" → "Mar '26". Short by necessity: this is a column header on a phone. */

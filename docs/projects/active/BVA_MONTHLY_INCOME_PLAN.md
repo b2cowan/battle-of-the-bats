@@ -1,6 +1,11 @@
 # Budget vs. Actual learns the whole income truth — implementation plan
 
-**Status: PHASE 1 BUILT ON DEV 2026-08-23 (owner QA §83 owed; no migration). Go received the same
+**Status: PHASE 1 BUILT ON DEV 2026-08-23 (owner QA §83 owed) · PHASE 2 = OPTION D, and its
+FIRST HALF (D-1) IS BUILT ON DEV 2026-08-23 (owner QA §85 owed; no migration) — see §2.1 for what
+landed, the five build decisions and the guard rebuild. D-2 (revenue item rows + the season
+opening balance) is gated on the §85 walk.**
+
+**Phase 1 detail. Go received the same
 day (owner: "agree with your recommendations", on the mockup artifact `f0598811`), which also took
 the Exhibit C RULING: when cash arrives in a month outside the budgeted/spent span, the grid GROWS
 the column (fold-into-edge-month and footnote-only-disclosure both rejected). Built per §1 exactly:
@@ -173,15 +178,117 @@ footnote.
 
 ---
 
-## §2 · Phase 2 — income in the month GRID (mockup session, NOT this build)
+## §2 · Phase 2 — income in the month GRID (MOCKUP SESSION HELD 2026-08-23, rulings pending)
 
-Held exactly as the prompt states: 2–3 honest options drawn as a Claude Artifact (income band in
-the grid · a fourth "Cash flow" view · strip-only+ expandable breakdown), costs priced in the
-artifact, owner rulings stamped, then a gated build. Constraints already binding: mental-model
-principle (2026-08-21), "never a tab row where a filter would do", do-not-worsen phones (phone
-tables are their own sequenced session — see TODO's phone-money-list planning item, which holds a
-worked month-stepper candidate), and Months must never group income differently than Statement's
-Revenue band (route :672–679 — one grouping, on purpose).
+Three options drawn and priced on the Phase 1 worked season — artifact
+`claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2`:
+- **A. Income band in the treasurer's grid** — dues row + the Statement's Revenue grouping, all
+  four lenses; the one wrinkle drawn honestly: money back / club reimbursements are cost
+  reductions on the REPORT and arrivals in CASH, so the band ($6,290 on the fixture) and the cash
+  row ($6,670) coexist with a bridging footnote (a "money back" income row was priced and advised
+  against — it would break the one-grouping rule with the Statement). Largest build.
+- **B. Fourth view "Cash flow"** — the register folded into months, pure cash, no netting wrinkle,
+  inherits the Phase 1 guard; priced against it: a deliberate second months table ("a second
+  report wearing the first's clothes" is the route's own standing warning), a fourth View button,
+  no plan comparison. Medium.
+- **C. Strip self-expands (RECOMMENDED)** — Actual-lens Money in/out rows grow chevrons opening
+  per-source cash rows; collapsed = pixel-identical to Phase 1; no netting wrinkle, no new view,
+  inherits the guard; gives up monthly plan-vs-actual for income (Statement keeps it seasonally);
+  compatible with adding A later. Smallest build.
+**SESSION TURN (owner, same day): a fourth shape — Option D, the FULL MERGE — now supersedes A–C
+as the working proposal.** The owner's direction: Months regroups like the Statement — a REVENUE
+band whose groups (Player dues · Fundraising · Sponsorships) sit at the same level as expense
+categories and open to the actual families/drives/sponsors, Total revenue and Total expenses rows,
+Running balance at the bottom. Drawn in the artifact on the REAL QA Money U13 season (pulled from
+dev DB; reconciles with the owner's screenshot to the dollar, including the two family-paid costs
+that explain his grid-vs-strip gaps). The load-bearing design call, drawn and priced: **cash in
+both bands** — revenue − expenses = running balance to the cent (register-guarded), the strip's
+separate cash rows dissolve into the band totals, payouts become an expense-side group, money
+back/club-in become a revenue group when present, and a family-paid cost steps out to the
+Statement via footnote. Priced consequence: Months' per-item Actual can differ from the
+Statement's where refunds/family-paid exist (two labeled truths; Statement↔chart stays one guard,
+this grid↔register the other). Coverage mapping in the artifact answers the owner's question:
+D covers everything Option B's cash-flow view showed, at finer grain.
+**Rulings TAKEN (owner, 2026-08-23, in-session):** D is the shape · CASH in both bands (confirmed
+via the family-paid call: "we didn't pay anything — once we pay the player it shows up at that
+point") · a **Net for the month** row under Total expenses whose season total equals the running
+balance's ending value · the **Running balance's Total cell carries that ending value** (= Cash on
+hand, always on screen) instead of an em dash · family-paid costs stay out, footnoted, until paid.
+**Further rulings taken same session:** a **Net for the month** row (season total = running
+balance's ending value) · the Running balance's Total cell carries the ending value (= Cash on
+hand, pinned on screen) · **a season can carry an OPENING BALANCE** — first row of the summary
+block, carried automatically at Start-next-season from the closing season's ending cash, editable
+in Team settings → Money; ⚠ it must reach this report, the REGISTER's book, and Cash on hand in
+one build item or the surfaces argue (guard covers it). Both proposed lenses are now DRAWN in the
+artifact (Scheduled = forward view with dateless pledges/pending requests in the No-date column,
+counted in Total but no month; Budget = the plan's own net + projected balance from the opening
+balance).
+**BUILD AGREED (owner, 2026-08-23: "ok, this looks good, I agree with the build")** — D as drawn,
+including both lenses, the Net row, the filled running-balance Total cell, and the opening
+balance. **One owner-directed pause:** the opening-balance WORKFLOW walks before it builds. The
+owner's requirements, both now drawn in the artifact: a step in the Start-next-season modal —
+"Carry your money forward?" (carry all, default · carry a different amount · start at $0, showing
+the register's own closing figure) — and a subtle edit home, drawn as a "Season opening balance"
+row in Team settings → Money beside the two dues settings already living there, with the
+register's Opening-balance line linking to it. Walkthrough note: settling up happens BEFORE
+rollover (a closed season's book takes no new payments — the standing warn-never-block tradeoff,
+unchanged); the carried number is a handoff, corrected only via the settings row.
+**Workflow walkthrough ACCEPTED (owner: "looks good") and the build is handed to a fresh session:
+`BVA_OPTION_D_MERGED_MONTHS_BUILD_PROMPT.md` (written 2026-08-23) carries every ruling, the spec
+artifact link, the guard-rework instructions (statement↔chart stays report-basis; the grid
+re-anchors to the register), and the traps. Build order: D-1 bands + totals + Net + lenses, then
+D-2 item drill-down + opening balance (migration 262-or-next).**
+
+### §2.1 · D-1 BUILT ON DEV 2026-08-23 (owner QA **§85** — the prompt said §84, which was already
+taken by the family dues statement PDF). No migration.
+
+Built as drawn: two bands over ONE month domain, `Total revenue` / `Total expenses` closing each,
+`Net for the month` and a `Running balance` whose Total cell carries the ending value. The strip's
+Money in / Money out rows dissolved into the band totals. Scheduled became the forward view
+(remaining dues instalments · sponsor pledges · pending club asks, dateless items in **No date
+yet**), Budget gained its own net, Difference is signed so a positive figure is good news on both
+bands. **QA Money U13 reconciles to the mockup to the dollar** ($8,141.69 / $5,279.00 / $2,862.69).
+
+**Five build decisions worth their own line, each stated in code where it lives:**
+1. **One builder, both bands.** `buildMonthGrid` gained an optional `budgets: CategoryEvent[]`
+   stream and a caller-owned `months` domain, rather than a sibling revenue builder. A plan is not
+   always a budget line — a dues instalment schedule is a plan and has no line — and that one
+   honest addition is what let revenue reuse the windowing, the undated bucket, the category
+   identity and the totals instead of copying four rules that have been consolidated twice.
+2. **`undatedBudget: number` became `undated: MonthCell`.** The forward view gave Scheduled its own
+   undated money (a pledge, a club ask); the bucket needed a field per lens. The "No date yet"
+   column's appearance rule moved from *which lens* to *is there a figure*, which is the 2026-08-21
+   ruling enforced on the thing it was always about.
+3. **`lensCell`/`lensTotal` gained a direction.** Difference on revenue is `actual − budget`; on
+   costs it stays `budget − actual`. Without it a dues shortfall prints positive and green.
+4. **Pending OUTGOING club money stays out of both bands**, matching the standing decision that
+   keeps club instalments off the Scheduled expense column. The register carries it; this grid does
+   not, and the reason is written on the loop.
+5. **The shortfall sentence learned tense.** "On this plan you go short" is a projection's sentence
+   and was plainly wrong under Actual, where the money has already gone. Found by reading the coach
+   demo back with the bands in place.
+
+**The guard was rebuilt, not patched (§3 of the prompt, done deliberately).**
+`check-money-report-arithmetic.mjs` now carries TWO reports answering to two authorities:
+statement ↔ chart (report-basis, season total + the chart's own internal sum), and **both bands ↔
+the REGISTER** — month by month, expense category by category, revenue group by group, plus
+opening + net = ending = Cash on hand. `statement = grid` is **gone on purpose**: it would now fail
+on every team that has ever been refunded a dollar. ⚠ **A real coverage loss is recorded in the
+script's header**: the grid was the chart's only per-month partner, so the chart's monthly figures
+are now guarded solely by `coach-expense-movements.test.ts`. The fixture-honesty gates gained a
+**sponsor pledge** (seeded into `seed-uat-coach-fixture.mjs`) and a **pending club request**.
+
+Green: 2,427 unit tests · typecheck · `check:money-report` with every breaking shape present ·
+`check:demos` · `check:layout --only=coach-budget-vs-actual` with **no new finding** (the
+`Record money` tap-floor it surfaced fails identically on Transactions and Payables — a money
+centralization P1 leftover, not this build's).
+
+**D-2 remains gated:** revenue item rows (per family / drive / sponsor) and the opening balance
+(migration, `Start next season` carry step, Team settings row, register's first line, Cash on hand
+— the matched pair moves together or the surfaces argue).
+Standing constraints applied: mental-model principle (2026-08-21), "never a tab row where a
+filter would do", do-not-worsen phones (the phone-stepper session is separate), one grouping with
+the Statement. **The winning option is its own gated build with its own QA section.**
 
 ## §3 · Aftercare (same unit of work as Phase 1)
 

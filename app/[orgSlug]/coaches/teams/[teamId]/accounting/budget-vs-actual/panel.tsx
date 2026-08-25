@@ -8,7 +8,12 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
-import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coach-budget-months';
+import {
+  formatMonthLabel, lensCell, lensTotal, lensUndated,
+  buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory,
+  bandTotalLabel, revenueGroupLabel, revenueGroupOf,
+  type MonthGrid, type MonthCell, type MoneyRowDirection,
+} from '@/lib/coach-budget-months';
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
@@ -642,10 +647,13 @@ export function BudgetVsActualPanel({
   function monthExportColumns(): ExportColumnDef[] {
     const g = data!.monthGrid;
     const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
-    /* ⚠ SAME RULE AS THE SCREEN: undated money is PLAN money, so under Actual and Scheduled this
-       column could only ever be blank. A column of blanks in a spreadsheet is worse than on a
-       screen — the file outlives the session and nothing explains it. */
-    if (lensReadsPlan(lens) && g.totals.undatedBudget > 0.005) cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
+    /* ⚠ THE SCREEN'S OWN PREDICATE, not a second spelling of it (`/simplify`, 2026-08-23 — the two
+       had already drifted apart near the rounding threshold). A column of blanks in a spreadsheet is
+       worse than on a screen, because the file outlives the session and nothing explains it — but so
+       is silently dropping a pledge the coach could see. */
+    if (hasUndated([data!.revenueGrid, g], lens)) {
+      cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
+    }
     /* ⚠⚠ EVERY MONTH, NEVER THE WINDOW. The grid shows twelve at a time (owner ruling
        2026-08-21); the FILE is the whole season and must stay that way. A spreadsheet that
        silently contained only what happened to be on screen is the worst outcome available
@@ -657,44 +665,72 @@ export function BudgetVsActualPanel({
 
   // The export shares the grid's own lens maths (`lensCell`/`lensTotal`/`lensReadsPlan`), so a
   // downloaded file can never disagree with the screen it was downloaded from.
+  /**
+   * The Months file, in the same two bands the screen shows (Option D, owner ruling 2026-08-23).
+   *
+   * ⚠⚠ IT READS THE GRID'S OWN HELPERS — `lensCell`, `lensTotal`, `lensUndated`, `hasUndated`,
+   * `categoryHasFigure`, `buildBandCashFlow`, `bandTotalLabel`, `revenueGroupLabel`. Every one of
+   * them is shared with the component, so a downloaded file cannot disagree with the screen it was
+   * downloaded from. A spreadsheet outlives the session that made it; it is the LAST place to
+   * re-derive anything — and the last two that were re-derived here (which revenue groups render,
+   * and whether the undated column appears) had ALREADY drifted from the screen by 2026-08-23.
+   */
   function buildMonthExportRows(): Array<Record<string, string | number>> {
     const g = data!.monthGrid;
-    const { todayMonth } = data!;
-    const undatedLive = lensReadsPlan(lens);
+    const rev = data!.revenueGrid;
+    const { todayMonth, cashOnHand } = data!;
     const rows: Array<Record<string, string | number>> = [];
 
-    /** A category or grand-total row: every lens has something to say about it. */
-    function aggregateRow(
-      item: string,
-      cells: typeof g.totals.cells,
-      total: typeof g.totals.total,
-      undatedBudget: number,
+    /** A category, item or band-total row: every lens has something to say about it. */
+    function moneyRow(
+      item: string, cells: MonthCell[], total: MonthCell, undated: MonthCell,
+      band: MoneyRowDirection,
     ): Record<string, string | number> {
       const row: Record<string, string | number> = { item };
-      row.undated = undatedLive ? undatedBudget : '';
-      g.months.forEach((m, i) => { row[`m_${m}`] = lensCell(cells[i], lens, m, todayMonth) ?? ''; });
-      row.total = lensTotal(total, lens);
+      row.undated = lensUndated(undated, lens) || '';
+      g.months.forEach((m, i) => { row[`m_${m}`] = lensCell(cells[i], lens, m, todayMonth, band) ?? ''; });
+      row.total = lensTotal(total, lens, band);
       return row;
     }
 
-    for (const cat of g.categories) {
-      rows.push(aggregateRow(cat.categoryName, cat.cells, cat.total, cat.undatedBudget));
+    function band(grid: MonthGrid, dir: MoneyRowDirection, categories: MonthGrid['categories']) {
+      rows.push({ item: dir === 'in' ? 'REVENUE' : 'EXPENSES' });
+      for (const cat of categories) {
+        const group = dir === 'in' ? revenueGroupOf(cat.categoryKey) : null;
+        rows.push(moneyRow(
+          group ? revenueGroupLabel(group, lens) : cat.categoryName,
+          cat.cells, cat.total, cat.undated, dir));
 
-      /* ⚠⚠ THE FILE CARRIES LINE-LEVEL MONEY TOO (fixed 2026-08-21). This blanked every line row
-         under any lens but Budget, on the same stale reasoning the screen used — so a coach who
-         exported Actual got a spreadsheet whose category rows had figures and whose item rows were
-         empty, and no way to tell that was a display rule rather than the truth. It reads the same
-         lens helpers the grid does, so the file and the screen cannot drift apart. */
-      for (const line of cat.lines) {
-        const lr: Record<string, string | number> = { item: `  — ${line.description}` };
-        lr.undated = undatedLive ? line.undatedBudget : '';
-        g.months.forEach((m, i) => { lr[`m_${m}`] = lensCell(line.cells[i], lens, m, todayMonth) ?? ''; });
-        lr.total = lensTotal(line.total, lens);
-        rows.push(lr);
+        /* ⚠⚠ THE FILE CARRIES LINE-LEVEL MONEY TOO (fixed 2026-08-21). This blanked every line row
+           under any lens but Budget, on the same stale reasoning the screen used — so a coach who
+           exported Actual got a spreadsheet whose category rows had figures and whose item rows were
+           empty, and no way to tell that was a display rule rather than the truth. */
+        for (const line of cat.lines) {
+          rows.push(moneyRow(`  — ${line.description}`, line.cells, line.total, line.undated, dir));
+        }
       }
+      rows.push(moneyRow(
+        bandTotalLabel(dir, lens), grid.totals.cells, grid.totals.total, grid.totals.undated, dir));
     }
 
-    rows.push(aggregateRow('Total', g.totals.cells, g.totals.total, g.totals.undatedBudget));
+    /* ⚠ THE SAME PER-LENS FILTER THE SCREEN APPLIES to revenue groups — literally the same
+       function. A file listing "Sponsor pledges — blank" under Actual would be a row the screen
+       never showed, and a reader has no way to tell an empty row from a missing one. */
+    band(rev, 'in', rev.categories.filter(c => categoryHasFigure(c.total, lens)));
+    /* ⚠ The SAME filter the screen applies — a file listing a row the screen never showed gives a
+       reader no way to tell an empty row from a missing one. */
+    band(g, 'out', g.categories.filter(c => !isPayoutCategory(c.categoryKey) || categoryHasFigure(c.total, lens)));
+
+    // The two summary rows, off the same assembly the screen runs — see `buildBandCashFlow`.
+    if (lens !== 'difference') {
+      const flow = buildBandCashFlow(rev, g, lens, cashOnHand);
+      const net: Record<string, string | number> = { item: 'Net for the month', undated: flow.undated.net || '' };
+      const run: Record<string, string | number> = { item: 'Running balance', undated: '' };
+      flow.rows.forEach(r => { net[`m_${r.month}`] = r.net; run[`m_${r.month}`] = r.running; });
+      net.total = flow.net;
+      run.total = flow.ending;
+      rows.push(net, run);
+    }
     return rows;
   }
 

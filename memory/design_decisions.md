@@ -4,6 +4,394 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-24 — THE IDENTITY BAR'S RIGHT-HAND SLOT DOES NOT EXIST ON A PHONE, GAME DAY INCLUDED — and a form field's rule had been deciding a toolbar's layout
+
+**Trigger:** owner, on a 390px Roster screenshot — *"this mobile header is taking up way too much
+space"*. The review widened it: the header was **not the larger half**. Masthead + title band ≈
+200px; the three toolbar rows and two hint rows beneath them ≈ the same again, with the list the
+page is named after starting near the bottom of the screen.
+
+⚠⚠ **TWO OF THE SIX CAUSES WERE DEFECTS AGAINST SHIPPED RULINGS, NOT DESIGN CHOICES — AND THEY WERE
+ONE ROOT.** `.segChoice` carries `display: flex; width: 100%` at ≤640 under a comment naming its own
+real subject: *"equal-width segmented choices (Home/Away/Neutral) go full-width rather than squashing
+their labels."* Correct for a choice inside a **form**; wrong for a view toggle riding a **toolbar**.
+At 390px it took the whole row, `.listToolbarEnd` wrapped, and a wrapping `inline-flex` puts its
+second line at its own **LEFT** edge — which is where the roster export was rendering, in direct
+contradiction of house rule 2 (2026-08-23: *pinned right at EVERY width*). **The house rule was not
+being ignored; it was being overruled by a stylesheet two hundred lines away.**
+**Generalise: a shared class whose comment names a specific context has a scope its selector does not
+state. Read what a class says it is for before reusing it.**
+
+⚠ **A SECOND COMMENT WAS TRUE ABOUT THE WRONG THING.** `.teamHeaderMeta`'s note proves a separator
+cannot be orphaned when a segment is **absent** (drawn between siblings, never punctuated into a
+string) — entirely true, and not the failure on screen. When the line **WRAPS**, the second span's
+`::before` starts the next line, and a phone read "· 2026 Season" under a wrapped club name.
+**A comment that proves one failure impossible reads, at a glance, as proving the class impossible.**
+
+**RULING (owner, 2026-08-24):** *"game day and practice day should be the same, just remove this from
+the mobile header. its a waste of space. coaches know they have a game that day."* **The right-hand
+status slot does not render at ≤640 — next-up, game day and the Complete chip alike.**
+
+⚠⚠ **I ARGUED FOR A GAME-DAY CARVE-OUT AND WAS OVERRULED CORRECTLY.** The argument — on game day that
+slot is a **door** (the bench console), not a fact, and on ~35 team pages it is the only one. Two
+things settled it: **(1) the carve-out did not fit either** — drawn at 390px it truncated to
+`6:30 p.m. · O…`, and a door ending in an ellipsis is not a door. **Two separate attempts to keep the
+slot by shrinking it both failed** (the first printed it over the meta line), and that is the evidence
+for REMOVING rather than SHRINKING. **(2) the door was never homeless** — Schedule is on the phone's
+bottom bar on every page and its game row grows its own `Game day` action inside the live window.
+**Check where a thing's other doors are BEFORE arguing it cannot be removed.**
+
+⚠ **THE SLOT'S ORIGINAL RULING WAS SOLVING A DESKTOP PROBLEM.** 2026-08-02 (Option B) put status on
+the right because *"a standalone team's bar was 70% empty space"* — never a phone argument, which is
+why this does not reverse it. **Desktop and tablet are untouched; the breakpoint is ≤640, not the
+masthead's usual ≤900,** because this is about a 390px row running out of horizontal space rather
+than about the nav swapping.
+
+⚠ **THE HIDE IS WRAPPED SO A DOOR SURVIVES.** The **public-site flip** shares `.teamHeaderRight`.
+Hiding that container wholesale would have removed it silently — the same failure class as the export
+bug, one width rule later. Only `.teamHeaderStatus` hides (`display: contents` above the breakpoint,
+so desktop is byte-identical).
+
+**Also ruled, same pass:** the status value takes `--font-sans`, not `--font-data` — it is a
+SENTENCE ("Wed 6:00 p.m. practice"), and the data face is for scores and numeric columns; the label
+above it keeps that face because labels are its other job. And the reorder tip moves **below** the
+list at every width, while the position nudge stays above it: **actionable state about the coach's
+data leads a list; an explanation of a control drawn on every row follows it.**
+
+⚠ **`.listToolbar` KEEPS `flex-wrap: wrap` DELIBERATELY** — only `.listToolbarEnd` goes nowrap.
+Forcing the toolbar itself is what put **30px of sideways page scroll on coach-expenses at 361**. A
+long fact now takes line one and the toggle+export line two: two rows, never three, export still
+right-pinned. **Degradation, not overflow.**
+
+⚠⚠ **AND THE FIX COULD NOT BE PROVED FROM THE FIXTURE.** At ≤640 the roster export's surviving
+choices are the two PDFs, both behind a **plan gate** the UAT team lacks — so its phone toolbar
+renders no export at all, and a green run would have been a check over an empty fixture (the standing
+lesson, arriving on a new surface). Proved instead by injecting a probe control into the real
+`.listToolbarEnd` under the real stylesheet: gap-from-right **0px**, height 44px, one row, at 361 /
+390 / 414. **Measured after: masthead 56px, meta 1 line, toolbar 47px/1 row, first player row 244px,
+no sideways scroll at any width.**
+
+**NOT DONE, and deliberately:** the `<h1>` title band (~72px) is the single biggest remaining saving
+and the word already appears in the bottom nav's active pill beneath it — but removing it breaks
+*"all forty coach screens open the same way"* (2026-08-11) and is the shape of **direction D**. A
+forty-screen ruling, not a Roster fix.
+
+**Applies to:** the coach portal's team masthead (every team page) and the shared list toolbar
+(Roster + Schedule). [[design-principles]] [[design-system]]
+
+### 2026-08-24 — THE ANSWER IS THE LOUDEST ROW, NOT THE SUBTOTAL — Months grid hierarchy (design pass, owner-approved)
+
+**Decision:** On Budget vs. Actual → Months, the **Running balance** carries the heaviest treatment
+in the table; the two **band totals** step down to a single rule and a lighter weight; **Net for the
+month** stays quiet. Each band heading opens with a **gutter above it**. The synthetic **Paid back
+to families** row renders only on lenses where it can carry a figure.
+
+**Rationale:** The band subtotals were the loudest rows on the screen — largest size, heaviest
+weight, full-strength ink, a 2px cap each — while the Running balance, *the figure the whole rebuild
+exists to deliver and the one ruled into the pinned Total column so it never scrolls away*, sat
+smaller, lighter and in secondary ink. In a treasurer's tool the least important figure was
+shouting over the most important one.
+
+**The cause was inheritance, not carelessness**, and that is the durable part: the heavy "closing
+total" recipe was written when a money grid had exactly ONE total, at the foot of the table. Option
+D gave it two, mid-table, doing a different job. ⚠ **A shared treatment carries an assumption about
+POSITION and COUNT; when either changes, the treatment is wrong even though nothing edited it.**
+
+- ⚠ **Scoped to this grid, never to the shared recipe.** Budget Plan still has a single closing
+  total where the heavy treatment is right, and `money-hierarchy-type-scale` pins that recipe
+  against the plan outline.
+- **Band headings are separated by SPACE, not more colour.** They and category rows were both tinted
+  rows, told apart only by small uppercase type. The table had no breathing room anywhere, which
+  made space the cheapest and clearest thing available.
+- **"Paid back to families" is the ONE expense row allowed to disappear.** The standing rule runs
+  the other way — a category you budgeted for stays visible when empty, because "planned, not yet
+  spent" is information. This group has no plan and no schedule and never can, so its dashes under
+  Budget and Scheduled say nothing at all.
+
+⚠⚠ **A live defect fell out of reading the rule that caused this:** the band totals set `color` on
+the VALUE span at a specificity that outranked the `.pos`/`.neg` classes the cell puts on that same
+span — so **the Difference lens's green/red was being silently overwritten to plain ink on the band
+totals**, on the one lens whose entire point is the sign. Colour belongs on the ROW, where a direct
+rule on the span still wins. Measured before and after.
+
+**Applies to:** Budget vs. Actual → Months (both bands, all four lenses).
+
+---
+
+### 2026-08-24 — A PINNED COLUMN MAKES THE WHOLE TABLE ITS PROBLEM — grounds, hairlines and wrapping in the money grids (owner-found, three rounds; all FIXED)
+
+**Owner read the new Months bands on a dark portal and reported, over three passes, what turned out
+to be one root and three separate silent no-ops.** Every claim below was MEASURED (computed styles +
+rendered captures in the owner's own theme), never eyeballed — three earlier guesses in this same
+session were wrong, and the measurement is what ended each of them.
+
+- **⚠⚠ EVERY BODY CELL PAINTS THE GRID'S GROUND — fixed at the TABLE, not per row type.** The two end
+  columns must be opaque or the scrolled money reads through them (the Chunk A D3 lesson, already
+  written up twice). Every *other* cell painted nothing, so any row whose type did not happen to set
+  a background rendered in TWO grounds — card at both pinned ends, page-dark across the middle — and
+  read as a deliberate black band. **It was first fixed per row type, and that was the wrong
+  altitude: the item rows were still striped an hour later.** The rule is not "this row needs a
+  ground", it is *"the pinned columns are opaque, so the whole table must be."* One declaration; no
+  future row type can be born with it.
+- **⚠⚠ ON A TABLE WITH STICKY COLUMNS, HAIRLINES ARE INSET SHADOWS, NOT BORDERS.** Rows measured
+  identical to the hundredth of a pixel with identically declared borders — the step was pure paint:
+  `border-collapse: collapse` hands the rule to the TABLE, while a sticky column paints in its own
+  layer that travels with the scroll, so at fractional row heights the two round independently. An
+  inset shadow is painted by the cell, takes no part in layout, and aligns by construction. Applies
+  to both money grids; do not "tidy" it back to `border-bottom`.
+- **⚠ THE LABEL COLUMN WRAPS — and its own rule had been a silent no-op since it was written.**
+  `.lead`'s `white-space: normal` (0,1,0) lost to the shared `.moneyGrid th, td` nowrap (0,1,1), so
+  long row names stretched the pinned column instead of wrapping. **This file already warns about
+  exactly that trap.** Fixed with a higher-specificity selector plus a cap on the cell's CONTENT,
+  because auto table layout treats a cell's `max-width` as a suggestion. The column is now elastic:
+  it tightens and hands space back to the months as the viewport narrows.
+- **⚠ THE CURRENT MONTH IS A TINTED COLUMN, NOT A LEFT BORDER.** One hairline on one edge reads as a
+  divider *between* two months. The owner's question was the evidence — *"why do we have a border
+  between July and August but for no other months?"* A marker that needs decoding is noise, and it
+  broke the standing rule that colour is paired with something readable. The tint needs no decoding
+  and pairs with the header's accent ink.
+- **⚠ NO EXPLANATORY ASIDE IN THE LABEL COLUMN.** "Running balance *from today's $2,862.69*" was the
+  widest label in the table, sitting in its narrowest column, repeating word for word what the
+  footnote under the grid already said. Deleted. A basis is explained in the footnote, which has
+  room for it.
+
+⚠ **The durable lesson is about WHERE a fix goes.** Three of these five were single-row or
+single-lens patches on their first attempt, and each was reported again within the hour by the same
+reader looking at the next row down. A pinned column is a property of the TABLE; so is a hairline;
+so is wrapping.
+
+---
+
+### 2026-08-24 — ONLY THE CLUB ROW IS EVER RENAMED BY A LENS (owner, narrowing the 2026-08-23 rule)
+
+**Decision:** On the Months revenue band, **Player dues** and **Sponsorships** keep their names on
+every lens. Only the club row changes — it reads **"Asked of the club"** under Scheduled.
+
+**Rationale:** The Option D build shipped with labels that moved freely with the lens ("Remaining
+dues instalments", "Sponsor pledges"), on the reasoning that the forward view asks a different
+question. The owner rejected it on sight, and the narrower rule is the true one: **an unpaid
+instalment is still dues and an unhonoured pledge is still sponsorship** — the same object, read
+forward — so renaming made one thing look like two as a coach flipped lenses, and spent the
+narrowest column in the table saying what the lens already says. A request the club has *not
+answered* is the genuine exception: it is not money back, it is a question, and that is what earns a
+name of its own. The trailing "— awaiting answer" went too: on Scheduled, everything is awaiting
+something.
+
+**Applies to:** Budget vs. Actual → Months, revenue band, all lenses.
+
+---
+
+### 2026-08-24 — WHAT OPENS BEHIND A REVENUE FIGURE — one rule for nine rows (owner-approved from drawings)
+
+Drawn and ruled from `claude.ai/code/artifact/da5d08b9-b81e-4848-a758-35a83923a98a`. Governs phase
+D-2 of the Months cash statement.
+
+1. **The chevron opens where the money came from** — the actual families, drives, sponsors and
+   requests behind the figure, never budget items.
+2. **The number opens what makes it up** — individual records, dated, always READ-ONLY. The grid
+   reaches the forms; it never becomes a second place to edit. (No "Record a payment" in these
+   panels, deliberately.)
+3. **At most TWO doors per panel: the ledger, and the thing itself.** Transactions is the book of
+   record; the second door is the drive, the sponsor, the family, the club. ⚠ Some rows earn only
+   ONE door, and the asymmetry is meaningful: a typed arrival or a recorded refund has no "thing
+   itself" — the record IS the thing.
+
+- **Money back and reimbursements name WHAT THEY REPAID** in the panel. They are the figures that
+  behave differently here than on the Statement (there they shrink the cost they repaid; here they
+  are money that arrived), and the panel is where a coach learns that without reading a footnote.
+- **A pledge/pending panel totals to "Possible", never "Total"** — the one word that stops a coach
+  banking money nobody has agreed to.
+- **Paid back to families opens BY FAMILY, mirroring dues** (owner call), with both Player Dues and
+  Transactions as doors. **The "why" rides on each payment's own meta line** ("overpaid instalment
+  #2", a shared surplus, a cashed-out credit) rather than becoming a second grouping level — so the
+  reason is answered without the row ceasing to mirror dues. ⚠ This row was never in the D-2 spec at
+  all; leaving it shut would have made it the one figure on the statement a coach could not trace to
+  a record.
+
+---
+
+### 2026-08-23 — MONTHS IS THE SEASON'S CASH STATEMENT — two bands, cash on both sides (owner, Option D; D-1 BUILT ON DEV)
+
+**Owner ruling, taken on the Phase 2 mockups (artifact `4a61dfc0`) after directing a fourth shape
+past the three drawn: *"ok, this looks good, I agree with the build"*.** Budget vs. Actual's Months
+view stops being a spending grid with a cash strip bolted underneath and becomes the season's cash
+statement — a **REVENUE** band grouped by where money came from, the **EXPENSES** categories plus a
+**Paid back to families** group, a total closing each, **Net for the month**, and a **Running
+balance** whose Total cell carries the ENDING value (Cash on hand, pinned, always on screen) where
+an em dash used to sit. The strip's separate Money in / Money out rows dissolve — **the band totals
+ARE those rows**.
+
+- **CASH IN BOTH BANDS.** The load-bearing call, confirmed by the owner on the family-paid
+  question — *"we didn't pay anything — once we pay the player it shows up at that point."* Gross
+  both directions, the register's dating rules, family-paid-direct costs excluded until the team
+  pays the family back. **Priced and accepted:** a per-item Actual on Months can differ from the
+  Statement's where a refund or a family-paid cost exists. **Two labelled truths, one guard each.**
+- **Scheduled is the season's forward view**: remaining dues instalments by due month, sponsor
+  pledges, pending club asks; against commitments still owed. Dateless items sit in **No date yet**
+  — in the Total, in no month, counted as possible and never as arrived. Its running balance starts
+  from today's real cash. **Budget** gained the same Net and running rows, projected from the
+  opening balance.
+- **A season may carry an OPENING BALANCE** — born at *Start next season*, corrected in Team
+  settings → Money, read on the register's first line, the Months summary block and Cash on hand.
+  ⚠ It must reach all three in ONE build item or the surfaces argue. **D-2, not built.**
+
+**⚠⚠ THE GUARD RULING, which is the part most likely to be mis-"fixed" later.** `statement = grid`
+is **deliberately deleted** from `check:money-report`. It was true while Months was a spending
+grid; it would now fail on every team ever refunded a dollar. What replaces it is stronger, because
+the register is an independent walk of the same records in another route rather than a second
+reading of one list: **both bands = the REGISTER**, month by month, expense category by category,
+revenue group by revenue group, plus opening + net = ending = Cash on hand. Statement ↔ chart stays
+as the report-basis pair. ⚠ **A real coverage loss is recorded in the script's own header rather
+than absorbed silently**: the grid was the chart's only per-month partner, so the chart's monthly
+figures now lean solely on `coach-expense-movements.test.ts`.
+
+- **One builder serves both bands.** `buildMonthGrid` learned that a plan can arrive as dated
+  EVENTS (a dues instalment schedule is a plan and is not a budget line) and that the caller can own
+  the month domain. That one addition replaced what would have been a parallel copy of the
+  windowing, the undated bucket, the category identity and the totals — four rules this module has
+  been consolidated twice to keep in one place.
+- **DIFFERENCE IS SIGNED PER BAND.** Costs read plan − actual; revenue reads actual − plan. Computed
+  one way for both, a dues shortfall prints positive and green — the same colour the grid uses for
+  "you saved money". Positive is good news on both bands, which is the only rule a reader can hold
+  in their head.
+- **A footnote's tense is part of its truth.** "On this plan you go short" is a projection's
+  sentence and was plainly wrong under Actual, where the money has already gone. Found only by
+  reading the public coach demo back with the bands in place — which is the practice, not the luck.
+
+---
+
+### 2026-08-23 — "MONEY IN IS PLAYER DUES ONLY" IS REVERSED — the cash-flow strip owes the whole cash truth (owner, §80 walk; build assigned)
+
+**The 2026-07-30 ruling below in this log** (Budget vs. Actual's Months strip counts dues only,
+"fundraiser rebates already credit dues, so counting both would count the same dollar twice")
+**is reversed by the owner.** Its rationale was true of the July model and is FALSE of the
+current one — verified in code 2026-08-23: since the credit/cash split (2026-08-14), the money-in
+taxonomy (mig 243) and club money joining the report (mig 250), dues cash, drive/sponsor cash,
+money-in records and club cash are DISJOINT streams; a rebate is a credit (a family sends less),
+never cash arriving twice. The register books all of them with a guard-proven identity, and BvA's
+"Money in" had silently become a narrower, unreconciled subset of it.
+
+- **Actual lens = ALL cash by month, both directions** (dues payouts were missing from Money out
+  entirely). **The guard is part of the ruling:** BvA's strip must be proven equal to the
+  register's rows bucketed by month, the same derive-independently-plus-checker pattern
+  register↔money-summary already uses.
+- Scheduled/Budget lenses keep dues installments as the only scheduled income (nothing else has a
+  schedule); the footnote states each lens honestly. The "same dollar twice" footnote retires.
+- **Phase 1 BUILT ON DEV 2026-08-23** (owner QA §83 owed; plan
+  `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`): the Actual strip is whole cash both
+  directions, assembled from the primitive records (gross, the register's dating rules,
+  family-paid-direct costs excluded), and `check:money-report` now proves strip = register
+  month-by-month both directions to the cent. **A further ruling rode the go (mockup Exhibit C,
+  artifact `f0598811`): a month where only cash moved GROWS a grid column** — folding it into an
+  edge month and footnote-only disclosure were both rejected. Phase 2 (income in the month grid)
+  became **Option D** and its first half is BUILT — see the entry above this one.
+- ⚠ The durable lesson: a correct exclusion outlived the model that justified it through THREE
+  model changes, restated on screen the whole time. A footnote that explains a rule is also the
+  rule's expiry-checklist — re-derive it when the model under it moves.
+
+### 2026-08-22 — A FORM FIELD THAT CHOOSES ONE VALUE IS A DROPDOWN, NOT A SEGMENTED PILL ROW (owner convention, going forward)
+
+**Owner, set while approving the money-centralization P1 gate:** *"for the 'how' I would prefer
+dropdowns rather than the long pill selector, this is the convention I would like to follow going
+forward."*
+
+- **Scope: FORM inputs.** When a form asks the user to pick one value from a list (payment method,
+  a type, a category), render a dropdown/select — never a long horizontal segmented-button/pill
+  row. First application: the money conversation's "How" (method) field, which mockup 02 drew as a
+  five-segment pill row — **the drawing is superseded on this point**; the approved mockup remains
+  the spec everywhere else.
+- **⚠ This does NOT touch the 2026-08-19/20 reporting-filter convention** (labelled pills that open
+  small lists on report toolbars, counts on options, filtered totals). That convention governs
+  *report filter strips*; this one governs *form fields*. They coexist.
+- Radio rows that carry explanatory sub-text per option (e.g. the paid/owed fork, "who actually
+  paid it?") are not pill selectors and are not affected.
+
+### 2026-08-21 — THE MEASURE IS THE USER'S MENTAL MODEL, NOT THE CLICK COUNT (owner principle, binding on all design sessions)
+
+**Owner, verbatim (set for the money-centralization session, explicitly meant to outlive it):**
+*"Make sure it thinks creatively with the goal of simplicity and ease of use in mind, less focus on
+'how many clicks' like what seems to have been the primary focus historically. We don't want 5
+buttons to the same place because they are each 'one click away from similar behavior' but rather
+what makes the most sense in a user's mind."*
+
+What it means in practice, tested against real proposals in that session:
+
+- **Proximity is not clarity.** A design that reaches everything in one tap from five places is five
+  things to learn that happen to be fast. Do not add doors to reduce distance.
+- **The test question:** when the user thinks *"I need to write down that I paid the umpires"*, what
+  do they believe they are doing? The right design matches the sentence already in their head; a
+  faster design that makes them learn our filing system has failed.
+- **Deletion is a preferred proposal.** Fewer things that exist beats more things that sit close
+  together.
+- **First application (money centralization, approved 2026-08-21):** the five money add-forms
+  become ONE recording conversation whose first question is *"who was the money with?"* — the form
+  asks the question the coach used to answer by choosing a tab. See
+  `docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md`.
+
+### 2026-08-21 — ⚠⚠ NO PLAN, TIER OR PRICE APPEARS ON A PITCH SURFACE — the page half of the 2026-08-20 split is OVERTURNED
+
+**Owner ruling, verbatim:** *"we don't need to mention any subscriptions here. This is just to
+illustrate quickly features that our app has and how our product will make these volunteers lives
+easier. Anything related to subscriptions or costs or plans etc. can be removed from any of these
+slide materials. We have subscription sections that mention what comes with what; when I present to
+prospects I can answer those questions. **We don't want to compartmentalize features at this stage,
+we want to show people all we have to offer and how we will improve their lives, period.**"*
+
+**⚠ THIS OVERTURNS HALF OF THE 2026-08-20 RULING**, which was a deliberate split: a *slide* is
+plan-free so it stays portable between decks, but the unattended *page* carries a plan line
+"because nobody is standing there to answer **is that included?**". The slide half stands. **The
+page half is gone.**
+
+**The division of labour is now by SURFACE, and that is the durable form of it:**
+- **The walkthrough creates desire** — here is what stops being your problem.
+- **The pricing page qualifies** — what comes with what.
+- **A human answers in the room.**
+
+A gate named beside a feature, on a page whose entire job is *"here is what stops being your
+problem"*, argues against the page it sits on. Nine plan chips came off the two walkthroughs
+(six coach, three tournament) plus one *"(the free portal keeps its Fees tool…)"* aside inside a
+panel's own copy.
+
+⚠ **The invariant is now held by a build check rather than by care**: the library's guard test
+reads the page panels' long copy as well as the slides, so a plan line cannot creep back into
+either. The bare product name ("the Coaches Portal") is deliberately still allowed — that is what
+the thing is called; what is banned is the tier, the gate and the comparison.
+
+**Applies to:** every pitch surface (both walkthroughs, present mode, the printed leave-behind, and
+any deck the Studio composes). NOT to the pricing page, the plan comparison, or in-app upgrade
+panels, whose job is exactly the opposite.
+
+---
+
+### 2026-08-21 — LIME IS THE ONE ACTION IN THE APP, AND THE BRAND ACCENT ON MARKETING
+
+**Owner ruling, resolving the rider open since §67.** The log recorded "lime is spent six times on
+the walkthrough panel" against the binding one-lime-action rule. ⚠ **Counting it properly is what
+resolved it:** lime appears on ~17 elements of the live coach page, but only **five roles** — and
+only one of those roles is an action.
+
+| Wears lime | Times | An action? |
+|---|---|---|
+| Start free | 2 | Yes — the ask |
+| The demo door + dot | 2 | A second ask |
+| The page eyebrow | 1 | No — a label |
+| "With FieldLogicHQ" | 6 | No — a section marker |
+| "See this screen live" | 6 | Yes, but six times |
+
+**So the rule was not being bent, it was being applied to two different jobs at once.** Lime also
+means *"this is us"* on these pages — the eyebrow and the section marker are brand, not instruction.
+Both conventions are coherent; doing both on one page is what read as loud.
+
+**The ruling:** **in the app, lime marks the one recommended action** — that rule was born where a
+wrong click costs a coach money and it stays exactly as strict. **On marketing, lime is the brand
+accent**, and an accent appearing once per page would read as an accident rather than a system.
+
+**One trim came with it:** the per-panel *"See this screen live →"* link was **deleted**. Six of
+them was the page's only genuine repetition of the accent, against a hero and a closing that
+already offer the identical door. Do not re-add it panel by panel.
+
+---
+
 ### 2026-08-21 — ⚠⚠ A PICTURE OWES FUNCTIONALITY, NOT PIXELS — the "forbidden fourth class" rule is REPLACED
 
 **Owner ruling, verbatim in substance:** *"I don't care about real screenshots vs. mockup drawings,

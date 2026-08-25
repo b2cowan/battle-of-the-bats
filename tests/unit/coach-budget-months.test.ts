@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   monthKeyOf, addMonths, monthSpan, deriveMonthRange, buildMonthGrid, buildCashFlow,
   isElapsed, formatMonthLabel, formatMonthLong,
+  lensCell, lensTotal, lensUndated, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
   type GridLine, type CategoryEvent,
 } from '../../lib/coach-budget-months.ts';
 
@@ -104,31 +105,38 @@ describe('buildMonthGrid', () => {
     const entry = g.categories[0].lines.find(l => l.description === 'Entry Fees')!;
     assert.equal(entry.cells[mar].budget, 1200);
     assert.equal(entry.cells[apr].budget, 0);
-    assert.equal(entry.undatedBudget, 0);
+    assert.equal(entry.undated.budget, 0);
 
     const uniforms = g.categories[0].lines.find(l => l.description === 'Uniforms')!;
-    assert.equal(uniforms.undatedBudget, 900);
+    assert.equal(uniforms.undated.budget, 900);
     // The whole point: an undated line contributes to NO month.
     assert.equal(uniforms.cells.reduce((s, c) => s + c.budget, 0), 0);
   });
 
-  it('grows a column for a month where only CASH moved — and puts no money in its cells', () => {
-    // Owner ruling 2026-08-23 (Exhibit C): dues received in January, two months before the first
-    // budgeted month, must have a column for the strip to land on — silently dropping it fails
-    // the register identity by exactly the hidden amount. The grid's own rows stay empty there.
-    const g = buildMonthGrid({
-      lines, actuals, scheduled, todayMonth: TODAY,
-      cashDates: ['2026-01-14'],
-    });
-    const jan = g.months.indexOf('2026-01');
-    assert.notEqual(jan, -1);
+  /* Owner ruling 2026-08-23 (Exhibit C): dues received two months before the first budgeted month
+     must still have a column — folding off-range cash into an edge month, and footnote-only
+     disclosure, were both rejected.
+
+     ⚠ ASSERTED AGAINST `deriveMonthRange`, WHICH IS WHAT ACTUALLY RUNS. `buildMonthGrid` once took
+     a `cashDates` parameter for this; Option D made the route derive the range ONCE over both bands
+     and hand it to each, so the route now feeds cash days here instead and that parameter had no
+     production reader left. Testing it would have been testing a branch nothing runs.
+     ⚠ The route's own wiring — that it really does feed cash days in — is held by
+     `check:money-report`, which fails out loud when cash moved in a month the grid has no column
+     for. A unit test cannot see that seam; the guard is where it belongs. */
+  it('grows a column for a month where only CASH moved (Exhibit C)', () => {
+    const budgeted = ['2026-03-01', '2026-06-01'];
+    const cashDay = '2026-01-14';
+    const { months } = deriveMonthRange([...budgeted, cashDay], TODAY);
+    assert.notEqual(months.indexOf('2026-01'), -1, 'the cash-only month got no column');
     // Contiguity holds: February exists between the cash month and the first budgeted month.
-    assert.notEqual(g.months.indexOf('2026-02'), -1);
-    // The column exists for the STRIP; the grid's money cells show nothing there.
+    assert.notEqual(months.indexOf('2026-02'), -1);
+
+    // And the grid handed that domain puts no money in the new column — it is there for the bands.
+    const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY, months });
+    const jan = g.months.indexOf('2026-01');
     const cat = g.categories[0];
-    assert.equal(cat.cells[jan].budget, 0);
-    assert.equal(cat.cells[jan].actual, 0);
-    assert.equal(cat.cells[jan].scheduled, 0);
+    assert.deepEqual(cat.cells[jan], { budget: 0, scheduled: 0, actual: 0 });
   });
 
   it('keeps scheduled and actual on their own tracks — they never merge into budget', () => {
@@ -151,7 +159,7 @@ describe('buildMonthGrid', () => {
   it('totals across the bottom and down the side agree', () => {
     const g = buildMonthGrid({ lines, actuals, scheduled, todayMonth: TODAY });
     const monthBudget = g.totals.cells.reduce((s, c) => s + c.budget, 0);
-    assert.equal(monthBudget + g.totals.undatedBudget, g.totals.total.budget);
+    assert.equal(monthBudget + g.totals.undated.budget, g.totals.total.budget);
     assert.equal(g.totals.total.budget, 4500);
   });
 
@@ -192,7 +200,7 @@ describe('buildMonthGrid', () => {
     const bufferRow = g.categories.find(c => c.categoryName === 'Not itemized yet')!;
     assert.equal(bufferRow.total.budget, 700);
     // It has no date by definition, so it belongs in the "no date yet" column, never a month.
-    assert.equal(bufferRow.undatedBudget, 700);
+    assert.equal(bufferRow.undated.budget, 700);
     assert.equal(bufferRow.cells.reduce((s, c) => s + c.budget, 0), 0);
     assert.equal(g.totals.total.budget, 4500 + 700);
   });
@@ -205,7 +213,7 @@ describe('buildMonthGrid', () => {
     const g = buildMonthGrid({ lines: drifted, actuals: [], scheduled: [], todayMonth: TODAY });
     const l = g.categories[0].lines[0];
     assert.equal(l.cells[g.months.indexOf('2026-03')].budget, 400);
-    assert.equal(l.undatedBudget, 600);
+    assert.equal(l.undated.budget, 600);
   });
 });
 
@@ -237,6 +245,48 @@ describe('buildCashFlow', () => {
   it('does not call a rounding crumb a shortfall', () => {
     const { shortfall } = buildCashFlow(['2026-03'], { '2026-03': 100 }, { '2026-03': 100.001 });
     assert.equal(shortfall, null);
+  });
+
+  /* ── the three bottom rows prove each other (owner ruling 2026-08-23) ────────────────────────── */
+
+  it('gives every month its own net, and the season the sum of them', () => {
+    const { rows, net } = buildCashFlow(
+      ['2026-03', '2026-04'], { '2026-03': 1000 }, { '2026-04': 400 });
+    assert.deepEqual(rows.map(r => r.net), [1000, -400]);
+    assert.equal(net, 600);
+  });
+
+  /* ⚠⚠ WHERE AN EM DASH USED TO SIT. "A running balance has no sum" was true and beside the point:
+     the figure a treasurer wants is where the balance ENDED, and the Total column is pinned, so
+     Cash on hand is now on screen whatever month has been scrolled to. */
+  it('ends on opening + net — the figure the Running balance Total cell carries', () => {
+    const flow = buildCashFlow(
+      ['2026-09', '2026-10'], { '2026-10': 3300 }, { '2026-09': 3000 }, 500);
+    assert.equal(flow.opening, 500);
+    assert.equal(flow.net, 300);
+    assert.equal(flow.ending, 800);
+    assert.equal(flow.ending, flow.rows[flow.rows.length - 1].running);
+  });
+
+  /* ⚠⚠ THE FORWARD VIEW'S LOAD-BEARING RULE. A sponsor pledge and a club request awaiting an answer
+     have no date, so they reach the TOTAL and no month — counted as possible, never as arrived. A
+     pledge that leaked into a month's running balance would appear to rescue a February the team
+     still has to get through without it, and the shortfall sentence would go quiet. */
+  it('puts undated money in the Total and in no month — and lets a shortfall still fire', () => {
+    const flow = buildCashFlow(
+      ['2026-11', '2026-12'], {}, { '2026-12': 400 }, 100, { moneyIn: 345 });
+    assert.deepEqual(flow.rows.map(r => r.running), [100, -300]);
+    assert.deepEqual(flow.shortfall, { month: '2026-12', amount: 300 });
+    assert.deepEqual(flow.undated, { moneyIn: 345, moneyOut: 0, net: 345 });
+    // …and it is still counted where it belongs: opening 100 − 400 + 345.
+    assert.equal(flow.net, -55);
+    assert.equal(flow.ending, 45);
+  });
+
+  it('nets undated money in both directions', () => {
+    const flow = buildCashFlow(['2026-11'], {}, {}, 0, { moneyIn: 250, moneyOut: 90 });
+    assert.deepEqual(flow.undated, { moneyIn: 250, moneyOut: 90, net: 160 });
+    assert.equal(flow.ending, 160);
   });
 });
 
@@ -357,5 +407,188 @@ describe('buildMonthGrid — money lands on the item row it belongs to', () => {
     // The invariant the whole change exists to hold.
     assert.equal(cat.total.actual, 120, 'category still equals the sum of its rows');
     assert.equal(cat.total.scheduled, 260);
+  });
+});
+
+// ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
+
+/**
+ * THE REVENUE BAND IS THE SAME BUILDER, and these pin the three additions that made that possible:
+ * a plan that arrives as dated EVENTS, an undated bucket that holds more than budget, and a month
+ * domain the CALLER owns so two bands line up column for column.
+ */
+describe('buildMonthGrid — a plan that arrives as events (the REVENUE band)', () => {
+  const TODAY_B = '2026-05';
+  const dues = (date: string | null, amount: number): CategoryEvent =>
+    ({ categoryId: 'revenue:dues', categoryName: 'Player dues', itemId: null, date, amount });
+
+  it('gives a category with NO budget lines a real budget row from its dated events', () => {
+    const g = buildMonthGrid({
+      lines: [],
+      actuals: [], scheduled: [],
+      budgets: [dues('2026-05-01', 2500), dues('2026-07-01', 2500)],
+      todayMonth: TODAY_B,
+    });
+    const cat = g.categories.find(c => c.categoryName === 'Player dues')!;
+    assert.equal(cat.cells[g.months.indexOf('2026-05')].budget, 2500);
+    assert.equal(cat.cells[g.months.indexOf('2026-07')].budget, 2500);
+    assert.equal(cat.total.budget, 5000);
+  });
+
+  /* ⚠ THE REGRESSION THIS EXISTS FOR: an "unplanned" category (one with no budget LINE) used to be
+     dropped when it had no scheduled and no actual money. Every revenue group is line-less, so a
+     group that is only ever BUDGETED — expected sponsorship, before a cheque arrives — would have
+     vanished from the one lens it exists to appear on. */
+  it('keeps a group that is only ever budgeted — it is the Budget lens own point', () => {
+    const g = buildMonthGrid({
+      lines: [], actuals: [], scheduled: [],
+      budgets: [{ categoryId: 'revenue:sponsorship', categoryName: 'Sponsorships', itemId: null, date: '2026-06-01', amount: 500 }],
+      todayMonth: TODAY_B,
+    });
+    assert.equal(g.categories.length, 1);
+    assert.equal(g.categories[0].total.budget, 500);
+  });
+
+  it('an undated plan event reaches the Total and no month', () => {
+    const g = buildMonthGrid({
+      lines: [], actuals: [], scheduled: [],
+      budgets: [dues('2026-05-01', 1000), dues(null, 400)],
+      todayMonth: TODAY_B,
+    });
+    const cat = g.categories[0];
+    assert.equal(cat.undated.budget, 400);
+    assert.equal(cat.cells.reduce((s, c) => s + c.budget, 0), 1000);
+    assert.equal(cat.total.budget, 1400);
+  });
+
+  /* ⚠⚠ THE FORWARD VIEW'S OWN BUCKET. Undated money used to be plan money and nothing else — a
+     sponsor pledge and a club request awaiting an answer have no date either, and they must reach
+     the Total without touching a month, or a pledge would appear to rescue a February the team has
+     to get through without it. */
+  it('holds undated SCHEDULED and ACTUAL money too, not only budget', () => {
+    const g = buildMonthGrid({
+      lines: [], actuals: [dues(null, 90)], scheduled: [dues(null, 250)],
+      budgets: [dues('2026-05-01', 1000)],
+      todayMonth: TODAY_B,
+    });
+    const cat = g.categories[0];
+    assert.deepEqual(cat.undated, { budget: 0, scheduled: 250, actual: 90 });
+    assert.deepEqual(g.totals.undated, { budget: 0, scheduled: 250, actual: 90 });
+    assert.equal(cat.cells.reduce((s, c) => s + c.scheduled, 0), 0, 'undated money is in NO month');
+  });
+});
+
+describe('buildMonthGrid — one month domain, two bands', () => {
+  const TODAY_B = '2026-05';
+  it('takes the caller months verbatim so both bands line up column for column', () => {
+    /* ⚠ THE DEFECT THIS PREVENTS IS NOT COSMETIC. `Net for the month` subtracts the expense band's
+       cell from the revenue band's at the SAME index — one extra column on either side and every
+       month after it subtracts the wrong pair. */
+    const months = ['2026-04', '2026-05', '2026-06', '2026-07'];
+    const revenue = buildMonthGrid({
+      lines: [], actuals: [{ categoryId: 'revenue:dues', categoryName: 'Player dues', itemId: null, date: '2026-05-04', amount: 900 }],
+      scheduled: [], todayMonth: TODAY_B, months, truncated: false,
+    });
+    const expenses = buildMonthGrid({
+      lines: [], actuals: [{ categoryName: 'Facilities', date: '2026-07-02', amount: 300 }],
+      scheduled: [], todayMonth: TODAY_B, months, truncated: false,
+    });
+    assert.deepEqual(revenue.months, months);
+    assert.deepEqual(expenses.months, months);
+    assert.equal(revenue.totals.cells.length, expenses.totals.cells.length);
+    assert.equal(revenue.totals.cells[1].actual, 900);
+    assert.equal(expenses.totals.cells[3].actual, 300);
+  });
+
+  it('carries the caller truncation flag rather than inventing its own', () => {
+    const g = buildMonthGrid({
+      lines: [], actuals: [], scheduled: [], todayMonth: TODAY_B,
+      months: ['2026-05'], truncated: true,
+    });
+    assert.equal(g.truncated, true);
+  });
+});
+
+/**
+ * THE SIGN OF "DIFFERENCE" FLIPS BETWEEN THE BANDS.
+ *
+ * ⚠⚠ THIS IS A COLOUR BUG WAITING TO HAPPEN, WHICH IS WHY IT IS ARITHMETIC AND NOT A STYLE RULE.
+ * Under budget on a cost is good news; under budget on dues is a shortfall. Computed one way for
+ * both, a season $900 light on dues would print a positive figure in the same green the grid uses
+ * for "you saved money".
+ */
+describe('lensCell / lensTotal — direction', () => {
+  const cell = { budget: 1000, scheduled: 0, actual: 600 };
+  it('a cost reads plan minus actual; revenue reads actual minus plan', () => {
+    assert.equal(lensCell(cell, 'difference', '2026-04', '2026-05'), 400);
+    assert.equal(lensCell(cell, 'difference', '2026-04', '2026-05', 'out'), 400);
+    assert.equal(lensCell(cell, 'difference', '2026-04', '2026-05', 'in'), -400);
+    assert.equal(lensTotal(cell, 'difference'), 400);
+    assert.equal(lensTotal(cell, 'difference', 'in'), -400);
+  });
+
+  it('defaults to a cost, so every pre-Option-D caller reads exactly as it did', () => {
+    assert.equal(lensCell(cell, 'difference', '2026-04', '2026-05'),
+      lensCell(cell, 'difference', '2026-04', '2026-05', 'out'));
+  });
+
+  it('a month still ahead says nothing on either band', () => {
+    assert.equal(lensCell(cell, 'difference', '2026-09', '2026-05', 'in'), null);
+    assert.equal(lensCell(cell, 'difference', '2026-09', '2026-05', 'out'), null);
+  });
+
+  it('every other lens ignores direction entirely', () => {
+    for (const lens of ['budget', 'scheduled', 'actual'] as const) {
+      assert.equal(lensCell(cell, lens, '2026-04', '2026-05', 'in'), cell[lens]);
+      assert.equal(lensCell(cell, lens, '2026-04', '2026-05', 'out'), cell[lens]);
+    }
+  });
+});
+
+describe('lensUndated', () => {
+  const undated = { budget: 700, scheduled: 250, actual: 40 };
+  it('gives each lens its own bucket', () => {
+    assert.equal(lensUndated(undated, 'budget'), 700);
+    assert.equal(lensUndated(undated, 'scheduled'), 250);
+    assert.equal(lensUndated(undated, 'actual'), 40);
+  });
+  /* Comparing an undated plan against an undated arrival is not a comparison anyone asked for, so
+     Difference reports the plan's own figure — the behaviour that column has always had. */
+  it('stays plan-only under Difference', () => {
+    assert.equal(lensUndated(undated, 'difference'), 700);
+  });
+});
+
+describe('the band vocabulary', () => {
+  it('only the club row is re-named by a lens — the others are the same object read forward', () => {
+    assert.equal(revenueGroupLabel('dues', 'actual'), 'Player dues');
+    assert.equal(revenueGroupLabel('dues', 'budget'), 'Player dues');
+    // ⚠ THE SAME NAME ON EVERY LENS (owner 2026-08-24) — a dues instalment still to come IS player
+    // dues. Only a group whose forward view is a DIFFERENT OBJECT gets renamed.
+    assert.equal(revenueGroupLabel('dues', 'scheduled'), 'Player dues');
+    assert.equal(revenueGroupLabel('sponsorship', 'scheduled'), 'Sponsorships');
+    assert.equal(revenueGroupLabel('moneyback', 'scheduled'), 'Asked of the club');
+    // A drive has no forward record; if one ever renders there it still says what it is.
+    assert.equal(revenueGroupLabel('fundraising', 'scheduled'), 'Fundraising');
+  });
+
+  it('a band total takes the lens own adjective, on screen and in the file alike', () => {
+    assert.equal(bandTotalLabel('in', 'actual'), 'Total revenue');
+    assert.equal(bandTotalLabel('out', 'actual'), 'Total expenses');
+    assert.equal(bandTotalLabel('in', 'budget'), 'Budgeted revenue');
+    assert.equal(bandTotalLabel('out', 'scheduled'), 'Scheduled expenses');
+    assert.equal(bandTotalLabel('in', 'difference'), 'Total revenue');
+  });
+
+  /* ⚠ THE GRID RETURNS `id:<categoryId>` and the route holds the bare id. Both have to answer, or
+     the screen silently falls back to the lens-neutral name and the Scheduled lens stops
+     re-labelling — which looks like nothing at all going wrong. */
+  it('recognises a revenue group from either spelling of its key, and nothing else', () => {
+    assert.equal(revenueGroupOf('id:revenue:dues'), 'dues');
+    assert.equal(revenueGroupOf('revenue:sponsorship'), 'sponsorship');
+    assert.equal(revenueGroupOf('id:cat-1'), null);
+    assert.equal(revenueGroupOf('name:facilities'), null);
+    assert.equal(revenueGroupOf('id:revenue:not-a-group'), null);
+    assert.equal(revenueGroupOf(null), null);
   });
 });
