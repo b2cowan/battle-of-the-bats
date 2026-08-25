@@ -31,6 +31,43 @@ These rules apply to all AI coding assistants working in this repository.
 - **Documentation**: Two memory stores exist — do not conflate them. The **Claude auto-memory** lives OUTSIDE the repo (a per-user store, loaded automatically into Claude Code sessions) and is the living record Claude maintains. The **in-repo `memory/` directory** is the cross-assistant store read by other AI tools; any write there must update `memory/MEMORY.md` in the same change (that index has drifted months behind its own files before).
 - **Task Tracking**: Agents MUST update the `TODO.md` file in the root directory. Mark items as completed `[x]` and move them to the `✅ Completed Tasks` section once verified.
 - **Status wording (anti-drift)**: In TODO.md, plan headers, ledgers, and memory, never record a deliverable's state as a perishable negative — "uncommitted", "NOT on prod", "DEV-ONLY" go stale silently the moment another session ships (the 2026-08-10 audit found ~25 such claims, all false). Record the positive fact with its anchor instead: "committed `<hash>` <date>", "applied to prod <date> (job N)". Deployment state has one home — the release-history record and the Owner QA Ledger; other docs point there rather than restating it. After every production promote, run the post-release truth-up checklist in `.claude/commands/release.md` (Phase 2b).
+- **One spelling, everywhere a customer can read it (owner ruling 2026-08-24, binding).** A word the
+  product shows has exactly **one** spelling across every surface — screen copy, table and column
+  headings (including `data-label` values, which render as visible text on a phone), empty states,
+  button labels, toasts and API error messages, in-app help articles **and their `keywords` /
+  `searchText` arrays**, and the demo sandboxes' dock lines and tour narration. Two spellings of one
+  word is a product bug, not a typo: help search misses the article, and the same screen calls one
+  thing two names.
+  - **Build-enforced, and the gate is the list.** `npm run check:spelling` (part of
+    `verify:changed`) fails on any enforced variant in customer-visible copy. **`installment` (two
+    Ls) is settled and gated.** Escape hatch for a genuine proper noun or a quoted external
+    document: `spelling-ok` in a comment on that line or the one above.
+  - ⚠ **THERE IS NO BLANKET "HOUSE DICTIONARY" YET — do not assert one, and do not widen the gate
+    without an owner ruling.** Building the gate surfaced **156 further customer-visible strings**
+    (`npm run check:spelling:report`) in two piles that are *not* one decision:
+    - **~126 `-our`/`-re`/`-ce`** (`colour` ×121, `behaviour` ×4) — **correct Canadian English** in a
+      product built for Canadian clubs. Changing these is a **brand-voice** call for the owner and
+      `/marketing`, not a typo fix. Shipping `installment` beside `colour` is coherent: Canadian
+      usage accepts both spellings of the first and only one of the second.
+    - **~31 `-ise`** (`customised` ×19, `organisation` ×6, `recognised` ×5) — **British-only**;
+      Canadian English takes Oxford `-ize`, so these are wrong on their own terms. Still not swept,
+      because `is_customised` is a real **column** (mig 083): this pile is part copy, part
+      migration, and cannot be done as a spelling pass.
+    - **Permanent exceptions even if those piles are ever settled:** `cheque` (a real payment method
+      a Canadian treasurer picks from a list), `licence` as a noun, `grey` (load-bearing in
+      design-token names — a rename is a token migration), `defence` (a sports term this product is
+      built on), and `Centre` inside venue proper nouns.
+  - **Before introducing a word with a known variant, grep the repo for the other spelling first.**
+    If both already exist, that is drift — fix it in the same unit of work rather than adding a
+    third instance. The one-L/two-L `instalment`/`installment` split reached ~220 occurrences and
+    ~30 customer-visible strings before anyone noticed, because every single one read fine on its
+    own.
+  - **Fixing prose does not touch identifiers, columns, enum values, route segments, CSS class
+    names, or `id`s** — a rename there is a migration, not a spelling fix. Applied migration files
+    are history: correct a misspelling inside one with a **new** migration, never by editing the
+    old file.
+  - Applies to code comments and plan docs as a courtesy, not a requirement — they are not the
+    product. Prefer consistency there too when you are already editing the line.
 
 ## Documentation Structure
 
