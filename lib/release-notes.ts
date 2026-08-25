@@ -44,6 +44,64 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-25',
+    title: 'One place to record money — and paperwork you can hand over',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Recording money starts from one button on any Money screen. Say what happened — a family paid, the bottle drive brought money in, you paid a bill — and it lands in the right place.',
+      },
+      {
+        category: 'new',
+        text: 'Bills can be paid in parts. Record a deposit now and the balance later, correct a payment entered by mistake, and see what a bill has actually paid against what it still owes.',
+      },
+      {
+        category: 'new',
+        text: 'Three documents built to be handed to someone else: a roster for the dressing-room wall with birthdates and contact details left off, one family\'s statement with no other family\'s money on it, and a season register you can email to a treasurer. Available on the Premium Coaches Portal and Club.',
+      },
+      {
+        category: 'new',
+        text: 'Coach documents carry your team\'s own name, crest and colours, set once in the team\'s document settings. Available on the Premium Coaches Portal and Club.',
+      },
+      {
+        category: 'new',
+        text: 'Tryout day runs on one screen — live board, check-in and scoring together. The printed check-in sheet matches the columns on the tablet.',
+      },
+      {
+        category: 'new',
+        text: 'Administrators can look up a family. A parent is one record that keeps every email address they have used, instead of an address re-typed onto each child.',
+      },
+      {
+        category: 'new',
+        text: 'Seven coach reports in one place, including the attendance records behind a player\'s percentage and the positions a player has actually played.',
+      },
+      {
+        category: 'new',
+        text: 'Closing a season gives you a single page for it — results, roster, practices and money for a finished year, with a season summary at the top.',
+      },
+      {
+        category: 'new',
+        text: 'The season\'s money reads month by month, with the running balance in view.',
+      },
+      {
+        category: 'improved',
+        text: 'Coach navigation groups into sections that fold away, and on a phone the team bar names the team you are working in.',
+      },
+      {
+        category: 'improved',
+        text: 'Money can be filtered by date range, and a link you share carries that filter with it.',
+      },
+      {
+        category: 'improved',
+        text: 'The coach money screens now read properly on a phone.',
+      },
+      {
+        category: 'fixed',
+        text: 'Unsubscribing from club email means the same thing everywhere it is offered.',
+      },
+    ],
+  },
+  {
     date: '2026-08-17',
     title: 'Every dollar has a date, a category, and a season',
     highlights: [
