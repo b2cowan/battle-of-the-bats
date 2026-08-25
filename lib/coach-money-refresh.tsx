@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 /**
  * "Something changed in Money — re-read yourself."
@@ -106,4 +106,30 @@ export function useMoneyRevision(): number {
 /** Called by the hub's Import menu once rows have actually landed. */
 export function useBumpMoneyRevision(): () => void {
   return useContext(MoneyRefreshContext).bump;
+}
+
+/**
+ * Run `onBump` whenever a money write elsewhere bumps the revision — and NOT on mount.
+ *
+ * ⚠⚠ THE MOUNT SKIP IS THE WHOLE POINT, AND IT IS VALUE-COMPARED RATHER THAN LATCHED. A boolean
+ * "have I run yet?" flag flips on StrictMode's FIRST double-invoke, so the second invoke fires a
+ * spurious reload on mount — which is how the Dues tab hung during the §80 walk. Remembering WHICH
+ * revision was handled is idempotent under double effects; a boolean is not.
+ *
+ * ⚠ ONE HOME, BECAUSE MORE PANELS ARE COMING (/simplify, altitude lens 2026-08-23). This idiom was
+ * hand-rolled twice in one change — the Dues panel and the hub's summary bridge — each re-deriving
+ * the same six lines and re-explaining the same StrictMode hazard. A third copy would have been
+ * equally likely to get it right or to reintroduce the bug both copies took care to avoid.
+ *
+ * ⚠ The caller's `onBump` should be stable (a `useCallback`), or this re-subscribes each render.
+ */
+export function useOnMoneyRevisionBump(onBump: () => void): void {
+  const revision = useMoneyRevision();
+  const seen = useRef<number | null>(null);
+  useEffect(() => {
+    if (seen.current === revision) return;
+    const first = seen.current === null;
+    seen.current = revision;
+    if (!first) onBump();
+  }, [revision, onBump]);
 }

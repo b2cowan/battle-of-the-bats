@@ -226,7 +226,7 @@ export default function InstallmentPlanEditor({
       {repeatOpen && (
         <div className={styles.repeatBox}>
           <p className={shared.discNote}>
-            Gym time on the first, association dues every month, an insurance instalment — build the
+            Gym time on the first, association dues every month, an insurance installment — build the
             whole run at once, then change any row you like before saving.
           </p>
           <div className={styles.repeatRow}>

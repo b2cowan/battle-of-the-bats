@@ -8,7 +8,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { tournamentToday } from '@/lib/timezone';
+import { orgDayKey } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -92,6 +92,65 @@ export const PATCH = withObservability(async (req: Request,
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   let newRaised = Number(entry.amount_raised);
 
+  /* ⚠⚠ THE DAY THE MONEY ARRIVED IS CORRECTABLE (money centralization P2, 2026-08-23).
+     Migration 261 gave the CREATE path a received date so a treasurer could log drive money
+     into the period it actually landed in — and left the edit path unable to fix a wrong one,
+     which is the half of a date field that matters most. Same shape and same validation as the
+     create path and the dues receipt. */
+  if (body.receivedDate !== undefined && body.receivedDate !== null) {
+    if (typeof body.receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.receivedDate)) {
+      return NextResponse.json({ error: 'receivedDate must be a YYYY-MM-DD date' }, { status: 400 });
+    }
+    updates.received_date = body.receivedDate;
+  }
+  /**
+   * ⚠⚠ RE-DATING HAPPENS ONLY WHEN A DATE WAS ACTUALLY SENT — and that is a defect fix, not a
+   * nicety (/review, 2026-08-23, Critical). The first cut resolved a date for EVERY edit
+   * (`sent ?? stored ?? today`) and stamped it onto the ledger row and the family's credit. On a
+   * pre-mig-261 row `stored` is NULL, so an edit of the AMOUNT — or of the note — resolved to
+   * TODAY and silently moved last spring's fundraiser income, and the credit it earned, into this
+   * month. The client made it trivially reachable by pre-filling the date box with today.
+   *
+   * So: no date sent, nothing re-dated. The entry keeps whatever it had (including nothing, which
+   * the register reads as the creation day), exactly as it behaved before P2.
+   */
+  const sentDay = updates.received_date as string | undefined;
+  /** The day this entry is CONSIDERED to have arrived — for stamping a credit that did not exist
+   *  before. Falls back the way every reader does: stored date, else the org-clock creation day. */
+  const arrivalDay = sentDay
+    ?? (entry.received_date as string | null)
+    ?? orgDayKey(entry.created_at as string);
+
+  /* ⚠ A DATE-ONLY EDIT MUST REACH THE LEDGER AND THE CREDIT TOO (/review, 2026-08-23, High). These
+     stamps used to live inside the `amountRaised` block, so correcting ONLY the date moved the
+     entry and left the books and the family's credit on the old one — the split-brain this route's
+     own comment promises does not happen. They live out here now, keyed on the date being sent. */
+  if (sentDay) {
+    if (entry.accounting_entry_id) {
+      const { error: entryDateError } = await supabaseAdmin
+        .from('accounting_entries')
+        .update({ entry_date: sentDay, updated_at: new Date().toISOString() })
+        .eq('id', entry.accounting_entry_id);
+      /* ⚠ CHECKED, because the money must not diverge in silence. `lib/db.ts`'s `updateEntry`
+         exists for exactly this: an amount correction that moved the record and left the ledger
+         behind, with a green save and nothing logged. */
+      if (entryDateError) {
+        console.error('[fundraiser-entry] ledger re-date failed', { entryId, error: entryDateError });
+        return NextResponse.json({ error: 'Could not move the books entry to that date. Try again.' }, { status: 500 });
+      }
+    }
+    if (entry.credit_id) {
+      const { error: creditDateError } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ credit_date: sentDay })
+        .eq('id', entry.credit_id);
+      if (creditDateError) {
+        console.error('[fundraiser-entry] credit re-date failed', { entryId, error: creditDateError });
+        return NextResponse.json({ error: 'Could not move the family credit to that date. Try again.' }, { status: 500 });
+      }
+    }
+  }
+
   if (body.amountRaised !== undefined) {
     const raised = Number(body.amountRaised);
     if (isNaN(raised) || raised < 0) {
@@ -106,10 +165,16 @@ export const PATCH = withObservability(async (req: Request,
 
     // Update the linked accounting entry (bypass ledger resolution — admin client has full access)
     if (entry.accounting_entry_id) {
-      await supabaseAdmin
+      const { error: amountError } = await supabaseAdmin
         .from('accounting_entries')
         .update({ amount: newRaised, updated_at: new Date().toISOString() })
         .eq('id', entry.accounting_entry_id);
+      /* Checked for the same reason the re-date above is — a silent failure here is the record and
+         the books disagreeing about a figure, permanently, behind a green save. */
+      if (amountError) {
+        console.error('[fundraiser-entry] ledger amount update failed', { entryId, error: amountError });
+        return NextResponse.json({ error: 'Could not update the books entry. Try again.' }, { status: 500 });
+      }
     }
 
     // Update the linked dues credit
@@ -123,8 +188,11 @@ export const PATCH = withObservability(async (req: Request,
       await supabaseAdmin.from('rep_dues_credits').delete().eq('id', entry.credit_id);
       updates.credit_id = null;
     } else if (!entry.credit_id && rebateAmount > 0) {
-      // No credit existed but now one is needed (rebate was 0 before, amount changed)
-      const today = tournamentToday();
+      /* No credit existed but now one is needed (rebate was 0 before, amount changed).
+         ⚠ DATED THE DAY THE MONEY ARRIVED, NOT TODAY (found at the P2 gate, 2026-08-23). A
+         back-dated entry that later grew a credit stamped it with the edit date, so the family
+         credit landed in a different month from the income that created it — a mig-261 loose
+         end, invisible until a coach reconciled two months. */
       const { data: newCredit } = await supabaseAdmin
         .from('rep_dues_credits')
         .insert({
@@ -133,7 +201,7 @@ export const PATCH = withObservability(async (req: Request,
           amount:             rebateAmount,
           description:        `Fundraiser rebate — updated`,
           credit_type:        'fundraiser',
-          credit_date:        today,
+          credit_date:        arrivalDay,
           created_by:         ctx!.user.id,
           fundraiser_entry_id: entryId,
         })
@@ -165,6 +233,7 @@ export const PATCH = withObservability(async (req: Request,
       accountingEntryId: updated.accounting_entry_id ?? null,
       creditId:          updated.credit_id ?? null,
       notes:             updated.notes ?? null,
+      receivedDate:      updated.received_date ?? null,
       updatedAt:         updated.updated_at,
     },
   });

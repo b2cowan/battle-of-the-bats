@@ -589,10 +589,19 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          *should a demo moment show this?*, not *does it deserve its own stop*. A Club-plan prospect
          is shopping for precisely this relationship and the demo had no sentence for it.
          ⚠ EVERY FIGURE IN IT IS PINNED BY `MIDSEASON_CLUB_MONEY`: a $900 share in three
-         instalments (two settled, one ahead), $180 the club agreed to pay back, and a $95 request
+         installments (two settled, one ahead), $180 the club agreed to pay back, and a $95 request
          still undecided. If that seed changes, this sentence changes with it — and the pending $95
          is also what makes the "may still say no" clause visible in the scheduled rows above. */
-      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. The club\'s own side has a screen of its own: $900 of shared permits billed across three instalments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes.',
+      /* ⚠ THE "Record" CLAUSE IS NEW WITH MONEY CENTRALIZATION P2 (2026-08-23), and it is a
+         sentence on this step rather than a ninth stop — the same call the P4 club clause above
+         records, for the same reason. It closes the rider Owner QA §80 left open: the green
+         button is the most visible thing on this screen and the tour walked straight past it,
+         which is precisely the drift CLAUDE.md's demo rule describes. It is also newly TRUE that
+         it is the only way in here — Transactions' own Add retired with P2 — so a prospect who
+         reads the narration and then looks for an Add button finds the answer already given.
+         ⚠ IT CLAIMS NO FIGURES, deliberately: nothing in it is pinned to a seed, so a reseed
+         cannot make it wrong. */
+      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. The club\'s own side has a screen of its own: $900 of shared permits billed across three installments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes. And writing any of it down is one green button, up beside Import: Record asks a coach what happened in their own words — a family paid, the drive brought money in, we paid a bill — and files it wherever it belongs, from whichever screen they happen to be standing on.',
       nextLabel: 'Next: playing time',
     },
     {

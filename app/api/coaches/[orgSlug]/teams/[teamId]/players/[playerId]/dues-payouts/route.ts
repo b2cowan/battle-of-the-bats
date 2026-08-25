@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { DUES_PAYMENT_METHODS } from '@/lib/types';
 
 // ⚠ ACTIVE YEAR ONLY, deliberately (plan §10): this resolves the team's live season and cannot
 // address a past one. Money moves; an archived season is a record, and the refund sheet renders
@@ -37,7 +38,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-const METHODS = ['etransfer', 'cash', 'cheque', 'other'] as const;
+/* ⚠ THE SHARED LIST, not a local copy (mig 260). This route carried its own four-token array,
+   which is exactly the drift the list's own doc-comment warns about: 'card' joined the product's
+   one method list on 2026-08-22, and a copy here would have refused what the recording form
+   offers. Payments and payouts share the type, the list and the DB CHECK. */
+const METHODS = DUES_PAYMENT_METHODS;
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-payouts
 // Hand a family their credit back in cash (mig 234) — the mirror of recording a payment. Posts

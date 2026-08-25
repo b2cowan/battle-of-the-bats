@@ -6,6 +6,10 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useBumpMoneyRevision, useMoneyRevision } from '@/lib/coach-money-refresh';
 import { moneySectionHref } from '@/lib/coach-money-links';
+import { tournamentToday } from '@/lib/timezone';
+/* The hub's one wire (money centralization P2): this screen's Record door opens the shared
+   recording conversation, which lives in a sibling panel it cannot call directly. */
+import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -14,7 +18,7 @@ import CoachBackLink from '@/components/coaches/CoachBackLink';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
-import { applyCreditsToBills, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
+import { previewCreditLanding, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 import {
   KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT,
   type FundraisingKind, type SponsorStatus, type CreditUnit,
@@ -63,6 +67,11 @@ interface FundraiserEntry {
   accountingEntryId: string | null;
   creditId: string | null;
   notes: string | null;
+  /** The day the money arrived (mig 261). Null on rows logged before it. */
+  receivedDate: string | null;
+  /** What the coach actually SEES this row dated — the stored date, or the org-clock creation day
+   *  the register falls back to. The only value this form may pre-fill. */
+  effectiveDate: string;
 }
 
 /** One open bill for the "Where it lands" preview — served in schedule order by the entries
@@ -97,39 +106,9 @@ export function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/**
- * The "Where it lands" preview — THE shared application arithmetic (lib/dues-credits.ts) run
- * over the open bills the entries route served, with the not-yet-saved rebate as the one
- * credit. Never a local re-derivation: the preview must show exactly what saving will do.
- */
-function previewCreditLanding(openBills: OpenBill[], rebate: number, mode: CreditApplicationMode) {
-  const position = applyCreditsToBills({
-    coverage: openBills.map(b => ({
-      installmentId: String(b.installmentNumber),
-      installmentNumber: b.installmentNumber,
-      allocated: 0,
-      remaining: b.toSend,
-      covered: false,
-      completedOn: null,
-    })),
-    credits: [{ id: 'preview', amount: rebate, creditType: 'fundraiser', creditDate: '9999-01-01' }],
-    mode,
-  });
-  const byNumber = new Map(position.perInstallment.map(c => [c.installmentNumber, c]));
-  const rows = openBills
-    .map(b => {
-      const after = byNumber.get(b.installmentNumber);
-      if (!after || after.creditApplied <= 0.005) return null;
-      return {
-        installmentNumber: b.installmentNumber,
-        dueDate: b.dueDate,
-        wasToSend: b.toSend,
-        newToSend: after.toSend,
-      };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-  return { rows, leftover: position.owedBack };
-}
+/* ⚖ `previewCreditLanding` MOVED TO `lib/dues-credits` (money centralization P2, 2026-08-23).
+   The recording conversation draws the same preview now that it owns the logging door, and a
+   second copy of the application arithmetic is exactly the shape that module exists to prevent. */
 
 export function FundraiserDetail({
   orgSlug,
@@ -162,6 +141,10 @@ export function FundraiserDetail({
   const [logPlayerId, setLogPlayerId]   = useState<string | null>(null);
   const [logAmount, setLogAmount]       = useState('');
   const [logNotes, setLogNotes]         = useState('');
+  /** The day the money arrived — the edit half of what mig 261 gave the create path. */
+  const [logDate, setLogDate]           = useState('');
+  /** What the date box was pre-filled WITH, so an untouched one is never sent — see `saveLog`. */
+  const [logDateWas, setLogDateWas]     = useState('');
   const [logSaving, setLogSaving]       = useState(false);
   const [logError, setLogError]         = useState('');
 
@@ -258,6 +241,7 @@ export function FundraiserDetail({
    * dues rows would otherwise leave the coach logging a rebate against a stale "Left to send" and a
    * stale "Where it lands" preview, indefinitely, with nothing on screen to say so.
    */
+  const recordSignal = useRecordMoneySignal();
   const moneyRevision = useMoneyRevision();
   useEffect(() => { load(); }, [load, moneyRevision]);
 
@@ -275,10 +259,31 @@ export function FundraiserDetail({
    */
   const saved = useCallback(() => { bumpMoneyRevision(); }, [bumpMoneyRevision]);
 
+  /**
+   * Open a player's row to CORRECT an amount already logged (money centralization P2).
+   *
+   * ⚖ IT NO LONGER SERVES THE ADD CASE. A player with nothing logged gets **Record**, which
+   * opens the one recording conversation with this drive and this player stated — the same
+   * window the coach sees wherever they write money down. Editing is not recording, so it stays
+   * here and in place (owner ruling, P2 gate 2026-08-23).
+   *
+   * ⚠ AND IT ASKS THE DATE NOW. The conversation gained "Date received" when mig 261 landed, so
+   * a drive amount can be logged into the period it arrived in — and until this edit could ask
+   * the same question, a wrong date was uncorrectable from the screen that set it.
+   */
   function startLog(playerId: string, existingEntry: FundraiserEntry | null) {
     setLogPlayerId(playerId);
     setLogAmount(existingEntry ? String(existingEntry.amountRaised) : '');
     setLogNotes(existingEntry?.notes ?? '');
+    /* ⚠⚠ THE DATE THE COACH SEES, NEVER TODAY (/review, 2026-08-23 — Critical). A pre-mig-261 row
+       stores no date and the register dates it by when it was recorded; pre-filling TODAY here
+       meant a coach editing an old entry's AMOUNT sent today's date with it, and the server moved
+       that entry's ledger row and the family's credit into this month. The server now re-dates only
+       when a date is actually sent — and this is the other half: what is shown is what is already
+       true, so an untouched box sends nothing. */
+    const shown = existingEntry?.effectiveDate ?? tournamentToday();
+    setLogDate(shown);
+    setLogDateWas(shown);
     setLogError('');
   }
 
@@ -286,6 +291,8 @@ export function FundraiserDetail({
     setLogPlayerId(null);
     setLogAmount('');
     setLogNotes('');
+    setLogDate('');
+    setLogDateWas('');
     setLogError('');
   }
 
@@ -303,7 +310,15 @@ export function FundraiserDetail({
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amountRaised: amount, notes: logNotes || null }),
+            /* ⚠ ONLY WHEN THE COACH ACTUALLY CHANGED IT. Sending back the pre-filled value would
+               ask the server to re-date the ledger row and the family credit on every save — which
+               on a legacy row (dated by its creation day, not by a stored date) silently moves real
+               money into the current month. Unchanged = omitted = nothing re-dated. */
+            body: JSON.stringify({
+              amountRaised: amount,
+              notes: logNotes || null,
+              ...(logDate && logDate !== logDateWas ? { receivedDate: logDate } : {}),
+            }),
           },
         );
       } else {
@@ -618,6 +633,19 @@ export function FundraiserDetail({
                                 aria-label="Amount raised"
                                 autoFocus
                               />
+                              {/* ⚠ THE DAY THE MONEY ARRIVED (P2, 2026-08-23). The conversation
+                                  has asked this since mig 261; until now this form could not,
+                                  so a date set there was uncorrectable here. Back-date it and
+                                  the register row and the family's credit both follow. */}
+                              <input
+                                className={`${styles.input} ${styles.inlineField}`}
+                                style={{ '--inline-field-w': '150px' } as React.CSSProperties}
+                                type="date"
+                                max={tournamentToday()}
+                                value={logDate}
+                                onChange={e => setLogDate(e.target.value)}
+                                aria-label="Date received"
+                              />
                               <input
                                 className={`${styles.input} ${styles.inlineField}`}
                                 style={{ '--inline-field-w': '120px' } as React.CSSProperties}
@@ -631,7 +659,13 @@ export function FundraiserDetail({
                               {/* "Where it lands" (binding mockup §2) — the bills this rebate
                                   will lower, shown BEFORE saving. New entries only: an edit's
                                   preview would need the delta against the credit already
-                                  applied, and the screen re-derives on save either way. */}
+                                  applied, and the screen re-derives on save either way.
+                                  ⚠ THE NEW-ENTRY CASE NOW BELONGS TO THE CONVERSATION (money
+                                  centralization P2, 2026-08-23), which draws this same preview from
+                                  the same shared helper. What is left here is the fallback path —
+                                  this screen rendered without a Money hub around it, where there is
+                                  no conversation to open and the row logs in place. Kept rather
+                                  than deleted so that fallback is a working door, not a worse one. */}
                               {!player.entry && (() => {
                                 const raised = parseFloat(logAmount);
                                 const pct = fundraiser?.playerRebatePercent ?? 0;
@@ -688,14 +722,44 @@ export function FundraiserDetail({
                               </button>
                             </div>
                           ) : canWriteMoney ? (
+                            /* ⚖⚖ ONE ROW, TWO VERBS, AND THEY MEAN TWO DIFFERENT ACTS (money
+                               centralization P2, owner ruling A, 2026-08-23).
+
+                               **Record** — a player with nothing logged — opens the ONE recording
+                               conversation with this drive and this player STATED, not offered:
+                               the same window, same order, same words a coach gets from the hub
+                               button or from a family's row. "Log amount" was one of the five
+                               dialects this project set out to retire.
+
+                               **Edit amount** — a player who already has one — stays exactly
+                               where it is. Editing is not recording, and the conversation only
+                               ever offers players with nothing logged (that is its own rule, not
+                               an accident), so it has nowhere to put a correction anyway.
+
+                               ⚠ Without a hub around this screen there is no conversation to
+                               open, so the Record half falls back to the in-place editor rather
+                               than rendering a button that does nothing. */
                             <button
                               className={styles.btnGhost}
-                              onClick={() => startLog(player.playerId, player.entry)}
+                              onClick={() => {
+                                if (!player.entry && recordSignal && fundraiser) {
+                                  recordSignal.request({
+                                    branch: 'drive',
+                                    lock: {
+                                      subject: `${fundraiser.name} · ${player.playerName}`,
+                                      detail: 'Opened from the leaderboard',
+                                    },
+                                    ids: { driveId: fundraiser.id, drivePlayerId: player.playerId },
+                                  });
+                                  return;
+                                }
+                                startLog(player.playerId, player.entry);
+                              }}
                               style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}
                               disabled={!fundraiser?.isActive}
                               title={!fundraiser?.isActive ? 'Fundraiser is closed' : undefined}
                             >
-                              {player.entry ? 'Edit amount' : 'Log amount'}
+                              {player.entry ? 'Edit amount' : 'Record'}
                             </button>
                           ) : null}
                         </td>

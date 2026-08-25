@@ -90,7 +90,7 @@ export const PATCH = withObservability(async (_req: Request,
      money twice. */
   const updated = await markRepAllocationInstallmentPaid(installId, ctx.user.id, null);
   if (!updated) {
-    return NextResponse.json({ error: 'That instalment has already been marked paid.' }, { status: 409 });
+    return NextResponse.json({ error: 'That installment has already been marked paid.' }, { status: 409 });
   }
   return NextResponse.json({ installment: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/allocations/[splitId]/installments/[installId]' });

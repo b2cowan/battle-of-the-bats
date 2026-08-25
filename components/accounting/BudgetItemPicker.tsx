@@ -70,6 +70,48 @@ interface Props {
    *  since 2026-08-17 that answer includes the fact that the SIDE is not one of the things that can
    *  be changed later, which is exactly when a coach needs to know it. */
   manageHint?: string;
+  /**
+   * ⚠⚠ A GROUP THAT IS NOT MADE OF BUDGET ITEMS, RENDERED FIRST (money centralization P2, owner
+   * ruling C2, 2026-08-23).
+   *
+   * The recording conversation's "we paid for something" branch has to let a coach say *this pays
+   * off a bill we already have*. Three shapes were drawn; the owner took the one that asks the
+   * coach NOTHING: the bills they owe are simply the first group in the list this control already
+   * opens, above Tournaments and Facilities, and the same typing filters both halves. That is R2
+   * applied to the branch body — "is this a payable?" is a question about OUR filing system, and
+   * making the coach answer it first is the habit the whole project exists to break.
+   *
+   * ⚠ THE CONTROL LEARNS A GROUP, NOT A DOMAIN. It knows nothing about commitments, payments or
+   * money: a caller hands it labelled options and gets told which one was picked. Teaching this
+   * control what a payable is would put money logic inside a control the Budget Plan and the Org
+   * Budget also render.
+   *
+   * ⚠ EXACTLY ONE OF `value` / `leadGroup.selectedId` IS EVER SET. Picking from either group is
+   * how the caller learns the other was abandoned — see `choose` and `chooseLead`.
+   */
+  leadGroup?: {
+    /** The group heading, e.g. "Bills you owe". */
+    label: string;
+    options: {
+      id: string;
+      name: string;
+      /** The fact that makes the row worth choosing — rendered at the row's end, e.g. "$400 owing". */
+      meta?: string;
+    }[];
+    /**
+     * How `meta` should READ. Quiet by default, because this control is also the Budget Plan's and
+     * the Org Budget's and their trailing facts are not debts.
+     *
+     * ⚠ THE DEFAULT IS THE HONEST ONE (/simplify, altitude lens 2026-08-23). The first cut hard-
+     * coded the portal's owing colour into the shared stylesheet, so every future lead group —
+     * "recently used", "from last season" — would have rendered its fact in alarm red with no way
+     * out, in a prop whose own documentation promises it is domain-agnostic. A caller that means
+     * "this is money owed" now says so.
+     */
+    metaTone?: 'quiet' | 'owing';
+    selectedId: string | null;
+    onPick: (id: string) => void;
+  };
 }
 
 /** An item with its category carried along — what the flat, searchable list is made of. */
@@ -90,6 +132,7 @@ export default function BudgetItemPicker({
   invalid = false,
   disabled = false,
   manageHint,
+  leadGroup,
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -143,9 +186,20 @@ export default function BudgetItemPicker({
     });
   }, [offered, q, localCategories]);
 
+  /* The lead group's own matches, filtered by the SAME typing (C2's promise: one search, both
+     halves). Kept separate from `matches` because these are not rows — they carry no category,
+     no direction and no tier, and merging them would mean teaching every consumer of `matches`
+     that some of its members are not items. */
+  const leadMatches = useMemo(
+    () => (leadGroup?.options ?? []).filter(o => !q || o.name.toLowerCase().includes(q)),
+    [leadGroup, q],
+  );
+
   const exact = offered.some(r => r.item.name.toLowerCase() === q);
   const canCreate = q.length > 0 && !exact && !disabled;
-  const optionCount = matches.length + (canCreate ? 1 : 0);
+  /* ⚠ KEYBOARD ORDER IS RENDER ORDER: lead options, then items, then "+ Add". A cursor index that
+     did not account for the lead group would move the highlight and select a DIFFERENT row. */
+  const optionCount = leadMatches.length + matches.length + (canCreate ? 1 : 0);
 
   /**
    * ⚠⚠ WHICH NAMES APPEAR MORE THAN ONCE ON THIS SIDE — the whole reason the tier tags exist.
@@ -168,7 +222,13 @@ export default function BudgetItemPicker({
     return new Set([...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k));
   }, [offered]);
 
+  /** A chosen lead option displays as itself — it has no "Category · Item" shape to borrow. */
+  const selectedLead = leadGroup?.selectedId
+    ? leadGroup.options.find(o => o.id === leadGroup.selectedId) ?? null
+    : null;
+
   const selectedLabel = (() => {
+    if (selectedLead) return selectedLead.name;
     if (!value?.itemId) return '';
     const base = `${value.categoryName} · ${value.itemName}`;
     if (!ambiguousNames.has(value.itemName.trim().toLowerCase())) return base;
@@ -187,6 +247,15 @@ export default function BudgetItemPicker({
       setDropUp(window.innerHeight - rect.bottom < 260 && rect.top > 280);
     }
     setOpen(true);
+  }
+
+  /** Picking from the lead group. The caller is responsible for clearing whatever `value` held —
+   *  this control never invents an item selection, so it cannot clear one either. */
+  function chooseLead(id: string) {
+    leadGroup?.onPick(id);
+    setQuery('');
+    setActiveIdx(-1);
+    setOpen(false);
   }
 
   function choose(row: Row) {
@@ -227,8 +296,11 @@ export default function BudgetItemPicker({
       setActiveIdx(i => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (activeIdx >= 0 && activeIdx < matches.length) choose(matches[activeIdx]);
-      else if (activeIdx === matches.length && canCreate) startCreate();
+      // Same order as `renderOptions` and `optionCount`: lead group, then items, then create.
+      const lead = leadMatches.length;
+      if (activeIdx >= 0 && activeIdx < lead) chooseLead(leadMatches[activeIdx].id);
+      else if (activeIdx >= lead && activeIdx < lead + matches.length) choose(matches[activeIdx - lead]);
+      else if (activeIdx === lead + matches.length && canCreate) startCreate();
       else {
         const m = offered.find(r => r.item.name.toLowerCase() === q);
         if (m) choose(m);
@@ -324,10 +396,38 @@ export default function BudgetItemPicker({
     }
   }
 
+  /** The lead group — its own heading, its own rows, above everything (C2). */
+  function renderLeadOptions() {
+    if (leadMatches.length === 0) return null;
+    return (
+      <>
+        <div className={`${styles.optGroup} ${styles.optGroupLead}`}>{leadGroup!.label}</div>
+        {leadMatches.map((o, i) => (
+          <button
+            type="button"
+            key={o.id}
+            className={`${styles.opt} ${i === activeIdx ? styles.optActive : ''}`}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => chooseLead(o.id)}
+          >
+            <span>{o.name}</span>
+            {o.meta && (
+              <span className={`${styles.optMeta} ${leadGroup!.metaTone === 'owing' ? styles.optMetaOwing : ''}`}>
+                {o.meta}
+              </span>
+            )}
+          </button>
+        ))}
+      </>
+    );
+  }
+
   // ── The dropdown's rows, with a category heading whenever the group changes ──
   function renderOptions() {
     const out: React.ReactNode[] = [];
     let lastCat: string | null = null;
+    // The lead group occupies the first indices — see `optionCount`.
+    const lead = leadMatches.length;
 
     matches.forEach((row, i) => {
       if (row.categoryId !== lastCat) {
@@ -338,7 +438,7 @@ export default function BudgetItemPicker({
         <button
           type="button"
           key={row.item.id}
-          className={`${styles.opt} ${i === activeIdx ? styles.optActive : ''}`}
+          className={`${styles.opt} ${i + lead === activeIdx ? styles.optActive : ''}`}
           onMouseDown={e => e.preventDefault()}
           onClick={() => choose(row)}
         >
@@ -383,10 +483,12 @@ export default function BudgetItemPicker({
             aria-label="Category and item"
             autoComplete="off"
             disabled={disabled}
-            className={`${styles.input} ${invalid ? styles.inputBad : ''} ${value?.itemId && !open ? styles.inputChosen : ''}`}
-            placeholder={direction === 'in'
-              ? 'Search what this is — e.g. “sponsorship”, “grant”'
-              : 'Search what this is — e.g. “diamond”, “entry”'}
+            className={`${styles.input} ${invalid ? styles.inputBad : ''} ${(value?.itemId || selectedLead) && !open ? styles.inputChosen : ''}`}
+            placeholder={leadGroup && leadGroup.options.length > 0
+              ? 'Search a bill you owe, or what the cost was for'
+              : direction === 'in'
+                ? 'Search what this is — e.g. “sponsorship”, “grant”'
+                : 'Search what this is — e.g. “diamond”, “entry”'}
             value={open ? query : (selectedLabel || query)}
             onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
             onFocus={() => { setQuery(''); openDropdown(); }}
@@ -400,8 +502,12 @@ export default function BudgetItemPicker({
           />
           {open && (
             <div id={listboxId} className={`${styles.dropdown} ${dropUp ? styles.dropdownUp : ''}`} role="listbox">
+              {renderLeadOptions()}
               {matches.length > 0 && renderOptions()}
-              {matches.length === 0 && (
+              {/* ⚠ "Nothing matches" must not appear while the lead group HAS a match — typing a
+                  bill's name legitimately empties the item half, and saying the search found
+                  nothing above a row it plainly found is the control calling itself a liar. */}
+              {matches.length === 0 && leadMatches.length === 0 && (
                 <div className={styles.dropEmpty}>
                   {q
                     ? <>Nothing on this side matches “{query.trim()}”.</>
@@ -411,7 +517,7 @@ export default function BudgetItemPicker({
               {canCreate && (
                 <button
                   type="button"
-                  className={`${styles.opt} ${styles.optCreate} ${activeIdx === matches.length ? styles.optActive : ''}`}
+                  className={`${styles.opt} ${styles.optCreate} ${activeIdx === leadMatches.length + matches.length ? styles.optActive : ''}`}
                   onMouseDown={e => e.preventDefault()}
                   onClick={startCreate}
                 >

@@ -56,6 +56,15 @@ export interface MoneySummary {
     overdueAmount: number;
     neverPaidCount: number;
     schedulesCount: number;
+    /**
+     * Families the team is HOLDING money for (position.owedBack > 0) — count and total (2026-08-22,
+     * money centralization P1). Exists for the recording conversation's "We paid a family back"
+     * live hint: the chooser's hints read from THIS payload the hub already loads, never from a
+     * fresh per-open probe (build prompt §2.8). Derived from the same deriveDuesPosition walk as
+     * overdue, so the hint and the payout sheet can't disagree about who is owed.
+     */
+    familiesInCreditCount: number;
+    familyCreditHeld: number;
   };
   /**
    * Money coming in from outside dues — SPLIT BY KIND, because the Overview rail carries a row for

@@ -784,7 +784,9 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // the report, and what the team's spending is matched to.
   /* ⚠ THE MONEY-IN PAIRS SAY SO (mig 246). A funding line and an income record name words on the
      money-IN side; a REFUND is the exception that proves it — it points at the COST word it is
-     paying back, which is exactly what the form's refund tick box does. */
+     paying back, which is exactly what the form's "Money back on something we paid" answer does
+     (the refund tick box it used to be became a first-class answer of the one recording
+     conversation, 2026-08-22). */
   const offSeasonItems = await budgetItemIds(team.id, [
     ...OFFSEASON_BUDGET_LINES, ...state.expenses,
     ...OFFSEASON_FUNDING_LINES.map(l => ({ ...l, direction: 'in' })),

@@ -3831,6 +3831,9 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 <!-- dict:col:rep_fundraiser_entries.credit_id -->
 **`credit_id`** (FK → `rep_dues_credits.id`, nullable) — reverse half of the circular FK; null when `rebate_amount = 0`.
 
+<!-- dict:col:rep_fundraiser_entries.received_date -->
+**`received_date`** (date, nullable; **mig 261**, 2026-08-23) — the day the money ARRIVED (org-timezone date, coach-typed via the recording conversation; owner ruling: logged late still lands in its period). Also the date stamped on the entry's ledger row and its rebate credit at creation. **NULL on every pre-261 row and on rows from doors that don't ask yet** (the drive's own Log-amount until money-centralization P2) — readers fall back to `created_at`, which is what the register always used; the register row's detail line says which of the two it is showing.
+
 <!-- dict:col:rep_fundraiser_entries.notes -->
 **`notes`** (text, nullable) — free text.
 

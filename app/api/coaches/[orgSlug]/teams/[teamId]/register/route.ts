@@ -100,7 +100,7 @@ export const GET = withObservability(async (_req: Request,
        columns it reads, so "realised" cannot mean two things. */
     supabaseAdmin
       .from('rep_fundraiser_entries')
-      .select('id, amount_raised, created_at, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id)')
+      .select('id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id)')
       .eq('rep_fundraisers.program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_allocation_splits')
@@ -372,7 +372,7 @@ export const GET = withObservability(async (_req: Request,
 
   // ── Derived: Fundraising — drives and sponsors ────────────────────────────
   type FundraiserEntryRow = {
-    id: string; amount_raised: number; created_at: string;
+    id: string; amount_raised: number; created_at: string; received_date: string | null;
     rep_fundraisers: { name: string; kind: string | null; sponsor_status: string | null } | null;
   };
   for (const raw of (fundraiserRes.data ?? []) as unknown as FundraiserEntryRow[]) {
@@ -385,11 +385,12 @@ export const GET = withObservability(async (_req: Request,
     if (!(amount > 0)) continue;
     rows.push({
       id: `fundraiser-${raw.id}`,
-      /* ⚠ A FUNDRAISING ENTRY HAS NO DATE COLUMN — `rep_fundraiser_entries` carries only
-         `created_at`. So the book dates it by the day the coach recorded it, and the row says so
-         rather than letting a reader assume it is the day the money changed hands. A PLEDGE has no
-         date at all: it has not arrived, and nothing records when it is expected. */
-      date: realised ? orgDayKey(raw.created_at) : null,
+      /* ⚠ THE DAY THE MONEY ARRIVED when the record knows it (mig 261 — the recording
+         conversation asks; owner ruling 2026-08-23: logged late still lands in its period), and
+         the day the coach RECORDED it for legacy rows, which carry only `created_at` — the row's
+         detail says which. A PLEDGE has no date at all: it has not arrived, and nothing records
+         when it is expected. */
+      date: realised ? (raw.received_date ?? orgDayKey(raw.created_at)) : null,
       kind: 'fundraising',
       description: parent.name,
       categoryName: null,
@@ -402,7 +403,9 @@ export const GET = withObservability(async (_req: Request,
       open: { kind: 'workspace', section: 'fundraisers' },
       recordPayment: null,
       sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
-      detail: realised ? 'Recorded on this date' : 'Pledged — not arrived yet',
+      detail: realised
+        ? (raw.received_date ? 'The day the money arrived' : 'Recorded on this date')
+        : 'Pledged — not arrived yet',
     });
   }
 

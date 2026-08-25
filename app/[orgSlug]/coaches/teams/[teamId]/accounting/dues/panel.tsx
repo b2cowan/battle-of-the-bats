@@ -19,7 +19,6 @@ import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '@/lib
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
-import DuesPayoutSheet from '@/components/coaches/DuesPayoutSheet';
 import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
@@ -29,6 +28,15 @@ import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { fmt } from '@/lib/coach-money-summary';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+/* The hub's one wire (money centralization P2). This panel's Record doors cannot reach the money
+   form's own functions — the form lives in a sibling panel — so they ask the hub, which is the
+   same channel its header button uses. Null when this panel is rendered outside the hub. */
+import { useRecordMoneySignal } from '@/lib/coach-record-money';
+/* ⚠ THE SHARED NAME ASSEMBLY, NOT A LOCAL ONE (/simplify reuse pass, 2026-08-23). A private copy
+   here would have been the fifteenth caller's worth of drift — and would have missed the guard the
+   shared helper exists for: it strips literal "null"/"undefined" strings that survive a bad import,
+   which a bare filter(Boolean).join(' ') does not. */
+import { playerName } from '@/lib/coach-roster-name';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
 import {
@@ -49,6 +57,9 @@ import type {
   DuesCredit,
   DuesCreditType,
 } from '@/lib/types';
+import { DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
+import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
+import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
 
 /** One credit's landing on one installment — "covered by fundraising — Bottle Drive". */
 interface CreditSource {
@@ -278,12 +289,8 @@ function stripStyle(): React.CSSProperties {
   };
 }
 
-const PAYMENT_METHOD_LABELS: Record<DuesPaymentMethod, string> = {
-  etransfer: 'E-transfer',
-  cash:      'Cash',
-  cheque:    'Cheque',
-  other:     'Other',
-};
+/* One shared label map (2026-08-22, mig 260) — see DUES_PAYMENT_METHOD_LABEL's own note. */
+const PAYMENT_METHOD_LABELS = DUES_PAYMENT_METHOD_LABEL;
 
 interface InstallmentRow {
   installmentNumber: number;
@@ -301,12 +308,8 @@ const BLANK_CREDIT_FORM = {
   notes:      '',
 };
 
-const BLANK_PAYOUT_FORM = {
-  amount:   '',
-  paidDate: tournamentToday(),
-  method:   'etransfer' as DuesPaymentMethod,
-  note:     '',
-};
+/* ⚖ `BLANK_PAYOUT_FORM` went with the in-drawer payout sheet (money centralization P2,
+   2026-08-23) — handing a family their credit back is recorded in the one conversation now. */
 
 const BLANK_PAYMENT_FORM = {
   amount:       '',
@@ -336,6 +339,8 @@ export function PlayerDuesPanel({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  /** The hub's recording-conversation wire — see the import. */
+  const recordSignal = useRecordMoneySignal();
 
   const [players, setPlayers] = useState<PlayerWithDues[]>([]);
   const [loading, setLoading] = useState(true);
@@ -416,8 +421,8 @@ export function PlayerDuesPanel({
   const [holdBackInput, setHoldBackInput] = useState('');
   const [holdBackSaving, setHoldBackSaving] = useState(false);
   /* (The settlement's own per-row payout state stood here — a `payingRow`, its form and its
-     saving flag. All three went with the per-row Pay out button, 2026-08-14. The PLAYER DRAWER's
-     payout state is separate and untouched: `payingOut` / `payoutForm` / `payoutSaving`.) */
+     saving flag. All three went with the per-row Pay out button, 2026-08-14; the player drawer's
+     equivalents went with the conversation, 2026-08-23. Neither exists now.) */
   const [payAllBusy, setPayAllBusy] = useState(false);
   /** The Set-refund sheet: an even share / a set amount / no share / forgive the balance. */
   const [choiceFor, setChoiceFor] = useState<SettlementSheetRow | null>(null);
@@ -483,10 +488,10 @@ export function PlayerDuesPanel({
   const [creditMode, setCreditMode] = useState<CreditApplicationMode | null>(null);
   const [moneySettingError, setMoneySettingError] = useState('');
   const [creditModeSaving, setCreditModeSaving] = useState(false);
-  // Paying a credit out in cash (mig 234) — the mirror of Record payment.
-  const [payingOut, setPayingOut] = useState(false);
-  const [payoutForm, setPayoutForm] = useState(BLANK_PAYOUT_FORM);
-  const [payoutSaving, setPayoutSaving] = useState(false);
+  /* ⚖ Paying a credit out in cash (mig 234) is the CONVERSATION's "we paid a family back"
+     branch now (P2) — `payingOut`, `payoutForm` and `payoutSaving` went with the sheet.
+     ⚠ `payoutError` STAYS: the payout receipts below can still be REMOVED, and a delete that
+     fails must say so somewhere the coach is looking. */
   const [payoutError, setPayoutError] = useState('');
   const [deletingPayoutId, setDeletingPayoutId] = useState<string | null>(null);
   // "See an example" — what the reminder email says and when it goes out. Read-only, so it
@@ -500,22 +505,48 @@ export function PlayerDuesPanel({
   // portal's chrome (bottom nav, scroll lock) behaving as though nothing is open on top of it.
   useOverlayOpen(confirmRemindersOpen || reminderPreviewOpen || !!choiceFor || refundOpen);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  /* ⚠ Monotonic sequence — only the NEWEST load may write (/review, 2026-08-23). The gap is
+     pre-existing, but joining the money revision (below) made it consequential: two writes in
+     quick succession anywhere in the hub now fire two overlapping /dues reads here, and a slow
+     first response landing last would silently replace newer figures with older ones. Same
+     stamp-and-drop the expenses panel's own loaders use. */
+  const loadSeq = useRef(0);
+  /* ⚠ `quiet` re-reads keep the last good screen (/review, 2026-08-23): everything below this
+     panel's header — the drawer, the payment sheet, the payout sheet — sits inside one
+     `{loading ? …}` ternary, so a loud reload flashes the WHOLE tab to "Loading…" under a coach
+     mid-typing. The hub page documents the same rule for the same reason: a background refresh
+     must never evict a half-filled form. Quiet also swallows its own failure — stale-but-good
+     beats blanking a tab the coach is working in over someone else's write. */
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
+      if (seq !== loadSeq.current) return;
       setPlayers(data.players ?? []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load player dues.');
+      if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load player dues.');
     } finally {
-      setLoading(false);
+      /* ⚠ The WINNING load always clears the spinner, quiet or not — `quiet` means "don't SHOW
+         one", never "leave one hanging". Under dev StrictMode's double effects, a quiet refresh
+         superseded the mount load and the tab hung on "Loading…" with the data already behind it
+         (owner, §80 walk 2026-08-23). */
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
+
+  /* ⚠ RE-READS ON THE SHARED MONEY REVISION (money centralization P1, 2026-08-22) — this was the
+     ONE money panel not listening. Every other tab re-reads when a write elsewhere bumps the
+     revision; dues never joined because nothing outside this tab could write a dues record.
+     The recording conversation can now (receipts and payouts from the hub's one door), and a
+     mounted-but-hidden Dues tab must not keep showing a bill a coach just settled. QUIETLY — see
+     `load`'s own note — and skipping the mount-time bump the effect above already covered. */
+  const quietReload = useCallback(() => { void load(true); }, [load]);
+  useOnMoneyRevisionBump(quietReload);
 
   useEffect(() => {
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`)
@@ -530,42 +561,10 @@ export function PlayerDuesPanel({
       .catch(() => {});
   }, [orgSlug, teamId]);
 
-  /** Hand a family their credit back in cash. Their bills go back up — those dollars are settled
-   *  now — which is why this reloads rather than patching state locally. */
-  async function savePayout() {
-    if (!selected) return;
-    setPayoutError('');
-    setPayoutSaving(true);
-    try {
-      const amount = parseFloat(payoutForm.amount);
-      if (isNaN(amount) || amount <= 0) throw new Error('Enter an amount to pay out');
-      // The ceiling itself is the SERVER's call (it re-derives from the database and owns the
-      // refusal wording); this is only the local guard that keeps the button honest.
-      if (amount > selected.payableNow + 0.005) throw new Error(payoutOverMessage);
-      if (!payoutForm.paidDate) throw new Error('Enter the day the money left');
-      const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-payouts`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount,
-            paidDate: payoutForm.paidDate,
-            method: payoutForm.method,
-            note: payoutForm.note.trim() || null,
-          }),
-        },
-      );
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to record the payout');
-      setPayingOut(false);
-      setPayoutForm(BLANK_PAYOUT_FORM);
-      await load();
-    } catch (e) {
-      setPayoutError(e instanceof Error ? e.message : 'Failed to record the payout');
-    } finally {
-      setPayoutSaving(false);
-    }
-  }
+  /* ⚖ `savePayout` IS GONE (P2, 2026-08-23). The conversation's payout branch POSTs to the same
+     `/players/[playerId]/dues-payouts` route with the same four facts, and states the same
+     ceiling before saving — the server has always owned that refusal. What remains here is the
+     UNDO, because a payout is created or removed and never edited. */
 
   /** The undo: voids the books entry and the money goes back to being owed. */
   async function deletePayout(payoutId: string) {
@@ -1214,14 +1213,8 @@ export function PlayerDuesPanel({
   // see the list but no send buttons.
   const moneyCanWrite = (page.capabilities?.money === 'write');
 
-  // The one sentence the Pay out sheet says when the coach types more than the family has left
-  // in credit. The amount and the over-ceiling test now live inside the shared sheet
-  // (components/coaches/DuesPayoutSheet) — they were three independent copies of the same
-  // arithmetic and wording before, and the save guard below still reads this same message.
-  const payoutOverMessage = selected
-    ? `This family has ${fmt(selected.payableNow)} left in credit — you can't pay out more than that.`
-    : '';
-  /** One rendering of the payout error, used inside the sheet and beside the strip. */
+  /* ⚖ The over-ceiling sentence went with `savePayout` — the conversation states its own, from
+     the same figure, and the server owns the refusal either way. */  /** One rendering of the payout error — beside the payout receipts, where Remove can fail. */
   const payoutErrorNote = payoutError
     ? <p className={styles.errorText} style={{ margin: '0 0 0.6rem', fontSize: '0.78rem' }}>{payoutError}</p>
     : null;
@@ -1376,13 +1369,10 @@ export function PlayerDuesPanel({
       formats={['xlsx', 'csv', 'pdf']}
       build={buildExport}
       /* The print run (Statements pass, 2026-08-23): a DIFFERENT document from the same view —
-         one page per family, for handing out. The hint carries the privacy rule: the whole file
-         is the coach's; a single family's page is what gets handed over. */
-      secondaryPdf={{
-        label: 'Family statements',
-        hint: 'One page per family, for handing out — each family sees only their own money. Keep the whole file with you.',
-        run: runFamilyStatements,
-      }}
+         one page per family, for handing out. Since 2026-08-24 the two are the dialog's DOCUMENT
+         choice rather than two rows in one list, so each is named and neither needs a sentence. */
+      primaryDocument="Team sheet"
+      secondaryPdf={{ label: 'Family statements', run: runFamilyStatements }}
       disabled={players.length === 0}
     />
   );
@@ -2267,7 +2257,7 @@ export function PlayerDuesPanel({
                         {/* ⚠ The per-row Pay out sheet stood here and is GONE with the close-out
                             ruling (2026-08-14). Paying ONE family is still entirely possible — it
                             happens in that player's own money record (the drawer's own
-                            DuesPayoutSheet, further down this file), which is where the rest of
+                            the conversation's payout branch), which is where the rest of
                             their history is. Nothing about the server path changed: it still
                             accepts a single-player payout at any point in the season. */}
                       </>
@@ -2400,43 +2390,42 @@ export function PlayerDuesPanel({
                                installment were different things. */
                             : <>This family&apos;s {fmt(selected.payableNow)} is lowering their installments. You can hand it over in cash instead — their installments go back up.</>}
                         </span>
-                        {moneyCanWrite && !payingOut && (
+                        {/* ⚖ RE-POINTED, AND THE SHEET BELOW GOES WITH IT (P2, 2026-08-23). A
+                            payout has no edit path — it is created or removed — so unlike the
+                            payment panel there is nothing left for the in-drawer sheet to do once
+                            the add door moves. Same lock: this names one family. */}
+                        {moneyCanWrite && recordSignal && (
                           <button
                             className={styles.btnSecondary}
                             style={{ fontSize: '0.78rem', flexShrink: 0 }}
-                            onClick={() => {
-                              setPayingOut(true);
-                              setPayoutForm({ ...BLANK_PAYOUT_FORM, amount: String(selected.payableNow) });
-                              setPayoutError('');
-                            }}
+                            onClick={() => recordSignal.request({
+                              branch: 'payout',
+                              lock: {
+                                subject: playerName(selected.player) || 'this player',
+                                detail: `Holding ${fmt(selected.payableNow)} of their money · opened from their record`,
+                              },
+                              ids: { payoutPlayerId: selected.player.id },
+                              amount: String(selected.payableNow),
+                            })}
                           >
-                            Pay out
+                            Record
                           </button>
                         )}
                       </div>
                     )}
 
-                    {/* Pay out — the ONE sheet (components/coaches/DuesPayoutSheet), shared with
-                        the season settlement's rows. Here the ceiling is the family's remaining
-                        CREDIT; there it is what the settlement says they are owed. */}
-                    {payingOut && (
-                      <DuesPayoutSheet
-                        form={payoutForm}
-                        onChange={setPayoutForm}
-                        ceiling={selected.payableNow}
-                        overCeilingMessage={payoutOverMessage}
-                        consequence={amt =>
-                          `Posts ${fmt(amt)} money out to the team ledger, dated ${fmtDate(payoutForm.paidDate)}${
-                            selected.creditApplied > 0.005
-                              ? ' — and their installments go back up by whatever this money was covering.'
-                              : '.'}`}
-                        error={payoutError}
-                        saving={payoutSaving}
-                        onCancel={() => { setPayingOut(false); setPayoutError(''); }}
-                        onSubmit={savePayout}
-                      />
-                    )}
-                    {!payingOut && payoutErrorNote}
+                    {/* ⚖⚖ THE IN-DRAWER PAYOUT SHEET IS GONE (money centralization P2, 2026-08-23).
+                        Handing a family their credit back is recorded in the ONE conversation now —
+                        the same four facts, the same words, the same consequence line — and unlike a
+                        dues receipt a payout has no edit path, so nothing was left for this sheet to do
+                        once its door moved — and it was the component's LAST caller, so
+                        `components/coaches/DuesPayoutSheet.tsx` went with it (/simplify, same day).
+                        The settlement's own per-row payout sheet, its only other caller, had already
+                        been removed on 2026-08-14; leaving the file behind would have left 130 lines
+                        of a money form that reads as live and is rendered by nothing.
+                        ⚠ The refusal it enforced did not live here: the server caps a payout at what the
+                        family is actually holding, and the conversation states the same ceiling before
+                        saving. */}
 
                     {/* Per-player actions. "Remind" lives HERE now (owner ruling 2026-08-03) rather
                         than on a duplicated chase list above the table — this is where the coach is
@@ -2472,14 +2461,37 @@ export function PlayerDuesPanel({
                       <button className={styles.btnGhost} onClick={() => openEdit(selected)} style={{ fontSize: '0.78rem' }}>
                         Edit schedule
                       </button>
-                      {moneyCanWrite && !recordingPayment && (
+                      {/* ⚖⚖ THIS DOOR RE-POINTS AT THE ONE CONVERSATION (money centralization P2,
+                          owner ruling A, 2026-08-23). It used to open the panel below in ADD mode;
+                          that panel is now reached only by the pencil on an existing receipt, and
+                          is a CORRECTION form. One word, one window, wherever a coach records money.
+                          ⚠ LOCKED: this door named one record — Jenny's — so the conversation states
+                          "A family paid their dues — Jenny Alvarez" instead of offering a question
+                          the coach could switch. Switching it here and saving filed money against
+                          something else while nothing on this drawer changed.
+                          ⚠ The one-tap shortcuts on the installments below are untouched, forever.
+                          ⚠ Without a hub around this panel (no signal) the button is not rendered
+                          rather than rendered dead — the standalone route has no conversation to
+                          open, and a control that does nothing is worse than one that is absent. */}
+                      {moneyCanWrite && !recordingPayment && recordSignal && (
                         <button
                           className={styles.btnPrimary}
-                          /* closeMoneySheets FIRST — an "add" must never inherit an edit target. */
-                          onClick={() => { closeMoneySheets(); setRecordingPayment(true); setPayForm(BLANK_PAYMENT_FORM); }}
+                          onClick={() => {
+                            closeMoneySheets();
+                            recordSignal.request({
+                              branch: 'dues',
+                              lock: {
+                                subject: playerName(selected.player) || 'this player',
+                                detail: selected.outstanding > 0.005
+                                  ? `Owes ${fmt(selected.outstanding)} · opened from their record`
+                                  : 'Paid up · opened from their record',
+                              },
+                              ids: { duesPlayerId: selected.player.id },
+                            });
+                          }}
                           style={{ fontSize: '0.78rem' }}
                         >
-                          Record payment
+                          Record
                         </button>
                       )}
                     </div>
@@ -2489,9 +2501,19 @@ export function PlayerDuesPanel({
                       </p>
                     )}
 
-                    {/* Record a payment — three facts (how much, when it arrived, how) and a
-                        statement of where it lands BEFORE saving. Amounts spread oldest-first;
-                        the coach never allocates by hand. */}
+                    {/* ⚖⚖ A CORRECTION FORM NOW, AND ONLY THAT (money centralization P2,
+                        2026-08-23). It served two acts from one panel — record a receipt that just
+                        arrived, and fix one already recorded — and the ADD half moved to the one
+                        conversation. The pencil on a receipt below is the only way in.
+
+                        ⚠ THAT MAKES THE 2026-08-14 CRITICAL STRUCTURALLY IMPOSSIBLE: this panel
+                        used to open blank with a stale edit id still set, so what a coach believed
+                        was a second payment silently PATCHed the family's first receipt. There is
+                        no blank-open path left — `editingPaymentId` is set by the only opener.
+
+                        ⚠ It keeps its own words on purpose: it says which receipt it is replacing
+                        and that the old books entry is voided. That is a different sentence from
+                        "a payment arrived", because it is a different act. */}
                     {recordingPayment && (
                       <div style={{
                         padding: '0.85rem', marginBottom: '1rem',
@@ -2524,15 +2546,11 @@ export function PlayerDuesPanel({
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                           <div>
                             <label className={styles.label}>Method</label>
-                            <select
+                            <DuesMethodSelect
                               className={styles.input}
                               value={payForm.method}
-                              onChange={e => setPayForm(f => ({ ...f, method: e.target.value as DuesPaymentMethod }))}
-                            >
-                              {(Object.entries(PAYMENT_METHOD_LABELS) as [DuesPaymentMethod, string][]).map(([v, l]) => (
-                                <option key={v} value={v}>{l}</option>
-                              ))}
-                            </select>
+                              onChange={m => setPayForm(f => ({ ...f, method: m }))}
+                            />
                           </div>
                           <div>
                             <label className={styles.label}>Note</label>
@@ -2569,9 +2587,12 @@ export function PlayerDuesPanel({
                           );
                           return (
                             <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                              {editingPaymentId
-                                ? <>Replaces this receipt: the old books entry is voided and {fmt(amt)} is posted afresh, dated {fmtDate(payForm.receivedDate || tournamentToday())}.</>
-                                : <>Posts {fmt(amt)} income to the team ledger, dated {fmtDate(payForm.receivedDate || tournamentToday())} — the day it arrived.</>}
+                              {/* ⚠ ONE SENTENCE, because there is one act left (P2): this panel is
+                                  only ever opened on an existing receipt. The "Posts {'{'}amount{'}'} income"
+                                  wording it used to carry for the ADD case moved with that case,
+                                  into the conversation, where it reads the same. */}
+                              Replaces this receipt: the old books entry is voided and {fmt(amt)} is
+                              posted afresh, dated {fmtDate(payForm.receivedDate || tournamentToday())}.
                               {excess > 0.005 && (
                                 <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.2rem' }}>
                                   {fmt(excess)} is more than what&apos;s left on this schedule — it will be saved as an overpayment credit.
@@ -2584,9 +2605,7 @@ export function PlayerDuesPanel({
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <button className={styles.btnGhost} onClick={() => closeMoneySheets()} style={{ fontSize: '0.8rem' }}>Cancel</button>
                           <button className={styles.btnPrimary} disabled={paySaving} onClick={savePayment} style={{ fontSize: '0.8rem' }}>
-                            {paySaving
-                              ? (editingPaymentId ? 'Saving…' : 'Recording…')
-                              : (editingPaymentId ? 'Save correction' : 'Record Payment')}
+                            {paySaving ? 'Saving…' : 'Save correction'}
                           </button>
                         </div>
                       </div>
@@ -2851,6 +2870,13 @@ export function PlayerDuesPanel({
                         </div>
                       </div>
                     )}
+
+                    {/* ⚠ THE PAYOUT ERROR CHANNEL LIVES HERE NOW (P2, 2026-08-23). It used to be
+                        rendered beside the credit strip, under the Pay-out sheet that has moved
+                        into the conversation — leaving the REMOVE button below with a failure
+                        nothing on screen would have shown. A delete that silently does nothing is
+                        the worst shape for a control that voids a ledger entry. */}
+                    {payoutErrorNote}
 
                     {/* Paid out — the outbox's receipts (mig 234), the mirror of Payments above.
                         Removing one voids its books entry and the money goes back to being owed. */}
@@ -3196,6 +3222,10 @@ export function PlayerDuesPanel({
                     className={styles.btnSecondary}
                     disabled={choiceSaving}
                     style={{ fontSize: '0.78rem' }}
+                    /* Flagged because saveRowChoice → load(), which now reads `loadSeq.current` —
+                       but only in its async body after the click, never during render (the same
+                       stamp-and-drop the expenses panel has always used). False positive. */
+                    // eslint-disable-next-line react-hooks/refs
                     onClick={() => saveRowChoice(row.playerId, 'forgive')}
                   >
                     Forgive the {fmt(row.leftToSend)} balance

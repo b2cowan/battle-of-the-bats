@@ -12,6 +12,7 @@ import {
   type InstallmentBasis,
 } from '@/lib/coach-budget-totals';
 import { tournamentToday, formatDayMonth } from '@/lib/timezone';
+import { formatPlayerLastFirst } from '@/lib/player-name';
 import type { RepBudgetPlan, RepInstallmentPreviewRow } from '@/lib/types';
 import DateField from './DateField';
 import styles from './budget/budget.module.css';
@@ -777,7 +778,7 @@ export default function GenerateInstallmentsModal({
                       </div>
                       {preview.slice(0, 10).map(row => (
                         <div key={row.playerId} className={styles.previewRow}>
-                          <span className={shared.scrollXStickyCell}>{[row.playerLastName, row.playerFirstName].filter(Boolean).join(', ')}</span>
+                          <span className={shared.scrollXStickyCell}>{formatPlayerLastFirst(row)}</span>
                           {row.installments.map((inst, i) => (
                             <span key={i} className={shared.tdNum}>{fmt(inst.amount)}</span>
                           ))}

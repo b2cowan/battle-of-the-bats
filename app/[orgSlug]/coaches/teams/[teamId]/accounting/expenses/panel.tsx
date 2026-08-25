@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
@@ -54,8 +55,16 @@ import {
 import styles from '../../../../coaches.module.css';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
-  RepTeamMoneyIn,
+  RepTeamMoneyIn, DuesPaymentMethod,
 } from '@/lib/types';
+import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
+import {
+  useRecordMoneySignal, type ConversationBranch, type RecordMoneyIntent,
+} from '@/lib/coach-record-money';
+import { formatPlayerLastFirst } from '@/lib/player-name';
+import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
+import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
+import { resolveCredit, type CreditUnit } from '@/lib/coach-fundraising';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { formatMonthLong, monthKeyOf } from '@/lib/coach-budget-months';
 import { toggleKey } from '@/lib/toggle-key';
@@ -64,12 +73,26 @@ import {
   formatStoredDate, tournamentToday, addCalendarDays, daysBetweenDateStrings,
 } from '@/lib/timezone';
 import { taxonomyKey } from '@/lib/coach-money-derived';
+/* The one "what lands beyond what is owed" rule — shared with the dues receipt book, cents-safe. */
+import { overpaymentExcess } from '@/lib/dues-payments';
+/* The "Where it lands" preview and the credit-application rule it runs under — shared with the
+   drive leaderboard, which drew this same block until its logging door moved here (P2). */
 import {
-  MONEY_IN_SOURCES, MONEY_IN_SOURCE_LABEL, moneyInReversalPreview,
-} from '@/lib/coach-money-in';
+  previewCreditLanding, normalizeCreditApplicationMode,
+  type CreditApplicationMode, type OpenBillForPreview,
+} from '@/lib/dues-credits';
+/* ⚠ `MONEY_IN_SOURCES` / `MONEY_IN_SOURCE_LABEL` ARE NO LONGER IMPORTED — the "Who paid it back"
+   select they rendered is gone (P2 §2.4). The constants stay in the module: the route still
+   validates against them, so a saved label survives an edit and an export. */
+import { moneyInReversalPreview } from '@/lib/coach-money-in';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** Cent-round for a consequence SENTENCE — display arithmetic only, never a stored figure. */
+function r2c(n: number) {
+  return Math.round(n * 100) / 100;
 }
 
 /**
@@ -519,6 +542,131 @@ function kindForFace(onPayables: boolean): { kind: EntryKind; timing: CostTiming
     : { kind: 'expense', timing: 'paid' };
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   THE ONE RECORDING CONVERSATION (money centralization P1 — owner-approved spec 2026-08-22:
+   mockups 01/02 + supplementary frames A–D; COACH_MONEY_CENTRALIZATION_BUILD_PROMPT.md).
+
+   The form's first question is now a FIELD ON THE FORM — "What happened?", a dropdown whose open
+   state carries the eight coach sentences in two groups with live hints. It replaced the
+   Expense/Income pills and the refund tick: refund is a first-class answer now, and the
+   paid/owed fork ("Has it been paid?") moved INSIDE the cost branch, so Transactions-vs-Payables
+   stops being a question the coach answers by picking a tab.
+
+   ⚠ THE FIVE NEW BRANCHES ADD NO WRITE PATHS. Dues receipts, drive amounts, club settlements and
+   payouts each POST/PATCH the exact route their home tab has always used, so the register derives
+   each record exactly as if it were logged from that tab; the sponsor answer HANDS OFF to the
+   Fundraising tab's own sponsor form (a sponsor's money is recorded at the sponsor's creation —
+   there is no second sponsor writer).
+
+   ⚠ SWITCHING THE ANSWER MID-ENTRY KEEPS amount/date/how/note AND RESETS the branch's own
+   question (frame C, binding) — pre-filling "which player" into "which item" would file money
+   against the wrong thing.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/* ⚠ THE UNION MOVED TO `lib/coach-record-money` (P2): the doors that name a branch live on other
+   panels now, and a door importing a type from a 5,000-line sibling panel is how a shared vocabulary
+   ends up copied. The TABLE below — the copy, the groups, the writers — stays here.
+   ⚠ The money-out ledger answer is `spend`, NOT `cost` — `cost`, `funding` and `sponsorship` are
+   budget-LINE kinds, and the budget-line-kind guard test bans comparing them to literals in any
+   file that touches the kind (this one does). The guard caught exactly that on first build. */
+
+/**
+ * THE ONE BRANCH TABLE — everything an answer is, in the exact order mockup 01 draws them.
+ * The chooser's two groups, the direct-writer set, the ledger side and the guard noun are all
+ * DERIVED below: five parallel lists keyed by the same union is how a ninth answer would reach
+ * four of them and silently miss the fifth (/simplify, 2026-08-23). A missing key here is a
+ * compile error, which is the same lesson FORM_COPY already encodes two screens up.
+ */
+const CONV_BRANCH: Record<ConversationBranch, {
+  /** The chosen sentence, exactly as mockup 01 words it — doubles as the modal subtitle. */
+  name: string;
+  /** Which chooser group it draws under. */
+  group: 'in' | 'out';
+  /** The drawn sub-line under the sentence. Live hints attach in render from the hub summary. */
+  sub: string;
+  /** LEDGER answers file on a side of the books — the mig 246 item-clearing rule reads this;
+   *  answers with no item to clear carry none. */
+  side?: 'in' | 'out';
+  /** Submits through its HOME TAB's writer instead of this form's ledger save. */
+  direct?: true;
+  /** What the discard guard calls a half-entered record. Ledger answers use FORM_COPY. */
+  noun?: string;
+}> = {
+  dues:       { name: 'A family paid their dues',        group: 'in',  sub: "Lands on that player's bill",            direct: true, noun: 'payment' },
+  drive:      { name: 'Fundraiser money came in',        group: 'in',  sub: 'Logged to a drive, counts for a player', direct: true, noun: 'fundraiser amount' },
+  sponsor:    { name: 'A sponsor came through',          group: 'in',  sub: 'A business or grant gave directly',      direct: true, noun: 'sponsor' },
+  refund:     { name: 'Money back on something we paid', group: 'in',  sub: 'A refund against a cost on the books',   side: 'out' },
+  'other-in': { name: 'Other money in',                  group: 'in',  sub: 'Interest, a grant, anything else',       side: 'in' },
+  spend:      { name: 'We paid for something',           group: 'out', sub: 'Paid already — or owed on a schedule',   side: 'out' },
+  club:       { name: 'We settled up with the club',     group: 'out', sub: 'Pay down what the club has billed',      direct: true, noun: 'settlement' },
+  payout:     { name: 'We paid a family back',           group: 'out', sub: 'Return credit a family has built up',    direct: true, noun: 'payout' },
+};
+const CONV_IDS = Object.keys(CONV_BRANCH) as ConversationBranch[];
+/** The chooser's two groups (mockup 01) — derived; the table's order is the drawn order.
+ *  The club answer only exists on an org-linked team (filtered in render). */
+const CONV_GROUPS = [
+  { label: 'Money came in',  options: CONV_IDS.filter(id => CONV_BRANCH[id].group === 'in') },
+  { label: 'Money went out', options: CONV_IDS.filter(id => CONV_BRANCH[id].group === 'out') },
+];
+/** The answers that submit through their own home-tab writer instead of this form's ledger save. */
+const CONV_DIRECT = new Set<ConversationBranch>(CONV_IDS.filter(id => CONV_BRANCH[id].direct));
+/** Which side of the books a LEDGER answer files under, or null for the rest. */
+function ledgerSideOf(b: ConversationBranch | null): 'in' | 'out' | null {
+  return (b && CONV_BRANCH[b].side) || null;
+}
+
+/** Branch questions — one flat object so `touched()` can compare it for the discard guard.
+ *  ⚠ Methods live here (stored enum tokens), not in `form.paymentMethod` (free text). */
+const BLANK_CONV = {
+  duesPlayerId: '',
+  duesMethod: 'etransfer' as DuesPaymentMethod,
+  driveId: '',
+  drivePlayerId: '',
+  clubInstallmentId: '',   // `${splitId}:${installmentId}`
+  payoutPlayerId: '',
+  payoutMethod: 'etransfer' as DuesPaymentMethod,
+  /* The sponsor branch records the sponsor INLINE through the same creation POST the Fundraising
+     door uses (owner UX ruling 2026-08-23, §80 walk — the original hand-off navigated tabs and
+     opened a second modal that re-asked the already-answered question). Received-only: a PLEDGE
+     is an expectation and stays on Fundraising. */
+  sponsorName: '',
+  sponsorPlayerId: '',
+  /** Per-sponsor credit, same control the Fundraising door offers (owner, §80 walk 2026-08-23 —
+   *  the first inline cut silently downgraded it to team-default-only). Value prefilled from the
+   *  team's standard percent when the settings load. */
+  sponsorCreditValue: '',
+  sponsorCreditUnit: 'percent' as CreditUnit,
+  /* ── Paying down a bill the team already owes (money centralization P2, owner ruling C2) ─────
+     Set when the "we paid for something" picker's FIRST group — "Bills you owe" — is what the
+     coach chose. It turns the branch from *create a cost* into *record a payment against this
+     commitment*, submitting through the payments route the bill's own door has always used.
+     ⚠ MUTUALLY EXCLUSIVE WITH `form.budgetItemId`: one field asks the question, so choosing from
+     either group clears the other. A record filed against both would be a cost and a payment at
+     once, which is not a thing the books have a shape for.
+     ⚠ `spendInstallmentId` is ALLOCATION, not identity — it is the coach's override for where the
+     money lands (R3), and it stays editable even at a door that locks everything else (owner
+     ruling A, 2026-08-23). '' = wherever it is owed, oldest first. */
+  spendExpenseId: '',
+  spendInstallmentId: '',
+};
+
+interface ConvDuesPlayer { id: string; name: string; outstanding: number; payableNow: number }
+interface ConvDrive { id: string; name: string }
+interface ConvDriveDetail {
+  rebatePercent: number;
+  /** The team's credit-application rule — the preview must land money the way saving will. */
+  creditApplication: CreditApplicationMode;
+  players: {
+    playerId: string;
+    playerName: string;
+    logged: number | null;
+    /** For the "Where it lands" preview (binding mockup §2) — carried by the same route read. */
+    openBills: OpenBillForPreview[];
+  }[];
+}
+interface ConvClubBill {
+  splitId: string; installmentId: string; description: string; amount: number; dueDate: string;
+}
+
 /**
  * The commitment's pieces in INSTALLMENT-NUMBER order — the order the plan is written in.
  *
@@ -837,26 +985,12 @@ function MoneyRecordsPanel({
    */
   const [scopeEdit, setScopeEdit] = useState<
     { expense: RepTeamExpense; installmentId: string; mode: 'edit' | 'remove' } | null>(null);
-  /**
-   * The Record-a-payment door (Payables Rebuild P2) — its own small modal, standing over a
-   * commitment. It replaced the money form's settle mode: a payment is date + amount + method +
-   * note + (optionally) which installment, and dragging the record's whole form along asked a
-   * coach to re-confirm five fields that are not part of the question.
-   *
-   * ⚠ A PAYMENT IS ITS OWN RECORD, POSTed to the payments sub-route — never a PATCH stamping the
-   * commitment. The register renders one row per payment, and the commitment's standing re-reads.
-   */
-  const [paying, setPaying] = useState<{
-    expense: RepTeamExpense;
-    /** The coach's override — where the pour STARTS (R3). Null records against the commitment. */
-    installmentId: string | null;
-    amount: string;
-    paidDate: string;
-    method: string;
-    note: string;
-  } | null>(null);
-  const [payingBusy, setPayingBusy] = useState(false);
-  const [payingError, setPayingError] = useState('');
+  /* ⚖ THE `paying` STATE IS GONE WITH ITS MODAL (money centralization P2, 2026-08-23). A payment
+     against a commitment is recorded in the ONE conversation now, so the fields live in `form` and
+     `conv` like every other answer, and the door only has to say which bill — see
+     `openRecordPayment`. What has NOT changed is the model the Payables Rebuild set: a payment is
+     still its own record, POSTed to the payments sub-route, never a PATCH stamping the commitment;
+     the register renders one row per payment and the commitment's standing re-reads. */
   /**
    * Which payment is waiting on a confirmation before it is undone.
    *
@@ -882,6 +1016,16 @@ function MoneyRecordsPanel({
      A latch, not a nicer message, is the fix: the second call must never leave the browser. */
   const undoRef = useRef(false);
   const [saveError, setSaveError] = useState('');
+  /**
+   * WHAT THE FORM LOOKED LIKE when the last refusal was raised (owner, §80 walk 2026-08-23:
+   * "Pick which player" kept glowing over a form where the player WAS picked). A refusal
+   * describes one save ATTEMPT; the moment any input changes, it is stale and clears — the
+   * render-phase change-guard adjustment below, the same sanctioned pattern the hub page uses.
+   * Save again for a fresh verdict. Identities, not deep compares: every setter replaces.
+   */
+  const [saveErrorSnapshot, setSaveErrorSnapshot] = useState<{
+    form: unknown; conv: unknown; plan: unknown; payee: unknown; tags: unknown; timing: unknown;
+  } | null>(null);
   /** Was the last save refused for a future date? Its own flag rather than a longer sentence,
    *  because the answer needs a LINK to the commitment door and a thrown message cannot carry one. */
   const [futureDateRefused, setFutureDateRefused] = useState(false);
@@ -905,6 +1049,93 @@ function MoneyRecordsPanel({
   const [roster, setRoster] = useState<Pick<RepRosterPlayer, 'id' | 'playerFirstName' | 'playerLastName'>[]>([]);
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
+
+  /* ── The conversation's own state (P1 — see the block comment above CONV_BRANCH) ──────────────
+     `convBranch` is the answer to "What happened?" in ADD mode; null = not answered yet, which is
+     the cold open (frame A: the dropdown starts open). An EDIT never reads it — a saved record's
+     kind is stated, not switchable, exactly as before. */
+  const [convBranch, setConvBranch] = useState<ConversationBranch | null>(null);
+  /**
+   * ⚠⚠ WHAT A CONTEXT DOOR ANSWERED, STATED RATHER THAN OFFERED (owner ruling A, 2026-08-23 —
+   * this SUPERSEDES frame D's "changeable like any field", which was written for the cold open).
+   *
+   * A door that names one RECORD locks; a door that names a SCREEN only suggests. Standing on
+   * Jenny's row, switching the question to "we paid for something" and saving filed money against
+   * dome rentals while nothing on the page behind the modal changed — a ghost save, and the coach's
+   * only clue was that Jenny's figures had not moved.
+   *
+   * Rendered as ONE stated band at the top of the form — the owner's treatment ii, taken against
+   * his own dropdown convention with the reason recorded: *"the items are read only anyway"*, and a
+   * dropdown that cannot be opened is a control lying about itself. This is mockup 02's who-line
+   * returning in the one place it makes sense, WITHOUT its "Change" hatch: the escape from a wrong
+   * door is Cancel and reopen.
+   */
+  const [convLock, setConvLock] = useState<{ subject: string; detail?: string } | null>(null);
+  const [whatOpen, setWhatOpen] = useState(false);
+  /** The "What happened?" field + its open list — outside-press closes the list. */
+  const whatWrapRef = useRef<HTMLDivElement>(null);
+  /** Where the FIXED list anchors — the field's rect, measured at the moment of opening. Fixed
+   *  positioning is what lets a real dropdown float over the form without the modal's scroll
+   *  region clipping it OR the modal changing size (owner, §80 walk — both were tried, both
+   *  rejected on sight). */
+  const [whatRect, setWhatRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  /* ⚠ A LISTENER, NOT A BACKDROP (/review, 2026-08-23 — Medium). The first cut rendered a fixed
+     full-viewport click-catcher under the list, and it swallowed the coach's actual click: aiming
+     at Cancel while the list was open closed the list and did nothing else — a first-click-does-
+     nothing bug on a form's own buttons. A capture-phase pointerdown that merely CLOSES (never
+     preventDefault) lets that same press also reach whatever it was aimed at.
+     ⚠ Scroll closes it too (capture phase; the list's own internal scroll excepted): a fixed
+     list can't follow a scrolling anchor, and closing is what every dropdown in the product
+     does rather than drifting detached. */
+  useEffect(() => {
+    if (!whatOpen) return;
+    const close = (e: Event) => {
+      if (!whatWrapRef.current?.contains(e.target as Node)) setWhatOpen(false);
+    };
+    document.addEventListener('pointerdown', close, true);
+    document.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close as EventListener);
+    return () => {
+      document.removeEventListener('pointerdown', close, true);
+      document.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close as EventListener);
+    };
+  }, [whatOpen]);
+  const [conv, setConv] = useState(BLANK_CONV);
+  const [convOpenedWith, setConvOpenedWith] = useState(BLANK_CONV);
+  /* Branch working data — fetched fresh each time its branch is chosen (user-triggered, so a
+     write on another surface can never leave a stale picker), never on mount. ⚠ These are the
+     branch's OWN reads, the same ones its home tab does; the CHOOSER's hints deliberately come
+     from the hub summary instead (build prompt §2.8 — no per-open probe fan-out). */
+  const [duesBook, setDuesBook] = useState<ConvDuesPlayer[] | null>(null);
+  const [duesBookError, setDuesBookError] = useState('');
+  const [drives, setDrives] = useState<ConvDrive[] | null>(null);
+  const [drivesError, setDrivesError] = useState('');
+  const [driveDetail, setDriveDetail] = useState<Record<string, ConvDriveDetail>>({});
+  /** ⚠ The LEADERBOARD's own failure slot (/review, 2026-08-23 — Medium): written into
+   *  `drivesError` it replaced the working drive picker with an error, and the player section
+   *  sat on "Loading…" forever with no retry. Its message renders beside a Try-again link. */
+  const [driveDetailError, setDriveDetailError] = useState('');
+  const [clubBills, setClubBills] = useState<ConvClubBill[] | null>(null);
+  const [clubBillsError, setClubBillsError] = useState('');
+  /** The team's standard player-credit share, for the sponsor branch — fetched once per open so
+   *  a conversation-recorded sponsor credits EXACTLY what the Fundraising door would have. */
+  const [sponsorDefaultPct, setSponsorDefaultPct] = useState<number | null>(null);
+  /**
+   * ⚠⚠ THE GENERATION LATCH the four branch loaders bail on (/review, 2026-08-23 — High).
+   * `resetForm` bumps it; a response from a PREVIOUS form session that lands after the reset (or
+   * after a reopen) is dropped instead of repopulating state the reset just cleared — without
+   * this, the `=== null` fetch guards then see "already loaded" and the picker silently shows a
+   * dead session's figures, defeating the fetch-fresh-per-open design outright. Same disease,
+   * same cure as `loadSeq`/`scheduleSeq` a screen up; a ref, because bumping must never render.
+   */
+  const convLoadGen = useRef(0);
+  /* The bump lives HERE, not in resetForm (which the render phase can reach — see its note):
+     every close path flips formOpen false, and an effect may write a ref. In-flight responses
+     from the closed session bail on the stale generation. */
+  useEffect(() => {
+    if (!formOpen) convLoadGen.current += 1;
+  }, [formOpen]);
 
   // Drives the form's Details disclosure (Batch 2, P0 #8). Read on mount, so a form pre-filled
   // with a bookkeeping detail — an EDIT, most often — opens it by itself rather than hiding what
@@ -979,28 +1210,10 @@ function MoneyRecordsPanel({
     return values.description.trim() === ''
       || (previousName !== '' && values.description.trim() === previousName);
   }, [chosenItemName]);
-  /**
-   * Press a pill.
-   *
-   * ⚠ THE ITEM CLEARS AND THE DESCRIPTION FOLLOWS IT. Since mig 246 the picker offers one side's
-   * words only, so an item carried across the switch would be a selection sitting in a control that
-   * can never re-offer it — the coach sees a filled field they cannot change back to. Clearing it
-   * costs one re-pick; leaving it costs a save filed against a word from the wrong side of the
-   * books. The description clears with it only when it is still the ITEM'S name, never words the
-   * coach typed — the same rule the picker's own pre-fill has always followed.
-   */
-  function setEntrySide(side: 'in' | 'out') {
-    if (side === formSide) return;
-    setFormKind(side === 'in' ? 'income' : 'expense');
-    setForm(f => ({
-      ...f,
-      budgetCategoryId: '',
-      budgetItemId: '',
-      budgetItemName: '',
-      category: '',
-      description: isItemLabel(f) ? '' : f.description,
-    }));
-  }
+  /* ⚖ `setEntrySide` IS GONE (money centralization P1, 2026-08-22) — the Expense/Income pills it
+     served became answers of the "What happened?" dropdown, and its one real rule (the item
+     clears on a side switch, the description follows only while it is still the item's name)
+     lives on verbatim inside `selectBranch`. */
   /* ⚖ THE SETTLE MODE IS GONE (Payables Rebuild P2): recording money against a commitment is the
      Record-a-payment modal (`paying`, above), which is its own door and never this form. The mode
      union shrank back to the two things this form actually does. */
@@ -1046,7 +1259,7 @@ function MoneyRecordsPanel({
 
   // Nav-hide + body-scroll-lock registration for the record modal, the payment modal AND the
   // commitment drawer (mobile sheet default) — one registration, any door.
-  useOverlayOpen(formOpen || paying !== null || drawerFor !== null || scopeEdit !== null);
+  useOverlayOpen(formOpen || drawerFor !== null || scopeEdit !== null);
 
   /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
      silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
@@ -1071,11 +1284,15 @@ function MoneyRecordsPanel({
     || !snapshotEqual(formPlan, formPlanOpenedWith)
     || (formPayee?.displayName ?? null) !== (editing?.payeePayer ?? null)
     || formTags.length !== baselineTags.length
-    || formTags.some(id => !baselineTags.includes(id));
+    || formTags.some(id => !baselineTags.includes(id))
+    // A branch's own answers (which player, which drive, which installment) are work too.
+    || touched(conv, convOpenedWith);
   const closeForm = useDiscardGuard({
     dirty: formDirty,
     close: () => { setFormOpen(false); resetForm(); },
-    noun: copy.noun,
+    // A branch record has its own noun — "Discard this expense?" over a half-entered dues
+    // payment would be the guard naming the wrong thing.
+    noun: (convBranch && CONV_BRANCH[convBranch].noun) || copy.noun,
   });
 
   /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
@@ -1094,6 +1311,30 @@ function MoneyRecordsPanel({
     setFormPayee(null);
     setConfirmDelete(false);
     setFutureDateRefused(false);
+    // The conversation's own state clears with the form — a player picked for one record must
+    // not persist into the next (this function's standing rule, restated below).
+    setConvBranch(null);
+    setConvLock(null);
+    setWhatOpen(false);
+    setConv(BLANK_CONV);
+    setConvOpenedWith(BLANK_CONV);
+    /* Branch working data dies with the form: fetched once per OPEN (so a dues↔payout toggle —
+       both read the same book — never refetches) and never carried ACROSS opens, because the
+       figures move under it. ⚠ `driveDetail` especially: cached across opens, a player whose
+       amount was just logged still read as unlogged on the next open (/simplify, 2026-08-23). */
+    /* ⚠ The generation BUMP does not live here: resetForm is reachable from the render phase
+       (the hub-press adjustment → openConversation → openAdd → here), and writing a ref from a
+       render-reachable function trips the compiler's ref rule — the same reason `savingRef` is
+       released in a `finally` rather than in this function. The bump is an effect on form close. */
+    setDuesBook(null);
+    setDuesBookError('');
+    setDrives(null);
+    setDrivesError('');
+    setDriveDetail({});
+    setDriveDetailError('');
+    setClubBills(null);
+    setClubBillsError('');
+    setSponsorDefaultPct(null);
     /* ⚠ THE RULE THIS FUNCTION IS FOR, restated because its most recent example has just been
        deleted: state added for one row must clear here, or it persists into the NEXT record. The
        inline "when was this paid?" prompt was left out when it was added, and a coach who opened it
@@ -1107,6 +1348,17 @@ function MoneyRecordsPanel({
     resetForm();
     setFormKind(opening.kind);
     setFormTiming(opening.timing);
+    /* A door that knows what it is adding opens the conversation PRE-ANSWERED (frame D): the
+       "What happened?" field arrives filled, and stays editable — unless the door named one
+       RECORD rather than one screen, in which case it locks (owner ruling A, 2026-08-23; see
+       `convLocked`).
+       ⚠ A COMMITMENT IS NOT A CONVERSATION ANSWER (owner ruling B2, 2026-08-23). Payables' Add
+       is a setup form for a PLAN, and every sentence in that list describes money that moved —
+       so it carries no answer at all and states its kind instead. */
+    setConvBranch(opening.timing === 'payable' ? null
+      : opening.kind === 'income' ? 'other-in'
+      : opening.kind === 'refund' ? 'refund'
+      : 'spend');
     /* An arrival is dated the day it landed, and a payment the day it left — almost always today,
        either way. Pre-filled through the ORG's clock, never the runtime's, or a coach entering
        after 8 PM Eastern gets tomorrow.
@@ -1194,45 +1446,32 @@ function MoneyRecordsPanel({
   function openRecordPayment(e: RepTeamExpense, target?: { installmentId?: string | null; amount?: number }) {
     const standing = standings[e.id];
     const suggested = target?.amount ?? standing?.remaining ?? e.amount;
-    setPayingError('');
     setUndoAsk(null);
-    setPaying({
-      expense: e,
-      installmentId: target?.installmentId ?? null,
+    /* ⚖⚖ THIS OPENS THE ONE CONVERSATION NOW (money centralization P2, 2026-08-23). It used to
+       raise its own small modal — date, amount, method, note, which installment — one of the five
+       money forms the project exists to merge. Every field it asked for is a field the conversation
+       already asks, in the same order and the same words, and the act is the same act: "we paid for
+       something", against a bill the team already owes.
+       ⚠ LOCKED (owner ruling A): this door named ONE record, so the answers it arrives with are
+       stated rather than offered. What stays editable is WHICH INSTALLMENT the money lands on —
+       that is allocation, not identity, and a coach who clicked one piece may be paying another. */
+    openConversationFrom({
+      branch: 'spend',
+      lock: {
+        subject: e.description,
+        detail: standing && standing.remaining > 0.005
+          ? `${fmt(standing.remaining)} still owing · opened from the bill`
+          : 'Opened from the bill',
+      },
+      ids: { spendExpenseId: e.id, spendInstallmentId: target?.installmentId ?? '' },
       amount: String(suggested),
-      paidDate: tournamentToday(),
-      method: '',
-      note: '',
     });
   }
 
-  /** Submit the Record-a-payment modal. Over-payment saves (R6) — the server does not compare. */
-  async function submitPayment() {
-    if (!paying) return;
-    setPayingBusy(true);
-    setPayingError('');
-    try {
-      const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${paying.expense.id}/payments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: parseFloat(paying.amount),
-            paidDate: paying.paidDate,
-            method: paying.method.trim() || null,
-            note: paying.note.trim() || null,
-            installmentId: paying.installmentId,
-          }),
-        });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
-      setPaying(null);
-      await refreshAfterWrite();
-    } catch (e: any) {
-      setPayingError(e.message);
-    } finally {
-      setPayingBusy(false);
-    }
-  }
+  /* ⚖ `submitPayment` IS GONE — `saveBillPayment` is its successor, on the form's own save path
+     with the form's own error channel, refusal clearing and double-submit latch. Same route, same
+     body, same R6 behaviour: an over-payment saves and the sentence says so; the server does not
+     compare. */
 
   /**
    * Undo a recorded payment — the books go back by exactly that payment's amount (R5).
@@ -1286,6 +1525,410 @@ function MoneyRecordsPanel({
     setFormOpen(true);
   }
 
+  /* ── The conversation's doors and branches (P1) ─────────────────────────────────────────── */
+
+  /** The hub's Record button — nothing answered, the "What happened?" field showing "Choose…".
+   *  ⚠ The list does NOT start open (owner ruling 2026-08-23, §80 walk — superseding frame A's
+   *  "the dropdown starts open"): seen live, the wall of eight options bursting open read as
+   *  heavier than the drawing; the sentences are one tap away behind the field.
+   *  ⚠ COMPOSES `openAdd` rather than re-writing its opening sequence — `openSavedRecord`'s own
+   *  warning is the reason: a second hand-rolled opener is where the next seeded field quietly
+   *  goes stale (/simplify altitude, 2026-08-23). What this layers on top: the question starts
+   *  UNANSWERED, and BOTH dates seed (into the baseline too — a seed the guard doesn't know
+   *  about is a wolf-cry) because no branch has said which date matters yet. */
+  function openConversation() {
+    openAdd({ kind: 'expense', timing: 'paid' });   // seeds paidDate=today into form + baseline
+    const today = tournamentToday();
+    setForm(f => ({ ...f, receivedDate: today }));
+    setFormOpenedWith(b => ({ ...b, receivedDate: today }));
+    setConvBranch(null);
+  }
+
+  /**
+   * Pre-answer part of the branch — into the form AND into the discard guard's baseline.
+   *
+   * ⚠⚠ BOTH STORES, ALWAYS, AND THAT IS WHY THIS IS A FUNCTION (/simplify, altitude lens
+   * 2026-08-23). A pre-answer is not the coach's typing: written only to `conv`, it reads as an
+   * unsaved change and the discard guard asks "discard this?" over a form nobody has touched —
+   * the wolf-cry `formOpenedWith` carries its own warning about. Three call sites were each
+   * doing the pair by hand and each re-explaining why; a fourth that set only `conv` would look
+   * exactly like the other three and be wrong.
+   */
+  function prefillConv(patch: (c: typeof BLANK_CONV) => typeof BLANK_CONV) {
+    setConv(patch);
+    setConvOpenedWith(patch);
+  }
+
+  /**
+   * Open the conversation the way a DOOR asked for it (money centralization P2).
+   *
+   * ⚠ COMPOSES `openConversation` + `selectBranch` rather than re-implementing either. Every door
+   * in the product now lands here, so the branch's own loaders, the date seeding and the frame-C
+   * carry-across cannot diverge between "pressed Record" and "pressed Record on Jenny's row".
+   *
+   * ⚠ THE PRE-ANSWERS GO IN AFTER `selectBranch`, WHICH RESETS THEM. That ordering is the whole
+   * function: `selectBranch` clears the branch's questions by design (frame C — a player picked for
+   * a dues receipt must never pre-answer which item a cost files under), so a door's own answers
+   * are written on top of the reset, never before it.
+   *
+   * ⚠ AND INTO THE BASELINE TOO. A pre-answer is not the coach's typing — leaving it out of
+   * `convOpenedWith` makes the discard guard cry wolf on a form nobody has touched, which is the
+   * exact trap `formOpenedWith` carries its own warning about.
+   */
+  function openConversationFrom(intent: RecordMoneyIntent | null) {
+    openConversation();
+    if (!intent) return;
+    selectBranch(intent.branch);
+    if (intent.lock) setConvLock(intent.lock);
+    if (intent.ids) {
+      const ids = intent.ids;
+      prefillConv(c => ({ ...c, ...ids }));
+      // The drive branch's leaderboard is fetched when a drive is CHOSEN; a door that already
+      // chose one has to ask for it, or the player list never arrives.
+      if (ids.driveId && !driveDetail[ids.driveId]) void loadDriveDetail(ids.driveId);
+    }
+    if (intent.amount !== undefined) {
+      setForm(f => ({ ...f, amount: intent.amount! }));
+      setFormOpenedWith(f => ({ ...f, amount: intent.amount! }));
+    }
+  }
+
+  /** Fetch the branch's working data — the same reads its home tab does, on demand.
+   *  ⚠ Every loader captures the generation FIRST and bails before ANY setState if the form has
+   *  since been reset — see `convLoadGen`. */
+  async function loadDuesBook() {
+    const gen = convLoadGen.current;
+    setDuesBookError('');
+    setDuesBook(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`);
+      const data = await res.json().catch(() => ({}));
+      if (gen !== convLoadGen.current) return;
+      if (!res.ok) throw new Error(data.error ?? 'Could not load the dues book');
+      setDuesBook(((data.players ?? []) as Array<{
+        player: RepRosterPlayer; outstanding: number; payableNow: number;
+      }>).map(row => ({
+        id: row.player.id,
+        name: formatPlayerLastFirst(row.player),
+        outstanding: row.outstanding,
+        payableNow: row.payableNow,
+      })));
+    } catch (e: any) {
+      if (gen === convLoadGen.current) setDuesBookError(e.message);
+    }
+  }
+
+  async function loadDrives() {
+    const gen = convLoadGen.current;
+    setDrivesError('');
+    setDrives(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`);
+      const data = await res.json().catch(() => ({}));
+      if (gen !== convLoadGen.current) return;
+      if (!res.ok) throw new Error(data.error ?? 'Could not load the drives');
+      // Running drives only: a sponsor is not a drive, and the entries writer refuses a
+      // finished one — offering it would be a refusal wearing a picker.
+      setDrives(((data.fundraisers ?? []) as Array<{
+        id: string; name: string; kind?: string; isActive?: boolean;
+      }>).filter(f => (f.kind ?? 'fundraiser') !== 'sponsor' && f.isActive !== false)
+        .map(f => ({ id: f.id, name: f.name })));
+    } catch (e: any) {
+      if (gen === convLoadGen.current) setDrivesError(e.message);
+    }
+  }
+
+  async function loadDriveDetail(driveId: string) {
+    const gen = convLoadGen.current;
+    setDriveDetailError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${driveId}/entries`);
+      const data = await res.json().catch(() => ({}));
+      if (gen !== convLoadGen.current) return;
+      if (!res.ok) throw new Error(data.error ?? 'Could not load the drive');
+      setDriveDetail(prev => ({
+        ...prev,
+        [driveId]: {
+          rebatePercent: Number(data.fundraiser?.playerRebatePercent ?? 0),
+          /* ⚠ NORMALISED, NEVER TRUSTED RAW — the same door every other reader of this setting
+             goes through, so an unknown value falls back to the documented default instead of
+             quietly landing credits in a mode that does not exist. */
+          creditApplication: normalizeCreditApplicationMode(data.creditApplication),
+          players: ((data.players ?? []) as Array<{
+            playerId: string; playerName: string; entry: { amountRaised?: number } | null;
+            openBills?: OpenBillForPreview[];
+          }>).map(p => ({
+            playerId: p.playerId,
+            playerName: p.playerName,
+            logged: p.entry ? Number(p.entry.amountRaised ?? 0) : null,
+            openBills: p.openBills ?? [],
+          })),
+        },
+      }));
+    } catch (e: any) {
+      if (gen === convLoadGen.current) setDriveDetailError(e.message);
+    }
+  }
+
+  async function loadClubBills() {
+    const gen = convLoadGen.current;
+    setClubBillsError('');
+    setClubBills(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/allocations`);
+      const data = await res.json().catch(() => ({}));
+      if (gen !== convLoadGen.current) return;
+      if (!res.ok) throw new Error(data.error ?? "Could not load the club's bills");
+      const owed: ConvClubBill[] = [];
+      for (const s of (data.splits ?? []) as Array<{
+        id: string; allocationDescription: string;
+        installments: Array<{ id: string; amount: number; dueDate: string; paidAt: string | null }>;
+      }>) {
+        for (const inst of s.installments ?? []) {
+          if (!inst.paidAt) {
+            owed.push({
+              splitId: s.id, installmentId: inst.id,
+              description: s.allocationDescription, amount: inst.amount, dueDate: inst.dueDate,
+            });
+          }
+        }
+      }
+      owed.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+      setClubBills(owed);
+      /* ⚠ The one-owed PRE-SELECT does not live here any more (/review, 2026-08-23): written from
+         a resolve callback it could land after the coach had switched branches, merging a club key
+         into another branch's working state — inert only because nothing else read it, which is an
+         invariant nothing enforced. It is a render-phase adjustment in the club body now, which
+         also re-preselects when the coach leaves the branch and comes back. */
+    } catch (e: any) {
+      if (gen === convLoadGen.current) setClubBillsError(e.message);
+    }
+  }
+
+  async function loadSponsorDefaults() {
+    const gen = convLoadGen.current;
+    const settings = await fetchAccountingSettings(orgSlug, teamId);
+    if (gen !== convLoadGen.current) return;
+    // A failed read falls back to 0% — the server forces 0 without a player anyway, and the
+    // consequence line states the credit before saving, so nothing is silently invented.
+    const pct = settings?.defaultPlayerCreditPercent ?? 0;
+    setSponsorDefaultPct(pct);
+    // PRE-FILLED, NOT GOVERNED — the same seeding the Fundraising door does, mirrored into the
+    // baseline so a prefill never counts as the coach's typing. Only into an untouched field.
+    prefillConv(c => (c.sponsorCreditValue === '' ? { ...c, sponsorCreditValue: String(pct) } : c));
+  }
+
+  /**
+   * Answer (or re-answer) "What happened?" — the field is the change control (frame B).
+   *
+   * What survives a switch and what resets is the spec's own rule (frame C, binding): amount,
+   * date, how and note stay; the branch's OWN question resets — a player picked for a dues
+   * payment must never pre-answer which item a cost files under. The mig 246 item rule carries
+   * over from the pills it replaced: an item cannot survive a SIDE switch.
+   */
+  function selectBranch(next: ConversationBranch) {
+    setWhatOpen(false);
+    /* ⚠⚠ THIS EARLY RETURN READS THE RENDER CLOSURE, NOT THE QUEUED VALUE, and a door's reopen
+       depends on an invariant nothing enforces (/review, 2026-08-23 — Low, no live trigger).
+       `openConversationFrom` calls `openConversation()` (which QUEUES `setConvBranch`) and then
+       calls this synchronously, so `convBranch` here is whatever the last COMMIT held. The reopen
+       only fires when `!formOpen`, and every path in this file that clears `formOpen` pairs it
+       with `resetForm()`, which nulls `convBranch` in the same batch — so "form closed ⇒ branch
+       null" holds and `next === convBranch` can never be true at a door.
+       ⚠ IF A FUTURE CLOSE PATH SKIPS `resetForm()`, this returns early at a door whose branch
+       happens to match: `convLock` would be set while `convBranch` stayed stale, the lock band
+       would not render, and Save would refuse with "Choose what happened first" over a form the
+       coach believes the row already answered. Keep every close going through `resetForm`. */
+    if (next === convBranch) return;
+    /* ⚖ THE SPONSOR HAND-OFF IS GONE (owner UX ruling 2026-08-23, §80 walk). It closed the
+       conversation, navigated the tab underneath, and opened a different modal that re-asked
+       "what is this?" — the question the coach had just answered. The sponsor records INLINE now,
+       through the SAME creation POST the Fundraising door uses (the plan's "no second sponsor
+       writer" rule was about writers, not about which form calls the one that exists). */
+    const prev = convBranch;
+    setConvBranch(next);
+    /* A refusal about the unanswered question ("Choose what happened first.") must not outlive
+       the answer — it read as a live error over a fully-filled form (owner, §80 walk). Any save
+       refusal clears here: the form under it has materially changed either way. */
+    setSaveError('');
+    if (next === 'spend') setFormKind('expense');
+    else if (next === 'refund') setFormKind('refund');
+    else if (next === 'other-in') setFormKind('income');
+    // mig 246 — the pill rule, restated for the dropdown: a side switch clears the item, and the
+    // description follows only while it is still the item's own name.
+    const prevSide = ledgerSideOf(prev);
+    const nextSide = ledgerSideOf(next);
+    if (prevSide && nextSide && prevSide !== nextSide) {
+      setForm(f => ({
+        ...f,
+        budgetCategoryId: '', budgetItemId: '', budgetItemName: '', category: '',
+        description: isItemLabel(f) ? '' : f.description,
+      }));
+    }
+    // Frame C: the target's date field inherits the one already typed (or today), into the
+    // BASELINE too when the baseline had none — a carried date is not the coach's typing.
+    // One transform, both stores: the inheritance rule must not exist twice.
+    const today = tournamentToday();
+    const seedDates = <T extends { receivedDate: string; paidDate: string }>(o: T): T => ({
+      ...o,
+      receivedDate: o.receivedDate || o.paidDate || today,
+      paidDate: o.paidDate || o.receivedDate || today,
+    });
+    setForm(seedDates);
+    setFormOpenedWith(seedDates);
+    // The branch's own question resets — and "how" carries INTO an enum branch when the typed
+    // method is one of the five (a coach who wrote "cheque" on the cost keeps it on the dues
+    // receipt; anything unmatched stays behind rather than being silently coerced).
+    const typedMethod = form.paymentMethod.trim().toLowerCase();
+    const matched = (DUES_PAYMENT_METHODS as readonly DuesPaymentMethod[])
+      .find(t => DUES_PAYMENT_METHOD_LABEL[t].toLowerCase() === typedMethod);
+    setConv(c => ({
+      ...BLANK_CONV,
+      duesMethod: (next === 'dues' && matched) || c.duesMethod,
+      payoutMethod: (next === 'payout' && matched) || c.payoutMethod,
+    }));
+    // Fetched once per OPEN (resetForm clears these on close) — a dues↔payout toggle reads the
+    // same book and costs nothing; a failed load stays null, so re-picking the branch retries.
+    // `loadDriveDetail` guards itself the same way at its call site.
+    if ((next === 'dues' || next === 'payout') && duesBook === null) void loadDuesBook();
+    if (next === 'drive' && drives === null) void loadDrives();
+    if (next === 'club' && clubBills === null) void loadClubBills();
+    if (next === 'sponsor' && sponsorDefaultPct === null) void loadSponsorDefaults();
+  }
+
+  /**
+   * Submit a branch that writes through its HOME TAB's route (dues receipt, drive amount, club
+   * settlement, payout). Called from `saveRecord`'s try block, so a thrown refusal lands on the
+   * same error channel as every other save. ⚠ NO new arithmetic here: amounts go to the writer
+   * exactly as typed, and every derived figure on screen afterwards comes from the re-read.
+   */
+  /**
+   * Pay down a bill the team already owes (money centralization P2, owner ruling C2).
+   *
+   * ⚠ THE SAME WRITER THE BILL'S OWN DOOR USES — the payments sub-route, one POST, identical body.
+   * That is what makes this a different DOOR onto one act rather than a second way to record a
+   * payment: the server applies the money oldest-piece-first unless the override names one, an
+   * over-payment saves and is stated (R6), and the register derives the row exactly as it would
+   * have from the Payables face. No new arithmetic lives here.
+   *
+   * ⚠ THE METHOD IS THE FREE-TEXT ONE. A commitment payment has always stored typed methods and
+   * the shared combobox seeds it with the same five words the enum branches offer — the one-method
+   * -list ruling was about what is OFFERED, not about converting a column.
+   */
+  async function saveBillPayment() {
+    const amount = parseFloat(form.amount);
+    if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+    if (!form.paidDate) throw new Error('Enter the day the money left.');
+    const res = await fetch(
+      `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${conv.spendExpenseId}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          paidDate: form.paidDate,
+          method: form.paymentMethod.trim() || null,
+          note: form.notes.trim() || null,
+          installmentId: conv.spendInstallmentId || null,
+        }),
+      });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
+    setFormOpen(false);
+    resetForm();
+    await refreshAfterWrite();
+  }
+
+  async function saveConversationBranch() {
+    const amount = parseFloat(form.amount);
+    if (convBranch === 'dues') {
+      if (!conv.duesPlayerId) throw new Error('Pick which player the payment is for.');
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+      if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${conv.duesPlayerId}/dues-payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            receivedDate: form.receivedDate,
+            method: conv.duesMethod,
+            note: form.notes.trim() || null,
+          }),
+        });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
+    } else if (convBranch === 'drive') {
+      if (!conv.driveId) throw new Error('Pick which drive the money came from.');
+      if (!conv.drivePlayerId) throw new Error('Pick which player it counts for.');
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+      if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${conv.driveId}/entries`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerId: conv.drivePlayerId,
+            amountRaised: amount,
+            receivedDate: form.receivedDate,
+            notes: form.notes.trim() || null,
+          }),
+        });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not log the amount');
+    } else if (convBranch === 'club') {
+      const bill = (clubBills ?? []).find(b => `${b.splitId}:${b.installmentId}` === conv.clubInstallmentId);
+      if (!bill) throw new Error('Pick which installment to settle.');
+      /* The one-tap settle, exactly as the Club tab's "Mark paid" sends it: NO body — the server
+         derives amount and date, and there is nowhere to store a method or note on an allocation
+         installment. Fieldless is the design, not a shortcut (build prompt §2.2). */
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${bill.splitId}/installments/${bill.installmentId}`,
+        { method: 'PATCH' });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not settle the installment');
+    } else if (convBranch === 'sponsor') {
+      if (!conv.sponsorName.trim()) throw new Error('The sponsor needs a name.');
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+      const creditValue = Number(conv.sponsorCreditValue) || 0;
+      if (conv.sponsorCreditUnit === 'percent' && (creditValue < 0 || creditValue > 100)) {
+        throw new Error('Player credit % must be between 0 and 100.');
+      }
+      /* The SAME creation POST the Fundraising door submits — status received (this branch is
+         "came through"; a pledge stays on Fundraising), with the coach's per-sponsor credit
+         exactly as the door takes it (the server forces 0 without a player). */
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'sponsor',
+          name: conv.sponsorName.trim(),
+          description: form.notes.trim() || null,
+          sponsorStatus: 'received',
+          sponsorAmount: amount,
+          broughtInById: conv.sponsorPlayerId || null,
+          creditValue: conv.sponsorPlayerId ? creditValue : 0,
+          creditUnit: conv.sponsorCreditUnit,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the sponsor');
+    } else if (convBranch === 'payout') {
+      if (!conv.payoutPlayerId) throw new Error('Pick which family to pay back.');
+      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+      if (!form.paidDate) throw new Error('Enter the day the money left.');
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/players/${conv.payoutPlayerId}/dues-payouts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            paidDate: form.paidDate,
+            method: conv.payoutMethod,
+            note: form.notes.trim() || null,
+          }),
+        });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payout');
+    }
+    setFormOpen(false);
+    resetForm();
+    await refreshAfterWrite();
+  }
+
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
   // flag, and a closed season no longer renders this screen at all, so a capability check is
@@ -1297,6 +1940,42 @@ function MoneyRecordsPanel({
   const canWriteMoney = (page.capabilities?.money === 'write');
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
   const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
+
+  /* ── The hub's Record button reaches this form here (P1) ────────────────────────────────────
+     ⚠ THE TRANSACTIONS FACE ALONE listens — both faces are instances of this one component, and
+     two listeners would open two modals over each other. Render-phase adjustment on a change
+     guard (the React-sanctioned derive-from-prop pattern the hub page itself uses) rather than an
+     effect: the open must not lag a paint behind the press. A press while the form is ALREADY
+     open is swallowed deliberately — resetting under the coach would discard their half-entered
+     record with no guard. */
+  /* A stale refusal clears the moment the form under it changes — render-phase adjustment on a
+     change guard. Every field setter replaces its object, so identity inequality IS "the coach
+     edited something since the refusal". */
+  if (saveError && saveErrorSnapshot && (
+    saveErrorSnapshot.form !== form || saveErrorSnapshot.conv !== conv
+    || saveErrorSnapshot.plan !== formPlan || saveErrorSnapshot.payee !== formPayee
+    || saveErrorSnapshot.tags !== formTags || saveErrorSnapshot.timing !== formTiming
+  )) {
+    setSaveError('');
+    setSaveErrorSnapshot(null);
+  }
+
+  const recordSignal = useRecordMoneySignal();
+  const [handledRecordNonce, setHandledRecordNonce] = useState(0);
+  // `canWriteMoney` is defense-in-depth (/review 2026-08-23): today the nonce's only producer is
+  // the hub's write-gated button, but this component shouldn't stay correct only by that fact.
+  /* ⚠ A PRESS ARRIVING WHILE A FORM IS ALREADY OPEN IS DELIBERATELY DROPPED (/review, 2026-08-23).
+     The nonce is marked handled either way, so the request does not fire later, out of the context
+     it was made in. What it protects is bigger than what it costs: reopening would reset a form the
+     coach has half filled, and because this modal PORTALS out of the (possibly hidden) panel, an
+     open form is on screen in front of them — so a press that does nothing is a press aimed past a
+     window they can see and close. Do not "fix" this into a queue. */
+  if (face === 'transactions' && recordSignal && recordSignal.openNonce > handledRecordNonce) {
+    setHandledRecordNonce(recordSignal.openNonce);
+    // The intent is read at the SAME nonce it was raised with — one object, so a door's branch and
+    // its ids can never arrive on different renders and half-answer the form.
+    if (!formOpen && canWriteMoney) openConversationFrom(recordSignal.intent);
+  }
   /** The category+item pairs this team budgeted for — rebuilt only when the plan reloads, not on
    *  every keystroke in the open form (the form's state lives in this same component). */
   const plannedPairs = useMemo(() => ({
@@ -1614,6 +2293,120 @@ function MoneyRecordsPanel({
   );
 
   /**
+   * ⚠⚠ THE BILLS A COACH CAN PAY DOWN — the "Bills you owe" group in the record form's one picker
+   * (money centralization P2, owner ruling C2, 2026-08-23).
+   *
+   * ⚠ DELIBERATELY NOT `payBills`. That list is the PAYABLES FACE's — narrowed by its Status, Item
+   * and tag filters and by whichever arrangement is showing. A coach who has filtered that screen
+   * down to overdue rows has not told the record form to forget the rest of their bills, and this
+   * field renders on the Transactions face too, where those filters do not exist at all.
+   *
+   * ⚠ SETTLED BILLS ARE NOT OFFERED. Nothing is owed on them, so a payment against one has no
+   * honest landing place; the drawn frame says "Bills you owe" and this is what makes that true.
+   *
+   * ⚠ THE CLUB'S OWN BILLS ARE NOT HERE EITHER. A club allocation is not a `rep_team_expenses`
+   * record and is settled through the Club tab, which owns that conversation — the conversation's
+   * own "we settled up with the club" answer is its door, and offering it twice under two different
+   * sentences is how one act grows two vocabularies again.
+   *
+   * Soonest due first, the order the Payables list itself sorts by, so the bill a coach is most
+   * likely reaching for is the first row under the heading.
+   */
+  const commitmentsAll = useMemo(() => {
+    const rows = allPayablesRaw.flatMap(e => {
+      const standing = standings[e.id];
+      if (!standing) return [];
+      const next = [...standing.installments]
+        .sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0))
+        .find(i => i.state !== 'settled');
+      return [{
+        id: e.id,
+        name: e.description,
+        remaining: standing.remaining,
+        nextDue: next?.dueDate ?? null,
+        expense: e,
+        standing,
+      }];
+    });
+    rows.sort((a, b) => {
+      if (a.nextDue && b.nextDue) return a.nextDue < b.nextDue ? -1 : a.nextDue > b.nextDue ? 1 : 0;
+      if (a.nextDue) return -1;
+      if (b.nextDue) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    return rows;
+  }, [allPayablesRaw, standings]);
+
+  /** What the picker OFFERS: only bills with something still owing — "Bills you owe" is the
+   *  heading, and a payment against a settled bill has no honest landing place. */
+  const openCommitments = useMemo(
+    () => commitmentsAll.filter(c => c.remaining > 0.005),
+    [commitmentsAll],
+  );
+
+  /** The bill this record is paying down, or null when the branch is creating a new cost.
+   *  ⚠ LOOKED UP IN THE FULL LIST, NOT THE OFFERED ONE. A door on the Payables face can name a
+   *  bill the picker would not offer — an over-paid one, or one settled in another tab a moment
+   *  ago — and resolving that to `null` would silently turn a payment into a brand-new cost.
+   *  ⚠ ADD MODE ONLY. A SAVED payment is not this form's record at all — it belongs to its
+   *  commitment and is corrected from the bill's own payment details, exactly as before. */
+  /* ⚠ MEMOISED LIKE THE TWO LISTS ABOVE IT (/simplify, efficiency lens 2026-08-23): the money form
+     lives inside this component, so a bare `.find` here re-scans every commitment on every
+     keystroke in the open form — exactly the cost those lists' own headers exist to explain. */
+  const payingBill = useMemo(
+    () => ((formMode === 'add' && convBranch === 'spend' && conv.spendExpenseId)
+      ? commitmentsAll.find(c => c.id === conv.spendExpenseId) ?? null
+      : null),
+    [formMode, convBranch, conv.spendExpenseId, commitmentsAll],
+  );
+
+  /**
+   * ⚠⚠ THE PICKER'S "Bills you owe" GROUP, BUILT ONCE — NOT PER KEYSTROKE (/simplify, efficiency
+   * lens 2026-08-23). Built inline in the JSX it was a fresh object with a fresh `options` array on
+   * every render of this panel — which is every keystroke anywhere in the open form — and the
+   * picker memoises its filtered lead rows on this very value, so the memo was defeated by the
+   * prop that feeds it. The same defect `allPayablesRaw`'s own header records, one field over.
+   *
+   * ⚠ ADD MODE ONLY, AND NEVER ON A COMMITMENT'S OWN FORM: editing a saved record must not offer to
+   * turn it into a payment against something else, and Payables' Add is a SETUP door for a plan —
+   * the one thing this conversation deliberately does not do.
+   */
+  const spendLeadGroup = useMemo(() => {
+    const offer = formMode === 'add' && convBranch === 'spend' && !isPayableForm
+      && openCommitments.length > 0;
+    if (!offer) return undefined;
+    return {
+      label: 'Bills you owe',
+      /* These trailing figures ARE debts, so they read as the portal's owing colour — the shared
+         control is quiet unless a caller says otherwise. */
+      metaTone: 'owing' as const,
+      options: openCommitments.map(c => ({
+        id: c.id,
+        name: c.name,
+        meta: `${fmt(c.remaining)} owing`,
+      })),
+      selectedId: conv.spendExpenseId || null,
+      /* ⚠ THE OTHER HALF OF THE FIELD CLEARS. One question, one answer: a record carrying both a
+         bill and a budget item would be a payment and a new cost at once. The description goes too
+         when it is still the item's own name — the same `isItemLabel` rule the picker's own
+         pre-fill uses, so a coach's typing is never thrown away. */
+      onPick: (id: string) => {
+        const bill = openCommitments.find(c => c.id === id);
+        setConv(c => ({ ...c, spendExpenseId: id, spendInstallmentId: '' }));
+        setForm(f => ({
+          ...f,
+          budgetCategoryId: '', budgetItemId: '', budgetItemName: '', category: '',
+          description: isItemLabel(f) ? '' : f.description,
+          /* The remainder, never the face value — the same rule the bill's own payment door
+             follows: pre-filling more invites a coach to confirm a figure larger than the payment
+             they actually made. Editable, like any suggestion. */
+          amount: f.amount || (bill ? String(bill.remaining) : ''),
+        }));
+      },
+    };
+  }, [formMode, convBranch, isPayableForm, openCommitments, conv.spendExpenseId]);
+
+  /**
    * ⚠⚠ THE ONE PAYABLES LIST, DERIVED ONCE (Rebuild P3) — the bills, their pieces, and what the
    * Status dropdown counts. Memoised for the reason the register's memo already gives: the money
    * form lives in this component, so every keystroke in it re-renders the whole panel, and this
@@ -1728,7 +2521,7 @@ function MoneyRecordsPanel({
         return {
           key: r.id,
           dueDate: r.dueDate ?? today,
-          label: r.label ?? 'Instalment',
+          label: r.label ?? 'Installment',
           installmentNumber: 1,
           owing: r.amount,
           faceAmount: r.amount,
@@ -2004,6 +2797,26 @@ function MoneyRecordsPanel({
     setFutureDateRefused(false);
     setSaving(true);
     try {
+      /* The conversation's branch records go through their HOME TAB's writer — never this form's
+         ledger save (P1: the conversation adds no write paths). Add mode only: an edit derives
+         its kind from the record and `convBranch` is never set for one. */
+      if (!editing && !editingMoneyIn) {
+        /* ⚠ A COMMITMENT'S OWN DOOR ASKS NO SUCH QUESTION. Payables' "Add a commitment" opens this
+           form in its setup mode — one kind of record, stated rather than chosen — so there is no
+           conversation answer to be missing (owner ruling B2, 2026-08-23). */
+        if (convBranch === null && !isPayableForm) throw new Error('Choose what happened first.');
+        if (convBranch !== null && CONV_DIRECT.has(convBranch)) {
+          await saveConversationBranch();
+          return;
+        }
+        /* Paying down a bill is the SAME first answer — "we paid for something" — with the picker's
+           "Bills you owe" group chosen instead of a budget item (C2). It writes through the bill's
+           own payments route, so it leaves this form's ledger save entirely. */
+        if (convBranch === 'spend' && conv.spendExpenseId) {
+          await saveBillPayment();
+          return;
+        }
+      }
       if (isMoneyInForm) {
         await saveMoneyIn();
         setFormOpen(false);
@@ -2075,6 +2888,16 @@ function MoneyRecordsPanel({
       if (!isPayable && form.paidDate && form.paidDate > tournamentToday()) {
         setFutureDateRefused(true);
         throw new Error('That hasn’t happened yet.');
+      }
+
+      /* ⚠⚠ A COST RECORDED HERE HAS A DATE (owner ruling B2, 2026-08-23). Leaving it blank used to
+         be the documented way to say "not paid yet" — a second, invisible door to a commitment,
+         beside the paid/owed fork that has now been deleted and the future-date refusal that hands
+         a coach to Payables. Record is for money that MOVED, so it has a day. An EDIT is exempt:
+         records created under the old rule exist and must stay editable without being forced into
+         a date the coach cannot know. */
+      if (!isPayable && !editing && !form.paidDate) {
+        throw new Error('Enter the day the money left — or put it on Payables if it hasn’t been paid yet.');
       }
 
       const common = {
@@ -2154,6 +2977,10 @@ function MoneyRecordsPanel({
       await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
+      // The refusal is ABOUT this exact state — editing anything makes it stale (see snapshot).
+      setSaveErrorSnapshot({
+        form, conv, plan: formPlan, payee: formPayee, tags: formTags, timing: formTiming,
+      });
     } finally {
       /* ⚠ RELEASED WHEN THE REQUEST ENDS, which is the whole window that matters: the defect is a
          second click landing while the first save is IN FLIGHT, before React has committed the
@@ -2287,13 +3114,601 @@ function MoneyRecordsPanel({
           <option value="">The team</option>
           {roster.map(p => (
             <option key={p.id} value={p.id}>
-              A family, out of pocket — {[p.playerLastName, p.playerFirstName].filter(Boolean).join(', ')}
+              A family, out of pocket — {formatPlayerLastFirst(p)}
             </option>
           ))}
         </select>
         {/* ⚠ THE MONEY SENTENCE MOVED TO THE CONSEQUENCE LINE, and is not repeated here. It said
             the same thing twice, once inside a fold that can be shut — and the whole reason the
             fold is safe is that the surviving copy cannot be. See `consequenceLine`. */}
+      </div>
+    );
+  }
+
+  /**
+   * "What happened?" — the conversation's first question, as a FIELD on the form (frames A/B).
+   *
+   * The open list IS approved mockup 01: eight sentences, two groups, live hints where the hub's
+   * summary already knows something useful. ⚠ The hints read the summary riding the hub context —
+   * never a fresh fetch on open (build prompt §2.8). Without a hub around (no provider), the
+   * options simply carry no hints; the club answer needs to know org linkage and falls back to
+   * the register's own flag.
+   */
+  function renderWhatField() {
+    /* ⚠ LOCKED — the door named one record (owner ruling A). Both answers collapse into one stated
+       band: the branch's own sentence, the subject the door supplied, and a quiet second line. No
+       control at all, so there is nothing to switch and no ghost save to make. */
+    if (convLock && convBranch) {
+      return (
+        <div className={`${styles.formGridFull} ${styles.convLockBand}`}>
+          <span className={styles.convLockLine}>
+            {CONV_BRANCH[convBranch].name} — {convLock.subject}
+          </span>
+          {convLock.detail && <span className={styles.convLockDetail}>{convLock.detail}</span>}
+        </div>
+      );
+    }
+    const s = recordSignal?.summary ?? null;
+    const live: Partial<Record<ConversationBranch, string>> = {};
+    if (s) {
+      if (s.dues.overdueCount > 0) {
+        live.dues = `${s.dues.overdueCount} overdue · ${fmt(s.dues.overdueAmount)}`;
+      } else if (s.dues.outstanding > 0.005) {
+        live.dues = `${fmt(s.dues.outstanding)} still to come`;
+      }
+      if (s.fundraisers.activeCount > 0) {
+        live.drive = s.fundraisers.activeCount === 1 ? '1 drive running'
+          : `${s.fundraisers.activeCount} drives running`;
+      }
+      if (s.allocations.outstanding > 0.005) live.club = `${fmt(s.allocations.outstanding)} owed`;
+      if (s.dues.familiesInCreditCount > 0) {
+        // Dollars ride along like every other hint — and this is the summary's held-total's
+        // one consumer, so the figure is not shipped speculatively (/simplify, 2026-08-23).
+        live.payout = `${s.dues.familiesInCreditCount === 1 ? '1 family' : `${s.dues.familiesInCreditCount} families`} in credit · ${fmt(s.dues.familyCreditHeld)}`;
+      }
+    }
+    const orgLinked = s ? s.orgLinked : (book?.orgLinked ?? false);
+    return (
+      <div ref={whatWrapRef} className={`${styles.field} ${styles.formGridFull} ${styles.convWhatWrap}`}>
+        <label className={styles.label}>What happened? *</label>
+        <button
+          type="button"
+          className={`${styles.convWhatField} ${convBranch === null ? styles.convWhatFieldEmpty : ''}`}
+          aria-haspopup="listbox"
+          aria-expanded={whatOpen}
+          onClick={() => {
+            if (!whatOpen) {
+              // Anchor the fixed list to the field as it stands at this moment.
+              const r = whatWrapRef.current?.getBoundingClientRect();
+              setWhatRect(r ? { top: r.bottom + 4, left: r.left, width: r.width } : null);
+            }
+            setWhatOpen(o => !o);
+          }}
+        >
+          <span>{convBranch ? CONV_BRANCH[convBranch].name : 'Choose…'}</span>
+          <ChevronDown size={15} className={styles.convWhatCaret} aria-hidden />
+        </button>
+        {whatOpen && whatRect && (
+          <>
+            <div
+              className={styles.convWhatList}
+              style={{ top: whatRect.top, left: whatRect.left, width: whatRect.width }}
+              role="listbox"
+              aria-label="What happened?"
+            >
+              {CONV_GROUPS.map(group => (
+                <Fragment key={group.label}>
+                  <div className={styles.convWhatGroup}>{group.label}</div>
+                  {group.options
+                    .filter(id => id !== 'club' || orgLinked)
+                    .map(id => (
+                      <button
+                        key={id}
+                        type="button"
+                        role="option"
+                        aria-selected={convBranch === id}
+                        className={styles.convWhatOpt}
+                        /* The compiler flags selectBranch because the branch LOADERS it calls
+                           read `convLoadGen.current` — but only inside their async bodies, after
+                           the click, never during render (the same read pattern `loadSeq` has
+                           always used one screen up). False positive, documented not obeyed. */
+                        // eslint-disable-next-line react-hooks/refs
+                        onClick={() => selectBranch(id)}
+                      >
+                        <span>
+                          <span className={styles.convWhatOptName}>{CONV_BRANCH[id].name}</span>
+                          <span className={styles.convWhatOptSub}>{CONV_BRANCH[id].sub}</span>
+                        </span>
+                        {live[id] && <span className={styles.convWhatOptLive}>{live[id]}</span>}
+                      </button>
+                    ))}
+                </Fragment>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  /**
+   * The four home-tab branches' bodies (dues receipt · drive amount · club settlement · payout).
+   * Same grammar as the ledger branches: the branch's one real question, the shared fields, and a
+   * consequence line stating dollars before anything saves. ⚠ Consequences RESTATE the writer's
+   * own behaviour (overpayment becomes a credit; a payout is capped) — they never compute a
+   * figure the register would then have to agree with.
+   */
+  function renderConvBody() {
+    const amount = Number(form.amount) || 0;
+    const consequence = (body: ReactNode) => (
+      <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+        <strong>When you save:</strong> {body}
+      </p>
+    );
+
+    if (convBranch === 'dues') {
+      const sel = (duesBook ?? []).find(p => p.id === conv.duesPlayerId) ?? null;
+      /* ⚠ THE SHARED RULE, IN CENTS (/simplify reuse pass, 2026-08-23). This was a local float
+         ternary for the same question the dues panel two files over already asks through
+         `overpaymentExcess` — the one place the "anything beyond what is owed becomes a credit"
+         rule lives, and the one with tests behind it. Two implementations of one money rule is how
+         the form and the receipt book start disagreeing about a family's credit by a cent. */
+      const over = sel ? overpaymentExcess(sel.outstanding, 0, amount) : 0;
+      return (
+        <>
+          {convPickerField({
+            label: 'Which player *',
+            error: duesBookError,
+            items: duesBook,
+            loading: 'Loading the dues book…',
+            empty: <>No dues schedules yet — set them up on <strong>Player Dues</strong> first.</>,
+            select: (
+              <select
+                className={styles.select}
+                value={conv.duesPlayerId}
+                onChange={e => setConv(c => ({ ...c, duesPlayerId: e.target.value }))}
+              >
+                <option value="">Choose…</option>
+                {(duesBook ?? []).map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.outstanding > 0.005 ? `owes ${fmt(p.outstanding)}` : 'paid up'}
+                  </option>
+                ))}
+              </select>
+            ),
+          })}
+          {convAmountField('Amount *')}
+          <div className={styles.field}>
+            <label className={styles.label}>Date received *</label>
+            <input
+              className={styles.input} type="date"
+              value={form.receivedDate}
+              onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+            />
+          </div>
+          {convMethodField('duesMethod')}
+          {convNoteField('e.g. paid at practice')}
+          {sel && amount > 0 && consequence(<>
+            <strong>{sel.name.split(', ').reverse().join(' ')}&apos;s bill drops to{' '}
+            {fmt(Math.max(0, r2c(sel.outstanding - amount)))}</strong>.
+            {over > 0 && <> The {fmt(over)} beyond their bill becomes a credit the family can use.</>}
+            {' '}Shows on the ledger right away.
+          </>)}
+        </>
+      );
+    }
+
+    if (convBranch === 'drive') {
+      const detail = conv.driveId ? driveDetail[conv.driveId] : undefined;
+      const openPlayers = detail?.players.filter(p => p.logged === null) ?? [];
+      const loggedCount = (detail?.players.length ?? 0) - openPlayers.length;
+      const selPlayer = detail?.players.find(p => p.playerId === conv.drivePlayerId) ?? null;
+      const credit = detail ? r2c(amount * detail.rebatePercent / 100) : 0;
+      return (
+        <>
+          {convPickerField({
+            label: 'Which drive *',
+            error: drivesError,
+            items: drives,
+            loading: 'Loading the drives…',
+            empty: <>No drive is running — start one on <strong>Fundraising</strong> first.</>,
+            select: (
+              <select
+                className={styles.select}
+                value={conv.driveId}
+                onChange={e => {
+                  const id = e.target.value;
+                  setConv(c => ({ ...c, driveId: id, drivePlayerId: '' }));
+                  if (id && !driveDetail[id]) void loadDriveDetail(id);
+                }}
+              >
+                <option value="">Choose…</option>
+                {(drives ?? []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            ),
+          })}
+          {/* Hand-built rather than `convPickerField` (it has a retry link and a footnote), but it
+              goes through the SAME lock gate — see `identityField`. Opened from a leaderboard row,
+              the drive AND the player are stated in the band above. */}
+          {conv.driveId && identityField(
+            <div className={`${styles.field} ${styles.formGridFull}`}>
+              <label className={styles.label}>Which player *</label>
+              {driveDetailError ? (
+                /* Its own slot + a retry — re-picking the same drive can't refire onChange, so
+                   without this link a failed leaderboard read wedged the branch on "Loading…"
+                   until the whole conversation was reopened (/review, 2026-08-23). */
+                <p className={styles.errorText}>
+                  {driveDetailError}{' '}
+                  <button
+                    type="button"
+                    className={styles.linkBtn}
+                    onClick={() => void loadDriveDetail(conv.driveId)}
+                  >
+                    Try again
+                  </button>
+                </p>
+              ) : !detail ? <p className={styles.formHint}>Loading the leaderboard…</p> : (
+                <>
+                  <select
+                    className={styles.select}
+                    value={conv.drivePlayerId}
+                    onChange={e => setConv(c => ({ ...c, drivePlayerId: e.target.value }))}
+                  >
+                    <option value="">Choose…</option>
+                    {openPlayers.map(p => (
+                      <option key={p.playerId} value={p.playerId}>{p.playerName}</option>
+                    ))}
+                  </select>
+                  {loggedCount > 0 && (
+                    <p className={styles.formHint}>
+                      {loggedCount === 1 ? '1 player already has' : `${loggedCount} players already have`}{' '}
+                      an amount logged — change those from the drive&apos;s own leaderboard.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {convAmountField('Amount raised *')}
+          {/* Ruled IN (owner, §80 walk 2026-08-23 — was deviation ①): treasurers log drive money
+              after the fact and need it in the PERIOD it arrived. Shares form.receivedDate, so it
+              survives a branch switch like every date. ⚠ The drive's own Log-amount door still
+              stamps today — it converges in P2 with the rest of the doors. */}
+          <div className={styles.field}>
+            <label className={styles.label}>Date received *</label>
+            <input
+              className={styles.input} type="date"
+              value={form.receivedDate}
+              onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
+            />
+          </div>
+          {convNoteField('Optional')}
+          {/* ⚠⚠ "WHERE IT LANDS" CAME WITH THE DOOR (money centralization P2, 2026-08-23).
+              It is binding mockup §2 and it lived on the drive's leaderboard, where it rendered
+              for NEW entries only — the exact case this conversation absorbed. Re-pointing the
+              door without it would have deleted the preview from the product while leaving its
+              code behind a condition that can no longer be true. Same helper, same shared
+              application arithmetic, same rows: which of this family’s bills the rebate lowers,
+              and by how much, before anything saves. */}
+          {detail && selPlayer && credit > 0.005 && (() => {
+            const landing = previewCreditLanding(selPlayer.openBills, credit, detail.creditApplication);
+            return (
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>
+                  Where it lands — {fmt(credit)} credit ({detail.rebatePercent}% of {fmt(amount)})
+                </label>
+                {landing.rows.length === 0 ? (
+                  <p className={styles.formHint}>
+                    {detail.creditApplication === 'keep_separate'
+                      ? 'Credits are kept separate on this team — bills don’t move; the amount is owed back at season’s end.'
+                      : 'No open bills — the credit becomes money owed back to this family.'}
+                  </p>
+                ) : landing.rows.map(r => (
+                  <p key={r.installmentNumber} className={styles.formHint}>
+                    Installment #{r.installmentNumber}{r.dueDate ? ` — due ${fmtDate(r.dueDate)}` : ''}:{' '}
+                    {r.newToSend <= 0.005
+                      ? 'covered — nothing to send'
+                      : `was ${fmt(r.wasToSend)} to send — now ${fmt(r.newToSend)}`}
+                  </p>
+                ))}
+                {landing.leftover > 0.005 && detail.creditApplication !== 'keep_separate' && (
+                  <p className={styles.formHint}>
+                    {fmt(landing.leftover)} more than the open bills — owed back to this family.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+          {detail && selPlayer && amount > 0 && consequence(<>
+            <strong>the drive&apos;s total rises {fmt(amount)}</strong>
+            {credit > 0.005 && <> · {selPlayer.playerName}&apos;s family earns{' '}
+              <strong>{fmt(credit)} off dues</strong> ({detail.rebatePercent}% player credit)</>}.
+            {' '}Shows on the ledger as fundraising income.
+          </>)}
+        </>
+      );
+    }
+
+    if (convBranch === 'club') {
+      /* One thing owed = no real question — pre-answer it. A render-phase adjustment on a change
+         guard (the hub page's own idiom), mirrored into the baseline so the pre-answer never
+         counts as the coach's typing. Running at render rather than at fetch-resolve means it
+         can't land on a branch the coach has since left, and it re-preselects on re-entry. */
+      if (clubBills?.length === 1 && conv.clubInstallmentId === '') {
+        const key = `${clubBills[0].splitId}:${clubBills[0].installmentId}`;
+        prefillConv(c => ({ ...c, clubInstallmentId: key }));
+      }
+      const sel = (clubBills ?? []).find(b => `${b.splitId}:${b.installmentId}` === conv.clubInstallmentId) ?? null;
+      return (
+        <>
+          {convPickerField({
+            label: 'Which installment *',
+            error: clubBillsError,
+            items: clubBills,
+            loading: "Loading the club's bills…",
+            empty: <>Nothing is owed — the club&apos;s bills are settled.</>,
+            select: (
+              <select
+                className={styles.select}
+                value={conv.clubInstallmentId}
+                onChange={e => setConv(c => ({ ...c, clubInstallmentId: e.target.value }))}
+              >
+                <option value="">Choose…</option>
+                {(clubBills ?? []).map(b => (
+                  <option key={`${b.splitId}:${b.installmentId}`} value={`${b.splitId}:${b.installmentId}`}>
+                    {b.description} — {fmt(b.amount)} due {fmtDate(b.dueDate)}
+                  </option>
+                ))}
+              </select>
+            ),
+            /* Fieldless ON PURPOSE (§2.2): today's settle is one tap — the server derives the
+               amount and the date, and an allocation installment has nowhere to keep a method
+               or note. A form here would make settling SLOWER, which the plan forbids. */
+          })}
+          {sel && consequence(<>
+            <strong>{fmt(sel.amount)} moves from the team to the club</strong> —{' '}
+            {sel.description}&apos;s installment shows settled, and the register gets the row.
+          </>)}
+        </>
+      );
+    }
+
+    if (convBranch === 'sponsor') {
+      const selPlayer = roster.find(p => p.id === conv.sponsorPlayerId) ?? null;
+      // ONE credit arithmetic — the same resolver the Fundraising door and its preview use.
+      const { credit: share, percent: sharePct } = resolveCredit(
+        amount, Number(conv.sponsorCreditValue) || 0, conv.sponsorCreditUnit);
+      return (
+        <>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Sponsor *</label>
+            <input
+              className={styles.input}
+              value={conv.sponsorName}
+              onChange={e => setConv(c => ({ ...c, sponsorName: e.target.value }))}
+              placeholder="e.g. Riverdale Dental"
+            />
+          </div>
+          {convAmountField('Amount *')}
+          <div className={styles.field}>
+            <label className={styles.label}>Brought in by</label>
+            <select
+              className={styles.select}
+              value={conv.sponsorPlayerId}
+              onChange={e => setConv(c => ({ ...c, sponsorPlayerId: e.target.value }))}
+            >
+              <option value="">Nobody in particular</option>
+              {roster.map(p => (
+                <option key={p.id} value={p.id}>{formatPlayerLastFirst(p)}</option>
+              ))}
+            </select>
+          </div>
+          {/* The door's own per-sponsor credit control, verbatim shape (owner, §80 walk):
+              prefilled from the team's standard percent, editable per sponsorship, $ or %. */}
+          {conv.sponsorPlayerId && (
+            <div className={styles.field}>
+              <label className={styles.label}>Credit to that family</label>
+              <div className={styles.unitField}>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={conv.sponsorCreditValue}
+                  onChange={e => setConv(c => ({ ...c, sponsorCreditValue: e.target.value }))}
+                  placeholder="0"
+                />
+                <div className={styles.unitPick} role="group" aria-label="Credit unit">
+                  {(['amount', 'percent'] as CreditUnit[]).map(u => (
+                    <button
+                      key={u}
+                      type="button"
+                      aria-pressed={conv.sponsorCreditUnit === u}
+                      className={`${styles.unitBtn} ${conv.sponsorCreditUnit === u ? styles.unitBtnOn : ''}`}
+                      onClick={() => setConv(c => ({ ...c, sponsorCreditUnit: u }))}
+                    >
+                      {u === 'amount' ? '$' : '%'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {convNoteField('Optional details…')}
+          <p className={`${styles.formHint} ${styles.formGridFull}`}>
+            A promised sponsorship isn&apos;t money yet — record a <strong>pledge</strong> on
+            Fundraising, where its status lives.
+          </p>
+          {amount > 0 && conv.sponsorName.trim() && consequence(<>
+            <strong>{fmt(amount)} arrives</strong> — shows on the ledger as sponsorship income.
+            {/* When a player is picked, the credit outcome is ALWAYS stated — including "none"
+                (owner, §80 walk 2026-08-23: a silent clause read as the credit being forgotten
+                rather than being zero). */}
+            {selPlayer && (
+              share > 0.005
+                ? <> {formatPlayerLastFirst(selPlayer).split(', ').reverse().join(' ')}&apos;s
+                    family earns <strong>{fmt(share)} off dues</strong>
+                    {conv.sponsorCreditUnit === 'percent' ? <> ({sharePct}% of what this sponsor gave)</> : null}.</>
+                : <> <strong>No dues credit</strong> — the credit above is zero, so it all stays
+                    with the team.</>
+            )}
+          </>)}
+        </>
+      );
+    }
+
+    if (convBranch === 'payout') {
+      const inCredit = (duesBook ?? []).filter(p => p.payableNow > 0.005);
+      const sel = inCredit.find(p => p.id === conv.payoutPlayerId) ?? null;
+      const overCeiling = sel && amount > sel.payableNow + 0.005;
+      return (
+        <>
+          {convPickerField({
+            label: 'Which family *',
+            error: duesBookError,
+            items: duesBook === null ? null : inCredit,
+            loading: 'Loading the dues book…',
+            empty: <>No family is in credit right now.</>,
+            select: (
+              <select
+                className={styles.select}
+                value={conv.payoutPlayerId}
+                onChange={e => {
+                  const id = e.target.value;
+                  setConv(c => ({ ...c, payoutPlayerId: id }));
+                  // The common case is handing back everything held — pre-fill it, editable.
+                  const picked = inCredit.find(p => p.id === id);
+                  if (picked) setForm(f => ({ ...f, amount: String(picked.payableNow) }));
+                }}
+              >
+                <option value="">Choose…</option>
+                {inCredit.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} — {fmt(p.payableNow)} in credit</option>
+                ))}
+              </select>
+            ),
+          })}
+          {convAmountField('Amount *', overCeiling && (
+            <p className={styles.formHint}>
+              That&apos;s more than the {fmt(sel!.payableNow)} the team is holding for them —
+              the save will be refused.
+            </p>
+          ))}
+          <div className={styles.field}>
+            <label className={styles.label}>Date paid *</label>
+            <input
+              className={styles.input} type="date" max={tournamentToday()}
+              value={form.paidDate}
+              onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
+            />
+          </div>
+          {convMethodField('payoutMethod')}
+          {convNoteField('Optional')}
+          {sel && amount > 0 && !overCeiling && consequence(<>
+            <strong>{fmt(amount)} leaves cash on hand</strong> · the credit the team holds for{' '}
+            {sel.name.split(', ').reverse().join(' ')}&apos;s family drops to{' '}
+            {fmt(Math.max(0, r2c(sel.payableNow - amount)))}.
+          </>)}
+        </>
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * One shape for the branches' "Which X" pickers: error → loading → empty → the select.
+   * Three copies of the same four-way ternary is a fix applied three times (/simplify, 2026-08-23).
+   */
+  /**
+   * ⚠⚠ THE ONE GATE RULING A'S LOCK PASSES THROUGH (/simplify, altitude lens 2026-08-23).
+   *
+   * A door that names one RECORD states its answers instead of offering them, so every control
+   * that asks *which one?* must disappear under a lock. That rule was enforced in THREE textually
+   * distant places — this helper, the drive branch's hand-built player block, and the budget-item
+   * picker — each with its own condition and its own comment admitting the next branch would have
+   * to remember. Now every identity control is wrapped in this one call, so "what did the lock
+   * hide?" is a single grep, and a new branch that forgets is visible as the one picker not routed
+   * through it.
+   *
+   * ⚠ IDENTITY ONLY. Allocation — which installment a payment lands on — stays editable under a
+   * lock by the same ruling, so it is deliberately NOT wrapped.
+   */
+  function identityField(node: ReactNode): ReactNode {
+    return convLock ? null : node;
+  }
+
+  function convPickerField(opts: {
+    label: string;
+    error: string;
+    /** null = still loading. The EMPTY test runs on this list, so pass the filtered one. */
+    items: ReadonlyArray<unknown> | null;
+    loading: string;
+    empty: ReactNode;
+    select: ReactNode;
+    after?: ReactNode;
+  }) {
+    /* ⚠⚠ ONE RULE, EVERY BRANCH (owner ruling A, 2026-08-23). Under a lock the door already named
+       the player / the drive / the installment / the family, and the stated band at the top of the
+       form says so — a picker underneath repeating the question would be the second control the
+       ruling exists to remove, and re-answering it is the ghost save. Every branch's identity
+       question goes through this helper, so locking here locks all of them; a future branch that
+       hand-builds its own picker has to remember, which is what the drive's player block's own
+       guard is a note about. */
+    return identityField(
+      <div className={`${styles.field} ${styles.formGridFull}`}>
+        <label className={styles.label}>{opts.label}</label>
+        {opts.error ? <p className={styles.errorText}>{opts.error}</p>
+          : opts.items === null ? <p className={styles.formHint}>{opts.loading}</p>
+          : opts.items.length === 0 ? <p className={styles.formHint}>{opts.empty}</p>
+          : opts.select}
+        {opts.after}
+      </div>,
+    );
+  }
+
+  /** The shared amount field — writes `form.amount` so it SURVIVES a branch switch (frame C). */
+  function convAmountField(label: string, hint?: ReactNode) {
+    return (
+      <div className={styles.field}>
+        <label className={styles.label}>{label}</label>
+        <input
+          className={styles.input} type="number" min={0} step="0.01" placeholder="0.00"
+          value={form.amount}
+          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+        />
+        {hint}
+      </div>
+    );
+  }
+
+  /** The shared "How" — a dropdown, per the owner's form-field convention (2026-08-22), storing
+   *  the dues enum token. The options themselves are `DuesMethodSelect`, the ONE renderer of the
+   *  one method list (also the payout sheet's and the dues panel's). */
+  function convMethodField(key: 'duesMethod' | 'payoutMethod') {
+    return (
+      <div className={styles.field}>
+        <label className={styles.label}>How</label>
+        <DuesMethodSelect
+          className={styles.select}
+          value={conv[key]}
+          onChange={m => setConv(c => ({ ...c, [key]: m }))}
+        />
+      </div>
+    );
+  }
+
+  /** The shared note field — writes `form.notes` so a note SURVIVES a branch switch (frame C). */
+  function convNoteField(placeholder: string) {
+    return (
+      <div className={`${styles.field} ${styles.formGridFull}`}>
+        <label className={styles.label}>Note</label>
+        <input
+          className={styles.input}
+          value={form.notes}
+          onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+          placeholder={placeholder}
+        />
       </div>
     );
   }
@@ -2324,6 +3739,27 @@ function MoneyRecordsPanel({
     const line = (body: ReactNode) => (
       <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>{body}</p>
     );
+
+    /* ── Paying down a bill the team already owes (P2, owner ruling C2) ──────────────────────
+       ⚠ THE THIRD OF THE THREE SIGNALS that the coach picked the other kind of answer in the one
+       picker — the description field left, the installment row arrived, and this sentence changed
+       from "a new cost" to naming the bill and what it drops to. The owner accepted one field with
+       two outcomes on the strength of these three saying so before anything saves.
+       ⚠ THE FIGURES ARE THE STANDING'S, not a re-derivation: what is left is `remaining` minus what
+       is being paid, floored at zero, and the over-payment case is stated under the Amount field by
+       the same rule the bill's own door uses. */
+    if (payingBill) {
+      const left = Math.max(0, Math.round((payingBill.remaining - amount) * 100) / 100);
+      return line(payingBill.expense.paidByPlayerId
+        ? <><strong>When you save:</strong> no team cash moves — a family paid this direct, and what
+          the team owes them grows by {money} on Player Dues.</>
+        : <><strong>When you save: {money} leaves the team’s books</strong>
+          {form.paidDate ? <> on {fmtDate(form.paidDate)}</> : null}. {payingBill.name}{' '}
+          {left > 0.005
+            ? <>drops to <strong>{fmt(left)} still owing</strong>.</>
+            : <>is <strong>fully paid</strong>.</>}
+          {' '}You can undo it from the bill’s payment details.</>);
+    }
 
     // ── A commitment: the one form in the portal that moves no money ──
     if (isPayableForm) {
@@ -2494,10 +3930,28 @@ function MoneyRecordsPanel({
       && derivedKeys.has(taxonomyKey(form.budgetCategoryId || null, form.budgetItemId)),
     );
 
+    /* ⚠⚠ ONE FIELD, TWO KINDS OF ANSWER (owner ruling C2, 2026-08-23). On the "we paid for
+       something" branch this picker also offers the bills the team already owes, as its FIRST
+       group — so a coach never has to decide whether their payment is "a cost" or "a payable"
+       before the product will show them anything. Picking a bill turns the record into a payment
+       against it; picking an item creates a new cost, exactly as before. The group itself is built
+       once, in `spendLeadGroup` — see its header for why it is not built here. */
+    const offerBills = spendLeadGroup !== undefined;
+
+    /* Locked to a bill (a door on the Payables face or the register): the band above states which
+       one, so this field has nothing left to ask. Through the SAME gate as every other branch's
+       identity question — see `identityField`. */
+    if (payingBill) return identityField(field());
+
+    return field();
+
+    function field() {
     return (
       <div className={`${styles.field} ${styles.formGridFull}`}>
         <label className={styles.label}>
-          {entryKind === 'refund' ? 'What is it paying you back for? *' : 'What is this? *'}
+          {entryKind === 'refund' ? 'What is it paying you back for? *'
+            : offerBills ? 'What did this pay for? *'
+            : 'What is this? *'}
         </label>
         {/* ⚠⚠ THE SHARED PICKER, NOT TWO SELECTS (Money form P2, 2026-08-16). This was the ONE
             surface still asking the category and the item as two chained dropdowns while the Budget
@@ -2523,11 +3977,21 @@ function MoneyRecordsPanel({
           createItemMode="coach"
           allowCreateCategory
           manageHint="Rename or remove it later from Budget Plan → Manage our items — but it stays on this side."
+          /* The bills group (C2). What is still owing rides each row — it is the fact that makes
+             one worth choosing, and the reason a coach recognises their bill in a list of words. */
+          /* The bills group (C2), built once above — a fresh object here would be a new identity
+             on every keystroke and would defeat the picker's own memo. */
+          leadGroup={spendLeadGroup}
           /* ⚠ THE PRE-FILL NEVER OVERWRITES A COACH'S OWN WORDS. It lands only on a description that
              is empty, or one still holding the name of the item being switched AWAY from — text this
              control put there and nobody has touched. That test is `isItemLabel`, shared with the
              pill switch so the two cannot drift. */
-          onChange={v => setForm(f => ({
+          onChange={v => {
+            /* The mirror of `leadGroup.onPick`: choosing a WORD abandons the bill. Without this a
+               coach who picked a bill, changed their mind and picked an item would save a payment
+               against the bill with an item stapled to it. */
+            if (conv.spendExpenseId) setConv(c => ({ ...c, spendExpenseId: '', spendInstallmentId: '' }));
+            setForm(f => ({
             ...f,
             budgetCategoryId: v.categoryId,
             budgetItemId:     v.itemId ?? '',
@@ -2538,7 +4002,8 @@ function MoneyRecordsPanel({
             // its own from the item, so this can never be the thing they disagree about.
             category:         v.categoryName,
             description:      isItemLabel(f) ? v.itemName : f.description,
-          }))}
+            }));
+          }}
         />
         {/* Honest at entry time, exactly as the old category warning was — one level finer, and
             now describing a row the coach will actually see rather than a list they might not. */}
@@ -2557,6 +4022,7 @@ function MoneyRecordsPanel({
             check on `budgetItemId` stays, because the server's does. */}
       </div>
     );
+    }
   }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
@@ -2768,7 +4234,7 @@ function MoneyRecordsPanel({
                 });
               }}
             >
-              Record a payment
+              Record
             </button>
           )}
           {isOrg && (
@@ -2839,7 +4305,7 @@ function MoneyRecordsPanel({
                 });
               }}
             >
-              Record a payment
+              Record
             </button>
           )}
         </td>
@@ -2950,7 +4416,7 @@ function MoneyRecordsPanel({
               className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
               onClick={ev => { ev.stopPropagation(); openRecordPayment(record!, { installmentId: settle.installmentId, amount: settle.amount }); }}
             >
-              Record a payment
+              Record
             </button>
           )}
           {canWriteMoney && openRecord && !settle && (
@@ -3015,15 +4481,25 @@ function MoneyRecordsPanel({
   // otherwise open a sheet only the server would refuse.
   const expenseToolbarActions = canWriteMoney ? (
     <>
-      {/* ⚠ ONE ADD BUTTON PER TAB, AND EACH NOW NAMES ITS OUTCOME (Money split P1, 2026-08-16).
-          The plain "Add" was right while one screen could produce four different records and the
-          form's own switch made the choice; each tab holds one kind of record now, so the button
-          can say what pressing it makes — and on Payables it must, because "Add" on a tab full of
-          money owed reads as "add money", which is the exact confusion the split removes.
-          Transactions keeps the plain word: it still opens the three-answer form. */}
-      <button className={styles.btnPrimary} onClick={() => openAdd()}>
-        <Plus size={14} aria-hidden /> {onPayables ? 'Add a commitment' : 'Add'}
-      </button>
+      {/* ⚖⚖ TRANSACTIONS' PLAIN "Add" IS RETIRED; PAYABLES KEEPS ITS OWN (owner rulings, P2
+          2026-08-23), and the asymmetry is the ruling rather than an oversight.
+
+          Transactions' Add opened the recording conversation pre-answered for the tab — which is
+          exactly what the hub's **Record** button now does from every tab, one row up in the page
+          header. Two buttons, one act, a hand's width apart.
+
+          "Add a commitment" is NOT that. Record is for money that MOVED (ruling B2), and a
+          commitment is a PLAN — so this button stopped being a duplicate door the moment the
+          paid/owed fork left the conversation, and became the only way to make one. Its standing is
+          New Fundraiser's and Generate installments': a setup form for an expectation, on the
+          screen that expectation lives on. ⚠ Do not "finish the job" by retiring it too; there
+          would then be no door to a payment schedule anywhere in the product.
+          ⚠ Empty states keep their own Add on BOTH faces — standing rule, untouched. */}
+      {onPayables && (
+        <button className={styles.btnPrimary} onClick={() => openAdd({ kind: 'expense', timing: 'payable' })}>
+          <Plus size={14} aria-hidden /> Add a commitment
+        </button>
+      )}
       {ownMoneyTags.length > 0 && (
         <button className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
           <Settings2 size={14} aria-hidden /> Manage tags
@@ -3644,7 +5120,7 @@ function MoneyRecordsPanel({
                             installmentId: inst.id, amount: inst.remaining,
                           })}
                         >
-                          Record a payment
+                          Record
                         </button>
                       )}
                       {/* ⚠⚠ THE SCOPED DOOR (P4, S1–S7). Changing or removing ONE payment in a
@@ -3795,7 +5271,7 @@ function MoneyRecordsPanel({
                     className={styles.btnPrimary}
                     onClick={() => { const e = drawerBill.expense!; closeDrawer(); openRecordPayment(e); }}
                   >
-                    Record a payment
+                    Record
                   </button>
                 )}
               </div>
@@ -3832,12 +5308,29 @@ function MoneyRecordsPanel({
           Replaces the two "Add Expense" / "Add Payable" modals that used to sit here. The type is
           a control at the top when ADDING, and a stated fact when EDITING (owner ruling: type is
           set at creation — see the note beside the switch). */}
-      {formOpen && (
+      {/* ⚠ PORTALED — because the hub's Record button opens this form while the panel itself may
+          be mounted display:none under another tab; rendered inline, the modal would exist and be
+          invisible. ⚠⚠ INTO THE WARM MARKER, NEVER <body> (/review, 2026-08-23 — Critical): the
+          coach palette's custom properties hang off `[data-coach-warm-enabled]` (CoachPortalShell's
+          root) and inherit through the DOM, not the React tree — a body portal exits that scope
+          and the whole money form renders in the WRONG THEME inside a warm portal. globals.css's
+          own note about the help drawer documents exactly this trap. Body is only the fallback for
+          a mount with no shell around it. */}
+      {formOpen && createPortal(
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeForm)?.(); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
-              title={{ edit: copy.editTitle, add: 'Add' }[formMode]}
-              subtitle={formMode === 'add' ? 'Record money the team spent, or money that came in.' : undefined}
+              /* Three doors, three names. "Record money" is the conversation; "Add a commitment"
+                 is Payables' setup form, which this modal also is (B2); an edit says what it is
+                 editing. A commitment door titled "Record money" would be the product contradicting
+                 the ruling in its own header. */
+              title={formMode === 'edit' ? copy.editTitle
+                : isPayableForm ? 'Add a commitment'
+                : 'Record money'}
+              subtitle={formMode !== 'add' ? undefined
+                : isPayableForm ? 'Money the team owes, and when it is due'
+                : convBranch ? CONV_BRANCH[convBranch].name
+                : 'Write down money that moved — it gets filed for you.'}
               onClose={closeForm}
             />
             <div className={styles.formGrid}>
@@ -3854,86 +5347,46 @@ function MoneyRecordsPanel({
                   Payables holds exactly one kind of record, so the answer is already known by the
                   time the form opens — and a commitment is ALWAYS money out, which is why income
                   never appears here. A scheduled income is a budget line; the plan side models it. */}
-              {!editing && !editingMoneyIn && isPayableForm ? (
-                <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
-                  {copy.statedFact}
-                </p>
-              ) : !editing && !editingMoneyIn ? (
-                /* ── TWO PILLS AND A TICK BOX (owner ruling 2026-08-16, form proposal b618c784) ──
-                    This replaced a three-option switch — A cost · Income · Money back on something —
-                    which asked a coach to hold three ideas at once when only two of them are
-                    directions. A refund is not a third kind of money; it is money that came back on
-                    something the team already paid for, which is why it rides on the EXPENSE pill:
-                    the tick flips which way the money moves and leaves the list of words alone.
-                    ⚠ THE DATA STILL HAS THREE, and that is deliberate, not a leak. `expense`,
-                    `income` and `refund` remain three different records with three different
-                    effects — one adds a cost, one adds an arrival, one REDUCES the row it repays.
-                    Only the control changed. */
-                <div className={styles.formGridFull}>
-                  <div className={styles.kindSwitch} role="radiogroup" aria-label="Is this money out or money in?">
-                    {([
-                      { side: 'out' as const, name: 'Expense', sub: 'Money the team spent' },
-                      { side: 'in'  as const, name: 'Income',  sub: 'Money the team earned or was given' },
-                    ]).map(p => (
-                      <button
-                        key={p.side}
-                        type="button"
-                        role="radio"
-                        aria-checked={formSide === p.side}
-                        className={`${styles.kindSwitchOption} ${formSide === p.side ? styles.kindSwitchOptionOn : ''}`}
-                        /* ⚠ SWITCHING KEEPS WHAT HAS BEEN TYPED. Amount and the note are common to
-                           both sides and are exactly the fields already filled in when a coach
-                           realises they picked wrong — clearing them would make the switch as
-                           expensive as cancelling, which is what it exists to replace.
-                           ⚠ THE ITEM IS THE ONE THING THAT CANNOT SURVIVE (mig 246). The pill
-                           decides which words are choosable, so a word carried across from the
-                           other side would sit in the picker as a selection the coach can see and
-                           can never re-pick. It clears, and the picker asks again. */
-                        onClick={() => setEntrySide(p.side)}
-                      >
-                        <span className={styles.kindName}>{p.name}</span>
-                        <span className={styles.kindSub}>{p.sub}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* ⛔ "PROMISED, NOT PAID YET" IS GONE FROM THIS FORM (Money split P1, ruled
-                      2026-08-16). It was a timing question inside a form that now records only
-                      what HAPPENED — and it was the seam the whole redesign turned on: the same
-                      modal derived a hidden mode from whichever sub-tab opened it, so a coach
-                      recording last night's diamond rental and a coach scheduling March's
-                      tournament entry met one screen wearing two meanings. A commitment has its
-                      own door on Payables now, and its deposit/balance pair and due dates went
-                      with it. What is left here is a single question: what happened, and when. */}
-                  <div className={styles.kindTickRow}>
-                    {/* ⚠⚠ RENDERED ON BOTH PILLS, LIVE ON ONLY ONE — and that is the fourth cell of
-                        the grid nobody had named. A refund of money the team RECEIVED (handing a
-                        family back a registration fee) is money going out against an income word,
-                        and no such record exists in this product. Hiding the tick under Income
-                        would leave a coach who opened the Money in door to log a refund — the
-                        obvious door, since a refund IS money arriving — with no control and no
-                        clue; disabling it with the reason turns a dead end into a direction. */}
-                    <label className={`${styles.formCheck} ${formSide === 'in' ? styles.formCheckOff : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={entryKind === 'refund'}
-                        disabled={formSide === 'in'}
-                        onChange={e => setFormKind(e.target.checked ? 'refund' : 'expense')}
-                      />
-                      This is a refund
-                    </label>
-                    {formSide === 'in' && (
-                      <p className={styles.kindTickWhy}>
-                        A refund goes against what the team paid — choose <strong>Expense</strong>.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
+              {/* ⚖ THE PILLS AND THE REFUND TICK ARE GONE (money centralization P1, 2026-08-22).
+                  The Expense/Income pills + "This is a refund" tick asked the coach to hold a
+                  direction and a flag; the conversation asks the ONE question in coach words —
+                  "What happened?" — and refund is a first-class answer ("Money back on something
+                  we paid"). What the tick's design protected survives in `selectBranch`: the data
+                  still has three ledger kinds, an item still cannot survive a side switch
+                  (mig 246), and typed work still carries across a switch (frame C).
+                  ⚠ EDIT MODE IS UNTOUCHED: a saved record never switches kind. */}
+              {/* ⚠⚠ THE COMMITMENT DOOR ASKS NO "WHAT HAPPENED?" EITHER (owner ruling B2,
+                  2026-08-23). Payables' "Add a commitment" is a SETUP form for a plan — the same
+                  standing as New Fundraiser or Generate installments — and the conversation is for
+                  money that MOVED. Offering the eight sentences here would put the seven answers
+                  that record real money on a door that records none of them, and would re-open the
+                  paid/owed fork through the back way. So it states its kind, exactly as an edit
+                  does, and the modal titles itself accordingly. */}
+              {formMode === 'edit' ? (
                 <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
                   {copy.statedFact} Wrong kind? Delete this and add it again.
                 </p>
+              ) : isPayableForm ? (
+                <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
+                  {copy.statedFact} Once it is paid, record the payment against it — from this bill’s
+                  row or from <strong>Record</strong>.
+                </p>
+              ) : (
+                renderWhatField()
               )}
+
+              {/* ⚠ `!isPayableForm` — the commitment door has no unanswered question to promise an
+                  answer to, and "choose above" over a form with no chooser above it would be the
+                  screen describing a control that is not there (B2). */}
+              {formMode === 'add' && convBranch === null && !isPayableForm ? (
+                /* Frame A's quiet promise — the cold open shows the question, not a form. */
+                <p className={`${styles.formGridFull} ${styles.convGhostNote}`}>
+                  Choose above — the rest of the form fills in from your answer.
+                </p>
+              ) : formMode === 'add' && convBranch !== null && CONV_DIRECT.has(convBranch) ? (
+                renderConvBody()
+              ) : (
+              <>
 
               {/* ⚠ THE BUDGET LINE IS ASKED BEFORE THE DESCRIPTION (owner ruling 2026-08-15), and
                   the order is the feature. Choosing a line NAMES the record — the description
@@ -3947,6 +5400,13 @@ function MoneyRecordsPanel({
                   to reach an expense, a payable, and every edit of either. */}
               {budgetItemField()}
 
+              {/* ⚠ A BILL ALREADY HAS A DESCRIPTION, so paying one down does not ask for another
+                  (owner ruling C2, 2026-08-23). This is the second of the three signals that the
+                  coach picked the other kind of answer — the field they were about to type into
+                  disappears, the installment row below arrives, and the consequence line names the
+                  bill's new balance. Anything they had typed is kept in state, so changing their
+                  mind back to an item restores it rather than starting them over. */}
+              {!payingBill && (
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description{isMoneyInForm ? '' : ' *'}</label>
                 <input
@@ -3972,6 +5432,55 @@ function MoneyRecordsPanel({
                     five places and a paid one can become impossible to reverse cleanly. Pre-filling
                     it from the budget line is the answer to the typing, not making it optional. */}
               </div>
+              )}
+
+              {/* ⚖⚖ THE PAID / OWED FORK IS GONE, AND SO IS THE SCHEDULE EDITOR BEHIND IT (owner
+                  ruling B2, 2026-08-23 — money centralization P2). It stood here as mockup 02 drew
+                  it: "Has it been paid?", with "Not yet — we owe it" opening the plan editor inside
+                  this modal. **RECORD IS FOR MONEY THAT MOVED.** A commitment is a PLAN, and this
+                  plan's own §2 puts "commitment schedules" on its list of expectations that stay on
+                  their own screens — beside budgets, dues schedules and drive definitions, none of
+                  which the conversation ever absorbed. The fork was the single exception, and
+                  exceptions are how one vocabulary becomes two again.
+
+                  ⚠ THREE DOORS TO ONE OUTCOME BECAME ONE. This form could produce an unpaid thing
+                  three ways — this fork, clearing Date paid, and typing a future date (refused,
+                  with a hop). Date paid is REQUIRED now and the hint that invited the blank is
+                  gone, so the only door to a commitment is Payables' own "Add a commitment", which
+                  KEEPS ITS BUTTON for exactly that reason. Only Transactions' plain "Add" retired.
+
+                  ⚠ WHAT REPLACED IT is not a smaller fork but no fork at all: the picker above
+                  offers the bills the team owes as its first group (C2), so "we paid for something"
+                  covers paying one down — which this modal could not do at all before.
+
+                  ⚠ THE FORM STILL HAS A COMMITMENT MODE. Payables' Add opens it, and the
+                  future-date refusal hands a coach into it with their typing intact. What was
+                  deleted is the CONVERSATION's route into a plan, not the plan's own form. */}
+
+              {/* Which piece the money lands on — the coach's override for where the pour STARTS
+                  (R3), offered exactly as the bill's own payment door offers it. Most payments
+                  leave it alone and the money fills the earliest unpaid piece, spilling forward.
+                  ⚠ ALLOCATION, NOT IDENTITY: this stays editable even at a door that locks the
+                  answers around it (owner ruling A, 2026-08-23) — the coach may have clicked one
+                  installment and be paying a different one. */}
+              {payingBill && payingBill.standing.installments.length > 1 && (
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label}>For installment</label>
+                  <select
+                    className={styles.select}
+                    value={conv.spendInstallmentId}
+                    onChange={e => setConv(c => ({ ...c, spendInstallmentId: e.target.value }))}
+                  >
+                    <option value="">Wherever it&rsquo;s owed (oldest first)</option>
+                    {payingBill.standing.installments.map(inst => (
+                      <option key={inst.id} value={inst.id}>
+                        Installment {inst.installmentNumber} — {fmt(inst.amount)} due {fmtDate(inst.dueDate)}
+                        {inst.state === 'settled' ? ' (settled)' : inst.applied > 0 ? ` (${fmt(inst.remaining)} left)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* ⚖ THE LOCK IS GONE (owner ruling 2026-08-16). A posted figure used to render
                   read-only with "delete this and enter it again", because nothing could carry a
@@ -4000,6 +5509,21 @@ function MoneyRecordsPanel({
                     2026-08-16, §3: one line, above the buttons, every state). It sat here as a
                     fourth copy of the same idea, worded differently from the other three — which is
                     how one of them ended up contradicting the screen it was on. */}
+                {/* ⚠ R6 — MORE THAN WHAT IS OWED SAVES, and says so instead of refusing: the money
+                    genuinely left, and a book that refuses reality stops matching the bank
+                    statement. Word for word the sentence the bill's own payment door gives, because
+                    it is now the same act through a different door. */}
+                {(() => {
+                  if (!payingBill) return null;
+                  const typed = parseFloat(form.amount);
+                  if (isNaN(typed)) return null;
+                  const overBy = Math.round((payingBill.standing.paid + typed - payingBill.standing.total) * 100) / 100;
+                  return overBy > 0 ? (
+                    <p className={styles.formHint}>
+                      That&rsquo;s {fmt(overBy)} more than what&rsquo;s owed. It still saves — the record will read &ldquo;{fmt(overBy)} over&rdquo;.
+                    </p>
+                  ) : null;
+                })()}
               </div>
               )}
 
@@ -4027,9 +5551,15 @@ function MoneyRecordsPanel({
               {!isMoneyInForm && !isPayableForm
                 && (!editing || (editingStanding?.payments.length ?? 0) === 1) && (
                 <div className={styles.field}>
-                  {/* ⚠ NO ASTERISK when recording a cost (/review, 2026-08-16): clearing it is the
-                      documented way to record something not settled yet. */}
-                  <label className={styles.label}>Date paid</label>
+                  {/* ⚖ THE ASTERISK IS BACK, AND IT MEANS IT (owner ruling B2, 2026-08-23). It was
+                      dropped on 2026-08-16 because clearing the field was "the documented way to
+                      record something not settled yet" — a second, invisible door to a commitment,
+                      which is exactly what this ruling closes. Record is for money that moved, so
+                      it has a date; anything not paid is a commitment, and commitments are made on
+                      Payables. An EDIT of a saved record is unchanged. */}
+                  <label className={styles.label}>
+                    Date paid{formMode === 'add' ? <span className={styles.labelRequired}> *</span> : null}
+                  </label>
                   <input
                     className={styles.input}
                     type="date"
@@ -4037,25 +5567,32 @@ function MoneyRecordsPanel({
                     value={form.paidDate}
                     onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
                   />
-                  {/* ⚠ THE HINT DEPENDS ON WHO PAID (/review, 2026-08-16). "Clear this and it waits
-                      as unpaid" is FALSE once Paid by names a family: that cost was settled by them,
-                      the server always creates it paid — so the field dates their credit rather
-                      than deciding whether one is owed. */}
+                  {/* ⚠ THE HINT DEPENDS ON WHO PAID (/review, 2026-08-16). "The day the family paid
+                      it" is the out-of-pocket case: the server always creates such a cost paid, so
+                      the field dates their credit rather than deciding whether one is owed.
+                      ⚖ THE "clear this and it waits as an unpaid cost" HALF IS DELETED (owner
+                      ruling B2, 2026-08-23) — it was the invisible third door to a commitment, and
+                      the field is required now. */}
                   <p className={styles.formHint}>
                     {form.paidByPlayerId
                       ? 'The day the family paid it. The team owes them from that date.'
-                      : 'When the money actually left. Not paid yet? Clear this and it waits as an '
-                        + 'unpaid cost until you record its payment.'}
+                      : 'The day the money actually left.'}
                   </p>
                   {/* ⚠⚠ THE REFUSAL CARRIES THE DOOR, which is the whole reason it is a rendered
                       element rather than a thrown sentence. Telling a coach "that hasn't happened
                       yet" and leaving them to find Payables themselves is a dead end wearing a
                       polite face — the link takes the amount and the item they already typed
-                      straight into the commitment form. */}
+                      straight into the commitment form.
+                      ⚠ AND IT IS THE ONLY WAY INTO A PLAN FROM HERE (owner ruling B2, 2026-08-23).
+                      With the paid/owed fork deleted this is not a shortcut past a question the
+                      form asks — it is the form telling a coach they are at the wrong door and
+                      opening the right one without making them retype anything. The record still
+                      lands on Payables, which is the whole point; what it no longer does is let a
+                      coach reach a schedule editor without being told they have changed act. */}
                   {futureDateRefused && (
                     <p className={`${styles.formHint} ${styles.formHintConsequence}`} role="alert">
-                      <strong>That hasn’t happened yet</strong> — money can only be recorded once it
-                      has moved. Agreed to pay it later?{' '}
+                      <strong>That hasn’t happened yet</strong> — Record is for money that has
+                      already moved. Agreed to pay it later?{' '}
                       <button
                         type="button"
                         className={styles.linkBtn}
@@ -4078,6 +5615,12 @@ function MoneyRecordsPanel({
                           resetForm();
                           setFormKind('expense');
                           setFormTiming('payable');
+                          /* ⚖ THE CONVERSATION'S ANSWER DOES NOT TRAVEL ANY MORE (owner ruling B2).
+                             It used to stay "we paid for something, on the owed side of its fork";
+                             there is no such side now. The coach has left the conversation and is
+                             standing in Payables' commitment form — which states its own kind, the
+                             way every edit does — so `convBranch` stays null and the modal retitles
+                             itself accordingly. */
                           setForm(carried);
                           setFormPayee(carriedPayee);
                           setFormTags(carriedTags);
@@ -4086,9 +5629,10 @@ function MoneyRecordsPanel({
                           setFormOpen(true);
                         }}
                       >
-                        Add it as a commitment instead
+                        Put it on Payables instead
                       </button>
-                      {' '}— it joins your payment schedule, and nothing moves until you record a payment against it.
+                      {' '}— your amount, item and description come with you. It joins your payment
+                      schedule, and nothing moves until you record a payment against it.
                     </p>
                   )}
                 </div>
@@ -4110,27 +5654,17 @@ function MoneyRecordsPanel({
                   />
                 </div>
               )}
-              {entryKind === 'refund' && (
-                <div className={styles.field}>
-                  <label className={styles.label}>Who paid it back</label>
-                  <select
-                    className={styles.select}
-                    value={form.receivedFrom}
-                    onChange={e => setForm(f => ({ ...f, receivedFrom: e.target.value }))}
-                  >
-                    <option value="">Not saying</option>
-                    {MONEY_IN_SOURCES.map(s => (
-                      <option key={s} value={s}>{MONEY_IN_SOURCE_LABEL[s]}</option>
-                    ))}
-                  </select>
-                  {/* ⚠ A LABEL, NEVER A BEHAVIOUR (money-back plan §4.1). In particular "A family"
-                      does not create, settle or touch any dues credit — that is what the cost
-                      form's "Paid by" does, and it is the opposite event. */}
-                  <p className={styles.formHint}>
-                    Just a note on the record. It changes nothing about anyone&apos;s dues.
-                  </p>
-                </div>
-              )}
+              {/* ⚖⚖ "WHO PAID IT BACK" IS GONE (money centralization P2 §2.4, built 2026-08-23).
+                  A dropdown offering club / vendor / sponsor / a family, whose own hint had to say
+                  "just a note on the record — it changes nothing about anyone's dues". Two fields
+                  wore one sentence and only the other one moved money: "A family" here created,
+                  settled and touched nothing, while the cost form's "Paid by" a fold away mints a
+                  real reimbursement credit. A coach reading them as the same question filed money
+                  against a family that never learned of it.
+
+                  ⚠ THE COLUMN AND THE ROUTE ARE UNTOUCHED. Existing values still load, still save
+                  on an edit and still export — this removes a way to SET the label, not the label.
+                  Nothing else in the product renders it. */}
 
               {/* ── A commitment's schedule — 1..n dated pieces (Payables Rebuild P4) ─────────
                   ⚠⚠ THIS REPLACED THE DEPOSIT/BALANCE PAIR AND THE LONE "Due date" BESIDE IT, and
@@ -4232,8 +5766,12 @@ function MoneyRecordsPanel({
               {/* ── What saving will DO — one line, every state (ruling 2026-08-16 §3) ────────
                   ⚠ LAST IN THE GRID, DIRECTLY ABOVE THE BUTTONS, and that placement is the ruling
                   rather than a layout preference: it is the sentence a coach reads in the instant
-                  before they commit, and it is what makes folding `Paid by` away safe. */}
+                  before they commit, and it is what makes folding `Paid by` away safe.
+                  (The conversation's four home-tab branches state their own consequence inside
+                  `renderConvBody`, same class, same position — one grammar, two renderers.) */}
               {consequenceLine()}
+              </>
+              )}
             </div>
 
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
@@ -4316,7 +5854,12 @@ function MoneyRecordsPanel({
                   <Trash2 size={13} aria-hidden /> Delete
                 </button>
               )}
-              <button className={styles.btnGhost} onClick={closeForm}>Cancel</button>
+              {/* ⚠ DISABLED WHILE SAVING (/review, 2026-08-23). The Record-a-payment modal P2
+                  deleted guarded its own Cancel this way, and routing bill payments through this
+                  shared footer would have quietly dropped that: click Save, then Cancel while the
+                  POST is in flight, and the form closes as though nothing happened while the
+                  payment lands a moment later. Every save path through this footer moves money. */}
+              <button className={styles.btnGhost} disabled={saving || deleting} onClick={closeForm}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving || deleting} onClick={saveRecord}>
                 {/* ⚠ ONE WORD FOR ADD AND EDIT (owner ruling 2026-08-16). It used to name the
                     outcome — "Add Expense", "Add Money Back", "Save changes" — which was right while
@@ -4328,116 +5871,20 @@ function MoneyRecordsPanel({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.querySelector('[data-coach-warm-enabled]') ?? document.body,
       )}
 
-      {/* ── Record a payment (Payables Rebuild P2) — the door that replaced Mark paid ─────────
-          Its own small modal: date, amount, method, note, and (optionally) which installment. A
-          part payment is the ordinary case now, an over-payment saves and is stated (R6), and the
-          server applies the money oldest-piece-first unless the picker says otherwise (R3). */}
-      {paying && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => !payingBusy && setPaying(null))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader
-              title="Record a payment"
-              subtitle={paying.expense.description}
-              onClose={() => !payingBusy && setPaying(null)}
-            />
-            <div className={styles.formGrid}>
-              <div className={styles.field}>
-                <label className={styles.label}>Date paid *</label>
-                <input
-                  className={styles.input}
-                  type="date"
-                  max={tournamentToday()}
-                  value={paying.paidDate}
-                  onChange={e => setPaying(p => p && ({ ...p, paidDate: e.target.value }))}
-                />
-                <p className={styles.formHint}>
-                  The day the money actually left — back-date it and the cost lands in that month.
-                </p>
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Amount *</label>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={paying.amount}
-                  onChange={e => setPaying(p => p && ({ ...p, amount: e.target.value }))}
-                  placeholder="0.00"
-                />
-                {/* ⚠ R6 — MORE THAN WHAT IS OWED SAVES. The sentence states it instead of a
-                    refusal: the money genuinely left, and a book that refuses reality stops
-                    matching the bank statement. */}
-                {(() => {
-                  const standing = standings[paying.expense.id];
-                  const typed = parseFloat(paying.amount);
-                  if (!standing || isNaN(typed)) return null;
-                  const overBy = Math.round((standing.paid + typed - standing.total) * 100) / 100;
-                  return overBy > 0 ? (
-                    <p className={styles.formHint}>
-                      That’s {fmt(overBy)} more than what’s owed. It still saves — the record will read “{fmt(overBy)} over”.
-                    </p>
-                  ) : null;
-                })()}
-              </div>
-              {/* The override (R3): where the pour STARTS. Most payments leave it on the default —
-                  money fills the earliest unpaid piece and spills forward on its own. */}
-              {(standings[paying.expense.id]?.installments.length ?? 0) > 1 && (
-                <div className={styles.field}>
-                  <label className={styles.label}>For installment</label>
-                  <select
-                    className={styles.select}
-                    value={paying.installmentId ?? ''}
-                    onChange={e => setPaying(p => p && ({ ...p, installmentId: e.target.value || null }))}
-                  >
-                    <option value="">Wherever it’s owed (oldest first)</option>
-                    {standings[paying.expense.id]!.installments.map(inst => (
-                      <option key={inst.id} value={inst.id}>
-                        Installment {inst.installmentNumber} — {fmt(inst.amount)} due {fmtDate(inst.dueDate)}
-                        {inst.state === 'settled' ? ' (settled)' : inst.applied > 0 ? ` (${fmt(inst.remaining)} left)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div className={styles.field}>
-                <label className={styles.label}>Payment Method</label>
-                <PaymentMethodCombobox
-                  methodsApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payment-methods`}
-                  value={paying.method}
-                  onChange={v => setPaying(p => p && ({ ...p, method: v }))}
-                />
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Note</label>
-                <input
-                  className={styles.input}
-                  value={paying.note}
-                  onChange={e => setPaying(p => p && ({ ...p, note: e.target.value }))}
-                  placeholder="e.g. Cheque no. 114"
-                />
-              </div>
-              {/* One line, above the buttons, saying what saving DOES — the same rule the money
-                  form follows, with the out-of-pocket case telling the truth about whose money. */}
-              <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
-                {paying.expense.paidByPlayerId
-                  ? <><strong>When you save:</strong> no team cash moves — a family paid this direct, and what the team owes them grows by this amount on Player Dues.</>
-                  : <><strong>When you save:</strong> {fmt(parseFloat(paying.amount) || 0)} leaves the team’s books on the date above. You can undo it from the commitment’s payment details.</>}
-              </p>
-              {payingError && <p className={`${styles.errorText} ${styles.formGridFull}`} role="alert">{payingError}</p>}
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} disabled={payingBusy} onClick={() => setPaying(null)}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={payingBusy} onClick={submitPayment}>
-                {payingBusy ? 'Recording…' : 'Record payment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ⚖⚖ THE RECORD-A-PAYMENT MODAL IS GONE (money centralization P2, 2026-08-23). It stood
+          here from the Payables Rebuild as its own small window — date, amount, method, note, which
+          installment — and it was the last of the five money forms this project set out to merge.
+          Every one of those fields is a field the ONE conversation already asks, in the same order
+          and the same words, and the act is the same act: "we paid for something", against a bill
+          the team already owes (owner ruling C2). Its doors open that form now, locked to the bill
+          (ruling A) with the installment override still editable, and it writes through the very
+          same payments route this modal did — see `openRecordPayment` and `saveBillPayment`.
+          ⚠ NOTHING ABOUT UNDO CHANGED: a recorded payment is still reversed from the bill's own
+          payment details, which is where a coach reads what has been paid. */}
 
       {/* ── Chunk H2 — the payables importer (write-gated, like every other write door) ── */}
       {importOpen && canWriteMoney && (

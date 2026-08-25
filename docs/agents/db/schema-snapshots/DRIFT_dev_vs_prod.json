@@ -1,9 +1,9 @@
 {
-  "generated": "2026-08-23",
-  "total": 167,
+  "generated": "2026-08-25",
+  "total": 168,
   "counts": {
     "tables": 8,
-    "columns": 77,
+    "columns": 78,
     "indexes": 35,
     "constraints": 37,
     "rls": 10
@@ -243,6 +243,10 @@
     },
     {
       "key": "column:only-dev:pitch_page_pulls.updated_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_entries.received_date",
       "sig": ""
     },
     {

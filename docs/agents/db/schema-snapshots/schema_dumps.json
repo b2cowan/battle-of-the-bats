@@ -10226,6 +10226,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_fundraiser_entries",
+        "pos": 14,
+        "column_name": "received_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_fundraisers",
         "pos": 1,
         "column_name": "id",

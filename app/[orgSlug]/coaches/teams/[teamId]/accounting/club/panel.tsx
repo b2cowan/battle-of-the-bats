@@ -183,8 +183,8 @@ function ClubExplainer() {
           <h4><ArrowUpRight size={13} aria-hidden /> What they bill you</h4>
           <p>
             Your club&apos;s <strong>owner or treasurer</strong> splits a shared cost across its teams.
-            Your share arrives here already divided into instalments with due dates — file it under one
-            of your own budget words and mark each instalment paid as you pay it.
+            Your share arrives here already divided into installments with due dates — file it under one
+            of your own budget words and mark each installment paid as you pay it.
           </p>
           <p className={styles.moneyKindEgs}>Field and diamond fees · league insurance · association dues</p>
         </div>
@@ -479,10 +479,10 @@ export function ClubPanel({
         { method: 'PATCH' },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error ?? 'Failed to mark this instalment paid.');
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to mark this installment paid.');
       await refreshAfterWrite();
     } catch (e: any) {
-      setActionError(e.message ?? 'Failed to mark this instalment paid.');
+      setActionError(e.message ?? 'Failed to mark this installment paid.');
     } finally {
       setMarking(prev => ({ ...prev, [inst.id]: false }));
     }
@@ -685,7 +685,7 @@ export function ClubPanel({
               <span className={styles.clubBandSub}>
                 {standing.owedCount === 0
                   ? 'nothing outstanding'
-                  : `${standing.owedCount} instalment${standing.owedCount === 1 ? '' : 's'}`}
+                  : `${standing.owedCount} installment${standing.owedCount === 1 ? '' : 's'}`}
                 {standing.overdueCount > 0 && (
                   <> · <span className={styles.clubBandOverdue}>
                     <AlertTriangle size={11} aria-hidden /> {standing.overdueCount} overdue
@@ -856,7 +856,7 @@ export function ClubPanel({
                               const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                               return (
                                 <tr key={inst.id} className={styles.tr}>
-                                  <td className={styles.td} data-label="Instalment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
+                                  <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
                                   <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
                                   <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                     {fmtDate(inst.dueDate)}
@@ -885,7 +885,23 @@ export function ClubPanel({
                                         disabled={!!marking[inst.id]}
                                         onClick={() => markPaid(split, inst)}
                                       >
-                                        {marking[inst.id] ? '…' : 'Mark paid'}
+                                        {/* ⚖ RENAMED FROM "Mark paid" (owner ruling, money
+                                            centralization P2 gate 2026-08-23) — the same call
+                                            Player Dues made on 2026-08-14, and for the same
+                                            reason: this button is not a flag. It RECORDS a
+                                            payment — the server derives the amount, the date and
+                                            the description, and the money shows on the register
+                                            like any other. "Mark paid" described the world before
+                                            there were payment records.
+                                            ⚠⚠ AND IT STAYS ONE TAP. P2 re-pointed every other
+                                            money door at the one conversation; this one was
+                                            deliberately left alone. A club installment is
+                                            FIELDLESS by design — there is nowhere to put an
+                                            amount, a method or a note — so opening a form would
+                                            add a step and ask nothing, which is exactly what the
+                                            "not one tap slower" rule forbids. Same standing as
+                                            Player Dues' "Record as paid" one-taps. */}
+                                        {marking[inst.id] ? '…' : 'Record as paid'}
                                       </button>
                                     )}
                                   </td>
@@ -1039,7 +1055,7 @@ export function ClubPanel({
               </div>
               <p className={`${styles.formGridFull} ${styles.formHint} ${styles.formHintConsequence}`}>
                 {filingItem?.itemId
-                  ? <>Every instalment of this bill will report under <strong>{filingItem.categoryName} · {filingItem.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
+                  ? <>Every installment of this bill will report under <strong>{filingItem.categoryName} · {filingItem.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
                   : <>Until this bill is filed under one of your budget words, it won&apos;t appear on Budget vs. Actual at all.</>}
               </p>
               {filingError && <p className={`${styles.errorText} ${styles.formGridFull}`}>{filingError}</p>}

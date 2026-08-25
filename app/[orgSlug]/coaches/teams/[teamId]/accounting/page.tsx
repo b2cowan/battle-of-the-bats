@@ -1,13 +1,16 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, use, type ComponentType } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, type ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Plus } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachTabBar from '@/components/coaches/CoachTabBar';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
-import { MoneyRefreshProvider } from '@/lib/coach-money-refresh';
+import { MoneyRefreshProvider, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
+import {
+  RecordMoneyProvider, type RecordMoneyIntent, type ConversationBranch,
+} from '@/lib/coach-record-money';
 import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import { legacyMoneyAddress, type CoachMoneySection } from '@/lib/coach-money-links';
 import OverviewDashboard from './OverviewDashboard';
@@ -61,6 +64,49 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
 // (lib/coach-money-links.ts). Derived, not restated: two hand-copied unions is how a renamed
 // tab compiles clean in one file and 404s from the other.
 type SectionId = 'overview' | CoachMoneySection;
+
+/**
+ * ⚠⚠ WHAT **Record** ARRIVES ANSWERED WITH, PER TAB (owner ruling, 2026-08-23).
+ *
+ * The button is the same button everywhere; what changes is whether the screen behind it makes an
+ * honest guess. Standing on Player Dues, "a family paid their dues" is what a coach reaching for
+ * Record almost always means — so the form opens there and they can change it, because **a tab is
+ * a guess, not a record** (the other half of ruling A: a door that names one RECORD locks; a door
+ * that names a SCREEN only suggests).
+ *
+ * ⚠ THREE TABS DELIBERATELY GUESS NOTHING. Overview is the season, Budget Plan is a plan and
+ * Budget vs. Actual is a report — none of them is about one kind of event, so Record opens on the
+ * question, exactly as it always has from Overview.
+ *
+ * ⚠ Payables answers "we paid for something" — NOT "add a commitment". Record is for money that
+ * moved (owner ruling B2); the bills the team owes are the first group in that branch's own picker,
+ * so pressing Record on Payables lands one field away from paying one down. Creating a commitment
+ * is what that tab's own "Add a commitment" button is for, and it keeps it.
+ */
+const RECORD_BRANCH_BY_SECTION: Partial<Record<SectionId, ConversationBranch>> = {
+  dues:         'dues',
+  fundraisers:  'drive',
+  club:         'club',
+  transactions: 'spend',
+  payables:     'spend',
+};
+
+/**
+ * Re-reads the summary when any money write bumps the shared revision (/review, 2026-08-23 —
+ * Medium). The summary feeds the Record chooser's LIVE HINTS ("1 family in credit", "$500
+ * owed"), and without this a coach emptying the Sunday-night pile from the one door — the exact
+ * workflow the button exists for — read pre-write figures on every hint after the first save.
+ * A child component because the page renders the provider and so cannot consume it itself;
+ * skips the mount-time value (the page's own mount load covers it), and the re-read is QUIET —
+ * a background refresh must never evict what a coach is doing (this page's own rule).
+ */
+function MoneySummaryRevisionBridge({ onBump }: { onBump: () => void }) {
+  /* The shared hook owns the mount-skip and its StrictMode reasoning — see
+     `useOnMoneyRevisionBump`. This component exists only because the page RENDERS the provider
+     and so cannot consume it itself. */
+  useOnMoneyRevisionBump(onBump);
+  return null;
+}
 
 export default function CoachesAccountingPage({
   params: paramsPromise,
@@ -163,23 +209,73 @@ export default function CoachesAccountingPage({
     return `${base}/accounting${qs ? `?${qs}` : ''}`;
   }
 
+  /* ── The one Record door (money centralization P1, approved 2026-08-22) ─────────────────────
+     The conversation itself lives in the shared money form (expenses/panel.tsx) — grown, not
+     forked. This button is its hub-level door: pressing it mounts the Transactions panel if it
+     has never been visited (hidden — the tab does NOT change under the coach) and bumps the
+     nonce the panel's transactions face listens for. The summary rides the same context so the
+     chooser's live hints read data this page already loaded — never a fresh per-open probe.
+     ⚠ Above the loading/access early returns with the rest of the hooks (rules-of-hooks). */
+  const [recordNonce, setRecordNonce] = useState(0);
+  const [recordIntent, setRecordIntent] = useState<RecordMoneyIntent | null>(null);
+  /**
+   * The one way in, for every door (P2). The header button calls it with a tab-shaped guess; the
+   * doors on other panels — a family's row, a drive's row — call it with the record they name.
+   * ⚠ ONE CHANNEL, NOT TWO. The dues and fundraiser panels cannot reach the money form's own
+   * functions, and a second wire for them is how two ways to open one form start to drift.
+   */
+  const requestRecord = useCallback((intent?: RecordMoneyIntent) => {
+    setVisited(v => v.has('transactions') ? v : new Set(v).add('transactions'));
+    // Set BEFORE the nonce so the panel, reading both at the same render, can never see a new
+    // nonce beside the previous request's intent.
+    setRecordIntent(intent ?? null);
+    setRecordNonce(n => n + 1);
+  }, []);
+  const recordSignal = useMemo(
+    () => ({ summary, openNonce: recordNonce, intent: recordIntent, request: requestRecord }),
+    [summary, recordNonce, recordIntent, requestRecord],
+  );
+
+  /**
+   * ⚠⚠ THE LAST RESPONSE TO ARRIVE MUST NOT WIN (/review, 2026-08-23 — the same defect the Dues
+   * panel and the register each carry their own guard against).
+   *
+   * This read now has THREE triggers: mount, coming back to Overview, and — new in P2 — the
+   * revision bridge, which fires on every money write anywhere in the hub. And P2 is what made
+   * writes common here: a coach emptying a Sunday-night pile records from one door, over and over.
+   * Two overlapping reads mean a slow earlier one can land last and replace fresh figures with
+   * stale ones — the Record chooser's live hints and Overview's tiles silently reverting to
+   * pre-write numbers, with nothing on screen to say so.
+   *
+   * ⚠ A ref, not state: bumping a counter must never itself cause a render.
+   */
+  const summarySeq = useRef(0);
   const load = useCallback(async (quiet = false) => {
     if (!quiet) { setLoading(true); setError(''); }
+    const seq = ++summarySeq.current;
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      setSummary(await res.json());
+      const data = await res.json();
+      // Every await is behind us; a superseded read stops here rather than writing stale figures.
+      if (seq !== summarySeq.current) return;
+      setSummary(data);
     } catch (e: unknown) {
+      if (seq !== summarySeq.current) return;
       // A QUIET refresh must never take the page down. Both `loading` and `error` replace the
       // whole tab area — panels included — so a failed background refresh would evict a coach's
       // half-filled form on another tab. It leaves the last good summary on screen instead.
       if (!quiet) setError(e instanceof Error ? e.message : 'Failed to load money summary.');
     } finally {
-      if (!quiet) setLoading(false);
+      // The newest read owns the spinner — an older one must not switch it off underneath it.
+      if (!quiet && seq === summarySeq.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // The revision bridge's callback — after `load` so the closure never reads a TDZ binding.
+  const quietReload = useCallback(() => { void load(true); }, [load]);
 
   // Coming BACK to Overview re-reads the summary — quietly, without unmounting anything.
   // Every fact on that screen comes from this one payload: which anchor the coach sees, the
@@ -286,6 +382,14 @@ export default function CoachesAccountingPage({
   // own). At 960px the 8-tab row also truncated with no cue — see the tab-bar rules.
   return (
     <MoneyRefreshProvider>
+    {/* ⚠⚠ THE BRIDGE HAD TO BE RENDERED, AND WAS NOT (found while wiring P2's doors, 2026-08-23).
+        `MoneySummaryRevisionBridge` was written with a full header explaining the defect it closes
+        — the Record chooser's live hints going stale after the first save — and then never placed
+        in the tree, leaving its callback unused and the defect open. P2 makes it matter more, not
+        less: money is now recorded from Player Dues, a drive's leaderboard and a bill's row, and
+        every one of those writes has to reach the hints the next open reads. */}
+    <MoneySummaryRevisionBridge onBump={quietReload} />
+    <RecordMoneyProvider value={recordSignal}>
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Page-header ruling 2026-08-11: title + archive chip + help, nothing under the title —
           the masthead above owns the season. The old in-header breadcrumb repeated the masthead's
@@ -305,16 +409,44 @@ export default function CoachesAccountingPage({
       <CoachPageHeader
         icon={DollarSign}
         title="Money"
+        /* ⚠ Record moved HERE from the tab row (owner ruling 2026-08-23, resolving §80's
+           deviation ④): a hub-wide door belongs with the hub's other doors, and in the tab row
+           it crowded a phone's strip to two visible tabs. On phones it collapses to a bare "+"
+           (the aria-label carries the words) and the row now RENDERS at phone width for it —
+           Import alone keeps rule 11's wide-only hiding, per-action. `actionsPhoneHidden` still
+           applies when there is no Record to show (read-only money), so that coach keeps the
+           empty-row-free phone header. */
         actions={canViewMoney ? (
-          <MoneyImportMenu
-            orgSlug={orgSlug}
-            teamId={teamId}
-            canWriteMoney={canWrite}
-            onNotice={setDataNotice}
-            onImported={() => { void load(true); }}
-          />
+          <>
+            {canWrite && (
+              <button
+                type="button"
+                className={`${styles.btnPrimary} ${styles.recordMoneyBtn}`}
+                aria-label="Record money"
+                /* Tab-aware (P2): the tab the coach is standing on pre-answers the first question
+                   where it honestly can, and the answer stays changeable — see the map's header. */
+                onClick={() => {
+                  const branch = RECORD_BRANCH_BY_SECTION[effectiveSection];
+                  requestRecord(branch ? { branch } : undefined);
+                }}
+              >
+                <Plus size={15} aria-hidden />
+                <span className={styles.headerBtnLabel}>Record</span>
+              </button>
+            )}
+            <span className={styles.headerActionWideOnly}>
+              <MoneyImportMenu
+                orgSlug={orgSlug}
+                teamId={teamId}
+                canWriteMoney={canWrite}
+                onNotice={setDataNotice}
+                onImported={() => { void load(true); }}
+              />
+            </span>
+          </>
         ) : undefined}
-        actionsPhoneHidden
+        actionsPhoneHidden={!canWrite}
+        actionsPhoneInTitleRow
         helpLabel="Money"
         help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-cards', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
@@ -395,6 +527,7 @@ export default function CoachesAccountingPage({
         </>
       )}
     </div>
+    </RecordMoneyProvider>
     </MoneyRefreshProvider>
   );
 }

@@ -17,7 +17,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -53,6 +53,17 @@ function mapEntry(e: Record<string, unknown>) {
     accountingEntryId:  e.accounting_entry_id ?? null,
     creditId:           e.credit_id ?? null,
     notes:              e.notes ?? null,
+    /* ⚠ THE DAY THE MONEY ARRIVED (mig 261) — returned so the leaderboard's edit form can show it
+       and correct it (P2). Without this the create path could set a date the edit path could not
+       even display, which is how a wrong month becomes permanent. */
+    receivedDate:       e.received_date ?? null,
+    /* ⚠⚠ WHAT THE COACH ACTUALLY SEES THIS ROW DATED, and the ONLY thing an edit form may pre-fill.
+       Pre-mig-261 rows carry NO received date; the register falls back to the org-clock day the row
+       was created, and so must anything that offers to correct that date. Pre-filling TODAY instead
+       (the first cut did) meant a coach editing an old entry's AMOUNT silently moved its ledger row
+       and the family's credit into this month — see the PATCH's own note. One rule, one place:
+       `received_date ?? orgDayKey(created_at)`, exactly as `register/route.ts` states it. */
+    effectiveDate:      (e.received_date as string | null) ?? orgDayKey(e.created_at as string),
     createdAt:          e.created_at,
     updatedAt:          e.updated_at,
   };
@@ -245,12 +256,19 @@ export const POST = withObservability(async (req: Request,
   if (!fundraiser.is_active) return NextResponse.json({ error: 'Fundraiser is closed' }, { status: 400 });
 
   const body = await req.json();
-  const { playerId, amountRaised, notes = null } = body;
+  const { playerId, amountRaised, notes = null, receivedDate = null } = body;
 
   if (!playerId) return NextResponse.json({ error: 'playerId is required' }, { status: 400 });
   const raised = Number(amountRaised);
   if (isNaN(raised) || raised < 0) {
     return NextResponse.json({ error: 'amountRaised must be a non-negative number' }, { status: 400 });
+  }
+  /* Optional since 2026-08-23 (owner ruling, money centralization §80 walk): treasurers log
+     drive money AFTER it arrived and need it in the PERIOD it arrived — the month reports read
+     the ledger entry's date. Same shape and validation as the dues receipt's receivedDate;
+     omitted = today, exactly the old behaviour. */
+  if (receivedDate !== null && (typeof receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate))) {
+    return NextResponse.json({ error: 'receivedDate must be a YYYY-MM-DD date' }, { status: 400 });
   }
 
   const { data: player } = await supabaseAdmin
@@ -278,7 +296,10 @@ export const POST = withObservability(async (req: Request,
 
   const rebatePct    = Number(fundraiser.player_rebate_percent);
   const rebateAmount = Math.round(raised * rebatePct / 100 * 100) / 100;
-  const today        = tournamentToday();
+  /* The day the money ARRIVED — coach-typed or today. It dates BOTH writes below: the ledger
+     entry (which is what places the income in a month on every report) and the family's credit
+     (earned the day the money arrived; credit ordering applies by this date). */
+  const receivedDay  = receivedDate ?? tournamentToday();
   const playerName   = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
 
   // 1 — Create team ledger income entry
@@ -286,7 +307,7 @@ export const POST = withObservability(async (req: Request,
   const accountingEntry = await createEntry(
     ledger.id,
     {
-      entryDate:   today,
+      entryDate:   receivedDay,
       description: `Fundraiser income — ${fundraiser.name} (${playerName})`,
       amount:      raised,
       entryType:   'income',
@@ -308,6 +329,8 @@ export const POST = withObservability(async (req: Request,
       rebate_percent:     rebatePct,
       rebate_amount:      rebateAmount,
       accounting_entry_id: accountingEntry.id,
+      // mig 261 — the entry itself remembers the day (the register reads THIS, not the ledger).
+      received_date:      receivedDay,
       notes:              notes?.trim() || null,
     })
     .select()
@@ -327,7 +350,7 @@ export const POST = withObservability(async (req: Request,
         amount:             rebateAmount,
         description:        `Fundraiser rebate — ${fundraiser.name}`,
         credit_type:        'fundraiser',
-        credit_date:        today,
+        credit_date:        receivedDay,
         notes:              null,
         created_by:         ctx!.user.id,
         fundraiser_entry_id: feRow.id,

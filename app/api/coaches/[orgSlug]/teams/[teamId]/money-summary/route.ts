@@ -133,6 +133,10 @@ export const GET = withObservability(async (_req: Request,
   let overdueAmount = 0;
   const overduePlayers = new Set<string>();
   let neverPaidCount = 0;
+  // Families whose money the team is holding (owedBack) — the recording conversation's
+  // "paid a family back" hint. Same position walk as overdue; see the type's own note.
+  let familiesInCreditCount = 0;
+  let familyCreditHeld = 0;
 
   schedules.forEach((schedule, idx) => {
     const insts = installmentLists[idx] ?? [];
@@ -153,6 +157,10 @@ export const GET = withObservability(async (_req: Request,
       paidOut: paidOutByPlayer.get(schedule.playerId) ?? 0,
       mode: programYear.creditApplication,
     });
+    if (position.owedBack > 0.005) {
+      familiesInCreditCount += 1;
+      familyCreditHeld += position.owedBack;
+    }
     for (const inst of insts) {
       if (!inst.paidAt && inst.dueDate && inst.dueDate < today) {
         const remaining = toSendById.get(inst.id) ?? inst.amount;
@@ -399,6 +407,8 @@ export const GET = withObservability(async (_req: Request,
       overdueAmount: r2(overdueAmount),
       neverPaidCount,
       schedulesCount: schedules.length,
+      familiesInCreditCount,
+      familyCreditHeld: r2(familyCreditHeld),
     },
     fundraisers: {
       // "Active" is a DRIVE's question — a sponsor answers pledged/received instead, and every

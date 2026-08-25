@@ -94,6 +94,38 @@
   color: var(--white-40, rgba(255,255,255,0.4));
 }
 
+/* ── The lead group (money centralization P2, owner ruling C2) ─────────────────────────────
+   A group that is NOT budget items, sitting above them — today, the bills a coach owes. It is
+   coloured with the accent rather than the muted heading colour on purpose: it is the answer a
+   coach standing in this field most often did not know was available, and every other heading in
+   this list is a category they already know. Same tokens as everything else here, so the warm
+   portal remaps it for free. */
+.optGroupLead {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  padding-bottom: 0.3rem;
+}
+
+/* The trailing fact on a lead-group row — whatever makes it worth choosing.
+   ⚠ QUIET BY DEFAULT, LOUD ONLY WHEN THE CALLER SAYS SO. This control is shared with the Budget
+   Plan and the Org Budget; baking the portal's owing colour in here would render every future lead
+   group's fact ("recently used", "from last season") as an overdue balance, in a prop documented as
+   domain-agnostic. `metaTone="owing"` is how a caller opts into the money reading.
+   ⚠ `margin-left: auto` belongs here: a lead row has no tier chip, so this is its only trailing
+   element (see the `.optTier` note below for why exactly one element may carry it). */
+.optMeta {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  white-space: nowrap;
+}
+/* Money the team still owes — the portal's owing colour, so a figure means the same thing here as
+   on every money screen. */
+.optMetaOwing { color: var(--danger-light); }
+
 .opt {
   display: flex;
   align-items: center;

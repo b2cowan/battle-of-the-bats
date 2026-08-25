@@ -274,6 +274,10 @@ export function FundraisersPanel({
     return result.tag;
   }
 
+  /* ⚖ The ?newSponsor= one-shot lived here for ONE DAY (money centralization P1) and is GONE
+     (owner UX ruling 2026-08-23): the conversation's sponsor answer records INLINE through the
+     same creation POST now, instead of navigating here to open this modal pre-set. */
+
   function openModal() {
     setFormKind('fundraiser');
     setFormName('');

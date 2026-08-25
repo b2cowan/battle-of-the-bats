@@ -29,6 +29,10 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   right-pinned row beneath (the .pageHeaderStd grid in coaches.module.css).
  * - Secondary action buttons opt into phone icon-only by wrapping their label in
  *   `styles.headerBtnLabel` + carrying an aria-label; the one lime primary keeps its words.
+ *   ⚠ Owner-ruled exception (2026-08-23): the Money hub's Record primary goes icon-only ("+")
+ *   on phones too — its aria-label carries the words. Per-action phone visibility also exists
+ *   now: `styles.headerActionWideOnly` hides ONE action at phone width while the row stays for
+ *   its siblings (Money: Import hides, Record stays), where `actionsPhoneHidden` drops the row.
  * - ⚠ THE ARCHIVE CHIP IS GONE (P2, 2026-08-16). It rendered "2025 · Complete" inside the <h1>
  *   and doubled as the season SWITCHER, which is what it really was; both died with the archive
  *   as a place. A finished working season is signalled once, by the masthead's own "Complete"
@@ -43,6 +47,7 @@ export default function CoachPageHeader({
   titleChips,
   actions,
   actionsPhoneHidden,
+  actionsPhoneInTitleRow,
   help,
   helpLabel,
   variant = 'standard',
@@ -69,6 +74,15 @@ export default function CoachPageHeader({
    * by another route (for Money, every empty state keeps its import offer).
    */
   actionsPhoneHidden?: boolean;
+  /**
+   * At phone width, the actions keep the TITLE ROW's corner — beside the "?" — instead of
+   * dropping to their own right-pinned row beneath (owner ruling 2026-08-23, the Money hub's
+   * Record "+"). ⚠ Only for an action set that is genuinely ONE compact control on a phone
+   * (icon-only, or with its siblings hidden via `styles.headerActionWideOnly`): the corner has
+   * room for one button next to the "?", and a row of three would shove the title. Composes
+   * with `actionsPhoneHidden` (which wins — no actions, no corner).
+   */
+  actionsPhoneInTitleRow?: boolean;
   /** Help drawer request → the iconOnly "?" in its fixed corner slot. */
   help?: HelpRequest;
   /** The page name the help drawer opens under (falls back to the request's own label). */
@@ -102,7 +116,7 @@ export default function CoachPageHeader({
     ) : null;
   }
   return (
-    <div className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}`}>
+    <div className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}>
       <div className={styles.pageHeaderLeft}>
         {Icon && (
           <div className={`${styles.headerIcon}${nested ? ` ${styles.headerIconNested}` : ''}`}>

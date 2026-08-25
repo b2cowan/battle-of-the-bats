@@ -1700,7 +1700,7 @@ export function BudgetPlanPanel({
                       <Fragment key={item.key}>
                         <button
                           type="button"
-                          className={`${shared.ledgerRow} ${shared.ledgerGroupHeadBtn}`}
+                          className={`${shared.ledgerRow} ${shared.ledgerRowBtn} ${shared.ledgerGroupHeadBtn}`}
                           aria-expanded={!isClosed(item.key)}
                           onClick={() => toggleSectionClosed(item.key)}
                         >

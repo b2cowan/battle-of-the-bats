@@ -10224,6 +10224,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_fundraiser_entries",
+    "column_name": "received_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "rep_fundraisers",
     "column_name": "id",
     "data_type": "uuid",

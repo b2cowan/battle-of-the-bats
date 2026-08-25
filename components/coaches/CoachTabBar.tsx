@@ -51,6 +51,12 @@ export default function CoachTabBar<Id extends string>({
    * to P3).
    */
   sticky?: boolean;
+  /* ⚠ NO ACTION SLOT — tried for one day (money centralization P1, per mockup 05's drawing) and
+     REMOVED by owner ruling 2026-08-23: on a phone the button crowded the strip down to two
+     visible tabs, and a control that belongs to the PAGE was scaling with the tab row. Hub-wide
+     actions live in the page header (the 2026-08-13 page-actions rule), with per-action phone
+     visibility — see the Money hub's Record button. Do not re-add a slot here for the next
+     hub-wide control. */
 }) {
   // Is a tab hidden past either edge? The arrows appear only on the side that actually has
   // something hidden — an arrow on a row that already fits, or pointing at nothing, is a lie.

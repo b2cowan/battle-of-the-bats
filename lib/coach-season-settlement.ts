@@ -32,7 +32,7 @@ export type { SettlementSheet, SettlementSheetRow, SettlementFamily } from './se
 import { familyLabel } from './coach-family-dues';
 import { normalizeGuardianEmail } from './guardian-email';
 import type { CoachCapabilities } from './coach-capabilities';
-import type { RepProgramYear } from './types';
+import type { RepProgramYear, DuesPaymentMethod } from './types';
 
 /**
  * The season settlement sheet, assembled from the database — the ONE place the whole sheet is
@@ -447,7 +447,9 @@ export async function recordSettlementPayouts(opts: {
    *  own figure says (which is what makes one cheque per family honest). */
   amount: number | null;
   paidDate: string;
-  method: 'etransfer' | 'cash' | 'cheque' | 'other';
+  /* The shared dues-method type (mig 260 widened it to include 'card') — an inline copy of the
+     union here is how a widened list gets refused by one caller and accepted by another. */
+  method: DuesPaymentMethod;
   note?: string | null;
   createdBy: string;
 }): Promise<{ sheet: SettlementSheet; paidCount: number; paidTotal: number }> {

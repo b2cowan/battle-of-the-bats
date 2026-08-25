@@ -25,24 +25,22 @@
  * ⚠ THE CASING HERE IS NOT A FRESH CHOICE — it matches the list the Payment requests form has
  * always shown ('Cash', 'E-Transfer', 'Cheque', … 'Other'). Inventing a tidier "E-transfer" here
  * would have made this the FOURTH payment-method vocabulary in the product and added the exact
- * spelling split this module exists to prevent. The other three, found 2026-08-15:
- *   1. Payment requests — a local list in its panel, shown as a closed <select>.
- *   2. Dues payments    — DUES_PAYMENT_METHODS in lib/types.ts, lowercase STORED codes
- *                         ('etransfer'), validated server-side.
- *   3. Expenses, payables and the club ledger — free text, which is what brought us here.
- * Unifying all three is a vocabulary decision across surfaces (and, for dues, a stored-value
- * migration), not something this pass should do quietly. Raised with the owner instead.
+ * spelling split this module exists to prevent.
  *
- * 'Credit card' and 'Debit' are split where Payment requests says only 'Card' — a club reconciling
- * a bank statement cares which, and nothing reads the old value as an enum.
+ * ⚠⚠ THE UNIFICATION THIS COMMENT USED TO DEFER IS NOW RULED (owner, 2026-08-22 — money
+ * centralization P1; mig 260). The product has ONE method list: E-Transfer · Cash · Cheque ·
+ * Card · Other. Dues stores it as lowercase tokens (DUES_PAYMENT_METHODS, lib/types.ts, widened
+ * to include 'card'); the club's payment-request list already said exactly this; and this seed
+ * list — the free-text surfaces' suggestions — says it now too. 'Credit card', 'Debit' and
+ * 'Bank transfer' left the seeds with that ruling: free text still saves, so a club that
+ * distinguishes them types the word once and it joins their learned list — but the product no
+ * longer TEACHES a second vocabulary by seeding it.
  */
 export const SEEDED_PAYMENT_METHODS = [
   'E-Transfer',
   'Cash',
   'Cheque',
-  'Credit card',
-  'Debit',
-  'Bank transfer',
+  'Card',
   'Other',
 ] as const;
 

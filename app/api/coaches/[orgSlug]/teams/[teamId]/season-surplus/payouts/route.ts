@@ -11,6 +11,7 @@ import {
 } from '@/lib/coach-season-settlement';
 import { tournamentToday } from '@/lib/timezone';
 import { fmt } from '@/lib/coach-money-summary';
+import { DUES_PAYMENT_METHODS } from '@/lib/types';
 
 /**
  * Settling the season in cash — one row, one family, or the lot.
@@ -46,7 +47,9 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-const METHODS = ['etransfer', 'cash', 'cheque', 'other'] as const;
+/* ⚠ THE SHARED LIST, not a local copy (mig 260) — 'card' joined the one method list 2026-08-22,
+   and this writer shares rep_dues_payouts' CHECK with the Pay out sheet's own route. */
+const METHODS = DUES_PAYMENT_METHODS;
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/season-surplus/payouts
 //

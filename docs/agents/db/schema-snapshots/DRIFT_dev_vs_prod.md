@@ -1,13 +1,13 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-08-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-08-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 167 divergence(s)** across dev/prod.
+**⚠️ 168 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 8 | 0 | — |
-| Columns | 77 | 0 | 0 |
+| Columns | 78 | 0 | 0 |
 | Indexes | 35 | 0 | 0 |
 | Constraints | 37 | 0 | — |
 | RLS / CHECK | 10 | 0 | 0 (RLS state) |
@@ -27,7 +27,7 @@
 _none_
 
 ## Columns
-### Only in DEV (77)
+### Only in DEV (78)
 - `family_links.person_id`
 - `league_registrations.org_id`
 - `league_registrations.person_id`
@@ -77,6 +77,7 @@ _none_
 - `pitch_page_pulls.slide_ids`
 - `pitch_page_pulls.updated_at`
 - `pitch_page_pulls.updated_by`
+- `rep_fundraiser_entries.received_date`
 - `rep_payable_installments.amount`
 - `rep_payable_installments.created_at`
 - `rep_payable_installments.due_date`
