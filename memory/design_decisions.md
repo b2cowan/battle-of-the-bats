@@ -44,9 +44,27 @@ re-affirmed 2026-08-24). A carve-out was raised and deliberately left to the own
 assumed. **Generalise: check whether a benefit survives the SCROLL STATE of the bar you are moving
 a control into, not just its width.**
 
-⚠ **UNMEASURED AND LOAD-BEARING: the 900–1100px band.** Above 900 the masthead now carries name +
-role left and **three** things right. That is the same narrow-row failure that took the status slot
-off phones. **Measure at 900/1000/1100/1280/1440 with a long club + team name; do not assert it.**
+**BUILT AND MEASURED THE SAME DAY, AND THE MEASUREMENT CORRECTED TWO OF MY OWN CLAIMS.**
+
+⚠⚠ **THE "?" MOVE IS WORTH 0px ON MOST SCREENS, NOT 8px.** The 44 → 36 saving only happens where the
+band has **no action**; where a create sits in the title corner (Roster, Schedule, Money, and now
+Overview) the **44px action button still sets the floor**, so removing a 34px "?" changes nothing.
+⚠⚠ **AND THE PHONE MASTHEAD GREW 3px (56 → 59)** — a 44px tap target in a ~41px row — which eats the
+margin trim. **Measured net at 390: Overview −57px, an actionless screen −9px, an ordinary
+corner-action screen −1px, desktop 0px.** The wins that survive are Overview, the actionless screens,
+one findable home, and a desktop help door that no longer scrolls away. **Never quote the 4px trim
+without the 3px the bar took back.**
+
+⚠ **The 900–1100px worry is CLEAR, measured:** the masthead row is **41px — one line — at 900, 1000,
+1100, 1280 and 1440** with name + role left and status + flip + "?" right; no wrap, no sideways
+scroll at any width. **Desktop scrolled 600px: the "?" is still visible. Phone scrolled: the bar
+collapses to 36px and the "?" goes with it** — the ruling, proven rather than assumed.
+
+⚠⚠ **THE PASS'S MOST DURABLE LESSON IS A REGRESSION IT CAUSED AND MEASURING CAUGHT.** Reserving 44px
+on the masthead row — added so the "?" landing after hydration could not shift the bar — also reached
+the **collapsed** bar, taking a scrolled phone from its ruled 36px to **55px**: a 19px permanent cost
+on every scrolled screen, to buy back 8px on a few unscrolled ones. **A reservation added for ONE
+state of a bar applies to ALL of its states.** Fixed and re-measured at 36px.
 
 **NOT done:** folding the page name into the masthead. **WITHDRAWN:** renaming the phone bar's fifth
 tab to the section you are standing in.

@@ -676,6 +676,20 @@
 }
 .teamHeaderFlip:hover { background: var(--white-5); color: var(--text-primary); }
 
+/* ── The page's help "?" — moved here from the page-title band 2026-08-25 ────────────────────────
+   LAST in the right slot, after the status stack and after the flip, so the 2026-08-11 clause
+   ("its own slot, always LAST, top-right at every width") reads literally. Drawn by the masthead
+   from whatever the page publishes — see `CoachPageHelpSlot`.
+
+   ⚠ It sits OUTSIDE `.teamHeaderStatus`, which is `display: none` at ≤640. A "?" is chrome, not a
+   status, and must survive the 2026-08-24 ruling that emptied that slot on phones.
+   ⚠ It DOES fold with `.teamHeaderCollapsed` (≤900) along with the flip — ruled 2026-08-25, and the
+   2026-08-02 bare-name collapse is deliberately not reopened. This is why "help stops scrolling
+   away" is true on a desktop (that bar never collapses) and false on a phone.
+   ⚠ NO desktop size override: the button is the shared 34px `.helpButtonIconOnly` circle, exactly
+   the control the band used to hold, so nothing about it changes except where it lives. */
+.teamHeaderHelp { flex-shrink: 0; display: inline-flex; }
+
 @media (max-width: 900px) {
   .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
   .teamHeaderName { font-size: 0.98rem; max-width: 100%; }
@@ -717,6 +731,34 @@
    meta to one row is the fix; a long club name shortens instead, which is the right thing to
    lose. Phone only — desktop has the width and wraps for real reasons. */
 @media (max-width: 640px) {
+  /* The phone tap floor follows the "?" to its new home (2026-08-25). It carried the identical
+     rule in the page-title band, added 2026-08-23 after the §80 walk found a 34×44 OVAL: the
+     height stretched and the width did not. `min-*` beats the help module's own `width: 32px`
+     at ≤760 regardless of specificity, and `border-radius: 999px` does the rest, so the target
+     grows into a LARGER CIRCLE rather than an oval. ⚠ Do not "simplify" these to width/height.
+     ⚠ 641–760px still renders the module's 32px circle — unchanged by the move, since the band's
+     44px rule was also ≤640 only. A tablet's "?" is exactly what it was yesterday.
+     ⚠ This is why the phone masthead grows a couple of pixels: a 44px control in a row whose text
+     stack is ~42px. The band gives back 8px + 4px of margin, so the screen still nets ahead —
+     MEASURE it rather than quoting this comment. */
+  .teamHeaderHelp button { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  /* ⚠⚠ THE ROW RESERVES THE BUTTON'S HEIGHT WHETHER OR NOT A "?" IS THERE, AND THAT IS THE POINT.
+     The slot is filled by an EFFECT (the page publishes after hydration), so the server sends a bar
+     with no "?" and the client adds one — a 44px control landing in a row whose text stack is ~42px
+     nudged the phone bar 56px → 58px AFTER paint. Reserving 44px makes the bar 58px from the first
+     frame instead: the same two pixels, spent once, with no shift. That is the standing preference
+     — space taken by making a thing smaller is kept; space that appears and disappears is borrowed.
+     ⚠ Desktop needs no equivalent: its row is already ~42px tall against a 34px button, so the "?"
+     changes nothing there. Moving it off the desktop band saves nothing and costs nothing. */
+  .teamHeaderRow { min-height: var(--tap-min, 44px); }
+  /* ⚠⚠ AND IT MUST NOT REACH THE COLLAPSED BAR — MEASURED, AFTER THE RESERVATION ABOVE BROKE IT.
+     A scrolled phone bar is 36px of bare team name (2026-08-02). Reserving 44px for a "?" that
+     `.teamHeaderCollapsed .teamHeaderRight` has just hidden took that bar to **55px** — a 19px
+     permanent cost on every scrolled phone screen, to buy back 8px on a handful of unscrolled
+     ones. The reservation exists only to stop a post-hydration shift in the EXPANDED bar; a
+     collapsed bar has nothing to reserve for. */
+  .teamHeaderCollapsed .teamHeaderRow { min-height: 0; }
+
   .teamHeaderMeta { flex-wrap: nowrap; }
   .teamHeaderMeta > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* The season and the record are short and fixed; the club name is the variable one, so it is
@@ -1246,6 +1288,13 @@
    the desktop's, which is exactly the bug this pass was reclaiming pixels to avoid. */
 @media (max-width: 640px) {
   .pageHeader { gap: 0.75rem; }
+  /* 1rem until 2026-08-25 (page-title band ruling). The band's 44px phone box is the TAP FLOOR on
+     the help "?" — the h1 is ~25px of it — so the text was never what cost the height, and with the
+     "?" moving to the masthead the 36px icon tile becomes the floor. This margin is the only part
+     that was ever freely reducible; below 0.75rem the band starts crowding the toolbar under it.
+     ⚠ PHONE ONLY. Desktop's 1rem is untouched: nothing there changed, because the desktop "?" is
+     34px inside a 36px tile row and moving it out saves exactly zero. */
+  .pageHeader { margin-bottom: 0.75rem; }
 }
 
 /* Demoted secondary tips below the team grid */
@@ -1325,6 +1374,29 @@
 
 .setupChipLabel { white-space: nowrap; }
 .setupChipCount { font-family: var(--font-data); color: var(--logic-lime); }
+
+/* ── The phone SYMBOL form (owner ruling 2026-08-25) ──────────────────────────────────────────
+   House rule 3 (2026-08-23): on a phone, words become symbols and the words survive as the
+   accessible name. This chip's symbol was already drawn — its progress ring — so at ≤640 the
+   label, the count and the chevron go and the ring is the control.
+
+   ⚠⚠ WHY: with its words this chip is ~145px, too wide to share the title line with "Overview",
+   its Premium/division chips and the "?". The header grid therefore dropped it to a second 44px
+   row, and that row plus its 12px gap IS the entire 116px-vs-60px gap between Overview and every
+   other coach screen — on the one page a brand-new coach meets first.
+
+   ⚠ It stays a `.setupChipWrap`-positioned BUTTON, not a swap to some other control: it anchors
+   the setup popover by ref, so replacing it would strand the disclosure.
+   ⚠ It keeps the standard 44px tap floor from `.pageHeaderStd .pageHeaderActions button` — this
+   block deliberately sets no height, so that rule stays the single owner of the phone floor. */
+@media (max-width: 640px) {
+  .setupChip { padding: 0; width: var(--tap-min, 44px); justify-content: center; gap: 0; }
+  .setupChipLabel,
+  .setupChipCount,
+  .setupChipChevron { display: none; }
+  /* The ring is the whole control now, so it stops being a 15px ornament beside text. */
+  .setupChipRing { width: 19px; height: 19px; }
+}
 
 .setupPop {
   position: absolute;

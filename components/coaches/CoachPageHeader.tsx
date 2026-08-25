@@ -1,6 +1,7 @@
 'use client';
 import type { ComponentType, ReactNode } from 'react';
 import HelpButton from '@/components/help/HelpButton';
+import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -25,7 +26,16 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   body they describe; required framing lines live in the card they frame. A page that wants
  *   a line under its title is a page trying to re-litigate the ruling.
  * - The help "?" is chrome, not an action: its own slot, always LAST, top-right at every width.
- *   On phones (≤640px) it holds the title line's corner while the actions drop to one
+ *   ⚠⚠ **THAT SLOT MOVED OUT OF THIS COMPONENT ON 2026-08-25** (owner ruling; plan
+ *   `COACH_PAGE_TITLE_BAND_PLAN.md` §5). Inside the team layout the "?" is now drawn by the
+ *   MASTHEAD, last in its right slot — this header PUBLISHES the request rather than rendering it
+ *   (`useCoachPageHelp`). The ruling's words are unchanged and now truer: one findable home, always
+ *   last, top-right, **at every width**. ⚠ Approving it phone-only was the drift the owner caught —
+ *   a phone-only move would have given the "?" two homes.
+ *   **Outside a masthead** (team-picker hub, notifications, the no-auth early return) there is no
+ *   host, so the "?" still renders HERE, exactly as before. That fallback is the default context
+ *   value, not a branch: a page whose "?" is published to nobody would have no help at all.
+ *   On phones (≤640px) the fallback holds the title line's corner while the actions drop to one
  *   right-pinned row beneath (the .pageHeaderStd grid in coaches.module.css).
  * - Secondary action buttons opt into phone icon-only by wrapping their label in
  *   `styles.headerBtnLabel` + carrying an aria-label; the one lime primary keeps its words.
@@ -108,6 +118,10 @@ export default function CoachPageHeader({
   variant?: 'standard' | 'embedded' | 'nested';
 }) {
   const nested = variant === 'nested';
+  /* ⚠ UNCONDITIONAL, and above every early return. The `embedded` and `nested` shapes own no "?"
+     (nested is one line under a header that already carries this screen's), so they publish null —
+     but a hook behind the `embedded` early return below is the classic ordering crash. */
+  const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
   if (variant === 'embedded') {
     return actions ? (
       <div className={`${styles.pageHeader} ${styles.pageHeaderStd}`}>
@@ -139,8 +153,10 @@ export default function CoachPageHeader({
       )}
       {/* `!nested` is the doc above made true rather than merely stated: a nested header sits one
           line under a header that already carries this screen's "?", and two of them would be two
-          doors to the same drawer. */}
-      {help && !nested && (
+          doors to the same drawer.
+          `!helpHosted` is the 2026-08-25 move: inside the team layout the masthead draws it, and
+          rendering it here as well would be exactly the two-doors bug one row apart. */}
+      {help && !nested && !helpHosted && (
         <span className={styles.pageHeaderHelp}>
           <HelpButton iconOnly label={helpLabel} help={help} />
         </span>

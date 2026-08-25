@@ -15,6 +15,7 @@ import {
 } from '@/lib/coach-masthead-status';
 import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 import CoachTeamSeasonGate from '@/components/coaches/CoachTeamSeasonGate';
+import { CoachPageHelpProvider } from '@/components/coaches/CoachPageHelpSlot';
 
 /**
  * The team segment's layout — it exists for ONE reason: the pinned masthead (desktop shell D2/A2).
@@ -106,7 +107,17 @@ export default async function CoachTeamLayout({
   };
 
   return (
-    <>
+    /* ⚠ THE PROVIDER EMITS NO DOM, WHICH IS WHY IT MAY WRAP THIS FRAGMENT AT ALL. The masthead has
+       to stay a DIRECT child of `.coachesMain` — its sticky pin and its padding-cancelling negative
+       margins are measured against that container — and a real wrapper element here would silently
+       break both. A context provider renders only its children, so the DOM is byte-identical.
+       It wraps the masthead AND the page because the "?" travels upward between them: the page
+       publishes its help topic, the masthead draws it (2026-08-25 ruling, `CoachPageHelpSlot`).
+       ⚠ Deliberately INSIDE the authenticated branch. The `if (!authCtx) return <>{children}</>`
+       above renders no masthead, so it must render no host either — a page publishing to a host
+       that draws nothing would lose its "?" entirely. The fallback is automatic: no provider means
+       `CoachPageHeader` keeps drawing its own. */
+    <CoachPageHelpProvider>
       <CoachTeamHeader
         teamId={teamId}
         orgName={authCtx.org.name}
@@ -140,6 +151,6 @@ export default async function CoachTeamLayout({
       >
         {children}
       </CoachTeamSeasonGate>
-    </>
+    </CoachPageHelpProvider>
   );
 }

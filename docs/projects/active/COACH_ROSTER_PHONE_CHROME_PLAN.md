@@ -150,9 +150,19 @@ measured.
 **The `<h1>` title band was NOT touched.** ⚠ Measured 2026-08-24: **60px** at 390px on a typical screen (44px box + 16px margin) and **116px on Overview**, where the actions wrap — NOT the ~72px first estimated here. ⚠⚠ And the 44px box **is the tap floor on the help "?"**, so deleting the title TEXT saves nothing; the saving lives in the "?" and the "+". Deleting it saves more than anything above, and
 the word "Roster" already appears in the bottom nav's active pill directly beneath it. It stays
 because it would break *"all forty coach screens open the same way"* (2026-08-11, ruled and shipped)
-— a portal-wide call across forty screens, and the shape of **direction D**, which the 2026-08-18
-note put back on the table. It deserves its own session, not a fix smuggled in behind five smaller
-ones.
+— a portal-wide call across forty screens. It deserves its own session, not a fix smuggled in behind
+five smaller ones.
+
+⚠⚠ **THAT SESSION RAN 2026-08-25 AND CORRECTED TWO CLAIMS THIS PARAGRAPH USED TO MAKE.**
+(1) The band is **NOT the shape of direction D** — D merges `CoachTopStrip` into the masthead, the
+strip is `display:none` ≤900px, so D saves **0px on a phone**. Conflating them was the error the
+design prompt itself warned against. (2) "Deleting it saves more than anything above" **overstates
+it**: the 44px box is the tap floor on the help "?", so the portal-wide prize is **4–8px a screen**
+unless both the "?" and the "+" leave the band — and the masthead corner they would move to was
+emptied on 2026-08-24 *because a short string could not be made to fit there*. The session
+recommends **keeping the band** and spending the effort on Overview's **56px** excess instead.
+Plan: `COACH_PAGE_TITLE_BAND_PLAN.md` · mockup:
+https://claude.ai/code/artifact/972ab843-5972-458c-91ca-bf7f2e990d70
 
 **✅ HELP CONTENT SYNCED in the same unit of work** (`/docs`, 2026-08-24). A full sweep of
 `lib/help-content/` found **exactly two** affected places, both in `coaches.tsx`:

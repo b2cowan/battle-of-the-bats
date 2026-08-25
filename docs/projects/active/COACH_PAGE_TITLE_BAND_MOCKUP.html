@@ -1,0 +1,647 @@
+<title>The Page-Title Band</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700;800;900&display=swap">
+
+<style>
+/* ── Drafting-bench palette. Light default; both themes defined token-level. ─────────── */
+:root{
+  --paper:#E7ECEF; --card:#FFFFFF;
+  --ink:#0E1519; --ink-soft:#46545E; --ink-dim:#75838C;
+  --rule:rgba(14,21,25,.14); --rule-soft:rgba(14,21,25,.07);
+  --accent:#146A76; --accent-soft:rgba(20,106,118,.10); --accent-line:rgba(20,106,118,.35);
+  --on-accent:#FFFFFF;
+  --flag:#A8481F; --flag-soft:rgba(168,72,31,.10);
+  --keep:#2F6B3D; --keep-soft:rgba(47,107,61,.10);
+  --shadow:0 1px 2px rgba(14,21,25,.06), 0 8px 24px rgba(14,21,25,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0B1113; --card:#141B1E;
+    --ink:#E4EDF0; --ink-soft:#9BAAB2; --ink-dim:#71828B;
+    --rule:rgba(228,237,240,.16); --rule-soft:rgba(228,237,240,.08);
+    --accent:#63C2CC; --accent-soft:rgba(99,194,204,.12); --accent-line:rgba(99,194,204,.4);
+    --on-accent:#08171A;
+    --flag:#E29068; --flag-soft:rgba(226,144,104,.13);
+    --keep:#7FC08D; --keep-soft:rgba(127,192,141,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0B1113; --card:#141B1E;
+  --ink:#E4EDF0; --ink-soft:#9BAAB2; --ink-dim:#71828B;
+  --rule:rgba(228,237,240,.16); --rule-soft:rgba(228,237,240,.08);
+  --accent:#63C2CC; --accent-soft:rgba(99,194,204,.12); --accent-line:rgba(99,194,204,.4);
+  --on-accent:#08171A;
+  --flag:#E29068; --flag-soft:rgba(226,144,104,.13);
+  --keep:#7FC08D; --keep-soft:rgba(127,192,141,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Public Sans",system-ui,-apple-system,sans-serif;
+  font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.015em}
+p{margin:0 0 .9em}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:.9em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.doc-head{padding:56px 0 28px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+.doc-head h1{font-size:clamp(2.1rem,5.4vw,3.3rem);font-weight:800;line-height:1.03;max-width:17ch}
+.deck{margin-top:18px;max-width:64ch;color:var(--ink-soft);font-size:1.05rem}
+.deck strong{color:var(--ink);font-weight:600}
+
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:32px;border-radius:3px;overflow:hidden}
+.fact{background:var(--card);padding:16px 18px}
+.fact .n{font-family:"JetBrains Mono",monospace;font-size:1.6rem;font-weight:700;line-height:1;color:var(--ink)}
+.fact .n small{font-size:.8rem;color:var(--ink-dim);font-weight:400}
+.fact .k{font-size:.78rem;color:var(--ink-soft);margin-top:8px;line-height:1.4}
+
+.bench{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid var(--rule);margin-top:40px;padding:12px 0}
+.bench-in{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.grp{display:flex;align-items:center;gap:8px}
+.grp .lbl{font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:var(--card)}
+.seg button{appearance:none;border:0;background:transparent;font:inherit;font-size:.83rem;padding:7px 13px;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--rule-soft);white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+
+.optcard{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:22px 24px;margin:26px 0 8px;box-shadow:var(--shadow)}
+.optcard h2{font-size:1.42rem;font-weight:800;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.optcard h2 .num{font-family:"JetBrains Mono",monospace;font-size:.78rem;color:var(--accent);letter-spacing:.1em;font-weight:700}
+.verdict{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:2px;font-weight:700}
+.v-rec{background:var(--keep-soft);color:var(--keep);border:1px solid var(--keep)}
+.v-no{background:var(--flag-soft);color:var(--flag);border:1px solid var(--flag)}
+.v-mid{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-line)}
+.optcard p{color:var(--ink-soft);max-width:76ch;font-size:.95rem;margin-top:12px}
+.costs{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:9px}
+.costs li{display:flex;gap:11px;font-size:.9rem;color:var(--ink-soft);max-width:80ch}
+.costs li::before{content:"";flex:0 0 3px;background:var(--flag);border-radius:2px;margin:4px 0}
+.costs li.ok::before{background:var(--keep)}
+
+.tblwrap{overflow-x:auto;margin-top:18px;border:1px solid var(--rule);border-radius:4px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:.88rem}
+th,td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font-family:"JetBrains Mono",monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);font-weight:700;border-bottom:1px solid var(--rule)}
+tbody td{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+tbody td:first-child{font-family:"Public Sans",sans-serif;color:var(--ink-soft)}
+tfoot td{font-weight:700;border-top:1px solid var(--rule);border-bottom:0;font-family:"JetBrains Mono",monospace}
+tfoot td:first-child{font-family:"Public Sans",sans-serif}
+.d-good{color:var(--keep);font-weight:700}
+.d-bad{color:var(--flag);font-weight:700}
+.d-zero{color:var(--ink-dim)}
+
+.rail{display:flex;gap:26px;overflow-x:auto;padding:26px 4px 30px}
+.rail.stack{flex-direction:column;align-items:flex-start}
+.specimen{flex:0 0 auto}
+.spec-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;max-width:470px}
+.spec-head .sn{font-family:"JetBrains Mono",monospace;font-size:.68rem;color:var(--accent);letter-spacing:.12em;font-weight:700}
+.spec-head h3{font-size:.98rem;font-weight:700}
+.spec-head p{margin:0;font-size:.78rem;color:var(--ink-dim);flex-basis:100%}
+.spec-body{display:flex}
+.gutter{width:78px;flex:0 0 78px;position:relative;font-family:"JetBrains Mono",monospace}
+.dev{position:relative;border:1px solid var(--rule);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);flex:0 0 auto}
+.dev[data-w="1440"]{border-radius:6px}
+
+.brk{position:absolute;right:8px;border:1px solid var(--accent);border-right:0;border-radius:2px 0 0 2px;pointer-events:none}
+.brk span{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:.66rem;color:var(--accent);font-weight:700;background:var(--paper);padding:1px 3px;white-space:nowrap}
+.brk[data-kind="mh"]{border-color:var(--ink-dim)}
+.brk[data-kind="mh"] span{color:var(--ink-dim)}
+.tick{position:absolute;right:0;left:0;border-top:1px dashed var(--flag);pointer-events:none}
+.tick span{position:absolute;right:5px;top:3px;font-size:.66rem;color:var(--flag);font-weight:700;background:var(--paper);padding:1px 3px;white-space:nowrap}
+
+/* ═══ PRODUCT SKIN — the drawings render in the portal's own tokens ═══════ */
+.dev{font-family:Inter,system-ui,sans-serif}
+.dev[data-skin="dark"]{
+  --p-bg:#0A0A0A; --p-card:#111827; --p-t1:rgba(255,255,255,.9); --p-t2:rgba(255,255,255,.7);
+  --p-t3:#94A3B8; --p-line:rgba(255,255,255,.08); --p-line2:rgba(255,255,255,.16);
+  --p-accent:#859BD5; --p-accent-rgb:133,155,213; --p-lime:#D9F99D; --p-lime-ink:#0A0A0A;
+  --p-fill:rgba(255,255,255,.06); --p-nav:#0D1117;
+}
+.dev[data-skin="warm"]{
+  --p-bg:#F8F4ED; --p-card:#FFFFFF; --p-t1:#241E15; --p-t2:#4A4235;
+  --p-t3:#6A635C; --p-line:rgba(70,55,30,.12); --p-line2:rgba(70,55,30,.20);
+  --p-accent:#57651E; --p-accent-rgb:87,101,30; --p-lime:#D9F99D; --p-lime-ink:#241E15;
+  --p-fill:rgba(70,55,30,.08); --p-nav:#EFEAE1;
+}
+.dev{background:var(--p-bg);color:var(--p-t1)}
+
+.mh{background:var(--p-card);border-bottom:1px solid var(--p-line);padding:.45rem 1rem;display:flex;flex-direction:column;justify-content:center;min-height:44px}
+.dev[data-w="1440"] .mh{padding:.5rem 2rem}
+.mhRow{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-width:0}
+.mhLeft{display:flex;flex-direction:column;align-items:flex-start;gap:.05rem;min-width:0;flex:1 1 auto}
+.mhNameRow{display:flex;align-items:center;gap:.45rem;min-width:0;max-width:100%}
+.mhName{font-size:.98rem;font-weight:700;color:var(--p-t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dev[data-w="1440"] .mhName{font-size:1.05rem}
+.mhRole{font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--p-fill);color:var(--p-t2);white-space:nowrap;flex:0 0 auto}
+.mhMeta{display:flex;font-size:.74rem;color:var(--p-t3);flex-wrap:nowrap;min-width:0;max-width:100%}
+.mhMeta>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mhMeta>span:first-child{flex:0 1 auto}
+.mhMeta>span+span{flex:none}
+.mhMeta>span+span::before{content:"\00b7";margin:0 .4rem}
+.mhRight{display:flex;align-items:center;gap:.5rem;flex:0 1 auto;min-width:0}
+.mhStatus{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.mhStatus b{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--p-t3);font-family:"JetBrains Mono",monospace}
+.mhStatus i{font-style:normal;font-size:.78rem;color:var(--p-t2)}
+.mhFlip{font-size:.7rem;color:var(--p-t3);border:1px solid var(--p-line2);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.mhPage{display:flex;align-items:center;gap:.4rem;flex:0 1 auto;min-width:0}
+.mhPageName{font-family:"Barlow Condensed",Impact,sans-serif;font-size:1.15rem;font-weight:900;color:var(--p-t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;line-height:1.15}
+
+.pg{padding:1rem;position:relative}
+.dev[data-w="1440"] .pg{padding:2rem}
+
+.band{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.dev[data-w="390"] .band{display:grid;grid-template-columns:1fr auto;align-items:center;row-gap:.75rem;column-gap:.75rem}
+.dev[data-w="390"] .band .bLeft{grid-row:1;grid-column:1}
+.dev[data-w="390"] .band .bHelp{grid-row:1;grid-column:2}
+.dev[data-w="390"] .band .bActs{grid-row:2;grid-column:1/-1}
+.dev[data-w="390"] .band.corner{grid-template-columns:1fr auto auto;column-gap:.5rem}
+.dev[data-w="390"] .band.corner .bActs{grid-row:1;grid-column:2}
+.dev[data-w="390"] .band.corner .bHelp{grid-row:1;grid-column:3}
+.bLeft{display:flex;align-items:center;gap:1rem;min-width:0;margin-right:auto}
+.tile{width:36px;height:36px;border-radius:12px;background:rgba(var(--p-accent-rgb),.12);border:1px solid rgba(var(--p-accent-rgb),.35);color:var(--p-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tile.nest{width:28px;height:28px;border-radius:8px}
+.ttl{font-family:"Barlow Condensed",Impact,sans-serif;font-size:1.4rem;font-weight:900;line-height:1.1;margin:0;color:var(--p-t1);display:flex;align-items:center;flex-wrap:wrap;gap:.5rem}
+.ttl.nest{font-size:1.1rem;font-weight:800}
+.chip{font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--p-fill);color:var(--p-t2);font-family:Inter,sans-serif}
+.chip.prem{background:var(--p-lime);color:var(--p-lime-ink)}
+.bActs{display:flex;align-items:center;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;margin-left:auto}
+.bHelp{flex-shrink:0;display:inline-flex}
+.btnP,.btnG,.q,.setup{font-family:Inter,sans-serif;font-size:.8rem;font-weight:700;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;border:1px solid transparent;white-space:nowrap;padding:0 .7rem;height:32px}
+.dev[data-w="390"] .btnP,.dev[data-w="390"] .btnG,.dev[data-w="390"] .setup{min-height:44px}
+.btnP{background:var(--p-lime);color:var(--p-lime-ink)}
+.btnG{background:transparent;border-color:var(--p-line2);color:var(--p-t2)}
+.btnP.sym{width:44px;padding:0}
+.q{width:34px;height:34px;padding:0;border-radius:999px;border-color:var(--p-line2);color:var(--p-t2);background:transparent}
+.dev[data-w="390"] .q{width:44px;height:44px;min-width:44px;min-height:44px}
+.q.mini{width:30px;height:30px;min-width:30px;min-height:30px}
+.setup{border-color:var(--p-line2);border-radius:999px;padding:0 .6rem;font-size:.76rem;color:var(--p-t2)}
+.setup.sym{padding:0;width:44px}
+.ring{width:18px;height:18px;flex:0 0 18px;border-radius:50%;border:2.5px solid var(--p-fill);border-top-color:var(--p-accent);border-right-color:var(--p-accent);transform:rotate(20deg)}
+
+.tabs{display:flex;gap:.35rem;border-bottom:1px solid var(--p-line);margin-bottom:1rem;overflow:hidden}
+.tabs span{font-size:.76rem;font-weight:700;color:var(--p-t3);padding:.45rem .55rem;white-space:nowrap}
+.tabs span.on{color:var(--p-accent);box-shadow:inset 0 -2px 0 var(--p-accent)}
+.crumb{font-size:.74rem;color:var(--p-t3);margin-bottom:.6rem}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:.5rem .6rem;margin-bottom:.6rem;min-height:47px}
+.dev[data-w="1440"] .toolbar{min-height:33px;padding:.3rem .6rem}
+.tbFact{font-size:.76rem;color:var(--p-t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbEnd{display:flex;gap:.35rem;flex:0 0 auto}
+.pill{font-size:.7rem;font-weight:700;color:var(--p-t3);border:1px solid var(--p-line2);border-radius:8px;padding:.3rem .5rem;white-space:nowrap}
+.row{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:.55rem .65rem;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem}
+.av{width:28px;height:28px;border-radius:50%;background:var(--p-fill);flex:0 0 28px}
+.rl{flex:1;min-width:0}
+.rl b{display:block;font-size:.84rem;font-weight:700;color:var(--p-t1)}
+.rl i{font-style:normal;font-size:.72rem;color:var(--p-t3)}
+.card{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;padding:.8rem;margin-bottom:.5rem}
+.card b{font-size:.8rem}
+.card p{margin:.3rem 0 0;font-size:.74rem;color:var(--p-t3)}
+
+.bnav{position:absolute;left:0;right:0;bottom:0;height:56px;background:var(--p-nav);border-top:1px solid var(--p-line);display:flex;align-items:center}
+.bt{flex:1;display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:0;padding:0 .25rem;color:var(--p-t3)}
+.bt .iw{width:46px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+.bt.on{color:var(--p-accent)}
+.bt.on .iw{background:rgba(var(--p-accent-rgb),.16)}
+.bt em{font-style:normal;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;text-align:center;width:100%}
+
+.strip{height:48px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 2rem;gap:.6rem;font-size:.82rem;color:var(--p-t2);font-weight:700}
+.strip .dot{width:9px;height:9px;border-radius:2px;background:var(--p-lime)}
+.dsk{display:flex;min-height:0}
+.side{width:220px;flex:0 0 220px;border-right:1px solid var(--p-line);background:var(--p-card);padding:.9rem .7rem;display:flex;flex-direction:column;gap:.3rem}
+.side span{font-size:.78rem;color:var(--p-t3);padding:.32rem .5rem;border-radius:8px}
+.side span.on{background:rgba(var(--p-accent-rgb),.16);color:var(--p-accent);font-weight:700}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+.prose{max-width:70ch}
+.section{padding-top:56px;border-top:1px solid var(--rule);margin-top:56px}
+.section h2{font-size:1.75rem;font-weight:800;margin-bottom:8px}
+.section h3{font-size:1.04rem;font-weight:700;margin:30px 0 6px}
+.section p,.section li{color:var(--ink-soft);font-size:.97rem}
+.pull{border-left:3px solid var(--flag);padding:2px 0 2px 18px;margin:24px 0;font-size:1.02rem;color:var(--ink)}
+.note{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:16px 18px;margin-top:22px;font-size:.92rem;color:var(--ink-soft)}
+.note b{color:var(--ink)}
+.legend{display:flex;gap:22px;flex-wrap:wrap;font-family:"JetBrains Mono",monospace;font-size:.7rem;color:var(--ink-dim);margin-top:8px}
+.legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.legend i::before{content:"";width:14px;height:2px;background:var(--accent)}
+.legend i.b::before{background:var(--ink-dim)}
+.legend i.c::before{background:none;height:0;border-top:1px dashed var(--flag)}
+.legend i.plain::before{display:none}
+</style>
+
+<div class="wrap">
+
+<header class="doc-head">
+  <p class="eyebrow">Coach portal &middot; design review &middot; ruled 2026-08-25</p>
+  <h1>Does the page-title band earn its height on a phone?</h1>
+  <p class="deck">
+    It is the last large piece of chrome on all forty coach screens, and the 2026-08-24 Roster pass
+    stopped short of it deliberately. Four options are drawn below, live and measured &mdash; every
+    figure on this page is read off the drawing beside it, never asserted.
+    <strong>It does earn it: the portal-wide prize is far smaller than it looks, and the biggest
+    single number on the table belongs to one screen.</strong>
+    Ruled 2026-08-25 &mdash; options 1 and 3 approved, 2 not built, 4 withdrawn.
+  </p>
+  <div class="facts">
+    <div class="fact"><div class="n">44<small>px</small></div><div class="k">The band&rsquo;s height on a phone is the tap floor on the help &ldquo;?&rdquo; &mdash; not the title.</div></div>
+    <div class="fact"><div class="n">36<small>px</small></div><div class="k">The next floor down is the icon tile. Removing the &ldquo;?&rdquo; alone buys 8px.</div></div>
+    <div class="fact"><div class="n">56<small>px</small></div><div class="k">Overview&rsquo;s excess over every other screen &mdash; and it is a one-screen fix.</div></div>
+    <div class="fact"><div class="n">35<small>/40</small></div><div class="k">Screens where this band is the only thing on screen naming them.</div></div>
+  </div>
+</header>
+
+<div class="bench">
+  <div class="bench-in">
+    <div class="grp"><span class="lbl">Option</span>
+      <div class="seg" id="segOpt">
+        <button data-v="0" aria-pressed="true">0 &middot; As shipped</button>
+        <button data-v="1" aria-pressed="false">1 &middot; Tuned</button>
+        <button data-v="2" aria-pressed="false">2 &middot; Into the masthead</button>
+        <button data-v="3" aria-pressed="false">3 &middot; Chrome out</button>
+        <button data-v="4" aria-pressed="false">4 &middot; The nav names it</button>
+      </div>
+    </div>
+    <div class="grp"><span class="lbl">Width</span>
+      <div class="seg" id="segW">
+        <button data-v="390" aria-pressed="true">390</button>
+        <button data-v="1440" aria-pressed="false">1440</button>
+      </div>
+    </div>
+    <div class="grp"><span class="lbl">Skin</span>
+      <div class="seg" id="segS">
+        <button data-v="warm" aria-pressed="true">Warm</button>
+        <button data-v="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="optWrite"></div>
+
+<div class="tblwrap">
+  <table id="tbl">
+    <thead><tr>
+      <th>Shape</th><th>Masthead</th><th>Band + margin</th><th>Content starts at</th><th>As shipped</th><th>Change</th>
+    </tr></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table>
+</div>
+<div class="legend">
+  <i>band, measured</i><i class="b">masthead, measured</i><i class="c">first line of content</i>
+  <i class="plain">Every figure is read from the drawings below at the selected width.</i>
+</div>
+
+<div class="rail" id="rail"></div>
+<div style="position:absolute;left:-99999px;top:0;overflow:hidden;height:1px;width:1px" id="baseRail" aria-hidden="true"></div>
+
+<section class="section">
+  <div class="prose">
+    <h2>What the measuring found</h2>
+
+    <h3>The band is a control row wearing a title&rsquo;s name</h3>
+    <p>At 390px the box is <code>44px</code> because the help &ldquo;?&rdquo; is a 44&times;44 tap target,
+      ruled portal-wide. Under that sits the 36px icon tile. The heading itself &mdash; Barlow Condensed
+      1.4rem at line-height 1.1 &mdash; is about <code>25px</code>. The title text is responsible for
+      roughly a quarter of the height it is being blamed for. Deleting words saves nothing; only moving
+      controls does.</p>
+
+    <h3>Overview is not the band&rsquo;s fault, and it is the biggest number here</h3>
+    <p>Every other screen is <code>60px</code>. Overview is <code>116px</code>, because its
+      &ldquo;Season setup 4/5&rdquo; chip is too wide to share the title line, so it takes a second 44px
+      row plus a 12px gap. That chip already carries a symbol &mdash; its progress ring &mdash; and the
+      2026-08-23 house rule says a phone turns words into symbols. Shrunk to the ring alone it fits the
+      title-line corner beside the &ldquo;?&rdquo;, exactly as the Money hub&rsquo;s Record
+      &ldquo;+&rdquo; already does. <strong>Overview drops to 60px using a mechanism that shipped two
+      days ago, reversing nothing.</strong> That one screen is worth more than the portal-wide
+      alternative.</p>
+
+    <div class="pull">The right half of the phone masthead was not emptied because it was surplus. It was
+      emptied because a short status string could not be made to fit there &mdash; two separate attempts
+      to keep it by shrinking it both failed, and one ended in &ldquo;6:30 p.m. &middot; O&hellip;&rdquo;.</div>
+
+    <h3>Why folding the page name upstairs is the wrong trade</h3>
+    <p>Option 2 is the one that saves real pixels, and the one I would not build. Switch to it at 390px
+      and watch which word gives way: the <em>team name</em> ellipsizes to make room for the page name.
+      An identity bar exists to say which team you are standing in; making the team&rsquo;s name the
+      compressible half inverts the bar&rsquo;s purpose.</p>
+    <p>It also asks the page title to survive the phone masthead&rsquo;s scroll collapse. Today&rsquo;s
+      band scrolls away honestly; a merged bar would make the page name a thing that vanishes and returns
+      &mdash; precisely the borrowed space rejected on sight in August &mdash; unless the collapse ruling
+      changes with it. And the plumbing is not free: the title is written by the page, the masthead by the
+      team layout, so all forty screens must publish their name upward, with drill-ins, embedded hub tabs
+      and the accessible heading each needing a separate answer.</p>
+
+    <h3>The &ldquo;?&rdquo; has a better home, but not for the pixels &mdash; and it is a desktop win</h3>
+    <p>Option 3 moves the help &ldquo;?&rdquo; into the masthead&rsquo;s corner. It buys
+      <code>8px</code> on a phone and <code>0px</code> on a desktop, where the band&rsquo;s height is set
+      by the 36px icon tile and the &ldquo;?&rdquo; is only 34px. Selling it as a space saving would be
+      dishonest at either width. Unlike a &ldquo;+&rdquo;, a &ldquo;?&rdquo; is never ambiguous in an
+      identity bar &mdash; it means &ldquo;help with what I am looking at&rdquo; everywhere in the
+      product &mdash; which is exactly why the create button stays behind.</p>
+    <p><strong>It moves at every width, not on phones only.</strong> The 2026-08-11 ruling makes the
+      &ldquo;?&rdquo; chrome with <em>&ldquo;its own slot, always last, top-right at every width &hellip;
+      one findable home&rdquo;</em>; a phone-only move would give it two homes. In the bar it is rendered
+      <strong>last</strong> &mdash; after the status stack and the public-site link &mdash; so that clause
+      stays literally true.</p>
+    <p><strong>Not the top strip beside the account icon.</strong> That strip holds only
+      leave-this-place doors, and the chat icon was removed from it in July 2026 for the two faults a
+      &ldquo;?&rdquo; would repeat: it is not an exit, and it duplicated a door already reachable at the
+      same width. The sidebar already carries a Help item, so a &ldquo;?&rdquo; up there would be a
+      second desktop help door about 200px from the first.</p>
+    <p><strong>And a correction to this option&rsquo;s original pitch.</strong> It was sold on
+      &ldquo;help stops scrolling away&rdquo; &mdash; <em>true on a desktop, false on a phone.</em> The
+      desktop bar never collapses, so the &ldquo;?&rdquo; becomes permanently visible; the phone bar
+      collapses to the bare team name and hides its whole right side, so the &ldquo;?&rdquo; folds away
+      there regardless. It is ruled to fold with it rather than reopen the bare-name collapse.
+      <strong>The lesson generalises: check whether a benefit survives the scroll state of the bar you
+      are moving a control into, not just its width.</strong></p>
+
+    <h3>Why option 4 was withdrawn the day it was proposed</h3>
+    <p>Option 4 was mine: make the fifth tab name the section you are standing in instead of always
+      reading &ldquo;More&rdquo;. The owner&rsquo;s reply was a question &mdash; <em>would that make
+      the More menu hard to find, and does any app do it well?</em> &mdash; and the honest answer
+      killed it.</p>
+    <p><strong>The signal is already built, twice.</strong> The More tab already takes the full active
+      treatment while you are inside a More section, and the sheet already highlights the row you are
+      on. The rename was adding nothing but risk. <strong>And there is no effective precedent:</strong>
+      iOS has auto-generated a &ldquo;More&rdquo; tab since 2008 for exactly this situation, and it
+      keeps the word and the &bull;&bull;&bull; glyph, putting the section&rsquo;s name in a title bar
+      at the top of the content &mdash; the same answer this review reaches from the other direction.
+      Material&rsquo;s guidance keeps bottom-bar labels static for the same reason: the bar trades on
+      position and a fixed word. <strong>It would also have put a number on the wrong noun</strong>
+      &mdash; that tab carries the unread-notification count, so renamed to &ldquo;Money&rdquo; the pip
+      reads as two things waiting in Money.</p>
+    <p>The measurement that ruled it out as a <em>replacement</em> for the band still stands, and is
+      worth keeping: the label is 9.6px uppercase in a tab about 74px wide, so <em>Practice plans</em>,
+      <em>Skills &amp; Goals</em> and <em>Email families</em> truncate. Switch to option 4 in the
+      drawing to see it.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="prose">
+    <h2>The ruling &mdash; 2026-08-25</h2>
+    <p><strong>Option 1, approved.</strong> Trim the bottom margin from 16px to 12px portal-wide, and
+      give Overview&rsquo;s setup chip its phone symbol so it joins the title line. Every other screen
+      loses 4px; Overview loses 56px. Nothing is reversed, nothing needs new plumbing, and the band
+      goes on naming the thirty-five screens that have no other name on screen.</p>
+    <p><strong>Option 3, approved &mdash; as help placement, not as space, and at every width.</strong>
+      The &ldquo;?&rdquo; moves into the team bar and is rendered last there. On a desktop it becomes
+      permanently visible at zero pixel cost; on a phone it is worth 8px and one findable home. Not the
+      top strip. The create &ldquo;+&rdquo; deliberately stays behind.</p>
+    <p><strong>Option 2 not built. Option 4 withdrawn.</strong></p>
+    <div class="note">
+      <b>A measured &ldquo;no change&rdquo; was a live possibility here, and this is close to it.</b>
+      The band survives because the tap floor makes the portal-wide prize roughly 4&ndash;8px a screen,
+      set against a plumbing change across forty screens, a scroll-collapse question, an accessibility
+      question, and a 390px line that has already run out of horizontal room.
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const I={
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+ dollar:'<line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+ clip:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+ help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+ plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+ cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+ msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ more:'<circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/>',
+ note:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+ chev:'<polyline points="6 9 12 15 18 9"/>'
+};
+const svg=(k,s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[k]+'</svg>';
+
+let OPT='0', W='390', SK='warm';
+
+const SHAPES=[
+ {id:'roster',n:'A',h:'Roster',sub:'A hub with a create action and the “?” — the everyday shape, and most of the forty screens.',
+  icon:'users',title:'Roster',acts:'create',help:true,nav:'roster',primary:true},
+ {id:'attend',n:'B',h:'Attendance — an assistant’s read-only view',sub:'A hub with no actions at all. The “?” is the only control, and it sets the height by itself.',
+  icon:'clip',title:'Attendance',acts:'none',help:true,nav:'Insights',primary:false},
+ {id:'over',n:'C',h:'Overview',sub:'The 116px worst case: the setup chip is too wide for the title line, so it takes a row of its own.',
+  icon:'dash',title:'Overview',chips:true,acts:'setup',help:true,nav:'overview',primary:true},
+ {id:'drill',n:'D',h:'Money → Fundraisers → one drive',sub:'A drill-in pays for two headers: the hub’s h1 and the record’s h2 beneath it.',
+  icon:'dollar',title:'Money',acts:'record',help:true,nested:'Spring Bottle Drive',nav:'Money',primary:false},
+ {id:'embed',n:'E',h:'Money → a hub tab',sub:'The embedded shape: actions only, no identity. Nothing here is a title.',
+  icon:'dollar',title:'Money',acts:'record',help:true,embedded:true,nav:'Money',primary:false}
+];
+
+function actsHTML(sh){
+  const phone=W==='390';
+  if(sh.acts==='none') return '';
+  if(sh.acts==='create') return '<span class="btnP'+(phone?' sym':'')+'" role="img" aria-label="Add player">'+(phone?svg('plus',16):'+ Add player')+'</span>';
+  if(sh.acts==='record') return '<span class="btnP'+(phone?' sym':'')+'" role="img" aria-label="Record money">'+(phone?svg('plus',16):'+ Record')+'</span>';
+  if(sh.acts==='setup'){
+    // As shipped the chip keeps its words on a phone, which is why it cannot share the title line.
+    if(phone && OPT!=='0') return '<span class="setup sym" role="img" aria-label="Season setup, 4 of 5 done"><span class="ring"></span></span>';
+    return '<span class="setup"><span class="ring"></span>Season setup 4/5 '+svg('chev',13)+'</span>';
+  }
+  return '';
+}
+
+function mastheadHTML(sh){
+  const wide=W==='1440';
+  const fold=OPT==='2'&&!wide&&!sh.embedded;   // option 2: page name moves up here
+  const helpUp=OPT==='3'&&!sh.embedded;        // option 3: only the "?" moves up
+  let right='';
+  if(wide){
+    // Option 3 at 1440: the "?" joins the bar LAST — after the status stack and the public-site
+    // flip — so "always last, top-right" stays literally true rather than approximately true.
+    right='<div class="mhRight"><div class="mhStatus"><b>Next up</b><i>Wed 6:00 p.m. practice</i></div><span class="mhFlip">⇄ Public site</span>'+
+      (helpUp?'<span class="q">'+svg('help',15)+'</span>':'')+'</div>';
+  } else if(fold){
+    right='<div class="mhRight"><div class="mhPage"><span class="mhPageName">'+sh.title+'</span>'+actsHTML(sh)+'<span class="q">'+svg('help',15)+'</span></div></div>';
+  } else if(helpUp){
+    right='<div class="mhRight"><span class="q mini">'+svg('help',14)+'</span></div>';
+  }
+  return '<div class="mh"><div class="mhRow"><div class="mhLeft">'+
+    '<span class="mhNameRow"><span class="mhName">U13 Rockets</span><span class="mhRole">Head coach</span></span>'+
+    '<div class="mhMeta"><span>Riverdale Ridge</span><span>2026 Season</span><span>12–4–1</span></div>'+
+    '</div>'+right+'</div></div>';
+}
+
+function bandHTML(sh){
+  const phone=W==='390';
+  const mb=(OPT==='0'?'1rem':'.75rem');
+  if(sh.embedded) return '<div class="band" style="margin-bottom:.75rem"><div class="bActs">'+actsHTML(sh)+'</div></div>';
+  if(OPT==='2'&&phone) return '';                    // the band is gone entirely
+  const helpUp=OPT==='3';
+  const dropTile=OPT==='3'&&phone;
+  const acts=actsHTML(sh);
+  const corner=phone&&acts&&(sh.acts!=='setup'||OPT!=='0');
+  const chips=sh.chips?'<span class="chip prem">Premium</span><span class="chip">U13</span>':'';
+  return '<div class="band'+(corner?' corner':'')+'" style="margin-bottom:'+mb+'">'+
+    '<div class="bLeft">'+(dropTile?'':'<div class="tile">'+svg(sh.icon,18)+'</div>')+'<h1 class="ttl">'+sh.title+chips+'</h1></div>'+
+    (acts?'<div class="bActs">'+acts+'</div>':'')+
+    ((sh.help&&!helpUp)?'<span class="bHelp"><span class="q">'+svg('help',phone?17:15)+'</span></span>':'')+
+  '</div>';
+}
+
+function nestedHTML(sh){
+  if(!sh.nested) return '';
+  return '<div class="crumb">← Back to fundraisers</div>'+
+   '<div class="band nb" style="margin-bottom:.75rem"><div class="bLeft"><div class="tile nest">'+svg('dollar',15)+
+   '</div><h2 class="ttl nest">'+sh.nested+'</h2></div><div class="bActs"><span class="btnG">Edit</span></div></div>';
+}
+
+function bodyHTML(sh){
+  if(sh.id==='over') return '<div class="content"><div class="card"><b>Next up · Wed 6:00 p.m.</b><p>Practice at Riverdale Park, diamond 2</p></div><div class="card"><b>12 of 18 families have paid</b><p>$2,862.69 in the season balance</p></div></div>';
+  if(sh.id==='embed'||sh.id==='drill') return '<div class="content"><div class="toolbar"><span class="tbFact">$1,240 raised of $2,000</span><span class="tbEnd"><span class="pill">All</span><span class="pill">↓</span></span></div><div class="row"><span class="av"></span><span class="rl"><b>Marchetti household</b><i>$120 · 3 Sep</i></span></div><div class="row"><span class="av"></span><span class="rl"><b>Okonkwo household</b><i>$80 · 3 Sep</i></span></div></div>';
+  if(sh.id==='attend') return '<div class="content"><div class="toolbar"><span class="tbFact">14 sessions this season</span><span class="tbEnd"><span class="pill">Season</span></span></div><div class="row"><span class="av"></span><span class="rl"><b>Amara Bello</b><i>13 of 14</i></span></div><div class="row"><span class="av"></span><span class="rl"><b>Jonah Reyes</b><i>11 of 14</i></span></div></div>';
+  return '<div class="content"><div class="toolbar"><span class="tbFact">18 players · 2 inactive</span><span class="tbEnd"><span class="pill">List</span><span class="pill">↓</span></span></div><div class="row"><span class="av"></span><span class="rl"><b>Amara Bello</b><i>#7 · Pitcher</i></span></div><div class="row"><span class="av"></span><span class="rl"><b>Jonah Reyes</b><i>#12 · Catcher</i></span></div><div class="row"><span class="av"></span><span class="rl"><b>Priya Raman</b><i>#3 · Shortstop</i></span></div></div>';
+}
+
+const NAVMAP={overview:['dash','Overview'],schedule:['cal','Schedule'],chat:['msg','Chat'],roster:['users','Roster']};
+function navHTML(sh){
+  const inMore=!sh.primary;
+  const secIcon=sh.nav==='Money'?'dollar':'note';
+  // Option 4: the fifth tab wears the name and icon of the section you are standing in.
+  const fifth=(OPT==='4'&&inMore)
+    ? '<span class="bt on"><span class="iw">'+svg(secIcon,20)+'</span><em>'+sh.nav+'</em></span>'
+    : '<span class="bt'+(inMore?' on':'')+'"><span class="iw">'+svg('more',20)+'</span><em>More</em></span>';
+  const four=['overview','schedule','chat','roster'].map(function(k){
+    const on=sh.primary&&sh.nav===k;
+    return '<span class="bt'+(on?' on':'')+'"><span class="iw">'+svg(NAVMAP[k][0],20)+'</span><em>'+NAVMAP[k][1]+'</em></span>';
+  }).join('');
+  return '<div class="bnav">'+four+fifth+'</div>';
+}
+
+function frameHTML(sh,shipped){
+  const saved=OPT; if(shipped) OPT='0';
+  const showTabs=sh.embedded||sh.nested;
+  const inner=mastheadHTML(sh)+'<div class="pg">'+bandHTML(sh)+
+    (showTabs?'<div class="tabs"><span class="on">Fundraisers</span><span>Transactions</span><span>Payables</span><span>Budget</span></div>':'')+
+    nestedHTML(sh)+bodyHTML(sh)+'</div>';
+  let html;
+  if(W==='1440'){
+    html='<div class="dev" data-w="1440" data-skin="'+SK+'" data-shape="'+sh.id+'" style="width:1440px;height:400px">'+
+      '<div class="strip"><span class="dot"></span>FieldLogicHQ · Coaches Portal</div><div class="dsk"><div class="side">'+
+      '<span class="'+(sh.id==='over'?'on':'')+'">Overview</span><span>Schedule</span>'+
+      '<span class="'+(sh.id==='roster'?'on':'')+'">Roster</span><span class="'+(sh.id==='attend'?'on':'')+'">Insights</span>'+
+      '<span class="'+((sh.id==='drill'||sh.id==='embed')?'on':'')+'">Money</span><span>Settings</span>'+
+      '</div><div class="main">'+inner+'</div></div></div>';
+  } else {
+    html='<div class="dev" data-w="390" data-skin="'+SK+'" data-shape="'+sh.id+'" style="width:390px;height:600px">'+inner+navHTML(sh)+'</div>';
+  }
+  OPT=saved;
+  return html;
+}
+
+const WRITE={
+ '0':{t:'As shipped today',v:'v-mid',vt:'Baseline',
+  p:'The band as it stands: a 44px control row whose height is set by the help “?”, a 36px icon tile beneath that, a 16px margin under it. Every measurement on this page is taken against this.',c:[]},
+ '1':{t:'Keep the band, tune it, fix Overview',v:'v-rec',vt:'Approved 2026-08-25',
+  p:'Two changes and nothing else. The bottom margin goes 16px → 12px on every screen. Overview’s “Season setup 4/5” chip becomes its progress ring alone on a phone — the words survive as its accessible name — so it fits the title-line corner beside the “?”, the same mechanism the Money hub’s Record “+” already uses.',
+  c:[{ok:1,t:'Reverses nothing. No new plumbing, no new component shape, no accessibility question.'},
+     {ok:1,t:'Overview — a new coach’s very first screen, and the only one where that chip is shown — drops 56px.'},
+     {ok:0,t:'Every other screen gains only 4px. That is the honest size of the portal-wide half.'}]},
+ '2':{t:'Fold the page name into the masthead',v:'v-no',vt:'Not recommended',
+  p:'At phone width the band disappears and its contents move up: team identity left, page name plus the “+” and the “?” right. It is the option that saves real pixels — around 60px on every screen — and the one I would not build.',
+  c:[{ok:0,t:'Watch the drawing at 390px: the team name is the half that ellipsizes. An identity bar whose identity gives way to a page name has stopped being an identity bar.'},
+     {ok:0,t:'The phone masthead collapses to a bare team name on scroll, so the page name becomes a thing that vanishes and returns — the borrowed space rejected on sight in August — unless that ruling changes too.'},
+     {ok:0,t:'The title is written by the page, the masthead by the team layout. All forty screens must publish their name upward, and drill-ins, embedded tabs and the accessible heading each need their own answer.'},
+     {ok:0,t:'Above 900px nothing changes, so the portal would carry two header shapes and two rules for where a page name lives.'}]},
+ '3':{t:'Move the help “?” into the team bar — at every width',v:'v-rec',vt:'Approved 2026-08-25 — as help placement',
+  p:'The “?” takes the masthead’s corner and is rendered LAST there, after the status stack and the public-site link, so the original rule — “always last, top-right at every width, one findable home” — stays literally true. On a phone the icon tile leaves the band with it, so what is left is a text row instead of a control row. Switch the width above to see both halves.',
+  c:[{ok:1,t:'On a computer the team bar never collapses, so the “?” becomes permanently visible — and it costs zero pixels there, because the band’s height is set by the 36px icon tile and the “?” is only 34px.'},
+     {ok:1,t:'Unlike a “+”, a “?” is never ambiguous in an identity bar — it means “help with what I am looking at” on every screen in the product.'},
+     {ok:0,t:'A correction to this option’s original pitch: “help stops scrolling away” is TRUE ON A COMPUTER and FALSE ON A PHONE — the phone bar collapses to the bare team name and hides its right side, so the “?” folds away regardless. Ruled to fold with it; the bare-name collapse is not reopened.'},
+     {ok:0,t:'The pixels are 8px on a phone and 0px on a computer. Presenting this as a space saving would be dishonest at either width.'},
+     {ok:0,t:'Not the top strip beside the account icon: that strip holds only leave-this-place doors, the chat icon was removed from it in July for the same two faults, and the sidebar already carries a Help item ~200px away.'},
+     {ok:0,t:'Unmeasured and load-bearing: between about 900 and 1100px the bar carries name + role left and three things right — the same squeeze that took the status slot off phones. Measure it, do not assert it.'}]},
+ '4':{t:'The bottom bar names the section you are in',v:'v-no',vt:'Withdrawn 2026-08-25',
+  p:'Proposed here, questioned by the owner the same day — “would naming that nav icon where the user is in cause confusion as to where the more menu is?” — and withdrawn on the answer. It is drawn so the reasoning can be checked rather than taken on trust.',
+  c:[{ok:0,t:'The “you are here” signal is already built, twice: the More tab already takes the full active treatment inside a More section, and the sheet already highlights the row you are on. The rename was the only thing being added — and it is the risky half.'},
+     {ok:0,t:'No effective precedent, and the canonical implementation does the opposite. iOS has auto-generated a “More” tab since 2008 for exactly this situation; it keeps the word and the ••• glyph and puts the section name in a title bar at the top of the content — the same answer this review reaches by another route.'},
+     {ok:0,t:'It would attach a number to the wrong noun. That tab carries the unread-notification count; renamed to “Money” while showing the pip, it reads as two things waiting in Money.'},
+     {ok:0,t:'And the label does not fit anyway: 9.6px uppercase in a tab about 74px wide. Money, Lineups and Tryouts fit; Practice plans, Skills & Goals and Email families truncate — visible in the drawing.'}]}
+};
+
+function renderWrite(){
+  const o=WRITE[OPT];
+  document.getElementById('optWrite').innerHTML='<div class="optcard"><h2><span class="num">OPTION '+OPT+'</span> '+o.t+
+    ' <span class="verdict '+o.v+'">'+o.vt+'</span></h2><p>'+o.p+'</p>'+
+    (o.c.length?'<ul class="costs">'+o.c.map(function(c){return '<li class="'+(c.ok?'ok':'')+'">'+c.t+'</li>';}).join('')+'</ul>':'')+'</div>';
+}
+
+function render(){
+  renderWrite();
+  const rail=document.getElementById('rail');
+  rail.className=(W==='1440'?'rail stack':'rail');
+  rail.innerHTML=SHAPES.map(function(sh){
+    return '<div class="specimen"><div class="spec-head"><span class="sn">'+sh.n+'</span><h3>'+sh.h+'</h3><p>'+sh.sub+
+      '</p></div><div class="spec-body"><div class="gutter" data-g="'+sh.id+'"></div>'+frameHTML(sh)+'</div></div>';
+  }).join('');
+  document.getElementById('baseRail').innerHTML=SHAPES.map(function(sh){return frameHTML(sh,true);}).join('');
+  requestAnimationFrame(measure);
+}
+
+function readFrame(dev){
+  const fr=dev.getBoundingClientRect();
+  const mh=dev.querySelector('.mh');
+  // The drill-in has TWO direct-child bands (hub h1 + record h2). The record's is excluded so
+  // option 2 — which deletes the hub band — cannot silently report the h2's height as the band's.
+  const band=dev.querySelector('.pg > .band:not(.nb)');
+  const content=dev.querySelector('.content');
+  const mhH=mh?Math.round(mh.getBoundingClientRect().height):0;
+  let bandH=0,bandTop=0;
+  if(band){
+    const r=band.getBoundingClientRect();
+    bandTop=Math.round(r.top-fr.top);
+    bandH=Math.round(r.height+parseFloat(getComputedStyle(band).marginBottom));
+  }
+  const cTop=content?Math.round(content.getBoundingClientRect().top-fr.top):0;
+  return {mhH:mhH,bandH:bandH,bandTop:bandTop,cTop:cTop};
+}
+
+function measure(){
+  const base={};
+  document.querySelectorAll('#baseRail .dev').forEach(function(d){base[d.dataset.shape]=readFrame(d);});
+  const rows=[]; let tot=0,totBase=0;
+  document.querySelectorAll('#rail .dev').forEach(function(dev){
+    const id=dev.dataset.shape, m=readFrame(dev), b=base[id]||m;
+    const g=document.querySelector('.gutter[data-g="'+id+'"]');
+    if(g){
+      const top=dev.getBoundingClientRect().top-g.getBoundingClientRect().top;
+      let marks='<div class="brk" data-kind="mh" style="top:'+top+'px;height:'+m.mhH+'px;width:26px"><span>'+m.mhH+'</span></div>';
+      if(m.bandH) marks+='<div class="brk" style="top:'+(top+m.bandTop)+'px;height:'+m.bandH+'px;width:48px"><span>'+m.bandH+'</span></div>';
+      marks+='<div class="tick" style="top:'+(top+m.cTop)+'px"><span>y '+m.cTop+'</span></div>';
+      g.innerHTML=marks;
+    }
+    const sh=SHAPES.filter(function(s){return s.id===id;})[0];
+    const d=m.cTop-b.cTop; tot+=m.cTop; totBase+=b.cTop;
+    rows.push('<tr><td>'+sh.n+' · '+sh.h+'</td><td>'+m.mhH+'</td><td>'+(m.bandH||'—')+'</td><td>'+m.cTop+
+      '</td><td>'+b.cTop+'</td><td class="'+(d<0?'d-good':d>0?'d-bad':'d-zero')+'">'+(d===0?'0':(d>0?'+':'')+d)+'</td></tr>');
+  });
+  document.querySelector('#tbl tbody').innerHTML=rows.join('');
+  const dt=tot-totBase;
+  document.querySelector('#tbl tfoot').innerHTML='<tr><td>Across all five shapes</td><td></td><td></td><td>'+tot+
+    '</td><td>'+totBase+'</td><td class="'+(dt<0?'d-good':dt>0?'d-bad':'d-zero')+'">'+(dt===0?'0':(dt>0?'+':'')+dt)+'</td></tr>';
+}
+
+function wire(id,set){
+  document.getElementById(id).addEventListener('click',function(e){
+    const b=e.target.closest('button'); if(!b) return;
+    Array.prototype.forEach.call(e.currentTarget.children,function(x){x.setAttribute('aria-pressed',String(x===b));});
+    set(b.dataset.v); render();
+  });
+}
+wire('segOpt',function(v){OPT=v;});
+wire('segW',function(v){W=v;});
+wire('segS',function(v){SK=v;});
+render();
+window.addEventListener('resize',function(){requestAnimationFrame(measure);});
+</script>

@@ -12027,3 +12027,69 @@ the rows on the boundary. Both were confirmed to FAIL against the pre-fix render
 - On a plan without PDF export, a coach with family-contact access sees two Roster documents whose
   only file types are spreadsheets; resizing a browser below phone width with that dialog open
   leaves an empty file-type list. Narrow and cosmetic; the trigger is correctly hidden on a phone.
+
+---
+
+## §100 · The help "?" moves into the team bar, and Overview stops costing double — ✅ PASSED 2026-08-25
+
+**BUILT 2026-08-25 (dev) · ✅ OWNER QA PASSED 2026-08-25, no defects raised.** Plan
+`docs/projects/active/COACH_PAGE_TITLE_BAND_PLAN.md` + PM brief.
+Mockup: https://claude.ai/code/artifact/972ab843-5972-458c-91ca-bf7f2e990d70 · **No migration.**
+
+⚠ **Two things were accepted rather than fixed, and they stay open on purpose** — do not read a pass
+as closing them: the phone team bar's spare 3px (tightening its padding would turn an ordinary
+screen from a wash into a real gain — offered, not taken), and the 21px **"Season insights"** link on
+Overview (pre-existing touch-target debt, recorded unargued).
+
+⚠ **Walk most of this on a phone (or a window narrowed to 390px), then repeat two of the boxes on a
+computer.** The desktop half is where the help move actually pays.
+
+⚠⚠ **Read this before judging the phone by the ruler.** The honest measured result is that **an
+ordinary screen is flat — about one pixel** — because the "?" needed a 44px home in the team bar and
+that grew the bar 3px, cancelling the margin trim. **What genuinely moved: Overview (−57px), the
+screens with no header button (−9px), one findable place for help, and a desktop help door that no
+longer scrolls away.** If you expected every screen to visibly gain height, that expectation came
+from me and it was wrong.
+
+- [x] **The "?" is in the team bar now, on the far right.** Open a team → **Roster** on a phone. The
+      strip with "Roster" on it has **no "?"** any more; the "?" sits at the right-hand end of the
+      team bar above, after the public-site link when the team has one. Confirm it opens the same
+      help drawer, on Roster's own topic.
+- [x] **It is in the same place on every screen.** Move through Schedule, Money, Documents, Staff,
+      Tryouts, Settings. The "?" never moves and never appears twice.
+- [x] ⚠ **And on a computer it is the same corner.** Widen to a full window. The "?" is at the end of
+      the team bar, after "Next up" and after **⇄ Public site**. This is the half you asked for —
+      confirm it reads as the last thing in that bar, not as something wedged into the status.
+- [x] ⚠⚠ **The computer's help no longer scrolls away — this is the actual win.** On a long Roster,
+      scroll well down the page. **The "?" is still there**, because the team bar does not collapse
+      on a computer. Compare with a phone: scroll down and the bar shrinks to the bare team name and
+      the "?" goes with it. **That difference is deliberate and ruled** — say if you would rather it
+      survived on a phone too, because that is a live option we did not take.
+- [x] **Overview is the screen that actually got shorter.** On a phone, open **Overview** on a team
+      that still has season setup outstanding. The **"Season setup 4/5"** chip is now just its
+      **progress ring**, sitting on the title line beside the "?" instead of on a row of its own.
+      Tapping the ring opens the same setup checklist. Confirm you can still tell what it is.
+- [x] ⚠ **A screen with no buttons is the other one that gained.** Open **Documents** or **Staff** on
+      a phone — the title strip is visibly shorter than Roster's, because nothing is holding it open.
+- [x] **Nothing lost its help.** The one screen outside a team — **Link Organization** — still draws
+      its own "?" in its title strip. Notifications and the team picker never had one.
+- [x] **A drill-in still has exactly one "?".** Money → **Fundraisers** → open one drive. The "?" is
+      in the team bar for Money; the drive's own heading below has none.
+- [x] ⚠ **A narrow laptop was the risk and it measured clean — check it by eye.** Drag a desktop
+      window down to roughly 1000px wide. The team bar should stay **one line**: team name and role
+      left, "Next up", the public-site link and the "?" right. Nothing wrapping, nothing cut off.
+
+**Measured after the build** (computed geometry, nine widths, not a screenshot): band at 390 —
+Overview **116 → 56**, an actionless screen **60 → 48**, a corner-action screen **60 → 56**; team bar
+**56 → 59** at ≤640 and **58 → 58** on a desktop; band on a desktop **52 → 52** (unchanged); "?"
+**44×44** at 361/390/640 and 34×34 at ≥768; masthead row **one line at 900/1000/1100/1280/1440**; no
+sideways scroll at any width.
+
+⚠ **One regression was introduced and caught by measuring, not by looking:** reserving the "?"'s
+height on the team bar also reached the **collapsed** bar, taking a scrolled phone from 36px to
+**55px**. Fixed and re-measured at 36px — but if a scrolled phone bar ever looks fat to you, that is
+the thing to report.
+
+⚠ **Known and NOT fixed here:** the **"Season insights →"** link on Overview is a 21px tap target.
+Pre-existing, recorded as touch-target debt rather than closed with a written excuse, and out of
+scope for this ruling.

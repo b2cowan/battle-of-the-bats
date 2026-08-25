@@ -13,6 +13,7 @@ import {
 import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
+import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
 import type { RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -302,6 +303,19 @@ function CoachTeamHeaderInner({
               Public site
             </Link>
           )}
+
+          {/* The page's help "?" — moved out of the page-title band 2026-08-25 (owner ruling;
+              `COACH_PAGE_TITLE_BAND_PLAN.md` §5). It is drawn LAST, after the status stack and
+              after the flip, so the 2026-08-11 clause — "its own slot, always LAST, top-right at
+              every width" — reads literally rather than approximately.
+
+              ⚠ OUTSIDE `.teamHeaderStatus` on purpose. That wrapper is `display: none` at ≤640
+              (the 2026-08-24 status ruling); the "?" is not a status and must survive there.
+              ⚠ It DOES fold with `.teamHeaderCollapsed` at ≤900, like the flip beside it — ruled,
+              and the 2026-08-02 bare-name collapse is deliberately not reopened.
+              ⚠ Renders nothing until a page publishes: a screen with no help topic leaves this
+              corner empty rather than offering a door onto nothing. */}
+          <CoachPageHelpSlot />
         </div>
       </div>
 

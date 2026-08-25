@@ -3069,10 +3069,6 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-overview|768|tap-floor|button·Season setup3/5": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "32px tall (floor 44)"
-    },
     "coach-overview|768|tap-floor|button·Skip this step": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -3629,10 +3625,6 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-team-hub|768|tap-floor|button·Season setup3/5": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "32px tall (floor 44)"
-    },
     "coach-team-hub|768|tap-floor|button·Skip this step": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -3740,6 +3732,30 @@
     "coach-fundraiser|768|tap-floor|button·Record": {
       "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons. · RE-KEYED 2026-08-23 (money centralization P2): the same control, renamed \"Log amount\" → \"Record\" when every door onto the recording conversation converged on one verb. Nothing about its size or placement changed.",
       "detail": "26px tall (floor 44)"
+    },
+    "coach-overview|768|tap-floor|button·Season setup, 4 of 5 done": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|button·Season setup, 4 of 5 done": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|390|tap-floor|a·Season insights →": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-overview|768|tap-floor|a·Season insights →": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|a·Season insights →": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|a·Season insights →": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
     }
   }
 }

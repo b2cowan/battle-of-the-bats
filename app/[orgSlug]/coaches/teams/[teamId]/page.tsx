@@ -1421,11 +1421,22 @@ export default function TeamOverviewPage({
     if (!showSetupChip) return null;
     return (
       <div className={styles.setupChipWrap} ref={setupChipRef}>
+        {/* ⚠⚠ ON A PHONE THIS IS THE RING ALONE, AND THAT IS WHAT TOOK OVERVIEW FROM 116px TO 60px
+            (owner ruling 2026-08-25 — `COACH_PAGE_TITLE_BAND_PLAN.md` §2). At ~145px wide with its
+            words this chip could not share the title line with "Overview", its two title chips and
+            the "?", so the header grid dropped it to a second 44px row: a 12px gap plus 44px, on
+            the ONE screen a brand-new coach meets first. House rule 3 (2026-08-23) already had the
+            answer — *on a phone, words become symbols, and the words survive as the accessible
+            name* — and this control's symbol was already drawn. Nothing was invented for it.
+            ⚠ The `aria-label` is NOT decoration: it is the only place the words survive at ≤640,
+            and it must carry the COUNT, because `setupChipQuiet` hides the visible one and a bare
+            ring says nothing at all. Keep it in step with both states. */}
         <button
           type="button"
           className={styles.setupChip}
           data-quiet={setupChipQuiet ? 'true' : 'false'}
           aria-expanded={setupOpen}
+          aria-label={setupChipQuiet ? 'Season setup' : `Season setup, ${ringSatisfied} of ${ringItems.length} done`}
           onClick={() => setSetupOpen(open => !open)}
         >
           <svg className={styles.setupChipRing} viewBox="0 0 20 20" aria-hidden>
@@ -1438,7 +1449,7 @@ export default function TeamOverviewPage({
           </svg>
           <span className={styles.setupChipLabel}>Season setup</span>
           {!setupChipQuiet && <span className={styles.setupChipCount}>{ringSatisfied}/{ringItems.length}</span>}
-          <ChevronDown size={13} aria-hidden />
+          <ChevronDown size={13} aria-hidden className={styles.setupChipChevron} />
         </button>
 
         {/* A disclosure, not a modal: it doesn't trap focus or inert the page, so it must not
@@ -1893,6 +1904,10 @@ export default function TeamOverviewPage({
           </>
         }
         actions={renderSetupChip()}
+        /* The chip is ONE compact control on a phone (ring only — see renderSetupChip), which is
+           exactly the condition this flag documents, so it keeps the title line's corner instead of
+           taking a row of its own. This is the whole of Overview's 116px → 60px. */
+        actionsPhoneInTitleRow
         helpLabel="Premium Coaches Portal"
         help={{ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], fullGuideHref: `${helpHref}#premium-portal-tour` }}
       />
