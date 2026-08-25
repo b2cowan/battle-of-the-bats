@@ -157,8 +157,12 @@ door that refuses dues and drive money.
 1. **Dues "Add Credit" type picker offers `Forgiven` and `Reimbursement`, which the API refuses**
    (validTypes allow-list) — a coach picking them gets a 400. The picker should not offer them
    (an adjacent comment already claims it doesn't).
-2. **DuesPayoutSheet's note placeholder still uses a guardian first name** ("e.g. sent to Dana") —
-   the exact PII-teaching example the 2026-08-13 ruling removed from Record payment's placeholder.
+2. ✅ **CLOSED 2026-08-25 — DO NOT RE-FIX.** The payout note placeholder that taught guardian
+   names ("e.g. sent to Dana") lived on `DuesPayoutSheet`, and **P2 deleted that component**: the
+   conversation took over the pay-a-family-back door, leaving the sheet with no callers at all
+   (found by P2's /simplify pass). Verified 2026-08-25 — the only surviving hit anywhere is a
+   COMMENT recording the 2026-08-13 PII ruling, which is legitimate history, not a defect. Left
+   here rather than deleted because a debt list that silently loses rows cannot be audited.
 3. **Stale comments** describing the removed BvA tag filter (an orphaned "Phase 3" banner in the
    panel; a "SKIPPED WHEN A TAG IS FILTERING" note in the route).
 4. Legacy money routes redirect with **308** (permanentRedirect), not 307 as some docs say —
@@ -207,6 +211,22 @@ door that refuses dues and drive money.
 - **P3 — tags per §5.3 + the debt**: chip row → §7 counted pill on both faces, filtered TOTAL
   always shown; label-only "Who paid it back" removal; §7's debt items (credit-picker 400, payout
   placeholder PII, stale comments).
+  **⊕ ADDED 2026-08-25 (owner): the required-asterisk sweep, and it is PORTAL-WIDE.** A required
+  field takes a PLAIN asterisk in the label’s own ink; the dedicated red marker is RETIRED, not
+  merely avoided in new code. Ruled because **red in this portal means something has gone wrong**
+  — money owed, overdue, a refused save — and a field is not in error for being required; the
+  asterisk already carries the meaning, so the colour was only adding volume and spending a signal
+  the portal needs for real failures.
+  ⚠ **THE STATE IT CORRECTS IS MIXED INSIDE SINGLE FILES, NOT SPLIT BY SCREEN.** Measured
+  2026-08-25: 44 required labels across 8 files, 29 red vs 15 plain — with **Player Dues AND the
+  money record form each using both**. Anyone scoping this as "money does one thing, roster does
+  another" will size it wrong.
+  ⚠ **IT REACHES BEYOND MONEY** — roster, schedule, the head-coach editor and the start-interest
+  form all carry the red marker. It rides this phase because P3 is already the words-and-leftovers
+  pass, not because it belongs to the money project.
+  ⚠ Deliberately NOT swept on the day it was ruled: roster and schedule were live in other
+  sessions’ working trees, and a 44-site label sweep across files someone else is mid-edit on is
+  an expensive merge over something cosmetic. Ruling: `memory/design_decisions.md` 2026-08-25.
 - **P4 — payer-on-payment** (ruled YES): its own phase; credit unwind on edit/delete is the
   acceptance test.
 - Every phase: **help docs + BOTH demo sandboxes re-read** — the money vocabulary is exactly the
