@@ -626,6 +626,11 @@
   },
   {
     "tablename": "family_links",
+    "indexname": "family_links_person_id_idx",
+    "indexdef": "CREATE INDEX family_links_person_id_idx ON public.family_links USING btree (person_id) WHERE (person_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_links",
     "indexname": "family_links_pkey",
     "indexdef": "CREATE UNIQUE INDEX family_links_pkey ON public.family_links USING btree (id)"
   },
@@ -996,6 +1001,16 @@
   },
   {
     "tablename": "league_registrations",
+    "indexname": "league_registrations_org_id_idx",
+    "indexdef": "CREATE INDEX league_registrations_org_id_idx ON public.league_registrations USING btree (org_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_person_id_idx",
+    "indexdef": "CREATE INDEX league_registrations_person_id_idx ON public.league_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registrations",
     "indexname": "league_registrations_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_registrations_pkey ON public.league_registrations USING btree (id)"
   },
@@ -1215,6 +1230,71 @@
     "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
   },
   {
+    "tablename": "org_people",
+    "indexname": "org_people_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_people_org_email_uniq ON public.org_people USING btree (org_id, email_normalized)"
+  },
+  {
+    "tablename": "org_people",
+    "indexname": "org_people_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_one_current_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_org_email_uniq ON public.org_person_emails USING btree (org_id, email_normalized)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_person_id_idx",
+    "indexdef": "CREATE INDEX org_person_emails_person_id_idx ON public.org_person_emails USING btree (person_id)"
+  },
+  {
+    "tablename": "org_person_emails",
+    "indexname": "org_person_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_emails_pkey ON public.org_person_emails USING btree (id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_pair_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pair_uniq ON public.org_person_match_rejections USING btree (org_id, person_a_id, person_b_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_person_a_idx",
+    "indexdef": "CREATE INDEX org_person_match_rejections_person_a_idx ON public.org_person_match_rejections USING btree (person_a_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_person_b_idx",
+    "indexdef": "CREATE INDEX org_person_match_rejections_person_b_idx ON public.org_person_match_rejections USING btree (person_b_id)"
+  },
+  {
+    "tablename": "org_person_match_rejections",
+    "indexname": "org_person_match_rejections_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_match_rejections_pkey ON public.org_person_match_rejections USING btree (id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_kept_idx",
+    "indexdef": "CREATE INDEX org_person_merges_kept_idx ON public.org_person_merges USING btree (kept_person_id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_org_id_idx",
+    "indexdef": "CREATE INDEX org_person_merges_org_id_idx ON public.org_person_merges USING btree (org_id)"
+  },
+  {
+    "tablename": "org_person_merges",
+    "indexname": "org_person_merges_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_merges_pkey ON public.org_person_merges USING btree (id)"
+  },
+  {
     "tablename": "org_public_site_content",
     "indexname": "org_public_site_content_org_id_key",
     "indexdef": "CREATE UNIQUE INDEX org_public_site_content_org_id_key ON public.org_public_site_content USING btree (org_id)"
@@ -1278,6 +1358,26 @@
     "tablename": "organizations",
     "indexname": "organizations_slug_key",
     "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
+  },
+  {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_persona_key",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_persona_key ON public.pitch_decks USING btree (persona)"
+  },
+  {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_pkey ON public.pitch_decks USING btree (id)"
+  },
+  {
+    "tablename": "pitch_decks",
+    "indexname": "pitch_decks_share_slug_key",
+    "indexdef": "CREATE UNIQUE INDEX pitch_decks_share_slug_key ON public.pitch_decks USING btree (share_slug)"
+  },
+  {
+    "tablename": "pitch_page_pulls",
+    "indexname": "pitch_page_pulls_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pitch_page_pulls_pkey ON public.pitch_page_pulls USING btree (persona)"
   },
   {
     "tablename": "plan_config_overrides",
@@ -1830,6 +1930,71 @@
     "indexdef": "CREATE INDEX rep_fundraisers_team_year_idx ON public.rep_fundraisers USING btree (team_id, program_year_id)"
   },
   {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_expense_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_expense_idx ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_number_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_number_key ON public.rep_payable_installments USING btree (expense_id, installment_number)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_org_id_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_org_id_idx ON public.rep_payable_installments USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_installments_pkey ON public.rep_payable_installments USING btree (id)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_team_due_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_team_due_idx ON public.rep_payable_installments USING btree (team_id, due_date)"
+  },
+  {
+    "tablename": "rep_payable_installments",
+    "indexname": "rep_payable_installments_year_idx",
+    "indexdef": "CREATE INDEX rep_payable_installments_year_idx ON public.rep_payable_installments USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_entry_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_entry_idx ON public.rep_payable_payments USING btree (accounting_entry_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_expense_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_expense_idx ON public.rep_payable_payments USING btree (expense_id, paid_date)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_installment_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_installment_idx ON public.rep_payable_payments USING btree (installment_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_org_id_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_org_id_idx ON public.rep_payable_payments USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_payable_payments_pkey ON public.rep_payable_payments USING btree (id)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_team_date_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_team_date_idx ON public.rep_payable_payments USING btree (team_id, paid_date)"
+  },
+  {
+    "tablename": "rep_payable_payments",
+    "indexname": "rep_payable_payments_year_idx",
+    "indexdef": "CREATE INDEX rep_payable_payments_year_idx ON public.rep_payable_payments USING btree (program_year_id)"
+  },
+  {
     "tablename": "rep_player_awards",
     "indexname": "rep_player_awards_event_idx",
     "indexdef": "CREATE INDEX rep_player_awards_event_idx ON public.rep_player_awards USING btree (event_id)"
@@ -2098,6 +2263,11 @@
     "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_org_id_idx",
     "indexdef": "CREATE INDEX rep_roster_players_org_id_idx ON public.rep_roster_players USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_person_id_idx",
+    "indexdef": "CREATE INDEX rep_roster_players_person_id_idx ON public.rep_roster_players USING btree (person_id) WHERE (person_id IS NOT NULL)"
   },
   {
     "tablename": "rep_roster_players",
@@ -2958,6 +3128,11 @@
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_org_id_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_org_id_idx ON public.rep_tryout_registrations USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_person_id_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_person_id_idx ON public.rep_tryout_registrations USING btree (person_id) WHERE (person_id IS NOT NULL)"
   },
   {
     "tablename": "rep_tryout_registrations",
