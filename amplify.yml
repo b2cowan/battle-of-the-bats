@@ -74,6 +74,24 @@ frontend:
         # Local prod build is ~96MB of real .next output; pruning here is what keeps the deployed
         # artifact under Amplify's 220MB SSR compute cap as the route count keeps growing.
         - pnpm prune --prod
+        # `.next/trace` is the build's own diagnostic timeline — a single plain-text file, MEASURED
+        # at 94MB (2026-08-25), which is nearly HALF the deployed artifact. Nothing reads it at
+        # request time; it exists for `next build --profile` analysis. `artifacts.files: '**/*'`
+        # under `baseDirectory: .next` sweeps it in with everything else, so it has been riding to
+        # production this whole time.
+        # This is what failed dev job 262: build output 235,256,299 bytes against Amplify's
+        # 230,686,720-byte (220MiB) SSR compute cap — over by 2%, with NO dependency change in the
+        # release (84 commits of accumulated route/page growth finally crossed the line). Dropping
+        # trace takes the artifact to ~141MB and restores ~79MB of headroom.
+        # ⚠ MEASURE BEFORE GUESSING NEXT TIME. The first hypothesis here was `.next/cache` — the
+        # usual suspect for this error, and separately listed under `cache.paths` below, which made
+        # it look guilty. It is 1MB. A local `next build --webpack` + `du -sm .next/*` is what found
+        # the real answer; note that `.next/dev` (~400MB) shows up in that listing on a dev box and
+        # is a red herring — the dev server writes it and a build machine never has one.
+        # Next lever if the cap is approached again: `.next/types` (~9MB, build-time TypeScript
+        # only). After that it is real output reduction, not housekeeping — and the 220MiB cap is a
+        # platform limit, so a bigger build instance does NOT raise it.
+        - rm -f .next/trace
   artifacts:
     baseDirectory: .next
     files:
