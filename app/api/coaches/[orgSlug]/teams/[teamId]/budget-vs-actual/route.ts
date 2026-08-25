@@ -1232,6 +1232,20 @@ export const GET = withObservability(async (req: Request,
     cash: { in: cashStrip.in, out: cashStrip.out },
     /** Where the Scheduled lens's running balance starts — today's real money, proven by the guard. */
     cashOnHand,
+    /* ⚠⚠ WHAT THE CASH VIEW LEFT OUT, so the STATEMENT can explain its own gap (owner ruling
+       2026-08-24, Option A). The Statement counts a cost a family paid the vendor — the season
+       really did incur it — and cash cannot, because no team money moved. Until now only Months
+       said so, in a footnote; the Statement is the half that gets exported to a board, which is
+       exactly where the question is asked and where nobody can ask a follow-up.
+       ⚠ SOURCED FROM THE ARITHMETIC THAT EXCLUDED IT (), never re-derived here.
+       A second copy of the exclusion rule is a second copy free to drift from the one that runs. */
+    familyPaidCosts: cashStrip.excluded.map(e => ({
+      id: e.id,
+      description: e.description,
+      categoryName: e.place.categoryName,
+      itemId: e.place.itemId,
+      amount: e.amount,
+    })),
     todayMonth,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual' });

@@ -381,6 +381,29 @@ async function main() {
       + ` (${money(cents(register.cashOnHand))}) — the Scheduled lens projects from the wrong starting money`);
   }
 
+  /* ── 6b. THE BRIDGE BETWEEN THE TWO TOTALS ACTUALLY BRIDGES THEM ──────────────────────────────
+     The Statement now explains its own gap to Months (owner ruling 2026-08-24): what the season
+     spent, plus money back, less costs a family paid the vendor, plus money paid back to families,
+     equals the cash that left. That is arithmetic shown to a board — so it is checked, not trusted.
+
+     ⚠ THIS IS THE CLAIM THE SCREEN MAKES, NOT A RESTATEMENT OF ONE ABOVE. Claims 3–5 hold each view
+     against the register separately; neither notices if the SENTENCE joining them is wrong. A
+     bridge that does not add up is worse than no bridge: it looks like a proof. */
+  const familyPaid = (data.familyPaidCosts ?? []).reduce((s, c) => s + cents(c.amount), 0);
+  const moneyBackNetted = (data.report?.expenses?.categories ?? [])
+    .flatMap(c => c.items ?? []).reduce((s, i) => s + cents(i.refundTotal), 0);
+  const payoutsOut = (grid.categories ?? [])
+    .filter(c => String(c.categoryKey ?? '').replace(/^id:/, '') === 'cash:payouts')
+    .reduce((s, c) => s + cents(c.total?.actual), 0);
+  const bridged = statement + moneyBackNetted - familyPaid + payoutsOut;
+  if (bridged !== cents(grid.totals?.total?.actual)) {
+    problems.push(
+      `THE STATEMENT'S BRIDGE TO MONTHS DOES NOT ADD UP — ${money(statement)} spent`
+      + ` + ${money(moneyBackNetted)} money back − ${money(familyPaid)} family-paid`
+      + ` + ${money(payoutsOut)} paid back = ${money(bridged)}, but Months says`
+      + ` ${money(cents(grid.totals?.total?.actual))} (out by ${money(bridged - cents(grid.totals?.total?.actual))})`);
+  }
+
   /* ── 7. AND THE STRIP'S OWN MONTH MAPS, WHICH ARE A SECOND CLAIM RATHER THAN A DUPLICATE ───────
      Claim 3 compares what the grid PLACED; this compares what the cash arithmetic DATED, before the
      grid touched it. A single claim could not tell a mis-dated dollar from a dropped one. */
@@ -413,6 +436,7 @@ async function main() {
      run, and on this file's own stated principle a claim nobody can see reads like one that did not
      happen. Every claim that executes says so. */
   console.log(`  and the cash arithmetic dated every dollar the way the register did  ✓`);
+  console.log(`  the Statement's bridge to Months adds up: ${money(statement)} spent → ${money(cents(grid.totals?.total?.actual))} in cash  ✓`);
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
      ⚠ A SKIPPED CLAIM MUST NEVER READ AS A PASS. These used to be `console.log` notes above a green

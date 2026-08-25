@@ -4,6 +4,129 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-25 — THE PHONE TITLE BAND STAYS, AND ITS HEIGHT WAS NEVER THE TITLE — plus: do not rename the More tab
+
+**Decision (owner, 2026-08-25, from drawings — artifact `972ab843-5972-458c-91ca-bf7f2e990d70`):**
+The page-title band survives on all forty coach screens. Two changes, both approved:
+
+1. **Its bottom margin goes 16px → 12px at ≤640px**, and **Overview's season-setup chip takes its
+   phone symbol form** (progress ring only, words surviving as its accessible name) so it joins the
+   title line instead of taking a row — **Overview 116px → 56px**.
+2. **The help "?" moves into the masthead's right corner — AT EVERY WIDTH, rendered LAST** (after
+   the status stack and the public-site flip), framed as **help placement, not as space**. Approved
+   on that basis explicitly.
+
+⚠⚠ **CLAUSE 2 WAS APPROVED PHONE-ONLY AND THE OWNER'S FOLLOW-UP CAUGHT THE DRIFT.** *"if we are
+going to move the help icon on mobile, should we do the same on desktop … or we can put it in the top
+nav next to the account icon?"* The 2026-08-11 ruling says the "?" is chrome with *"its own slot,
+always LAST, top-right **at every width** … one findable home"* — **a phone-only move gives it two
+homes and breaks that clause.** It moves at both widths, and it is rendered LAST so *"always last,
+top-right"* stays literally true rather than approximately true.
+
+⚠⚠ **THE TOP STRIP IS RULED OUT ON A SETTLED BOUNDARY, NOT ON TASTE — AND THE PRECEDENT IS A DOOR
+THAT WAS ALREADY REMOVED FROM IT.** `CoachTopStrip` holds *"only genuine leave-this-place doors
+(wordmark · account · workspaces)"*, and the **chat icon was removed from it by owner ruling
+2026-07-31** for the two faults a "?" would repeat: **it is not an exit**, and it **duplicated a door
+reachable at the same width**. `CoachesSidebar` already carries a `Help` item, so a "?" beside the
+account icon would be a second desktop help door ~200px from the first. **Do not re-propose the top
+strip for contextual help.** (The two doors are genuinely different — the rail's opens the full
+guide PAGE, the "?" opens the in-context DRAWER at this screen's section — which is why the "?"
+moving a row up into the bar reads as *less* of a duplicate, not more.)
+
+⚠⚠ **AND I HAD TO CORRECT MY OWN JUSTIFICATION FOR IT.** I sold this as *"help stops scrolling
+away."* **True on desktop, FALSE on a phone.** The desktop masthead never collapses (2026-08-19), so
+the "?" becomes permanently visible **at zero pixel cost** — the band there is 36px tile + 16px
+margin and the "?" is 34px, so removing it changes nothing. **Desktop is where this option actually
+works.** On a phone `.teamHeaderCollapsed` hides `.teamHeaderRight`, so it folds away on scroll
+regardless; only the 8px and the single home land. **RULED: it folds with the collapse on a phone
+like everything else in that slot** — the 2026-08-02 bare-name collapse is NOT reopened (it was
+re-affirmed 2026-08-24). A carve-out was raised and deliberately left to the owner rather than
+assumed. **Generalise: check whether a benefit survives the SCROLL STATE of the bar you are moving
+a control into, not just its width.**
+
+⚠ **UNMEASURED AND LOAD-BEARING: the 900–1100px band.** Above 900 the masthead now carries name +
+role left and **three** things right. That is the same narrow-row failure that took the status slot
+off phones. **Measure at 900/1000/1100/1280/1440 with a long club + team name; do not assert it.**
+
+**NOT done:** folding the page name into the masthead. **WITHDRAWN:** renaming the phone bar's fifth
+tab to the section you are standing in.
+
+**Rationale — three premises died, and naming them is the point of this entry.**
+
+⚠⚠ **THE 44px BAND IS THE TAP FLOOR ON THE "?", NOT THE HEADING.** The `<h1>` is ~25px of it and the
+icon tile 36px, so **deleting the title text saves nothing** and the portal-wide prize is **4–8px a
+screen**. This is why the 2026-08-18 pass moved desktop 80px → 52px and the phone by only −4px. **A
+band's height belongs to its tallest CONTROL; look there before blaming its text.**
+
+⚠⚠ **THE MASTHEAD'S EMPTY RIGHT HALF IS NOT SURPLUS REAL ESTATE — IT IS A SLOT THAT FAILED.** It was
+emptied on 2026-08-24 *because a short status string could not be made to fit at 390px*: two shrink
+attempts failed, one ending in `6:30 p.m. · O…`. Filling it with a page name makes the **unbounded
+team name** the compressible half — **an identity bar whose identity gives way to a page name has
+stopped being an identity bar** — and the phone bar's scroll collapse would make the page name
+vanish-and-return, the borrowed space rejected on sight 2026-08-19. **Before filling an emptied slot,
+find out WHY it emptied.**
+
+⚠ **THE BAND IS NOT DIRECTION D.** D merges the desktop top strip into the masthead; that strip is
+`display:none` ≤900px, so **D saves 0px on a phone**. The conflation had already reached two shipped
+documents (Roster plan §4, QA §93) and both were corrected in this session.
+
+⚠⚠ **AND THE WITHDRAWN OPTION IS THE MOST DURABLE PART. DO NOT RENAME THE PHONE BAR'S FIFTH TAB.**
+The owner's question — *"would naming that nav icon where the user is in cause confusion as to where
+the more menu is?"* — was answered by looking, not arguing, and it killed my own proposal:
+
+- **The "you are here" signal is ALREADY BUILT, TWICE.** The More tab already takes the full active
+  treatment inside a More section (`isOnTeamMore`, heavier stroke, active dot) and the sheet already
+  marks the current row (`dropActive`). **The rename was the only thing being added, and it is the
+  risky half.**
+- **No effective precedent exists and the canonical implementation does the opposite.** UIKit's
+  auto-generated More tab has kept the word "More" and the ••• glyph since 2008, putting the
+  section's name in a **title bar at the top of the content** — the same answer this ruling reaches
+  by another route. Material's bottom-nav guidance agrees: labels stay **static**, because the bar
+  trades on position + fixed word. The one genuinely dynamic fifth tab in wide use is a *profile*
+  tab: the avatar changes, the label does not.
+- **It would attach a number to the wrong noun.** That tab carries the notification count; renamed
+  to "Money" while showing the pip it reads as *two things waiting in Money*.
+
+**Applies to:** `CoachPageHeader` (all three variants) and the coach Overview header (1 + 2); the
+coach team masthead's right slot **at every width** (2); `CoachTopStrip` (the standing "leave-this-
+place doors only", now also barring contextual help); `CoachesBottomNav`'s fifth tab (the standing
+"do not rename"). Plan: `docs/projects/active/COACH_PAGE_TITLE_BAND_PLAN.md`.
+[[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-24 — THE STATEMENT EXPLAINS ITS OWN GAP — a reconciliation bridge, not a footnote (owner, Option A; ✅ BUILT ON DEV 2026-08-24, owner QA §98)
+
+**Decision:** Budget vs. Actual's **Statement** gains a folded line under `Total expenses` reading
+*"In cash, this season spent $X — why the difference?"*, opening to a reconciliation: what the
+season spent, **less** costs a family paid the vendor (itemised), **plus** money paid back to
+families, **plus/less** money back where it exists, arriving at the cash figure, with a door through
+to Months. **It renders only when a gap exists.** Drawn:
+`claude.ai/code/artifact/4a160131-fea3-4f6b-99f4-4f9217932ee6`.
+
+**Rationale:** The two totals differ by design — the Statement is what the season SPENT, Months is
+what the CASH DID — and until now only Months explained itself. The Statement is the half that gets
+exported for a board, which is exactly where the question gets asked and where nobody can ask a
+follow-up. A reconciliation is also the shape the question already has: start at one figure, list the
+adjustments, arrive at the other.
+
+⚠ **The gap is NOT spread thinly, and that is what the drawing found.** On the worked season it
+lands on two rows — Officials reads $899 on the Statement against $300 in cash. A season-level
+bridge answers late for a reader staring at that row.
+
+**Option B — marking the affected rows ("$599 paid by a family") — was drawn and NOT taken**, for
+two reasons worth keeping: it cannot stand alone, because money paid back to families has no row on
+the Statement to hang a marker from; and the Statement does not currently know which costs a family
+paid (that fact is deliberately kept on the cash side), so it is plumbing rather than a label. ⚠ **If
+B is ever built, A carries the arithmetic and B carries the pointer** — built the other way round,
+the markers imply a total they never state.
+
+⚠ **ONE CANONICAL EXPLANATION, REFERENCED TWICE.** The note under the Months grid shrinks to a
+sentence and links to the bridge rather than restating it. Two explanations of one rule drift apart —
+the failure this programme has now designed against four times.
+
+---
+
 ### 2026-08-24 — THE IDENTITY BAR'S RIGHT-HAND SLOT DOES NOT EXIST ON A PHONE, GAME DAY INCLUDED — and a form field's rule had been deciding a toolbar's layout
 
 **Trigger:** owner, on a 390px Roster screenshot — *"this mobile header is taking up way too much

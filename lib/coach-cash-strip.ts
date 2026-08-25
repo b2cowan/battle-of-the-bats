@@ -119,6 +119,16 @@ export interface CashStrip {
   /** Every cash departure, placed for the EXPENSES band (payouts carry the synthetic placement). */
   expenses: ExpenseCashEvent[];
   /**
+   * What this arithmetic DELIBERATELY LEFT OUT — spending a family paid the vendor directly.
+   *
+   * ⚠⚠ IT IS REPORTED BY THE THING THAT EXCLUDED IT, and that is the whole point. The Statement
+   * counts these (the season really did incur them); cash cannot (no team money moved). Something
+   * has to explain that gap to a coach, and the only safe source is here — anywhere else would be a
+   * SECOND copy of the exclusion rule, free to drift from the one that actually runs. Re-derived in
+   * the route, a rule change here would silently stop matching the explanation on screen.
+   */
+  excluded: ExpenseCashEvent[];
+  /**
    * Every day a cash event landed on — fed into the month grid's range derivation so a month where
    * cash moved always has a column (owner ruling 2026-08-23, Exhibit C: the grid GROWS the column;
    * silently dropping off-range cash from the strip was rejected with the mockups).
@@ -133,6 +143,7 @@ const PAYOUT_PLACE: CashPlacement = {
 export function buildActualCashStrip(x: CashStripInputs): CashStrip {
   const revenue: RevenueCashEvent[] = [];
   const expenses: ExpenseCashEvent[] = [];
+  const excluded: ExpenseCashEvent[] = [];
   const dates: string[] = [];
 
   /* ⚠ A ZERO IS NOT AN EVENT. Emitting it would put a row on the grid for a record that moved
@@ -169,7 +180,12 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
     else spend(r, settledOn);
   }
   for (const p of x.expensePayments) {
-    if (p.familyPaidDirect) continue;
+    /* ⚠ RECORDED, NOT DISCARDED. The season spent this and the team's cash did not — the Statement
+       counts it, this arithmetic must not, and the difference is a real question a coach asks. */
+    if (p.familyPaidDirect) {
+      if (p.amount) excluded.push({ id: p.id, description: p.description, amount: p.amount, place: p.place, date: p.paidDate });
+      continue;
+    }
     spend(p, p.paidDate);
   }
   for (const i of x.clubInstallments) {
@@ -193,5 +209,5 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
   for (const e of revenue) bucket(inMap, e.date, e.amount);
   for (const e of expenses) bucket(outMap, e.date, e.amount);
 
-  return { in: inMap, out: outMap, revenue, expenses, dates };
+  return { in: inMap, out: outMap, revenue, expenses, excluded, dates };
 }

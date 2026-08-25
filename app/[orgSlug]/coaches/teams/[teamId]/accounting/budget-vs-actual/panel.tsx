@@ -19,7 +19,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
-import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat } from '@/lib/coach-money-exports';
+import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat, type MoneyRowKind } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
@@ -156,6 +156,20 @@ interface BvaData extends MonthGridPayload {
   monthlyChart: MonthlyPoint[];
   /** Plan money with no date on it — named so the chart can say what it isn't plotting. */
   undatedBudget: number;
+  /**
+   * Spending a FAMILY paid the vendor directly — on this statement, absent from the cash view.
+   *
+   * ⚠ IT COMES FROM THE CASH ARITHMETIC THAT EXCLUDED IT, not from a second reading of the same
+   * rule. It exists so the Statement can explain its own gap rather than leaving Months to do it in
+   * a footnote a board never sees.
+   */
+  familyPaidCosts: Array<{
+    id: string;
+    description: string;
+    categoryName: string | null;
+    itemId: string | null;
+    amount: number;
+  }>;
 }
 
 /**
@@ -514,6 +528,96 @@ function CategoryGroup({
 }
 
 /** A REVENUE / EXPENSES band, or an activity's own name. */
+/**
+ * WHY THIS STATEMENT'S TOTAL IS NOT THE TEAM'S BANK BALANCE (owner ruling 2026-08-24, Option A,
+ * drawn at `claude.ai/code/artifact/4a160131-fea3-4f6b-99f4-4f9217932ee6`).
+ *
+ * The Statement is what the season SPENT; Months is what the CASH DID. They differ by design, and
+ * until now only Months explained it — in a footnote, on the half a board never opens. **The
+ * Statement is what gets exported to a meeting**, which is exactly where the question gets asked
+ * and where nobody can ask a follow-up.
+ *
+ * ⚠ IT IS A RECONCILIATION, NOT A SENTENCE. Start at one figure, list the adjustments, arrive at the
+ * other — the shape the question already has, and the shape a treasurer can defend line by line.
+ *
+ * ⚠⚠ IT RENDERS ONLY WHEN THERE IS A GAP. A team with no family-paid cost, no payout and no money
+ * back has two identical totals, and a bridge saying "no difference" is furniture. This is also why
+ * the arithmetic is not hidden behind a flag: the row's own presence IS the claim.
+ *
+ * ⚠ EVERY FIGURE HERE ALREADY EXISTED except the family-paid list, which is reported by the cash
+ * arithmetic that excluded it. Nothing is re-derived, so the bridge cannot disagree with either view.
+ */
+function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => void }) {
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const familyPaid = r2(data.familyPaidCosts.reduce((s, c) => s + c.amount, 0));
+  /* Money back NETS INTO the cost it repaid on this statement; in cash it is an arrival on the
+     revenue side, so it never reduced the cash that went out. Added back to get there. */
+  const moneyBack = r2(data.report.expenses.categories
+    .flatMap(c => c.items).reduce((s, i) => s + (i.refundTotal ?? 0), 0));
+  /* Money handed back to a family is real cash out and no part of what the season SPENT. */
+  const payouts = r2((data.monthGrid.categories ?? [])
+    .filter(c => isPayoutCategory(c.categoryKey))
+    .reduce((s, c) => s + c.total.actual, 0));
+
+  if (familyPaid < 0.005 && moneyBack < 0.005 && payouts < 0.005) return null;
+
+  const cashOut = r2(data.monthGrid.totals.total.actual);
+  /* ⚠ THE ITEMISATION TRAVELS WITH THE LINE IT EXPLAINS. Rendered as a separate pass it landed at
+     the foot of the list, under whichever adjustment happened to be last — so "Officials · $599"
+     read as a breakdown of *money paid back to families*. A sub-list that can drift away from its
+     parent is worse than no sub-list; it attributes real money to the wrong sentence. */
+  const lines: Array<{ label: string; amount: number; subs?: Array<{ id: string; label: string; amount: number }> }> = [];
+  if (moneyBack > 0.005) lines.push({ label: 'Plus money back, counted in cash as money arriving', amount: moneyBack });
+  if (familyPaid > 0.005) {
+    lines.push({
+      label: 'Less costs a family paid the vendor',
+      amount: -familyPaid,
+      /* "less $660" is not an answer a coach can take to a board — WHICH costs is the question, and
+         on a real season it lands on one or two rows. */
+      subs: data.familyPaidCosts.map(c => ({
+        id: c.id,
+        label: [c.categoryName, c.description].filter(Boolean).join(' · '),
+        amount: c.amount,
+      })),
+    });
+  }
+  if (payouts > 0.005) lines.push({ label: 'Plus money paid back to families', amount: payouts });
+
+  return (
+    <details className={styles.bridge}>
+      <summary className={styles.bridgeSummary}>
+        <ChevronRight size={13} className={styles.bridgeChev} aria-hidden />
+        <span>In cash, this season spent <strong>{fmt(cashOut)}</strong> — why the difference?</span>
+      </summary>
+      <div className={styles.bridgeBody}>
+        <dl className={styles.bridgeList}>
+          <div className={styles.bridgeRow}>
+            <dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd>
+          </div>
+          {lines.map(l => (
+            <Fragment key={l.label}>
+              <div className={styles.bridgeRow}>
+                <dt>{l.label}</dt>
+                <dd>{l.amount < 0 ? `−${fmt(Math.abs(l.amount))}` : `+${fmt(l.amount)}`}</dd>
+              </div>
+              {l.subs?.map(s => (
+                <div className={`${styles.bridgeRow} ${styles.bridgeSub}`} key={s.id}>
+                  <dt>{s.label}</dt>
+                  <dd>{fmt(s.amount)}</dd>
+                </div>
+              ))}
+            </Fragment>
+          ))}
+          <div className={`${styles.bridgeRow} ${styles.bridgeOut}`}>
+            <dt>Cash that left the team&apos;s account</dt><dd>{fmt(cashOut)}</dd>
+          </div>
+        </dl>
+        <button type="button" className={styles.bridgeLink} onClick={onSeeMonths}>See it by month</button>
+      </div>
+    </details>
+  );
+}
+
 function SectionBand({ label, inner }: { label: string; inner?: boolean }) {
   return (
     <div className={`${styles.sectionBand} ${inner ? styles.sectionBandInner : ''}`}>
@@ -658,7 +762,9 @@ export function BudgetVsActualPanel({
        2026-08-21); the FILE is the whole season and must stay that way. A spreadsheet that
        silently contained only what happened to be on screen is the worst outcome available
        here — it leaves the product, and nothing in it says a slice was taken. */
-    for (const m of g.months) cols.push({ label: formatMonthLabel(m), key: `m_${m}`, format: 'currency' });
+    // `headerMonth` writes the Excel header as the month's real date ("Feb 2026"); the label
+    // stays the CSV/PDF spelling, which is the one the import parser has always read.
+    for (const m of g.months) cols.push({ label: formatMonthLabel(m), key: `m_${m}`, format: 'currency', headerMonth: m });
     cols.push({ label: 'Total', key: 'total', format: 'currency' });
     return cols;
   }
@@ -675,11 +781,23 @@ export function BudgetVsActualPanel({
    * re-derive anything — and the last two that were re-derived here (which revenue groups render,
    * and whether the undated column appears) had ALREADY drifted from the screen by 2026-08-23.
    */
-  function buildMonthExportRows(): Array<Record<string, string | number>> {
+  function buildMonthExportRows(): {
+    rows: Array<Record<string, string | number>>;
+    kinds: Array<MoneyRowKind | undefined>;
+  } {
     const g = data!.monthGrid;
     const rev = data!.revenueGrid;
     const { todayMonth, cashOnHand } = data!;
     const rows: Array<Record<string, string | number>> = [];
+    // Index-aligned with `rows` — Excel presentation only (bold bands, collapsible line rows).
+    // The `  — ` prefixes pushed below stay in the CSV/PDF text but are stripped from the Excel
+    // cells at download (the indent replaces them) — see MoneyRowKind for why the import round
+    // trip survives that.
+    const kinds: Array<MoneyRowKind | undefined> = [];
+    const push = (row: Record<string, string | number>, kind?: MoneyRowKind) => {
+      rows.push(row);
+      kinds.push(kind);
+    };
 
     /** A category, item or band-total row: every lens has something to say about it. */
     function moneyRow(
@@ -694,23 +812,24 @@ export function BudgetVsActualPanel({
     }
 
     function band(grid: MonthGrid, dir: MoneyRowDirection, categories: MonthGrid['categories']) {
-      rows.push({ item: dir === 'in' ? 'REVENUE' : 'EXPENSES' });
+      push({ item: dir === 'in' ? 'REVENUE' : 'EXPENSES' }, 'section');
       for (const cat of categories) {
         const group = dir === 'in' ? revenueGroupOf(cat.categoryKey) : null;
-        rows.push(moneyRow(
+        push(moneyRow(
           group ? revenueGroupLabel(group, lens) : cat.categoryName,
-          cat.cells, cat.total, cat.undated, dir));
+          cat.cells, cat.total, cat.undated, dir), 'category');
 
         /* ⚠⚠ THE FILE CARRIES LINE-LEVEL MONEY TOO (fixed 2026-08-21). This blanked every line row
            under any lens but Budget, on the same stale reasoning the screen used — so a coach who
            exported Actual got a spreadsheet whose category rows had figures and whose item rows were
            empty, and no way to tell that was a display rule rather than the truth. */
         for (const line of cat.lines) {
-          rows.push(moneyRow(`  — ${line.description}`, line.cells, line.total, line.undated, dir));
+          push(moneyRow(`  — ${line.description}`, line.cells, line.total, line.undated, dir), 'item');
         }
       }
-      rows.push(moneyRow(
-        bandTotalLabel(dir, lens), grid.totals.cells, grid.totals.total, grid.totals.undated, dir));
+      push(moneyRow(
+        bandTotalLabel(dir, lens), grid.totals.cells, grid.totals.total, grid.totals.undated, dir),
+        'total');
     }
 
     /* ⚠ THE SAME PER-LENS FILTER THE SCREEN APPLIES to revenue groups — literally the same
@@ -729,9 +848,10 @@ export function BudgetVsActualPanel({
       flow.rows.forEach(r => { net[`m_${r.month}`] = r.net; run[`m_${r.month}`] = r.running; });
       net.total = flow.net;
       run.total = flow.ending;
-      rows.push(net, run);
+      push(net, 'total');
+      push(run, 'total');
     }
-    return rows;
+    return { rows, kinds };
   }
 
   const inMonthView = view === 'months' && !!data?.monthGrid;
@@ -746,13 +866,6 @@ export function BudgetVsActualPanel({
    */
   const monthGridInFormat = (format: MoneyExportFormat) => inMonthView && format !== 'pdf';
 
-  function buildExportRows() {
-    // The category table comes from the SHARED builder, so this page's export and the Money hub's
-    // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
-    // without which the spreadsheet's totals would disagree with the screen.
-    return bvaCategoryRows(data);
-  }
-
   /**
    * Everything the export needs, built AT CLICK TIME from what is on screen — the view, the
    * reading, the whole lot. This is the reason Export sits on the tab rather than in the hub
@@ -762,13 +875,22 @@ export function BudgetVsActualPanel({
   function buildExport(format: MoneyExportFormat) {
     const asMonthGrid = monthGridInFormat(format);
     const exportCols = asMonthGrid ? monthExportColumns() : BVA_EXPORT_COLUMNS;
+    // The category table comes from the SHARED builder, so this page's export and the Money hub's
+    // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
+    // without which the spreadsheet's totals would disagree with the screen.
+    const built = asMonthGrid ? buildMonthExportRows() : bvaCategoryRows(data);
     return {
       dataset: asMonthGrid ? `budget-by-month-${lens}` : 'budget-vs-actual',
       title: asMonthGrid
         ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
         : 'Budget vs. Actual',
       columns: exportCols,
-      rows: asMonthGrid ? buildMonthExportRows() : buildExportRows(),
+      rows: built.rows,
+      rowKinds: built.kinds,
+      // This report's binding screen notation (`fmtCell`): a negative in brackets, a zero as an
+      // em dash. The Excel file reads like the screen it came from; every other tab keeps the
+      // default minus-sign notation because that is what THEIR screens and PDFs use.
+      currencyNotation: 'brackets' as const,
       // The month grid's columns depend on the season, so its PDF rows are formatted from the
       // same column definitions rather than a hand-written list — that is what keeps the three
       // formats in step when the month range or the reading changes.
@@ -1235,6 +1357,12 @@ export function BudgetVsActualPanel({
               })()}
               </div>
              </CoachScrollX>
+             {/* ⚠ THE BRIDGE BELONGS AT THE FOOT, WITH THE NOTES (owner, 2026-08-24). It was first put
+                 under Total expenses, which dropped a bordered panel into the middle of the
+                 statement's own closing arithmetic — Total expenses → Season net → Funded by
+                 players is one continuous chain and reads as one. A basis is explained where the
+                 other bases are explained: underneath, quietly, for the reader who went looking. */}
+             <CashBridge data={data} onSeeMonths={() => setView('months')} />
              {data.funding && (
                <p className={styles.fundingNote}>
                  A fundraiser&apos;s actual is your team&apos;s share — everything raised, less anything

@@ -10992,9 +10992,15 @@ the practice run-sheet, schedules, posters/cards/brackets — the roster and pra
 their §82 regression guards untouched); the Phase 3 CI check (the harness and scanner carried
 forward, productionisation still owed).
 
-## §85 · Months becomes the season's cash statement — two bands, a Net row, a balance that stays on screen
+## §85 · Months becomes the season's cash statement — two bands, a Net row, a balance that stays on screen — ✅ PASSED 2026-08-24
 
-**BUILT 2026-08-23 (dev).** Option D, built from the approved mockups
+**BUILT 2026-08-23 (dev) · ✅ QA COMPLETE 2026-08-24 (owner-directed).** The owner walked it live
+across the build session and ruled seven chrome corrections in flight — the two-ground rows, the
+hairline across the pinned seam, the label column that could not wrap, the current-month marker, the
+inverted row hierarchy, the band gutters and the lens-naming rule — each fixed and re-measured
+before the walk closed. Two further surfaces were DRAWN and decided during the walk rather than
+built: the D-2 drill-ins, and the Statement’s reconciliation bridge. Option D, built from the
+approved mockups
 https://claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2 (owner: *"ok, this looks
 good, I agree with the build"*). Plan: `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md` §2; build
 prompt `BVA_OPTION_D_MERGED_MONTHS_BUILD_PROMPT.md`. **No migration.** This is **phase D-1**: the
@@ -11745,8 +11751,15 @@ the practice line **over** the season line; once it did shrink, the game-day doo
 I argued for into your ruling.
 
 **Not changed, deliberately:** the **Roster** title band (measured 60px on a phone — 116px on
-Overview — and the biggest remaining saving on that screen). Removing it would break *"all forty coach screens open the same way"* and is the shape
-of direction D; it wants its own session across all forty screens.
+Overview — and the biggest remaining saving on that screen). Removing it would break *"all forty coach screens open the same way"*;
+it wants its own session across all forty screens.
+
+⚠ **That session ran 2026-08-25 and its finding reverses the sentence this note used to carry.**
+The band is **not** "the shape of direction D" — D is a *desktop* merge of `CoachTopStrip` into the
+masthead and saves 0px on a phone. More importantly the band's 44px phone height is the **tap floor
+on the help "?"**, not the heading, so the portal-wide prize is 4–8px a screen. The session
+recommends keeping the band and fixing **Overview's 56px excess** instead.
+See `docs/projects/active/COACH_PAGE_TITLE_BAND_PLAN.md` — planning only, owner ruling owed.
 
 **✅ The guides were updated in the same pass** — walk these two as well, from a phone:
 
@@ -11874,3 +11887,143 @@ thing that needed a true ordering, which is how it surfaced.
 dropdown of events reads each event's day by slicing its stored moment, so an event that starts
 after 8 p.m. is offered under the **next day's** date. Same defect class, different feature, one
 line to correct. Say the word and it goes in.
+
+## §97 · The Money Excel files start dressing like spreadsheets
+
+**BUILT 2026-08-25 (dev), v2 the same day from the owner's rendered file.** Plan:
+`COACH_EXCEL_EXPORT_FORMATTING_PLAN.md`. No migration; CSV and PDF byte-identical throughout.
+
+Every Money-tab Excel file now writes real currency cells (`$2,600.04`), and the two grouped
+reports (Budget by month, Budget vs. actual) come out with bold REVENUE/EXPENSES/category/total
+bands and their line rows indented and **grouped under Excel's +/− controls — starting CLOSED**,
+so the file opens at category level. Line rows shed their `— ` prefix in Excel (the indent
+replaces it; CSV/PDF keep the dash). Month headers are **real date cells** displaying "Feb 2026".
+On the two budget reports a zero displays as `—` and a negative in brackets — the screen's own
+notation. The import layer was taught the new spellings in the same unit of work: it reads a
+row's outline/indent styling as the line-row signal the dash used to carry, and a date-valued
+month header as the month it is — both verified against the parser's code, which reads raw stored
+values, iterates hidden (collapsed) rows, and never sees display formatting.
+
+- [ ] **Months view → Export → Excel** (Budget vs. actual → Months): the file OPENS with every
+      group folded — categories, totals and bands only, a "+" beside each category that has
+      lines. Expand one: dash-free, indented line rows. Bold bands; `$`-formatted cells; `—`
+      where the screen shows a dash; brackets on a negative. Month headers read "Feb 2026" and
+      are real dates (click one — the formula bar shows a date, not text). Every season month
+      still present.
+- [ ] **Categories view → Excel**: same treatment on the statement shape (REVENUE → categories →
+      items → totals).
+- [ ] ⚠ **The round trip holds on the new signals.** Re-import the exported Months file (Import →
+      Month grid) WITHOUT expanding the groups first: every line still lands under its category
+      with its months; zeros and blanks still distinguishable. (Known, accepted: copy-pasting
+      the file's cells into a fresh sheet drops the styling and with it the line-vs-category
+      distinction — re-importing the downloaded file itself is the promise.)
+- [ ] **A flat tab is only quieter, never different.** Transactions → Excel: currency columns
+      formatted, everything else exactly as before. Any CSV: identical to last week's file —
+      dashes and `Feb '26` labels included.
+
+## §98 · The Statement explains why it isn't the bank balance — ✅ PASSED 2026-08-24
+
+**BUILT 2026-08-24 (dev) · ✅ QA COMPLETE 2026-08-24 (owner-directed).** Walked on the build; the
+owner rejected the first placement on sight — a bordered panel under Total expenses split the
+statement’s own closing chain in half — and it was moved to the foot, beside the other basis notes,
+and re-weighted to match them before the walk closed. Owner ruling the same day (Option A), drawn at
+`claude.ai/code/artifact/4a160131-fea3-4f6b-99f4-4f9217932ee6`. Raised while walking §85, built
+after it closed. Plan: `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`. **No migration.**
+
+The Statement and Months report two different truths — what the season SPENT versus what the CASH
+DID — and until now only Months explained the difference, in a footnote on the half a board never
+opens. The Statement is what gets exported to a meeting, so it now answers the question itself.
+
+Walk on **QA Money U13** (`qa-money-lab`), which carries all three causes: two costs a family paid
+the vendor, one payment back to a family, and no refunds.
+
+- [ ] **Money → Reports → Budget vs. Actual → Statement.** ⚠ It sits at the **FOOT**, beneath
+      *Funded by players* and beside the other basis notes — NOT under Total expenses, which is where
+      it was first built and where it interrupted the statement’s own closing chain (Total expenses →
+      Season net → Funded by players reads as one thing). One folded line: *"In cash, this season spent $5,279.00 — why the difference?"* It should read as
+      a quiet aside, not compete with the total above it.
+- [ ] **Open it.** The reconciliation runs: what this season spent <span>$5,919.00</span> · less
+      costs a family paid the vendor <span>−$660.00</span> · **itemised underneath it** (Officials
+      $599, Facilities $61) · plus money paid back to families <span>+$20.00</span> · **cash that
+      left the team's account $5,279.00**.
+- [ ] **The itemised costs sit under the line they explain**, not at the foot of the list. (They
+      were orphaned under the payouts line on the first build — a sub-list that drifts attributes
+      real money to the wrong sentence.)
+- [ ] **"See it by month" switches the view to Months**, landing on the figure the bridge just
+      quoted.
+- [ ] **It disappears when there is nothing to explain.** On a team with no family-paid cost, no
+      payout and no money back, the two totals are identical and the line must not render at all —
+      a bridge saying "no difference" is furniture. QA Money U11 or the between-seasons team is the
+      quickest way to see the absence.
+- [ ] **A refund adds its own line.** Record money back against a cost, then re-read the bridge: a
+      *"plus money back, counted in cash as money arriving"* line appears and the arithmetic still
+      lands on the cash figure. (This team has no refunds today, so that line is currently absent —
+      which is itself correct.)
+- [ ] **It is read-only and folds away.** Nothing in it is editable; it stays closed until asked.
+
+**Machine-checked:** `npm run check:money-report` now proves the bridge ADDS UP — spending + money
+back − family-paid + payouts = the Months cash total — as its own claim. The two views were already
+each held against the register; nothing until now checked the sentence joining them, and a
+reconciliation that does not reconcile is worse than none because it looks like a proof.
+
+**Not in this pass, on purpose:** marking the affected ROWS ("$599 paid by a family" beside
+Officials). Drawn as Option B and not taken — it cannot stand alone (money paid back to families has
+no row to hang a marker from) and the Statement does not currently carry which costs a family paid.
+If it is ever built, the bridge keeps the arithmetic and the markers carry the pointer.
+
+## §99 · /review on the Working-sheets pass — four defects, two of them mine to have caught
+
+**REVIEWED + FIXED 2026-08-24 (dev).** High-risk tier, five lenses. Nothing here is a new feature —
+these are corrections to §91/§92/§96, and every one was found by an adversarial lens rather than by
+a gate, a test or the eye on the paper.
+
+- [ ] ⚠⚠ **A rotation's group list can no longer print over the footer.** Print a practice whose
+      rotation groups hold long full names — enough that a group's player list WRAPS to two or
+      three lines. Every name must appear, and nothing may print across the "Page X of Y" line or
+      off the bottom. The block that holds them must move whole to the next page when it does not
+      fit. *(Both the page guard and the whole-block measurement counted a wrapped group list as
+      ONE line — so a block "fitted" a page it did not fit, and its last groups printed into the
+      footer band or off the paper.)*
+- [ ] **A long name in "What everyone's working on" wraps instead of being cut.** Give a player a
+      long name and a focus area; the whole name prints on two lines. *(It was clipped to its first
+      line — the same defect the block's staff/players line had already been fixed for earlier the
+      same day, left behind one section lower.)*
+- [ ] **A block that spills says which block it is, wherever it spills.** An oversized block whose
+      ROTATION GRID or group lists run onto the next page now repeats its clock and
+      "(continued)" title there, not only when its prose is what spilled.
+- [ ] ⚠ **Two teams, one print button.** Open Tryouts → Tryout day → Check-in on team A with two
+      tryout sessions, tap **Print sheet**, and switch to team B *before the chooser appears*. No
+      chooser may appear over team B. *(Closing it on a team switch was not enough: team A's
+      sessions request was still in flight and re-opened the chooser afterwards, over team B, with
+      nothing naming a team. Picking a row then produced team B's candidates under team A's session
+      heading — exactly the file the guard existed to prevent.)*
+- [ ] **A failed session lookup says so instead of printing an undated sheet.** If the tryout-dates
+      request fails, the sheet must NOT print with only "Printed {date}" — that silently reproduces
+      the two-identical-sheets defect naming the session exists to fix.
+- [ ] **A tryout session that fails validation can no longer be saved backwards.** Nothing to walk
+      by hand — the create route now checks the times it will STORE rather than the ones typed, as
+      its sibling edit route already did. *(Across a daylight-saving gap the two disagree: "01:59"
+      and "02:01" pass as a two-minute session and land 58 minutes apart, in reverse.)*
+
+**Verified by sabotage, not by green.** The first two fixes carry new contract tests — and the
+first cut of those tests **passed with the bugs reintroduced**, because the test double splits text
+on newlines only and never wraps. A run sheet's entire behaviour is wrapping, so a non-wrapping
+double cannot test it. They now run against a wrapping double, and the floor test SWEEPS the block
+down the page rather than hand-picking one position, because a single fixture does not reliably land
+the rows on the boundary. Both were confirmed to FAIL against the pre-fix renderer before being kept.
+**Same lesson as §86's privacy test: a test that cannot fail is not coverage.**
+
+**Looked at and deliberately NOT changed:**
+- The shared identity band now has an empty-identity branch the two drawn documents it replaced
+  never had. Unreachable — every caller passes a name — and already disclaimed in the code.
+- Re-saving a session that falls inside the one ambiguous hour of the autumn clock change can move
+  it an hour. A property of the platform's shared time helper, not of this change; fixing it there
+  would move every date in the product and wants its own decision.
+- ⚠ **The check-in candidate feed hands the browser the whole registration row** — guardian email
+  and phone, consent IP, the raw date of birth — however little the screen or the sheet prints, and
+  a blind tryout's names are hidden by the CLIENT while the platform's own evaluator surface nulls
+  them on the SERVER. Pre-existing, unchanged by this pass, and out of scope for a review of it;
+  raised here because it is the kind of thing that should not wait to be rediscovered.
+- On a plan without PDF export, a coach with family-contact access sees two Roster documents whose
+  only file types are spreadsheets; resizing a browser below phone width with that dialog open
+  leaves an empty file-type list. Narrow and cosmetic; the trigger is correctly hidden on a phone.

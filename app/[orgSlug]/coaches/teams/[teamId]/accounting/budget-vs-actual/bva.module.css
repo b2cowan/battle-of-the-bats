@@ -458,3 +458,81 @@
    ADDITIVE and warm-gated, so dark output is untouched. Under the warm theme,
    the "Unbudgeted Expenses" accent switches from raw orange to warm burnt-orange. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .page { --bva-unbudgeted: var(--home-rust); }
+
+/* ── The cash bridge (owner ruling 2026-08-24, Option A) ──────────────────────
+   Why this statement's total is not the team's bank balance.
+
+   ⚠⚠ IT IS A FOOTNOTE, NOT A PANEL (owner correction, same day). The first build gave it a bordered
+   card directly under Total expenses — which dropped a box into the middle of the statement's own
+   closing arithmetic, where Total expenses → Season net → Funded by players reads as one
+   continuous chain. It now sits at the FOOT beside the other basis notes, weighted like them: a
+   quiet line a reader goes looking for, not a claim that interrupts the report.
+
+   ⚠ NATIVE <details> — free keyboard support and no state to hold (the same reasoning as the
+   report's dropdowns and the CollapsibleCard primitive). */
+.bridge { margin: 0.55rem 0 0; }
+
+.bridgeSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  list-style: none;
+}
+.bridgeSummary::-webkit-details-marker { display: none; }
+.bridgeSummary:hover { color: var(--text-secondary); }
+.bridgeSummary strong { color: var(--text-secondary); font-weight: 650; }
+.bridgeSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 4px; }
+.bridgeChev { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease; }
+.bridge[open] .bridgeChev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .bridgeChev { transition: none; } }
+
+/* Opened, it is a small ledger — indented under its own line so it reads as that line's working. */
+.bridgeBody {
+  margin: 0.15rem 0 0 0.95rem;
+  padding: 0.5rem 0 0.1rem;
+  border-top: 1px solid var(--border-2);
+  max-width: 30rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.bridgeList { margin: 0; display: flex; flex-direction: column; }
+.bridgeRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.22rem 0;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+}
+.bridgeRow dt { margin: 0; }
+.bridgeRow dd { margin: 0; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+/* The itemised family-paid costs sit under the line they explain. */
+.bridgeSub { padding-left: 1rem; font-size: 0.73rem; opacity: 0.85; }
+.bridgeOut {
+  border-top: 1px solid var(--border-2);
+  margin-top: 0.25rem;
+  padding-top: 0.38rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.bridgeLink {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 0.15rem 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-light);
+  cursor: pointer;
+  border-bottom: 1px dashed var(--border-2);
+}
+.bridgeLink:hover { border-bottom-style: solid; }
+.bridgeLink:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 3px; }

@@ -73,6 +73,35 @@ describe('buildActualCashStrip', () => {
     });
   });
 
+  /* ⚠⚠ 'DROPPED' IS NOT THE SAME AS 'FORGOTTEN' (2026-08-24). The Statement counts these and cash
+     cannot, and the STATEMENT now explains that gap to a coach — from this list. If the exclusion
+     ever stops reporting itself, the bridge on screen silently loses a line and stops adding up,
+     while every other figure in this module stays correct. */
+  it('REPORTS what it excluded, so the Statement can explain its own gap', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      expensePayments: [
+        { ...outRec(599), paidDate: '2026-07-02', familyPaidDirect: true },
+        { ...outRec(61), paidDate: '2026-08-09', familyPaidDirect: true },
+        { ...outRec(300), paidDate: '2026-06-01', familyPaidDirect: false },
+      ],
+    });
+    assert.deepEqual(strip.excluded.map(e => e.amount).sort((a, b) => a - b), [61, 599]);
+    // It carries the words and the filing, because the bridge names WHICH costs, not just how much.
+    assert.equal(strip.excluded[0].description, 'Record 599');
+    assert.equal(strip.excluded[0].place.categoryName, 'Facilities');
+    assert.equal(strip.excluded[0].date, '2026-07-02');
+    // And it stayed out of the cash the band actually shows.
+    assert.deepEqual(strip.out, { '2026-06': 300 });
+  });
+
+  it('excludes nothing when no family paid a vendor directly', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      expensePayments: [{ ...outRec(300), paidDate: '2026-06-01', familyPaidDirect: false }],
+    });
+    assert.deepEqual(strip.excluded, []);
+  });
   it('drops a family-paid-direct cost — spending on the report, never team cash', () => {
     const strip = buildActualCashStrip({
       ...empty(),

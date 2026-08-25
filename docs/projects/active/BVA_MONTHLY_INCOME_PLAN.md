@@ -1,9 +1,13 @@
 # Budget vs. Actual learns the whole income truth — implementation plan
 
-**Status: PHASE 1 BUILT ON DEV 2026-08-23 (owner QA §83 owed) · PHASE 2 = OPTION D, and its
-FIRST HALF (D-1) IS BUILT ON DEV 2026-08-23 (owner QA §85 owed; no migration) — see §2.1 for what
-landed, the five build decisions and the guard rebuild. D-2 (revenue item rows + the season
-opening balance) is gated on the §85 walk.**
+**Status: PHASE 2 = OPTION D. D-1 BUILT ON DEV 2026-08-23 and ✅ owner QA §85 PASSED 2026-08-24 —
+the owner walked it live and ruled seven chrome corrections in flight, all fixed and committed. A
+follow-on surface, the Statement’s cash bridge, was raised during that walk and BUILT the same day
+(✅ owner QA §98). D-2 (revenue item rows + the season opening balance) is now RELEASED — build
+prompt: `BVA_OPTION_D2_ITEMS_AND_OPENING_BALANCE_BUILD_PROMPT.md`.
+⚠ **PHASE 1’s §83 is SUPERSEDED, not owed**: D-1 replaced the strip it walks (the Money in / Money
+out rows no longer exist — the band totals are those rows), and everything §83 protected is
+re-verified inside §85 plus the build-blocking register identity.**
 
 **Phase 1 detail. Go received the same
 day (owner: "agree with your recommendations", on the mockup artifact `f0598811`), which also took
@@ -283,7 +287,13 @@ Green: 2,427 unit tests · typecheck · `check:money-report` with every breaking
 `Record money` tap-floor it surfaced fails identically on Transactions and Payables — a money
 centralization P1 leftover, not this build's).
 
-**D-2 remains gated:** revenue item rows (per family / drive / sponsor) and the opening balance
+**§98 — the Statement’s cash bridge — was raised while walking §85 and BUILT the same day** (owner
+ruling, Option A): a folded line under Total expenses reconciling the Statement to the Months cash
+figure, itemising the family-paid costs beneath the line they explain, sourced from the cash
+arithmetic that excluded them.  now proves that reconciliation adds up as its own
+claim. Option B (marking the affected rows) was drawn and NOT taken — see the decision log.
+
+**D-2 (gate CLEARED — §85 passed 2026-08-24):** revenue item rows (per family / drive / sponsor) and the opening balance
 (migration, `Start next season` carry step, Team settings row, register's first line, Cash on hand
 — the matched pair moves together or the surfaces argue).
 Standing constraints applied: mental-model principle (2026-08-21), "never a tab row where a

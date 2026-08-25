@@ -4,9 +4,11 @@
 session.** D-1 (the two bands, the totals, the Net row, the four lenses) is BUILT ON DEV and its
 walk is **owner QA §85**. This prompt is the second and final half of Option D.
 
-⚠⚠ **GATED ON THE §85 WALK.** Do not start until the owner has walked §85 or explicitly released
-this. The item rows you are about to build sit ON TOP of the bands that walk inspects; if the walk
-moves a band, this work moves with it. Ask before assuming.
+✅ **THE GATE IS CLEARED — §85 PASSED 2026-08-24.** The owner walked D-1 live and ruled seven chrome
+corrections in flight (two-ground rows, the hairline across the pinned seam, the label column that
+could not wrap, the current-month marker, the inverted row hierarchy, band gutters, and the
+lens-naming rule); all were fixed, re-measured and are committed. **The bands you are building on
+top of are signed off.** Start when told.
 
 ⚠ Re-verify every code claim against the tree — this repo's plans have been wrong before, and this
 one is a day old. You share `dev` and one working copy with concurrent sessions (AGENCY_RULES
@@ -24,14 +26,19 @@ the Player Dues panel and the money hub header — coordinate, don't collide.
    - `claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2` — the original Option D panel,
      which holds the **opening-balance workflow**: the Start-next-season carry step and the Team
      settings row, both walked and accepted.
-3. `memory/design_decisions.md` — the three entries dated **2026-08-24** are binding: the one-rule
-   drill-in model, the lens-naming rule, and the pinned-column/table-chrome rules.
+3. `memory/design_decisions.md` — the **2026-08-24** entries are binding: the one-rule drill-in
+   model, the lens-naming rule, the pinned-column/table-chrome rules, the row hierarchy, and the
+   Statement’s cash bridge.
 4. `lib/coach-cash-strip.ts` and `lib/coach-budget-months.ts` — D-1's arithmetic. Their headers
    carry the register contract and the band rules. **Extend, never fork.**
 5. `scripts/check-money-report-arithmetic.mjs` — the build-blocking guard as D-1 left it. Its header
    explains what it proves and what it deliberately does not. §3 below extends it.
 6. `app/api/coaches/[orgSlug]/teams/[teamId]/register/route.ts` — the cash contract, and the surface
    the opening balance must reach in the same unit of work.
+7. **The Statement’s cash bridge** (owner QA §98, built 2026-08-24) — it explains the Statement→Months
+   gap from `cashStrip.excluded`. ⚠ **The opening balance does NOT belong in it.** The bridge
+   reconciles two ways of counting ONE season’s spending; money carried in from LAST season is not
+   part of that and would make a correct reconciliation stop balancing.
 
 ---
 
@@ -123,8 +130,12 @@ Drawn in artifact `4a61dfc0`, workflow walked and accepted 2026-08-23.
 5. **Help + demos aftercare** (CLAUDE.md): the coaches help guide's Months section changes again
    (drill-ins, family names, opening balance); the coach demo tour narrates BvA at step 4 and the
    register at step 5 — re-read both, and `check:demos` must stay green.
-6. **QA ledger §86** (verify next free number), TODO line, plan + PM brief, `design_decisions`
+6. **QA ledger — verify the next free number** (§98 was taken 2026-08-24 and sections are being minted fast by concurrent sessions), TODO line, plan + PM brief, `design_decisions`
    built-stamp.
-7. **2,450+ unit tests, typecheck, `verify:changed`** (schema-parity fails on pre-existing
+7. **The bridge is now a build-blocking claim.** `check:money-report` proves spending + money back
+   − family-paid + payouts = the Months cash total. Any change to what the cash arithmetic includes
+   or excludes moves that identity — if it fails, the bridge on screen has stopped adding up, which
+   is the one thing worse than not having one.
+8. **2,452+ unit tests, typecheck, `verify:changed`** (schema-parity fails on pre-existing
    cross-session drift — not yours unless you migrated, in which case snapshots first).
-8. **No commit without the owner's explicit OK.** Product-owner voice in every summary.
+9. **No commit without the owner's explicit OK.** Product-owner voice in every summary.
