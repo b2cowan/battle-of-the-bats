@@ -11071,6 +11071,23 @@ Team settings → Money, read on the register and in Cash on hand. Both are D-2,
 - [ ] **The Running balance row carries no inline aside** — "from today's $X" was deleted; that fact
       lives in the footnote under the grid, on the Scheduled lens.
 
+- [ ] **The Running balance is now the loudest row in the table, and the band totals are not.**
+      Read the bottom of the grid: *Running balance* should carry the most weight on the screen —
+      it is the figure the whole view exists to deliver and the one pinned so it never scrolls away.
+      *Total revenue* and *Total expenses* should read clearly as closing rows but SUBORDINATE to it
+      (one rule above them, not two). Before this they were the loudest thing on the table and the
+      answer was the quietest.
+- [ ] **Each band opens with a gap above its heading.** REVENUE and EXPENSES should read as section
+      caps rather than as one more category row — they were told apart only by small type before, in
+      a table with no breathing room anywhere.
+- [ ] **&ldquo;Paid back to families&rdquo; appears under Actual only.** Flip to Budget and to
+      Scheduled: the row should be ABSENT, not a line of dashes. It is the one expense row allowed
+      to disappear — it can never carry a plan or a schedule. ⚠ Every REAL category must still show
+      on every lens even when empty: "you budgeted it and haven't spent it" is information.
+- [ ] **Difference colours the band totals again.** On the Difference lens, *Total revenue* and
+      *Total expenses* must show green and red figures, not plain ink. (They were being silently
+      overwritten to plain ink — on the one lens whose entire point is the sign.)
+
 **⚠ Found while building, NOT this build's doing:** the money hub's **Record money** button is 31px
 tall at 768px (floor 44) on Budget vs. Actual, Transactions and Payables alike — a money
 centralization P1 leftover, unbaselined. Not fixed here because it belongs to that programme.
@@ -11304,7 +11321,14 @@ rider §80 left open). `check:demos` proves rendering, not story — read that s
 
 ---
 
-## §88 · Roster and Schedule stop looking like a different product — and Roster's Import comes out of hiding
+## §88 · Roster and Schedule stop looking like a different product — and Roster's Import comes out of hiding — ✅ PASSED 2026-08-24
+
+⚠ **ONE CHECK CARRIED FORWARD, NOT WALKED.** The cross-team dialog case below — open Roster →
+Export on team A, leave the dialog open, back-navigate to team B, confirm it has closed — needs a
+coach who holds two teams and a deliberate back-navigation, and was not exercised. The fix for it is
+in (review found it; the dialog now closes on a path change as well as a query-string change), but
+the *proof* is owed. It is a cross-team PII path, so it rides the release checklist rather than
+being signed off here.
 
 **BUILT 2026-08-23 (dev).** Page-level action consistency **Phase 2 (Roster + Schedule)**, built to
 **four house rules the owner took that day** — plan `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`
@@ -11776,3 +11800,38 @@ items deliberately left unticked, neither a blocker:
 **Housekeeping owed:** `.recordMoneyBtn` is now a transitional alias for `.headerPrimaryBtn`. The
 Money hub's Record button was left pointing at the old name because that file is carrying another
 session's in-flight work; point it at the new name and delete the alias once that lands.
+
+## §95 · A tryout sits in the schedule like everything else on it
+
+**BUILT 2026-08-24 (dev).** Owner question of the same day, from a screenshot: *"why is the format
+of a tryout event on the schedule different than the rest?"* No migration.
+
+A tryout session is projected onto the schedule from the Tryouts tab rather than being a real event,
+and its row was built on its own. Two of the differences were deliberate; two were drift, and one of
+those was not a formatting problem at all.
+
+- [ ] **A tryout carries its date in the List view.** Schedule → **List**. The tryout row now reads
+      *"Aug 23 · 5:00 p.m."* like every row around it. Before this it showed the bare time — it was
+      the only row in the one view that has no date anywhere else on it.
+- [ ] ⚠ **The month is in date order.** This is the real defect the question turned up: the list
+      rendered every self-entered event, then every tournament game, then every tryout, as three
+      stacked blocks inside one month heading. A tryout on the 23rd sat BELOW a practice on the
+      30th. Walk a month that has a tryout dated before a practice and confirm they interleave.
+- [ ] **The clipboard mark sits where every other row's mark sits** — in the leading slot before
+      the time, not wedged into the middle of the title text.
+- [ ] **It still reads as read-only and separate**, which is deliberate and unchanged: dashed
+      left rail, muted text, and tapping it opens the **Tryouts** tab rather than the event editor.
+- [ ] **Week and Month views are unchanged** — a tryout shows the time only there, because the
+      column header already carries the day.
+
+**⚠⚠ RAISED, NOT FIXED — a tryout's stored time is not the moment it claims to be.** Tryout
+sessions live in the same kind of column as events (a true instant), but the tryout feature reads
+and writes them by slicing the raw text: a session typed as 5:00 p.m. is stored as `17:00+00`,
+which is 1:00 p.m. Toronto, and every tryout screen slices it back to 5:00 p.m. again. Self-
+consistent, so nothing a coach sees is wrong today — the tryout card, the setup checklist and the
+schedule all agree. But it is four hours from the instant it records, so **anything that treats a
+session as a real moment would be wrong by the zone offset**. Nothing does yet: the schedule's
+calendar export takes events only, and the printed check-in sheet formats by slicing like the rest
+of the feature. Sorting was the first thing that needed a true ordering, which is how it surfaced —
+this list sorts on what each row DISPLAYS for exactly that reason. Fixing the storage is a
+write-path change plus a back-fill of existing sessions, and wants its own decision.

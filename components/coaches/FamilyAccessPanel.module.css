@@ -204,3 +204,18 @@
   color: var(--warning);
   margin-left: 0.4rem;
 }
+
+/* ⚠ THE PHONE TAP FLOOR, ADDED WHEN THIS PANEL WENT BEHIND A FOLD (2026-08-24).
+   These controls have measured 34px at 361/390 since they were built — eight recorded entries in
+   the rendered baseline. That was visible debt while the panel sat open at the top of Roster; the
+   moment it collapsed it became debt nobody would trip over again, because a sweep cannot measure
+   inside a closed <details>. Folding a surface must not be how its defects stop being found, so
+   they are fixed on the way past rather than inherited by whoever opens it next.
+   Desktop keeps the portal's grandfathered compact control heights. */
+@media (max-width: 640px) {
+  .btn,
+  .linkBtn,
+  .segBtn {
+    min-height: var(--tap-min, 44px);
+  }
+}
