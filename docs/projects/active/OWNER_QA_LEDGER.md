@@ -13732,21 +13732,101 @@ this?**
       above it.
 - [ ] **Clear the tag.** Club bills return, every count returns, nothing else moved.
 
-**And the fold toggle stops offering to fold one thing.**
+**And the folding behaviour is deliberately UNCHANGED — check that it really is.**
 
-- [ ] **Payables showing a single commitment.** The **Open all / Fold all** button is **gone**, and
-      that commitment arrives **open** rather than folded behind its chevron.
-- [ ] **Its own chevron still folds it.** The default changed; the control did not go away.
-- [ ] **Payables with two or more commitments.** The button is back, reading **Open all**; the
-      due-date arrangement still opens with its periods open and the button reading **Fold all**.
+The owner raised the **Open all** button in the same breath (*"a button no one will select and is
+wasting space"*), a fix was built, and it was **taken back out at the review gate**. Both halves of
+it changed the screen's shape in response to a filter, which the owner ruled against:
+*"it doesn't change the format of the screen just because a user selected a filter."*
+
+- [ ] **Payables, grouped by commitment.** Bills still arrive **folded**, exactly as before.
+- [ ] **Open one bill, then tick a tag that narrows the list to that one bill.** ⚠⚠ **This is the
+      whole check.** It must stay **open**. A build of this phase re-folded it — hiding the very
+      thing the coach had just narrowed to — because the "open/shut" memory records *differences
+      from the default* and the default had been made to depend on how many bills were on screen.
+- [ ] **Now widen the filter again.** The bill you opened is still open; its neighbours are still
+      shut. Nothing swapped.
+- [ ] **Do the mirror.** Fold a bill, narrow to it, widen again — it stays folded throughout.
+- [ ] **The Open all / Fold all button is present exactly as before**, at every filter setting,
+      including when the list is narrowed to one bill.
+- [ ] **The due-date arrangement still opens with its periods open**, button reading **Fold all**.
 
 ⚠ **It is one button wearing two labels.** "Open all" and "Fold all" are the same control — it says
-"Open all" only because bills arrive folded. Deleting the label you happen to be looking at deletes
-the other, which is why it was narrowed to lists of two or more rather than removed.
+"Open all" only because bills arrive folded. Deleting the label on screen deletes the other.
+
+⚠ **OPEN QUESTION, NOT BUILT.** The owner's original complaint is unaddressed: on a team that has
+only one commitment the button is redundant with that bill's own chevron. Any future fix must test
+**the team's list, not the narrowed view** — hiding it on the filtered count is the thing that was
+just removed.
 
 ### Gate
 
 Typecheck 0 · units **2,618/2,618** · lint 0 errors (17 warnings, every one pre-existing and none in
-a changed block). **Owed: the rendered layout sweep.** A single-commitment Payables screen now opens
-its one bill by default, which changes what that screen measures on a one-bill fixture; not run
-because the dev server is shared with other live sessions.
+a changed block) · **rendered layout sweep ✓ no new findings** (Transactions, Payables and
+Payables-by-date at 361/390/768/1440) · demo sandboxes ✓ both presentable. ⚠ The deterministic chain
+stops early at schema parity — two migrations from other sessions are on dev and not prod — so the
+checks after it (index/dictionary coverage, admin context, observability, marketing shots) did not
+run; none touches this change.
+
+---
+
+## §110 · The head coach is never blind — and the receipt stops claiming otherwise — BUILT, awaiting QA
+
+**Owner ruling 2026-08-26.** *"Head coaches know everyone that is trying out, plain and simple…
+former teams, birth years, etc. all play in to their decision making process."* Blind evaluation is
+now a **scorer-side** rule. Logged in `memory/design_decisions.md` (newest entry); **reverses R1 and
+R6** from Tryout Insights. **No migration.**
+
+### What the owner sees
+
+**Everything, everywhere, on every tryout screen.** Names on the decision board and the live
+scoreboard. Name search at check-in — previously bib-only, so the person at the desk could not look
+up the player standing in front of them. The returning-player marker and last season's score. The
+full-detail export, which could not be built *at all* while names were hidden.
+
+**The switch relabels** from "Names hidden / Names showing" to **"Helpers see bibs / Helpers see
+names"**, because that is the only thing it now changes. Its tooltip says your own screens are
+unaffected.
+
+**The fairness receipt loses one line.** It no longer claims *"players appeared as bib numbers only,
+start to finish"*. It keeps what it can still prove: how many players, by how many evaluators, on one
+shared scorecard, and whether scoring was locked.
+
+### ⚠ Why the receipt line went rather than being reworded
+
+It is printed for parents and the club board. With the coach seeing names — **and the coach able to
+score** — that sentence was true of the helpers and false of the coach. A fairness claim that needs
+qualifying on a parent-facing document is worse than no claim. A "helpers scored blind" variant was
+offered and the owner chose the simpler removal.
+
+### What to walk
+
+1. **Turn the switch to "Helpers see bibs."** Then confirm, on YOUR screens: the decision board shows
+   names; the live scoreboard shows names; check-in search finds a player by name; the
+   returning-player marker appears; last season's score shows on a returning candidate.
+2. **Open a helper's scoring link on a phone** (or the evaluator link) — it must show **bib numbers
+   only**. This is the half that still matters, and the one thing that would be a real defect.
+3. **Score as yourself** from the coach's own door — you should see names there too.
+4. **Tryout report → Export full detail.** It must be available while helpers are on bibs; it was
+   previously blocked entirely. The explicit confirm before it downloads is unchanged.
+5. **Read the fairness receipt** on the report and in the printed board summary — no sentence about
+   blindness or bib numbers anywhere.
+6. Flip the switch to "Helpers see names" and confirm nothing on your own screens changes.
+
+### Gate
+
+Typecheck clean across the changed files · units **2,618 / 2,618** · lint 0 errors.
+
+⚠ **Two honest notes.** A concurrent session's money file (`budget-vs-actual`) is mid-edit and fails
+typecheck — not this change, and it will block a clean full run until they finish. And **schema
+parity stays red** on migrations from other work.
+
+### ⚠ Deliberately NOT changed
+
+- **The printed check-in sheet still follows the switch.** It is a physical artifact that can end up
+  in a helper's hands; nothing in the ruling required changing it. Raised, not decided.
+- **The development baseline still stamps "blind" on a player's permanent card** from the same rule.
+  It is coach-facing and still true (the helpers were blind), so it stands.
+- ⚠ **Migration 263 must still reach prod.** The stamp it adds is written by the names switch and
+  read by that baseline — it was NOT orphaned by dropping the receipt line, contrary to a claim made
+  mid-session and corrected.

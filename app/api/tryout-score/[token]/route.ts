@@ -47,7 +47,7 @@ export const GET = withObservability(async (_req: Request,
   if (!r.ok) return r.res;
 
   // The link's own lifetime is part of being honest with a volunteer (WI-8).
-  const ctx = await buildTryoutScoreContext(r.session, r.tryout, { expiresAt: r.session.expiresAt });
+  const ctx = await buildTryoutScoreContext(r.session, r.tryout, { expiresAt: r.session.expiresAt, hideNames: r.tryout.isAnonymous });
   return NextResponse.json(ctx);
 }, { route: '/api/tryout-score/[token]' });
 

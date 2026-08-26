@@ -68,7 +68,12 @@ export const GET = withObservability(async (_req: Request,
     getRepTryoutEvaluatorSessions(tryout.id),
   ]);
 
-  const blind = tryout.isAnonymous;
+  // ⚠ THE COACH IS NEVER BLIND (owner ruling 2026-08-26). Blind evaluation is a scorer-side rule
+  // and applies to HELPERS only — a head coach ran the sessions and knows every kid, so hiding
+  // names, birth years or last season from them was theatre, and those are legitimate inputs to
+  // the decision they are being asked to make. The flag still rides out so the screen can SAY
+  // what the helpers are seeing; it must never be used to withhold from this response.
+  const helpersAreBlind = tryout.isAnonymous;
   const categories = (rubric?.categories ?? []).map(c => ({ key: c.key, label: c.label, weight: c.weight }));
 
   // Withdrawn candidates pulled themselves out — not part of the coach's decision set.
@@ -86,7 +91,7 @@ export const GET = withObservability(async (_req: Request,
   const evaluatorNames = new Map(evaluatorSessions.map(e => [e.id, e.evaluatorName]));
   const perEvaluator = evaluatorCompositesByCandidate(categories, scores);
 
-  const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind })
+  const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind: false })
     .map(c => {
       const reg = regById.get(c.registrationId);
       return {
@@ -94,9 +99,8 @@ export const GET = withObservability(async (_req: Request,
         status: reg?.status ?? 'pending_review',
         hasGuardianEmail: !!reg?.guardianEmail?.trim(),
         isCheckedIn: reg?.isCheckedIn ?? false,
-        // Family-authored context — blind-SAFE only once names are visible; a parent's
-        // note beside an anonymized bib could identify the kid.
-        playerNotes: !blind ? (reg?.playerNotes ?? null) : null,
+        // What the family wrote at signup. No longer gated: the coach is never blind.
+        playerNotes: reg?.playerNotes ?? null,
         // The breakdown's second half; the per-category averages already on the ranked row are
         // the first. Empty for a candidate nobody scored, which the board renders as its own
         // sentence rather than an empty panel.
@@ -117,7 +121,7 @@ export const GET = withObservability(async (_req: Request,
   }
 
   return NextResponse.json({
-    blind,
+    blind: helpersAreBlind,
     locked: !!tryout.scoresLockedAt,
     scaleMax: rubric?.scaleMax ?? 5,
     categories,

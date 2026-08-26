@@ -440,7 +440,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>
           <p className={styles.subtitle}>
             Sort each player into a pile — ranked by score.
-            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Names are hidden — use the switch above to decide by name.</>}
+            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Your helpers are scoring on bib numbers — you always see names here.</>}
           </p>
         </div>
       </div>

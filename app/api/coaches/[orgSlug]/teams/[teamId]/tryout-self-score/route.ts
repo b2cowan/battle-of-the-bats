@@ -94,7 +94,7 @@ export const GET = withObservability(async (_req: Request,
   const { session, tryout } = await resolveSelfSession(r);
   // expiresAt: null — the coach's door is their login, not a dying link (WI-8 shows lifetimes
   // for shareable links only).
-  const ctx = await buildTryoutScoreContext(session, tryout, { expiresAt: null });
+  const ctx = await buildTryoutScoreContext(session, tryout, { expiresAt: null, hideNames: false });
   return NextResponse.json(ctx);
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-self-score' });
 

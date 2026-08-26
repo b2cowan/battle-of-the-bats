@@ -3,6 +3,56 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-26 — BLIND EVALUATION IS A SCORER-SIDE RULE: the head coach is never blind, and the fairness receipt stops claiming otherwise
+
+**Decision (owner, 2026-08-26):** *"head coaches know everyone that is trying out, plain and simple.
+the blind evaluation might be useful for only the helpers who are scoring for them but even that is
+only sometimes. we don't need to hide any of this information from the head coach, former teams,
+birth years, etc. all play in to their decision making process."*
+
+The head coach sees **everything, always** — names on the decision board and the live scoreboard,
+name search at check-in, the returning-player marker, last season's score beside this one, and the
+full-detail export. Hiding any of it from the person who ran the sessions was theatre; those facts
+are legitimate inputs to the selection they are being asked to make. **The switch now governs
+HELPERS only** and says so: "Helpers see bibs / Helpers see names".
+
+⚠⚠ **THIS REVERSES R1 AND R6** (Tryout Insights, 2026-08-02), which withheld candidate rows and
+candidate memory from the coach while blind. Their real target survives and is now stated precisely:
+**a volunteer scorer must not know whose card they are marking.** That is the only place blindness
+ever did work, and it is still enforced.
+
+**The load-bearing implementation detail, because it is what stops this drifting back:** one shared
+function built the scoring context for BOTH the helper's token link and the coach's own scoring, and
+it read the tryout's flag. It now takes `hideNames` as a **required parameter with no default** — the
+helper's door passes the flag, the coach's door passes `false`. Blind stopped being a property of the
+TRYOUT and became a property of **who is asking**, so each door has to state its own answer and a
+future third door cannot inherit a wrong one. (Same reasoning the retired decision-email flag used.)
+
+⚠ **THE FAIRNESS RECEIPT LOST ITS BLINDNESS CLAIM, and that was the hard half.** It printed *"Blind
+evaluation — players appeared as bib numbers only, start to finish"* on a document handed to parents
+and the club board. Once the coach always sees names — **and the coach can also score** — that
+sentence was true of the helpers and false of the coach. **A fairness claim that needs qualifying on
+a parent-facing document is worse than no claim**, so the line is gone; the receipt now states only
+what it can prove unqualified: how many players, by how many evaluators, on one shared scorecard, and
+whether scoring was locked. Owner chose this over a "helpers scored blind" variant.
+
+⚠ **The write-once `names_shown_at` stamp (mig 263) is KEPT.** Two reasons, and the first was got
+wrong out loud before being checked: it is **not** orphaned — the development baseline still stamps
+each player's permanent card from the same rule (`wasBlindThroughout`), so the column is read either
+way, and **migration 263 must still reach prod** because the switch WRITES it. Second, it is
+recoverable history: if the claim is ever wanted back it can return on evidence rather than starting
+from nothing.
+
+**Deliberately NOT changed:** the printed check-in sheet still follows the switch. It is a physical
+artifact that can end up in a helper's hands, and nothing in the ruling required it — flagged rather
+than decided silently.
+
+**Build-enforced.** Five tests encoded the old ruling and were INVERTED, not deleted: the receipt one
+now fails if a blindness claim is reinstated; the memory one keeps the half that still matters (no
+tryout still means no history — inventing history is the thing that feature must never do). The C5
+guard protecting the helper's scoring surface is untouched.
+
+---
 ### 2026-08-26 — A PLATFORM DOES NOT WRITE THE OFFER LETTER: tryout decision emails removed outright, and D-E9 is reversed (owner ruling, binding)
 
 **Decision (owner, unprompted):** *"offers come with custom letters they need to sign, often
@@ -233,6 +283,19 @@ means something has gone wrong** — money owed, an overdue bill, a refused save
 error because it is required, and painting it danger-red before the coach has done anything is
 colour crying wolf on the calmest signal a form has. The asterisk already carries the meaning;
 the colour was only adding volume, and it spends a signal the portal needs for real failures.
+
+**⚠ EXTENSION (owner, 2026-08-26): MARK THE FEW REQUIRED, NEVER THE MANY OPTIONAL.** The asterisk
+ruling has a second half that was left implicit and had to be stated when a new-form mockup arrived
+with **"· optional" hung on almost every field**. A form where most fields are optional and each one
+says so is a form that repeats itself into noise — the eye has to read a tag on every row to learn
+nothing, and the two or three fields that actually gate the save do not stand out at all. **Put a
+plain asterisk on the required few and leave every other label bare.** Optional is the resting
+state of a field and needs no announcement.
+
+Binding on **any new form presented in a mockup or built**, not only on the money screens the
+original sweep covered. If a form genuinely has more required than optional fields, that is the
+signal to question the form, not to invert the marker.
+
 
 ⚠ **THE STATE THIS CORRECTS WAS NOT A SCREEN-BY-SCREEN SPLIT — IT WAS MIXED INSIDE SINGLE FILES.**
 Measured 2026-08-25: 44 required labels across 8 files, 29 red and 15 plain — with **Player Dues

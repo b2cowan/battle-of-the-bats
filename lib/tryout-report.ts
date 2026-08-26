@@ -35,8 +35,8 @@ export function pickPriorProgramYear<T extends { id: string; year: number }>(yea
  * Honesty rules baked in (they are the feature):
  *  - Every fairness-receipt fact is emitted only when the underlying data proves it; a receipt is
  *    absent entirely when nobody scored.
- *  - Candidate rows (names × scores × decisions) are withheld while blind evaluation is on — the
- *    full-detail export cannot exist before names are revealed (R1/R6).
+ *  - Candidate rows are NO LONGER withheld while helpers score on bibs (owner 2026-08-26) — this
+ *    is the coach's own report and they are never blind. The export keeps its explicit confirm.
  *  - Nothing is fabricated for missing stages: no rubric → no class profile; no prior season → no
  *    turnout comparison.
  */
@@ -138,12 +138,11 @@ export interface TryoutReport {
     namesShownAt: string | null;
     scoresLockedAt: string | null;
   } | null;
-  /** Per-candidate detail for the full-detail export. NULL while blind evaluation is on (R1/R6). */
+  /** Per-candidate detail for the full-detail export. No longer blind-gated (owner 2026-08-26). */
   candidateRows: TryoutReportCandidateRow[] | null;
   /**
    * "N returning candidates improved +X on average" (Phase 3, C4). NULL below three comparable
-   * pairs, and NULL while blind — the pairing that produces it is the same de-anonymization the
-   * continuity scan refuses, aggregate or not.
+   * pairs. No longer blind-gated: the coach sees their own returning players (owner 2026-08-26).
    */
   returningImprovement: TryoutMemoryAggregate | null;
 }
@@ -167,11 +166,16 @@ export function fairnessReceiptLines(fairness: NonNullable<TryoutReport['fairnes
     `${fairness.evaluatedCount} ${players} evaluated by ${fairness.evaluatorsWhoScored} ${evals}` +
       (fairness.sharedScorecard ? ' on one shared scorecard' : ''),
   ];
-  lines.push(fairness.blind === 'throughout'
-    ? 'Blind evaluation — players appeared as bib numbers only, start to finish'
-    : fairness.namesShownAt
-      ? `Blind evaluation — players appeared as bib numbers until names were shown on ${formatStoredDate(fairness.namesShownAt)}`
-      : 'Blind evaluation — players appeared as bib numbers until names were shown');
+  // ⚠⚠ THE BLINDNESS LINE IS DELIBERATELY GONE (owner ruling 2026-08-26). It claimed "players
+  // appeared as bib numbers only, start to finish" — a sentence printed for parents and the club
+  // board. Once blind became a HELPER-side rule and the head coach always sees names, that claim
+  // was true of the helpers and false of the coach, and a qualified fairness claim on a
+  // parent-facing document is worse than no claim. The receipt now states only what it can still
+  // prove without qualification: who evaluated, on what scorecard, and whether scoring was locked.
+  //
+  // ⚠ The write-once names-shown stamp (mig 263) is KEPT even though nothing reads it here — it is
+  // recoverable history, so the claim can return on evidence rather than starting from nothing.
+  // Its column must still reach prod: the names switch WRITES it, and a missing column would fail.
   if (fairness.scoresLockedAt) lines.push('Scoring was locked — no score changed after the lock');
   return lines;
 }
@@ -212,8 +216,23 @@ export function wasBlindThroughout(
  * scan already does. Pairing a prior season's named record with a bib number is a server-side
  * de-anonymization, so this gate belongs before any matching, not in front of a render.
  */
+/**
+ * ⚠⚠ THIS NO LONGER GATES ON BLIND, AND THAT IS THE RULING (owner 2026-08-26). It used to return
+ * false while names were hidden — R6, written when blind was a property of the TRYOUT. Blind is now
+ * a property of the SCORER: helpers score on bibs, the head coach sees everything. "Head coaches
+ * know everyone that is trying out, plain and simple… former teams, birth years, etc. all play in
+ * to their decision making process."
+ *
+ * It still returns false for a MISSING tryout — there is no workspace, so there is nothing to show,
+ * which is a different answer from "hidden". Kept as a function rather than deleted so the memory
+ * route keeps one obvious place to state that condition, and so this headstone sits where the next
+ * person looks for R6.
+ *
+ * ⚠ This does NOT open the helper's scoring surface. That stays blind, guarded by the C5 test
+ * below, and the two doors now say so individually via `buildTryoutScoreContext(..., hideNames)`.
+ */
 export function canShowTryoutMemory(tryout: Pick<RepTryout, 'isAnonymous'> | null | undefined): boolean {
-  return !!tryout && !tryout.isAnonymous;
+  return !!tryout;
 }
 
 /** One season's frozen view of one candidate — the memory strip's card, either side. */
@@ -392,12 +411,12 @@ export function buildTryoutReport(input: {
   const inPlay = inPlayTryoutCandidates(input.registrations);
   const decisions = tallyTryoutDecisions(inPlay);
 
-  // Pass the tryout's REAL blind state into the ranker so names are withheld at the source while
-  // blind — not merely nulled downstream. Defense in depth for R1/R6: a future field read off
-  // `ranked` cannot leak a name that was never assembled (/review security+contract finding).
-  const blind = tryout?.isAnonymous ?? true;
+  // ⚠ NEVER BLIND HERE (owner ruling 2026-08-26). This report is a COACH surface, and the coach
+  // sees names everywhere — they ran the sessions and know every kid. R1/R6 used to withhold names
+  // at the source here; blind is now a property of the SCORER, so the place that still withholds is
+  // `buildTryoutScoreContext`, which asks its caller. A helper's phone is blind; this is not.
   const categories = rubric?.categories ?? [];
-  const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind });
+  const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind: false });
   const evaluated = ranked.filter(r => r.composite != null).length;
 
   const attended = inPlay.filter(r => r.isCheckedIn).length;
@@ -466,11 +485,13 @@ export function buildTryoutReport(input: {
     };
   }
 
-  // Full-detail rows exist only once names are revealed — while blind, the mapping of names to
-  // scores must not be constructible anywhere, including a download (R1/R6). `blind` was resolved
-  // above and already withheld names inside the ranker.
+  // ⚠ R1/R6 RETIRED HERE (owner ruling 2026-08-26). These rows used to be withheld while names
+  // were hidden, so the full-detail export could not be built at all. Blind is now a HELPER-side
+  // rule — the head coach sees names everywhere — and withholding their own tryout's detail from
+  // them was the same theatre as hiding names on the board. The export keeps its explicit confirm,
+  // which is what actually guards a file full of names leaving the building.
   const regById = new Map(inPlay.map(r => [r.id, r]));
-  const candidateRows: TryoutReportCandidateRow[] | null = blind ? null : ranked.map(r => ({
+  const candidateRows: TryoutReportCandidateRow[] | null = ranked.map(r => ({
     registrationId: r.registrationId,
     // rankTryoutCandidates already assembled the display name (not blind on this branch).
     name: r.name ?? '',

@@ -102,12 +102,16 @@ export default function TryoutNamesSwitch({ apiBase, canWrite, blind, onChanged,
     }
   }
 
-  const label = hidden ? 'Names hidden' : 'Names showing';
+  // ⚠ THE SWITCH GOVERNS HELPERS, NOT THE COACH (owner ruling 2026-08-26). The coach always sees
+  // names, birth years and last season — on the board, at check-in, on the scoreboard, everywhere.
+  // Hiding them from the person who ran the sessions was theatre. So the label names whose view
+  // this actually changes, rather than implying it changes everyone's.
+  const label = hidden ? 'Helpers see bibs' : 'Helpers see names';
 
   if (!canWrite) {
     return (
       <span className={`${styles.static} ${hidden ? '' : styles.staticShown}`}
-        title={hidden ? 'Players show as bib numbers on this tryout' : 'Player names are showing on this tryout'}>
+        title={hidden ? 'Your scoring helpers see bib numbers, not names' : 'Your scoring helpers see player names'}>
         {hidden ? <EyeOff size={12} /> : <Eye size={12} />} {label}
       </span>
     );
@@ -121,8 +125,8 @@ export default function TryoutNamesSwitch({ apiBase, canWrite, blind, onChanged,
       disabled={saving}
       aria-pressed={!hidden}
       title={hidden
-        ? 'Show player names — on the board, on your helpers’ phones and on the printed sheet'
-        : 'Hide player names — everyone goes back to bib numbers'}
+        ? 'Let your helpers see names on their phones — you already see them everywhere'
+        : 'Hide names from your helpers — they score on bib numbers. Your own screens are unaffected.'}
     >
       <span className={styles.track}><span className={styles.knob} /></span>
       <span>{label}</span>

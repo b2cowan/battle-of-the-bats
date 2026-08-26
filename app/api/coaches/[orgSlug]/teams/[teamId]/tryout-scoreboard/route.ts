@@ -55,7 +55,12 @@ export const GET = withObservability(async (_req: Request,
     getRepTryoutEvaluatorSessionByTokenHash(selfEvaluatorTokenHash(tryout.id, r.userId)),
   ]);
 
-  const blind = tryout.isAnonymous;
+  // ⚠ THE COACH IS NEVER BLIND (owner ruling 2026-08-26). Blind evaluation is a scorer-side rule
+  // and applies to HELPERS only — a head coach ran the sessions and knows every kid, so hiding
+  // names, birth years or last season from them was theatre, and those are legitimate inputs to
+  // the decision they are being asked to make. The flag still rides out so the screen can SAY
+  // what the helpers are seeing; it must never be used to withhold from this response.
+  const helpersAreBlind = tryout.isAnonymous;
   const scaleMax = rubric?.scaleMax ?? 5;
   const categories = (rubric?.categories ?? []).map(c => ({ key: c.key, label: c.label, weight: c.weight }));
   const weightTotal = categories.reduce((s, c) => s + (c.weight > 0 ? c.weight : 0), 0);
@@ -69,7 +74,7 @@ export const GET = withObservability(async (_req: Request,
   // Ranked candidate rows come from the shared helper (single-sourced with the decision board);
   // check-in state rides along so a no-show never reads as merely "not scored yet" (WI-3).
   const checkedInById = new Map(candidates.map(c => [c.id, c.isCheckedIn]));
-  const candidateRows = rankTryoutCandidates(candidates, categories, scores, { blind })
+  const candidateRows = rankTryoutCandidates(candidates, categories, scores, { blind: false })
     .map(c => ({ ...c, isCheckedIn: checkedInById.get(c.registrationId) ?? false }));
 
   // Per-evaluator running totals for the bias flag (scoreboard-only concern).
@@ -109,7 +114,7 @@ export const GET = withObservability(async (_req: Request,
   });
 
   return NextResponse.json({
-    blind,
+    blind: helpersAreBlind,
     locked: !!tryout.scoresLockedAt,
     scaleMax,
     weightTotal,

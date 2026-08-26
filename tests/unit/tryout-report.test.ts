@@ -194,51 +194,47 @@ describe('fairness receipt', () => {
     assert.equal(r.fairness!.evaluatedCount, 1);
   });
 
-  it('states only what the data proves — blind state, lock line only when locked', () => {
+  /**
+   * ⚠⚠ THIS TEST WAS INVERTED ON 2026-08-26 AND THAT IS THE POINT. It used to assert the receipt
+   * SAID "bib numbers only, start to finish". Blind evaluation is now a HELPER-side rule — the head
+   * coach always sees names, birth years and last season, because they ran the sessions and know
+   * every kid (owner ruling). A blindness claim on a document printed for parents and the club
+   * board would therefore be true of the helpers and false of the coach, and a fairness claim that
+   * needs qualifying is worse than none.
+   *
+   * So the receipt now says only what it can prove without qualification, and this asserts it makes
+   * NO blindness claim in EITHER state — which is what catches somebody quietly reinstating the
+   * sentence because it read well.
+   */
+  it('makes NO blindness claim — in either state', () => {
     const regs = [mkReg({ id: 'a' })];
     const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
 
     const blind = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null }, registrations: regs, scores });
-    let lines = fairnessReceiptLines(blind.fairness!);
-    assert.equal(lines.length, 2);
-    assert.match(lines[0], /1 player evaluated by 1 evaluator on one shared scorecard/);
-    assert.match(lines[1], /bib numbers only, start to finish/);
+    const shown = buildTryoutReport({ ...BASE, tryout: { isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: null }, registrations: regs, scores });
 
-    const revealedLocked = buildTryoutReport({ ...BASE, tryout: { isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: '2027-08-13T00:00:00Z' }, registrations: regs, scores });
-    lines = fairnessReceiptLines(revealedLocked.fairness!);
-    assert.equal(lines.length, 3);
-    assert.match(lines[1], /until names were shown on Aug 12, 2027/);
-    assert.match(lines[2], /Scoring was locked/);
+    for (const [what, report] of [['blind', blind], ['names shown', shown]] as const) {
+      const joined = fairnessReceiptLines(report.fairness!).join(' | ');
+      assert.doesNotMatch(joined, /blind/i, `The receipt claims blindness (${what}). It is printed for parents and the board, and the coach is never blind — the claim cannot be made without qualifying it.`);
+      assert.doesNotMatch(joined, /bib number/i, `The receipt mentions bib numbers (${what}) — same problem as claiming blindness.`);
+    }
   });
 
-  /**
-   * ⚠ THE TEST THE WHOLE `namesShownAt` COLUMN EXISTS FOR (owner ruling 2026-08-25).
-   *
-   * Showing names became a two-way switch, which quietly demoted `isAnonymous` from evidence to
-   * view state. A coach could show every name, score the tryout with them on screen, flip back to
-   * bib-only and export a report claiming the scoring was blind. The receipt reads the write-once
-   * stamp instead — so the ONLY input that differs between these two cases is the stamp, and the
-   * live flag is identical (blind) in both.
-   */
-  it('cannot claim blind-throughout once names have EVER been shown, even if switched back', () => {
+  it('states what it CAN prove — who evaluated, and the lock line only when locked', () => {
     const regs = [mkReg({ id: 'a' })];
     const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
 
-    const neverShown = buildTryoutReport({
-      ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null },
-      registrations: regs, scores,
-    });
-    assert.equal(neverShown.fairness!.blind, 'throughout');
-    assert.match(fairnessReceiptLines(neverShown.fairness!)[1], /start to finish/);
+    const unlocked = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null }, registrations: regs, scores });
+    let lines = fairnessReceiptLines(unlocked.fairness!);
+    assert.equal(lines.length, 1, 'Unlocked: the evaluated line and nothing else.');
+    assert.match(lines[0], /1 player evaluated by 1 evaluator on one shared scorecard/);
 
-    const shownThenHidden = buildTryoutReport({
-      ...BASE, tryout: { isAnonymous: true, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: null },
-      registrations: regs, scores,
-    });
-    assert.equal(shownThenHidden.fairness!.blind, 'names_shown');
-    assert.match(fairnessReceiptLines(shownThenHidden.fairness!)[1], /until names were shown on Aug 12, 2027/);
-    assert.doesNotMatch(fairnessReceiptLines(shownThenHidden.fairness!)[1], /start to finish/);
+    const locked = buildTryoutReport({ ...BASE, tryout: { isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: '2027-08-13T00:00:00Z' }, registrations: regs, scores });
+    lines = fairnessReceiptLines(locked.fairness!);
+    assert.equal(lines.length, 2);
+    assert.match(lines[1], /Scoring was locked/);
   });
+
 
   /**
    * ⚠ ONE definition of "was this blind?", because two features answered it separately and
@@ -272,17 +268,28 @@ describe('fairness receipt', () => {
       registrations: regs, scores,
     });
     assert.equal(legacy.fairness!.blind, 'names_shown');
-    assert.match(fairnessReceiptLines(legacy.fairness!)[1], /until names were shown$/);
+    // The FIELD still records the fact (the development baseline stamps a player's permanent card
+    // from the same rule). The RECEIPT no longer prints it — see 'makes NO blindness claim' above.
+    assert.equal(fairnessReceiptLines(legacy.fairness!).length, 1);
   });
 });
 
-describe('candidateRows — R1/R6', () => {
+describe('candidateRows — the coach can always build their own report', () => {
   const regs = [mkReg({ id: 'a', status: 'offered', offerResponse: 'accepted', playerFirstName: 'Maya', playerLastName: 'Torres' })];
   const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
 
-  it('is NULL while blind — the full-detail export must be unbuildable', () => {
+  /**
+   * ⚠⚠ INVERTED 2026-08-26. This asserted R1: the full-detail export was UNBUILDABLE while names
+   * were hidden. Blind is now a HELPER-side rule — the head coach always sees names — so
+   * withholding the detail of their own tryout from them was the same theatre as hiding names on
+   * their board. What actually guards a file full of names leaving the building is the explicit
+   * confirm on the export, which is untouched.
+   */
+  it('carries rows even while helpers are on bibs — the coach is never blind', () => {
     const r = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null }, registrations: regs, scores });
-    assert.equal(r.candidateRows, null);
+    assert.ok(r.candidateRows, 'The coach cannot build their own full-detail export.');
+    assert.equal(r.candidateRows!.length, 1);
+    assert.equal(r.candidateRows![0].name, 'Maya Torres', 'Rows carry the real name — the coach sees names everywhere.');
   });
 
   it('carries names, composites, and decision labels once revealed', () => {
@@ -394,12 +401,23 @@ describe('one definition of "in play"', () => {
   });
 });
 
-describe('R6 — canShowTryoutMemory fails closed', () => {
-  it('refuses while blind, refuses without a tryout at all, allows once revealed', () => {
-    assert.equal(canShowTryoutMemory({ isAnonymous: true }), false);
-    assert.equal(canShowTryoutMemory(null), false);
-    assert.equal(canShowTryoutMemory(undefined), false);
+describe('candidate memory — the COACH is never blind', () => {
+  /**
+   * ⚠⚠ INVERTED 2026-08-26. This asserted R6: memory was refused while names were hidden, because
+   * blind was a property of the TRYOUT. Blind is now a property of the SCORER — helpers score on
+   * bibs, the head coach sees everything, because they ran the sessions and know every kid.
+   * Last season's score beside this one is exactly the kind of thing they decide on.
+   *
+   * What survives is the OTHER half, and it is the half that matters: a missing tryout still
+   * refuses, because there is no workspace and inventing history is the one thing this feature
+   * must never do. And the HELPER's scoring surface stays clean — guarded by C5 below.
+   */
+  it('shows memory whether or not helpers are blind, and still refuses without a tryout', () => {
+    assert.equal(canShowTryoutMemory({ isAnonymous: true }), true,
+      'The coach is never blind — helpers being on bibs must not hide last season from the coach.');
     assert.equal(canShowTryoutMemory({ isAnonymous: false }), true);
+    assert.equal(canShowTryoutMemory(null), false, 'No tryout = nothing to show. Never invent history.');
+    assert.equal(canShowTryoutMemory(undefined), false);
   });
 });
 

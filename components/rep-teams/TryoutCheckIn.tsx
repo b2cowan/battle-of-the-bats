@@ -185,7 +185,9 @@ export default function TryoutCheckIn({
     const q = search.trim().toLowerCase();
     if (!q) return true;
     const bib = (c.bibNumber ?? '').toLowerCase();
-    if (isAnonymous) return bib.includes(q);
+    // The coach is never blind (owner 2026-08-26) — search by name works whether or not helpers
+    // are on bibs. It was gated on isAnonymous, which meant the person running check-in could not
+    // look up the player standing in front of them.
     return fullName(c).toLowerCase().includes(q) || bib.includes(q);
   });
 
@@ -360,7 +362,7 @@ export default function TryoutCheckIn({
           className={styles.search}
           type="text"
           inputMode="search"
-          placeholder={isAnonymous ? 'Search bib #…' : 'Search name or bib…'}
+          placeholder="Search name or bib…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -394,18 +396,21 @@ export default function TryoutCheckIn({
               >
                 <span className={styles.bib}>{c.bibNumber ?? '—'}</span>
                 <span className={styles.main}>
-                  {isAnonymous
-                    ? <span className={styles.bibOnly}>Bib {c.bibNumber ?? '—'}</span>
-                    : <span className={styles.name}>{fullName(c) || `Bib ${c.bibNumber ?? '—'}`}</span>}
+                  {/* The coach is never blind (owner 2026-08-26). This is the check-in desk and the
+                      person running it is looking straight at the player — hiding the name here
+                      meant they could not find who was standing in front of them. Helpers score on
+                      bibs elsewhere; that is what the switch governs now. */}
+                  <span className={styles.name}>{fullName(c) || `Bib ${c.bibNumber ?? '—'}`}</span>
                   {/*
                     Chunk F (D-F1): "have we seen this person before?" Deliberately a MARKER, not
                     a link — the whole row is a tap-to-check-in target, and a nested link inside it
                     would fight the primary action on the one screen where speed matters most. The
                     coach opens the season switcher to read what was said; this just tells them
-                    there is something to read. Suppressed in an anonymous tryout, where the point
-                    is that names are hidden.
+                    there is something to read. No longer suppressed while helpers are on bibs —
+                    the coach is never blind, and "have we seen this person before" is exactly the
+                    kind of thing they are here to know (owner 2026-08-26).
                   */}
-                  {!isAnonymous && returning?.[c.id] && (
+                  {returning?.[c.id] && (
                     <span className={styles.returning}>
                       {returning[c.id].kind === 'roster'
                         ? `On the ${returning[c.id].priorProgramYearName} roster`

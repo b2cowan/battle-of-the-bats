@@ -31,11 +31,28 @@ export interface TryoutScoreContext {
   expiresAt: string | null;
 }
 
-/** Load the scoring context: rubric, candidate list (bib-only when blind), and prior scores. */
+/**
+ * Load the scoring context: rubric, candidate list, and this scorer's prior scores.
+ *
+ * ⚠⚠ `hideNames` IS THE CALLER'S ANSWER AND IS REQUIRED — no default, deliberately. Blind
+ * evaluation is a property of WHO IS SCORING, not of the tryout (owner ruling 2026-08-26: "head
+ * coaches know everyone that is trying out, plain and simple… the blind evaluation might be useful
+ * for only the helpers who are scoring for them"). Two doors share this function and they want
+ * opposite answers:
+ *
+ *   · the HELPER's token link — `tryout.isAnonymous`. Hiding names from a volunteer scorer is the
+ *     entire point of the switch, and the only place it ever did real work.
+ *   · the COACH's own scoring — `false`, always. They ran the sessions and know every kid; hiding
+ *     names from them was theatre, and former teams and birth years are legitimate inputs to the
+ *     decision they are being asked to make.
+ *
+ * A defaulted parameter here would be a trap for the next caller — the same reasoning the tryout
+ * decision-email flag used. Make a new door state its own answer.
+ */
 export async function buildTryoutScoreContext(
   session: RepTryoutEvaluatorSession,
   tryout: RepTryout,
-  opts: { expiresAt: string | null },
+  opts: { expiresAt: string | null; hideNames: boolean },
 ): Promise<TryoutScoreContext> {
   const [rubric, candidates, priorScores, team] = await Promise.all([
     getRepTryoutRubric(tryout.id),
@@ -45,11 +62,11 @@ export async function buildTryoutScoreContext(
     getRepTeam(session.teamId),
   ]);
 
-  const blind = tryout.isAnonymous;
+  const blind = opts.hideNames;
   const list = candidates.map(c => ({
     registrationId: c.id,
     bib: c.bibNumber ?? null,
-    // Blind mode hides identity from the scorer — bib only until the head coach reveals.
+    // Bib only when THIS scorer is meant to be blind — see the ruling on hideNames above.
     name: blind ? null : `${c.playerFirstName} ${c.playerLastName}`.trim(),
     isCheckedIn: c.isCheckedIn,
   }));
