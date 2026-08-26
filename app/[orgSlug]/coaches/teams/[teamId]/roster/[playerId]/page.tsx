@@ -15,6 +15,7 @@ import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, ca
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachBackLink from '@/components/coaches/CoachBackLink';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import {
@@ -48,10 +49,24 @@ function money(n: number): string {
   return `$${n.toFixed(2)}`;
 }
 
-const STATUS_CSS: Record<string, string> = {
-  active:   styles.badgeActive,
-  inactive: styles.badgeDraft,
-};
+/* ⚠ THREE TABS, NOT NINE DRAWERS (owner ruling 2026-08-26). The page was a flat stack of equal
+   collapsible sections ordered by the data model — Player, Guardian contact, Safety, Guardians,
+   Documents, Development, Attendance, Awards, Dues — which made two different pages wear one coat:
+   a FORM filled in once in April, and a RECORD read all season. Stacked flat, the thing a coach
+   reads weekly sat under the thing they typed once, and a phone number could be in any of three
+   places. The tabs map to the three reasons anyone opens a player: how are they doing, what did I
+   mistype, who do I call.
+   ⚠ "This season" is the default because that is the mid-season question; a coach who has just
+   added someone is already on their way to Details. */
+/* ⚠ TWO LABELS EACH, AND THE SHORT ONE IS NOT AN AFTERTHOUGHT. At 390px the three full labels
+   run past the right edge and "Family & paperwork" is cut mid-word — a rail that looks broken
+   rather than one that scrolls. The phone gets the short forms; every other width gets the words. */
+const PLAYER_TABS = [
+  { id: 'season',  label: 'This season',        short: 'Season' },
+  { id: 'details', label: 'Details',            short: 'Details' },
+  { id: 'family',  label: 'Family & paperwork', short: 'Family' },
+] as const;
+type PlayerTab = typeof PLAYER_TABS[number]['id'];
 
 interface EditForm {
   playerFirstName: string; playerLastName: string;
@@ -134,6 +149,8 @@ export default function PlayerDetailPage({
 
   const [player, setPlayer] = useState<RepRosterPlayer | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
+  const [tab, setTab] = useState<PlayerTab>('season');
+  const confirm = useConfirm();
   const [attendance, setAttendance] = useState<RepPlayerAttendanceSummary | null>(null);
   const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
   const [awards, setAwards] = useState<RepPlayerAwardsSummary | null>(null);
@@ -234,9 +251,29 @@ export default function PlayerDetailPage({
     }
   }
 
+  /* ⚠ THIS IS THE DELETE, AND IT NOW SAYS SO (owner ruling 2026-08-26). There is no hard delete in
+     the coach portal — taking a player off a team IS this write — and until now it was an unguarded
+     ghost button sitting directly under the child's name, and another on every row of the roster
+     list. The confirmation states the CONSEQUENCE rather than the state: "inactive" means nothing
+     to a coach, whereas "stops appearing in lineups, attendance, dues and team emails" is the
+     actual effect, and "everything recorded is kept" is the reassurance that makes it a decision
+     rather than a gamble.
+     ⚠ Putting someone BACK is not guarded — it restores, it does not destroy. */
   async function handleToggleStatus() {
     if (!player) return;
     const newStatus = player.status === 'active' ? 'inactive' : 'active';
+    if (newStatus === 'inactive') {
+      const firstName = clean(player.playerFirstName) || 'this player';
+      const ok = await confirm({
+        title: `Take ${firstName} off the roster?`,
+        message: 'They stop appearing in lineups, attendance, dues and team emails. '
+          + 'Everything already recorded is kept, and you can put them back any time.',
+        confirmText: 'Take off the roster',
+        cancelText: 'Keep on the roster',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
     setTogglingStatus(true);
     try {
       const res = await fetch(
@@ -280,6 +317,11 @@ export default function PlayerDetailPage({
   const attnKnown = attendance ? attendance.attending + attendance.absent + attendance.late : 0;
   const attnRate = attnKnown > 0 ? Math.round((attendance!.attending / attnKnown) * 100) : 0;
   const age = player ? ageFromDob(player.playerDateOfBirth) : null;
+  const bestPositions = form?.positions.best ?? [];
+  const canWriteRoster = !!page.capabilities?.rosterWrite;
+  const guardianName = player
+    ? [player.guardianFirstName, player.guardianLastName].filter(Boolean).join(' ').trim()
+    : '';
 
   return (
     <div className={styles.page}>
@@ -295,34 +337,87 @@ export default function PlayerDetailPage({
         title={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
       />
 
-      {/* Status row */}
-      <div className={styles.statusRow}>
-        {(player.playerNumber || age !== null) && (
-          <span className={styles.listToolbarFact}>
-            {[
-              player.playerNumber ? `#${player.playerNumber}` : null,
-              age !== null ? `Age ${age}` : null,
-            ].filter(Boolean).join(' · ')}
-          </span>
-        )}
-        <span className={styles.statusLabel}>Status</span>
-        <span className={`${styles.badge} ${STATUS_CSS[player.status] ?? styles.badgeDraft}`}>
-          {player.status === 'active' ? 'Active' : 'Inactive'}
-        </span>
-        {player.medicalNotes && (
-          <span className={styles.medicalFlag} title="This player has medical notes on file">
-            <AlertTriangle size={12} /> Medical info
-          </span>
-        )}
-        <button
-          type="button"
-          className="btn btn-ghost"
-          style={{ fontSize: '0.82rem', marginLeft: 'auto', opacity: togglingStatus ? 0.5 : 1 }}
-          disabled={togglingStatus}
-          onClick={handleToggleStatus}
-        >
-          {togglingStatus ? '…' : player.status === 'active' ? 'Deactivate' : 'Activate'}
-        </button>
+      {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26). What stood here was a "Status"
+          strip whose first control, directly under a child's name, was the delete — and whose badge
+          read ACTIVE on every player who has ever been looked at, because that is the default.
+          It is replaced by what someone actually opens a player to find out. Removal moved to the
+          foot of Details, where a destructive act belongs and where it is named for what it does.
+          ⚠ Off the roster is the ONE state worth stating, so it is the only badge here. */}
+      <div className={styles.playerGlance}>
+        <div className={styles.playerGlanceChips}>
+          {player.status !== 'active' && (
+            <span className={`${styles.badge} ${styles.badgeDraft}`}>Off the roster</span>
+          )}
+          {player.playerNumber && <span className={styles.playerGlanceJersey}>#{clean(player.playerNumber)}</span>}
+          {bestPositions.length > 0 && <span className={styles.chipQuiet}>{bestPositions.join(' / ')}</span>}
+          {player.lineupProfile?.aSquad && <span className={styles.chipQuiet}>A-squad</span>}
+          {player.lineupProfile?.pitcher && (
+            <span className={styles.chipQuiet}>Pitcher · rank {player.lineupProfile.pitcher.rank}</span>
+          )}
+          {age !== null && <span className={styles.chipQuiet}>Age {age}</span>}
+          {player.medicalNotes && (
+            <span className={styles.chipDanger} title="This player has medical notes on file">
+              <AlertTriangle size={11} /> Medical notes
+            </span>
+          )}
+        </div>
+
+        {/* ⚠ FOUR TILES, ALL FROM DATA THIS PAGE HAS ALREADY FETCHED — no extra call for a summary.
+            ⚠ There is deliberately no "documents outstanding" tile: nothing in the product records
+            which documents a team REQUIRES, and a tile that invented that number would be inventing
+            a policy. Documents live on the Family & paperwork tab, where they can be counted
+            honestly. */}
+        <div className={styles.playerGlanceTiles}>
+          <div className={styles.playerTile}>
+            <span className={styles.playerTileKey}>Dues</span>
+            <span className={styles.playerTileValue}
+              data-tone={dues?.hasSchedule && dues.balance > 0 ? 'danger' : undefined}>
+              {!dues?.hasSchedule ? 'None set' : dues.balance > 0 ? money(dues.balance) : 'Paid'}
+            </span>
+            <span className={styles.playerTileFoot}>
+              {dues?.hasSchedule
+                ? `${dues.paidInstallmentCount}/${dues.installmentCount} installments paid`
+                : 'No dues this season'}
+            </span>
+          </div>
+          <div className={styles.playerTile}>
+            <span className={styles.playerTileKey}>Attendance</span>
+            <span className={styles.playerTileValue}>{attnKnown > 0 ? `${attnRate}%` : '—'}</span>
+            <span className={styles.playerTileFoot}>
+              {attendance && attendance.total > 0
+                ? `${attendance.total} recorded`
+                : 'Nothing recorded yet'}
+            </span>
+          </div>
+          <div className={styles.playerTile}>
+            <span className={styles.playerTileKey}>Family</span>
+            <span className={styles.playerTileValue}>{guardianName || 'No contact'}</span>
+            <span className={styles.playerTileFoot}>
+              {player.guardianEmail || player.guardianPhone || 'Add one on Family & paperwork'}
+            </span>
+          </div>
+          <div className={styles.playerTile}>
+            <span className={styles.playerTileKey}>Awards</span>
+            <span className={styles.playerTileValue}>{awards?.total ?? 0}</span>
+            <span className={styles.playerTileFoot}>this season</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.playerTabs} role="tablist" aria-label="Player record">
+        {PLAYER_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`${styles.playerTab}${tab === t.id ? ' ' + styles.playerTabOn : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            <span className={styles.playerTabLong}>{t.label}</span>
+            <span className={styles.playerTabShort}>{t.short}</span>
+          </button>
+        ))}
       </div>
 
       {/* ⚠ THIS PAGE WAS TWO COLUMNS UNTIL 2026-08-13 (D3, 2026-08-01): a main column of collapsible
@@ -331,7 +426,11 @@ export default function PlayerDetailPage({
           into ~635px to make room for fields that then had to be squeezed again to fit the rail.
           Everything it held MOVED here; nothing was dropped. See the guardian/safety sections
           directly below and the Dues section at the foot of the page. */}
-      {/* Player info */}
+      {/* ── DETAILS: the form filled in once, in April ───────────────────────────────────
+          ⚠ The sections keep their own disclosures. A tab groups; a disclosure orders WITHIN a
+          group, and the coach's collapse state is already remembered per section — throwing that
+          away to prove a point about nesting would cost more than it buys. */}
+      {tab === 'details' && (<>
       <CoachCollapseSection sectionId="player" title="Player">
         <div className={styles.formGrid}>
           <div className={styles.field}>
@@ -456,6 +555,41 @@ export default function PlayerDetailPage({
         </div>
       </CoachCollapseSection>
 
+      {/* ⚠ THE REMOVAL LIVES HERE — at the FOOT of the form, not the top of the page (owner
+          ruling 2026-08-26). It is the delete: there is no hard delete in the coach portal, and an
+          inactive player disappears from lineups, attendance, dues, team emails and every report.
+          A destructive act belongs at the end of the thing it destroys, named for its effect, and
+          behind a question. It was a ghost button under a child's name.
+          ⚠ Head coach (or an assistant granted roster-write) only — the API refuses everyone else,
+          and a control that always fails is worse than no control. */}
+      {canWriteRoster && (
+        <div className={styles.playerDangerZone}>
+          <div className={styles.playerDangerCopy}>
+            <p className={styles.playerDangerTitle}>
+              {player.status === 'active'
+                ? `Take ${clean(player.playerFirstName) || 'this player'} off the roster`
+                : `Put ${clean(player.playerFirstName) || 'this player'} back on the roster`}
+            </p>
+            <p className={styles.detailPlaceholder} style={{ marginTop: 0 }}>
+              {player.status === 'active'
+                ? 'They stop appearing in lineups, attendance, dues and team emails. Everything already recorded is kept, and you can put them back any time.'
+                : 'They start appearing in lineups, attendance, dues and team emails again.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn btn-ghost ${player.status === 'active' ? styles.playerDangerBtn : ''}`}
+            disabled={togglingStatus}
+            onClick={handleToggleStatus}
+          >
+            {togglingStatus ? '…' : player.status === 'active' ? 'Take off the roster' : 'Add back'}
+          </button>
+        </div>
+      )}
+      </>)}
+
+      {/* ── FAMILY & PAPERWORK: who to call, and what is on file ─────────────────────────── */}
+      {tab === 'family' && (<>
       {/* ── Relocated from the rail, 2026-08-13 ─────────────────────────────────────────────
           Owner ruling: TWO sections, not one combined card and not folded into Player. Safety is
           the reason — allergies and an emergency number are what someone opens this page for in a
@@ -511,7 +645,7 @@ export default function PlayerDetailPage({
         </div>
       </CoachCollapseSection>
 
-      <CoachCollapseSection sectionId="safety" title="Safety">
+      <CoachCollapseSection sectionId="safety" title="Safety" defaultOpen={false}>
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label} htmlFor="medical">Allergies / medical notes</label>
@@ -549,20 +683,21 @@ export default function PlayerDetailPage({
       {/* This player's guardians (Chunk D Slice 2). Rides `rosterPii` — the same capability
           that governs guardian contact details, since this card shows exactly those. Renders
           nothing at all while the guardian tier is switched off. */}
+      {/* ⚠ NO COLLAPSE WRAPPER HERE — the card draws its own, so that when the guardian tier is
+          switched off (which it is, pending privacy counsel review) the whole section disappears
+          instead of leaving an empty drawer between Safety and Documents. See the card's docblock. */}
       {assignment && assignment.capabilities.rosterPii && player && (
-        <CoachCollapseSection sectionId="guardians" title="Guardians">
-          <PlayerGuardiansCard
-            orgSlug={orgSlug}
-            teamId={teamId}
-            playerId={playerId}
-            playerFirstName={player.playerFirstName}
-            rosterGuardianEmail={player.guardianEmail ?? null}
-          />
-        </CoachCollapseSection>
+        <PlayerGuardiansCard
+          orgSlug={orgSlug}
+          teamId={teamId}
+          playerId={playerId}
+          playerFirstName={player.playerFirstName}
+          rosterGuardianEmail={player.guardianEmail ?? null}
+        />
       )}
 
       {assignment && canViewPlayerDocuments(assignment.capabilities) && (
-        <CoachCollapseSection sectionId="documents" title="Documents">
+        <CoachCollapseSection sectionId="documents" title="Documents" defaultOpen={false}>
           <PlayerDocumentsSection
             orgSlug={orgSlug}
             teamId={teamId}
@@ -572,6 +707,10 @@ export default function PlayerDetailPage({
         </CoachCollapseSection>
       )}
 
+      </>)}
+
+      {/* ── THIS SEASON: how the player is actually doing ────────────────────────────────── */}
+      {tab === 'season' && (<>
       {/* Development (Player Development 3A) — section renders only when this coach can see
           goals (notes) or measurables (record access); the API filters server-side regardless. */}
       {assignment && (canViewDevelopmentGoals(assignment.capabilities) || canViewMeasurables(assignment.capabilities)) && (
@@ -640,7 +779,7 @@ export default function PlayerDetailPage({
       )}
 
       {/* Attendance */}
-      <CoachCollapseSection sectionId="attendance" title="Attendance">
+      <CoachCollapseSection sectionId="attendance" title="Attendance" defaultOpen={false}>
         {!attendance || attendance.total === 0 ? (
           <p className={styles.detailPlaceholder}>No attendance recorded yet this season.</p>
         ) : (
@@ -671,7 +810,7 @@ export default function PlayerDetailPage({
       </CoachCollapseSection>
 
       {/* Awards */}
-      <CoachCollapseSection sectionId="awards" title="Awards">
+      <CoachCollapseSection sectionId="awards" title="Awards" defaultOpen={false}>
         {!awards || awards.total === 0 ? (
           <p className={styles.detailPlaceholder}>No awards yet this season.</p>
         ) : (
@@ -698,6 +837,7 @@ export default function PlayerDetailPage({
       <CoachCollapseSection
         sectionId="dues"
         title="Dues"
+        defaultOpen={false}
         meta={dues && dues.hasSchedule ? money(dues.balance) : undefined}
       >
         {!dues || !dues.hasSchedule ? (
@@ -723,7 +863,12 @@ export default function PlayerDetailPage({
         )}
         <Link href={moneySectionHref(base, 'dues', undefined)} className={styles.contactLink}>Manage dues →</Link>
       </CoachCollapseSection>
+      </>)}
 
+      {/* ⚠ THE SAVE BAR IS OUTSIDE THE TABS ON PURPOSE. The form lives on Details, but the state
+          lives on this component — so a coach who edits a field and switches tabs still has unsaved
+          work, and a bar that vanished with the tab would be a page quietly holding changes it had
+          stopped mentioning. It stays pinned wherever they are. */}
       {/* Save bar — viewport-pinned while there are unsaved changes, no matter where you scroll.
           The spacer reserves scroll room so the bar never covers the last card. */}
       {(isDirty || savedFlash) && <div aria-hidden className={styles.saveBarSpacer} />}

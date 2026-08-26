@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
+import CoachCollapseSection from './CoachCollapseSection';
 import styles from './FamilyAccessPanel.module.css';
 
 /**
@@ -8,6 +9,16 @@ import styles from './FamilyAccessPanel.module.css';
  *
  * ⚠ Renders NOTHING while the guardian tier is switched off: the API 404s and this removes
  * itself. A coach must not be shown a panel for something that cannot yet happen.
+ *
+ * ⚠⚠ AND IT OWNS ITS OWN DISCLOSURE, WHICH IS THE POINT OF THE WRAPPER BEING IN HERE rather than
+ * on the page (2026-08-26). The page used to draw a "Guardians" collapse section around this and
+ * gate it on guardian-PII alone — but the tier switch is a SERVER env the browser learns about by
+ * being 404'd, so the section header rendered and this card returned null inside it. The result
+ * was a drawer, on every player, that opened onto nothing. Invisible while every section on the
+ * page was expanded by default; obvious the moment they started collapsed, sitting between Safety
+ * and Documents as an identical closed header with no content behind it.
+ * The component that knows whether it has anything to say is the one that must own the container
+ * it would otherwise leave empty.
  *
  * The important interaction here is APPROVAL. A requester typed a child's first name into a
  * form that showed them no roster at all, so approving is the coach — a human who knows this
@@ -124,6 +135,7 @@ export default function PlayerGuardiansCard({
   const decidable = [...pendingRequests, ...waiting];
 
   return (
+    <CoachCollapseSection sectionId="guardians" title="Guardians" defaultOpen={false}>
     <div className={styles.panel}>
       {/* The profile page's collapse summary carries the visible "Guardians" title now; this h2
           stays for the DOCUMENT OUTLINE only (the 2026-07-31 staff lesson: the repeated-header
@@ -260,5 +272,6 @@ export default function PlayerGuardiansCard({
 
       {error && <p className={styles.error} role="alert">{error}</p>}
     </div>
+    </CoachCollapseSection>
   );
 }

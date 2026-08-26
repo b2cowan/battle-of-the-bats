@@ -37,11 +37,6 @@ import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
-const STATUS_CSS: Record<string, string> = {
-  active:   styles.badgeActive,
-  inactive: styles.badgeDraft,
-};
-
 // ── Export definition ─────────────────────────────────────────────────────────
 
 const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
@@ -248,21 +243,39 @@ export default function RosterPage({
     }
   }
 
+  /* ⚠⚠ REORDERING WORKS ON THE VISIBLE LIST, AND IS KEYED BY ID, NOT BY POSITION.
+     Since 2026-08-26 the table renders only players who are ON the roster — the rest sit in the
+     shelf beneath it — so an index into what the coach can see is NOT an index into `players`.
+     Left position-keyed, the arrows would have moved the wrong player the moment a team had
+     someone off the roster sorting above an active one, silently and with no error. This is the
+     same positional-match trap that once rewrote a paid installment on Payables; the rule it
+     earned is that a list which can be filtered must be addressed by id.
+     The off-roster rows are appended to the write so every player still ends up with a
+     deterministic order rather than a stale one left over from before they were removed. */
+  function withOffRosterAppended(nextActive: RepRosterPlayer[]) {
+    return [...nextActive, ...players.filter(p => p.status !== 'active')];
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = players.findIndex(p => p.id === active.id);
-    const newIndex = players.findIndex(p => p.id === over.id);
+    const shown = players.filter(p => p.status === 'active');
+    const oldIndex = shown.findIndex(p => p.id === active.id);
+    const newIndex = shown.findIndex(p => p.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
-    await persistOrder(arrayMove(players, oldIndex, newIndex), players);
+    await persistOrder(withOffRosterAppended(arrayMove(shown, oldIndex, newIndex)), players);
   }
 
-  // Mobile reorder: drag is disabled on touch (the grip is hidden in card mode),
-  // so up/down buttons keep reordering possible on a phone.
-  async function movePlayer(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= players.length) return;
-    await persistOrder(arrayMove(players, index, target), players);
+  /* Up/down reorder. ⚠ CSS-hidden at every width since 2026-08-26 — desktop reorders by drag and
+     a phone no longer reorders at all (owner call: a coach sets the order once, at a desk) — but
+     kept correct rather than left to rot, because the put-back is one line of CSS. */
+  async function movePlayer(playerId: string, dir: -1 | 1) {
+    const shown = players.filter(p => p.status === 'active');
+    const from = shown.findIndex(p => p.id === playerId);
+    if (from < 0) return;
+    const to = from + dir;
+    if (to < 0 || to >= shown.length) return;
+    await persistOrder(withOffRosterAppended(arrayMove(shown, from, to)), players);
   }
 
   async function handleAdd(keepOpen = false) {
@@ -490,8 +503,11 @@ export default function RosterPage({
   }
 
   // ── Roster summary + data-quality signals ─────────────────────────────────
-  const activeCount = players.filter(p => p.status === 'active').length;
-  const inactiveCount = players.length - activeCount;
+  /* The list shows the TEAM. Players taken off it fold into a shelf at the foot (owner ruling
+     2026-08-26) instead of sitting inline in batting order told apart by a grey pill — which was
+     the only thing the Status column was ever really doing. */
+  const activePlayers = players.filter(p => p.status === 'active');
+  const offRoster = players.filter(p => p.status !== 'active');
   // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
   // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
@@ -520,12 +536,13 @@ export default function RosterPage({
     return dup;
   })();
 
-  const missingPosition = players.filter(p => p.status === 'active' && !p.primaryPosition && !p.secondaryPosition).length;
-  const missingContact = players.filter(p => p.status === 'active' && !p.guardianEmail && !p.guardianPhone).length;
-  const nudgeParts: string[] = [];
-  if (missingPosition) nudgeParts.push(`${missingPosition} without a position`);
-  if (missingContact) nudgeParts.push(`${missingContact} without guardian contact`);
-  const nudge = nudgeParts.length ? `${nudgeParts.join(' · ')} — open a player to fill in details` : '';
+  /* ⚠ THE GAP SUMMARY IS GONE, AND NOTHING FILTERS (owner ruling 2026-08-26). It counted players
+     without a position and without a contact, then left the coach to find them — on a list of
+     twelve rows that fits on one screen. Chips that filter twelve rows to three are slower than
+     reading twelve. The gaps now sit in the ROWS, as a quiet prompt where the value would be
+     (see `rosterAddPrompt` below), which is where a coach is already looking when they notice one.
+     ⚠ Dim, not amber: on a brand-new roster EVERY row is missing a position, and twelve warnings
+     about a roster that is merely new is how you teach someone to ignore warnings. */
 
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call
   // stays scannable (same shape as the Money panels' headerActions consts).
@@ -674,14 +691,12 @@ export default function RosterPage({
           here) — plus the counts that used to be the header subtitle (page-header ruling
           2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
       <div className={styles.listToolbar}>
-        {/* ⚠ DROPS ON A PHONE (owner ruling 2026-08-24), so the view toggle and Export get the
-            whole row. At 390px this count squeezed "Depth chart" into wrapping inside its own
-            button — a control that looks broken costs more than a number the coach can see by
-            looking at the list underneath it. */}
-        <span className={`${styles.listToolbarFact} ${styles.listToolbarFactPhoneDrop}`}>
-          {activeCount} active {activeCount === 1 ? 'player' : 'players'}
-          {inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ''}
-        </span>
+        {/* ⚠ THE COUNT IS GONE ENTIRELY (owner ruling 2026-08-26). It was dropped on phones on
+            2026-08-24 to stop it squeezing "Depth chart" into wrapping; that turned out to be the
+            wrong cause (the pills were splitting their box in half — see the toolbar's own
+            `.segBtn` note) and the count was never the problem. It goes now for the honest reason:
+            a roster is twelve rows on one screen, and counting something a coach can see is chrome
+            charging rent. */}
         <span className={`${styles.listToolbarEnd} ${styles.listToolbarEndSpread}`}>
           <div className={styles.segChoice} aria-label="Roster view">
             <button type="button" aria-pressed={view === 'list'}
@@ -728,11 +743,6 @@ export default function RosterPage({
             seeing a row was premature. On a phone they never shared a line, which cost the list
             two rows of chrome for one row of information.
           */}
-          {nudge && (
-            <div className={styles.rosterMeta}>
-              <span className={styles.rosterNudge}>{nudge}</span>
-            </div>
-          )}
           <DndContext id={`rep-roster-dnd-${teamId}`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <div className={`${styles.tableWrap} ${styles.rosterWrap}`}>
               <table className={`${styles.table} ${styles.rosterTable}`}>
@@ -742,25 +752,22 @@ export default function RosterPage({
                     <th className={styles.th}>#</th>
                     <th className={styles.th}>Player</th>
                     <th className={styles.th}>Positions</th>
-                    <th className={styles.th}>Guardian</th>
-                    <th className={styles.th}>Status</th>
-                    <th className={styles.th} aria-hidden />
+                    {/* "Family", not "Guardian": the column now leads with the PERSON rather than
+                        with a 40-character address. See the cell for why. */}
+                    <th className={styles.th}>Family</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <SortableContext items={players.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                    {players.map((p, i) => (
+                  <SortableContext items={activePlayers.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                    {activePlayers.map((p, i) => (
                       <SortableRow
                         key={p.id}
                         player={p}
                         base={base}
-                        togglingId={togglingId}
-                        onToggle={handleToggleStatus}
-                        canWrite={canWriteRoster}
-                        dragDisabled={players.length < 2 || !canWriteRoster}
+                        dragDisabled={activePlayers.length < 2 || !canWriteRoster}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
                         index={i}
-                        count={players.length}
+                        count={activePlayers.length}
                         onMove={movePlayer}
                       />
                     ))}
@@ -769,11 +776,50 @@ export default function RosterPage({
               </table>
             </div>
           </DndContext>
+
+          {/* ⚠ PLAYERS WHO ARE OFF THE ROSTER GET A SHELF, NOT A ROW (owner ruling 2026-08-26).
+              They used to sit INLINE among the team in batting order, separated from a playing
+              player by a grey pill in a column nobody reads — which is precisely why that column
+              had to exist. Put them below the list and position carries the meaning, so the badge
+              and the column both stop having a job.
+              ⚠ Native <details>, so the shelf's contents stay mounted and the browser owns the
+              open state — the portal's own CollapsibleCard convention. */}
+          {offRoster.length > 0 && (
+            <details className={styles.offRoster}>
+              <summary className={styles.offRosterSummary}>
+                Off the roster ({offRoster.length})
+              </summary>
+              <ul className={styles.offRosterList}>
+                {offRoster.map(p => (
+                  <li key={p.id} className={styles.offRosterRow}>
+                    <Link href={`${base}/roster/${p.id}`} className={styles.offRosterName}>
+                      {playerFullName(p)}
+                    </Link>
+                    {p.playerNumber && <span className={styles.offRosterNum}>#{p.playerNumber}</span>}
+                    {/* Only the head coach (or an assistant granted roster-write) may put someone
+                        back — the API refuses the rest, and a button that always fails is worse
+                        than no button. */}
+                    {canWriteRoster && (
+                      <button
+                        type="button"
+                        className={`btn btn-ghost ${styles.offRosterAdd}`}
+                        disabled={togglingId === p.id}
+                        onClick={() => handleToggleStatus(p)}
+                      >
+                        {togglingId === p.id ? '…' : 'Add back'}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
           {/* The reorder tip, in its new home under the rows it describes. Same copy, same two
               variants (drag on desktop, arrows where drag is disabled) — only the position moved,
               and it moved at EVERY width rather than only on a phone: one control, one place to
               read about it, is worth more than the few pixels a width-gated version would save. */}
-          {players.length >= 2 && (
+          {activePlayers.length >= 2 && (
             <div className={styles.rosterHintBelow}>
               <span className={styles.rosterHint}>
                 <span className={styles.rosterHintDrag}>
@@ -984,9 +1030,6 @@ export default function RosterPage({
 function SortableRow({
   player: p,
   base,
-  togglingId,
-  onToggle,
-  canWrite,
   dragDisabled,
   isDuplicateNumber,
   index,
@@ -994,16 +1037,13 @@ function SortableRow({
   onMove,
 }: {
   player: RepRosterPlayer;
-  base: string;
   /** Chunk F: keeps a player link inside the season the roster is showing. */
-  togglingId: string | null;
-  onToggle: (player: RepRosterPlayer) => void;
-  canWrite: boolean;
+  base: string;
   dragDisabled: boolean;
   isDuplicateNumber: boolean;
   index: number;
   count: number;
-  onMove: (index: number, dir: -1 | 1) => void;
+  onMove: (playerId: string, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: dragDisabled });
   const style = {
@@ -1012,6 +1052,7 @@ function SortableRow({
     opacity: isDragging ? 0.6 : 1,
   };
   const fullName = playerFullName(p);
+  const guardianName = [p.guardianFirstName, p.guardianLastName].filter(Boolean).join(' ').trim();
   return (
     <tr ref={setNodeRef} style={style} className={styles.tr}>
       <td className={`${styles.td} ${styles.gripTd}`} style={{ width: 28, paddingLeft: '0.25rem', paddingRight: 0 }}>
@@ -1036,6 +1077,28 @@ function SortableRow({
       <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
         <span className={styles.playerCell}>
           <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
+          {/* ⚠ THREE MARKERS, ALL FROM DATA ALREADY ON THIS ROW — no extra call, nothing new for a
+              coach to enter. They are what someone actually scans a roster for: who starts, who
+              pitches, and who the trainer needs to know about. Each carries a title AND an
+              accessible label, because a coloured square is not information to a screen reader
+              and colour alone is not information to anyone (the portal's own contrast ruling). */}
+          {(p.lineupProfile?.aSquad || p.lineupProfile?.pitcher || p.medicalNotes) && (
+            <span className={styles.rosterFlags}>
+              {p.lineupProfile?.aSquad && (
+                <span className={`${styles.rosterFlag} ${styles.rosterFlagSquad}`}
+                  title="A-squad — gold-medal starter" aria-label="A-squad">★</span>
+              )}
+              {p.lineupProfile?.pitcher && (
+                <span className={`${styles.rosterFlag} ${styles.rosterFlagPitch}`}
+                  title={`Pitcher — rank ${p.lineupProfile.pitcher.rank}`}
+                  aria-label={`Pitcher, rank ${p.lineupProfile.pitcher.rank}`}>P{p.lineupProfile.pitcher.rank}</span>
+              )}
+              {p.medicalNotes && (
+                <span className={`${styles.rosterFlag} ${styles.rosterFlagMed}`}
+                  title="Medical notes on file" aria-label="Medical notes on file">✚</span>
+              )}
+            </span>
+          )}
           {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
           <span className={styles.playerCellMeta}>
             {p.playerNumber && (
@@ -1046,9 +1109,14 @@ function SortableRow({
                 #{p.playerNumber}
               </span>
             )}
-            <span className={`${styles.badge} ${STATUS_CSS[p.status] ?? styles.badgeDraft}`}>
-              {p.status === 'active' ? 'Active' : 'Inactive'}
-            </span>
+            {/* Positions ride the name row on a phone; their own card line is hidden at 640. Short
+                enough to sit beside a name, which is exactly why this one moved up and the guardian
+                contact did not. */}
+            {(p.primaryPosition || p.secondaryPosition) && (
+              <span className={styles.playerPosChip}>
+                {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ')}
+              </span>
+            )}
             {/* Reorder arrows live here on mobile (drag is disabled on touch); hidden on desktop. */}
             {!dragDisabled && (
               <span className={styles.rosterMoveControls}>
@@ -1057,7 +1125,7 @@ function SortableRow({
                   className={styles.rosterMoveBtn}
                   aria-label={`Move ${fullName} up`}
                   disabled={index === 0}
-                  onClick={() => onMove(index, -1)}
+                  onClick={() => onMove(p.id, -1)}
                 >
                   <ChevronUp size={15} />
                 </button>
@@ -1066,7 +1134,7 @@ function SortableRow({
                   className={styles.rosterMoveBtn}
                   aria-label={`Move ${fullName} down`}
                   disabled={index === count - 1}
-                  onClick={() => onMove(index, 1)}
+                  onClick={() => onMove(p.id, 1)}
                 >
                   <ChevronDown size={15} />
                 </button>
@@ -1076,38 +1144,32 @@ function SortableRow({
         </span>
       </td>
       <td className={styles.td} data-label="Positions" style={{ fontSize: '0.85rem' }}>
-        {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ') || <span className={styles.cellEmpty}>—</span>}
+        {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ')
+          || <Link href={`${base}/roster/${p.id}`} className={styles.rosterAddPrompt}>Add a position</Link>}
       </td>
-      <td className={styles.td} data-label="Guardian" style={{ fontSize: '0.85rem' }}>
-        {(p.guardianEmail || p.guardianPhone)
+      {/* ⚠ THE COLUMN LEADS WITH THE PERSON, NOT THE ADDRESS (owner ruling 2026-08-26). It used to
+          print the guardian's email as the whole cell — the widest thing on the page, and the least
+          glanceable: at a glance a coach wants "can I reach this family", not a 40-character string
+          they will copy rather than read. The name leads; the address and phone stay one tap away
+          beneath it.
+          ⚠ AND THERE IS NO "on the family app" BADGE HERE, deliberately. Team family-access
+          followers carry NO player, so they cannot answer it for one child, and the per-player
+          guardian tier is shipped SWITCHED OFF pending privacy counsel review. This cell is shaped
+          so that badge drops in later rather than forcing a rebuild — see the plan §2.
+          ⚠ Redaction is unchanged: a coach without guardian-contact access has these fields
+          stripped by the API before they reach here, so the cell simply falls to its prompt. */}
+      <td className={styles.td} data-label="Family" style={{ fontSize: '0.85rem' }}>
+        {(guardianName || p.guardianEmail || p.guardianPhone)
           ? <span className={styles.guardianStack}>
-              {p.guardianEmail
-                ? <a href={`mailto:${p.guardianEmail}`} className={styles.guardianEmail}>{p.guardianEmail}</a>
-                : <span className={styles.cellEmpty}>No email on file</span>}
-              {p.guardianPhone && <span className={styles.guardianPhone}>{p.guardianPhone}</span>}
+              {guardianName && <span className={styles.familyName}>{guardianName}</span>}
+              {p.guardianEmail && (
+                <a href={`mailto:${p.guardianEmail}`} className={styles.guardianEmail}>{p.guardianEmail}</a>
+              )}
+              {p.guardianPhone && (
+                <a href={`tel:${p.guardianPhone}`} className={styles.guardianPhone}>{p.guardianPhone}</a>
+              )}
             </span>
-          : <span className={styles.cellEmpty}>—</span>}
-      </td>
-      <td className={styles.td} data-label="Status">
-        <span className={`${styles.badge} ${STATUS_CSS[p.status] ?? styles.badgeDraft}`}>
-          {p.status === 'active' ? 'Active' : 'Inactive'}
-        </span>
-      </td>
-      <td className={`${styles.td} ${styles.rowActionCell}`}>
-        {/* Desktop-only status toggle. On mobile this is hidden — deactivate from the player
-            profile instead (it's a rare action), which keeps the roster card compact.
-            Hidden entirely for coaches without roster-write (the API blocks it anyway). */}
-        {canWrite && (
-        <button
-          type="button"
-          className={`btn btn-ghost ${styles.rosterStatusBtn}`}
-          style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem', color: 'var(--white-45)', opacity: togglingId === p.id ? 0.5 : 1 }}
-          disabled={togglingId === p.id}
-          onClick={() => onToggle(p)}
-        >
-          {togglingId === p.id ? '…' : p.status === 'active' ? 'Deactivate' : 'Activate'}
-        </button>
-        )}
+          : <Link href={`${base}/roster/${p.id}`} className={styles.rosterAddPrompt}>Add a contact</Link>}
       </td>
     </tr>
   );

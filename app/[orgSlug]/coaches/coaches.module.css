@@ -3837,6 +3837,26 @@ a.oneChip:hover { border-color: currentColor; }
   flex-wrap: wrap;
   margin-bottom: 0.6rem;
 }
+/* ⚠ THE NUDGE LINE IS DESKTOP-ONLY (owner call 2026-08-26). On a phone it spent two of the three
+   card-heights a coach can actually see, summarising a list of twelve rows sitting directly beneath
+   it — and every gap it counts is already legible in the card it belongs to. The live count above it
+   went on 2026-08-24 for the identical reason (`.listToolbarFactPhoneDrop`); this is the other half
+   of that ruling. A roster is short enough that nothing about it needs summarising.
+
+   ⚠ Hides the WRAPPER, not `.rosterNudge`: the wrapper is a flex row carrying its own bottom margin,
+   so hiding only the text inside it leaves that margin behind as a gap above the list.
+
+   ⚠⚠ AND IT MUST STAY BELOW `.rosterMeta`, WHICH IS THE ENTIRE REASON THIS PARAGRAPH IS LONGER THAN
+   THE RULE. Written ABOVE the base block on the first attempt, at equal specificity — so
+   `display: flex` won on source order and the line kept rendering on every phone, exactly as if the
+   rule had never been added. That is the third time this file has been bitten by the same thing
+   (see `.segChoiceFull`, and the toolbar's own `.segBtn` note): a modifier declared above the class
+   it modifies is a silent no-op, and silent is the operative word — nothing errors, the page just
+   looks unchanged. */
+@media (max-width: 640px) {
+  .rosterMeta { display: none; }
+}
+
 .rosterHint {
   display: inline-flex;
   align-items: center;
@@ -3858,6 +3878,113 @@ a.oneChip:hover { border-color: currentColor; }
 .rosterHintBelow { margin: 0.6rem 0 0; }
 
 .thWithHelp { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* ══ ROSTER: the redesign of 2026-08-26 ═══════════════════════════════════════════════════
+   Status column and the per-row Deactivate both gone; what replaces them is below. */
+
+/* A gap, sitting where its value would be. ⚠ DIM, NOT A WARNING COLOUR, and that is a ruling
+   rather than a taste: a brand-new roster has no positions on ANY row, so an amber cell per player
+   is a wall of alarm about a roster whose only fault is being new. It reads as an invitation, and
+   at twelve rows on one screen a coach sees every one of them without anything counting them. */
+.rosterAddPrompt {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--home-line-strong, rgba(255,255,255,0.18));
+  padding-bottom: 1px;
+}
+.rosterAddPrompt:hover { color: var(--text-secondary); border-bottom-style: solid; }
+
+/* The three markers on a name: A-squad, pitcher rank, medical notes. All three come off data the
+   row already carries. Each is a SHAPE plus a label, never a colour alone. */
+.rosterFlags { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.45rem; }
+.rosterFlag {
+  display: inline-grid; place-items: center;
+  line-height: 1;
+}
+
+/* ⚠⚠ THE STAR WAS A DARK OLIVE BLOCK, AND THE CAUSE IS A TRAP THIS FILE ALREADY WARNS ABOUT.
+   It was written as a lime chip — `background: var(--logic-lime); color: var(--on-lime)` — which is
+   correct everywhere except the theme every coach actually uses: the warm portal REMAPS
+   `--logic-lime` to `--home-olive`, so the chip painted dark olive and the ink on it stayed dark,
+   giving a muddy green square with a barely visible star inside it. (globals.css carries the
+   warning beside the token: a captured lime re-resolves to olive; real lime is `--logic-lime-fixed`.)
+
+   The fix is not a different fill — it is NO fill. A star IS the shape; wrapping it in a coloured
+   box adds nothing and costs the legibility. Gold because the product's own words for this are
+   "gold-medal starter". */
+.rosterFlagSquad { color: var(--warning); font-size: 0.86rem; }
+/* The pitcher marker keeps a chip because it carries TEXT ("P1") — bare, it reads as part of the
+   player's name. Quiet fill, so the gold star stays the thing the eye finds first. */
+.rosterFlagPitch {
+  background: var(--white-8);
+  color: var(--text-secondary);
+  border-radius: 5px;
+  min-width: 17px; height: 17px; padding: 0 0.22rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem; font-weight: 700;
+}
+.rosterFlagMed { color: var(--danger); font-size: 0.8rem; font-weight: 700; }
+
+/* The family cell leads with the person; the address and phone follow it, quieter. */
+.familyName { font-weight: 600; color: var(--text-primary); }
+
+/* ── Off the roster ──────────────────────────────────────────────────────────────────────
+   ⚠ A SHELF, NOT ROWS (owner ruling 2026-08-26). These players used to sit INLINE among the team
+   in batting order, told apart from a playing player by a grey pill in a column nobody reads —
+   which is the whole reason that column had to exist. Below the list, position carries the
+   meaning, so the badge and the column both stop having a job.
+   Native `<details>`, matching the portal's CollapsibleCard convention: the browser owns the open
+   state and the contents stay mounted. */
+.offRoster {
+  margin-top: 0.9rem;
+  border: 1px dashed var(--border-2);
+  border-radius: 10px;
+}
+.offRosterSummary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.offRosterSummary::-webkit-details-marker { display: none; }
+.offRosterSummary::before {
+  content: '▸';
+  font-size: 0.7rem;
+  transition: transform 0.12s;
+}
+.offRoster[open] > .offRosterSummary::before { transform: rotate(90deg); }
+.offRosterSummary:hover { color: var(--text-secondary); }
+.offRosterList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.85rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.offRosterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--white-05);
+}
+.offRosterName { color: var(--text-secondary); font-weight: 600; font-size: 0.88rem; text-decoration: none; }
+.offRosterName:hover { color: var(--text-primary); text-decoration: underline; }
+.offRosterNum { font-family: var(--font-data, monospace); font-size: 0.78rem; color: var(--text-tertiary); }
+.offRosterAdd { margin-left: auto; font-size: 0.78rem; padding: 0.25rem 0.6rem; }
+
+@media (max-width: 640px) {
+  /* The shelf's own row is a target on a phone like every other control here. */
+  .offRosterSummary { min-height: var(--tap-min, 44px); }
+  .offRosterAdd { min-height: var(--tap-min, 44px); }
+}
 
 .cellEmpty { opacity: 0.3; }
 
@@ -3886,6 +4013,20 @@ a.oneChip:hover { border-color: currentColor; }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .playerNumBadgeDup { color: var(--warning); }
+/* Positions, folded into the phone card's name row (their own card line is hidden at 640 — see the
+   roster reflow block). Quiet on purpose: this is identity, not a warning. It renders nothing at
+   all when a player has no position yet, rather than printing an em dash the coach must read past
+   — the desktop table keeps its dash, where a column of them lines up and genuinely reads as
+   "these are the ones to fill in". */
+.playerPosChip {
+  font-size: 0.72rem; font-weight: 600; color: var(--text-secondary);
+  background: var(--white-8); border-radius: 6px; padding: 0.1rem 0.42rem;
+  /* Positions are FREE TEXT (no CHECK on the column, no Sport Pack enforcement at write time), so
+     a coach who types "Catcher / Second Base" must not be able to push a card sideways. The chip
+     ellipsizes; the full value is still on the row it links to and in the desktop column. */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 8.5rem; min-width: 0;
+}
 
 /* Duplicate jersey number flag (warn, don't block) */
 .jerseyDup {
@@ -3901,8 +4042,6 @@ a.oneChip:hover { border-color: currentColor; }
 .guardianEmail { color: var(--blueprint-light); text-decoration: none; }
 .guardianEmail:hover { text-decoration: underline; }
 .guardianPhone { color: var(--text-tertiary); font-size: 0.78rem; }
-
-.rowActionCell { text-align: right; white-space: nowrap; }
 
 /* Mobile-only up/down reorder (replaces touch drag, which is disabled in card
    mode). Hidden on desktop where the drag grip handles reordering. */
@@ -3935,11 +4074,16 @@ a.oneChip:hover { border-color: currentColor; }
   .rosterTable tbody,
   .rosterTable tr,
   .rosterTable td { display: block; width: auto; }
+  /* ⚠ THE CARD IS TWO LINES, NOT THREE (owner call 2026-08-26). At three labelled lines plus the
+     chrome above them a phone showed two-and-a-bit players out of twelve, so reading the roster
+     meant scrolling a list short enough to have been taken in at a glance. Positions moved up into
+     the name row (below) and the paddings came in a notch. The guardian contact keeps a line of
+     its own — it is the one value here too long to ride beside anything. */
   .rosterTable tr {
     border: 1px solid var(--border-2);
     border-radius: 10px;
-    padding: 0.5rem 0.7rem;
-    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    margin-bottom: 0.4rem;
     background: var(--home-olive-soft, rgba(255,255,255,0.025));
   }
   .rosterTable td {
@@ -3951,14 +4095,19 @@ a.oneChip:hover { border-color: currentColor; }
     border-bottom: none !important;
     text-align: right;
   }
-  /* Jersey # + Status fold into the player header on mobile — hide their own rows. */
+  /* ⚠ THE PHONE CARD IS ONE LINE (owner ruling 2026-08-26). Jersey # and positions ride the name
+     row; the FAMILY cell is hidden outright — a guardian's email is the tallest and widest thing
+     on a card, and a coach who wants it is one tap from the player who owns it. Nothing is lost,
+     and roughly twice as many players fit on a screen again.
+     ⚠ The desktop table keeps its Family column — this is a phone decision, not a data one. */
   .rosterTable td[data-label="#"],
-  .rosterTable td[data-label="Status"] { display: none; }
+  .rosterTable td[data-label="Positions"],
+  .rosterTable td[data-label="Family"] { display: none; }
   .playerCell { width: 100%; }
   .playerCellMeta { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto; flex-shrink: 0; }
-  /* Hint + add-button swaps on mobile. */
+  /* The drag hint stands down here (no grip on a phone); the arrows variant it used to swap in is
+     retired with the arrows themselves — see the tip rule at the foot of this block. */
   .rosterHintDrag { display: none; }
-  .rosterHintMove { display: inline-flex; }
   /* Page-header ruling 2026-08-11 inverted the old collapse here: the one lime PRIMARY
      ("+ Add Player") keeps its words at every width; it's the SECONDARY buttons that go
      icon-only on phones (.headerBtnLabel). A primary you can't read isn't a primary. */
@@ -3973,19 +4122,29 @@ a.oneChip:hover { border-color: currentColor; }
   }
   .rosterTable td:not([data-label])::before { content: none; }
   .rosterTable .gripTd { display: none; }
+  /* ⚠ NO SEPARATOR ANY MORE. This rule drew the line between the name row and the data rows
+     beneath it — and with Family hidden there is nothing beneath it, so the line became a stray
+     rule across the bottom of every card, under nothing. */
   .rosterTable .playerCellTd {
-    padding-bottom: 0.4rem !important;
-    margin-bottom: 0.3rem;
-    border-bottom: 1px solid var(--white-05) !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0;
+    border-bottom: none !important;
   }
   .rosterTable .playerCellTd::before { content: none; }
   .rosterTable .guardianStack { align-items: flex-end; text-align: right; }
-  /* Deactivate moves to the player profile on mobile — drop the whole action row so the
-     card is just header + positions + guardian. */
-  .rosterTable .rowActionCell { display: none; }
-  /* Reorder arrows sit in the header meta on mobile, compact. */
-  .rosterMoveControls { display: inline-flex; gap: 0.25rem; }
-  .rosterMoveBtn { width: 30px; height: 30px; border-radius: 7px; }
+  /* ⚠ REORDERING IS A DESKTOP JOB (owner call 2026-08-26), so the arrows come off the phone card
+     and nothing replaces them — the drag grip is already hidden here, so a phone cannot reorder the
+     roster at all. That is the intended trade, not an oversight: a coach sets the batting order
+     once when the season starts, almost certainly at a desk, and the two 30px buttons it cost were
+     the tallest thing in every card and sat on all twelve of them forever after. The hint that
+     described them goes with them (below) rather than pointing at controls that are no longer
+     drawn. */
+  .rosterMoveControls { display: none; }
+
+  /* ⚠ THE REORDER TIP GOES WITH THE CONTROL IT DESCRIBES. Both variants hide: the drag one because
+     the grip is hidden here, the arrows one because the arrows now are too. A tip explaining a
+     control that is not on screen is worse than no tip — it reads as something being broken. */
+  .rosterHintBelow { display: none; }
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
@@ -4697,6 +4856,27 @@ a.oneChip:hover { border-color: currentColor; }
 .segChoiceFull { display: flex; width: 100%; }
 .segChoiceFull .segBtn { flex: 1; text-align: center; }
 
+/* ⚠ A LIST TOOLBAR'S VIEW TOGGLE HAS EQUAL PILLS, SIZED TO ITS LONGEST LABEL (owner call,
+   2026-08-26). "List" beside "Depth chart" left a stub next to a slab — legible, but plainly two
+   controls rather than one switch, and the eye reads the wide half as the selected one whichever
+   is actually on.
+
+   Grid, not flex, and that distinction is the whole rule. `flex: 1` in a `fit-content` box splits
+   whatever width the box already settled on, which is how "Depth chart" ended up wrapping inside
+   its own pill for months. `grid-auto-columns: 1fr` in an auto-width grid resolves every column to
+   the LARGEST max-content instead — so both pills take the width of the longer label, the box grows
+   to hold them, and no label can be squeezed. Equal by construction rather than by division.
+
+   ⚠ Scoped to `.listToolbarEnd` on purpose. The base `.segChoice` is also the sheets' Paste/Upload
+   switch and the Home/Away/Neutral field, both of which want the full-width flex behaviour. */
+.listToolbarEnd .segChoice {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: fit-content;
+}
+.listToolbarEnd .segBtn { text-align: center; white-space: nowrap; }
+
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
   .formSectionGrid { grid-template-columns: 1fr; }
@@ -4708,6 +4888,146 @@ a.oneChip:hover { border-color: currentColor; }
      squashing their labels. */
   .segChoice { display: flex; width: 100%; }
   .segBtn { flex: 1; text-align: center; }
+}
+
+/* ══ PLAYER RECORD: the glance card + three tabs (2026-08-26) ═════════════════════════════
+   Replaces the "Status" strip whose first control was the delete, and gives the nine equal
+   drawers a grouping so the weekly read is not buried under the April form. */
+
+.playerGlance {
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.playerGlanceChips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.playerGlanceJersey {
+  font-family: var(--font-data, monospace);
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--white-8);
+  border-radius: 6px;
+  padding: 0.12rem 0.45rem;
+}
+/* Quiet identity chips — positions, A-squad, pitcher rank, age. These are facts, not warnings,
+   so they take the neutral fill; the portal reserves colour for state that needs acting on. */
+.chipQuiet {
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--white-8);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+}
+/* The one chip that IS a warning. ⚠ Icon + words, never colour alone — the portal's contrast
+   ruling, and the reason this reads at all for a deuteranope. */
+.chipDanger {
+  display: inline-flex; align-items: center; gap: 0.28rem;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.12);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+}
+
+.playerGlanceTiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.playerTile {
+  border: 1px solid var(--border-2);
+  border-radius: 9px;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.playerTileKey {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.playerTileValue {
+  font-size: 1.05rem; font-weight: 700; line-height: 1.15;
+  color: var(--text-primary);
+  /* A guardian's name can be long and a tile is a quarter of the page — truncate rather than
+     letting one family's surname set the width of all four. */
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.playerTileValue[data-tone="danger"] { color: var(--danger); }
+.playerTileFoot {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── The tabs ─────────────────────────────────────────────────────────────────────────────
+   A rail of three, underlined rather than pilled: these are NAVIGATION within one record, and a
+   segmented pill row in this portal means a one-value FORM field (owner ruling 2026-08-22). The
+   two must not look alike. */
+.playerTabs {
+  display: flex;
+  gap: 0.15rem;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+.playerTab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.playerTab:hover { color: var(--text-secondary); }
+/* The long/short label swap — see PLAYER_TABS. */
+.playerTabLong  { display: inline; }
+.playerTabShort { display: none; }
+.playerTabOn, .playerTabOn:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--logic-lime);
+}
+
+/* ── Taking a player off the roster ───────────────────────────────────────────────────────
+   ⚠ Quiet, and at the FOOT of the form. This is the portal's only delete for a player, and it
+   spent its life as an unlabelled ghost button under a child's name and on every row of the
+   list. It is not styled to attract — it is styled to be found on purpose. */
+.playerDangerZone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.9rem;
+}
+.playerDangerCopy { min-width: 0; flex: 1 1 260px; }
+.playerDangerTitle { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.2rem; color: var(--text-primary); }
+.playerDangerBtn { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.45); }
+
+@media (max-width: 640px) {
+  /* Two-up rather than four across — four tiles on a phone gives each one about 80px, which is
+     narrower than "None set". */
+  .playerGlanceTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .playerTab { min-height: var(--tap-min, 44px); padding: 0.6rem 0.7rem; flex: 1; }
+  .playerTabLong  { display: none; }
+  .playerTabShort { display: inline; }
+  /* Three short labels fit, so the rail stops scrolling and stops looking cut off. */
+  .playerTabs { overflow-x: visible; }
+  .playerDangerZone > button { min-height: var(--tap-min, 44px); width: 100%; }
 }
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
@@ -4745,20 +5065,6 @@ a.oneChip:hover { border-color: currentColor; }
 .contactLink:hover { text-decoration: underline; }
 
 /* Medical-info flag in the player status row */
-.medicalFlag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.12);
-  border: 1px solid rgba(var(--warning-rgb), 0.3);
-}
 
 .sectionHeadRow {
   display: flex;
@@ -4906,24 +5212,7 @@ a.oneChip:hover { border-color: currentColor; }
   }
 }
 
-.statusRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.07));
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
 
-.statusLabel {
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
 
 .notAssigned {
   padding: 4rem 2rem;
@@ -11136,9 +11425,23 @@ button.gdChip[aria-pressed='true'] {
    ⚠ Two columns above phone width, and the label lane is narrow ON PURPOSE: these are short values,
    and a wide label lane would strand each one in the middle of the panel.
    ⚠ `.payDrawerNote` is RETIRED — the note is a row in here now. */
+/* "Add an installment", under the schedule it adds to (owner ruling 2026-08-26).
+   ⚠ THE TAP FLOOR COMES FROM THE SURFACE, and this is a NEW slot — it inherits nothing from
+   `.pageHeaderActions` or `.panelToolbarActions`, which is exactly how a relocated control landed
+   at 30px once before (header house rules, the expensive gotcha). */
+.payDrawerAdd { display: flex; padding: 0.45rem 0 0.15rem; }
+@media (max-width: 640px) {
+  .payDrawerAdd button { min-height: var(--tap-min, 44px); }
+}
+
+/* ⚠ IT NEEDS ITS OWN AIR NOW. When this block sat LAST it followed a labelled section and inherited
+   that spacing; moving it up between the standing figure and the schedule left it welded to the
+   underside of the total band — the tag row read as part of the "Still owing" line (owner
+   screenshot, 2026-08-26). A block that moves inherits the spacing of where it LANDED, not of
+   where it came from. */
 .payDrawerFacts {
   display: grid; grid-template-columns: 5.25rem 1fr; gap: 0.3rem 0.75rem;
-  margin: 0; font-size: 0.82rem;
+  margin: 0.85rem 0 0.25rem; font-size: 0.82rem;
 }
 .payDrawerFacts dt {
   color: var(--text-tertiary); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
@@ -11261,9 +11564,31 @@ button.gdChip[aria-pressed='true'] {
      above. Scoped back to `fit-content` here only; every form-context `.segChoice` is untouched.
      ⚠ Do NOT "simplify" this by editing the base rule — the sheets' Paste/Upload switch and the
      Home/Away/Neutral field both depend on the full-width default. */
-  .listToolbarEnd .segChoice { display: inline-flex; width: fit-content; min-width: 0; }
+  .listToolbarEnd .segChoice {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    width: fit-content;
+    min-width: 0;
+  }
   /* 1rem of side padding per button is desktop generosity; 0.7 is what makes
-     fact + toggle + export one row at 361 with the tap floor above still intact. */
+     fact + toggle + export one row at 361 with the tap floor above still intact.
+
+     ⚠⚠ AND `flex: 1` COMES OFF WITH IT — the half the scope-back above missed (owner report,
+     2026-08-26). The base phone rule sets BOTH `.segChoice { width: 100% }` and
+     `.segBtn { flex: 1 }`. Resetting only the CONTAINER to `fit-content` left the two pills
+     still splitting whatever width it settled on down the middle, so "Depth chart" — three times
+     the label "List" is — got exactly half and wrapped onto a second line INSIDE its own pill, at
+     every phone width, with a hand's width of empty toolbar to its right. The live count was
+     dropped on 2026-08-24 to buy room for it, which never had a chance of working: the control was
+     not short of room, it was refusing to use it.
+
+     This is the same failure a third time in this file — see the `.segChoiceFull` comment beside
+     the base rule, which describes it exactly ("`flex: 1` still split its children evenly, which
+     is a recipe for squeezing the LONGER label until it wraps") and was written about a form. A
+     container-only override never finishes the job: the CHILD carries the property doing the
+     squeezing. `nowrap` is the belt to that braces — a segmented pill that has wrapped reads as a
+     broken control, not a tight one. */
   .listToolbarEnd .segBtn { padding: 0.42rem 0.7rem; }
 
   /* The live fact yields first — it is prose, the two controls are targets. Scoped to a direct
@@ -11284,10 +11609,26 @@ button.gdChip[aria-pressed='true'] {
   /* The corner variant (CoachPageHeader `actionsPhoneInTitleRow`, owner ruling 2026-08-23):
      the surviving action sits ON the title row, beside the "?", instead of a right-pinned row
      beneath — one compact control fits the corner, and the row-2 dead band goes with it. */
-  .pageHeaderStd.pageHeaderActionsCorner { grid-template-columns: 1fr auto auto; column-gap: 0.5rem; }
+  /* ⚠⚠ THE GAPS ARE MARGINS, NOT `column-gap`, AND THAT IS THE WHOLE FIX (owner report, 2026-08-26).
+     Inside the TEAM layout the masthead draws the "?" and `CoachPageHeader` renders no
+     `.pageHeaderHelp` at all — but the third track stays declared, and a grid draws the gap beside
+     an empty track exactly as it draws one beside a full track. So the surviving action sat half a
+     rem short of the container's right edge on every team page using this variant, while the list
+     toolbar's export directly beneath it — an ordinary flex row — held the true edge. Two controls
+     in the same right-hand column, one of them 8px in: visible on Roster as an Add button that
+     didn't line up with the Export under it.
+
+     Margins put the space between the ITEMS instead of between the TRACKS, so a help button that
+     isn't rendered contributes no space. Where the "?" IS rendered (a page outside the team
+     layout), the spacing comes out byte-identical to what `column-gap` gave.
+
+     ⚠ `.pageHeaderActions` carries `margin-left: auto` from its base rule, which is inert in an
+     `auto` track (no free space to absorb) — overriding it here is safe and scoped to the corner
+     variant, so the row-2 layout the base rule serves is untouched. */
+  .pageHeaderStd.pageHeaderActionsCorner { grid-template-columns: 1fr auto auto; column-gap: 0; }
   .pageHeaderStd.pageHeaderActionsCorner .pageHeaderLeft { grid-row: 1; grid-column: 1; }
-  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderActions { grid-row: 1; grid-column: 2; }
-  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderHelp { grid-row: 1; grid-column: 3; }
+  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderActions { grid-row: 1; grid-column: 2; margin-left: 0.5rem; }
+  .pageHeaderStd.pageHeaderActionsCorner .pageHeaderHelp { grid-row: 1; grid-column: 3; margin-left: 0.5rem; }
 }
 
 
