@@ -26,93 +26,75 @@
 .muted { color: var(--text-tertiary); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
 
-/* ── Summary banner ──────────────────────────────────────────────────────── */
-.summaryBanner {
+/* ── The result strip ────────────────────────────────────────────────────────
+   ⚠⚠ ONE ROW, WHERE A THREE-TILE BANNER AND A FOUR-TILE DUES CARD USED TO STACK
+   (owner ruling 2026-08-26). ~280px of summary became ~70px, which is the whole point:
+   the month columns now arrive in the same screenful as the controls that shape them.
+   The reasoning for what was cut lives on the markup in `panel.tsx` — read it before
+   adding anything back here. Headroom keeps 1.45rem and its semantic colour because it
+   is the answer; budget and actual are the WORKING and read at supporting size. */
+.resultStrip {
   display: flex;
-  align-items: stretch;
-  gap: 0;
-  padding: 1.25rem 1.75rem;
-  border-radius: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.15rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: 10px;
   background: rgba(var(--blueprint-blue-rgb), 0.07);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.summaryItem { min-width: 100px; }
+.stripLead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
 
-.summaryLabel {
-  display: block;
+.stripLabel {
   font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-tertiary);
-  margin-bottom: 0.2rem;
 }
 
-.summaryValue {
-  display: block;
-  font-size: 1.15rem;
+.stripValue {
+  font-size: 1.45rem;
   font-weight: 700;
-  color: var(--text-primary);
+  line-height: 1.05;
   font-variant-numeric: tabular-nums;
+  /* colour is set inline — it is SEMANTIC (under vs over budget), not decorative. */
 }
 
-/* ⚠ WAS `--white-30`, which the warm portal remaps to a HAIRLINE token — so "under budget" and
-   "incl. $X not itemized yet" were rendering at rgba(70,55,30,0.2) on the banner's own ground, far
-   under AA. Pre-existing, and invisible to every gate until 2026-08-13: `check:text-contrast`
-   reads declared colours rather than rendered ones, and the rendered sweep had never drawn this
-   banner because the layout fixture had no budget in it. `--white-45` is the portal's third text
-   tier and the floor the ladder is capped at. */
-.summaryHint {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--text-tertiary);
-  margin-top: 0.15rem;
-}
+/* ⚠ THE MUTED TEXT ON THIS STRIP TAKES `--text-tertiary`, NEVER `--white-30`/`--white-45`.
+   The banner this replaced shipped "under budget" in `--white-30`, which the warm portal
+   remaps to a HAIRLINE token — rgba(70,55,30,0.2) as ink on the strip's own ground, far under
+   AA, and invisible to every gate until 2026-08-13 (`check:text-contrast` reads DECLARED
+   colours, and the rendered sweep had never drawn this banner because the layout fixture had
+   no budget in it). `--text-tertiary` is the portal's third text tier and the floor the ladder
+   is capped at. */
+.stripState { font-size: 0.85rem; color: var(--text-secondary); }
 
-.summaryDivider {
+.stripRule {
   width: 1px;
-  background: var(--home-card, rgba(255,255,255,0.08));
   align-self: stretch;
   flex-shrink: 0;
+  background: rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
-/* ── Dues collection card ────────────────────────────────────────────────── */
-.duesCard {
-  padding: 1rem 1.5rem;
-  border-radius: 10px;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  margin-bottom: 1.25rem;
-}
-
-.duesTitle {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-tertiary);
-  margin-bottom: 0.75rem;
-}
-
-.duesRow {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.duesStat { min-width: 80px; }
-
-.duesValue {
-  display: block;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.stripSupport {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
+.stripSupport b { font-weight: 700; color: var(--text-primary); }
+
+/* The plan's own lines exceeding the estimate this report measures against — the only thing on
+   the page that explains a disagreement with the budget plan screen, so it sits INLINE on the
+   result rather than pushing the strip to a second row. */
+.stripWarn { font-size: 0.8rem; color: var(--danger-light); }
 
 /* ── Monthly chart card ──────────────────────────────────────────────────── */
 .chartCard {
@@ -417,15 +399,23 @@
    Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
    ════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
-  /* Headroom / Total budget / Total actual read top-to-bottom rather than as a
-     three-across banner with a vertical rule squeezed between them. The axis flip
-     comes from the shared .stack640 on the element; only the page's own spacing and
-     its own divider live here. */
-  .summaryBanner {
-    gap: 0.75rem;
-    padding: 1rem 1.1rem;
+  /* The result reads top-to-bottom on a phone — headroom, then the spent-of-planned line —
+     rather than one row squeezed behind a vertical rule. The axis flip comes from the shared
+     .stack640 on the element; only the page's own spacing and its own rule live here.
+
+     ⚠ THE CLASS IS DOUBLED ON PURPOSE, and it is not tidiness. .stack640's own ≤640 rule sets
+     `align-items: stretch` at 0-1-0, and `.resultStrip` sets `align-items: center` at 0-1-0 —
+     a tie ACROSS TWO STYLESHEETS, resolved by whichever order the bundler emits them in. That
+     is a build detail deciding whether a phone gets a left-aligned stack or a centred one.
+     0-2-0 settles it here, deliberately. (Same failure mode as the funding accent in
+     `budget.module.css` and the pinned-column gutter below; see
+     `memory/reference_cascade_collisions_coach_budget.md`.) */
+  .resultStrip.resultStrip {
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.85rem 1.1rem;
   }
-  .summaryDivider { display: none; }
+  .stripRule { display: none; }
 
   /* The pinned first column owns its own leading gutter — see --scrollx-pin-gutter in the
      shared primitive. Each row hands down what its left padding used to be, INCLUDING the

@@ -27,7 +27,6 @@ import {
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip } from '@/lib/coach-cash-strip';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
-import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 
@@ -599,24 +598,23 @@ export const GET = withObservability(async (req: Request,
       paidAt:      c.paidDate,
     }))));
 
-  // ── 6. Dues collection summary ────────────────────────────────────────
+  // ── 6. Dues schedules and instalments ─────────────────────────────────
   const { data: schedules } = await supabaseAdmin
     .from('rep_player_dues_schedules')
     .select('id, player_id, total_amount')
     .eq('program_year_id', programYear.id);
 
   const scheduleIds = (schedules ?? []).map((s: { id: string }) => s.id);
-  const expectedDues = (schedules ?? []).reduce(
-    (s: number, r: { total_amount: number }) => s + (r.total_amount ?? 0), 0,
-  );
 
-  // Collected = recorded payment FACTS (mig 232), capped per player at their schedule total —
-  // the same figure the dues table's Paid column shows, so this card and that screen can never
-  // disagree. Installments stay fetched for the SCHEDULED half of the cash-flow strip ("what
-  // lands in July if everyone pays on time").
-  // Payments arrive with the money-in wave above (the strip needs them schedule or no schedule);
-  // only the INSTALLMENTS still hinge on schedules existing, because they hang off them.
-  let collectedDues = 0;
+  /* ⚠⚠ THE DUES-COLLECTION SUMMARY IS GONE FROM THIS PAYLOAD (owner ruling 2026-08-26). It fed
+     one thing — the four-tile `Dues Collection` card at the top of Budget vs. Actual — and that
+     card was deleted: dues are money IN, this report measures spending against plan, and all
+     four of its figures are already told on the Money hub's Overview card and on Player Dues'
+     own footer. The report states dues month by month in its own income band besides.
+     ⚠ Removed rather than left computed-and-unread: the payload's own contract note (below, at
+     `unbudgetedActuals`) is that a field nothing sends or nothing reads is how the next reader
+     gets `undefined` with a clean typecheck. The SCHEDULES and INSTALLMENTS fetches stay — the
+     cash-flow strip and the Scheduled lens both hang off them. */
   /* ⚠ THE INSTALMENT'S OWN IDENTITY RIDES ALONG (Option D, 2026-08-23). The Scheduled lens quotes
      what is STILL OWED on each piece, and `duesRemainingByInstallment` matches payments, credits
      and payouts to instalments by id and player — a list of bare amounts cannot be asked the
@@ -631,17 +629,8 @@ export const GET = withObservability(async (req: Request,
       .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
       .in('schedule_id', scheduleIds);
     duesInstallments = (inst ?? []) as typeof duesInstallments;
-    const paymentsByPlayer = paymentsTotalByPlayer(duesPayments);
-    for (const s of (schedules ?? []) as Array<{ player_id: string; total_amount: number }>) {
-      collectedDues += duesPaidAmount(paymentsByPlayer.get(s.player_id) ?? 0, s.total_amount ?? 0);
-    }
   }
 
-  const duesCollection = {
-    expected:    Math.round(expectedDues    * 100) / 100,
-    collected:   Math.round(collectedDues   * 100) / 100,
-    outstanding: Math.round((expectedDues - collectedDues) * 100) / 100,
-  };
   /* Whose instalment is whose. ⚠ `rep_player_dues_installments.player_id` is denormalised and can
      be null on older rows, so the SCHEDULE answers for them — the register's own fallback, and the
      remainder derivation groups by player, so an instalment with no owner would be dropped. */
@@ -1456,7 +1445,6 @@ export const GET = withObservability(async (req: Request,
     /** How much of `totalActual` went on items nobody planned — a figure to NAME, never to add. */
     unbudgeted,
     unbudgetedActuals,
-    duesCollection,
     monthlyChart,
     // Named so the chart can state what it is NOT plotting, rather than smearing it (D-H4).
     undatedBudget,

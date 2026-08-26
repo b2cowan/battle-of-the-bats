@@ -114,12 +114,6 @@ interface UnbudgetedActual {
   paidAt: string | null;
 }
 
-interface DuesCollection {
-  expected: number;
-  collected: number;
-  outstanding: number;
-}
-
 interface MonthlyPoint {
   month: string;
   budgetedForMonth: number;
@@ -154,7 +148,6 @@ interface BvaData extends MonthGridPayload {
      declared-but-unsent field is how the next reader gets `undefined` at runtime with a clean
      typecheck. */
   unbudgetedActuals: UnbudgetedActual[];
-  duesCollection: DuesCollection;
   monthlyChart: MonthlyPoint[];
   /** Plan money with no date on it — named so the chart can say what it isn't plotting. */
   undatedBudget: number;
@@ -1054,78 +1047,60 @@ export function BudgetVsActualPanel({
               on the fixture, $8,905 became $10,900. A report cannot half-filter a comparison.
               Tag filtering still lives on Transactions, where it narrows a LIST and nothing is
               being compared. Do not reinstate it here without a way to tag the plan. */}
-          {/* Headroom summary */}
-          <div className={`${styles.summaryBanner} ${shared.stack640}`}>
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Headroom</span>
+          {/* ⚠⚠ ONE ROW, AND THE DUES CARD IS GONE (owner ruling 2026-08-26).
+              This page opened with ~280px of summary above the table it exists to show. Two
+              separate blocks, and neither survived the question "who reads this here?":
+
+              · THE THREE-TILE BANNER WAS THE TABLE'S OWN FOOT. Headroom / Total Budget /
+                Total Actual are the same three figures the `Total expenses` SubtotalRow states
+                at the bottom of the statement — the coach read the arithmetic, scrolled past a
+                card, and met it again. Headroom keeps its size and its colour because it is the
+                one number this page exists to give; budget and actual are the WORKING and now
+                read as such, on the same line.
+
+              · THE DUES CARD ANSWERED A DIFFERENT QUESTION, and answered it third. Dues are
+                money IN; this report measures spending against plan. All four of its figures
+                are already told on the Money hub's Overview card (which draws the bar and the
+                `· 88%` rate) and again on Player Dues' own footer — and since the income work
+                landed, this report states dues month by month in its OWN income band, which the
+                card never could. ⚠ Do not "restore" it: the connection a coach actually needs
+                here (is enough coming in to fund the plan?) is answered at the foot by
+                `Funded by players` and the cash bridge.
+
+              ⚠ THE BUFFER HINT WENT WITH IT (`incl. X not itemized yet`) — informational, and
+              it did not earn a second row. The over-planned warning below DID: it is the only
+              thing on this page that explains why this total disagrees with the budget plan
+              page, so it stays INLINE rather than wrapping the strip. */}
+          <div className={`${styles.resultStrip} ${shared.stack640}`}>
+            <span className={styles.stripLead}>
+              <span className={styles.stripLabel}>Headroom</span>
               <span
-                className={styles.summaryValue}
-                style={{ color: data.headroom >= 0 ? 'var(--success-light)' : 'var(--danger-light)', fontSize: '1.45rem' }}
+                className={styles.stripValue}
+                style={{ color: data.headroom >= 0 ? 'var(--success-light)' : 'var(--danger-light)' }}
               >
                 {data.headroom < 0 ? '-' : '+'}{fmt(data.headroom)}
               </span>
-              <span className={styles.summaryHint}>
+              <span className={styles.stripState}>
                 {data.headroom >= 0 ? 'under budget' : 'over budget'}
               </span>
-            </div>
-            <div className={styles.summaryDivider} />
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Total Budget</span>
-              <span className={styles.summaryValue}>{fmt(data.effectiveBudget)}</span>
-              {data.buffer > 0 && (
-                <span className={styles.summaryHint}>incl. {fmt(data.buffer)} not itemized yet</span>
-              )}
-              {/* When the plan is over its own estimate this report measures against the ESTIMATE
-                  (the shared rule), which is a lower number than the lines add up to. The budget
-                  page says so in red; without this the report just showed the smaller figure and
-                  left the coach to notice — the same two-pages-disagree problem the rule fixed. */}
-              {data.overPlanned && (
-                <span className={styles.summaryHint} style={{ color: 'var(--danger-light)' }}>
+            </span>
+            <span className={styles.stripRule} aria-hidden />
+            <span className={styles.stripSupport}>
+              <b>{fmt(data.totalActual)}</b> spent of <b>{fmt(data.effectiveBudget)}</b> planned
+            </span>
+            {/* When the plan is over its own estimate this report measures against the ESTIMATE
+                (the shared rule), which is a lower number than the lines add up to. The budget
+                page says so in red; without this the report just showed the smaller figure and
+                left the coach to notice — the same two-pages-disagree problem the rule fixed. */}
+            {data.overPlanned && (
+              <>
+                <span className={styles.stripRule} aria-hidden />
+                <span className={styles.stripWarn}>
                   your lines are {fmt(Math.abs(data.estimateDifference))} over this estimate
                 </span>
-              )}
-            </div>
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Total Actual</span>
-              <span className={styles.summaryValue}>{fmt(data.totalActual)}</span>
-            </div>
+              </>
+            )}
           </div>
-
-          {/* Dues collection */}
-          {(data.duesCollection.expected > 0 || data.duesCollection.collected > 0) && (
-            <div className={styles.duesCard}>
-              <span className={styles.duesTitle}>Dues Collection</span>
-              <div className={styles.duesRow}>
-                <div className={styles.duesStat}>
-                  <span className={styles.summaryLabel}>Expected</span>
-                  <span className={styles.duesValue}>{fmt(data.duesCollection.expected)}</span>
-                </div>
-                <div className={styles.duesStat}>
-                  <span className={styles.summaryLabel}>Collected</span>
-                  <span className={styles.duesValue} style={{ color: 'var(--success-light)' }}>
-                    {fmt(data.duesCollection.collected)}
-                  </span>
-                </div>
-                <div className={styles.duesStat}>
-                  <span className={styles.summaryLabel}>Outstanding</span>
-                  <span
-                    className={styles.duesValue}
-                    style={{ color: data.duesCollection.outstanding > 0 ? 'var(--danger-light)' : undefined }}
-                  >
-                    {fmt(data.duesCollection.outstanding)}
-                  </span>
-                </div>
-                {data.duesCollection.expected > 0 && (
-                  <div className={styles.duesStat}>
-                    <span className={styles.summaryLabel}>Collection Rate</span>
-                    <span className={styles.duesValue}>
-                      {Math.round((data.duesCollection.collected / data.duesCollection.expected) * 100)}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* ⚠ THE TWO NEW SHAPES JOIN THE CONTROL THAT WAS ALREADY HERE (plan §3.5), rather than
               introducing a second idea of "switching views" beside it. Statement is the default —
