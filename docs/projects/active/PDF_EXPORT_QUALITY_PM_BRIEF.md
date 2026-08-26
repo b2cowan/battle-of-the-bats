@@ -123,8 +123,54 @@ than being absorbed here, because each is a new document with its own choices ab
 actually needs on paper — arrival time and uniform, not eleven columns. The export catalog now
 records that they are owed.
 
-**One group pass remains** — posters and brackets — then the Phase 3 check that renders documents in
-CI so this class of rot cannot return unseen.
+## Posters, cards and brackets — the last group (2026-08-25)
+
+These four are not read, they are glanced at: a poster taped inside a dugout, a card handed to an
+umpire, a bracket pinned to a fence that a parent photographs. They are now branded, legible from a
+distance, and honest about what a person is meant to write on.
+
+**A club's crest stopped being distorted.** The bracket — the most public thing we print — drew the
+logo into a fixed wide box, so any round or square club mark came out stretched to double width. It
+now uses the same crest slot as every other document. The bracket also has a real title at last: the
+division and event used to be small grey type under the club name, so the subject of the page read
+as a footnote.
+
+**The dugout poster and the batting card now say which club they came from.** They were the only
+paper in the product with no crest and no club name — and not by design: the lineup screen was
+already looking all of it up at the moment of export and throwing it away. Both now carry the crest,
+the club, and a proper footer with the export date.
+
+**Both stopped giving away half their paper.** A nine-player lineup — the ordinary case — used to
+stop two-thirds down the sheet, and a small playoff draw used about a third of it. Rows and match
+boxes now grow to use the page, so everything is materially bigger for free. A batting card kept its
+single-page shape by owner decision, after two-up and three-up alternatives were rendered and
+considered.
+
+**A long club name is no longer silently cut off.** The matchup used to be truncated with an
+ellipsis to reserve room for the time — so a club with a long name lost its opponent. Headlines now
+shrink a step at a time and wrap only if they must; a long player name shrinks rather than clipping.
+Nothing on these documents is dropped without the reader being able to see it.
+
+**The poster stopped promising a mark it never made.** Its legend has always said "blank box = fill
+in at the field", and an unassigned inning printed nothing at all. The first fix drew a small box in
+every empty cell — and the owner rejected it immediately: the box sat inside a grid cell that was
+already a box, so it made the space to write *smaller*, not clearer. It came straight back out, and
+the words moved instead: the line now reads "Blank = fill in at the field". An empty cell in a ruled
+grid needs no help. *(The blank bracket keeps its boxes, because there the match card has no
+internal rules at all — the boxes are the only thing telling an organizer where the score goes.)*
+
+**And an empty bracket is something you can actually use.** The write-on lines were faint grey
+hairlines; they are now real boxes for the team name and the score, and the sheet has DIVISION and
+DATE fields to fill in — which the whole point of printing an empty one required and it never had.
+
+**Two reported faults turned out not to be real, and one of them was the headline.** A missing
+connector line on the bracket, and a missing substitutes list on the card, were both artifacts of
+hand-written test data rather than anything a customer would ever see. Fixing either would have
+introduced a defect. They were caught by rebuilding the test data from what the live system actually
+stores — the same discipline that caught two faults in the schedules pass.
+
+**Only Phase 3 remains** — the check that renders documents automatically so this class of rot
+cannot return unseen.
 
 ## The problem, now with proof
 

@@ -13156,3 +13156,44 @@ typecheck, lint (0 errors) and spelling gate clean.
 **Mutation set updated, not weakened: 17 of 17 caught.** Two pairs collapsed into single mutations
 because the code they targeted is now genuinely shared — one anchor in the strap now fails both the
 poster's and the card's crest tests, which is the extraction paying for itself.
+
+### `/review` — 2026-08-26 (correctness, high effort)
+
+⚠ **The first run reviewed the WRONG DIFF** — it picked up the whole working tree and audited
+another session's season-carry-forward money work, explicitly setting the export changes aside as
+low-risk "export-formatting churn". Re-run scoped to this pass's files. **Anyone running `/review`
+in this shared working copy must scope it explicitly** or it audits whatever else is in flight.
+
+*(That first run did surface two money findings in another session's uncommitted work — a $0
+carry-forward losing its provenance, and a blank "carry a different amount" field silently opening
+a season at $0. Passed to the owner; NOT this pass's to fix or claim.)*
+
+**Two findings, both real, both mine, both fixed:**
+
+1. **The blank bracket's title could run underneath its own new DIVISION/DATE fields.** The title
+   is drawn BEFORE the right-hand content and had no width guard — and nothing occupied that space
+   in blank mode until this pass put the fields there. The header now **measures the right-hand
+   side first** and clips the title to what is left. The same guard covers the champion line, which
+   shares that row on a finished bracket.
+2. **The bracket kept a fourth copy of the footer assembly** that `/simplify` had just centralized —
+   the exact drift `footerParts` exists to prevent. `footerParts` is now exported and the bracket
+   uses it; `BRANDING_TEXT` and the date-stamp import are gone from that file.
+
+**⚠⚠ Fixing #2 nearly shipped a crash, and the empty-bracket test written earlier caught it.**
+The footer now calls the file's `truncate` helper, which was declared BELOW the no-games early
+return — a temporal dead zone, so **a division with no playoff games would have thrown instead of
+exporting**. `truncate` moved above the header and footer. This is the second time this pass that a
+test written for an "empty" case paid for itself.
+
+**⚠ The mutation run then found a real COVERAGE GAP, not just a stale anchor.** Swapping the
+bracket's footer for a branding-only version stayed GREEN — nothing asserted the club's own line or
+the date stamp ever reached that document. Two tests added. Two further mutations had gone silently
+inert: one anchored on a line the width guard had reworded, and one on `} else if (blank) {`, which
+now appears **twice** (the reserve calculation and the draw) so it was mutating the wrong site.
+Both retargeted. **19 of 19 now caught.**
+
+**State:** contract suite **117 pass / 0 fail**; corpus scan unchanged across all 78 documents;
+typecheck clean; lint 0 errors; spelling gate clean. ⚠ The **full** suite reports 2,576 / 2,578 —
+the two reds are in `tests/unit/family-email-guard.test.ts`, owned by another session whose
+`lib/email.ts` / `lib/family-email.ts` edits are in the tree. Not this pass's, and not to be
+signed off as this pass's.

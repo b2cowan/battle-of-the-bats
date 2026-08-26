@@ -62,10 +62,10 @@ genuinely bespoke drawings. 3 menu buttons offer PDF and apologise instead.**
 | Document | Notes today |
 |---|---|
 | Tryout board summary | the standard-setter: correct page totals, stat row, receipt; never draws the logo |
-| Lineup poster (dugout wall) | strong; accent + FieldLogicHQ line only |
-| Batting-order card | strong |
-| Playoff bracket | works incl. connectors + winner bolding; floats high, dead space below |
-| Blank bracket (draw-day fill-in) | works |
+| Lineup poster (dugout wall) | ~~strong; accent + FieldLogicHQ line only~~ → **rebuilt §105**: club identity, fills the sheet, the blank-inning box its legend always promised |
+| Batting-order card | ~~strong~~ → **rebuilt §105**: identity, fills the sheet, starting positions, subs; ONE full page by owner choice over two-up/three-up |
+| Playoff bracket | ~~works incl. connectors + winner bolding; floats high, dead space below~~ → **rebuilt §105**: shared crest slot (it squashed every square logo), real title block, fills the page |
+| Blank bracket (draw-day fill-in) | ~~works~~ → **rebuilt §105**: real pen boxes, DIVISION/DATE write-in fields |
 
 ### Stubs — PDF offered, apology delivered (3)
 
@@ -310,8 +310,67 @@ judges on the group's own definition of good:
      widths on every table in the product. Its own pass.
 
   *Good = the whole weekend, at a glance, on a wall.*
-- **Posters, cards & brackets:** logo on the drawn documents; bracket vertical centring. *Good = big
-  type, high contrast, one job.*
+- **Posters, cards & brackets — BUILT 2026-08-25 (QA §105).** ⚠ **The bullet this replaced read
+  "logo on the drawn documents; bracket vertical centring", and understated the group badly** —
+  the same way every other Phase-2 group's inventory line did. What was actually there:
+
+  1. **The bracket squashed every square club crest.** It never called `drawLogoSlot` and drew the
+     logo into a hard-coded `20 × 10` box, so a round or square mark printed stretched to double
+     width — on the most public document in the product. Now goes through the shared
+     `drawIdentityBand` / `drawLogoSlot`, and `bracket-pdf.ts` no longer hand-rolls a header.
+  2. **The poster and card could not be branded at all.** Their options contract took only
+     `accentColor` + `showBranding`, so they were the only paper in the product with no crest and
+     no club name — while the lineups screen was *already* resolving the full identity at export
+     time and discarding it. `LineupPosterOptions` now carries `settings: OrgPdfSettings`
+     (owner decision 1).
+  3. **"Vertical centring" was really SCALE.** Both the bracket and the poster capped how large
+     content could grow and centred the remainder, so a nine-player lineup — the ordinary case —
+     left a third of a dugout poster blank, and a six-team draw used a third of the sheet. Both
+     now fill the page, with a deliberate `BOX_H_MAX` so a two-game bracket isn't absurd
+     (owner decision 3).
+  4. **The poster promised a box it never drew.** The legend read *"Blank box = fill in at the
+     field"* and an unassigned inning printed **nothing**. Fixed by **changing the words, not by
+     drawing a box** — the legend now reads *"Blank = fill in at the field"*, on its own
+     constructed line so it can never orphan *"at the field"* across a wrap.
+
+     ⚠⚠ **A DRAWN BOX WAS BUILT HERE FIRST AND THE OWNER REVERSED IT ON SIGHT (2026-08-26):
+     "seems like that is just in the way of writing in the positions later." He is right, and
+     the mistake is worth keeping written down.** The §91 working-sheets rule — *a column
+     somebody fills in by hand gets a real drawn box* — was written for the tryout check-in
+     sheet, whose tick column had **no cell borders at all**, so a volunteer had nothing to aim
+     at. The lineup poster is the opposite: a heavily ruled grid with a thick outer border and a
+     line between every row and every inning. **The cell already IS the box**, so an inner
+     rectangle makes the writable area *smaller* than the cell — a coach pencilling "SS" at the
+     field either squeezes inside it or crosses its edge. **The rule applies where a cell has no
+     edges, not wherever something is written by hand.** Do not re-add it.
+
+     ⚠ The blank BRACKET keeps its drawn boxes and that is deliberate, not an inconsistency: its
+     match card is a faint outline with **no rule between the name area and the score area**, so
+     those boxes carry structure that does not otherwise exist. Checked against this reversal.
+  5. **A long opponent was silently truncated** on both documents (the title reserved a fixed 60mm
+     strip for a clock). Headlines now shrink through a size ladder and only then wrap; cells
+     shrink and only then ellipsise (owner decision 4). The date moved to its own line.
+  6. **The card was a full page carrying a third of a page of white.** ⚠ The owner considered
+     rendered two-up and three-up options and **chose to keep ONE FULL PAGE** — filled, with the
+     starting position named (its own `POS` column) and substitutes at the foot. Do not re-open
+     the page-shape question on the way past.
+  7. **The blank bracket got real pen boxes** (the §91 rule, applied to the purest fill-in-by-hand
+     document we ship) and **DIVISION / DATE fields** to hand-write, which it had never had.
+
+  ⚠⚠ **TWO REPORTED DEFECTS WERE NOT REAL, and the headline one was the opposite of what was
+  written down.** The build prompt opened with *"the bracket does not draw its first connector —
+  the biggest defect in the group"*. It is an artifact of a hand-written fixture: `advancePlayoffs`
+  sets the advancing team's id and **never clears the `Winner <code>` placeholder** the connectors
+  are drawn from, so production data carries both. Fed the shape the database actually holds, every
+  connector draws — as does the tournament demo's own bracket, which seeds through the real code.
+  The same fixture also had no substitutes, which is why the card was reported as dropping them; it
+  never did. **Both were found by rebuilding the fixture from what the DB stores, and both would
+  have been "fixed" into regressions.**
+
+  `bracket-pdf.ts` gained `buildBracketDoc(jsPDFClass, …)` — jsPDF by injection, like every other
+  builder — because the one document that squashed crests had no way to be tested, and its imports
+  moved from `@/` to relative for the same reason (`resolve-pdf-settings.ts` documents that rule).
+  *Good = big type, high contrast, one job.*
 
 **Phase 3 — the D5 check wired into the verify pipeline**, seeded from the session harness, run on
 the widest-table fixtures so this class of rot cannot return unseen.

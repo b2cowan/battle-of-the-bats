@@ -21,9 +21,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  buildTablePDF, buildPracticeRunSheetDoc, abbreviateHeadings, DEFAULT_PDF_SETTINGS,
+  buildTablePDF, buildPracticeRunSheetDoc, buildLineupPosterDoc, buildBattingOrderCardDoc,
+  abbreviateHeadings, DEFAULT_PDF_SETTINGS,
   type OrgPdfSettings, type PracticeSheetBlock, type PracticeSheetOptions,
+  type LineupPosterOptions, type LineupPosterPlayer,
 } from '../../lib/export/pdf';
+import { buildBracketDoc } from '../../lib/export/bracket-pdf';
+import type { Game, Team } from '../../lib/types';
 import {
   checkinSheetHeadings, checkinTickColumn, CHECKIN_TICK_HEADING, CHECKIN_FORBIDDEN_HEADINGS,
 } from '../../lib/export/tryout-checkin-columns';
@@ -32,7 +36,7 @@ import { ROSTER_WALL_HEADERS, ROSTER_PRIVATE_HEADINGS, rosterContactHeaders } fr
 
 // ── Recording fakes ──────────────────────────────────────────────────────────
 
-interface TextCall { str: string; page: number }
+interface TextCall { str: string; page: number; y?: number }
 
 class MockDoc {
   orientation: 'portrait' | 'landscape';
@@ -52,14 +56,33 @@ class MockDoc {
     },
     getNumberOfPages: () => this.pages,
   };
-  setFillColor() {} rect() {} setFontSize() {} setTextColor() {}
+  /** Plain rects, recorded for the Posters pass: the poster's blank-inning box, the blank
+   *  bracket's write-in slots, and the blank bracket's division/date rules are all `rect`. */
+  rects: { x: number; y: number; w: number; h: number }[] = [];
+  setFillColor() {}
+  rect(x: number, y: number, w: number, h: number, style?: string) {
+    // Only OUTLINED rects are pen targets; a filled one is a header band or a zebra stripe.
+    if (style !== 'F') this.rects.push({ x, y, w, h });
+  }
+  setFontSize(n: number) { this.fontSize = n; }
+  fontSize = 10;
+  setTextColor() {}
   setFont(_family: string, style?: string) { this.font = style === 'bold' ? 'bold' : 'normal'; }
-  setDrawColor() {} setLineWidth() {} line() {} circle() {}
+  setDrawColor() {} setLineWidth() {} circle() {}
+  /** Connector segments, recorded: the bracket's whole job is showing who plays whom next. */
+  lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  line(x1: number, y1: number, x2: number, y2: number) { this.lines.push({ x1, y1, x2, y2 }); }
+  /** The bracket dashes a losers-bracket connector; the table engine never calls this. */
+  setLineDashPattern() {}
   roundedRect(x: number, y: number) { this.boxes.push({ x, y }); }
   addPage() { this.pages += 1; this.currentPage = this.pages; }
   setPage(n: number) { this.currentPage = n; this.setPageCalls.push(n); }
   text(str: string | string[], ..._rest: unknown[]) {
-    for (const s of Array.isArray(str) ? str : [str]) this.texts.push({ str: s, page: this.currentPage });
+    // y is recorded so "nothing is drawn past the footer" is assertable — the run sheet does its
+    // own paging, and an under-measured block silently prints across the footer band.
+    const yy = typeof _rest[1] === 'number' ? (_rest[1] as number) : 0;
+    (Array.isArray(str) ? str : [str]).forEach((line, i) =>
+      this.texts.push({ str: line, page: this.currentPage, y: yy + i * 4.2 }));
   }
   font: 'normal' | 'bold' = 'normal';
   splitWidths: number[] = [];
@@ -81,6 +104,51 @@ class MockDoc {
   getImageProperties() { return { width: 100, height: 100 }; }
   addImage(_data: string, _fmt: string, x: number, y: number, w: number, h: number) {
     this.images.push({ x, y, w, h });
+  }
+}
+
+/**
+ * The same fake, but `splitTextToSize` really WRAPS at the requested width.
+ *
+ * ⚠⚠ WHY THIS EXISTS. `MockDoc` deliberately splits on newlines only, and for the table engine
+ * that is right — a width-wrapping fake would break the fit-notice assertions into fragments and
+ * the tests would be measuring the fake. But the DRAWN run sheet's whole behaviour is wrapping:
+ * how tall a block is, whether it fits a page, whether a name is clipped. Against the
+ * non-wrapping fake, the run-sheet regression tests below PASSED WITH THE BUG REINTRODUCED — they
+ * proved nothing, which is the same failure as a privacy test asserting its own literal (QA §86).
+ * Caught by reverting the fix and watching them stay green.
+ */
+class WrappingMockDoc extends MockDoc {
+  splitTextToSize(str: string, width?: number) {
+    const paras = String(str).split(/\n/);
+    if (width === undefined) return paras;
+    const out: string[] = [];
+    for (const para of paras) {
+      let line = '';
+      for (const word of para.split(' ')) {
+        const next = line ? `${line} ${word}` : word;
+        if (line && this.getTextWidth(next) > width) { out.push(line); line = word; } else { line = next; }
+      }
+      out.push(line);
+    }
+    return out;
+  }
+}
+
+/**
+ * The wrapping fake, but text width also SCALES WITH FONT SIZE.
+ *
+ * ⚠⚠ WHY THIS EXISTS, and it is the same lesson a third time. `MockDoc.getTextWidth` is
+ * 2mm per character regardless of size, which is fine for the table engine. But the Posters
+ * pass's whole "shrink before you truncate" behaviour is a loop that lowers the size and
+ * re-measures — against a size-blind fake that loop can never succeed, so every headline would
+ * fall through to the wrap/ellipsis branch and the tests would be measuring the fake rather
+ * than the rule. Verified by shrinking the size ladder to a single entry and watching the
+ * shrink assertions go red.
+ */
+class SizingMockDoc extends WrappingMockDoc {
+  getTextWidth(s: string) {
+    return String(s).length * 2 * (this.fontSize / 10) * (this.font === 'bold' ? 1.15 : 1);
   }
 }
 
@@ -868,12 +936,15 @@ describe('the practice run sheet', () => {
       'where it continues, it says so — a page picked up alone still names what it is');
   });
 
+
+
   it('leaves the focus section ABSENT, not redacted-looking, without the grant', () => {
     const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ focus: [] }));
     const printed = doc.texts.map(t => t.str.toUpperCase());
     assert.ok(!printed.some(s => s.includes('WORKING ON')));
   });
 });
+
 // ── Schedules pass (Phase 2, pass 5) ─────────────────────────────────────────
 
 import { buildScheduleDocument, type ScheduleGame } from '../../lib/export/schedule-document';
@@ -1154,5 +1225,398 @@ describe('a state the filter row does not offer still prints the screen’s word
   it('still sentence-cases a state nobody has written yet', () => {
     const d = buildScheduleDocument([game({ status: 'abandoned' }), game({ time: '9:00 AM' })]);
     assert.ok(printedCells(d).includes('Abandoned'));
+  });
+});
+
+// ── Posters, cards & brackets pass (2026-08-25) ──────────────────────────────
+//
+// Four documents that are GLANCED AT, not read: a poster taped in a dugout, a card handed to
+// an umpire, a bracket pinned to a fence. Good here means big type, high contrast, one job.
+//
+// ⚠ The pass opened by disproving its own brief. The reported "bracket never draws its first
+// connector" was an artifact of a hand-written fixture: production sets the advancing team's
+// id but NEVER clears the "Winner QF1" note the connectors are drawn from, and the fixture had
+// been written with that note omitted. Fed the shape the database actually holds, every
+// connector draws. The bracket fixtures below therefore carry BOTH the team and its note.
+
+const posterPlayer = (
+  order: string, name: string, innings: Record<string, string> = {}, isSub = false,
+): LineupPosterPlayer => ({ battingOrder: order, name, isSub, inningPositions: innings });
+
+const NINE = Array.from({ length: 9 }, (_, i) =>
+  posterPlayer(String(i + 1), `#${i + 2} Player ${i + 1}`, { '1': 'P', '2': 'C' }));
+
+const posterOpts = (over: Partial<LineupPosterOptions> = {}): LineupPosterOptions => ({
+  teamName: 'Riverdale Ridge U13 AA',
+  opponent: 'Harborview Herons',
+  homeAway: 'home',
+  dateLabel: 'Sat, Aug 29, 2026 · 10:00 a.m.',
+  eventName: 'Riverdale Summer Classic',
+  inningCount: 7,
+  players: NINE,
+  legend: [{ code: 'P', label: 'Pitcher' }, { code: 'C', label: 'Catcher' }],
+  settings: settings({
+    headerLine1: 'Riverdale Ridge U13 AA',
+    logoDataUrl: 'data:image/png;base64,AA',
+    footerText: 'Riverdale Minor Ball',
+    showDateStamp: true,
+  }),
+  ...over,
+});
+
+/** jsPDF-constructor stand-in: every `new` hands back the one recording doc. */
+const inject = (doc: MockDoc) => class { constructor() { return doc; } };
+
+describe('the poster and the card say whose paper they are', () => {
+  // They took only an accent colour and a branding flag, so they were the ONLY documents in
+  // the product printing no crest and no club name — while the lineups screen was already
+  // resolving the full identity at export time and dropping it (owner decision 1).
+  it('draws the resolved crest on the poster', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    assert.equal(doc.images.length, 1, 'the poster drew no crest');
+  });
+
+  it('draws the resolved crest on the card', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts());
+    assert.equal(doc.images.length, 1, 'the card drew no crest');
+  });
+
+  it('draws that crest ASPECT-FIT, never stretched to the slot', () => {
+    // The square-crest bug the bracket had; proven here for the two documents that never had
+    // a crest at all, so neither can acquire it later.
+    for (const build of [buildLineupPosterDoc, buildBattingOrderCardDoc]) {
+      const doc = new SizingMockDoc({ orientation: 'landscape' });
+      build(inject(doc), posterOpts());
+      const img = doc.images[0];
+      assert.equal(img.w, img.h, 'a square crest was drawn non-square');
+    }
+  });
+
+  it('names the club on both, and carries a real footer', () => {
+    for (const build of [buildLineupPosterDoc, buildBattingOrderCardDoc]) {
+      const doc = new SizingMockDoc({ orientation: 'landscape' });
+      build(inject(doc), posterOpts());
+      const drawn = doc.texts.map(t => t.str).join('\n');
+      assert.ok(drawn.includes('Riverdale Ridge U13 AA'), 'no identity line');
+      assert.ok(/Riverdale Minor Ball/.test(drawn), 'the footer lost the club line');
+      assert.ok(/Exported: /.test(drawn), 'the footer lost the date stamp');
+      assert.ok(/Generated by FieldLogicHQ/.test(drawn), 'the footer lost the branding line');
+    }
+  });
+
+  it('leaves the crest slot alone when the org has no logo', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc),
+      posterOpts({ settings: settings({ headerLine1: 'Riverdale Ridge U13 AA' }) }));
+    assert.equal(doc.images.length, 0);
+    assert.ok(doc.texts.some(t => t.str === 'Riverdale Ridge U13 AA'));
+  });
+});
+
+describe('a name that does not fit shrinks — it is never silently cut', () => {
+  // Truncation is the one behaviour that loses information without telling the reader. The
+  // matchup used to be ellipsised to buy a fixed 60mm strip for a clock (owner decision 4).
+  const LONG = 'Harborview Herons Athletic Association of Greater Riverdale County';
+
+  it('never prints an ellipsis in the poster headline', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({ opponent: LONG }));
+    // A wrapped headline is several runs, and only the FIRST carries the team name — so the
+    // whole page's text is rejoined before asking whether the opponent survived intact.
+    const all = doc.texts.map(t => t.str).join(' ').replace(/\s+/g, ' ');
+    assert.ok(!all.includes('…'), 'something on the poster was truncated');
+    assert.ok(all.includes(LONG), 'the opponent lost its tail');
+  });
+
+  it('never prints an ellipsis in the card headline', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts({ opponent: LONG }));
+    const head = doc.texts.filter(t => t.str.includes('Harborview')).map(t => t.str).join(' ');
+    assert.ok(!head.includes('…'), `the headline was truncated: ${head}`);
+  });
+
+  it('keeps the ordinary matchup on ONE line — shrinking is a fallback, not the default', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    assert.equal(doc.texts.filter(t => t.str.includes('Harborview')).length, 1,
+      'a short matchup should not wrap');
+  });
+
+  it('shrinks a long player name rather than clipping it in the batter column', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({
+      players: [posterPlayer('1', '#10 Priya Balasubramanian', { '1': 'P' }), ...NINE.slice(1)],
+    }));
+    assert.ok(doc.texts.some(t => t.str === '#10 Priya Balasubramanian'),
+      'the batter name was clipped instead of shrunk');
+  });
+});
+
+describe('an unassigned inning is left empty — the ruled cell IS the box', () => {
+  // ⚠⚠ THIS SUITE INVERTED ON 2026-08-26, and the reason matters more than the assertion.
+  // A drawn box was added here first, borrowing the working-sheets rule ("a column somebody
+  // fills in by hand gets a real drawn box"). The owner rejected it on sight: that rule was
+  // written for the tryout check-in sheet, whose tick column had NO cell borders, and this
+  // poster is a heavily ruled grid. A box inside a cell makes the writable area SMALLER than
+  // the cell it sits in — it is in the way of the pen, which is the opposite of the intent.
+  it('draws NO box in an unassigned inning', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({
+      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P' })],
+    }));
+    assert.equal(doc.rects.length, 0,
+      'a box was drawn inside a grid cell that is already a box');
+  });
+
+  it('draws no box where a position is assigned either', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({
+      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P', '2': 'C' })],
+    }));
+    assert.equal(doc.rects.length, 0);
+  });
+
+  it('still marks a benched inning "BN" — a decision is not a blank', () => {
+    // The distinction the blank cell has to carry: nothing written = not decided yet;
+    // "BN" = decided, and the answer is that they sit.
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({
+      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P', '2': 'Bench' })],
+    }));
+    assert.ok(doc.texts.some(t => t.str === 'BN'));
+    assert.ok(!doc.texts.some(t => t.str === ''), 'an empty inning drew a text run');
+  });
+
+  it('does not promise a mark the page no longer carries', () => {
+    // The original defect was a legend naming a box that was never drawn. Removing the box
+    // brings that back unless the words move with it.
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    const drawn = doc.texts.map(t => t.str);
+    assert.ok(drawn.includes('Blank = fill in at the field'),
+      'the instruction is not drawn as one whole line');
+    assert.ok(!drawn.some(s => /box/i.test(s)),
+      'the legend still names a box the poster does not draw');
+    assert.ok(!drawn.some(s => s.trim() === 'at the field'),
+      'the instruction shredded across the wrap again');
+  });
+});
+
+describe('the poster and card use the page they were given', () => {
+  // Both capped how tall a row could grow and then centred the result, so a NINE-player lineup
+  // — the ordinary case — stopped two-thirds down and left a third of a dugout poster blank.
+  const rowSpan = (doc: MockDoc, match: RegExp) => {
+    const ys = doc.texts.filter(t => match.test(t.str)).map(t => t.y ?? 0).sort((a, b) => a - b);
+    return ys.length > 1 ? ys[ys.length - 1] - ys[0] : 0;
+  };
+
+  // ⚠ Assert the ROW PITCH, not the total span. Written as `span > 8 * 18 - 1` the card's
+  // version passed with the 18mm cap put back — 8 × 18 = 144 clears 143 — so it proved
+  // nothing. Caught by the mutation run, which is the only reason it is written this way.
+  const rowPitch = (doc: MockDoc, match: RegExp) => rowSpan(doc, match) / 8;
+
+  it('spreads a nine-player poster past the old 13mm-per-row ceiling', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    assert.ok(rowPitch(doc, /^#\d+ Player/) > 13, 'the grid still stops short of the page');
+  });
+
+  it('spreads a nine-batter card past the old 18mm-per-row ceiling', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts());
+    assert.ok(rowPitch(doc, /^#\d+ Player/) > 18, 'the order still stops short of the page');
+  });
+});
+
+describe('the batting card is a card an umpire can use', () => {
+  it('names the starting position for each batter', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts({
+      players: [posterPlayer('1', '#2 A', { '1': 'SS' })],
+    }));
+    assert.ok(doc.texts.some(t => t.str === 'SS'), 'the card printed no position');
+    assert.ok(doc.texts.some(t => t.str === 'POS'), 'the position column has no heading');
+  });
+
+  it('leaves the position blank rather than inventing one when inning 1 is unset', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts({
+      players: [posterPlayer('1', '#2 A', { '2': 'SS' })],
+    }));
+    assert.ok(!doc.texts.some(t => t.str === 'SS'),
+      'the card read a position from the wrong inning');
+  });
+
+  it('still lists the substitutes', () => {
+    // Reported as missing; it was not. The brief's fixture simply had no subs in it.
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts({
+      players: [...NINE, posterPlayer('', '#14 Ruby Ferreira', {}, true)],
+    }));
+    assert.ok(doc.texts.some(t => t.str === 'Subs'));
+    assert.ok(doc.texts.some(t => t.str.includes('Ruby Ferreira')));
+  });
+});
+
+// ── The bracket ─────────────────────────────────────────────────────────────
+
+const bg = (
+  code: string, over: Partial<Game> = {},
+): Game => ({
+  id: code, bracketCode: code, isPlayoff: true, status: 'scheduled',
+  homeTeamId: null, awayTeamId: null, homeScore: null, awayScore: null,
+  homePlaceholder: null, awayPlaceholder: null,
+  ...over,
+} as unknown as Game);
+
+/** Four quarter-finals into two semis into a final — SHAPED AS THE DATABASE HOLDS IT: an
+ *  advanced game carries the resolved team id AND the "Winner <code>" note it came from. */
+const BRACKET: Game[] = [
+  bg('QF1', { homeTeamId: 't1', awayTeamId: 't8', homeScore: 7, awayScore: 2, status: 'completed', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #8' }),
+  bg('QF2', { homeTeamId: 't4', awayTeamId: 't5', homeScore: 4, awayScore: 5, status: 'completed', homePlaceholder: 'Seed #4', awayPlaceholder: 'Seed #5' }),
+  bg('QF3', { homeTeamId: 't2', awayTeamId: 't7', homeScore: 6, awayScore: 3, status: 'completed', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #7' }),
+  bg('QF4', { homeTeamId: 't3', awayTeamId: 't6', homeScore: 1, awayScore: 8, status: 'completed', homePlaceholder: 'Seed #3', awayPlaceholder: 'Seed #6' }),
+  bg('SF1', { homeTeamId: 't1', awayTeamId: 't5', homePlaceholder: 'Winner QF1', awayPlaceholder: 'Winner QF2' }),
+  bg('SF2', { homeTeamId: 't2', awayTeamId: 't6', homePlaceholder: 'Winner QF3', awayPlaceholder: 'Winner QF4' }),
+  bg('FIN', { homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' }),
+];
+const BRACKET_TEAMS = Array.from({ length: 8 }, (_, i) =>
+  ({ id: `t${i + 1}`, name: `Team ${i + 1}` }) as unknown as Team);
+
+const bracketSettings = settings({
+  headerLine1: 'Riverdale Minor Ball', headerLine2: '2026 Season',
+  logoDataUrl: 'data:image/png;base64,AA', footerText: 'Riverdale Minor Ball',
+  showDateStamp: true, orientation: 'landscape',
+});
+
+describe('the bracket stops squashing the club crest', () => {
+  it('draws a SQUARE crest square', () => {
+    // ⚠ THE defect of this group. The bracket hand-rolled its own header and drew the logo into
+    // a fixed 20 × 10 box, so every square or round club mark printed stretched to double width
+    // — on the most public document in the product. It now goes through the ONE shared band.
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', 'Riverdale Summer Classic 2026',
+      BRACKET, BRACKET_TEAMS, bracketSettings, false);
+    assert.equal(doc.images.length, 1, 'the bracket drew no crest');
+    assert.equal(doc.images[0].w, doc.images[0].h,
+      'the bracket stretched a square crest again');
+  });
+
+  it('prints the division as a TITLE, not as metadata under the club name', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', 'Riverdale Summer Classic 2026',
+      BRACKET, BRACKET_TEAMS, bracketSettings, false);
+    // Its own run, not folded into a joined "title · subtitle · group" line.
+    assert.ok(doc.texts.some(t => t.str === 'U13 — Playoff Bracket'),
+      'the bracket still has no title block');
+    assert.ok(doc.texts.some(t => t.str === 'Riverdale Summer Classic 2026'));
+    assert.ok(doc.texts.some(t => t.str === 'Riverdale Minor Ball'), 'no identity line');
+  });
+
+  it('still footers, and still says so when there is nothing to draw', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U9 — Playoff Bracket', undefined, [], BRACKET_TEAMS,
+      bracketSettings, false);
+    assert.ok(doc.texts.some(t => t.str === 'No playoff bracket games to display.'));
+    assert.ok(doc.texts.some(t => /Generated by FieldLogicHQ/.test(t.str)));
+    assert.ok(doc.texts.some(t => t.str === 'U9 — Playoff Bracket'));
+  });
+});
+
+describe('the blank bracket is something you can actually write on', () => {
+  it('draws real boxes for every name and score slot', () => {
+    // Two grey hairlines before this pass — on the purest fill-in-by-hand document we ship.
+    // The working-sheets rule: a slot somebody fills in by hand gets a box to aim a pen at.
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket (Blank)', undefined,
+      BRACKET, BRACKET_TEAMS, bracketSettings, true);
+    // 7 games × 2 sides × (name + score) = 28 pen boxes, before the division/date rules.
+    assert.ok(doc.rects.length >= 28,
+      `the blank bracket drew ${doc.rects.length} pen boxes, expected at least 28`);
+  });
+
+  it('offers somewhere to hand-write which draw this is and when', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket (Blank)', undefined,
+      BRACKET, BRACKET_TEAMS, bracketSettings, true);
+    assert.ok(doc.texts.some(t => t.str === 'DIVISION'));
+    assert.ok(doc.texts.some(t => t.str === 'DATE'));
+  });
+
+  it('prints no scores and no team names', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket (Blank)', undefined,
+      BRACKET, BRACKET_TEAMS, bracketSettings, true);
+    assert.ok(!doc.texts.some(t => /^Team \d$/.test(t.str)), 'a blank bracket named a team');
+    assert.ok(!doc.texts.some(t => t.str === '7'), 'a blank bracket printed a score');
+  });
+
+  it('does NOT offer those write-in fields on a played bracket', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', undefined,
+      BRACKET, BRACKET_TEAMS, bracketSettings, false);
+    assert.ok(!doc.texts.some(t => t.str === 'DIVISION'));
+  });
+});
+
+describe('the bracket title makes room for whatever shares its row', () => {
+  // /review, 2026-08-26: the title is drawn BEFORE the champion line and before the blank
+  // sheet's DIVISION/DATE fields, and nothing occupied that space in blank mode until this
+  // pass added the fields — so a long division name ran underneath them.
+  const LONG_TITLE = 'U13 Boys Competitive Division — Championship Playoff Bracket, Gold Tier';
+
+  it('clips a long title rather than running it under the blank sheet’s write-in fields', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), LONG_TITLE, undefined, BRACKET, BRACKET_TEAMS,
+      bracketSettings, true);
+    const drawn = doc.texts.find(t => t.str.startsWith('U13 Boys'))!;
+    assert.ok(drawn.str.endsWith('…'), 'the long title was not clipped');
+    // 279.4mm landscape − 2×14 margin − (46+46+14+8) reserved for DIVISION/DATE.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    assert.ok(doc.getTextWidth(drawn.str) <= 279.4 - 28 - 114,
+      'the title still overruns the write-in fields');
+  });
+
+  it('clips a long title rather than running it under the champion line', () => {
+    const done = BRACKET.map(g => g.bracketCode === 'FIN'
+      ? { ...g, status: 'completed', homeTeamId: 't1', awayTeamId: 't2', homeScore: 6, awayScore: 5 }
+      : g) as Game[];
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), LONG_TITLE, undefined, done, BRACKET_TEAMS,
+      bracketSettings, false);
+    assert.ok(doc.texts.some(t => /^Champion: /.test(t.str)), 'no champion line to collide with');
+    assert.ok(doc.texts.find(t => t.str.startsWith('U13 Boys'))!.str.endsWith('…'),
+      'the title was not clipped away from the champion line');
+  });
+
+  it('leaves a short title alone', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', undefined, BRACKET, BRACKET_TEAMS,
+      bracketSettings, true);
+    assert.ok(doc.texts.some(t => t.str === 'U13 — Playoff Bracket'), 'a short title was clipped');
+  });
+});
+
+describe('the bracket footer says the same three things every other document says', () => {
+  // ⚠ COVERAGE GAP found by the mutation run, not by reading: the bracket kept its own fourth
+  // copy of the footer assembly, and swapping it for a branding-only version stayed GREEN —
+  // nothing asserted the club's own line or the date stamp ever reached this document.
+  it('carries the club line, the date stamp and the branding', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', undefined, BRACKET, BRACKET_TEAMS,
+      bracketSettings, false);
+    const footer = doc.texts.map(t => t.str).find(s => /Generated by FieldLogicHQ/.test(s)) ?? '';
+    assert.ok(/Riverdale Minor Ball/.test(footer), 'the bracket footer lost the club line');
+    assert.ok(/Exported: /.test(footer), 'the bracket footer lost the date stamp');
+  });
+
+  it('says nothing at all when the org has configured no footer', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildBracketDoc(inject(doc), 'U13 — Playoff Bracket', undefined, BRACKET, BRACKET_TEAMS,
+      settings({ showBranding: false, showDateStamp: false }), false);
+    assert.ok(!doc.texts.some(t => /Generated by FieldLogicHQ|Exported: /.test(t.str)));
   });
 });

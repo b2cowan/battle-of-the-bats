@@ -386,8 +386,10 @@ export default function CoachLineupBuilderPage({
       legend: buildPositionLegend(LINEUP_POSITIONS.filter(p => p && p !== 'Bench')),
       includeNotes: pdfIncludeNotes,
       notes: lineupNotes,
-      accentColor: settings.accentColor,
-      showBranding: settings.showBranding,
+      // The whole resolved identity — crest, club name, footer, date stamp — not just the
+      // accent. This screen always fetched all of it; the poster and card simply had nowhere
+      // to put it, which is why they were the only paper in the product with no crest on it.
+      settings,
     };
   }
   async function handleLineupPoster() {
