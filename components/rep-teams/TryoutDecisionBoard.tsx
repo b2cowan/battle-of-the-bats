@@ -1,16 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
-import { ListChecks, Check, EyeOff, Mail } from 'lucide-react';
+import { ListChecks, Check, EyeOff } from 'lucide-react';
 import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
 import TryoutMemoryStrip from './TryoutMemoryStrip';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import type { TryoutMemoryPair } from '@/lib/tryout-report';
-import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import styles from './TryoutDayCard.module.css';
-// The email switch reuses the accept drawer's fee-toggle track/knob classes VERBATIM (warm
-// overrides included) — two visually-identical toggles in one feature must be one style.
-import toggleStyles from './TryoutAcceptDrawer.module.css';
 
 type Status = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
 type Decision = 'offer' | 'waitlist' | 'cut';
@@ -22,12 +18,9 @@ interface Candidate {
   composite: number | null;
   evaluatorCount: number;
   status: Status;
-  // 2B.5: the family's self-serve offer response + a lazily-computed deadline lapse (offered rows only).
-  offerResponse?: 'accepted' | 'declined' | null;
-  offerExpired?: boolean;
-  /** True only when an offer email (with its response link) has actually gone out — a
-   *  record-only offer has nothing to await (D-E9). */
-  offerEmailed?: boolean;
+  /** Whether the club holds an email address for this family — a coach who now delivers EVERY
+   *  decision personally needs to know when there is no address to write to (owner 2026-08-26:
+   *  the platform sends nothing on their behalf). Nothing here mails anyone. */
   hasGuardianEmail?: boolean;
   isCheckedIn?: boolean;
   playerNotes?: string | null;
@@ -72,8 +65,6 @@ interface Props {
    * report and baseline cards on the Build stage already take.
    */
   active?: boolean;
-  /** Keys the device-remembered email switch per team. */
-  teamId?: string;
   /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
   canWrite?: boolean;
   onError?: (msg: string) => void;
@@ -220,13 +211,18 @@ function ScoreBreakdown({ candidate, categories, scaleMax }: {
   );
 }
 
-/** Device-remembered, per team — presentation state for a per-ACTION flag. The server only ever
- *  emails when the individual decision request carries the flag, so a device that never turned
- *  the switch on can never send anything (D-E9: the failure direction is always "no email"). */
-const emailSwitchKey = (teamId: string) => `tryout-email-decisions:${teamId}`;
-
-export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memoryApiBase, active = true, teamId, canWrite = true, onError }: Props) {
-  const confirm = useConfirm();
+/**
+ * ⚠ THIS BOARD SENDS NOTHING TO A FAMILY, and there is no switch that changes that (owner ruling
+ * 2026-08-26, binding). A rep offer is a custom letter the family SIGNS — frequently conditional,
+ * frequently the opening of a conversation — so a generic platform email is not that artifact and
+ * cannot stand in for it. The removed "Email families my decisions" switch and per-row "Email this
+ * offer" button were a mis-tap risk one tap from "Not this season" with no upside, and their
+ * removal took the family self-serve Accept/Decline loop with them (the reply token only ever
+ * travelled inside the offer email). Do not reintroduce either without an owner ruling —
+ * off-by-default is a mitigation, not the answer. Plan:
+ * docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md.
+ */
+export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memoryApiBase, active = true, canWrite = true, onError }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -235,7 +231,6 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   /** Which player's score breakdown is open. ONE at a time on purpose: the panel is for looking
    *  hard at one kid, and a board with five open panels is the ranked list nobody can scan. */
   const [breakdownOpenId, setBreakdownOpenId] = useState<string | null>(null);
-  const [notifyFamily, setNotifyFamily] = useState(false);
   const {
     byCurrent: continuityByReg, decide: decideContinuityShared, dismiss: dismissContinuity,
     busy: continuityBusy, error: continuityErr,
@@ -243,25 +238,11 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   const [memoryByReg, setMemoryByReg] = useState<Record<string, TryoutMemoryPair>>({});
   /** Bumped when a continuity link is CONFIRMED — see the memory effect. */
   const [memoryEpoch, setMemoryEpoch] = useState(0);
-  const [resendingId, setResendingId] = useState<string | null>(null);
   const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
   const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
   const fail = useCallback((m: string) => { if (onErrorRef.current) onErrorRef.current(m); else console.error(m); }, []);
-
-  // Rehydrate the switch after mount (SSR-safe), per team.
-  useEffect(() => {
-    if (!teamId) return;
-    try { setNotifyFamily(localStorage.getItem(emailSwitchKey(teamId)) === '1'); } catch { /* private mode */ }
-  }, [teamId]);
-  const toggleNotify = () => {
-    setNotifyFamily(v => {
-      const next = !v;
-      if (teamId) { try { localStorage.setItem(emailSwitchKey(teamId), next ? '1' : '0'); } catch { /* private mode */ } }
-      return next;
-    });
-  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -341,28 +322,11 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
     const target = CHOICES.find(x => x.key === choice)!;
     if (c.status === target.status) return; // no-op
 
-    // Lock BEFORE any await: the confirm below suspends this call mid-dialog, and the shared
-    // ConfirmProvider holds a single resolver — a second decide() slipping in while the dialog
-    // is open would orphan this one's promise forever (review finding). savingId also disables
-    // the other rows' buttons, which is exactly right while a decision dialog is up.
+    // No confirm on "Not this season" any more. The dialog existed for exactly one reason — a
+    // release email could not be unsent — and with nothing outward happening a pass is a recorded
+    // decision the coach can change back in one tap. Asking twice for a reversible, private write
+    // is friction with no purpose (owner ruling 2026-08-26).
     setSavingId(c.registrationId);
-
-    // With emails ON, a pass sends a release note the moment it lands — and an email cannot be
-    // unsent, from a button that sits adjacent to Offer. Ask first, naming what the family gets.
-    // Record-only mode needs no ask: nothing outward happens and the tap is fully re-tappable.
-    if (choice === 'cut' && notifyFamily) {
-      const who = c.name ?? `Bib #${c.bib ?? '—'}`;
-      const ok = await confirm({
-        title: `Pass on ${who}?`,
-        message: c.hasGuardianEmail === false
-          ? 'This family has no email on file, so nothing will be sent — remember to tell them yourself.'
-          : 'Their family receives a respectful “not this season” email right away. You can change the decision later, but an email can’t be unsent.',
-        confirmText: c.hasGuardianEmail === false ? 'Pass' : 'Pass & send',
-        cancelText: 'Cancel',
-        tone: 'danger',
-      });
-      if (!ok) { setSavingId(null); return; }
-    }
 
     const prevStatus = c.status;
     // Optimistic: update the one candidate + the tally.
@@ -371,43 +335,16 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
       const res = await fetch(apiBase, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: c.registrationId, decision: choice, notifyFamily }),
+        body: JSON.stringify({ registrationId: c.registrationId, decision: choice }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to save decision');
-      // Mirror the server's offer-link truth so badges never go stale within a session:
-      // an EMAILED offer has a live link; every other transition (waitlist/cut clears the link
-      // server-side; a record-only offer never mints one) leaves nothing to await.
-      const emailed = choice === 'offer' && notifyFamily && c.hasGuardianEmail !== false;
-      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerEmailed: emailed, offerResponse: null, offerExpired: false } : x) } : b);
     } catch (e: any) {
       // Revert just this candidate.
       setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: prevStatus } : x), counts: recount(b.candidates, c.registrationId, prevStatus) } : b);
       fail(e.message ?? 'Failed to save decision.');
     } finally {
       setSavingId(null);
-    }
-  }
-
-  // "Email this offer" / re-send: a fresh Accept/Decline link + new deadline (clears any prior
-  // response). The one explicit per-row send that works whatever the switch says.
-  async function emailOffer(c: Candidate) {
-    if (resendingId || savingId) return;
-    setResendingId(c.registrationId);
-    try {
-      const res = await fetch(apiBase, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: c.registrationId, decision: 'resend' }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to email the offer');
-      // Fresh link + deadline + cleared response → the row is (back to) "awaiting".
-      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerEmailed: true, offerResponse: null, offerExpired: false } : x) } : b);
-    } catch (e: any) {
-      fail(e.message ?? 'Failed to email the offer.');
-    } finally {
-      setResendingId(null);
     }
   }
 
@@ -434,8 +371,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
     const res = await fetch(`${apiBase}/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // The welcome email follows the same switch as every other decision email (D-E9).
-      body: JSON.stringify({ registrationId: regId, notifyFamily, ...payload }),
+      // Adding a player to the roster is a private record. No welcome email — the coach has
+      // already welcomed them, in their own words (owner ruling 2026-08-26).
+      body: JSON.stringify({ registrationId: regId, ...payload }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
@@ -467,10 +405,6 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
     );
   }
 
-  // Offered candidates whose family has declined — still 'offered' status until the coach acts, so they
-  // sit inside counts.offered. Surface them so the "offered" number never implies a spot is still open.
-  const familyDeclined = board.candidates.filter(c => c.status === 'offered' && c.offerResponse === 'declined').length;
-
   return (
     // data-sandbox-tour: the beat the demo's "how 28 kids got ranked" step rings — the ranked
     // board, still blind. Inert off a demo org.
@@ -485,50 +419,13 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
         </div>
       </div>
 
-      {/* D-E9: the email switch lives directly above the decision buttons, so what a tap does is
-          visible at the moment of decision. Default OFF — decisions are the coach's to deliver. */}
-      {canWrite && (
-        <div className={styles.notifyRow}>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={notifyFamily}
-            aria-label="Email families my decisions"
-            className={toggleStyles.toggle}
-            onClick={toggleNotify}
-          >
-            <span className={`${toggleStyles.switch} ${notifyFamily ? toggleStyles.switchOn : ''}`}>
-              <span className={toggleStyles.knob} aria-hidden />
-            </span>
-          </button>
-          <div className={styles.notifyText}>
-            <span className={styles.notifyLabel}><Mail size={13} style={{ verticalAlign: '-2px' }} /> Email families my decisions</span>
-            <span className={styles.notifyHint}>
-              {notifyFamily
-                ? 'On — each choice emails the family right away: an offer with an Accept/Decline link, a waitlist update, or a respectful release note on “Not this season”.'
-                : 'Off — decisions are only recorded here; you reach out yourself. Offered players keep an “Email this offer” button for selective sends.'}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div className={styles.tally}>
         <span className={styles.tallyItem}><strong>{board.counts.offered}</strong> offered</span>
         <span className={styles.tallyItem}><strong>{board.counts.waitlisted}</strong> waitlist</span>
         <span className={styles.tallyItem}><strong>{board.counts.declined}</strong> passed</span>
         {board.counts.accepted > 0 && <span className={styles.tallyItem}><strong>{board.counts.accepted}</strong> accepted</span>}
-        {familyDeclined > 0 && <span className={styles.tallyItem} style={{ color: 'var(--danger-light)' }}><strong>{familyDeclined}</strong> declined by family</span>}
         <span className={styles.tallyItem} style={{ marginLeft: 'auto' }}><strong>{board.counts.pending}</strong> undecided</span>
       </div>
-
-      {/* 2B.5: a spot may have opened (a family declined or an offer lapsed) and players are waitlisted.
-          We only flag the coach — never auto-offer (D2). */}
-      {board.counts.waitlisted > 0 &&
-        board.candidates.some(c => c.status === 'offered' && (c.offerResponse === 'declined' || c.offerExpired)) && (
-        <p className={styles.offerNudge}>
-          A spot may have opened — <strong>{board.counts.waitlisted}</strong> {board.counts.waitlisted === 1 ? 'player is' : 'players are'} waitlisted. Extend an offer when you&apos;re ready.
-        </p>
-      )}
 
       <div className={styles.sessionList}>
         {board.candidates.map((c, i) => {
@@ -570,8 +467,8 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                   <span className={styles.bib}>#{c.bib ?? '—'}</span>
                   {c.name && <span style={{ marginLeft: '0.5rem' }}>{c.name}</span>}
                   {c.hasGuardianEmail === false && (
-                    <span className={styles.noEmailChip} title="No guardian email was captured for this candidate — no decision email can reach this family.">
-                      no email on file — notify by phone
+                    <span className={styles.noEmailChip} title="No guardian email was captured for this candidate — you'll need a phone number to reach this family.">
+                      no email on file — reach them by phone
                     </span>
                   )}
                   {suggested.length > 0 && (
@@ -642,33 +539,18 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                       </button>
                     ))}
                   </div>
+                  {/* One action on an offered row, and it is the only one there has ever needed
+                      to be: the coach has had the conversation, the family said yes, put them on
+                      the roster. No response badges — nothing here asks a family anything. */}
                   {c.status === 'offered' && (
-                    <>
-                      {/* Response badges only make sense once an offer EMAIL exists — a
-                          record-only offer has nothing to await (D-E9). */}
-                      {c.offerEmailed && offerBadge(c)}
-                      <button
-                        type="button"
-                        className={styles.acceptRosterBtn}
-                        onClick={() => openAccept(c)}
-                        disabled={!!savingId || !!acceptLoadingId}
-                      >
-                        {acceptLoadingId === c.registrationId ? 'Opening…'
-                          : c.offerResponse === 'accepted' ? 'Confirm → add to roster'
-                          : 'Accept → add to roster'}
-                      </button>
-                      {c.offerResponse !== 'accepted' && c.hasGuardianEmail !== false && (
-                        <button
-                          type="button"
-                          className={styles.resendBtn}
-                          onClick={() => emailOffer(c)}
-                          disabled={!!resendingId || !!savingId}
-                          title="Email the offer with a fresh Accept/Decline link + response deadline"
-                        >
-                          {resendingId === c.registrationId ? 'Sending…' : c.offerEmailed ? 'Resend offer' : '✉ Email this offer'}
-                        </button>
-                      )}
-                    </>
+                    <button
+                      type="button"
+                      className={styles.acceptRosterBtn}
+                      onClick={() => openAccept(c)}
+                      disabled={!!savingId || !!acceptLoadingId}
+                    >
+                      {acceptLoadingId === c.registrationId ? 'Opening…' : 'Accept → add to roster'}
+                    </button>
                   )}
                 </div>
               ) : null}
@@ -716,16 +598,6 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
       )}
     </div>
   );
-}
-
-/** A small chip showing where a family's offer response stands (emailed offers only). */
-function offerBadge(c: Candidate) {
-  let text: string, color: string;
-  if (c.offerResponse === 'accepted') { text = '✓ Family accepted'; color = 'var(--logic-lime)'; }
-  else if (c.offerResponse === 'declined') { text = '✕ Family declined'; color = 'var(--danger-light)'; }
-  else if (c.offerExpired) { text = 'Offer expired'; color = 'var(--warning-light)'; }
-  else { text = 'Awaiting response'; color = 'var(--home-dim, rgba(255,255,255,0.45))'; }
-  return <span style={{ fontSize: '0.72rem', fontWeight: 700, color, textAlign: 'right' }}>{text}</span>;
 }
 
 /** Recompute the tally after one candidate's status changes (keeps the header honest without a refetch). */

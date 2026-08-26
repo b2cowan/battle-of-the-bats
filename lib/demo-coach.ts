@@ -649,6 +649,32 @@ export const MIDSEASON_BUDGET_LINES = [
 ] as const;
 
 /**
+ * ⚖⚖ THE 12U's MONEY TAGS — the OCCASION labels a budget item cannot express (owner ruling, money
+ * centralization plan §5.3; seeded 2026-08-25 with P3).
+ *
+ * ⚠ THE DEMO COULD NOT SHOW THIS FEATURE AT ALL BEFORE. The seed deletes the team's tags and
+ * created none, so both money faces hid the tag control entirely and no prospect had ever seen the
+ * question it answers — precisely the "the demo is missing something the product gained" drift
+ * CLAUDE.md's demo rule exists for, and the one thing `check:demos` cannot tell you.
+ *
+ * ⚠ THE TEAM TAG DELIBERATELY CUTS ACROSS TWO BUDGET CATEGORIES. The item says WHAT KIND of cost
+ * (Entry Fees · Umpire Fees); the tag says WHICH OCCASION. A tag that shadowed one category would
+ * teach the opposite of the distinction — it would look like a second, worse way to say
+ * "Tournaments".
+ *
+ * ⚠ ONE OF THEM IS ORG-SHARED (`orgShared`), and it has to be: shared tags carry the blueprint-blue
+ * swatch and a team may apply but not edit them, so a world with only team tags demonstrates half
+ * the control. Diamond permits are exactly what a club sets up a shared label for.
+ *
+ * ⚠ NO FIGURE HERE IS QUOTED IN THE TOUR NARRATION, on purpose — the Transactions step's tag
+ * sentence claims no numbers, so a reseed or a re-anchor can never make it wrong.
+ */
+export const MIDSEASON_MONEY_TAGS = [
+  { name: 'Spring Classic', orgShared: false, expenseKeys: ['MS-TOURN-1', 'MS-UMP-1'] },
+  { name: 'Club permits',   orgShared: true,  expenseKeys: ['MS-DIAMOND-1', 'MS-DIAMOND-2'] },
+] as const;
+
+/**
  * The 12U's SEASON ESTIMATE — deliberately **not** the sum of the lines above ($9,400).
  *
  * ⚠ DO NOT "FIX" THIS BY RE-DERIVING IT FROM `MIDSEASON_BUDGET_LINES`. Every other demo team sets
@@ -1862,9 +1888,14 @@ export function resolveTryoutDayState(now: Date): TryoutDayState {
   };
 }
 
+// ⚠ THIS STRING IS SEEDED ONTO THE DEMO'S PUBLIC TRYOUT PAGE — a real prospect reads it, so it is a
+// PROMISE, not flavour text. It used to end "Decisions go out by email within a week of callbacks",
+// which the 2026-08-26 ruling made false: the platform never emails a tryout family a decision.
+// Keep it matched to what the product actually does, and RESEED after editing (the demo world only
+// changes when the seed runs).
 export const TRYOUT_DESCRIPTION =
   'Two evaluation sessions plus callbacks. Bring a glove and water; bibs are handed out at check-in. '
-  + 'Decisions go out by email within a week of callbacks.';
+  + 'We follow up with every family directly once decisions are made.';
 
 // ── 13U season's end ─────────────────────────────────────────────────────────────────────────
 

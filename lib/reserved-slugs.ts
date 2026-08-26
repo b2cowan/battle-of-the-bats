@@ -25,6 +25,8 @@ export const RESERVED_ORG_SLUGS: ReadonlySet<string> = new Set([
   'admin', 'api', 'platform', 'platform-admin', 'dashboard', 'dev',
   // Role shells & tournament sub-surfaces that also exist at the top level
   'coaches', 'coach', 'team', 'teams', 'official', 'scorekeeper', 'check-in',
+  // 'tryout-response' stays reserved though its route was retired (family decision emails
+  // removed, owner 2026-08-26) — a path that used to be public must not become claimable.
   'news', 'results', 'rules', 'schedule', 'standings', 'tryout-response', 'tryout-score',
   // Marketing / content
   'pricing', 'blog', 'changelog', 'about', 'contact', 'support', 'help', 'legal',

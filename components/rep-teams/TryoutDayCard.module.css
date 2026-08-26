@@ -349,14 +349,6 @@
   font-size: 0.78rem; font-weight: 700; color: var(--logic-lime);
 }
 
-/* 2B.5: "a spot may have opened" nudge (flag-the-coach; never auto-offers). */
-.offerNudge {
-  margin: 0 0 0.85rem; padding: 0.55rem 0.75rem;
-  font-size: 0.8rem; color: rgba(251,191,36,0.95); /* token-exempt: warning-light alpha tint, no -rgb token exists */
-  border: 1px solid rgba(251,191,36,0.3); border-left: 3px solid rgba(251,191,36,0.6); /* token-exempt: warning-light alpha tint, no -rgb token exists */
-  border-radius: 8px; background: rgba(251,191,36,0.06); /* token-exempt: warning-light alpha tint, no -rgb token exists */
-}
-
 /* Decision column: the offer/waitlist/cut group plus (for offered candidates) the Accept action. */
 .decisionCol { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; align-items: stretch; }
 .acceptRosterBtn {
@@ -367,13 +359,6 @@
 }
 .acceptRosterBtn:hover { background: rgba(var(--logic-lime-rgb),0.2); }
 .acceptRosterBtn:disabled { opacity: 0.55; cursor: default; }
-.resendBtn {
-  align-self: flex-end; padding: 0.15rem 0.2rem;
-  background: transparent; border: none; cursor: pointer; font-family: inherit;
-  font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: underline;
-}
-.resendBtn:hover { color: rgba(255,255,255,0.8); }
-.resendBtn:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 560px) {
   .decisionCol { width: 100%; }
@@ -447,8 +432,7 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdownNote,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChipMean,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resendBtn {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn {
   color: var(--home-dim);
 }
 
@@ -486,19 +470,13 @@
   border-color: rgba(var(--home-live-rgb), 0.40);
 }
 
-/* Bias / "spot opened" nudges → warm amber, solid enough to read in glare */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .biasFlag,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .offerNudge {
+/* Bias flags → warm amber, solid enough to read in glare */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .biasFlag {
   color: var(--home-amber);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChipBias {
   background: rgba(var(--home-amber-rgb), 0.10);
   border-color: rgba(var(--home-amber-rgb), 0.45);
-}
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .offerNudge {
-  background: rgba(var(--home-amber-rgb), 0.08);
-  border-color: rgba(var(--home-amber-rgb), 0.35);
-  border-left-color: var(--home-amber);
 }
 
 /* Decision chips + accept: SOLID fills + labels (never colour-alone) */
@@ -533,24 +511,8 @@
   background: rgba(var(--home-olive-rgb), 0.16);
 }
 
-/* ── D-E9: the decision-email switch (Chunk E) ─────────────────────────────────
-   Sits directly above the decision buttons so what a tap does is visible at the
-   moment of decision. The track/knob classes are REUSED from the accept drawer's
-   fee toggle (TryoutAcceptDrawer.module.css .toggle/.switch/.knob, warm overrides
-   included) — only the row layout lives here. */
-.notifyRow {
-  display: flex; align-items: flex-start; gap: 0.6rem;
-  margin: 0 0 0.7rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-}
-.notifyText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.notifyLabel { font-size: 0.82rem; font-weight: 700; color: var(--white-90); }
-.notifyHint { font-size: 0.74rem; color: rgba(255,255,255,0.45); line-height: 1.45; }
-
-/* "No email on file" — a decision the product can't deliver must say so where it's made. */
+/* "No email on file" — the coach delivers every decision personally now, so a family with no
+   address on file has to be flagged where the decision is made. */
 .noEmailChip {
   display: inline-block; margin-left: 0.5rem;
   font-size: 0.64rem; font-weight: 700; letter-spacing: 0.02em;
@@ -580,17 +542,7 @@
   display: flex; flex-direction: column; gap: 0.2rem;
 }
 
-/* Warm variant: paper panel + ink text; switch tracks mirror the fee toggle. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyRow {
-  background: var(--home-card);
-  border-color: var(--home-line);
-}
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyLabel {
-  color: var(--home-ink);
-}
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyHint {
-  color: var(--home-dim);
-}
+/* Warm variant: paper panel + ink text. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noEmailChip {
   color: var(--home-amber);
   background: rgba(var(--home-amber-rgb), 0.10);

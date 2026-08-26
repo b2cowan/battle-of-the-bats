@@ -86,9 +86,11 @@ export const POST = withObservability(async (req: Request,
   // timestamp/IP — those are stamped server-side below.
   const consentDataCollection = body.consentDataCollection === true;
   // OPTIONAL since 2026-07-30 (CASL unbundling, owner-decided): this is genuine MARKETING
-  // consent — club news and future-season announcements. Tryout STATUS emails (offer, waitlist,
-  // release, welcome) are transactional updates about the family's own application and are
-  // never gated on it; making it a submit condition was the pattern CASL frowns on.
+  // consent — club news and future-season announcements. The application-received receipt below
+  // is a transactional acknowledgement of the family's OWN submission and is never gated on it;
+  // making it a submit condition was the pattern CASL frowns on. (The offer / waitlist / release
+  // / welcome emails this comment used to also name were removed outright on 2026-08-26 — the
+  // receipt is now the only email a tryout ever sends a family.)
   const consentEmailComms     = body.consentEmailComms === true;
   const consentEligibility    = body.consentEligibility === true;
   if (!consentDataCollection || !consentEligibility) {

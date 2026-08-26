@@ -6,7 +6,8 @@ import { supabaseAdmin } from './supabase-admin';
  * lib/no-login-token.ts — ONE home for the no-login token convention.
  *
  * Four surfaces independently re-implemented the same three lines (discovery G4):
- * `lib/tryout-offer-token.ts`, `lib/tryout-evaluator-token.ts`,
+ * `lib/tryout-offer-token.ts` (since DELETED — the tryout offer email and its family
+ * Accept/Decline loop were retired 2026-08-26), `lib/tryout-evaluator-token.ts`,
  * `lib/assistant-invite-token.ts`, and the team-workspace claim flow. The convention
  * they share is sound — 32 random bytes → base64url in the URL, SHA-256 hex in the
  * database, so a database read can never reconstruct a live link. What none of them

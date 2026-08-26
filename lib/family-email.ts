@@ -22,12 +22,16 @@ import { normalizeGuardianEmail } from './guardian-email';
  * unsubscribed" before a send) fetch it once with `getFamilySuppressionList` and hand it
  * back in — the guard still runs, it just does not re-query per recipient.
  *
- * ⚠ WHO IS STILL OUTSIDE THIS DOOR, and why (audited 2026-08-18 — the count is the point, so
- * correct it here if you change one):
- *  - **Dues reminders (4 senders) and tryout offer/waitlist/release.** Deliberate. These are
- *    transactional — a family cannot mute a bill or an offer of a roster spot by unsubscribing
- *    from club announcements (owner ruling 2026-08-18). They identify their sender but skip
- *    the suppression check ON PURPOSE. Do not "fix" them by routing them through here.
+ * ⚠ WHO IS STILL OUTSIDE THIS DOOR, and why (audited 2026-08-18, recounted 2026-08-26 — the count
+ * is the point, so correct it here if you change one):
+ *  - **Dues reminders (4 senders).** Deliberate. Transactional — a family cannot mute a bill by
+ *    unsubscribing from club announcements (owner ruling 2026-08-18). They identify their sender
+ *    but skip the suppression check ON PURPOSE. Do not "fix" them by routing them through here.
+ *  - **Tryout offer / waitlist / release USED TO BE ON THIS LIST and no longer exist at all**
+ *    (owner ruling 2026-08-26): the platform sends a tryout family nothing on a coach's behalf,
+ *    because a rep offer is a custom letter the family signs. The senders were deleted, not
+ *    routed through this guard — so this is one fewer exception, but NOT progress on closing the
+ *    remaining ones.
  *  - **The free-tier coach's "Email families"** (`lib/basic-coach-announcements.ts`). NOT
  *    deliberate, and NOT fixable by routing it here: `basic_coach_teams` has no `org_id`, and
  *    both the suppression list and the unsubscribe token are keyed on an ORG. A free team has

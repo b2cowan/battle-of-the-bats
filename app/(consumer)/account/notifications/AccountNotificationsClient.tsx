@@ -34,8 +34,6 @@ export type NotificationCard = {
   subtitle: string;
   /** Reserved module capabilities the org holds (org card only) — gates optional sections. */
   modules: string[];
-  /** Coach card only (rule R4): false hides the tryout row for an assistant without tryouts access. */
-  canReceiveTryouts?: boolean;
 };
 
 function initials(name: string): string {
@@ -137,17 +135,11 @@ function OrgCard({ card }: { card: NotificationCard }) {
 }
 
 function CoachCard({ card }: { card: NotificationCard }) {
-  // Rule R4: hide the tryout row for an assistant coach who can't receive it.
-  const canTryouts = card.canReceiveTryouts !== false;
-  const nonDigest = useMemo<NotificationEventType[]>(
-    () => (canTryouts ? ['tryout_offer_response'] : []),
-    [canTryouts],
-  );
-  const eventTypes = useMemo<NotificationEventType[]>(
-    () => ['coach_insights_digest', ...nonDigest],
-    [nonDigest],
-  );
-  // Digest leads as an always-visible control (R1); everything else rolls up by category.
+  // The weekly digest is the coach card's only row. 'tryout_offer_response' used to sit beside it
+  // (gated by R4 on the tryouts capability) and was removed 2026-08-26 with the tryout decision
+  // emails: it fired when a family answered an offer email, and nothing sends one any more. A
+  // settings page must not advertise a toggle for an event that can never arrive.
+  const eventTypes = useMemo<NotificationEventType[]>(() => ['coach_insights_digest'], []);
   const groups = useMemo<PreferenceGroup[]>(
     () => [
       {
@@ -156,9 +148,8 @@ function CoachCard({ card }: { card: NotificationCard }) {
         eventTypes: ['coach_insights_digest'],
         lead: true,
       },
-      ...simpleGroupsFor(nonDigest),
     ],
-    [nonDigest],
+    [],
   );
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });
@@ -186,9 +177,6 @@ function CoachCard({ card }: { card: NotificationCard }) {
             <p className={styles.chatPointer}>
               Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
             </p>
-            {!canTryouts && (
-              <p className={styles.filteredNote}>You&apos;re seeing only the notifications your access includes.</p>
-            )}
           </>
         )}
       </div>

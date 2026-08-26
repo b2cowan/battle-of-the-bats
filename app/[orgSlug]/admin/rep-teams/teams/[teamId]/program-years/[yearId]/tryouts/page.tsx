@@ -120,24 +120,14 @@ export default function TryoutsPage({
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
 
-  // D-E9 extended to the admin surface (owner-directed 2026-07-30): family emails are OPT-IN,
-  // default OFF — decisions are recorded and the club reaches out itself unless this is on.
-  // Device-remembered under the SAME key as the coach decision board deliberately: one device,
-  // one team, one answer, whichever door the same person manages from. The server only emails
-  // when the individual status write carries the flag.
-  const [notifyFamily, setNotifyFamily] = useState(false);
-  // A decline about to email a family asks first — an email can't be unsent.
-  const [declineConfirm, setDeclineConfirm] = useState<RepTryoutRegistration | null>(null);
-  useEffect(() => {
-    try { setNotifyFamily(localStorage.getItem(`tryout-email-decisions:${params.teamId}`) === '1'); } catch { /* private mode */ }
-  }, [params.teamId]);
-  const toggleNotify = () => {
-    setNotifyFamily(v => {
-      const next = !v;
-      try { localStorage.setItem(`tryout-email-decisions:${params.teamId}`, next ? '1' : '0'); } catch { /* private mode */ }
-      return next;
-    });
-  };
+  // ⚠ NO FAMILY EMAILS FROM THIS SCREEN, and no switch that changes that (owner ruling
+  // 2026-08-26, binding — removed from BOTH this surface and the coach decision board on the
+  // same day). A rep offer is a custom letter the family SIGNS, frequently conditional and
+  // frequently the start of a negotiation; a generic platform email cannot stand in for it, so
+  // the control's best case was going unused and its worst case was contradicting the letter the
+  // club was about to send. The family self-serve Accept/Decline loop went with it — the reply
+  // token only ever travelled inside the offer email. Plan:
+  // docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md.
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -189,14 +179,8 @@ export default function TryoutsPage({
   }), [registrations]);
 
   async function handleAction(regId: string, newStatus: RepTryoutRegistrationStatus) {
-    // A decline with emails ON sends the family a release note the moment it lands — ask first,
-    // through the confirm modal below (D-E9 parity with the coach board). Declines with the
-    // switch off, or with no email on file, just record.
-    if (newStatus === 'declined' && notifyFamily && !declineConfirm) {
-      const reg = registrations.find(r => r.id === regId);
-      if (reg?.guardianEmail?.trim()) { setDeclineConfirm(reg); return; }
-    }
-    setDeclineConfirm(null);
+    // No decline confirmation any more — it guarded an outgoing release email, and nothing goes
+    // out. A decline is a private record the club can change back in one click.
     setActionLoading(regId);
     try {
       const res = await fetch(
@@ -204,21 +188,20 @@ export default function TryoutsPage({
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus, notifyFamily }),
+          body: JSON.stringify({ status: newStatus }),
         },
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Action failed');
       await load();
       setSelected(null);
-      // The toast tells the truth about whether a family heard anything (D-E9).
-      const reg = registrations.find(r => r.id === regId);
-      const emailed = notifyFamily && !!reg?.guardianEmail?.trim();
+      // Every toast says the same thing in its own words: it is recorded, and telling the family
+      // is still yours to do.
       const msg =
-        newStatus === 'offered'    ? (emailed ? 'Offer extended — the family has been emailed an Accept/Decline link.' : 'Offer recorded — no email sent; reach the family your way.') :
-        newStatus === 'waitlisted' ? (emailed ? 'Moved to the waitlist — the family has been emailed.' : 'Moved to the waitlist — no email sent.') :
+        newStatus === 'offered'    ? 'Offer recorded — reach the family your way.' :
+        newStatus === 'waitlisted' ? 'Moved to the waitlist — let the family know yourself.' :
         newStatus === 'accepted'   ? 'Application accepted — player added to roster.' :
-        newStatus === 'declined'   ? (emailed ? 'Application declined — the family has been sent a respectful note.' : 'Application declined — no email sent; remember to tell the family.') :
+        newStatus === 'declined'   ? 'Application declined — remember to tell the family.' :
         newStatus === 'withdrawn'  ? 'Marked as withdrawn.' : 'Updated.';
       showFeedback('success', msg);
     } catch (e: any) {
@@ -255,20 +238,18 @@ export default function TryoutsPage({
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        // The welcome email follows the same opt-in switch as every other decision email (D-E9).
-        body: JSON.stringify({ status: 'accepted', notifyFamily, ...payload }),
+        body: JSON.stringify({ status: 'accepted', ...payload }),
       },
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error ?? 'Failed to add the player.');
-    const emailed = notifyFamily && !!acceptTarget.guardianEmail?.trim();
     setAcceptTarget(null);
     setAcceptSuggestion(null);
     setSelected(null);
     await load();
     showFeedback('success', (payload.dues
       ? 'Player added to the roster with their fee schedule.'
-      : 'Player added to the roster.') + (emailed ? ' The family has been sent the welcome email.' : ' No email sent — welcome them your way.'));
+      : 'Player added to the roster.') + ' Welcome them your way.');
   }
 
   async function handleSaveNotes() {
@@ -595,22 +576,6 @@ export default function TryoutsPage({
             />
           )}
 
-          {/* D-E9: the email switch lives where decisions are made, so what a click does is
-              visible before it happens. Default OFF — decisions record; the club reaches out. */}
-          {canWrite && (
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', margin: '0 0 0.8rem', cursor: 'pointer', maxWidth: '46rem' }}>
-              <input type="checkbox" checked={notifyFamily} onChange={toggleNotify} style={{ marginTop: 3 }} />
-              <span style={{ fontSize: '0.85rem', lineHeight: 1.45 }}>
-                <strong>Email families my decisions</strong>
-                <span style={{ display: 'block', color: 'var(--white-55)', fontSize: '0.8rem' }}>
-                  {notifyFamily
-                    ? 'On — each decision emails the family right away: an offer with an Accept/Decline link, a waitlist update, a respectful release note on decline, and the welcome email on accept.'
-                    : 'Off — decisions are only recorded here; reach families your way. Turn on to have offers, waitlist updates, release notes and welcome emails sent for you.'}
-                </span>
-              </span>
-            </label>
-          )}
-
           {/* Tabs */}
           <div className={styles.tryoutTabs}>
             {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([tab, label]) => (
@@ -848,8 +813,6 @@ export default function TryoutsPage({
                 )}
               </div>
 
-              {selected.status === 'offered' && <OfferStateNote reg={selected} />}
-
               {canWrite && (
                 <div className={styles.slideOverSection}>
                   <div className={styles.slideOverSectionTitle}>Actions</div>
@@ -1067,18 +1030,6 @@ export default function TryoutsPage({
         />
       )}
 
-      {/* D-E9: a decline with emails ON asks first — an email can't be unsent. */}
-      <FeedbackModal
-        isOpen={declineConfirm != null}
-        onClose={() => setDeclineConfirm(null)}
-        onConfirm={() => { if (declineConfirm) void handleAction(declineConfirm.id, 'declined'); }}
-        title={`Decline ${declineConfirm ? `${declineConfirm.playerFirstName} ${declineConfirm.playerLastName}` : ''}?`}
-        message="Their family receives a respectful release email right away. You can change the status later, but an email can't be unsent."
-        confirmText="Decline & send"
-        cancelText="Cancel"
-        type="danger"
-      />
-
       <FeedbackModal
         isOpen={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
@@ -1090,24 +1041,3 @@ export default function TryoutsPage({
   );
 }
 
-/** Compact "where the family's offer response stands" note in the applicant slide-over (2B.5). */
-function OfferStateNote({ reg }: { reg: RepTryoutRegistration }) {
-  // Mount-time clock (state initializer keeps render pure — react-hooks/purity): a deadline that
-  // lapses while the slide-over is open updates on the next open, which is honest enough here.
-  const [now] = useState(() => Date.now());
-  const expired = !!reg.offerExpiresAt && new Date(reg.offerExpiresAt).getTime() < now && !reg.offerRespondedAt;
-  let text: string, color: string;
-  if (reg.offerResponse === 'accepted') { text = '✓ Family accepted the offer — accept below to add them to the roster.'; color = 'var(--logic-lime)'; }
-  else if (reg.offerResponse === 'declined') { text = '✕ Family declined the offer.'; color = '#f87171'; }
-  else if (expired) { text = 'Offer expired — no response by the deadline.'; color = '#fbbf24'; }
-  else if (reg.offerSentAt) {
-    const by = reg.offerExpiresAt ? new Date(reg.offerExpiresAt).toLocaleDateString('en-CA') : null;
-    text = by ? `Awaiting family response — respond by ${by}.` : 'Awaiting family response.'; color = 'var(--white-45)';
-  } else { text = 'No response link sent yet.'; color = 'var(--white-45)'; }
-  return (
-    <div className={styles.slideOverSection}>
-      <div className={styles.slideOverSectionTitle}>Offer response</div>
-      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color }}>{text}</p>
-    </div>
-  );
-}

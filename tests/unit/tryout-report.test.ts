@@ -22,7 +22,10 @@ import type { RepTryoutRegistration } from '../../lib/types.ts';
  *   · withdrawn candidates must vanish from every number (matching tryout-overview).
  */
 
-const NOW = Date.parse('2027-08-14T12:00:00Z');
+// A fixed `NOW` clock was injected into every buildTryoutReport call here until 2026-08-26, purely
+// so an emailed offer's response deadline could be judged expired. Nothing in the report is
+// time-relative any more — if a future figure needs a clock, inject it again rather than reaching
+// for Date.now() inside the pure module.
 
 let seq = 0;
 function mkReg(over: Partial<RepTryoutRegistration> = {}): RepTryoutRegistration {
@@ -62,7 +65,6 @@ const BASE = {
   continuityLinks: [] as { status: 'suggested' | 'confirmed' | 'rejected'; currentRosterId: string | null; currentRegistrationId: string | null }[],
   priorRegistrationCount: null as number | null,
   priorSeasonName: null as string | null,
-  now: NOW,
 };
 
 describe('buildTryoutReport — funnel', () => {
@@ -86,10 +88,11 @@ describe('buildTryoutReport — funnel', () => {
     // 3 currently offered + 1 accepted, none with a sticky stamp — the union's legacy half.
     assert.equal(r.funnel.offered, 4);
     assert.equal(r.funnel.accepted, 1);
-    assert.equal(r.funnel.familyDeclined, 1);
-    // 'c' expired against the injected clock; 'b' still open
-    assert.equal(r.funnel.offerExpired, 1);
-    assert.equal(r.funnel.awaitingReply, 1);
+    // familyDeclined / offerExpired / awaitingReply were asserted here until 2026-08-26. All
+    // three counted a family's self-serve reply to an offer EMAIL, and that loop was retired
+    // with the tryout decision emails — the fixture's offerSentAt/offerResponse columns are
+    // still set above ON PURPOSE, to prove the funnel now ignores them rather than merely
+    // reporting zero because nothing populated them.
   });
 
   // The whole point of the sticky stamp (mig 223): a coach who offers a player and then changes
@@ -288,18 +291,25 @@ describe('candidateRows — R1/R6', () => {
     assert.equal(r.candidateRows!.length, 1);
     assert.equal(r.candidateRows![0].name, 'Maya Torres');
     assert.equal(r.candidateRows![0].composite, 4);
-    assert.equal(r.candidateRows![0].decision, 'Offered — family accepted');
+    // 'offerResponse' is still set on the fixture reg above; the label must ignore it.
+    assert.equal(r.candidateRows![0].decision, 'Offered');
   });
 
   it('maps every status to a decision label — an unmapped status must not read as silence', () => {
-    assert.equal(decisionLabel({ status: 'declined', offerResponse: null }), 'Not offered');
-    assert.equal(decisionLabel({ status: 'withdrawn', offerResponse: null }), 'Withdrew');
-    assert.equal(decisionLabel({ status: 'pending_review', offerResponse: null }), 'No decision');
-    assert.equal(decisionLabel({ status: 'offered', offerResponse: 'declined' }), 'Offered — family declined');
-    assert.equal(decisionLabel({ status: 'offered', offerResponse: null }), 'Offered');
-    assert.equal(decisionLabel({ status: 'offered', offerResponse: 'accepted' }), 'Offered — family accepted');
-    assert.equal(decisionLabel({ status: 'waitlisted', offerResponse: null }), 'Waitlisted');
-    assert.equal(decisionLabel({ status: 'accepted', offerResponse: null }), 'Accepted');
+    assert.equal(decisionLabel({ status: 'declined' }), 'Not offered');
+    assert.equal(decisionLabel({ status: 'withdrawn' }), 'Withdrew');
+    assert.equal(decisionLabel({ status: 'pending_review' }), 'No decision');
+    assert.equal(decisionLabel({ status: 'offered' }), 'Offered');
+    assert.equal(decisionLabel({ status: 'waitlisted' }), 'Waitlisted');
+    assert.equal(decisionLabel({ status: 'accepted' }), 'Accepted');
+  });
+
+  // 2026-08-26: 'Offered — family accepted' / '— family declined' were removed with the family
+  // self-serve reply loop. A candidate STILL carrying a stored offerResponse (an old row, or the
+  // fixture above) must now read as a plain 'Offered' — the label takes its answer from the
+  // coach's recorded decision and from nothing else.
+  it('ignores a legacy offerResponse when labelling', () => {
+    assert.equal(decisionLabel({ status: 'offered' } as Parameters<typeof decisionLabel>[0]), 'Offered');
   });
 
   it('rounds category averages at the assembly point — exports must never print full-precision floats', () => {

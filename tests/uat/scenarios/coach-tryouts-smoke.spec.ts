@@ -15,8 +15,8 @@ import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membe
  *  3. a dirty scorecard builder asks before discarding (naming the stake) and a clean one
  *     closes silently; a typed-but-unnamed category row blocks save instead of vanishing;
  *  4. link reissue keeps the SAME evaluator identity (old token dies, scores survive);
- *  5. D-E9 — the decision-email switch renders OFF, a record-only offer mints NO response link
- *     (the data-level proof no email machinery ran), and switching ON makes a pass ask first;
+ *  5. nothing on the decision board can mail a family — no switch, no per-row send, no confirm —
+ *     and an offer mints NO response link (the data-level proof no email machinery ran);
  *  6. the depth VIEW takes the wide column + the CoachScrollX hint while the roster list keeps
  *     the reading column.
  *
@@ -223,7 +223,16 @@ async function open(page: Page, url: string) {
   await page.goto(url);
   const main = page.locator('main[class*="coachesMain"]');
   await expect(main).toBeVisible({ timeout: 45_000 });
-  await expect(main.getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+  /* ⚠⚠ MATCH THE LOADING ELEMENT, NEVER ITS WORDS (/review, 2026-08-26). This waited on the
+     literal text "Loading…" reaching zero, and Playwright matches a plain string as a SUBSTRING —
+     so the moment the portal gave every loading state a subject ("Loading the register…",
+     "Loading the roster…"), the substring stopped existing and this wait passed instantly on every
+     screen. A no-op wait is worse than no wait: it reads as a deterministic signal while the fetch
+     it was built to wait for races on underneath it. `[class*="loadingState"]` is the same
+     hashed-CSS-module idiom `main[class*="coachesMain"]` already uses one line up, and it matches
+     the shared CoachLoading component AND every hand-written .loadingState still in the portal —
+     i.e. it cannot be broken by a copy change. */
+  await expect(main.locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
 }
 
 const main = (page: Page) => page.locator('main[class*="coachesMain"]');
@@ -406,9 +415,18 @@ test('reissuing an evaluator link kills the old token, works on the same row, an
   expect(rows ?? []).toHaveLength(1);
 });
 
-// ─── 5 · D-E9: the decision-email switch ─────────────────────────────────────────
+// ─── 5 · Nothing mails a tryout family ───────────────────────────────────────────
 
-test('the email switch renders OFF; a record-only offer mints NO response link; switching ON makes a pass ask first; the honesty chips render', async ({ page }) => {
+/**
+ * ⚠ THIS TEST WAS INVERTED ON 2026-08-26. It used to be "D-E9: the decision-email switch" and
+ * asserted the switch rendered OFF, that turning it ON made a pass ask first, and that an offered
+ * row offered "Email this offer". The owner removed all of it: a rep offer is a custom letter the
+ * family SIGNS, often conditional, so FieldLogicHQ sends a tryout family nothing on a coach's
+ * behalf. The valuable half of the old test — the DATA-level proof that no offer link was minted —
+ * survives here, because that is what proves no mail machinery ran, rather than merely proving a
+ * button is absent from a screen.
+ */
+test('no email control exists on the board; an offer mints NO response link; the honesty chips render', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/tryouts`);
@@ -417,20 +435,19 @@ test('the email switch renders OFF; a record-only offer mints NO response link; 
   // or the scoreboard's copies of the same markers match first.
   const panel = main(page).locator('[data-tryout-stage]:visible');
 
-  const emailSwitch = main(page).locator('button[role="switch"]');
-  await expect(emailSwitch.first()).toBeVisible();
-  await expect(emailSwitch.first()).toHaveAttribute('aria-checked', 'false');
-  await expect(main(page).getByText(/decisions are only recorded here/i)).toBeVisible();
+  // The switch and its hint are GONE — not merely defaulted off.
+  await expect(main(page).getByText(/email families my decisions/i)).toHaveCount(0);
+  await expect(main(page).getByText(/decisions are only recorded here/i)).toHaveCount(0);
 
   // The honesty chips: a walk-up with no email, and a no-show distinct from "not scored yet".
-  await expect(panel.getByText(/no email on file — notify by phone/i)).toBeVisible();
+  await expect(panel.getByText(/no email on file — reach them by phone/i)).toBeVisible();
   await expect(panel.getByText(/didn’t check in/).first()).toBeVisible();
   // The family's registration note is one tap away.
   await panel.getByRole('button', { name: /family's note/i }).first().click();
   await expect(panel.getByText(/prefers shortstop/i)).toBeVisible();
 
-  // Record-only offer: status flips, and NO response link is minted (the data-level proof that
-  // no email machinery ran — a link only ever exists inside an offer email).
+  // An offer flips status and mints NO response link — the data-level proof that no email
+  // machinery ran, since a link only ever existed inside an offer email.
   await main(page).getByRole('group', { name: /decision/i }).first().getByRole('button', { name: /^offer$/i }).click();
   await expect(main(page).getByText(/1.*offered/i).first()).toBeVisible({ timeout: 20_000 });
   await expect
@@ -440,23 +457,21 @@ test('the email switch renders OFF; a record-only offer mints NO response link; 
       return data;
     }, { timeout: 15_000 })
     .toMatchObject({ status: 'offered', offer_expires_at: null, offer_sent_at: null });
-  // A record-only offer shows the selective per-row send, not a response badge.
-  await expect(main(page).getByRole('button', { name: /email this offer/i })).toBeVisible();
+
+  // No per-row send, and no response badge for a family that was never asked anything.
+  await expect(main(page).getByRole('button', { name: /email this offer|resend offer/i })).toHaveCount(0);
   await expect(main(page).getByText(/awaiting response/i)).toHaveCount(0);
 
-  // Switch ON → a pass asks first, naming what the family receives; Cancel sends nothing.
-  await emailSwitch.first().click();
-  await expect(emailSwitch.first()).toHaveAttribute('aria-checked', 'true');
+  // A pass no longer asks first: that confirm existed only because an email could not be unsent.
   const noShowGroup = main(page).getByRole('group', { name: /decision/i }).nth(1);
   await noShowGroup.getByRole('button', { name: /not this season/i }).click();
-  await expect(page.getByText(/pass on ali reyes\?/i)).toBeVisible();
-  await expect(page.getByText(/can’t be unsent|can't be unsent/i)).toBeVisible();
-  await page.getByRole('button', { name: /^cancel$/i }).click();
-  const { data: aliRow } = await admin.from('rep_tryout_registrations').select('status').eq('id', regNoShowId).single();
-  expect(aliRow!.status).toBe('pending_review');
-
-  // Leave the switch OFF for other tests (device state is per-context anyway).
-  await emailSwitch.first().click();
+  await expect(page.getByText(/pass on ali reyes\?/i)).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const { data } = await admin.from('rep_tryout_registrations').select('status').eq('id', regNoShowId).single();
+      return data?.status;
+    }, { timeout: 15_000 })
+    .toBe('declined');
 });
 
 // ─── 6 · The depth view's width + honest scroll ──────────────────────────────────

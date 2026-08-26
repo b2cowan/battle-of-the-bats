@@ -3,6 +3,53 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-26 — A PLATFORM DOES NOT WRITE THE OFFER LETTER: tryout decision emails removed outright, and D-E9 is reversed (owner ruling, binding)
+
+**Decision (owner, unprompted):** *"offers come with custom letters they need to sign, often
+conditional requiring conversations and some back and forth potentially, an email from FLHQ I would
+never expect to be used in this case and therefore is only a risk of being sent when someone fat
+fingers something."* FieldLogicHQ now sends a tryout family **nothing** as a consequence of a
+coach's or club admin's decision. This **reverses D-E9 (2026-07-30)** — the opt-in switch, its
+per-row "Email this offer" companion, the decline confirm and the welcome-on-accept are deleted from
+**both** the coach Decide board and the club-admin applicant screen.
+
+- ⚠⚠ **OFF-BY-DEFAULT IS A MITIGATION, NOT AN ANSWER — and this is the generalizable rule.** D-E9
+  was a *good* design: server-defaulted to silent, flag required on every write, switch visible at
+  the moment of decision, confirm before an irreversible send. It was still wrong, because the
+  question it answered was *"how do we make this safe to have?"* rather than *"should the product be
+  able to do this at all?"* A control whose **best case is that nobody uses it** and whose worst case
+  contradicts the letter a coach is about to send is not a feature with a safe default; it is a
+  liability with a safe default. When the artifact a customer actually sends is bespoke, negotiated
+  and signed, the platform's job is to record the decision, not to perform it.
+- ⚠ **REMOVING A SEND CAN RETIRE A WHOLE FEATURE, and you must trace the delivery vehicle before
+  agreeing to the scope.** The family self-serve Accept/Decline loop had exactly ONE minting site
+  (`extendTryoutOffer`) and the offer email was its ONLY delivery vehicle — so deleting the emails
+  silently orphaned the public reply page, the awaiting/accepted/declined/expired badges, the
+  "Confirm → add to roster" wording, the `tryout_offer_response` notification row and three Tryout
+  report figures. Presented as a choice (hide the controls vs. retire the loop) the owner took the
+  full retirement; had it not been surfaced, the product would have kept a reachable page and a set
+  of badges that could never light up.
+- ⚠⚠ **A PROMISE MADE TO A CUSTOMER IS A SURFACE, AND IT IS THE ONE THAT DOES NOT GREP LIKE CODE.**
+  The most consequential find was not a control — it was a sentence on the public tryout form:
+  *"We'll email you about this application either way — offers, waitlist and roster updates."* It
+  would have become false on deploy, in front of every applicant, while every test passed and every
+  screen rendered. It is now marked in-place as a promise that must stay matched to what actually
+  sends. **When removing a sender, grep the copy that promised it, not just the code that called
+  it.**
+- **The one email that survives, and why the line is where it is:** the **application-received
+  receipt**. It is the family's receipt for the family's OWN action, not a coach's decision announced
+  on their behalf — and removing it would leave an applicant with no proof their form landed. The
+  test that used to demand the three decision templates carry the shared transactional footer now
+  asserts the opposite: the senders, the templates and the reply page **stay deleted**. A ruling of
+  the form "we deliberately cannot do X" earns a build guard, because the next change will reinstate
+  it as "harmless, and it's opt-in".
+- **Untouched on purpose:** the report's "Offers extended" (trigger-stamped `first_offered_at`, never
+  a send), the "no email on file" chip (reworded — a coach who now delivers every decision personally
+  needs it MORE), and the offer columns themselves (real history; no longer written or read).
+
+Plan: `docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md`.
+
+---
 ### 2026-08-25 — NULL IS NOT ZERO WHEN A SEASON CARRIES MONEY FORWARD, and a claim that cannot fail is not a claim (D-2 build)
 
 **Three rules taken while building D-2, all of which the code now enforces rather than promises.**
@@ -3789,6 +3836,11 @@ Rules 1, 2, 4 and 5 are general to every list row on the platform. Owner QA pend
 **Applies to:** `lib/{timezone,coach-recurrence,coach-schedule-import,coach-schedule-vocab,coach-arm-care}.ts`, `lib/db.ts` (event writers), `lib/basic-coach-teams.ts` (mirror assembly), `lib/sports.ts` (`orderLabel`), `lib/team-season-analytics.ts`, `lib/coach-tournament-games.ts`, `components/coaches/ScheduleImportSheet.{tsx,module.css}` (new), the events POST + the new import preview/commit routes, the coach schedule page, the team Overview anchor, `_LineupEditor.tsx`, `coaches.module.css`, `lib/help-content/coaches.tsx`, `scripts/fix-coach-event-times.mjs` (new), `tests/unit/coach-schedule-intelligence.test.ts` + `tests/uat/scenarios/coach-schedule-smoke.spec.ts` (new). **NO migration.** [[design-system]] [[design-principles]]
 
 ---
+
+> ⚠⚠ **RULE 1 BELOW (D-E9, the opt-in decision emails) WAS REVERSED ON 2026-08-26 — see the top
+> of this file.** The switch, the per-row send, the confirm and the welcome email are DELETED on
+> both surfaces; the platform sends a tryout family nothing on a coach's behalf. The rest of this
+> entry (the shared scorer, the re-keyed lost link) stands.
 
 ### 2026-07-30 — Coach Portal Chunk E: family emails are OPT-IN per decision write; a coach scores through the SAME scorer as a volunteer, never a second one; a lost link is re-keyed on the SAME identity (mockups `claude.ai/code/artifact/82b6eac7-89b0-4c28-9d75-777e54e7f86d` rev 2 = binding; D-E1–D-E8 ratified at the recommendations + D-E9 owner-directed, 2026-07-30)
 

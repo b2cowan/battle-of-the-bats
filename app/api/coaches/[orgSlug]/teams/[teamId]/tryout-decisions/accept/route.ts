@@ -9,15 +9,13 @@ import {
   TryoutAcceptError,
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
-import { tryoutAcceptedHtml } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { denyUnless, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; contactEmail?: string; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+  | { ok: true; orgId: string; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 // Fee-setup follows the coach's EXISTING dues access (OQ3): any assigned coach can set dues on the
 // dues page today, so an assigned coach can accept-with-fees here too. No extra gate beyond assignment
@@ -33,7 +31,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!assignment) return { ok: false, res: forbidden() };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  return { ok: true, orgId: ctx.org.id, team, programYear, contactEmail: ctx.org.contactEmail ?? undefined, assignment };
+  return { ok: true, orgId: ctx.org.id, team, programYear, assignment };
 }
 
 /** Prefill for the accept drawer: the candidate's identity/guardian + the team's standard fee schedule. */
@@ -83,9 +81,6 @@ export const POST = withObservability(async (req: Request,
 
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';
-  // D-E9: the welcome email follows the same opt-in switch as every other decision email —
-  // a coach welcoming families personally isn't second-guessed by an automatic send.
-  const notifyFamily = body.notifyFamily === true;
 
   const reg = await getRepTryoutRegistration(registrationId);
   if (!reg || reg.programYearId !== r.programYear.id) return NextResponse.json({ error: 'not_found' }, { status: 404 });
@@ -106,30 +101,10 @@ export const POST = withObservability(async (req: Request,
 
   try {
     const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
-    // Same welcome email the admin accept sends — but only when the coach's switch says so
-    // (D-E9), and AWAITED: no post-response work guarantee on this platform (Amplify gotcha).
-    if (notifyFamily && reg.guardianEmail?.trim()) {
-      await sendTransactionalEmail({
-        key: 'tryout_offer_accepted',
-        to: reg.guardianEmail,
-        vars: {
-          guardianFirstName: reg.guardianFirstName,
-          playerFirstName: reg.playerFirstName,
-          playerLastName: reg.playerLastName,
-          teamName: r.team!.name,
-          yearName: r.programYear.name,
-        },
-        defaultSubject: `${r.team!.name} — Welcome to the Team!`,
-        defaultHtml: tryoutAcceptedHtml({
-          guardianFirstName: reg.guardianFirstName,
-          playerFirstName: reg.playerFirstName,
-          playerLastName: reg.playerLastName,
-          teamName: r.team!.name,
-          yearName: r.programYear.name,
-          contactEmail: r.contactEmail,
-        }),
-      }).catch(e => console.error('[email] tryout accepted (coach):', e));
-    }
+    // ⚠ NO WELCOME EMAIL. Rostering a player is the record of a conversation the coach has
+    // already had — and by the time it happens the family has signed a letter this platform did
+    // not write. A "Welcome to the Team!" from FieldLogicHQ arriving after that is at best noise
+    // and at worst contradicts it (owner ruling 2026-08-26). Do not reinstate behind a switch.
     // Redact on the way out like every other roster read. `tryouts` and `rosterPii` are independent
     // grants, so a tryouts-only assistant reached this with an unredacted player attached. Harmless
     // today — the row was just created from registration fields they already see, and medical /

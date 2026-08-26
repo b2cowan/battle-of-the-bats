@@ -10586,7 +10586,7 @@ a permanent safety net. Plan: `docs/projects/active/PITCH_DECK_STUDIO_PLAN.md`.
 ## §79 · Every PDF knows whose paper it is — and a coach can make it theirs
 
 **BUILT 2026-08-23, committed `d2b1e469` (dev; incl. /simplify + /review passes and the help-guide sync).** PDF Export Quality Phase 1 (D1–D4 + honest menus). Plan:
-`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4. Approved mockup:
+`docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4. Approved mockup:
 https://claude.ai/code/artifact/b72a7ee2-4c8d-4339-9b7a-8e5d3d6b1b93. Migration 259 dev-only.
 
 - [ ] **An untouched org's PDF is presentable with zero configuration.** Export any admin report
@@ -10795,7 +10795,7 @@ session, not a bug fix.
 ## §82 · Every register survives being emailed to a treasurer
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 1 of 6: Registers**. Plan:
-`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
 `PDF_EXPORT_QUALITY_P2_REGISTERS_BUILD_PROMPT.md`. Decision gallery (rendered options + the two
 defects rendering turned up): https://claude.ai/code/artifact/d77e4b37-6c6e-4b2e-8a5e-c38f08234fdf
 — owner picked the tryout diet (short codes + legend) and approved both plumbing fixes. No migration.
@@ -10909,7 +10909,7 @@ session, owner-ruled from drawings, separately gated build).
 ## §84 · A coach can hand one family their own money — and nobody else's
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 2 of 6: Statements & handouts**.
-Plan: `docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+Plan: `docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
 `PDF_EXPORT_QUALITY_P2_STATEMENTS_BUILD_PROMPT.md`. Checkpoint-1 mockups (owner picked the drawn
 one-pager, both doors, coach-hands-it-over):
 https://claude.ai/code/artifact/43b20053-b0d5-4f8c-8f33-9f82c9855da8 · built gallery:
@@ -11101,7 +11101,7 @@ centralization P1 leftover, unbaselined. Not fixed here because it belongs to th
 ## §86 · A coach can pin the roster up without publishing fourteen birthdates
 
 **BUILT 2026-08-23 (dev).** PDF Export Quality **Phase 2, pass 3 of 6: Rosters**. Plan:
-`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
+`docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4; build prompt
 `PDF_EXPORT_QUALITY_P2_ROSTERS_BUILD_PROMPT.md`. Checkpoint-1 decisions (owner took all four
 recommendations): https://claude.ai/code/artifact/c189810f-c10f-468a-ab14-7efd1fca0c9a · built
 gallery: https://claude.ai/code/artifact/eaa601d4-0438-4046-947c-99b24d957ec5. No migration.
@@ -11522,7 +11522,7 @@ one-sheet fix. Owner to say whether to sweep it.
 ## §91 · A coach can run practice off the sheet, and a volunteer has a box to tick
 
 **BUILT 2026-08-24 (dev).** PDF Export Quality **Phase 2, pass 4 of 6: Working sheets**. Plan:
-`docs/projects/active/PDF_EXPORT_QUALITY_PLAN.md` §4 + `PRACTICE_SHEET_STRUCTURE_PLAN.md`; build
+`docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md` §4 + `PRACTICE_SHEET_STRUCTURE_PLAN.md`; build
 prompt `PDF_EXPORT_QUALITY_P2_WORKING_SHEETS_BUILD_PROMPT.md`. Checkpoint-1 decisions (owner took
 all seven recommendations): https://claude.ai/code/artifact/d3675cd6-ea40-47a6-b7c9-73c1d7a90616 ·
 built gallery: https://claude.ai/code/artifact/771dd950-ab5c-40db-9b2d-79b0ab05e854. No migration.
@@ -12688,9 +12688,17 @@ drawing is in warm. **Check the band and the pill in BOTH.**
 - [ ] **Open it.** One row per tag actually used on this book, each with its **count** in the label
       ("Spring classic (2)"), an **All tags** row at the top, and a **coloured dot** per row —
       **blue** for a tag the club shares, olive/lime for the team's own.
-- [ ] ⚠ **The blue dot replaced a colour legend that only ever rendered on Payables.** Confirm there
-      is no legend strip under the toolbar on either face any more, and that the distinction is
-      still being made.
+- [ ] ⚠⚠ **THE BLUE DOT MUST ACTUALLY BE BLUE — check this in the WARM (cream) theme especially.**
+      Club permits blue, Spring classic olive, matching the chips on the rows below.
+      **Found broken by the owner on the first walk (2026-08-26) and fixed.** The cream theme remaps
+      BOTH the blue and the lime token to olive, and the warm rescue that exists for org CHIPS had
+      never listed the DOT — so both dots came out olive and the distinction vanished. ⚠ It had been
+      wrong in the tag picker since warm shipped; P3 made it load-bearing by moving the filter onto
+      these dots **and deleting the colour legend that used to say the same thing in words**, so
+      cream users briefly had neither. Also worth opening the tag picker inside a record — same dot,
+      same fix.
+- [ ] The legend strip is gone from under the toolbar on both faces, and the dot is now carrying
+      that meaning on its own.
 - [ ] **Tick Spring classic.** The pill reads **Spring classic** (its name, not "1 selected"). The
       book narrows.
 - [ ] **The band above the book states the answer** — the dollars **first**, big and bold: *"$X
@@ -12704,6 +12712,34 @@ drawing is in warm. **Check the band and the pill in BOTH.**
 - [ ] **Untick everything** (or use **All tags**). The book, the Balance column and Cash on hand all
       come back; the band goes.
 - [ ] **Export while a tag is on.** The file is what the screen is showing, as it was before.
+
+### A2 · The commitment panel — three findings from the owner walk, 2026-08-26
+
+⚠ **Payables-drawer surface, NOT P3's** — reported while walking §104 and fixed in the same pass.
+
+- [ ] **Open a commitment and read it WITHOUT pressing Edit.** THREE labelled sections, in this
+      order: **Scheduled**, **Payments recorded**, **Details** — the last carrying **Payee**,
+      **Tags**, **How**, **Notes** — each row shown only when the bill has one. ⚠⚠ The panel used to
+      show the schedule and nothing else, so a payee or a tag could only be read by opening **Edit**
+      (a write door) and backing out — which meant a **read-only money assistant could not read them
+      at all**, the Edit button being gated away from them. Re-check as that account in Part C.
+- [ ] ⚠⚠ **DETAILS MUST BE LAST, NOT FIRST — the owner corrected the first build on sight.** These
+      are precisely the fields the edit form keeps behind **More** because they are used least, so
+      opening the panel with them inverts that judgement and pushes the schedule and **Still owing**
+      — what the panel is FOR — down the screen. If Details sits above the schedule, that is the
+      regression. (The build argued for omitting empty rows *so the schedule would not be pushed
+      down*, then pushed it down anyway.)
+- [ ] The note is a row in that block, **back at the bottom where it always was**. ⚠ It moved up
+      briefly on a real observation — under the settlement total it read as a comment on the
+      PAYMENTS rather than on the bill — but the fix for that is the **Details** label, not
+      promotion to the top.
+- [ ] **Edit → Cancel returns to the COMMITMENT PANEL, not the list.** Same for **Add an
+      installment** and **Record**, and same on **save** (with the new figures showing). ⚠ **Delete
+      is the deliberate exception** — it returns to the list, because the bill no longer exists.
+- [ ] **The tag legend under the Tags box reads BLUE for "Shared by your organization."** ⚠ Third
+      site of the same colour collapse and the worst of them: its swatches were coloured inline,
+      which no theme override can reach, so on cream it drew two identical olive squares and
+      labelled one of them "shared by your organization" — a legend teaching the opposite.
 
 ### B · The same pill and the same band — Payables
 
@@ -13197,3 +13233,270 @@ typecheck clean; lint 0 errors; spelling gate clean. ⚠ The **full** suite repo
 the two reds are in `tests/unit/family-email-guard.test.ts`, owned by another session whose
 `lib/email.ts` / `lib/family-email.ts` edits are in the tree. Not this pass's, and not to be
 signed off as this pass's.
+
+## §107 · The paper finally gets a gate — and it goes red on its first run — BUILT, awaiting QA
+
+**PDF Export Quality, Phase 3 — the last phase. The programme closes with this.**
+
+Nothing in this repo had ever rendered a PDF in a check. Every defect the six Phase-2 passes fixed
+— a squashed crest, a shredded column heading, a report quietly apologising that a column did not
+fit, a footer that lied about the page count, a run sheet printed across its own footer — survived
+every automated gate and was found by a person generating the file and looking at it. **That is now
+a build failure instead of a person remembering.**
+
+### What the owner sees
+
+Nothing on screen; there is no customer-visible change in this pass. What changes is what happens
+when somebody widens a column, adds a field or renames a heading: the build says which promise broke
+and on which document, before a customer prints it.
+
+- **It fires only when it can matter.** ~3.5s when a commit stages the export engine, the assemblers
+  that feed it, its fixtures, or a screen that imports an exporter — **0.1s otherwise**. One full
+  sweep sits in the release checklist (§1d-4) as the backstop for the one gap the trigger cannot see.
+- **26 documents → 99 rendered files, 189 pages read back.** `npm run check:pdf`.
+
+### ⚠ Four things that contradicted the brief, all argued at checkpoint 1
+
+1. **The cost was ~30× lower than budgeted, because the browser was never needed.** The brief priced
+   the read-back at 13.7s inside Chromium. In plain Node it is **0.4s**, with no Playwright at all.
+   This did NOT reopen the cadence ruling — triggered, never scheduled, stands.
+2. **The mutation tester the brief said to "productionise" had never been written.** §106's nineteen
+   deliberate defects were run by hand. It is net-new here, and it is the most valuable single piece.
+3. **Driving the gate off `lib/export/catalog.ts` would have silently missed five documents** —
+   including the two the last two passes actually fixed. The catalog registers table export MENUS
+   and has no entry for the run sheet, the poster, the batting card, the bracket or the development
+   summary. The gate reads the import graph instead.
+4. **"Seventeen documents" was low, and a plain grep is not enough to find them.** There are **26**,
+   reached from **25** screens — and **six coach money screens produce a PDF through an intermediate
+   module**, so searching the app for `downloadPDF` finds none of them.
+
+### ⚠⚠ THE GATE'S FIRST CATCH IS A REAL DEFECT — REPORTED, NOT FIXED. AN OWNER CALL IS OWED.
+
+**Three coach money documents lose columns on paper, and say so, for every club that has not changed
+its orientation preference:**
+
+| Document | Columns the coach does not get |
+| --- | --- |
+| **Payables** | Still owing · Payee · Tags |
+| **Transactions** | Balance · Status |
+| **Fundraisers** | Player credits · Team net · Players · Tags |
+
+**Verified structural, not a fixture artifact** — rendered with single-character cells, the HEADINGS
+ALONE still do not fit portrait. The cause is one line's absence: the coach money exports declare no
+orientation, so they inherit the org preference (portrait by default), while the equally wide reports
+that DO declare landscape for themselves — tournament results, club Budget vs. Actual — fit in full.
+
+Not fixed here, because changing a shipped document's shape is an owner decision and Phase 3's scope
+is the gate. Each is recorded against the exact columns it loses, so **if a fourth column starts
+dropping the build goes red anyway.**
+
+### The proof of done is NOT "it passes"
+
+The deliverable is a check, so the only meaningful evidence is that it fails when it should.
+**Nine defects from the six shipped passes were deliberately reinstated and all nine were caught by
+the rule that was supposed to catch them** (`npm run check:pdf:mutate`, working tree restored either
+way). Two of those nine were found only because the harness insists on the rule NAME rather than a
+non-zero exit:
+
+- **Six early "catches" were child-process crashes, not detections** — a Windows path where a URL was
+  required. A crash exits non-zero and reads exactly like a gate doing its job.
+- **The run-sheet footer mutation went GREEN the first time.** Moving the floor 16mm still left
+  18.6mm of clearance with the existing fixtures — a fixture that cannot produce the bad state
+  proves nothing about the rule that would catch it (the §101 lesson, again).
+
+### What it asserts, and what it deliberately leaves alone
+
+`tests/unit/pdf-export-contract.test.ts` already holds **119 tests covering every invariant on the
+brief's list**, in under a second, with no browser. So this asserts none of them. It asserts only
+what those fakes are structurally incapable of seeing: real text metrics (the fake measures 2mm per
+character — an average, wrong in both directions), **real pagination** (the table fake performs no
+layout at all and invents where it finished, so every page count in that suite is a fiction), and
+the finished bytes. Five rules: a fixed-column report never apologises · every kept heading is on
+the paper · nothing is drawn into the footer or off the paper · every page carries its footer · the
+page total is true against the file's real page count.
+
+**Cells still break mid-word in a narrow column** ("chen.family@e / xample.ca"). Pre-existing, out of
+scope by the brief, and deliberately NOT asserted on — its cause is the shared column-floor rule and
+changing it moves column widths on every table in the product.
+
+### Owner QA — what to walk
+
+1. `npm run check:pdf` → green, with the three reported findings listed above it.
+2. `npm run check:pdf:mutate` → 9/9, then `git status` to confirm the working tree came back clean.
+3. `npm run check:pdf:list` → the 26 documents and the screens each stands for; check nothing you
+   print is missing.
+4. **The decision owed:** should the three coach money documents declare landscape, the way tournament
+   results and club Budget vs. Actual already do? That restores nine lost columns across three
+   documents. It changes the shape of paper a coach may already be filing.
+
+---
+
+## §108 · The platform stops writing the offer letter — tryout decision emails removed outright — BUILT, awaiting QA
+
+**Owner ruling 2026-08-26, binding.** *"Offers come with custom letters they need to sign, often
+conditional requiring conversations and some back and forth potentially, an email from FLHQ I would
+never expect to be used in this case and therefore is only a risk of being sent when someone fat
+fingers something."* Plan + PM brief: `COACH_TRYOUT_EMAIL_REMOVAL_{PLAN,PM_BRIEF}.md`. **This
+reverses D-E9 (2026-07-30).**
+
+### What the owner sees
+
+**Tryouts → Decide** loses the "Email families my decisions" switch above the buttons, and every
+offered player's row loses "✉ Email this offer". Offer / Waitlist / Not this season now only record
+the decision. Accepting a player onto the roster sends nothing either. **The same removal on the
+club-admin tryouts screen** (Rep Teams → team → program year → Tryouts).
+
+- The **"Pass on ___?" confirmation is gone** — it existed only because a release email could not be
+  unsent. A pass is now a private record, changeable in one tap.
+- **Response badges are gone** (awaiting / family accepted / declined / expired), along with the
+  "declined by family" tally and the stale-offer banner. The offered row's button reads plainly
+  **Accept → add to roster**.
+- The **family Accept/Decline page is retired** — it only ever arrived inside the offer email. A link
+  already sitting in a family's inbox stops working.
+- **Tryout report** loses three figures that could only count emailed offers (awaiting reply, offers
+  expired, declined by family). Turnout / evaluated / **Offers extended** / accepted / on-roster are
+  untouched — "offered" is stamped when the decision is recorded, never when mail goes out.
+- **"Tryout offer response" disappears from a coach's notification settings.**
+- **Kept on purpose:** the *"application received"* receipt a family gets when **they** submit the
+  public form (their receipt for their own action — without it an applicant has no proof it landed),
+  and the "no email on file" chip, reworded, because a coach who now delivers every decision
+  personally needs it more.
+
+### ⚠ Five customer-facing PROMISES had to be rewritten, and four were found by `/review`, not by me
+
+The removal itself propagated cleanly — the security, data-contract, correctness and regression
+lenses found **no Critical or High defects**. What nearly shipped was the product still *promising*
+the emails, in five places, in five different vocabularies:
+
+| Surface | What it said |
+| --- | --- |
+| **Public tryout form** | *"We'll email you about this application either way — offers, waitlist and roster updates."* |
+| **Club-admin help, consent FAQ** | *"Status emails about their own application (offer, waitlist, decline, welcome) … are sent regardless — the form says so plainly."* |
+| **Families help, unsubscribe FAQ** | *"Dues reminders and tryout emails still go out. A family can't switch off a bill, or an offer of a roster spot…"* |
+| **Coach "How tryouts work" guide** | *"Reach families yourself — or turn on family emails and offers land with a secure reply link."* |
+| **Demo seed, public tryout page** | *"Decisions go out by email within a week of callbacks."* |
+
+⚠⚠ **The first sweep grepped the control LABELS and every one of these phrased the idea differently,
+so none matched.** The club-admin one sat **15 lines below** a passage that HAD been rewritten in the
+same file, and it cross-referenced the very form sentence just corrected. The families one is the
+script staff read to a complaining parent — it would have produced a false statement *to a family*.
+The demo one is **seeded data on a page that is live on production**, unreachable by any code grep.
+**Sweep the concept in the customer's words, not the identifiers the code uses.**
+
+### What to walk
+
+1. **Coach board** — Tryouts → Decide on a team with candidates. Confirm **no email switch above the
+   buttons** and **no send button** on an offered row. Make each decision; confirm it sticks, no
+   confirmation dialog appears on "Not this season", and no email arrives anywhere.
+2. **Accept a player** onto the roster with fees. Confirm no welcome email.
+3. **Club-admin tryouts screen** — same: no checkbox above the tabs, Extend Offer / Waitlist /
+   Decline / Accept all silent, and the applicant panel shows no "Offer response" section.
+4. **Tryout report** — confirm the funnel reads turnout → evaluated → offers extended → accepted →
+   on roster with no gap or zeroed column.
+5. **Help** — search "email" in coach help and in the club Rep Teams help; confirm nothing describes
+   a switch or an offer email.
+6. **Public tryout form** — confirm it promises only the application receipt.
+
+### Gate
+
+Typecheck 0 · units **2,596/2,596** · lint 0 errors · token, CSS-purity, spelling, contrast, date,
+dictionary, index-coverage, org-context, observability, marketing-shot and demo gates green.
+`check:layout` on **coach-tryouts: zero new findings** at 361/390/768/1440.
+
+⚠ **Two honest gaps.** The full layout sweep **aborted on the memory floor** at screen 6 of 118 (an
+abort is a failure, not a pass) — the scoped re-run above is what covers this change; the rest of the
+portal is unmeasured this pass. And **schema parity is red on migrations 262/263 from other work**
+(dev-only), which predates this change.
+
+### ⚠ Owed before this can ship
+
+- **Migration 264 is applied NOWHERE** (it retires three now-unsendable platform email templates).
+- **The demo fix is SEED DATA** — only a full demo reseed writes it. The demo world still shows the
+  old sentence until reseeded, on dev now and **on production at release**.
+
+---
+
+## §109 · Money stops flashing — one loading state, one convention, and a retry that a thumb can hit — ✅ OWNER QA PASSED 2026-08-26
+
+**✅ OWNER QA PASSED 2026-08-26** (owner sign-off, same session as the build). No migration; no
+schema change; nothing owed before this can ship. The steps below are kept as the walked record.
+
+**BUILT ON DEV 2026-08-26.** Raised by the owner from two screenshots: Money's loading text was
+bigger than the rest of the portal, said only "Loading", and had no pulsing dot — and Transactions
+flashed its empty-state card before the data arrived.
+
+### What changed, in the owner's terms
+
+1. **One loading state across the whole coach portal.** Money, Roster, team home, Settings, Staff,
+   Tryout history, announcements, team chat, the awards certificate, the depth chart, development,
+   the recap preview and the schedule's attendance/lineup panels had each drifted onto whatever
+   muted text style was nearest. All now use the house pulsing-dot line, at the house size, naming
+   what is coming ("Loading the register…", "Loading the dues book…"). The last three-period
+   "Loading..." spellings are gone.
+2. **Transactions no longer flashes "Nothing on the books yet".** A superseded read was switching
+   the screen from loading to done having written nothing, so the full empty-state card — headline,
+   teaching copy, Add Expense and Add Income — rendered for a beat before the real register
+   replaced it.
+3. **Recording money no longer blanks the screen.** Rows change under the coach instead of the whole
+   book dropping out and coming back. Club was the last tab still blanking on someone else's write;
+   it joined too.
+4. **Figures can no longer silently revert** on Budget Plan, Budget vs. Actual and Fundraisers — a
+   slow older read can no longer overwrite a newer one.
+5. **A failed load is no longer a dead end.** All seven Money tabs and the hub offer *Try again*.
+
+### The rule this establishes (binding for the next money panel)
+
+Three cases, not two — written once in `lib/coach-money-refresh.tsx`:
+- **The coach asked for it** (mount, *Try again*) → loud: spinner, and a failure takes the screen.
+- **The coach's OWN write** → quiet about the spinner, **never** about the failure. The screen it
+  would be keeping is the one the save just made wrong.
+- **Somebody ELSE's write** → quiet: keep the last good screen, swallow the failure.
+
+### A · The loading line, on every screen
+
+- Open each Money tab cold. Small text, pulsing dot, a sentence naming the screen — identical in
+  weight and position to Schedule's "Loading events…".
+- Same on Roster, team home, Settings, Staff, Tryout history, announcements, chat.
+- Walk **both themes**: warm is the default, and the dot takes its colour from a remapped token.
+
+### B · The flash is gone
+
+- Open Transactions on a team **with** rows. The empty-state card must never appear, at any speed.
+- Open it on a team with **no** rows. The empty state appears once, after loading — not before.
+
+### C · Recording money leaves the screen up
+
+- On Transactions, record an expense. The book must not blank; the new row simply appears.
+- With Budget vs. Actual open, record money from the hub. The report refreshes without flashing.
+
+### D · Honesty when a refresh fails
+
+- On Transactions, save a record with the network throttled to failing. Expect: the save succeeds,
+  the figures stay on screen, and a line above the book says the figures may be out of date, with
+  **Refresh**. It must **not** silently show pre-save numbers.
+
+### E · The retry is reachable
+
+- At 361 / 390 / 768, the *Try again* control is a real target (44px), not a hairline of text.
+
+### Gate
+
+Typecheck 0 · units **2,596/2,596** · lint 0 errors · CSS-purity, token, spelling, index-coverage,
+dictionary, org-context, observability and demo gates green.
+`check:layout` on the seven money screens at 361/390/768/1440: **zero findings from this change**
+after the tap-floor fix below.
+
+⚠ **What the gates caught that nothing else did.** The rendered check found the new *Try again*
+button at **15px** against the 44px floor on all three touch widths — invisible to types, tests,
+lint and four review agents, because it only exists once a browser has laid the page out. Fixed.
+
+⚠ **Found by `/review`, both fixed, both worth remembering.** (1) The post-save refresh was
+swallowing its own failures — a coach on a bad connection could have re-recorded a payment they had
+already made. (2) Six UAT specs waited on the literal text "Loading…" to disappear as their signal
+that a screen had loaded; naming the loading states broke that match and **silently turned the wait
+into a no-op**. They now watch the loading element itself, which no copy change can break.
+
+### ⚠ Pre-existing, surfaced here, NOT fixed (belongs to the header-actions work)
+
+- **"Record money" measures 31px at 768** on Budget vs. Actual and Fundraisers — under the same tap
+  floor. It is a page-header action from other in-flight work and was deliberately left alone.

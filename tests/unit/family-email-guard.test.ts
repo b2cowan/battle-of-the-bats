@@ -88,9 +88,12 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
     what: 'The org admin\'s dues wave' },
   { file: 'lib/dues-reminders.ts', posture: 'transactional',
     what: 'The nightly automatic dues sweep — unattended, so the least visible of the four' },
-  { file: 'lib/tryout-notifications.ts', posture: 'transactional',
-    what: 'Tryout offer, waitlist and release. Suppressing these would cost a child a roster spot ' +
-          'because a parent unsubscribed from newsletters two seasons ago' },
+  // NOTE (2026-08-26): `lib/tryout-notifications.ts` used to sit here — tryout offer, waitlist and
+  // release emails, transactional and suppression-skipping on purpose. It is GONE, along with the
+  // switch that fired it, on both the coach board and the club-admin screen: a rep offer is a
+  // custom letter the family signs, so the platform sends nothing on a coach's behalf (owner
+  // ruling, binding). One fewer sender outside the suppression door — but do not read that as
+  // progress on the suppression audit; the capability was removed, not routed through the guard.
 
   // ── The one that is simply wrong, kept visible. ────────────────────────────────────────────
   { file: 'lib/basic-coach-announcements.ts', posture: 'known-gap',
@@ -191,7 +194,7 @@ describe('Family email — every sender is accounted for', () => {
   it('EVERY transactional notice carries the shared footer — the price of skipping the opt-out', () => {
     const transactional = FAMILY_SENDERS.filter(s => s.posture === 'transactional');
     assert.equal(
-      transactional.length, 5,
+      transactional.length, 4,
       'The transactional set changed size — re-audit it. Each member skips the unsubscribe check, ' +
       'so each one owes a family an explanation of why it arrived anyway.',
     );
@@ -199,7 +202,7 @@ describe('Family email — every sender is accounted for', () => {
       // Dues senders build their own body and reach the footer via the dues template; the tryout
       // sender delegates its whole body to templates in lib/email.ts. Accept either route in, but
       // require that SOME path to the shared footer exists.
-      const body = read(s.file) + (/tryout/.test(s.file) ? read('lib/email.ts') : '');
+      const body = read(s.file);
       assert.ok(
         /transactionalFamilyFooterHtml|duesReminderFooterHtml|duesReminderEmail/.test(body),
         `${s.file} no longer reaches the shared transactional footer. It is exempt from the ` +
@@ -209,14 +212,65 @@ describe('Family email — every sender is accounted for', () => {
     }
   });
 
-  it('all three tryout templates carry the footer, not just the one someone remembered', () => {
-    const emailSrc = read('lib/email.ts');
-    const uses = emailSrc.match(/transactionalFamilyFooterHtml\(/g) ?? [];
+  /**
+   * ⚠⚠ THIS TEST REPLACED ONE THAT ASSERTED THE OPPOSITE. Until 2026-08-26 it demanded that all
+   * three tryout templates (offer, waitlist, release) carry the shared transactional footer. Then
+   * the owner ruled the templates should not exist: a rep offer is a custom letter the family
+   * SIGNS — frequently conditional, frequently negotiated — so FieldLogicHQ sends a tryout family
+   * nothing as a consequence of a coach's or club admin's decision. The switch that fired them, the
+   * per-row "Email this offer" button, and the family Accept/Decline reply loop the offer email
+   * carried all went with them.
+   *
+   * The reason this is a BUILD GUARD and not just a deletion: every one of those senders was
+   * off-by-default and perfectly well-behaved, which is exactly the shape of thing a future change
+   * reinstates as "harmless, and it's opt-in". It is not the default that was wrong; it was the
+   * capability. Plan: docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md.
+   */
+  it('NOTHING mails a tryout family on a coach\'s behalf — the decision senders stay deleted', () => {
     assert.ok(
-      uses.length >= 3,
-      `Expected the shared transactional footer in all three tryout templates (offer, waitlist, ` +
-      `release) — found ${uses.length}. A family that gets a release email with no sender and no ` +
-      'explanation is the case this rule was written for.',
+      !existsSync(join(REPO, 'lib/tryout-notifications.ts')),
+      'lib/tryout-notifications.ts is back. That module WAS the tryout decision mailer (offer, ' +
+      'waitlist, release). Its removal is an owner ruling, not cleanup — do not restore it, ' +
+      'behind a switch or otherwise.',
+    );
+
+    const emailSrc = codeOf('lib/email.ts');
+    for (const fn of ['tryoutOfferHtml', 'tryoutWaitlistHtml', 'tryoutDeclinedHtml', 'tryoutAcceptedHtml']) {
+      assert.ok(
+        !new RegExp(`\\b${fn}\\b`).test(emailSrc),
+        `lib/email.ts defines ${fn} again. A coach's offer / waitlist / release / welcome is the ` +
+        'coach\'s own letter to write. Only tryoutRegistrationConfirmationHtml may live here — ' +
+        'that one is the family\'s receipt for the family\'s OWN form submission.',
+      );
+    }
+
+    // The two decision surfaces, and the accept that follows them. None may reach a transport.
+    const DECISION_SURFACES = [
+      'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-decisions/route.ts',
+      'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-decisions/accept/route.ts',
+      'app/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]/route.ts',
+    ];
+    for (const file of DECISION_SURFACES) {
+      const code = codeOf(file);
+      assert.ok(
+        !CALLS_RAW_SEND.test(code) && !/sendTransactionalEmail\s*\(|sendFamilyEmail\s*\(/.test(code),
+        `${file} sends email again. Recording a tryout decision must reach no inbox — the coach ` +
+        'delivers it themselves, with the signed conditional letter a platform email cannot be.',
+      );
+      assert.ok(
+        !/notifyFamily/.test(code),
+        `${file} carries a notifyFamily flag again. The flag WAS the opt-in switch; reintroducing ` +
+        'it is reintroducing the control, whichever way it defaults.',
+      );
+    }
+
+    // The family self-serve reply loop had exactly one delivery vehicle (the offer email), so it
+    // cannot come back without one. Its absence is what makes the removal complete rather than
+    // cosmetic — a live token page reachable from an old inbox would be the same bug, quieter.
+    assert.ok(
+      !existsSync(join(REPO, 'app/tryout-response')) && !existsSync(join(REPO, 'app/api/tryout-response')),
+      'The family Accept/Decline reply page is back. It was reachable only from the offer email ' +
+      'that no longer exists, so restoring it either does nothing or means the emails returned.',
     );
   });
 

@@ -335,10 +335,17 @@ export default function TryoutRegisterForm({
         </div>
         {errors.consent && <p className={styles.errorMsg} style={{ marginTop: '0.6rem' }}>{errors.consent}</p>}
 
-        {/* Status emails about THIS application are transactional — they were never something a
-            family should have to "consent" to in order to apply (CASL unbundling, 2026-07-30). */}
+        {/* ⚠ THIS SENTENCE IS A PROMISE TO A FAMILY — keep it matched to what actually sends.
+            It used to read "We'll email you about this application either way — offers, waitlist
+            and roster updates", which stopped being true on 2026-08-26 when tryout decision emails
+            were removed entirely (owner ruling: an offer is a custom letter the club writes, so
+            the platform sends nothing on a coach's behalf). The confirmation receipt below is now
+            the ONLY email this form causes. The receipt itself is transactional and was never
+            something a family should have to "consent" to in order to apply (CASL unbundling,
+            2026-07-30) — which is why it still sits outside the optional marketing box. */}
         <p className={styles.consentText} style={{ display: 'block', margin: '0.8rem 0 0' }}>
-          We&apos;ll email you about this application either way — offers, waitlist and roster updates.
+          We&apos;ll email you a confirmation that this application was received. Any news about a
+          spot comes from {orgName} directly.
         </p>
 
         {/* Genuine MARKETING consent, optional and unchecked — club news, not application status. */}

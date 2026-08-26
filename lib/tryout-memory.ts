@@ -65,7 +65,14 @@ interface PriorSeasonRecord {
  * cut-last-year-came-back kid), so the card says so rather than letting "Offered" imply a season
  * that never happened.
  */
-const IMPLIES_A_SPOT = new Set(['Offered', 'Offered — family accepted', 'Accepted', 'Waitlisted']);
+// ⚠ 'Offered — family accepted' was a member here until 2026-08-26 and has been REMOVED, along
+// with a comment claiming it still had to match "old rows". That claim was wrong: `label` below is
+// `decisionLabel(priorReg)` — RECOMPUTED from the registration's `status` on every read, never a
+// stored string — so once that label variant was deleted from `decisionLabel`, no historical row
+// could produce it either. Behaviour is unchanged: a prior candidate whose family accepted via the
+// retired reply loop still has status 'offered' (that loop never moved status — the coach
+// finalized), so they land on 'Offered', which is matched here.
+const IMPLIES_A_SPOT = new Set(['Offered', 'Accepted', 'Waitlisted']);
 
 /** Scale fallback, rounding and category projection are `tryoutSnapshotCore`'s — the same
  *  projection the stored development baseline uses, so the two can never round differently. */

@@ -9,11 +9,9 @@ import {
   updateRepTryoutRegistrationStatus,
   acceptTryoutAndAddToRoster,
   TryoutAcceptError,
+  clearTryoutOffer,
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
-import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
-import { tryoutAcceptedHtml } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -94,11 +92,6 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const body = await req.json();
-  const contactEmail = ctx!.org.contactEmail ?? undefined;
-  // D-E9 (extended to the admin surface, owner-directed 2026-07-30): family emails are OPT-IN
-  // everywhere decisions are made. The flag rides each status write from the visible switch —
-  // the server defaults to record-only, so the failure direction is always "no email".
-  const notifyFamily = body.notifyFamily === true;
 
   // Notes-only update (no status change)
   if (body.status === undefined && body.adminNotes !== undefined) {
@@ -119,15 +112,6 @@ export const PATCH = withObservability(async (req: Request,
     );
   }
 
-  const emailParams = {
-    guardianFirstName: reg.guardianFirstName,
-    playerFirstName: reg.playerFirstName,
-    playerLastName: reg.playerLastName,
-    teamName: team.name,
-    yearName: programYear.name,
-    contactEmail,
-  };
-
   if (newStatus === 'accepted') {
     // Optional roster fields + optional dues schedule ride along on the accept (Phase 2B.4). The
     // upgraded accept is atomic (mig-169 RPC): roster + status + dues all-or-nothing.
@@ -143,23 +127,7 @@ export const PATCH = withObservability(async (req: Request,
 
     try {
       const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
-      // Welcome email follows the same opt-in switch as every other decision email (D-E9),
-      // and is AWAITED — no post-response work guarantee on this platform (Amplify gotcha).
-      if (notifyFamily && reg.guardianEmail?.trim()) {
-        await sendTransactionalEmail({
-          key: 'tryout_offer_accepted',
-          to: reg.guardianEmail,
-          vars: {
-            guardianFirstName: emailParams.guardianFirstName,
-            playerFirstName: emailParams.playerFirstName,
-            playerLastName: emailParams.playerLastName,
-            teamName: emailParams.teamName,
-            yearName: emailParams.yearName,
-          },
-          defaultSubject: `${team.name} — Welcome to the Team!`,
-          defaultHtml: tryoutAcceptedHtml(emailParams),
-        }).catch(e => console.error('[email] tryout accepted:', e));
-      }
+      // ⚠ NO WELCOME EMAIL — see the ruling comment at the bottom of this handler.
       return NextResponse.json({ registration, player });
     } catch (e) {
       if (e instanceof TryoutAcceptError) {
@@ -176,19 +144,14 @@ export const PATCH = withObservability(async (req: Request,
     body.adminNotes !== undefined ? body.adminNotes : reg.adminNotes,
   );
 
-  // Family-facing side effects (offer link + branded offer/waitlist/release emails) — same shared
-  // path as the coach decision board (Phase 2B.5), and since 2026-07-30 the same OPT-IN rule
-  // (D-E9 extended): emails fire only when the request's switch says so.
-  await applyTryoutDecisionSideEffects({
-    reg: registration,
-    newStatus,
-    notifyFamily,
-    teamName: team.name,
-    yearName: programYear.name,
-    orgName: ctx!.org.name,
-    orgLogoUrl: ctx!.org.logoUrl ?? undefined,
-    contactEmail,
-  });
+  // ⚠ NO FAMILY-FACING SIDE EFFECT, on this surface or the coach decision board (owner ruling
+  // 2026-08-26, binding). A rep offer is a custom letter the family SIGNS — frequently
+  // conditional, frequently negotiated — and a generic platform email cannot stand in for it,
+  // so the old opt-in switch was a mis-tap risk with no upside. The family self-serve
+  // Accept/Decline loop went with it: the reply token only ever travelled inside the offer
+  // email. The one thing left is hygiene — wipe any token the retired loop left on the row.
+  // Plan: docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md.
+  if (newStatus !== 'offered') await clearTryoutOffer(registration.id);
 
   return NextResponse.json({ registration });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });

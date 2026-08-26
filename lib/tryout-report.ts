@@ -60,8 +60,6 @@ export function inPlayTryoutCandidates<T extends Pick<RepTryoutRegistration, 'st
 }
 
 export type TryoutDecisionLabel =
-  | 'Offered — family accepted'
-  | 'Offered — family declined'
   | 'Offered'
   | 'Waitlisted'
   | 'Accepted'
@@ -87,11 +85,14 @@ export interface TryoutReportFunnel {
   offered: number;
   accepted: number;
   rostered: number;
-  // Drop-off captions — rendered only when > 0.
+  // Drop-off caption — rendered only when > 0.
   neverCheckedIn: number;
-  familyDeclined: number;
-  offerExpired: number;
-  awaitingReply: number;
+  // NOTE: `familyDeclined`, `offerExpired` and `awaitingReply` lived here until 2026-08-26. All
+  // three counted states of an EMAILED offer awaiting a family's self-serve reply, and that loop
+  // was retired with the tryout decision emails (owner ruling — the platform sends a tryout
+  // family nothing on a coach's behalf). They could only ever report zero, so they are gone
+  // rather than left to render an empty caption forever. `offered` is unaffected: it reads a
+  // sticky stamp written by a DB trigger on the status change, never by a send.
 }
 
 export interface TryoutReportProfileCategory {
@@ -352,11 +353,12 @@ export function returningImprovementAggregate(pairs: TryoutMemoryPair[]): Tryout
   return { pairs: deltas.length, avg, line };
 }
 
-export function decisionLabel(reg: Pick<RepTryoutRegistration, 'status' | 'offerResponse'>): TryoutDecisionLabel {
+// The two 'Offered — family accepted/declined' variants were removed 2026-08-26: a family's
+// self-serve reply to an offer email no longer exists, so 'Offered' means what the coach recorded
+// and nothing else can qualify it.
+export function decisionLabel(reg: Pick<RepTryoutRegistration, 'status'>): TryoutDecisionLabel {
   switch (reg.status) {
     case 'offered':
-      if (reg.offerResponse === 'accepted') return 'Offered — family accepted';
-      if (reg.offerResponse === 'declined') return 'Offered — family declined';
       return 'Offered';
     case 'waitlisted': return 'Waitlisted';
     case 'accepted': return 'Accepted';
@@ -381,10 +383,11 @@ export function buildTryoutReport(input: {
    * also the correct answer while blind: the resolver refuses to build pairs at all (R6).
    */
   memoryPairs?: TryoutMemoryPair[];
-  /** Injected clock (ms epoch) — offer-expiry is an instant comparison, never calendar math. */
-  now: number;
+  // NOTE: an injected `now` clock used to be required here, purely to decide whether an emailed
+  // offer had passed its response deadline. Nothing in this report is time-relative any more
+  // (2026-08-26) — do not reintroduce a clock without a figure that actually needs one.
 }): TryoutReport {
-  const { tryout, rubric, scores, roster, now } = input;
+  const { tryout, rubric, scores, roster } = input;
 
   const inPlay = inPlayTryoutCandidates(input.registrations);
   const decisions = tallyTryoutDecisions(inPlay);
@@ -398,10 +401,6 @@ export function buildTryoutReport(input: {
   const evaluated = ranked.filter(r => r.composite != null).length;
 
   const attended = inPlay.filter(r => r.isCheckedIn).length;
-  const familyDeclined = inPlay.filter(r => r.offerResponse === 'declined').length;
-  const openOffers = inPlay.filter(r => r.status === 'offered' && r.offerSentAt && !r.offerResponse);
-  const offerExpired = openOffers.filter(r => r.offerExpiresAt && Date.parse(r.offerExpiresAt) < now).length;
-  const awaitingReply = openOffers.length - offerExpired;
   const rosterFromTryout = roster.filter(p => p.source === 'tryout').length;
   // Ever-offered: the sticky stamp, unioned with current standing (see TryoutReportFunnel.offered).
   const everOffered = inPlay.filter(r =>
@@ -416,9 +415,6 @@ export function buildTryoutReport(input: {
     accepted: decisions.accepted,
     rostered: rosterFromTryout,
     neverCheckedIn: inPlay.length - attended,
-    familyDeclined,
-    offerExpired,
-    awaitingReply,
   };
 
   // Roster composition — "returning" = a roster player whose identity the coach CONFIRMED against a

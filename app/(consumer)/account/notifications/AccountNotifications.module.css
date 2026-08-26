@@ -178,13 +178,6 @@
 }
 .chatPointer strong { color: var(--home-ink); }
 
-.filteredNote {
-  font-size: 0.75rem;
-  color: var(--home-dim);
-  font-style: italic;
-  margin: 0;
-}
-
 /* ── "Customize individual notifications" expander (the full per-event grid) ──── */
 
 .customize {

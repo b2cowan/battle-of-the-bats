@@ -40,7 +40,7 @@ statuses into the schedule's RSVP editor, but every answer is coach-entered seco
 | Coach-side RSVP editor | `schedule/page.tsx` attendance tab (`ATTENDANCE_OPTIONS`, `.rsvpEditor`, ratified warm RSVP palette TH-5 already in `coaches.module.css`) | The coach's book; gains a "family answers" lane + Accept-all |
 | Attendance model | `rep_team_event_attendance` + batch PATCH route | Untouched; pre-fill writes go through the existing PATCH |
 | Lineup ↔ attendance drift warning | `schedule/page.tsx` (~543, 1218) + absent-players-excluded pool (~884) | Extended to read family responses ("2 marked Out since you built this lineup") |
-| Tokenized no-login response flow | Tryout offer-response: `app/tryout-response/[token]/*` — GET read-only (email-scanner-safe), POST on explicit tap, data-minimized (`lastInitial()`), terminal states, coach `notify()` on response | **The architectural template for email RSVP** |
+| Tokenized no-login response flow | ⚠ **DELETED 2026-08-26 — read it from git history, not from the tree.** `app/tryout-response/[token]/*` was the template (GET read-only / email-scanner-safe, POST on explicit tap, data-minimized `lastInitial()`, terminal states, coach `notify()` on response) and it is gone: tryout decision emails were removed entirely by owner ruling, and the reply token only ever travelled inside the offer email. The PATTERN is still the right one to copy — `lib/no-login-token.ts` and `lib/tryout-evaluator-token.ts` are the surviving live examples. | **The architectural template for email RSVP (recover from git, or copy the evaluator-token flow)** |
 | Family authenticated surface | `app/(consumer)/family/teams/[teamId]` (`FamilyTeamClient`) — session-based after link verification; schedule rows already rendered | In-app response buttons (guardian tier, when enabled) |
 | Family email chokepoint | `lib/family-email.ts` `sendFamilyEmail` — org-wide `family_email_optouts` suppression (fail-closed), unsubscribe footer | ALL RSVP emails route through this; raw `sendEmail` is forbidden here |
 | Family notify | `lib/family-notify.ts` (bell + email, **no push** — VAPID delivery unverified, G9) | New kinds ride the same rail |
@@ -76,13 +76,13 @@ rep_event_availability_responses
 
 Per event (games + practices), the coach (or the weekly digest job, §3.5) sends each rostered
 player's guardian email(s) a request through `sendFamilyEmail`. The link opens
-`/availability/[token]` — same skeleton as `tryout-response/[token]`:
+`/availability/[token]` — same skeleton as the (now deleted, see the table above) `tryout-response/[token]`:
 
 - Token: per (event, player, email) — hashed at rest, expiry = event end. GET renders event
   card (name, date/time, location, arrival time, uniform) + child **first name + last initial
   only** + three big buttons; POST records the answer. Terminal states: answered (editable
   until event start), event cancelled, expired, invalid.
-- Data exposure is a *narrower* slice than the tryout-response precedent already ships
+- Data exposure is a *narrower* slice than the tryout-response precedent shipped (that flow was retired 2026-08-26; the comparison still holds against what it did)
   (that page shows tryout context to a no-login visitor). No roster, no other children, no
   standing access — deliberately not a "guardian tier by the back door": nothing persists
   beyond the single event response, and no consent ledger entry is needed because no standing
@@ -147,7 +147,7 @@ never on every routine "in".
 - `POST .../events/[eventId]/availability/request` + `/nudge` (caps: `attendance`; nudge
   requires nothing beyond it — recipients resolved server-side, addresses never returned to
   a non-`rosterPii` caller)
-- `GET/POST /api/availability/[token]` (public, no-login; mirrors tryout-response hardening)
+- `GET/POST /api/availability/[token]` (public, no-login; mirrors the tryout-response hardening — recover that route from git history, it is no longer in the tree)
 - `POST /api/family/teams/[teamId]/events/[eventId]/availability` (guardian session channel,
   dormant until tier enabled)
 - Roll-up joined into the existing schedule events read (one aggregate per upcoming event, no

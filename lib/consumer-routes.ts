@@ -85,7 +85,7 @@ function orgSegments(pathname: string): string[] | null {
  *
  * seg[0] is checked against RESERVED_ORG_SLUGS — the CANONICAL "can't be an org slug" list
  * (one source, reused, not a second drifting copy), so every real top-level route (/discover,
- * /platform/…, /tryout-response/…, …) is excluded; a real org slug is never
+ * /platform/…, /tryout-score/…, …) is excluded; a real org slug is never
  * reserved, so it passes through to the seg[1] section check.
  *
  * The bar mount pairs this with `useParams().tournamentSlug`, and BOTH checks are needed —

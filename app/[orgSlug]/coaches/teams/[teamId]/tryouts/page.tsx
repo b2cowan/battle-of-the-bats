@@ -276,7 +276,7 @@ export default function CoachTryoutsPage({
         {/* The names SWITCH (2026-08-25). Decide keeps the control it has had since 2026-08-17 —
             it is simply no longer the ONLY door to it, and no longer one-way. */}
         <PanelIntro
-          text="Offer, waitlist, or pass on each ranked player. Tap a player to see what made their score. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself."
+          text="Offer, waitlist, or pass on each ranked player. Tap a player to see what made their score. Decisions are recorded here for you — nothing is sent to a family, so you deliver the news your own way."
           action={
             <TryoutNamesSwitch
               apiBase={`${base}/tryout-sessions`}
@@ -296,7 +296,7 @@ export default function CoachTryoutsPage({
         <TryoutDecisionBoard key={revealBump} apiBase={`${base}/tryout-decisions`}
           continuityApiBase={`${base}/development/continuity`}
           memoryApiBase={`${base}/tryout-memory`} active={activeTab === 'decide'}
-          canWrite teamId={teamId} onError={fail} />
+          canWrite onError={fail} />
       </div>
 
       {/* Stage 4 — Build your team: the Tryout Report (Tryout Insights Phase 1, mockups v1

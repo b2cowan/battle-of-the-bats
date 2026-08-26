@@ -90,11 +90,6 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     eventTypes: ['payment_received', 'payment_failed'],
   },
   {
-    label: 'Coaches Portal',
-    module: 'module_rep_teams',
-    eventTypes: ['tryout_offer_response'],
-  },
-  {
     label: 'House League',
     module: 'module_house_league',
     eventTypes: ['house_league_registration_new'],
@@ -111,12 +106,21 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   // The NotificationEventType union, labels/descriptions, and NOTIFICATION_CATEGORY total map are
   // deliberately LEFT intact (drift guard) — reinstating a row when a trigger ships is one line.
   //
+  // 'tryout_offer_response' JOINED that dead list on 2026-08-26 and took the whole 'Coaches
+  // Portal' section with it (it was the section's only member). It fired when a family clicked
+  // Accept/Decline in a tryout offer email; the decision emails and their reply loop were removed
+  // outright — a rep offer is a custom letter the family signs, so the platform sends nothing on
+  // a coach's behalf (owner ruling, binding). Same treatment as the other five: the union, label,
+  // description and push-default entry stay put so existing bell rows still render, and its
+  // coach-facing row on /account/notifications is gone too. This one is NOT waiting on a trigger
+  // to ship — do not reinstate the row.
+  //
   // NOTE: 'assistant_coach_joined' + 'assistant_coach_approval_requested' are INTENTIONALLY not
   // listed here (like 'chat_mention') — they're targeted lifecycle bells (to the head coach / org
   // admins), not general per-user-configurable events, so they don't get a preferences-UI row.
-  // NOTE: 'coach_insights_digest' + 'tryout_offer_response' get their coach-facing rows on the
-  // universal /account/notifications coach card, NOT here — an org admin doesn't receive the
-  // per-coach digest, so it must not render on the org grid (R4).
+  // NOTE: 'coach_insights_digest' gets its coach-facing row on the universal
+  // /account/notifications coach card, NOT here — an org admin doesn't receive the per-coach
+  // digest, so it must not render on the org grid (R4).
 ];
 
 

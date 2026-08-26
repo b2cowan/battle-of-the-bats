@@ -1,10 +1,13 @@
 /**
  * lib/family-mail-footer.ts — the footer every TRANSACTIONAL family notice carries.
  *
- * Some club mail deliberately ignores a family's unsubscribe: dues reminders, and the tryout
- * offer/waitlist/release mails. That is an owner ruling (2026-08-18) and it is the right call —
- * a family cannot mute a bill by unsubscribing from announcements, and suppressing an offer would
- * cost a child a roster spot because a parent unsubscribed from newsletters two seasons ago.
+ * Some club mail deliberately ignores a family's unsubscribe: dues reminders. That is an owner
+ * ruling (2026-08-18) and it is the right call — a family cannot mute a bill by unsubscribing from
+ * announcements.
+ *
+ * ⚠ The tryout offer/waitlist/release mails were the OTHER member of that exemption and no longer
+ * exist (owner ruling 2026-08-26 — the platform sends a tryout family nothing on a coach's
+ * behalf), so dues reminders are now this footer's only user. Do not re-add a tryout example here.
  *
  * ⚠ THE EXEMPTION IS NOT FREE. It is paid for by this footer, and the ruling has two halves:
  *   1. **Name the sender.** Before this, these notices signed off `FieldLogicHQ` — the software

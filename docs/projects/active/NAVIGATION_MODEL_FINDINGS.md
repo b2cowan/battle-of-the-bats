@@ -28,7 +28,7 @@ own chrome family:
 | 8 | Scorekeeper / Check-in (`/{orgSlug}/scorekeeper`, `/check-in`) | One minimal sticky header, identical on all viewports: wordmark + FlipPill + cross-tool link + sign out | Dead (plain text) |
 | 9 | Platform admin (`/platform-admin/**`) | Own sidebar (7 role-filtered groups); phone = horizontally scrolling top strip | Dead (plain text) |
 
-Token-based one-shot surfaces (tryout-score, tryout-response, unsubscribe) are deliberate chrome-less
+Token-based one-shot surfaces (tryout-score, unsubscribe — tryout-response was retired 2026-08-26 with the tryout decision emails) are deliberate chrome-less
 dead ends — correct as designed; a nav model must simply leave them alone.
 
 ### The nine shells already have a ratified grouping — and it is not "four shells"

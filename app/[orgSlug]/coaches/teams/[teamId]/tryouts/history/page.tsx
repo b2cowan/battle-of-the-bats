@@ -5,6 +5,7 @@ import { useCoachSeasonPage, useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -64,8 +65,8 @@ function decisionLabel(c: HistoryCandidate): { text: string; tone: 'made' | 'not
  *
  * Two questions this exists to answer, both of them asked a year after the fact: is turnout
  * growing, and what did we say about this candidate last time. The live tryout hub is a
- * different thing entirely — it runs a tryout (check-in, evaluator links, decisions, offer
- * emails) — and none of that machinery appears here.
+ * different thing entirely — it runs a tryout (check-in, evaluator links, decisions) — and none of
+ * that machinery appears here.
  */
 export default function TryoutHistoryPage({
   params,
@@ -98,7 +99,7 @@ export default function TryoutHistoryPage({
 
   useEffect(() => { if (!loading) void load(); }, [loading, load]);
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <CoachLoading label="Loading past tryouts…" />;
 
   if (!page.hasAccess) {
     return (

@@ -106,7 +106,6 @@ export const GET = withObservability(async (_req: Request,
       : null,
     priorSeasonName: prior?.name ?? null,
     memoryPairs,
-    now: Date.now(),
   });
 
   return NextResponse.json({

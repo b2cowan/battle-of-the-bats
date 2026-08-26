@@ -365,11 +365,6 @@
 | `app/platform-admin/observability/CallsVsErrorsChart.tsx:62` | `#f87171` | `--danger-light` |
 | `app/platform-admin/observability/CallsVsErrorsChart.tsx:65` | `#f87171` | `--danger-light` |
 | `app/platform-admin/observability/CallsVsErrorsChart.tsx:80` | `#f87171` | `--danger-light` |
-| `app/tryout-response/[token]/page.tsx:24` | `#111827` | `--bg-3` / `--surface` / `--hud-surface` |
-| `app/tryout-response/[token]/page.tsx:24` | `#F1F5F9` | `--fl-text` |
-| `app/tryout-response/[token]/page.tsx:25` | `#D9F99D` | `--primary-light` / `--logic-lime` |
-| `app/tryout-response/[token]/page.tsx:139` | `#fbbf24` | `--warning-light` |
-| `app/tryout-response/[token]/page.tsx:25` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/unsubscribe/confirmed/page.tsx:50` | `#D9F99D` | `--primary-light` / `--logic-lime` |
 | `app/unsubscribe/confirmed/page.tsx:61` | `#F1F5F9` | `--fl-text` |
 | `app/unsubscribe/confirmed/page.tsx:84` | `#F1F5F9` | `--fl-text` |
@@ -462,8 +457,6 @@
 | `app/platform-admin/dev-tools/page.tsx:114` | `#f9a8d4` |
 | `app/platform-admin/dev-tools/page.tsx:1377` | `#f0f0f0` |
 | `app/platform-admin/dev-tools/page.tsx:1399` | `#ffff00` |
-| `app/tryout-response/[token]/page.tsx:24` | `#0b0f14` |
-| `app/tryout-response/[token]/page.tsx:145` | `#0b0f14` |
 | `app/unsubscribe/confirmed/page.tsx:26` | `#0b0f14` |
 | `components/coaches/CoachThemeColor.tsx:19` | `#0a0a0f` |
 | `components/coaches/PositionProfileEditor.tsx:41` | `#bef264` |

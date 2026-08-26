@@ -104,14 +104,10 @@ export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref,
     // both are wanted, but under one word they read as the same number disagreeing with itself —
     // which is what a coach who rescinded an offer would have seen.
     { label: 'Offers extended', value: f.offered },
-    {
-      label: 'Accepted', value: f.accepted,
-      caption: [
-        f.familyDeclined > 0 ? `${f.familyDeclined} declined by family` : null,
-        f.offerExpired > 0 ? `${f.offerExpired} offer${f.offerExpired === 1 ? '' : 's'} expired` : null,
-        f.awaitingReply > 0 ? `${f.awaitingReply} awaiting reply` : null,
-      ].filter(Boolean).join(' · ') || undefined,
-    },
+    // No caption under Accepted any more: the three things that went here (declined by family,
+    // offer expired, awaiting reply) were all states of a family replying to an offer EMAIL, and
+    // that loop is gone (2026-08-26).
+    { label: 'Accepted', value: f.accepted },
     { label: 'On roster', value: f.rostered },
   ];
 
