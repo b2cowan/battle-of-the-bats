@@ -71,6 +71,33 @@ const ENFORCED = [
 ];
 
 /**
+ * Enforced rules that are a SHAPE rather than a word.
+ *
+ * ⚠ THE CLOCK NEEDED THIS AND A WORD LIST COULD NOT DO IT. The product told the time two ways —
+ * "8:00 PM" on tournament and admin surfaces, "8:00 p.m." on everything that formatted through
+ * the platform — so a family could read both spellings in one sitting. Settled 2026-08-26 (owner
+ * + /marketing): **lowercase with periods, everywhere a customer reads a time, no exception for
+ * dense tables.** It is the same house-language decision that keeps `colour` and `cheque`, and it
+ * is what `en-CA` returns natively — which is why every screen using the platform's formatter was
+ * already correct and only the seven hand-rolled builders had to change.
+ *
+ * ⚠ IT MATCHES THE TOKEN ONLY AFTER A CLOCK TIME. Bare `AM`/`PM` are ordinary capitals and appear
+ * in acronyms and identifiers; enforcing them as words would drown the gate in false positives.
+ *
+ * ⚠ AND IT TOLERATES AN EXOTIC SPACE ON PURPOSE. Newer versions of the platform's own formatter
+ * emit a NARROW NO-BREAK SPACE (U+202F) before the token instead of an ordinary one. If that ever
+ * arrives under us it would be a third spelling that looks identical on screen, so the separator
+ * class matches it too rather than letting it slip through unseen.
+ */
+const ENFORCED_PATTERNS = [
+  {
+    id: 'clock-period',
+    pattern: /\d:\d{2}[\s\u00a0\u202f]*(AM|PM)\b/g,
+    right: 'a lowercase "a.m." / "p.m." — see formatTime() in lib/utils.ts',
+  },
+];
+
+/**
  * Reported by `--report`, never enforced — see the two piles in the header. This list is the
  * standing evidence for the owner decision, so keep it accurate rather than pruning it.
  */
@@ -189,7 +216,35 @@ function scan(list) {
   return hits;
 }
 
-const violations = scan(ENFORCED);
+/** The same walk as scan(), for rules that are a SHAPE rather than a word. */
+function scanPatterns(list) {
+  const hits = [];
+  for (const root of SCAN_ROOTS) {
+    for (const file of collectFiles(root)) {
+      const src = fs.readFileSync(file, 'utf8');
+      const raw = src.split(/\r?\n/);
+      const code = stripComments(raw, path.extname(file) === '.css');
+      code.forEach((line, i) => {
+        if (/spelling-ok/i.test(raw[i]) || (i > 0 && /spelling-ok/i.test(raw[i - 1]))) return;
+        for (const rule of list) {
+          rule.pattern.lastIndex = 0;
+          for (const m of line.matchAll(rule.pattern)) {
+            hits.push({
+              file: file.split(path.sep).join('/'),
+              line: i + 1,
+              found: m[0],
+              expected: rule.right,
+              text: raw[i].trim().slice(0, 140),
+            });
+          }
+        }
+      });
+    }
+  }
+  return hits;
+}
+
+const violations = [...scan(ENFORCED), ...scanPatterns(ENFORCED_PATTERNS)];
 
 if (JSON_OUT) {
   const survey = scan(SURVEY);

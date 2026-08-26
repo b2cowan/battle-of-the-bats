@@ -755,7 +755,7 @@ export default function OrgSettingsPage() {
             <span className={styles.cardPreviewTitle}>Field 1 · U12 Division</span>
             <span className={styles.cardPreviewBadge}>Active</span>
           </div>
-          <div className={styles.cardPreviewMeta}>Sat Jun 14 · 9:00 AM · Lions Park</div>
+          <div className={styles.cardPreviewMeta}>Sat Jun 14 · 9:00 a.m. · Lions Park</div>
         </div>
       </div>
 

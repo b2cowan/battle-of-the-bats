@@ -1720,7 +1720,7 @@ export default function TournamentEventSettingsPage() {
                   </div>
                 </div>
                 <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                  Example: a {gameDurationMinutes}-minute game at 8:00 AM → next game at that venue no earlier than {(() => {
+                  Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → next game at that venue no earlier than {(() => {
                     const total = 8 * 60 + gameDurationMinutes + bufferMinutes;
                     const h = Math.floor(total / 60) % 24;
                     const m = total % 60;

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 import { formatInOrgZone } from './timezone';
+import { endSentence } from './utils';
 import { isVisibleToFamilies } from './family-access';
 
 /**
@@ -65,12 +66,12 @@ function describe(event: EventFacts, teamName: string, kind: FamilyGameUpdateKin
   if (kind === 'reinstated') {
     return {
       title: `${teamName} — ${opponent} is back on`,
-      body: `The ${noun} is going ahead ${when}${event.location ? ` at ${event.location}` : ''}.`,
+      body: endSentence(`The ${noun} is going ahead ${when}${event.location ? ` at ${event.location}` : ''}`),
     };
   }
   return {
     title: `${teamName} — schedule change`,
-    body: `${opponent} is now ${when}${event.location ? ` at ${event.location}` : ''}.`,
+    body: endSentence(`${opponent} is now ${when}${event.location ? ` at ${event.location}` : ''}`),
   };
 }
 

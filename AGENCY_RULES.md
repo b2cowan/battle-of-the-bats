@@ -42,6 +42,21 @@ These rules apply to all AI coding assistants working in this repository.
     `verify:changed`) fails on any enforced variant in customer-visible copy. **`installment` (two
     Ls) is settled and gated.** Escape hatch for a genuine proper noun or a quoted external
     document: `spelling-ok` in a comment on that line or the one above.
+  - **⏰ THE CLOCK IS SETTLED AND GATED TOO — "8:00 a.m.", lowercase, with periods** (owner +
+    `/marketing`, 2026-08-26). It applies **everywhere a customer reads a time** — screens, tables,
+    badges, exports, posters, family emails, help articles — with **no carve-out for a dense
+    table**; if a schedule column is tight, the fix is the column. Not exceptions, because they
+    are not our prose: a time a customer typed into a free-text field, and a time quoted from an
+    external document. ⚠ The reasoning is **house language, NOT positioning** — the brand voice
+    canon forbids claiming Canadian identity ("community sport", never "Canadian sport"), so this
+    rests on the same ground as `colour` and `cheque`, and on the fact that `en-CA` returns it
+    natively. That is also why the sweep was small: every screen formatting through the platform
+    was already right, and only **seven hand-rolled builders** were wrong. **`formatTime()` in
+    `lib/utils.ts` is now the only place the product builds a clock label by hand** — call it
+    rather than writing the ternary again. The gate matches the uppercase token **only after a
+    clock time** (bare `AM`/`PM` are ordinary capitals) and deliberately also catches a **narrow
+    no-break space** before it, since a future platform version may emit one and it would be a
+    third spelling that looks identical.
   - ⚠ **THERE IS NO BLANKET "HOUSE DICTIONARY" YET — do not assert one, and do not widen the gate
     without an owner ruling.** Building the gate surfaced **156 further customer-visible strings**
     (`npm run check:spelling:report`) in two piles that are *not* one decision:

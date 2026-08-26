@@ -1,4 +1,5 @@
 // Schedule import for the coach portal — PURE parsing + review. No I/O, no React.
+import { formatTime, endSentence } from './utils';
 //
 // Chunk C (P1 #7). Inherits the Chunk H2 importer contract wholesale:
 //   1. Templates ship STRUCTURE, never content — every date/time/opponent cell is blank.
@@ -274,7 +275,7 @@ export function reviewScheduleRows(
     if (time === null) {
       return verdict({
         outcome: 'blocked',
-        reason: `We can’t read the time “${row.time.trim()}”. Try 6:00 PM or 18:00.`,
+        reason: `We can’t read the time “${row.time.trim()}”. Try 6:00 p.m. or 18:00.`,
       });
     }
 
@@ -282,7 +283,7 @@ export function reviewScheduleRows(
     if (arrival === null) {
       return verdict({
         outcome: 'blocked',
-        reason: `We can’t read the arrival time “${row.arrival.trim()}”. Try 5:15 PM or 17:15.`,
+        reason: `We can’t read the arrival time “${row.arrival.trim()}”. Try 5:15 p.m. or 17:15.`,
       });
     }
 
@@ -358,7 +359,7 @@ export function reviewScheduleRows(
       return verdict({
         outcome: 'update',
         matchedEventId: match.id,
-        reason: changes.length ? capitalize(changes.join(', ')) + '.' : 'Nothing changes on this one.',
+        reason: changes.length ? endSentence(capitalize(changes.join(', '))) : 'Nothing changes on this one.',
         warning,
         resolved,
       });
@@ -368,14 +369,17 @@ export function reviewScheduleRows(
   });
 }
 
-/** `HH:mm` → a friendly 12-hour clock, for verdict copy the coach reads. */
+/**
+ * `HH:mm` → a friendly 12-hour clock, for verdict copy the coach reads.
+ *
+ * Guards the shape and then defers to the one shared formatter, rather than building the label
+ * itself — this used to be its own copy of that arithmetic and its own uppercase spelling.
+ */
 function friendly(hhmm: string): string {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
-  if (!m) return hhmm;
-  const h = Number(m[1]);
-  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`;
+  return /^\d{1,2}:\d{2}$/.test(hhmm) ? formatTime(hhmm) : hhmm;
 }
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 
 /** Rows that will actually be written. */
 export function committableScheduleRows(rows: ReviewedScheduleRow[]): ReviewedScheduleRow[] {

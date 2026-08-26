@@ -576,7 +576,7 @@ export const PITCH_SLIDES = {
     id: '#11',
     imageClass: 'proof',
     shotId: 'fan-live-score',
-    pain: 'Saturday, 2:14 PM — eleven texts asking for the score.',
+    pain: 'Saturday, 2:14 p.m. — eleven texts asking for the score.',
     claim: 'Families follow their team on the public site. You never answer that text again.',
     pageAnswer:
       'Families follow their team on the tournament’s public site — live scores, schedule, and standings, no account, no app store. You never answer that text again.',

@@ -134,7 +134,7 @@ const AUTOMATIC: Preview[] = [
     trigger: 'Auto-scheduled — the evening before the team’s first game.',
     html: gameDayReminderHtml({
       teamName: S.teamName, coachName: S.coachName, tournamentName: S.tournamentName,
-      firstGameLabel: 'Saturday, July 14 · 9:00 AM', location: 'Diamond 3, Memorial Park',
+      firstGameLabel: 'Saturday, July 14 · 9:00 a.m.', location: 'Diamond 3, Memorial Park',
       opponentName: 'Milton Mavericks', portalUrl: PORTAL, contactEmail: S.contactEmail,
     }),
   },
@@ -214,7 +214,7 @@ const ORGANIZER_INITIATED: Preview[] = [
     trigger: 'Organizer posts an announcement with the email channel on.',
     html: announcementHtml({
       title: 'Gate times & parking',
-      body: 'Hi coaches,\n\nGates open at 7:30 AM Saturday. Park in Lot C and check in at the scorer’s table before your first game.\n\nSee you there!',
+      body: 'Hi coaches,\n\nGates open at 7:30 a.m. Saturday. Park in Lot C and check in at the scorer’s table before your first game.\n\nSee you there!',
       tournamentName: S.tournamentName, contactEmail: S.contactEmail, coachEmail: S.coachEmail,
     }),
   },

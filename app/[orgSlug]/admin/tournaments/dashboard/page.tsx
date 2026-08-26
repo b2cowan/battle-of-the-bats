@@ -31,7 +31,7 @@ import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
 import PersonaPanel from '@/components/admin/tournament/PersonaPanel';
 import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tournament-guidance';
 import styles from './dashboard.module.css';
-import { copiedSummary } from '@/lib/utils';
+import { copiedSummary, formatTime } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
 import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 
@@ -437,11 +437,7 @@ function fmtClock(time: string | null | undefined): string {
   if (!time) return '';
   const m = /^(\d{1,2}):(\d{2})/.exec(time);
   if (!m) return '';
-  let h = Number(m[1]);
-  const min = m[2];
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12; if (h === 0) h = 12;
-  return `${h}:${min} ${ampm}`;
+  return formatTime(`${m[1]}:${m[2]}`);
 }
 
 function fmtDateRange(start?: string, end?: string): string | null {

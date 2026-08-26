@@ -241,8 +241,14 @@ describe('schedule import — verdicts', () => {
     );
     assert.equal(row.outcome, 'update');
     assert.equal(row.matchedEventId, 'own-1');
-    assert.match(row.reason!, /2:00 PM/);
-    assert.match(row.reason!, /6:00 PM/);
+    // The clock is spelled one way (owner + /marketing, 2026-08-26). The INPUT above is still
+    // "6:00 PM" on purpose — a coach pastes whatever their spreadsheet produced, and the parser
+    // must go on accepting it; only what we SHOW them changed.
+    assert.match(row.reason!, /2:00 p\.m\./);
+    assert.match(row.reason!, /6:00 p\.m\./);
+    // ⚠ And it ends with ONE full stop. A formatted time already ends in a period, so appending
+    // another produced "6:00 p.m.." — invisible everywhere except where a time lands last.
+    assert.ok(!row.reason!.includes('..'), `doubled full stop: ${row.reason}`);
   });
 
   it('blocks an ambiguous date with a reason in the coach’s words', () => {

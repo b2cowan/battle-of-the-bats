@@ -2665,13 +2665,13 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-import-ambiguous-date',
           question: 'Why won’t it accept my dates?',
-          answerText: 'Because a date like 03/04/2026 could be 3 April or 4 March, and there is no safe way for us to tell which one you meant. Rather than pick one and quietly put your season a month out, that row is handed back saying "We can’t tell what date 03/04/2026 is — write it as 2026-04-03 and we’ll take it." Anything unambiguous is accepted as-is: 2026-04-03, 2026/4/3, "Sep 8, 2026" and "8 September 2026" all work. Times are forgiving — 6:00 PM, 6pm and 18:00 are all fine. You can fix the date right there in the review list and the row turns green without re-uploading anything.',
+          answerText: 'Because a date like 03/04/2026 could be 3 April or 4 March, and there is no safe way for us to tell which one you meant. Rather than pick one and quietly put your season a month out, that row is handed back saying "We can’t tell what date 03/04/2026 is — write it as 2026-04-03 and we’ll take it." Anything unambiguous is accepted as-is: 2026-04-03, 2026/4/3, "Sep 8, 2026" and "8 September 2026" all work. Times are forgiving — 6:00 p.m., 6pm and 18:00 are all fine. You can fix the date right there in the review list and the row turns green without re-uploading anything.',
           keywords: ['ambiguous date', 'wont accept my date', 'date format', 'cannot tell the date', 'dd/mm', 'mm/dd', 'date rejected', 'fix the date'],
           popular: true,
           answer: (
             <>
               <p>Because a date like <strong>03/04/2026</strong> could be <strong>3 April</strong> or <strong>4 March</strong>, and there&rsquo;s no safe way for us to know which you meant. Rather than pick one and quietly put your season a month out, that row comes back asking.</p>
-              <p>Anything unambiguous is accepted as-is: <strong>2026-04-03</strong>, <strong>2026/4/3</strong>, <strong>Sep 8, 2026</strong> and <strong>8 September 2026</strong> all work. Times are forgiving — <strong>6:00 PM</strong>, <strong>6pm</strong> and <strong>18:00</strong> are all fine.</p>
+              <p>Anything unambiguous is accepted as-is: <strong>2026-04-03</strong>, <strong>2026/4/3</strong>, <strong>Sep 8, 2026</strong> and <strong>8 September 2026</strong> all work. Times are forgiving — <strong>6:00 p.m.</strong>, <strong>6pm</strong> and <strong>18:00</strong> are all fine.</p>
               <p>Fix the date right there in the review list and the row turns green — no need to re-upload anything.</p>
             </>
           ),

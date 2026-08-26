@@ -374,7 +374,11 @@ async function renderAll(documents, looks, coachDocs) {
       const jobs = [['', d.render, null], ...d.edgeCases.map(([n, fn, over]) => [n, fn, over ?? null])];
       for (const [edge, fn, over] of jobs) {
         const shape = over ? { ...d, ...over } : d;
-        for (const [look, settings] of states) {
+        for (const [look, loopSettings] of states) {
+          /* An edge case may render under DIFFERENT settings than the look it sits in — the
+           * blank-footer case is the reason. Whatever it actually used is what gets recorded,
+           * or the assertions would reason about settings the document never saw. */
+          const settings = shape.settingsOverride ?? loopSettings;
           const id = [d.id, edge, look].filter(Boolean).join('--');
           capture = [];
           let threw = false;
@@ -387,7 +391,7 @@ async function renderAll(documents, looks, coachDocs) {
             /* Drain whatever landed BEFORE deciding the outcome: a renderer that saved a file
              * and then threw has produced real bytes, and discarding them would hide a document
              * from every assertion below. */
-            for (const c of capture ?? []) files.push({ id, doc: shape, edge, look, bytes: c.bytes });
+            for (const c of capture ?? []) files.push({ id, doc: shape, edge, look, settings, bytes: c.bytes });
             if (!threw && (capture ?? []).length === 0) {
               errors.push({ doc: id, rule: 'render', detail: 'produced no file at all.' });
             }
@@ -520,6 +524,23 @@ function assertDocument(file, read, failures, notes) {
         break;
       }
     }
+    /**
+     * ⚠ A BLANK FOOTER IS A SETTING A CUSTOMER CAN CHOOSE, NOT A FAULT. A club on a plan that
+     * allows customization can switch off the date stamp, the page numbers AND the branding line
+     * and leave the footer text empty — and then a perfectly correct document carries no footer
+     * at all. Demanding one unconditionally would have reported every page of it as broken.
+     *
+     * It could not fire today because no fixture used that shape, which is the more interesting
+     * half: the gate had never rendered a configuration a paying customer can actually create.
+     * There is a fixture for it now, and the rules below stand down for it — replaced by the one
+     * promise that still holds when there is no footer to measure against: stay off the edge.
+     */
+    if (!expectsFooter(file.settings)) {
+      const floor = 5 * MM; // the physical margin no home or office printer will reproduce
+      const low = body.find((t) => t.y < floor);
+      if (low) fail('off-paper', `page ${i + 1} prints "${clip(low.str)}" into the ${5}mm the printer cannot reach.`);
+      return;
+    }
     if (footer.length === 0) {
       fail('unfooted-page', `page ${i + 1} carries no footer — a page that lost the club's line is a page a reader cannot place.`);
       return;
@@ -543,6 +564,13 @@ function assertDocument(file, read, failures, notes) {
    *   be noise. They declare `pageTotals: 'none'`, WHICH STILL HAS TEETH: the moment such a
    *   document grows past one page it fails, because a multi-page handout with no numbering is
    *   one a reader cannot put back in order. */
+  /* ⚠ AND THE SAME SETTING SILENCES THE PAGE STAMP. A club that switched page numbers off has a
+   * document with no "Page X of Y" anywhere, by choice — demanding one would report a correct
+   * document as broken. Found by ADDING the blank-footer fixture: the footer rule had already
+   * been taught to stand down and this one had not, which is exactly what a fixture that can
+   * produce the awkward state is for. */
+  if (file.settings && file.settings.showPageNumbers === false) return;
+
   if (file.doc.pageTotals === 'none') {
     if (read.pageCount > 1) {
       fail('page-total', `this document declares itself a single sheet but rendered ${read.pageCount} pages with no page numbering.`);
@@ -585,6 +613,16 @@ function assertDocument(file, read, failures, notes) {
 }
 
 const clip = (s) => (s.length > 44 ? `${s.slice(0, 44)}…` : s);
+
+/**
+ * Would these settings put ANYTHING in the footer?
+ *
+ * Mirrors what the engine's own footer assembly asks: a line of text, a date stamp, the branding
+ * line, or a page number. All four off is a legitimate, reachable customer configuration.
+ */
+const expectsFooter = (settings) => Boolean(
+  settings?.footerText || settings?.showDateStamp || settings?.showBranding || settings?.showPageNumbers,
+);
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** The most useful line of a crashed child's output — the error, not the version banner. */
 const firstLine = (text) => text.split('\n').map((l) => l.trim())

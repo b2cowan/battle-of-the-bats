@@ -130,6 +130,14 @@ export async function buildDocuments() {
   const COACH_BRANDED = applyTeamLook(ADMIN_BRANDED, TEAM, null, true);
   /** A club whose crest is not square — the header slot lays out differently around it. */
   const ADMIN_WIDE_CREST = { ...ADMIN_BRANDED, logoDataUrl: CREST_WIDE };
+  /** Every footer switch off — a real, reachable configuration on a plan that customizes. */
+  const BLANK_FOOTER = {
+    ...ADMIN_BRANDED,
+    footerText: '',
+    showDateStamp: false,
+    showBranding: false,
+    showPageNumbers: false,
+  };
 
   const docs = [];
   /**
@@ -171,6 +179,25 @@ export async function buildDocuments() {
       ]),
       settings, { identity: ORG },
     ),
+    edgeCases: [
+      /**
+       * ⚠ A CLUB THAT TURNED THE WHOLE FOOTER OFF. On a plan that allows customization, all four
+       * footer switches can be off at once — no text, no date stamp, no branding, no page numbers
+       * — and the result is a correct document with nothing along the bottom. The gate had never
+       * rendered that shape and would have reported every page of it as a fault. Multi-page on
+       * purpose, so the continuation pages are exercised too.
+       */
+      ['no-footer', (name, settings) => downloadPDF(
+        name, 'Tournament Registrations', TOURNAMENT, REG_HEADERS,
+        Array.from({ length: 26 }, (_, i) => [
+          TEAMS[i % TEAMS.length], ['U11 A', 'U13 AA', 'U15 AAA'][i % 3], full(i),
+          `${KIDS[i % KIDS.length][1].toLowerCase()}.family@example.ca`,
+          ['Confirmed', 'Awaiting payment', 'Waitlisted'][i % 3],
+          `Pool ${'ABCD'[i % 4]} · Slot ${(i % 6) + 1}`, money(675),
+        ]),
+        settings, { identity: ORG },
+      ), { settingsOverride: BLANK_FOOTER }],
+    ],
   });
 
   const schedRows = (games) => games.map((g) => ({

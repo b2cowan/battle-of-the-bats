@@ -1,5 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { formatTime } from '@/lib/utils';
 import { ArrowLeft, Calendar, CalendarPlus, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import Link from 'next/link';
@@ -268,14 +269,12 @@ function resourceHint(type: RepEventType): { label: string; url: string } {
   }
 }
 
-// "HH:mm" (24h, as stored for arrival_time) → friendly 12-hour clock ("5:15 PM").
+// "HH:mm" (24h, as stored for arrival_time) → friendly 12-hour clock ("5:15 p.m.").
+// Guards the shape, then defers to the ONE shared formatter. This was a seventh copy of that
+// arithmetic, and the copies are exactly how the product ended up spelling the clock two ways.
 function fmtClock(hhmm: string): string {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
-  if (!m) return hhmm;
-  const h = Number(m[1]); const mins = m[2];
-  const period = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${mins} ${period}`;
+  const t = hhmm.trim();
+  return /^\d{1,2}:\d{2}$/.test(t) ? formatTime(t) : hhmm;
 }
 
 /** Form inputs → the wall-clock string the API takes. The server resolves it to a real instant in

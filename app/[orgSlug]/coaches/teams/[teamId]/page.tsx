@@ -1,5 +1,6 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { formatTime } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -158,7 +159,7 @@ function fmtClockLabel(hhmm: string): string {
   const m = /^(\d{1,2}):(\d{2})/.exec(hhmm.trim());
   if (!m) return hhmm;
   const h = Number(m[1]);
-  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`;
+  return formatTime(`${m[1]}:${m[2]}`);
 }
 
 function formatMoney(amount: number): string {

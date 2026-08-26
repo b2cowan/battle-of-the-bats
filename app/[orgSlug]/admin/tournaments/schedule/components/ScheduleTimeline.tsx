@@ -19,7 +19,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDrop
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
 import { resolveGameTiming, buildConflictMap, checkVenueConflict, toConflictGame, timeToMinutes, minutesToTime, type ConflictInfo, type ConflictGame } from '@/lib/schedule-conflict';
 import { teamAvatarHue } from '@/lib/team-color';
-import { formatTime } from '@/lib/utils';
+import { formatTime, formatHour } from '@/lib/utils';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './ScheduleTimeline.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -55,10 +55,7 @@ function minToTime(min: number): string {
 }
 
 function hourLabel(min: number): string {
-  const h = Math.floor(min / 60);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12} ${ampm}`;
+  return formatHour(Math.floor(min / 60));
 }
 
 function dayLabel(iso: string): string {

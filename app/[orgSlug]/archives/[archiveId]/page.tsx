@@ -53,13 +53,8 @@ function formatDate(iso: string) {
   }
 }
 
-function formatTime(hhmm: string) {
-  if (!hhmm) return '';
-  const [h, m] = hhmm.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hour = h % 12 || 12;
-  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
-}
+// One source for the clock — see formatTime in lib/utils.ts for why this is not local.
+import { formatTime } from '@/lib/utils';
 
 export default async function ArchiveDetailPage({
   params,
