@@ -1,9 +1,16 @@
 # Coach Portal — Page-Level Action Consistency
 
-**Status:** approved design · **Phase 1 (Money hub) BUILT on dev 2026-08-13** · **Phase 2
-(Roster + Schedule) BUILT on dev 2026-08-23** — owner QA pending for both (`OWNER_QA_LEDGER.md`);
-Phases 3–4 not started · owner-approved 2026-08-13, extended by the four house rules below
-2026-08-23
+**Status:** ✅ **BUILT OUT.** All four phases on dev; owner QA **PASSED** (§105 guard + keyboard,
+§110 the Schedule fold). Owner-approved 2026-08-13, extended by the four house rules in §0 on
+2026-08-23, corrected 2026-08-25 when the help "?" left the page header.
+
+**Per phase:** P1 Money hub (2026-08-13) · P2 Roster + Schedule (2026-08-23) · P3 Plan templates +
+Drills (2026-08-25) · P4a the guard (2026-08-25) · P4b the Schedule fold and the last two
+hand-written header buttons (2026-08-26). Deployment state lives in the release record, not here.
+
+**Open, and none of it is build work:** one cosmetic class alias (`.recordMoneyBtn`, blocked on a
+permanently-busy file), the full `check:layout` sweep, and two owner gate decisions — all of them
+described in the 2026-08-26 log entry at the bottom.
 
 ---
 
@@ -1050,3 +1057,36 @@ sequential; each is independently shippable.
   the two gate decisions raised by the 4a review (`npm test` in the deploy build, and giving
   `verify:changed` the branch guard `amplify.yml` already has so its last six checks stop being
   skipped).
+
+- **2026-08-26** — **§110 OWNER QA PASSED. THE PLAN IS BUILT OUT.** All four phases are on dev and
+  both QA sections are signed off (§105, §110).
+
+  **Checked against the plan rather than from memory**, which is this project's own lesson:
+  - **§5's four shared pieces** all exist — the coach action menu (P1), header geometry as classes
+    (P2 + 4b), the panel-toolbar pair (P1), and the per-dataset `formats` declaration (P1).
+  - **§2.6's drift vector is verifiably closed.** A scan of every `<CoachPageHeader>` call site that
+    passes `actions` finds **no inline `style={{…}}` and no global `btn btn-*` class** left in any
+    of them. That was the thing the original inventory said would let the next one drift.
+  - **§4.6 (Awards) was struck** and **§4.7 (Overview) closed by the title-band plan**, both recorded
+    above; §4.8's "everything else" was confirmed compliant in §2.5 and is now guard-enumerated.
+
+  **⚠ ONE BUILD ITEM REMAINS AND IT IS COSMETIC: the `.recordMoneyBtn` alias.** The Money hub's
+  Record button still names the transitional class rather than `.headerPrimaryBtn`. **Nothing a
+  coach can see depends on it** — both selectors carry identical rules — and it has been blocked on
+  every single attempt across three sessions because `accounting/page.tsx` and `coaches.module.css`
+  are the two most continuously-edited files in the portal. It needs ~90 seconds in a quiet window.
+  Deliberately not forced: the alias is documented in the stylesheet, so the cost of waiting is a
+  comment, and the cost of forcing it is dragging someone's unfinished money work into a commit.
+
+  **Still owed, neither of them build work:**
+  1. **The full `check:layout` sweep**, which has now aborted on the machine's memory floor three
+     times across two sessions. Targeted sweeps plus a revert control stood in for it each time.
+  2. **The two gate decisions from the 4a review**, for the owner: `npm test` in the deploy build,
+     and giving `verify:changed` the branch guard `amplify.yml` already has so its last six checks
+     stop being skipped on dev. ⚠ The first of these acquired real evidence the same day — another
+     session's unfinished test blocked the chain for everyone, exactly as the review predicted.
+
+  **Pre-existing gaps recorded by the 4a review and deliberately NOT in scope** (they are portal-wide
+  questions, not header-action ones): the Money hub's Import busy-guard sitting on its trigger rather
+  than its items, the coach modals declaring `aria-modal` without initial focus or a trap, and
+  disabled menu items using native `disabled` rather than `aria-disabled`.
