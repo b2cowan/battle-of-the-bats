@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
+import { ensureSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import type { DemoOrgKind } from '@/lib/demo-org';
 
 /**
@@ -47,6 +48,27 @@ export function SandboxProvider({
     () => value,
     [value.isSandbox, value.kind, value.slug, value.landingPath], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  // Keep this browser MARKED for as long as a demo tab is open.
+  //
+  // The marker cookie is what makes the request layer look at all (lib/sandbox-exit.ts), and it
+  // is written once at the door — while this tab goes on refreshing its Supabase token in the
+  // background, straight to the auth server, writing auth cookies the request layer never sees.
+  // A browser that left the demo in another tab and then had its session revived by THIS one
+  // would hold a live demo session with no marker, and the leave-the-demo rule would be silently
+  // disarmed for good. Re-asserting on mount and on focus closes that: focus is when a revived
+  // tab becomes reachable again. Costs a cookie read; writes only when the marker has gone.
+  useEffect(() => {
+    if (!memo.isSandbox) return;
+    ensureSandboxMarkerCookie();
+    const reassert = () => ensureSandboxMarkerCookie();
+    window.addEventListener('focus', reassert);
+    document.addEventListener('visibilitychange', reassert);
+    return () => {
+      window.removeEventListener('focus', reassert);
+      document.removeEventListener('visibilitychange', reassert);
+    };
+  }, [memo.isSandbox]);
+
   return <SandboxContext.Provider value={memo}>{children}</SandboxContext.Provider>;
 }
 

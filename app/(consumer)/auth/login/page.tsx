@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, getUser } from '@/lib/auth';
+import { createClient } from '@/lib/supabase-browser';
+import { isDemoOrganizerEmail } from '@/lib/demo-org';
+import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
@@ -98,6 +101,28 @@ function LoginForm() {
       const user = await getUser();
       if (!active) return;
       if (user) {
+        // A "See it live" visit leaves a REAL session for a shared fictional account behind, and
+        // following it dropped a visitor back inside the demo instead of showing this form
+        // (reported 2026-08-25). An ordinary navigation here no longer reaches this branch: the
+        // request layer ends the demo before the page is served (lib/sandbox-exit.ts).
+        //
+        // ⚠ Kept as defence in depth, not because a specific case is known to need it: this
+        // effect runs on MOUNT only (no pageshow listener, unlike lib/use-client-signed-in.ts),
+        // so it cannot catch a bfcache Back onto this screen — an earlier draft of this comment
+        // claimed it could, and that was wrong. What it does catch is a route the request layer
+        // has not run on. Reaching this screen is unambiguous — the visitor is asking to sign in
+        // as THEMSELVES, and a sandbox org has no login to forward anyone to.
+        //
+        // ⚠ scope:'local' is LOAD-BEARING (full reasoning in lib/use-client-signed-in.ts): every
+        // demo visitor shares ONE auth user, and supabase-js defaults to scope 'global' — which
+        // would end the demo for every other prospect inside it at that moment.
+        if (isDemoOrganizerEmail(user.email)) {
+          await createClient().auth.signOut({ scope: 'local' });
+          forgetSandboxMarkerCookie(); // and the marker the server-side rule keys off
+
+          if (active) setCheckingAuth(false);
+          return;
+        }
         const dest = await resolveLoginDestination(consumeNextOnce(searchParams.get('next')));
         if (active) router.replace(dest);
         return;

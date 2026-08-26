@@ -153,6 +153,39 @@ const BY_SLUG: ReadonlyMap<string, DemoOrgDefinition> = new Map(
 export const DEMO_ORG_SLUGS: readonly string[] = DEMO_ORGS.map(org => org.slug);
 
 /**
+ * One percent-decode of a path segment, matching what the router does when it builds `params`.
+ *
+ * ⚠ **This is load-bearing, and it was missing.** `URL.pathname` preserves `%XX` exactly as sent,
+ * but Next's route matcher `decodeURIComponent`s each dynamic segment before a handler sees it. So
+ * `POST /api/coaches/%72iverdale-minor-ball/…` arrived here as the literal `%72iverdale-minor-ball`
+ * (no match, write allowed) and reached the handler as `riverdale-minor-ball` (the real, seeded
+ * demo org). Verified live during the 2026-08-03 review: the encoded form returned the route's own
+ * 401 instead of this module's 403, proving the chokepoint had been stepped around. With a demo
+ * session — which the door hands to anyone who asks — that is a real write against the sandbox,
+ * defeating the one promise the whole feature rests on.
+ *
+ * Decoding ONCE is exactly right, not a guess: it mirrors the router's single decode. A
+ * double-encoded `%2572…` decodes here to `%72…` and reaches the handler as `%72…` too — neither is
+ * the demo org, and they still agree. Agreement with the router is the property that matters.
+ *
+ * A malformed escape (`%`, `%zz`) throws; the raw segment is then compared instead, which is also
+ * what the router will fail to decode, so the two still cannot disagree.
+ *
+ * Lives HERE — the module that owns the allow-list — because every predicate answering "is this
+ * path a demo org's?" has to agree, and the two that exist (the write block in
+ * `lib/demo-guard.ts` and the leave-the-demo rule in `lib/sandbox-exit-rule.ts`) once did not:
+ * the second was written without this decode, three weeks after the first was fixed by adding it.
+ */
+export function decodePathSegment(segment: string): string {
+  if (!segment.includes('%')) return segment; // the overwhelmingly common case, untouched
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
  * Is this slug a sandbox org? The primary question every caller asks.
  * Trims and lowercases because slugs arrive from URL segments, which are user-controlled.
  */

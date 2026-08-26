@@ -6,6 +6,17 @@ import { isTournamentTier } from './lib/billing-urls';
 import { demoOrgSlugForBlockedWrite, sandboxRejectionResponse } from './lib/demo-guard';
 import { getDemoOrgBySlug } from './lib/demo-org';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from './lib/sandbox-door';
+import { sandboxExitResponse, isSandboxSurfacePath } from './lib/sandbox-exit';
+import { decodePathSegment } from './lib/demo-org';
+
+/**
+ * The org sections this file bounces an unauthenticated visitor out of (see the guards below).
+ * Read only by the sandbox short-circuit, which must not skip a guard that would have run: a demo
+ * org has an admin half like any other org, and its anonymous arrivals are walked back through the
+ * demo's own front door rather than to a login form. Adding a guarded section below means adding
+ * it here.
+ */
+const PROXY_GUARDED_ORG_SECTIONS = ['admin', 'scorekeeper', 'check-in'];
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -52,6 +63,33 @@ export async function proxy(request: NextRequest) {
     const apiRes = NextResponse.next({ request: { headers: requestHeaders } });
     apiRes.headers.set('x-request-id', requestId);
     return apiRes;
+  }
+
+  // ── Leaving the demo world ends the demo ───────────────────────────────────────────────────
+  // The twin of the write block above, for identity rather than data: a "See it live" session is
+  // a real session for a fictional account, so anywhere outside the sandbox reads it as a login
+  // and draws that fictional person's chrome — a workspace card and a COACHES PORTAL door on
+  // Discover, their account on /account, their follows in this browser. Owner ruling 2026-08-26:
+  // the demo is self-contained. Decided HERE, before the page renders, because the surfaces that
+  // leaked are server-rendered and the two earlier browser-side patches could never reach them.
+  //
+  // Costs a session read only for a browser carrying the sandbox marker; ends a session only for
+  // the hardcoded fictional addresses; never reaches past this browser. See lib/sandbox-exit.ts.
+  {
+    const leaving = await sandboxExitResponse(request);
+    if (leaving) return leaving;
+  }
+
+  // …and get out of the way INSIDE it. A marked browser standing in the sandbox reaches this
+  // function only because of the marker-gated matcher entry at the foot of this file: most demo
+  // paths (the fan side, the coach portal) have never had proxy work of their own, and buying
+  // them a session round-trip per navigation would make the shop window slower for nobody. The
+  // exception is the sections this file genuinely guards below — a demo org has those too.
+  if (isSandboxSurfacePath(pathname)
+      && !PROXY_GUARDED_ORG_SECTIONS.includes(decodePathSegment(segments[1] ?? ''))) {
+    const sandboxRes = NextResponse.next({ request: { headers: requestHeaders } });
+    sandboxRes.headers.set('x-request-id', requestId);
+    return sandboxRes;
   }
 
   // Redirect legacy /[orgSlug]/admin/tournaments/teams → /[orgSlug]/admin/tournaments/registrations
@@ -237,5 +275,22 @@ export const config = {
     '/my/:path*',
     '/coaches',
     '/coaches/:path*',
+    // ── Every route in the app, for a browser that has been through a demo door ────────────
+    // The leave-the-demo rule (lib/sandbox-exit.ts) is dead code on a route the proxy never sees,
+    // and the entries above are an allow-list — which is exactly HOW a demo session came to be
+    // read as a login on Discover, on /account and on the sign-up form: the request layer simply
+    // did not run there. Enumerating those tabs by hand fixed the screens that had already leaked
+    // and left the next one to leak, so the reach is expressed as a CONDITION instead.
+    //
+    // `has` is evaluated by the router BEFORE this function is invoked, so a visitor who has never
+    // opened a sandbox — very nearly everyone — pays nothing for this entry at all. A marked
+    // browser gets the rule everywhere: the consumer tabs, the marketing site, a real club's
+    // public event pages, anywhere a future screen appears. No enrollment, ever.
+    // ⚠ The cookie name is a LITERAL and cannot be the imported constant: Next requires matcher
+    // values to be statically analyzable and silently IGNORES a variable — which here would not
+    // fail a build, it would just quietly stop the rule from ever running. Pinned to
+    // SANDBOX_MARKER_COOKIE by tests/unit/demo-sandbox-exit.test.ts instead.
+    { source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+      has: [{ type: 'cookie', key: 'flhq-in-sandbox' }] },
   ],
 };

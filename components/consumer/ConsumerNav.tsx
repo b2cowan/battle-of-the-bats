@@ -136,7 +136,11 @@ export default function ConsumerNav({
   // cookie read; anonymous visitors never hit the network; re-resolves on SPA sign-in/
   // out). Inert off tournament routes; the consumer variant keeps its SSR prop — identity
   // is NEVER SSR'd into SW-cached tournament HTML (the shared-device replay guard).
-  const clientSignedIn = useClientSignedIn(onPublicRoute);
+  // Enabled on the consumer tabs too — NOT for its answer there (that variant keeps its SSR
+  // prop, below), but for the demo teardown it carries: these tabs are where a "See it live"
+  // session used to be read as a login, and a client-side route change into them is the one case
+  // the request layer deliberately cannot judge.
+  const clientSignedIn = useClientSignedIn(onPublicRoute || variant === 'consumer');
   const signedIn = variant === 'tournament' ? clientSignedIn : signedInProp;
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is

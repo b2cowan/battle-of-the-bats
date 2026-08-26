@@ -83,14 +83,15 @@ export default function Navbar() {
   // summary: the two doors below need only "is someone signed in", and marketing is the one
   // surface where a per-visit identity round-trip would be pure cost.
   //
-  // `endDemoSession`: marketing ground is also where a "See it live" visit ENDS. The demo doors
-  // establish a real session for a shared fictional account, which this check would otherwise
-  // read as a login and answer with "Account" / "Open app →" — offering a prospect two doors into
-  // somebody else's demo account and telling them they have an account they never made. Reaching a
-  // marketing page is the visitor leaving the demo, so the demo session ends here. A real
-  // customer's session is untouched (see the hook).
+  // Marketing ground is also where a "See it live" visit ENDS — the demo doors establish a real
+  // session for a shared fictional account, which this check would otherwise read as a login and
+  // answer with "Account" / "Open app →", offering a prospect two doors into somebody else's demo
+  // and telling them they have an account they never made. That teardown is no longer this call's
+  // to ask for: the hook now ends a demo session on ANY page outside the demo world, the same rule
+  // the request layer applies before a page renders (lib/sandbox-exit.ts, owner ruling 2026-08-26).
+  // A real customer's session is untouched either way.
   const onMarketing = isMarketingPath(pathname);
-  const marketingSignedIn = useClientSignedIn(onMarketing, { endDemoSession: true });
+  const marketingSignedIn = useClientSignedIn(onMarketing);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);

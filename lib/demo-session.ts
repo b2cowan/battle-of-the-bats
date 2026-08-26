@@ -3,6 +3,7 @@ import type { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { supabaseAdmin } from './supabase-admin';
 import { isDemoOrganizerEmail } from './demo-org';
+import { SANDBOX_MARKER_COOKIE, SANDBOX_MARKER_MAX_AGE_SECONDS } from './sandbox-exit-rule';
 
 /**
  * lib/demo-session.ts — establishing the ONE demo organizer's session.
@@ -38,6 +39,18 @@ export async function attachDemoSession(
   if (!isDemoOrganizerEmail(organizerEmail)) {
     throw new Error('refused to establish a session for an address that is not on the demo allow-list');
   }
+
+  // The "this browser has been through a demo door" marker, set in the ONE place every door
+  // already funnels through so a new door cannot forget it. It carries no authority — it is the
+  // cheap hint that lets the leave-the-demo rule (lib/sandbox-exit.ts) skip a session read for
+  // every visitor who has never seen a sandbox. Same response, same write, one thing.
+  response.cookies.set(SANDBOX_MARKER_COOKIE, '1', {
+    path: '/',
+    sameSite: 'lax',
+    httpOnly: false, // the two client-side exits clear it as well; it is a hint, not a credential
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SANDBOX_MARKER_MAX_AGE_SECONDS,
+  });
 
   const sessionWriter = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -83,30 +96,15 @@ export async function attachDemoSession(
 /**
  * Whoever is signed in on this request, or null when nobody is.
  *
- * Returns the SESSION, not just an email, because the door's decision is "may I replace this?" —
+ * Lives in `lib/sandbox-exit.ts` now — the leave-the-demo rule runs in the proxy and asks the
+ * same question, and the proxy must not pull in this module's service-role client to ask it.
+ * Re-exported here because the doors and the confirm screens have always imported it from the
+ * module that establishes the session, and that reads correctly: same question, one answer.
+ *
+ * It returns the SESSION, not just an email, because the door's decision is "may I replace this?" —
  * and an account with no email address (Supabase supports phone and anonymous identities) is still
  * somebody's account. Answering with an email alone made an email-less session indistinguishable
  * from no session at all, which would have let the door quietly overwrite it. Caught by the
  * 2026-08-03 adversarial review.
- *
- * Uses a READ-ONLY cookie adapter — its `setAll` has nowhere to write, so asking who is here can
- * never mutate the caller's cookies. That property is the whole point at the door, where the
- * answer decides whether we are allowed to touch their session at all.
  */
-export async function currentSessionUser(
-  request: NextRequest,
-): Promise<{ id: string; email: string | null } | null> {
-  const reader = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: () => { /* deliberately inert — see above */ },
-      },
-    },
-  );
-  const { data: { user } } = await reader.auth.getUser();
-  if (!user) return null;
-  return { id: user.id, email: user.email?.trim().toLowerCase() ?? null };
-}
+export { currentSessionUser } from './sandbox-exit';
