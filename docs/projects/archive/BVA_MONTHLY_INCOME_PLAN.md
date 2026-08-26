@@ -3,7 +3,10 @@
 **Status: PHASE 2 = OPTION D. D-1 BUILT ON DEV 2026-08-23 and ✅ owner QA §85 PASSED 2026-08-24 —
 the owner walked it live and ruled seven chrome corrections in flight, all fixed and committed. A
 follow-on surface, the Statement’s cash bridge, was raised during that walk and BUILT the same day
-(✅ owner QA §98). D-2 (revenue item rows + the season opening balance) is now RELEASED — build
+(✅ owner QA §98). ✅ **D-2 (revenue item rows + the season opening balance) BUILT ON DEV 2026-08-25,
+✅ owner QA §101 PASSED 2026-08-26 — four corrections and one shape ruling taken in flight, all fixed
+before the walk closed. Option D and this plan are COMPLETE.** ⚠ **Migration 262 is on DEV ONLY and
+must reach prod BEFORE this code is promoted.** (§2.2.) Build
 prompt: `BVA_OPTION_D2_ITEMS_AND_OPENING_BALANCE_BUILD_PROMPT.md`.
 ⚠ **PHASE 1’s §83 is SUPERSEDED, not owed**: D-1 replaced the strip it walks (the Money in / Money
 out rows no longer exist — the band totals are those rows), and everything §83 protected is
@@ -293,12 +296,75 @@ figure, itemising the family-paid costs beneath the line they explain, sourced f
 arithmetic that excluded them.  now proves that reconciliation adds up as its own
 claim. Option B (marking the affected rows) was drawn and NOT taken — see the decision log.
 
-**D-2 (gate CLEARED — §85 passed 2026-08-24):** revenue item rows (per family / drive / sponsor) and the opening balance
+**D-2 — ✅ BUILT ON DEV 2026-08-25 (owner QA §101), see §2.2 below:** revenue item rows (per family / drive / sponsor) and the opening balance
 (migration, `Start next season` carry step, Team settings row, register's first line, Cash on hand
 — the matched pair moves together or the surfaces argue).
 Standing constraints applied: mental-model principle (2026-08-21), "never a tab row where a
 filter would do", do-not-worsen phones (the phone-stepper session is separate), one grouping with
 the Statement. **The winning option is its own gated build with its own QA section.**
+
+### §2.2 · D-2 BUILT ON DEV 2026-08-25 · ✅ owner QA **§101** PASSED 2026-08-26. Migration **262**.
+
+**Five things changed during the walk, and one of them changed the report's shape** — the four
+defects and the opening/closing ruling are written up in §101 rather than repeated here. The durable
+one: *"if we're going to have an opening balance row, should we not just apply that to every
+month?"* — taken, with **Running balance renamed Closing balance**, so the summary block reads
+**opening + net = closing** in the column a coach is looking at. The grid WINDOWS to twelve months,
+so a scrolled view previously showed a cumulative series whose origin had scrolled off screen; the
+redundancy (each opening IS the month before's closing) was priced and accepted for that reason.
+
+Option D is complete. Two halves, built together because the second one cannot be half-built:
+
+**Part A — every revenue figure opens.** The chevron on each revenue group opens *where the money
+came from* (families, drives, sponsors, requests — never budget items) and the NUMBER opens *what
+makes it up* (individual records, dated, **always read-only**). At most two doors per panel: the
+ledger, and the thing itself. Nine rows, one rule. Built as drawn in `da5d08b9`, including the row
+that was never in the spec — **Paid back to families**, opened by family on the owner’s call, with
+the *why* on each payment’s own meta line rather than as a second grouping level.
+
+**Part B — the season opening balance (mig 262).** `rep_program_years.opening_balance` +
+`opening_balance_from_year_id`. Born at *Start next season*, corrected in Team settings → Money, read
+on the register’s first line, the Months summary block and Cash on hand.
+
+**Six build decisions worth their own line, each stated in code where it lives:**
+1. **An item panel is a FILTER of its category’s list, not a second copy in the payload.** Every
+   record carries the grid ROW it belongs to (`<categoryKey>|<itemId>` — exactly the key
+   `buildMonthGrid` places money by), so the two grains cannot drift and the heaviest read in the
+   portal does not ship the same records twice.
+2. **`GridLineResult` gained `itemId` rather than every reader parsing it back out of the row id.**
+   A category NAME may legitimately contain a pipe, so each reader was one split-from-the-wrong-end
+   away from a silent mismatch — which is exactly how the LAST drill-in on this grid broke.
+3. **Which doors a panel offers, and the word over its total, live in ONE function**
+   (`cellPanelSpec`) — including the expense band’s two answers, which had been written inline at
+   the call site. They are the same decision (*which book does this figure belong to?*), and keeping
+   them apart is how one table drifts into two vocabularies. "Possible" instead of "Total" is that
+   rule doing its job.
+4. **The payouts group is now pinned to the foot of the expense band explicitly.** It used to land
+   there by accident — arriving only as EVENTS, and the builder appends event-only categories last.
+   Giving it real rows (one per family) moved it into the planned list, where it would have jumped
+   to the TOP of a treasurer’s spending table. Order that matters is order that is stated.
+5. **The register’s book assembly moved to `lib/coach-register-book.ts`.** `Start next season` is a
+   second caller that must not answer differently: it writes the carried figure to the database
+   PERMANENTLY, so it computes it from the register’s own walk (`seasonClosingCashCents`) rather
+   than a fourth arithmetic. Nothing about which records are cash changed. ⚠ `dues-definition-guard`
+   fired on the now-empty route — which was it WORKING; the entry moved with the code.
+6. **NULL is not zero, and three screens read the difference.** `null` = nothing was carried and no
+   opening line renders anywhere; `0.00` = deliberately carried at zero and a figure shows. A `?? 0`
+   in any reader collapses two different facts into one number.
+
+**The guard extension.** `check:money-report`’s claim 6 now **reads `openingBalance` by name and
+treats an absent field as a FAILURE, not a zero** — the change the comment standing there demanded.
+A new claim 6a proves **a group equals the rows a coach can open behind it, month by month** (rows
+may legitimately sum to LESS — orphans land at category level — but never to more, which would be
+money counted twice). Two fixture-honesty gates were added: a season that **carries an opening
+balance** (without one, claim 6 adds zero and is arithmetically the hardcoded claim it replaced) and
+a revenue group with **rows behind it**. `check:register` §§1–3 fold the carry in.
+
+Green: 2,478 unit tests · typecheck · `check:money-report` with every breaking shape present
+(opening $500 + net $860 = Cash on hand $1,360) · `check:register` · `check:demos` ·
+`check:layout --only=coach-settings-money` clean at all four widths. ⚠ Two **pre-existing** layout
+findings on Budget vs. Actual at 768px are recorded in §101 rather than fixed or baselined — one
+fails identically on Transactions, the other is §98’s disclosure line.
 
 ## §3 · Aftercare (same unit of work as Phase 1)
 

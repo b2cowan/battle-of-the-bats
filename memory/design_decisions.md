@@ -3,7 +3,70 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-25 — NULL IS NOT ZERO WHEN A SEASON CARRIES MONEY FORWARD, and a claim that cannot fail is not a claim (D-2 build)
 
+**Three rules taken while building D-2, all of which the code now enforces rather than promises.**
+
+- ⚠⚠ **WHAT KIND OF RECORD IT IS AND WHAT THE RECORD SAYS ARE TWO FIELDS** (owner-found on the §101
+  walk, 2026-08-25). A drill-in panel opened from ONE family is titled with her name, so each row
+  usefully leads with the kind — "Dues payment". Opened from the GROUP it is titled "Player dues",
+  which every record then restated: **thirteen families reached the coach as thirteen identical
+  lines.** The drawing had asked for *"every family's payment, NAMED"* and only the panel was built.
+  ⚠ **NO RULE INFERRED FROM THE RECORDS CAN SEPARATE THE TWO, and three were tried against real
+  data before the field existed**: *"every row says the same thing"* drops "Season sponsorship"
+  correctly and "Home opener gate" wrongly; *"only one record"* keeps both. Whether a word belongs
+  to the RECORD or to its KIND is knowledge the source has and the screen cannot recover — so the
+  source states it. **Generalise: when a heuristic is right four cases out of six, the missing input
+  is a fact somebody upstream knows and is not passing on.**
+  ⚠⚠ **AND THE SAME RULE HAD TO BE APPLIED A SECOND TIME, TO THE OTHER WORD** (owner-found
+  2026-08-26). Suppressing the KIND left the coach's OWN words echoing: an arrival filed under
+  "Gate / admission" and *described* as "Gate / admission" printed the phrase in the panel title
+  and again on the row beneath it. **Only one group can do this and it is worth knowing which** —
+  dues, drives and sponsors have PEOPLE and DRIVES for rows, so a record's words cannot coincide
+  with them; Other income's rows are budget ITEMS, and a coach with nothing more to say than the
+  item's own name is the ordinary case there, not the edge. The rule is now one function
+  (`panelRowWords`) in a module a test can reach, **because it had been wrong twice while it lived
+  inside a component where nothing could assert against it.**
+  ⚠ Found while answering the same question: an arrival with NO budget item got **no row at all** —
+  its money reached the group's total and nothing beneath it, so expanding the group showed rows
+  that silently added up to less than the figure above them. The guard could not have caught it:
+  claim 6a deliberately allows rows to sum to LESS (orphans are real on the expense band) and only
+  fails when they sum to more.
+  ⚠ Found in the same screenshot: the panel printed the **stored token** for a payment method
+  ("other", "etransfer") beside real figures, while every other money screen printed "E-Transfer"
+  from the shared label map — whose own header records it being written to stop a THIRD copy. This
+  was worse than a copy: no lookup at all. **A shared map only holds if the new reader knows it
+  exists — grep for the vocabulary before printing a stored value.**
+
+- ⚠⚠ **`null` and `0` are different FACTS, and three screens read the difference.** *Nothing was
+  carried* hides the opening line everywhere — the register, the Months summary block, the settings
+  row, which reads "None carried". *Carried at exactly zero* shows a figure. A `?? 0` in any reader
+  collapses them, and a first season would then be told about money it never had. The mapper, the
+  payload, the settings client and the fixture-honesty gate all keep the distinction deliberately.
+- ⚠⚠ **A GUARD OVER A FIXTURE THAT CANNOT DISAGREE IS NOT EVIDENCE — the third time this file has
+  had to say it.** `check:money-report`'s claim 6 was a hardcoded `const opening = 0` with a comment
+  naming itself as the thing to change the day carry-forward shipped. It now reads `openingBalance`
+  by name **and treats an absent field as a FAILURE rather than a zero** — but that alone was not
+  enough: over a season that carried nothing the claim adds zero and is arithmetically identical to
+  the hardcoded one it replaced. So the UAT fixture now **carries $500**, and the guard says out
+  loud (exit 2) when a run's fixture has no carry. The same reasoning added a gate for revenue
+  groups with **rows** behind them, because the new "a group equals its rows" claim compares a
+  figure against an empty list otherwise.
+
+**And a structural one, recorded because it moved 500 lines:** the register's book assembly left its
+route for `lib/coach-register-book.ts`. *Start next season* is a second caller that writes the
+carried figure to the database **permanently**, so it computes it from the register's own walk
+rather than becoming a fourth arithmetic for one question. ⚠ `dues-definition-guard` fired on the
+now-empty route, which was it **working**; the entry moved with the code, and loosening its pattern
+so the old path still "passed" would have left the dues arithmetic unguarded in its new home.
+
+⚠ **The order of the payouts group is now STATED, not arranged.** "Paid back to families" sat at the
+foot of the expense band by accident — it arrived only as EVENTS, and the builder appends event-only
+categories last. Giving it real rows (one per family) moved it into the planned list, where it would
+have jumped to the TOP of a treasurer's spending table. Order that matters is order that is written
+down.
+
+---
 ### 2026-08-25 — THE PHONE TITLE BAND STAYS, AND ITS HEIGHT WAS NEVER THE TITLE — plus: do not rename the More tab
 
 **Decision (owner, 2026-08-25, from drawings — artifact `972ab843-5972-458c-91ca-bf7f2e990d70`):**
@@ -110,6 +173,58 @@ coach team masthead's right slot **at every width** (2); `CoachTopStrip` (the st
 place doors only", now also barring contextual help); `CoachesBottomNav`'s fifth tab (the standing
 "do not rename"). Plan: `docs/projects/active/COACH_PAGE_TITLE_BAND_PLAN.md`.
 [[design-principles]] [[design-system]]
+
+---
+
+### 2026-08-25 — ONE REQUIRED MARKER, AND IT IS NOT RED
+
+**Decision (owner, 2026-08-25):** a required field is marked with a **plain asterisk in the
+label's own colour**. The dedicated red marker is retired — not merely avoided in new code.
+
+**The reason, and it is a rule about colour rather than about asterisks:** in this portal **red
+means something has gone wrong** — money owed, an overdue bill, a refused save. A field is not in
+error because it is required, and painting it danger-red before the coach has done anything is
+colour crying wolf on the calmest signal a form has. The asterisk already carries the meaning;
+the colour was only adding volume, and it spends a signal the portal needs for real failures.
+
+⚠ **THE STATE THIS CORRECTS WAS NOT A SCREEN-BY-SCREEN SPLIT — IT WAS MIXED INSIDE SINGLE FILES.**
+Measured 2026-08-25: 44 required labels across 8 files, 29 red and 15 plain — with **Player Dues
+and the money record form each using BOTH**, so a coach could meet the two styles on one screen.
+Anyone assuming "money screens do one thing, roster does another" will mis-scope the sweep.
+
+⚠ **IT REACHES BEYOND MONEY**: roster, schedule, the head-coach editor and the start-interest form
+all carry the red marker. Do not file this under the money work — it is portal-wide.
+
+**Where it gets done:** folded into **money centralization P3** (owner, same day), which is
+already the words-and-leftovers phase. Deliberately NOT done the day it was ruled: roster and
+schedule were live in other sessions’ working trees, and a 44-site label sweep across files
+someone else is mid-edit on is an expensive merge over something cosmetic.
+
+**How it was found:** the owner noticed one red asterisk among a dozen grey ones on **Date paid**,
+a field P2 had just made required — I had reached for the named marker while the form around it
+used plain literals. That one label was matched to its form immediately; this ruling is the
+general answer behind it.
+
+**✅ SWEPT 2026-08-25 (money centralization P3, owner QA §104) — AND THE MEASUREMENT ABOVE WAS
+UNDERSTATED.** Counted against the tree rather than against this entry: **32 red markers across 9
+FILES, not 29 across 8** — the **Club tab** carried its own `.req` copy and was missed entirely —
+and **~58 marker sites across 11 files** rather than 44 across 8, because the two **Fundraising**
+screens were never counted. Their asterisks were already plain, so they needed no edit; the point is
+that a session scoping the sweep from the paragraph above would have been wrong about where it
+reaches. ⚠ **Roster and schedule were CLEAN by the time it ran** — the two files with other
+sessions' work in them turned out to be the money ones.
+
+⚠ **THE CSS IS DELETED, NOT MERELY UNUSED.** `.labelRequired` and `.req` in the portal stylesheet,
+**plus four local copies** (budget, start-interest, head-coach editor, schedule editor), each
+replaced by a headstone naming this ruling — because a rule left in place is a rule the next form
+finds. ⚠ One of the four was coloured `--home-live` rather than `--danger`, so the marker had
+already drifted into **two different reds** before anyone looked.
+
+⚠ **SCOPE RULED: THE COACHES PORTAL ONLY** (owner, 2026-08-25). Twelve further red markers live
+outside it — the public tryout registration form, the public league registration form, and one
+platform-admin screen. This ruling's reasoning is about what red means *in this portal*; those are
+different surfaces and were left alone deliberately. **A future session must not "finish the job"
+without its own ruling.**
 
 ---
 
@@ -322,10 +437,10 @@ something.
 
 ---
 
-### 2026-08-24 — WHAT OPENS BEHIND A REVENUE FIGURE — one rule for nine rows (owner-approved from drawings)
+### 2026-08-24 — WHAT OPENS BEHIND A REVENUE FIGURE — one rule for nine rows (owner-approved from drawings; ✅ BUILT ON DEV 2026-08-25, owner QA §101)
 
 Drawn and ruled from `claude.ai/code/artifact/da5d08b9-b81e-4848-a758-35a83923a98a`. Governs phase
-D-2 of the Months cash statement.
+D-2 of the Months cash statement. **Built as drawn** — plan `BVA_MONTHLY_INCOME_PLAN.md` §2.2.
 
 1. **The chevron opens where the money came from** — the actual families, drives, sponsors and
    requests behind the figure, never budget items.
@@ -374,7 +489,10 @@ ARE those rows**.
   opening balance.
 - **A season may carry an OPENING BALANCE** — born at *Start next season*, corrected in Team
   settings → Money, read on the register's first line, the Months summary block and Cash on hand.
-  ⚠ It must reach all three in ONE build item or the surfaces argue. **D-2, not built.**
+  ⚠ It must reach all three in ONE build item or the surfaces argue. ✅ **BUILT ON DEV 2026-08-25
+  (migration 262, owner QA §101) — and it reached all three together**, held by `check:register` and
+  `check:money-report`'s claim 6, which now reads the real field and treats an absent one as a
+  failure rather than a zero.
 
 **⚠⚠ THE GUARD RULING, which is the part most likely to be mis-"fixed" later.** `statement = grid`
 is **deliberately deleted** from `check:money-report`. It was true while Months was a spending
@@ -419,7 +537,7 @@ never cash arriving twice. The register books all of them with a guard-proven id
 - Scheduled/Budget lenses keep dues installments as the only scheduled income (nothing else has a
   schedule); the footnote states each lens honestly. The "same dollar twice" footnote retires.
 - **Phase 1 BUILT ON DEV 2026-08-23** (owner QA §83 owed; plan
-  `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`): the Actual strip is whole cash both
+  `docs/projects/archive/BVA_MONTHLY_INCOME_PLAN.md`): the Actual strip is whole cash both
   directions, assembled from the primitive records (gross, the register's dating rules,
   family-paid-direct costs excluded), and `check:money-report` now proves strip = register
   month-by-month both directions to the cent. **A further ruling rode the go (mockup Exhibit C,

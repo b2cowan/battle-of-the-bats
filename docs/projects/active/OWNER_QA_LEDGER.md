@@ -10877,7 +10877,7 @@ own rendered sign-off session.
 player dues only"), go given on the mockup artifact
 https://claude.ai/code/artifact/f0598811-0ac6-4235-8cdc-2cf805a6c2d7 (Exhibit C ruled: the grid
 GROWS a column for a cash-only month). Plan:
-`docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`. No migration.
+`docs/projects/archive/BVA_MONTHLY_INCOME_PLAN.md`. No migration.
 
 Walk on a team with fundraising, a sponsor, club money, a payout, and (ideally) a family-paid
 cost — the UAT fixture has all five; a dues-only team proves nothing here.
@@ -11002,7 +11002,7 @@ before the walk closed. Two further surfaces were DRAWN and decided during the w
 built: the D-2 drill-ins, and the Statement’s reconciliation bridge. Option D, built from the
 approved mockups
 https://claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2 (owner: *"ok, this looks
-good, I agree with the build"*). Plan: `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md` §2; build
+good, I agree with the build"*). Plan: `docs/projects/archive/BVA_MONTHLY_INCOME_PLAN.md` §2; build
 prompt `BVA_OPTION_D_MERGED_MONTHS_BUILD_PROMPT.md`. **No migration.** This is **phase D-1**: the
 bands, the totals, the Net row and all four lenses. Per-family / per-drive / per-sponsor item rows
 and the season **opening balance** are D-2, deliberately not in this pass.
@@ -11945,7 +11945,7 @@ owner rejected the first placement on sight — a bordered panel under Total exp
 statement’s own closing chain in half — and it was moved to the foot, beside the other basis notes,
 and re-weighted to match them before the walk closed. Owner ruling the same day (Option A), drawn at
 `claude.ai/code/artifact/4a160131-fea3-4f6b-99f4-4f9217932ee6`. Raised while walking §85, built
-after it closed. Plan: `docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md`. **No migration.**
+after it closed. Plan: `docs/projects/archive/BVA_MONTHLY_INCOME_PLAN.md`. **No migration.**
 
 The Statement and Months report two different truths — what the season SPENT versus what the CASH
 DID — and until now only Months explained the difference, in a footnote on the half a board never
@@ -12144,10 +12144,49 @@ at 38 entries across both screens — the fold removes one control per screen ra
 pattern instead of using the shared menu. Folding it in is a Phase 4 job — it is a screen already
 walked at §88 and not worth re-opening for tidiness alone.
 
-## §101 · Every figure on Months opens, and a season can carry money forward — BUILT, awaiting QA
+## §101 · Every figure on Months opens, and a season can carry money forward — ✅ PASSED 2026-08-26
 
-**BUILT ON DEV 2026-08-25.** Option D's second and final half (D-2). Plan
-`docs/projects/active/BVA_MONTHLY_INCOME_PLAN.md` §2.2 + PM brief. Build prompt:
+**BUILT ON DEV 2026-08-25 · ✅ OWNER QA PASSED 2026-08-26**, with **four corrections ruled in flight
+and fixed before the walk closed** — all four found by the owner looking at real screens, none by
+anything in the build:
+
+1. **A group's panel named nobody.** Thirteen families arrived as thirteen identical lines reading
+   "Dues payment" — the drawing had asked for *"every family's payment, NAMED"* and only the panel
+   was built. Every group panel now leads with its row (the family, the sponsor, the drive).
+2. **A payment method printed its stored value** ("other", "etransfer") beside real figures, while
+   every other money screen printed *E-Transfer* from the shared list. A method of "Other" now shows
+   nothing at all, because the word tells a coach nothing.
+3. **An arrival with nothing filed against it had NO ROW** — its money reached the group's total with
+   nothing beneath it, so expanding the group showed rows quietly adding up to less than the figure
+   above them. It lands on **Not itemized** now.
+4. **The coach's own words echoed the row** — an arrival filed under *Gate / admission* and described
+   as "Gate / admission" printed the phrase in the title and again beneath it. ⚠ The rule (*nothing
+   on a row restates what you can already see*) had been wrong TWICE while it lived inside the grid
+   component where nothing could assert against it; it now lives in a module with all seven cases
+   pinned, including the two that broke and the one that must not be swallowed.
+
+⚠⚠ **AND ONE OWNER RULING TAKEN DURING THE WALK, which changed the shape of the summary block:**
+*"if we're going to have an opening balance row, should we not just apply that to every month? we
+can rename running balance to closing balance so it relates properly."* **Taken.** Every month now
+states what it opened with, and **Running balance became Closing balance**, so the block reads
+**opening + net = closing** in the column a coach is looking at.
+- **The reason it is worth the redundancy** (each opening IS the month before's closing): the grid
+  **windows to twelve months**, so a scrolled view used to show a cumulative series whose origin had
+  scrolled off screen — a number the reader was asked to trust rather than check.
+- **Priced and accepted:** the row can no longer hide for a team that carried nothing, because their
+  later months open on real money. Every team gains a row on the portal's most-read money screen.
+- ⚠ **One column cannot balance and never could:** *No date yet* holds money that is in the Total and
+  in no month — a balance is a moment, and undated money has none. Both balance rows show a dash
+  there while Net carries a figure. The Total column still balances, because that is where undated
+  money lands.
+
+**Still open from this section, and NOT closed by the pass** — both pre-existing, neither this
+build's, neither baselined: the **`Record money`** button at 31px (fails identically on
+Transactions) and the **Statement's cash-bridge line** at 28px (§98's disclosure, whose session did
+not re-run the layout sweep). One line of styling each, if you want them taken.
+
+**Original build note (2026-08-25).** Option D's second and final half (D-2). Plan
+`docs/projects/archive/BVA_MONTHLY_INCOME_PLAN.md` §2.2 + PM brief. Build prompt:
 `BVA_OPTION_D2_ITEMS_AND_OPENING_BALANCE_BUILD_PROMPT.md`. Drawings:
 `claude.ai/code/artifact/da5d08b9-b81e-4848-a758-35a83923a98a` (what opens behind a figure) and
 `claude.ai/code/artifact/4a61dfc0-d6ee-49e3-80a7-70032a0f24b2` (the opening-balance workflow).
@@ -12174,8 +12213,15 @@ season forward on a standalone Premium team, or set one in Team settings → Mon
 - [ ] **Tap a family's figure.** A read-only panel: each payment, its date, how it arrived. Two
       doors — **Open Player Dues**, **Open Transactions**. ⚠ **No "Record a payment" button**,
       deliberately: the grid reaches your forms, it never becomes a second editor.
-- [ ] **Tap the GROUP's figure instead.** The same panel for the whole team that month — every
-      family's payment, named. Same shape, wider scope.
+- [ ] **Tap the GROUP's figure instead.** The same panel for the whole team that month — ⚠ **every
+      family's payment NAMED**: each row leads with the family, not with "Dues payment". (Found on
+      your first look at this: the panel was built and the naming was not, so thirteen families
+      arrived as thirteen identical lines. Fixed 2026-08-25 — the same rule now applies to every
+      group panel, so **Sponsorships** leads with the sponsor and **Paid back to families** with the
+      family, never with the kind the title already said.)
+- [ ] **The method reads in words** — *E-Transfer*, *Cash*, *Cheque* — never the stored token, and a
+      payment recorded as "Other" simply shows its date rather than the word. (Also found on that
+      first look: the panel was printing raw values beside real figures.)
 - [ ] **Fundraising** opens to each **drive**. Inside a drive: who raised each amount, and the
       rebate as a **note** ("$120 credited to their dues") — ⚠ **never a second figure**. Panel
       total reads **"Total raised"**. Second door opens **that drive** by name.
@@ -12470,7 +12516,12 @@ now says plainly that it is **not** general yet and names what the first new cal
 proved to fail with the defect reintroduced, same discipline as the rest of the pass. The corpus
 was re-rendered a third time after the review fixes and is unchanged.
 
-## §103 · Names become a switch, and a score explains itself — BUILT, awaiting QA
+## §103 · Names become a switch, and a score explains itself — ✅ OWNER QA PASSED 2026-08-26
+
+**✅ OWNER QA PASSED 2026-08-26** (owner sign-off; committed `100838ad` on dev 2026-08-25).
+⚠ **Migration 263 is applied to DEV only — it must reach prod BEFORE this code is promoted**, and
+that is now the only thing standing between this and a release. The steps below are kept as the
+walked record.
 
 **BUILT ON DEV 2026-08-25.** Plan + PM brief:
 `docs/projects/active/COACH_TRYOUT_NAMES_AND_BREAKDOWN_PLAN.md`. Approved mockup (binding, and it
@@ -12608,3 +12659,500 @@ against a freshly restarted server.
 **Coverage after the review:** 2,518 tests (one added for the shared blind predicate), typecheck
 clean, `verify:changed` green apart from the standing dev-only schema parity.
 
+## §104 · Tags answer the question they were kept for, and the red asterisk retires — BUILT, awaiting QA
+
+**▶ STEP-BY-STEP WALKTHROUGH (six phases, in the order that makes each cheap to check):**
+`claude.ai/code/artifact/31a3f79a-21cc-49b6-8343-1f88e4caa845`
+
+**BUILT ON DEV 2026-08-25.** Money centralization **P3** — the tags-and-leftovers phase. Plan
+`docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md` §5.3 + §8; build prompt
+`COACH_MONEY_CENTRALIZATION_P3_BUILD_PROMPT.md`. Gate drawing (the one undecided thing, approved
+2026-08-25): `claude.ai/code/artifact/ccb5e84e-e25c-4b08-ba12-857735f81351`. **No migration.**
+
+**The one sentence this phase exists for:** *a tag-filtered view that shows rows but no total has
+not answered "what did the Summer Classic cost us?"* Transactions had **no total at all**; Payables
+had one written back-to-front.
+
+⚠ **Walk it on `uat-test-org` → the live 2026 team.** The fixture now seeds money tags for the first
+time — **Spring classic** (team-own, on *Spring classic entry* + *Practice balls and tees*) and
+**Club permits** (org-shared, blue). Before this session it seeded game tags only, which is why the
+layout sweep had been walking both money faces with the whole control invisible.
+
+⚠ **The dark theme is an account preference, not a media query** — warm is the default and the
+drawing is in warm. **Check the band and the pill in BOTH.**
+
+### A · The counted pill — Transactions
+
+- [ ] **Money → Transactions.** The row of little tag buttons is **gone**. In its place, a fifth
+      dropdown beside Show / Status / Item / Date, labelled **Tags**, reading **Every tag**.
+- [ ] **Open it.** One row per tag actually used on this book, each with its **count** in the label
+      ("Spring classic (2)"), an **All tags** row at the top, and a **coloured dot** per row —
+      **blue** for a tag the club shares, olive/lime for the team's own.
+- [ ] ⚠ **The blue dot replaced a colour legend that only ever rendered on Payables.** Confirm there
+      is no legend strip under the toolbar on either face any more, and that the distinction is
+      still being made.
+- [ ] **Tick Spring classic.** The pill reads **Spring classic** (its name, not "1 selected"). The
+      book narrows.
+- [ ] **The band above the book states the answer** — the dollars **first**, big and bold: *"$X
+      across 2 costs tagged Spring classic."*
+- [ ] ⚠ **Cash on hand disappears while a tag is on**, and so does the Balance column. That is the
+      standing rule (a running total over some of the rows is not your cash) — the tag total is what
+      arrives in its place as the figure worth reading.
+- [ ] **Tick a second tag.** The pill reads **2 selected**; the band names both — *"tagged Spring
+      classic or Club permits"* — and the figure and count grow. ⚠ **A cost carrying BOTH tags must
+      be counted ONCE** — check the row count against the rows on screen.
+- [ ] **Untick everything** (or use **All tags**). The book, the Balance column and Cash on hand all
+      come back; the band goes.
+- [ ] **Export while a tag is on.** The file is what the screen is showing, as it was before.
+
+### B · The same pill and the same band — Payables
+
+- [ ] **Money → Payables.** The **Tags** pill sits with Status and Item — ⚠ **never before "Group
+      by"**, which chooses an arrangement rather than a narrowing.
+- [ ] **Tick a tag** on **Group by: commitment**. The band reads *"$X across N commitments tagged
+      …"* — figure first. ⚠ It used to read *"vs Spring classic: N commitments, $X total"*; the old
+      wording is retired everywhere.
+- [ ] **Switch to Group by: due date with the tag still on.** ⚠⚠ **The sentence must change to
+      "across N payments"** — and the figure with it. This is the defect the phase fixed: the old
+      band said "3 commitments" while the screen showed five dated payments.
+- [ ] ⚠⚠ **NOW TICK "Paid" IN Status, still on the due-date view.** The settled installments appear
+      and the figure GROWS to include them. This is the sharpest check in Part B: the first build
+      summed a field that means *remaining* on an unpaid piece and *the full amount* on a paid one,
+      then called the result "still owing" — so every paid installment was counted at full value
+      under a label saying it was outstanding. It reads the face amount now and no longer claims
+      "still owing". ⚠ With Status set to All, **the two Payables arrangements must agree to the
+      cent** — same money, two ways of splitting it.
+- [ ] **Filter Payables, then switch to Transactions.** ⚠ The band must **restate itself for the new
+      face**, never strand a payables figure over the register (it did exactly that before P3).
+
+### C · Read-only money access
+
+- [ ] Sign in as **uat-asst-money-read** — a persona added for this walk, because the check was
+      NOT WALKABLE before it. The fixture had two write-money assistants and two with none, and
+      never one with READ, so signing in as **uat-asst-money** (which is WRITE) would have shown
+      every button present and read as a pass. The two differ in exactly one grant.
+- [ ] The **Tags** pill and the **total band** are both there — reading is not writing.
+- [ ] **Manage tags**, **Add a commitment**, **Record** and every edit door stay absent.
+
+### D · The credit picker no longer offers what the server refuses
+
+- [ ] **Money → Player Dues → a player → Add credit.** The **Kind** list offers exactly four:
+      **Contribution · Fundraiser · Overpayment · Other**.
+- [ ] ⚠ **Forgiven and Reimbursement are gone from it.** Picking either used to fill the whole form
+      in and then fail on Save with a bare error — the API has always refused both.
+- [ ] **Open an existing forgiveness credit for a correction** (settlement sheet grants one). Its
+      Kind still reads **Forgiven**, greyed and unchangeable — ⚠ it must **not** silently relabel
+      itself "Contribution".
+
+### E · The red asterisk is retired, portal-wide
+
+Every required field still carries an asterisk in the same place; the asterisk is now the label's
+own colour rather than red. **Red in this portal means something has gone wrong** — nothing else
+changes.
+
+- [ ] **Money → Budget Plan → Add a line** (Category & Item, Total Amount) — plain.
+- [ ] **Money → Player Dues** — the record-a-payment fields **and** the Add-credit fields. ⚠ This
+      screen used **both** treatments before; confirm it is now consistent with itself.
+- [ ] **Money → Club → New request** (direction, Amount, Description) — plain.
+- [ ] **Money → Transactions → Record** — unchanged (it was always plain). Confirm it now matches
+      its neighbours rather than being the odd one out.
+- [ ] **Roster → Add player** (First Name) · **Schedule → Add event** (every date/time field) ·
+      **Team settings → head coach** · the **start-interest** form — all plain, legends included.
+- [ ] ⚠ **A refused save must still be red.** Trigger a validation error somewhere in Money and
+      confirm the error styling is untouched — that signal is the whole reason the marker went.
+
+### F · The demo
+
+- [ ] ⚠ **The coach sandbox could not show tags at all before today** — none had ever been seeded.
+      The 12U mid-season world now carries **Spring Classic** (deliberately spanning *two* budget
+      categories, which is the distinction tags exist for) and an org-shared **Club permits**.
+      ⚠ **This needs a reseed of the coach demo to appear** — a nightly tick only re-anchors dates.
+- [ ] The **Transactions** tour step gained one closing sentence about the labels. ⚠ **It names no
+      figures**, deliberately, so a re-anchor can never make it wrong.
+
+### G · A failed reading carries NOTHING, never zero (the §101 fix, walked here)
+
+⚠ **Not P3's feature — but it reaches real money and ships in the same working copy.** Rolling a
+team forward with *carry the cash forward* asks the app what the old season closed at; a failed
+read used to be saved as **"carried from the 2025 Season: $0.00"**, permanently, for a team that may
+have closed holding thousands.
+
+- [ ] **Roll a team forward with "carry the cash forward"** from a season that closed holding money.
+      The new season opens with it and the opening line **names where it came from**.
+- [ ] **Roll forward choosing "don't carry anything".** No opening line at all; Team settings reads
+      **None carried**.
+- [ ] **Roll forward typing an amount yourself.** Carried — and the line does **NOT** name the old
+      season. ⚠ Naming a source would vouch for a figure the coach chose.
+- [ ] **Roll a team whose previous season closed genuinely EMPTY.** An opening line saying **$0.00
+      carried from the 2025 Season**. ⚠⚠ **This is the distinction the whole fix turns on**: a real
+      zero SAYS SO; a failed read says nothing at all.
+- [ ] **If you can stage a failure** (rollover while the database is unreachable): the roll still
+      **completes** — it is never blocked by a stumbling cash read — and the season carries nothing,
+      with a warning pointing at **Team settings → Money**. ⚠ Hard to stage by hand, which is why it
+      is pinned by nine automated assertions instead; the one thing they cannot check is the
+      sentence a coach reads.
+
+### H · Regression edges
+
+- **Payables' "Fold all"** still works and still looks like a chip — it is the one control that
+  legitimately kept the old chip styling.
+- **A team with no money tags** sees no pill and no band on either face, exactly as before.
+- **Re-tagging a row** from the record still works, and the pill's counts follow it.
+
+⚠⚠ **WHAT THE AUTOMATED SWEEP DOES AND DOES NOT COVER HERE — read before trusting a green run.**
+`check:layout` loads a screen; it never ticks a filter. So it proves the **pill** does not push either
+toolbar into a wrap (it does not, at 361/390/768/1440 on all three money faces) — but **the total band
+only exists after a coach selects a tag, so nothing automated has ever rendered it.** This walk is its
+only coverage.
+
+⚠ **Three pre-existing findings surfaced the moment the fixture gained money tags, and none of them are
+this feature's** — recorded here so the walk is not surprised by them:
+1. **FIXED.** The per-row tag chip read **4.47:1 at 11px** in the warm theme — three hundredths under
+   AA, on customer-visible text, unmeasured for months because a tag chip only renders on a record
+   that carries a tag. The own-tag ink is one step darker now.
+2. **RECORDED AS DEBT, NOT FIXED.** The money hub's **Record** button is **31px tall at 768px**
+   (floor 44) on *every* money tab — Budget and Club included, which this phase only touched
+   asterisks on — and **Manage tags** is 33px. Both are portal chrome from earlier phases; raising
+   them is the touch-target debt plan's call, not this feature's, so they are in the baseline with
+   **no reason written**, which is how that file records unargued debt.
+3. **NOT RECORDED, DELIBERATELY.** `coach-schedule` reports a 31px row button whose baseline key
+   embeds the fixture's **re-anchored practice time** — so the finding renames itself on every
+   reseed. Baselining it would rot immediately and produce a fresh phantom next time. ⚠ Anyone
+   reseeding the UAT fixture will see this one; it is a flaw in that control's identity, not a
+   regression.
+
+⚠⚠ **TWO REAL DEFECTS FOUND BY §104's `/review` THAT BELONG TO OTHER SESSIONS' UNCOMMITTED WORK.**
+Recorded here because that is where they were found and this ledger is what gets read — **neither is
+P3's, and neither has been touched.** Both verified in the tree by hand, not taken on the agent's
+word.
+
+1. ✅ **FIXED 2026-08-25 (owner-directed) — `lib/rep-season-rollover.ts`: a FAILED cash read WAS
+   stored as a CONFIDENT `$0` carry with provenance.** (Belongs to the carry-forward /
+   opening-balance work, mig 262, §101 — fixed here because it reaches real money and ships in the
+   same working copy. **Walk it as Part G below.**) With
+   `carryCash.mode: 'all'` — the dialog's default — if `seasonClosingCashCents()` throws, the catch
+   only logs and warns: `openingCents` stays at its initialiser `0`, so `openingBalance` computes to
+   `0` rather than `null`, and the `openingBalance !== null` test then stamps
+   `opening_balance_from_year_id = currentSeason.id`. A transient DB error therefore writes *"carried
+   from the 2025 Season: $0.00"* — permanently, on the register's first line, Budget vs. Actual and
+   the settings row — for a team that may have closed holding thousands. The modal's warning is
+   shown once and lost; the false provenance is not. ⚠⚠ **It breaks the rule stated in its own
+   comment three lines above** (*"NULL, NOT ZERO, WHEN NOTHING WAS CARRIED … Same number, different
+   facts"*), which is that session's own binding ruling from the same day
+   (`memory/design_decisions.md` 2026-08-25). Fix: on the catch path with mode `'all'`, leave
+   `openingBalance` **null** and write no provenance.
+   **How it was fixed:** `openingCents` became `closingCents`, initialised to **null** rather than
+   `0` — *initialise a money variable to the value that means "we do not know", so a `catch` that
+   forgets to assign cannot promote a failure into a figure.* ⚠⚠ **AND THE DECISION MOVED OUT OF
+   THAT FILE.** `rep-season-rollover.ts` imports `server-only` and does DB work, so nothing in it
+   could ever be unit-tested — which is precisely how the failure path shipped wrong. The two pure
+   functions now live in **`lib/season-carry.ts`** (`openingBalanceFor`, `carriesProvenance`;
+   `SeasonCarryChoice` moved with them and is re-exported so every importer still works), pinned by
+   **`tests/unit/season-carry-forward.test.ts` — 9 assertions**, including one that sweeps every
+   choice × closing-value combination to prove **no input can ever produce a null figure wearing a
+   provenance stamp**. Suite is 2,538 passing.
+2. 🟡 **`lib/export/schedule-document.ts` `splitVenue()` mis-splits a venue whose NAME contains
+   ` - `.** (Owner: the PDF export / schedules work, §102.) It splits on the FIRST ` - `, so a real
+   facility named *"North - South Fields"* with no diamond suffix parses as venue `North` + field
+   `South Fields` — the day heading then names a place that does not exist and every row under it is
+   mislabelled on a document that goes on a wall. Narrow (needs a dash inside the venue name) but a
+   silent misprint. No test covers it; every existing case is `"Park - Diamond N"` shaped.
+
+**Coverage:** typecheck clean · focused lint 0 errors · full unit suite **2,518 passing** ·
+`check:register` ✓ (opening carry reached both book and summary) · `check:layout` green on all
+three money faces plus Budget/Dues/Club/Roster/Settings ·
+`check:money-report`, `check:spelling`, `check:css-purity`, `check:demos` green. **Help updated**
+(the money guide's filter-strip paragraph, the tags section and the tags FAQ — all three described
+a one-at-a-time chip row).
+
+---
+
+## §105 · The header rules stop being a document nobody read — and menus answer the keyboard — BUILT, awaiting QA
+
+**Checkable walkthrough:** https://claude.ai/code/artifact/0ae5c557-c786-43de-95a2-678753595e80
+
+**BUILT 2026-08-25 (dev).** Page-level action consistency, **Phase 4a** — the last phase of
+`COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`. **No migration. No screen changed**, which is the point:
+three phases spent a fortnight making every coach page header agree, and nothing stopped the next
+change from quietly disagreeing again. This is the part that stops it, plus one accessibility fix
+that rides along.
+
+**⚠ Most of this is invisible in a browser.** Walk it as two short passes — one to confirm nothing
+moved, one at the keyboard.
+
+### Pass 1 — nothing moved (5 minutes, and a "nothing happened" is the pass)
+
+- [ ] **The Money hub still looks exactly as it did.** Open **Money**. Header: **Record** then
+      **Import**, then the team bar's **?** above it. On a phone Record is a bare **+** in the title
+      line's corner and Import is gone.
+- [ ] **Roster, Schedule, Plan templates, Drills and Overview are all unchanged** — same buttons,
+      same order, same phone behaviour. Nothing in this phase touched a screen.
+
+### Pass 2 — the menus now answer the keyboard (the real change a coach can feel)
+
+Three menus in the portal open onto a choice: **Money → Import**, **Plan templates → New template**,
+and **Drills → New drill**. All three behaved the same way before this: they announced themselves to
+a screen reader as a *menu*, and then ignored every key except Escape.
+
+- [ ] **Tab to the button and press Enter (or Space).** The menu opens and **the first choice is
+      already highlighted** — you can act without hunting for it.
+- [ ] **Press the Down arrow with the button closed.** It opens onto the **first** choice.
+      **Press Up instead** — it opens onto the **last** one.
+- [ ] **Arrow up and down inside the open menu.** Focus moves between the choices and **wraps** from
+      the last back to the first. **Home** jumps to the top, **End** to the bottom.
+- [ ] **A greyed-out choice is skipped.** On **Plan templates**, start a blank template and reopen
+      the menu while it is working — *Start from blank* is disabled and the arrows step straight past
+      it to the import route, which stays usable. (This is the Phase 3 rule that folding two buttons
+      into one must not fold their disabled states together.)
+- [ ] **Press Tab with the menu open.** The menu **closes** and focus carries on to the next control
+      *after* the button — it passes through the button rather than resting on it, so one Tab is one
+      step. Before this, Tab walked into the page *behind* a panel that stayed on screen — which is
+      what makes a menu a trap.
+- [ ] **Click somewhere empty on the page while the menu is open.** It closes, and focus quietly
+      returns to the button rather than being lost — so if you then press Tab, you carry on from
+      where the menu was instead of from the top of the page.
+- [ ] **Pick "Bring one forward from a past season".** The window opens; focus goes back to the
+      button behind it. ⚠ **Known gap, not a defect to report:** that window does not take focus for
+      itself, so a keyboard user still has to Tab into it. That is a pre-existing gap in the window,
+      not in the menu — recorded in the plan.
+- [ ] **Press Escape.** The menu closes and focus returns to the button. (Unchanged — it was already
+      right.)
+- [ ] **Nothing changed for the mouse.** Click the button, click a choice, click away — all exactly
+      as before.
+
+### What now fails a check instead of relying on someone having read a document
+
+- [ ] **Nothing to click here — this is context for the two passes above.** A new build check reads
+      every coach page header and refuses a change that: adds an action to a header that had none,
+      changes how a header behaves on a phone, **puts an export inside a page header**, draws a
+      second button before the page's create, hides a header action behind a view switch, or adds a
+      second screen whose header slot holds a status readout instead of an action. Ten of those were
+      deliberately committed one at a time to prove each is actually caught.
+- [ ] **Overview's season-setup ring is the one enumerated exception**, with its reason written
+      down — it is a status readout that opens a checklist, it is ruled to stay, and it is now the
+      *only* screen allowed to be that.
+
+**⚠ Two things this pass deliberately did NOT do, and why** — both are collisions, not decisions:
+**Schedule's Add Event** still hand-rolls its own menu (so it does *not* get the keyboard pattern
+above — that is expected, not a defect to report), and the Money hub's Record button still names a
+transitional CSS alias. Both files are mid-edit by other work; they ride the next unit.
+
+**⚠ Verification gap to know about before signing this off:** the full rendered layout sweep
+**aborted on the machine's memory floor** part-way through and was not re-run, because the dev
+server it needs is shared with other live sessions. A targeted sweep over the six screens this
+change can reach came back with **no findings attributable to it** — the two that did appear were
+re-tested with this change reverted and appeared identically, so they belong to other in-flight
+work (a re-anchored practice date in the test fixture, and the Money hub's Record button measuring
+31px at tablet width). **The full sweep is owed.**
+
+**Nothing changed in the in-app guides or the demo sandboxes** — no named control moved, and no
+guide or tour sentence describes keyboard operation.
+
+---
+
+## §106 · Paper you read from across a field — and two "defects" that were never real — BUILT, awaiting QA
+
+**PDF Export Quality, Phase 2, pass 6 of 6 — the last group.** The lineup poster, the batting-order
+card, the playoff bracket and the blank bracket. These four are not read, they are **glanced at, in
+the open air, while something is happening**. Only Phase 3 (the rendered check in CI) now remains.
+
+**Owner decisions taken at checkpoint 1, from rendered options:** (1) brand the poster and card
+like every other document · (2) **the card stays ONE FULL PAGE**, filled — two-up and three-up were
+rendered and rejected · (3) the bracket and poster fill the page · (4) a name that doesn't fit
+shrinks, then wraps; it is never silently cut.
+
+### ⚠⚠ Two reported defects were NOT REAL, and the headline one was the opposite of what was written
+
+The build prompt opened with *"THE BRACKET DOES NOT DRAW ITS FIRST CONNECTOR… the biggest defect in
+the group and nobody has ever recorded it."* It is not a defect. `advancePlayoffs` sets the
+advancing team's id and **never clears the `Winner <code>` placeholder** that connectors are drawn
+from — the only code that clears one is the deliberate "game deleted → reset the slot to TBD" flow.
+So real rows carry **both** the resolved team and its note. The prompt's fixture was hand-written
+with that note omitted on one game, which is the entire finding. Fed production shape, **every
+connector draws** — as does the tournament demo's own bracket, which seeds through the real code
+(`seed-demo-tournament.mjs` writes `Seed #N` / `Winner SF1` properly).
+
+The same fixture had **no substitutes in it**, which is why the card was reported as dropping the
+bench. It never did.
+
+**Both would have been "fixed" into regressions.** This is the §102 lesson a third time: an exhibit
+built from a fixture you wrote is evidence about your fixture.
+
+### What was actually wrong (all confirmed on rendered paper, several not in the prompt)
+
+- **The bracket squashed every square club crest** — a hard-coded `20 × 10` box, never
+  `drawLogoSlot`. A round mark printed as a wide ellipse, on the most public document we make.
+- **The poster and card carried NO crest and NO club name** — their contract took only
+  `accentColor` + `showBranding`. ⚠ Not by design: the lineups screen already calls
+  `fetchResolvedPdfSettings` and builds the whole identity at export time, then keeps two fields.
+- **"Vertical centring" was really SCALE.** Both documents capped growth and centred the remainder:
+  a **nine-player lineup** — the ordinary case — stopped two-thirds down a dugout poster, and a
+  six-team draw used a third of the sheet.
+- **The poster promised a box it did not draw** *(not in the prompt)*. The legend says "Blank box =
+  fill in at the field"; an unassigned inning printed **nothing**. ⚠ **Fixed by changing the WORDS
+  — see the reversal below.**
+- **A long opponent was silently truncated** on both documents *(not in the prompt)* — the title
+  reserved a fixed 60mm strip for a clock and ellipsised whatever was left.
+- **The bracket had no title block** — division and event were the identity band's small grey
+  second line.
+- **The blank bracket's write-on lines were grey hairlines**, and it had nowhere to name the
+  division or the date.
+
+### Walk it
+
+- [ ] **Coach → a team → Lineups → an event → export the poster.** The club crest and name are at
+      the top; the matchup is the headline; the date and event are on their own line beneath it.
+      The grid **reaches the bottom of the sheet** — try a nine-player lineup, which is where it
+      used to stop short. The footer carries the club line, the export date and the branding.
+- [ ] **On that poster, look at an inning you left unassigned.** The cell is **completely open** —
+      no box drawn inside it, because the ruled grid cell already is one. There should be plenty of
+      room to pencil a position in. A benched inning still reads **BN**. The legend's second line
+      reads "Blank = fill in at the field" and never breaks "at the field" onto its own line.
+- [ ] **Give the team a very long opponent name.** The matchup **shrinks, then wraps** — no "…".
+      Same on the card. A long player name shrinks in the batter column rather than clipping.
+- [ ] **Export the batting card.** One full page, crest and club name, the order filling the sheet,
+      a **POS** column naming where each batter starts, substitutes at the foot. A batter whose
+      first inning is unset shows **no** position rather than an invented one.
+- [ ] **Admin → Tournaments → Schedule → bracket view → Export.** ⚠ **Set a SQUARE or ROUND club
+      logo first** — that is the whole point. It should render **circular, not a wide ellipse**.
+      The division is a **large title**, the event is beneath it, the club is above it, and the
+      tree uses the whole page.
+- [ ] **Export the blank bracket.** Real **boxes** for every name and score, and **DIVISION** and
+      **DATE** fields to hand-write. A played bracket does *not* show those fields.
+- [ ] **Edge cases worth one look each:** a bracket with nothing played yet · a bracket with byes ·
+      a division with no playoff games at all (should still title itself and footer) · a lineup
+      with no opponent set · a finished bracket (the Champion line still sits opposite the title).
+
+### Evidence
+
+- **Full corpus, before and after, compared by DRAWN TEXT** (byte comparison is meaningless here —
+  jsPDF stamps a creation date, so two renders of identical code differ). A HEAD worktree rendered
+  the 32-document generator corpus; **24 of 32 are identical**, and the 8 that changed are the six
+  this pass owns (poster ×2, card ×2, bracket ×2) plus **two that are NOT mine** — the practice run
+  sheet, which carries another session's uncommitted work in the same file. ⚠ Attributed before
+  defending, per §102: my hunks never enter `buildPracticeRunSheetDoc`.
+- **The scanner reports no change at all** across all 78 documents — no pagination shift, no footer
+  regression, no fit-contract apology.
+- **18 mutations, every one caught.** Each reintroduces a defect this pass fixed and the suite is
+  proved to go RED. ⚠ **One test was found to prove nothing this way**: the card's fill-the-page
+  assertion was written as `span > 8 * 18 - 1` and passed with the 18mm cap reinstated (8 × 18 =
+  144 clears 143). It now asserts the row **pitch**, not the span. Per §99 — a test that cannot
+  fail is not coverage.
+- Full suite **2,563 pass / 0 fail**. `typecheck` clean. `verify:changed` clean except the
+  **pre-existing** schema-parity red (dev-only migrations 262/263 from other sessions; this pass
+  adds no migration).
+
+### Structural notes
+
+- `bracket-pdf.ts` gained **`buildBracketDoc(jsPDFClass, …)`** — jsPDF by injection, like
+  `buildTablePDF` / `buildLineupPosterDoc` / `buildPracticeRunSheetDoc`. The one document that
+  squashed crests had no way to be tested at all; the fix and its guard arrived together. Its
+  imports moved from `@/` to relative for the same reason (the unit-test resolver deliberately
+  handles only relative specifiers — `resolve-pdf-settings.ts` documents that rule).
+- The bracket now uses the shared **`MARGIN`** (14mm, was its own 12mm), so its crest, title and
+  first column line up with every other document.
+- `LineupPosterOptions.settings` replaces `accentColor` + `showBranding`.
+- `SizingMockDoc` joins `MockDoc` / `WrappingMockDoc` in the test fakes: text width now scales with
+  font size. ⚠ Without it every shrink-before-truncate test would have measured the fake — the
+  shrink loop cannot succeed against a size-blind width model. Verified by collapsing the size
+  ladder and watching the assertions go red.
+
+### Verification not run, and the residual risk
+
+- **`check:layout` was not run.** The lineups screen **is** in the registry (`coach-lineups`), but
+  the only change to it is the export payload handed to the PDF builder — **no JSX and no CSS
+  changed**, so a rendered layout sweep has nothing to catch. The admin schedule screen is not in
+  the registry at all. Residual risk: none identified.
+- **Browser testing is owed** — every exhibit above was rendered headless through the real
+  exporters and looked at, but no document has been produced from a live screen.
+
+**Demo sandboxes — asked and answered.** ⚠ The tournament sandbox runs on `tournament_plus` and has
+a **live finished bracket with a crowned champion**, so a prospect can download the most public
+document in this programme today. **Nothing has gone stale**: the walkthrough's bracket copy is
+about the bracket *building itself* from standings and the inline editor — no sentence describes the
+export. **A new moment is now plausible and it is the owner's call**: the bracket a visitor can
+print is materially better than it was, and the demo's crest is exactly the square-ish mark that
+used to come out stretched.
+
+**Help docs.** The exports guide's availability table and its "a PDF is a document, not a copy of
+the spreadsheet" paragraph both still describe what ships — the document set did not change, only
+how the four of them look. No named control moved.
+
+### ⚠ Owner reversal, 2026-08-26 — the fill-in box on the poster came straight back out
+
+Shown the built poster, the owner's reaction to the drawn box in each unassigned inning was
+*"do we really need these squares within the squares? seems like that is just in the way of
+writing in the positions later."* **Correct, and it was mis-applied precedent, not a taste call.**
+
+The §91 working-sheets rule — *a column somebody fills in by hand gets a real drawn box* — exists
+because the tryout check-in sheet's tick column had **no cell borders at all**; a volunteer had
+nothing to aim at. The lineup poster is the opposite: a heavily ruled grid, thick outer border, a
+line between every row and every inning. **The cell already IS the box**, so the inner rectangle
+made the writable area *smaller* than the cell it sat in — actively in the way of the pen it was
+supposed to help. The rule applies where a cell has no edges, not wherever something is
+handwritten.
+
+**What changed:** the box is gone; an unassigned inning is simply an empty cell. The legend line
+moved with it — *"Blank = fill in at the field"*, because a sentence naming a box the page no
+longer carries is the exact defect the line was fixing in the first place.
+
+⚠ **The blank BRACKET keeps its boxes, deliberately.** Re-checked against this reversal: its match
+card is a faint outline with **no rule separating the name area from the score area**, so those
+boxes carry structure that does not otherwise exist. Different situation, opposite answer. If it
+still reads as boxes-inside-boxes on paper, say so and it comes out too.
+
+**Re-proved after the reversal:** contract suite 114 pass, full suite **2,563 pass / 0 fail**,
+typecheck clean, spelling gate clean. The mutation set was updated rather than deleted — the two
+tests that guarded the box now guard its **absence** (a box drawn inside the cell again, and the
+legend naming a box the poster does not draw), and **18 of 18 mutations are still caught**.
+
+### `/simplify` — 2026-08-26 (four cleanup agents: reuse, simplification, efficiency, altitude)
+
+**Three of the four independently landed on the same finding, and it was a fair hit:** this pass
+fixed the bracket's hand-rolled header by routing it through the shared `drawIdentityBand`, then
+**hand-rolled two more** — the poster and the card each carried their own near-identical copy of
+the quiet crest/club strap. They had already drifted (only the card clamped the club name to the
+page width). The same pass had extracted three other shared helpers, so there was no excuse.
+
+**Applied:**
+- **`drawQuietIdentity`** — ONE copy of the strap, used by both. Fixes the drift for free. ⚠ It is
+  deliberately NOT `drawIdentityBand`: that band is the primary heading of the documents it serves
+  (bold 14pt, its own divider, drawn at the module `MARGIN`), while these two want the club to sit
+  *under* the matchup in emphasis and use their own margins. A second, quieter variant is correct —
+  **two copies of it were not.**
+- **`drawMatchupHeadline`** — the shrink-then-wrap headline block, previously duplicated verbatim.
+- **`footerParts`** — the footer's parts and order now have one definition behind both the
+  paginated `stampFooters` and the single-page `drawPosterFooter`.
+- **`boxH` scoped locally to `drawSection`** in the bracket. It had been an outer-scope `let` with a
+  reset and an accessor — a comment justifying a reset that was only needed because I had scoped it
+  wrong. Every read and write was already inside that one function; a fresh binding per call does
+  the job, and the accessor is gone.
+- **Row-invariant sizes hoisted** out of the poster's player loop.
+
+**Skipped, with reasons:**
+- **Widening the unit-test resolver to map `@/`** (altitude agent's recommendation, so
+  `bracket-pdf.ts` could keep `@/` imports). Genuinely the righter depth — `@/` can never be a real
+  package, so the resolver's "never shadow a package" property would survive — but it is **shared
+  test infrastructure under 2,574 tests, in a working copy other sessions are actively running**,
+  and it is outside this diff. ⚠ **Recorded as a real recommendation for whoever next touches
+  `tests/ts-resolver-hooks.mjs`**: there are now TWO files carrying relative imports purely to dodge
+  that limitation, and the constraint is silent and unenforced.
+- **Inlining `sizeLadder` into `fitCell`/`fitHeadline`** — it centralizes a real subtlety (the floor
+  size is always tried last, which matters because one ladder's top is not grid-aligned). Inlining
+  would duplicate that subtlety into two functions.
+- **Every efficiency finding** — the reviewer's own verdict was that a once-per-click browser-side
+  export does not justify trading readability for unmeasurable gains. Agreed.
+- **The bracket's local `truncate` duplicating `fitText`** — pre-existing, untouched by this diff.
+
+**⚠ The refactor was proved INERT on paper, which is the only thing that matters here.** Six
+documents (both cards, four brackets) rendered before and after and compared **pixel by pixel**:
+all six identical once the export date stamp is excluded. One card initially showed ~34k differing
+pixels — traced to the **size-ladder deepening that predates `/simplify`**, and confirmed by
+temporarily restoring the old ladder, at which point that document was pixel-identical too. First
+headline line sits at the same y to two decimals in both, which is the strap extraction proving
+itself. Corpus scan unchanged across all 78 documents; full suite **2,574 pass / 0 fail**;
+typecheck, lint (0 errors) and spelling gate clean.
+
+**Mutation set updated, not weakened: 17 of 17 caught.** Two pairs collapsed into single mutations
+because the code they targeted is now genuinely shared — one anchor in the strap now fails both the
+poster's and the card's crest tests, which is the extraction paying for itself.

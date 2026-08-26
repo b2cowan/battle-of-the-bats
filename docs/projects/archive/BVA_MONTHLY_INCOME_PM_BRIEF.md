@@ -1,6 +1,9 @@
 # PM Brief — Budget vs. Actual learns the whole income truth
 
-**Status: Phase 1 BUILT on dev 2026-08-23 (owner QA §83). Phase 2 = Option D; its first half (D-1) BUILT on dev the same day (owner QA §85). D-2 gated on that walk — see the bottom of this brief.**
+**Status: COMPLETE on dev. Phase 1 BUILT 2026-08-23 (owner QA §83). Phase 2 = Option D — D-1 BUILT
+the same day (✅ owner QA §85 PASSED 2026-08-24), D-2 BUILT 2026-08-25, ✅ owner QA §101
+PASSED 2026-08-26. Option D is finished; see the bottom of this brief for what D-2 changed.**
+⚠ **Migration 262 is on DEV only and must reach production BEFORE this code is promoted.**
 Plan: `BVA_MONTHLY_INCOME_PLAN.md` · Origin ruling: owner, 2026-08-23, mid-§80 walk.
 
 ## The problem, in the owner's words
@@ -172,11 +175,77 @@ Owner QA ledger **§85**. Fastest confidence check: `qa-money-lab` → QA Money 
 approved mockup to the dollar — Total revenue $8,141.69, Total expenses $5,279.00, Net $2,862.69,
 and the $640 gap against the Statement is exactly the two family-paid costs less the one payout.
 
-## Not in this build — D-2, gated on the §85 walk
+## D-2 — ✅ BUILT ON DEV 2026-08-25 (owner QA §101). Option D is complete.
 
-1. **Item rows under each revenue group** — the actual families, drives and sponsors behind each
-   figure (dues rows show family names, same audience as the Player Dues tab).
-2. **A season opening balance** — carried automatically at *Start next season* from the closing
-   season's own cash, corrected in Team settings → Money, and read on the register's first line, in
-   the Months summary block and inside Cash on hand. It needs a migration, and it must reach all
-   three surfaces in one go or they argue about the team's money.
+### What a coach sees and does differently
+
+**Every figure on Months now opens.** Before this, a coach could see that dues brought in $2,600 in
+May and had no way to find out whose $2,600 it was without leaving the report. Now:
+
+- **The chevron beside a revenue group opens where the money came from** — the actual families,
+  drives, sponsors and requests behind the figure. Every family renders; nothing is folded away. A
+  family's missing catch-up payment is visible at a glance, in the month it did not arrive.
+- **The number opens what makes it up** — the individual records, dated. Tap a family's figure for
+  that family's month; tap the group's for the whole team's. **Always read-only**: the grid reaches
+  the forms, it never becomes a second place to edit, which is why there is no *Record a payment*
+  button in any of these panels.
+- **At most two doors out of a panel**: Transactions (the book of record), and the thing itself —
+  that drive, that sponsor, Player Dues, Club. **Some rows earn only one, on purpose**: money back a
+  coach typed in has no "thing" behind it, because the record *is* the thing.
+- **The panel says what kind of money it just added up.** A drive totals to *Total raised*, a
+  remaining instalment to *Still to come*, and a pledge or a pending club ask to **"Possible"** —
+  the one word that stops a coach banking money nobody has agreed to send.
+- **Money back names the cost it repaid.** These are the figures that behave differently here than
+  on the Statement, and the panel is where a coach learns that without reading a footnote.
+- **"Paid back to families" opens by family**, mirroring dues, with the *reason* on each payment's
+  own line. It was never in the spec; left shut it would have been the one figure on the statement a
+  coach could not trace back to a record.
+
+**A season can now open with money already in the bank.** *Start next season* asks what to do with
+the cash the closing season is holding — carry all of it (the default; the team really does still
+have it), carry a different amount if families are about to be paid back, or start at $0. Whatever
+is carried becomes the new season's **opening balance**: the first line of its register, the first
+row of its Budget vs. Actual summary, and part of its cash on hand. Every running balance starts
+from it. It is corrected in **Team settings → Money**, which is also where a team whose first season
+began mid-year sets one for the first time.
+
+### Why it matters
+
+The report could already prove *how much*; it could not answer *who*. That was the last step between
+a treasurer reading a figure and acting on it — and the one figure a coach could not trace was the
+one most likely to be questioned at a parents' meeting.
+
+The opening balance closes a smaller but sharper gap: until now every season's books started at
+exactly zero, so a team that rolled forward with $2,800 in the bank spent its second season looking
+poorer than it was on every money screen at once.
+
+### Tradeoffs taken
+
+- **No item rows on Budget or Difference**, deliberately. A family has no per-family plan, so every
+  row would print its whole Actual as "ahead of plan" in the colour the grid uses for good news. The
+  comparison a coach wants is the group's, one row up.
+- **The carry question is a block inside the existing Start-next-season form**, not the three-step
+  wizard the drawing implied. Restructuring that dialog would have pushed its owner-placed *"This
+  closes the {season} season"* panel — the sentence that prevents the one mistake this product
+  cannot undo — behind a Next button.
+- **The register's carried balance takes over its existing "Starting balance" line** rather than
+  adding a second line above it saying nearly the same thing.
+- **Expense item figures open too**, a small extension past the nine drawn rows: once a coach learns
+  that figures open, an inert one reads as broken.
+- **Nothing validates a hand-typed opening balance against last season's close.** A coach correcting
+  a handoff knows something the product cannot see — they settled in cash, they forgave a balance —
+  which is the same reason unsettled money warns and never blocks.
+
+### What the walk changed
+
+Four defects and one shape ruling, all found by the owner on real screens and fixed before the walk
+closed — written up in **§101**. The one worth knowing at brief level: **every month now states what
+it opened with, and "Running balance" became "Closing balance"**, so the summary block reads
+*opening + net = closing* in the column a coach is looking at rather than asking them to trace a
+running total back to an origin that may have scrolled off screen.
+
+### How to test
+
+Owner QA ledger **§101** — ✅ passed. ⚠ **Migration 262 is on DEV only** and must reach prod before this code is
+promoted. Walk Part A on `qa-money-lab` → QA Money U13; Part B needs a team that actually carried
+something, so either roll a season forward or set a figure in Team settings → Money.
