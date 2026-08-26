@@ -168,6 +168,17 @@ export default function FamilyAccessPanel({ orgSlug, teamId }: { orgSlug: string
      * panel genuinely needs attention for. Safe to read counts here: the component renders
      * nothing until its load resolves, so the first render already knows.
      *
+     * ⚠ AND OPEN WHEN THERE IS NO LINK YET (owner report, 2026-08-26). Folded shut, the only words
+     * a coach ever saw were the title and "No link yet" — a card that announces its own emptiness
+     * and hides the one control that would fix it. It reads as a switched-off feature, and it was
+     * mistaken for exactly that: reported alongside two genuine cases of chrome left behind by a
+     * feature flag. It is not one of those — the feature works, the link is one click away — but a
+     * surface that looks dead may as well be, because nobody opens it to find out.
+     *
+     * The condition is narrow on purpose. This opens ONCE, for a coach who has never set it up;
+     * the moment a link exists it folds away again and "Link active" is all they need. A settings
+     * card that is permanently open is the thing the ruling above removed.
+     *
      * ⚠⚠ BEING COLLAPSED MEANS `check:layout` CANNOT MEASURE WHAT IS INSIDE. The seeded fixture
      * has no pending requests, so a normal sweep sees the summary row and nothing else. That is
      * how a fold quietly becomes the place defects go to stop being found: the eight controls in
@@ -182,7 +193,7 @@ export default function FamilyAccessPanel({ orgSlug, teamId }: { orgSlug: string
       sectionId="family-access"
       title="Team family access"
       meta={summary}
-      defaultOpen={requests.length > 0}
+      defaultOpen={requests.length > 0 || !hasLink}
     >
       {/* ── The link ── */}
       <div className={styles.row}>
