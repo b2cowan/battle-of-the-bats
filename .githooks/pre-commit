@@ -22,4 +22,16 @@ files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(module\.cs
 datefiles=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$')
 [ -n "$datefiles" ] && { node scripts/check-date-correctness.mjs --staged $datefiles || exit 1; }
 
+# Rendered-document guardrail — the ONLY check in this repo that generates a PDF and looks at
+# it. Every other gate reads source text or database state, which is how a squashed crest, a
+# shredded heading, a lying page total and a run sheet printed across its own footer all shipped.
+#
+# TRIGGERED, NEVER SCHEDULED (owner ruling 2026-08-26). The script reads the staged list and
+# returns instantly unless something that can change a document is in it — the export engine,
+# the assemblers that feed it, its fixtures, or a screen that imports an exporter. ~3.5s when it
+# runs, ~0.1s when it does not. It is deliberately NOT in `verify:changed`; the release
+# checklist runs one full sweep before documents can reach a customer.
+pdffiles=$(git diff --cached --name-only --diff-filter=ACM)
+[ -n "$pdffiles" ] && { node --import ./scripts/lib/pdf-node-loader.mjs scripts/check-pdf-documents.mjs --staged $pdffiles || exit 1; }
+
 exit 0

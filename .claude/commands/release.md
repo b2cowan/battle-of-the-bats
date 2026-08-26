@@ -150,6 +150,21 @@ npm run draft:notes
 
 This step is **skipped for `dev` releases** (notes publish at the production promotion, not on staging pushes).
 
+### 1d-4 — The documents a customer prints (master / promote targets only)
+
+Seventeen-odd documents leave this product on paper and get handed to another human being — a schedule taped to a fence, a roster on a wall, a dues statement to a family, a bracket, a run sheet, an umpire's card. **Nothing else in the pipeline looks at one.** `verify:changed` reads source text and database state; `check:layout` needs a dev server and looks at screens. That is how a squashed crest, a shredded column heading, a footer that lied about the page count and a run sheet printed across its own footer all reached a customer-facing release.
+
+The pre-commit hook already renders them whenever a commit touches the export engine or a screen that prints. This is the **backstop for the class it cannot see**: a change *elsewhere* that alters what a document receives (an upstream data-shape change, say) touches no export file and trips nothing. Deliberate gap — this step closes it, once, before paper reaches anyone.
+
+```powershell
+npm run check:pdf
+```
+- ✅ pass → continue. It renders every document in every identity state and reads the finished files back — **~4 seconds**, no browser, no dev server.
+- ✖ fail → **STOP.** Every failure blocks; there is deliberately no "known findings" list to park one in. The output names the document and which promise broke: this report is apologising that a column did not fit · this heading is not on the page · this page lost the club's line · something printed into the footer · the page total is wrong · a screen can print and nothing fixtures it. Fix it, or — if the change is deliberate — update `scripts/pdf-documents.mjs`, but never by making an assertion looser.
+- ⚠ A `gate-blinded` failure is different and means the check itself: someone reworded a string the gate matches on (the "didn't fit" line, the footer, the page stamp), so a rule is now hunting for words the product never prints. Update the pattern in `scripts/check-pdf-documents.mjs` in the same change as the wording.
+
+**Skip for `dev` releases** (the hook already covers the commits themselves).
+
 ### 1e — Release summary
 
 After all checks pass:
@@ -164,6 +179,7 @@ TS check: ✅ clean
 Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
 Deploy-only: [master/promote only: ✅ verified on deployed dev / n/a — no native/build-config changes | dev: n/a]
 Release notes: [master/promote only: ✅ entry committed on dev / ⏭ skipped — internal-only release | dev: n/a]
+Printed docs: [master/promote only: ✅ N documents render clean / ✖ see npm run check:pdf | dev: n/a]
 AWS CLI:  [✅ available / ⚠️  not configured — log fetching unavailable]
 
 [If working tree was dirty, include this block:]
