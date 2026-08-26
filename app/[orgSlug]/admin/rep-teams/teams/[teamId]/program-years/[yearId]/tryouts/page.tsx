@@ -13,7 +13,6 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import TryoutAcceptDrawer, { type AcceptSuggestedDues, type AcceptPayload } from '@/components/rep-teams/TryoutAcceptDrawer';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -104,8 +103,6 @@ export default function TryoutsPage({
   const [detailNotes, setDetailNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [acceptTarget, setAcceptTarget] = useState<RepTryoutRegistration | null>(null);
-  const [acceptSuggestion, setAcceptSuggestion] = useState<AcceptSuggestedDues | null>(null);
   const [togglingOpen, setTogglingOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddForm>(BLANK);
@@ -211,45 +208,30 @@ export default function TryoutsPage({
     }
   }
 
-  // Open the accept drawer for an offered applicant: pull the team's standard fee schedule to pre-fill.
-  async function openAcceptDrawer(reg: RepTryoutRegistration) {
+  // Add an offered applicant to the roster — one click, no drawer, no fees (owner 2026-08-26).
+  // A per-player amount depends on the roster size, which does not exist yet; dues are set from
+  // the team's Dues screen once the team is settled.
+  async function addToRoster(reg: RepTryoutRegistration) {
     setActionLoading(reg.id);
     try {
-      const sep = orgQuery ? '&' : '?';
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${reg.id}${orgQuery}${sep}feeSuggestion=1`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${reg.id}${orgQuery}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'accepted' }),
+        },
       );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Could not open accept');
-      setAcceptSuggestion(data.suggestedDues ?? null);
-      setAcceptTarget(reg);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Failed to add the player.');
+      setSelected(null);
+      await load();
+      showFeedback('success', 'Player added to the roster. Welcome them your way.');
     } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Could not open the accept form.');
+      showFeedback('danger', e.message ?? 'Failed to add the player.');
     } finally {
       setActionLoading(null);
     }
-  }
-
-  // Confirm accept → atomic roster + optional dues via the accepted transition.
-  async function handleAcceptConfirm(payload: AcceptPayload) {
-    if (!acceptTarget) return;
-    const res = await fetch(
-      `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${acceptTarget.id}${orgQuery}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'accepted', ...payload }),
-      },
-    );
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error ?? 'Failed to add the player.');
-    setAcceptTarget(null);
-    setAcceptSuggestion(null);
-    setSelected(null);
-    await load();
-    showFeedback('success', (payload.dues
-      ? 'Player added to the roster with their fee schedule.'
-      : 'Player added to the roster.') + ' Welcome them your way.');
   }
 
   async function handleSaveNotes() {
@@ -675,7 +657,7 @@ export default function TryoutsPage({
                                   className="btn btn-primary"
                                   style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
                                   disabled={actionLoading === reg.id}
-                                  onClick={() => openAcceptDrawer(reg)}
+                                  onClick={() => addToRoster(reg)}
                                 >
                                   {actionLoading === reg.id ? '…' : 'Accept'}
                                 </button>
@@ -844,9 +826,9 @@ export default function TryoutsPage({
                           type="button"
                           className="btn btn-primary"
                           disabled={actionLoading === selected.id}
-                          onClick={() => openAcceptDrawer(selected)}
+                          onClick={() => addToRoster(selected)}
                         >
-                          {actionLoading === selected.id ? '…' : 'Accept → Add to Roster'}
+                          {actionLoading === selected.id ? '…' : 'Add to Roster'}
                         </button>
                         <button
                           type="button"
@@ -1011,23 +993,6 @@ export default function TryoutsPage({
             </div>
           </div>
         </div>
-      )}
-
-      {acceptTarget && (
-        <TryoutAcceptDrawer
-          identity={{
-            playerFirstName:   acceptTarget.playerFirstName,
-            playerLastName:    acceptTarget.playerLastName,
-            playerDateOfBirth: acceptTarget.playerDateOfBirth,
-            guardianFirstName: acceptTarget.guardianFirstName,
-            guardianLastName:  acceptTarget.guardianLastName,
-            guardianEmail:     acceptTarget.guardianEmail,
-            guardianPhone:     acceptTarget.guardianPhone,
-          }}
-          suggestedDues={acceptSuggestion}
-          onClose={() => { setAcceptTarget(null); setAcceptSuggestion(null); }}
-          onConfirm={handleAcceptConfirm}
-        />
       )}
 
       <FeedbackModal

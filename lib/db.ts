@@ -4650,6 +4650,110 @@ export async function acceptTryoutAndAddToRoster(
   return { registration, player };
 }
 
+/**
+ * Everything that would be DESTROYED if this roster player were deleted — as words a coach reads.
+ *
+ * ⚠⚠ THIS EXISTS BECAUSE THE DATABASE WILL NOT WARN YOU. Twenty tables reference
+ * `rep_roster_players`, and almost every one is `ON DELETE CASCADE`, so deleting a player silently
+ * takes their dues payments, fundraiser credits, attendance, lineup slots, awards, development
+ * goals and measurables, documents and family links with them. Postgres does it quietly and
+ * reports success. Undoing a tryout acceptance is a coach correcting a mis-tap, not a request to
+ * erase a season — so the undo asks THIS first and refuses when the answer is not empty.
+ *
+ * Deliberately a hand-maintained list rather than a schema walk: a new child table should have to
+ * be considered here on purpose. If you add one that a coach would miss, add it to this list in the
+ * same change.
+ */
+/**
+ * ⚠⚠ THE COLUMN NAME IS PER-TABLE AND MUST NOT BE ASSUMED. The first version of this list hardcoded
+ * `player_id` for every table. `rep_player_tryout_baselines` names its FK `roster_player_id` and has
+ * no `player_id` column at all, so that one query errored on EVERY call — and because a failed check
+ * is (correctly) treated as a blocker, Undo refused 100% of the time. The feature was dead on
+ * arrival and the fail-closed choice is the only reason it was not silently deleting instead.
+ * Caught by /review 2026-08-26. Verify a new entry's column against the SCHEMA, never by pattern.
+ */
+const ROSTER_PLAYER_DEPENDENTS: { table: string; column: string; label: string }[] = [
+  { table: 'rep_dues_payments',             column: 'player_id',        label: 'a recorded payment' },
+  { table: 'rep_dues_credits',              column: 'player_id',        label: 'a dues credit' },
+  { table: 'rep_dues_payouts',              column: 'player_id',        label: 'a payout' },
+  { table: 'rep_player_dues_schedules',     column: 'player_id',        label: 'a fee schedule' },
+  // Its own direct cascade off the roster player, NOT merely inherited via the schedule above —
+  // a second independent path, so it is guarded on its own terms.
+  { table: 'rep_player_dues_installments',  column: 'player_id',        label: 'a dues installment' },
+  { table: 'rep_fundraiser_entries',        column: 'player_id',        label: 'fundraiser credit' },
+  { table: 'rep_team_event_attendance',     column: 'player_id',        label: 'attendance' },
+  { table: 'rep_team_lineup_entries',       column: 'player_id',        label: 'a lineup spot' },
+  { table: 'rep_player_awards',             column: 'player_id',        label: 'an award' },
+  { table: 'rep_player_development_goals',  column: 'player_id',        label: 'a development goal' },
+  { table: 'rep_player_measurables',        column: 'player_id',        label: 'a test result' },
+  { table: 'rep_player_tryout_baselines',   column: 'roster_player_id', label: 'a development baseline' },
+  { table: 'rep_player_documents',          column: 'player_id',        label: 'a document' },
+  { table: 'rep_season_refund_adjustments', column: 'player_id',        label: 'a season settlement entry' },
+  { table: 'family_links',                  column: 'player_id',        label: 'a linked family' },
+];
+
+export async function rosterPlayerDependencies(playerId: string): Promise<string[]> {
+  const simple = await Promise.all(ROSTER_PLAYER_DEPENDENTS.map(async ({ table, column, label }) => {
+    const { count, error } = await supabaseAdmin
+      .from(table)
+      .select('id', { count: 'exact', head: true })
+      .eq(column, playerId);
+    // A read that FAILS must not read as "nothing there" — that is how a guard waves through the
+    // very deletion it exists to stop. Surface it as a blocker rather than swallowing it.
+    if (error) return `${label} (could not be checked)`;
+    return (count ?? 0) > 0 ? label : null;
+  }));
+
+  // Continuity links cannot ride the loop above: the roster player is referenced by TWO columns
+  // (this season's side and the prior season's side), through a COMPOSITE key with team_id. It is
+  // the record of a coach CONFIRMING that this year's player is last year's player — the spine of
+  // the multi-season development history — and it cascades, so losing it silently is the worst
+  // outcome on this list.
+  const links = await supabaseAdmin
+    .from('rep_player_continuity_links')
+    .select('id', { count: 'exact', head: true })
+    .or(`current_roster_id.eq.${playerId},prior_roster_id.eq.${playerId}`);
+  const linkLabel = links.error
+    ? 'a confirmed returning-player link (could not be checked)'
+    : (links.count ?? 0) > 0 ? 'a confirmed returning-player link' : null;
+
+  return [...simple, linkLabel].filter((x): x is string => x !== null);
+}
+
+/**
+ * Put an accepted tryout candidate back on the decision board: remove the roster player their
+ * acceptance created, and return the registration to 'offered'.
+ *
+ * Caller MUST have checked `rosterPlayerDependencies` first — this does not re-check, because the
+ * route needs the labels to explain the refusal.
+ *
+ * ⚠ Ordering is deliberate and makes a half-failure SELF-HEALING: the roster row goes first, the
+ * status second. If the second write fails, the candidate is left 'accepted' with no roster player,
+ * and running undo again finds no player and simply reverts the status. The reverse order would
+ * leave an 'offered' candidate still sitting on the roster, which a second accept would duplicate.
+ */
+export async function undoTryoutAcceptance(regId: string): Promise<RepTryoutRegistration> {
+  const { data: rows, error: findErr } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('id')
+    .eq('tryout_registration_id', regId);
+  if (findErr) throw findErr;
+
+  for (const row of rows ?? []) {
+    const { error } = await supabaseAdmin.from('rep_roster_players').delete().eq('id', row.id);
+    if (error) throw error;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update({ status: 'offered', updated_at: new Date().toISOString() })
+    .eq('id', regId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutRegistration(data);
+}
+
 /** Candidate day-of check-in / bib assignment (Phase 2A). */
 export async function updateRepTryoutCheckin(
   regId: string,

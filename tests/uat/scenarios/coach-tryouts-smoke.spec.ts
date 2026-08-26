@@ -299,7 +299,7 @@ test('an assistant without the tryouts grant gets the honest empty state on the 
   // The old check-in address redirects into the hub (One-Room build), whose gate answers for it.
   await open(page, `${base()}/tryouts/check-in`);
   await expect(main(page).getByText(/tryouts aren't turned on for you/i)).toBeVisible();
-  await expect(main(page).getByRole('button', { name: /add walk-up/i })).toHaveCount(0);
+  await expect(main(page).getByRole('button', { name: /add player/i })).toHaveCount(0);
 
   // Server side: every write is refused — including the two NEW routes.
   const posts: Array<[string, Record<string, unknown>]> = [
@@ -439,7 +439,7 @@ test('no email control exists on the board; an offer mints NO response link; the
   await expect(main(page).getByText(/email families my decisions/i)).toHaveCount(0);
   await expect(main(page).getByText(/decisions are only recorded here/i)).toHaveCount(0);
 
-  // The honesty chips: a walk-up with no email, and a no-show distinct from "not scored yet".
+  // The honesty chips: a hand-added player with no email, and a no-show distinct from "not scored yet".
   await expect(panel.getByText(/no email on file — reach them by phone/i)).toBeVisible();
   await expect(panel.getByText(/didn’t check in/).first()).toBeVisible();
   // The family's registration note is one tap away.
@@ -448,7 +448,7 @@ test('no email control exists on the board; an offer mints NO response link; the
 
   // An offer flips status and mints NO response link — the data-level proof that no email
   // machinery ran, since a link only ever existed inside an offer email.
-  await main(page).getByRole('group', { name: /decision/i }).first().getByRole('button', { name: /^offer$/i }).click();
+  await main(page).getByRole('group', { name: /decision/i }).first().getByRole('button', { name: /^offering$/i }).click();
   await expect(main(page).getByText(/1.*offered/i).first()).toBeVisible({ timeout: 20_000 });
   await expect
     .poll(async () => {

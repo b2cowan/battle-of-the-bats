@@ -11,7 +11,6 @@ import {
   TryoutAcceptError,
   clearTryoutOffer,
 } from '@/lib/db';
-import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -56,12 +55,9 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // The accept drawer opens with `?feeSuggestion=1` to pre-fill the team's standard fee schedule
-  // (derived from prevailing roster dues — no fee-template exists in the schema).
-  const wantFee = new URL(_req.url).searchParams.get('feeSuggestion') === '1';
-  const suggestedDues = wantFee ? await deriveStandardDuesSchedule(programYear.id) : undefined;
-
-  return NextResponse.json({ registration, suggestedDues });
+  // The `?feeSuggestion=1` fee pre-fill was removed with the accept drawer (owner 2026-08-26):
+  // a per-player amount depends on the roster size, which does not exist yet at accept time.
+  return NextResponse.json({ registration });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -113,20 +109,12 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   if (newStatus === 'accepted') {
-    // Optional roster fields + optional dues schedule ride along on the accept (Phase 2B.4). The
-    // upgraded accept is atomic (mig-169 RPC): roster + status + dues all-or-nothing.
-    const roster = body.roster && typeof body.roster === 'object' ? {
-      playerNumber:    typeof body.roster.playerNumber === 'string' ? body.roster.playerNumber.trim() || null : null,
-      primaryPosition: typeof body.roster.primaryPosition === 'string' ? body.roster.primaryPosition.trim() || null : null,
-      jerseySize:      typeof body.roster.jerseySize === 'string' ? body.roster.jerseySize.trim() || null : null,
-    } : undefined;
-
-    const duesError = validateAcceptDues(body.dues);
-    if (duesError) return NextResponse.json({ error: duesError }, { status: 400 });
-    const dues = body.dues ? normalizeAcceptDues(body.dues) : null;
-
+    // No fees, no roster fields here (owner ruling 2026-08-26). Accepting gets the player a roster
+    // place and nothing more; their number/position/jersey are set on the Roster page and their
+    // dues from "Set dues for all players", once the roster size — which the amount depends on —
+    // is actually known.
     try {
-      const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
+      const { registration, player } = await acceptTryoutAndAddToRoster(reg.id);
       // ⚠ NO WELCOME EMAIL — see the ruling comment at the bottom of this handler.
       return NextResponse.json({ registration, player });
     } catch (e) {

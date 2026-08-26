@@ -136,3 +136,118 @@ are unmodified, and neither reads `NOTIFICATION_SECTIONS`, the only thing this c
 route: `/account/notifications`.) The shared coach chrome `coaches.module.css` is under concurrent
 edit (+98 lines) and is the likeliest source. **Recorded rather than fixed, because it belongs to
 whoever owns that work — but it is a real defect and it will fail the gate for the next commit.**
+
+---
+
+# §109 — follow-on from the §108 walk (owner rulings 2026-08-26)
+
+The §108 QA walk produced three observations and one that widened into a fourth.
+
+## 1. "Offer" was the only verb among two states
+
+Owner: *the button implies something is going out.* Correct, but the sharper defect is grammatical —
+*Offer* is an action, *Waitlist* and *Not this season* are piles. **"Offering"** fixes the reading
+while keeping the word inside the offer family, so the report ("Offers extended"), the season record
+and the returning-player strip keep one vocabulary. The alternative ("Selected") was mocked and
+offered; it is the tidier end state but costs a five-surface sweep.
+
+⚠ **The pair mattered more than either word.** *Offer → Accept* still told the retired story: the
+system offers, the family accepts. Both are the coach's own act now, so Accept became **Add to
+roster**. Fixing one word and leaving the other would have left the screen telling it anyway.
+
+## 2. Fees asked for a number before its input existed
+
+Owner: *"the amounts they charge are even dependent on how many players they select given there are
+more or less parents to contribute."* This is a domain fact, not a preference, and it makes the
+accept-time fee step **premature by construction** — the roster size the amount depends on does not
+exist at the moment a player joins the roster.
+
+Checked before agreeing: the Dues screen already carries **Set dues for all players**, the same
+generator the Budget Plan tab uses (owner ruling 2026-08-13). So the accept-time version did
+per-player, at the worst possible moment, what another screen does for everyone at the right one.
+Removed entirely — both surfaces, plus `lib/tryout-fees.ts`, which had no other consumer.
+
+## 3. With fees gone, the drawer was a speed bump
+
+Everything left in it — number, position, jersey size — is optional and already editable on the
+Roster page, where a coach does the whole squad in one sitting. Accepting is now **one tap**.
+
+## 4. Undo — and the reason it is guarded
+
+Reverting between Offering / Waitlist / Not this season always worked. The one-way door was
+**Accept**: the board refused to touch an accepted candidate, and releasing them from the roster did
+not put them back.
+
+⚠⚠ **The FK audit is the load-bearing finding.** Twenty tables reference `rep_roster_players` and
+nearly all are `ON DELETE CASCADE`: dues payments, dues credits, payouts, fee schedules, fundraiser
+entries, attendance, lineup entries, awards, development goals, measurables, tryout baselines,
+documents, settlement rows, family links. A bare delete would erase all of it **silently, reporting
+success**. Owner said "undo freely"; the honest implementation of that is *free while the player is
+fresh, refused once anything has attached* — which also matches the owner's own expectation that
+fees rarely exist at that point.
+
+`rosterPlayerDependencies()` is a **hand-maintained list, deliberately** — a new child table should
+have to be considered here on purpose — and a failed dependency read is treated as a **blocker**,
+never as "nothing found", because a guard that waves through on error is the deletion it exists to
+stop.
+
+`undoTryoutAcceptance()` deletes the roster row **before** reverting the status, so a half-failure is
+self-healing: the candidate stays 'accepted' with no roster player, and re-running undo finds no
+player and simply reverts. The reverse order would leave an 'offered' candidate still on the roster,
+which a second accept would duplicate.
+
+## Not done, raised for later
+
+**A coach can no longer mark anyone "withdrawn."** With the family reply loop gone, only a club
+admin can. A standalone coach whose player pulls out has no way to record it — flagged, not built.
+
+## §109 review findings (`/review`, high-risk tier, 2026-08-26) — all fixed
+
+**⚠⚠ THE UNDO WAS DEAD ON ARRIVAL, and the fail-closed choice is the only reason it was not worse.**
+`rosterPlayerDependencies()` assumed every child table names its foreign key `player_id`.
+`rep_player_tryout_baselines` calls it **`roster_player_id`** and has no `player_id` column at all,
+so PostgREST rejected that filter on **every call, for every player**. Because a failed check counts
+as a blocker, **Undo refused 100% of the time**. Typecheck could not see it (table and column are
+strings), no test touched it, and the endpoint smoke-test only proved it fails closed when
+unauthenticated. The same bug behind a fail-OPEN guard would have silently deleted a season of
+records instead of never working — **the fail-closed decision converted a data-loss bug into a
+visible non-functional one.**
+
+Now **build-enforced**: `tests/unit/roster-delete-guard.test.ts` reads the guard's own list out of
+`lib/db.ts` and checks every table/column pair against the committed dev schema snapshot, plus
+asserts that every table cascading off `rep_roster_players` is either guarded or listed as a
+deliberate exception with its reason. Proven able to fail: reintroducing the original wrong column
+turns the suite red on exactly that entry.
+
+Three further guard defects, all fixed:
+- **`rep_player_continuity_links` was entirely unguarded** — the record of a coach CONFIRMING that
+  this year's player is last year's player, i.e. the spine of the multi-season development history.
+  It cascades, and it cannot ride the loop: the roster player sits on either side of the link
+  (`current_roster_id` / `prior_roster_id`) through a composite key. Now a hand-written check on both
+  sides, asserted by the test.
+- **`rep_player_dues_installments` missing** — it has its OWN direct cascade off the roster player,
+  not merely an inherited one through its schedule. Mitigated in practice (a player with
+  installments always has a schedule, which was guarded) but that is a convention, not a constraint.
+- **The guard inspected ONE roster row while the delete removed ALL of them.** `tryout_registration_id`
+  carries no unique constraint; the route used `.find()` and the delete loops every match. Not
+  reachable through the shipped UI today — it is a guard that did not cover its own action, closed
+  on principle.
+
+**Copy drift — and the miss is the lesson again.** The §108 review's lesson was "sweep the concept,
+not the identifier". This round I swept the help ARTICLE I was editing and missed the LIVE SCREENS:
+the Build-stage panel intro ("Accept players onto your roster with their fees (optional)"), the
+tryout hub's payoff line, the Tryout report's empty state, the "what to do next" hint the flow header
+renders, the club-admin detail button (still "Accept → Add to Roster" while the row button beside it
+said "Accept" — two labels, one action, one page), and the **pitch-deck slide copy**. Plus two help
+articles that ended up **self-contradicting**, because correct paragraphs were added beside stale ones
+rather than replacing them: the coach recipe described a drawer collecting jersey sizes immediately
+above a paragraph saying jersey sizes are set on the Roster page. **Adding correct copy without
+removing the wrong copy next to it is worse than either alone.** One §108 leftover also surfaced here:
+a help note still promised a "Welcome to the Team" email following an email switch that no longer
+exists.
+
+Clean: security/multi-tenant (all six checks — the deleted prefill carried no validation the
+remaining handlers relied on), correctness/UI-state (no orphaned state, balanced JSX, no
+double-submit or tally corruption), auth on the new destructive verb (identical gate to its
+non-destructive sibling), race/atomicity (the self-healing ordering claim holds), and the rendered
+layout check on the tryouts screen at all four widths.

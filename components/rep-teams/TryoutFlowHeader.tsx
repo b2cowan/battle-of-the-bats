@@ -109,8 +109,8 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
         <div className={styles.how}>
           <div className={styles.howStep}>{num(1)}<span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
           <div className={styles.howStep}>{num(2)}<span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
-          <div className={styles.howStep}>{num(3)}<span><strong>Decide.</strong> Offer, waitlist, or pass on each player — tap one to see what made their score. Your decisions are recorded here and nothing is sent to a family, so you tell them yourself.</span></div>
-          <div className={styles.howStep}>{num(4)}<span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
+          <div className={styles.howStep}>{num(3)}<span><strong>Decide.</strong> Sort each player into Offering, Waitlist or Not this season — tap one to see what made their score. Nothing is sent to a family; whoever sits in Offering is who you build the roster from.</span></div>
+          <div className={styles.howStep}>{num(4)}<span><strong>Build your team.</strong> Add your Offering players onto the roster — one tap each. They&apos;re then ready for your lineups; squad numbers and dues come after.</span></div>
 
           {next ? (
             <div className={styles.next}>

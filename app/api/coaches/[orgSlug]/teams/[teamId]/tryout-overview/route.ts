@@ -55,8 +55,8 @@ function computeNext(s: {
   if (s.candidateCount === 0) return { label: 'Check players in', hint: 'Players appear once they register or you check them in on tryout day.', anchor: 'tryout-day' };
   if (s.scoredCount === 0) return { label: 'Score your players', hint: 'Rate players yourself or invite helpers — the scoreboard ranks them live.', anchor: 'tryout-day' };
   if (decided === 0 && s.blind) return { label: 'Reveal names to decide', hint: 'Names are hidden for fairness — reveal them on the Decide tab when you’re ready to make picks.', anchor: 'decide' };
-  if (decided === 0) return { label: 'Make your offers', hint: 'Offer, waitlist, or pass on each ranked player.', anchor: 'decide' };
-  if (s.offered > 0) return { label: 'Add accepted players to your roster', hint: 'When a family accepts, confirm them onto your roster with their fees.', anchor: 'decide' };
+  if (decided === 0) return { label: 'Sort your players', hint: 'Sort each ranked player into Offering, Waitlist or Not this season.', anchor: 'decide' };
+  if (s.offered > 0) return { label: 'Add your players to the roster', hint: 'One tap adds an Offering player to your roster — no fees at this step.', anchor: 'decide' };
   if (s.accepted > 0) return { label: 'View your team roster', hint: 'Your accepted players are on the roster, ready for lineups.', anchor: 'roster' };
   return null; // all decided, none accepted — nothing pressing
 }

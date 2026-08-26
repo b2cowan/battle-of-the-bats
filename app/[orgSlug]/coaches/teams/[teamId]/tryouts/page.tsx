@@ -183,8 +183,8 @@ export default function CoachTryoutsPage({
           quiet
           icon={<ClipboardList size={20} aria-hidden />}
           headline="Tryouts aren't turned on for you"
-          description="Tryouts runs the whole selection day from a phone — check-in, a shared scorecard, a live ranked board, and Offer / Waitlist decisions."
-          payoff="Players you accept land straight on the roster with their fees already set, so the season starts without re-typing a single name."
+          description="Tryouts runs the whole selection day from a phone — check-in, a shared scorecard, a live ranked board, and Offering / Waitlist decisions."
+          payoff="Players you add land straight on the roster, ready for lineups and attendance, so the season starts without re-typing a single name."
           blocker="Tryouts involve candidate contact details and selection decisions, so it stays with the head coach unless they grant it to you."
         />
       </div>
@@ -276,7 +276,7 @@ export default function CoachTryoutsPage({
         {/* The names SWITCH (2026-08-25). Decide keeps the control it has had since 2026-08-17 —
             it is simply no longer the ONLY door to it, and no longer one-way. */}
         <PanelIntro
-          text="Offer, waitlist, or pass on each ranked player. Tap a player to see what made their score. Decisions are recorded here for you — nothing is sent to a family, so you deliver the news your own way."
+          text="Sort each ranked player into Offering, Waitlist or Not this season. Tap a player to see what made their score."
           action={
             <TryoutNamesSwitch
               apiBase={`${base}/tryout-sessions`}
@@ -304,7 +304,7 @@ export default function CoachTryoutsPage({
           moved inside the card so this stage has one owner). */}
       <div className={hidden('build')} data-tryout-stage="build">
         <TryoutPrereqPrompt overview={overview} tab="build" onTabChange={selectTab} />
-        <PanelIntro text="Accept players onto your roster with their fees (optional). They're then ready for your lineups." />
+        <PanelIntro text="Add your Offering players onto the roster — one tap each. They're then ready for your lineups; dues get set for everyone once the team is settled." />
         <TryoutReportCard
           apiBase={`${base}/tryout-report`}
           orgSlug={orgSlug}

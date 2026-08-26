@@ -349,6 +349,31 @@
   font-size: 0.78rem; font-weight: 700; color: var(--logic-lime);
 }
 
+/* The line that says what the buttons cannot: nothing goes out, and the Offering pile is what
+   Build your team draws from (owner 2026-08-26). Quiet on purpose — read once, then ignored. */
+.sortNote {
+  margin: 0 0 0.7rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78rem; line-height: 1.5;
+  color: var(--white-55);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.5);
+  border-radius: 0 6px 6px 0;
+}
+.sortNote strong { color: var(--white-90); font-weight: 700; }
+
+/* Undo on a rostered row. Deliberately QUIET — it is a correction, not an action a coach is being
+   invited to take, and it sits beside a chip that reads as done. */
+.undoBtn {
+  align-self: flex-end;
+  padding: 0.28rem 0.55rem;
+  background: transparent; border: 1px solid var(--border-2); border-radius: 6px;
+  font-family: inherit; font-size: 0.72rem; font-weight: 600;
+  color: var(--white-55); cursor: pointer;
+}
+.undoBtn:hover:not(:disabled) { color: var(--fl-text); border-color: var(--white-45); }
+.undoBtn:disabled { opacity: 0.55; cursor: default; }
+
 /* Decision column: the offer/waitlist/cut group plus (for offered candidates) the Accept action. */
 .decisionCol { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; align-items: stretch; }
 .acceptRosterBtn {
@@ -543,6 +568,18 @@
 }
 
 /* Warm variant: paper panel + ink text. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sortNote {
+  color: var(--home-dim);
+  background: var(--home-olive-soft);
+  border-left-color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sortNote strong { color: var(--home-ink); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .undoBtn {
+  color: var(--home-dim); border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .undoBtn:hover:not(:disabled) {
+  color: var(--home-ink); border-color: var(--home-line-strong);
+}
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noEmailChip {
   color: var(--home-amber);
   background: rgba(var(--home-amber-rgb), 0.10);

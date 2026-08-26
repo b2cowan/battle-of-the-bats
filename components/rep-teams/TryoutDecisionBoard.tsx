@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { ListChecks, Check, EyeOff } from 'lucide-react';
-import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
 import TryoutMemoryStrip from './TryoutMemoryStrip';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
@@ -73,13 +72,19 @@ interface Props {
 // Returning-player rows ride the shared useContinuityLinks hook + ContinuityCompareCard
 // (one plumbing + one compare surface across both verify doors — 3C /simplify).
 
+/**
+ * ⚠ THESE ARE THREE PILES, NOT THREE ACTIONS (owner ruling 2026-08-26). The label was "Offer" — the
+ * only VERB among two states — and it read as a button that fires something outward, which is
+ * exactly what this board no longer does. "Offering" is a stance the coach holds; the word stays in
+ * the offer family on purpose, so the report ("Offers extended"), the season record and the
+ * returning-player strip keep their one vocabulary. Do not reintroduce an action-shaped label here.
+ */
 const CHOICES: { key: Decision; label: string; status: Status }[] = [
-  { key: 'offer', label: 'Offer', status: 'offered' },
+  { key: 'offer', label: 'Offering', status: 'offered' },
   { key: 'waitlist', label: 'Waitlist', status: 'waitlisted' },
   { key: 'cut', label: 'Not this season', status: 'declined' },
 ];
 
-interface AcceptTarget { registrationId: string; identity: AcceptIdentity; suggestedDues: AcceptSuggestedDues | null }
 
 /** How far apart the highest and lowest evaluator were on one player. Null below two evaluators —
  *  one person cannot disagree with themselves, and "0.0 apart" would read as agreement. */
@@ -238,8 +243,8 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   const [memoryByReg, setMemoryByReg] = useState<Record<string, TryoutMemoryPair>>({});
   /** Bumped when a continuity link is CONFIRMED — see the memory effect. */
   const [memoryEpoch, setMemoryEpoch] = useState(0);
-  const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
-  const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
   const fail = useCallback((m: string) => { if (onErrorRef.current) onErrorRef.current(m); else console.error(m); }, []);
@@ -348,41 +353,62 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
     }
   }
 
-  // Open the accept drawer for an offered candidate: fetch identity + the team's standard fee schedule.
-  async function openAccept(c: Candidate) {
-    if (acceptLoadingId || savingId) return;
-    setAcceptLoadingId(c.registrationId);
+  // One tap → roster place. No drawer, no fees, no welcome email: the coach has had the
+  // conversation already, and the amount a family owes depends on a roster size that does not
+  // exist yet (owner 2026-08-26).
+  async function addToRoster(c: Candidate) {
+    if (addingId || savingId) return;
+    setAddingId(c.registrationId);
     try {
-      const res = await fetch(`${apiBase}/accept?registrationId=${encodeURIComponent(c.registrationId)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Could not open accept');
-      setAcceptTarget({ registrationId: c.registrationId, identity: data.registration, suggestedDues: data.suggestedDues ?? null });
+      const res = await fetch(`${apiBase}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId: c.registrationId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
+      setBoard(b => b ? {
+        ...b,
+        candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: 'accepted' } : x),
+        counts: recount(b.candidates, c.registrationId, 'accepted'),
+      } : b);
     } catch (e: any) {
-      fail(e.message ?? 'Could not open the accept form.');
+      fail(e.message ?? 'Failed to add the player.');
     } finally {
-      setAcceptLoadingId(null);
+      setAddingId(null);
     }
   }
 
-  // Confirm accept → atomic roster + optional dues. On success flip the candidate to the Accepted chip.
-  async function confirmAccept(payload: AcceptPayload) {
-    if (!acceptTarget) return;
-    const regId = acceptTarget.registrationId;
-    const res = await fetch(`${apiBase}/accept`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // Adding a player to the roster is a private record. No welcome email — the coach has
-      // already welcomed them, in their own words (owner ruling 2026-08-26).
-      body: JSON.stringify({ registrationId: regId, ...payload }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
-    setBoard(b => b ? {
-      ...b,
-      candidates: b.candidates.map(x => x.registrationId === regId ? { ...x, status: 'accepted' } : x),
-      counts: recount(b.candidates, regId, 'accepted'),
-    } : b);
-    setAcceptTarget(null);
+  /**
+   * Take a rostered player back off, returning them to Offering.
+   *
+   * ⚠ THE SERVER REFUSES THIS ONCE ANYTHING HAS ATTACHED TO THE PLAYER, and that guard is the
+   * whole feature. Nineteen tables cascade off a roster player — dues payments, fundraiser credits,
+   * attendance, lineups, awards, development goals and measurables, documents, family links — so an
+   * unguarded undo would silently erase a season's records with no warning. Free for a mis-tap,
+   * refused for a player who has actually been playing, and the refusal says which.
+   */
+  async function undoAccept(c: Candidate) {
+    if (undoingId || savingId) return;
+    setUndoingId(c.registrationId);
+    try {
+      const res = await fetch(`${apiBase}/accept`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId: c.registrationId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Could not undo this.');
+      setBoard(b => b ? {
+        ...b,
+        candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: 'offered' } : x),
+        counts: recount(b.candidates, c.registrationId, 'offered'),
+      } : b);
+    } catch (e: any) {
+      fail(e.message ?? 'Could not undo this.');
+    } finally {
+      setUndoingId(null);
+    }
   }
 
   // Only the FIRST load blanks the stage. A refresh triggered by returning to Decide keeps the
@@ -397,7 +423,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
         <div className={styles.head}>
           <div>
             <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>
-            <p className={styles.subtitle}>Offer, waitlist, or pass on each player — ranked by score.</p>
+            <p className={styles.subtitle}>Sort each player into a pile — ranked by score.</p>
           </div>
         </div>
         <p className={styles.empty}>No candidates yet. Players appear here once they&apos;ve registered or checked in.</p>
@@ -413,11 +439,19 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
         <div>
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>
           <p className={styles.subtitle}>
-            Offer, waitlist, or pass on each player — ranked by score.
+            Sort each player into a pile — ranked by score.
             {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Names are hidden — use the switch above to decide by name.</>}
           </p>
         </div>
       </div>
+
+      {/* The two things the buttons cannot say for themselves: nothing goes out, and the Offering
+          pile is what Build your team draws from. Read once, then ignored — which is the right
+          trade for a line that stops a coach assuming families have been told (owner 2026-08-26). */}
+      <p className={styles.sortNote}>
+        Sorting only — <strong>nothing is sent to anyone</strong>. Whoever sits in Offering is who you
+        build the roster from.
+      </p>
 
       <div className={styles.tally}>
         <span className={styles.tallyItem}><strong>{board.counts.offered}</strong> offered</span>
@@ -519,7 +553,25 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                 )}
               </div>
               {accepted ? (
-                <span className={styles.acceptedChip}><Check size={13} /> Accepted</span>
+                <div className={styles.decisionCol}>
+                  <span className={styles.acceptedChip}><Check size={13} /> On the roster</span>
+                  {/* Accepting used to be a ONE-WAY DOOR — the board refused to touch the row and
+                      releasing them from the roster did not put them back, so a mis-tap was
+                      permanent. Undo is deliberately guarded rather than free: nineteen tables
+                      cascade off a roster player, so an unguarded delete would silently take a
+                      season of dues, attendance, lineups and development with it (owner 2026-08-26). */}
+                  {canWrite && (
+                    <button
+                      type="button"
+                      className={styles.undoBtn}
+                      onClick={() => undoAccept(c)}
+                      disabled={!!savingId || undoingId === c.registrationId}
+                      title="Take this player back off the roster and return them to the board"
+                    >
+                      {undoingId === c.registrationId ? 'Undoing…' : 'Undo'}
+                    </button>
+                  )}
+                </div>
               ) : canWrite ? (
                 <div className={styles.decisionCol}>
                   <div className={styles.choiceGroup} role="group" aria-label="Decision">
@@ -529,27 +581,26 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                         type="button"
                         className={`${styles.choiceBtn} ${c.status === choice.status ? styles[`choice_${choice.key}`] : ''}`}
                         onClick={() => decide(c, choice.key)}
-                        // Also locked while an accept drawer is LOADING — cutting a candidate whose
-                        // drawer is about to open would present a stale accept form (server 409s
-                        // either way; this keeps the UI honest).
-                        disabled={!!savingId || !!acceptLoadingId}
+                        disabled={!!savingId || !!addingId}
                         aria-pressed={c.status === choice.status}
                       >
                         {choice.label}
                       </button>
                     ))}
                   </div>
-                  {/* One action on an offered row, and it is the only one there has ever needed
-                      to be: the coach has had the conversation, the family said yes, put them on
-                      the roster. No response badges — nothing here asks a family anything. */}
+                  {/* ONE TAP, no drawer (owner 2026-08-26). The drawer's fee half was removed — a
+                      per-player amount cannot be known before the roster size is, which is the very
+                      thing it depends on — and what remained were three optional fields the Roster
+                      page already edits better, all players at once. Finishing a tryout gets you a
+                      roster place and nothing more; dues come later, from Set dues for all players. */}
                   {c.status === 'offered' && (
                     <button
                       type="button"
                       className={styles.acceptRosterBtn}
-                      onClick={() => openAccept(c)}
-                      disabled={!!savingId || !!acceptLoadingId}
+                      onClick={() => addToRoster(c)}
+                      disabled={!!savingId || !!addingId}
                     >
-                      {acceptLoadingId === c.registrationId ? 'Opening…' : 'Accept → add to roster'}
+                      {addingId === c.registrationId ? 'Adding…' : 'Add to roster'}
                     </button>
                   )}
                 </div>
@@ -587,15 +638,6 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
           );
         })}
       </div>
-
-      {acceptTarget && (
-        <TryoutAcceptDrawer
-          identity={acceptTarget.identity}
-          suggestedDues={acceptTarget.suggestedDues}
-          onClose={() => setAcceptTarget(null)}
-          onConfirm={confirmAccept}
-        />
-      )}
     </div>
   );
 }

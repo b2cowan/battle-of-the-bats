@@ -102,7 +102,6 @@ const SCOPES = {
       'components/rep-teams/TryoutSetupChecklist.module.css',
       'components/rep-teams/TryoutCheckIn.module.css',
       'components/rep-teams/TryoutNamesSwitch.module.css',
-      'components/rep-teams/TryoutAcceptDrawer.module.css',
       'components/rep-teams/TryoutReportCard.module.css',
       'components/rep-teams/TryoutBaselineCard.module.css',
       'components/rep-teams/TryoutMemoryStrip.module.css',

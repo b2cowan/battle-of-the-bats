@@ -92,7 +92,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
             <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
             <li>Use <strong>Extend Offer</strong> to mark a player as invited. It <strong>records your decision and sends nothing</strong> — the offer itself is a letter your club writes, on your own terms, so you reach the family yourself. That holds for every decision on this screen: no email leaves it.</li>
-            <li>Use <strong>Accept</strong> once the family has said yes — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. <strong>Waitlist</strong> and <strong>Decline</strong> likewise only record where things stand.</li>
+            <li>Use <strong>Accept</strong> once the family has said yes — one click puts them on the roster and makes them visible to the coach. <strong>No fees are set here</strong>: what a family owes usually depends on the final roster size, so dues are set afterwards from the team&apos;s Money screens. <strong>Waitlist</strong> and <strong>Decline</strong> likewise only record where things stand.</li>
             <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
           <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and that they&apos;re the guardian of an eligible player, and the date is captured for your records. A separate <strong>optional</strong> box covers club news and future-season emails. The only email the form itself sends is a <strong>confirmation that the application was received</strong> — the form says so plainly, and tells families that news about a spot comes from you directly. The <strong>applicant export</strong> includes both the consent record and the news-email answer when you need documentation — as a spreadsheet, or as a printable list grouped by status with counts.</p>
@@ -119,9 +119,9 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-accept-player-to-roster',
       group: 'How-to recipes',
       heading: 'How to accept a player onto a rep roster',
-      summary: 'Move a player from tryout application to coach-visible roster — with their fees set up in the same step.',
+      summary: 'Move a player from tryout application to coach-visible roster in one click. Fees are set later, from Money.',
       keywords: ['accept player', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues', 'standard fee'],
-      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility accept drawer fees dues standard fee schedule installments prefilled editable optional atomic no card charge',
+      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility one click no drawer no fees at accept fees are set later dues from money set dues for all players depends on roster size',
       content: (
         <>
           <p>A player becomes visible to the coach only after the application reaches the accepted state.</p>
@@ -129,9 +129,9 @@ const repTeamsHelp: HelpPageContent = {
             <li>Open the program year&apos;s <strong>Tryouts</strong> tab.</li>
             <li>Find the applicant by player name or guardian email.</li>
             <li>If the player is still pending, extend an offer first if your workflow requires it.</li>
-            <li>Click <strong>Accept</strong> when the player is confirmed. A drawer opens with their details already filled in from their registration; add an optional number/position/jersey size, and choose whether to attach fees.</li>
-            <li>When your team already charges dues, the drawer pre-fills your <strong>standard fee schedule</strong> (the amount and installment plan the rest of the team pays) — edit it, or turn fees off to add them later on the coach&apos;s Dues page. Fees only record what&apos;s owed; no card is charged.</li>
-            <li>Confirm. The roster entry and the fee schedule save together — nothing half-finishes. Open the roster or ask the coach to refresh their workspace.</li>
+            <li>Click <strong>Accept</strong> when the player is confirmed — one click, no form. They are on the roster immediately and visible to the coach.</li>
+            <li><strong>No fees are set here.</strong> Accepting gets the player a roster place and nothing more — what a family owes usually depends on the final roster size, so it cannot sensibly be decided one player at a time. Dues are set afterwards from the team&apos;s Money screens, for everyone at once. Squad numbers, positions and jersey sizes are filled in on the roster.</li>
+            <li>If the coach can&apos;t see them yet, ask them to refresh their workspace.</li>
             <li>If the player is still missing, confirm you accepted them in the same program year the coach is viewing.</li>
           </ol>
           <p>Declined and offer-only players do not appear on the active roster. Standalone Premium head coaches can also accept players directly from their own Decision board — the same one-step flow.</p>

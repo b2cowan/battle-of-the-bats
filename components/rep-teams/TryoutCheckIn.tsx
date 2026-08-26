@@ -13,6 +13,14 @@ import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutCheckIn.module.css';
 
+/**
+ * ⚠ THE BUTTON SAYS "Add player", NOT "Add walk-up" (owner ruling 2026-08-26). Many coaches — the
+ * standalone ones especially — take registrations outside the product entirely and enter the whole
+ * squad here BEFORE tryout day, so calling every one of them a walk-up was wrong for the common
+ * case. The club-admin screen already said "Add Applicant" for the same act, so the product had two
+ * names for one thing; this is the smaller half of fixing that. Identifiers below keep the old word
+ * (renaming them is churn, not a spelling fix) — the CUSTOMER-visible strings are what moved.
+ */
 const BLANK_WALKUP = { first: '', last: '', email: '' };
 
 interface Props {
@@ -97,7 +105,7 @@ export default function TryoutCheckIn({
   const guardedWalkupClose = useDiscardGuard({
     dirty: touched(walkup, BLANK_WALKUP),
     close: () => setWalkupOpen(false),
-    noun: 'walk-up',
+    noun: 'player',
   });
 
   const fail = useCallback((m: string) => { onError ? onError(m) : console.error(m); }, [onError]);
@@ -226,7 +234,7 @@ export default function TryoutCheckIn({
       await load();
       onChanged?.();
     } catch (e: any) {
-      fail(e.message ?? 'Failed to add walk-up.');
+      fail(e.message ?? 'Failed to add player.');
     } finally {
       setSavingWalkup(false);
     }
@@ -358,7 +366,7 @@ export default function TryoutCheckIn({
         />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button type="button" className={styles.addBtn} onClick={() => { setWalkup(BLANK_WALKUP); setWalkupOpen(true); }}>
-            <Plus size={15} /> Add walk-up
+            <Plus size={15} /> Add player
           </button>
           <button type="button" className={styles.addBtn} onClick={printSheet} disabled={candidates.length === 0 || printing}>
             <Printer size={15} /> {printing ? 'Building…' : 'Print sheet'}
@@ -369,7 +377,7 @@ export default function TryoutCheckIn({
       {filtered.length === 0 ? (
         <p className={styles.empty}>
           {total === 0
-            ? 'No candidates yet. Add a walk-up, or open registration so families can sign up.'
+            ? 'No candidates yet. Add a player, or open registration so families can sign up.'
             : 'No matches.'}
         </p>
       ) : (
@@ -433,7 +441,7 @@ export default function TryoutCheckIn({
       {walkupOpen && (
         <div className={styles.scrim} onClick={() => !savingWalkup && guardedWalkupClose()}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>Add walk-up</h3>
+            <h3 className={styles.modalTitle}>Add player</h3>
             <div className={styles.row2}>
               <div className={styles.field}>
                 <label className={styles.label}>First name</label>

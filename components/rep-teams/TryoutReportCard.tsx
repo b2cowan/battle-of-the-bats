@@ -78,9 +78,10 @@ export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref,
   if (!report.hasAnything) {
     return (
       <p className={styles.empty}>
-        Once you accept players from the decision board, they land on your{' '}
-        <a href={rosterHref} className={styles.inlineLink}>team roster</a> with their fees already
-        set — so lineups, attendance, dues and announcements all work from day one, with no name re-typed.
+        Once you add players from the decision board, they land on your{' '}
+        <a href={rosterHref} className={styles.inlineLink}>team roster</a> — so lineups, attendance and
+        announcements all work from day one, with no name re-typed. Dues get set for everyone once the
+        team is settled.
       </p>
     );
   }

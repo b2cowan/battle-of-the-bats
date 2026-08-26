@@ -12699,6 +12699,11 @@ drawing is in warm. **Check the band and the pill in BOTH.**
       same fix.
 - [ ] The legend strip is gone from under the toolbar on both faces, and the dot is now carrying
       that meaning on its own.
+- [ ] **Open a record for editing and read the legend under its Tags box** — **Shared by your
+      organization** must be BLUE. ⚠ Third site of the same colour collapse and the worst of them:
+      its swatches were coloured inline, which no theme override can reach, so on cream it drew two
+      identical olive squares and labelled one of them "shared by your organization" — a legend
+      teaching the opposite of the truth. (Moved here from A2.)
 - [ ] **Tick Spring classic.** The pill reads **Spring classic** (its name, not "1 selected"). The
       book narrows.
 - [ ] **The band above the book states the answer** — the dollars **first**, big and bold: *"$X
@@ -12713,33 +12718,74 @@ drawing is in warm. **Check the band and the pill in BOTH.**
       come back; the band goes.
 - [ ] **Export while a tag is on.** The file is what the screen is showing, as it was before.
 
-### A2 · The commitment panel — three findings from the owner walk, 2026-08-26
+### A2 · SUPERSEDED BY A3 — kept for the reversal it records
 
-⚠ **Payables-drawer surface, NOT P3's** — reported while walking §104 and fixed in the same pass.
+⚠⚠ **DO NOT WALK THIS SECTION.** It was written on 2026-08-26 for the commitment **modal**, hours
+before the same walk turned the modal into a sub-view. Its central instruction is now the OPPOSITE
+of the truth, and a walker following it would report the shipped build as a regression:
 
-- [ ] **Open a commitment and read it WITHOUT pressing Edit.** THREE labelled sections, in this
-      order: **Scheduled**, **Payments recorded**, **Details** — the last carrying **Payee**,
-      **Tags**, **How**, **Notes** — each row shown only when the bill has one. ⚠⚠ The panel used to
-      show the schedule and nothing else, so a payee or a tag could only be read by opening **Edit**
-      (a write door) and backing out — which meant a **read-only money assistant could not read them
-      at all**, the Edit button being gated away from them. Re-check as that account in Part C.
-- [ ] ⚠⚠ **DETAILS MUST BE LAST, NOT FIRST — the owner corrected the first build on sight.** These
-      are precisely the fields the edit form keeps behind **More** because they are used least, so
-      opening the panel with them inverts that judgement and pushes the schedule and **Still owing**
-      — what the panel is FOR — down the screen. If Details sits above the schedule, that is the
-      regression. (The build argued for omitting empty rows *so the schedule would not be pushed
-      down*, then pushed it down anyway.)
-- [ ] The note is a row in that block, **back at the bottom where it always was**. ⚠ It moved up
-      briefly on a real observation — under the settlement total it read as a comment on the
-      PAYMENTS rather than on the bill — but the fix for that is the **Details** label, not
-      promotion to the top.
-- [ ] **Edit → Cancel returns to the COMMITMENT PANEL, not the list.** Same for **Add an
-      installment** and **Record**, and same on **save** (with the new figures showing). ⚠ **Delete
-      is the deliberate exception** — it returns to the list, because the bill no longer exists.
-- [ ] **The tag legend under the Tags box reads BLUE for "Shared by your organization."** ⚠ Third
-      site of the same colour collapse and the worst of them: its swatches were coloured inline,
-      which no theme override can reach, so on cream it drew two identical olive squares and
-      labelled one of them "shared by your organization" — a legend teaching the opposite.
+> *"Details must be LAST, not first."*
+
+**On the modal that was right; on the sub-view it is wrong**, and the reasoning is worth keeping
+because the sentence underneath it never changed. In a fixed 90vh box, putting Details on top pushed
+the schedule and **Still owing** — what the panel is FOR — out of view, so Details went last. On a
+view that simply scrolls, nothing is pushed out of anything, so the short fixed things go first and
+the list that can **grow without limit** goes last. Both orders come from one rule:
+
+> **The thing that can grow without limit never sits above the things that cannot.**
+
+Its other items were absorbed: reading a bill without a write door, and the modals closing back onto
+the view, are both in **A3**; the tag-legend colour check moved to **Part A**, where the rest of that
+colour family lives.
+
+### A3 · A commitment becomes a sub-view — PILOT, evaluate before it spreads
+
+⚠⚠ **NOT P3 WORK, AND DELIBERATELY SCOPED TO ONE SCREEN** (owner 2026-08-26: *"try your
+recommendations for this screen only, and after I evaluate the real case if I like it you can move
+ahead and update the remaining 17"*). Design + UX both reviewed it; drawn options and the reasoning:
+`claude.ai/code/artifact/0c44d290-8a76-4235-aeab-79c8f4f8c366`.
+
+⚠⚠ **THE RECOMMENDATION WAS CORRECTED MID-BUILD, and the correction is the interesting part.** It
+said *"a commitment should be its own PAGE — every other coach record with children has one"*, from
+game / practice / player / lineup. **Those were the wrong neighbours.** Money went the OTHER way on
+2026-08-14: one fundraiser WAS a standalone page and was pulled back INTO the hub as
+`?fundraiser=`, because leaving it *"took the tab row, the archive chip and the Import door with
+it — the last such exception in Money"*. A commitment page would have rebuilt exactly what that
+sweep removed. It is a **sub-view of the Payables tab** instead — still a URL (Back works, links are
+shareable, the schedule may grow), with the Money hub still around it.
+
+- [ ] **Money → Payables → tap a bill.** It opens in place, the Money tab row still above it, the
+      address now carrying `?bill=`. **Browser Back returns to the list.** Copy the URL into a new
+      tab — it lands on the same bill.
+- [ ] **Reading order:** the bill's name, then **Still owing**, then **Details**, then **Scheduled**,
+      then **Payments recorded**. ⚠ The unbounded list is LAST here — the reverse of the modal, and
+      deliberately: in a fixed box Details on top pushed the schedule out of view; on a scrolling
+      view nothing is pushed out, so the list that can grow without limit goes last. The constant is
+      the same sentence both times.
+- [ ] **Open a bill with a long schedule.** It simply scrolls. ⚠ This is the case the modal could not
+      do — §64 Part E, where content past the fold was UNREACHABLE.
+- [ ] **The way back is an arrow in the header's leading corner** (`← Payables`), not a blue row
+      above it. On a phone it is the bare arrow. ⚠ **PILOT — every other drill-in still has the old
+      row.** Two treatments in the portal until you rule; that is expected, not drift.
+- [ ] ⚠⚠ **COUNT THE DOORS — this is what the second pass fixed.** The header holds **one** button,
+      **Edit details**. There is **no page-level Record**: it opened the same locked conversation as
+      each unpaid row's Record, minus the precision, a hand's width from three of them. Recording
+      money is the ROW's door, plus the hub's own `+ Record` above the tabs (the product-wide one,
+      untouched).
+- [ ] **"Add an installment" sits under the schedule**, not in the header — a button belongs to the
+      nearest chrome that names what it acts on, and it adds a row to the list right above it.
+- [ ] **"Edit details" edits the bill's own fields.** The old name was "Edit" and it promised the
+      whole record while opening a form that duplicated every row control on the page.
+- [ ] **Change / Remove keep their dialog on purpose** — they ask a real question (this payment /
+      this and later / all unpaid). ⚠ **A modal is for a QUESTION, not for a field**, which is the
+      line option B will draw next: payee, tags, how and notes become editable in place.
+- [ ] Everything opens over the view and closes back onto it.
+- [ ] **Delete the bill you are standing on.** It returns you to the list rather than stranding you
+      on a view of a record that no longer exists.
+- [ ] ⚠ **The page must NOT lock or hide the nav.** It was registered as an overlay when it was a
+      modal; leaving that in place would have locked the very scroll it now needs.
+- [ ] **A club bill still has no sub-view** — its door is the Club tab, unchanged.
+- [ ] **As the read-only money account:** the whole view is readable, with no action buttons.
 
 ### B · The same pill and the same band — Payables
 
@@ -12851,7 +12897,15 @@ this feature's** — recorded here so the walk is not surprised by them:
    asterisks on — and **Manage tags** is 33px. Both are portal chrome from earlier phases; raising
    them is the touch-target debt plan's call, not this feature's, so they are in the baseline with
    **no reason written**, which is how that file records unargued debt.
-3. **NOT RECORDED, DELIBERATELY.** `coach-schedule` reports a 31px row button whose baseline key
+3. 🔴 **NEW, REAL, AND NOT THIS WORK'S — the Date filter's panel opens 96px OFF-SCREEN at 390px.**
+   On Transactions, opening **Date** on a phone puts seven presets and the *To date* field past the
+   right edge **with nothing to scroll them into view** — the same unreachable-control shape as the
+   §64 drawer. ⚠ It is not a regression: a concurrent session extended `check:layout` on 2026-08-26
+   with a `control-offscreen` rule (*"the gate that was blind to it"*), and this is what the better
+   gate found on its first run. Reproduced on a freshly restarted dev server. **Recorded as unargued
+   debt, not fixed** — the honest fix is the viewport-anchored panel treatment the money form's own
+   dropdown already got, which belongs to the date-pill feature and not inside a pilot.
+4. **NOT RECORDED, DELIBERATELY.** `coach-schedule` reports a 31px row button whose baseline key
    embeds the fixture's **re-anchored practice time** — so the finding renames itself on every
    reseed. Baselining it would rot immediately and produce a fresh phantom next time. ⚠ Anyone
    reseeding the UAT fixture will see this one; it is a flaw in that control's identity, not a
@@ -13566,3 +13620,79 @@ other work.
 **Verification note:** the full rendered sweep is **still owed** (see §105). Schedule was measured at
 every width with no findings attributable to this change, and fourteen keyboard behaviours were
 verified in a real browser.
+
+---
+
+## §109 · Three piles, one tap, and a door that opens both ways — BUILT, awaiting QA
+
+**Owner rulings 2026-08-26, from the §108 walk.** Four changes to the tryout Decide and Build
+stages. Plan: `COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md` (§109 section).
+
+### What the owner sees
+
+**The decision buttons read Offering · Waitlist · Not this season**, with one line above the players:
+*"Sorting only — nothing is sent to anyone. Whoever sits in Offering is who you build the roster
+from."* The stage intro lost its own "nothing is sent" clause so the point is made once, where the
+buttons are.
+
+**Adding a player is one tap.** The drawer is gone. An offered row shows **Add to roster** and that
+is the whole interaction.
+
+**Fees have left the tryout entirely** — no toggle, no pre-filled schedule, no mention. Finishing a
+tryout gets a roster and nothing more. Dues are set afterwards from **Money → Dues → Set dues for
+all players**, and squad numbers/positions/jersey sizes on the **Roster** page. Same on the
+club-admin screen.
+
+**A rostered player can be undone.** Their row reads *On the roster* with a quiet **Undo**.
+
+**"+ Add walk-up" is now "+ Add player"** on check-in.
+
+### ⚠ Why each was a defect and not a preference
+
+- **"Offer" was the only VERB among two states.** Beside *Waitlist* and *Not this season* — two
+  piles — an action-shaped word read as a button that fires. "Offering" keeps the word a club
+  actually uses (so the report's "Offers extended", the season record and the returning-player strip
+  keep ONE vocabulary) while removing the outward reading. The pair *Offer → Accept* also still told
+  the retired story — the system offers, the family accepts — so **"Accept → add to roster" became
+  "Add to roster"**; both are the coach's own action now.
+- **The fee step asked for a number before its input existed.** Owner: *"the amounts they charge are
+  even dependent on how many players they select."* A per-player amount cannot be known at the moment
+  a player is added to the roster. The Dues screen's **Set dues for all players** — the same
+  generator the Budget Plan uses — already does it for everyone once the number is known, which is
+  what made the accept-time version redundant rather than merely early.
+- **With fees gone the drawer held only three optional fields the Roster page edits better**, all
+  players in one pass. A drawer whose entire content is optional is a speed bump.
+
+### ⚠⚠ The undo is guarded, and the guard is the feature
+
+**Twenty tables hang off a roster player and almost every one is set to delete quietly when the
+player does** — dues payments, fundraiser credits, attendance, lineups, awards, development goals
+and measurables, documents, family links, settlement rows. An unguarded Undo three weeks in would
+erase a season with **no warning**; Postgres would report success.
+
+So Undo is **free while the player is fresh** (the mis-tap case it exists for) and **refuses the
+moment anything has attached**, naming what is in the way and pointing at the Roster page. A failed
+dependency read counts as a blocker, never as "nothing there".
+
+### What to walk
+
+1. **Decide** — buttons read Offering / Waitlist / Not this season; the sorting line sits above the
+   players; the stage intro no longer repeats it.
+2. Tap each of the three on a player; confirm it records, no dialog, no email.
+3. **Add to roster** on an offered player — one tap, no drawer, no fee prompt. Row becomes *On the
+   roster*.
+4. **Undo** that player immediately → they return to Offering and leave the roster.
+5. Add a player, give them something on another screen (a dues schedule, an attendance mark), then
+   Undo → **refused**, naming what is in the way.
+6. **Check-in** — the button reads **+ Add player**; the dialog title matches.
+7. **Club admin** tryouts — Accept is one click, no drawer, no fees.
+8. **Help** — coach and Rep Teams help describe a one-tap add with fees set later.
+
+### Gate
+
+Typecheck 0 · units **2,600/2,600** (run three times — an earlier single failure did not reproduce
+and was a concurrent-edit read) · lint 0 errors · spelling, CSS purity, token, contrast, dictionary
+and demo gates green. Endpoints smoke-tested live: the undo fails closed at 401 unauthenticated, and
+the retired fee-prefill returns 405.
+
+**No migration.** The accept RPC still accepts a dues argument; it is simply never passed one.
