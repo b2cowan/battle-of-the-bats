@@ -787,7 +787,7 @@ describe('coach page headers — what the actions slot may hold', () => {
       unlisted, [],
       'A coach page header appeared that this guard does not know about:\n  ' + unlisted.join('\n  ') +
       '\nAdd it to SITES with its phone behaviour stated, and log the decision in ' +
-      'docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md §10.',
+      'docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md §10.',
     );
 
     const missing = [...listed].filter(k => !found.has(k));

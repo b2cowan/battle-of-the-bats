@@ -14,7 +14,7 @@ Run `/design`. Then read, in this order, before proposing anything:
 - `docs/projects/active/COACH_PAGE_HEADER_CONSISTENCY_PLAN.md` — the ruling that created the band
 - `docs/projects/active/COACH_HEADER_VERTICAL_SPACE_PLAN.md` — the pass that already shrank it, and
   the reverted experiment
-- `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §0 — the four house rules for what
+- `docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §0 — the four house rules for what
   sits in that band
 - `components/coaches/CoachPageHeader.tsx` — read the docblock in full; it is the spec
 

@@ -3,7 +3,7 @@
 **Plan:** `COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`
 **Mockup (the spec):** `claude.ai/code/artifact/44162825-32ef-4744-90dc-7939ee635e9e`
 **Priority:** high — it fixes one thing a coach genuinely cannot find today
-**Status:** approved 2026-08-13, not yet built
+**Status:** ✅ **DELIVERED.** All four phases on dev; owner QA passed 2026-08-26 (ledger §105 and §110).
 
 ---
 
@@ -97,3 +97,49 @@ practice, not there.
 - No page header in the portal carries more than two buttons plus help.
 - Nothing in the portal offers a spreadsheet download on a phone.
 - Every empty state that could accept an import still offers one at phone width.
+
+---
+
+## What actually shipped (added on close, 2026-08-26)
+
+Four phases, delivered in order, over two weeks:
+
+1. **The Money hub** — one Import door for the whole hub instead of four treatments under four
+   names, every tab's create moved down beside the thing it creates, and the three exports that
+   were simply missing.
+2. **Roster and Schedule** — Roster's bulk-add finally got a findable door (it had been reachable
+   only from an empty state that vanished the moment one player existed), and its whole action group
+   stopped disappearing in the depth chart. Export moved to sit above the list it exports.
+3. **Plan templates and Drills** — two creates competing in a filter row became one create in the
+   header with the two ways inside it.
+4. **The guard, and the last fold** — a build check that refuses the next quiet drift, and
+   Schedule's Add Event brought onto the shared menu.
+
+## What we learned that changed the plan
+
+**Three of the plan's four Phase-3 sections were wrong when we got to them**, every time for the
+same reason: the screen had been rebuilt after the section was written. Awards had already been
+moved and was correct; Overview's "state display" was actually a button; Drills' "tag control" had
+never existed. **A plan section naming a control's destination goes stale the moment that control's
+screen is rebuilt, and nothing in the plan itself shows it.**
+
+**The guard's first version reported green over a live defect.** It matched export controls by name,
+so importing one under a different name walked straight past it. Found by an adversarial review that
+built the exploit rather than reasoning about it. It now identifies controls by where they come
+from, and fourteen deliberate breakages are on record as proof it catches them.
+
+**And the guard's own first finding was that nothing ran it.** The test suite this repo has been
+building for months was not part of any automatic check — so every guard of this family had been
+describing itself as blocking things while blocking nothing. That is now fixed for the routine
+check; whether it should also block a deploy is still an open decision.
+
+## Left open at close
+
+- **One cosmetic naming tidy-up** in the Money hub. Nothing a coach can see depends on it; it has
+  been blocked on file contention on every attempt.
+- **The full rendered layout sweep**, which has aborted on machine memory three times. Targeted
+  runs plus a reverted-change control stood in each time.
+- **Two gate decisions for the owner**, both raised by the review — see the plan's final log entry.
+
+These are tracked in `TODO.md` rather than here, because an archived brief is not a place anyone
+looks for outstanding work.

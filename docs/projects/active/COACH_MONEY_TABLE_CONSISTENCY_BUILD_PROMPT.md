@@ -18,7 +18,7 @@ they make one hub look like three products.**
 
 ## Read first (in this order)
 
-1. `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` — the action pass that just
+1. `docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` — the action pass that just
    finished on these same screens. §4.1 is the tab-by-tab state you are inheriting; every tab now
    has one shared control row (`.panelToolbar` / `.panelToolbarActions` in `coaches.module.css`).
 2. `memory/design_decisions.md` — the **three 2026-08-13 entries** at the top, newest first. They

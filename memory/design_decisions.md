@@ -2401,7 +2401,7 @@ to the help button in the coaches portal headers for consistency? it seems to be
 not other times… perhaps an overall review of all pages should be taken first, inventory the buttons
 and their types."* Mockup (approved, binding visual spec):
 `claude.ai/code/artifact/44162825-32ef-4744-90dc-7939ee635e9e` (source
-`docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html`). Plan + PM brief:
+`docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_MOCKUP.html`). Plan + PM brief:
 `COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`.
 
 **The literal request was declined and the observation behind it granted.** The help "?" is chrome

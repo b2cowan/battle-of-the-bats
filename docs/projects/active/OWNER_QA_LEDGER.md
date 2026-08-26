@@ -1137,7 +1137,7 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
 *Page-level action ruling 2026-08-13 (Phase 1). The hub header gains constant `Import ▾ / Export ▾`;
 every tab's create drops into that tab's own control row; three exports that never existed were
 written; the tab bar becomes navigation only.* Plan:
-`active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §4.1. Binding mockup: artifact `44162825`.
+`archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md` §4.1. Binding mockup: artifact `44162825`.
 **Setup:** the same `qa-money-lab` team as §11, plus one team with real budget lines, expenses,
 payables and a fundraiser — the exports have nothing to say on an empty season and will tell you so
 rather than hand you an empty sheet (that message is itself worth seeing once).
@@ -11350,7 +11350,7 @@ the *proof* is owed. It is a cross-team PII path, so it rides the release checkl
 being signed off here.
 
 **BUILT 2026-08-23 (dev).** Page-level action consistency **Phase 2 (Roster + Schedule)**, built to
-**four house rules the owner took that day** — plan `docs/projects/active/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`
+**four house rules the owner took that day** — plan `docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`
 §0. Approved drawings: https://claude.ai/code/artifact/0eac6be6-c9ea-48db-821a-7889478621b1
 (interactive — the width, view and order controls drive the bands).
 **Checkable walkthrough:** https://claude.ai/code/artifact/8d3dd827-51a6-4187-acb6-9f1b2b2428c6
