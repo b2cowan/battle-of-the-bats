@@ -12903,7 +12903,7 @@ a one-at-a-time chip row).
 
 ---
 
-## §105 · The header rules stop being a document nobody read — and menus answer the keyboard — BUILT, awaiting QA
+## §105 · The header rules stop being a document nobody read — and menus answer the keyboard — ✅ OWNER QA PASSED 2026-08-26
 
 **Checkable walkthrough:** https://claude.ai/code/artifact/0ae5c557-c786-43de-95a2-678753595e80
 
@@ -12918,10 +12918,10 @@ moved, one at the keyboard.
 
 ### Pass 1 — nothing moved (5 minutes, and a "nothing happened" is the pass)
 
-- [ ] **The Money hub still looks exactly as it did.** Open **Money**. Header: **Record** then
+- [x] **The Money hub still looks exactly as it did.** Open **Money**. Header: **Record** then
       **Import**, then the team bar's **?** above it. On a phone Record is a bare **+** in the title
       line's corner and Import is gone.
-- [ ] **Roster, Schedule, Plan templates, Drills and Overview are all unchanged** — same buttons,
+- [x] **Roster, Schedule, Plan templates, Drills and Overview are all unchanged** — same buttons,
       same order, same phone behaviour. Nothing in this phase touched a screen.
 
 ### Pass 2 — the menus now answer the keyboard (the real change a coach can feel)
@@ -12930,41 +12930,41 @@ Three menus in the portal open onto a choice: **Money → Import**, **Plan templ
 and **Drills → New drill**. All three behaved the same way before this: they announced themselves to
 a screen reader as a *menu*, and then ignored every key except Escape.
 
-- [ ] **Tab to the button and press Enter (or Space).** The menu opens and **the first choice is
+- [x] **Tab to the button and press Enter (or Space).** The menu opens and **the first choice is
       already highlighted** — you can act without hunting for it.
-- [ ] **Press the Down arrow with the button closed.** It opens onto the **first** choice.
+- [x] **Press the Down arrow with the button closed.** It opens onto the **first** choice.
       **Press Up instead** — it opens onto the **last** one.
-- [ ] **Arrow up and down inside the open menu.** Focus moves between the choices and **wraps** from
+- [x] **Arrow up and down inside the open menu.** Focus moves between the choices and **wraps** from
       the last back to the first. **Home** jumps to the top, **End** to the bottom.
-- [ ] **A greyed-out choice is skipped.** On **Plan templates**, start a blank template and reopen
+- [x] **A greyed-out choice is skipped.** On **Plan templates**, start a blank template and reopen
       the menu while it is working — *Start from blank* is disabled and the arrows step straight past
       it to the import route, which stays usable. (This is the Phase 3 rule that folding two buttons
       into one must not fold their disabled states together.)
-- [ ] **Press Tab with the menu open.** The menu **closes** and focus carries on to the next control
+- [x] **Press Tab with the menu open.** The menu **closes** and focus carries on to the next control
       *after* the button — it passes through the button rather than resting on it, so one Tab is one
       step. Before this, Tab walked into the page *behind* a panel that stayed on screen — which is
       what makes a menu a trap.
-- [ ] **Click somewhere empty on the page while the menu is open.** It closes, and focus quietly
+- [x] **Click somewhere empty on the page while the menu is open.** It closes, and focus quietly
       returns to the button rather than being lost — so if you then press Tab, you carry on from
       where the menu was instead of from the top of the page.
-- [ ] **Pick "Bring one forward from a past season".** The window opens; focus goes back to the
+- [x] **Pick "Bring one forward from a past season".** The window opens; focus goes back to the
       button behind it. ⚠ **Known gap, not a defect to report:** that window does not take focus for
       itself, so a keyboard user still has to Tab into it. That is a pre-existing gap in the window,
       not in the menu — recorded in the plan.
-- [ ] **Press Escape.** The menu closes and focus returns to the button. (Unchanged — it was already
+- [x] **Press Escape.** The menu closes and focus returns to the button. (Unchanged — it was already
       right.)
-- [ ] **Nothing changed for the mouse.** Click the button, click a choice, click away — all exactly
+- [x] **Nothing changed for the mouse.** Click the button, click a choice, click away — all exactly
       as before.
 
 ### What now fails a check instead of relying on someone having read a document
 
-- [ ] **Nothing to click here — this is context for the two passes above.** A new build check reads
+- [x] **Nothing to click here — this is context for the two passes above.** A new build check reads
       every coach page header and refuses a change that: adds an action to a header that had none,
       changes how a header behaves on a phone, **puts an export inside a page header**, draws a
       second button before the page's create, hides a header action behind a view switch, or adds a
       second screen whose header slot holds a status readout instead of an action. Ten of those were
       deliberately committed one at a time to prove each is actually caught.
-- [ ] **Overview's season-setup ring is the one enumerated exception**, with its reason written
+- [x] **Overview's season-setup ring is the one enumerated exception**, with its reason written
       down — it is a status readout that opens a checklist, it is ruled to stay, and it is now the
       *only* screen allowed to be that.
 

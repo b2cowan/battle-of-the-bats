@@ -33,10 +33,24 @@ phone header. The fourth is new. **They take precedence over §3's twelve rules 
    file, so it wears a calendar mark. Same rule, truthful icon.
    *(Considered and overruled: keeping one word on the toolbar control. Money already ships the
    bare glyph on all seven tabs, and two conventions for one control is the worse outcome.)*
-4. **The create sits in the page header beside the "?", and it goes FIRST.** At every width. On a
-   phone it keeps the title line's corner rather than taking a row of its own, so the band above a
-   coach's first line of content stays one line tall. Net phone header, every screen:
-   **title · symbol · "?"** and nothing else.
+4. **The create sits in the page header, and it goes FIRST.** At every width. On a phone it keeps
+   the title line's corner rather than taking a row of its own, so the band above a coach's first
+   line of content stays one line tall. Net phone header, every screen inside a team:
+   **title · symbol** and nothing else.
+   ⚠ **CORRECTED 2026-08-25 (Phase 4a).** This rule was written as *"beside the '?'"* with a net
+   phone header of *"title · symbol · '?'"*. **The "?" is no longer in the page header at all**
+   inside the team layout — `COACH_PAGE_TITLE_BAND_PLAN.md` §5 moved it to the masthead's right
+   slot at every width, and it shipped on 2026-08-25. The create's corner is now *alone* rather
+   than shared, which is if anything a stronger version of the same rule. **Outside the team
+   layout** (Link Organization, and the team layout's own no-auth early return) the page still
+   draws its own "?" as the default fallback, so **two header shapes are legal** and the Phase 4a
+   guard pins which screens use which.
+   ⚠ **AND THE CAVEAT ON "ONE FINDABLE HOME" (2026-08-11 ruling), stated here rather than left in
+   someone's memory:** it is true at the top of the page and **not while scrolled on a phone.**
+   The masthead's right slot folds with `.teamHeaderCollapsed` at ≤900px, so a scrolled phone
+   loses the "?" exactly as it loses the flip and the season. That is ruled and accepted — the
+   2026-08-02 bare-name collapse is not reopened — but the promise is "findable corner **at the
+   top of the page**", and it should not be quoted without that half.
 
 **Why create-first rather than §3 rule 3's "in, out, then primary":** that sequence existed to keep
 import and export paired. House rule 2 moved export out of the header, so the header holds two
@@ -331,13 +345,38 @@ Confirmed compliant in §2.5. No change.
 
 ## 6. The guard
 
-Rules are re-litigated by the next contributor unless a build fails. Following the established
-idiom (`APPROVED_ARCHIVE_DOORS` in `tests/unit/coach-season-write-guard.test.ts`):
+Rules are re-litigated by the next contributor unless something fails. Built 2026-08-25 as
+`tests/unit/coach-page-actions-guard.test.ts`, following the established source-scan idiom
+(`HISTORY_ENDPOINTS` in `tests/unit/coach-history-endpoint-guard.test.ts`).
 
-**A unit test pins, per screen, the number and kind of header actions.** Adding a third button to
-any page header, or passing a non-action into the actions slot, fails the build until the list is
-edited — which is the decision point. Paired with the existing rendered-layout sweep, which is what
-caught the last two header defects that every file-reading gate passed.
+⚠ **THE ORIGINAL SENTENCE HERE WAS WRONG AND IS CORRECTED.** It said *"a unit test pins, per
+screen, the number and kind of header actions"*. **A source scan cannot count buttons on this
+portal.** Eleven screens pass header actions and **six pass a variable**, so counting would mean
+following references — and half the portal would be invisible while the guard reported green. The
+contract is therefore split by what each mechanism can actually see:
+
+- **The scan pins the ENUMERATION** — all literals, all reliable: which of the 38 call sites render
+  a page header, which pass `actions`, which phone flags they pass, where each action set comes
+  from, house rule 2 (no export in a page header), house rule 4 (create first), rule 7 (not gated
+  on a view), the Overview carve-out, and the two legal header shapes. **A new page header, or a
+  screen gaining or losing a header action, fails until the list is edited** — the decision point.
+- **`npm run check:layout` keeps owning COUNT and GEOMETRY** — rule 9's cap of two-plus-the-create,
+  house rule 4's phone shape, and the 44px tap floor. It renders the real pages and reads real
+  controls by accessible name, and it caught two header defects every file-reading gate passed.
+- **Six rules stay human review and the guard says so in its own header** — verbs only, nearest
+  label wins, one name one weight, one verb one button, icons only for words already met, and a
+  contextual export staying with its context. An unstated limit reads as coverage.
+
+**Proven, not assumed:** ten deliberate violations were injected one at a time and each failed the
+guard, naming its rule — a new call site, a deleted row, an action added to a bare header, a phone
+flag changed quietly, an export moved into a header, a secondary drawn before the create, a view
+gate, an unfollowable reference, a second status-door carve-out, and the masthead dropping its "?".
+
+⚠ **`npm test` ran NOWHERE automatically before this phase** — not in `verify:changed`, not in the
+pre-commit hook, not in the Amplify build. Every guard of this family, this plan's included, has
+been describing itself as failing "the build" while failing nothing unless someone typed the
+command. **Phase 4a adds `npm test` to `npm run verify:changed`** (2,518 tests, ~7s). Promoting it
+into `amplify.yml` alongside the token and date guardrails is a separate owner call.
 
 ---
 
@@ -681,3 +720,243 @@ sequential; each is independently shippable.
   actually wins (the same cascade-order trap this stylesheet was bitten by twice this week); the
   warm-skin lime block matches `.btnPrimary`'s convention exactly; the empty states' own doors are
   untouched.
+
+- **2026-08-25** — **Phase 4 build prompt written:** `COACH_PAGE_ACTIONS_P4_GUARD_BUILD_PROMPT.md`.
+
+  **It recommends SPLITTING Phase 4**, because six things have accumulated under one heading and
+  shipping them together would make a ~40-screen diff whose failures are hard to attribute:
+  **4a** the guard + its two carve-outs + correcting §0's two stale rule texts + dropping the
+  transitional class alias; **4b** migrating Schedule's hand-rolled Add Event menu onto the shared
+  component and giving that component a real ARIA keyboard pattern — which reaches the Money hub's
+  menus and therefore needs their QA.
+
+  **⚠ IT ALSO RAISES A DESIGN QUESTION §6 DOES NOT ANSWER.** §6 says a unit test pins *"the number
+  and kind of header actions"* per screen, following the source-scan idiom. That idiom reads
+  literals; header actions are almost always passed as a **variable**, so a scan that counted
+  buttons would have to follow references — and that guard file's own header carries the warning
+  about precisely this ("a delegated handler it cannot follow fails here rather than passing
+  vacuously", the lesson that cost nine tag routes their coverage). **Recommendation on record:
+  the source scan pins the ENUMERATION (which screens have header actions, and which phone flags
+  they pass — all literals), and `check:layout` keeps owning COUNT and GEOMETRY, since it reads real
+  controls by accessible name and is the only thing that sees the truth.** If someone builds the
+  count-by-regex version instead, they owe a deliberate violation proving it cannot go blind.
+
+- **2026-08-25** — **PHASE 4a BUILT on dev: the guard, its two carve-outs, and the correction of
+  §0 and §6.** No screen changed. `tests/unit/coach-page-actions-guard.test.ts`.
+
+  **⚠⚠ THE FINDING THAT REFRAMES THE WHOLE PHASE: `npm test` RAN NOWHERE AUTOMATICALLY.** Not in
+  `verify:changed`, not in the pre-commit hook, not in `amplify.yml`. So the idiom this plan asked
+  to follow — and CLAUDE.md's own claim that *"the build fails when a route or a page learns to read
+  a year"* — has been **false for every guard of this family**, silently, for as long as they have
+  existed. Building a guard into that gap would have produced a file that reads well and blocks
+  nothing. **`npm test` is now the FIRST step of `npm run verify:changed`** (2,529 tests, ~7s).
+  ⚠ It is deliberately first, not appended: the chain is `&&`-joined and `check-schema-parity` sits
+  in the middle and is **chronically red on dev by design** (dev runs ahead of prod between
+  releases), so anything after it would almost never run. **Promoting `npm test` into `amplify.yml`
+  beside the token and date guardrails is a separate owner call** — it would make a red test a red
+  deploy.
+
+  **What the guard pins** (the split recommended in the build prompt, adopted): the ENUMERATION —
+  38 call sites across 35 screens, 11 of which pass `actions`; each one's variant, phone flags and
+  where its action set comes from; house rule 2 (no export in a page header); house rule 4 (the
+  create goes first); rule 7 (not gated on a view); the Overview carve-out; and the two legal header
+  shapes. **`check:layout` keeps COUNT and GEOMETRY**, and the guard's own header names the six
+  rules that stay human review — an unstated limit reads as coverage.
+
+  **Proven, not asserted — ten deliberate violations, each injected alone, each caught, each naming
+  one rule:** a brand-new page header · a deleted enumeration row · an action added to a bare header
+  · a phone flag changed quietly · an export moved into a header · a secondary drawn before the
+  create · a view-mode gate · an `actions` reference the scan cannot follow · a second status-door
+  carve-out · the masthead dropping its "?".
+
+  **⚠ THE SCANNER'S OWN NEAR-MISS, WORTH CARRYING TO THE NEXT SOURCE SCAN.** The first draft tracked
+  strings but not comments and **desynchronised on the Money hub**, whose header carries a comment
+  reading *a bare "+"*. One unmatched quote inside prose and the brace counter walked off the end of
+  the file — reporting, in green, that Money's header had no phone flags at all. Fixed by blanking
+  comments (offsets preserved) before anything reads the source, and by a first assertion that
+  **fails when a parsed prop is not one `CoachPageHeader` accepts** — a desync now announces itself
+  instead of quietly halving the coverage.
+
+  **Two rule texts corrected** (§0 rule 4, §6). Rule 4 no longer says *"beside the '?'"*: inside a
+  team the phone header is **title · symbol**, and the create's corner is now alone rather than
+  shared. The *"one findable home"* caveat is written into §0 rather than left in memory — it is
+  true at the top of the page and **false on a scrolled phone**, where `.teamHeaderCollapsed` folds
+  the masthead's right slot at ≤900px. §6's *"pins the number and kind of header actions"* is struck
+  and replaced with what a source scan can actually see.
+
+  **Also landed: `CoachToolbarMenu` now keeps the promise its `role="menu"` makes** (item 6 of the
+  build prompt's 4b, taken here because the component was collision-free while `schedule/page.tsx`
+  is not). Arrow keys rove over enabled items only, Home/End jump, Down/Up on a closed trigger open
+  it onto the first/last item, Tab closes and hands focus back to the trigger, and every item is
+  `tabIndex={-1}` so a roving menu has one tab stop. Escape was already right (`useDismissable`) and
+  is untouched. **Reaches the Money hub's Import menu, Plan templates and Drills** — the pre-existing
+  Medium recorded by Phase 3's `/review`, closed portal-wide.
+
+  **Deliberately NOT done, with reasons:**
+  1. **The `.recordMoneyBtn` alias stays.** The prompt's condition holds — `coaches.module.css` is
+     carrying another session's in-flight work (73 changed lines), and the alias cannot be removed
+     without also repointing the Money hub, which means staging that file and dragging their
+     unfinished change into this commit.
+  2. **Schedule's hand-rolled Add Event menu is not migrated** (4b item 5): `schedule/page.tsx` is
+     mid-edit by another session. Hard collision, no partial version worth having.
+  3. **The last two hand-written header buttons are not swept** (§2.6 / prompt item 7):
+     `link-org`'s Refresh (`btn btn-ghost btn-sm`) and the lineup-template editor's Save
+     (`btn btn-lime btn-sm` plus inline flex). Both are real drift and both are now **recorded as
+     rows in the guard's enumeration** so they are known debt rather than a future discovery. They
+     change rendered weight, and 4a's whole value is that it ships zero rendered change beside four
+     other sessions' in-flight work.
+
+  **⚠ THE PROMPT WAS RIGHT ABOUT ITS OWN SCOREBOARD — and this time the plan matched the screens.**
+  Every one of the 38 call sites was read before it was enumerated. Two details the prompt got
+  slightly wrong, both harmless: the "35 screens / 11 with actions" count is 35 screens across **38
+  call sites** (three files render two headers each — Link Organization, Email families and Season's
+  End all have an early return), and the six money panels are not simply `embedded` — they render
+  `variant={embedded ? 'embedded' : 'standard'}`, **two legal shapes from one call site**, which the
+  enumeration now records as such.
+
+  **Verification.** typecheck ✓ · focused lint ✓ (0 errors; 233 warnings all pre-existing) ·
+  `npm test` ✓ 2,529/2,529 · tokens, CSS purity, spelling, contrast, dates, snapshots, indexes,
+  dictionary, org-context, observability, marketing shots, demos ✓ · schema parity ✗
+  **pre-existing** (other sessions' dev-only migrations 262–263; this change adds none).
+
+  **⚠ `check:layout` — THE FULL SWEEP ABORTED, AND AN ABORT IS A FAILURE, NOT A PASS.** It stopped
+  at `coach-staff @361` on the memory floor (1402 MB free, floor 1536) — the dev server is another
+  session's and has been heavily browsed, which is precisely the condition `AGENTS.md` warns
+  against. **Not re-run with a restart, because restarting a shared dev server would interrupt live
+  work.** Instead: a targeted sweep over the six screens this phase's component can reach (Overview,
+  Roster, Schedule, Money hub, Drills, Plan templates) at every width. **Two NEW findings at 768, and
+  BOTH REPRODUCE WITH THIS PHASE'S CHANGE REVERTED** — proven by re-running the same invocation
+  against `HEAD`'s `CoachToolbarMenu.tsx`, so neither is attributable here:
+  - `coach-schedule · button·Aug 25 · 10:07 p.m.UAT probe practice` — **fixture drift**, the same
+    class Phase 2 recorded: the baseline signature carries the seeded practice's date text
+    (`Aug 23 · 9:34 p.m.`) and the season re-anchors.
+  - `coach-accounting · button·Record money` at 31px — the Money hub's Record. Its sibling
+    `coach-budget|768|button·Record money` IS baselined; the hub's copy is not, and
+    `.layout-baseline.json` is itself uncommitted and mid-edit by another session.
+
+  **Tap-target baseline: 0 entries added, 0 removed by this phase** (346 phone tap-floor entries
+  before and after; the file is untouched here). **The full sweep is OWED once the dev server can be
+  restarted cleanly** — recorded in the QA ledger rather than left as a green claim.
+
+  **Nothing for `/docs` or the demos.** No named control moved, no screen changed, and no guide or
+  tour sentence describes keyboard operability. The UAT specs are unaffected: they find controls by
+  accessible name and role, and neither changed — `role="menuitem"` items are still menuitems.
+
+  **Still open after 4a:** the 12px title-band margin trim (`COACH_PAGE_TITLE_BAND_PLAN.md` option
+  1, ruled and unbuilt); 4b's Schedule migration and the two hand-written header buttons; the
+  `.recordMoneyBtn` alias; the full rendered sweep; and the owner call on `npm test` in the deploy
+  build.
+
+- **2026-08-25** — **`/review` run on Phase 4a** (high-risk tier, 4 lenses: correctness · accessibility/
+  interaction · blast-radius · "does this guard actually guard?"). **One Critical confirmed and fixed,
+  one High confirmed and fixed, one High REFUTED by measurement, three hardenings.** The guard file
+  and `CoachToolbarMenu` both changed; no screen did.
+
+  **⚠⚠ THE CRITICAL, AND IT IS THE ONE THIS FILE EXISTS TO PREVENT: the guard reported GREEN over a
+  live export sitting in a page header.** House rule 2 was checked by looking for the *names*
+  `CoachExportButton` / `MoneyExportButton` / `ExportMenu` in the resolved source. A lens added a real
+  file with `import Dl from '@/components/coaches/CoachExportButton'` and `<Dl />` inside the header
+  actions — **an ordinary rename, no obfuscation** — and all ten assertions passed. *A textual name
+  match checks the spelling of a variable, not what the screen renders.* Fixed by making the MODULE
+  the identity: the scan reads each file's imports, learns whatever local name an export module was
+  bound to, and looks for that. ⚠ **And the name list was KEPT alongside it** — replacing one with the
+  other lost a case the first version caught (an export tag with no matching import), proven by
+  re-running the violation set after the "fix". The check is the union; neither is trusted alone.
+
+  **The High, same root: the resolver went blind on ordinary shapes.** It followed only a BARE
+  identifier, so `actions={canWrite ? scheduleHeaderActions : null}` was classified "inline" and the
+  const's real JSX was never read — **three rules at once** (export placement, create-first, view
+  gate) checking four words of a ternary. Only the exact spelling `x || undefined` was rescued; the
+  equally natural `x ?? null` was not. And a name declared twice in one file resolved to whichever
+  came first in the text, which in a 4,700-line screen is a coin toss. Now: every identifier the
+  expression names is followed and spliced in, and **a name with two declarations FAILS** rather than
+  being guessed at.
+
+  **Two more hardenings from the same lens:** the walk now covers `components/coaches/**` as well as
+  the routes (a header rendered from a shared component was invisible, while the test called itself
+  *"every page header in the coach portal"*), and the scanner now carries **two independent desync
+  alarms** — ending mid-string, and the raw `<CoachPageHeader` count not matching the number of tags
+  extracted. The second is the stronger one: a scanner that loses its place swallows the rest of the
+  file into one "tag", and the count sees that without needing to know why.
+
+  **Violation set re-run and widened to FOURTEEN, all caught**, including all four exploits the lens
+  reproduced against version 1. ⚠ One "miss" in the first re-run was a **bad test, not a hole**: the
+  apostrophe-desync patch corrupted nothing (real screens already carry an even number of
+  apostrophes, so one more in JSX text pairs up instead of running to EOF). Rebuilt as a hostile
+  construction — odd apostrophe **plus** a comment carrying a `>` inside the header tag **plus** a
+  live export — and it is caught. *A violation test that does not violate anything reports the
+  guard's coverage, not the guard's coverage of that violation.*
+
+  **⚠ THE REFUTED HIGH, AND THE METHOD MATTERS MORE THAN THE VERDICT.** A lens found that dismissing
+  the menu by clicking away strands focus on `<body>`, and reasoned that before this phase focus
+  "stayed on the trigger". **Driving a real browser refuted the premise:** with NO menu open and focus
+  on the trigger, clicking inert page background sends focus to `<body>` anyway — that is the
+  browser, not this change. *Reasoning produced a plausible regression; a control test produced the
+  baseline.* The finding was dropped as a regression and the fix kept as an improvement, because the
+  menu now returns focus where the browser would have dropped it.
+
+  **`CoachToolbarMenu` gained one thing the keyboard pattern owed: an answer to "and then where?"**
+  Every way of closing the panel now has one, because the panel now holds focus. ⚠ **Two earlier
+  attempts were written and thrown away, and both failure modes are worth carrying:**
+  1. Restoring focus during `pointerdown` **loses to the browser's own blur** — the mousedown clears
+     focus AFTER the handler, so the "fix" was a no-op that a confident comment would have hidden.
+  2. Restoring focus unconditionally on select **broke the Money hub**: `MoneyImportMenu` puts its
+     busy guard on the TRIGGER (`disabled={importLoading}`), so the button just focused is disabled
+     on the next commit, the browser blurs it, and focus is gone for the whole fetch.
+  The shipped version is a **safety net, not a grab**: one frame later, act only if nobody else
+  claimed focus. A self-focusing dialog wins, a clicked control wins, a trigger that has since
+  disabled itself is skipped. **Both attempts were caught by driving the browser, neither by reading
+  the code.**
+
+  **Verified in a real browser, not by reading** — fourteen assertions on the live Drills page and
+  Money hub: open-onto-first, arrow roving with wrap, Home/End, Down/Up on a closed trigger, Tab
+  closing and carrying on past the trigger, Escape returning focus, every item `tabIndex=-1`,
+  click-away not stranding focus, a click-away onto a focusable control still winning, a
+  self-focusing destination beating the rescue, a non-self-focusing one getting it, and the Money
+  trigger NOT being focused-then-blurred while it disables itself.
+
+  **Recorded, PRE-EXISTING, not fixed here (all three from the accessibility lens):**
+  1. **`MoneyImportMenu` puts its busy guard on the TRIGGER, not its items** — the same shape Plan
+     templates' own `/review` note says not to do ("folding two controls into one must not fold their
+     disabled states together"). Consequence: after picking an import, focus has nowhere to go for
+     the length of the fetch. Fixing it means moving `disabled={importLoading}` onto the two import
+     items, which keeps the concurrency guard and frees "Recent imports" — a Money-hub change needing
+     Money QA, deliberately not taken in a phase whose value is that it changes no screen.
+  2. **The coach modals are `role="dialog" aria-modal="true"` with no initial focus and no focus
+     trap** (drills' and templates' import windows, `RecentImportsSheet`). The menu now hands focus
+     back to the trigger instead of losing it, which is better, but not the full hand-off the pattern
+     asks for. This is a portal-wide modal question, not a menu one.
+  3. **Disabled menu items use native `disabled` rather than `aria-disabled`**, so they drop out of
+     the roving set entirely and a screen-reader user arrowing past never learns they exist.
+  Also noted and accepted: no type-ahead (2–4 item menus, every item reachable in ≤2 keystrokes), no
+  `aria-controls` linking trigger to panel, and `CoachToolbarMenuHeading` rendering a bare `<div>`
+  inside `role="menu"` — all pre-existing, none blocking.
+
+  **⚠ AND A FINDING ABOUT THE GATE ITSELF, WHICH IS BIGGER THAN THIS DIFF: `verify:changed` is
+  chronically red on dev, so the SIX checks after `check-schema-parity` effectively never run** —
+  index coverage, dictionary coverage, org-context, observability, marketing shots and the demo
+  check. Dev legitimately runs ahead of prod between releases, and `amplify.yml` already handles this
+  by gating parity on master only (`if [ "$AWS_BRANCH" = "master" ]`) — **but the `verify:changed`
+  chain has no such branch guard**, so on dev it fails at parity every day and everything downstream
+  is skipped in silence. This is the same class of defect Phase 4a was created to fix (a check that
+  does not run is not a check) and it is the reason `npm test` was put FIRST in the chain rather than
+  appended. **Recommend giving `verify:changed` the same branch guard `amplify.yml` already has.**
+  Not done here — it is a repo-wide ops change and the owner's call.
+
+  **Gate:** typecheck ✓ · focused lint ✓ (0 errors) · `npm test` ✓ **2,570/2,570** · violation set
+  ✓ 14/14 · browser probe ✓ 14/14. `check:layout` unchanged from the Phase 4a entry above — no
+  rendered surface changed by this pass.
+
+- **2026-08-26** — **§105 OWNER QA PASSED.** Phase 4a signed off: the guard and its two carve-outs,
+  the corrected §0 and §6 rule texts, and `CoachToolbarMenu`'s keyboard pattern. Checkable
+  walkthrough: `claude.ai/code/artifact/0ae5c557-c786-43de-95a2-678753595e80`.
+
+  **⚠ PHASE 4b IS NOW UNBLOCKED.** Both files it was held on — `schedule/page.tsx` and
+  `coaches.module.css` — landed with other sessions' commits, so all three deferred items are
+  reachable again: the Schedule Add Event migration onto the shared menu, the two hand-written
+  header buttons (`link-org`'s Refresh, the lineup-template editor's Save), and the
+  `.recordMoneyBtn` alias. ⚠ Re-check that they are still clean immediately before starting — this
+  working copy moves under you, and that is exactly why these three were deferred rather than forced.
+
+  **Still owed regardless of 4b:** the full `check:layout` sweep (see the 4a entry — it aborted on
+  the memory floor and a targeted sweep plus a revert control stood in for it).
