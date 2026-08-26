@@ -16,7 +16,7 @@ import BudgetItemPicker, { type BudgetItemSelection } from '@/components/account
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { useSharedMoneyRead, useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { useSharedMoneyRead, useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { CLUB_MONEY_ITEM_DIRECTION, type ClubRequest, type ClubRequestType } from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -25,6 +25,8 @@ import {
   ALLOCATION_COLUMNS, allocationRows,
   PAYMENT_REQUEST_COLUMNS, paymentRequestRows,
 } from '@/lib/coach-money-exports';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -225,7 +227,6 @@ export function ClubPanel({
   const { assignments, closedAssignments, loading: ctxLoading } = useCoaches();
 
   const sharedRead = useSharedMoneyRead();
-  const moneyRevision = useMoneyRevision();
   const bumpMoneyRevision = useBumpMoneyRevision();
 
   const [splits, setSplits] = useState<AllocationSplit[]>([]);
@@ -350,10 +351,12 @@ export function ClubPanel({
      ⚠ A ref, not state: bumping a counter must never itself cause a render. */
   const loadSeq = useRef(0);
 
-  const load = useCallback(async () => {
+  /* `quiet` joins the stamp-and-drop this panel already had — the shared Money-panel loading
+     convention, written once above `useMoneyRevision` in lib/coach-money-refresh.tsx. Club was
+     the last tab still blanking itself whenever money was recorded anywhere else in the hub. */
+  const load = useCallback(async (quiet = false) => {
     const seq = ++loadSeq.current;
-    setLoading(true);
-    setError('');
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       /* ⚠ The taxonomy goes through `sharedRead` because the money form one tab over reads the same
          URL; the two club reads are this panel's alone and stay on a plain fetch, the same split the
@@ -374,6 +377,7 @@ export function ClubPanel({
       if (!allocRes.ok) throw new Error(allocData?.error ?? 'Failed to load what the club has billed this team.');
       if (!reqRes.ok) throw new Error(reqData?.error ?? 'Failed to load this team\'s club requests.');
 
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
       const fetchedSplits: AllocationSplit[] = allocData.splits ?? [];
       setSplits(fetchedSplits);
       setRequests(reqData.requests ?? []);
@@ -386,14 +390,16 @@ export function ClubPanel({
          not blank the club money a coach came here to read. */
       if (catRes.ok) setCategories((catRes.data.categories as BudgetCategoryWithItems[]) ?? []);
     } catch (e: any) {
-      if (seq !== loadSeq.current) return;
+      if (quiet || seq !== loadSeq.current) return;
       setError(e.message ?? 'Failed to load your club money.');
     } finally {
       if (seq === loadSeq.current) setLoading(false);
     }
   }, [orgSlug, teamId, sharedRead]);
 
-  useEffect(() => { load(); }, [load, moneyRevision]);
+  useEffect(() => { load(); }, [load]);
+  const quietReload = useCallback(() => { void load(true); }, [load]);
+  useOnMoneyRevisionBump(quietReload);
 
   /**
    * WHAT EVERY WRITE ON THIS SCREEN DOES AFTERWARDS. One function, four callers.
@@ -612,7 +618,7 @@ export function ClubPanel({
     }
   }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading the club's money…" />;
   if (!assignment && !closed) {
     return <CoachNotOnTeam />;
   }
@@ -654,9 +660,9 @@ export function ClubPanel({
       />
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading the club's money…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !hasAnything ? (
         <>
           <CoachEmptyState
@@ -1111,7 +1117,7 @@ export function ClubPanel({
                 </div>
               ) : (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>Which way is the money going? <span className={styles.req}>*</span></label>
+                  <label className={styles.label}>Which way is the money going? *</label>
                   <div className={styles.clubDirectionPair}>
                     <button
                       type="button"
@@ -1138,7 +1144,7 @@ export function ClubPanel({
               )}
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="club-amount">Amount ($) {!readOnly && <span className={styles.req}>*</span>}</label>
+                <label className={styles.label} htmlFor="club-amount">Amount ($) {!readOnly && '*'}</label>
                 {readOnly ? (
                   <p className={styles.recordValue} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(parseFloat(formAmount) || 0)}</p>
                 ) : (
@@ -1169,7 +1175,7 @@ export function ClubPanel({
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="club-desc">Description {!readOnly && <span className={styles.req}>*</span>}</label>
+                <label className={styles.label} htmlFor="club-desc">Description {!readOnly && '*'}</label>
                 {readOnly ? (
                   <p className={styles.recordValue}>{formDesc}</p>
                 ) : (

@@ -10,6 +10,8 @@ import { tournamentToday } from '@/lib/timezone';
 /* The hub's one wire (money centralization P2): this screen's Record door opens the shared
    recording conversation, which lives in a sibling panel it cannot call directly. */
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -423,7 +425,7 @@ export function FundraiserDetail({
     }
   }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading this drive…" />;
 
   return (
     <>
@@ -494,9 +496,9 @@ export function FundraiserDetail({
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading this drive…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : summary && (
         <>
           {/* Summary cards */}

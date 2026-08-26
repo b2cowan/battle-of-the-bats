@@ -8,6 +8,7 @@ import type {
 } from '@/lib/rep-team-announcements';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from './AnnouncementEditor.module.css';
 
 type Props = {
@@ -198,7 +199,7 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
   }
 
   if (loading) {
-    return <div className={styles.editor}><p className={styles.logNote}>Loading announcements…</p></div>;
+    return <div className={styles.editor}><CoachLoading label="Loading announcements…" inline /></div>;
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, ShieldCheck, Users, Lock } from 'lucide-react';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from './TournamentRosterSubmit.module.css';
 
 /**
@@ -212,7 +213,7 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
   }
 
   if (loading) {
-    return <div className={`card ${styles.card}`}><p className={styles.muted}>Loading your roster…</p></div>;
+    return <div className={`card ${styles.card}`}><CoachLoading label="Loading your roster…" inline /></div>;
   }
   if (loadError || !data) {
     return <div className={`card ${styles.card}`}><p className={styles.error} role="alert">{loadError ?? 'Could not load your event roster.'}</p></div>;

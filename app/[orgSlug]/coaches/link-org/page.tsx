@@ -182,7 +182,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
   }
 
   if (orgLoading || loading) {
-    return <div className={styles.loadingState}>Loading organization links...</div>;
+    return <div className={styles.loadingState}>Loading organization links…</div>;
   }
 
   if (!isTeamWorkspace) {

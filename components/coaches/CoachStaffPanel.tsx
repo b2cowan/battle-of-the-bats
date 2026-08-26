@@ -14,6 +14,7 @@ import {
   type DocsAccess,
 } from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import css from './CoachStaffPanel.module.css';
 
 /**
@@ -603,7 +604,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: {
         </div>
 
         <div className={css.listArea}>
-          {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
+          {!staff && !loadError && <CoachLoading label="Loading staff…" inline />}
 
           {staff && everyAssistant.length === 0 && (
             // Quiet, not the glowing illustration: the invite sits directly above and the rail

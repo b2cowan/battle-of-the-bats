@@ -23,6 +23,7 @@ import {
 } from '@/lib/rep-roster-options';
 import { formatInOrgZone } from '@/lib/timezone';
 import { moneySectionHref } from '@/lib/coach-money-links';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamGameMoment } from '@/lib/types';
 import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary, RepPlayerAwardsSummary } from '@/lib/db';
@@ -259,7 +260,7 @@ export default function PlayerDetailPage({
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
-  if (assignmentsLoading || fetching) return <p className={styles.muted}>Loading…</p>;
+  if (assignmentsLoading || fetching) return <CoachLoading label="Loading this player…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>

@@ -16,6 +16,7 @@ import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
 import { formatRecord, tallyResults, WLT_CATEGORIES, type WltTally } from '@/lib/coach-season-record';
 import { EventTypeMark } from '@/components/coaches/eventTypeMark';
 import type { RepEventType } from '@/lib/types';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -508,7 +509,7 @@ export default function SeasonEndPage({
     }
   }
 
-  if (loading) return <p className={styles.muted}>Loading...</p>;
+  if (loading) return <CoachLoading label="Loading the season…" />;
 
   if (!page.hasAccess && !closed) {
     return (

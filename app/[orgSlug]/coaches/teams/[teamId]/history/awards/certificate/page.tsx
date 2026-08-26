@@ -10,6 +10,7 @@ import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { formatShortDate } from '@/lib/measurable-format';
 import type { RepPlayerAward } from '@/lib/types';
 import styles from '../../../../../coaches.module.css';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import cert from './certificate.module.css';
 
 /**
@@ -115,7 +116,7 @@ export default function AwardCertificatePage({
       </div>
 
       {loading ? (
-        <p className={styles.detailPlaceholder}>Loading…</p>
+        <CoachLoading label="Loading the awards…" />
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : selected.length === 0 ? (

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useRef, use, Fragment } from 'react';
 import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
@@ -17,7 +17,7 @@ import {
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
-import { useMoneyRevision } from '@/lib/coach-money-refresh';
+import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
 import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat, type MoneyRowKind } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -25,6 +25,8 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import type { ExportColumnDef } from '@/lib/export';
 import styles from './bva.module.css';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import shared from '../../../../coaches.module.css';
 
 /* ⚠ THE REPORT IS TWO LEVELS: CATEGORY → ITEM (owner ruling 2026-08-15). It used to be category →
@@ -706,27 +708,35 @@ export function BudgetVsActualPanel({
   const assignment = assignments.find(a => a.teamId === teamId);
   const moneyCanWrite = (page.capabilities?.money === 'write');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  /* Stamp-and-drop + `quiet` — the Money-panel loading convention, written once above
+     `useMoneyRevision` in lib/coach-money-refresh.tsx. */
+  const loadSeq = useRef(0);
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       // ⚠ ONE REQUEST NOW. The item taxonomy was fetched alongside the report purely to fill the
       // Recategorize picker, which mig 240 retired — the report names every category and item
       // itself, so a second call would load a list nothing reads.
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      setData(await res.json());
+      const body = await res.json();
+      if (seq !== loadSeq.current) return;
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
+      setData(body);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
+      if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
-  // Budget lines imported from the hub's Import menu change what this report compares against,
-  // so it re-reads on the same signal — without remounting anything.
-  const moneyRevision = useMoneyRevision();
-  useEffect(() => { load(); }, [load, moneyRevision]);
+  /* Mount loud, bump quiet. Budget lines imported from the hub's Import menu — and any money
+     recorded on another tab — change what this report compares against, so it re-reads on the
+     same signal, without remounting anything. */
+  useEffect(() => { load(); }, [load]);
+  const quietReload = useCallback(() => { void load(true); }, [load]);
+  useOnMoneyRevisionBump(quietReload);
 
   const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
   useEffect(() => {
@@ -954,7 +964,7 @@ export function BudgetVsActualPanel({
   function toggleCat(name: string) { setExpandedCats(prev => toggleKey(prev, name)); }
   function toggleLine(id: string)  { setExpandedLines(prev => toggleKey(prev, id)); }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading the report…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -1020,9 +1030,9 @@ export function BudgetVsActualPanel({
       />
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading the report…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !data || data.effectiveBudget === 0 ? (
         <>
           <CoachEmptyState

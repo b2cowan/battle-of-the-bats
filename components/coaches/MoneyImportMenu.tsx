@@ -12,6 +12,7 @@ import {
   CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator,
 } from '@/components/coaches/CoachToolbarMenu';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from './MoneyImportMenu.module.css';
 
 /**
@@ -289,7 +290,7 @@ function RecentImportsSheet({
         {error ? (
           <p className={shared.errorText}>{error}</p>
         ) : imports === null ? (
-          <p className={shared.muted}>Loading…</p>
+          <CoachLoading label="Loading recent imports…" inline />
         ) : imports.length === 0 ? (
           <p className={shared.muted}>
             Nothing has been imported into this season yet. When you bring in a budget or a

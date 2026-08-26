@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import warm from '@/components/consumer/warmTheme.module.css';
 import PlayerRecapView from '@/components/family/PlayerRecapView';
 import type { PlayerSeasonRecapPayload } from '@/lib/rep-player-season-recap';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -76,7 +77,7 @@ export default function PlayerRecapPreview({ orgSlug, teamId, playerId, playerFi
         </p>
       )}
 
-      {open && loading && <p className={styles.detailPlaceholder}>Loading the preview…</p>}
+      {open && loading && <CoachLoading label="Loading the preview…" inline />}
       {open && error && <p className={styles.detailPlaceholder}>{error}</p>}
       {open && recap && (
         <div className={warm.warm}>

@@ -23,6 +23,8 @@ import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
 import { installmentToSend } from '@/lib/dues-installment-view';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -40,7 +42,8 @@ import { playerName } from '@/lib/coach-roster-name';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
 import {
-  creditsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, type CreditApplicationMode,
+  creditsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
+  type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
@@ -159,12 +162,17 @@ const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
   fundraiser:    'Fundraiser',
   overpayment:   'Overpayment',
   other:         'Other',
-  // New kinds (mig 233). Neither is offered by the manual Add-credit picker: forgiveness is
-  // granted from the settlement sheet (Pass 3) and reimbursements ride out-of-pocket expenses
-  // (Pass 2) — one door each, so the story of a credit is always traceable to its act.
+  // New kinds (mig 233). Neither is offered by the manual Add-credit picker — see
+  // MANUAL_CREDIT_TYPES below, which is what actually enforces that. They stay in THIS map because
+  // it is also the DISPLAY map: a forgiveness or a reimbursement credit still has to be named
+  // wherever it is listed.
   forgiven:      'Forgiven',
   reimbursement: 'Reimbursement',
 };
+
+/* ⚠ WHICH KINDS THE PICKER OFFERS IS NOT DECIDED HERE — `MANUAL_CREDIT_TYPES` in
+   lib/dues-credits.ts is the one list, shared with the write route that would otherwise refuse
+   them. Its header carries the story. */
 
 /* ⚠ RENAMED FROM "Mark Paid" (owner call 2026-08-14). The button is not a flag — it RECORDS A
    PAYMENT, for whatever is still owed on the installment, dated today, and that payment appears
@@ -525,6 +533,7 @@ export function PlayerDuesPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       if (seq !== loadSeq.current) return;
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setPlayers(data.players ?? []);
     } catch (e: unknown) {
       if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load player dues.');
@@ -1199,7 +1208,7 @@ export function PlayerDuesPanel({
     setRows(rows.filter((_, i) => i !== idx).map((r, i) => ({ ...r, installmentNumber: i + 1 })));
   }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading the dues book…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -1464,9 +1473,9 @@ export function PlayerDuesPanel({
       />
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading the dues book…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !players.length ? (
         <div className={styles.emptyState}>No active roster players found.</div>
       ) : (
@@ -1894,7 +1903,7 @@ export function PlayerDuesPanel({
                 <div className={styles.settlementScroll}>
                 {settlementError && <p className={styles.errorText} style={{ marginTop: 0 }}>{settlementError}</p>}
                 {settlementLoading && !settlement ? (
-                  <p className={styles.muted}>Loading…</p>
+                  <CoachLoading label="Loading the settlement…" inline />
                 ) : !settlement ? null : (
                   /* Two columns from 760px: the money summary beside the family payouts, which is
                      what turns a scroll into a screenful. `.settlementBody` owns the split — the
@@ -2522,7 +2531,7 @@ export function PlayerDuesPanel({
                       }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                           <div>
-                            <label className={styles.label}>Amount received <span className={styles.labelRequired}>*</span></label>
+                            <label className={styles.label}>Amount received *</label>
                             <input
                               className={styles.input}
                               type="number"
@@ -2534,7 +2543,7 @@ export function PlayerDuesPanel({
                             />
                           </div>
                           <div>
-                            <label className={styles.label}>Date received <span className={styles.labelRequired}>*</span></label>
+                            <label className={styles.label}>Date received *</label>
                             <input
                               className={styles.input}
                               type="date"
@@ -2950,11 +2959,11 @@ export function PlayerDuesPanel({
                           border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                         }}>
                           <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
-                            <span className={styles.labelRequired}>*</span> Required
+                            * Required
                           </p>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
-                              <label className={styles.label}>Amount <span className={styles.labelRequired}>*</span></label>
+                              <label className={styles.label}>Amount *</label>
                               <input
                                 className={styles.input}
                                 type="number"
@@ -2966,7 +2975,7 @@ export function PlayerDuesPanel({
                               />
                             </div>
                             <div>
-                              <label className={styles.label}>Date <span className={styles.labelRequired}>*</span></label>
+                              <label className={styles.label}>Date *</label>
                               <input
                                 className={styles.input}
                                 type="date"
@@ -2976,7 +2985,7 @@ export function PlayerDuesPanel({
                             </div>
                           </div>
                           <div style={{ marginBottom: '0.6rem' }}>
-                            <label className={styles.label}>Description <span className={styles.labelRequired}>*</span></label>
+                            <label className={styles.label}>Description *</label>
                             <input
                               className={styles.input}
                               placeholder="e.g. Player bat contribution"
@@ -3001,8 +3010,16 @@ export function PlayerDuesPanel({
                                 title={editingCreditId ? 'The kind of credit cannot be changed — remove it and add the right kind' : undefined}
                                 onChange={e => setCreditForm(f => ({ ...f, creditType: e.target.value as DuesCreditType }))}
                               >
-                                {(Object.entries(CREDIT_TYPE_LABELS) as [DuesCreditType, string][]).map(([v, l]) => (
-                                  <option key={v} value={v}>{l}</option>
+                                {/* ⚠ THE CURRENT TYPE IS ALWAYS AN OPTION, even when it is not a
+                                    manual kind. The select is disabled while editing, but a
+                                    `<select>` whose value matches no option renders the FIRST one
+                                    — so a forgiveness credit opened for a note correction would
+                                    have sat there calling itself a Contribution. */}
+                                {(editingCreditId && !MANUAL_CREDIT_TYPES.includes(creditForm.creditType)
+                                  ? [creditForm.creditType, ...MANUAL_CREDIT_TYPES]
+                                  : MANUAL_CREDIT_TYPES
+                                ).map(v => (
+                                  <option key={v} value={v}>{CREDIT_TYPE_LABELS[v]}</option>
                                 ))}
                               </select>
                             </div>

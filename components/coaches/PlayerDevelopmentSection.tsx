@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, X, Check, Settings2, Printer } from 'lucide-react';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -456,7 +457,7 @@ export default function PlayerDevelopmentSection({
   }
 
   if (!data && !error) {
-    return <p className={styles.detailPlaceholder}>Loading development…</p>;
+    return <CoachLoading label="Loading development…" inline />;
   }
   if (!data) {
     return (

@@ -9,6 +9,7 @@ import { hasRecordAccess } from '@/lib/coach-capabilities';
 import PositionProfileEditor from '@/components/coaches/PositionProfileEditor';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import type { RepRosterPlayer, LineupSettings } from '@/lib/types';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from './DepthChartBoard.module.css';
 
 // The "Depth chart" view of the Roster page (P5 — Lineup Intelligence). One editable profile per
@@ -233,7 +234,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   if (caps?.minInningsPerPlayer != null) capBits.push(<span key="m">Min <b>{caps.minInningsPerPlayer}</b> IP/player</span>);
 
   // ── states ──
-  if (assignmentsLoading || (fetching && canView)) return <p className={styles.readOnlyNote} style={{ padding: 24 }}>Loading…</p>;
+  if (assignmentsLoading || (fetching && canView)) return <CoachLoading label="Loading the depth chart…" />;
   if (!assignment) return <div className={styles.empty}><p>You are not assigned to this team.</p></div>;
   if (!canView) return <div className={styles.empty}><p>You don’t have access to this team’s roster.</p></div>;
   if (loadError) return <div className={styles.empty}><p>{loadError}</p><button className={styles.editlink} onClick={() => void load()}>Try again</button></div>;

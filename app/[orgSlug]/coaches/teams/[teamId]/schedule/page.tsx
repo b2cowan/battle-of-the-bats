@@ -38,6 +38,7 @@ import {
   findDuplicateSelfEntries, readDismissedDuplicates, dismissDuplicate,
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
@@ -2766,7 +2767,7 @@ export default function CoachesSchedulePage({
               )}
 
               {attendanceLoading ? (
-                <div className={styles.attendanceEmpty}>Loading attendance...</div>
+                <CoachLoading label="Loading attendance…" inline />
               ) : attendanceRows.length === 0 ? (
                 <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
               ) : filteredRows.length === 0 ? (
@@ -2872,7 +2873,7 @@ export default function CoachesSchedulePage({
                       </div>
 
                       {lineupLoading ? (
-                        <div className={styles.attendanceEmpty}>Loading lineup…</div>
+                        <CoachLoading label="Loading the lineup…" inline />
                       ) : !hasLineup ? (
                         <div className={styles.lineupPeekEmpty}>
                           <p>Build the batting order and field positions on the full Lineups page.</p>
@@ -2955,9 +2956,9 @@ export default function CoachesSchedulePage({
             <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
 
             <div className={styles.formBody}>
-              {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
+              {/* Legend for the per-field * markers below —
                   most fields on this form are optional, so only the few that block Save are flagged. */}
-              <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+              <p className={styles.formHint}>* Required</p>
 
               {/* Type — changeable on add (keeps shared fields); fixed once an event exists. */}
               {!editingEventId && (
@@ -3006,7 +3007,7 @@ export default function CoachesSchedulePage({
                     </div>
                   ) : (
                     <div className={styles.field}>
-                      <label className={styles.label}>Which tournament? <span className={styles.labelRequired}>*</span></label>
+                      <label className={styles.label}>Which tournament? *</label>
                       <select className={styles.select} value={form.parentEventId} onChange={e => selectParentTournament(e.target.value)}>
                         <option value="">Select a tournament…</option>
                         {tournamentOptions.map(t => (
@@ -3077,7 +3078,7 @@ export default function CoachesSchedulePage({
                 {form.eventType === 'external_tournament' ? (
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
-                      <label className={styles.label}>Start date <span className={styles.labelRequired}>*</span></label>
+                      <label className={styles.label}>Start date *</label>
                       <input className={styles.input} type="date" value={form.startsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
                     </div>
                     <div className={styles.field}>
@@ -3095,7 +3096,7 @@ export default function CoachesSchedulePage({
                         </select>
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Start time <span className={styles.labelRequired}>*</span></label>
+                        <label className={styles.label}>Start time *</label>
                         <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
@@ -3107,11 +3108,11 @@ export default function CoachesSchedulePage({
                         <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>First date <span className={styles.labelRequired}>*</span></label>
+                        <label className={styles.label}>First date *</label>
                         <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Last date <span className={styles.labelRequired}>*</span></label>
+                        <label className={styles.label}>Last date *</label>
                         <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
                       </div>
                     </div>
@@ -3172,7 +3173,7 @@ export default function CoachesSchedulePage({
                   <>
                     <div className={styles.formSectionGrid}>
                       <div className={styles.field}>
-                        <label className={styles.label}>Starts <span className={styles.labelRequired}>*</span></label>
+                        <label className={styles.label}>Starts *</label>
                         <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
                       </div>
                       <div className={styles.field}>

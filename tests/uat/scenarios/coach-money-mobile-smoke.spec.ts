@@ -195,11 +195,15 @@ test.beforeAll(async () => {
     if (linkErr) throw linkErr;
   }
 
-  // ── Chunk H: a PRIOR season with its own lines, so the comparison column has something to
-  // compare. 'Umpire fees' matches this season's line by name; 'Banquet' has no match at all,
-  // which is the whole point of the "in last season's plan, not in this one" list. No coach
-  // row for this year — a closed ASSIGNMENT would change the team switcher, and this fixture
-  // is only about the budget data rollover leaves behind.
+  /* ── A PRIOR season with its own lines.
+     ⚠ THE TEST THIS WAS SEEDED FOR IS GONE (the Months comparison column, removed by owner ruling
+     2026-08-21; its test deleted 2026-08-24). The seeding STAYS on purpose: a team whose live season
+     sits behind a completed one is the rolled-forward shape, and other behaviour on this fixture
+     reads it — the team switcher, season resolution, and anything that asks whether this team has
+     history. Removing it is a separate change with its own verification, not something to let ride
+     along with a deleted assertion.
+     No coach row for this year — a closed ASSIGNMENT would change the team switcher, and this
+     fixture is only about the budget data rollover leaves behind. */
   const { data: priorYear, error: pyErr } = await admin.from('rep_program_years')
     .insert({ team_id: repTeamId, org_id: orgId, name: `${MARK} 2025`, year: 2025, status: 'completed' })
     .select('id').single();
@@ -316,11 +320,20 @@ async function open(page: Page, url: string) {
   await page.goto(url);
   const main = page.locator('main[class*="coachesMain"]');
   await expect(main).toBeVisible({ timeout: 45_000 });
-  // Every Money page loads its data client-side and renders "Loading…" until it lands.
-  // Waiting for THAT to clear is the deterministic signal; `networkidle` never settles
-  // reliably against a dev server (the HMR socket keeps the connection alive) and turned
-  // a cold Turbopack compile into a spurious layout failure.
-  await expect(main.getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+  /* Every Money page loads its data client-side and shows the portal loading state until it
+     lands. Waiting for THAT to clear is the deterministic signal; `networkidle` never settles
+     reliably against a dev server (the HMR socket keeps the connection alive) and turned a cold
+     Turbopack compile into a spurious layout failure.
+
+     ⚠⚠ MATCH THE ELEMENT, NEVER ITS WORDS (/review, 2026-08-26). This waited on the literal text
+     "Loading…", and Playwright matches a plain string as a SUBSTRING — so the moment the portal
+     gave every loading state a subject ("Loading the register…", "Loading the dues book…") the
+     substring stopped existing and this wait passed instantly on every screen. A no-op wait is
+     worse than no wait: it reads as a deterministic signal while the fetch races underneath it.
+     `[class*="loadingState"]` is the same hashed-CSS-module idiom `main[class*="coachesMain"]`
+     uses one line up, and it matches both the shared CoachLoading component and every
+     hand-written .loadingState left in the portal — so no copy change can silence it again. */
+  await expect(main.locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
 }
 
 /** The pass bar: the PAGE never scrolls sideways, whatever a grid does inside its own frame. */
@@ -825,7 +838,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await strip.getByRole('button', { name: /we don't pay for plate fees/i }).click();
     await expect(strip.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
     await page.reload();
-    await expect(page.locator('main[class*="coachesMain"]').getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+    await expect(page.locator('main[class*="coachesMain"]').locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
     const strip2 = page.getByTestId('budget-checklist');
     await strip2.getByRole('button', { name: /review/i }).click();
     await expect(strip2.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
@@ -969,15 +982,14 @@ test.describe('Money by month @360x740', () => {
     await expect(main.getByText(/budget is your plan, not your commitments/i)).toBeVisible();
   });
 
-  test('last season shows up as a column, and what is missing from this season shows up as a list', async ({ page }) => {
-    const main = await openMonths(page);
-    await expect(main.getByRole('columnheader', { name: '2025' })).toBeVisible();
-    // 'Banquet' existed last season and has no line this season — the point of the column.
-    await expect(main.getByText(/not in this one/i)).toBeVisible();
-    await expect(main.getByText('Banquet')).toBeVisible();
-    // Last season's figures are reference, never a suggestion (D-G1 holds across chunk H too).
-    await expect(main.getByText(/not a suggestion for this one/i)).toBeVisible();
-  });
+  /* ⚠ THE PRIOR-SEASON COLUMN TEST WAS DELETED HERE (owner, 2026-08-24). The column it walked was
+     removed by owner ruling on 2026-08-21 — a bare year at the head of a row of MONTH columns read
+     as another month of this season, and it ignored the Showing lens, so under Scheduled it stood
+     last year's budget beside this year's remaining debt. The test outlived the feature by three
+     days and failed every run since, which is its own cost: a suite with an expected failure in it
+     teaches everyone to skim past the next real one.
+     ⚠ Cross-season comparison is still WANTED — the ruling said 'in its own view', not 'never'. If
+     that view is ever built it gets its own tests; do not resurrect these against this grid. */
 
   test('a budget cell opens the budget-line form that already exists — the grid never edits', async ({ page }) => {
     const main = await openMonths(page, 'Budget');
@@ -996,7 +1008,7 @@ test.describe('Money by month @360x740', () => {
 
     await expect(page).toHaveURL(/\/accounting\?section=budget&line=/);
     const budgetMain = page.locator('main[class*="coachesMain"]');
-    await expect(budgetMain.getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+    await expect(budgetMain.locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
     // The real edit modal, pre-filled — not a second editor built into the grid.
     await expect(page.getByLabel(/total amount/i)).toHaveValue('4800');
   });

@@ -52,6 +52,8 @@ import {
   AROUND_WINDOW_DAYS, computeSeasonBounds, isDateRangePresetId, resolveDateRangePreset,
   type DateRangePresetId, type DateRangeSelection,
 } from '@/lib/coach-date-range';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import type {
   RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan, RepRosterPlayer,
@@ -68,7 +70,7 @@ import { resolveCredit, type CreditUnit } from '@/lib/coach-fundraising';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { formatMonthLong, monthKeyOf } from '@/lib/coach-budget-months';
 import { toggleKey } from '@/lib/toggle-key';
-import { useMoneyRevision, useBumpMoneyRevision, useSharedMoneyRead } from '@/lib/coach-money-refresh';
+import { useMoneyRevision, useBumpMoneyRevision, useOnMoneyRevisionBump, useSharedMoneyRead } from '@/lib/coach-money-refresh';
 import {
   formatStoredDate, tournamentToday, addCalendarDays, daysBetweenDateStrings,
 } from '@/lib/timezone';
@@ -851,6 +853,20 @@ function MoneyRecordsPanel({
   /** Which bill's drawer is open — the whole commitment in one panel. Every row opens it, settled
    *  or not, which is defect 3 closing. */
   const [drawerFor, setDrawerFor] = useState<string | null>(null);
+  /**
+   * ⚖ WHICH COMMITMENT DRAWER TO PUT BACK when the modal that replaced it closes (owner walk,
+   * 2026-08-26).
+   *
+   * Edit / Add an installment / Record all live in the drawer's footer, and each one closed the
+   * drawer to make room for its own modal — so cancelling out of Edit dropped the coach on the
+   * LIST, several steps from where they were, with the bill they were reading gone from the screen.
+   * A door opened from inside a panel goes back to that panel.
+   *
+   * ⚠ A REF, NOT STATE: nothing renders from it, and making it state would re-render the whole
+   * panel (which hosts both money screens and the record form) on a value only the close path
+   * reads.
+   */
+  const returnToDrawerRef = useRef<string | null>(null);
 
   /* Money coming IN (mig 243): income and money back, in one list beside the two money-out ones.
      `derivedKeys` are the category+item rows whose actual already comes from a fundraiser or a
@@ -1304,6 +1320,21 @@ function MoneyRecordsPanel({
   // Chunk H2 — a season of commitments arrives as a schedule far more often than one at a time.
   const [importOpen, setImportOpen] = useState(false);
   const [importMessage, setImportMessage] = useState('');
+  /**
+   * ⚠⚠ A REFRESH AFTER THE COACH'S OWN WRITE MAY NOT FAIL SILENTLY (/review, 2026-08-26).
+   *
+   * `quiet` exists so someone ELSE's write can't blank the book a coach is reading — for that,
+   * keeping the last good screen is exactly right. It is the WRONG answer after the coach's own
+   * save, because the screen they are keeping is the one the save just made wrong: the register
+   * states outright that its closing balance IS cash on hand, and a swallowed refresh failure
+   * leaves it quietly disagreeing with the money. The realistic cost is a coach who believes the
+   * payment did not go through and records it a second time.
+   *
+   * So a post-write refresh is quiet about its SPINNER and loud about its FAILURE — this line,
+   * above the book, with a way to try again. It never takes the screen: the figures below are
+   * stale, not absent, and hiding them helps nobody.
+   */
+  const [staleAfterWrite, setStaleAfterWrite] = useState(false);
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
 
   // Nav-hide + body-scroll-lock registration for the record modal, the payment modal AND the
@@ -1338,7 +1369,7 @@ function MoneyRecordsPanel({
     || touched(conv, convOpenedWith);
   const closeForm = useDiscardGuard({
     dirty: formDirty,
-    close: () => { setFormOpen(false); resetForm(); },
+    close: () => dismissForm(),
     // A branch record has its own noun — "Discard this expense?" over a half-entered dues
     // payment would be the guard naming the wrong thing.
     noun: (convBranch && CONV_BRANCH[convBranch].noun) || copy.noun,
@@ -1537,6 +1568,28 @@ function MoneyRecordsPanel({
   function closeDrawer() {
     setDrawerFor(null);
     setUndoAsk(null);
+    /* ⚠ An ordinary close leaves nothing pending. The footer buttons that LEAVE for another modal
+       set `returnToDrawerRef` AFTER calling this, so clearing here cannot strand them. */
+    returnToDrawerRef.current = null;
+  }
+
+  /**
+   * Close the record form — and put the commitment drawer back if the form was opened from it.
+   *
+   * ⚠ ONE HELPER, SIX CALLERS. `setFormOpen(false); resetForm();` was written out at the discard
+   * guard, at four save paths and at the delete — so a seventh close path added later would have
+   * silently skipped the return. The pair had already drifted apart once in this file's history.
+   *
+   * ⚠ THE RESTORE CANNOT LIVE IN `resetForm`, which is what it looks like it should do:
+   * `openAdd` / `openSavedRecord` / `openEditMoneyIn` all call `resetForm` on the way IN, so the
+   * drawer would spring back the instant the form opened.
+   */
+  function dismissForm(opts?: { backToDrawer?: boolean }) {
+    const back = opts?.backToDrawer === false ? null : returnToDrawerRef.current;
+    returnToDrawerRef.current = null;
+    setFormOpen(false);
+    resetForm();
+    if (back) setDrawerFor(back);
   }
 
   /** Confirmed — actually reverse it. The question is asked in the panel; this only does the work. */
@@ -1552,9 +1605,12 @@ function MoneyRecordsPanel({
       setUndoAsk(null);
       await refreshAfterWrite();
     } catch (err: any) {
-      // Surfaced beside the list rather than a toast nothing owns — same channel as every other
-      // load error on this screen.
-      setError(err.message);
+      /* ⚠ NOT `setError` (/review, 2026-08-26). This is the one WRITE on the screen that reported
+         itself through the panel-wide LOAD error, which had two consequences: it replaced the whole
+         register with "Failed to load…" over a failed undo, and — now that a winning load clears
+         that state — any background re-read could wipe the message before the coach read it. The
+         import line is the honest home for it: it says its piece above the book without taking it. */
+      setImportMessage(err.message);
       setUndoAsk(null);
     } finally {
       undoRef.current = false;
@@ -1881,8 +1937,7 @@ function MoneyRecordsPanel({
         }),
       });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
-    setFormOpen(false);
-    resetForm();
+    dismissForm();
     await refreshAfterWrite();
   }
 
@@ -1973,8 +2028,7 @@ function MoneyRecordsPanel({
         });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payout');
     }
-    setFormOpen(false);
-    resetForm();
+    dismissForm();
     await refreshAfterWrite();
   }
 
@@ -2056,10 +2110,19 @@ function MoneyRecordsPanel({
   const loadSeq = useRef(0);
   const scheduleSeq = useRef(0);
 
-  const load = useCallback(async () => {
+  /* ⚠ `quiet` RE-READS KEEP THE LAST GOOD SCREEN (UX review 2026-08-26) — the same rule the Dues
+     panel already documents, and this face needed it more. Everything below the toolbar sits inside
+     one `{loading ? …}` ternary, so a loud reload flashes the WHOLE register — every row, the
+     running balance, the filters — back to "Loading…" and in again. Every write here reloads TWICE
+     (see `refreshAfterWrite`), so recording one expense did that to the coach twice in a row.
+     Quiet swallows its own failure too: stale-but-good beats blanking the book a coach is reading
+     because someone else's write bumped the revision. */
+  /** Resolves TRUE only if this call is the one that wrote the screen. A quiet load swallows its
+   *  own failure, so its caller is the only thing left that can notice one — see `staleAfterWrite`.
+   *  A superseded load resolves false too: it did not write the screen either. */
+  const load = useCallback(async (quiet = false): Promise<boolean> => {
     const seq = ++loadSeq.current;
-    setLoading(true);
-    setError('');
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       /* ⚠⚠ THE THREE SHARED READS GO THROUGH `sharedRead`, WHICH IS THE OTHER HALF OF P1'S
          `/simplify` FINDING (money plan §10 P1, deferred to here). Transactions and Payables are two
@@ -2094,8 +2157,8 @@ function MoneyRecordsPanel({
       /* ⚠⚠ FROM HERE DOWN IS THE WRITING, AND ONLY THE NEWEST LOAD MAY DO IT. A slower earlier
          response landing last is how a payment a coach just made reverts to Scheduled in front of
          them. Bailing here also skips the `finally`'s spinner reset — correct, because the newer
-         load owns the spinner now. */
-      if (seq !== loadSeq.current) return;
+         load owns the spinner now — see the `finally`, which a `return` here still runs. */
+      if (seq !== loadSeq.current) return false;
 
       if (!res.ok) throw new Error((res.data.error as string) ?? 'Failed to load');
       const data = res.data as {
@@ -2103,6 +2166,8 @@ function MoneyRecordsPanel({
         tagsByExpenseId?: Record<string, string[]>;
         standings?: Record<string, CommitmentStanding>;
       };
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
+      setStaleAfterWrite(false);
       setExpenses(data.expenses ?? []);
       setExpenseTags(data.expenseTags ?? []);
       setTagsByExpenseId(data.tagsByExpenseId ?? {});
@@ -2138,10 +2203,20 @@ function MoneyRecordsPanel({
         })));
         if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       }
+      return true;
     } catch (e: any) {
-      setError(e.message ?? 'Failed to load expenses.');
+      if (!quiet && seq === loadSeq.current) setError(e.message ?? 'Failed to load expenses.');
+      return false;
     } finally {
-      setLoading(false);
+      /* ⚠⚠ ONLY THE WINNING LOAD MAY CLEAR THE SPINNER, and the note above the `seq` bail used to
+         claim this block was skipped by it. It is not — a `return` inside `try` still runs
+         `finally`. So a superseded load switched the screen from "Loading…" to "done" having
+         written NOTHING, and the coach got the full "Nothing on the books yet" empty state —
+         headline, teaching copy, Add Expense and Add Income — for a beat before the real register
+         replaced it (owner, UX review 2026-08-26). Two loads race on every mount under StrictMode
+         and after every write, so this fired constantly. Same guard the Dues, Club and Roster
+         loaders already carry. `quiet` means "don't SHOW a spinner", never "leave one hanging". */
+      if (seq === loadSeq.current) setLoading(false);
     }
     // `face` decides whether the arrivals fetch runs at all, so it belongs here — a panel is one
     // face for its whole life, so this never actually re-fires; leaving it out would just be a lie
@@ -2163,7 +2238,15 @@ function MoneyRecordsPanel({
    * marked paid changes the report just as much as an arrival does.
    */
   const bumpMoneyRevision = useBumpMoneyRevision();
-  useEffect(() => { load(); }, [load, moneyRevision]);
+  useEffect(() => { load(); }, [load]);
+  /* ⚠ THE SHARED HOOK, NOT `moneyRevision` IN THE DEPS (UX review 2026-08-26). Listing the
+     revision beside `load` fired a SECOND full load on mount — which is what made the empty-state
+     flash above reachable — and turned every outside write into a loud reload.
+     `useOnMoneyRevisionBump` skips the mount revision by VALUE (StrictMode-safe; its own header
+     explains why a boolean latch is not), and a bump is by definition someone else's write, so it
+     re-reads quietly. */
+  const quietReload = useCallback(() => { void load(true); }, [load]);
+  useOnMoneyRevisionBump(quietReload);
 
 
   // The roster behind "Paid by" — fetched the first time the Add Expense form opens, not on
@@ -2216,7 +2299,9 @@ function MoneyRecordsPanel({
         .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
       setSchedule(rows);
     } catch (e: any) {
-      setScheduleError(e.message ?? 'Could not load what your club has billed this team.');
+      // Same rule as the register loader beside it: a superseded read must not post its error
+      // over a table a newer read has already filled.
+      if (seq === scheduleSeq.current) setScheduleError(e.message ?? 'Could not load what your club has billed this team.');
     }
   }, [orgSlug, teamId]);
 
@@ -2243,7 +2328,10 @@ function MoneyRecordsPanel({
    */
   const refreshAfterWrite = useCallback(async () => {
     bumpMoneyRevision();
-    await load();
+    /* Quiet about the SPINNER — the rows a coach just changed should change under them rather than
+       the whole register blanking and coming back. Loud about FAILURE — see `staleAfterWrite`. */
+    const ok = await load(true);
+    setStaleAfterWrite(!ok);
     // The club-bill feed is its own fetch, and only the face that renders it pays for the re-read.
     if (face === 'payables') await loadSchedule();
   }, [bumpMoneyRevision, load, loadSchedule, face]);
@@ -2976,8 +3064,7 @@ function MoneyRecordsPanel({
       }
       if (isMoneyInForm) {
         await saveMoneyIn();
-        setFormOpen(false);
-        resetForm();
+        dismissForm();
         await refreshAfterWrite();
         return;
       }
@@ -3129,8 +3216,7 @@ function MoneyRecordsPanel({
           });
 
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
-      setFormOpen(false);
-      resetForm();
+      dismissForm();
       await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
@@ -3169,8 +3255,9 @@ function MoneyRecordsPanel({
         method: 'DELETE',
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete');
-      setFormOpen(false);
-      resetForm();
+      /* ⚠ NO RETURN TO THE DRAWER: the bill this deleted no longer exists, so reopening it would
+         flash an empty panel and vanish. */
+      dismissForm({ backToDrawer: false });
       await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
@@ -4182,7 +4269,7 @@ function MoneyRecordsPanel({
     }
   }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -4751,6 +4838,16 @@ function MoneyRecordsPanel({
         <p className={styles.moneyTagSummary} role="status" style={{ marginBottom: '1rem' }}>{importMessage}</p>
       )}
 
+      {/* Saved, but the re-read that follows it didn't land. The figures below are the ones from
+          BEFORE the save — say so, and offer the way out. */}
+      {staleAfterWrite && (
+        <CoachLoadError
+          message="Your change was saved, but these figures could not be refreshed — what you see below may be out of date."
+          onRetry={() => { void load(); }}
+          label="Refresh"
+        />
+      )}
+
       {/* ⚠ SUB-TABS AND ACTIONS SHARE ONE ROW (owner review 2026-08-15, Q2). They used to be two
           stacked bands, so a coach crossed THREE strips of chrome — hub tabs, sub-tabs, then a
           full-width toolbar — before the first row of money. That third strip carried nothing on
@@ -5035,9 +5132,9 @@ function MoneyRecordsPanel({
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !onPayables ? (
         /* ── THE REGISTER (money redesign P3, plan §4) ──────────────────────────────────────
            One dated book of every dollar the season moved, with the balance beside it. The two
@@ -5272,17 +5369,116 @@ function MoneyRecordsPanel({
           two-tap Undo, and the Still owing figure were built as the Commitments row's "Payment
           details" expansion; nothing about the money changed in this phase, only where a coach
           finds it. */}
-      {drawerBill && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeDrawer)?.(); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader
-              title={drawerBill.description}
-              subtitle={[drawerBill.category, drawerBill.itemName].filter(Boolean).join(' · ') || undefined}
-              onClose={closeDrawer}
-            />
+      {/* ⚖⚖ ONE COMMITMENT, AS A PAGE (owner ruling 2026-08-26, from the drawn options
+          `claude.ai/code/artifact/0c44d290-8a76-4235-aeab-79c8f4f8c366`). This was a MODAL, and the
+          modal was the problem: a bill can carry a dozen or more installments, and a fixed 90vh box
+          made the schedule push everything else — the standing figure, the payee, the tags — off the
+          bottom. It had already overflowed once (§64 Part E, 2026-08-21) where the content past the
+          fold was not merely below the line but UNREACHABLE.
 
-            {drawerStanding ? (
-              <div className={styles.payDrawer}>
+          ⚠⚠ THE RULE THAT DECIDES THE ORDER (owner, 2026-07-09, binding): *reaching a different
+          domain must never require scrolling past other domains*, and page scroll is reserved for
+          ONE long homogeneous list, *which may grow freely*. So the short fixed things — what the
+          bill comes to, and what it is — sit above, and the SCHEDULE takes the page scroll, because
+          it is exactly the list that rule allows to grow.
+
+          ⚠ THAT REVERSES THE ORDER RULED FOR THE MODAL FOUR DAYS EARLIER, and deliberately: in a
+          fixed box, Details on top pushed the schedule out of view, so it went last. On a page
+          nothing is pushed out — the page simply scrolls — so the unbounded list goes last instead.
+          The constant across both is the same sentence: **the thing that can grow without limit
+          never sits above the things that cannot.**
+
+          ⚠ EVERY WRITE FLOW IS UNCHANGED. Edit, Add an installment, Record, the per-row Change /
+          Remove / Record and the undo confirmation all still open the panel's own modals — which is
+          ordinary over a page, and was modal-over-modal before. The `returnToDrawerRef` bookkeeping
+          that put the drawer back after each of them is GONE: it existed only to rebuild navigation
+          history the container did not have, which is the clearest evidence the container was
+          wrong. A page has that history for free, including the browser's own back.
+
+          ⚠ ORG ALLOCATIONS NEVER REACH HERE. A club bill is not the team's record to edit — its
+          door is the Club tab (see `PayBill.kind`), and its key is not an expense id, so the route
+          below cannot address one. */}
+      {drawerBill && (
+        <>
+          <CoachPageHeader
+            icon={Receipt}
+            title={drawerBill.description}
+            /* ⚠ PILOT of the in-header back affordance — this page only, owner 2026-08-26. Every
+               other drill-in still wears `CoachBackLink`; see the prop's own doc for the terms. */
+            backTo={{ href: `${base}/accounting?section=payables`, label: 'Payables' }}
+            actions={canWriteMoney && drawerBill.expense ? (
+              <>
+                {/* ⚠ EDIT AND DELETE ARE LIVE ON A SETTLED BILL. Deleting one reverses what it
+                    posted and says so in dollars first — the money form's own confirmation, reached
+                    through the same door, so there is one delete path rather than two. */}
+                <button className={styles.btnSecondary} onClick={() => openEdit(drawerBill.expense!)}>
+                  <span className={styles.headerBtnLabel}>Edit</span>
+                </button>
+                {/* ⚖ OFFERED ON ANY BILL (P4). It used to appear only on a one-piece one, because
+                    the plan was capped at two and the editor behind it could hold no more — a button
+                    that gets refused is worse than one that is not there. */}
+                <button className={`${styles.btnSecondary} ${styles.headerActionWideOnly}`}
+                  onClick={() => openAddInstallment(drawerBill.expense!)}>
+                  <span className={styles.headerBtnLabel}>Add an installment</span>
+                </button>
+                {drawerStanding && drawerStanding.remaining > 0 && (
+                  <button className={styles.btnPrimary} aria-label="Record a payment"
+                    onClick={() => openRecordPayment(drawerBill.expense!)}>
+                    <span className={styles.headerBtnLabel}>Record</span>
+                  </button>
+                )}
+              </>
+            ) : null}
+            actionsPhoneInTitleRow
+            help={{
+              module: 'coaches',
+              sectionIds: ['premium-money'],
+              subtopicId: 'premium-money-payables',
+              fullGuideHref: `/${orgSlug}/coaches/help#premium-money`,
+            }}
+            helpLabel="Payables"
+          />
+          {/* The bill's filing, in the body-summary slot the page-header ruling created for exactly
+              this — entity facts belong under the title, never inside the header. */}
+          <p className={styles.bodySummary}>
+            {[drawerBill.category, drawerBill.itemName, drawerBill.expense?.payeePayer]
+              .filter(Boolean).join(' · ')}
+          </p>
+
+          {drawerStanding ? (
+            <div className={styles.payDrawer}>
+              {/* The answer first, and it never scrolls away on a page. */}
+              <div className={styles.payDrawerTotal}>
+                <span>{drawerStanding.over > 0 ? 'Paid over the total' : 'Still owing'}</span>
+                <strong>{fmt(drawerStanding.over > 0 ? drawerStanding.over : drawerStanding.remaining)}</strong>
+              </div>
+
+              {/* ⚠ WHAT THE RECORD HOLDS — and it is READABLE WITHOUT A WRITE DOOR, which is the
+                  whole reason it exists. The actions above are `canWriteMoney`-gated, so before
+                  this block a read-only money assistant could not see a bill's payee or its tags
+                  anywhere in the product: the only route was Edit, the one door they are refused.
+                  ⚠ Every row is omitted when empty, and the section with them — most commitments
+                  carry none of this, and a stack of "—" would be chrome. */}
+              {(() => {
+                const e = drawerBill.expense;
+                const tagIds = e ? (tagsByExpenseId[e.id] ?? []) : [];
+                const rows: Array<[string, ReactNode]> = [];
+                if (e?.paymentMethod) rows.push(['How', e.paymentMethod]);
+                if (tagIds.length > 0 && e) rows.push(['Tags', tagChips(e.id)]);
+                if (e?.notes) rows.push(['Notes', e.notes]);
+                if (rows.length === 0) return null;
+                return (
+                  <dl className={styles.payDrawerFacts}>
+                    {rows.map(([k, v]) => (
+                      <Fragment key={k}>
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                );
+              })()}
+
                 {/* ── The plan, piece by piece ─────────────────────────────────────────────── */}
                 <p className={styles.payDrawerLabel}>
                   Scheduled{drawerStanding.installments.length > 1 ? ` — ${drawerStanding.installments.length} installments` : ''}
@@ -5427,55 +5623,12 @@ function MoneyRecordsPanel({
                   </>
                 )}
 
-                <div className={styles.payDrawerTotal}>
-                  <span>{drawerStanding.over > 0 ? 'Paid over the total' : 'Still owing'}</span>
-                  <strong>{fmt(drawerStanding.over > 0 ? drawerStanding.over : drawerStanding.remaining)}</strong>
-                </div>
-
-                {drawerBill.expense?.notes && (
-                  <p className={styles.payDrawerNote}>{drawerBill.expense.notes}</p>
-                )}
               </div>
             ) : (
-              <p className={styles.mutedInline} style={{ padding: '1rem 0' }}>Loading payment details…</p>
+              <CoachLoading label="Loading payment details…" inline />
             )}
-
-            {canWriteMoney && drawerBill.expense && (
-              <div className={styles.modalFooter}>
-                {/* ⚠ EDIT AND DELETE ARE LIVE ON A SETTLED BILL. Deleting one reverses what it
-                    posted and says so in dollars first — the money form's own confirmation, reached
-                    through the same door, so there is one delete path rather than two. */}
-                <button
-                  className={styles.btnGhost}
-                  onClick={() => { const e = drawerBill.expense!; closeDrawer(); openEdit(e); }}
-                >
-                  Edit
-                </button>
-                {/* ⚖ OFFERED ON ANY BILL NOW (P4). It used to appear only on a one-piece one,
-                    because the plan was capped at two and the editor behind it could hold no more —
-                    a button that gets refused is worse than one that is not there. The cap, the
-                    two-field editor and this restriction lifted in the SAME change, deliberately:
-                    a raised cap with the old editor still in place would have re-created the silent
-                    truncation the cap was added to prevent. */}
-                <button
-                  className={styles.btnGhost}
-                  onClick={() => { const e = drawerBill.expense!; closeDrawer(); openAddInstallment(e); }}
-                >
-                  Add an installment
-                </button>
-                {drawerStanding && drawerStanding.remaining > 0 && (
-                  <button
-                    className={styles.btnPrimary}
-                    onClick={() => { const e = drawerBill.expense!; closeDrawer(); openRecordPayment(e); }}
-                  >
-                    Record
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
 
       {/* ── Changing or removing ONE scheduled payment, with a scope (P4, S1–S7) ──────────────
           ⚠ It stands OVER the drawer rather than replacing it: the coach came from a specific row
@@ -6105,7 +6258,7 @@ function MoneyRecordsPanel({
           onImported={message => {
             setImportOpen(false);
             setImportMessage(message);
-            void load();
+            void load(true);
             if (face === 'payables') void loadSchedule();
           }}
         />

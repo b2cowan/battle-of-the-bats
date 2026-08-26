@@ -7,6 +7,7 @@ import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
 import { DRAFT_SUBJECT_PARAM, DRAFT_BODY_PARAM } from '@/lib/postgame-draft';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 
 export default function TeamAnnouncementsPage({
@@ -34,7 +35,7 @@ export default function TeamAnnouncementsPage({
     : null;
 
   if (assignmentsLoading) {
-    return <div className={styles.page}><p className={styles.bodyNote}>Loading…</p></div>;
+    return <div className={styles.page}><CoachLoading label="Loading announcements…" /></div>;
   }
   if (!assignment && closed) {
     return (

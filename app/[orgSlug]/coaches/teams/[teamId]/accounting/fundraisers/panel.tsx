@@ -1,11 +1,13 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Gift, Plus, ChevronRight, TrendingUp, Handshake } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -15,7 +17,7 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
-import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import {
@@ -202,36 +204,50 @@ export function FundraisersPanel({
     noun: 'fundraiser',
   });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  /* Stamp-and-drop + `quiet` — the Money-panel loading convention, written once above
+     `useMoneyRevision` in lib/coach-money-refresh.tsx. */
+  const loadSeq = useRef(0);
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
+      if (seq !== loadSeq.current) return;
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setFundraisers(data.fundraisers);
       // The money-tag library rides the list — it is needed the moment the create form opens, and
       // fetching it there would put a spinner inside a modal.
       setMoneyTags(data.moneyTags ?? []);
     } catch (e: any) {
-      setError(e.message ?? 'Failed to load fundraisers.');
+      if (!quiet && seq === loadSeq.current) setError(e.message ?? 'Failed to load fundraisers.');
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
-  // ⚠ The revision is a DEPENDENCY, not a second fetch path: an import above the tabs, or a
-  // rebate logged inside a fundraiser, both bump it, and this list re-reads its totals without
-  // being remounted (lib/coach-money-refresh.tsx). Before the drill-in it only needed the import
-  // case; now the sub-view behind this list can change the very numbers each row shows.
-  //
-  // ⚠ NOT while a drive is open. The early return below decides what RENDERS, not which effects
-  // run — so without this guard every amount logged inside a fundraiser would also fetch a list
-  // nobody is looking at, once per save. Clearing `?fundraiser=` re-fires this on the way back,
-  // which is exactly when the fresh totals are wanted.
-  const moneyRevision = useMoneyRevision();
   const bumpMoneyRevision = useBumpMoneyRevision();
-  useEffect(() => { if (!openFundraiserId) load(); }, [load, moneyRevision, openFundraiserId]);
+  /* Mount loud, bump quiet — the shared convention — with ONE panel-specific twist.
+   *
+   * ⚠ NOT WHILE A DRIVE IS OPEN. The early return further down decides what RENDERS, not which
+   * effects run, so without this guard every amount logged inside a fundraiser would also fetch a
+   * list nobody is looking at, once per save. The guard sits in BOTH places on purpose: the effect
+   * skips the fetch while the drive is open and re-fires on the way back out (which is exactly
+   * when the fresh totals are wanted, and why closing a drive is a quiet re-read rather than a
+   * blank tab), and the bump callback skips it for the same reason. */
+  const listShown = !openFundraiserId;
+  /* ⚠ ALWAYS LOUD (/review, 2026-08-26). This read `load(loadSeq.current > 0)` — "quiet if we have
+     loaded before" — which is the boolean-latch mistake `useOnMoneyRevisionBump`'s header warns
+     about wearing a different hat: `load` increments that counter SYNCHRONOUSLY, so StrictMode's
+     second mount invocation saw 1 and went quiet, and being second it was also the call that WON.
+     A failed first load then set no error, cleared the spinner and rendered "Nothing raised yet" —
+     the exact empty-state lie this whole pass exists to remove. Quiet belongs to the revision bump
+     below, where there is a last good screen to keep; a load this effect fires is either a mount or
+     a return from a drive, and neither is a background refresh. */
+  useEffect(() => { if (listShown) void load(); }, [load, listShown]);
+  const quietReload = useCallback(() => { if (listShown) void load(true); }, [load, listShown]);
+  useOnMoneyRevisionBump(quietReload);
 
   /** The roster and the team's standard split, loaded once alongside the list. Both only matter
    *  when the create form opens, but fetching them there would put a spinner inside a modal. */
@@ -354,7 +370,7 @@ export function FundraisersPanel({
     }
   }
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading your drives…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -464,9 +480,9 @@ export function FundraisersPanel({
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading your drives…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : fundraisers.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyStateTitle}>Nothing raised yet</p>

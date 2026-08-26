@@ -6,6 +6,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachStaffPanel from '@/components/coaches/CoachStaffPanel';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 export default function CoachStaffPage({
@@ -24,7 +25,7 @@ export default function CoachStaffPage({
   const isHeadCoach =
     (assignments.find(a => a.teamId === teamId)?.capabilities ?? page.capabilities)?.isHeadCoach ?? false;
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <CoachLoading label="Loading staff…" />;
 
   if (!page.hasAccess) {
     return (

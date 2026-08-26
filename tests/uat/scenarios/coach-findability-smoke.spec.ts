@@ -183,7 +183,16 @@ const main = (page: Page) => page.locator('main[class*="coachesMain"]');
 async function open(page: Page, url: string) {
   await page.goto(url);
   await expect(main(page)).toBeVisible({ timeout: 45_000 });
-  await expect(main(page).getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+  /* ⚠⚠ MATCH THE LOADING ELEMENT, NEVER ITS WORDS (/review, 2026-08-26). This waited on the
+     literal text "Loading…" reaching zero, and Playwright matches a plain string as a SUBSTRING —
+     so the moment the portal gave every loading state a subject ("Loading the register…",
+     "Loading the roster…"), the substring stopped existing and this wait passed instantly on every
+     screen. A no-op wait is worse than no wait: it reads as a deterministic signal while the fetch
+     it was built to wait for races on underneath it. `[class*="loadingState"]` is the same
+     hashed-CSS-module idiom `main[class*="coachesMain"]` already uses one line up, and it matches
+     the shared CoachLoading component AND every hand-written .loadingState still in the portal —
+     i.e. it cannot be broken by a copy change. */
+  await expect(main(page).locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
 }
 
 /**

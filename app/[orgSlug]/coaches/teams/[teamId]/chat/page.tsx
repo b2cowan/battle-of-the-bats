@@ -2,6 +2,7 @@
 import { use } from 'react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachChatView from '@/components/chat/CoachChatView';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from './chat.module.css';
 
 export default function TeamChatPage({
@@ -18,7 +19,7 @@ export default function TeamChatPage({
   const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
 
   if (loading) {
-    return <p style={{ padding: '1rem', color: 'var(--white-40)' }}>Loading…</p>;
+    return <CoachLoading label="Loading the room…" />;
   }
   if (!assignment && closed) {
     return (

@@ -15,6 +15,8 @@ import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summar
 import { legacyMoneyAddress, type CoachMoneySection } from '@/lib/coach-money-links';
 import OverviewDashboard from './OverviewDashboard';
 import SetupOverview from './SetupOverview';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 
 // Code-split, not just lazy-mounted: each panel is 1000+ lines and a couple pull in
@@ -290,7 +292,7 @@ export default function CoachesAccountingPage({
     wasOnOverview.current = onOverview;
   }, [onOverview, load]);
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading your team's money…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -465,9 +467,9 @@ export default function CoachesAccountingPage({
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading your team's money…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : summary && (
         <>
           <CoachTabBar

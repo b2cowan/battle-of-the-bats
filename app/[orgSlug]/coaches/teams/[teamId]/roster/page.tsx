@@ -33,6 +33,7 @@ import {
   ROSTER_WALL_HEADERS, rosterContactHeaders,
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
@@ -475,7 +476,7 @@ export default function RosterPage({
     );
   }
 
-  if (assignmentsLoading) return <p className={styles.muted}>Loading…</p>;
+  if (assignmentsLoading) return <CoachLoading label="Loading the roster…" />;
   // Chunk F: `hasAccess` covers the archive too — a coach whose season has ended, or who has
   // switched back to a past year, still belongs here. Keying this off the live assignment alone
   // is what shut them out in the first place.
@@ -697,7 +698,7 @@ export default function RosterPage({
       {view === 'depth' ? (
         <DepthChartBoard orgSlug={orgSlug} teamId={teamId} />
       ) : fetching ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading the roster…" />
       ) : players.length === 0 ? (
         // Lead with the fast path: a coach's team list already exists somewhere as text, and
         // pasting it is the difference between two minutes and fifteen modal round trips.
@@ -811,10 +812,10 @@ export default function RosterPage({
               {addedInRun > 0 && <span className={styles.discToggleMeta}>{addedInRun} added</span>}
             </CoachModalHeader>
 
-            {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
+            {/* Legend for the per-field * markers below —
                 most fields on this form are optional, so only the few that block Save are flagged. */}
             <p className={styles.formHint}>
-              <span className={styles.labelRequired}>*</span> Required ·{' '}
+              * Required ·{' '}
               <button
                 type="button"
                 className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
@@ -827,7 +828,7 @@ export default function RosterPage({
             <div className={styles.formGrid}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pfn">
-                  First Name <span className={styles.labelRequired}>*</span>
+                  First Name *
                 </label>
                 <input id="add-pfn" className={styles.input} type="text" autoFocus
                   value={addForm.playerFirstName}

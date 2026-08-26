@@ -14,6 +14,7 @@ import {
   CREDIT_MODE_SENTENCES, normalizeCreditApplicationMode, type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import type { LineupSettings } from '@/lib/types';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 interface SettingsData {
@@ -353,7 +354,7 @@ export default function TeamSettingsPage({
     }
   }
 
-  if (loading) return <p className={styles.muted}>Loading...</p>;
+  if (loading) return <CoachLoading label="Loading team settings…" />;
   if (loadError || !data) {
     return (
       <div className={styles.notAssigned}>

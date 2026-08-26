@@ -14,7 +14,7 @@ import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal'
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
-import { useMoneyRevision, useBumpMoneyRevision } from '@/lib/coach-money-refresh';
+import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
@@ -44,6 +44,8 @@ import type {
 import DateField from '../DateField';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import styles from './budget.module.css';
+import CoachLoadError from '@/components/coaches/CoachLoadError';
+import CoachLoading from '@/components/coaches/CoachLoading';
 import shared from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
@@ -737,9 +739,12 @@ export function BudgetPlanPanel({
     });
   }
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  /* Stamp-and-drop + `quiet` — the Money-panel loading convention, written once above
+     `useMoneyRevision` in lib/coach-money-refresh.tsx. */
+  const loadSeq = useRef(0);
+  const load = useCallback(async (quiet = false) => {
+    const seq = ++loadSeq.current;
+    if (!quiet) { setLoading(true); setError(''); }
     try {
       const [planRes, catRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
@@ -750,6 +755,11 @@ export function BudgetPlanPanel({
       const planData = await planRes.json();
       const catData  = await catRes.json();
       if (!planRes.ok) throw new Error(planData.error ?? 'Failed to load plan');
+      /* ⚠ EVERY BODY IS READ BEFORE ANYTHING IS WRITTEN, so the staleness check has exactly one
+         place to sit — above the FIRST setter, never between two of them. A guard part-way down
+         leaves the plan written from an old answer and the taxonomy from a new one. */
+      if (seq !== loadSeq.current) return;
+      setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setPlan(planData.plan);
       setDuesAssessed(planData.duesAssessed ?? 0);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
@@ -757,19 +767,20 @@ export function BudgetPlanPanel({
       if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       setCategories(catData.categories ?? []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
+      if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
-  // `moneyRevision` bumps when the hub's Import menu commits rows while this panel is mounted
-  // but off-screen — the panel re-READS rather than remounting, so a half-filled line form on
-  // another tab is never thrown away. Outside the hub the revision is a constant 0.
-  const moneyRevision = useMoneyRevision();
   /** Tells the other mounted money tabs to re-read — see the note on the item manager's `onChanged`. */
   const bumpMoneyRevision = useBumpMoneyRevision();
-  useEffect(() => { load(); }, [load, moneyRevision]);
+  /* Mount loud, bump quiet. A bump means the hub's Import menu (or a write on another tab)
+     committed rows while this panel sat mounted off-screen — it re-READS rather than remounting,
+     so a half-filled line form is never thrown away. Outside the hub there are no bumps. */
+  useEffect(() => { load(); }, [load]);
+  const quietReload = useCallback(() => { void load(true); }, [load]);
+  useOnMoneyRevisionBump(quietReload);
 
   // Deep link from the Money hub / Dues page: ?generate=1 opens the Generate
   // Installments modal directly (only when the CTA would be shown, which includes
@@ -1291,7 +1302,7 @@ export function BudgetPlanPanel({
     () => categories.reduce((n, c) => n + c.items.filter(i => i.teamId === teamId).length, 0),
     [categories, teamId]);
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <CoachLoading label="Loading your budget…" />;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
 
   const fundingLines = allLines.filter(l => isFundingKind(l.lineKind));
@@ -1407,9 +1418,9 @@ export function BudgetPlanPanel({
       )}
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <CoachLoading label="Loading your budget…" />
       ) : error ? (
-        <p className={styles.errorText}>{error}</p>
+        <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : (
         <>
           {/*
@@ -1935,7 +1946,7 @@ export function BudgetPlanPanel({
           >
             <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={closeLineModal} />
 
-            <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+            <p className={styles.formHint}>* Required</p>
 
             {/* What KIND of line — asked first, because it changes what every field under it
                 means. Amounts stay positive either way; the kind carries the sign. */}
@@ -1982,7 +1993,7 @@ export function BudgetPlanPanel({
                   without an item has nothing to be called and nothing for spending to line up
                   against, which is the whole defect this change closes. */}
               <label className={styles.label}>
-                Category &amp; Item <span className={styles.labelRequired}>*</span>
+                Category &amp; Item *
               </label>
               <BudgetItemPicker
                 selectId={FOCUS_ITEM}
@@ -2035,7 +2046,7 @@ export function BudgetPlanPanel({
               <div className={styles.field} style={{ flex: 1 }}>
                 {/* Associated label — tapping it focuses the field, which matters most on the
                     phone layout where label and input are now on separate lines. */}
-                <label className={styles.label} htmlFor={FOCUS_TOTAL}>Total Amount ($) <span className={styles.labelRequired}>*</span></label>
+                <label className={styles.label} htmlFor={FOCUS_TOTAL}>Total Amount ($) *</label>
                 <input
                   id={FOCUS_TOTAL}
                   className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}

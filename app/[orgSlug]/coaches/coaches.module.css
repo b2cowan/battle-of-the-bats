@@ -1132,6 +1132,41 @@
   gap: 1rem;
 }
 
+/* ⚖⚖ THE WAY UP, IN THE HEADER'S LEADING CORNER — the mirror of the help "?" at the trailing one
+   (owner 2026-08-26; amends ONE clause of the 2026-08-11 page-header ruling, which put this on its
+   own row above the header). The argument is that ruling's own: it decided the "?" is CHROME, not
+   an action, anchoring a corner on every page at every width to give help "one findable home".
+   A way UP is the same kind of thing at the opposite corner — and folding it in deletes a ~40px
+   desktop / ~52px phone row.
+   ⚠ PILOT — the commitment page only. `CoachBackLink` is still the treatment on the other 17
+   drill-ins until the owner rules on the real thing. Do NOT spread this by hand; the component's
+   prop doc carries the terms.
+   ⚠ INK IS `--text-secondary`, NOT the link blue. On its own row the blue said "this is a link";
+   inside the header it would be the loudest thing in a row that also holds the record's NAME.
+   Chrome is quiet — the arrow and the hairline carry the meaning. */
+.pageHeaderBack {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex: none;
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 0.82rem; font-weight: 600;
+  padding: 0.4rem 0.5rem; margin-left: -0.5rem; border-radius: 6px;
+}
+.pageHeaderBack:hover { color: var(--text-primary); background: var(--white-8); }
+/* The hairline that says "chrome, not the title". Not a border on the link — a link's own border
+   would move with its hover background. */
+.pageHeaderBackRule {
+  width: 1px; align-self: stretch; margin: 0.15rem 0; flex: none;
+  background: var(--border-2);
+}
+@media (max-width: 640px) {
+  /* House rule 3 — on a phone words become symbols. The destination survives in the aria-label,
+     so the arrow keeps naming where it goes for a screen reader.
+     ⚠ The tap floor comes from the SURFACE a control sits on, and this is a NEW slot in the
+     header — it inherits nothing from `.pageHeaderActions`. See the header house-rules memo. */
+  .pageHeaderBackLabel { display: none; }
+  .pageHeaderBack { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); justify-content: center; }
+  .pageHeaderLeft { gap: 0.6rem; }
+}
+
 /* Trailing header controls (export / + add / view toggle / help) pin to the right — including
    when they wrap below the title on narrow screens — for a consistent, standard placement.
    LEGACY hand-rolled headers only — CoachPageHeader (.pageHeaderStd) owns its own geometry
@@ -2884,6 +2919,9 @@ a.oneChip:hover { border-color: currentColor; }
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50%       { opacity: 1;   transform: scale(1.2); }
 }
+/* Inside a card, drawer or modal body rather than standing in for a whole screen — the
+   2rem screen padding is what made a one-line wait inside a panel look like a gap. */
+.loadingStateInline { padding: 0.5rem 0; }
 
 /* ── Empty state ────────────────────────────────────────────────────────── */
 .emptyState {
@@ -4199,15 +4237,19 @@ a.oneChip:hover { border-color: currentColor; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-/* Required-field marker inline in a field/section label, paired with the "* Required" legend
-   at the top of the event form. Replaces the old per-field "optional" tag — most fields on this
-   form are optional, so flagging the few that actually block Save reads cleaner than flagging
-   everything else. */
-.labelRequired {
-  color: var(--danger);
-  font-weight: 700;
-  margin-left: 0.2rem;
-}
+/* ⚖⚖ `.labelRequired` IS RETIRED — DO NOT BRING IT BACK (owner ruling 2026-08-25, portal-wide;
+   `memory/design_decisions.md`). It was a red, bold asterisk marker for required labels, and the
+   ruling deletes the RULE rather than merely avoiding it in new code, precisely so the next form
+   cannot find it and use it.
+
+   The rule now: a required field takes a PLAIN asterisk in the label's own ink — ` *` written
+   inline in the label text, exactly as the money record form and the fundraising forms already
+   did. Red in this portal means something has GONE WRONG — money owed, overdue, a refused save —
+   and a field is not in error for being required. The asterisk already carries the meaning; the
+   colour was only adding volume and spending a signal real failures need.
+
+   ⚠ Its sibling `.req` (the Club tab's copy of the same idea) is retired in the same sweep. If you
+   are here because a label needs a marker, write ` *` in the label text. */
 
 .input, .select, .textarea {
   background: var(--white-05);
@@ -6641,6 +6683,25 @@ a.oneChip:hover { border-color: currentColor; }
 
 .errorText { color: var(--danger); font-size: 0.85rem; margin: 0; }
 
+/* The way OUT of a failed load (CoachLoadError). It reads as a link inside the error sentence —
+   `inherit` deliberately, so it never introduces a second colour into a line that is already
+   saying one thing.
+   ⚠ 44px IS A FINGER MEASUREMENT, so it is applied where fingers are and nowhere else. As a bare
+   link-button this measured 15px and failed the tap floor on all three touch widths the rendered
+   check walks (/review, 2026-08-26) — a retry nobody can hit is the same dead end the component
+   was built to remove. The negative margin keeps the enlarged target from indenting the sentence. */
+.retryBtn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; color: inherit; font-weight: 600;
+  text-decoration: underline;
+}
+@media (max-width: 768px) {
+  .retryBtn {
+    display: inline-flex; align-items: center;
+    min-height: 44px; padding: 0 0.5rem; margin: 0 0 0 -0.5rem;
+  }
+}
+
 .successText {
   color: var(--success);
   font-size: 0.85rem;
@@ -7454,6 +7515,10 @@ a.oneChip:hover { border-color: currentColor; }
   font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; white-space: nowrap;
 }
 .multiSelectOption:hover { background: var(--white-8); }
+/* ⚠ NO `.multiSelectSwatch` HERE, deliberately. The dropdown's optional per-option swatch reuses
+   `.tagComboDot` / `.tagComboDotOrg` / `.tagComboDotOwn` above — the SAME dot the tag picker and
+   the row chips draw. A private swatch rule here was written first and gave org-vs-team a second
+   set of colours to drift from (`/simplify`, 2026-08-25). One meaning, one rule. */
 .multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
 
 /* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
@@ -7543,10 +7608,14 @@ a.oneChip:hover { border-color: currentColor; }
   border-radius: 999px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer;
   display: inline-flex; gap: 0.35rem; align-items: center;
 }
-.moneyFilterChipActive { background: var(--logic-lime); color: var(--pitch-black); border-color: var(--logic-lime); font-weight: 700; }
-.moneyFilterChipOrg { border-color: rgba(var(--blueprint-blue-rgb), 0.45); color: var(--tag-org-fg); }
-.moneyFilterChipOrgActive { background: var(--tag-org-active-bg); border-color: var(--tag-org-active-bg); color: var(--pitch-black); font-weight: 700; }
-.moneyFilterCount { opacity: 0.6; font-size: 0.68rem; }
+/* ⚖ THE MONEY-TAG CHIP STATES ARE RETIRED (money centralization P3, 2026-08-25) —
+   `.moneyFilterChipActive`, `.moneyFilterChipOrg`, `.moneyFilterChipOrgActive` and
+   `.moneyFilterCount` all went with the chip row the tag filter used to be. It is a
+   `MultiSelectDropdown` now, like Show / Status / Item beside it: the count rides the option's
+   label and org-shared is a swatch (`.multiSelectSwatch`) rather than a blue border needing a
+   legend. `.moneyFilterChip` itself STAYS — Payables' `Fold all` still wears it.
+   ⚠ Do not re-add them for a new filter. A row of chips beside four dropdowns reads as a
+   different KIND of control for what is the same act of narrowing; that is why they went. */
 /* ⚠ THE PHONE TAP FLOOR, the same fix `.viewToggleBtn` took on 2026-08-15 and for the same reason.
    These chips were metadata filters when the rule was written — a nice-to-have above a list. The
    register makes them the screen's PRIMARY control: they replaced its sub-tabs outright (money
@@ -7561,11 +7630,26 @@ a.oneChip:hover { border-color: currentColor; }
 @media (max-width: 768px) {
   .moneyFilterChip { min-height: var(--tap-min, 44px); }
 }
+/* What the tagged list comes to — the band that answers "what did the Summer Classic cost us?".
+   ⚠ ON BOTH MONEY FACES since money centralization P3; it was Payables-only before, and read
+   back-to-front ("vs {tag}: 3 commitments, $900.00 total"). The figure leads now. */
 .moneyTagSummary {
   background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
   border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
 }
-.moneyTagSummary strong { color: var(--logic-lime); }
+/* ⚠ THE TAG NAME IS A NAME, NOT A STATUS — ordinary ink, with WEIGHT doing the emphasising (design
+   log 2026-08-18: text names a ROLE, not a shade). It was the accent until this band gained a
+   figure: two accented things in one short sentence leave nothing leading it, which is the
+   opposite of what the band is for. */
+.moneyTagSummary strong { color: var(--text-primary); }
+/* ⚠ THE FIGURE IS THE ONE ACCENTED THING, and it is NOT COLOUR-ALONE — it is the largest text in
+   the band and the only bold number, so it still reads as the answer where the accent cannot be
+   told from the ink (the olive/danger deutan pair this portal has been bitten by once).
+   Tabular so it lines up with the money column below it. */
+.moneyTagSummaryFigure {
+  font-size: 1.05rem; font-weight: 700; color: var(--logic-lime);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ── The register (money redesign P3; reading order + sticky controls, follow-up) ─────────────
    ONE chronological book, oldest at the top — an overdue row interleaved at its true date, a
@@ -7931,28 +8015,45 @@ a.oneChip:hover { border-color: currentColor; }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachesShell {
   --tag-org-fg: var(--home-blue);
   --tag-org-active-bg: var(--home-blue);
-  --tag-own-fg: var(--home-olive);
+  /* ⚠⚠ ONE STEP DARKER THAN `--home-olive`, AND THE STEP IS THE WHOLE POINT (measured 2026-08-25).
+     The warm accent on the own-tag chip's own lime tint reads **4.47:1 at 11px** — three
+     hundredths under AA, on customer-visible text. It went unmeasured for months because the tag
+     chip only renders on a record that CARRIES a tag and the UAT fixture seeded game tags only;
+     money centralization P3 seeded money tags into the fixture and `check:layout` found this on
+     its first honest look. The generalisable half: a chip that renders only when its data exists
+     is invisible to a sweep over a fixture without that data — see
+     `memory/reference_green_check_over_empty_fixture.md`.
+     ⚠ Deliberately scoped to the TAG INK, not to `--home-olive` itself: that token is the warm
+     portal's accent everywhere and moving it to fix an 11px chip would repaint the product. */
+  --tag-own-fg: #515e1b; /* token-exempt: AA-corrected own-tag olive on the chip's own tint */
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboChipOrg,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyTagChipOrg {
   background: rgba(var(--home-blue-rgb), 0.12);
   border-color: rgba(var(--home-blue-rgb), 0.40);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipOrg {
-  border-color: rgba(var(--home-blue-rgb), 0.45);
+/* ⚠⚠ THE DOT NEEDS THE SAME RESCUE AS THE CHIP, and for years it did not have it (found by the
+   owner on the P3 walk, 2026-08-26). The block above rescues org CHIPS; `.tagComboDotOrg` rides the
+   very same remapped `--blueprint-blue-rgb` and was simply never listed — so on cream BOTH dots
+   resolved to olive and the org-vs-own distinction the dot exists to carry silently disappeared.
+   It was wrong in the tag picker from the day warm shipped; money centralization P3 then made it
+   load-bearing by moving the tag filter onto these dots AND deleting the colour legend that used to
+   say the same thing in words, which is what finally made it visible.
+   ⚠ Only ORG needs correcting: own-tag olive is already what the remap produces, and is right. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboDotOrg {
+  background: rgba(var(--home-blue-rgb), 0.55);
+  border-color: rgba(var(--home-blue-rgb), 0.75);
 }
 
 /* Lime-FILL "on"/brand chips: the token remap alone gives an olive fill (banned as a
    fill, E3) under cream text — restore the ratified TRUE lime + dark ink, mirroring
    .btnPrimary above and the solid-blue org-active chip (blue=org / lime=own preserved). */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .titlePremiumBadge,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltToggleActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltPip[data-r="win"] {
   background: var(--home-lime);
   color: var(--home-lime-ink);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltToggleActive {
   border-color: var(--home-lime);
 }
@@ -10692,9 +10793,9 @@ button.gdChip[aria-pressed='true'] {
    table, badge and modal below them reuses the shared recipes the two old screens already used, so
    the merge did not fork the Money hub's visual language. */
 
-/* A required-field marker. Was an inline `style={{ color: 'var(--danger-light)' }}` repeated on
-   three fields of the old requests form — one rule instead, so the marker cannot drift per field. */
-.req { color: var(--danger-light); }
+/* ⚖ `.req` IS RETIRED with `.labelRequired` (owner ruling 2026-08-25, portal-wide) — see that
+   rule's headstone above for the reasoning and for what to write instead. It was this tab's own
+   red required-field marker, and the Club form now writes a plain ` *` like every other form. */
 
 /* ── The standing band ──────────────────────────────────────────────────────
    ⚠ THREE FIGURES, NOT `.summaryGrid`. The shared summary grid is auto-fit and was carrying FOUR
@@ -11061,7 +11162,35 @@ button.gdChip[aria-pressed='true'] {
   font-size: 0.86rem; color: var(--text-secondary);
 }
 .payDrawerTotal strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--text-primary); }
-.payDrawerNote { margin: 0.8rem 0 0; font-size: 0.78rem; color: var(--text-tertiary); }
+/* ⚖ WHAT THE BILL IS — payee, tags, how it is paid, the note (owner walk 2026-08-26). The drawer
+   used to show the schedule and nothing else, so a coach had to open EDIT to read a payee or a tag,
+   and a read-only money assistant — who has no Edit button — could not read them at all.
+   ⚠⚠ IT IS THE LAST SECTION, under its own `.payDrawerLabel`, and that is the owner's correction:
+   these are the fields the edit form keeps behind "More" because they are used least, so opening
+   the panel with them pushes the schedule and `Still owing` — what the panel is FOR — down the
+   screen. It carries no rule of its own; the label above it does the separating, exactly as
+   "Payments recorded" does.
+   ⚠ Two columns above phone width, and the label lane is narrow ON PURPOSE: these are short values,
+   and a wide label lane would strand each one in the middle of the panel.
+   ⚠ `.payDrawerNote` is RETIRED — the note is a row in here now. */
+.payDrawerFacts {
+  display: grid; grid-template-columns: 5.25rem 1fr; gap: 0.3rem 0.75rem;
+  margin: 0; font-size: 0.82rem;
+}
+.payDrawerFacts dt {
+  color: var(--text-tertiary); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding-top: 0.15rem;
+}
+.payDrawerFacts dd {
+  margin: 0; color: var(--text-secondary); min-width: 0; overflow-wrap: anywhere;
+  display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center;
+}
+@media (max-width: 480px) {
+  /* One column on the narrowest phones: a 5.25rem label lane plus a payee name is a wrap either
+     way, and stacked reads better than a two-line value beside a one-word label. */
+  .payDrawerFacts { grid-template-columns: 1fr; gap: 0.1rem; }
+  .payDrawerFacts dt { padding-top: 0.4rem; }
+}
 
 @media (max-width: 640px) {
   /* ⚠ THE PHONE PASS (§64 Part C's last step: rows become cards, group headers do not eat the

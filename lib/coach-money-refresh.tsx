@@ -98,6 +98,45 @@ export function useSharedMoneyRead(): (url: string) => Promise<SharedRead> {
   return useContext(MoneyRefreshContext).read;
 }
 
+/**
+ * ⚠⚠ HOW A MONEY PANEL LOADS — THE WHOLE CONVENTION, SAID ONCE (UX review 2026-08-26).
+ *
+ * Every Money panel is one `{loading ? … : error ? … : <the screen>}` ternary, and every one of
+ * them re-reads on its own writes AND on the shared revision below. That gives all of them the
+ * same two hazards, so they all answer them the same way:
+ *
+ *   1. **Stamp each read; let an old answer lose.** `const seq = ++loadSeq.current` at the top of
+ *      `load`, `if (seq !== loadSeq.current) return` above the FIRST setter (never between two of
+ *      them), and `if (seq === loadSeq.current)` around the error and the spinner reset. Two loads
+ *      are in flight together routinely; with nothing to tell them apart the response that happens
+ *      to land LAST wins, and a slow earlier read puts pre-save figures back in front of the coach.
+ *      ⚠ A ref, not state — bumping a counter must never itself cause a render.
+ *
+ *   2. **`load(quiet)` — and there are THREE cases, not two** (the middle one was got wrong once
+ *      and cost a /review finding, 2026-08-26):
+ *      • **The coach asked for it** — mount, or pressing Try again. LOUD: show the spinner, and let
+ *        a failure take the screen. They are waiting on this and nothing else.
+ *      • **The coach's OWN write** — the refresh that follows a save. Quiet about the SPINNER (the
+ *        rows should change under them, not blank and come back) but NEVER about the FAILURE. The
+ *        screen it would be "keeping" is the one the save just made wrong, and on a money screen
+ *        that means a coach who thinks the payment did not go through and records it twice. Say so
+ *        in a line above the data, with a way to try again — see `staleAfterWrite` in the
+ *        Transactions panel. ⚠ Panels whose own-write refresh is still LOUD (Club, Budget, Dues)
+ *        are safe, not wrong; they simply take the blank rather than the notice.
+ *      • **Somebody ELSE's write** — a revision bump from another tab. QUIET: show nothing, swallow
+ *        the failure, keep the last good screen. Blanking a tab under someone reading it is worse
+ *        than a moment of staleness, and they never asked for this read.
+ *      A quiet load still clears the spinner if it is the winner: `quiet` means "don't SHOW one",
+ *      never "leave one hanging".
+ *      ⚠ A winning load that SUCCEEDED must `setError('')`: otherwise a coach who hit a failed
+ *      read and then recorded money anyway (the toolbars sit ABOVE the ternary) stays on the error
+ *      screen with good data behind it.
+ *
+ *   3. **Mount loud, bump quiet.** `useEffect(() => { load(); }, [load])` for the mount, and
+ *      `useOnMoneyRevisionBump` — never `moneyRevision` in the deps, never a `loadedOnce` latch —
+ *      for everything after it. See that hook's own header for why a boolean latch is wrong.
+ */
+
 /** Add to a panel's load-effect deps: a bump re-runs the fetch without touching component state. */
 export function useMoneyRevision(): number {
   return useContext(MoneyRefreshContext).revision;
