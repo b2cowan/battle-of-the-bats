@@ -13628,6 +13628,8 @@ verified in a real browser.
 
 ## §109 · Three piles, one tap, and a door that opens both ways — BUILT, awaiting QA
 
+**Checkable walkthrough:** https://claude.ai/code/artifact/d62f6ac0-db91-4852-bb3f-622d323c10e0
+
 **Owner rulings 2026-08-26, from the §108 walk.** Four changes to the tryout Decide and Build
 stages. Plan: `COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md` (§109 section).
 
@@ -13699,3 +13701,52 @@ and demo gates green. Endpoints smoke-tested live: the undo fails closed at 401 
 the retired fee-prefill returns 405.
 
 **No migration.** The accept RPC still accepts a dues argument; it is simply never passed one.
+
+## §111 · A filter count is a promise about the list — BUILT, awaiting QA
+
+**BUILT 2026-08-26 (dev).** Money centralization **P3 follow-on**, found while walking §104.
+**No migration.** ⚠ Read **§104 phase A** alongside this — it changes the number that phase asks
+you to look at.
+
+**What a coach gets.** Filtering Money by a tag gave two different answers to one question a few
+inches apart: the option in the **Tags** list said **(1)** while the band under the toolbar said
+**across 3 costs**. Both were true — the option counted tagged *records*, the band counted *rows on
+screen* — and a commitment paid in three installments is one record and three rows. The number on a
+filter option is now a promise about the list underneath it: **how many rows will I see if I tick
+this?**
+
+- [ ] **Transactions → tick a tag on a commitment paid in installments.** The option's number and
+      the band's count are **the same number**, and both match the rows you can count on screen.
+- [ ] **Payables → Group by: commitment.** The number counts **bills** — one commitment reads (1)
+      however many installments it carries. The band agrees.
+- [ ] **Payables → Group by: due date**, same tag. The number changes to count **payments**, and the
+      band changes with it. ⚠ Flipping the arrangement changes the number, and that is the point
+      rather than a bug: the two arrangements put different things on screen.
+- [ ] **Narrow the Date pill until a tag's costs fall outside the window.** That tag now reads
+      **(0)** — and **stays in the list**. ⚠ It must never disappear: a vanishing option is a
+      control you cannot use to undo the thing that hid it.
+- [ ] **Same with Status.** Untick every status a tag's rows wear and it reads (0), still listed.
+- [ ] ⚠⚠ **Payables, on a team its club bills.** Tick any tag — **every club bill must leave the
+      list.** Until now they ignored the tag pill completely and sat among the results, while the
+      band beneath them counted only the tagged team bills, so the caption disagreed with the rows
+      above it.
+- [ ] **Clear the tag.** Club bills return, every count returns, nothing else moved.
+
+**And the fold toggle stops offering to fold one thing.**
+
+- [ ] **Payables showing a single commitment.** The **Open all / Fold all** button is **gone**, and
+      that commitment arrives **open** rather than folded behind its chevron.
+- [ ] **Its own chevron still folds it.** The default changed; the control did not go away.
+- [ ] **Payables with two or more commitments.** The button is back, reading **Open all**; the
+      due-date arrangement still opens with its periods open and the button reading **Fold all**.
+
+⚠ **It is one button wearing two labels.** "Open all" and "Fold all" are the same control — it says
+"Open all" only because bills arrive folded. Deleting the label you happen to be looking at deletes
+the other, which is why it was narrowed to lists of two or more rather than removed.
+
+### Gate
+
+Typecheck 0 · units **2,618/2,618** · lint 0 errors (17 warnings, every one pre-existing and none in
+a changed block). **Owed: the rendered layout sweep.** A single-commitment Payables screen now opens
+its one bill by default, which changes what that screen measures on a one-bill fixture; not run
+because the dev server is shared with other live sessions.
