@@ -13341,3 +13341,175 @@ changing it moves column widths on every table in the product.
    that matters: check that nothing you actually print is missing from that list, and that nothing
    on it is a document you cannot produce.** That is the exact error this pass made and corrected.
 4. No product decision is owed. The finding that appeared to need one was not real.
+
+---
+
+## §108 · The platform stops writing the offer letter — tryout decision emails removed outright — BUILT, awaiting QA
+
+**Owner ruling 2026-08-26, binding.** *"Offers come with custom letters they need to sign, often
+conditional requiring conversations and some back and forth potentially, an email from FLHQ I would
+never expect to be used in this case and therefore is only a risk of being sent when someone fat
+fingers something."* Plan + PM brief: `COACH_TRYOUT_EMAIL_REMOVAL_{PLAN,PM_BRIEF}.md`. **This
+reverses D-E9 (2026-07-30).**
+
+### What the owner sees
+
+**Tryouts → Decide** loses the "Email families my decisions" switch above the buttons, and every
+offered player's row loses "✉ Email this offer". Offer / Waitlist / Not this season now only record
+the decision. Accepting a player onto the roster sends nothing either. **The same removal on the
+club-admin tryouts screen** (Rep Teams → team → program year → Tryouts).
+
+- The **"Pass on ___?" confirmation is gone** — it existed only because a release email could not be
+  unsent. A pass is now a private record, changeable in one tap.
+- **Response badges are gone** (awaiting / family accepted / declined / expired), along with the
+  "declined by family" tally and the stale-offer banner. The offered row's button reads plainly
+  **Accept → add to roster**.
+- The **family Accept/Decline page is retired** — it only ever arrived inside the offer email. A link
+  already sitting in a family's inbox stops working.
+- **Tryout report** loses three figures that could only count emailed offers (awaiting reply, offers
+  expired, declined by family). Turnout / evaluated / **Offers extended** / accepted / on-roster are
+  untouched — "offered" is stamped when the decision is recorded, never when mail goes out.
+- **"Tryout offer response" disappears from a coach's notification settings.**
+- **Kept on purpose:** the *"application received"* receipt a family gets when **they** submit the
+  public form (their receipt for their own action — without it an applicant has no proof it landed),
+  and the "no email on file" chip, reworded, because a coach who now delivers every decision
+  personally needs it more.
+
+### ⚠ Five customer-facing PROMISES had to be rewritten, and four were found by `/review`, not by me
+
+The removal itself propagated cleanly — the security, data-contract, correctness and regression
+lenses found **no Critical or High defects**. What nearly shipped was the product still *promising*
+the emails, in five places, in five different vocabularies:
+
+| Surface | What it said |
+| --- | --- |
+| **Public tryout form** | *"We'll email you about this application either way — offers, waitlist and roster updates."* |
+| **Club-admin help, consent FAQ** | *"Status emails about their own application (offer, waitlist, decline, welcome) … are sent regardless — the form says so plainly."* |
+| **Families help, unsubscribe FAQ** | *"Dues reminders and tryout emails still go out. A family can't switch off a bill, or an offer of a roster spot…"* |
+| **Coach "How tryouts work" guide** | *"Reach families yourself — or turn on family emails and offers land with a secure reply link."* |
+| **Demo seed, public tryout page** | *"Decisions go out by email within a week of callbacks."* |
+
+⚠⚠ **The first sweep grepped the control LABELS and every one of these phrased the idea differently,
+so none matched.** The club-admin one sat **15 lines below** a passage that HAD been rewritten in the
+same file, and it cross-referenced the very form sentence just corrected. The families one is the
+script staff read to a complaining parent — it would have produced a false statement *to a family*.
+The demo one is **seeded data on a page that is live on production**, unreachable by any code grep.
+**Sweep the concept in the customer's words, not the identifiers the code uses.**
+
+### What to walk
+
+1. **Coach board** — Tryouts → Decide on a team with candidates. Confirm **no email switch above the
+   buttons** and **no send button** on an offered row. Make each decision; confirm it sticks, no
+   confirmation dialog appears on "Not this season", and no email arrives anywhere.
+2. **Accept a player** onto the roster with fees. Confirm no welcome email.
+3. **Club-admin tryouts screen** — same: no checkbox above the tabs, Extend Offer / Waitlist /
+   Decline / Accept all silent, and the applicant panel shows no "Offer response" section.
+4. **Tryout report** — confirm the funnel reads turnout → evaluated → offers extended → accepted →
+   on roster with no gap or zeroed column.
+5. **Help** — search "email" in coach help and in the club Rep Teams help; confirm nothing describes
+   a switch or an offer email.
+6. **Public tryout form** — confirm it promises only the application receipt.
+
+### Gate
+
+Typecheck 0 · units **2,596/2,596** · lint 0 errors · token, CSS-purity, spelling, contrast, date,
+dictionary, index-coverage, org-context, observability, marketing-shot and demo gates green.
+`check:layout` on **coach-tryouts: zero new findings** at 361/390/768/1440.
+
+⚠ **Two honest gaps.** The full layout sweep **aborted on the memory floor** at screen 6 of 118 (an
+abort is a failure, not a pass) — the scoped re-run above is what covers this change; the rest of the
+portal is unmeasured this pass. And **schema parity is red on migrations 262/263 from other work**
+(dev-only), which predates this change.
+
+### ⚠ Owed before this can ship
+
+- **Migration 264 is applied NOWHERE** (it retires three now-unsendable platform email templates).
+- **The demo fix is SEED DATA** — only a full demo reseed writes it. The demo world still shows the
+  old sentence until reseeded, on dev now and **on production at release**.
+
+---
+
+## §109 · Money stops flashing — one loading state, one convention, and a retry that a thumb can hit — ✅ OWNER QA PASSED 2026-08-26
+
+**✅ OWNER QA PASSED 2026-08-26** (owner sign-off, same session as the build). No migration; no
+schema change; nothing owed before this can ship. The steps below are kept as the walked record.
+
+**BUILT ON DEV 2026-08-26.** Raised by the owner from two screenshots: Money's loading text was
+bigger than the rest of the portal, said only "Loading", and had no pulsing dot — and Transactions
+flashed its empty-state card before the data arrived.
+
+### What changed, in the owner's terms
+
+1. **One loading state across the whole coach portal.** Money, Roster, team home, Settings, Staff,
+   Tryout history, announcements, team chat, the awards certificate, the depth chart, development,
+   the recap preview and the schedule's attendance/lineup panels had each drifted onto whatever
+   muted text style was nearest. All now use the house pulsing-dot line, at the house size, naming
+   what is coming ("Loading the register…", "Loading the dues book…"). The last three-period
+   "Loading..." spellings are gone.
+2. **Transactions no longer flashes "Nothing on the books yet".** A superseded read was switching
+   the screen from loading to done having written nothing, so the full empty-state card — headline,
+   teaching copy, Add Expense and Add Income — rendered for a beat before the real register
+   replaced it.
+3. **Recording money no longer blanks the screen.** Rows change under the coach instead of the whole
+   book dropping out and coming back. Club was the last tab still blanking on someone else's write;
+   it joined too.
+4. **Figures can no longer silently revert** on Budget Plan, Budget vs. Actual and Fundraisers — a
+   slow older read can no longer overwrite a newer one.
+5. **A failed load is no longer a dead end.** All seven Money tabs and the hub offer *Try again*.
+
+### The rule this establishes (binding for the next money panel)
+
+Three cases, not two — written once in `lib/coach-money-refresh.tsx`:
+- **The coach asked for it** (mount, *Try again*) → loud: spinner, and a failure takes the screen.
+- **The coach's OWN write** → quiet about the spinner, **never** about the failure. The screen it
+  would be keeping is the one the save just made wrong.
+- **Somebody ELSE's write** → quiet: keep the last good screen, swallow the failure.
+
+### A · The loading line, on every screen
+
+- Open each Money tab cold. Small text, pulsing dot, a sentence naming the screen — identical in
+  weight and position to Schedule's "Loading events…".
+- Same on Roster, team home, Settings, Staff, Tryout history, announcements, chat.
+- Walk **both themes**: warm is the default, and the dot takes its colour from a remapped token.
+
+### B · The flash is gone
+
+- Open Transactions on a team **with** rows. The empty-state card must never appear, at any speed.
+- Open it on a team with **no** rows. The empty state appears once, after loading — not before.
+
+### C · Recording money leaves the screen up
+
+- On Transactions, record an expense. The book must not blank; the new row simply appears.
+- With Budget vs. Actual open, record money from the hub. The report refreshes without flashing.
+
+### D · Honesty when a refresh fails
+
+- On Transactions, save a record with the network throttled to failing. Expect: the save succeeds,
+  the figures stay on screen, and a line above the book says the figures may be out of date, with
+  **Refresh**. It must **not** silently show pre-save numbers.
+
+### E · The retry is reachable
+
+- At 361 / 390 / 768, the *Try again* control is a real target (44px), not a hairline of text.
+
+### Gate
+
+Typecheck 0 · units **2,596/2,596** · lint 0 errors · CSS-purity, token, spelling, index-coverage,
+dictionary, org-context, observability and demo gates green.
+`check:layout` on the seven money screens at 361/390/768/1440: **zero findings from this change**
+after the tap-floor fix below.
+
+⚠ **What the gates caught that nothing else did.** The rendered check found the new *Try again*
+button at **15px** against the 44px floor on all three touch widths — invisible to types, tests,
+lint and four review agents, because it only exists once a browser has laid the page out. Fixed.
+
+⚠ **Found by `/review`, both fixed, both worth remembering.** (1) The post-save refresh was
+swallowing its own failures — a coach on a bad connection could have re-recorded a payment they had
+already made. (2) Six UAT specs waited on the literal text "Loading…" to disappear as their signal
+that a screen had loaded; naming the loading states broke that match and **silently turned the wait
+into a no-op**. They now watch the loading element itself, which no copy change can break.
+
+### ⚠ Pre-existing, surfaced here, NOT fixed (belongs to the header-actions work)
+
+- **"Record money" measures 31px at 768** on Budget vs. Actual and Fundraisers — under the same tap
+  floor. It is a page-header action from other in-flight work and was deliberately left alone.
