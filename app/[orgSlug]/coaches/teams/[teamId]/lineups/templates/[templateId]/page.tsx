@@ -130,8 +130,16 @@ export default function TemplateBuilderPage({
         icon={ListOrdered}
         title={isNew ? 'New template' : 'Edit template'}
         actions={canLineups && !loading && !loadError ? (
-          <button type="button" className="btn btn-lime btn-sm" disabled={saving} onClick={handleSave} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Check size={15} /> {saving ? 'Saving…' : 'Save template'}
+          /* ⚠ A SAVE, NOT A CREATE — but it takes the header's primary geometry all the same,
+             because the slot is what decides the size (plan §2.6, swept in Phase 4b). The inline
+             flex/gap this replaces was the last hand-written sizing on a coach page header. */
+          <button
+            type="button"
+            className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
+            disabled={saving}
+            onClick={handleSave}
+          >
+            <Check size={15} aria-hidden /> {saving ? 'Saving…' : 'Save template'}
           </button>
         ) : undefined}
         helpLabel="Lineup templates"

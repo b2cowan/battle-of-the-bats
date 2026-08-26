@@ -13515,3 +13515,54 @@ into a no-op**. They now watch the loading element itself, which no copy change 
 
 - **"Record money" measures 31px at 768** on Budget vs. Actual and Fundraisers — under the same tap
   floor. It is a page-header action from other in-flight work and was deliberately left alone.
+
+---
+
+## §110 · Schedule's Add Event stops being the odd one out — BUILT, awaiting QA
+
+**BUILT 2026-08-26 (dev).** Page-level action consistency, **Phase 4b** — the last build work in
+`COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`. **No migration.** Follows §105, which signed off the
+guard and the keyboard pattern this now extends to a fourth screen.
+
+**What a coach gets.** Schedule's **Add Event** was the one create-with-a-choice in the portal that
+answered no keys at all — and worse, it never closed on its own. Open it, click anywhere else, and
+the list of event types just sat there over the page. It now behaves like the other three menus.
+
+- [ ] **Open Schedule and press Add Event.** The six choices appear as before, in the same order,
+      with **Game (Tournament)** still indented under **Tournament** and every type still wearing its
+      own colour.
+- [ ] **Click somewhere empty with the menu open.** It closes. ⚠ **This is the fix worth checking
+      first** — before today it stayed open indefinitely.
+- [ ] **Press Escape with it open.** It closes and focus returns to the button. Also new.
+- [ ] **Tab to the button and press Enter.** It opens with the first choice already highlighted;
+      arrows move between choices and wrap; Home and End jump to the ends; Tab closes it and carries
+      on down the page.
+- [ ] **Pick any type.** The Add form opens exactly as it always did — same fields, same defaults.
+- [ ] **On a phone the button is still a bare +** in the title line's corner, and Import still drops
+      out below 640px.
+- [ ] **The empty-state card still works.** On a team with no events, the *Add Event* button inside
+      the "No events scheduled yet" card still opens the same list of types up in the page header.
+      ⚠ That mid-page-button-opens-a-header-menu behaviour is unchanged from before — noted because
+      it looks odd on purpose, and re-deciding it was out of scope here.
+
+**Two smaller things in the same pass:**
+
+- [ ] **Link Organization's Refresh** and the **lineup template editor's Save** now match every other
+      coach header button in size and weight. They were the last two writing their own sizing. Check
+      they look at home rather than slightly off.
+- [ ] **Nothing else moved** — Roster, Money, Drills, Plan templates and Overview are untouched.
+
+**⚠ Three things that looked like defects and were not**, recorded because each would have been
+reported: the rendered check flagged Add Event as a "new" finding when only its *accessible name* had
+changed (same button, same size — the baseline is keyed on the name); "Enter doesn't open it" was a
+dev server serving a build from before the edit; and "picking a choice no longer opens the form" was
+the test looking for the wrong kind of panel. The form opens with ten fields, verified.
+
+**⚠ Known, unchanged, do not report:** the Money hub's Import button still switches itself off while
+an import loads, so focus has nowhere to go for the length of the fetch — pre-existing, and the one
+item in this project that has never been reachable because that screen is permanently under edit by
+other work.
+
+**Verification note:** the full rendered sweep is **still owed** (see §105). Schedule was measured at
+every width with no findings attributable to this change, and fourteen keyboard behaviours were
+verified in a real browser.

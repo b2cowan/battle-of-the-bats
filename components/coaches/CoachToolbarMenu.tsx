@@ -56,6 +56,8 @@ export function CoachToolbarMenu({
   disabled = false,
   variant = 'secondary',
   collapseOnPhone = false,
+  open: openProp,
+  onOpenChange,
   children,
 }: {
   /** The button's words — a plain string, so it is also the accessible name. */
@@ -74,9 +76,32 @@ export function CoachToolbarMenu({
    * says what is being created; a toolbar trigger has no such anchor and keeps its word.
    */
   collapseOnPhone?: boolean;
+  /**
+   * ⚠ **CONTROLLED MODE, AND IT EXISTS FOR EXACTLY ONE SHAPE: A DOOR ELSEWHERE ON THE PAGE THAT
+   * OPENS THIS MENU** (Schedule's empty state, Phase 4b). Leave both undefined and the menu owns
+   * its own state, which is what every other caller wants.
+   *
+   * Schedule's "No events scheduled yet" card carries an *Add Event* button that opens the page
+   * header's menu — the coach presses a button mid-page and the choices appear in the header. That
+   * is pre-existing behaviour and not this phase's to re-decide, but it is why the shared component
+   * needed a way to be opened from outside. **Do not reach for this to drive a menu from a sibling
+   * toolbar** — a menu that opens somewhere other than the control that was pressed is a thing to
+   * justify, not a pattern to spread.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openSelf, setOpenSelf] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openSelf;
+  /* One setter for both modes, so nothing below has to know which one it is in. An uncontrolled
+     menu keeps its own state AND still reports out, so a caller may watch without taking over. */
+  const setOpen = useCallback((next: boolean | ((was: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(open) : next;
+    if (!controlled) setOpenSelf(value);
+    onOpenChange?.(value);
+  }, [controlled, onOpenChange, open]);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -236,18 +261,36 @@ export function CoachToolbarMenuItem({
   label,
   hint,
   disabled = false,
+  nested = false,
   onSelect,
 }: {
   icon?: ReactNode;
   label: ReactNode;
   hint?: ReactNode;
   disabled?: boolean;
+  /**
+   * This choice makes a CHILD of the one above it — indented, with a turn-down mark.
+   * Schedule's *Tournament game* sits under *Tournament* this way, because a game slot belongs to a
+   * tournament and a coach should see that where they create one.
+   *
+   * ⚠ Structure, not decoration: indent a row only where the thing it makes genuinely belongs to
+   * the thing above. It stays an ordinary `menuitem` — arrow keys treat it like any other row,
+   * because a screen reader user should not have to learn a second navigation model to reach it.
+   */
+  nested?: boolean;
   onSelect: () => void;
 }) {
   return (
     // `tabIndex={-1}`: a roving menu has ONE tab stop, the trigger. Arrow keys move between items
     // (see the component doc above); Tab leaves the menu entirely.
-    <button type="button" className={styles.item} role="menuitem" tabIndex={-1} disabled={disabled} onClick={onSelect}>
+    <button
+      type="button"
+      className={`${styles.item}${nested ? ` ${styles.itemNested}` : ''}`}
+      role="menuitem"
+      tabIndex={-1}
+      disabled={disabled}
+      onClick={onSelect}
+    >
       {icon && <span className={styles.itemIcon}>{icon}</span>}
       <span className={styles.itemText}>
         <span className={styles.itemLabel}>{label}</span>

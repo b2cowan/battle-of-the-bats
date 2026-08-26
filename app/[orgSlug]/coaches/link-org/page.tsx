@@ -214,7 +214,11 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         icon={Building2}
         title="Link Organization"
         actions={
-          <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks} aria-label="Refresh">
+          /* Portal geometry, not the global button scale (plan §2.6 — the drift vector the
+             inventory named, swept here in Phase 4b). This is one of only two header buttons that
+             still hand-wrote its own sizing; the page-actions guard carries a row for each so they
+             were known debt rather than a future discovery. */
+          <button type="button" className={styles.btnSecondary} onClick={loadLinks} aria-label="Refresh">
             <RefreshCw size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Refresh</span>
           </button>
         }

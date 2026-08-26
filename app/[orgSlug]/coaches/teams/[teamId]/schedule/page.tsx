@@ -21,6 +21,7 @@ import {
   type ExportColumnDef, type ICSEventInput,
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
@@ -2090,35 +2091,40 @@ export default function CoachesSchedulePage({
           events POST 403s, so this was a button that could only ever fail — and once the empty
           state started saying "adding events needs schedule access", leaving it here contradicted
           that outright. */}
+      {/* ⚠⚠ **THE LAST HAND-ROLLED COPY OF THIS PATTERN, FOLDED IN (Phase 4b, 2026-08-26).** This
+          was the portal's one create-with-a-choice that did not use `CoachToolbarMenu`, and the
+          gap was not cosmetic: the hand-rolled panel answered NO key at all and closed only when
+          a choice was picked — click the button, click elsewhere, and the menu stayed open over
+          the page. It now inherits the whole pattern (arrows, Home/End, Tab, Escape, click-away,
+          and the focus hand-back) for free, which is the entire argument for having one component
+          rather than four near-copies. */}
       {canAddEvents && (
-        <div className={styles.addEventWrap}>
-          <button
-            className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
-            /* House rule 3: the words go on a phone, the aria-label carries them. */
-            aria-label="Add event"
-            onClick={() => setAddTypeMenuOpen(v => !v)}
-          >
-            <Plus size={15} aria-hidden />
-            <span className={styles.headerBtnLabel}>Add Event</span>
-          </button>
-          {addTypeMenuOpen && (
-            <div className={styles.addEventMenu}>
-              {ADD_MENU.map(({ type, nested }) => {
-                const Icon = EVENT_ICONS[type];
-                return (
-                  <button
-                    key={type}
-                    className={`${styles.addEventMenuItem}${nested ? ` ${styles.addEventMenuSubItem}` : ''}`}
-                    onClick={() => openAddForm(type)}
-                  >
-                    <Icon size={14} style={{ color: EVENT_COLORS[type] }} />
-                    {EVENT_LABELS[type]}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <CoachToolbarMenu
+          label="Add Event"
+          icon={<Plus size={15} aria-hidden />}
+          variant="primary"
+          /* House rule 3: the words go on a phone and the label survives as the accessible name. */
+          collapseOnPhone
+          /* Controlled, because the empty state's own "Add Event" opens THIS menu — see the prop's
+             note. Every other caller in the portal leaves the menu to own its state. */
+          open={addTypeMenuOpen}
+          onOpenChange={setAddTypeMenuOpen}
+        >
+          {ADD_MENU.map(({ type, nested }) => {
+            const Icon = EVENT_ICONS[type];
+            return (
+              <CoachToolbarMenuItem
+                key={type}
+                nested={nested}
+                /* The per-type colour is set on the icon itself, so it beats the shared slot's
+                   olive without either one having to know about the other. */
+                icon={<Icon size={15} style={{ color: EVENT_COLORS[type] }} />}
+                label={EVENT_LABELS[type]}
+                onSelect={() => openAddForm(type)}
+              />
+            );
+          })}
+        </CoachToolbarMenu>
       )}
       {/* House rule 1 — picking a file is desktop work, so this hides below 640px while the
           create keeps the corner. Gated on the same grant as Add Event; a read-only assistant

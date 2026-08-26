@@ -960,3 +960,93 @@ sequential; each is independently shippable.
 
   **Still owed regardless of 4b:** the full `check:layout` sweep (see the 4a entry — it aborted on
   the memory floor and a targeted sweep plus a revert control stood in for it).
+- **2026-08-26** — **A 31st page header, and a PILOT amendment to the 2026-08-11 back-link clause.**
+  Money → Payables → one commitment became a **sub-view of the Payables tab** (`?bill=`), so the
+  Payables list panel now renders a second `CoachPageHeader` — `variant="nested"`, help hosted by
+  the masthead, actions **Record · Edit · Add an installment** (both secondaries wide-only on a
+  phone, `actionsPhoneInTitleRow`). Recorded in the guard's `SITES`.
+  ⚠ **House rule 4 caught a real defect on the way in.** The three buttons were lifted out of a
+  modal footer, where the primary sits LAST — in a header the create goes FIRST, at every width.
+  The guard failed the build; the order was corrected. *A footer reads right-to-left, a header
+  reads left-to-right, and moving controls between the two is not a move.*
+  ⚠ **`backTo` is new on `CoachPageHeader` and is a PILOT — one call site only** (owner, same day:
+  *"try your recommendations for this screen only, and after I evaluate the real case… you can move
+  ahead and update the remaining 17"*). It draws the way UP in the header's leading corner, the
+  mirror of the help "?" at the trailing one, and deletes the separate blue back row (~40px desktop
+  / ~52px phone). It amends ONE clause of the 2026-08-11 ruling — *"a way back is neither the
+  name nor the actions"* — using that ruling's own reasoning about the "?" being chrome. Every
+  other drill-in still wears `CoachBackLink`; the portal has two treatments until the pilot is
+  ruled on, which is deliberate and temporary. `KNOWN_PROPS` carries the same warning.
+
+- **2026-08-26** — **PHASE 4b BUILT on dev. The plan's build work is COMPLETE.** No migration.
+
+  **Schedule's Add Event was the portal's last hand-rolled copy of the menu pattern, and the gap was
+  not cosmetic.** That panel answered **no key at all** and closed only when a choice was picked —
+  click the trigger, click anywhere else, and it stayed open over the page indefinitely. It now uses
+  `CoachToolbarMenu` and inherits the whole pattern for free: arrows with wrap, Home/End, Down/Up on
+  a closed trigger, Tab, Escape, click-away, and the focus hand-back. **That is the entire argument
+  for one component instead of four near-copies**, and it is worth noting the copy here was written
+  by someone who simply did not have a shared one to reach for.
+
+  **Two additions the shared component needed, both generic:**
+  1. **Controlled open** (`open` / `onOpenChange`). Schedule's empty-state card carries its own *Add
+     Event* button that opens the **page header's** menu — a coach presses a button mid-page and the
+     choices appear in the header. ⚠ That is pre-existing behaviour and was not this phase's to
+     re-decide, but it is why the shared component needed an outside opener. The prop's own note says
+     not to spread it: a menu that opens somewhere other than the control that was pressed is a thing
+     to justify, not a pattern.
+  2. **Nested items** (`nested`). *Tournament game* sits indented under *Tournament* with a turn-down
+     mark, because a game slot belongs to a tournament. It stays an ordinary `menuitem` — arrow keys
+     treat it like any other row, so no screen-reader user has to learn a second navigation model.
+
+  **§2.6's drift vector is closed.** The last two header buttons that hand-wrote their own sizing —
+  `link-org`'s Refresh (global `btn btn-ghost btn-sm`) and the lineup-template editor's Save (`btn
+  btn-lime btn-sm` plus inline flex) — now take the portal's own geometry. Both had been **recorded
+  as rows in the Phase 4a guard**, which is why they were a scheduled item rather than a rediscovery.
+
+  **Dead CSS removed** (`.addEventWrap` / `.addEventMenu` / `.addEventMenuItem` /
+  `.addEventMenuSubItem`), replaced by a tombstone comment naming where the nesting mark went.
+
+  **Verified in a real browser — 14 assertions on the live Schedule page**, every one of them
+  behaviour that screen did not have this morning: open-onto-first, arrows reaching the nested
+  choice, Home/End, wrap, Escape closing (it did not before), click-away closing (it did not before),
+  Tab, focus handed back each time, picking a choice still opening the add form, the nested row
+  actually indented (9.6px → 32px), and six distinct per-type icon colours surviving the shared slot.
+
+  **⚠⚠ THREE FALSE ALARMS, AND EACH ONE WOULD HAVE BEEN WRITTEN UP AS A DEFECT BY A READER:**
+  1. **A "new" tap-floor finding on Add Event at 768.** It is the **same control at the same 31px**,
+     already grandfathered — its ACCESSIBLE NAME changed from `Add event` to `Add Event`, because the
+     shared trigger uses the label as its phone aria-label while the old button hard-coded a
+     lowercase one. The baseline entry's own reason recorded it being renamed the *other* way once
+     before. Renamed, and the new name matches the visible text, which is what a voice-control user
+     says. **A rendered baseline keyed on accessible name reports a RENAME as a defect.**
+  2. **"Enter does not open the menu, but ArrowDown does."** Reproduced twice, then vanished — the
+     dev server was serving a build from before the edit. **An inconsistent result across identical
+     runs is a stale compile until proven otherwise.**
+  3. **"Picking a choice no longer opens the form."** The probe looked for a `<form>` or a dialog;
+     Schedule's add form is an inline panel. It opens "Add Team Event" with ten fields, exactly as
+     before. **A failing assertion is a claim about the assertion first.**
+  The real lesson under all three: `domcontentloaded` plus a visible `<h1>` is **not** interactive on
+  a 2,900-line client page. Every early failure here was a probe clicking before hydration; waiting
+  for network idle made all of it deterministic.
+
+  **Found and fixed on the way past:** `coach-schedule-smoke`'s read-only sweep is commented *"No
+  Import and no Add Event anywhere"* and asserted **only Import** — so half of "a coach without the
+  grant sees no write door" has been unproven for as long as that test has existed. The Add Event
+  assertion now exists. **A sentence in a test is not a test**, and this one sat directly above the
+  line that was doing the work.
+
+  **Gate:** typecheck ✓ · focused lint ✓ (0 errors) · unit suite ✓ 2,503/2,503 · CSS purity ✓ ·
+  tokens ✓ · spelling ✓ · `check:layout` ✓ on Schedule at 361 / 390 / 768 / 1440 with no findings
+  attributable to this change.
+  ⚠ **Two things in the tree are NOT ours and were excluded deliberately:** another session's
+  uncommitted `demo-sandbox-exit` test fails and does not typecheck. **That is the coupling the
+  Phase 4a `/review` predicted within hours of `npm test` joining `verify:changed`** — a foreign
+  broken test now blocks the chain for everyone. It is working as designed; whether that trade is
+  right is the owner's call, and it is now a real data point rather than a hypothetical.
+
+  **Still open, and none of it is build work:** the `.recordMoneyBtn` alias (the Money hub went back
+  under edit — it is the one item that has never been reachable), the full `check:layout` sweep, and
+  the two gate decisions raised by the 4a review (`npm test` in the deploy build, and giving
+  `verify:changed` the branch guard `amplify.yml` already has so its last six checks stop being
+  skipped).

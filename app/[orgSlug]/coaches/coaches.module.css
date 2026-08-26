@@ -5069,48 +5069,11 @@ a.oneChip:hover { border-color: currentColor; }
   .viewToggleBtn { min-height: var(--tap-min, 44px); }
 }
 
-.addEventWrap { position: relative; }
-.addEventMenu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.25);
-  border-radius: 8px;
-  padding: 0.35rem 0;
-  min-width: 190px;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  /* The phone tap floor makes each row ~44px, so the open menu is ~65px taller there than
-     its desktop self — cap it and let it scroll rather than run off a short (landscape)
-     viewport. Harmless on tall phones: 6 rows fit inside the cap. */
-  max-height: min(60vh, 340px);
-  overflow-y: auto;
-}
-.addEventMenuItem {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  padding: 0.5rem 1rem;
-  font-size: 0.88rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.1s;
-}
-.addEventMenuItem:hover { background: var(--home-olive-soft, rgba(255,255,255,0.06)); }
-/* Tournament game nests under Tournament so the parent/child relationship is visible. */
-.addEventMenuSubItem { padding-left: 2.1rem; position: relative; }
-.addEventMenuSubItem::before {
-  content: '↳';
-  position: absolute;
-  left: 1.05rem;
-  color: var(--text-tertiary);
-  font-size: 0.82rem;
-}
+/* ⚠ Schedule's hand-rolled add-event menu lived here (.addEventWrap / .addEventMenu /
+   .addEventMenuItem / .addEventMenuSubItem) until Phase 4b, 2026-08-26. It folded into the
+   shared CoachToolbarMenu, which brought the keyboard pattern, click-away and the focus hand-back
+   with it — none of which the copy here had. The nesting mark it carried (a turn-down arrow under
+   Tournament) moved to .itemNested in that component's own stylesheet. */
 
 .wltWidget {
   display: flex;

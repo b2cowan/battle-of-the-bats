@@ -76,6 +76,19 @@
 .item:hover:not(:disabled) { background: var(--home-olive-soft, var(--white-05)); }
 .item:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* A choice that makes a CHILD of the one above it (Schedule: Tournament game under Tournament).
+   Declared AFTER .item so the padding actually wins — same-specificity rules in this stylesheet
+   are decided by source order, and a modifier written above its base is a silent no-op. */
+.itemNested { padding-left: 2rem; position: relative; }
+.itemNested::before {
+  content: '↳';
+  position: absolute;
+  left: 0.95rem;
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
 .itemIcon {
   flex-shrink: 0;
   display: inline-flex;

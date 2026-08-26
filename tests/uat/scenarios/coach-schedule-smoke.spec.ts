@@ -579,7 +579,11 @@ test('a coach without the schedule grant sees no write door, and every schedule 
   await open(page, `${base()}`);
 
   // No Import and no Add Event anywhere on the overview or the schedule.
+  // ⚠ The Add Event half was only ever a COMMENT — the assertion below it checked Import alone, so
+  // "no write door" was half-proven for as long as this test has existed (found while folding the
+  // add-event menu into the shared component, 2026-08-26). A sentence in a test is not a test.
   await expect(main(page).getByRole('button', { name: /^Import$/ })).toHaveCount(0);
+  await expect(main(page).getByRole('button', { name: /^Add Event$/i })).toHaveCount(0);
 
   for (const [method, url, data] of [
     ['post', `${api()}/events`, { eventType: 'practice', name: 'nope', startsAt: `${D('09-08')}T18:00` }],
