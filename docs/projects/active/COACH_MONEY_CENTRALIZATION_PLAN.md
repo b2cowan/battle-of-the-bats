@@ -235,6 +235,85 @@ door that refuses dues and drive money.
 - The build prompt must re-verify §7 against the tree at build time (this repo's plans have been
   wrong before; this one is no exception by fiat).
 
+## 8b · P3 follow-on — a filter count is a promise about the list (owner ruling 2026-08-26)
+
+Raised by the owner mid-§104 walk, looking at Transactions filtered to one tag: *"is it accurate in
+the transactions screen to show the count as 1 when there are 3 rows?"* It was not. Two numbers
+answered one question a few inches apart, and both were true of different things — the **Tags**
+option counted tagged **records**, the band beneath counted **rows on screen**. A commitment paid in
+three installments is one record and three register lines.
+
+**⚖ THE RULE, in the owner's words:** *"the assumption when filtering a table is how many rows am I
+going to see when I filter, so we should show that figure."* The count on a filter option is a
+**promise about the list underneath it**, so it counts what ticking it will put there:
+
+| Face | Unit |
+|---|---|
+| Transactions | register lines |
+| Payables · Group by commitment | bills |
+| Payables · Group by due date | dated payments |
+
+That is the band's own unit on each face, so the two can no longer disagree — and it is taken over
+the rows every **other** control already admits (the same "count before THIS filter narrows" rule
+Status follows), so a tag whose rows the Date or Status pill excludes honestly reads **(0)**.
+
+⚠ **The ruling reached one place the owner did not name.** He reasoned that Payables "tags by
+group", so (1) is right there — true of *Group by: commitment*, but Payables has a second
+arrangement whose rows are dated payments. The band already switches nouns between them, so the
+count switches with it. Flipping the arrangement changes the number **by design**.
+
+⚠⚠ **WHICH TAGS ARE OFFERED IS NOT DERIVED FROM THE COUNTS, and that separation is load-bearing.**
+Zero is now an ordinary answer, so a list built from the counts would make an option **vanish** as a
+coach moved the date pill — the exact trap the tag memo's own header was written against ("the
+difference between a control and a trap"). The offer stays *every tag this face's records carry,
+plus anything selected*; only the number changed.
+
+⚠ **Structural, not duplicated.** Both faces tally from the row list they already render — the
+register extracts its status+date pipeline so it can run once for the book and once with the tag
+lifted; Payables tallies during the pass that builds the visible pieces. No second arithmetic, which
+is the rule `check:register` and `check:money-report` exist to hold.
+
+**A third defect fell out of the read.** Club bills were pushed onto the Payables list **after** the
+tag filter and so bypassed it entirely: filtering by an occasion left every club bill among the
+results, while the band counted only tagged team bills and therefore disagreed with the rows above
+it. The register's stated rule — *"every other row simply has no such label, which is a match of
+zero, not a match of all"* — now holds on both faces.
+
+### The fold toggle — built, then withdrawn at the gate
+
+Raised in the same message: *"can we remove Open all? seems like a button no one will select and is
+wasting space."* ⚠ **It is ONE control with two labels** — it reads "Open all" only because bills
+arrive folded, and the identical button reads "Fold all" on the due-date arrangement; deleting what
+was on screen would delete "Fold all" too, and a mobile UAT check clicks it by name. The complaint
+was real but its cause was the fixture: **one** commitment, so the button offered to open a single
+row. So it was narrowed rather than deleted — the toggle hidden below two groups, and a lone
+commitment arriving open.
+
+**⚠⚠ THAT BUILD WAS WRONG AND THE REVIEW CAUGHT IT — three independent lenses, same defect.**
+`flippedFolds` is a **delta, not a state**: it records the keys that differ from the current
+default. Making the default depend on the visible group count therefore reversed the meaning of
+every entry in it the moment a filter crossed the one-vs-many line. Open a bill among several, tick
+a tag that narrows to that bill, and it **re-folded itself** — hiding the very thing the coach had
+just narrowed to — with the bulk toggle hidden at the same instant, leaving only the row's own
+chevron to recover. The mirror case reopened a deliberately-folded bill when a filter widened.
+
+Both options were drawn (`claude.ai/code/artifact/64d185dd-beb6-45cb-a524-fa38eeb87b92`) — *a lone
+bill always open with its chevron removed*, versus *fold behaviour untouched*. The agent recommended
+the first; **the owner chose the second and gave the principle that governs it:**
+
+> ⚖ **"it doesn't change the format of the screen just because a user selected a filter."**
+
+That principle also condemns hiding the **button** on the filtered count — a control that vanishes
+because a tag was ticked is the same defect wearing a politer face — so that half came out too.
+**Net effect on folding: nothing changed.** The default is pinned to the arrangement alone, with a
+headstone at the line recording why it may never depend on anything else while the fold memory
+stays a delta.
+
+⚠ **OPEN, NOT BUILT.** The original complaint still stands for a team that genuinely has one
+commitment. Any future fix must test **the team's list, not the narrowed view**.
+
+**Owner QA §111.** No migration.
+
 ## 9 · Aftercare / links
 
 - Binding design principle logged in `memory/design_decisions.md` (2026-08-21, mental model over

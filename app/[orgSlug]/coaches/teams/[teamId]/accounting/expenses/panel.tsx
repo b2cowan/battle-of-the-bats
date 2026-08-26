@@ -2350,6 +2350,7 @@ function MoneyRecordsPanel({
    */
   const {
     showBalance, bookRows, bookStartingBalance, bookOpensSeason, bookEmpty, registerItemNames, statusCounts,
+    registerTagCounts,
   } = useMemo(() => {
     /* ⚠⚠ WHEN A FILTER HIDES ROWS, THE BALANCE COLUMN HIDES WITH IT (plan §4.3). A running balance
        over a subset is a number that looks like cash and isn't — a coach reading "Expenses only"
@@ -2363,48 +2364,86 @@ function MoneyRecordsPanel({
       selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '',
       filterTagIds.size > 0 ? 'x' : '',
     );
-    const matchesKindItemTag = (r: RegisterBookRow) => {
+    const matchesKindItem = (r: RegisterBookRow) => {
       if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
       if (selectedItems.size > 0 && (!r.itemName || !selectedItems.has(r.itemName))) return false;
-      /* Money tags live on expenses, so a tag filter narrows the book to the rows that can carry one
-         — every other row simply has no such label, which is a match of zero, not a match of all. */
-      if (filterTagIds.size > 0) {
-        if (r.open?.kind !== 'expense') return false;
-        if (!(tagsByExpenseId[r.open.id] ?? []).some(id => filterTagIds.has(id))) return false;
-      }
       return true;
     };
-    const beforeStatus = (book?.book ?? []).filter(matchesKindItemTag);
+    /* Money tags live on expenses, so a tag filter narrows the book to the rows that can carry one
+       — every other row simply has no such label, which is a match of zero, not a match of all. */
+    const matchesTag = (r: RegisterBookRow) => {
+      if (filterTagIds.size === 0) return true;
+      if (r.open?.kind !== 'expense') return false;
+      return (tagsByExpenseId[r.open.id] ?? []).some(id => filterTagIds.has(id));
+    };
+    /**
+     * Status, then the date window — everything the pipeline does AFTER kind/item/tag.
+     *
+     * ⚠ EXTRACTED SO IT CAN RUN TWICE, and that is the whole reason it exists: once for the book on
+     * screen, and once over the same rows with the tag filter LIFTED, which is how the Tags
+     * dropdown counts what ticking an option would actually put in front of the coach. One
+     * pipeline, two callers — a second arithmetic over the same rows is precisely how a list and
+     * the figure captioning it drift apart (`check:register` exists because that already happened).
+     */
+    const windowRows = (rows: RegisterBookRow[]) => {
+      const statusFiltered = selectedStatus.size === 0 ? rows
+        : rows.filter(r => selectedStatus.has(registerStatusOf(r)));
+      /* ⚠⚠ OVERDUE ALWAYS IGNORES THE DATE RANGE, REGARDLESS OF WHAT ELSE IS SELECTED (owner call,
+         2026-08-19). It must never be the reason a coach doesn't see an open obligation — whether
+         they've narrowed to Overdue alone (an audit) or are browsing Actual + Overdue together (the
+         default). Actual and Scheduled rows are windowed normally. */
+      const overdueRows = statusFiltered.filter(r => r.overdueDays != null);
+      const rangeableRows = statusFiltered.filter(r => r.overdueDays == null);
+      /* An Overdue-only selection (neither Actual nor Scheduled chosen) isn't a slice of the
+         timeline, it's a cross-section of it — same as the old audit toggle. No starting balance to
+         state there; `rangeableRows` is empty by construction whenever this is true. */
+      const auditOnly = selectedStatus.size > 0 && !selectedStatus.has('actual') && !selectedStatus.has('scheduled');
+      /* ⚠⚠ THE WINDOW STARTS FROM THE CARRY (mig 262). "Starting balance" has always meant the real
+         cash immediately before the first visible row — with nothing before the window that used to
+         be zero, and on a season that carried money forward it is the carry. Left at zero, the
+         whole-season view would open on $0.00 while every row below it carried a higher balance. */
+      const { rows: ranged, startingBalance, isSeasonOpening } = auditOnly
+        ? { rows: rangeableRows, startingBalance: null as number | null, isSeasonOpening: false }
+        : applyDateRange(rangeableRows, dateRange.from, dateRange.to, book?.opening ?? 0);
+      /* Recombine in the book's own chronological order rather than concatenating the two groups —
+         `statusFiltered` is already ordered, so filtering IT by membership is simpler than merging
+         two separately-ordered arrays back together. */
+      const visibleIds = new Set([...ranged.map(r => r.id), ...overdueRows.map(r => r.id)]);
+      return { rows: statusFiltered.filter(r => visibleIds.has(r.id)), startingBalance, isSeasonOpening };
+    };
+
+    const kindItemRows = (book?.book ?? []).filter(matchesKindItem);
+    const beforeStatus = kindItemRows.filter(matchesTag);
     /* Counted BEFORE the Status selection narrows further — otherwise the dropdown's own counts
        would just report themselves back once picked, the same rule the old Overdue chip's count
        followed. */
     const counts: Record<RegisterStatus, number> = { actual: 0, overdue: 0, scheduled: 0 };
     for (const r of beforeStatus) counts[registerStatusOf(r)]++;
-    const statusFiltered = selectedStatus.size === 0 ? beforeStatus
-      : beforeStatus.filter(r => selectedStatus.has(registerStatusOf(r)));
-    /* ⚠⚠ OVERDUE ALWAYS IGNORES THE DATE RANGE, REGARDLESS OF WHAT ELSE IS SELECTED (owner call,
-       2026-08-19). It must never be the reason a coach doesn't see an open obligation — whether
-       they've narrowed to Overdue alone (an audit) or are browsing Actual + Overdue together (the
-       default). Actual and Scheduled rows are windowed normally. */
-    const overdueRows = statusFiltered.filter(r => r.overdueDays != null);
-    const rangeableRows = statusFiltered.filter(r => r.overdueDays == null);
-    /* An Overdue-only selection (neither Actual nor Scheduled chosen) isn't a slice of the
-       timeline, it's a cross-section of it — same as the old audit toggle. No starting balance to
-       state there; `rangeableRows` is empty by construction whenever this is true. */
-    const auditOnly = selectedStatus.size > 0 && !selectedStatus.has('actual') && !selectedStatus.has('scheduled');
-    /* ⚠⚠ THE WINDOW STARTS FROM THE CARRY (mig 262). "Starting balance" has always meant the real
-       cash immediately before the first visible row — with nothing before the window that used to
-       be zero, and on a season that carried money forward it is the carry. Left at zero, the
-       whole-season view would open on $0.00 while every row below it carried a higher balance. */
-    const { rows: ranged, startingBalance, isSeasonOpening } = auditOnly
-      ? { rows: rangeableRows, startingBalance: null as number | null, isSeasonOpening: false }
-      : applyDateRange(rangeableRows, dateRange.from, dateRange.to, book?.opening ?? 0);
-    /* Recombine in the book's own chronological order rather than concatenating the two groups —
-       `statusFiltered` is already ordered, so filtering IT by membership is simpler than merging
-       two separately-ordered arrays back together. */
-    const visibleIds = new Set([...ranged.map(r => r.id), ...overdueRows.map(r => r.id)]);
-    const finalRows = statusFiltered.filter(r => visibleIds.has(r.id));
+    const { rows: finalRows, startingBalance, isSeasonOpening } = windowRows(beforeStatus);
+    /**
+     * ⚖⚖ WHAT TICKING THAT TAG WOULD PUT ON SCREEN (owner ruling 2026-08-26). The number on a
+     * filter option is a promise about the list underneath it, so it counts ROWS — over the rows
+     * every OTHER control already admits, the same "count before THIS filter narrows" rule Status
+     * follows one block up.
+     *
+     * ⚠ IT COUNTS THE SAME UNIT THE BAND TOTALS, and that is the point: the register's unit is a
+     * LINE, so a commitment paid in three installments is one tagged record but three rows, and
+     * the option used to say "(1)" six inches above a band saying "across 3 costs".
+     *
+     * ⚠ WITH NO TAG TICKED THE TAG-FREE SET *IS* THE BOOK ON SCREEN, so the common case — reading
+     * the counts before picking anything — costs nothing. Only a live tag filter pays for the
+     * second pass, which is the case where the two sets genuinely differ.
+     */
+    const tagCountRows = filterTagIds.size === 0 ? finalRows : windowRows(kindItemRows).rows;
+    const registerTagCounts = new Map<string, number>();
+    for (const r of tagCountRows) {
+      if (r.open?.kind !== 'expense') continue;
+      for (const id of (tagsByExpenseId[r.open.id] ?? [])) {
+        registerTagCounts.set(id, (registerTagCounts.get(id) ?? 0) + 1);
+      }
+    }
     return {
+      registerTagCounts,
       showBalance: balanceShown,
       bookRows: finalRows,
       bookStartingBalance: startingBalance,
@@ -2566,7 +2605,9 @@ function MoneyRecordsPanel({
    * how it is laid out below. That is what makes "nothing appears, nothing disappears" true by
    * construction rather than by two code paths agreeing — the check §64 Part C walks.
    */
-  const { payBills, payStatusCounts, payItemNames } = useMemo(() => {
+  const {
+    payBills, payStatusCounts, payItemNames, payTagBillCounts, payTagPieceCounts,
+  } = useMemo(() => {
     const today = tournamentToday();
     const counts: Record<PayableRowStatus, number> = {
       outstanding: 0, overdue: 0, partly_paid: 0, paid: 0,
@@ -2589,7 +2630,15 @@ function MoneyRecordsPanel({
        now structurally impossible to read a bill's `next*` figures before they are real. */
     type PayBillDraft = Omit<PayBill,
       'pieces' | 'nextDue' | 'nextBadge' | 'nextDays' | 'nextPartly' | 'nextInstallmentId' | 'nextOwing'>;
-    const admitted: Array<{ bill: PayBillDraft; pieces: PayPiece[] }> = [];
+    /**
+     * ⚠ THE TAG FILTER IS RECORDED HERE AND APPLIED IN PASS TWO, not applied here. The Tags
+     * dropdown has to count what ticking an option WOULD show, which means walking the bills the
+     * tag filter currently excludes — impossible once they have been `continue`d past. `tagIds`
+     * carries what each bill is labelled with; `passesTag` is the answer this render needs.
+     */
+    const admitted: Array<{
+      bill: PayBillDraft; pieces: PayPiece[]; tagIds: readonly string[]; passesTag: boolean;
+    }> = [];
     const itemNames = new Set<string>();
 
     for (const e of allPayablesRaw) {
@@ -2597,17 +2646,19 @@ function MoneyRecordsPanel({
       if (name) itemNames.add(name);
       const standing = standings[e.id];
       if (!standing) continue;
+      if (payItems.size > 0 && (!name || !payItems.has(name))) continue;
       /* The tag pill, inlined rather than called through a helper: a predicate rebuilt on every
          render is a dependency this memo could never satisfy, and its two real inputs
          (`filterTagIds`, `tagsByExpenseId`) are already in the list below. */
-      if (filterTagIds.size > 0
-        && !(tagsByExpenseId[e.id] ?? []).some(id => filterTagIds.has(id))) continue;
-      if (payItems.size > 0 && (!name || !payItems.has(name))) continue;
+      const tagIds = tagsByExpenseId[e.id] ?? [];
+      const passesTag = filterTagIds.size === 0 || tagIds.some(id => filterTagIds.has(id));
 
       const count = standing.installments.length;
       const pieces: PayPiece[] = standing.installments.map(inst => {
         const statuses = installmentStatuses(inst, today);
-        for (const s of statuses) counts[s]++;
+        /* Status counts stay narrowed by the tag pill exactly as before — a bill the tag filter is
+           hiding must not add to the number beside a status a coach can tick. */
+        if (passesTag) for (const s of statuses) counts[s]++;
         return {
           key: inst.id,
           dueDate: inst.dueDate,
@@ -2644,6 +2695,8 @@ function MoneyRecordsPanel({
           standing,
         },
         pieces,
+        tagIds,
+        passesTag,
       });
     }
 
@@ -2660,11 +2713,18 @@ function MoneyRecordsPanel({
       if (bucket) bucket.push(r); else byAllocation.set(r.description, [r]);
     }
     for (const [description, rows] of byAllocation) {
+      /* ⚠⚠ A CLUB BILL CARRIES NO TAG, SO A TAG FILTER DROPS IT (fixed 2026-08-26). This is the
+         register's own rule — "every other row simply has no such label, which is a match of zero,
+         not a match of all" — finally applied to the other face. Until now these were pushed onto
+         the list AFTER the tag filter and so bypassed it entirely: filtering Payables by an
+         occasion left every club bill sitting among the results, while the band beneath counted
+         only the tagged team bills and therefore disagreed with the rows on screen. */
+      const passesTag = filterTagIds.size === 0;
       const pieces: PayPiece[] = rows.map(r => {
         const settled = !!r.paid;
         const status: PayableRowStatus = settled ? 'paid'
           : (r.dueDate ?? '') < today ? 'overdue' : 'outstanding';
-        counts[status]++;
+        if (passesTag) counts[status]++;
         return {
           key: r.id,
           dueDate: r.dueDate ?? today,
@@ -2695,6 +2755,8 @@ function MoneyRecordsPanel({
           unpaidCount: pieces.filter(p => !p.settled).length,
         },
         pieces,
+        tagIds: [],
+        passesTag,
       });
     }
 
@@ -2703,11 +2765,30 @@ function MoneyRecordsPanel({
        bill above, never from the visible slice: "$1,550 still owing" must not change because the
        coach ticked a filter. */
     const bills: PayBill[] = [];
-    for (const { bill, pieces } of admitted) {
+    /**
+     * ⚖⚖ WHAT TICKING THAT TAG WOULD PUT ON SCREEN (owner ruling 2026-08-26) — counted over the
+     * bills every OTHER control already admits, so the number on the option is a promise about the
+     * list underneath it rather than a census of the label.
+     *
+     * ⚠ BOTH UNITS ARE TALLIED HERE, and the arrangement picks one later. Payables shows bills
+     * under `Group by: commitment` and dated payments under `Group by: due date` — the band already
+     * switches nouns between them, so the count has to switch with it. Tallying both keeps `groupBy`
+     * OUT of this memo's dependencies: flipping the arrangement must not rebuild every bill.
+     */
+    const tagBillCounts = new Map<string, number>();
+    const tagPieceCounts = new Map<string, number>();
+    for (const { bill, pieces, tagIds, passesTag } of admitted) {
       const visible = payStatus.size === 0
         ? pieces
         : pieces.filter(p => p.statuses.some(s => payStatus.has(s)));
+      /* A bill Status has emptied is off the list, so it counts towards no tag either — the rows
+         and the number leave through the same `continue`. */
       if (visible.length === 0) continue;
+      for (const id of tagIds) {
+        tagBillCounts.set(id, (tagBillCounts.get(id) ?? 0) + 1);
+        tagPieceCounts.set(id, (tagPieceCounts.get(id) ?? 0) + visible.length);
+      }
+      if (!passesTag) continue;
       const next = pieces.find(p => !p.settled) ?? null;
       bills.push({
         ...bill,
@@ -2737,6 +2818,8 @@ function MoneyRecordsPanel({
     return {
       payBills: bills,
       payStatusCounts: counts,
+      payTagBillCounts: tagBillCounts,
+      payTagPieceCounts: tagPieceCounts,
       /* The words actually on THIS list, not the whole library — a filter offering an item the team
          has never committed against is a control that can only ever empty the screen. */
       payItemNames: [...itemNames].sort((a, b) => a.localeCompare(b)),
@@ -2814,21 +2897,43 @@ function MoneyRecordsPanel({
    */
   const tagFacts = useMemo(() => {
     const byId = new Map(expenseTags.map(t => [t.id, t]));
-    /* Which records the counts are taken over. On the register that is EVERY expense, both kinds:
-       the book carries a commitment's settled halves beside an ordinary cost, so counting only one
-       type would offer an option whose number disagreed with the rows it then produced. */
+    /**
+     * ⚖⚖ THE COUNT IS A PROMISE ABOUT THE LIST (owner ruling 2026-08-26): "how many rows am I going
+     * to see when I filter". Each face hands over a tally already taken in the unit that face
+     * renders, over the rows its OTHER controls admit —
+     *
+     *   Transactions           register lines
+     *   Payables · commitment  bills
+     *   Payables · due date    dated payments
+     *
+     * ⚠ IT USED TO BE A CENSUS OF THE LABEL — one count of tagged RECORDS, shown on both faces and
+     * in both arrangements. A commitment paid in three installments is one record and three
+     * register lines, so the option read "(1)" directly above a band reading "across 3 costs": the
+     * same question, two units, six inches apart.
+     */
+    const counts = onPayables
+      ? (groupBy === 'due' ? payTagPieceCounts : payTagBillCounts)
+      : registerTagCounts;
+    /* ⚠⚠ WHICH TAGS ARE OFFERED IS *NOT* DERIVED FROM THOSE COUNTS, and that separation is
+       load-bearing. A count is now the row count, so it legitimately reads (0) when the Date or
+       Status pill excludes every row a tag is on — and a list built from the counts would make the
+       option VANISH as a coach moved the date pill, which is the trap the block above this memo
+       exists to prevent. The offer stays what it always was: every tag this face's records carry,
+       plus anything selected. Only the number changed. */
     const activeAll = onPayables ? allPayablesRaw : expenses;
-    const counts = new Map<string, number>();
-    for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) counts.set(id, (counts.get(id) ?? 0) + 1);
-    const used = [...new Set([...counts.keys(), ...filterTagIds])]
+    const present = new Set<string>();
+    for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) present.add(id);
+    const used = [...new Set([...present, ...filterTagIds])]
       .map(id => byId.get(id))
       .filter((t): t is RepTeamTag => !!t)
       .sort((a, b) => a.name.localeCompare(b.name));
     return {
       used,
       /* ⚠ COUNTS RIDE THE OPTION LABEL, the convention Status already uses ("Overdue (2)") — one
-         family, one look. `?? 0` is load-bearing rather than defensive: a tag selected on the
-         other face is deliberately still offered here and must read "(0)", never "(undefined)".
+         family, one look. `?? 0` is load-bearing rather than defensive, and more so since the count
+         became a row count: a tag selected on the other face, or one every visible row has been
+         filtered away from, is deliberately still offered and must read "(0)", never
+         "(undefined)".
          ⚠ `swatch` is the org/team distinction the row chips already draw; it is a NAMED ROLE, not
          a colour, so the dropdown's own stylesheet owns which token paints it. */
       options: used.map(t => ({
@@ -2842,7 +2947,8 @@ function MoneyRecordsPanel({
       /** The commitments this face is showing, for the total and for the export. */
       filteredActive: payBills.map(b => b.expense).filter((e): e is RepTeamExpense => !!e),
     };
-  }, [expenseTags, onPayables, allPayablesRaw, expenses, tagsByExpenseId, filterTagIds, payBills]);
+  }, [expenseTags, onPayables, allPayablesRaw, expenses, tagsByExpenseId, filterTagIds, payBills,
+      groupBy, payTagBillCounts, payTagPieceCounts, registerTagCounts]);
 
   /**
    * ⚖⚖ WHAT THE TAGGED LIST COMES TO — the answer tags exist to give (owner ruling, plan §5.3):
@@ -2891,11 +2997,27 @@ function MoneyRecordsPanel({
   const drawerBill = drawerFor ? payBills.find(b => b.key === drawerFor) ?? null : null;
   const drawerStanding = drawerBill?.standing;
 
-  /** Bills open shut, periods open open — see `flippedFolds`. */
+  const foldKeys = groupBy === 'due' ? payPeriods.map(p => p.key) : payBills.map(b => b.key);
+  /**
+   * Bills open shut, periods open open — see `flippedFolds`.
+   *
+   * ⚠⚠ THIS MAY ONLY DEPEND ON `groupBy`, NEVER ON HOW MANY GROUPS ARE CURRENTLY VISIBLE.
+   * Two reasons, and the second one is a bug that actually shipped into this working copy:
+   *
+   * 1. **A filter narrows content; it does not restyle the screen** (owner ruling 2026-08-26,
+   *    choosing this over a "one group opens itself" variant). Ticking a tag must not change the
+   *    resting shape of the list it filters.
+   * 2. **`flippedFolds` is a DELTA, not a state.** It records the keys that differ from this
+   *    default, so the moment the default moves, every entry in it reverses meaning. A version of
+   *    this line reading `groupBy === 'commitment' && foldKeys.length > 1` did exactly that: open a
+   *    bill among several, then filter down to that one bill, and it re-folded itself — hiding the
+   *    very thing the coach had just narrowed to, with the bulk toggle gone too. Three independent
+   *    review lenses found it. If a future default needs to vary with anything else on screen,
+   *    `flippedFolds` has to stop being a delta first.
+   */
   const foldDefaultShut = groupBy === 'commitment';
   /** Is this group shut right now? The default, flipped by anything the coach has toggled. */
   const isShut = (key: string) => foldDefaultShut !== flippedFolds.has(key);
-  const foldKeys = groupBy === 'due' ? payPeriods.map(p => p.key) : payBills.map(b => b.key);
   /** Is everything shut? Decides whether the one control says "Fold all" or "Open all" — two
    *  buttons for one toggle would be the click tax this strip is trying to avoid. */
   const allFolded = foldKeys.length > 0 && foldKeys.every(isShut);
@@ -4926,6 +5048,16 @@ function MoneyRecordsPanel({
             {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
                 the arrangement (plan §7) and keeps the first slot on both faces. */}
             {tagFilterPill}
+            {/* ⚠ ONE TOGGLE, TWO LABELS — it reads "Open all" only because bills arrive folded, and
+                the identical button reads "Fold all" the moment anything is open (and always, on
+                the due-date arrangement, whose periods arrive open). Removing the one you happen to
+                be looking at removes the other.
+                ⚠⚠ IT MAY NOT HIDE ITSELF ON THE *FILTERED* GROUP COUNT (owner ruling 2026-08-26).
+                A `foldKeys.length > 1` gate was built here and taken back out: a control that
+                vanishes because a coach ticked a tag is the screen changing shape in response to a
+                filter, which is the same objection that settled the fold default above. If this
+                button is ever to hide on a one-bill team, the test has to be the TEAM's list, not
+                the narrowed view — an open question, not a thing to re-derive here. */}
             {payBills.length > 0 && (
               <button
                 type="button"

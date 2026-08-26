@@ -12659,10 +12659,21 @@ against a freshly restarted server.
 **Coverage after the review:** 2,518 tests (one added for the shared blind predicate), typecheck
 clean, `verify:changed` green apart from the standing dev-only schema parity.
 
-## §104 · Tags answer the question they were kept for, and the red asterisk retires — BUILT, awaiting QA
+## §104 · Tags answer the question they were kept for, and the red asterisk retires — ✅ OWNER QA PASSED 2026-08-26
 
-**▶ STEP-BY-STEP WALKTHROUGH (six phases, in the order that makes each cheap to check):**
+**▶ STEP-BY-STEP WALKTHROUGH (eight phases, in the order that makes each cheap to check):**
 `claude.ai/code/artifact/31a3f79a-21cc-49b6-8343-1f88e4caa845`
+
+**✅ WALKED AND PASSED 2026-08-26.** Everything in this section stands as built. **Two things the
+owner raised mid-walk did not fail this phase — they opened the next one:**
+
+- ⚖ **"Is it accurate to show the count as 1 when there are 3 rows?"** It was not. The number on a
+  Tags option counted tagged **records** while the band beneath it counted **rows**, so a commitment
+  paid in three installments read "(1)" above "across 3 costs". Ruled: a filter count is a promise
+  about the list — **§111**.
+- **"Can we remove Open all?"** Built, then withdrawn at that phase's review gate under the owner's
+  own principle (*a filter must not change the format of the screen*) — also **§111**. Folding
+  behaviour is unchanged; the complaint is recorded as still open there.
 
 **BUILT ON DEV 2026-08-25.** Money centralization **P3** — the tags-and-leftovers phase. Plan
 `docs/projects/active/COACH_MONEY_CENTRALIZATION_PLAN.md` §5.3 + §8; build prompt
@@ -12683,12 +12694,12 @@ drawing is in warm. **Check the band and the pill in BOTH.**
 
 ### A · The counted pill — Transactions
 
-- [ ] **Money → Transactions.** The row of little tag buttons is **gone**. In its place, a fifth
+- [x] **Money → Transactions.** The row of little tag buttons is **gone**. In its place, a fifth
       dropdown beside Show / Status / Item / Date, labelled **Tags**, reading **Every tag**.
-- [ ] **Open it.** One row per tag actually used on this book, each with its **count** in the label
+- [x] **Open it.** One row per tag actually used on this book, each with its **count** in the label
       ("Spring classic (2)"), an **All tags** row at the top, and a **coloured dot** per row —
       **blue** for a tag the club shares, olive/lime for the team's own.
-- [ ] ⚠⚠ **THE BLUE DOT MUST ACTUALLY BE BLUE — check this in the WARM (cream) theme especially.**
+- [x] ⚠⚠ **THE BLUE DOT MUST ACTUALLY BE BLUE — check this in the WARM (cream) theme especially.**
       Club permits blue, Spring classic olive, matching the chips on the rows below.
       **Found broken by the owner on the first walk (2026-08-26) and fixed.** The cream theme remaps
       BOTH the blue and the lime token to olive, and the warm rescue that exists for org CHIPS had
@@ -12697,26 +12708,26 @@ drawing is in warm. **Check the band and the pill in BOTH.**
       these dots **and deleting the colour legend that used to say the same thing in words**, so
       cream users briefly had neither. Also worth opening the tag picker inside a record — same dot,
       same fix.
-- [ ] The legend strip is gone from under the toolbar on both faces, and the dot is now carrying
+- [x] The legend strip is gone from under the toolbar on both faces, and the dot is now carrying
       that meaning on its own.
-- [ ] **Open a record for editing and read the legend under its Tags box** — **Shared by your
+- [x] **Open a record for editing and read the legend under its Tags box** — **Shared by your
       organization** must be BLUE. ⚠ Third site of the same colour collapse and the worst of them:
       its swatches were coloured inline, which no theme override can reach, so on cream it drew two
       identical olive squares and labelled one of them "shared by your organization" — a legend
       teaching the opposite of the truth. (Moved here from A2.)
-- [ ] **Tick Spring classic.** The pill reads **Spring classic** (its name, not "1 selected"). The
+- [x] **Tick Spring classic.** The pill reads **Spring classic** (its name, not "1 selected"). The
       book narrows.
-- [ ] **The band above the book states the answer** — the dollars **first**, big and bold: *"$X
+- [x] **The band above the book states the answer** — the dollars **first**, big and bold: *"$X
       across 2 costs tagged Spring classic."*
-- [ ] ⚠ **Cash on hand disappears while a tag is on**, and so does the Balance column. That is the
+- [x] ⚠ **Cash on hand disappears while a tag is on**, and so does the Balance column. That is the
       standing rule (a running total over some of the rows is not your cash) — the tag total is what
       arrives in its place as the figure worth reading.
-- [ ] **Tick a second tag.** The pill reads **2 selected**; the band names both — *"tagged Spring
+- [x] **Tick a second tag.** The pill reads **2 selected**; the band names both — *"tagged Spring
       classic or Club permits"* — and the figure and count grow. ⚠ **A cost carrying BOTH tags must
       be counted ONCE** — check the row count against the rows on screen.
-- [ ] **Untick everything** (or use **All tags**). The book, the Balance column and Cash on hand all
+- [x] **Untick everything** (or use **All tags**). The book, the Balance column and Cash on hand all
       come back; the band goes.
-- [ ] **Export while a tag is on.** The file is what the screen is showing, as it was before.
+- [x] **Export while a tag is on.** The file is what the screen is showing, as it was before.
 
 ### A2 · SUPERSEDED BY A3 — kept for the reversal it records
 
@@ -12754,75 +12765,75 @@ it — the last such exception in Money"*. A commitment page would have rebuilt 
 sweep removed. It is a **sub-view of the Payables tab** instead — still a URL (Back works, links are
 shareable, the schedule may grow), with the Money hub still around it.
 
-- [ ] **Money → Payables → tap a bill.** It opens in place, the Money tab row still above it, the
+- [x] **Money → Payables → tap a bill.** It opens in place, the Money tab row still above it, the
       address now carrying `?bill=`. **Browser Back returns to the list.** Copy the URL into a new
       tab — it lands on the same bill.
-- [ ] **Reading order:** the bill's name, then **Still owing**, then **Details**, then **Scheduled**,
+- [x] **Reading order:** the bill's name, then **Still owing**, then **Details**, then **Scheduled**,
       then **Payments recorded**. ⚠ The unbounded list is LAST here — the reverse of the modal, and
       deliberately: in a fixed box Details on top pushed the schedule out of view; on a scrolling
       view nothing is pushed out, so the list that can grow without limit goes last. The constant is
       the same sentence both times.
-- [ ] **Open a bill with a long schedule.** It simply scrolls. ⚠ This is the case the modal could not
+- [x] **Open a bill with a long schedule.** It simply scrolls. ⚠ This is the case the modal could not
       do — §64 Part E, where content past the fold was UNREACHABLE.
-- [ ] **The way back is an arrow in the header's leading corner** (`← Payables`), not a blue row
+- [x] **The way back is an arrow in the header's leading corner** (`← Payables`), not a blue row
       above it. On a phone it is the bare arrow. ⚠ **PILOT — every other drill-in still has the old
       row.** Two treatments in the portal until you rule; that is expected, not drift.
-- [ ] ⚠⚠ **COUNT THE DOORS — this is what the second pass fixed.** The header holds **one** button,
+- [x] ⚠⚠ **COUNT THE DOORS — this is what the second pass fixed.** The header holds **one** button,
       **Edit details**. There is **no page-level Record**: it opened the same locked conversation as
       each unpaid row's Record, minus the precision, a hand's width from three of them. Recording
       money is the ROW's door, plus the hub's own `+ Record` above the tabs (the product-wide one,
       untouched).
-- [ ] **"Add an installment" sits under the schedule**, not in the header — a button belongs to the
+- [x] **"Add an installment" sits under the schedule**, not in the header — a button belongs to the
       nearest chrome that names what it acts on, and it adds a row to the list right above it.
-- [ ] **"Edit details" edits the bill's own fields.** The old name was "Edit" and it promised the
+- [x] **"Edit details" edits the bill's own fields.** The old name was "Edit" and it promised the
       whole record while opening a form that duplicated every row control on the page.
-- [ ] **Change / Remove keep their dialog on purpose** — they ask a real question (this payment /
+- [x] **Change / Remove keep their dialog on purpose** — they ask a real question (this payment /
       this and later / all unpaid). ⚠ **A modal is for a QUESTION, not for a field**, which is the
       line option B will draw next: payee, tags, how and notes become editable in place.
-- [ ] Everything opens over the view and closes back onto it.
-- [ ] **Delete the bill you are standing on.** It returns you to the list rather than stranding you
+- [x] Everything opens over the view and closes back onto it.
+- [x] **Delete the bill you are standing on.** It returns you to the list rather than stranding you
       on a view of a record that no longer exists.
-- [ ] ⚠ **The page must NOT lock or hide the nav.** It was registered as an overlay when it was a
+- [x] ⚠ **The page must NOT lock or hide the nav.** It was registered as an overlay when it was a
       modal; leaving that in place would have locked the very scroll it now needs.
-- [ ] **A club bill still has no sub-view** — its door is the Club tab, unchanged.
-- [ ] **As the read-only money account:** the whole view is readable, with no action buttons.
+- [x] **A club bill still has no sub-view** — its door is the Club tab, unchanged.
+- [x] **As the read-only money account:** the whole view is readable, with no action buttons.
 
 ### B · The same pill and the same band — Payables
 
-- [ ] **Money → Payables.** The **Tags** pill sits with Status and Item — ⚠ **never before "Group
+- [x] **Money → Payables.** The **Tags** pill sits with Status and Item — ⚠ **never before "Group
       by"**, which chooses an arrangement rather than a narrowing.
-- [ ] **Tick a tag** on **Group by: commitment**. The band reads *"$X across N commitments tagged
+- [x] **Tick a tag** on **Group by: commitment**. The band reads *"$X across N commitments tagged
       …"* — figure first. ⚠ It used to read *"vs Spring classic: N commitments, $X total"*; the old
       wording is retired everywhere.
-- [ ] **Switch to Group by: due date with the tag still on.** ⚠⚠ **The sentence must change to
+- [x] **Switch to Group by: due date with the tag still on.** ⚠⚠ **The sentence must change to
       "across N payments"** — and the figure with it. This is the defect the phase fixed: the old
       band said "3 commitments" while the screen showed five dated payments.
-- [ ] ⚠⚠ **NOW TICK "Paid" IN Status, still on the due-date view.** The settled installments appear
+- [x] ⚠⚠ **NOW TICK "Paid" IN Status, still on the due-date view.** The settled installments appear
       and the figure GROWS to include them. This is the sharpest check in Part B: the first build
       summed a field that means *remaining* on an unpaid piece and *the full amount* on a paid one,
       then called the result "still owing" — so every paid installment was counted at full value
       under a label saying it was outstanding. It reads the face amount now and no longer claims
       "still owing". ⚠ With Status set to All, **the two Payables arrangements must agree to the
       cent** — same money, two ways of splitting it.
-- [ ] **Filter Payables, then switch to Transactions.** ⚠ The band must **restate itself for the new
+- [x] **Filter Payables, then switch to Transactions.** ⚠ The band must **restate itself for the new
       face**, never strand a payables figure over the register (it did exactly that before P3).
 
 ### C · Read-only money access
 
-- [ ] Sign in as **uat-asst-money-read** — a persona added for this walk, because the check was
+- [x] Sign in as **uat-asst-money-read** — a persona added for this walk, because the check was
       NOT WALKABLE before it. The fixture had two write-money assistants and two with none, and
       never one with READ, so signing in as **uat-asst-money** (which is WRITE) would have shown
       every button present and read as a pass. The two differ in exactly one grant.
-- [ ] The **Tags** pill and the **total band** are both there — reading is not writing.
-- [ ] **Manage tags**, **Add a commitment**, **Record** and every edit door stay absent.
+- [x] The **Tags** pill and the **total band** are both there — reading is not writing.
+- [x] **Manage tags**, **Add a commitment**, **Record** and every edit door stay absent.
 
 ### D · The credit picker no longer offers what the server refuses
 
-- [ ] **Money → Player Dues → a player → Add credit.** The **Kind** list offers exactly four:
+- [x] **Money → Player Dues → a player → Add credit.** The **Kind** list offers exactly four:
       **Contribution · Fundraiser · Overpayment · Other**.
-- [ ] ⚠ **Forgiven and Reimbursement are gone from it.** Picking either used to fill the whole form
+- [x] ⚠ **Forgiven and Reimbursement are gone from it.** Picking either used to fill the whole form
       in and then fail on Save with a bare error — the API has always refused both.
-- [ ] **Open an existing forgiveness credit for a correction** (settlement sheet grants one). Its
+- [x] **Open an existing forgiveness credit for a correction** (settlement sheet grants one). Its
       Kind still reads **Forgiven**, greyed and unchangeable — ⚠ it must **not** silently relabel
       itself "Contribution".
 
@@ -12832,24 +12843,24 @@ Every required field still carries an asterisk in the same place; the asterisk i
 own colour rather than red. **Red in this portal means something has gone wrong** — nothing else
 changes.
 
-- [ ] **Money → Budget Plan → Add a line** (Category & Item, Total Amount) — plain.
-- [ ] **Money → Player Dues** — the record-a-payment fields **and** the Add-credit fields. ⚠ This
+- [x] **Money → Budget Plan → Add a line** (Category & Item, Total Amount) — plain.
+- [x] **Money → Player Dues** — the record-a-payment fields **and** the Add-credit fields. ⚠ This
       screen used **both** treatments before; confirm it is now consistent with itself.
-- [ ] **Money → Club → New request** (direction, Amount, Description) — plain.
-- [ ] **Money → Transactions → Record** — unchanged (it was always plain). Confirm it now matches
+- [x] **Money → Club → New request** (direction, Amount, Description) — plain.
+- [x] **Money → Transactions → Record** — unchanged (it was always plain). Confirm it now matches
       its neighbours rather than being the odd one out.
-- [ ] **Roster → Add player** (First Name) · **Schedule → Add event** (every date/time field) ·
+- [x] **Roster → Add player** (First Name) · **Schedule → Add event** (every date/time field) ·
       **Team settings → head coach** · the **start-interest** form — all plain, legends included.
-- [ ] ⚠ **A refused save must still be red.** Trigger a validation error somewhere in Money and
+- [x] ⚠ **A refused save must still be red.** Trigger a validation error somewhere in Money and
       confirm the error styling is untouched — that signal is the whole reason the marker went.
 
 ### F · The demo
 
-- [ ] ⚠ **The coach sandbox could not show tags at all before today** — none had ever been seeded.
+- [x] ⚠ **The coach sandbox could not show tags at all before today** — none had ever been seeded.
       The 12U mid-season world now carries **Spring Classic** (deliberately spanning *two* budget
       categories, which is the distinction tags exist for) and an org-shared **Club permits**.
       ⚠ **This needs a reseed of the coach demo to appear** — a nightly tick only re-anchors dates.
-- [ ] The **Transactions** tour step gained one closing sentence about the labels. ⚠ **It names no
+- [x] The **Transactions** tour step gained one closing sentence about the labels. ⚠ **It names no
       figures**, deliberately, so a re-anchor can never make it wrong.
 
 ### G · A failed reading carries NOTHING, never zero (the §101 fix, walked here)
@@ -12859,16 +12870,16 @@ team forward with *carry the cash forward* asks the app what the old season clos
 read used to be saved as **"carried from the 2025 Season: $0.00"**, permanently, for a team that may
 have closed holding thousands.
 
-- [ ] **Roll a team forward with "carry the cash forward"** from a season that closed holding money.
+- [x] **Roll a team forward with "carry the cash forward"** from a season that closed holding money.
       The new season opens with it and the opening line **names where it came from**.
-- [ ] **Roll forward choosing "don't carry anything".** No opening line at all; Team settings reads
+- [x] **Roll forward choosing "don't carry anything".** No opening line at all; Team settings reads
       **None carried**.
-- [ ] **Roll forward typing an amount yourself.** Carried — and the line does **NOT** name the old
+- [x] **Roll forward typing an amount yourself.** Carried — and the line does **NOT** name the old
       season. ⚠ Naming a source would vouch for a figure the coach chose.
-- [ ] **Roll a team whose previous season closed genuinely EMPTY.** An opening line saying **$0.00
+- [x] **Roll a team whose previous season closed genuinely EMPTY.** An opening line saying **$0.00
       carried from the 2025 Season**. ⚠⚠ **This is the distinction the whole fix turns on**: a real
       zero SAYS SO; a failed read says nothing at all.
-- [ ] **If you can stage a failure** (rollover while the database is unreachable): the roll still
+- [x] **If you can stage a failure** (rollover while the database is unreachable): the roll still
       **completes** — it is never blocked by a stumbling cash read — and the season carries nothing,
       with a warning pointing at **Team settings → Money**. ⚠ Hard to stage by hand, which is why it
       is pinned by nine automated assertions instead; the one thing they cannot check is the

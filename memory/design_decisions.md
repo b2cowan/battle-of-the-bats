@@ -3,6 +3,44 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-26 — TWO RULES ABOUT FILTERS: a count on an option is a promise about the list, and a filter never changes the screen's format
+
+Both came out of one owner question on the coaches Money screen, filtered to a single tag:
+*"is it accurate in the transactions screen to show the count as 1 when there are 3 rows?"*
+
+**RULE 1 — a filter option's count is a promise about the list underneath it.** It states **how many
+rows ticking it will put on screen**, in the unit that surface renders, counted over the rows every
+**other** control already admits. It is *not* a census of matching records. On Money that means
+register **lines** on Transactions, **bills** on Payables grouped by commitment, and **dated
+payments** on Payables grouped by due date — the same unit the summary band totals, so the two can
+never disagree. Consequences that are deliberate, not bugs: the number **changes when the
+arrangement changes**, and it honestly reads **(0)** when another filter has excluded every row a
+label sits on.
+
+⚠ **But WHICH options are offered must never be derived from those counts.** Zero is an ordinary
+answer, so a list built from the counts makes an option **vanish** as a coach moves a date pill —
+removing the only control that could undo the thing emptying their screen. Offer from the records;
+count from the rows.
+
+**RULE 2 (owner, on being shown two drawn options) — a filter narrows CONTENT; it does not change
+the FORMAT of the screen.** *"It doesn't change the format of the screen just because a user
+selected a filter."* Ticking a tag may not fold or unfold a row, and may not make a control appear
+or disappear. A proposal to open a lone commitment automatically, and to hide the Open all / Fold
+all toggle once a list narrowed to one group, was **built and then withdrawn** under this rule —
+including the button half, which the owner's own reason condemned even though he had asked for it.
+
+⚠⚠ **THE ENGINEERING LESSON UNDERNEATH RULE 2, which is the reusable part.** The fold memory stores
+**which groups DIFFER from the current default** — a delta, not a state. Making that default
+conditional (`groupBy === 'commitment' && visibleGroups > 1`) therefore **reversed the meaning of
+every remembered click** the moment a filter crossed the boundary: open a bill among several, filter
+down to that bill, and it re-folded itself, hiding the very thing the coach had narrowed to, with
+the bulk control gone at the same instant. Three independent review lenses found it.
+**A delta-encoded UI memory pins its default. If a default must vary, stop storing a delta first.**
+
+Applies to `app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx` (both money faces).
+Owner QA §111; plan `COACH_MONEY_CENTRALIZATION_PLAN.md` §8b.
+
+---
 ### 2026-08-26 — BLIND EVALUATION IS A SCORER-SIDE RULE: the head coach is never blind, and the fairness receipt stops claiming otherwise
 
 **Decision (owner, 2026-08-26):** *"head coaches know everyone that is trying out, plain and simple.
