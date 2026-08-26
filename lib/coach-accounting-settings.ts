@@ -20,7 +20,15 @@ export type AccountingSettingPatch =
   | { creditApplication: CreditApplicationMode }
   /** The team's standard share of what a player raises or brings in (mig 237). Unlike the two
    *  above it changes nothing that already exists — it only pre-fills the next form. */
-  | { defaultPlayerCreditPercent: number };
+  | { defaultPlayerCreditPercent: number }
+  /**
+   * What the team was already holding when this season started (mig 262).
+   *
+   * ⚠ THE ONLY ONE OF THE FOUR THAT MOVES A FIGURE ON ANOTHER SCREEN — Cash on hand, the register's
+   * first line and every running balance on Budget vs. Actual all start from it. `null` CLEARS it,
+   * which is not the same as setting zero: a season that carried nothing shows no opening line.
+   */
+  | { openingBalance: number | null };
 
 /**
  * Ask the server what these two settings ACTUALLY are.
@@ -44,6 +52,8 @@ export async function fetchAccountingSettings(
   autoRemindersEnabled: boolean;
   creditApplication: CreditApplicationMode;
   defaultPlayerCreditPercent: number;
+  openingBalance: number | null;
+  openingBalanceFrom: string | null;
 } | null> {
   try {
     const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`);
@@ -53,6 +63,11 @@ export async function fetchAccountingSettings(
       autoRemindersEnabled: d.autoRemindersEnabled ?? true,
       creditApplication: normalizeCreditApplicationMode(d.creditApplication),
       defaultPlayerCreditPercent: Number(d.defaultPlayerCreditPercent ?? 0),
+      /* ⚠ NO `?? 0`. Null means nothing was carried and the row says so in words; zero means the
+         season opened at zero and the row shows a figure. Collapsing them here would make the
+         resync path disagree with the load path about a team's first season. */
+      openingBalance: d.openingBalance == null ? null : Number(d.openingBalance),
+      openingBalanceFrom: (d.openingBalanceFrom as string | null) ?? null,
     };
   } catch {
     // Offline, or the resync itself failed. The caller keeps whatever is on screen and keeps

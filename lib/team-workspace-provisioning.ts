@@ -98,6 +98,8 @@ type RepProgramYearRow = {
   auto_reminders_enabled: boolean | null;
   credit_application?: string | null;
   default_player_credit_percent?: number | string | null;
+  opening_balance?: number | string | null;
+  opening_balance_from_year_id?: string | null;
   lineup_settings: RepProgramYear['lineupSettings'] | null;
   created_at: string;
   updated_at: string;
@@ -142,6 +144,10 @@ function mapProgramYear(row: RepProgramYearRow): RepProgramYear {
     // Same normalization as mapRepProgramYear (lib/db.ts) — the two mappers must agree.
     creditApplication: normalizeCreditApplicationMode(row.credit_application),
     defaultPlayerCreditPercent: Number(row.default_player_credit_percent ?? 0),
+    /* ⚠ A BRAND-NEW WORKSPACE CARRIES NOTHING, and null says so rather than claiming zero (mig 262).
+       The season this provisions is a team's FIRST — there is nothing behind it to have carried. */
+    openingBalance: row.opening_balance != null ? Number(row.opening_balance) : null,
+    openingBalanceFromYearId: row.opening_balance_from_year_id ?? null,
     lineupSettings: row.lineup_settings ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -28,9 +28,22 @@
 import {
   categoryKey as categoryIdentity, displayCategoryName, NO_CATEGORY_LABEL,
 } from './coach-budget-rollup.ts';
+/* ⚠ TYPE-ONLY, and that is what keeps this module pure: the section NAMES are a shared vocabulary,
+   the href builder is not imported and never should be (see `PanelDoor`). */
+import type { CoachMoneySection } from './coach-money-links.ts';
 
 /** A month key, always `YYYY-MM`. */
 export type MonthKey = string;
+
+/**
+ * Where a drill-in files a record that has NO DATE — the "No date yet" column's own panel.
+ *
+ * ⚠ DELIBERATELY NOT A MONTH-KEY SHAPE. It shares one keyspace with real months (a cell's detail
+ * list is addressed `<lens>|<category>|<when>`), so it has to be something `monthKeyOf` can never
+ * return and no reader can mistake for a month — including `check:money-report`, which reads those
+ * keys to find out what a fixture contains.
+ */
+export const UNDATED_CELL = 'no-date';
 
 // ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
 
@@ -138,6 +151,155 @@ export function bandTotalLabel(band: MoneyRowDirection, lens: MoneyLens): string
   return `${adjective} ${noun}`;
 }
 
+// ── what opens behind a figure (owner ruling 2026-08-24, from the drawings) ───
+
+/**
+ * A door out of a drill-in panel.
+ *
+ * ⚠ THE SECTION, NEVER THE HREF. This module is pure and framework-free (`check:demos` loads it
+ * under plain Node); `moneySectionHref` needs the team's base path, which only a rendering surface
+ * has. The caller turns these into links — the RULE about which doors a panel offers lives here,
+ * once, so the grid and anything that follows it cannot answer differently.
+ */
+export interface PanelDoor {
+  section: CoachMoneySection;
+  extra?: Record<string, string>;
+  label: string;
+}
+
+export interface CellPanelSpec {
+  /**
+   * The word over the panel's own sum.
+   *
+   * ⚠⚠ "Possible" IS NOT A SYNONYM FOR "Total" (owner ruling 2026-08-24). A pledge and a request
+   * the club has not answered add up to money NOBODY HAS AGREED TO SEND — and one word is what
+   * stops a coach banking it. "Total raised" and "Still to come" are the same rule applied twice
+   * more: the panel says what kind of money it just added up.
+   */
+  totalLabel: string;
+  /**
+   * ⚠⚠ AT MOST TWO: the ledger, and the thing itself. Transactions is the book of record; the
+   * second door is the drive, the sponsor, the family, the club. A panel with five doors is a menu,
+   * not an answer. ⚠ SOME ROWS EARN ONLY ONE, and the asymmetry is meaningful rather than an
+   * omission — a typed arrival and a refund a coach recorded have no "thing itself" behind them.
+   */
+  doors: PanelDoor[];
+}
+
+const TRANSACTIONS_DOOR: PanelDoor = { section: 'transactions', label: 'Open Transactions' };
+const DUES_DOOR: PanelDoor = { section: 'dues', label: 'Open Player Dues' };
+const CLUB_DOOR: PanelDoor = { section: 'club', label: 'Open Club' };
+const SPONSORS_DOOR: PanelDoor = { section: 'fundraisers', extra: { kind: 'sponsor' }, label: 'Open Sponsors' };
+const FUNDRAISERS_DOOR: PanelDoor = { section: 'fundraisers', extra: { kind: 'fundraiser' }, label: 'Open Fundraisers' };
+
+/** The drive or sponsor itself, when the panel is about ONE of them; else that hub. */
+function subjectDoor(subject: PanelSubject | null, hub: PanelDoor): PanelDoor {
+  return subject?.id
+    ? { section: 'fundraisers', extra: { fundraiser: subject.id }, label: `Open ${subject.name}` }
+    : hub;
+}
+
+/** Which family / drive / sponsor / filing a panel is about, or null for a whole group's month. */
+export interface PanelSubject { id: string | null; name: string }
+
+/**
+ * What a drill-in panel says over its sum, and where it lets a coach out.
+ *
+ * ⚠⚠ ONE RULE, NINE ROWS (owner ruling 2026-08-24, drawn in artifact `da5d08b9`). The chevron opens
+ * where the money came from; the NUMBER opens what makes it up — individual records, dated, always
+ * READ-ONLY. The grid reaches the forms; it never becomes a second place to edit, which is why no
+ * door here is a "Record a payment".
+ *
+ * ⚠ THE EXPENSE BAND'S OWN TWO ANSWERS LIVE HERE TOO, and they used to be written inline at the one
+ * call site. They are the same decision — which book does this figure belong to — and keeping them
+ * apart is how the revenue half and the expense half would drift into two vocabularies.
+ */
+export function cellPanelSpec(
+  row: { group: RevenueGroupKey | null; payout?: boolean },
+  lens: 'actual' | 'scheduled',
+  subject: PanelSubject | null,
+): CellPanelSpec {
+  if (row.group === null) {
+    /* ⚠ MONEY PAID BACK TO A FAMILY IS AN EXPENSE THAT ANSWERS TO DUES. Dues says who is owed; this
+       says who was repaid; Transactions is the book both settle into. */
+    if (row.payout) return { totalLabel: 'Total', doors: [DUES_DOOR, TRANSACTIONS_DOOR] };
+    return lens === 'actual'
+      ? { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] }
+      /* ⚠ THE TWO LENSES LAND ON DIFFERENT TABS (Money split P1, 2026-08-16), which is what the
+         grid was always describing: an Actual cell is money that moved and belongs on Transactions,
+         a Scheduled cell is money still owed and belongs on the payment schedule. */
+      : { totalLabel: 'Total', doors: [{ section: 'payables', extra: { tab: 'schedule' }, label: 'Open the payment schedule' }] };
+  }
+  if (lens === 'scheduled') {
+    switch (row.group) {
+      case 'dues':        return { totalLabel: 'Still to come', doors: [DUES_DOOR] };
+      case 'sponsorship': return { totalLabel: 'Possible', doors: [SPONSORS_DOOR] };
+      case 'moneyback':   return { totalLabel: 'Possible', doors: [CLUB_DOOR] };
+      /* Neither a drive nor typed income has a forward record, so neither row exists on this lens —
+         but a spec is returned rather than null, because a caller that renders one anyway must get
+         an honest panel instead of a crash. */
+      default:            return { totalLabel: 'Possible', doors: [TRANSACTIONS_DOOR] };
+    }
+  }
+  switch (row.group) {
+    case 'dues':
+      return { totalLabel: 'Total', doors: [DUES_DOOR, TRANSACTIONS_DOOR] };
+    case 'fundraising':
+      /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different answers,
+         and a coach chasing a drive wants the second. */
+      return { totalLabel: 'Total raised', doors: [subjectDoor(subject, FUNDRAISERS_DOOR), TRANSACTIONS_DOOR] };
+    case 'sponsorship':
+      return { totalLabel: 'Total', doors: [subjectDoor(subject, SPONSORS_DOOR), TRANSACTIONS_DOOR] };
+    case 'other':
+      /* ⚠ ONE DOOR. There is no "thing itself" to open — the RECORD is the thing. */
+      return { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] };
+    case 'moneyback':
+      /* ⚠ CLUB MONEY HAS A CLUB SCREEN; A REFUND YOU TYPED IN DOES NOT. Same group, two sources,
+         two different numbers of doors — see `MONEY_BACK_CLUB` in lib/coach-cash-strip.ts. */
+      return subject?.id === 'moneyback:club'
+        ? { totalLabel: 'Total', doors: [CLUB_DOOR, TRANSACTIONS_DOOR] }
+        : { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] };
+  }
+}
+
+/** Two strings that say the same thing, however the coach happened to capitalise it. */
+function sameWords(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/**
+ * Which words a drill-in row leads with, and which follow on its meta line.
+ *
+ * ⚠⚠ ONE RULE: NOTHING ON A ROW RESTATES WHAT THE READER CAN ALREADY SEE. The panel's title has
+ * just named either the group ("Player dues") or the row ("Gate / admission"), and a record that
+ * repeats it fills the screen with an answer to a question nobody asked.
+ *
+ * ⚠ IT HAS BEEN WRONG TWICE, WHICH IS WHY IT LIVES HERE RATHER THAN INSIDE THE GRID. First the
+ * record's KIND echoed the group — thirteen families arrived as thirteen lines reading "Dues
+ * payment". Then the coach's OWN words echoed the row — an arrival filed under "Gate / admission"
+ * and described as "Gate / admission" printed the phrase twice, once in the title and once beneath
+ * it. Both are the same rule applied to a different word, and both were found by a person looking
+ * at a screen, because a helper inside a component is one nothing can assert against.
+ *
+ * ⚠ ONLY ONE GROUP CAN ECHO ITS ROW, and it is worth knowing which: dues, drives and sponsors have
+ * PEOPLE and DRIVES for rows, so a record's words cannot coincide with them. Other income's rows
+ * are budget ITEMS — and a coach with nothing more to say than the item's own name is the ordinary
+ * case there, not the edge.
+ */
+export function panelRowWords(
+  record: { description?: string | null; kind?: string | null },
+  opts: { subject?: string; group: boolean },
+): { lead: string; words: string } {
+  const own = record.description?.trim() ?? '';
+  const words = opts.subject && sameWords(own, opts.subject) ? '' : own;
+  /* A ROW's panel is already titled with its subject, so the record's own words lead — falling back
+     to its kind when it has none, or when they only echoed the title. A record whose subject has no
+     row of its own (money nobody could attribute) lands here too rather than leading with a blank. */
+  if (!opts.group) return { lead: words || record.kind?.trim() || '', words: '' };
+  /* A GROUP's panel leads with the ROW and never prints the kind — the title already said it. */
+  return { lead: opts.subject ?? own, words };
+}
+
 export interface DatedAmount {
   /** `YYYY-MM-DD`, or null when the amount carries no date (→ the "no date yet" bucket). */
   date: string | null;
@@ -235,6 +397,16 @@ export interface MonthCell {
 export interface GridLineResult {
   id: string;
   description: string;
+  /**
+   * The taxonomy item — or, on a revenue group and the payouts group, the SUBJECT (the family, the
+   * drive, the sponsor, the request) this row stands for.
+   *
+   * ⚠ CARRIED RATHER THAN PARSED BACK OUT OF `id`. The row id is `<categoryKey>|<itemId>` and a
+   * category name may legitimately contain a pipe, so every reader that wanted the item was one
+   * split-from-the-wrong-end away from a silent mismatch. The drill-in behind a cell needs it (a
+   * drive's panel opens THAT drive), which is what made a second reader exist at all.
+   */
+  itemId: string | null;
   /** Carried straight through so a cell can address a real budget line — see `GridPlanLine`. */
   planLines: GridPlanLine[];
   /** Per-month cells, index-aligned with `months`. */
@@ -589,6 +761,7 @@ export function buildMonthGrid(input: {
       return {
         id: line.id,
         description: line.description,
+        itemId: line.itemId,
         planLines: line.planLines ?? [],
         cells,
         undated,
@@ -692,6 +865,19 @@ export interface CashFlowRow {
   moneyOut: number;
   /** Revenue less expenses for this month alone — the "Net for the month" row. */
   net: number;
+  /**
+   * What this month STARTED with — the month before it closed on, or the season's own opening
+   * balance in the first month (owner ruling 2026-08-26).
+   *
+   * ⚠⚠ IT IS THE PREVIOUS ROW'S `running` AND THAT REDUNDANCY IS THE POINT, priced and accepted.
+   * The grid WINDOWS to twelve months: scroll to a later window and the closing figures are a
+   * cumulative series whose origin is off screen, so a coach was asked to trust a running total
+   * they could not check. With the opening stated per column, every window reads on its own and
+   * `opening + net = closing` is verifiable in the month a coach is actually looking at.
+   */
+  opening: number;
+  /** What it CLOSED on. Named `running` because every reader already speaks it; the screen calls
+   *  it "Closing balance" now that an opening sits above it. */
   running: number;
 }
 
@@ -743,9 +929,12 @@ export function buildCashFlow(
     const moneyIn = round2(moneyInByMonth[month] ?? 0);
     const moneyOut = round2(moneyOutByMonth[month] ?? 0);
     const net = round2(moneyIn - moneyOut);
+    /* ⚠ CAPTURED BEFORE THE MONTH MOVES IT — this is what the team was holding on the first of the
+       month, which is the month before's close, which is the season's opening in month one. */
+    const opening = running;
     running = round2(running + net);
     if (running < -0.005 && !shortfall) shortfall = { month, amount: round2(Math.abs(running)) };
-    return { month, moneyIn, moneyOut, net, running };
+    return { month, moneyIn, moneyOut, net, opening, running };
   });
 
   const undatedIn = round2(undatedFlow.moneyIn ?? 0);
@@ -769,9 +958,13 @@ export function buildCashFlow(
  * rule would have had two call sites, and a spreadsheet whose Net and Running rows disagreed with
  * the screen it was exported from is the exact failure the Option D ruling exists to prevent.
  *
- * ⚠ THE OPENING IS THE LENS'S OWN. Actual and Budget start from the season's opening balance
- * (nothing carried yet — the carry-forward is its own build item); Scheduled starts from TODAY'S
- * REAL MONEY, because a forward view projected from zero would be fiction.
+ * ⚠⚠ THE OPENING IS THE LENS'S OWN, AND SINCE 2026-08-24 A SEASON CAN CARRY ONE (owner ruling).
+ * Actual and Budget start from the season's own opening balance — money the team was holding on
+ * day one, carried forward at `Start next season` and correctable in Team settings → Money.
+ * Scheduled starts from TODAY'S REAL MONEY, because a forward view projected from zero would be
+ * fiction — and `cashOnHand` ALREADY INCLUDES the carried balance, so adding it again here would
+ * count it twice. That is the one way this pair can go wrong, and it is why the opening is passed
+ * as two separate facts rather than one number the caller adds up.
  *
  * ⚠ BOTH BANDS MUST SHARE A MONTH DOMAIN — `buildMonthGrid`'s `months` input is how the caller
  * guarantees it. Index `i` addresses the same month on both sides here, so a mismatch would
@@ -782,6 +975,7 @@ export function buildBandCashFlow(
   expenses: MonthGrid,
   lens: Exclude<MoneyLens, 'difference'>,
   cashOnHand: number,
+  openingBalance = 0,
 ): CashFlowResult {
   const moneyInByMonth: Record<string, number> = {};
   const moneyOutByMonth: Record<string, number> = {};
@@ -795,7 +989,7 @@ export function buildBandCashFlow(
   });
   return buildCashFlow(
     expenses.months, moneyInByMonth, moneyOutByMonth,
-    lens === 'scheduled' ? cashOnHand : 0,
+    lens === 'scheduled' ? cashOnHand : openingBalance,
     { moneyIn: revenue.totals.undated[lens], moneyOut: expenses.totals.undated[lens] },
   );
 }

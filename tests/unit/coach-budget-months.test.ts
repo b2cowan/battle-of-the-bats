@@ -4,6 +4,7 @@ import {
   monthKeyOf, addMonths, monthSpan, deriveMonthRange, buildMonthGrid, buildCashFlow,
   isElapsed, formatMonthLabel, formatMonthLong,
   lensCell, lensTotal, lensUndated, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
+  buildBandCashFlow, cellPanelSpec, panelRowWords,
   type GridLine, type CategoryEvent,
 } from '../../lib/coach-budget-months.ts';
 
@@ -590,5 +591,275 @@ describe('the band vocabulary', () => {
     assert.equal(revenueGroupOf('name:facilities'), null);
     assert.equal(revenueGroupOf('id:revenue:not-a-group'), null);
     assert.equal(revenueGroupOf(null), null);
+  });
+});
+
+/**
+ * WHAT OPENS BEHIND A FIGURE — one rule for nine rows (owner ruling 2026-08-24, artifact da5d08b9).
+ *
+ * ⚠ EVERY ONE OF THESE IS A JUDGEMENT NO ARITHMETIC GUARD CAN MAKE. `check:money-report` proves the
+ * figures; nothing proves that a pledge panel says "Possible" instead of "Total", or that a refund a
+ * coach typed in offers ONE door because there is no "thing itself" behind it. Those are the rules,
+ * and they are pinned here.
+ */
+describe('cellPanelSpec — the doors, and the word over the total', () => {
+  const labels = (spec: { doors: Array<{ label: string }> }) => spec.doors.map(d => d.label);
+
+  it('a dues panel offers the ledger and the family’s own screen', () => {
+    assert.deepEqual(
+      labels(cellPanelSpec({ group: 'dues' }, 'actual', null)),
+      ['Open Player Dues', 'Open Transactions']);
+  });
+
+  /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different answers, and a
+     coach chasing a drive wants the second. At the GROUP's grain there is no single drive, so the
+     second door is the hub — the right grain rather than no door at all. */
+  it('a drive opens THAT drive; the whole group opens the hub', () => {
+    const one = cellPanelSpec({ group: 'fundraising' }, 'actual', { id: 'drive-1', name: 'Bottle drive' });
+    assert.deepEqual(labels(one), ['Open Bottle drive', 'Open Transactions']);
+    assert.deepEqual(one.doors[0].extra, { fundraiser: 'drive-1' });
+    assert.deepEqual(
+      labels(cellPanelSpec({ group: 'fundraising' }, 'actual', null)),
+      ['Open Fundraisers', 'Open Transactions']);
+    // Gross, so the panel's own sum is what was RAISED — the rebate is a note on a row, not a figure.
+    assert.equal(one.totalLabel, 'Total raised');
+  });
+
+  /* ⚠⚠ THE ASYMMETRY IS THE POINT. Club money has a Club screen to open; a refund a coach typed in
+     has no "thing itself" behind it — the record IS the thing, and it lives on Transactions. */
+  it('money back offers two doors from the club and one from your own records', () => {
+    assert.deepEqual(
+      labels(cellPanelSpec({ group: 'moneyback' }, 'actual', { id: 'moneyback:club', name: 'Repaid by the club' })),
+      ['Open Club', 'Open Transactions']);
+    assert.deepEqual(
+      labels(cellPanelSpec({ group: 'moneyback' }, 'actual', { id: 'moneyback:recorded', name: 'Money back you recorded' })),
+      ['Open Transactions']);
+  });
+
+  it('typed income has one door, because there is nothing else to open', () => {
+    assert.deepEqual(labels(cellPanelSpec({ group: 'other' }, 'actual', null)), ['Open Transactions']);
+  });
+
+  /* ⚠⚠ ONE WORD IS WHAT STOPS A COACH BANKING MONEY NOBODY HAS AGREED TO SEND. */
+  it('a pledge and a pending ask total to “Possible”, never “Total”', () => {
+    assert.equal(cellPanelSpec({ group: 'sponsorship' }, 'scheduled', null).totalLabel, 'Possible');
+    assert.equal(cellPanelSpec({ group: 'moneyback' }, 'scheduled', null).totalLabel, 'Possible');
+    assert.deepEqual(labels(cellPanelSpec({ group: 'moneyback' }, 'scheduled', null)), ['Open Club']);
+  });
+
+  it('dues still to come read “Still to come”, and go to Player Dues alone', () => {
+    const spec = cellPanelSpec({ group: 'dues' }, 'scheduled', { id: 'p1', name: 'Bo Ledger' });
+    assert.equal(spec.totalLabel, 'Still to come');
+    assert.deepEqual(labels(spec), ['Open Player Dues']);
+  });
+
+  /* ⚠ Dues answers who is owed; this answers who was repaid; Transactions is the book both settle
+     into. It was never in the D-2 spec — left shut it would have been the one figure on the
+     statement a coach could not trace back to a record. */
+  it('money paid back to a family answers to dues and to the ledger', () => {
+    assert.deepEqual(
+      labels(cellPanelSpec({ group: null, payout: true }, 'actual', { id: 'p1', name: 'Maya Ledger' })),
+      ['Open Player Dues', 'Open Transactions']);
+  });
+
+  /* ⚠ THE EXPENSE BAND'S OWN TWO ANSWERS LIVE IN THE SAME FUNCTION, and that is deliberate: they are
+     the same decision — which book does this figure belong to — and keeping them apart is how the
+     two halves of one table drift into two vocabularies. */
+  it('an ordinary cost lands on the book its lens belongs to', () => {
+    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'actual', null)), ['Open Transactions']);
+    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'scheduled', null)), ['Open the payment schedule']);
+  });
+});
+
+/**
+ * A ROW THAT IS A SUBJECT (a family, a drive, a sponsor) CARRIES ITS OWN ITEM ID.
+ *
+ * ⚠ IT IS CARRIED RATHER THAN PARSED BACK OUT OF THE ROW ID. The id is `<categoryKey>|<itemId>` and
+ * a category NAME may legitimately contain a pipe — so every reader that wanted the item was one
+ * split-from-the-wrong-end away from a silent mismatch, and a drill-in that resolves to an empty
+ * list is exactly how the last one on this grid broke.
+ */
+describe('buildMonthGrid — a row knows which subject it stands for', () => {
+  it('hands the item id back on every row', () => {
+    const grid = buildMonthGrid({
+      lines: [{
+        id: 'id:revenue:dues|player-1', description: 'Maya Ledger',
+        categoryId: 'revenue:dues', categoryName: 'Player dues',
+        itemId: 'player-1', totalAmount: 0, inPlan: false, periods: [],
+      }],
+      actuals: [{ categoryId: 'revenue:dues', categoryName: 'Player dues', itemId: 'player-1', date: '2026-08-06', amount: 217 }],
+      scheduled: [],
+      todayMonth: '2026-08',
+    });
+    const row = grid.categories[0].lines[0];
+    assert.equal(row.itemId, 'player-1');
+    assert.equal(row.total.actual, 217, 'the row carries its own money, not a dash under its category');
+    assert.equal(grid.categories[0].total.actual, 217, 'and the category is what its rows add up to');
+  });
+});
+
+/**
+ * THE OPENING BALANCE REACHES THE RUNNING ROWS — and reaches Scheduled exactly ONCE.
+ */
+describe('buildBandCashFlow — a season that was handed money', () => {
+  const band = (actual: number) => buildMonthGrid({
+    lines: [],
+    actuals: [{ categoryId: 'c', categoryName: 'C', itemId: null, date: '2026-08-01', amount: actual }],
+    scheduled: [],
+    todayMonth: '2026-08',
+    months: ['2026-08'],
+  });
+
+  it('Actual and Budget start from the carry', () => {
+    const flow = buildBandCashFlow(band(1000), band(400), 'actual', 9999, 500);
+    assert.equal(flow.opening, 500);
+    assert.equal(flow.ending, 500 + 1000 - 400);
+    assert.equal(flow.rows[0].running, 500 + 600);
+  });
+
+  /* ⚠⚠ THE ONE WAY THIS PAIR CAN GO WRONG. The forward view projects from TODAY'S REAL MONEY, and
+     Cash on hand already contains the carry — so adding the opening balance here as well would count
+     it twice, and the Scheduled lens would quietly claim the team is $500 richer than the Actual
+     lens says it is, on the same screen. */
+  it('Scheduled projects from cash on hand and does NOT add the carry a second time', () => {
+    const flow = buildBandCashFlow(band(1000), band(400), 'scheduled', 2500, 500);
+    assert.equal(flow.opening, 2500);
+  });
+
+  it('a season that carried nothing is unchanged', () => {
+    assert.equal(buildBandCashFlow(band(1000), band(400), 'actual', 9999).opening, 0);
+  });
+});
+
+/**
+ * NOTHING ON A DRILL-IN ROW RESTATES WHAT THE READER CAN ALREADY SEE.
+ *
+ * ⚠⚠ THIS RULE HAS BEEN WRONG TWICE IN PRODUCTION-SHAPED DATA, both times found by a person looking
+ * at a screen rather than by anything here — which is exactly why it now lives in a module a test
+ * can reach. The panel's title has just named either the GROUP or the ROW; a record that repeats it
+ * is answering a question nobody asked, thirteen times over in the case that started this.
+ */
+describe('panelRowWords — a row never repeats its own title', () => {
+  /* ── the first miss: the KIND echoing the group ─────────────────────────────────────────────
+     Opened from one family the kind is useful; opened from the group it IS the title, and
+     thirteen families reached a coach as thirteen lines reading "Dues payment". */
+  it('a dues payment leads with its kind on a family’s panel, and with the family on the group’s', () => {
+    const rec = { kind: 'Dues payment', description: null };
+    assert.deepEqual(
+      panelRowWords(rec, { subject: 'Maya Ledger', group: false }),
+      { lead: 'Dues payment', words: '' });
+    assert.deepEqual(
+      panelRowWords(rec, { subject: 'Maya Ledger', group: true }),
+      { lead: 'Maya Ledger', words: '' },
+      'the group’s panel is titled "Player dues" — the kind would be the title restated');
+  });
+
+  /* ── the second miss: the COACH'S OWN WORDS echoing the row ─────────────────────────────────
+     An arrival filed under "Gate / admission" and described as "Gate / admission" printed the
+     phrase in the title and again beneath it. */
+  it('drops a description that only repeats the row it sits under', () => {
+    const rec = { kind: 'Income', description: 'Gate / admission' };
+    assert.deepEqual(
+      panelRowWords(rec, { subject: 'Gate / admission', group: false }),
+      { lead: 'Income', words: '' },
+      'the title already said "Gate / admission" — the row falls back to its kind');
+    assert.deepEqual(
+      panelRowWords(rec, { subject: 'Gate / admission', group: true }),
+      { lead: 'Gate / admission', words: '' },
+      'and on the group’s panel the row leads, with nothing echoing after it');
+  });
+
+  it('ignores how the coach happened to capitalise it', () => {
+    assert.deepEqual(
+      panelRowWords({ kind: 'Income', description: '  gate / ADMISSION ' }, { subject: 'Gate / admission', group: true }),
+      { lead: 'Gate / admission', words: '' });
+  });
+
+  /* ⚠ AND IT MUST NOT SWALLOW WORDS THAT SAY SOMETHING. This is the case every heuristic tried
+     before the fields were split got wrong: two arrivals under one item are told apart ONLY by
+     what the coach typed. */
+  it('keeps a description that tells the rows apart', () => {
+    const one = panelRowWords({ kind: 'Income', description: 'Home opener gate' }, { subject: 'Gate takings', group: true });
+    const two = panelRowWords({ kind: 'Income', description: 'Doubleheader gate' }, { subject: 'Gate takings', group: true });
+    assert.deepEqual(one, { lead: 'Gate takings', words: 'Home opener gate' });
+    assert.deepEqual(two, { lead: 'Gate takings', words: 'Doubleheader gate' });
+  });
+
+  it('a refund keeps its own words on both panels — they name what it repaid', () => {
+    const rec = { kind: 'Money back', description: 'Umpire clinic — two spots refunded' };
+    assert.equal(panelRowWords(rec, { subject: 'Money back you recorded', group: false }).lead,
+      'Umpire clinic — two spots refunded');
+    assert.deepEqual(panelRowWords(rec, { subject: 'Money back you recorded', group: true }),
+      { lead: 'Money back you recorded', words: 'Umpire clinic — two spots refunded' });
+  });
+
+  /* Money nobody could attribute has no row of its own, so a group's panel has no subject to lead
+     with. It leads with the record's own words rather than a blank. */
+  it('falls back to the record’s own words when nothing owns it', () => {
+    assert.deepEqual(
+      panelRowWords({ kind: 'Income', description: 'Concession takings' }, { group: true }),
+      { lead: 'Concession takings', words: 'Concession takings' });
+  });
+
+  it('leads with nothing at all rather than inventing a word', () => {
+    assert.equal(panelRowWords({ description: null, kind: null }, { group: false }).lead, '');
+  });
+});
+
+/**
+ * OPENING + NET = CLOSING, IN EVERY COLUMN (owner ruling 2026-08-26).
+ *
+ * ⚠⚠ THIS IS A PROMISE MADE TO THE READER'S EYE, which is what makes it worth a test rather than a
+ * comment. The block invites a coach to check one month's arithmetic across the row — so if the
+ * three rows can ever disagree, the screen is inviting them to find a mistake that is ours.
+ *
+ * ⚠ AND EACH MONTH OPENS ON THE ONE BEFORE IT. That is the redundancy the ruling accepted: on one
+ * screen the opening series is the closing series shifted a column, and on a SCROLLED screen it is
+ * the only thing that makes the visible columns readable, because the grid windows to twelve.
+ */
+describe('buildCashFlow — every month opens on the one before it', () => {
+  const flow = () => buildCashFlow(
+    ['2026-05', '2026-06', '2026-07'],
+    { '2026-05': 7000, '2026-06': 0, '2026-07': 1200 },
+    { '2026-05': 300, '2026-06': 500, '2026-07': 2300 },
+    500,
+  );
+
+  it('opening + net = closing, month by month', () => {
+    for (const r of flow().rows) {
+      assert.equal(Math.round((r.opening + r.net) * 100) / 100, r.running,
+        r.month + ' does not balance across the row');
+    }
+  });
+
+  it('each month opens on what the month before closed on', () => {
+    const rows = flow().rows;
+    assert.equal(rows[0].opening, 500, 'the first month opens on the season’s own carry');
+    for (let i = 1; i < rows.length; i++) {
+      assert.equal(rows[i].opening, rows[i - 1].running);
+    }
+  });
+
+  it('a season that carried nothing opens its first month at zero, and still opens the rest', () => {
+    const rows = buildCashFlow(
+      ['2026-05', '2026-06'],
+      { '2026-05': 1000 }, { '2026-05': 0, '2026-06': 400 },
+    ).rows;
+    assert.equal(rows[0].opening, 0);
+    assert.equal(rows[1].opening, 1000, 'the row still has something to say without a carry');
+  });
+
+  /* ⚠⚠ THE ONE COLUMN THAT CANNOT BALANCE, and it is deliberate. A pledge and a club request
+     awaiting an answer reach the TOTAL and no month — a balance is a moment, and undated money has
+     none. So the undated bucket carries a NET and no balances, and the season's totals absorb it. */
+  it('undated money reaches the season’s net and ending without ever opening a month', () => {
+    const f = buildCashFlow(
+      ['2026-05'], { '2026-05': 1000 }, { '2026-05': 400 }, 500, { moneyIn: 250 },
+    );
+    assert.equal(f.rows[0].opening, 500);
+    assert.equal(f.rows[0].running, 1100, 'the month itself never sees the undated money');
+    assert.equal(f.undated.net, 250);
+    assert.equal(f.net, 600 + 250, 'the season’s net does');
+    assert.equal(f.ending, 500 + 850, 'and so does where it ends up');
   });
 });

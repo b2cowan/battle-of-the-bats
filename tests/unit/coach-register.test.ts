@@ -49,6 +49,61 @@ describe('the register — the balance IS Cash on hand, decomposed', () => {
     row({ id: 'refund',    date: '2026-05-14', kind: 'refund',  moneyIn: 400 }),
   ];
 
+  /**
+   * A SEASON THAT WAS HANDED MONEY (mig 262, owner ruling 2026-08-23).
+   *
+   * ⚠ THE CARRY IS NOT A ROW AND MUST NEVER BECOME ONE. It has no kind, so it would answer to no
+   * filter; it has no date, so it would answer to no window; and it moved on a day this season
+   * cannot see. It is where the walk STARTS — which is why every assertion below is about a
+   * balance rather than about a row.
+   */
+  describe('an opening balance carried from the season before', () => {
+    it('every balance, the close and the projection all start from it', () => {
+      const book = buildBook(season, 500);
+      assert.equal(book.opening, 500);
+      assert.equal(book.book[0].balance, 500 + 1200, 'the first row builds ON the carry');
+      assert.equal(book.cashOnHand, 500 + 1200 - 450 + 800 - 1300 + 400);
+      assert.equal(book.book.length, season.length, 'the carry did not become a row');
+    });
+
+    it('is the same arithmetic money-summary runs, to the cent', () => {
+      /* ⚠ THE PAIR THAT CANNOT BE ALLOWED TO DISAGREE. `/register` sums rows and `money-summary`
+         sums category totals; an opening balance reaching one and not the other is a difference in
+         DOLLARS with both figures still looking plausible. */
+      assert.equal(
+        toDollars(cashOnHandCents(season, 50_000)),
+        buildBook(season, 500).cashOnHand,
+      );
+    });
+
+    it('a season that carried nothing is unchanged', () => {
+      assert.equal(buildBook(season).opening, 0);
+      assert.equal(buildBook(season).cashOnHand, buildBook(season, 0).cashOnHand);
+    });
+
+    it('an overdue row before the first settled one carries the opening balance, not zero', () => {
+      const book = buildBook([
+        row({ id: 'late-bill', date: '2026-03-01', moneyOut: 300, scheduled: true, overdueDays: 40 }),
+        row({ id: 'dues-1', date: '2026-04-02', kind: 'dues', moneyIn: 1200 }),
+      ], 500);
+      // It shows the real cash that existed immediately before it — which, first on the page, is
+      // the carry. It never advances the balance itself; no cash moved.
+      assert.equal(book.book[0].balance, 500);
+      assert.equal(book.cashOnHand, 500 + 1200);
+    });
+
+    it('the whole-season window OPENS on the carry, and a narrowed one does not', () => {
+      const book = buildBook(season, 500);
+      const whole = applyDateRange(book.book, '2026-01-01', '2026-12-31', 500);
+      assert.equal(whole.startingBalance, 500);
+      assert.equal(whole.isSeasonOpening, true, 'nothing precedes the window — this IS the opening');
+
+      const later = applyDateRange(book.book, '2026-05-01', '2026-12-31', 500);
+      assert.equal(later.startingBalance, 500 + 1200 - 450 + 800, 'an ordinary starting balance');
+      assert.equal(later.isSeasonOpening, false);
+    });
+  });
+
   it('the whole book reads oldest to newest, top to bottom', () => {
     const book = buildBook(season);
     assert.equal(book.cashOnHand, 1200 - 450 + 800 - 1300 + 400);

@@ -21,7 +21,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
-import { cashOnHandCents, toDollars } from '@/lib/coach-register';
+import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -336,6 +336,10 @@ export const GET = withObservability(async (_req: Request,
    * ⚠ Nothing here is `scheduled`. This route reports what has moved; the projection lives on the
    * register, where a coach can see the rows it is made of.
    */
+  /* ⚠⚠ AND IT STARTS FROM WHAT THE SEASON WAS HANDED (mig 262). The opening balance is not a
+     movement and never becomes an entry in this list — it is where the sum starts, exactly as it is
+     on the register. ⚠ THE PAIR MOVES TOGETHER OR THE SURFACES ARGUE: `/register` passes the same
+     figure into `buildBook`, and `check:register` fails loudly if one of the two forgets. */
   const onHand = toDollars(cashOnHandCents([
     { moneyIn: duesReceived,       moneyOut: 0,                 movesCash: true, scheduled: false },
     { moneyIn: fundraisingRaised,  moneyOut: 0,                 movesCash: true, scheduled: false },
@@ -346,7 +350,7 @@ export const GET = withObservability(async (_req: Request,
     { moneyIn: 0,                  moneyOut: allocationsPaid,   movesCash: true, scheduled: false },
     { moneyIn: 0,                  moneyOut: orgPayments,       movesCash: true, scheduled: false },
     { moneyIn: 0,                  moneyOut: payoutsTotal,      movesCash: true, scheduled: false },
-  ]));
+  ], toCents(programYear.openingBalance ?? 0)));
 
   const stage: 'plan' | 'collect' | 'operate' =
     schedules.length > 0 ? 'operate'

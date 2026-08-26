@@ -188,7 +188,10 @@
    ROW, where a direct rule on the span still beats it. */
 .totalRow .cellValue { font-weight: 700; }
 
-/* The running balance is the ANSWER — the loudest thing in the table, as it should have been. */
+/* The closing balance is the ANSWER — the loudest thing in the table, as it should have been.
+   ⚠ THE CLASS KEEPS ITS NAME while the label became "Closing balance" (owner ruling 2026-08-26).
+   A class rename here is a rename in the component too, buys no reader anything, and this file's
+   own history is full of selectors that stopped matching after a tidy-up. */
 .grid tbody tr.runningRow.runningRow th,
 .grid tbody tr.runningRow.runningRow td {
   font-size: var(--money-cat-size);

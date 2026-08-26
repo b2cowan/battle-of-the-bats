@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type 
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -93,6 +93,29 @@ function fmt(n: number) {
 /** Cent-round for a consequence SENTENCE — display arithmetic only, never a stored figure. */
 function r2c(n: number) {
   return Math.round(n * 100) / 100;
+}
+
+/**
+ * "Summer Classic" / "Summer Classic or Fall Cup" / "A, B or C" — the tag filter's sentence.
+ *
+ * ⚠ OR, NOT AND, and that is the semantics rather than the prose: ticking two tags WIDENS the
+ * answer to both occasions (see `filterTagIds`), so "and" would describe a narrowing the pill does
+ * not do.
+ *
+ * ⚠ KNOWN DUPLICATION, LEFT DELIBERATELY (`/simplify` reuse lens, 2026-08-25). This exact
+ * `slice(0,-1).join(', ') + conjunction + last` shape now exists NINE times in this repo — private
+ * `joinNames` helpers in `lib/coach-dues-statement.ts` and `lib/coach-family-dues.ts`, plus inline
+ * copies in `lib/walkthrough-derive.ts`, `lib/rep-practice-plan.ts`, `lib/payable-scope-edit.ts`,
+ * `lib/coach-budget-item-usage.ts`, `lib/export/pdf.ts` and `components/notifications/
+ * FanAlertsCard.tsx`. None is exported and every one is "and"-only. The fix that actually pays is
+ * ONE exported `joinList(items, conjunction)` and a migration of all nine — which is a job of its
+ * own, not something to smuggle into a tags phase, and a new shared module used by a single caller
+ * would relocate three lines while reducing nothing. Recorded here so the tenth author finds the
+ * count instead of rediscovering it.
+ */
+function joinWithOr(items: readonly string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
 }
 
 /**
@@ -843,6 +866,10 @@ function MoneyRecordsPanel({
      screen whose entire point is that they don't. */
   const [book, setBook] = useState<{
     book: RegisterBookRow[]; todayIndex: number;
+    /** What the season was HANDED on day one (mig 262) — money carried forward at Start next
+     *  season. Not a row and never a row: it is where the running balance starts. */
+    opening?: number;
+    openingFrom?: string | null;
     cashOnHand: number; projectedBalance: number | null; orgLinked: boolean;
   } | null>(null);
   /* ⚠ MULTI-SELECT, EMPTY = ALL (owner call — "fit like QuickBooks/Excel" needed the seven pills
@@ -1034,8 +1061,14 @@ function MoneyRecordsPanel({
      the form has its own busy state, so a second per-row one would have been a spinner nothing
      could turn off. */
 
-  // Money tags (Phase 3): the team + org-shared expense-tag library, which tags each expense
-  // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
+  /* Money tags — the team + org-shared expense-tag library, which tags each expense carries,
+     per-form selections, the filter pill, inline re-tag, and the manager modal.
+
+     ⚠ A TAG IS THE OCCASION A BUDGET ITEM CANNOT EXPRESS (owner ruling, money centralization
+     plan §5.3): the item says WHAT KIND of cost, the tag says WHICH OCCASION — and the question
+     tags exist to answer is "what did the Summer Classic actually cost us?" That sentence is the
+     whole spec, and it is why the filter must always state a TOTAL: a narrowed list that makes a
+     coach add the rows up themselves has not answered it. */
   const [expenseTags, setExpenseTags] = useState<RepTeamTag[]>([]);
   const [tagsByExpenseId, setTagsByExpenseId] = useState<Record<string, string[]>>({});
   /* Where each commitment stands — its plan, its payments and what that adds up to (Payables
@@ -1047,7 +1080,23 @@ function MoneyRecordsPanel({
   /** The roster, for the "Paid by" choice. Fetched once — the picker is the only reader, and an
    *  expense form on a team with no players simply offers nothing but "The team". */
   const [roster, setRoster] = useState<Pick<RepRosterPlayer, 'id' | 'playerFirstName' | 'playerLastName'>[]>([]);
-  const [filterTagId, setFilterTagId] = useState<string | null>(null);
+  /**
+   * ⚖ SEVERAL TAGS AT ONCE, EMPTY = ALL (owner call, money centralization P3, 2026-08-25). This
+   * was a single `filterTagId` behind a row of one-at-a-time chips; it is now the same
+   * multi-select contract every other control on this toolbar speaks, because the pill it became
+   * is `MultiSelectDropdown` — and a checkbox list that only lets you tick one is a radio button
+   * wearing the wrong clothes.
+   *
+   * ⚠ THE TAGS ARE OR-ed, NOT AND-ed. Tick Summer Classic and Fall Cup and you get the costs of
+   * BOTH occasions, which is the reading the total then states. A cost carrying both tags is
+   * still one row and is counted once — the match is per row, so nothing double-counts.
+   *
+   * ⚠ NOT PERSISTED, deliberately. Show/Status/Item and the date preset are remembered per team;
+   * an occasion filter is a question a coach asks once, and a remembered one would greet them
+   * with a book that silently omits most of the season. (It also keeps the deep-link debt the
+   * date pill created from spreading — memory: persisted filters create deep-link debt.)
+   */
+  const [filterTagIds, setFilterTagIds] = useState<Set<string>>(() => new Set());
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
   /* ── The conversation's own state (P1 — see the block comment above CONV_BRANCH) ──────────────
@@ -2212,7 +2261,7 @@ function MoneyRecordsPanel({
    * identity on every render and silently defeat the memo it is an input to.
    */
   const {
-    showBalance, bookRows, bookStartingBalance, bookEmpty, registerItemNames, statusCounts,
+    showBalance, bookRows, bookStartingBalance, bookOpensSeason, bookEmpty, registerItemNames, statusCounts,
   } = useMemo(() => {
     /* ⚠⚠ WHEN A FILTER HIDES ROWS, THE BALANCE COLUMN HIDES WITH IT (plan §4.3). A running balance
        over a subset is a number that looks like cash and isn't — a coach reading "Expenses only"
@@ -2223,16 +2272,17 @@ function MoneyRecordsPanel({
        one continuous timeline rather than excluding a category from a sum, so every visible
        balance stays honest. See `applyDateRange`'s own header for the full argument. */
     const balanceShown = balanceIsMeaningful(
-      selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '', filterTagId,
+      selectedKinds.size === 0 ? 'all' : 'expense', selectedItems.size > 0 ? 'x' : '',
+      filterTagIds.size > 0 ? 'x' : '',
     );
     const matchesKindItemTag = (r: RegisterBookRow) => {
       if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
       if (selectedItems.size > 0 && (!r.itemName || !selectedItems.has(r.itemName))) return false;
       /* Money tags live on expenses, so a tag filter narrows the book to the rows that can carry one
          — every other row simply has no such label, which is a match of zero, not a match of all. */
-      if (filterTagId) {
+      if (filterTagIds.size > 0) {
         if (r.open?.kind !== 'expense') return false;
-        if (!(tagsByExpenseId[r.open.id] ?? []).includes(filterTagId)) return false;
+        if (!(tagsByExpenseId[r.open.id] ?? []).some(id => filterTagIds.has(id))) return false;
       }
       return true;
     };
@@ -2254,9 +2304,13 @@ function MoneyRecordsPanel({
        timeline, it's a cross-section of it — same as the old audit toggle. No starting balance to
        state there; `rangeableRows` is empty by construction whenever this is true. */
     const auditOnly = selectedStatus.size > 0 && !selectedStatus.has('actual') && !selectedStatus.has('scheduled');
-    const { rows: ranged, startingBalance } = auditOnly
-      ? { rows: rangeableRows, startingBalance: null as number | null }
-      : applyDateRange(rangeableRows, dateRange.from, dateRange.to);
+    /* ⚠⚠ THE WINDOW STARTS FROM THE CARRY (mig 262). "Starting balance" has always meant the real
+       cash immediately before the first visible row — with nothing before the window that used to
+       be zero, and on a season that carried money forward it is the carry. Left at zero, the
+       whole-season view would open on $0.00 while every row below it carried a higher balance. */
+    const { rows: ranged, startingBalance, isSeasonOpening } = auditOnly
+      ? { rows: rangeableRows, startingBalance: null as number | null, isSeasonOpening: false }
+      : applyDateRange(rangeableRows, dateRange.from, dateRange.to, book?.opening ?? 0);
     /* Recombine in the book's own chronological order rather than concatenating the two groups —
        `statusFiltered` is already ordered, so filtering IT by membership is simpler than merging
        two separately-ordered arrays back together. */
@@ -2266,6 +2320,10 @@ function MoneyRecordsPanel({
       showBalance: balanceShown,
       bookRows: finalRows,
       bookStartingBalance: startingBalance,
+      /* Nothing before the window ⇒ the figure a coach is reading IS the season's opening balance,
+         and the line says so in those words with a link to the one place it can be corrected.
+         Narrow the window and it goes back to being an ordinary starting balance, because it is. */
+      bookOpensSeason: isSeasonOpening && (book?.opening ?? 0) !== 0,
       bookEmpty: finalRows.length === 0,
       statusCounts: counts,
       /* The words actually ON the book, not the whole library: a filter offering a category the
@@ -2274,7 +2332,7 @@ function MoneyRecordsPanel({
         (book?.book ?? []).map(r => r.itemName).filter((n): n is string => !!n),
       )].sort((a, b) => a.localeCompare(b)),
     };
-  }, [book, selectedKinds, selectedItems, filterTagId, selectedStatus, dateRange, tagsByExpenseId]);
+  }, [book, selectedKinds, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
 
 
   /* ⚠ HOISTED ABOVE THE MEMO THAT READS THEM. These used to sit below the access guard with the
@@ -2451,10 +2509,11 @@ function MoneyRecordsPanel({
       if (name) itemNames.add(name);
       const standing = standings[e.id];
       if (!standing) continue;
-      /* The tag chip, inlined rather than called through a helper: a predicate rebuilt on every
+      /* The tag pill, inlined rather than called through a helper: a predicate rebuilt on every
          render is a dependency this memo could never satisfy, and its two real inputs
-         (`filterTagId`, `tagsByExpenseId`) are already in the list below. */
-      if (filterTagId && !(tagsByExpenseId[e.id] ?? []).includes(filterTagId)) continue;
+         (`filterTagIds`, `tagsByExpenseId`) are already in the list below. */
+      if (filterTagIds.size > 0
+        && !(tagsByExpenseId[e.id] ?? []).some(id => filterTagIds.has(id))) continue;
       if (payItems.size > 0 && (!name || !payItems.has(name))) continue;
 
       const count = standing.installments.length;
@@ -2594,7 +2653,7 @@ function MoneyRecordsPanel({
          has never committed against is a control that can only ever empty the screen. */
       payItemNames: [...itemNames].sort((a, b) => a.localeCompare(b)),
     };
-  }, [allPayablesRaw, standings, schedule, payStatus, payItems, categories, tagsByExpenseId, filterTagId]);
+  }, [allPayablesRaw, standings, schedule, payStatus, payItems, categories, tagsByExpenseId, filterTagIds]);
 
   /**
    * The list as the chosen arrangement lays it out.
@@ -2639,6 +2698,104 @@ function MoneyRecordsPanel({
     }
     return ordered;
   }, [payBills, groupBy]);
+
+  /**
+   * ⚠⚠ EVERYTHING THE TAG FILTER NEEDS, MEMOISED AND HOISTED ABOVE THE ACCESS GUARD — and both
+   * halves of that are load-bearing.
+   *
+   * **Hoisted**, because `if (ctxLoading) return …` sits below this and a `useMemo` after an early
+   * return is a conditional hook. This is the same move (and the same reason) as the note on
+   * `allPayablesRaw` further up: *fine for JSX, illegal for a hook's dependency list.*
+   *
+   * **Memoised**, because this panel hosts the money-entry FORM as well as both money screens, so
+   * it re-renders on every keystroke a coach types into it — and this block walks every expense on
+   * the season to count tags. It was in the render body until `/simplify`'s efficiency lens
+   * measured it (2026-08-25).
+   *
+   * ⚠ It depends on `expenseTags`, NOT on the render-body `tagById` Map — that Map is rebuilt on
+   * every render, so depending on it would have defeated the memo silently while looking correct.
+   *
+   * ⚠⚠ A TAG THAT IS SELECTED IS ALWAYS AN OPTION, even when this face uses it on nothing, and that
+   * is not tidiness — it is the difference between a control and a trap. The selection SURVIVES A
+   * TAB CHANGE (nothing clears it, deliberately: a coach comparing the two faces of one occasion
+   * should not have to re-pick). Offering only the tags this face uses meant filtering Payables by
+   * a bills-only label and switching to Transactions could hide the pill entirely — while the
+   * filter it had set was still narrowing the book to nothing. An empty screen, no explanation, and
+   * no control left to undo it. So a selected-but-unused tag stays, honestly counted `(0)`, and the
+   * band says which label produced nothing — which "Nothing matches that" cannot.
+   */
+  const tagFacts = useMemo(() => {
+    const byId = new Map(expenseTags.map(t => [t.id, t]));
+    /* Which records the counts are taken over. On the register that is EVERY expense, both kinds:
+       the book carries a commitment's settled halves beside an ordinary cost, so counting only one
+       type would offer an option whose number disagreed with the rows it then produced. */
+    const activeAll = onPayables ? allPayablesRaw : expenses;
+    const counts = new Map<string, number>();
+    for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const used = [...new Set([...counts.keys(), ...filterTagIds])]
+      .map(id => byId.get(id))
+      .filter((t): t is RepTeamTag => !!t)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      used,
+      /* ⚠ COUNTS RIDE THE OPTION LABEL, the convention Status already uses ("Overdue (2)") — one
+         family, one look. `?? 0` is load-bearing rather than defensive: a tag selected on the
+         other face is deliberately still offered here and must read "(0)", never "(undefined)".
+         ⚠ `swatch` is the org/team distinction the row chips already draw; it is a NAMED ROLE, not
+         a colour, so the dropdown's own stylesheet owns which token paints it. */
+      options: used.map(t => ({
+        id: t.id,
+        label: `${t.name} (${counts.get(t.id) ?? 0})`,
+        swatch: t.teamId === null ? ('org' as const) : ('own' as const),
+      })),
+      /* "Summer Classic" · "Summer Classic or Fall Cup" · "A, B or C". OR, not AND — the pill
+         widens the answer rather than narrowing it twice (see `filterTagIds`). */
+      phrase: joinWithOr(used.filter(t => filterTagIds.has(t.id)).map(t => t.name)),
+      /** The commitments this face is showing, for the total and for the export. */
+      filteredActive: payBills.map(b => b.expense).filter((e): e is RepTeamExpense => !!e),
+    };
+  }, [expenseTags, onPayables, allPayablesRaw, expenses, tagsByExpenseId, filterTagIds, payBills]);
+
+  /**
+   * ⚖⚖ WHAT THE TAGGED LIST COMES TO — the answer tags exist to give (owner ruling, plan §5.3):
+   * "what did the Summer Classic actually cost us?" A filtered view that shows rows but no total
+   * has not answered it, and until P3 Transactions showed no total at all while Payables showed one
+   * written back-to-front ("vs {tag}: 3 commitments, $900.00 total").
+   *
+   * ⚠⚠ IT TOTALS WHATEVER THE LIST IN FRONT OF YOU IS SHOWING, and that is the whole rule. It is
+   * NOT a second arithmetic over the same records (`check:register` / `check:money-report` exist
+   * because two places computing one figure is how they drift): each face reduces the rows its own
+   * filters ALREADY produced, in that face's own unit —
+   *
+   *   Transactions        the book's money-out, over `bookRows`      "$1,240.00 across 3 costs"
+   *   Payables · bills    each commitment's amount                   "$900.00 across 3 commitments"
+   *   Payables · due date each dated piece's face amount             "$900.00 across 5 payments"
+   *
+   * ⚠⚠ THE DUE-DATE FACE READS `faceAmount`, AND READING `owing` THERE WAS A BUG (`/simplify`,
+   * 2026-08-25). `PayPiece.owing` is dual-purpose: on an UNSETTLED piece it is the remaining
+   * balance, but on a SETTLED one it is the full face amount. Summing it across every visible piece
+   * and calling the result "still owing" therefore counted every paid installment at full value the
+   * moment a coach ticked Paid. The face amount has one meaning in both states, so the sentence
+   * stays true whatever Status is showing — and the two Payables arrangements then agree on the
+   * same money, which is the point of their being two views of one list.
+   *
+   * ⚠ SCHEDULED AND OUT-OF-POCKET ROWS COUNT. A cost a parent fronted still cost the occasion (the
+   * team owes them for it), and a scheduled piece is on screen wearing its own badge. Excluding
+   * either would make the total disagree with rows a coach can see and add up themselves — which is
+   * the complaint this band closes.
+   */
+  const tagFilterSummary = useMemo(() => {
+    if (filterTagIds.size === 0) return null;
+    if (!onPayables) {
+      return { total: bookRows.reduce((s, r) => s + r.moneyOut, 0), count: bookRows.length, noun: 'cost' };
+    }
+    if (groupBy === 'due') {
+      const pieces = payPeriods.flatMap(b => b.rows);
+      return { total: pieces.reduce((s, { piece }) => s + piece.faceAmount, 0), count: pieces.length, noun: 'payment' };
+    }
+    const bills = tagFacts.filteredActive;
+    return { total: bills.reduce((s, e) => s + e.amount, 0), count: bills.length, noun: 'commitment' };
+  }, [filterTagIds, onPayables, bookRows, groupBy, payPeriods, tagFacts]);
 
   /** The bill whose drawer is open, and its standing. ⚠ Looked up in `payBills` rather than held in
    *  state: after a payment lands the list rebuilds, and a held copy would go on showing the figures
@@ -4041,18 +4198,6 @@ function MoneyRecordsPanel({
      as; they care what left the account and when. */
   const allPayables = allPayablesRaw;
 
-  // Filter chip row: tags actually used by the current tab's expenses, with counts (mirrors the
-  // game "vs tag" report). Selecting one narrows the list + shows a tag total.
-  /* Which records the tag chips are counted over. On the register that is EVERY expense, both
-     kinds: the book carries a commitment's settled halves beside an ordinary cost, so counting only
-     one type would offer a chip whose number disagreed with the rows it then produced. */
-  const activeAll = onPayables ? allPayables : expenses;
-  const tagCounts = new Map<string, number>();
-  for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
-  const usedTagIds = [...tagCounts.keys()]
-    .map(id => tagById.get(id))
-    .filter((t): t is RepTeamTag => !!t)
-    .sort((a, b) => a.name.localeCompare(b.name));
   /**
    * ⚠⚠ THE EXPORT IS WHAT THE ARRANGEMENT IS SHOWING (Payables Rebuild P3), which keeps BOTH files
    * a coach's downloads folder already holds. Grouped by commitment it is the `payables` file;
@@ -4066,9 +4211,9 @@ function MoneyRecordsPanel({
    * what is still owed, and a coach wanting the settled history ticks Paid first. Called out in
    * §64 Part C so the walk does not read it as a lost record.
    */
-  const filteredActive = payBills
-    .map(b => b.expense)
-    .filter((e): e is RepTeamExpense => !!e);
+  /* ⚠ MEMOISED ABOVE THE ACCESS GUARD (`tagFacts`'s sibling) — it is an input to the tag total,
+     which is a hook, and a bare `.filter()` here would hand it a new array every render. */
+  const filteredActive = tagFacts.filteredActive;
   /** The dated pieces, in the order the due-date arrangement shows them, for that file. */
   const payScheduleExport = payPeriods.flatMap(band => band.rows.map(({ bill, piece }) => ({
     description: bill.kind === 'org'
@@ -4103,7 +4248,7 @@ function MoneyRecordsPanel({
   const singleSelectedKind = selectedKinds.size === 1 ? [...selectedKinds][0] : null;
   /** Nothing narrowing the register at all — the season genuinely has no rows yet, as opposed to
    *  a filter combination that happens to match none. */
-  const noNarrowing = selectedKinds.size === 0 && selectedItems.size === 0 && !filterTagId;
+  const noNarrowing = selectedKinds.size === 0 && selectedItems.size === 0 && filterTagIds.size === 0;
   const registerExportLabel = selectedKinds.size === 0 ? 'Register'
     : singleSelectedKind ? REGISTER_FILTERS.find(f => f.id === singleSelectedKind)!.label
     : `Register (${selectedKinds.size} kinds)`;
@@ -4452,22 +4597,46 @@ function MoneyRecordsPanel({
    *  the balance directly, don't make a coach do the arithmetic from a count and a net) and the
    *  Today divider (owner call: unnecessary now that overdue/scheduled rows already carry their
    *  own status tag — a coach doesn't need a second cue for what day it is). */
-  function registerBalanceRow(key: string, label: string, balance: number) {
+  function registerBalanceRow(
+    key: string, label: string, balance: number,
+    /**
+     * The one balance line that has somewhere to go: the season's carried opening balance, whose
+     * only correction path is Team settings → Money.
+     *
+     * ⚠ THE WORDS AND THE CONTROL ARE SEPARATE, and that is a lesson this table already learned.
+     * The action cell holds real buttons beside "Mark paid" and the row pencil — a sentence in it
+     * wraps and drags every register row back to two lines tall, which is exactly the height the
+     * compact-row pass was built to remove. The explanation goes in the label cell, which spans six
+     * columns and has room for one; the cell at the end gets a short control.
+     */
+    door?: { href: string; note?: string },
+  ) {
     return (
       // `.tr .registerRowCompact` too — the same compound selector every data row uses for its
       // font-size/line-height/padding, so this line sits at the identical row height rather than
       // reverting to the shared (taller) `.td` default.
       <tr key={key} className={`${styles.tr} ${styles.registerRowCompact} ${styles.registerBalanceRow}`}>
-        <td colSpan={6} className={styles.registerBalanceLabel}>{label}</td>
+        <td colSpan={6} className={styles.registerBalanceLabel}>
+          {label}{door?.note ? ` · ${door.note}` : ''}
+        </td>
         <td className={`${styles.td} ${styles.tdNum} ${styles.registerAmt}`}>{fmt(balance)}</td>
-        <td className={styles.td}></td>
+        <td className={styles.td}>
+          {door && (
+            <Link
+              href={door.href}
+              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+              style={{ whiteSpace: 'nowrap' }}
+              aria-label="Change the season opening balance in Team settings"
+            >
+              Change →
+            </Link>
+          )}
+        </td>
       </tr>
     );
   }
 
   const summaryHasOrgRows = (schedule ?? []).some(r => r.source === 'org');
-  const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
-  const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
   // Page-level action ruling 2026-08-13. The creates and the tag library act on THIS LIST, and
   // the nearest chrome that names the list is the list's own toolbar — not the Money hub header
@@ -4512,18 +4681,40 @@ function MoneyRecordsPanel({
   // `Import ▾` menu above the tabs owns it and lists this dataset by name; a second Import here
   // would be the same door twice, one line apart. On the standalone route there is no such menu,
   // so the button stays (rule 8: single-dataset screens keep plain buttons).
-  /** Is there a tag filter to draw on the left of the toolbar? */
-  /* Money tags live on expenses, so the schedule (two sources, by due date) has nothing for the
-     filter to narrow. On the register the chips move DOWN into the book's own control row — the
-     toolbar's left-hand slot is the type strip now, and two filter bars sharing one line is the
-     three-bands-of-chrome problem the toolbar merge removed. */
-  /* ⚠ MONEY TAGS NARROW THE PAYABLES LIST NOW. They used to be hidden on the Schedule view, because
-     that view mixed two sources by due date and a tag could only ever describe one of them. The one
-     list still mixes them — but a tag chip narrowing it to the team's own tagged bills is a real
-     answer, and a club allocation simply carries no tag, which is a match of zero rather than a
-     match of all (the same rule the register applies to its own derived rows). */
-  const showTagFilter = usedTagIds.length > 0;
-  const tagFilterInToolbar = showTagFilter && onPayables;
+  /**
+   * ⚖⚖ ONE TAG PILL, DRAWN ONCE, USED ON BOTH FACES (money centralization P3, 2026-08-25). This
+   * used to be two hand-written copies of a chip row — one in the Payables toolbar, one down in
+   * the register's control row — and "seen twice" is the defect this screen keeps producing
+   * (the Manage-tags button did the same thing). It is now the same `MultiSelectDropdown` as
+   * Show / Status / Item, built here and rendered in each face's own filter row.
+   *
+   * ⚠ MONEY TAGS NARROW THE PAYABLES LIST TOO. They were once hidden on the by-due-date view,
+   * because it mixed two sources and a tag could only ever describe one. The one list still mixes
+   * them — but narrowing it to the team's own tagged bills is a real answer, and a club allocation
+   * simply carries no tag, which is a match of zero rather than a match of all (the same rule the
+   * register applies to its own derived rows).
+   *
+   * ⚠ BLUE STILL MEANS ORG-SHARED. The chips carried that in their border and needed a colour
+   * legend underneath to say so — a legend that only ever rendered on Payables, so half the
+   * product explained itself and half didn't. The swatch in each option says it in place, on both
+   * faces, and the legend is gone. ⚠ It is the SAME swatch the tag picker draws
+   * (`.tagComboDot*`), reached through a named role rather than a colour — the first build passed
+   * fresh `rgba()` literals in and gave the org/team distinction a second, drifting encoding
+   * (`/simplify`, reuse + altitude lenses, 2026-08-25).
+   *
+   * ⚠ The options themselves are built in `tagFacts` — they walk every expense to count tags, and
+   * this panel re-renders on every keystroke in the money form it also hosts.
+   */
+  const showTagFilter = tagFacts.used.length > 0;
+  const tagFilterPill = showTagFilter ? (
+    <MultiSelectDropdown
+      label="Tags"
+      options={tagFacts.options}
+      selected={filterTagIds}
+      onChange={setFilterTagIds}
+      allLabel="Every tag"
+    />
+  ) : null;
 
   const expenseHeaderActions = !embedded && canWriteMoney ? (
     <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
@@ -4570,8 +4761,9 @@ function MoneyRecordsPanel({
           The tag filter joins the SAME row rather than reclaiming its own — `.panelToolbar` wraps,
           so it shares the line when it fits and drops below when it doesn't. It self-hides when the
           current tab has no tagged rows; the row itself always renders, because the ACTIONS are
-          what must survive every empty state (rule 7), not the filter. The schedule tab is a
-          due-date list across two sources, so a tag filter has nothing to narrow there. */}
+          what must survive every empty state (rule 7), not the filter.
+          ⚠ IT NO LONGER RECLAIMS A BAND EVEN WHEN IT IS SHOWN (money centralization P3): it is a
+          pill in each face's own filter row now, not a chip row that needed one. */}
       {/* Export lives here on every sub-tab, so the row can no longer disappear with the filter
           or the write gate. */}
       {/* ⚠ STICKY ON THE REGISTER ONLY (reading-order ruling, follow-up to P3) — the one tab whose
@@ -4634,6 +4826,9 @@ function MoneyRecordsPanel({
                 allLabel="Every budget item"
               />
             )}
+            {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
+                the arrangement (plan §7) and keeps the first slot on both faces. */}
+            {tagFilterPill}
             {payBills.length > 0 && (
               <button
                 type="button"
@@ -4686,21 +4881,9 @@ function MoneyRecordsPanel({
             />
           </div>
         )}
-        {tagFilterInToolbar && (
-          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
-            <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-            {usedTagIds.map(t => {
-              const isOrg = t.teamId === null;
-              const active = filterTagId === t.id;
-              const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
-              return (
-                <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
-                  {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* ⚠ THE PAYABLES TAG CONTROL NO LONGER OWNS A ROW OF ITS OWN — it is `tagFilterPill`,
+            standing with Group by / Status / Item in the row above. It was a second `.moneyFilterBar`
+            here purely because a chip row could not fit beside them. */}
         {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — this used to be a
             second sticky row of its own, stacked below this toolbar. Two rows of filters never
             needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
@@ -4734,21 +4917,11 @@ function MoneyRecordsPanel({
               seasonBounds={dateRange.seasonBounds}
               onChange={onDateRangeChange}
             />
-            {showTagFilter && !tagFilterInToolbar && (
-              <>
-                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
-                {usedTagIds.map(t => {
-                  const isOrg = t.teamId === null;
-                  const active = filterTagId === t.id;
-                  const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
-                  return (
-                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
-                      {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
-                    </button>
-                  );
-                })}
-              </>
-            )}
+            {/* ⚠ THE FIFTH PILL, and the last of the chip rows this strip used to carry. Show,
+                Status, Item, Date and now Tags: five controls of one shape, which is the whole
+                reason the chips went — a tag row beside four dropdowns read as a different KIND
+                of control for what is the same act of narrowing. */}
+            {tagFilterPill}
           </div>
         )}
         <div className={styles.panelToolbarActions}>
@@ -4833,24 +5006,31 @@ function MoneyRecordsPanel({
           {expenseToolbarActions}
         </div>
       </div>
-      {tagFilterInToolbar && (
-        <div className={styles.tagComboLegend} style={{ margin: '-0.5rem 0 0.7rem' }}>
-          <span className={styles.tagComboLegendItem}>
-            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
-          </span>
-          <span className={styles.tagComboLegendItem}>
-            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
-          </span>
-        </div>
-      )}
-      {/* ⚠ GATED ON THE SAME CONDITION AS THE CHIPS. The filter itself hides on the tabs money
-          tags cannot narrow, but this caption was gated only on a tag BEING chosen — and nothing
-          clears that choice on a tab change. Filter the Payables list, switch to Money in, and the
-          payables count and total sat there captioning a list they had nothing to do with
-          (/review, regression lens). */}
-      {filterTag && tagFilterInToolbar && (
+      {/* ⚠ THE ORG/TEAM COLOUR LEGEND IS GONE, and nothing was lost with it: the swatch now sits in
+          each option of the tag pill, where the distinction is actually being used. The legend
+          rendered on Payables only, so the register showed blue-bordered chips and never said
+          why. */}
+      {/* ⚖⚖ THE ANSWER, ON BOTH FACES (owner ruling, plan §5.3 — "a filtered view must always show
+          its TOTAL"). Transactions had NO total at all until now; a coach could narrow the book to
+          one occasion and still had to add the column up by hand, which is the exact complaint
+          tags were kept to answer.
+
+          ⚠ GATED ON THE FILTER, NOT ON THE FACE. The old caption was gated on a tag merely being
+          CHOSEN, and nothing clears that choice on a tab change — so filtering Payables and
+          switching to Transactions left a payables count captioning a list it had nothing to do
+          with (/review, regression lens). It cannot happen now: `tagFilterSummary` is derived from
+          whichever face is rendering, so switching tabs restates the figure rather than stranding
+          it. `showTagFilter` still hides the whole thing where no tag is in use.
+
+          ⚠ THE MONEY LEADS. This read "vs {tag}: 3 commitments, $900.00 total" — figure last,
+          and "vs" was left over from the game-tag report it was copied from. The dollars are the
+          answer to the question a coach came here with. */}
+      {tagFilterSummary && showTagFilter && (
         <div className={styles.moneyTagSummary}>
-          vs <strong>{filterTag.name}</strong>: {filteredActive.length} commitment{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
+          <span className={styles.moneyTagSummaryFigure}>{fmt(tagFilterSummary.total)}</span>
+          {' '}across {tagFilterSummary.count}{' '}
+          {tagFilterSummary.noun}{tagFilterSummary.count !== 1 ? 's' : ''} tagged{' '}
+          <strong>{tagFacts.phrase}</strong>
         </div>
       )}
 
@@ -4937,8 +5117,25 @@ function MoneyRecordsPanel({
                       balance brackets it when a real date window is in effect (`bookStartingBalance`
                       is null during the Overdue audit view, which isn't a slice of the timeline).
                       No Today divider — a scheduled/overdue row already carries its own tag. */}
+                  {/* ⚠ THE SEASON'S CARRY IS THE BOOK'S FIRST LINE, NOT A SECOND LINE ABOVE ONE
+                      (mig 262). This row already meant "the real cash before the first row you can
+                      see"; on a season that carried money forward that IS the opening balance, so
+                      it takes those words and a link to where it is corrected rather than growing a
+                      twin that says nearly the same thing one row higher. */}
                   {showBalance && bookStartingBalance !== null
-                    && registerBalanceRow('starting', 'Starting balance', bookStartingBalance)}
+                    && registerBalanceRow(
+                      'starting',
+                      bookOpensSeason ? 'Opening balance' : 'Starting balance',
+                      bookStartingBalance,
+                      bookOpensSeason
+                        ? {
+                          href: `${base}/settings#money`,
+                          note: book?.openingFrom
+                            ? `carried from ${book.openingFrom}`
+                            : 'money the team was already holding',
+                        }
+                        : undefined,
+                    )}
                   {bookRows.map(r => registerRow(r))}
                   {showBalance && bookStartingBalance !== null && bookRows.length > 0
                     && registerBalanceRow('ending', 'Ending balance', bookRows[bookRows.length - 1].balance)}
@@ -5557,9 +5754,15 @@ function MoneyRecordsPanel({
                       which is exactly what this ruling closes. Record is for money that moved, so
                       it has a date; anything not paid is a commitment, and commitments are made on
                       Payables. An EDIT of a saved record is unchanged. */}
-                  <label className={styles.label}>
-                    Date paid{formMode === 'add' ? <span className={styles.labelRequired}> *</span> : null}
-                  </label>
+                  {/* ⚠ A PLAIN LITERAL ASTERISK, in the label's own ink — and that is now the
+                      PORTAL-WIDE rule, not this form's local habit (owner ruling 2026-08-25,
+                      `memory/design_decisions.md`). The dedicated red marker this comment used to
+                      weigh itself against is RETIRED: red in this portal means something has gone
+                      wrong — money owed, overdue, a refused save — and a field is not in error for
+                      being required, so the colour was only spending a signal real failures need.
+                      The question this comment left open ("a question for the money-forms review")
+                      was taken in P3's sweep; there is no marker left to reach for. */}
+                  <label className={styles.label}>Date paid{formMode === 'add' ? ' *' : ''}</label>
                   <input
                     className={styles.input}
                     type="date"

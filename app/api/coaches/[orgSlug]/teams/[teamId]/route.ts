@@ -4,6 +4,7 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getLatestClosedRepProgramYear,
+  getSeasonName,
   updateRepTeam,
   updateRepProgramYear,
   setRepTeamShareClubBook,
@@ -128,6 +129,13 @@ export const GET = withObservability(async (_req: Request,
           // The team's standard split (mig 237). It pre-fills the new-fundraiser and new-sponsor
           // forms and NOTHING else — it is never applied to a record that already exists.
           defaultPlayerCreditPercent: programYear.defaultPlayerCreditPercent ?? 0,
+          /* What the team was already holding when this season started (mig 262) — the one setting
+             in this group that MOVES a figure elsewhere (Cash on hand, the register's first line,
+             every running balance on Budget vs. Actual).
+             ⚠ NULL IS NOT ZERO: a season that carried nothing shows no opening line anywhere, and
+             the settings row says "None carried" rather than "$0.00". */
+          openingBalance: programYear.openingBalance,
+          openingBalanceFrom: await getSeasonName(programYear.openingBalanceFromYearId),
         }
       : null,
     // Assistant Coaches: the caller's effective capability set + their role, so the client can

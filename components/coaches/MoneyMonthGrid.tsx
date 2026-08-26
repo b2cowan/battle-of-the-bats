@@ -5,11 +5,12 @@ import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan,
-  categoryHasFigure, hasUndated, isPayoutCategory,
+  categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf,
   formatMonthLabel, formatMonthLong,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
-  type GridCategoryResult, type MoneyRowDirection,
+  type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
+  type RevenueGroupKey,
 } from '@/lib/coach-budget-months';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
@@ -39,10 +40,40 @@ export const MONEY_LENSES: Array<{ id: MoneyLens; label: string; short: string }
 
 export interface CellDetailItem {
   id: string;
+  /** What THIS record says for itself. Empty where it has nothing beyond its kind. */
   description: string;
+  /**
+   * What KIND of record it is — "Dues payment", "Paid back", "Season sponsorship".
+   *
+   * ⚠⚠ NOT A SECOND SPELLING OF `description`, and the difference is what stops thirteen families
+   * arriving as thirteen identical lines (owner-found 2026-08-25). A ROW's panel is titled with the
+   * family, so the kind is a useful lead; a GROUP's panel is titled with the kind, so it must lead
+   * with the family instead. No rule inferred from the records themselves can separate the two —
+   * three were tried against real data first — so the source states which word is which.
+   */
+  kind?: string | null;
   date: string | null;
   amount: number;
-  paid: boolean;
+  /** Absent where "paid"/"unpaid" says nothing — a dues payment did not get paid, it arrived. */
+  paid?: boolean;
+  /**
+   * The meta line, where the record has something the date does not say: the method it came by,
+   * the credit a drive gave a family back, the cost a refund repaid, why a family was paid back.
+   *
+   * ⚠ IT REPLACES paid/unpaid RATHER THAN JOINING IT. Two clauses of housekeeping in front of the
+   * one that answers the coach's question is how a meta line stops being read.
+   */
+  note?: string | null;
+  /** "Due", "Asked" — a word before a date that is not the day the money moved. */
+  datePrefix?: string;
+  /**
+   * The grid ROW this record belongs to (`<categoryKey>|<itemId>`).
+   *
+   * ⚠⚠ AN ITEM'S PANEL IS A FILTER OF ITS CATEGORY'S LIST, never a second copy of it in the
+   * payload — the same records would otherwise ship twice on the heaviest read in the portal, and
+   * two arrays are two things a future change can put out of step.
+   */
+  row?: string;
 }
 
 /**
@@ -79,6 +110,18 @@ export interface MonthGridPayload {
    * own opening balance instead.
    */
   cashOnHand: number;
+  /**
+   * What the season was HANDED on day one — money carried forward at `Start next season` (mig 262).
+   *
+   * ⚠⚠ NULL IS NOT ZERO. A season that carried nothing shows no opening row at all; one carried at
+   * exactly $0 shows a row saying so. They are the same number and different facts, and a first
+   * season deserves a table with no line about money it never had.
+   * ⚠ `cashOnHand` ALREADY INCLUDES IT — the Scheduled lens projects from real money, so adding
+   * this to that lens as well would count the carry twice. `buildBandCashFlow` owns that rule.
+   */
+  openingBalance?: number | null;
+  /** The season it came from, when it was carried rather than typed. */
+  openingBalanceFrom?: string | null;
   todayMonth: MonthKey;
 }
 
@@ -93,6 +136,44 @@ const fmtCell = fmtCompact;
 function fmtDay(d: string | null) {
   if (!d) return '';
   return new Date(d.slice(0, 10) + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * What one record's two lines say, and it depends on WHOSE panel this is (owner-found 2026-08-25).
+ *
+ * ⚠⚠ A GROUP'S PANEL IS NOT ITS ROW'S PANEL WITH MORE RECORDS IN IT. Open one family and the title
+ * already names them, so each row says what the record IS ("Dues payment"). Open the GROUP and the
+ * title says "Player dues" — which every record restates — so thirteen families arrived as thirteen
+ * identical lines reading "Dues payment". The drawing asked for "every family's payment, NAMED";
+ * this is the naming.
+ *
+ * ⚠ THE WORD THAT IS THE SAME ON EVERY ROW DISTINGUISHES NOTHING, and that is the whole rule for
+ * the second line — no flag on the record, no list of which groups are "generic". "Dues payment"
+ * repeated thirteen times is furniture; "Home opener gate" beside "Doubleheader gate" is the
+ * answer. A panel holding ONE record keeps its words either way: nothing is being distinguished,
+ * but the record still has something to say.
+ *
+ * ⚠ THE DATE CAN BE ABSENT AND THE ROW STILL MEANS SOMETHING — a sponsor's pledge and a club ask
+ * have no date, because nothing records when they land. Every line is assembled from whichever
+ * parts exist rather than around a date that may not.
+ */
+/**
+ * One record's two lines inside a drill-in panel.
+ *
+ * ⚠ WHICH WORDS APPEAR IS `panelRowWords`, IN THE LIB, and deliberately not here: that rule has
+ * been wrong twice and nothing could assert against it while it lived in a component. What is left
+ * here is the assembly — a date this screen knows how to format, and a note.
+ * ⚠ THE DATE CAN BE ABSENT AND THE ROW STILL MEANS SOMETHING: a sponsor's pledge and a club ask
+ * have none, because nothing records when they land.
+ */
+function detailLines(
+  item: CellDetailItem,
+  opts: { subject?: string; group: boolean },
+): { lead: string; meta: string } {
+  const when = item.date ? `${item.datePrefix ?? ''}${fmtDay(item.date)}` : '';
+  const said = item.note?.trim() || (item.paid === undefined ? '' : item.paid ? 'paid' : 'unpaid');
+  const { lead, words } = panelRowWords(item, opts);
+  return { lead, meta: [words, when, said].filter(Boolean).join(' · ') };
 }
 
 /**
@@ -138,8 +219,27 @@ export default function MoneyMonthGrid({
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
   const { monthGrid: grid, revenueGrid, cellDetails, cashOnHand, todayMonth } = data;
+  const opening = data.openingBalance ?? null;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [detail, setDetail] = useState<{ title: string; items: CellDetailItem[]; href: string; hrefLabel: string } | null>(null);
+  const [detail, setDetail] = useState<{
+    title: string;
+    items: CellDetailItem[];
+    totalLabel: string;
+    doors: PanelDoor[];
+    /**
+     * Row key → the name of the family / drive / sponsor / source it belongs to, for a GROUP's
+     * panel. Empty on a row's own panel, where the title already names the subject.
+     *
+     * ⚠ RESOLVED FROM THE GRID'S OWN ROWS RATHER THAN SHIPPED ON EVERY RECORD. The rows are on
+     * screen already and each carries its name; a copy of that name on every payment would be the
+     * same word travelling twice in the portal's heaviest payload, free to disagree with the row it
+     * belongs under.
+     */
+    subjects: Record<string, string>;
+    /** The one row this panel is about, when it is about one — absent on a GROUP's panel, which is
+     *  also how the row renderer knows which of the two it is drawing. */
+    subject?: string;
+  } | null>(null);
   /** "Which line's dates?" — only ever open for a row standing for two or more budget lines. */
   const [chooser, setChooser] = useState<{ item: string; when: string; lines: GridPlanLine[] } | null>(null);
 
@@ -186,8 +286,8 @@ export default function MoneyMonthGrid({
      (nothing carried yet — the carry-forward is its own build item); Scheduled starts from TODAY'S
      REAL MONEY, because a forward view projected from zero would be fiction. */
   const cash = useMemo(
-    () => (lens === 'difference' ? null : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand)),
-    [grid, revenueGrid, lens, cashOnHand]);
+    () => (lens === 'difference' ? null : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0)),
+    [grid, revenueGrid, lens, cashOnHand, opening]);
 
   /* ⚠ A REVENUE GROUP RENDERS ONLY WHERE IT HAS SOMETHING TO SAY UNDER THIS LENS, and that is what
      makes Scheduled read as a FORWARD view rather than a restatement: a bottle drive has no
@@ -208,21 +308,73 @@ export default function MoneyMonthGrid({
 
   function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
-  function openDetail(kind: 'actual' | 'scheduled', categoryKey: string, categoryName: string, month: MonthKey) {
-    const items = cellDetails[`${kind}|${categoryKey}|${month}`] ?? [];
+  /**
+   * Every record behind ONE cell, filtered to a row when the coach tapped an item's figure.
+   *
+   * ⚠ THE FILTER IS THE WHOLE MECHANISM (D-2, 2026-08-24). A category's list and its rows' lists are
+   * the same records read at two grains — so an item panel narrows the category's list by `row`
+   * rather than reading a second map. There is no second map to disagree with.
+   */
+  function cellItems(kind: 'actual' | 'scheduled', categoryKey: string, when: string, row?: string) {
+    const all = cellDetails[`${kind}|${categoryKey}|${when}`] ?? [];
+    return row ? all.filter(i => i.row === row) : all;
+  }
+
+  /**
+   * What opens when a coach taps a figure — one rule for every row on the table (owner ruling
+   * 2026-08-24, artifact `da5d08b9`).
+   *
+   * ⚠ READ-ONLY, ALWAYS. The grid reaches the forms; it never becomes a second place to edit, which
+   * is why there is no "Record a payment" here and never will be.
+   * ⚠ THE DOORS AND THE TOTAL'S WORD ARE NOT DECIDED HERE — `cellPanelSpec` owns both, so the
+   * screen and anything that follows it cannot answer differently. "Possible" instead of "Total" on
+   * a pledge panel is that rule doing its job.
+   */
+  /** A cell belongs either to a whole group's month or to ONE row within it. */
+  type PanelRow = { key: string; subject: PanelSubject } | null;
+
+  function openDetail(kind: 'actual' | 'scheduled', cat: PanelCategory, when: string, row: PanelRow) {
+    const items = cellItems(kind, cat.categoryKey, when, row?.key);
     if (items.length === 0) return;
+    const spec = cellPanelSpec({ group: cat.group, payout: cat.payout }, kind, row?.subject ?? null);
+    /* A GROUP's panel names each record's own row; a row's panel does not, because its title
+       already did. Built from the band this category belongs to, so a family removed from the
+       roster mid-season still resolves through the row her money left behind. */
+    const subjects: Record<string, string> = {};
+    if (!row) {
+      const band = cat.group ? revenueGrid : grid;
+      const owner = band.categories.find(c => c.categoryKey === cat.categoryKey);
+      for (const line of owner?.lines ?? []) subjects[line.id] = line.description;
+    }
     setDetail({
-      title: `${kind === 'actual' ? 'Paid in' : 'Due in'} ${formatMonthLong(month)} · ${categoryName}`,
+      // The drawings' own form: whose money, and when. The lens is named by the control that got here.
+      title: `${row?.subject.name ?? cat.label} · ${when === UNDATED_CELL ? 'no date yet' : formatMonthLong(when)}`,
       items,
-      /* ⚠ THE TWO LENSES NOW LAND ON DIFFERENT TABS (Money split P1, 2026-08-16), which is what
-         the grid was always describing: an "Actual" cell is money that moved and belongs on
-         Transactions, a "Scheduled" cell is money still owed and belongs on the Payables schedule.
-         They used to be one screen with a sub-tab hop between them. */
-      href: kind === 'actual'
-        ? moneySectionHref(base, 'transactions', undefined)
-        : moneySectionHref(base, 'payables', { tab: 'schedule' }),
-      hrefLabel: kind === 'actual' ? 'Open Transactions' : 'Open the payment schedule',
+      totalLabel: spec.totalLabel,
+      doors: spec.doors,
+      subjects,
+      subject: row?.subject.name,
     });
+  }
+
+  /**
+   * What a MONEY cell does when a coach taps it — the twin of `planCell` above, for the two lenses
+   * that hold records rather than a plan.
+   *
+   * ⚠ NOTHING PRETENDS TO BE TAPPABLE. The affordance appears only where the payload actually has
+   * records behind that cell — the defect two of this grid's own affordances shipped with was a
+   * control that looked live and silently did nothing.
+   */
+  function drill(cat: PanelCategory, when: string, row: PanelRow) {
+    if (lens !== 'actual' && lens !== 'scheduled') return {};
+    if (cellItems(lens, cat.categoryKey, when, row?.key).length === 0) return {};
+    const who = row?.subject.name ?? cat.label;
+    return {
+      onClick: () => openDetail(lens, cat, when, row),
+      title: when === UNDATED_CELL
+        ? `See what makes up ${who} with no date yet`
+        : `See what makes up ${who} in ${formatMonthLong(when)}`,
+    };
   }
 
   /** The dates a budget line currently sits on, said the way a coach would say it. */
@@ -291,6 +443,9 @@ export default function MoneyMonthGrid({
     return <span className={cls}>{body}</span>;
   }
 
+  /** Which row of the table a panel is being opened from — its identity, its words, and its band. */
+  type PanelCategory = { categoryKey: string; label: string; group: RevenueGroupKey | null; payout: boolean };
+
   /** Every column the table has, so a band heading spans the grid without breaking the pinned ends. */
   const spacerCells = (key: string) => (
     <>
@@ -350,11 +505,27 @@ export default function MoneyMonthGrid({
   function renderCategory(cat: GridCategoryResult, band: MoneyRowDirection) {
     const open = expanded.has(cat.categoryKey);
     const group = band === 'in' ? revenueGroupOf(cat.categoryKey) : null;
+    const payout = isPayoutCategory(cat.categoryKey);
     // ⚠ The label MOVES WITH THE LENS on revenue — "Player dues" is money received, "Remaining
     // dues instalments" is money still to come, and one name for both would flatten the forward
     // view into a restatement of the past.
     const label = group ? revenueGroupLabel(group, lens) : cat.categoryName;
     const catUndated = lensUndated(cat.undated, lens);
+    const panelCat = { categoryKey: cat.categoryKey, label, group, payout };
+    /* ⚠⚠ A ROW THAT IS A SUBJECT ONLY SHOWS WHERE IT HAS MONEY UNDER THIS LENS (D-2, 2026-08-24).
+       The families, drives, sponsors and requests behind a revenue group — and the families behind
+       "Paid back to families" — are RECORDS, not plan lines: a family who has paid nothing this
+       season has no row on Actual, and none of them has a Budget figure at all, because a group's
+       plan is a dues schedule or a funding line and lives on the group's own row.
+       ⚠ AND NONE OF THEM APPEARS UNDER DIFFERENCE, deliberately. There is no per-family plan to
+       compare against, so every row would print its whole Actual as "ahead of plan" in the colour
+       the grid uses for good news. The comparison the coach wants is the GROUP's, one row up.
+       ⚠ THE EXPENSE BAND'S OWN CATEGORIES KEEP EVERY ROW, empty or not — a budgeted item you have
+       not spent on is answering the question, not failing to. */
+    const subjectRows = band === 'in' || payout;
+    const lines = !subjectRows ? cat.lines
+      : lens === 'difference' ? []
+        : cat.lines.filter(l => categoryHasFigure(l.total, lens));
     return (
       <Fragment key={cat.categoryKey}>
         <tr className={shared.moneyGridCat}>
@@ -364,9 +535,9 @@ export default function MoneyMonthGrid({
               className={shared.moneyGridToggle}
               onClick={() => toggle(cat.categoryKey)}
               aria-expanded={open}
-              disabled={cat.lines.length === 0}
+              disabled={lines.length === 0}
             >
-              {cat.lines.length === 0
+              {lines.length === 0
                 ? <span className={shared.moneyGridChevronSpacer} aria-hidden />
                 : open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
               <span className={shared.wrap640}>{label}</span>
@@ -380,26 +551,22 @@ export default function MoneyMonthGrid({
           </th>
           {showUndated && (
             <td className={`${styles.num} ${styles.undated}`}>
-              {cellNode(Math.abs(catUndated) > 0.005 ? catUndated : null)}
+              {cellNode(Math.abs(catUndated) > 0.005 ? catUndated : null, drill(panelCat, UNDATED_CELL, null))}
             </td>
           )}
           {/* ⚠ `k` is the position ON SCREEN, `i` the position in the SEASON. Every cell
               lookup uses `i`, or a paged grid reads the wrong month's money. */}
+          {/* ⚠⚠ EVERY FIGURE ON BOTH BANDS OPENS NOW (owner ruling 2026-08-24). This used to be the
+              expense band's alone, with a comment saying revenue had no detail list to open — that
+              was true and is the thing D-2 built. */}
           {view.map((m, k) => {
             const i = start + k;
             const v = lensCell(cat.cells[i], lens, m, todayMonth, band);
-            /* ⚠ THE DRILL-IN IS THE EXPENSE BAND'S. Revenue cells have no detail list to open yet
-               — per-family, per-drive and per-sponsor rows are their own build item — and a cell
-               that looks tappable and does nothing is the defect two of this grid's affordances
-               already shipped with. */
-            const drillable = band === 'out' && (lens === 'actual' || lens === 'scheduled')
-              && (cellDetails[`${lens}|${cat.categoryKey}|${m}`]?.length ?? 0) > 0;
             return (
               <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
                 {cellNode(v, {
                   emphasis: lens === 'difference' ? 'signed' : undefined,
-                  onClick: drillable ? () => openDetail(lens as 'actual' | 'scheduled', cat.categoryKey, label, m) : undefined,
-                  title: drillable ? `See what makes up ${formatMonthLong(m)}` : undefined,
+                  ...drill(panelCat, m, null),
                 })}
               </td>
             );
@@ -409,9 +576,14 @@ export default function MoneyMonthGrid({
           </td>
         </tr>
 
-        {open && cat.lines.map(line => {
+        {open && lines.map(line => {
           const lineUndated = lensUndated(line.undated, lens);
           const undatedEditable = canWrite && undatedLive && lineUndated > 0.005 && band === 'out';
+          /* ⚠ THE ROW'S OWN KEY IS `line.id` — `<categoryKey>|<itemId>`, exactly what the payload
+             stamped on each record. Rebuilding it from the parts here would be a second spelling of
+             one key, and a panel that quietly resolves to an empty list is how the LAST drill-in on
+             this grid broke (a nameless category keyed two ways, silent for weeks). */
+          const row = { key: line.id, subject: { id: line.itemId, name: line.description } };
           return (
             <tr key={line.id} className={styles.lineRow}>
               <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
@@ -422,7 +594,10 @@ export default function MoneyMonthGrid({
                   {cellNode(Math.abs(lineUndated) > 0.005 ? lineUndated : null, {
                     ...(undatedEditable
                       ? { ...planCell(line, 'with no date yet'), title: 'Give this money a date' }
-                      : {}),
+                      /* ⚠ A SPONSOR'S PLEDGE AND A CLUB ASK LIVE ENTIRELY HERE (owner ruling
+                         2026-08-23) — in the Total and in no month. Until D-2 this column's figure
+                         was the one on the table with nothing behind it. */
+                      : drill(panelCat, UNDATED_CELL, row)),
                   })}
                 </td>
               )}
@@ -440,7 +615,7 @@ export default function MoneyMonthGrid({
                 const canEdit = canWrite && lens === 'budget' && band === 'out' && line.cells[i].budget > 0.005;
                 return (
                   <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
-                    {cellNode(v, canEdit ? planCell(line, `in ${formatMonthLong(m)}`) : {})}
+                    {cellNode(v, canEdit ? planCell(line, `in ${formatMonthLong(m)}`) : drill(panelCat, m, row))}
                   </td>
                 );
               })}
@@ -497,7 +672,55 @@ export default function MoneyMonthGrid({
                 are one table rather than two widgets. */}
             {cash && (
               <>
+                {/* ⚠⚠ EVERY MONTH SAYS WHAT IT OPENED WITH (owner ruling 2026-08-26, replacing the
+                    2026-08-23 single-cell row). The block now reads as a statement — **opening +
+                    net = closing**, verifiable in the column a coach is looking at rather than by
+                    tracing a cumulative series back to its origin.
+
+                    ⚠⚠ THE WINDOW IS WHY, and it is worth stating because the redundancy is obvious
+                    and the reason is not: this grid shows TWELVE months at a time. Scroll to a later
+                    window and the closing figures were a running total whose starting point had
+                    scrolled off screen — a number the reader was asked to trust rather than check.
+                    Each month's opening IS the month before's closing, so on one screen it is the
+                    same series twice; on a SCROLLED screen it is the only thing making the visible
+                    columns readable. Priced and accepted by the owner.
+
+                    ⚠ SO IT NO LONGER HIDES WHEN NOTHING WAS CARRIED. A first season opens at zero
+                    in its first month — which renders as an em dash like every other zero here —
+                    but its LATER months open on real money, so the row has something to say for
+                    every team. That is one more row on the portal's most-read money screen, taken
+                    deliberately.
+
+                    ⚠ SCHEDULED SHOWS IT TOO, and states the thing that lens most needs said: the
+                    forward view projects from TODAY'S REAL CASH, and that figure now sits in the
+                    table's first column instead of only in a sentence underneath it. */}
                 <tr className={`${shared.moneyGridFlow} ${shared.moneyGridFlowFirst}`}>
+                  {/* ⚠⚠ NO "carried from {season}" SUB-LABEL HERE, and that is a rule this table
+                      already learned the hard way (owner-found 2026-08-24). The label column is the
+                      narrowest thing in the grid and every pixel it takes costs a visible month at
+                      every width — the balance row's own "from today's $X" hint was deleted for
+                      exactly this, being the widest label in the table for an aside only one lens
+                      ever showed. The provenance is a SENTENCE, and it goes in the notes under the
+                      grid where there is room for one. */}
+                  <th scope="row" className={styles.lead}>Opening balance</th>
+                  {/* ⚠ A BALANCE IS A MOMENT, AND UNDATED MONEY HAS NONE. A pledge and a club ask
+                      reach the Total and no month, so this column alone cannot show opening + net =
+                      closing — both balance rows are dashes here while Net carries a figure. True
+                      before this change too; stated now that the reader is invited to check the
+                      row's arithmetic. */}
+                  {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
+                  {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
+                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                      {cellNode(r.opening, { emphasis: 'negative' })}
+                    </td>
+                  ))}
+                  {/* ⚠ THE SEASON'S OWN OPENING, never the visible window's. The Total column is the
+                      whole season on every other row and must not become "the window" on this one. */}
+                  <td className={`${styles.num} ${styles.totalCol}`}>
+                    {cellNode(cash.opening, { emphasis: 'negative' })}
+                  </td>
+                </tr>
+                <tr className={shared.moneyGridFlow}>
                   <th scope="row" className={styles.lead}>Net for the month</th>
                   {showUndated && (
                     <td className={`${styles.num} ${styles.undated}`}>
@@ -522,7 +745,11 @@ export default function MoneyMonthGrid({
                       every lens, squeezing a month column off the screen, while the row it belongs
                       to only shows it on one. And it was already redundant: the Scheduled footnote
                       under the grid states the same figure in a sentence with room for it. */}
-                  <th scope="row" className={styles.lead}>Running balance</th>
+                  {/* ⚠ "Closing", NOT "Running" (owner ruling 2026-08-26). The two words describe
+                      the same figure and only one of them PAIRS with the Opening row above it —
+                      "running" asked the reader to hold a series in their head, "closing" says what
+                      the cell is. Each cell always was the month's closing balance. */}
+                  <th scope="row" className={styles.lead}>Closing balance</th>
                   {/* A balance is a moment, not a bucket: undated money reaches the Total (it is
                       part of where the season ends up) and no single month. */}
                   {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
@@ -559,6 +786,18 @@ export default function MoneyMonthGrid({
             Expenses are every dollar that left — bills paid, payments to the club, and money paid back
             to families. A cost a <strong>family paid a vendor directly</strong> is season spending on the
             Statement but isn’t here: no team cash moved. It lands here the day you pay that family back.
+          </p>
+        )}
+        {/* ⚠ THE CARRY EXPLAINS ITSELF WHERE THERE IS ROOM FOR A SENTENCE — see the note on the
+            Opening balance row. Shown on the two lenses that start from it; Scheduled projects from
+            today's real money, which already contains it. */}
+        {opening !== null && lens !== 'scheduled' && (
+          <p className={styles.note}>
+            <strong>This season opened with {fmt(opening)}</strong>
+            {data.openingBalanceFrom
+              ? ` — carried from ${data.openingBalanceFrom} when this season was started.`
+              : ' that the team was already holding.'}
+            {' '}Change it in <strong>Team settings → Money</strong>.
           </p>
         )}
         {lens === 'scheduled' && (
@@ -650,24 +889,48 @@ export default function MoneyMonthGrid({
               <button className={shared.modalCloseBtn} onClick={() => setDetail(null)} aria-label="Close"><X size={16} /></button>
             </div>
             <ul className={styles.detailList}>
-              {detail.items.map(item => (
+              {detail.items.map(item => {
+                /* ⚠ THE ROW'S NAME IS WANTED ON BOTH PANELS, for two different reasons: a GROUP's
+                    panel leads with it, and a ROW's panel needs it only to notice when a record's
+                    words merely echo it. `subjects` is empty on a row's own panel, so its name
+                    comes from the title the panel was opened with. */
+                const lines = detailLines(item, {
+                  subject: (item.row ? detail.subjects[item.row] : undefined) ?? detail.subject,
+                  group: detail.subject === undefined,
+                });
+                return (
                 <li key={item.id}>
                   <span className={styles.detailDesc}>
-                    {item.description}
-                    <span className={styles.detailMeta}>
-                      {fmtDay(item.date)}{item.paid ? ' · paid' : ' · unpaid'}
-                    </span>
+                    {lines.lead}
+                    {/* ⚠⚠ THE META LINE IS WHERE THE ANSWER LIVES on half these rows (owner ruling
+                        2026-08-24): what a refund repaid, what a drive credited back to that
+                        family's dues, how much of an instalment is already covered, why a family
+                        was paid back. A record's own `note` REPLACES paid/unpaid rather than
+                        queueing behind it — two clauses of housekeeping in front of the one that
+                        answers the question is how a meta line stops being read. */}
+                    <span className={styles.detailMeta}>{lines.meta}</span>
                   </span>
                   <span className={styles.detailAmt}>{fmt(item.amount)}</span>
                 </li>
-              ))}
+                );
+              })}
               <li className={styles.detailTotal}>
-                <span>Total</span>
+                {/* ⚠ "Possible", NEVER "Total", on a pledge or a pending ask — the one word that
+                    stops a coach banking money nobody has agreed to send. `cellPanelSpec` owns it. */}
+                <span>{detail.totalLabel}</span>
                 <span className={styles.detailAmt}>{fmt(detail.items.reduce((s, i) => s + i.amount, 0))}</span>
               </li>
             </ul>
             <div className={shared.modalFooter}>
-              <Link href={detail.href} className={shared.btnSecondary}>{detail.hrefLabel}</Link>
+              {detail.doors.map(door => (
+                <Link
+                  key={door.label}
+                  href={moneySectionHref(base, door.section, door.extra)}
+                  className={shared.btnSecondary}
+                >
+                  {door.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

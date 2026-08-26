@@ -22,8 +22,15 @@ interface RolloverSummary {
   roster: { copied: number; failed: number };
   budget: { carried: boolean; linesCopied: number; periodsCopied: number; failed: number };
   fees: { carried: boolean; playersCopied: number; failed: number; dueDatesShifted: boolean };
+  /** What the new season opened with — the SERVER's figure, not the one this dialog displayed. */
+  openingBalance: { carried: boolean; amount: number };
   notes: string[];
   warnings: string[];
+}
+
+/** Money in this dialog's own voice. */
+function fmtMoney(n: number): string {
+  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function StartNextSeasonModal({
@@ -46,6 +53,13 @@ export default function StartNextSeasonModal({
   const [year, setYear] = useState(String(defaultNextYear));
   const [carryBudget, setCarryBudget] = useState(true);
   const [carryFees, setCarryFees] = useState(true);
+  /* ⚠ DEFAULTS TO CARRYING EVERYTHING, and that is the honest default rather than the convenient
+     one: the team really is holding that money on day one of the new season. */
+  const [carryCash, setCarryCash] = useState<'all' | 'amount' | 'none'>('all');
+  const [carryAmount, setCarryAmount] = useState('');
+  /** The register's own closing figure — read here only to SHOW it. The server computes the number
+   *  it writes (a stale tab must never decide what a season opens with). */
+  const [closingCash, setClosingCash] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<RolloverSummary | null>(null);
@@ -101,6 +115,23 @@ export default function StartNextSeasonModal({
     return () => { alive = false; };
   }, [orgSlug, teamId, hasTryoutSignal]);
 
+  /* The register's closing figure, so "Carry $X into the 2027 season" can name a real number.
+     ⚠ DISPLAY ONLY. The server recomputes it from the same walk when the season is actually
+     created; if this read fails the option simply stops quoting a figure rather than quoting a
+     wrong one, and the roll goes ahead either way. */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/register`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (alive && typeof data?.cashOnHand === 'number') setClosingCash(data.cashOnHand);
+      } catch { /* best-effort — an unnamed figure beats a stale one */ }
+    })();
+    return () => { alive = false; };
+  }, [orgSlug, teamId]);
+
   // Escape closes the form (not the success view — that only exits via "Go to ...").
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -118,7 +149,12 @@ export default function StartNextSeasonModal({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/seasons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), year: Number(year), carryBudget, carryFees }),
+        body: JSON.stringify({
+          name: name.trim(), year: Number(year), carryBudget, carryFees,
+          carryCash: carryCash === 'amount'
+            ? { mode: 'amount', amount: Number(carryAmount.trim().replace(/[$,]/g, '')) }
+            : { mode: carryCash },
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -161,6 +197,14 @@ export default function StartNextSeasonModal({
               )}
               {summary.fees.carried && (
                 <li>{summary.fees.playersCopied} player{summary.fees.playersCopied === 1 ? '' : 's'}&apos; fee plan{summary.fees.playersCopied === 1 ? '' : 's'} carried.</li>
+              )}
+              {/* ⚠ THE SERVER'S FIGURE, NOT THE ONE THIS DIALOG DISPLAYED — so a coach can see what
+                  actually landed rather than what was on offer when the form was drawn. */}
+              {summary.openingBalance.carried && (
+                <li>
+                  <strong>{fmtMoney(summary.openingBalance.amount)}</strong> carried forward as the new
+                  season&apos;s opening balance.
+                </li>
               )}
               <li>The schedule starts fresh — last season&apos;s games, payments, and spending stay with {currentSeasonName}.</li>
             </ul>
@@ -268,6 +312,69 @@ export default function StartNextSeasonModal({
                 <span>Carry over the <strong>fee plan</strong> (amounts &amp; installments; due dates shift forward a year — paid history does not carry).</span>
               </label>
             </div>
+
+            {/* ── Carry your money forward? (mig 262, owner ruling 2026-08-23, drawn) ────────
+                ⚠⚠ DRAWN AS "step 2 of 3" AND BUILT AS A BLOCK, deliberately. This dialog is one
+                form, and its opening "This closes the {season} season" panel was owner-placed at the
+                top in 2026-08-18 precisely so the consequence is read before anything else.
+                Restructuring it into a wizard to house one question would move that panel behind a
+                Next button — a bigger change than the ruling asked for, and to the one sentence
+                that prevents the mistake this product cannot undo.
+                ⚠ SETTLING UP HAPPENS BEFORE THIS, and the note says so: a closed season's book takes
+                no new payments. That is the standing warn-never-block tradeoff, unchanged — nothing
+                here refuses a roll. */}
+            <fieldset style={{ border: 0, margin: '1rem 0 0', padding: 0 }}>
+              <legend style={{ padding: 0, fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
+                Carry your money forward?
+              </legend>
+              {closingCash !== null && (
+                <p style={{ margin: '0.25rem 0 0.6rem', fontSize: '0.85rem', color: 'var(--white-55)' }}>
+                  Cash on hand today: <strong>{fmtMoney(closingCash)}</strong> — the register&apos;s own closing figure.
+                </p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                  <input type="radio" name="carryCash" checked={carryCash === 'all'}
+                    onChange={() => setCarryCash('all')} style={{ marginTop: 3 }} />
+                  <span>
+                    <strong>Carry {closingCash !== null ? fmtMoney(closingCash) : 'it all'} into {name.trim() || 'the new season'}.</strong>{' '}
+                    It becomes the new season&apos;s opening balance — the first line of its register and its report.
+                  </span>
+                </label>
+                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                  <input type="radio" name="carryCash" checked={carryCash === 'amount'}
+                    onChange={() => setCarryCash('amount')} style={{ marginTop: 3 }} />
+                  <span>
+                    <strong>Carry a different amount.</strong> Planning to pay families back or settle with the
+                    club first? Carry what will be left.
+                  </span>
+                </label>
+                {carryCash === 'amount' && (
+                  <input
+                    className={styles.input}
+                    type="text"
+                    inputMode="decimal"
+                    aria-label="Amount to carry into the new season"
+                    placeholder="0.00"
+                    value={carryAmount}
+                    onChange={e => setCarryAmount(e.target.value)}
+                    style={{ maxWidth: 160, marginLeft: '1.7rem', minHeight: 44, textAlign: 'right' }}
+                  />
+                )}
+                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                  <input type="radio" name="carryCash" checked={carryCash === 'none'}
+                    onChange={() => setCarryCash('none')} style={{ marginTop: 3 }} />
+                  <span>
+                    <strong>Start the new season at $0.</strong> The {currentSeasonName} season keeps its own
+                    record either way.
+                  </span>
+                </label>
+              </div>
+              <p style={{ margin: '0.6rem 0 0', fontSize: '0.82rem', color: 'var(--white-55)', lineHeight: 1.5 }}>
+                You can adjust this later in <strong>Team settings → Money</strong>. Settling up happens{' '}
+                <strong>before</strong> this step — a closed season&apos;s book can&apos;t take new payments.
+              </p>
+            </fieldset>
 
             {/* What ISN'T a choice — the two things families ask about that this dialog used to
                 omit (readiness review f5-7): development history and awards. */}

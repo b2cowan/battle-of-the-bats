@@ -30,8 +30,19 @@ interface SettingsData {
    *  not on the Club plan, or its admin has not turned sharing on. Never a locked tease. */
   clubBook: { showSwitch: boolean; sharing: boolean; canEdit: boolean };
   /** Null when this coach has no money access — the server omits the figures entirely. */
-  money: { autoRemindersEnabled: boolean; creditApplication: string; defaultPlayerCreditPercent?: number } | null;
+  money: {
+    autoRemindersEnabled: boolean; creditApplication: string; defaultPlayerCreditPercent?: number;
+    /** What the team was holding when this season started (mig 262). Null = nothing carried. */
+    openingBalance?: number | null;
+    /** The season it was carried from — the provenance line, absent on a hand-set figure. */
+    openingBalanceFrom?: string | null;
+  } | null;
   capabilities?: CoachCapabilities;
+}
+
+/** The season's opening balance, in the settings row's own voice. */
+function fmtMoney(n: number): string {
+  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -90,6 +101,13 @@ export default function TeamSettingsPage({
   const [defaultCredit, setDefaultCredit] = useState(0);
   const [defaultCreditDraft, setDefaultCreditDraft] = useState('0');
   const [defaultCreditSaving, setDefaultCreditSaving] = useState(false);
+  /* ⚠ NULL IS A STATE, NOT A MISSING NUMBER (mig 262). A season that carried nothing reads null and
+     the row says so in words; a season carried at exactly zero reads 0 and shows a figure. */
+  const [opening, setOpening] = useState<number | null>(null);
+  const [openingFrom, setOpeningFrom] = useState<string | null>(null);
+  const [openingDraft, setOpeningDraft] = useState('');
+  const [openingEditing, setOpeningEditing] = useState(false);
+  const [openingSaving, setOpeningSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -116,6 +134,10 @@ export default function TeamSettingsPage({
         const pct = Number(json.money.defaultPlayerCreditPercent ?? 0);
         setDefaultCredit(pct);
         setDefaultCreditDraft(String(pct));
+        const carried = json.money.openingBalance ?? null;
+        setOpening(carried);
+        setOpeningFrom(json.money.openingBalanceFrom ?? null);
+        setOpeningDraft(carried === null ? '' : String(carried));
       }
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Settings could not be loaded');
@@ -235,6 +257,42 @@ export default function TeamSettingsPage({
     // number beside them, and the draft follows so the input shows what the server actually has.
     setDefaultCredit(fresh.defaultPlayerCreditPercent);
     setDefaultCreditDraft(String(fresh.defaultPlayerCreditPercent));
+    setOpening(fresh.openingBalance);
+    setOpeningFrom(fresh.openingBalanceFrom);
+    setOpeningDraft(fresh.openingBalance === null ? '' : String(fresh.openingBalance));
+  }
+
+  /**
+   * Save what the team was holding when this season started.
+   *
+   * ⚠⚠ THIS ONE CHANGES CASH ON HAND, which is why it is a form with a Save rather than a
+   * save-on-blur field like the credit split beside it: a treasurer tabbing through the Money group
+   * must not silently move the figure the register, the report and the Money hub all start from.
+   * ⚠ AN EMPTY FIELD CLEARS IT — back to a season that carried nothing, no opening line anywhere.
+   * ⚠ AND THE PROVENANCE GOES WITH THE EDIT (the server drops it): once the coach has changed the
+   * number, "Carried from …" is a sentence vouching for a figure nobody carried.
+   */
+  async function saveOpening() {
+    const raw = openingDraft.trim().replace(/[$,]/g, '');
+    const next = raw === '' ? null : Number(raw);
+    if (next !== null && !Number.isFinite(next)) {
+      setMoneyError('Enter the money the team was holding when this season started, or leave it empty.');
+      return;
+    }
+    setOpeningSaving(true);
+    setMoneyError('');
+    try {
+      await patchAccountingSetting(orgSlug, teamId, { openingBalance: next });
+      setOpening(next);
+      setOpeningFrom(null);
+      setOpeningDraft(next === null ? '' : String(next));
+      setOpeningEditing(false);
+    } catch (e) {
+      setMoneyError(e instanceof Error ? e.message : 'Could not save that setting.');
+      await resyncMoneySettings();
+    } finally {
+      setOpeningSaving(false);
+    }
   }
 
   async function toggleAutoReminders(enabled: boolean) {
@@ -619,6 +677,75 @@ export default function TeamSettingsPage({
                     </span>
                   ) : (
                     <span className={styles.settingRowDesc}>{defaultCredit}%</span>
+                  )}
+                </div>
+              </div>
+
+              {/* ── The season's opening balance (mig 262, owner ruling 2026-08-23) ──────────
+                  ⚠⚠ DELIBERATELY BESIDE THE DUES SETTINGS AND DELIBERATELY QUIET. This is the
+                  established home for money facts a coach sets once and shouldn't trip over daily,
+                  and the register's own "Opening balance" line links here — so the one place a
+                  curious coach meets the number is one tap from the place that explains and
+                  corrects it. It is NOT on the money hub, and it is not a step in any flow: the
+                  figure is born at Start next season and this is only the correction path. */}
+              <div className={styles.settingRow}>
+                <div className={styles.settingRowMain}>
+                  <span className={styles.settingRowLabel}>Season opening balance</span>
+                  <span className={styles.settingRowDesc}>
+                    {opening === null
+                      ? 'Nothing was carried into this season — its books start at zero. Set a figure here if the team already had money when the season started.'
+                      : <>
+                          {openingFrom
+                            ? <>Carried from the <strong>{openingFrom}</strong> when this one was started. </>
+                            : <>Money the team was already holding when this season started. </>}
+                          Changing it changes <strong>Cash on hand</strong> and every running balance —
+                          edit only to correct the handoff.
+                        </>}
+                  </span>
+                </div>
+                <div className={styles.settingRowCtl}>
+                  {!moneyCanWrite ? (
+                    <span className={styles.settingRowDesc}>
+                      {opening === null ? 'None carried' : fmtMoney(opening)}
+                    </span>
+                  ) : openingEditing ? (
+                    <span style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <input
+                        className={styles.input}
+                        type="text"
+                        inputMode="decimal"
+                        aria-label="Season opening balance"
+                        placeholder="0.00"
+                        value={openingDraft}
+                        disabled={openingSaving}
+                        style={{ minHeight: 44, maxWidth: 120, textAlign: 'right' }}
+                        onChange={e => setOpeningDraft(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className={styles.btnPrimary}
+                        style={{ minHeight: 44 }}
+                        disabled={openingSaving}
+                        onClick={() => void saveOpening()}
+                      >
+                        {openingSaving ? 'Saving...' : 'Save'}
+                      </button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', gap: '0.6rem', alignItems: 'center' }}>
+                      {/* The same weight the read-only branch above uses — one row, one voice. */}
+                      <span className={styles.settingRowDesc}>
+                        {opening === null ? 'None carried' : fmtMoney(opening)}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        style={{ minHeight: 44 }}
+                        onClick={() => setOpeningEditing(true)}
+                      >
+                        Edit
+                      </button>
+                    </span>
                   )}
                 </div>
               </div>

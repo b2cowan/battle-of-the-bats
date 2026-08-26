@@ -678,7 +678,14 @@ export function BudgetVsActualPanel({
   const [monthStartRaw, setMonthStartRaw] = useState<number | null>(null);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  // Money-tag filter (Phase 3): scope the actuals to expenses carrying a tag (server-side).
+  /* ⚠ THERE IS NO MONEY-TAG FILTER ON THIS REPORT, and its absence is a ruling rather than a gap
+     (owner, 2026-08-21 — the route carries the full argument at the same point in its read). A
+     budget line carries no tag, so a tag-filtered reading set a slice of spending against the
+     whole plan and Headroom ROSE as you narrowed. Tag filtering lives on Transactions, which
+     LISTS; this screen COMPARES. Reinstating it here needs tagged plan lines first.
+     ⚠ A comment claiming this filter still existed sat here until 2026-08-25 over code that had
+     had none since §64 — which is how a reader learns the opposite of the truth from a file that
+     compiles perfectly. */
 
   /* ⚠ THE RECATEGORIZE FIX-IT IS GONE (mig 240), and its absence is deliberate. It existed to
      move an expense onto a real CATEGORY so it stopped sitting in a separate Unbudgeted list at the
@@ -788,6 +795,7 @@ export function BudgetVsActualPanel({
     const g = data!.monthGrid;
     const rev = data!.revenueGrid;
     const { todayMonth, cashOnHand } = data!;
+    const opening = data!.openingBalance ?? null;
     const rows: Array<Record<string, string | number>> = [];
     // Index-aligned with `rows` — Excel presentation only (bold bands, collapsible line rows).
     // The `  — ` prefixes pushed below stay in the CSV/PDF text but are stripped from the Excel
@@ -822,8 +830,20 @@ export function BudgetVsActualPanel({
         /* ⚠⚠ THE FILE CARRIES LINE-LEVEL MONEY TOO (fixed 2026-08-21). This blanked every line row
            under any lens but Budget, on the same stale reasoning the screen used — so a coach who
            exported Actual got a spreadsheet whose category rows had figures and whose item rows were
-           empty, and no way to tell that was a display rule rather than the truth. */
-        for (const line of cat.lines) {
+           empty, and no way to tell that was a display rule rather than the truth.
+
+           ⚠⚠ AND THE SAME PER-LENS FILTER THE SCREEN APPLIES TO SUBJECT ROWS (D-2, 2026-08-24) —
+           `categoryHasFigure`, literally the same predicate. The families, drives and sponsors
+           behind a revenue group (and the families behind "Paid back to families") are RECORDS, not
+           plan lines: none of them has a Budget figure and none appears under Difference, because
+           there is no per-family plan to compare against. A file listing every family blank under
+           Budget would be rows the screen never showed, and a reader cannot tell an empty row from
+           a missing one. */
+        const subjectRows = dir === 'in' || isPayoutCategory(cat.categoryKey);
+        const lines = !subjectRows ? cat.lines
+          : lens === 'difference' ? []
+            : cat.lines.filter(l => categoryHasFigure(l.total, lens));
+        for (const line of lines) {
           push(moneyRow(`  — ${line.description}`, line.cells, line.total, line.undated, dir), 'item');
         }
       }
@@ -840,14 +860,33 @@ export function BudgetVsActualPanel({
        reader no way to tell an empty row from a missing one. */
     band(g, 'out', g.categories.filter(c => !isPayoutCategory(c.categoryKey) || categoryHasFigure(c.total, lens)));
 
-    // The two summary rows, off the same assembly the screen runs — see `buildBandCashFlow`.
+    // The three summary rows, off the same assembly the screen runs — see `buildBandCashFlow`.
     if (lens !== 'difference') {
-      const flow = buildBandCashFlow(rev, g, lens, cashOnHand);
+      const flow = buildBandCashFlow(rev, g, lens, cashOnHand, opening ?? 0);
+      /* ⚠⚠ THREE ROWS, AND THE FILE READS AS THE STATEMENT THE SCREEN DOES (owner ruling
+         2026-08-26): every month says what it OPENED with, what it NETTED, and what it CLOSED on,
+         so `opening + net = closing` is checkable in a spreadsheet column exactly as it is on
+         screen. The old shape put the carried figure in the first month and dashes everywhere else.
+         ⚠ THE ROW NO LONGER DEPENDS ON A CARRY. Every month opens on the one before it, so a team
+         that carried nothing still has an opening series worth reading — its first month is simply
+         zero, which this file leaves blank the way the screen shows an em dash.
+         ⚠ A BALANCE IS A MOMENT AND UNDATED MONEY HAS NONE, so both balance rows leave the
+         "No date yet" column empty while Net carries a figure. That one column cannot balance, in
+         the file or on the screen. */
+      const open: Record<string, string | number> = { item: 'Opening balance', undated: '' };
       const net: Record<string, string | number> = { item: 'Net for the month', undated: flow.undated.net || '' };
-      const run: Record<string, string | number> = { item: 'Running balance', undated: '' };
-      flow.rows.forEach(r => { net[`m_${r.month}`] = r.net; run[`m_${r.month}`] = r.running; });
+      const run: Record<string, string | number> = { item: 'Closing balance', undated: '' };
+      flow.rows.forEach(r => {
+        open[`m_${r.month}`] = r.opening || '';
+        net[`m_${r.month}`] = r.net;
+        run[`m_${r.month}`] = r.running;
+      });
+      /* ⚠ THE SEASON'S OWN OPENING AND ENDING, never the visible window's — the Total column is the
+         whole season on every other row of this file. */
+      open.total = flow.opening || '';
       net.total = flow.net;
       run.total = flow.ending;
+      push(open, 'total');
       push(net, 'total');
       push(run, 'total');
     }

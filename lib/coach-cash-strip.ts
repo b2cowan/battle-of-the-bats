@@ -42,14 +42,41 @@ export interface CashPlacement {
   itemId: string | null;
 }
 
+/**
+ * WHO or WHAT a dollar came from — the row a REVENUE group opens to (owner ruling 2026-08-24).
+ *
+ * ⚠⚠ THE NAME IS RESOLVED BY THE CALLER AND CARRIED BY US, exactly as `CashPlacement` is. This
+ * module decides which records are cash; it has no database and no business learning a roster. What
+ * it must do is keep the subject welded to the figure — the grid row, the month cell and the panel
+ * behind that cell are three readings of ONE event, and a second lookup anywhere downstream is a
+ * second chance to disagree about whose money it was.
+ *
+ * `id` is null only where a stream genuinely has nothing to group by (an arrival typed against no
+ * budget item). Those land on a row of their own rather than vanishing.
+ */
+export interface CashSubject {
+  id: string | null;
+  name: string;
+}
+
 export interface CashStripInputs {
-  /** Dues a family actually paid, the day it arrived (mig 232). */
-  duesPayments: Array<{ amount: number; receivedDate: string | null }>;
+  /** Dues a family actually paid, the day it arrived (mig 232). ⚠ The family's name comes from the
+   *  caller's roster read and is gated exactly as the Player Dues tab is — never wider. */
+  duesPayments: Array<{
+    id: string; amount: number; receivedDate: string | null;
+    playerId: string | null; playerName: string; method: string | null;
+  }>;
   /**
    * Recorded arrivals — BOTH kinds. `money_back` is cash IN even though the report nets it, and the
    * kind decides which revenue group it lands in ("Other income" vs "Money back & reimbursements").
    */
-  moneyInRecords: Array<{ amount: number; receivedDate: string | null; kind: 'income' | 'money_back' }>;
+  moneyInRecords: Array<{
+    id: string; amount: number; receivedDate: string | null; kind: 'income' | 'money_back';
+    description: string;
+    /** Where the coach filed it — the GROUPING for typed income, and the "what it repaid" line on
+     *  money back. Both come off the record's own join; neither is re-derived here. */
+    itemId: string | null; itemName: string | null; categoryName: string | null;
+  }>;
   /**
    * Realised drive/sponsor entries, GROSS. A rebate is a CREDIT — a family sends less dues — never
    * cash out; gross fundraising + actual dues receipts is the identity the register already proves.
@@ -59,8 +86,14 @@ export interface CashStripInputs {
    * ⚠ `kind` splits the two revenue groups: a drive is Fundraising, a sponsor is Sponsorships.
    */
   realisedEntries: Array<{
-    amountRaised: number; receivedDate: string | null; createdAt: string;
+    id: string; amountRaised: number; receivedDate: string | null; createdAt: string;
     kind: 'fundraiser' | 'sponsor';
+    /** The drive or the sponsor this row belongs to — the row the group opens to. */
+    fundraiserId: string; fundraiserName: string;
+    /** Who raised it, and what their dues were credited. ⚠ THE REBATE IS A NOTE, NEVER A FIGURE
+     *  (owner ruling 2026-08-24): the credit already lowered that family's dues, so showing it as
+     *  an amount beside gross would read as money leaving. */
+    playerId: string | null; playerName: string | null; rebateAmount: number;
   }>;
   /**
    * Approved club requests, settled the day they were DECIDED (approval posts the transfer).
@@ -68,7 +101,11 @@ export interface CashStripInputs {
    * club repaying a cost is the same species of arrival as a vendor refunding one. Anything else is
    * cash out, filed where the request itself was filed.
    */
-  clubRequests: Array<CashOutRecord & { isReimbursement: boolean; reviewedAt: string | null; createdAt: string }>;
+  clubRequests: Array<CashOutRecord & {
+    isReimbursement: boolean; reviewedAt: string | null; createdAt: string;
+    /** The item's word, for the "repaid Facilities / Dome time" line — `place` carries only its id. */
+    itemName: string | null;
+  }>;
   /**
    * One entry per expense PAYMENT (the standings' movements), on the day the money left.
    * ⚠ `familyPaidDirect` rows are the one spend that never moves team cash — a family paid the
@@ -77,7 +114,14 @@ export interface CashStripInputs {
    */
   expensePayments: Array<CashOutRecord & { paidDate: string | null; familyPaidDirect: boolean }>;
   /** Money handed BACK to a family (mig 234) — real cash out, its own expense-band group. */
-  duesPayouts: Array<{ id: string; amount: number; paidDate: string | null }>;
+  duesPayouts: Array<{
+    id: string; amount: number; paidDate: string | null;
+    playerId: string | null; playerName: string; method: string | null;
+    /** WHY this family was paid back — "overpaid instalment #2", a shared surplus, a cashed-out
+     *  credit. ⚠ It rides on the payment's own meta line rather than becoming a second grouping
+     *  level, so the row still mirrors dues (owner ruling 2026-08-24). */
+    reason: string | null;
+  }>;
   /** Club allocation installments; only PAID ones are cash (on the day the team paid). */
   clubInstallments: Array<CashOutRecord & { paidAt: string | null }>;
 }
@@ -95,6 +139,17 @@ export interface CashOutRecord {
   description: string;
   amount: number;
   place: CashPlacement;
+  /**
+   * The one thing this record needs a coach to know beside its date — the method it left by, the
+   * reason a family was paid back. Absent on the ordinary rows, whose date and words say it all.
+   */
+  note?: string | null;
+  /**
+   * What KIND of record this is, where the record has no words of its own — see the same field on
+   * `RevenueCashEvent` for why the two are not one field. A bill carries its own description and
+   * needs none of this; money handed back to a family is only ever "Paid back".
+   */
+  kind?: string | null;
 }
 
 /** One dollar of revenue, in its group, on the day it arrived. */
@@ -102,6 +157,34 @@ export interface RevenueCashEvent {
   group: RevenueGroupKey;
   date: string | null;
   amount: number;
+  /** The record's own id — the panel behind a cell lists records, and a list needs stable keys. */
+  id: string;
+  /** WHO or WHAT it came from — the family, the drive, the sponsor, the item it was filed under. */
+  subject: CashSubject;
+  /**
+   * What KIND of record this is — "Dues payment", "Paid back", "Season sponsorship".
+   *
+   * ⚠⚠ IT IS NOT THE SAME THING AS `description`, AND CONFLATING THEM PUT THIRTEEN IDENTICAL LINES
+   * ON A COACH'S SCREEN (owner-found 2026-08-25). Opened from a family, "Dues payment" is a useful
+   * line — the title already names Maya. Opened from the GROUP, the title says "Player dues" and
+   * every record restated it, so thirteen families arrived as thirteen rows reading "Dues payment".
+   *
+   * ⚠ NO HEURISTIC CAN TELL THESE APART, and three were tried against real records before this
+   * field existed. "Every row says the same thing" drops "Season sponsorship" correctly and drops
+   * "Home opener gate" wrongly; "only one record" keeps both. Whether a word belongs to the RECORD
+   * or to its KIND is knowledge the source has and the screen cannot recover — so the source says
+   * it, here, rather than the renderer guessing.
+   */
+  kind: string;
+  /**
+   * What THIS record says for itself — who raised it, what a refund repaid, which gate took it.
+   *
+   * Null where a record genuinely has no words of its own beyond its kind: one dues payment is
+   * much like another, and the family, the date and the method are the whole story.
+   */
+  description: string | null;
+  /** Its meta line: the method, the credit a drive gave back, the cost a refund repaid. */
+  note: string | null;
 }
 
 /** One dollar of spending that actually left the team's cash, where it was filed. */
@@ -136,9 +219,34 @@ export interface CashStrip {
   dates: string[];
 }
 
-const PAYOUT_PLACE: CashPlacement = {
-  categoryId: PAYOUT_CATEGORY_ID, categoryName: PAYOUT_CATEGORY_NAME, itemId: null,
-};
+/**
+ * The two sources behind "Money back & reimbursements", which are two different EVENTS.
+ *
+ * ⚠ ONE OF THEM HAS A DOOR AND THE OTHER DOES NOT, and the asymmetry is the point (owner ruling
+ * 2026-08-24). Club money has a Club screen to open; a refund a coach typed in has no "thing
+ * itself" behind it — the record IS the thing, and it lives on Transactions.
+ */
+export const MONEY_BACK_RECORDED = { id: 'moneyback:recorded', name: 'Money back you recorded' };
+export const MONEY_BACK_CLUB = { id: 'moneyback:club', name: 'Repaid by the club' };
+
+/** Whole dollars where they are whole — a note line reads "$120 credited", never "$120.00". */
+function money(n: number): string {
+  const whole = Math.abs(n % 1) < 0.005;
+  return `$${n.toLocaleString('en-CA', {
+    minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2,
+  })}`;
+}
+
+/** "Facilities / Dome time" — what a refund repaid, said the way the report files it. */
+function repaidLabel(place: { categoryName: string | null; itemName?: string | null }): string | null {
+  const parts = [place.categoryName, place.itemName].filter((p): p is string => !!p && !!p.trim());
+  return parts.length > 0 ? `repaid ${parts.join(' / ')}` : null;
+}
+
+/** Where money handed back to a family sits — its own group, on that family's own row. */
+const payoutPlace = (playerId: string | null): CashPlacement => ({
+  categoryId: PAYOUT_CATEGORY_ID, categoryName: PAYOUT_CATEGORY_NAME, itemId: playerId,
+});
 
 export function buildActualCashStrip(x: CashStripInputs): CashStrip {
   const revenue: RevenueCashEvent[] = [];
@@ -148,9 +256,15 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
 
   /* ⚠ A ZERO IS NOT AN EVENT. Emitting it would put a row on the grid for a record that moved
      nothing and, worse, would widen the month range to the day it did not happen. */
-  const income = (group: RevenueGroupKey, date: string | null, amount: number) => {
+  const income = (
+    group: RevenueGroupKey, date: string | null, amount: number,
+    rec: { id: string; subject: CashSubject; kind: string; description?: string | null; note?: string | null },
+  ) => {
     if (!amount) return;
-    revenue.push({ group, date, amount });
+    revenue.push({
+      group, date, amount, id: rec.id, subject: rec.subject,
+      kind: rec.kind, description: rec.description?.trim() || null, note: rec.note ?? null,
+    });
     if (date) dates.push(date);
   };
   /* ⚠ THE EVENT IS BUILT FIELD BY FIELD, NEVER SPREAD FROM THE INPUT. An input row carries its own
@@ -159,25 +273,81 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
      date on the event beside the answer, and the next reader has no way to know which one is real. */
   const spend = (rec: CashOutRecord, date: string | null) => {
     if (!rec.amount) return;
-    expenses.push({ id: rec.id, description: rec.description, amount: rec.amount, place: rec.place, date });
+    expenses.push({
+      id: rec.id, description: rec.description, amount: rec.amount, place: rec.place,
+      note: rec.note ?? null, kind: rec.kind ?? null, date,
+    });
     if (date) dates.push(date);
   };
 
-  for (const p of x.duesPayments) income('dues', p.receivedDate, p.amount);
+  for (const p of x.duesPayments) {
+    income('dues', p.receivedDate, p.amount, {
+      id: `dues-payment-${p.id}`,
+      subject: { id: p.playerId, name: p.playerName },
+      kind: 'Dues payment',
+      note: p.method,
+    });
+  }
   for (const m of x.moneyInRecords) {
-    income(m.kind === 'money_back' ? 'moneyback' : 'other', m.receivedDate, m.amount);
+    if (m.kind === 'money_back') {
+      /* ⚠ A REFUND NAMES WHAT IT REPAID (owner ruling 2026-08-24). These are the figures that
+         behave differently here than on the Statement — there they shrink the cost they repaid,
+         here they are money that arrived — and the panel is where a coach learns that without
+         reading a footnote. */
+      income('moneyback', m.receivedDate, m.amount, {
+        id: `money-in-${m.id}`,
+        subject: MONEY_BACK_RECORDED,
+        kind: 'Money back',
+        description: m.description,
+        note: repaidLabel(m),
+      });
+      continue;
+    }
+    /* ⚠ TYPED INCOME GROUPS BY WHAT IT WAS FILED UNDER — the only grouping a typed arrival has.
+       An arrival against no item is its own row rather than a dollar with nowhere to sit. */
+    income('other', m.receivedDate, m.amount, {
+      id: `money-in-${m.id}`,
+      subject: { id: m.itemId, name: m.itemName?.trim() || 'Not itemized' },
+      kind: 'Income',
+      description: m.description,
+    });
   }
   for (const e of x.realisedEntries) {
+    const sponsor = e.kind === 'sponsor';
     income(
-      e.kind === 'sponsor' ? 'sponsorship' : 'fundraising',
+      sponsor ? 'sponsorship' : 'fundraising',
       e.receivedDate ?? orgDayKey(e.createdAt),
       e.amountRaised,
+      {
+        id: `fundraiser-entry-${e.id}`,
+        subject: { id: e.fundraiserId, name: e.fundraiserName },
+        kind: sponsor ? 'Season sponsorship' : 'Fundraising',
+        /* ⚠ A DRIVE'S RECORD HAS WORDS OF ITS OWN AND A SPONSOR'S DOES NOT: a drive entry is one
+           family's effort, so WHO raised it is the record; a sponsor's arrival is the sponsor, who
+           is already the row. */
+        description: sponsor ? null : (e.playerName?.trim() || 'Team collection'),
+        /* ⚠⚠ THE REBATE IS A NOTE, NOT A SECOND FIGURE. The credit already lowered that family's
+           dues; printing it as an amount beside the gross would read as money leaving, which is
+           the one thing a drive's cash never does. */
+        note: sponsor
+          ? 'received'
+          : e.rebateAmount > 0.005
+            ? `${money(e.rebateAmount)} credited to their dues`
+            : e.playerId ? null : 'not attributed',
+      },
     );
   }
   for (const r of x.clubRequests) {
     const settledOn = orgDayKey(r.reviewedAt ?? r.createdAt);
-    if (r.isReimbursement) income('moneyback', settledOn, r.amount);
-    else spend(r, settledOn);
+    if (r.isReimbursement) {
+      income('moneyback', settledOn, r.amount, {
+        id: r.id,
+        subject: MONEY_BACK_CLUB,
+        kind: 'Money back',
+        description: r.description,
+        note: repaidLabel({ categoryName: r.place.categoryName, itemName: r.itemName }),
+      });
+    } else spend(r, settledOn);
   }
   for (const p of x.expensePayments) {
     /* ⚠ RECORDED, NOT DISCARDED. The season spent this and the team's cash did not — the Statement
@@ -196,7 +366,19 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
      and "Paid back to families" belongs at the FOOT of the expense band (the Option D mockup draws
      it there) rather than interleaved with the team's real spending categories. */
   for (const p of x.duesPayouts) {
-    spend({ id: p.id, description: PAYOUT_CATEGORY_NAME, amount: p.amount, place: PAYOUT_PLACE }, p.paidDate);
+    /* ⚠ BY FAMILY, MIRRORING DUES (owner call 2026-08-24) — this row was never in the D-2 spec, and
+       left shut it would have been the one figure on the statement a coach could not trace to a
+       record. The WHY rides on the payment's own meta line rather than splitting the group. */
+    spend({
+      id: p.id,
+      /* ⚠ THE KIND, NOT A DESCRIPTION. Under a panel already titled "Paid back to families" the
+         words say nothing — the family, the day and the reason are the record. */
+      description: '',
+      kind: 'Paid back',
+      amount: p.amount,
+      place: payoutPlace(p.playerId),
+      note: [p.method, p.reason].filter(n => !!n && !!n.trim()).join(' · ') || null,
+    }, p.paidDate);
   }
 
   const inMap: Record<MonthKey, number> = {};

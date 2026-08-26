@@ -1,12 +1,29 @@
 {
-  "generated": "2026-08-25",
-  "total": 0,
+  "generated": "2026-08-26",
+  "total": 4,
   "counts": {
     "tables": 0,
-    "columns": 0,
+    "columns": 3,
     "indexes": 0,
-    "constraints": 0,
+    "constraints": 1,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "column:only-dev:rep_program_years.opening_balance",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_program_years.opening_balance_from_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryouts.names_shown_at",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_program_years.rep_program_years_opening_balance_from_year_id_fkey",
+      "sig": ""
+    }
+  ]
 }

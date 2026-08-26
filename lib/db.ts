@@ -3538,6 +3538,11 @@ function mapRepProgramYear(r: any): RepProgramYear {
     autoRemindersEnabled: r.auto_reminders_enabled ?? true,
     creditApplication: normalizeCreditApplicationMode(r.credit_application),
     defaultPlayerCreditPercent: Number(r.default_player_credit_percent ?? 0),
+    /* ⚠ NULL SURVIVES AS NULL (mig 262). A `?? 0` here would erase the difference between a season
+       that carried nothing and one that carried exactly nothing, and the screens read that
+       difference: one shows no opening line at all, the other shows $0.00. */
+    openingBalance: r.opening_balance != null ? Number(r.opening_balance) : null,
+    openingBalanceFromYearId: (r.opening_balance_from_year_id ?? null) as string | null,
     lineupSettings: (r.lineup_settings ?? null) as LineupSettings | null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -9236,6 +9241,10 @@ export async function getRealisedFundraiserEntries(
 export interface SeasonFundraiserEntry {
   id: string;
   fundraiserId: string;
+  /** The drive's or the sponsor's own name — the ROW a revenue group opens to on the Months grid.
+   *  ⚠ ADDITIVE TO A READER BUILT FOR TOTALS, deliberately, rather than a third entries query: the
+   *  parent row is already joined below, so this name was one column away the whole time. */
+  fundraiserName: string;
   playerId: string | null;
   amountRaised: number;
   rebateAmount: number;
@@ -9270,7 +9279,7 @@ export async function getSeasonFundraiserEntries(
 ): Promise<SeasonFundraiserEntry[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_fundraiser_entries')
-    .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, received_date, created_at, rep_fundraisers!inner(program_year_id, kind, sponsor_status)')
+    .select('id, fundraiser_id, player_id, amount_raised, rebate_amount, received_date, created_at, rep_fundraisers!inner(name, program_year_id, kind, sponsor_status)')
     .eq('rep_fundraisers.program_year_id', programYearId);
   if (error) throw error;
   return (data ?? [])
@@ -9281,6 +9290,7 @@ export async function getSeasonFundraiserEntries(
       return {
         id: r.id,
         fundraiserId: r.fundraiser_id,
+        fundraiserName: (parent.name as string) ?? '',
         playerId: r.player_id ?? null,
         amountRaised: Number(r.amount_raised ?? 0),
         rebateAmount: Number(r.rebate_amount ?? 0),
@@ -11870,6 +11880,51 @@ export async function setDefaultPlayerCreditPercent(programYearId: string, perce
   const { error } = await supabaseAdmin
     .from('rep_program_years')
     .update({ default_player_credit_percent: percent })
+    .eq('id', programYearId);
+  if (error) throw error;
+}
+
+/**
+ * The season's opening balance, and where it came from (mig 262).
+ *
+ * ⚠⚠ IT MOVES CASH ON HAND, AND THAT IS THE WHOLE POINT — the register's first line, the Months
+ * report's running balances and the Money hub's cash figure all start from it. There is deliberately
+ * no validation of "does this match last season's close": a coach correcting a handoff knows
+ * something the product cannot see (they settled up in cash, they forgave a balance), which is the
+ * same reason unsettled money WARNS and never blocks.
+ *
+ * ⚠ `null` CLEARS IT, and clearing is not setting zero: a season that carries nothing shows no
+ * opening line at all, which is what a first season should look like.
+ */
+/**
+ * The NAME of the season an opening balance was carried from — the provenance line a coach reads
+ * ("Carried from the 2026 Season when this one was started").
+ *
+ * ⚠ THE NAME, NOT THE SEASON. Three surfaces want this one word and none of them wants the row: a
+ * full `getRepProgramYear` here would put a second program year on every money payload, where the
+ * next reader would reasonably assume it was live. Returns null when nothing was carried, and when
+ * the source season has since been deleted — the money stayed either way (`ON DELETE SET NULL`),
+ * and "carried forward" with no name is a truer line than a dangling one.
+ */
+export async function getSeasonName(programYearId: string | null): Promise<string | null> {
+  if (!programYearId) return null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('name')
+    .eq('id', programYearId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.name as string | null) ?? null;
+}
+
+export async function setSeasonOpeningBalance(
+  programYearId: string,
+  amount: number | null,
+  fromYearId: string | null = null,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ opening_balance: amount, opening_balance_from_year_id: fromYearId })
     .eq('id', programYearId);
   if (error) throw error;
 }

@@ -100,7 +100,12 @@ async function main() {
   // Oldest to newest now, so the closing balance is the LAST settled row, not the first — and it
   // has to be found by `!scheduled`, because an overdue row can sit after it in array order while
   // never being part of the real close.
-  const closing = settled.length > 0 ? settled[settled.length - 1].balance : 0;
+  /* ⚠⚠ AND THE BOOK MAY OPEN ON MONEY THIS SEASON DID NOT MOVE (mig 262). A season carried
+     forward starts its walk from the balance the one before it closed at — so an EMPTY book's close
+     is the carry rather than zero, and every identity below has to start from the same place.
+     Absent on a payload from before this shipped, which reads as zero and is right for it. */
+  const opening = cents(book.opening ?? 0);
+  const closing = settled.length > 0 ? settled[settled.length - 1].balance : book.opening ?? 0;
   if (cents(closing) !== cents(book.cashOnHand)) {
     problems.push(`the last settled row's balance ${fmt(closing)} is not the book's own close ${fmt(book.cashOnHand)}`);
   }
@@ -111,9 +116,11 @@ async function main() {
   }
 
   // ── 2. Every row is a movement of it ───────────────────────────────────────────────────────
-  const summed = settled.reduce((c, r) => c + (r.movesCash ? cents(r.moneyIn) - cents(r.moneyOut) : 0), 0);
+  const summed = opening + settled.reduce((c, r) => c + (r.movesCash ? cents(r.moneyIn) - cents(r.moneyOut) : 0), 0);
   if (summed !== cents(book.cashOnHand)) {
-    problems.push(`the settled rows sum to ${fmt(summed / 100)}, which is not the close ${fmt(book.cashOnHand)}`);
+    problems.push(
+      `the opening balance ${fmt(opening / 100)} plus the settled rows comes to ${fmt(summed / 100)},`
+      + ` which is not the close ${fmt(book.cashOnHand)}`);
   }
 
   // ── 3. An overdue row never moves the real close, wherever it's interleaved ───────────────
@@ -122,7 +129,9 @@ async function main() {
     // FULL array — it must be carried, never its own accumulation.
     const posInBook = rows.indexOf(r);
     const priorSettled = [...rows.slice(0, posInBook)].reverse().find(x => !x.scheduled);
-    const expected = priorSettled ? priorSettled.balance : 0;
+    /* ⚠ WITH NOTHING SETTLED BEFORE IT, THE REAL CASH IS THE CARRY, NOT ZERO (mig 262) — an overdue
+       bill dated before a carried season's first payment sits on top of the money it opened with. */
+    const expected = priorSettled ? priorSettled.balance : (book.opening ?? 0);
     return cents(r.balance) !== cents(expected);
   });
   if (overdueMoved) {
@@ -151,6 +160,9 @@ async function main() {
   }
 
   console.log(`\n  balance at Today = cash on hand = ${fmt(book.cashOnHand)}  ✓`);
+  if (opening !== 0) {
+    console.log(`  (opening ${fmt(opening / 100)} carried in — and it reached the book AND the summary)`);
+  }
   if (book.projectedBalance !== null && book.projectedBalance !== undefined) {
     console.log(`  once everything scheduled lands: ${fmt(book.projectedBalance)}`);
   }

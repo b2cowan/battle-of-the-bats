@@ -11592,6 +11592,24 @@
     "ordinal_position": 15
   },
   {
+    "table_name": "rep_program_years",
+    "column_name": "opening_balance",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "rep_program_years",
+    "column_name": "opening_balance_from_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
     "table_name": "rep_roster_players",
     "column_name": "id",
     "data_type": "uuid",
@@ -15811,6 +15829,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_tryouts",
+    "column_name": "names_shown_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
   },
   {
     "table_name": "request_metrics_raw",

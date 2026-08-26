@@ -216,19 +216,27 @@ export function byDateAscending(a: RegisterRow, b: RegisterRow): number {
 }
 
 /**
- * The season's closing cash, in cents: every SETTLED movement, from an opening balance of zero.
+ * The season's closing cash, in cents: every SETTLED movement, on top of what the season OPENED
+ * with.
  *
- * ⚠ ZERO IS A FACT HERE, NOT A CONVENTION. Every figure behind Cash on hand is scoped to the working
- * program year — dues, fundraising, expenses, allocations, and club requests as of migration 247 —
- * so the season's book genuinely starts empty and its last settled row's balance IS the cash.
- * If anything season-less is ever folded into that figure again, this stops being true and the
- * register's headline claim quietly becomes false. That is the trap migration 247 closed.
+ * ⚠⚠ ZERO WAS A FACT HERE AND IS NOW A DEFAULT (mig 262, owner ruling 2026-08-23). Every figure
+ * behind Cash on hand is still scoped to the working program year — dues, fundraising, expenses,
+ * allocations, and club requests as of migration 247 — so the season's own MOVEMENTS still start
+ * empty, and that trap stays closed. What changed is that a season may now be handed a balance by
+ * the one before it: money the team was already holding on day one, carried at `Start next season`.
+ * It is not a movement and never becomes a row in any sum of movements; it is where the sum starts.
  *
- * ⚠ TWO CALLERS, AND THAT IS THE POINT: the register sums its rows, and `money-summary` sums its
- * category totals. One arithmetic, so the two cannot disagree by a rounding step.
+ * ⚠⚠ EVERY CALLER PASSES IT OR NONE DO, and there is no third option that is safe. The register
+ * sums its rows and `money-summary` sums its category totals — one arithmetic, so the two cannot
+ * disagree by a rounding step — but an opening balance reaching one and not the other is a
+ * DISAGREEMENT IN DOLLARS, silently, with both figures still looking plausible.
+ * `check:register` holds them equal for exactly this reason.
  */
-export function cashOnHandCents(movements: readonly CashMovement[]): number {
-  let cents = 0;
+export function cashOnHandCents(
+  movements: readonly CashMovement[],
+  openingCents = 0,
+): number {
+  let cents = openingCents;
   for (const m of movements) if (!m.scheduled) cents += movementCents(m);
   return cents;
 }
@@ -257,7 +265,7 @@ export function cashOnHandCents(movements: readonly CashMovement[]): number {
  * one through overdue rows merged in by date — both moving strictly oldest to newest, so neither
  * list is ever built backwards and reversed.
  */
-export function buildBook(rows: readonly RegisterRow[]): {
+export function buildBook(rows: readonly RegisterRow[], openingBalance = 0): {
   book: RegisterBookRow[];
   /** Index into `book` where the Today divider sits — also the auto-scroll landing point. */
   todayIndex: number;
@@ -265,6 +273,14 @@ export function buildBook(rows: readonly RegisterRow[]): {
   cashOnHand: number;
   /** Where the balance ends up if everything scheduled happens. Null when nothing is scheduled. */
   projectedBalance: number | null;
+  /**
+   * What the book OPENED with (mig 262) — money carried in from the season before.
+   *
+   * ⚠ RETURNED RATHER THAN LEFT FOR THE SCREEN TO ADD BACK. Every row's balance already includes
+   * it, so a caller that re-added it would double the carry on every line; returning it is what
+   * lets the register NAME its first line instead of a coach wondering where the extra came from.
+   */
+  opening: number;
 } {
   // ⚠ `.filter` already returns a fresh array, so sorting it in place cannot reorder the caller's.
   const settledAsc = rows.filter(r => !r.scheduled).sort(byDateAscending);
@@ -272,7 +288,11 @@ export function buildBook(rows: readonly RegisterRow[]): {
   const overdueAsc = scheduledAsc.filter(r => r.overdueDays !== null);
   const futureAsc = scheduledAsc.filter(r => r.overdueDays === null);
 
-  let cents = 0;
+  /* ⚠ THE WALK STARTS FROM THE CARRY, not from zero — so every balance down the page, the close,
+     and the projection past Today are all one continuous line rather than a figure with a
+     correction applied at the end. */
+  let cents = toCents(openingBalance);
+  const openingCents = cents;
   const settledCents: { row: RegisterRow; cents: number }[] = settledAsc.map(r => {
     cents += movementCents(r);
     return { row: r, cents };
@@ -283,7 +303,10 @@ export function buildBook(rows: readonly RegisterRow[]): {
   // overdue row's own balance is whatever real cash had accumulated up to that point — it never
   // advances the running total itself.
   const merged: RegisterBookRow[] = [];
-  let si = 0, oi = 0, carriedCents = 0;
+  /* ⚠ AN OVERDUE ROW BEFORE THE FIRST SETTLED ONE CARRIES THE OPENING BALANCE, not zero. It shows
+     the real cash that existed immediately before it, and on a season that carried money forward
+     that is the carry — `check:register` §3 asserts exactly this. */
+  let si = 0, oi = 0, carriedCents = openingCents;
   while (si < settledCents.length || oi < overdueAsc.length) {
     const s = settledCents[si];
     const o = overdueAsc[oi];
@@ -309,6 +332,7 @@ export function buildBook(rows: readonly RegisterRow[]): {
     todayIndex: merged.length,
     cashOnHand,
     projectedBalance: futureWithBalance.length > 0 ? toDollars(projected) : null,
+    opening: toDollars(openingCents),
   };
 }
 
@@ -345,18 +369,29 @@ export function applyDateRange(
   book: readonly RegisterBookRow[],
   fromKey: string,
   toKey: string,
-): { rows: RegisterBookRow[]; startingBalance: number } {
+  openingBalance = 0,
+): { rows: RegisterBookRow[]; startingBalance: number; isSeasonOpening: boolean } {
   const rows: RegisterBookRow[] = [];
-  let lastBeforeRange = 0;
+  /* ⚠⚠ THE WINDOW STARTS FROM THE CARRY WHEN NOTHING PRECEDES IT (mig 262). "Starting balance" has
+     always meant "the real cash immediately before the first row you can see" — with nothing before
+     the window that used to be zero, and on a season that carried money forward it is the carry.
+     Left at zero, the whole-season view would open on $0.00 and every row's own balance would then
+     be higher than the line above it claimed to start from. */
+  let lastBeforeRange = openingBalance;
+  let anythingBefore = false;
   for (const r of book) {
     const inRange = r.date === null || (r.date >= fromKey && r.date <= toKey);
     if (inRange) {
       rows.push(r);
     } else if (r.date !== null && r.date < fromKey) {
       lastBeforeRange = r.balance;
+      anythingBefore = true;
     }
   }
-  return { rows, startingBalance: lastBeforeRange };
+  /* Nothing before the window ⇒ the figure a coach is reading IS the season's opening balance, and
+     the register says so in those words with a link to where it is corrected. Narrow the window and
+     it goes back to being an ordinary starting balance, because that is what it is. */
+  return { rows, startingBalance: lastBeforeRange, isSeasonOpening: !anythingBefore };
 }
 
 /**

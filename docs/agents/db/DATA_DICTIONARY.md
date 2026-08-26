@@ -1919,6 +1919,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 3. **Status transitions are forward-only — `draft→active→completed→archived`, enforced ONLY on the admin route** (`VALID_TRANSITIONS`; invalid → 422). **Provisioning bypasses it** — a self-serve team-workspace inserts `status:'active'` directly ([lib/team-workspace-provisioning.ts:184](../../../lib/team-workspace-provisioning.ts#L184)), skipping the guard.
 4. **`budget_amount` + `auto_reminders_enabled` are COACH-side fields** — the org-admin program-year PATCH deliberately omits `budgetAmount` even though `updateRepProgramYear` supports it ([lib/db.ts:3987](../../../lib/db.ts#L3987)). An org admin editing a program year cannot touch the budget or the reminder toggle.
 5. **No billing sync on completing/archiving (Club Repackaging, 2026-06-22).** The former Club-only per-team Stripe sync is **retired** — program-year status changes no longer trigger any billing call. Club capacity is a flat per-plan team cap, not a per-team meter.
+6. **A season's books no longer necessarily start at zero (mig 262).** `opening_balance` carries the previous season's closing cash forward, and **every** cash figure starts from it — the register's running balance, Cash on hand, and both running rows on Budget vs. Actual. The season-scoping that migration 247 completed still holds and is what makes the carry safe: the season's own **movements** are still scoped to the year, so the opening balance is the *only* cross-season figure and it is an explicit stored one rather than a leak. ⚠ Its two readers (`/register` and `/money-summary`) are a matched pair — see the column note.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -1959,6 +1960,41 @@ standard can change year to year and a finished season must keep the one it ran 
 pre-fills, it does not govern:** it seeds the new-fundraiser and new-sponsor forms only, every
 record can differ, and changing it is **never** applied retroactively — the same rule
 `rep_fundraisers.player_rebate_percent` already follows (gotcha 2 on that table).
+
+<!-- dict:col:rep_program_years.opening_balance -->
+**`opening_balance`** (numeric(12,2), **nullable**; mig 262) — cash the team was **already holding on
+day one of this season**, carried forward from the season before it. Written at *Start next season*
+from the closing season's own register figure (`seasonClosingCashCents`,
+[lib/coach-register-book.ts](../../../lib/coach-register-book.ts)) **in the same INSERT that creates
+the season**, and corrected afterwards only in **Team settings → Money**
+([accounting-settings route](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/accounting-settings/route.ts)).
+
+⚠⚠ **NULL IS NOT ZERO, and three screens read the difference.** `null` = *nothing was carried*, and
+the register, the Months report and the settings row show **no opening line at all**; `0.00` = *this
+season was deliberately carried at zero* and shows a figure. A `?? 0` anywhere in a reader collapses
+two different facts into one number.
+
+⚠⚠ **IT IS NOT A MOVEMENT AND MUST NEVER BECOME A ROW.** It has no kind (so no register filter would
+match it), no date (so no date window would), and it moved on a day this season cannot see. It is
+where the walk **starts**: `cashOnHandCents(rows, openingCents)` and `buildBook(rows, opening)`
+([lib/coach-register.ts](../../../lib/coach-register.ts)) both take it as an opening, and
+`/money-summary` passes the same figure into the same function — **the two are a matched pair, and
+`npm run check:register` fails loudly if a change reaches one and not the other.**
+
+⚠ **A HANDOFF, NOT A LIVE LINK.** Nothing recomputes it after the carry; editing the source season
+later does not move it. That is deliberate (a closed season's book takes no new payments), and the
+settings row is the only correction path.
+
+<!-- dict:col:rep_program_years.opening_balance_from_year_id -->
+**`opening_balance_from_year_id`** (FK → `rep_program_years.id`, nullable, **ON DELETE SET NULL**;
+mig 262) — which season the opening balance was carried **from**; the provenance line the settings
+row and the register's first line read back ("Carried from the 2026 Season when this one was
+started"). **Null when a coach typed the figure themselves** — for a team whose first season began
+mid-stream with money already in the bank, and **also after any hand edit**, because a provenance
+line that outlives the value it describes is a sentence vouching for a figure nobody carried (the
+accounting-settings PATCH clears it on every manual write). `ON DELETE SET NULL` so a deleted season
+can never take a live season's money with it — the cash was carried, and the handoff is finished the
+moment it lands.
 
 <!-- dict:col:rep_program_years.lineup_settings -->
 **`lineup_settings`** (jsonb, nullable; mig 172) — Lineup Intelligence P3 **season-default innings caps** for the game-day auto-fill, set on the coach team Settings page. **App-enforced shape (`lib/lineup-caps.ts`, NO DB CHECK)**: `{ maxInningsPerPosition: int|null (rotation cap — max innings any one player at a single field position), pitcherMaxInningsDefault: int|null (team default arm-care ceiling), minInningsPerPlayer: int|null (min-play floor) }`. A null column or missing key = that rule is OFF. Effective cap at generation = per-game `rep_team_lineups.rules_override` ?? this default; the per-player `lineup_profile.pitcher.maxInnings` (mig 171) still applies on top (stricter wins). See docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md.

@@ -357,17 +357,29 @@ async function main() {
      Opening + the season's net = the ending balance = Cash on hand. The screen shows the same
      number three ways on purpose; if they can differ, the report cannot prove itself. */
   const bandTotal = g => cents(g.totals?.total?.actual);
-  /* ⚠⚠ THE OPENING BALANCE IS **NOT** READ FROM THE PAYLOAD, AND SAYING SO IS THE POINT.
-     A first draft wrote `cents(data.openingBalance ?? 0)` — which reads like evidence and is not:
-     the route emits no such field, so the `??` silently made this a hardcoded zero dressed up as a
-     live check (`/review`, verification-integrity + correctness lenses, 2026-08-23, found
-     independently by both). Today zero is CORRECT — no season carries a balance forward yet — so
-     the claim below is true, but it would have stayed "true" the day carry-forward shipped under
-     any other field name, quietly passing while off by exactly the carried amount. That is the
-     "a claim got weaker and nobody noticed" failure this file's own header is about.
-     ⚠⚠ WHEN CARRY-FORWARD SHIPS, THIS CONSTANT IS THE THING TO CHANGE — read the real field and
-     DELETE the `?? 0` habit with it, so a missing field fails loudly instead of reading as zero. */
-  const opening = 0;
+  /* ⚠⚠ AND THE OPENING BALANCE IS NOW READ BY NAME, WITH NO `?? 0` HABIT ANYWHERE NEAR IT (mig 262,
+     2026-08-25). This is the change the comment that stood here demanded, and its history is kept
+     because the trap is an easy one to walk back into.
+
+     It used to be `const opening = 0`. A draft before THAT wrote `cents(data.openingBalance ?? 0)`
+     against a route that emitted no such field — which reads like evidence and is not: the `??`
+     silently made it a hardcoded zero wearing a live check's clothes (`/review`,
+     verification-integrity + correctness lenses, 2026-08-23, found independently by both). Zero was
+     CORRECT while no season could carry a balance, so the claim was true — and would have stayed
+     "true" the day carry-forward shipped under any other field name, passing quietly while off by
+     exactly the carried amount.
+
+     ⚠⚠ SO A MISSING FIELD IS A FAILURE, NOT A ZERO. `undefined` means the route stopped emitting it,
+     and this run stops rather than proving an identity about a season it can no longer see the
+     opening balance of. `null` is a real answer and means "nothing was carried". */
+  if (data.openingBalance === undefined) {
+    console.error('\n✗ THE REPORT NO LONGER SAYS WHAT THE SEASON OPENED WITH.');
+    console.error('  openingBalance is absent from the payload (mig 262). It is null when nothing was');
+    console.error('  carried and a number when something was — absent means the route stopped emitting');
+    console.error('  it, and every claim below would silently assume zero.\n');
+    process.exit(1);
+  }
+  const opening = cents(data.openingBalance ?? 0);
   const seasonNet = bandTotal(revenue) - bandTotal(grid);
   const ending = opening + seasonNet;
   if (ending !== cents(register.cashOnHand)) {
@@ -379,6 +391,41 @@ async function main() {
     problems.push(
       `the report's own Cash on hand (${money(cents(data.cashOnHand))}) is not the register's`
       + ` (${money(cents(register.cashOnHand))}) — the Scheduled lens projects from the wrong starting money`);
+  }
+
+  /* ── 6a. A GROUP IS WHAT ITS ROWS ADD UP TO, IN EVERY MONTH (D-2, owner ruling 2026-08-24) ────
+     Every revenue figure now OPENS: a group's chevron shows the families, drives, sponsors and
+     requests behind it, and tapping a figure lists the records. Those rows are a second grain of the
+     same money — so if they can disagree with the total above them, the drill-in is a screen that
+     contradicts the report it is part of, and every claim above would still pass.
+
+     ⚠ THE MONTH IS THE UNIT, not the season. Season totals reconcile around a dollar filed in the
+     wrong month, which is the exact defect this whole file exists to catch elsewhere.
+
+     ⚠ ORPHANS ARE THE ONE HONEST GAP AND IT IS ONE-DIRECTIONAL. Money whose subject has no row —
+     unattributable arrivals, a family removed from the roster mid-season — is added at the CATEGORY
+     level by the builder rather than dropped, so rows may legitimately sum to LESS than their group.
+     They may never sum to more: that is money counted twice. */
+  for (const [bandName, g] of [['revenue', revenue], ['expenses', grid]]) {
+    for (const cat of g.categories ?? []) {
+      const rows = cat.lines ?? [];
+      if (rows.length === 0) continue;
+      (g.months ?? []).forEach((m, i) => {
+        const group = cents(cat.cells?.[i]?.actual);
+        const summed = rows.reduce((s, r) => s + cents(r.cells?.[i]?.actual), 0);
+        if (summed > group) {
+          problems.push(
+            `${bandName} · ${cat.categoryName} in ${m}: its rows add up to ${money(summed)} but the`
+            + ` group says ${money(group)} — a drill-in that counts money the total above it does not`);
+        }
+      });
+      const totalRows = rows.reduce((s, r) => s + cents(r.total?.actual), 0);
+      if (totalRows > cents(cat.total?.actual)) {
+        problems.push(
+          `${bandName} · ${cat.categoryName}: its rows total ${money(totalRows)} against a group total`
+          + ` of ${money(cents(cat.total?.actual))}`);
+      }
+    }
   }
 
   /* ── 6b. THE BRIDGE BETWEEN THE TWO TOTALS ACTUALLY BRIDGES THEM ──────────────────────────────
@@ -436,6 +483,7 @@ async function main() {
      run, and on this file's own stated principle a claim nobody can see reads like one that did not
      happen. Every claim that executes says so. */
   console.log(`  and the cash arithmetic dated every dollar the way the register did  ✓`);
+  console.log('  every group equals the rows a coach can open behind it, month by month  ✓');
   console.log(`  the Statement's bridge to Months adds up: ${money(statement)} spent → ${money(cents(grid.totals?.total?.actual))} in cash  ✓`);
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
@@ -492,6 +540,26 @@ async function main() {
   if (!forward.some(r => r.kind === 'club' && r.date === null && String(r.id).startsWith('request-'))) {
     missing.push('a club request awaiting an answer (the other undated forward row)');
   }
+  /* ⚠⚠ AND A SEASON THAT CARRIED MONEY FORWARD (mig 262). Claim 6 reads the real opening balance
+     now — but over a season that opened at nothing, `opening` is zero and the claim is arithmetically
+     identical to the one it replaced. It CANNOT FAIL on such a fixture, so a green run over one is
+     not evidence that the carry reaches Cash on hand, the register and this report together. That is
+     precisely the pair the ruling warned would argue.
+     ⚠ THIS IS A REAL COVERAGE GAP UNTIL THE FIXTURE CARRIES ONE — said out loud, exiting non-zero,
+     rather than noted above a green exit. A skipped claim must never read as a pass. */
+  if (!(cents(data.openingBalance ?? 0) !== 0)) {
+    missing.push(
+      'an OPENING BALANCE carried from a previous season (mig 262) — with none, claim 6 adds zero and'
+      + ' cannot tell whether the carry reaches the register and Cash on hand at all');
+  }
+  /* ⚠ AND ROWS BEHIND THE REVENUE FIGURES (D-2). Claim 6a is a comparison between two grains; a
+     season whose groups have no rows compares a figure against nothing and passes every time. */
+  if (!(revenue.categories ?? []).some(c => (c.lines ?? []).length > 0)) {
+    missing.push(
+      'a revenue group with ROWS behind it (the families, drives or sponsors D-2 opens to) — without'
+      + ' one, the group-equals-its-rows claim compares a figure against an empty list');
+  }
+
   if (missing.length > 0) {
     console.error('\n⚠ THIS RUN PROVES LESS THAN IT LOOKS LIKE. This report shows no:');
     for (const m of missing) console.error(`  · ${m}`);

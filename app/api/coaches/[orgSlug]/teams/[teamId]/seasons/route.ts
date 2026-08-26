@@ -9,7 +9,7 @@ import {
 import { canViewMoney } from '@/lib/coach-capabilities';
 import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { startNextRepSeason, SeasonRolloverError } from '@/lib/rep-season-rollover';
+import { startNextRepSeason, SeasonRolloverError, type SeasonCarryChoice } from '@/lib/rep-season-rollover';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import type { Organization } from '@/lib/types';
@@ -272,6 +272,31 @@ export const POST = withObservability(async (req: Request,
   const carryBudget = body.carryBudget !== false; // default on
   const carryFees = body.carryFees !== false; // default on
 
+  /* ── What happens to the money the closing season is holding (mig 262) ──────────────────────
+     ⚠⚠ THE MODE IS THE CLIENT'S; THE FIGURE FOR "carry all" IS NOT. The dialog shows a coach the
+     register's closing number, and the server works it out again from the same walk at the moment
+     the season is created — a stale tab or a payment recorded in another window would otherwise
+     open the new season on a balance the team never had, permanently.
+     ⚠ DEFAULTS TO 'all', which is the dialog's own default and the honest one: the team really is
+     holding that money on day one of the new season. A client that says nothing gets the same
+     answer the coach would have seen pre-selected. */
+  const rawMode = body.carryCash?.mode;
+  if (rawMode !== undefined && rawMode !== 'all' && rawMode !== 'amount' && rawMode !== 'none') {
+    return NextResponse.json({ error: 'Unknown carry-forward choice.' }, { status: 400 });
+  }
+  let carryCash: SeasonCarryChoice = { mode: 'all' };
+  if (rawMode === 'none') carryCash = { mode: 'none' };
+  else if (rawMode === 'amount') {
+    const amount = Number(body.carryCash?.amount);
+    if (!Number.isFinite(amount) || Math.abs(amount) > 100_000_000) {
+      return NextResponse.json(
+        { error: 'Enter how much to carry into the new season, or choose one of the other options.' },
+        { status: 400 },
+      );
+    }
+    carryCash = { mode: 'amount', amount: Math.round(amount * 100) / 100 };
+  }
+
   // Resolve the workspace row so we can re-point its active-season pointer (hygiene).
   const { data: workspace } = await supabaseAdmin
     .from('team_workspaces')
@@ -291,6 +316,7 @@ export const POST = withObservability(async (req: Request,
       newYear: yearNum,
       carryBudget,
       carryFees,
+      carryCash,
     });
     return NextResponse.json({ summary }, { status: 201 });
   } catch (e) {

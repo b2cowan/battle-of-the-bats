@@ -3,7 +3,7 @@ import {
   getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getSeasonFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
-  getRepAllocationSplitsForTeam, getCommitmentStandings,
+  getRepAllocationSplitsForTeam, getCommitmentStandings, getSeasonName,
 } from '@/lib/db';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel, paymentLabel } from '@/lib/payable-standing';
@@ -13,8 +13,9 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import {
-  buildMonthGrid, monthKeyOf, deriveMonthRange,
+  buildMonthGrid, monthKeyOf, deriveMonthRange, isPayoutCategory, UNDATED_CELL,
   revenueCategoryId, revenueGroupLabel, revenueGroupOf, REVENUE_GROUPS,
+  PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME,
   type CategoryEvent, type GridLine, type RevenueGroupKey, type GridCategoryResult,
 } from '@/lib/coach-budget-months';
 import { LINE_KIND_ACTUAL_SOURCE } from '@/lib/coach-budget-totals';
@@ -28,6 +29,39 @@ import { buildActualCashStrip } from '@/lib/coach-cash-strip';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
 import { duesPaidAmount, paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
+import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
+
+/**
+ * How a payment arrived, in the word the rest of the portal prints.
+ *
+ * ⚠⚠ THE SHARED MAP, NOT THE STORED TOKEN (owner-found 2026-08-25). The drill-in shipped the raw
+ * value straight to the screen, so a coach read "other" and "etransfer" in lower case beside
+ * figures — while Player Dues, the payout sheet and the recording conversation all printed
+ * "E-Transfer" from `DUES_PAYMENT_METHOD_LABEL`. That map's own header records it being written to
+ * stop a THIRD copy; this was worse than a copy, it was no lookup at all.
+ *
+ * ⚠ "Other" IS DROPPED RATHER THAN PRINTED. It is the answer a coach gives when they did not say
+ * how the money came, so putting it on the line adds a word and no information — the row simply
+ * reads "Sep 2", and the one beside it still reads "Sep 2 · Cash".
+ */
+function methodWord(method: DuesPaymentMethod | null): string | null {
+  if (!method || method === 'other') return null;
+  return DUES_PAYMENT_METHOD_LABEL[method] ?? null;
+}
+
+/** Money in a sentence — the panel's own notes ("$100 of $317 already paid"). */
+function fmtMoney(n: number): string {
+  const whole = Math.abs(n % 1) < 0.005;
+  return `$${n.toLocaleString('en-CA', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 })}`;
+}
+
+/** "Aug 2" — a day in a note, never a column header. */
+function fmtDay(d: string | null): string {
+  if (!d) return 'no date';
+  const [y, m, day] = d.slice(0, 10).split('-').map(Number);
+  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return y && m && day ? `${names[m - 1] ?? m} ${day}` : d;
+}
 
 /** A category row without the raw records behind each item — see the note at the payload. */
 function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
@@ -146,11 +180,6 @@ export const GET = withObservability(async (req: Request,
   /* ── 2b. Club money (money redesign P4, 2026-08-17) ───────────────────────────────────────────
      ⚠⚠ NONE OF THIS REACHED THIS REPORT BEFORE. See the long note at the rollup call for what was
      missing and why; this is the read.
-
-     ⚠ SKIPPED ENTIRELY WHEN A MONEY TAG IS FILTERING. "Spend by tag" is a cut of the tagged
-     EXPENSES, and club money carries no tags — folding it in would make every tag's total include
-     the same untagged club bill, so the filtered figures would not sum to the unfiltered one and
-     the cut would be meaningless. Same rule the expenses half applies one block up.
 
      ⚠ SPLITS ARE SEASON-SCOPED, matching every other read on this page and the P4 correction to the
      Club tab itself. Requests are approved-only: a pending one is money the club may still decline
@@ -362,14 +391,32 @@ export const GET = withObservability(async (req: Request,
      ⚠ DUES CREDITS ride along for the same forward view: what a family still owes on an instalment
      is net of the credits their fundraising already earned, and quoting the face value here while
      the payment schedule quotes the remainder is two answers to one family's question. */
-  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits] = await Promise.all([
+  /* ⚠⚠ AND THE ROSTER'S NAMES (D-2, owner ruling 2026-08-24). The REVENUE band's rows are the
+     actual families, drives and sponsors behind a figure, so the report has to be able to say whose
+     dollar it is. ⚠ GATED EXACTLY AS THE PLAYER DUES TAB IS AND NO WIDER: this whole route already
+     refuses a coach without `canViewMoney` above, which is the same key that opens Dues. Nothing
+     here widens who can read a family name. */
+  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, rosterRes] = await Promise.all([
     getRepTeamMoneyIn(programYear.id),
     getDerivedIncomeClaims(programYear.id),
     getSeasonFundraiserEntries(programYear.id),
     getRepDuesPaymentsByProgramYear(programYear.id),
     getRepDuesPayoutsByProgramYear(programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    supabaseAdmin
+      .from('rep_roster_players')
+      .select('id, player_first_name, player_last_name')
+      .eq('program_year_id', programYear.id),
   ]);
+  /* ⚠ THE SAME NAME THE REGISTER PRINTS, assembled the same way — a family reading as "Maya Ledger"
+     on one screen and "Maya" on the next is the same record answering twice. */
+  const playerName = new Map(
+    ((rosterRes.data ?? []) as Array<{ id: string; player_first_name: string; player_last_name: string | null }>)
+      .map(pl => [pl.id, [pl.player_first_name, pl.player_last_name].filter(Boolean).join(' ')]),
+  );
+  /** A family whose roster row is gone (a mid-season removal) still has money on the book. */
+  const familyName = (playerId: string | null) =>
+    (playerId ? playerName.get(playerId) : null) ?? 'A family';
   const realisedEntries = allEntries.filter(e => e.realised);
   /** What a sponsor has promised and not sent. Undated by nature — nothing records when it lands. */
   const sponsorPledges = allEntries.filter(e => !e.realised && e.kind === 'sponsor');
@@ -771,7 +818,30 @@ export const GET = withObservability(async (req: Request,
   const gridScheduled: CategoryEvent[] = [];
   // Per-cell drill-in detail, keyed `${categoryKey}|${YYYY-MM}` — the read panels behind an
   // Actual or Scheduled cell. Already-loaded rows, so no extra query.
-  const cellDetails: Record<string, Array<{ id: string; description: string; date: string | null; amount: number; paid: boolean }>> = {};
+  /* ⚠⚠ KEYED BY CATEGORY AND MONTH, AND EACH RECORD NAMES ITS OWN ROW (D-2, 2026-08-24). An ITEM's
+     panel is a FILTER of its category's list, never a second copy of it in the payload: the same
+     records would otherwise ship twice on a report that is already the heaviest read in the portal,
+     and two arrays are two things a future change can put out of step. `row` is the grid row's own
+     id — `<categoryKey>|<itemId>` — which is exactly what `buildMonthGrid` keys money by, so the
+     filter cannot drift from the placement. */
+  const cellDetails: Record<string, Array<{
+    id: string; description: string; date: string | null; amount: number;
+    /**
+     * What kind of record it is, for the rows whose own words are just that kind repeated.
+     *
+     * ⚠ A ROW'S panel leads with the record's words and falls back to this; a GROUP's panel leads
+     * with the row's NAME and never shows the kind, because the group already is the kind. Sending
+     * both is what lets one list serve two panels without the screen guessing which word is which.
+     */
+    kind?: string | null;
+    /** Absent where paid/unpaid says nothing — a dues payment did not "get paid". */
+    paid?: boolean;
+    /** The meta line, when the record has something to say the date does not. */
+    note?: string | null;
+    /** "Due", "Asked" — a word before a date that is not the day money moved. */
+    datePrefix?: string;
+    row?: string;
+  }>> = {};
   /* ⚠ THE SAME CATEGORY IDENTITY THE GRID ITSELF RETURNS, or a cell has detail behind it that its
      own panel cannot find. This used to key on `(category ?? '').trim().toLowerCase()` while
      `buildMonthGrid` returned its own key — for a NAMELESS category those were `''` and
@@ -781,12 +851,25 @@ export const GET = withObservability(async (req: Request,
     kind: 'actual' | 'scheduled',
     category: { categoryId: string | null; categoryName: string },
     date: string | null,
-    item: { id: string; description: string; amount: number; paid: boolean },
+    item: {
+      id: string; description: string; amount: number;
+      kind?: string | null; paid?: boolean; note?: string | null; datePrefix?: string; itemId?: string | null;
+    },
   ) {
-    const m = monthKeyOf(date);
+    /* ⚠⚠ UNDATED MONEY GETS A BUCKET RATHER THAN BEING DROPPED (D-2, 2026-08-24). A sponsor
+       PLEDGE and a club request awaiting an answer have no date because nothing records when they
+       land — they live entirely in the "No date yet" column, and until now that column's figure had
+       nothing behind it. A cell a coach can see and cannot open is the dead end this build exists
+       to close. `UNDATED_CELL` is deliberately not a month key shape, so nothing can mistake it
+       for one. */
+    const m = monthKeyOf(date) ?? (date === null ? UNDATED_CELL : null);
     if (!m) return;
-    const key = `${kind}|${categoryKey(category.categoryId, category.categoryName)}|${m}`;
-    (cellDetails[key] ??= []).push({ ...item, date });
+    const cat = categoryKey(category.categoryId, category.categoryName);
+    const { itemId, ...rest } = item;
+    /* ⚠ THE ROW KEY IS BUILT THE WAY THE GRID BUILDS IT — `no-item` for unattributed money, the
+       same fallback `buildMonthGrid` uses — so a record and the row it belongs to can never key
+       differently. */
+    (cellDetails[`${kind}|${cat}|${m}`] ??= []).push({ ...rest, date, row: `${cat}|${itemId ?? 'no-item'}` });
   }
 
   /* ══ SCHEDULED KEEPS ITS OWN RAW FEED, AND THAT IS A DECISION ══════════════════════════════════
@@ -845,6 +928,7 @@ export const GET = withObservability(async (req: Request,
       gridScheduled.push({ ...cat, itemId: placed.itemId, date: inst.dueDate, amount: inst.remaining });
       pushDetail('scheduled', cat, inst.dueDate, {
         id: inst.id,
+        itemId: placed.itemId,
         description: installmentLabel(description, inst.installmentNumber, count),
         amount: inst.remaining,
         /* ⚠ R4 — SETTLED MEANS PAID IN FULL, and a part-paid piece is therefore still here, for
@@ -870,14 +954,33 @@ export const GET = withObservability(async (req: Request,
      The inclusion and dating rules live in lib/coach-cash-strip.ts, pinned by its unit tests;
      `check:money-report` proves the result equals the register month-by-month, to the cent. */
   const cashStrip = buildActualCashStrip({
-    duesPayments,
-    moneyInRecords,
-    realisedEntries,
+    duesPayments: duesPayments.map(p => ({
+      id: p.id, amount: p.amount, receivedDate: p.receivedDate,
+      playerId: p.playerId, playerName: familyName(p.playerId), method: methodWord(p.method),
+    })),
+    /* ⚠ THE SAME `placeArrival` THE STATEMENT USES. An arrival filing itself one way on the report
+       and another in its own drill-in is the "two answers to one fact" defect this route's header is
+       about — the resolution is called once, here, and both readings take it. */
+    moneyInRecords: moneyInRecords.map(m => {
+      const at = placeArrival(m);
+      return {
+        id: m.id, amount: m.amount, receivedDate: m.receivedDate, kind: m.kind,
+        description: m.description ?? '',
+        categoryName: at.categoryName, itemId: at.itemId, itemName: at.itemName,
+      };
+    }),
+    realisedEntries: realisedEntries.map(e => ({
+      id: e.id, amountRaised: e.amountRaised, receivedDate: e.receivedDate, createdAt: e.createdAt,
+      kind: e.kind, fundraiserId: e.fundraiserId, fundraiserName: e.fundraiserName,
+      playerId: e.playerId, playerName: e.playerId ? familyName(e.playerId) : null,
+      rebateAmount: e.rebateAmount,
+    })),
     clubRequests: clubApprovedRequests.map(r => ({
       id: `club-request-${r.id}`,
       description: r.description,
       amount: r.amount,
       place: { categoryId: r.categoryId, categoryName: r.categoryName, itemId: r.itemId },
+      itemName: r.itemName ?? null,
       isReimbursement: clubRequestIsReimbursement(r.requestType),
       reviewedAt: r.reviewedAt,
       createdAt: r.createdAt,
@@ -895,7 +998,13 @@ export const GET = withObservability(async (req: Request,
         familyPaidDirect: !!exp.paid_by_player_id,
       }));
     }),
-    duesPayouts: duesPayouts.map(p => ({ id: `dues-payout-${p.id}`, amount: p.amount, paidDate: p.paidDate })),
+    duesPayouts: duesPayouts.map(p => ({
+      id: `dues-payout-${p.id}`, amount: p.amount, paidDate: p.paidDate,
+      playerId: p.playerId, playerName: familyName(p.playerId), method: methodWord(p.method),
+      /* ⚠ THE COACH'S OWN WORDS FOR WHY — "overpaid instalment #2", a shared surplus, a cashed-out
+         credit. Nothing is invented when the note is blank; the row simply says how it was sent. */
+      reason: p.note,
+    })),
     clubInstallments: clubSplits.flatMap(s =>
       s.installments.map(i => ({
         id: `club-allocation-${i.id}`,
@@ -917,11 +1026,34 @@ export const GET = withObservability(async (req: Request,
      `actualMovements` survives above and still feeds the cumulative CHART, which is report-basis and
      stays paired with the statement. Two labelled truths, one guard each — the grid answers to the
      register, the statement and the chart answer to each other. */
+  /* ⚠⚠ AND MONEY PAID BACK OPENS BY FAMILY (D-2, owner call 2026-08-24). This group has no budget
+     items to be fed from, so its rows are the families themselves — registered here, in the order
+     the money left, exactly as the revenue band learns its own rows. Left shut it would have been
+     the one figure on the statement a coach could not trace back to a record. */
+  const payoutRows = new Map<string, GridLine>();
   for (const mv of cashStrip.expenses) {
     const cat = gridCategory(mv.place.categoryId, mv.place.categoryName);
+    if (isPayoutCategory(mv.place.categoryId) && mv.place.itemId) {
+      const id = `${categoryKey(PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME)}|${mv.place.itemId}`;
+      if (!payoutRows.has(id)) {
+        payoutRows.set(id, {
+          id,
+          description: familyName(mv.place.itemId),
+          categoryId: PAYOUT_CATEGORY_ID,
+          categoryName: PAYOUT_CATEGORY_NAME,
+          itemId: mv.place.itemId,
+          totalAmount: 0,
+          inPlan: false,
+          periods: [],
+        });
+      }
+    }
     gridActuals.push({ ...cat, itemId: mv.place.itemId, date: mv.date, amount: mv.amount });
     pushDetail('actual', cat, mv.date, {
-      id: mv.id, description: mv.description, amount: mv.amount, paid: true,
+      id: mv.id, itemId: mv.place.itemId, description: mv.description, kind: mv.kind, amount: mv.amount,
+      /* ⚠ A PAYOUT'S META LINE IS ITS REASON, NOT THE WORD "paid" (owner ruling 2026-08-24). Every
+         other cash-out row keeps paid/unpaid, which is the only thing it has to say. */
+      ...(mv.note ? { note: mv.note } : { paid: true }),
     });
   }
 
@@ -968,17 +1100,76 @@ export const GET = withObservability(async (req: Request,
      EVENTS (a dues instalment schedule is a plan, and it is not a budget line). */
   const revenueEvent = (
     group: RevenueGroupKey, date: string | null, amount: number,
+    subject: { id: string | null; name: string } | null = null,
   ): CategoryEvent => ({
     categoryId: revenueCategoryId(group),
     // The lens-neutral name; the screen re-labels per lens (`revenueGroupLabel`).
     categoryName: revenueGroupLabel(group, 'actual'),
-    itemId: null,
+    /* ⚠⚠ WHO OR WHAT THE MONEY CAME FROM (D-2, owner ruling 2026-08-24) — the family, the drive,
+       the sponsor, the filing. It rides in `itemId` because that is the field `buildMonthGrid`
+       already keys a row by; giving revenue its own second key would be a parallel copy of the
+       placement rule, which is the thing this builder has been consolidated twice to avoid. */
+    itemId: subject?.id ?? null,
     date,
     amount,
   });
 
+  /* ══ THE REVENUE BAND'S OWN ROWS ══════════════════════════════════════════════════════════════
+     ⚠⚠ ONE ROW PER SUBJECT, LEARNED FROM THE MONEY ITSELF. A revenue group has no budget lines to
+     be fed from — what a season collects in dues is a schedule, what it raises is a drive — so the
+     rows are the families, drives, sponsors and requests that actually have a figure. Registered in
+     FIRST-APPEARANCE order within each group, which is the register's own chronology.
+     ⚠ NOTHING IS ELIDED. Every family renders; the drawing's "…nine more families" was drawing
+     economy, not a design (owner ruling 2026-08-24). */
+  const revenueRows = new Map<string, GridLine>();
+  function revenueRow(group: RevenueGroupKey, subject: { id: string | null; name: string }) {
+    const categoryId = revenueCategoryId(group);
+    /* ⚠⚠ MONEY NOBODY FILED STILL GETS A ROW, and it took an owner question about sample data to
+       notice it did not. This returned early on a null subject, so an arrival with no budget item
+       reached the group's TOTAL and no row beneath it — expand the group and the rows silently add
+       up to less than the figure above them, with nothing on screen saying why.
+       ⚠ `no-item` IS NOT AN INVENTED KEY: it is the exact fallback `buildMonthGrid` already uses
+       when it places an event carrying no item, so the row and its money meet on the same key
+       rather than the row being a label with nothing behind it. */
+    const id = `${categoryKey(categoryId, revenueGroupLabel(group, 'actual'))}|${subject.id ?? 'no-item'}`;
+    if (revenueRows.has(id)) return;
+    revenueRows.set(id, {
+      id,
+      description: subject.name,
+      categoryId,
+      categoryName: revenueGroupLabel(group, 'actual'),
+      itemId: subject.id,
+      /* ⚠ NO PLAN, ON PURPOSE. A revenue row is a RECORD of where money came from, not a line
+         anybody budgeted — so it carries no total and no periods, and the group's own budget
+         (a dues schedule, a funding line) stays on the group row where a coach set it. `inPlan`
+         false keeps every pre-240 reader honest about that. */
+      totalAmount: 0,
+      inPlan: false,
+      periods: [],
+    });
+  }
+
+  /** A revenue record's own line in the panel behind its cell. */
+  function pushRevenueDetail(
+    kind: 'actual' | 'scheduled', group: RevenueGroupKey, date: string | null,
+    rec: {
+      id: string; subject: { id: string | null; name: string };
+      description?: string | null; kind?: string | null;
+      note?: string | null; amount: number; datePrefix?: string;
+    },
+  ) {
+    pushDetail(kind, { categoryId: revenueCategoryId(group), categoryName: revenueGroupLabel(group, 'actual') }, date, {
+      id: rec.id, itemId: rec.subject.id, description: rec.description ?? '', kind: rec.kind,
+      amount: rec.amount, note: rec.note ?? null, datePrefix: rec.datePrefix,
+    });
+  }
+
   // ── Revenue · ACTUAL: the cash that arrived, in its group, on the day it arrived.
-  const revenueActuals: CategoryEvent[] = cashStrip.revenue.map(e => revenueEvent(e.group, e.date, e.amount));
+  const revenueActuals: CategoryEvent[] = cashStrip.revenue.map(e => {
+    revenueRow(e.group, e.subject);
+    pushRevenueDetail('actual', e.group, e.date, e);
+    return revenueEvent(e.group, e.date, e.amount, e.subject);
+  });
 
   /* ── Revenue · BUDGET: what the season PLANNED to bring in.
      Two feeds, and they are genuinely different animals:
@@ -1040,14 +1231,39 @@ export const GET = withObservability(async (req: Request,
          the exact rule the register's own forward view follows. */
       if (i.paid_at) continue;
       const owed = remaining.get(i.id) ?? (i.amount ?? 0);
-      if (owed > 0.005) revenueScheduled.push(revenueEvent('dues', i.due_date, owed));
+      if (owed <= 0.005) continue;
+      const playerId = i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null;
+      const subject = { id: playerId, name: familyName(playerId) };
+      revenueRow('dues', subject);
+      /* ⚠⚠ THE REMAINDER, AND THE PANEL SAYS SO OUT LOUD (owner ruling 2026-08-24). A family $100
+         into a $317 instalment has $217 coming — quoting the face value here while the payment
+         schedule quotes the remainder is two answers to one family's question, and the note is what
+         stops the smaller figure reading as a mistake. */
+      const face = i.amount ?? 0;
+      const covered = Math.round((face - owed) * 100) / 100;
+      pushRevenueDetail('scheduled', 'dues', i.due_date, {
+        id: i.id, subject, amount: owed,
+        // One word, one spelling, everywhere a customer can read it (owner ruling 2026-08-24).
+        description: `Installment #${i.installment_number}`,
+        datePrefix: 'Due ',
+        note: covered > 0.005 ? `${fmtMoney(covered)} of ${fmtMoney(face)} already paid` : null,
+      });
+      revenueScheduled.push(revenueEvent('dues', i.due_date, owed, subject));
     }
   }
   /* A sponsor's promise, and a request the club has not answered. ⚠ BOTH UNDATED, and that is
      honest rather than missing: nothing records when a pledge lands or when a club will decide.
      They sit in the "No date yet" column — in the Total, in no month — so they are counted as
      POSSIBLE and can never rescue a month the team has to get through without them. */
-  for (const e of sponsorPledges) revenueScheduled.push(revenueEvent('sponsorship', null, e.amountRaised));
+  for (const e of sponsorPledges) {
+    const subject = { id: e.fundraiserId, name: e.fundraiserName };
+    revenueRow('sponsorship', subject);
+    pushRevenueDetail('scheduled', 'sponsorship', null, {
+      id: `sponsor-pledge-${e.id}`, subject, amount: e.amountRaised,
+      description: 'Pledged', note: `recorded ${fmtDay(e.receivedDate ?? orgDayKey(e.createdAt))}`,
+    });
+    revenueScheduled.push(revenueEvent('sponsorship', null, e.amountRaised, subject));
+  }
   for (const r of allClubRequests) {
     /* ⚠ INCOMING ONLY, and this MATCHES the expense band rather than diverging from it: club money
        the team still owes is deliberately absent from the Scheduled expense column (see the note on
@@ -1055,7 +1271,14 @@ export const GET = withObservability(async (req: Request,
        and not the other is how two surfaces start disagreeing). A pending `payment_to_org` is the
        same shape, so it stays out of both. The register carries it; this grid does not. */
     if (r.status !== 'pending' || !clubRequestIsReimbursement(r.requestType)) continue;
-    revenueScheduled.push(revenueEvent('moneyback', null, r.amount));
+    const subject = { id: r.id, name: r.description || 'Asked of the club' };
+    revenueRow('moneyback', subject);
+    pushRevenueDetail('scheduled', 'moneyback', null, {
+      id: `club-request-${r.id}`, subject, amount: r.amount,
+      description: r.description || 'Asked of the club',
+      note: `Asked ${fmtDay(orgDayKey(r.createdAt))} · they may still decline`,
+    });
+    revenueScheduled.push(revenueEvent('moneyback', null, r.amount, subject));
   }
 
   /* ══ ONE MONTH DOMAIN, TWO BANDS ══════════════════════════════════════════════════════════════
@@ -1077,8 +1300,8 @@ export const GET = withObservability(async (req: Request,
     todayMonth,
   );
 
-  const monthGrid = buildMonthGrid({
-    lines: gridLines,
+  const monthGridRaw = buildMonthGrid({
+    lines: [...gridLines, ...payoutRows.values()],
     actuals: gridActuals,
     scheduled: gridScheduled,
     todayMonth,
@@ -1086,9 +1309,19 @@ export const GET = withObservability(async (req: Request,
     months: gridMonths,
     truncated: gridTruncated,
   });
+  /* ⚠⚠ "Paid back to families" IS PINNED TO THE FOOT OF THE BAND, and it now has to be said rather
+     than arranged. The mockup draws it last, and until D-2 it landed there by accident: the group
+     arrived only as EVENTS, and the builder appends event-only categories after the planned ones.
+     Giving it real rows (one per family) moved it into the planned list, where it would have jumped
+     to the TOP of a treasurer's spending table. Order that matters is order that is stated. */
+  const monthGrid = {
+    ...monthGridRaw,
+    categories: [...monthGridRaw.categories].sort(
+      (a, b) => Number(isPayoutCategory(a.categoryKey)) - Number(isPayoutCategory(b.categoryKey))),
+  };
 
   const revenueGridRaw = buildMonthGrid({
-    lines: [],
+    lines: [...revenueRows.values()],
     actuals: revenueActuals,
     scheduled: revenueScheduled,
     budgets: revenueBudgets,
@@ -1117,8 +1350,19 @@ export const GET = withObservability(async (req: Request,
      summed from the strip's month maps rather than from the bands, deliberately: the bands can
      truncate their columns, and a balance that quietly shrank with the window would be worse than
      no balance at all. */
+  /* ⚠⚠ AND IT STARTS FROM WHAT THE SEASON WAS HANDED (mig 262, owner ruling 2026-08-23). The
+     carried balance is not a movement — it is in no month, in no band and in no cash map — so it is
+     added HERE, once, exactly where the register adds it. A season that carried nothing reads
+     `null` and this is unchanged. */
+  const openingBalance = programYear.openingBalance;
+  /* ⚠ ONE EXTRA ROUND TRIP, AND ONLY WHERE THERE IS SOMETHING TO NAME. A season that carried
+     nothing, or whose balance a coach typed in by hand, asks the database nothing at all. */
+  const carriedFromSeason = openingBalance != null
+    ? await getSeasonName(programYear.openingBalanceFromYearId)
+    : null;
   const cashOnHand = r2(
-    Object.values(cashStrip.in).reduce((s, v) => s + v, 0)
+    (openingBalance ?? 0)
+    + Object.values(cashStrip.in).reduce((s, v) => s + v, 0)
     - Object.values(cashStrip.out).reduce((s, v) => s + v, 0));
 
   /* ── 9. What players still have to fund ──────────────────────────────────────────────────────
@@ -1232,6 +1476,14 @@ export const GET = withObservability(async (req: Request,
     cash: { in: cashStrip.in, out: cashStrip.out },
     /** Where the Scheduled lens's running balance starts — today's real money, proven by the guard. */
     cashOnHand,
+    /* ⚠⚠ WHAT THE SEASON OPENED WITH (mig 262). **NULL IS NOT ZERO**: a season that carried nothing
+       shows no opening row at all, and a season carried at exactly $0 shows one that says so. The
+       screens read that difference, and `check:money-report`'s claim 6 reads this field by name —
+       it used to be a hardcoded zero with a comment naming itself as the thing to change the day
+       carry-forward shipped. This is that field, and the `?? 0` habit went with it. */
+    openingBalance,
+    /** The season it was carried FROM, named — the provenance the report's own row reads back. */
+    openingBalanceFrom: carriedFromSeason,
     /* ⚠⚠ WHAT THE CASH VIEW LEFT OUT, so the STATEMENT can explain its own gap (owner ruling
        2026-08-24, Option A). The Statement counts a cost a family paid the vendor — the season
        really did incur it — and cash cannot, because no team money moved. Until now only Months

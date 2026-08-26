@@ -9,6 +9,8 @@ import {
   suggestContinuityLinksBulk,
 } from './db';
 import { addStaffMember, projectMembershipsOntoProgramYear } from './coach-membership';
+import { seasonClosingCashCents } from './coach-register-book';
+import { openingBalanceFor, carriesProvenance, type SeasonCarryChoice } from './season-carry';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import type { RepProgramYear } from './types';
 
@@ -39,9 +41,23 @@ export type RepSeasonRolloverSummary = {
   roster: { copied: number; failed: number };
   budget: { carried: boolean; linesCopied: number; periodsCopied: number; failed: number };
   fees: { carried: boolean; playersCopied: number; failed: number; dueDatesShifted: boolean };
+  /**
+   * What the new season OPENS with (mig 262) — the closing season's own cash, carried forward.
+   *
+   * ⚠ THE AMOUNT IS THE SERVER'S, NOT THE DIALOG'S, and it is reported back so the coach can see
+   * which figure actually landed. The browser showed a number when the form was drawn; the season
+   * starts on the one computed at the moment it was created.
+   */
+  openingBalance: { carried: boolean; amount: number };
   notes: string[];
   warnings: string[];
 };
+
+/* ⚠ THE CARRY DECISION AND ITS TYPE LIVE IN `lib/season-carry.ts`, NOT HERE — this module imports
+   `server-only` and touches the database, so anything defined in it is unreachable from a unit
+   test, which is exactly how its failure path shipped wrong. That module's header carries the whole
+   story. Re-exported so every existing importer of `SeasonCarryChoice` keeps working. */
+export type { SeasonCarryChoice } from './season-carry';
 
 export class SeasonRolloverError extends Error {
   code: string;
@@ -87,8 +103,12 @@ export async function startNextRepSeason(params: {
   newYear: number;
   carryBudget: boolean;
   carryFees: boolean;
+  /** What to do with the money the closing season is holding (mig 262). Absent ⇒ carry nothing,
+   *  which is what every roll did before this existed. */
+  carryCash?: SeasonCarryChoice;
 }): Promise<RepSeasonRolloverSummary> {
   const { orgId, teamId, workspaceId, currentSeason, initiatorUserId, newName, newYear, carryBudget, carryFees } = params;
+  const carryCash: SeasonCarryChoice = params.carryCash ?? { mode: 'none' };
 
   const summary: RepSeasonRolloverSummary = {
     ok: true,
@@ -98,6 +118,7 @@ export async function startNextRepSeason(params: {
     roster: { copied: 0, failed: 0 },
     budget: { carried: carryBudget, linesCopied: 0, periodsCopied: 0, failed: 0 },
     fees: { carried: carryFees, playersCopied: 0, failed: 0, dueDatesShifted: false },
+    openingBalance: { carried: false, amount: 0 },
     notes: [],
     warnings: [],
   };
@@ -125,6 +146,46 @@ export async function startNextRepSeason(params: {
     }
   }
 
+  /* ── What the new season opens with (mig 262, owner ruling 2026-08-23) ──────────────────────
+     ⚠⚠ COMPUTED BEFORE THE INSERT AND WRITTEN WITH IT, in one statement, so a season can never
+     exist for a moment holding money it was not given — nothing else in this function is allowed to
+     see a half-carried year either.
+     ⚠⚠ AND COMPUTED FROM THE REGISTER'S OWN WALK, never from the figure the dialog displayed. That
+     is the difference between a number a coach saw and a number the team had; this one is written
+     to the database and corrected afterwards only by hand.
+     ⚠ A FAILURE HERE DOES NOT STOP THE ROLL. Starting next season is the ordinary thing to do at
+     the end of a year, and refusing it because a cash read stumbled would be the product holding a
+     season hostage to a figure the coach can type in Team settings in ten seconds. It warns, in the
+     same voice unsettled money does.
+
+     ⚠⚠ AND A FAILURE CARRIES **NOTHING**, NEVER ZERO — `null` is the initial value for exactly that
+     reason (fixed 2026-08-25 by `/review` during money centralization P3; the bug is written up in
+     Owner QA §104). This started at `0` and the catch only logged, so a transient read error fell
+     through to `openingBalance = 0` — which is not merely a wrong figure, it is a wrong FACT: the
+     provenance stamp below fires on `openingBalance !== null`, so the new season was recorded as
+     *"carried from the 2025 Season: $0.00"*, confidently and permanently, for a team that may have
+     closed holding thousands. The modal's warning is shown once and then gone; the false record is
+     not, and it reads back on the register's first line, on Budget vs. Actual and in Team settings.
+     ⚠ That is this file's own rule below — *null is not zero* — losing on the one path where it
+     mattered most. A `catch` that leaves a money variable at its initialiser is how a failure gets
+     promoted to a measurement: initialise to the value that means "we do not know". */
+  /** null = we do not know what it closed at. NEVER "it closed at zero" — see `openingBalanceFor`. */
+  let closingCents: number | null = null;
+  if (carryCash.mode === 'all') {
+    try {
+      closingCents = await seasonClosingCashCents(currentSeason, teamId);
+    } catch (e) {
+      console.error('[rep-season-rollover] closing cash read failed; carrying nothing:', e);
+      summary.warnings.push(
+        'We could not work out what the last season closed with, so the new season starts with '
+        + 'nothing carried forward. Set it under Team settings → Money.');
+    }
+  }
+  /* ⚠ NULL, NOT ZERO, WHEN NOTHING WAS CARRIED. A season that starts at zero because nobody carried
+     anything shows no opening line on the register or the report; one deliberately carried at $0
+     shows a line saying so. Same number, different facts — decided in ONE tested place. */
+  const openingBalance = openingBalanceFor(carryCash, closingCents);
+
   // ── Critical core: new active season + coaching access (revert + throw on failure) ──
   // Insert the season already-active in ONE statement (no draft->active window that could strand a
   // half-created year and block retries via the duplicate-year guard).
@@ -133,7 +194,19 @@ export async function startNextRepSeason(params: {
   try {
     const { data, error } = await supabaseAdmin
       .from('rep_program_years')
-      .insert({ org_id: orgId, team_id: teamId, name: newName, year: newYear, status: 'active', tryout_open: false })
+      .insert({
+        org_id: orgId, team_id: teamId, name: newName, year: newYear, status: 'active',
+        tryout_open: false,
+        opening_balance: openingBalance,
+        /* The provenance the settings row and the register's first line read back. Null on a
+           hand-typed amount: "carried from the 2026 Season" would be vouching for a figure the
+           coach chose rather than one the season closed at.
+           ⚠ AND NULL WHEN THE READ FAILED, which this expresses only because `openingBalance` is
+           null on that path — see the block above. This line is what turns a wrong figure into a
+           wrong CLAIM, so the two must be changed together or not at all. */
+        opening_balance_from_year_id: carriesProvenance(carryCash, openingBalance)
+          ? currentSeason.id : null,
+      })
       .select('id')
       .single();
     if (error) throw error;
@@ -146,6 +219,7 @@ export async function startNextRepSeason(params: {
     throw new SeasonRolloverError('create_failed', 500, 'Could not create the new season. Nothing was changed — please try again.');
   }
   summary.newSeason.id = newSeason.id;
+  summary.openingBalance = { carried: openingBalance !== null, amount: openingBalance ?? 0 };
 
   try {
     // M1 (2026-08-16): the new season's staff RECORD is written from the team's MEMBERSHIPS —

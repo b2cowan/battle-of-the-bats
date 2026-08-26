@@ -588,6 +588,33 @@ if (!pySettings.lineup_settings?.pitcherMaxInningsDefault) {
   ok('arm-care caps already present');
 }
 
+/**
+ * A SEASON THAT WAS HANDED MONEY (mig 262) — the shape `check:money-report`'s claim 6 needs to be
+ * able to fail at all.
+ *
+ * ⚠⚠ WITHOUT IT THAT CLAIM ADDS ZERO AND IS ARITHMETICALLY THE HARDCODED ONE IT REPLACED. The claim
+ * reads the real `openingBalance` now, but over a season that opened at nothing it can pass while the
+ * carry reaches none of the three surfaces it has to reach together — the register's first line,
+ * Cash on hand, and both running rows on Budget vs. Actual. That is exactly the pair the owner
+ * ruling warned would argue with each other, so the fixture carries one and the guard says so out
+ * loud when it does not.
+ *
+ * ⚠ NO `opening_balance_from_year_id` ON PURPOSE. The UAT team has no earlier season to point at, and
+ * a dangling provenance would be a sentence vouching for a carry that never happened. Null is the
+ * "a coach typed it" case, which is the other half of the feature and equally worth exercising.
+ */
+const { data: pyOpening, error: pyOpeningErr } = await db.from('rep_program_years')
+  .select('opening_balance').eq('id', py.id).single();
+if (pyOpeningErr) { console.error('✗ opening balance lookup', pyOpeningErr.message); process.exit(1); }
+if (pyOpening.opening_balance == null) {
+  const upd = await db.from('rep_program_years')
+    .update({ opening_balance: 500 }).eq('id', py.id);
+  if (upd.error) { console.error('✗ opening balance update', upd.error.message); process.exit(1); }
+  ok('season opening balance seeded ($500 carried in — claim 6 can now fail)');
+} else {
+  ok('season opening balance already present');
+}
+
 const { data: livePractices } = await db.from('rep_team_events')
   .select('id, starts_at').eq('program_year_id', py.id).eq('event_type', 'practice')
   .like('name', 'Team practice%').order('starts_at', { ascending: true });
@@ -963,6 +990,57 @@ if (!existingExp?.length) {
   }
 } else {
   ok('expenses already present');
+}
+
+/**
+ * ⚠⚠ MONEY TAGS, AND THE SWEEP WAS BLIND WITHOUT THEM (money centralization P3, 2026-08-25).
+ *
+ * The tag filter and the total it states BOTH self-hide when a team has no money tags — and this
+ * fixture seeded `kind: 'game'` tags only, so `check:layout` walked Transactions and Payables with
+ * the pill and the band absent and reported green. That is the empty-fixture trap this file's own
+ * header (line ~691) was written about, one screen further along: a control that never rendered
+ * cannot push a toolbar into a wrap at 361px, and a green sweep over it proves nothing.
+ *
+ * ⚠ ONE TEAM-OWN TAG AND ONE ORG-SHARED ONE (`team_id: null`), because they are drawn differently
+ * — the shared one carries the blueprint-blue swatch and a team may not edit it. A fixture with
+ * only team tags would sweep half the control.
+ *
+ * ⚠ TWO EXPENSES CARRY THE SAME TAG so the total has something to add up, and the third is left
+ * untagged so filtering actually removes a row.
+ */
+const { data: existingMoneyTag } = await db.from('rep_team_tags')
+  .select('id').eq('org_id', org.id).eq('kind', 'expense').limit(1);
+
+if (!existingMoneyTag?.length) {
+  try {
+    const moneyTagRows = [
+      { org_id: org.id, team_id: team.id, kind: 'expense', name: 'Spring classic' },
+      { org_id: org.id, team_id: null,    kind: 'expense', name: 'Club permits' },
+    ];
+    const insMoneyTags = await db.from('rep_team_tags').insert(moneyTagRows).select('id, name');
+    if (insMoneyTags.error) throw new Error(insMoneyTags.error.message);
+    const moneyTagId = Object.fromEntries((insMoneyTags.data ?? []).map(r => [r.name, r.id]));
+
+    const { data: taggable } = await db.from('rep_team_expenses')
+      .select('id, description').eq('team_id', team.id).eq('program_year_id', py.id);
+    const byDesc = Object.fromEntries((taggable ?? []).map(r => [r.description, r.id]));
+    /* The two Spring-classic costs are one occasion across two budget words — exactly the cut a
+       tag exists for, and exactly what the total then answers. */
+    const links = [
+      { expense_id: byDesc['Spring classic entry'],  tag_id: moneyTagId['Spring classic'] },
+      { expense_id: byDesc['Practice balls and tees'], tag_id: moneyTagId['Spring classic'] },
+      { expense_id: byDesc['Spring classic entry'],  tag_id: moneyTagId['Club permits'] },
+    ].filter(l => l.expense_id && l.tag_id);
+    if (links.length) {
+      const insLinks = await db.from('rep_team_expense_tags').insert(links);
+      if (insLinks.error) throw new Error(insLinks.error.message);
+    }
+    ok(`money tags seeded (Spring classic + an org-shared Club permits, ${links.length} links)`);
+  } catch (e) {
+    console.log(`  ! money tags skipped (${e.message})`);
+  }
+} else {
+  ok('money tags already present');
 }
 
 /**
@@ -1719,6 +1797,31 @@ const QA_PEOPLE = [
       schedule: false, scheduleManage: false, attendance: false, lineups: false, rosterPii: false,
       notes: false, money: 'write', documents: 'off', announcementsSend: false, tryouts: false,
       staffChat: false,
+    },
+  },
+  {
+    email: 'uat-asst-money-read@uat-test-org.local',
+    name: 'UAT Assistant (money, read-only)',
+    role: 'assistant_coach',
+    /**
+     * ⚠⚠ **THE ONLY PERSONA THAT CAN WALK A READ-ONLY MONEY SCREEN**, added 2026-08-25 (money
+     * centralization P3) — and it was added for exactly the reason the treasurer above records:
+     * **the check was not walkable and nothing said so.**
+     *
+     * `money: 'read'` is a real, shipped grant (`MoneyAccess = 'off' | 'read' | 'write'`) and every
+     * money screen has a `canWriteMoney` branch that hides its write doors for it. Until now the
+     * fixture had `'write'` twice and `'off'` twice and never `'read'` — so a walk of "an assistant
+     * who may READ the books sees the figures but is offered nothing the server would refuse" had
+     * no account to sign in as. Signing in as `uat-asst-money` (which is WRITE) would have shown
+     * every add button present and read as a PASS, confirming the opposite of the rule.
+     *
+     * ⚠ Otherwise IDENTICAL to `uat-asst-money`, deliberately: the pair differ in ONE key, so any
+     * difference on screen between them is the money grant and nothing else.
+     */
+    caps: {
+      schedule: true, scheduleManage: false, attendance: true, lineups: true, rosterPii: true,
+      notes: false, money: 'read', documents: 'read', announcementsSend: false, tryouts: false,
+      staffChat: true,
     },
   },
   {

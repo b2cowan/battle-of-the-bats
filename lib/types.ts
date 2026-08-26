@@ -1144,6 +1144,19 @@ export interface RepProgramYear {
    *  ⚠ It PRE-FILLS the new-fundraiser and new-sponsor forms and nothing else — never applied to
    *  a record that already exists, the same rule `player_rebate_percent` follows per entry. */
   defaultPlayerCreditPercent: number;
+  /**
+   * Cash the team was already holding on day one of this season (mig 262).
+   *
+   * ⚠⚠ NULL IS NOT ZERO. "Nothing was carried" and "we started at zero" are the same number and
+   * different facts — the register and the Months report hide the line entirely for the first, so a
+   * team's first season shows no opening line rather than a line of dashes. Born at
+   * `Start next season` from the closing season's own register figure; corrected in Team settings →
+   * Money, which is the ONLY correction path (the carry is a handoff, not a live link).
+   */
+  openingBalance: number | null;
+  /** Which season it was carried FROM (mig 262) — the provenance the settings row reads back.
+   *  Null when a coach typed the figure for a first season that began mid-stream. */
+  openingBalanceFromYearId: string | null;
   lineupSettings: LineupSettings | null; // P3 season-default caps (mig 172)
   createdAt: string;
   updatedAt: string;

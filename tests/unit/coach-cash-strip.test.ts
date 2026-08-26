@@ -24,6 +24,33 @@ const outRec = (amount: number) => ({
   description: `Record ${amount}`,
   amount,
   place: { categoryId: 'cat-1', categoryName: 'Facilities', itemId: 'item-1' },
+  // The word behind the id, for the "repaid Facilities / Dome time" line a refund's panel shows.
+  itemName: 'Dome time',
+});
+
+/* ⚠ THE SUBJECT IS AS DELIBERATELY UNIFORM AS THE PLACEMENT ABOVE. What this module decides is
+   which record is cash, when, and in which direction; WHO it came from is the caller's answer,
+   carried through unread. A test that varies it says so on its own line. */
+const duesPay = (amount: number, receivedDate: string | null) => ({
+  id: `pay-${amount}`, amount, receivedDate,
+  playerId: 'player-1', playerName: 'Maya Ledger', method: 'e-transfer',
+});
+const arrival = (amount: number, receivedDate: string | null, kind: 'income' | 'money_back') => ({
+  id: `in-${amount}`, amount, receivedDate, kind,
+  description: `Arrival ${amount}`, itemId: 'item-1', itemName: 'Gate takings', categoryName: 'Other',
+});
+const entry = (
+  amountRaised: number, receivedDate: string | null, createdAt: string,
+  kind: 'fundraiser' | 'sponsor',
+) => ({
+  id: `entry-${amountRaised}`, amountRaised, receivedDate, createdAt, kind,
+  fundraiserId: kind === 'sponsor' ? 'sponsor-1' : 'drive-1',
+  fundraiserName: kind === 'sponsor' ? 'Northside Physio' : 'Bottle drive',
+  playerId: null, playerName: null, rebateAmount: 0,
+});
+const payoutRec = (id: string, amount: number, paidDate: string | null) => ({
+  id, amount, paidDate,
+  playerId: 'player-1', playerName: 'Maya Ledger', method: 'e-transfer', reason: null,
 });
 
 const empty = (): CashStripInputs => ({
@@ -41,15 +68,15 @@ describe('buildActualCashStrip', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       duesPayments: [
-        { amount: 2400, receivedDate: '2025-09-04' },
-        { amount: 1600, receivedDate: '2025-10-12' },
+        duesPay(2400, '2025-09-04'),
+        duesPay(1600, '2025-10-12'),
       ],
       moneyInRecords: [
         // Both kinds are cash in — money back is netted by the REPORT, never by cash.
-        { amount: 200, receivedDate: '2025-10-20', kind: 'money_back' as const },
+        arrival(200, '2025-10-20', 'money_back'),
       ],
       realisedEntries: [
-        { amountRaised: 640, receivedDate: '2025-10-18', createdAt: '2025-11-01T14:00:00Z', kind: 'fundraiser' as const },
+        entry(640, '2025-10-18', '2025-11-01T14:00:00Z', 'fundraiser'),
       ],
       clubRequests: [
         { ...outRec(180), isReimbursement: true, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' },
@@ -58,7 +85,7 @@ describe('buildActualCashStrip', () => {
       expensePayments: [
         { ...outRec(1200), paidDate: '2025-09-10', familyPaidDirect: false },
       ],
-      duesPayouts: [{ id: 'payout-150', amount: 150, paidDate: '2025-11-14' }],
+      duesPayouts: [payoutRec('payout-150', 150, '2025-11-14')],
       clubInstallments: [{ ...outRec(300), paidAt: '2025-09-20T18:00:00Z' }],
     });
 
@@ -118,9 +145,9 @@ describe('buildActualCashStrip', () => {
       ...empty(),
       realisedEntries: [
         // Knows its arrival day → that month, even though it was recorded much later.
-        { amountRaised: 300, receivedDate: '2025-08-30', createdAt: '2025-10-01T12:00:00Z', kind: 'fundraiser' as const },
+        entry(300, '2025-08-30', '2025-10-01T12:00:00Z', 'fundraiser'),
         // Legacy row (and every sponsor today): the recording day, as the register does.
-        { amountRaised: 750, receivedDate: null, createdAt: '2025-11-03T12:00:00Z', kind: 'fundraiser' as const },
+        entry(750, null, '2025-11-03T12:00:00Z', 'fundraiser'),
       ],
     });
     assert.deepEqual(strip.in, { '2025-08': 300, '2025-11': 750 });
@@ -153,7 +180,7 @@ describe('buildActualCashStrip', () => {
   it('reports every dated cash day so the grid can grow a column for it (Exhibit C ruling)', () => {
     const strip = buildActualCashStrip({
       ...empty(),
-      duesPayments: [{ amount: 1050, receivedDate: '2025-08-14' }],
+      duesPayments: [duesPay(1050, '2025-08-14')],
     });
     assert.deepEqual(strip.dates, ['2025-08-14']);
     assert.deepEqual(strip.in, { '2025-08': 1050 });
@@ -163,10 +190,10 @@ describe('buildActualCashStrip', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       duesPayments: [
-        { amount: 100, receivedDate: null },
-        { amount: 0, receivedDate: '2025-09-01' },
+        duesPay(100, null),
+        duesPay(0, '2025-09-01'),
       ],
-      duesPayouts: [{ id: 'payout-50', amount: 50, paidDate: null }],
+      duesPayouts: [payoutRec('payout-50', 50, null)],
     });
     assert.deepEqual(strip.in, {});
     assert.deepEqual(strip.out, {});
@@ -177,8 +204,8 @@ describe('buildActualCashStrip', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       duesPayments: [
-        { amount: 0.1, receivedDate: '2025-09-01' },
-        { amount: 0.2, receivedDate: '2025-09-02' },
+        duesPay(0.1, '2025-09-01'),
+        duesPay(0.2, '2025-09-02'),
       ],
     });
     assert.deepEqual(strip.in, { '2025-09': 0.3 });
@@ -203,14 +230,14 @@ describe('buildActualCashStrip — the revenue band', () => {
   it('routes each source to its own group — and money back is REVENUE, never a smaller cost', () => {
     const strip = buildActualCashStrip({
       ...empty(),
-      duesPayments: [{ amount: 2400, receivedDate: '2025-09-04' }],
+      duesPayments: [duesPay(2400, '2025-09-04')],
       moneyInRecords: [
-        { amount: 500, receivedDate: '2025-09-05', kind: 'income' },
-        { amount: 200, receivedDate: '2025-10-20', kind: 'money_back' },
+        arrival(500, '2025-09-05', 'income'),
+        arrival(200, '2025-10-20', 'money_back'),
       ],
       realisedEntries: [
-        { amountRaised: 640, receivedDate: '2025-10-18', createdAt: '2025-10-18T12:00:00Z', kind: 'fundraiser' },
-        { amountRaised: 750, receivedDate: '2025-11-03', createdAt: '2025-11-03T12:00:00Z', kind: 'sponsor' },
+        entry(640, '2025-10-18', '2025-10-18T12:00:00Z', 'fundraiser'),
+        entry(750, '2025-11-03', '2025-11-03T12:00:00Z', 'sponsor'),
       ],
       // The club repaying a cost is the same species of arrival as a vendor refunding one.
       clubRequests: [{ ...outRec(180), isReimbursement: true, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
@@ -228,8 +255,8 @@ describe('buildActualCashStrip — the revenue band', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       realisedEntries: [
-        { amountRaised: 100, receivedDate: '2025-09-01', createdAt: '2025-09-01T12:00:00Z', kind: 'fundraiser' },
-        { amountRaised: 250, receivedDate: '2025-09-02', createdAt: '2025-09-02T12:00:00Z', kind: 'sponsor' },
+        entry(100, '2025-09-01', '2025-09-01T12:00:00Z', 'fundraiser'),
+        entry(250, '2025-09-02', '2025-09-02T12:00:00Z', 'sponsor'),
       ],
     });
     assert.deepEqual(groups(strip), { fundraising: 100, sponsorship: 250 });
@@ -247,6 +274,121 @@ describe('buildActualCashStrip — the revenue band', () => {
 });
 
 /**
+ * WHO EACH DOLLAR CAME FROM (D-2, owner ruling 2026-08-24).
+ *
+ * ⚠ THE SUBJECT IS WHY A ROW EXISTS AT ALL. A revenue group's rows are the families, drives,
+ * sponsors and filings behind its figure — and the grid keys a row by exactly this id, so a stream
+ * that stopped carrying one would silently collapse into a single unnamed row while every total
+ * stayed correct. No guard downstream can see that: the money still adds up.
+ */
+describe('buildActualCashStrip — who the money came from', () => {
+  const subjects = (strip: ReturnType<typeof buildActualCashStrip>) =>
+    strip.revenue.map(e => [e.group, e.subject.id, e.subject.name, e.kind, e.description, e.note]);
+
+  /* ⚠⚠ THE KIND AND THE RECORD'S OWN WORDS ARE TWO FIELDS, and every assertion below turns on the
+     difference (owner-found 2026-08-25). A panel opened from ONE family is titled with her name, so
+     the KIND leads each row; a panel opened from the GROUP is titled "Player dues", so the FAMILY
+     leads and the kind is never printed — it would be the title restated on every line, which is
+     exactly how thirteen families reached a coach as thirteen rows reading "Dues payment".
+     ⚠ No rule inferred from the records can separate the two: "every row says the same thing" drops
+     "Season sponsorship" correctly and "Home opener gate" wrongly. The source says which is which. */
+  it('names the family behind a dues payment, and how it arrived — and has no words of its own', () => {
+    const strip = buildActualCashStrip({ ...empty(), duesPayments: [duesPay(217, '2026-08-06')] });
+    assert.deepEqual(subjects(strip),
+      [['dues', 'player-1', 'Maya Ledger', 'Dues payment', null, 'e-transfer']]);
+  });
+
+  it('opens a drive to the drive, and shows the rebate as a NOTE rather than a second figure', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      realisedEntries: [{
+        ...entry(240, '2026-08-09', '2026-08-09T12:00:00Z', 'fundraiser'),
+        playerId: 'player-1', playerName: 'Maya Ledger', rebateAmount: 120,
+      }],
+    });
+    /* ⚠ THE FIGURE IS GROSS. The credit already lowered that family's dues; printing it as an
+       amount beside the gross would read as money leaving, which a drive's cash never does. */
+    assert.equal(strip.revenue[0].amount, 240);
+    /* ⚠ A DRIVE'S RECORD HAS WORDS OF ITS OWN — one family's effort — where a sponsor's does not:
+       a sponsor's arrival IS the sponsor, who is already the row. */
+    assert.deepEqual(subjects(strip), [
+      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', 'Maya Ledger', '$120 credited to their dues'],
+    ]);
+  });
+
+  it('a sponsor’s arrival carries a kind and no words — the sponsor is already the row', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      realisedEntries: [entry(500, '2026-08-15', '2026-08-15T12:00:00Z', 'sponsor')],
+    });
+    assert.deepEqual(subjects(strip), [
+      ['sponsorship', 'sponsor-1', 'Northside Physio', 'Season sponsorship', null, 'received'],
+    ]);
+  });
+
+  it('says so when a drive entry was not attributed to anybody', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      realisedEntries: [entry(240, '2026-08-11', '2026-08-11T12:00:00Z', 'fundraiser')],
+    });
+    assert.deepEqual(subjects(strip), [
+      ['fundraising', 'drive-1', 'Bottle drive', 'Fundraising', 'Team collection', 'not attributed'],
+    ]);
+  });
+
+  it('groups typed income by what it was filed under, and unfiled income on its own row', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      moneyInRecords: [
+        { ...arrival(300, '2026-07-12', 'income'), description: 'Home opener gate' },
+        { ...arrival(120, '2026-08-02', 'income'), itemId: null, itemName: null },
+      ],
+    });
+    assert.deepEqual(subjects(strip), [
+      ['other', 'item-1', 'Gate takings', 'Income', 'Home opener gate', null],
+      ['other', null, 'Not itemized', 'Income', 'Arrival 120', null],
+    ]);
+  });
+
+  /* ⚠⚠ THE TWO SOURCES OF MONEY BACK ARE TWO EVENTS, and one of them has a door the other cannot
+     have — the club has a Club screen; a refund a coach typed in has no "thing itself" behind it.
+     Both NAME WHAT THEY REPAID, which is the load-bearing detail: these are the figures that behave
+     differently here than on the Statement, and the panel is where a coach finds that out. */
+  it('splits money back into what you recorded and what the club repaid, each naming the cost', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      moneyInRecords: [{
+        ...arrival(150, '2026-07-18', 'money_back'),
+        description: 'Umpire clinic — two spots refunded',
+        categoryName: 'Officials', itemName: 'Clinic fees',
+      }],
+      clubRequests: [{
+        ...outRec(180), description: 'Dome permit share', isReimbursement: true,
+        reviewedAt: '2026-08-05T15:00:00Z', createdAt: '2026-08-01T15:00:00Z',
+      }],
+    });
+    assert.deepEqual(subjects(strip), [
+      ['moneyback', 'moneyback:recorded', 'Money back you recorded',
+        'Money back', 'Umpire clinic — two spots refunded', 'repaid Officials / Clinic fees'],
+      ['moneyback', 'moneyback:club', 'Repaid by the club',
+        'Money back', 'Dome permit share', 'repaid Facilities / Dome time'],
+    ]);
+  });
+
+  it('carries a payout’s reason on its own meta line, beside how it was sent', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      duesPayouts: [{ ...payoutRec('dues-payout-1', 20, '2026-08-18'), reason: 'overpaid instalment #2' }],
+    });
+    assert.equal(strip.expenses[0].note, 'e-transfer · overpaid instalment #2');
+    /* ⚠ THE KIND, NOT A DESCRIPTION. Under a panel already titled "Paid back to families" those
+       words say nothing; the family, the day and the reason are the record. */
+    assert.equal(strip.expenses[0].kind, 'Paid back');
+    assert.equal(strip.expenses[0].description, '');
+  });
+});
+
+/**
  * THE EXPENSES BAND — placement carried through, and money paid back to a family in its own group.
  */
 describe('buildActualCashStrip — the expenses band', () => {
@@ -254,13 +396,15 @@ describe('buildActualCashStrip — the expenses band', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       expensePayments: [{ ...outRec(1200), paidDate: '2025-09-10', familyPaidDirect: false }],
-      duesPayouts: [{ id: 'dues-payout-1', amount: 150, paidDate: '2025-11-14' }],
+      duesPayouts: [payoutRec('dues-payout-1', 150, '2025-11-14')],
     });
     const payout = strip.expenses.find(e => e.id === 'dues-payout-1');
     assert.ok(payout, 'the payout never reached the expenses band');
     assert.equal(payout!.place.categoryId, PAYOUT_CATEGORY_ID);
     assert.equal(payout!.place.categoryName, PAYOUT_CATEGORY_NAME);
-    assert.equal(payout!.place.itemId, null);
+    /* ⚠ AND ON THE FAMILY'S OWN ROW (owner call 2026-08-24). "Paid back to families" opens by
+       family, mirroring dues — so the family is the row, and the row is what `itemId` carries. */
+    assert.equal(payout!.place.itemId, 'player-1');
   });
 
   /* ⚠ THE ORDER IS A DISPLAY RULE WITH A REAL CONSEQUENCE: the month grid orders categories it
@@ -269,7 +413,7 @@ describe('buildActualCashStrip — the expenses band', () => {
   it('emits payouts LAST so “Paid back to families” lands at the foot of the band', () => {
     const strip = buildActualCashStrip({
       ...empty(),
-      duesPayouts: [{ id: 'dues-payout-1', amount: 150, paidDate: '2025-09-01' }],
+      duesPayouts: [payoutRec('dues-payout-1', 150, '2025-09-01')],
       expensePayments: [{ ...outRec(80), paidDate: '2025-12-01', familyPaidDirect: false }],
     });
     assert.deepEqual(strip.expenses.map(e => e.place.categoryName), ['Facilities', PAYOUT_CATEGORY_NAME]);
@@ -287,6 +431,11 @@ describe('buildActualCashStrip — the expenses band', () => {
     assert.deepEqual(strip.expenses[0], {
       id: 'exp-1-payment-9', description: 'Dome rental — payment 2 of 3', amount: 400,
       place: { categoryId: 'cat-2', categoryName: 'Facilities', itemId: 'item-9' },
+      // An ordinary bill has nothing to add: its date and its own words already say everything —
+      // which is why it carries no KIND either. That field is for records whose only description
+      // would be their kind repeated.
+      note: null,
+      kind: null,
       date: '2025-10-02',
     });
   });
@@ -298,11 +447,11 @@ describe('buildActualCashStrip — the expenses band', () => {
   it('in/out are exactly the events summed — one walk, two grains', () => {
     const strip = buildActualCashStrip({
       ...empty(),
-      duesPayments: [{ amount: 2400, receivedDate: '2025-09-04' }],
-      moneyInRecords: [{ amount: 200, receivedDate: '2025-09-20', kind: 'money_back' }],
-      realisedEntries: [{ amountRaised: 640, receivedDate: '2025-10-18', createdAt: '2025-10-18T12:00:00Z', kind: 'sponsor' }],
+      duesPayments: [duesPay(2400, '2025-09-04')],
+      moneyInRecords: [arrival(200, '2025-09-20', 'money_back')],
+      realisedEntries: [entry(640, '2025-10-18', '2025-10-18T12:00:00Z', 'sponsor')],
       expensePayments: [{ ...outRec(1200), paidDate: '2025-09-10', familyPaidDirect: false }],
-      duesPayouts: [{ id: 'dues-payout-1', amount: 150, paidDate: '2025-10-14' }],
+      duesPayouts: [payoutRec('dues-payout-1', 150, '2025-10-14')],
     });
     const bucket = (events: Array<{ date: string | null; amount: number }>) => {
       const by: Record<string, number> = {};

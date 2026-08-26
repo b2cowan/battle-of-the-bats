@@ -4,9 +4,11 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getActiveRepProgramYear,
+  getSeasonName,
   setAutoRemindersEnabled,
   setCreditApplicationMode,
   setDefaultPlayerCreditPercent,
+  setSeasonOpeningBalance,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
@@ -47,6 +49,11 @@ export const GET = withObservability(async (_req: Request,
     autoRemindersEnabled: programYear.autoRemindersEnabled,
     creditApplication: programYear.creditApplication,
     defaultPlayerCreditPercent: programYear.defaultPlayerCreditPercent,
+    /* ⚠ NULL TRAVELS AS NULL (mig 262). "Nothing was carried" and "we opened at zero" are the same
+       number and different facts, and the settings row says different things about them. */
+    openingBalance: programYear.openingBalance,
+    /** The season it was carried from, so the row can explain itself without a second request. */
+    openingBalanceFrom: await getSeasonName(programYear.openingBalanceFromYearId),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/accounting-settings' });
 
@@ -64,8 +71,33 @@ export const PATCH = withObservability(async (req: Request,
   const hasReminders = typeof body.autoRemindersEnabled === 'boolean';
   const hasCreditMode = typeof body.creditApplication === 'string';
   const hasDefaultCredit = body.defaultPlayerCreditPercent !== undefined;
-  if (!hasReminders && !hasCreditMode && !hasDefaultCredit) {
+  const hasOpening = body.openingBalance !== undefined;
+  if (!hasReminders && !hasCreditMode && !hasDefaultCredit && !hasOpening) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+  if (hasOpening) {
+    /* ⚠⚠ THIS ONE MOVES CASH ON HAND (mig 262), which is what makes it different from every other
+       setting on this route. Explicit `null` CLEARS it — the row disappears from the register and
+       the report rather than reading $0.00, because a season that carried nothing should say
+       nothing about it.
+
+       ⚠ AND THE PROVENANCE IS DROPPED ON A HAND EDIT, deliberately. Once a coach has changed the
+       figure, "Carried from the 2026 Season when this one was started" is no longer true of the
+       number on screen, and a provenance line that outlives the value it describes is worse than
+       none: it is a sentence vouching for a figure nobody carried.
+
+       ⚠ NOTHING IS VALIDATED AGAINST LAST SEASON'S CLOSE. A coach correcting a handoff knows
+       something the product cannot see — they settled up in cash, they forgave a balance — which is
+       the same reason unsettled money WARNS and never blocks. */
+    if (body.openingBalance === null) {
+      await setSeasonOpeningBalance(programYear.id, null, null);
+    } else {
+      const amount = Number(body.openingBalance);
+      if (!Number.isFinite(amount) || Math.abs(amount) > 100_000_000) {
+        return NextResponse.json({ error: 'Enter the money the team was holding when this season started.' }, { status: 400 });
+      }
+      await setSeasonOpeningBalance(programYear.id, Math.round(amount * 100) / 100, null);
+    }
   }
   if (hasDefaultCredit) {
     const pct = Number(body.defaultPlayerCreditPercent);

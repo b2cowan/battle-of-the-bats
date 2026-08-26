@@ -33,10 +33,15 @@ const REQUIRED_IMPORTERS = [
   'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/adjustments/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/payouts/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables/route.ts',
-  // The register (money redesign P3): its scheduled overlay quotes what each instalment still owes,
-  // beside the payments that have already arrived. Same figure as the payment schedule, and it must
-  // come from the same place — the two screens sit one tab apart.
-  'app/api/coaches/[orgSlug]/teams/[teamId]/register/route.ts',
+  /* The register (money redesign P3): its scheduled overlay quotes what each instalment still owes,
+     beside the payments that have already arrived. Same figure as the payment schedule, and it must
+     come from the same place — the two screens sit one tab apart.
+     ⚠ THE ENTRY MOVED, IT DID NOT LAPSE (2026-08-25). The book's assembly left the route for
+     `lib/coach-register-book.ts` when `Start next season` became a second caller (mig 262), and this
+     guard fired on the empty route — which was it WORKING. Renaming the entry is the whole edit;
+     loosening the pattern so the old path still "passes" is the failure this list exists to
+     prevent, and it would have left the dues arithmetic unguarded in its new home. */
+  'lib/coach-register-book.ts',
   /* ⚠ The `/ask` route is GONE from this list because the route is gone (reports portal P1,
      2026-08-18): the "Ask about your team" bar was retired, and its two dues questions — what each
      family still owes, and who has not paid anything yet — are answered on the Money hub's Player
