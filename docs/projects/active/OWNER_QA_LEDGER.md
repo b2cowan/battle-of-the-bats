@@ -13479,9 +13479,12 @@ portal is unmeasured this pass. And **schema parity is red on migrations 262/263
 
 ### ⚠ Owed before this can ship
 
-- **Migration 264 is applied NOWHERE** (it retires three now-unsendable platform email templates).
-- **The demo fix is SEED DATA** — only a full demo reseed writes it. The demo world still shows the
-  old sentence until reseeded, on dev now and **on production at release**.
+- **Migration 264 applied to DEV 2026-08-26** (retires three now-unsendable platform email templates; all four were stock, so no admin-authored content was lost, and the application-received receipt was verified to survive). Data-only, no schema change. **Prod owed at release.**
+- **The demo fix is SEED DATA** — only a full demo reseed writes it; the nightly tick does not.
+  **Reseeded on dev 2026-08-26 and verified**: no tryout page on dev promises a decision email any
+  more. ⚠ **The PRODUCTION demo still tells visitors "Decisions go out by email within a week of
+  callbacks"** and will until it is reseeded there — a release step, not something a code promote
+  does on its own.
 
 ---
 
