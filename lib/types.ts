@@ -1220,7 +1220,11 @@ export interface RepTryout {
   programYearId: string;
   teamId: string;
   orgId: string;
-  isAnonymous: boolean;        // blind evaluation default-ON
+  isAnonymous: boolean;        // blind evaluation default-ON, freely switchable (owner 2026-08-25)
+  /** The FIRST moment names were shown, stamped once and never cleared — the tryout report's
+   *  evidence for "blind throughout", which `isAnonymous` stopped being the day the switch became
+   *  two-way. NULL = nobody has ever seen a name against a score on this tryout. */
+  namesShownAt: string | null;
   scoresLockedAt: string | null;  // reserved for Phase 2B one-way reveal/lock
   scoresLockedBy: string | null;
   createdAt: string;

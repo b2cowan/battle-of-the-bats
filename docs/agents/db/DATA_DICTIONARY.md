@@ -3139,7 +3139,10 @@ record can differ, and changing it is **never** applied retroactively — the sa
 **`team_id` / `org_id`** (FK, NOT NULL, denormalized) — rep_* leaf scoping (one-hop `org_id`).
 
 <!-- dict:col:rep_tryouts.is_anonymous -->
-**`is_anonymous`** (boolean, NOT NULL, default **true**) — BLIND evaluation default-ON: day-of + scoring views show bib numbers and hide names until a deliberate reveal.
+**`is_anonymous`** (boolean, NOT NULL, default **true**) — BLIND evaluation default-ON: day-of + scoring views show bib numbers and hide names. ⚠ **Freely switchable BOTH WAYS since mig 263** (owner ruling 2026-08-25) — it was one-way (a 409 `already_revealed` guarded it) until coaches who simply wanted names beside bib numbers had to hunt three stages forward to turn it off. It is therefore **view state, not evidence**: read `names_shown_at` for any claim about how the scoring was actually run.
+
+<!-- dict:col:rep_tryouts.names_shown_at -->
+**`names_shown_at`** (timestamptz, nullable) — the FIRST moment names were shown against scores; **stamped once, never cleared, never re-stamped**, so a coach who shows names, scores the tryout and switches back cannot print a report claiming it was blind. NULL = names have never been shown. Backfilled from `updated_at` for rows already revealed under the old one-way rule (a dated approximation; the receipt says "names were shown" without a date when the stamp is absent). Read by `lib/tryout-report.ts`'s fairness receipt — **`is_anonymous` must not be used for that claim**. **mig 263.**
 
 <!-- dict:col:rep_tryouts.scores_locked_at -->
 <!-- dict:col:rep_tryouts.scores_locked_by -->

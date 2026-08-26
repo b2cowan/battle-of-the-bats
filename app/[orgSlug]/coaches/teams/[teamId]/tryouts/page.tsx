@@ -8,7 +8,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TryoutSetupChecklist from '@/components/rep-teams/TryoutSetupChecklist';
-import TryoutRevealControl from '@/components/rep-teams/TryoutRevealControl';
+import TryoutNamesSwitch from '@/components/rep-teams/TryoutNamesSwitch';
 import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
 import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
 import TryoutReportCard from '@/components/rep-teams/TryoutReportCard';
@@ -273,15 +273,21 @@ export default function CoachTryoutsPage({
       {/* Stage 3 — Decide */}
       <div className={hidden('decide')} data-tryout-stage="decide">
         <TryoutPrereqPrompt overview={overview} tab="decide" onTabChange={selectTab} />
-        {/* Reveal names lives HERE now (2026-08-17) — the stage where the guide says it happens. */}
+        {/* The names SWITCH (2026-08-25). Decide keeps the control it has had since 2026-08-17 —
+            it is simply no longer the ONLY door to it, and no longer one-way. */}
         <PanelIntro
-          text="Offer, waitlist, or pass on each ranked player. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself. Names hidden? Reveal them here when you're ready."
+          text="Offer, waitlist, or pass on each ranked player. Tap a player to see what made their score. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself."
           action={
-            <TryoutRevealControl
+            <TryoutNamesSwitch
               apiBase={`${base}/tryout-sessions`}
               canWrite
+              // ⚠ CONTROLLED BY THE OVERVIEW, not self-loading (/review 2026-08-25). Every stage
+              // stays mounted for the life of the page, so a self-loading copy fetched once at
+              // mount and never learned about a switch flipped on Set up or at check-in — leaving
+              // a stale pill sitting directly above rows that had already followed the change.
+              blind={overview?.stats.blind}
               onError={fail}
-              onRevealed={() => { setRevealBump(b => b + 1); loadOverview(); }}
+              onChanged={() => { setRevealBump(b => b + 1); loadOverview(); }}
             />
           }
         />

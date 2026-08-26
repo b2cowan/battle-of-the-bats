@@ -7,6 +7,7 @@ import type {
   RepPlayerContinuityLink,
 } from './types';
 import { rankTryoutCandidates, tallyTryoutDecisions } from './tryout-scoring';
+import { formatStoredDate } from './timezone';
 
 /** Which season came immediately before this one — shared by the report and tryout-history routes
  *  so "last season" can never mean two different things (/simplify 2026-08-02). */
@@ -127,7 +128,13 @@ export interface TryoutReport {
     evaluatedCount: number;
     evaluatorsWhoScored: number;
     sharedScorecard: boolean;
-    blind: 'on' | 'revealed';
+    /** `'throughout'` = no name was ever shown against a score on this tryout; `'names_shown'` =
+     *  they were, at `namesShownAt`. ⚠ NOT derived from the live blind switch, which since
+     *  2026-08-25 flips both ways and so proves nothing about how the scoring was actually run. */
+    blind: 'throughout' | 'names_shown';
+    /** When names were first shown. Null on an older tryout revealed before the stamp existed —
+     *  the claim then states the fact without dating it. */
+    namesShownAt: string | null;
     scoresLockedAt: string | null;
   } | null;
   /** Per-candidate detail for the full-detail export. NULL while blind evaluation is on (R1/R6). */
@@ -142,9 +149,15 @@ export interface TryoutReport {
 
 /**
  * The fairness receipt, as sentences. ONE assembly point shared by the on-screen card and the PDF
- * so the two can never disagree — and every line states only what the data proves (a still-blind
- * tryout claims "is on", a revealed one may claim "until names were revealed" because blind is the
- * only starting state and reveal is one-way; no lock, no lock line).
+ * so the two can never disagree — and every line states only what the data proves (no lock, no lock
+ * line).
+ *
+ * ⚠ The blind line is the one that had to change when the switch became two-way (owner 2026-08-25).
+ * It used to read the live flag and say "blind evaluation is on", which was sound only while
+ * re-hiding was impossible. Now it reads the write-once stamp: a tryout may claim it was blind
+ * START TO FINISH only when no name was ever shown against a score. A coach who shows names, scores
+ * the whole tryout, then switches back gets the honest sentence, not the flattering one — which is
+ * the entire reason the stamp exists.
  */
 export function fairnessReceiptLines(fairness: NonNullable<TryoutReport['fairness']>): string[] {
   const players = fairness.evaluatedCount === 1 ? 'player' : 'players';
@@ -153,9 +166,11 @@ export function fairnessReceiptLines(fairness: NonNullable<TryoutReport['fairnes
     `${fairness.evaluatedCount} ${players} evaluated by ${fairness.evaluatorsWhoScored} ${evals}` +
       (fairness.sharedScorecard ? ' on one shared scorecard' : ''),
   ];
-  lines.push(fairness.blind === 'on'
-    ? 'Blind evaluation is on — players appear as bib numbers only'
-    : 'Blind evaluation — players appeared as bib numbers until names were revealed');
+  lines.push(fairness.blind === 'throughout'
+    ? 'Blind evaluation — players appeared as bib numbers only, start to finish'
+    : fairness.namesShownAt
+      ? `Blind evaluation — players appeared as bib numbers until names were shown on ${formatStoredDate(fairness.namesShownAt)}`
+      : 'Blind evaluation — players appeared as bib numbers until names were shown');
   if (fairness.scoresLockedAt) lines.push('Scoring was locked — no score changed after the lock');
   return lines;
 }
@@ -167,6 +182,28 @@ export function fairnessReceiptLines(fairness: NonNullable<TryoutReport['fairnes
  * half (which season may be read, and by whom) lives in the route + lib/tryout-memory.ts, and
  * the blindfold half (R6) is `canShowTryoutMemory` immediately below.
  * ════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **Was this tryout scored without anyone ever seeing a name?** — the ONE definition, because two
+ * features answered it separately and immediately disagreed (/review 2026-08-25).
+ *
+ * ⚠ It reads the write-once stamp, never the live switch. While revealing was one-way, "blind right
+ * now" implied "blind all along" and every caller could use `isAnonymous` — the day the switch
+ * became two-way that implication died, and the development baseline was still stamping each
+ * player's PERMANENT card with the word "blind" from the live flag. A coach could show names, score
+ * the whole tryout with them on screen, hide them again, seed baselines, and every card would claim
+ * a blind evaluation while the report on the next tab correctly said otherwise.
+ *
+ * The `!isAnonymous` half catches a tryout revealed before the stamp existed whose backfill could
+ * not reach it: no stamp but visibly not blind is still not blind. **Fails closed** — an absent
+ * tryout row claims nothing.
+ */
+export function wasBlindThroughout(
+  tryout: Pick<RepTryout, 'isAnonymous' | 'namesShownAt'> | null | undefined,
+): boolean {
+  if (!tryout) return false;
+  return tryout.isAnonymous && !tryout.namesShownAt;
+}
 
 /**
  * **R6, as a function.** Prior-season evaluation data may be assembled only once names are
@@ -330,7 +367,7 @@ export function decisionLabel(reg: Pick<RepTryoutRegistration, 'status' | 'offer
 }
 
 export function buildTryoutReport(input: {
-  tryout: Pick<RepTryout, 'isAnonymous' | 'scoresLockedAt'> | null;
+  tryout: Pick<RepTryout, 'isAnonymous' | 'namesShownAt' | 'scoresLockedAt'> | null;
   rubric: Pick<RepTryoutRubric, 'scaleMax' | 'categories'> | null;
   registrations: RepTryoutRegistration[];
   scores: Pick<RepTryoutScore, 'registrationId' | 'categoryKey' | 'score' | 'evaluatorSessionId'>[];
@@ -426,7 +463,9 @@ export function buildTryoutReport(input: {
         scores.filter(s => inPlayIds.has(s.registrationId)).map(s => s.evaluatorSessionId),
       ).size,
       sharedScorecard: categories.length > 0,
-      blind: tryout.isAnonymous ? 'on' : 'revealed',
+      // ONE definition, shared with the development baseline — see wasBlindThroughout.
+      blind: wasBlindThroughout(tryout) ? 'throughout' : 'names_shown',
+      namesShownAt: tryout.namesShownAt,
       scoresLockedAt: tryout.scoresLockedAt ?? null,
     };
   }

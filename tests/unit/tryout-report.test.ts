@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import {
   buildTryoutReport, fairnessReceiptLines, decisionLabel,
   buildTryoutMemoryPair, canShowTryoutMemory, returningImprovementAggregate,
-  inPlayTryoutCandidates, MIN_MEMORY_AGGREGATE_PAIRS,
+  inPlayTryoutCandidates, MIN_MEMORY_AGGREGATE_PAIRS, wasBlindThroughout,
   type TryoutMemorySnapshot, type TryoutMemoryPair,
 } from '../../lib/tryout-report.ts';
 import type { RepTryoutRegistration } from '../../lib/types.ts';
@@ -54,7 +54,7 @@ const RUBRIC = {
 };
 
 const BASE = {
-  tryout: { isAnonymous: false, scoresLockedAt: null },
+  tryout: { isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: null },
   rubric: RUBRIC,
   registrations: [] as RepTryoutRegistration[],
   scores: [] as { registrationId: string; categoryKey: string; score: number; evaluatorSessionId: string }[],
@@ -195,17 +195,81 @@ describe('fairness receipt', () => {
     const regs = [mkReg({ id: 'a' })];
     const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
 
-    const blind = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, scoresLockedAt: null }, registrations: regs, scores });
+    const blind = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null }, registrations: regs, scores });
     let lines = fairnessReceiptLines(blind.fairness!);
     assert.equal(lines.length, 2);
     assert.match(lines[0], /1 player evaluated by 1 evaluator on one shared scorecard/);
-    assert.match(lines[1], /Blind evaluation is on/);
+    assert.match(lines[1], /bib numbers only, start to finish/);
 
-    const revealedLocked = buildTryoutReport({ ...BASE, tryout: { isAnonymous: false, scoresLockedAt: '2027-08-13T00:00:00Z' }, registrations: regs, scores });
+    const revealedLocked = buildTryoutReport({ ...BASE, tryout: { isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: '2027-08-13T00:00:00Z' }, registrations: regs, scores });
     lines = fairnessReceiptLines(revealedLocked.fairness!);
     assert.equal(lines.length, 3);
-    assert.match(lines[1], /until names were revealed/);
+    assert.match(lines[1], /until names were shown on Aug 12, 2027/);
     assert.match(lines[2], /Scoring was locked/);
+  });
+
+  /**
+   * ⚠ THE TEST THE WHOLE `namesShownAt` COLUMN EXISTS FOR (owner ruling 2026-08-25).
+   *
+   * Showing names became a two-way switch, which quietly demoted `isAnonymous` from evidence to
+   * view state. A coach could show every name, score the tryout with them on screen, flip back to
+   * bib-only and export a report claiming the scoring was blind. The receipt reads the write-once
+   * stamp instead — so the ONLY input that differs between these two cases is the stamp, and the
+   * live flag is identical (blind) in both.
+   */
+  it('cannot claim blind-throughout once names have EVER been shown, even if switched back', () => {
+    const regs = [mkReg({ id: 'a' })];
+    const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
+
+    const neverShown = buildTryoutReport({
+      ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null },
+      registrations: regs, scores,
+    });
+    assert.equal(neverShown.fairness!.blind, 'throughout');
+    assert.match(fairnessReceiptLines(neverShown.fairness!)[1], /start to finish/);
+
+    const shownThenHidden = buildTryoutReport({
+      ...BASE, tryout: { isAnonymous: true, namesShownAt: '2027-08-12T16:00:00Z', scoresLockedAt: null },
+      registrations: regs, scores,
+    });
+    assert.equal(shownThenHidden.fairness!.blind, 'names_shown');
+    assert.match(fairnessReceiptLines(shownThenHidden.fairness!)[1], /until names were shown on Aug 12, 2027/);
+    assert.doesNotMatch(fairnessReceiptLines(shownThenHidden.fairness!)[1], /start to finish/);
+  });
+
+  /**
+   * ⚠ ONE definition of "was this blind?", because two features answered it separately and
+   * disagreed (/review 2026-08-25): the development baseline was still stamping each player's
+   * PERMANENT card with the word "blind" off the live switch, so a coach who showed names, scored
+   * the tryout, then hid them again froze a claim their own report contradicted. Both now call
+   * `wasBlindThroughout`; this pins the truth table so they cannot drift apart again.
+   */
+  it('wasBlindThroughout is the single rule the report and the development baseline share', () => {
+    // hidden + never shown = the only true case
+    assert.equal(wasBlindThroughout({ isAnonymous: true, namesShownAt: null }), true);
+    // hidden NOW, but shown at some point — the case the stamp exists for
+    assert.equal(wasBlindThroughout({ isAnonymous: true, namesShownAt: '2027-08-12T16:00:00Z' }), false);
+    // currently showing
+    assert.equal(wasBlindThroughout({ isAnonymous: false, namesShownAt: '2027-08-12T16:00:00Z' }), false);
+    // legacy: revealed before the stamp existed, backfill could not date it
+    assert.equal(wasBlindThroughout({ isAnonymous: false, namesShownAt: null }), false);
+    // fails closed
+    assert.equal(wasBlindThroughout(null), false);
+    assert.equal(wasBlindThroughout(undefined), false);
+  });
+
+  /** The pre-migration rows: revealed under the old one-way rule, so `is_anonymous` is false but
+   *  the stamp the backfill dates from `updated_at` could be absent on a row written between the
+   *  two. The claim must still fail closed — state the fact, skip the date. */
+  it('treats an un-stamped but visible tryout as names-shown, not blind-throughout', () => {
+    const regs = [mkReg({ id: 'a' })];
+    const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
+    const legacy = buildTryoutReport({
+      ...BASE, tryout: { isAnonymous: false, namesShownAt: null, scoresLockedAt: null },
+      registrations: regs, scores,
+    });
+    assert.equal(legacy.fairness!.blind, 'names_shown');
+    assert.match(fairnessReceiptLines(legacy.fairness!)[1], /until names were shown$/);
   });
 });
 
@@ -214,7 +278,7 @@ describe('candidateRows — R1/R6', () => {
   const scores = [{ registrationId: 'a', categoryKey: 'hit', score: 4, evaluatorSessionId: 'ev1' }];
 
   it('is NULL while blind — the full-detail export must be unbuildable', () => {
-    const r = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, scoresLockedAt: null }, registrations: regs, scores });
+    const r = buildTryoutReport({ ...BASE, tryout: { isAnonymous: true, namesShownAt: null, scoresLockedAt: null }, registrations: regs, scores });
     assert.equal(r.candidateRows, null);
   });
 

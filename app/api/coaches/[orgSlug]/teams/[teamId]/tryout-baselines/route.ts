@@ -20,6 +20,7 @@ import {
   buildTryoutBaselineSnapshot, suggestBaselineFocus, tryoutDateLabel, isEmptyBaselineSnapshot,
   MAX_SEEDED_GOALS,
 } from '@/lib/tryout-baseline';
+import { wasBlindThroughout } from '@/lib/tryout-report';
 import { parseDevelopmentGoalInput, type DevelopmentGoalInput } from '@/lib/development-goal-input';
 import { ORG_TIME_ZONE } from '@/lib/timezone';
 
@@ -99,7 +100,11 @@ async function assembleSeedingPlayers(teamId: string, programYearId: string, sea
         tryoutId: tryout?.id ?? null,
         seasonLabel,
         dateLabel,
-        blindUsed: tryout?.isAnonymous ?? false,
+        // ⚠ THE STAMP, NOT THE LIVE SWITCH (/review 2026-08-25). This read isAnonymous, which was
+        // sound only while revealing was one-way: a snapshot is PERMANENT and stamps the word
+        // "blind" on a player's development card forever, so a coach who showed names, scored the
+        // tryout and switched back would have frozen a claim their own tryout report contradicts.
+        blindUsed: wasBlindThroughout(tryout),
       });
       const stored = baselineByPlayer.get(p.id);
       return {

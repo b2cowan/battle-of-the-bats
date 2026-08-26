@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trophy, TrendingUp, TrendingDown, EyeOff, Lock, LockOpen } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Lock, LockOpen } from 'lucide-react';
+import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutDayCard.module.css';
 
 interface CategoryDef { key: string; label: string; weight: number }
@@ -115,15 +116,35 @@ export default function TryoutScoreboardCard({ apiBase, settingsBase, canWrite =
           </h3>
           <p className={styles.subtitle}>
             Ranked by weighted average across evaluators. {board.locked ? 'Scoring is closed.' : 'Updates automatically.'}
-            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — bib numbers only.</>}
+
           </p>
         </div>
+        <div className={styles.headActions}>
+          {/* The names switch sits beside the lock because they are the two things a head coach
+              changes ABOUT a running board, as opposed to the scores on it. */}
+          {settingsBase && (
+            <TryoutNamesSwitch
+              apiBase={settingsBase}
+              canWrite={canWrite}
+              blind={board.blind}
+              // The SAME invalidation the lock toggle does one line down, and for the same reason:
+              // a poll GET issued before the switch can resolve after it and repaint the old state.
+              // `load` also early-returns while a poll is in flight, so without the optimistic set
+              // the pill could stay wrong until the next 6s tick (/review 2026-08-25).
+              onChanged={b => {
+                gen.current++;
+                setBoard(prev => prev ? { ...prev, blind: b } : prev);
+                load(false);
+              }}
+            />
+          )}
         {settingsBase && canWrite && (
           <button type="button" className={styles.revealBtn} onClick={toggleLock} disabled={locking}
             title={board.locked ? 'Reopen scoring for evaluators' : 'Freeze evaluator scoring'}>
             {board.locked ? <><LockOpen size={14} /> Reopen scoring</> : <><Lock size={14} /> Lock scoring</>}
           </button>
         )}
+        </div>
       </div>
 
       {board.evaluators.length > 0 && (

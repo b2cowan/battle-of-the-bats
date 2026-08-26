@@ -165,6 +165,7 @@ export default function TryoutSetupChecklist({ apiBase, canWrite, sport, onError
           onError={onError}
           onStatus={report('dates')}
           blind={blind}
+          onBlindChanged={() => onChangedRef.current?.()}
         />
       </Row>
       <Row itemKey="scorecard" status={status.scorecard} isOpen={open.scorecard} onToggle={toggle}>

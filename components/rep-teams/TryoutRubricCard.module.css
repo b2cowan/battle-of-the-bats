@@ -432,8 +432,15 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .cat,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepper,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
+/* ⚠ The COLOUR matters as much as the border here. This rule used to set the border alone, which
+   left the digits on their dark-portal `rgba(255,255,255,0.7)` — white on a cream card, so the
+   preview showed five EMPTY boxes and a coach couldn't tell what their helpers would tap. Every
+   other piece of the preview got a warm colour in the same pass; this one line was missed.
+   `--home-ink-soft`, not `--home-dim`: these are the buttons a helper actually presses, so they
+   sit one step below the category label, not down with the caption text. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .pScale span {
   border-color: var(--home-line);
+  color: var(--home-ink-soft);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepVal {
   border-left-color: var(--home-line);

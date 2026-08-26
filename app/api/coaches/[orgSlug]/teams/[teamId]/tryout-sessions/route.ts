@@ -66,16 +66,27 @@ export const POST = withObservability(async (req: Request,
   if (!body.startsAt || isNaN(new Date(body.startsAt).getTime())) {
     return NextResponse.json({ errors: { startsAt: 'A valid date and time is required' } }, { status: 400 });
   }
-  // A session can't end before it starts (owner 2026-08-17 — one was saved reading 6:00–5:00 p.m.).
-  // Wall-clock strings compare as local dates; equal is rejected too (a zero-length session is a
-  // typo). ⚠ Parseability first (/review): NaN <= x is false, so an unparseable endsAt would sail
-  // past the order check and 500 at the insert instead of 400-ing here.
+  /**
+   * ⚠⚠ VALIDATE WHAT WILL BE STORED, NOT WHAT WAS TYPED (/review, high-risk tier, 2026-08-24).
+   *
+   * A session can't end before it starts (owner 2026-08-17 — one was saved reading 6:00–5:00 p.m.).
+   * This used to compare the RAW `datetime-local` strings while the insert below stored the
+   * CONVERTED instants, and the two can disagree: across a spring-forward gap the wall clocks
+   * "01:59" and "02:01" look like a two-minute session and land 58 minutes APART IN REVERSE, so a
+   * row that passed validation reads as ending before it starts on every screen that shows it.
+   *
+   * The sibling PATCH route already compares the effective CONVERTED pair, which is why it was
+   * never exposed to this; the two now agree. ⚠ Parseability first: NaN <= x is false, so an
+   * unparseable endsAt would sail past the order check and 500 at the insert instead of 400-ing.
+   */
+  const startsAtUtc = wallClockStringToUtc(body.startsAt) ?? body.startsAt;
+  const endsAtUtc = body.endsAt ? (wallClockStringToUtc(body.endsAt) ?? body.endsAt) : null;
   if (body.endsAt) {
-    const end = new Date(body.endsAt).getTime();
+    const end = new Date(endsAtUtc as string).getTime();
     if (isNaN(end)) {
       return NextResponse.json({ errors: { startsAt: 'A valid end time is required' } }, { status: 400 });
     }
-    if (end <= new Date(body.startsAt).getTime()) {
+    if (end <= new Date(startsAtUtc).getTime()) {
       return NextResponse.json({ errors: { startsAt: 'The end time must be after the start time' } }, { status: 400 });
     }
   }
@@ -102,8 +113,8 @@ export const POST = withObservability(async (req: Request,
      * Now: one convention, the same one `rep_team_events` has always used. Stored as an instant,
      * read through `formatInOrgZone`. Never re-introduce a slicing reader.
      */
-    startsAt: wallClockStringToUtc(body.startsAt) ?? body.startsAt,
-    endsAt: body.endsAt ? (wallClockStringToUtc(body.endsAt) ?? body.endsAt) : null,
+    startsAt: startsAtUtc,
+    endsAt: endsAtUtc,
     location: body.location?.trim() || null,
     locationAddress: body.locationAddress?.trim() || null,
     fieldNumber: body.fieldNumber?.trim() || null,
@@ -124,15 +135,21 @@ export const PATCH = withObservability(async (req: Request,
   const body = await req.json();
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
 
-  const patch: { isAnonymous?: boolean; scoresLockedAt?: string | null; scoresLockedBy?: string | null } = {};
+  const patch: { isAnonymous?: boolean; namesShownAt?: string; scoresLockedAt?: string | null; scoresLockedBy?: string | null } = {};
 
-  // Reveal is ONE-WAY: blind (true) → revealed (false) is allowed; re-blinding once revealed is not
-  // (evaluators have already seen names — re-hiding would be theatre and hurts trust in the record).
+  // Showing names is a SWITCH, both ways (owner ruling 2026-08-25). It used to be one-way, and the
+  // 409 that enforced it ('already_revealed') is gone with this comment — coaches who never wanted
+  // blind scoring were being made to hunt three stages forward to turn it off, and plenty simply
+  // want names beside bib numbers all the way through.
+  //
+  // ⚠ THE ONE-WAY RULE WAS DOING A SECOND JOB: it made `isAnonymous` evidence. The tryout report's
+  // fairness block tells a parent the scoring was blind, and a switchable flag cannot support that
+  // sentence — a tryout scored with every name on screen could be re-hidden and printed as blind.
+  // So the first flip to visible stamps `namesShownAt`, which nothing clears, and the report reads
+  // THAT (see lib/tryout-report.ts). Removing this stamp re-opens the hole; it is not bookkeeping.
   if (typeof body.isAnonymous === 'boolean' && body.isAnonymous !== tryout.isAnonymous) {
-    if (body.isAnonymous === true && tryout.isAnonymous === false) {
-      return NextResponse.json({ error: 'already_revealed', message: 'Names have already been revealed — this can’t be undone.' }, { status: 409 });
-    }
     patch.isAnonymous = body.isAnonymous;
+    if (body.isAnonymous === false && !tryout.namesShownAt) patch.namesShownAt = new Date().toISOString();
   }
 
   // Score lock is reversible: lock freezes evaluator input; reopen clears it.

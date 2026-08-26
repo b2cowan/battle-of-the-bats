@@ -5,18 +5,22 @@ import HelpCallout from '@/components/help/HelpCallout';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
-import { utcToZonedInputs } from '@/lib/timezone';
+import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
 import { getSportPack } from '@/lib/sports';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
+import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutDayCard.module.css';
 
 /**
  * The "Tryout dates" manager — the body of the first Get-set-up checklist row (2026-08-17; the
- * standalone card chrome, the Reveal-names control, and the check-in CTA all moved out: reveal
- * lives on the Decide tab via TryoutRevealControl, check-in on the Tryout day tab, and the row
- * bar owns the title/status). Sessions still appear on the team schedule.
+ * standalone card chrome and the check-in CTA moved out: check-in lives on the Tryout day tab and
+ * the row bar owns the title/status). Sessions still appear on the team schedule.
+ *
+ * The names control came BACK here on 2026-08-25 — as a two-way switch beside the hint, because
+ * the stage where a coach configures the tryout is the stage where "do I want blind scoring at
+ * all?" is actually asked. It is the same TryoutNamesSwitch the board and Decide mount.
  */
 
 interface Props {
@@ -32,6 +36,11 @@ interface Props {
    *  copy once on mount and stays mounted for the whole session, so without this the blind hint
    *  reads stale after Reveal names fires on the Decide tab (/review 2026-08-17). */
   blind?: boolean;
+  /** Fired after the names switch changes. ⚠ REQUIRED for the pill to stick: `blind` above is the
+   *  PAGE's overview value and outranks this card's own fetch, and the overview only refreshes when
+   *  a session's status moves — so without this the pill visibly snapped back to its pre-toggle
+   *  state after a successful save (/review 2026-08-25). */
+  onBlindChanged?: () => void;
 }
 
 interface SessionForm {
@@ -72,7 +81,23 @@ function toLocalInput(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onStatus, blind }: Props) {
+/** Minutes between two datetime-local values — null when either is missing or the pair is
+ *  backwards, so callers fall back to the 2-hour default rather than seeding a negative length. */
+function minutesBetween(from: string, to: string): number | null {
+  if (!from || !to) return null;
+  const a = new Date(from).getTime(), b = new Date(to).getTime();
+  if (isNaN(a) || isNaN(b) || b <= a) return null;
+  return Math.round((b - a) / 60_000);
+}
+
+/** A datetime-local value plus N minutes, still as a datetime-local value. */
+function addMinutes(value: string, minutes: number): string {
+  const t = new Date(value).getTime();
+  if (isNaN(t)) return '';
+  return toLocalInput(new Date(t + minutes * 60_000));
+}
+
+export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onStatus, blind, onBlindChanged }: Props) {
   const base = apiBase;
 
   const [tryout, setTryout] = useState<RepTryout | null>(null);
@@ -137,23 +162,43 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   const isAnonymous = blind ?? tryout?.isAnonymous ?? true;
 
   function openAdd() {
-    // The form opens fully seeded to ROUND HOURS (owner 2026-08-17): start = the next full hour,
+    // The form opens fully seeded. With sessions ALREADY on the list it FOLLOWS them — same time
+    // of day, next calendar day, same length — because a tryout is a run of near-identical
+    // evenings and retyping the date for day 2 is pure friction (owner 2026-08-25). Only the
+    // FIRST session falls back to ROUND HOURS (owner 2026-08-17): start = the next full hour,
     // end = start + 2h — never the current wall-clock minutes. Seeding sets the BASELINE too: our
     // prefill is not the coach's work, so an untouched seeded form still closes silently (the
     // Chunk G rider).
-    // ⚠ Seeded from the CLUB's clock, not the device's: what the coach types is interpreted as
-    // club-local when it saves, so prefilling a travelling coach's own next hour would hand them
-    // a time that means something different from what it says.
-    const start = new Date();
-    start.setMinutes(0, 0, 0);
-    start.setHours(start.getHours() + 1);
-    const end = new Date(start);
-    end.setHours(end.getHours() + 2);
-    const seeded: SessionForm = {
-      ...BLANK,
-      startsAt: toInputValue(start.toISOString()),
-      endsAt: toInputValue(end.toISOString()),
-    };
+    // ⚠ The follow-on seed steps the CLUB wall clock (the strings the field shows) by a CALENDAR
+    // day, not an instant by 86_400_000ms — across a DST boundary the latter arrives an hour off,
+    // which is exactly the class of bug `addCalendarDays` exists to prevent.
+    // ⚠ The ROUNDING is the device's next full hour; the VALUE is then rendered in the club's
+    // zone, which is the zone it will be read back in. On a device whose offset from the club is a
+    // whole number of hours — every North American one — those are the same thing. On a half-hour
+    // offset the prefill simply is not a round hour in club terms, which costs a coach one edit and
+    // nothing else: whatever they submit is converted correctly on save either way.
+    // (Comment corrected /review 2026-08-24 — it used to claim the rounding itself was club-side.)
+    let seeded: SessionForm;
+    // The list arrives ordered by start, so the last row is the latest session.
+    const previous = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+    const prevStart = previous ? toInputValue(previous.startsAt) : '';
+    if (previous && prevStart) {
+      const [prevDate, prevTime] = prevStart.split('T');
+      const startsAt = `${addCalendarDays(prevDate, 1)}T${prevTime}`;
+      const prevEnd = toInputValue(previous.endsAt);
+      seeded = { ...BLANK, startsAt, endsAt: addMinutes(startsAt, minutesBetween(prevStart, prevEnd) ?? 120) };
+    } else {
+      const start = new Date();
+      start.setMinutes(0, 0, 0);
+      start.setHours(start.getHours() + 1);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 2);
+      seeded = {
+        ...BLANK,
+        startsAt: toInputValue(start.toISOString()),
+        endsAt: toInputValue(end.toISOString()),
+      };
+    }
     setEditingId(null);
     setForm(seeded);
     setFormBaseline(seeded);
@@ -240,9 +285,23 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
         <p className={styles.empty}>Loading sessions…</p>
       ) : (
         <>
-          {isAnonymous && (
-            <p className={styles.blindHint}><strong>Blind evaluation is on</strong> — players show as bib numbers only. Reveal names on the Decide tab when you’re ready to make picks (one-way).</p>
-          )}
+          {/* The switch lives HERE too (owner 2026-08-25), not only on Decide: a coach who never
+              wanted blind scoring was being made to walk three stages forward to turn it off, at
+              the one moment they are actually configuring the tryout. */}
+          <div className={styles.blindHint}>
+            <p>
+              {isAnonymous
+                ? <><strong>Names are hidden</strong> — players show as bib numbers on the board, on your helpers’ phones and on the printed sheet.</>
+                : <><strong>Names are showing</strong> — players appear by name everywhere, including your helpers’ phones.</>}
+            </p>
+            <TryoutNamesSwitch
+              apiBase={base}
+              canWrite={canWrite}
+              blind={isAnonymous}
+              onChanged={() => { load(); onBlindChanged?.(); }}
+              onError={fail}
+            />
+          </div>
 
           {sessions.length > 0 && (
             <div className={styles.sessionList} style={{ marginTop: '0.6rem' }}>
@@ -291,10 +350,22 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
                   setForm(f => {
                     // End FOLLOWS start, keeping the session length (calendar convention,
                     // owner 2026-08-17) — moving a 6–8pm session to 4pm makes it 4–6pm.
-                    if (!next || !f.startsAt || !f.endsAt) return { ...f, startsAt: next };
+                    // With NO length to keep — an empty end field — it fills to start + 2h
+                    // (owner 2026-08-25) rather than staying blank, which is what a coach who
+                    // cleared it, or opened a session saved without one, used to be left with.
+                    // The two are deliberately NOT collapsed into "always +2h": that would eat a
+                    // deliberate 3-hour end the moment the coach corrected the date.
+                    if (!next) return { ...f, startsAt: next };
+                    // ⚠ ONLY an EMPTY end gets filled. This read `!f.startsAt || !f.endsAt`, which
+                    // also fired when the START was blank and the end held a real value — clearing
+                    // and re-picking the date on a 6:00–9:30pm session silently shrank it to two
+                    // hours, the exact clobber the comment above swears off (/review 2026-08-25).
+                    if (!f.endsAt) return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
+                    // No old start to measure a length from — keep the end the coach chose.
+                    if (!f.startsAt) return { ...f, startsAt: next };
                     const oldStart = new Date(f.startsAt), oldEnd = new Date(f.endsAt), newStart = new Date(next);
                     if (isNaN(oldStart.getTime()) || isNaN(oldEnd.getTime()) || isNaN(newStart.getTime())) {
-                      return { ...f, startsAt: next };
+                      return { ...f, startsAt: next, endsAt: addMinutes(next, 120) };
                     }
                     const shiftedEnd = new Date(newStart.getTime() + (oldEnd.getTime() - oldStart.getTime()));
                     return { ...f, startsAt: next, endsAt: toLocalInput(shiftedEnd) };

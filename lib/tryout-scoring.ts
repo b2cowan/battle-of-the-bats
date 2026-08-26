@@ -56,6 +56,82 @@ export function tryoutSnapshotCore(
   };
 }
 
+/**
+ * Category averages → the one weighted number a tryout ranks on.
+ *
+ * ⚠ Extracted from inside `rankTryoutCandidates` (2026-08-25) the moment a SECOND caller appeared:
+ * the Decide board's per-player breakdown works out each evaluator's own composite for a player, and
+ * "3.8 overall, Dana had them at 4.6" is a sentence about two numbers that must be produced the same
+ * way. Two hand-copies of a weighting rule is how a panel ends up quietly contradicting the row it
+ * opened from.
+ *
+ * Falls back to an EVEN mean when every weight is zero but scores exist — a scorecard whose shares
+ * were never set still has to rank, and refusing to would leave a coach staring at dashes.
+ * Returns null when nothing was scored: a candidate nobody evaluated has no number, which is a
+ * different fact from a zero.
+ */
+export function weightedComposite(
+  categoryAverages: Record<string, number | null>,
+  categories: Pick<RepTryoutRubricCategory, 'key' | 'weight'>[],
+): number | null {
+  let weighted = 0; let usedWeight = 0; let anyScore = false;
+  for (const def of categories) {
+    const a = categoryAverages[def.key];
+    if (a == null) continue;
+    anyScore = true;
+    const w = def.weight > 0 ? def.weight : 0;
+    if (w > 0) { weighted += a * w; usedWeight += w; }
+  }
+  if (!anyScore) return null;
+  const value = usedWeight > 0
+    ? weighted / usedWeight
+    : mean(Object.values(categoryAverages).filter((v): v is number => v != null));
+  return value == null ? null : round2(value);
+}
+
+/**
+ * What each evaluator, on their own, made of each candidate — the numbers behind the average.
+ *
+ * The Decide board opens this under a tapped player, because a 4.1 built from 4.6 and 3.5 is a
+ * different player from a 4.1 three people agreed on, and the composite cannot tell them apart.
+ * Same weighting as the composite (`weightedComposite` above), applied to one evaluator's scores
+ * instead of everyone's: an evaluator who only filled in two of five categories is composited on
+ * the two they filled, exactly as a candidate scored on two categories is.
+ *
+ * ⚠ Evaluator identity is NOT blind-gated, and that is deliberate: blind evaluation hides the
+ * CANDIDATE's name from the scorer, never the scorer's name from the head coach. The candidate side
+ * of the map is keyed by registration id, so a caller that withholds names still withholds them.
+ */
+export function evaluatorCompositesByCandidate(
+  categories: Pick<RepTryoutRubricCategory, 'key' | 'weight'>[],
+  scores: Pick<RepTryoutScore, 'registrationId' | 'categoryKey' | 'score' | 'evaluatorSessionId'>[],
+): Map<string, { evaluatorSessionId: string; composite: number }[]> {
+  // registrationId → evaluatorSessionId → categoryKey → that evaluator's score.
+  const byCandidate = new Map<string, Map<string, Record<string, number | null>>>();
+  for (const s of scores) {
+    let byEval = byCandidate.get(s.registrationId);
+    if (!byEval) { byEval = new Map(); byCandidate.set(s.registrationId, byEval); }
+    let cats = byEval.get(s.evaluatorSessionId);
+    if (!cats) { cats = {}; byEval.set(s.evaluatorSessionId, cats); }
+    // One evaluator scores one category once; a duplicate row would be a data fault, and taking
+    // the last is the same thing the cross-evaluator mean does with it.
+    cats[s.categoryKey] = s.score;
+  }
+
+  const out = new Map<string, { evaluatorSessionId: string; composite: number }[]>();
+  for (const [registrationId, byEval] of byCandidate) {
+    const rows: { evaluatorSessionId: string; composite: number }[] = [];
+    for (const [evaluatorSessionId, cats] of byEval) {
+      const composite = weightedComposite(cats, categories);
+      if (composite != null) rows.push({ evaluatorSessionId, composite });
+    }
+    // Highest first: the coach is looking for the spread, and a sorted pair shows it at a glance.
+    rows.sort((a, b) => b.composite - a.composite);
+    if (rows.length) out.set(registrationId, rows);
+  }
+  return out;
+}
+
 /** One candidate's aggregated standing across all evaluators (Phase 2B). */
 export interface RankedTryoutCandidate {
   registrationId: string;
@@ -103,27 +179,16 @@ export function rankTryoutCandidates(
   const rows = candidates.map(c => {
     const cats = byCandidate.get(c.id);
     const categoryAverages: Record<string, number | null> = {};
-    let weighted = 0; let usedWeight = 0; let anyScore = false;
     for (const def of categories) {
-      const a = cats ? mean(cats.get(def.key) ?? []) : null;
-      categoryAverages[def.key] = a;
-      if (a != null) {
-        anyScore = true;
-        const w = def.weight > 0 ? def.weight : 0;
-        if (w > 0) { weighted += a * w; usedWeight += w; }
-      }
+      categoryAverages[def.key] = cats ? mean(cats.get(def.key) ?? []) : null;
     }
-    let composite: number | null = null;
-    if (anyScore) {
-      composite = usedWeight > 0
-        ? weighted / usedWeight
-        : mean(Object.values(categoryAverages).filter((v): v is number => v != null));
-    }
+    const composite = weightedComposite(categoryAverages, categories);
     return {
       registrationId: c.id,
       bib: c.bibNumber ?? null,
       name: opts.blind ? null : `${c.playerFirstName} ${c.playerLastName}`.trim(),
-      composite: composite != null ? round2(composite) : null,
+      // Already rounded by weightedComposite — rounding here again was dead work.
+      composite,
       evaluatorCount: evaluatorsByCandidate.get(c.id)?.size ?? 0,
       categoryAverages,
     };

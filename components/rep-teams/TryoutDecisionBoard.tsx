@@ -31,12 +31,20 @@ interface Candidate {
   hasGuardianEmail?: boolean;
   isCheckedIn?: boolean;
   playerNotes?: string | null;
+  /** Each category's cross-evaluator average, keyed by the scorecard's category key. */
+  categoryAverages?: Record<string, number | null>;
+  /** What each evaluator, alone, made of this player — highest first. The reason the panel
+   *  exists: 4.1 from a 4.6 and a 3.5 is a different player from 4.1 three people agreed on. */
+  evaluatorScores?: { name: string | null; composite: number }[];
 }
 interface Counts { offered: number; waitlisted: number; declined: number; accepted: number; pending: number }
 interface Board {
   blind: boolean;
   locked: boolean;
   scaleMax: number;
+  /** The scorecard as the coach set it — label + weight per category, in card order. Drives the
+   *  breakdown's rows AND its share percentages, so a renamed category renames here too. */
+  categories: { key: string; label: string; weight: number }[];
   counts: Counts;
   total: number;
   candidates: Candidate[];
@@ -82,6 +90,136 @@ const CHOICES: { key: Decision; label: string; status: Status }[] = [
 
 interface AcceptTarget { registrationId: string; identity: AcceptIdentity; suggestedDues: AcceptSuggestedDues | null }
 
+/** How far apart the highest and lowest evaluator were on one player. Null below two evaluators —
+ *  one person cannot disagree with themselves, and "0.0 apart" would read as agreement. */
+function evaluatorSpread(c: Candidate): number | null {
+  const vals = (c.evaluatorScores ?? []).map(e => e.composite);
+  if (vals.length < 2) return null;
+  return Math.round((Math.max(...vals) - Math.min(...vals)) * 100) / 100;
+}
+
+/** A whole point apart on the same kid, on the same scorecard, is the threshold at which a coach
+ *  should look before deciding rather than trust the average. Scale-relative, because a 1-point gap
+ *  means something different on a 1–10 card than on a 1–5 one. */
+const SPLIT_THRESHOLD = (scaleMax: number) => scaleMax * 0.2;
+
+/** The player's three strongest categories, for the collapsed row: "Hitting 4.6 · Attitude 4.5 · …".
+ *  Ordered by score, not by card order — the row is answering "what is this kid good at?". */
+function topCategories(c: Candidate, categories: Board['categories']): string {
+  const scored = categories
+    .map(def => ({ label: def.label, avg: c.categoryAverages?.[def.key] ?? null }))
+    .filter((x): x is { label: string; avg: number } => x.avg != null)
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, 3);
+  return scored.map(x => `${x.label} ${x.avg.toFixed(1)}`).join(' · ');
+}
+
+/**
+ * What made the number — opened by tapping a player on the board (owner 2026-08-25).
+ *
+ * Two halves, and the second is the one that earns the feature: the categories say WHERE the score
+ * came from, weighted by the share the coach gave them; the evaluator chips say WHO it came from.
+ * A composite cannot distinguish three people agreeing on 4.1 from one person at 4.6 and another at
+ * 3.5, and those are different players to offer a spot to.
+ *
+ * ⚠ It renders only what the server sent. The per-evaluator numbers are composited server-side with
+ * the SAME weighting as the headline score (`weightedComposite`), so this component does no
+ * arithmetic beyond the spread — a second opinion here is how the panel would start contradicting
+ * the row it opened from.
+ */
+function ScoreBreakdown({ candidate, categories, scaleMax }: {
+  candidate: Candidate;
+  categories: Board['categories'];
+  scaleMax: number;
+}) {
+  const evals = candidate.evaluatorScores ?? [];
+  if (candidate.composite == null) {
+    return (
+      <div className={styles.breakdown}>
+        <p className={styles.breakdownNote}>
+          Nobody has scored {candidate.name ?? `bib ${candidate.bib ?? '—'}`} yet, so there is nothing behind the number.
+        </p>
+      </div>
+    );
+  }
+
+  // Shares, not raw weights (owner ruling, tryout scorecard weights): a coach set "Hitting 3" and
+  // needs to read "40% of the score". Zero total = an unweighted card, where every category counts
+  // the same — say so rather than printing a row of 0%.
+  //
+  // ⚠ THE SHARE IS OVER THE CATEGORIES THAT WERE ACTUALLY SCORED, not over the whole scorecard
+  // (/review 2026-08-25). The composite re-normalizes over the scored subset — an unscored category
+  // contributes nothing and is not a zero — so totalling every weight made the panel contradict the
+  // number at the top of it: a candidate scored on Hitting and Fielding only was told "Attitude, 17%
+  // of the score" for a category that had contributed none of it. An unscored row now says so
+  // instead of claiming a share.
+  const scored = categories.filter(def => candidate.categoryAverages?.[def.key] != null);
+  const weightTotal = scored.reduce((sum, c) => sum + (c.weight > 0 ? c.weight : 0), 0);
+  const lowest = scored.length
+    ? Math.min(...scored.map(def => candidate.categoryAverages![def.key]!))
+    : null;
+  const spread = evaluatorSpread(candidate);
+  const split = spread != null && spread >= SPLIT_THRESHOLD(scaleMax);
+
+  return (
+    <div className={styles.breakdown}>
+      <div className={styles.breakdownHead}>What made {candidate.composite.toFixed(1)}</div>
+      <div className={styles.catList}>
+        {categories.map(def => {
+          const avg = candidate.categoryAverages?.[def.key] ?? null;
+          // Unscored ⇒ no share to claim; unweighted card ⇒ every scored category counts alike.
+          const share = avg == null || weightTotal <= 0
+            ? null
+            : Math.round((Math.max(def.weight, 0) / weightTotal) * 100);
+          return (
+            <div key={def.key} className={styles.catRow}>
+              <span className={styles.catLabel}>
+                <b>{def.label}</b>
+                <span>
+                  {avg == null ? 'not scored' : share != null ? `${share}% of the score` : 'counts the same as the rest'}
+                </span>
+              </span>
+              <span className={styles.catTrack}>
+                {avg != null && (
+                  <i
+                    className={avg === lowest ? styles.catFillThin : undefined}
+                    style={{ width: `${Math.min(100, (avg / scaleMax) * 100)}%` }}
+                  />
+                )}
+              </span>
+              <span className={`${styles.catNum} ${avg == null ? styles.catNumNone : ''}`}>
+                {avg != null ? avg.toFixed(1) : '–'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {evals.length > 0 && (
+        <>
+          <div className={styles.breakdownHead}>Each helper’s number for this player</div>
+          <div className={styles.evalRow}>
+            {evals.map((e, idx) => (
+              <span key={idx} className={styles.evalScore}>
+                {e.name ?? 'Evaluator'} <b>{e.composite.toFixed(1)}</b>
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+
+      <p className={styles.breakdownNote}>
+        {split
+          ? <><strong>These helpers are {spread!.toFixed(1)} apart</strong> on the same player — worth a second look before you decide.</>
+          : spread != null
+            ? <>All {evals.length} helpers landed within {spread.toFixed(1)} of each other.</>
+            : <>Scored by one helper so far.</>}
+        {lowest != null && <> Lowest category is marked.</>}
+      </p>
+    </div>
+  );
+}
+
 /** Device-remembered, per team — presentation state for a per-ACTION flag. The server only ever
  *  emails when the individual decision request carries the flag, so a device that never turned
  *  the switch on can never send anything (D-E9: the failure direction is always "no email"). */
@@ -94,6 +232,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   const [savingId, setSavingId] = useState<string | null>(null);
   const [continuityOpenId, setContinuityOpenId] = useState<string | null>(null);
   const [notesOpenId, setNotesOpenId] = useState<string | null>(null);
+  /** Which player's score breakdown is open. ONE at a time on purpose: the panel is for looking
+   *  hard at one kid, and a board with five open panels is the ranked list nobody can scan. */
+  const [breakdownOpenId, setBreakdownOpenId] = useState<string | null>(null);
   const [notifyFamily, setNotifyFamily] = useState(false);
   const {
     byCurrent: continuityByReg, decide: decideContinuityShared, dismiss: dismissContinuity,
@@ -164,10 +305,18 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
    * "verify, then decide" flow confirmed the match and watched nothing happen, because the shared
    * continuity hook updates only its own local state.
    *
-   * The guarded path deliberately clears NOTHING: the map is only ever filled by the fetch below,
-   * and revealing names is one-way, so there is no transition that could strand stale memory on
-   * screen. Not clearing also means tabbing back to Decide keeps the strips up while they refresh
-   * instead of flashing empty.
+   * The guarded path deliberately clears NOTHING: the map is only ever filled by the fetch below.
+   * Not clearing also means tabbing back to Decide keeps the strips up while they refresh instead
+   * of flashing empty.
+   *
+   * ⚠⚠ **THIS USED TO SAY "revealing names is one-way, so there is no transition that could strand
+   * stale memory on screen." THAT PREMISE DIED on 2026-08-25** when the switch became two-way — the
+   * board can now go names-shown → names-hidden without unmounting, whenever the switch is flipped
+   * on one of the other three screens. What actually holds the line today is the render gate below:
+   * every strip is `c.name && memoryByReg[...]`, and the server nulls `name` again the moment this
+   * board refetches while hidden. **Do not delete that `c.name &&` as redundant** — it is now the
+   * only thing standing between a re-hidden tryout and a prior season's real name sitting beside a
+   * bib number (/review 2026-08-25, traced: no live leak, one edit away from one).
    */
   const blind = board?.blind;
   useEffect(() => {
@@ -331,7 +480,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>
           <p className={styles.subtitle}>
             Offer, waitlist, or pass on each player — ranked by score.
-            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — use Reveal names above to decide by name.</>}
+            {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Names are hidden — use the switch above to decide by name.</>}
           </p>
         </div>
       </div>
@@ -392,8 +541,30 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
           const hasFamilyNote = !!c.playerNotes;
           return (
             <Fragment key={c.registrationId}>
-            <div className={styles.scoreRow}>
+            <div className={`${styles.scoreRow} ${breakdownOpenId === c.registrationId ? styles.scoreRowOpen : ''}`}>
               <div className={styles.rank}>{c.composite != null ? `#${i + 1}` : '—'}</div>
+              {/* THE RATING, as the row's anchor (owner 2026-08-25). It used to sit inside the meta
+                  line as grey text, while the live scoreboard — same players, same ranking, same
+                  arithmetic — showed it large on the right. The two screens had drifted; this is
+                  Decide catching up. Doubles as the tap target for the breakdown. */}
+              <button
+                type="button"
+                className={styles.ratingBtn}
+                onClick={() => setBreakdownOpenId(id => id === c.registrationId ? null : c.registrationId)}
+                aria-expanded={breakdownOpenId === c.registrationId}
+                aria-label={c.composite != null
+                  ? `Score ${c.composite.toFixed(1)} from ${c.evaluatorCount} evaluator${c.evaluatorCount === 1 ? '' : 's'} — show what made it`
+                  : 'Not scored yet'}
+              >
+                <span className={`${styles.ratingVal} ${c.composite == null ? styles.ratingNone : ''}`}>
+                  {c.composite != null ? c.composite.toFixed(1) : '–'}
+                </span>
+                <span className={styles.ratingUnit}>
+                  {c.composite != null
+                    ? `${c.evaluatorCount} eval${c.evaluatorCount === 1 ? '' : 's'}`
+                    : 'no score'}
+                </span>
+              </button>
               <div className={styles.scoreMain}>
                 <div className={styles.sessionWhen}>
                   <span className={styles.bib}>#{c.bib ?? '—'}</span>
@@ -420,8 +591,21 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                   {/* A no-show must never read as merely "not scored yet" — a kid with a family
                       emergency is not a kid who scored low (WI-3). */}
                   {c.isCheckedIn === false && <span style={{ fontWeight: 700 }}>didn’t check in · </span>}
-                  {/* Same ruling as the live scoreboard (owner 2026-08-23): no per-row "/5". */}
-                  {c.composite != null ? <>score {c.composite.toFixed(1)} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</> : 'not scored yet'}
+                  {/* The score itself moved OUT of this line into the rating block. What stays is
+                      the player's three best categories — a row that says something about the kid
+                      before anyone opens anything. Same ruling as the live scoreboard (owner
+                      2026-08-23): no per-row "/5". */}
+                  {c.composite != null ? (
+                    <button
+                      type="button"
+                      className={styles.noteToggle}
+                      onClick={() => setBreakdownOpenId(id => id === c.registrationId ? null : c.registrationId)}
+                      aria-expanded={breakdownOpenId === c.registrationId}
+                    >
+                      {topCategories(c, board.categories) || 'what made this score'}
+                      {' '}{breakdownOpenId === c.registrationId ? '▾' : '▸'}
+                    </button>
+                  ) : 'not scored yet'}
                   {hasFamilyNote && (
                     <button type="button" className={styles.noteToggle}
                       onClick={() => setNotesOpenId(id => id === c.registrationId ? null : c.registrationId)}
@@ -432,6 +616,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                 </div>
                 {notesOpenId === c.registrationId && hasFamilyNote && (
                   <div className={styles.familyNote}>{c.playerNotes}</div>
+                )}
+                {breakdownOpenId === c.registrationId && (
+                  <ScoreBreakdown candidate={c} categories={board.categories} scaleMax={board.scaleMax} />
                 )}
               </div>
               {accepted ? (

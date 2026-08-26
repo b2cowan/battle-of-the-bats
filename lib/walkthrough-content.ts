@@ -448,7 +448,7 @@ export const PITCH_SLIDES = {
     // the ranking is a weighted composite of the coach's OWN categories, and blind mode is the
     // default rather than an option somebody has to find.
     pageAnswer:
-      'Evaluators score on their phones — a link, no login, and one card per player. You choose the categories and how much each is worth, so the ranked list at the end means what you decided it means, not what a spreadsheet averaged. Names stay hidden while scoring, and you reveal them when you are ready to decide. Offer, waitlist or pass, and an accepted player lands on your roster with their fees already set up.',
+      'Evaluators score on their phones — a link, no login, and one card per player. You choose the categories and how much each is worth, so the ranked list at the end means what you decided it means, not what a spreadsheet averaged. Names stay hidden while scoring unless you say otherwise — one switch shows them, and puts them back. Tap any player to see what made their score, right down to each helper’s own number. Offer, waitlist or pass, and an accepted player lands on your roster with their fees already set up.',
     seoPhrase: 'tryout scoring on a phone',
   },
   '#21': {

@@ -1,0 +1,112 @@
+/* The names switch — one pill, four homes (check-in, live board, Set up, Decide).
+   Its two states are deliberately DIFFERENT HUES rather than one hue at two opacities: a coach
+   glancing at a phone in a dugout is reading colour before text, and "hidden" vs "showing" is the
+   single fact this control exists to report. Blue keeps the meaning the old blind chip taught
+   (this tryout is anonymized); olive is the portal's own accent for a live/normal state. */
+
+.wrap { display: inline-flex; align-items: center; }
+
+/* ⚠ The TAP FLOOR is why this carries a min-height rather than padding alone: the rendered check
+   measured the first version at 25px against the portal's 44px floor (/review 2026-08-25). It is a
+   real control now, not the chip it replaced, and it is used one-handed at a venue — the pill keeps
+   its compact look because the height comes from min-height + centring, not from fat padding.
+   The read-only `.static` twin deliberately does NOT take the floor: nothing taps it. */
+.switch {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  font-family: inherit;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.26rem 0.75rem 0.26rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.35);
+  color: #c7d2fe; /* token-exempt: indigo blind-scoring chip, distinct categorical hue, no token */
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+}
+.switch:hover:not(:disabled) { background: rgba(99,102,241,0.24); }
+.switch:disabled { cursor: progress; opacity: 0.6; }
+.switch:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+.shown {
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border-color: rgba(var(--logic-lime-rgb), 0.38);
+  color: var(--logic-lime);
+}
+.shown:hover:not(:disabled) { background: rgba(var(--logic-lime-rgb), 0.22); }
+
+/* The track is the only part that says "this is a control and not a label" at a glance — the
+   old chip carried an eye icon and coaches read it as decoration, which is the whole defect
+   this component was built to fix (owner 2026-08-25). */
+.track {
+  width: 26px; height: 15px; border-radius: 999px; flex: none;
+  position: relative;
+  background: rgba(99,102,241,0.45);
+  transition: background 0.16s;
+}
+.shown .track { background: rgba(var(--logic-lime-rgb), 0.5); }
+.knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #fff; /* token-exempt: switch knob reads as a physical part, white on both themes */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  transition: transform 0.16s ease;
+}
+.shown .knob { transform: translateX(11px); }
+
+/* The verb is the affordance ("· show" / "· hide"), quieter than the state it acts on. */
+.verb { font-weight: 600; opacity: 0.75; }
+
+/* Read-only twin for an assistant coach: the same words, none of the control chrome. An
+   assistant must still be able to SEE that names are hidden — that is why this is a span and
+   not an absence. */
+.static {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.25rem 0.6rem; border-radius: 999px;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.35);
+  color: #c7d2fe; /* token-exempt: matches .switch, same categorical hue */
+  white-space: nowrap;
+}
+.staticShown {
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border-color: rgba(var(--logic-lime-rgb), 0.38);
+  color: var(--logic-lime);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch, .track, .knob { transition: none; }
+}
+
+/* ── Warm (light) coach portal ─────────────────────────────────────────────
+   Both hues move to their AA-corrected warm tokens; the lime FILL survives on paper only as a
+   fill under dark ink, so the "showing" state becomes olive text on an olive wash instead. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switch,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .static {
+  background: rgba(var(--home-blue-rgb), 0.12);
+  border-color: rgba(var(--home-blue-rgb), 0.35);
+  color: var(--home-blue);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switch:hover:not(:disabled) {
+  background: rgba(var(--home-blue-rgb), 0.2);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .track {
+  background: rgba(var(--home-blue-rgb), 0.35);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .shown,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .staticShown {
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.4);
+  color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .shown:hover:not(:disabled) {
+  background: rgba(var(--home-olive-rgb), 0.18);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .shown .track {
+  background: rgba(var(--home-olive-rgb), 0.45);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switch:focus-visible {
+  outline-color: var(--home-olive);
+}

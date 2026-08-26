@@ -500,7 +500,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: team(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=decide'),
       exactPath: true,
       anchor: '[data-sandbox-tour="tryout-decisions"]',
-      said: 'Twenty-eight kids tried out this morning. They are already ranked — a weighted average of what each evaluator scored, updating as the scores come in. The names are still hidden: you are deciding on bib numbers, and you reveal them when you are ready.',
+      said: 'Twenty-eight kids tried out this morning. They are already ranked — a weighted average of what each evaluator scored, updating as the scores come in. The names are hidden here: you are deciding on bib numbers, and one switch shows them whenever you want.',
       nextLabel: 'Next: the off-season',
     },
     {
@@ -601,7 +601,14 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          reads the narration and then looks for an Add button finds the answer already given.
          ⚠ IT CLAIMS NO FIGURES, deliberately: nothing in it is pinned to a seed, so a reseed
          cannot make it wrong. */
-      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. The club\'s own side has a screen of its own: $900 of shared permits billed across three installments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes. And writing any of it down is one green button, up beside Import: Record asks a coach what happened in their own words — a family paid, the drive brought money in, we paid a bill — and files it wherever it belongs, from whichever screen they happen to be standing on.',
+      /* ⚠ THE CLOSING "labels" CLAUSE IS NEW WITH MONEY CENTRALIZATION P3 (2026-08-25), and it is
+         here because this world could not show the feature at all until the same day: no money tag
+         had ever been seeded, so both money faces hid the control outright and a prospect never
+         met the one question a budget category cannot answer. `MIDSEASON_MONEY_TAGS` is the world
+         it describes — "Spring Classic" deliberately spanning two categories.
+         ⚠ IT CLAIMS NO FIGURES EITHER, for the same reason as the Record clause: the totals move
+         with the nightly anchor, so the sentence must not name one. */
+      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. The club\'s own side has a screen of its own: $900 of shared permits billed across three installments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes. And writing any of it down is one green button, up beside Import: Record asks a coach what happened in their own words — a family paid, the drive brought money in, we paid a bill — and files it wherever it belongs, from whichever screen they happen to be standing on. One more control worth a look: the coach\'s own labels. A budget word says what kind of cost something was; a label says which occasion it belonged to — so tick one and the book narrows to that weekend, across every category it touched, and states what it came to.',
       nextLabel: 'Next: playing time',
     },
     {

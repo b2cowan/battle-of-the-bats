@@ -12469,3 +12469,142 @@ now says plainly that it is **not** general yet and names what the first new cal
 **Coverage:** five more tests (89 in this file, 2,507 across the suite). Both review fixes were
 proved to fail with the defect reintroduced, same discipline as the rest of the pass. The corpus
 was re-rendered a third time after the review fixes and is unchanged.
+
+## §103 · Names become a switch, and a score explains itself — BUILT, awaiting QA
+
+**BUILT ON DEV 2026-08-25.** Plan + PM brief:
+`docs/projects/active/COACH_TRYOUT_NAMES_AND_BREAKDOWN_PLAN.md`. Approved mockup (binding, and it
+is INTERACTIVE — flip the switch, tap a row):
+`claude.ai/code/artifact/55c9e3d6-f8f4-4c40-b711-d2b8d8a0a666`.
+**Migration 263 — applied to DEV only.** ⚠ It must reach prod BEFORE this code is promoted; the
+tryout report reads the new column on every load.
+
+⚠⚠ **THIS REVERSES A SHIPPED RULE.** Revealing names was ONE-WAY, server-enforced with a 409, and
+the reversal was argued against before it was built (the record it was quietly propping up is the
+subject of D below). The owner's ruling stands: *"many coaches just want to be able to see names and
+bib numbers — make it easy for them to switch."* The 409 is gone.
+
+⚠ **The dark theme is an account preference, not a media query.** Warm is the default and every
+fresh browser renders warm. Walk **both** — the switch has two hues in each theme, which is four
+states, and the breakdown's lime wash becomes olive on paper.
+
+### A · The switch is in all four homes, and each one works
+
+- **Set up → Tryout dates**: hint sentence + pill on one row. Toggle it; the sentence changes with it.
+- **Tryout day → Check-in**: pill sits beside "N / N checked in". Toggle it — **the candidate rows
+  must repaint from `Bib 14` to the player's name without a reload.**
+- **Tryout day → Live board**: pill beside **Lock scoring**. The board polls every 6s; the names on
+  its rows must follow.
+- **Decide**: pill in the panel intro. Toggling must repaint the decision board AND the stage header.
+- ⚠ **Switch on ONE screen, then walk to the others** — they must all agree without a refresh.
+- ⚠ **The phone**: the pair on the live board (switch + lock) wraps as a unit; neither should strand.
+
+### B · What follows the switch, and what must not
+
+- With names showing: **the printed check-in sheet prints names**; with them hidden it prints bibs
+  and says so. Print both ways.
+- The **evaluator's phone** (the no-login scoring link) must follow the switch — and must still show
+  its own plain `Blind` badge, never a control. Open one and check.
+- **An assistant coach** (tryouts capability off) has no route to any of these screens; a coach with
+  the capability sees the switch. There is no third state to hunt for.
+
+### C · The Decide row + breakdown
+
+- The rating is a **large number between the rank and the player**, evaluator count under it. An
+  unscored candidate shows a smaller dim dash reading `no score`, NOT a low-looking number.
+- The meta line shows the player's **three best categories**. Tap either the rating or that line —
+  both open the same panel, one player at a time.
+- Panel: every category with its average, a bar, and **the SHARE** ("40% of the score"), weakest
+  marked; then each helper's own number, highest first.
+- ⚠ **The split case is the one to hunt for.** The demo seed carries a deliberate split opinion. A
+  player whose helpers are ≥20% of the scale apart must show *"These helpers are N apart"*. Compare
+  with an agreed player.
+- A candidate nobody scored opens to a sentence, not an empty panel.
+- **Keyboard**: tab to the rating, Enter opens; focus ring visible in both themes.
+
+### D · The record that had to be built with it — READ THIS BEFORE PASSING
+
+Making the switch two-way demoted `is_anonymous` from **evidence** to **view state**. The tryout
+report's fairness receipt tells a parent the scoring was blind; a coach could otherwise score a whole
+tryout with names on screen, flip back, and print that claim.
+
+The tryout now permanently stamps the first moment names were shown, and the report reads the stamp.
+**Walk it:** on a tryout that has never shown names, Build team → Tryout report must say *"players
+appeared as bib numbers only, start to finish"*. Show names, hide them again, reload the report — it
+must now say *"until names were shown on <date>"* and must NOT say "start to finish". A held test
+proves this on the arithmetic side; the walk is to confirm the sentence a parent actually reads.
+
+Historical tryouts revealed under the old rule were backfilled from their last-updated time, so none
+of them wrongly claims it was blind — spot-check one if the demo has a closed season with a revealed
+tryout.
+
+### E · Regression edges
+
+- **Full-detail export** must still refuse while names are hidden, and become available when they
+  are shown — including after a hide → show → hide round trip.
+- **The returning-player memory strip** must still be absent while names are hidden, and reappear
+  when shown, on a confirmed link only.
+- The **score lock** is untouched and still reversible; it must not have picked up any of the
+  switch's behaviour.
+
+**Coverage:** `tests/unit/tryout-scoring.test.ts` is new (9 assertions, including two candidates with
+an identical composite separated only by their spread); two new report tests hold the D rule. Full
+suite 2,517 passing, typecheck clean, `verify:changed` green apart from the expected dev-only schema
+parity (migs 262 + 263 both awaiting the next prod release).
+
+---
+
+### F · `/review` (high-risk, 5 lenses) — 13 findings, 11 confirmed and FIXED post-build
+
+Run 2026-08-25 after the build, before QA. Security/PII and the API contract came back **clean**;
+every real defect was in state plumbing, in one arithmetic display, or in copy this session had
+already claimed to have corrected. **Two were caused by the ruling itself** — the switch becoming
+two-way silently broke invariants that only held while revealing was one-way:
+
+- ⚠⚠ **The development baseline was stamping "blind" on a player's PERMANENT card from the LIVE
+  switch.** Same defect class as the report's fairness receipt, in the sibling feature, missed
+  because the fix was applied where the bug was reported rather than everywhere the premise was
+  used. A coach could show names, score the tryout, hide them again, seed baselines — and every
+  development card would freeze a claim the tryout report on the next tab correctly denied. Both now
+  call ONE predicate (`wasBlindThroughout`), pinned by a six-case truth table.
+- ⚠ **A comment asserting "revealing names is one-way" as a SAFETY invariant.** No live leak — the
+  render gate `c.name && …` holds the line — but the comment invited a future editor to delete that
+  gate as redundant, which would put a prior season's real name beside a bib number. Corrected in
+  place, naming what actually holds it now.
+
+**The panel contradicted its own headline number.** Category shares were computed over the WHOLE
+scorecard while the composite re-normalizes over the scored subset — a candidate scored on two of
+five categories was told "Attitude · 17% of the score" for a category contributing none of it.
+Shares are now over the scored categories; an unscored row says "not scored".
+
+**Three stale-pill defects, all from four copies of one control:** Set up snapped back after saving
+(the page's overview outranks the card and only refreshes when a session moves); Decide's copy was a
+one-shot that never learned about a flip made elsewhere; the live board's copy bypassed the
+poll-invalidation the lock beside it uses. Also a switch response landing after a team switch could
+apply the wrong team's answer.
+
+**The end-time clobber the build's own comment swore off:** clearing and re-picking the start date on
+a 6:00–9:30pm session silently shrank it to two hours, because the guard tested the START field
+instead of the END field.
+
+**FIVE stale strings — the completion claim was false.** The demo sandbox tour still narrated the
+one-way reveal (exactly the drift CLAUDE.md says goes quietly stale), and three screens still told
+coaches to press a "Reveal names" button that no longer exists (the export menu ×4, the board's blind
+banner, and "How tryouts work" step 3).
+
+**Refuted / not fixed:** cross-instance double-submit (two mounts clicked simultaneously on one
+device — inherent, not worth a mutex) and the check-in mount's hardcoded write flag (the server
+re-checks the capability on every write; matches the established sibling pattern).
+
+**Rendered check:** `check:layout` proved the tap floor — the new switch measured **25px against the
+44px floor** on a phone, a defect only a browser can see. Fixed with a min-height; the re-run on a
+freshly restarted server reports **"No new layout findings"** at 390/768/1440. ⚠ An intermediate run
+reported the page as crashed — that was the DEV SERVER exhausted after three back-to-back sweeps
+(the script names this as a usual cause), not the code; proven by a clean-cache restart. ⚠ The
+retired one-way button was itself a baselined tap-floor violation, and **15 baseline entries on this
+screen no longer reproduce** — `check:layout:prune` is owed, and it aborts on memory unless run
+against a freshly restarted server.
+
+**Coverage after the review:** 2,518 tests (one added for the shared blind predicate), typecheck
+clean, `verify:changed` green apart from the standing dev-only schema parity.
+

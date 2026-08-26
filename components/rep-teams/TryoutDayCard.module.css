@@ -17,6 +17,15 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
+/* The board head's right-hand group: the names switch and the score lock — the two controls
+   that change something ABOUT the board rather than a score on it. Wraps as a unit so the pair
+   never splits across lines on a phone with one control stranded. */
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .title {
   font-size: 0.95rem;
   font-weight: 800;
@@ -33,13 +42,22 @@
 }
 
 /* Blind toggle (sibling of the Registration toggle) */
+/* The hint and the switch are ONE row: the sentence explains the state, the pill changes it.
+   They wrap onto separate lines on a phone, which is why the gap is set here rather than as a
+   margin on either child. */
 .blindHint {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
   font-size: 0.75rem;
   color: rgba(255,255,255,0.4);
   margin: 0.4rem 0 0;
 }
+.blindHint p { margin: 0; flex: 1 1 18rem; line-height: 1.45; }
 
-/* One-way reveal (replaces the two-way blind toggle) */
+/* Lock/Reopen scoring button (also imported by TryoutScoreboardCard — the names switch moved to
+   its own module when it became two-way, 2026-08-25). */
 .revealBtn {
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.45rem 0.8rem;
@@ -53,12 +71,6 @@
 }
 .revealBtn:hover { background: rgba(var(--logic-lime-rgb),0.14); }
 .revealBtn:disabled { opacity: 0.6; cursor: default; }
-.revealedChip {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  font-size: 0.78rem; font-weight: 600;
-  color: rgba(255,255,255,0.55);
-  flex: 0 0 auto;
-}
 
 /* Session list */
 .sessionList { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -200,6 +212,103 @@
   text-align: center;
 }
 .scoreMain { flex: 1 1 auto; min-width: 0; }
+
+/* ── The Decide row's rating (owner 2026-08-25) ─────────────────────────────────
+   The score used to live inside the meta line as grey text while the LIVE BOARD — same players,
+   same ranking, same arithmetic — printed it large. Two screens, one number, two treatments: this
+   is Decide catching up, and the class name says rating rather than composite because that is the
+   word the coach uses.
+   It is a BUTTON, not a div: it is the tap target that opens the breakdown, so it has to be
+   reachable by keyboard and announce its expanded state. Bordered on the right so it reads as a
+   column of the row rather than a floating number. */
+.ratingBtn {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 3.4rem;
+  padding: 0.1rem 0.45rem 0.1rem 0;
+  border: none; border-right: 1px solid rgba(255,255,255,0.1);
+  background: none; font-family: inherit; color: inherit;
+  cursor: pointer;
+  border-radius: 4px 0 0 4px;
+  transition: opacity 0.12s;
+}
+.ratingBtn:hover { opacity: 0.78; }
+.ratingBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.ratingVal {
+  font-size: 1.75rem; font-weight: 800; line-height: 1;
+  color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+}
+/* Unscored is a smaller, dimmer dash — an empty rating must not carry the same visual weight as a
+   real one, or a board of un-scored kids reads as a board of low scores. */
+.ratingNone { font-size: 1.25rem; color: rgba(255,255,255,0.35); }
+.ratingUnit {
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.01em;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap; margin-top: 0.12rem;
+}
+.scoreRowOpen { border-left-color: var(--logic-lime); background: rgba(var(--logic-lime-rgb),0.05); }
+
+/* ── The breakdown panel ───────────────────────────────────────────────────────
+   Sits INSIDE .scoreMain rather than under the whole row, so it lines up with the player's name
+   and stays visually owned by that player — the memory strip below it uses the other convention
+   (its own slot) because it is about two tryouts, not one. */
+.breakdown {
+  margin-top: 0.5rem;
+  display: grid; gap: 0.55rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(var(--logic-lime-rgb),0.28);
+  border-radius: 8px;
+  background: rgba(var(--logic-lime-rgb),0.06);
+}
+.breakdownHead {
+  font-size: 0.66rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.catList { display: grid; gap: 0.35rem; }
+.catRow {
+  display: grid; grid-template-columns: 9.5rem 1fr 2.4rem;
+  align-items: center; gap: 0.6rem;
+  font-size: 0.78rem;
+}
+@media (max-width: 560px) {
+  .catRow { grid-template-columns: 6.5rem 1fr 2.2rem; font-size: 0.72rem; }
+}
+.catLabel { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.catLabel b { font-weight: 600; color: var(--white-90); }
+/* The SHARE, never the raw weight (owner ruling, scorecard weights): a coach set "3" and needs to
+   read "40% of the score". */
+.catLabel span { font-size: 0.64rem; color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; }
+.catTrack {
+  height: 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+.catTrack i { display: block; height: 100%; border-radius: 999px; background: var(--logic-lime); }
+/* The weakest category is marked in a SECOND CHANNEL as well as colour — the bar is shortest by
+   construction, and the note names it in words. Colour alone never carries a fact in this portal. */
+.catFillThin { background: var(--warning); }
+.catNum {
+  text-align: right; font-weight: 700; color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+}
+.catNumNone { color: rgba(255,255,255,0.35); font-weight: 500; }
+.evalRow { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.evalScore {
+  display: inline-flex; align-items: baseline; gap: 0.3rem;
+  font-size: 0.72rem;
+  padding: 0.18rem 0.5rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.75);
+}
+.evalScore b { font-weight: 800; color: var(--white-90); font-variant-numeric: tabular-nums; }
+.breakdownNote {
+  margin: 0; font-size: 0.72rem; line-height: 1.45;
+  color: rgba(255,255,255,0.6);
+}
+.breakdownNote strong { color: var(--warning); font-weight: 700; }
 .bib {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
@@ -308,6 +417,10 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionWhen,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .composite,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .ratingVal,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel b,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catNum,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalScore b,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalTitle,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem strong,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn:hover,
@@ -322,11 +435,16 @@
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .subtitle,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .blindHint,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .revealedChip,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionMeta,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .empty,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rank,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .compositeUnit,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .ratingUnit,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .ratingNone,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel span,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catNumNone,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdownHead,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdownNote,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChipMean,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
@@ -483,3 +601,23 @@
   border-color: var(--home-line);
   color: var(--home-ink-soft);
 }
+
+/* Decide-row rating + breakdown panel on paper (2026-08-25). The lime FILL survives here — it is a
+   fill under nothing, on a bar — but every hairline and ground moves to the warm tokens, and the
+   panel's tint becomes olive: lime as a WASH on cream reads as a highlighter smear. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .ratingBtn { border-right-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .ratingBtn:focus-visible { outline-color: var(--home-olive); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scoreRowOpen { background: var(--home-olive-soft); border-left-color: var(--home-olive); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdown {
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.30);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catTrack { background: rgba(var(--home-line-rgb), 0.14); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catTrack i { background: var(--home-olive); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catFillThin { background: var(--home-amber); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalScore {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .breakdownNote strong { color: var(--home-amber); }

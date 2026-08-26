@@ -28,15 +28,6 @@
 }
 .progressText { font-size: 0.95rem; font-weight: 800; color: var(--white-90); }
 .progressText .total { color: rgba(255,255,255,0.45); font-weight: 600; }
-.blindChip {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  font-size: 0.72rem; font-weight: 700;
-  padding: 0.25rem 0.6rem; border-radius: 999px;
-  background: rgba(99,102,241,0.15);
-  border: 1px solid rgba(99,102,241,0.35);
-  color: #c7d2fe; /* token-exempt: indigo blind-scoring chip, distinct categorical hue, no token */
-  white-space: nowrap;
-}
 .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
 .barFill { height: 100%; background: var(--success); transition: width 0.2s; }
 
@@ -207,12 +198,6 @@
   border-color: var(--home-line-strong);
 }
 
-/* Blind-scoring chip → warm blue on a legible tint */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .blindChip {
-  background: rgba(var(--home-blue-rgb), 0.12);
-  border-color: rgba(var(--home-blue-rgb), 0.35);
-  color: var(--home-blue);
-}
 
 /* Warm ink scrim behind the walk-up sheet */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {

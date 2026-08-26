@@ -270,21 +270,21 @@ export default function TryoutReportCard({ apiBase, orgSlug, teamId, rosterHref,
                   role="menuitem" className={styles.menuItem}
                   onClick={() => exportFullDetail('pdf')}
                   disabled={blind || !canUsePDF}
-                  title={!canUsePDF ? pdfGateCopy : blind ? 'Reveal names first — full detail can’t exist while evaluation is blind' : undefined}
+                  title={!canUsePDF ? pdfGateCopy : blind ? 'Show names first — full detail can’t exist while names are hidden' : undefined}
                 >
                   {!canUsePDF && <Lock size={12} aria-hidden />}<FileText size={14} aria-hidden />
                   <span><span className={styles.menuLabel}>Full detail (PDF)</span>
-                  <span className={styles.menuHint}>{blind ? 'Reveal names first' : 'Every candidate, score and decision — staff only'}</span></span>
+                  <span className={styles.menuHint}>{blind ? 'Show names first' : 'Every candidate, score and decision — staff only'}</span></span>
                 </button>
                 <button
                   role="menuitem" className={styles.menuItem}
                   onClick={() => exportFullDetail('xlsx')}
                   disabled={blind}
-                  title={blind ? 'Reveal names first — full detail can’t exist while evaluation is blind' : undefined}
+                  title={blind ? 'Show names first — full detail can’t exist while names are hidden' : undefined}
                 >
                   <FileSpreadsheet size={14} aria-hidden />
                   <span><span className={styles.menuLabel}>Full detail (Excel)</span>
-                  <span className={styles.menuHint}>{blind ? 'Reveal names first' : 'Same data as the PDF, for your own analysis'}</span></span>
+                  <span className={styles.menuHint}>{blind ? 'Show names first' : 'Same data as the PDF, for your own analysis'}</span></span>
                 </button>
               </div>
             )}

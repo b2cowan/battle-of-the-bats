@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Plus, EyeOff, Printer } from 'lucide-react';
+import { Check, Plus, Printer } from 'lucide-react';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import {
@@ -10,6 +10,7 @@ import { checkinSheetHeadings, checkinTickColumn } from '@/lib/export/tryout-che
 import { tournamentToday } from '@/lib/timezone';
 import { describeTryoutSession, tryoutSessionDay } from '@/lib/tryout-session-label';
 import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
+import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutCheckIn.module.css';
 
 const BLANK_WALKUP = { first: '', last: '', email: '' };
@@ -17,7 +18,10 @@ const BLANK_WALKUP = { first: '', last: '', email: '' };
 interface Props {
   /** The candidate API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-candidates`. */
   apiBase: string;
-  /** The tryout-sessions API base — read at PRINT time so the sheet can name its session. */
+  /** The tryout-sessions API base — read at PRINT time so the sheet can name its session, and
+   *  PATCHed by the names switch in the header. The hub (the only caller) always passes it; the
+   *  switch is gated on it rather than made required so an embedder that only wants the list
+   *  degrades to a list instead of a crash. */
   sessionsBase?: string;
   /** For the printed sheet's branding: resolved team → club → defaults at print time. */
   orgSlug?: string;
@@ -126,13 +130,27 @@ export default function TryoutCheckIn({
   useEffect(() => () => { if (recentTimer.current) clearTimeout(recentTimer.current); }, []);
 
   /**
-   * ⚠ The coach portal does NOT remount when a coach switches team, so a chooser left open on
-   * team A would still be on screen for team B — and picking a session there would print team B's
-   * candidates under team A's session heading. The moment this became a downloadable FILE it
-   * stopped being a cosmetic leftover (the standing lesson from the Rosters pass: adding an export
-   * re-severities every pre-existing race on the screen). The chooser closes with the team.
+   * ⚠⚠ THE PRINT FLOW IS SEQUENCE-TOKENED, exactly like `load()` above, and clearing state was
+   * not enough on its own.
+   *
+   * The coach portal does NOT remount when a coach switches team, so a chooser left open on team A
+   * would still be on screen for team B — and picking a session there would print team B's
+   * candidates under team A's session heading. Resetting the state on a team change closed that
+   * door, but left a second one open: the sessions fetch already IN FLIGHT for team A resumes after
+   * the reset and calls `setSessionChoices` with team A's sessions, RE-OPENING the chooser over
+   * team B with nothing on it naming a team (/review, high-risk tier, 2026-08-24). Picking a row
+   * then produced exactly the mismatched file the reset existed to prevent.
+   *
+   * The token makes a stale response inert; the reset keeps the screen honest. Both are needed.
+   * (The standing lesson from the Rosters pass: adding an export re-severities every pre-existing
+   * race on the screen.)
    */
-  useEffect(() => { setSessionChoices(null); setPrinting(false); }, [apiBase]);
+  const printSeq = useRef(0);
+  useEffect(() => {
+    printSeq.current++;
+    setSessionChoices(null);
+    setPrinting(false);
+  }, [apiBase]);
 
   // Check-ins keep landing from other devices and evaluators — re-sync quietly on window
   // refocus and when this face comes back on screen (/review 2026-08-23: once mounted inside
@@ -148,6 +166,9 @@ export default function TryoutCheckIn({
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [togglingId, savingWalkup, load]);
+
+  // Which session the chooser marks "Most likely" — one scan per render, not one per row.
+  const suggestedId = sessionChoices ? suggestSession(sessionChoices) : null;
 
   const checkedCount = candidates.filter(c => c.isCheckedIn).length;
   const total = candidates.length;
@@ -265,13 +286,20 @@ export default function TryoutCheckIn({
 
   async function printSheet() {
     if (printing) return;
+    const seq = ++printSeq.current;
     setPrinting(true);
     try {
       let sessions: RepTryoutSession[] = [];
       if (sessionsBase) {
         const res = await fetch(sessionsBase);
-        if (res.ok) sessions = (await res.json()).sessions ?? [];
+        // ⚠ A non-ok response must NOT read as "this tryout has no sessions". Swallowing it printed
+        // an UNDATED sheet — silently reproducing the very defect naming the session exists to fix
+        // (two sessions on one weekend, identical paper), with nothing telling the coach why
+        // (/review 2026-08-24). Only a genuinely absent `sessionsBase` means "no sessions".
+        if (!res.ok) throw new Error('Could not read your tryout dates — try again in a moment.');
+        sessions = (await res.json()).sessions ?? [];
       }
+      if (seq !== printSeq.current) return; // the coach changed team while this was in flight
       const live = sessions.filter(s => s.status !== 'cancelled');
       if (live.length > 1) {
         // More than one session: the coach says which morning this paper is for. Today's, or
@@ -281,22 +309,23 @@ export default function TryoutCheckIn({
       }
       await buildSheet(live[0] ?? null);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to build the sheet.');
+      if (seq === printSeq.current) fail(e.message ?? 'Failed to build the sheet.');
     } finally {
-      setPrinting(false);
+      if (seq === printSeq.current) setPrinting(false);
     }
   }
 
   /** Pick one session from the chooser and print it. */
   async function printForSession(session: RepTryoutSession | null) {
+    const seq = ++printSeq.current;
     setSessionChoices(null);
     setPrinting(true);
     try {
       await buildSheet(session);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to build the sheet.');
+      if (seq === printSeq.current) fail(e.message ?? 'Failed to build the sheet.');
     } finally {
-      setPrinting(false);
+      if (seq === printSeq.current) setPrinting(false);
     }
   }
 
@@ -307,7 +336,16 @@ export default function TryoutCheckIn({
       <div className={styles.header}>
         <div className={styles.progressRow}>
           <span className={styles.progressText}>{checkedCount} <span className={styles.total}>/ {total} checked in</span></span>
-          {isAnonymous && <span className={styles.blindChip}><EyeOff size={12} /> Blind · names hidden</span>}
+          {/* The state IS the control (owner 2026-08-25). This was an inert chip that reported
+              blind mode and left a coach hunting three stages forward for the switch. Every
+              candidate row's name follows it, so the list reloads on change. */}
+          {sessionsBase && <TryoutNamesSwitch
+            apiBase={sessionsBase}
+            canWrite
+            blind={isAnonymous}
+            onChanged={b => { setIsAnonymous(b); load(true); onChanged?.(); }}
+            onError={fail}
+          />}
         </div>
         <div className={styles.bar}><div className={styles.barFill} style={{ width: total ? `${(checkedCount / total) * 100}%` : '0%' }} /></div>
         <input
@@ -428,7 +466,7 @@ export default function TryoutCheckIn({
             <h3 className={styles.modalTitle}>Which session is this sheet for?</h3>
             <div className={styles.sessionList}>
               {sessionChoices.map(s => {
-                const suggested = s.id === suggestSession(sessionChoices);
+                const suggested = s.id === suggestedId;
                 return (
                   <button
                     key={s.id}

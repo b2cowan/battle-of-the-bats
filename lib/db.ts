@@ -4435,6 +4435,7 @@ function mapRepTryout(r: any): RepTryout {
     teamId: r.team_id,
     orgId: r.org_id,
     isAnonymous: r.is_anonymous ?? true,
+    namesShownAt: r.names_shown_at ?? null,
     scoresLockedAt: r.scores_locked_at ?? null,
     scoresLockedBy: r.scores_locked_by ?? null,
     createdAt: r.created_at,
@@ -4808,10 +4809,15 @@ export async function getOrCreateRepTryout(fields: {
 
 export async function updateRepTryout(
   tryoutId: string,
-  fields: { isAnonymous?: boolean; scoresLockedAt?: string | null; scoresLockedBy?: string | null },
+  fields: { isAnonymous?: boolean; namesShownAt?: string; scoresLockedAt?: string | null; scoresLockedBy?: string | null },
 ): Promise<RepTryout> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.isAnonymous !== undefined) patch.is_anonymous = fields.isAnonymous;
+  // WRITE-ONCE BY CONSTRUCTION: the field's type admits no null, so no caller can clear the stamp
+  // however carelessly it patches — and the route only sends it while the column is still empty.
+  // That matters because this column is the ONLY thing standing behind the report's blind claim
+  // now that `is_anonymous` can be switched back (mig 263).
+  if (fields.namesShownAt !== undefined) patch.names_shown_at = fields.namesShownAt;
   if (fields.scoresLockedAt !== undefined) patch.scores_locked_at = fields.scoresLockedAt;
   if (fields.scoresLockedBy !== undefined) patch.scores_locked_by = fields.scoresLockedBy;
   const { data, error } = await supabaseAdmin

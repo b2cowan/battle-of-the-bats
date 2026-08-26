@@ -8,9 +8,10 @@ import {
   getRepTryoutRubric,
   getRepTryoutRegistrations,
   getRepTryoutScores,
+  getRepTryoutEvaluatorSessions,
   updateRepTryoutRegistrationStatus,
 } from '@/lib/db';
-import { rankTryoutCandidates } from '@/lib/tryout-scoring';
+import { rankTryoutCandidates, evaluatorCompositesByCandidate } from '@/lib/tryout-scoring';
 import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
@@ -61,10 +62,12 @@ export const GET = withObservability(async (_req: Request,
   // Lazy 1:1 init of the tryout workspace (same convention as the scoreboard/rubric routes) — the row
   // is a benign empty workspace, created on first view if the coach hasn't opened setup yet.
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
-  const [rubric, registrations, scores] = await Promise.all([
+  const [rubric, registrations, scores, evaluatorSessions] = await Promise.all([
     getRepTryoutRubric(tryout.id),
     getRepTryoutRegistrations(r.programYear.id),
     getRepTryoutScores(tryout.id),
+    // Names for the per-player breakdown the board opens under a tapped row.
+    getRepTryoutEvaluatorSessions(tryout.id),
   ]);
 
   const blind = tryout.isAnonymous;
@@ -78,6 +81,12 @@ export const GET = withObservability(async (_req: Request,
   // 2B.5: surface the family's offer response + a lazily-computed "expired" flag (no status mutation).
   // Chunk E (WI-3): plus what the coach needs to decide honestly — whether the family is even
   // reachable by email, whether the kid actually showed up, and what the family wrote at signup.
+  // What each evaluator, alone, made of each candidate — the numbers BEHIND the average, which
+  // the board shows when a coach taps a player. Evaluator identity is not blind-gated: blind
+  // evaluation hides the candidate from the scorer, never the scorer from the head coach.
+  const evaluatorNames = new Map(evaluatorSessions.map(e => [e.id, e.evaluatorName]));
+  const perEvaluator = evaluatorCompositesByCandidate(categories, scores);
+
   const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind })
     .map(c => {
       const reg = regById.get(c.registrationId);
@@ -95,6 +104,13 @@ export const GET = withObservability(async (_req: Request,
         // Family-authored context — blind-SAFE only once names are visible; a parent's
         // note beside an anonymized bib could identify the kid.
         playerNotes: !blind ? (reg?.playerNotes ?? null) : null,
+        // The breakdown's second half; the per-category averages already on the ranked row are
+        // the first. Empty for a candidate nobody scored, which the board renders as its own
+        // sentence rather than an empty panel.
+        evaluatorScores: (perEvaluator.get(c.registrationId) ?? []).map(e => ({
+          name: evaluatorNames.get(e.evaluatorSessionId) ?? null,
+          composite: e.composite,
+        })),
       };
     });
 
