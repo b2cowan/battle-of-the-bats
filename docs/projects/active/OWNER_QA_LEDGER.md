@@ -13346,6 +13346,8 @@ changing it moves column widths on every table in the product.
 
 ## §108 · The platform stops writing the offer letter — tryout decision emails removed outright — BUILT, awaiting QA
 
+**Checkable walkthrough:** https://claude.ai/code/artifact/da851169-d44d-4fa6-b21c-e4e098a5f982
+
 **Owner ruling 2026-08-26, binding.** *"Offers come with custom letters they need to sign, often
 conditional requiring conversations and some back and forth potentially, an email from FLHQ I would
 never expect to be used in this case and therefore is only a risk of being sent when someone fat
