@@ -2,7 +2,7 @@ import { EQUIPMENT_TAG_LIBRARY, coachTagMergeRoute } from '@/lib/coach-tag-route
 
 /**
  * Fold one equipment tag into another. `merge_rep_team_tags` merges the tag rows;
- * `EQUIPMENT_TAG_LIBRARY.afterMerge` then re-points every plan that used the loser to the winner.
+ * `EQUIPMENT_TAG_LIBRARY.repointForMerge` re-points every plan and template that used the loser to the winner.
  */
 export const { POST } = coachTagMergeRoute({
   ...EQUIPMENT_TAG_LIBRARY,

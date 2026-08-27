@@ -362,12 +362,25 @@ export function buildDrift(raw) {
   const prodChk = new Map(prod.rls.filter((r) => r.kind === 'CHECK').map((r) => [checkKey(r), r.check_clause]));
   const chk = diffSets(new Set(devChk.keys()), new Set(prodChk.keys()));
 
+  // ⚠ A CHECK's NAME says nothing about what it ADMITS — the same lesson as `fkChanged` above, and
+  // it cost us the same way. Migration 266 widened `rep_team_tags_kind_check` to admit 'staff' and
+  // 'equipment' by DROPping and re-ADDing the SAME constraint name, so both environments carried the
+  // name, key-set membership called that parity, and the gate whose whole job is "prod is behind dev"
+  // reported green on a migration prod had never seen. The clause was sitting in devChk/prodChk as
+  // the VALUE the whole time and was simply never compared.
+  const chkChanged = [];
+  for (const [k, d] of devChk) {
+    const p = prodChk.get(k);
+    if (p !== undefined && p !== d) chkChanged.push({ key: k, dev: d, prod: p });
+  }
+  chkChanged.sort((a, b) => a.key.localeCompare(b.key));
+
   const counts = {
     tables: tbl.onlyDev.length + tbl.onlyProd.length,
     columns: col.onlyDev.length + col.onlyProd.length + colChanged.length,
     indexes: idx.onlyDev.length + idx.onlyProd.length + idxChanged.length,
     constraints: con.onlyDev.length + con.onlyProd.length + fkChanged.length,
-    rls: rlsChanged.length + chk.onlyDev.length + chk.onlyProd.length,
+    rls: rlsChanged.length + chk.onlyDev.length + chk.onlyProd.length + chkChanged.length,
   };
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
@@ -392,6 +405,7 @@ export function buildDrift(raw) {
   for (const r of rlsChanged) add(`rls:changed:${r.key}`, `${r.dev} :: ${r.prod}`);
   for (const c of chk.onlyDev) add(`check:only-dev:${c}`);
   for (const c of chk.onlyProd) add(`check:only-prod:${c}`);
+  for (const c of chkChanged) add(`check:changed:${c.key}`, `${c.dev} :: ${c.prod}`);
   items.sort((a, b) => a.key.localeCompare(b.key));
 
   // markdown

@@ -104,9 +104,35 @@ async function loadColumns(ref) {
   return map;
 }
 
-let dev, prod;
+/**
+ * table.constraint_name -> the CHECK's full definition, for every CHECK in the public schema.
+ *
+ * ⚠ A COLUMN COMPARISON CANNOT SEE A WIDENED CHECK, and that is a release blocker this gate was
+ * silently missing. Migration 266 admitted two new `rep_team_tags.kind` values by DROPping and
+ * re-ADDing the SAME constraint name — no table added, no column added, so everything above reports
+ * parity while prod still refuses every row the new code writes. A name-only or column-only view
+ * calls that "in sync"; only the DEFINITION distinguishes them.
+ */
+async function loadChecks(ref) {
+  const rows = await apiQuery(
+    ref,
+    `SELECT rel.relname AS table_name, con.conname AS constraint_name,
+            pg_get_constraintdef(con.oid) AS def
+       FROM pg_constraint con
+       JOIN pg_class rel ON rel.oid = con.conrelid
+       JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+      WHERE ns.nspname = 'public' AND con.contype = 'c'
+      ORDER BY 1, 2;`,
+  );
+  return new Map(rows.map((r) => [`${r.table_name}.${r.constraint_name}`, r.def]));
+}
+
+let dev, prod, devChk, prodChk;
 try {
-  [dev, prod] = await Promise.all([loadColumns(PROJECTS.dev), loadColumns(PROJECTS.prod)]);
+  [dev, prod, devChk, prodChk] = await Promise.all([
+    loadColumns(PROJECTS.dev), loadColumns(PROJECTS.prod),
+    loadChecks(PROJECTS.dev), loadChecks(PROJECTS.prod),
+  ]);
 } catch (e) {
   console.error(`✖ Could not verify prod migration drift: ${e.message}`);
   console.error('  Treating as a FAILURE — do not release on an unverified DB state.');
@@ -125,11 +151,20 @@ for (const [table, cols] of dev) {
   for (const c of cols) if (!prodCols.has(c)) missingColumns.push(`${table}.${c}`);
 }
 
+// A CHECK present in BOTH under the same name but admitting different values: prod will refuse the
+// writes dev-side code makes. Blocks exactly like a missing column, because it fails the same way.
+const divergentChecks = [];
+for (const [k, d] of devChk) {
+  const pr = prodChk.get(k);
+  if (pr !== undefined && pr !== d) divergentChecks.push({ key: k, dev: d, prod: pr });
+}
+divergentChecks.sort((a, b) => a.key.localeCompare(b.key));
+
 // Prod-ahead (rare): informational only — never blocks a release.
 const prodAheadTables = [];
 for (const [table] of prod) if (!dev.has(table)) prodAheadTables.push(table);
 
-const behind = missingTables.length + missingColumns.length;
+const behind = missingTables.length + missingColumns.length + divergentChecks.length;
 
 if (JSON_OUT) {
   console.log(
@@ -138,6 +173,7 @@ if (JSON_OUT) {
         ok: behind === 0,
         missingTables: missingTables.sort(),
         missingColumns: missingColumns.sort(),
+        divergentChecks,
         prodAheadTables: prodAheadTables.sort(),
       },
       null,
@@ -165,6 +201,14 @@ if (missingTables.length) {
 if (missingColumns.length) {
   console.error(`  Missing COLUMNS in prod (${missingColumns.length}):`);
   for (const c of missingColumns.sort()) console.error(`    - ${c}`);
+}
+if (divergentChecks.length) {
+  console.error(`  CHECK constraints that ADMIT LESS in prod (${divergentChecks.length}):`);
+  for (const c of divergentChecks) {
+    console.error(`    - ${c.key}`);
+    console.error(`        dev:  ${c.dev}`);
+    console.error(`        prod: ${c.prod}`);
+  }
 }
 console.error('\n  Fix: apply the corresponding migration(s) to prod, then refresh + re-check:');
 console.error('    node scripts/apply-migration-api.mjs supabase/migrations/<file>.sql --prod');

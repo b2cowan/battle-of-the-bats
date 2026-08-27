@@ -118,12 +118,50 @@ async function repointTeamPlans(
   }
 }
 
+/**
+ * The same walk over PLAN TEMPLATES, whose `plan` jsonb is the very same shape.
+ *
+ * ⚠⚠ A TEMPLATE IS NOT A PRACTICE EVENT, and walking only `rep_team_events` was a real defect.
+ * `stationForTemplate` deliberately KEEPS `equipmentTagIds` — "kit is part of the SHAPE a template
+ * carries (what to bring), not people" — while stripping staff. So a merge or delete that skipped
+ * this table left templates pointing at a tag row that no longer exists anywhere, and a stale ID
+ * (unlike a stale legacy NAME, which renders a "+ Add ... to your list" recovery chip) has nothing
+ * to show and no way back: the kit simply disappeared from the template with no evidence it had
+ * ever been chosen. Exactly the silent split this whole feature exists to prevent.
+ *
+ * ⚠ Walked for BOTH kinds even though today's builder strips staff — rows written before that rule
+ * landed can still carry `staffTagIds`, and dropping a dead id is never wrong.
+ */
+async function repointTeamTemplates(
+  teamId: string,
+  kind: 'staff' | 'equipment',
+  transform: (id: string) => string | null,
+): Promise<void> {
+  const { data: templates, error } = await supabaseAdmin
+    .from('rep_team_plan_templates')
+    .select('id, plan')
+    .eq('team_id', teamId)
+    .not('plan', 'is', null);
+  if (error) throw error;
+
+  for (const row of templates ?? []) {
+    const plan = row.plan as PracticePlan;
+    const { plan: nextPlan, changed } = repointPracticePlanTags(plan, kind, transform);
+    if (!changed) continue;
+    const { error: updateError } = await supabaseAdmin
+      .from('rep_team_plan_templates').update({ plan: nextPlan }).eq('id', row.id);
+    if (updateError) throw updateError;
+  }
+}
+
 /** Every plan pick pointing at the loser now points at the winner (dedup'd against an existing pick). */
 export async function repointTeamPlansOnMerge(
   teamId: string, kind: RepTagKind, winnerTagId: string, loserTagId: string,
 ): Promise<void> {
   if (kind !== 'staff' && kind !== 'equipment') return;
-  await repointTeamPlans(teamId, kind, id => (id === loserTagId ? winnerTagId : id));
+  const toWinner = (id: string) => (id === loserTagId ? winnerTagId : id);
+  await repointTeamPlans(teamId, kind, toWinner);
+  await repointTeamTemplates(teamId, kind, toWinner);
 }
 
 /** Every plan pick pointing at the deleted tag is dropped — mirrors `ON DELETE CASCADE`'s effect
@@ -132,5 +170,7 @@ export async function repointTeamPlansOnDelete(
   teamId: string, kind: RepTagKind, tagId: string,
 ): Promise<void> {
   if (kind !== 'staff' && kind !== 'equipment') return;
-  await repointTeamPlans(teamId, kind, id => (id === tagId ? null : id));
+  const drop = (id: string) => (id === tagId ? null : id);
+  await repointTeamPlans(teamId, kind, drop);
+  await repointTeamTemplates(teamId, kind, drop);
 }

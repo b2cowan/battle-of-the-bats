@@ -3,7 +3,7 @@ import { EQUIPMENT_TAG_LIBRARY, coachTagItemRoutes } from '@/lib/coach-tag-route
 /**
  * One equipment tag — PATCH to rename, DELETE to remove.
  *
- * ⚠ DELETE strips the id from every plan that had it (`afterDelete` on `EQUIPMENT_TAG_LIBRARY`)
+ * ⚠ DELETE strips the id from every plan that had it (`repointForDelete` on `EQUIPMENT_TAG_LIBRARY`)
  * rather than leaving it dangling. See `staff-tags/[tagId]/route.ts` for the parallel case.
  */
 export const { PATCH, DELETE } = coachTagItemRoutes({

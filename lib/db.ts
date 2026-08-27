@@ -6553,7 +6553,12 @@ export async function deleteRepTeamTag(id: string, teamId: string): Promise<bool
  *  loser (Postgres function `merge_rep_team_tags` — migration 181). Both tags must belong to
  *  `teamId`, checked here so a cross-team id can't even reach the RPC (the function itself also
  *  guards same-team/same-kind as a defense-in-depth backstop). */
-export async function mergeRepTeamTags(winnerId: string, loserId: string, teamId: string): Promise<void> {
+export async function mergeRepTeamTags(
+  winnerId: string,
+  loserId: string,
+  teamId: string,
+  beforeDestructive?: () => Promise<void>,
+): Promise<void> {
   const [winner, loser] = await Promise.all([
     supabaseAdmin.from('rep_team_tags').select('id, team_id').eq('id', winnerId).maybeSingle(),
     supabaseAdmin.from('rep_team_tags').select('id, team_id').eq('id', loserId).maybeSingle(),
@@ -6562,6 +6567,15 @@ export async function mergeRepTeamTags(winnerId: string, loserId: string, teamId
   if (loser.error) throw loser.error;
   if (!winner.data || winner.data.team_id !== teamId) throw new Error('Tag not found');
   if (!loser.data || loser.data.team_id !== teamId) throw new Error('Tag not found');
+
+  // ⚠⚠ THE LAST SAFE MOMENT — after both ids are proved to be this team's, before anything is
+  // destroyed. `merge_rep_team_tags` DELETEs the loser row, so work that must not outlive a
+  // failure (re-pointing ids that live inside jsonb, with no FK to carry them) belongs HERE and not
+  // after the call. Run afterwards, a throw leaves the merge committed and the ids dangling while
+  // the coach is told "Merge failed"; run here, a throw leaves the loser tag alive and every plan
+  // untouched, so the coach can simply try again. The sibling DELETE route has always ordered it
+  // this way — merge was the odd one out.
+  if (beforeDestructive) await beforeDestructive();
 
   const { error } = await supabaseAdmin.rpc('merge_rep_team_tags', {
     p_winner_tag_id: winnerId,
