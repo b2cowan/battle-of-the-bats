@@ -2,14 +2,14 @@
 
 **Generated:** 2026-08-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 10 divergence(s)** across dev/prod.
+**✅ No structural drift** between dev and prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 5 | 0 | 0 |
-| Indexes | 2 | 0 | 0 |
-| Constraints | 2 | 0 | — |
+| Columns | 0 | 0 | 0 |
+| Indexes | 0 | 0 | 0 |
+| Constraints | 0 | 0 | — |
 | RLS / CHECK | 0 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -20,12 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (5)
-- `rep_payable_payments.paid_by_player_id`
-- `rep_program_years.opening_balance`
-- `rep_program_years.opening_balance_from_year_id`
-- `rep_tryout_registrations.last_season_team`
-- `rep_tryouts.names_shown_at`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
@@ -34,9 +30,8 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (2)
-- `idx_rep_payable_payments_paid_by`
-- `uniq_rep_dues_credits_reimbursement_per_household`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
@@ -45,9 +40,8 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (2)
-- `rep_payable_payments.rep_payable_payments_paid_by_player_id_fkey`
-- `rep_program_years.rep_program_years_opening_balance_from_year_id_fkey`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
