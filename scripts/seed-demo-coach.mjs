@@ -35,6 +35,7 @@ import {
   MIDSEASON_LINEUP_GRID, midseasonLineupGrid, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
   midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_FUNDRAISER, MIDSEASON_SPONSOR,
   MIDSEASON_CLUB_MONEY,
+  MIDSEASON_MONEY_TAGS,
   MIDSEASON_BUDGET_LINES, MIDSEASON_SEASON_ESTIMATE,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING, demoOpponent,
@@ -395,6 +396,8 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
  * every row, and the job's whole contract is that it doesn't.
  */
 async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
+  /** Descriptor key → the row that was written, so money tags can find their costs by name. */
+  const idByKey = new Map();
   /* ⚠⚠ SEEDED AS THE RECORDS THE MONEY SCREENS READ (Payables Rebuild P2): installments and
      payments, written directly — the legacy deposit/balance/paid columns are dead and nothing
      writes them. `demoExpensePlan` (lib/demo-coach.ts) is the ONE statement of what each
@@ -414,14 +417,62 @@ async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
       created_by: coach.id,
     };
     const pieces = demoExpensePlan(e);
-    await insertCommitmentWithRecords(db, {
+    const expenseId = await insertCommitmentWithRecords(db, {
       row,
       installments: pieces.map(p => ({ amount: p.amount, dueDate: p.dueDate ?? seedDay })),
       payments: pieces
         .filter(p => p.paidDate)
         .map(p => ({ amount: p.amount, paidDate: p.paidDate, installmentNumber: p.installmentNumber })),
     });
+    idByKey.set(e.key, expenseId);
   }
+  return idByKey;
+}
+
+/**
+ * ⚖ THE COACH'S OWN OCCASION LABELS — the money tags a world's costs carry.
+ *
+ * ⚠ THE DEMO SHOWED NONE OF THIS UNTIL 2026-08-25. `resetTeam` deletes `rep_team_tags` and nothing
+ * put any back, so both money faces hid the tag control outright and the question it answers
+ * ("what did the Spring Classic actually cost us?") had never been visible to a prospect. That is
+ * the half of demo drift `check:demos` cannot catch — it proves the world is in the state it was
+ * seeded in, not that the state still shows everything the product can do.
+ *
+ * ⚠ An org-shared tag survives `resetTeam` and so must be re-used rather than re-inserted; the
+ * branch that does it carries the reason.
+ */
+async function insertDemoMoneyTags(team, tags, expenseIdByKey) {
+  if (!tags?.length) return;
+  /* ⚠ ONE LINK INSERT FOR EVERY TAG, not one per tag — the rows are independent and the table takes
+     them in a batch, which is how every other seeded list in this file is written. */
+  const links = [];
+  /* ⚠ SEQUENTIAL ON PURPOSE, and `Promise.all` here would be a bug rather than a speed-up: the
+     org-shared branch is a read-then-insert on a row keyed by NAME, so two tags racing that check
+     could both miss and both insert. Two tags is two round trips; correctness is worth more. */
+  for (const t of tags) {
+    let tagId;
+    if (t.orgShared) {
+      /* ⚠ An org-shared tag carries `team_id: null` and so is NOT removed by `resetTeam`'s
+         team-scoped delete — look it up by name first or every reseed grows another blue tag, and
+         the pill lists them all. */
+      const { data: existing } = await db.from('rep_team_tags')
+        .select('id').eq('org_id', org.id).is('team_id', null)
+        .eq('kind', 'expense').eq('name', t.name).maybeSingle();
+      tagId = existing?.id;
+    }
+    if (!tagId) {
+      const ins = await db.from('rep_team_tags')
+        .insert({ org_id: org.id, team_id: t.orgShared ? null : team.id, kind: 'expense', name: t.name })
+        .select('id').single();
+      die(`create demo money tag ${t.name}`, ins.error);
+      tagId = ins.data.id;
+    }
+    for (const key of t.expenseKeys) {
+      const expenseId = expenseIdByKey.get(key);
+      if (expenseId) links.push({ expense_id: expenseId, tag_id: tagId });
+    }
+  }
+  if (links.length) die('link demo money tags', (await db.from('rep_team_expense_tags').insert(links)).error);
 }
 
 /**
@@ -1120,7 +1171,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     description: line.description, total_amount: line.total, sort_order: i,
   }));
   await insertAll('rep_budget_lines', budgetRows);
-  await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems);
+  /* ⚠ TAGS RIDE THE SAME CALL, keyed off the ids it hands back — a second lookup by description
+     would break the moment a demo cost is renamed, and this world renames things. */
+  const midSeasonExpenseIds = await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems);
+  await insertDemoMoneyTags(team, MIDSEASON_MONEY_TAGS, midSeasonExpenseIds);
 
   // Waivers: a published template, signed by everyone except one — the beat the roster tells.
   const templateId = randomUUID();

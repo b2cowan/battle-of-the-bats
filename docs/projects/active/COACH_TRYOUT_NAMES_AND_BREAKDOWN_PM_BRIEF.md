@@ -1,6 +1,6 @@
 # PM brief — Tryout names switch + score breakdown
 
-**Built on dev 2026-08-25 · awaiting owner QA (§103) · plan:**
+**Built on dev 2026-08-25 · ✅ owner QA passed 2026-08-26 (§103) · plan:**
 `COACH_TRYOUT_NAMES_AND_BREAKDOWN_PLAN.md`
 
 ## What a coach can do that they couldn't before

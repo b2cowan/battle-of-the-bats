@@ -4,6 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { MANUAL_CREDIT_TYPES } from '@/lib/dues-credits';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -83,8 +84,11 @@ export const POST = withObservability(async (req: Request,
   if (!creditDate) {
     return NextResponse.json({ error: 'creditDate is required' }, { status: 400 });
   }
-  const validTypes = ['contribution', 'fundraiser', 'overpayment', 'other'];
-  if (!validTypes.includes(creditType)) {
+  /* ⚠ THE PICKER READS THIS SAME LIST (money centralization P3, 2026-08-25). It was a literal
+     here and the whole display map on the screen, so the Add-credit form offered two kinds this
+     very line then refused with a bare 400 — see MANUAL_CREDIT_TYPES' header for the whole
+     story. */
+  if (!MANUAL_CREDIT_TYPES.includes(creditType)) {
     return NextResponse.json({ error: 'Invalid creditType' }, { status: 400 });
   }
 

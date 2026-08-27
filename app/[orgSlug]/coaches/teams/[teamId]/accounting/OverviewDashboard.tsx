@@ -177,8 +177,16 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
           {/* The cash-basis caveat qualifies THESE numbers, so it lives with them —
               not as a page-level sentence bolted above a tile row. */}
           <p className={styles.footNote}>Cash actually received and actually paid — not what&apos;s still owed.</p>
+          {/* ⚠ THE REGISTER, NOT PLAYER DUES (2026-08-26). This foot read 'See what's outstanding'
+              and opened the dues tab — the SAME door the Collections card beside it already owns, and
+              only half of what its own words promised: money the team still owes OUT was nowhere on
+              that journey. Cash on hand IS the register's running balance at today, and the register
+              prints this exact figure in its own toolbar, so the number's one true door is the book
+              that produces it. What is still owed keeps its answers — the Collections card for money
+              in, the Next-N-days ledger below for everything dated — and the caveat sentence above
+              already points at them without spending this link on it. */}
           <div className={styles.foot}>
-            <Link href={hrefs.dues} className={styles.footLink}>See what&apos;s outstanding →</Link>
+            <Link href={hrefs.transactions} className={styles.footLink}>Transactions →</Link>
           </div>
         </div>
 

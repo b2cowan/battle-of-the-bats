@@ -154,17 +154,25 @@ door that refuses dues and drive money.
 
 ### Defects/debt found by discovery (fix regardless of direction; none started)
 
-1. **Dues "Add Credit" type picker offers `Forgiven` and `Reimbursement`, which the API refuses**
-   (validTypes allow-list) — a coach picking them gets a 400. The picker should not offer them
-   (an adjacent comment already claims it doesn't).
+1. ✅ **FIXED 2026-08-25 (P3).** Dues "Add Credit" offered `Forgiven` and `Reimbursement`, which
+   the API refused with a 400 — and the comment beside those two labels asserted they were not
+   offered, which is why it survived a year of reading. The picker and the route now share ONE
+   exported list (`MANUAL_CREDIT_TYPES`, `lib/dues-credits.ts`), so the screen cannot offer a kind
+   the server rejects. ⚠ An existing credit of an excluded kind still names itself correctly in the
+   disabled select — a `<select>` whose value matches no option renders the FIRST one, so a
+   forgiveness opened for a note correction would have sat there calling itself a Contribution.
 2. ✅ **CLOSED 2026-08-25 — DO NOT RE-FIX.** The payout note placeholder that taught guardian
    names ("e.g. sent to Dana") lived on `DuesPayoutSheet`, and **P2 deleted that component**: the
    conversation took over the pay-a-family-back door, leaving the sheet with no callers at all
    (found by P2's /simplify pass). Verified 2026-08-25 — the only surviving hit anywhere is a
    COMMENT recording the 2026-08-13 PII ruling, which is legitimate history, not a defect. Left
    here rather than deleted because a debt list that silently loses rows cannot be audited.
-3. **Stale comments** describing the removed BvA tag filter (an orphaned "Phase 3" banner in the
-   panel; a "SKIPPED WHEN A TAG IS FILTERING" note in the route).
+3. ✅ **FIXED 2026-08-25 (P3).** Stale comments describing the removed BvA tag filter. ⚠ **BOTH
+   sites were still live**, not one: the panel's orphaned "Phase 3" banner AND the route's
+   "SKIPPED ENTIRELY WHEN A MONEY TAG IS FILTERING" note — the latter sitting fifty lines above the
+   note that says the filter was removed, so the file contradicted itself and compiled perfectly.
+   The P3 build prompt claimed the route half was already gone; it was not. The panel now states
+   the RULING (why this report has no tag filter) rather than describing a control that isn't there.
 4. Legacy money routes redirect with **308** (permanentRedirect), not 307 as some docs say —
    cosmetic, noted for accuracy.
 
@@ -211,6 +219,38 @@ door that refuses dues and drive money.
 - **P3 — tags per §5.3 + the debt**: chip row → §7 counted pill on both faces, filtered TOTAL
   always shown; label-only "Who paid it back" removal; §7's debt items (credit-picker 400, payout
   placeholder PII, stale comments).
+  **✅ BUILT ON DEV 2026-08-25 (owner QA §104; NO migration).** Gate run first; the owner approved
+  every recommendation. Drawing: `claude.ai/code/artifact/ccb5e84e-e25c-4b08-ba12-857735f81351`.
+  What landed, and where it deviated from this bullet:
+  1. **The pill is MULTI-select** (owner call at the gate) — the chip row was one-at-a-time, and the
+     family it joined is a checkbox list; ticking two tags ORs them and a cost carrying both counts
+     once. Mockup 05's "Tags · 1 selected" is not what the shared control renders — it shows the
+     tag's NAME for one selection, which is better and is what the four pills beside it already do.
+  2. **The total's placement was the one undrawn thing** and is now a stated band above the list,
+     on BOTH faces, **figure first**. Payables' old band ("vs {tag}: N commitments, $X total") is
+     retired: it read back-to-front, and it said "commitments" while the by-due-date arrangement
+     showed dated payments. The rule taken: **the band totals whatever the list in front of you is
+     showing, in that face's own unit** — costs · commitments · dated payments —
+     derived from the rows each face's filters already produced, never a second arithmetic.
+  3. **The org/team colour legend is gone.** It rendered on Payables only, so the register showed
+     blue-bordered chips and never said why. Blue now rides a swatch inside each dropdown option
+     (`MultiSelectDropdown` gained an optional per-option `accent`, documented for that one meaning).
+  4. ⚠⚠ **`check:layout` HAD BEEN BLIND TO THIS ENTIRE FEATURE.** The pill and the band self-hide
+     when a team has no money tags, and the UAT fixture seeded `kind: 'game'` tags only — so every
+     sweep of both money faces walked past an absent control and reported green. The fixture now
+     seeds a team-own **Spring classic** and an org-shared **Club permits**. This is the
+     empty-fixture trap one screen further along, and it would have survived the phase.
+  5. ⚠ **The coach demo could not show tags either** — `resetTeam` deletes the tag table and nothing
+     put any back, so no prospect had ever seen the question tags answer. `MIDSEASON_MONEY_TAGS`
+     seeds "Spring Classic" (deliberately spanning TWO budget categories, which is the distinction
+     tags exist for) and an org-shared "Club permits"; the Transactions tour step gained one closing
+     sentence that names **no figures**, so a re-anchor cannot make it wrong. ⚠ **It needs a reseed
+     of the coach demo to appear — a nightly tick only re-anchors dates.**
+  6. **Help updated in three places** — the filter-strip paragraph, the tags section and the tags
+     FAQ all described a one-at-a-time chip row.
+  ⚠ Two items on this bullet were **already closed** before P3 began and were re-verified rather
+  than re-fixed: the label-only "Who paid it back" select (removed in P1/P2) and the payout
+  placeholder PII (its component was deleted by P2's simplify pass).
   **⊕ ADDED 2026-08-25 (owner): the required-asterisk sweep, and it is PORTAL-WIDE.** A required
   field takes a PLAIN asterisk in the label’s own ink; the dedicated red marker is RETIRED, not
   merely avoided in new code. Ruled because **red in this portal means something has gone wrong**
@@ -227,6 +267,22 @@ door that refuses dues and drive money.
   ⚠ Deliberately NOT swept on the day it was ruled: roster and schedule were live in other
   sessions’ working trees, and a 44-site label sweep across files someone else is mid-edit on is
   an expensive merge over something cosmetic. Ruling: `memory/design_decisions.md` 2026-08-25.
+  **✅ SWEPT 2026-08-25 (P3), and the measurement above was UNDERSTATED — verified against the
+  tree, not this plan.** The real figures: **32 red markers across 9 FILES, not 29 across 8** (the
+  Club tab's own `.req` copy was missed entirely), and **~58 marker sites across 11 files** rather
+  than 44 across 8 (the two Fundraising screens were not counted; their asterisks were already
+  plain, so they needed no edit — but anyone sizing the sweep from this line would have been wrong
+  about where it reaches). Roster and schedule were CLEAN by the time it ran; the two dirty files
+  were the money ones.
+  ⚠ **The CSS is deleted, not merely unused** — `.labelRequired` and `.req` in the portal
+  stylesheet **plus four local copies** (budget, start-interest, head-coach editor, schedule
+  editor), each replaced by a headstone naming the ruling, because a rule left in place is a rule
+  the next form finds. One of the four was coloured `--home-live` rather than `--danger`, so the
+  marker had already drifted into two reds.
+  ⚠ **SCOPE RULED (owner, 2026-08-25): the coaches portal only.** Twelve further red markers live
+  outside it — the public tryout registration form, the public league registration form and one
+  platform-admin screen. The ruling's reasoning is about what red means *in this portal*, and those
+  are different surfaces; they were left alone deliberately, not missed.
 - **P4 — payer-on-payment** (ruled YES): its own phase; credit unwind on edit/delete is the
   acceptance test.
 - Every phase: **help docs + BOTH demo sandboxes re-read** — the money vocabulary is exactly the

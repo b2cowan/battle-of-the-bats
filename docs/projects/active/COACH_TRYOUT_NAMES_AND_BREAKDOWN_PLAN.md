@@ -1,6 +1,7 @@
 # Tryout names switch + score breakdown — implementation plan
 
-**Status:** BUILT ON DEV 2026-08-25. Awaiting owner QA (`OWNER_QA_LEDGER.md` §103).
+**Status:** BUILT ON DEV 2026-08-25 (committed `100838ad`). **✅ OWNER QA PASSED 2026-08-26**
+(`OWNER_QA_LEDGER.md` §103). Ready for the next production release — see the migration line below.
 **Owner ruling:** 2026-08-25 — blind evaluation becomes a two-way switch; the Decide board gains a
 per-player breakdown; the rating leads the row.
 **Mockup (approved, binding):** `claude.ai/code/artifact/55c9e3d6-f8f4-4c40-b711-d2b8d8a0a666`

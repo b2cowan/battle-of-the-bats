@@ -35,6 +35,7 @@
  * tests/unit/dues-definition-guard.test.ts, the same guard that stopped stamp-sum copy five).
  */
 import { allocateDuesPayments, type InstallmentCoverage, type AllocatableInstallment, type AllocatablePayment } from './dues-payments';
+import type { DuesCreditType } from './types';
 
 const toCents = (n: number) => Math.round(n * 100);
 const toDollars = (c: number) => c / 100;
@@ -47,6 +48,28 @@ export type CreditApplicationMode = 'last_first' | 'next_first' | 'keep_separate
 
 export const CREDIT_APPLICATION_MODES: readonly CreditApplicationMode[] =
   ['last_first', 'next_first', 'keep_separate'];
+
+/**
+ * ⚖⚖ THE CREDIT KINDS A COACH MAY CREATE BY HAND — the picker's options AND the write route's
+ * allow-list, from ONE list, so the screen can never offer a kind the server refuses.
+ *
+ * ⚠ IT LIVES HERE BECAUSE IT ALREADY DRIFTED ONCE (fixed 2026-08-25, money centralization P3).
+ * The dues panel's Add-credit picker rendered the whole `CREDIT_TYPE_LABELS` display map, which
+ * includes `forgiven` and `reimbursement`; the route has always refused both with a 400. A coach
+ * who picked either filled the form in, pressed Save, and got a bare error — and the comment
+ * beside those two labels asserted they were not offered, which is exactly why nobody caught it.
+ * The lists are the same object now; there is nothing left to keep in step by hand.
+ *
+ * ⚠ NEITHER EXCLUDED KIND IS A MANUAL CREDIT, and that is the product rule rather than a
+ * limitation: forgiveness is granted from the settlement sheet, and a reimbursement is minted by
+ * an out-of-pocket expense. One door each, so a credit's story always traces back to the act that
+ * made it. Adding a kind here without giving the route the same list is the bug this replaced.
+ *
+ * ⚠ NOT the display map. Every kind still needs a NAME wherever a credit is listed — that map is
+ * the dues panel's `CREDIT_TYPE_LABELS`, and it stays whole on purpose.
+ */
+export const MANUAL_CREDIT_TYPES: readonly DuesCreditType[] =
+  ['contribution', 'fundraiser', 'overpayment', 'other'];
 
 /**
  * The three sentences the product says about credit application, in ONE place.

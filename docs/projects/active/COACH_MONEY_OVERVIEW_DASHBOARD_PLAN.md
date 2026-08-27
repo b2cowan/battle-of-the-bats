@@ -90,8 +90,13 @@ becomes, **when `summary.stage === 'operate'`**, a one-screen dashboard:
    `onHand` (green ≥ 0 / danger < 0); two labelled mini-bars IN / OUT scaled
    against `max(moneyIn.total, moneyOut.total)`; the cash-basis caveat sentence
    moves from page level into this card as a footnote (the page-level
-   `moneySummaryBasis` line is removed). Footer link: **See what's outstanding →**
-   (dues tab).
+   `moneySummaryBasis` line is removed). Footer link: **Transactions →**.
+   ⚠ **Was 'See what's outstanding →' (dues tab); repointed 2026-08-26.** It was the
+   same door the Collections card above already owns, and it promised both sides of
+   'outstanding' while showing only money owed IN. Cash on hand IS the register's
+   running balance at today — the register prints this figure in its own toolbar — so
+   the card's link now opens the book that produces its headline. Money still owed
+   keeps the Collections card and the Next-N-days ledger as its answers.
 3. **Budget** (merges Headroom tile + Season Budget Plan card + Budget vs. Actual
    card). Headline `$headroom headroom` + chip `on plan` / `over budget`;
    footers **Budget plan →** and **Budget vs. Actual →**.

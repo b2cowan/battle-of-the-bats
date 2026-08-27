@@ -132,3 +132,137 @@ Two things were found while wiring this and closed in the same pass: a back-date
 that later earned a family credit stamped that credit with today rather than the day the money
 arrived; and the mechanism that keeps the Record chooser's live figures fresh after a save had been
 written but never actually switched on.
+
+---
+
+## What P3 shipped: tags earn their keep, and the leftovers go (2026-08-25, dev)
+
+Owner QA **§104**. No migration. This is the small phase — tags, three bits of debt, and a
+portal-wide tidy of one visual habit.
+
+### Tags finally answer the question they were kept for
+
+When the owner ruled that money tags should stay, he said exactly what they were for: *"maybe they
+have items for tournament fees and deposits but want to tag each one with the tournament name,
+later filter by how much they paid for a specific tournament."*
+
+A budget item says **what kind of cost** something was. A tag says **which occasion** it belonged
+to. So the question a tag exists to answer is *"what did the Summer Classic actually cost us?"* —
+and until now the product could narrow the list and then leave the coach to add the column up
+themselves. **Transactions had no total at all.** Payables had one, written back-to-front.
+
+Now: the row of little tag buttons becomes a **Tags dropdown** sitting with Show, Status, Item and
+Date — the same shape as everything beside it, with a count against each label. It takes **several
+tags at once**. And whenever a tag is on, a line above the list states the answer, money first:
+
+> **$1,240.00** across 3 costs tagged **Spring Classic**
+
+The same line, the same shape, on **both** money screens. On Payables it counts commitments; switch
+that screen to read by due date and it says *"across 5 payments"* — because the rule is
+that the line totals **whatever is in front of you**, not a figure computed off to one side. The old
+Payables line said "3 commitments" while the screen showed five dated payments; that is fixed.
+
+One small thing goes with it: the colour key explaining that blue tags belong to the whole club used
+to sit under the Payables toolbar only — so the other screen showed blue tags and never said why.
+The colour now sits in the dropdown itself, on both screens, and the key is gone.
+
+### A bug a coach could hit any day
+
+On **Player Dues → Add credit**, the *Kind* list offered **Forgiven** and **Reimbursement**. Neither
+is something a coach creates by hand — forgiveness is granted from the settlement sheet, and a
+reimbursement is created by an out-of-pocket expense. The server has always refused both. So a coach
+who picked either filled the whole form in, pressed Save, and got a bare error with no explanation.
+
+Both are off the list. Existing credits of those kinds still name themselves correctly.
+
+### Red stops meaning "required"
+
+Required fields have always carried an asterisk. On most forms it was **red**. Red in this portal
+means something has gone wrong — money owed, a payment overdue, a save refused — and a field is not
+in error simply for being required. The asterisk already carries the meaning; the colour was
+spending a signal that real failures need.
+
+Every required field still has its asterisk, in the same place. It is now the label's own colour.
+Nothing else moves. Two screens — Player Dues and the money record form — were using **both**
+treatments, so this also makes those screens consistent with themselves.
+
+### Two things nobody could see, and now can
+
+**The automated layout check had never looked at this feature.** The tag control hides itself when a
+team has no tags, and the test fixture only ever created *game* tags — so every sweep of both money
+screens walked past an invisible control and came back green. The fixture now carries money tags,
+one of each kind.
+
+**The demo could not show tags either.** No money tag had ever been seeded into the coach sandbox,
+so no prospect has ever seen this. The mid-season team now carries a *Spring Classic* label
+deliberately spanning two different budget categories — which is the whole distinction — and a
+club-shared *Club permits*. The Transactions tour gained one closing sentence about it, naming no
+figures so a reseed can never make it wrong. ⚠ **The demo needs a reseed for this to appear**; the
+nightly job only moves dates.
+
+### Success criteria
+
+- A coach can answer *"what did that tournament cost us?"* without adding anything up.
+- The figure reads the same on both money screens and on both Payables arrangements.
+- Nobody can pick a credit kind the system will refuse.
+- Red, in the coaches portal, means something is wrong — and nothing else.
+
+## The P3 follow-on: the number on a filter now means what you'd expect (2026-08-26, dev)
+
+Found by the owner while walking §104, with a filtered Transactions screen in front of him: the
+**Tags** list offered *test tag (1)* while the band directly beneath it read *$400.00 across 3
+costs*. Both numbers were correct and they were counting different things — the option counted
+**labelled records**, the band counted **rows on screen** — and a cost paid in three installments is
+one record and three lines.
+
+### What a coach sees now
+
+The number beside a tag tells you **how many rows you will see if you tick it**. It matches the band
+underneath, always, on every money screen:
+
+- **Transactions** counts the lines in the register.
+- **Payables**, arranged by commitment, counts bills — one commitment is one, however many
+  installments it carries.
+- **Payables**, arranged by due date, counts the individual payments. The number changes when you
+  change the arrangement, because the arrangement changes what is on screen.
+
+It also respects the rest of the toolbar. Narrow the date window past everything a tag is on and it
+reads **(0)** — still listed, so you can always undo the thing that emptied the screen, but honest
+about what picking it would show.
+
+### A club bill was ignoring the tag filter completely
+
+On a team whose club bills it, filtering Payables by an occasion left **every club bill** sitting in
+the results — they were added to the list after the filter had already run. The caption underneath
+counted only the tagged team bills, so it disagreed with the rows above it. Club bills now drop out
+of a tag-filtered list, which is what the register has always done with rows that cannot carry a
+label.
+
+### The fold button — a change we built and then took back
+
+Raised in the same breath: *"can we remove Open all? seems like a button no one will select."* It
+turned out to be one button with two labels — it only says "Open all" because bills arrive folded,
+and the same button says "Fold all" everywhere else, so removing it would have removed both. What
+looked wrong was smaller: with a single commitment on screen it was offering to open one row. So we
+hid it below two groups and let a lone commitment arrive already open.
+
+**The review found that this broke something worse.** The screen remembers which bills you have
+opened as *differences from the default*. Tying the default to how many bills are on screen meant
+that every time a filter narrowed the list to one, every remembered click reversed: open a bill,
+tick a tag that narrows to it, and **the bill you were reading folded itself shut** — with the bulk
+control gone at the same moment.
+
+Shown both options drawn side by side, the owner chose to leave folding alone, and gave the rule
+that decided it: **a filter narrows content; it does not change the shape of the screen.** That rule
+also rules out hiding the *button* whenever a filter narrows the list, so that came out too.
+
+**So folding behaves exactly as it did before this work** — and the original complaint is recorded
+as still open. If the button is ever to disappear for a one-commitment team, the test has to be what
+the team actually has, not what the current filter is showing.
+
+### Success criteria
+
+- The number on a tag and the figure beneath the toolbar never disagree.
+- A tag never disappears from the list while its filter is the reason the screen is empty.
+- A tag-filtered Payables list contains nothing the tag is not on.
+- Ticking a filter never folds, unfolds, or removes anything a coach had set for themselves.
