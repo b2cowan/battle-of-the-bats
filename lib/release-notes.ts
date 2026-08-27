@@ -44,6 +44,104 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-27',
+    title: 'One tap to decide a tryout — and money you can follow',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Deciding a tryout is one tap. Candidates sit in three piles — offered, waitlisted, released — and a name moves between them with a single tap. Change your mind and it moves back.',
+      },
+      {
+        category: 'new',
+        text: 'The offer letter is yours. An offer is usually a conversation and often conditional, so nothing generic goes out under your name — you decide what reaches the family, and when.',
+      },
+      {
+        category: 'new',
+        text: 'Names on or off is a switch on every tryout screen, so you can evaluate blind and turn names back on without going looking for the control. A score now shows how it was reached.',
+      },
+      {
+        category: 'new',
+        text: 'Adding a player yourself asks for everything the family\'s own registration form asks for, so a player you enter is as complete as one who registered.',
+      },
+      {
+        category: 'new',
+        text: 'A bill you pay in parts has its own page. Record a deposit now and the balance later, see what it has paid against what it still owes, and correct any part of it in place.',
+      },
+      {
+        category: 'new',
+        text: 'Recording a payment on a bill, you can say a family paid that piece directly — the deposit a parent puts on their own card. The bill comes down, no team cash moves for it, and that household is owed the money back against their dues. One bill can hold both: a payment the team made and a payment a family fronted.',
+      },
+      {
+        category: 'new',
+        text: 'Undoing a payment, changing a schedule or deleting a cost now stops and explains itself when the change would leave a family out of pocket for money they fronted. Deleting a cost names the household and the amount before anything goes.',
+      },
+      {
+        category: 'new',
+        text: 'Every figure in the season\'s months opens. Open a number to see the families, drives, sponsors and requests behind it — the actual records, not a budget line. A season can also carry its balance forward into the next one.',
+      },
+      {
+        category: 'new',
+        text: 'Money exports open as real spreadsheets — headings, columns and figures Excel understands, instead of a flat list of text.',
+      },
+      {
+        category: 'new',
+        text: 'Practice plans remember who runs a drill and what it needs. Staff and equipment become your team\'s own lists that fill in as you type, instead of free text retyped every week.',
+      },
+      {
+        category: 'new',
+        text: 'Posters, lineup cards and brackets are built to be read at a glance from a distance — taped in a dugout, handed to an official, pinned to a fence. Available on Tournament Plus and above, and on the Premium Coaches Portal.',
+      },
+      {
+        category: 'new',
+        text: 'The tournament schedule prints like a weekend rather than a database, grouped by day and location the way someone reading it on a fence needs it. Available on Tournament Plus and above, and on the Premium Coaches Portal.',
+      },
+      {
+        category: 'improved',
+        text: 'The roster answers questions instead of listing names — who is available, what is missing, and what needs attention before the next game.',
+      },
+      {
+        category: 'improved',
+        text: 'The coach portal treats a tablet as a touch device, so buttons and spacing stay finger-sized instead of switching to a desktop layout too early.',
+      },
+      {
+        category: 'improved',
+        text: 'The way back out of any detail screen is an arrow in the page header, in the same place every time.',
+      },
+      {
+        category: 'improved',
+        text: 'Budget vs. Actual opens on the report itself rather than on summaries stacked above it, and the season Statement explains why its total is not your bank balance.',
+      },
+      {
+        category: 'improved',
+        text: 'Each screen has one clearly placed way to create something, and help now sits in the team bar.',
+      },
+      {
+        category: 'improved',
+        text: 'Times read the same way everywhere — 8:00 a.m. on every screen, export, poster and email.',
+      },
+      {
+        category: 'fixed',
+        text: 'A filter\'s count matches the list it produces — tick an option and you get exactly as many rows as it promised.',
+      },
+      {
+        category: 'fixed',
+        text: 'Recording a credit only offers the kinds that can actually be saved.',
+      },
+      {
+        category: 'fixed',
+        text: 'Naming the family who paid a bill directly now saves. Until this release the form asked the question and did not record the answer, so no credit was raised for that household.',
+      },
+      {
+        category: 'fixed',
+        text: 'Team family access no longer reports itself as empty when it is not.',
+      },
+      {
+        category: 'fixed',
+        text: 'Money screens load like the rest of the portal, without the flash.',
+      },
+    ],
+  },
+  {
     date: '2026-08-25',
     title: 'One place to record money — and paperwork you can hand over',
     highlights: [
