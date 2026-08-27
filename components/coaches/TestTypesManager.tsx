@@ -20,7 +20,7 @@ export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd, pri
   primaryAdd?: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+    <div className={styles.newTypeRow} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
       <div className={styles.field} style={{ flex: '1 1 160px' }}>
         <label className={styles.label} htmlFor={`${idPrefix}-name`}>New test name</label>
         <input id={`${idPrefix}-name`} className={styles.input} type="text" value={name}
@@ -31,7 +31,7 @@ export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd, pri
         <input id={`${idPrefix}-unit`} className={styles.input} type="text" value={unit}
           onChange={e => onUnit(e.target.value)} maxLength={20} placeholder="seconds" />
       </div>
-      <button type="button" className={`btn ${primaryAdd ? 'btn-lime' : 'btn-ghost'}`} style={{ fontSize: '0.8rem' }} onClick={onAdd}>
+      <button type="button" className={`btn ${primaryAdd ? 'btn-lime' : 'btn-ghost'} ${styles.devSectionAction}`} style={{ fontSize: '0.8rem' }} onClick={onAdd}>
         Add test
       </button>
     </div>

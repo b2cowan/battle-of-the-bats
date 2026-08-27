@@ -421,7 +421,7 @@ function EventForm({
         ))}
       </div>
 
-      <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+      <p className={styles.formHint}>* Required</p>
 
       <input
         className={styles.input}
@@ -434,7 +434,7 @@ function EventForm({
       />
 
       <label className={styles.fieldLabel}>
-        Starts <span className={styles.labelRequired}>*</span>{' '}
+        Starts *{' '}
         <input
           className={styles.input}
           type="datetime-local"

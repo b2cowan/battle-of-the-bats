@@ -1,0 +1,571 @@
+<title>Tablet Band QA Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+
+<style>
+  :root {
+    --paper:#F8F4ED; --card:#FFFFFF; --ink:#241E15; --ink-soft:#4A4235; --dim:#6A635C;
+    --line:rgba(70,55,30,.12); --line-hard:rgba(70,55,30,.22); --fill:rgba(70,55,30,.055);
+    --olive:#57651E; --olive-soft:rgba(87,101,30,.10);
+    --live:#B03A22; --live-soft:rgba(176,58,34,.10);
+    --win:#34662A; --win-soft:rgba(52,102,42,.12);
+    --amber:#835006; --amber-soft:rgba(131,80,6,.12);
+    --rule:rgba(70,55,30,.16);
+    --shadow:0 1px 2px rgba(70,55,30,.05), 0 8px 22px rgba(70,55,30,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#16130E; --card:#1F1B15; --ink:#F1ECE2; --ink-soft:#D3CCBE; --dim:#9C9385;
+      --line:rgba(240,232,216,.14); --line-hard:rgba(240,232,216,.26); --fill:rgba(240,232,216,.06);
+      --olive:#AFC259; --olive-soft:rgba(175,194,89,.14);
+      --live:#E4744F; --live-soft:rgba(228,116,79,.14);
+      --win:#7FB56C; --win-soft:rgba(127,181,108,.16);
+      --amber:#D69A3C; --amber-soft:rgba(214,154,60,.16);
+      --rule:rgba(240,232,216,.18);
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#16130E; --card:#1F1B15; --ink:#F1ECE2; --ink-soft:#D3CCBE; --dim:#9C9385;
+    --line:rgba(240,232,216,.14); --line-hard:rgba(240,232,216,.26); --fill:rgba(240,232,216,.06);
+    --olive:#AFC259; --olive-soft:rgba(175,194,89,.14);
+    --live:#E4744F; --live-soft:rgba(228,116,79,.14);
+    --win:#7FB56C; --win-soft:rgba(127,181,108,.16);
+    --amber:#D69A3C; --amber-soft:rgba(214,154,60,.16);
+    --rule:rgba(240,232,216,.18);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink); margin: 0; padding: 0 0 6rem;
+    font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 1.2rem; }
+  h1, h2, h3, .ui { font-family: Archivo, "Helvetica Neue", Arial, sans-serif; }
+  h1 { font-size: clamp(1.9rem,5vw,2.9rem); font-weight:700; letter-spacing:-.028em; line-height:1.05; margin:0 0 .5rem; text-wrap:balance; }
+  h2 { font-size: clamp(1.2rem,3vw,1.55rem); font-weight:700; letter-spacing:-.018em; margin:0; text-wrap:balance; }
+  h3 { font-size:1.02rem; font-weight:600; margin:0 0 .4rem; }
+  p { margin: 0 0 .9rem; }
+  .mono, code { font-family:"IBM Plex Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  code { font-size:.84em; background:var(--fill); padding:.1em .36em; border-radius:4px; }
+
+  header.top { border-bottom:1px solid var(--rule); padding:2.6rem 0 1.8rem; margin-bottom:1.6rem; }
+  .eyebrow { font-family:Archivo,sans-serif; font-size:.7rem; font-weight:700; letter-spacing:.17em; text-transform:uppercase; color:var(--olive); margin:0 0 .8rem; }
+  .lede { font-size:1.14rem; color:var(--ink-soft); max-width:58ch; }
+
+  /* progress */
+  .progress {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: .7rem 0;
+    margin-bottom: 1.6rem;
+  }
+  .progress-inner { display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
+  .bar { flex:1 1 12rem; height:8px; border-radius:99px; background:var(--fill); overflow:hidden; min-width:8rem; }
+  .bar span { display:block; height:100%; width:0%; background:var(--olive); transition:width .25s ease; }
+  @media (prefers-reduced-motion: reduce) { .bar span { transition:none; } }
+  .count { font-family:"IBM Plex Mono",monospace; font-size:.82rem; font-weight:600; color:var(--ink-soft); white-space:nowrap; }
+
+  .btn {
+    font-family:Archivo,sans-serif; font-size:.82rem; font-weight:600;
+    min-height:44px; padding:0 .95rem; border-radius:8px; cursor:pointer;
+    border:1px solid var(--line-hard); background:var(--card); color:var(--ink);
+  }
+  .btn:hover { background:var(--fill); }
+  .btn-go { background:var(--olive); border-color:var(--olive); color:#FFF8E8; }
+  :root[data-theme="dark"] .btn-go { color:#16130E; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-go { color:#16130E; } }
+
+  section.part {
+    background: var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:1.3rem 1.35rem; margin-bottom:1.5rem; box-shadow:var(--shadow);
+  }
+  .part-head { display:flex; align-items:baseline; gap:.8rem; margin-bottom:.4rem; }
+  .part-key {
+    font-family:"IBM Plex Mono",monospace; font-size:.78rem; font-weight:600; color:var(--dim);
+    border:1px solid var(--line-hard); border-radius:5px; padding:.1rem .42rem; flex:none;
+  }
+  .part-sub { color:var(--dim); font-size:.95rem; margin:0 0 1.1rem; }
+
+  ul.checks { list-style:none; margin:0 0 1.1rem; padding:0; }
+  ul.checks li { border-top:1px solid var(--line); }
+  ul.checks li:last-child { border-bottom:1px solid var(--line); }
+  label.check {
+    display:flex; gap:.85rem; align-items:flex-start;
+    padding:.75rem .25rem; cursor:pointer; min-height:44px;
+  }
+  label.check:hover { background:var(--fill); }
+  label.check input { flex:none; width:22px; height:22px; margin-top:.18rem; accent-color:var(--olive); cursor:pointer; }
+  label.check span { font-size:1rem; line-height:1.5; }
+  label.check input:checked + span { color:var(--dim); text-decoration:line-through; text-decoration-thickness:1px; }
+  label.check .why { display:block; font-size:.86rem; color:var(--dim); margin-top:.2rem; text-decoration:none; }
+  label.check input:checked + span .why { color:var(--dim); }
+
+  .verdict { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:.7rem; }
+  .verdict .lbl { font-family:Archivo,sans-serif; font-size:.7rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-right:.3rem; }
+  .vbtn {
+    font-family:Archivo,sans-serif; font-size:.8rem; font-weight:600; min-height:44px; padding:0 .9rem;
+    border-radius:8px; cursor:pointer; border:1.5px solid var(--line-hard); background:transparent; color:var(--ink-soft);
+  }
+  .vbtn[aria-pressed="true"][data-v="pass"] { border-color:var(--win); background:var(--win-soft); color:var(--win); }
+  .vbtn[aria-pressed="true"][data-v="issue"] { border-color:var(--amber); background:var(--amber-soft); color:var(--amber); }
+  .vbtn[aria-pressed="true"][data-v="fail"] { border-color:var(--live); background:var(--live-soft); color:var(--live); }
+
+  textarea.notes {
+    width:100%; min-height:64px; resize:vertical; font:inherit; font-size:.95rem;
+    background:var(--fill); border:1px solid var(--line); border-radius:9px;
+    padding:.6rem .7rem; color:var(--ink);
+  }
+  textarea.notes::placeholder { color:var(--dim); }
+
+  .note { border-left:3px solid var(--olive); padding:.1rem 0 .1rem 1rem; margin:1.1rem 0; }
+  .note.warn { border-left-color:var(--live); }
+  .note .kicker { font-family:Archivo,sans-serif; font-size:.68rem; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--olive); display:block; margin-bottom:.25rem; }
+  .note.warn .kicker { color:var(--live); }
+  .note p:last-child { margin-bottom:0; }
+  .note p { font-size:.96rem; }
+
+  .where {
+    font-family:Archivo,sans-serif; font-size:.8rem; color:var(--ink-soft);
+    background:var(--olive-soft); border-radius:8px; padding:.5rem .7rem; margin:0 0 1rem;
+    display:inline-block;
+  }
+
+  .summary-box {
+    background:var(--card); border:1.5px solid var(--olive); border-radius:14px;
+    padding:1.3rem 1.35rem; box-shadow:var(--shadow);
+  }
+  #summary-out {
+    width:100%; min-height:220px; font-family:"IBM Plex Mono",monospace; font-size:.78rem;
+    line-height:1.5; background:var(--fill); border:1px solid var(--line); border-radius:9px;
+    padding:.7rem; color:var(--ink); white-space:pre; overflow:auto; display:none; margin-top:1rem;
+  }
+  .actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+  footer.end { border-top:1px solid var(--rule); margin-top:2.5rem; padding-top:1.4rem; font-family:Archivo,sans-serif; font-size:.85rem; color:var(--dim); }
+  :where(a,button,input,textarea):focus-visible { outline:2px solid var(--olive); outline-offset:2px; }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Owner QA · §115 · coach portal</p>
+  <h1>The 641–768 band</h1>
+  <p class="lede">
+    318 findings across six never-measured coach screens, down to six. Ticks save in this browser
+    as you go, so you can close the tab and come back. At the end, build a summary and paste it
+    into the chat.
+  </p>
+  <div class="note warn" style="margin-top:1.4rem">
+    <span class="kicker">Do this one on a tablet</span>
+    <p>
+      Most of this walk is about whether a <em>thumb</em> can land on something. A mouse pointer
+      will pass every step below and tell you nothing. Use an iPad in portrait if you have one; a
+      phone covers Part D.
+    </p>
+  </div>
+
+  <div class="note warn" style="margin-top:1.1rem">
+    <span class="kicker">⚠ Read this before Part A or you will report a bug that isn't one</span>
+    <p>
+      <strong>The change only reaches tablets 768px wide or narrower</strong> — the iPad Mini and
+      pre-2018 iPads. A current full-size iPad in portrait is 810–834px, <em>above</em> that
+      ceiling, and still shows the old screen. Measured on the real build, not assumed.
+    </p>
+    <p style="margin-top:.6rem">
+      So: if Part A fails on your iPad, <strong>check the iPad first</strong>. In Safari, tap
+      <em>Aa</em> → Website Settings, or just open this page and read the width printed below. That
+      gap is one of two open decisions at the end of this walk — it is not a defect in what was
+      built, it is the boundary the standard was set at.
+    </p>
+    <p style="margin-top:.7rem">
+      <strong>This device is <span id="vw" class="mono">…</span> CSS pixels wide.</strong>
+      <span id="vw-verdict"></span>
+    </p>
+  </div>
+</header>
+
+<div class="progress">
+  <div class="progress-inner">
+    <div class="bar"><span id="bar-fill"></span></div>
+    <span class="count" id="count">0 / 0 checked</span>
+    <button class="btn" type="button" id="reset">Reset</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="A">
+  <div class="part-head"><span class="part-key">A</span><h2>The lineup grid on a tablet</h2></div>
+  <p class="part-sub">The screen this whole decision was made about.</p>
+  <p class="where"><strong>Where:</strong> Lineups → tap a game → the <em>Positions</em> tab</p>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span>Every inning cell is easy to hit with a thumb — not "possible if you aim", easy.<span class="why">They were 32px. The standard is 44px, and the grid is the reason this project existed.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>You can read the full word in a cell — <strong>“Bench”</strong> is not clipped against its own arrow.<span class="why">At the old width the word ran into the chevron in all 72 cells. The extra 6px of width is what fixes it.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>The grid does <strong>not</strong> scroll sideways. All six innings are on screen at once.<span class="why">The measured claim is that the grid got taller and not one pixel wider. If you are swiping sideways to reach inning 6, that claim is wrong.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>The little drag handle and the ✕ beside each player's name are <strong>gone</strong> from the grid.<span class="why">Deliberate. A drag and a sideways swipe are indistinguishable on a touch screen, so they live one tab across instead.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Everything above the grid is where it was — the score, the “in the lineup but marked Out” warning, Format, Innings, Auto-fill, Reshuffle, Templates.<span class="why">Nothing was meant to move except control heights.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>About <strong>seven</strong> players are visible before you scroll, where it used to be nine.<span class="why">This is the price that was approved. If it is dramatically fewer than seven, say so.</span></span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Fail</button>
+  </div>
+  <textarea class="notes" placeholder="Notes on Part A…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="B">
+  <div class="part-head"><span class="part-key">B</span><h2>The tab strip, and where reorder went</h2></div>
+  <p class="part-sub">⚠ The load-bearing one. If this fails, Part A took two controls away rather than moving them.</p>
+  <p class="where"><strong>Where:</strong> same screen — the three tabs above the grid</p>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span><strong>Batting order</strong>, <strong>Positions</strong> and <strong>Playing time</strong> are each a comfortable thumb target.<span class="why">They were 29px. Everything in Part A depends on being able to land on the first of these.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Tap <strong>Batting order</strong>. Each player's row has a full-size drag handle on the left and a full-size ✕ on the right.<span class="why">These were already the right size — confirm they still are, and that this is genuinely where removal now lives.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Press and hold a row and drag it. The order changes, and the new order is still there when you go back to <strong>Positions</strong>.<span class="why">Reordering is the thing that moved. It has to actually work here.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Remove a player with the ✕, then check they are gone from the Positions grid too.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Tap <strong>Playing time</strong> and back. Nothing looks broken in either direction.</span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Fail</button>
+  </div>
+  <textarea class="notes" placeholder="Notes on Part B…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="C">
+  <div class="part-head"><span class="part-key">C</span><h2>The other five screens</h2></div>
+  <p class="part-sub">Same idea, smaller stakes — about forty controls that were too small on every touch screen, phone included.</p>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span><strong>A lineup template</strong> — Lineups → Templates → tap one. Same grid, same tabs, all comfortable. The <em>Template name</em> field is a proper box.<span class="why">This screen shares the editor with the builder, so it should feel identical.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>A player's profile</strong> — Roster → tap a player. The three tabs across the top (This season / Details / Family &amp; paperwork) are easy targets.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span>On the same profile, <strong>Preview</strong> (in Family season recap) and <strong>Manage dues →</strong> are both real targets now.<span class="why">These were 15px and 20px — the two smallest controls in the whole set.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Still on the profile: <strong>Test types</strong>, <strong>Add focus area</strong> and <strong>Log a measurable</strong> in Skills &amp; Goals.<span class="why">⚠ Check the rows and lists <em>around</em> them look unchanged — only these three were meant to grow.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>A plan template</strong> — Development → Plan templates → tap one. Its name field, its purpose field, the tag box and <strong>Add a block</strong>.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>The practice plan editor</strong> — Schedule → a practice → its plan. Its tag box moved with the template's, on purpose. Nothing else about it should look different.<span class="why">The one screen outside the six that this touched, because it is literally the same editor.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>An evaluation session</strong> — Development → a session. The date, the event picker, the session note, and the “add a new test” row with its two fields and <strong>Add test</strong>.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>An opponent</strong> — Reports → Scouting → tap an opponent. The observation box, the five filing chips (Pitching, Hitting, Defense, Baserunning, Coaching), <strong>Save observation</strong>, and <strong>Same team as…</strong><span class="why">The five chips become noticeably chunkier — that is intended, they are how an observation gets filed.</span></span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Fail</button>
+  </div>
+  <textarea class="notes" placeholder="Notes on Part C…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="D">
+  <div class="part-head"><span class="part-key">D</span><h2>The phone — the grid is untouched, but ~40 controls did grow</h2></div>
+  <p class="part-sub">⚠ <strong>Corrected after review.</strong> This section used to say nothing changes on a phone. That was wrong: only the <em>grid</em> was checked at phone width and the claim was stretched to the whole change. The rules apply from 768px <em>down</em>, so phones move too.</p>
+
+  <div class="note warn">
+    <span class="kicker">What actually changed on a phone</span>
+    <p>
+      <strong>The lineup grid: nothing.</strong> It already had all of this.
+      <strong>Everything else: about forty small controls got taller</strong> — the same ones listed
+      in Part C. They were under the standard on a phone as well, so this is an improvement — but
+      the mockups you approved were drawn at tablet size, so <em>nobody has looked at these at
+      phone width</em>. That is what this section is really for.
+    </p>
+  </div>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span>The lineup <strong>grid</strong> on a phone looks and behaves exactly as it did before.<span class="why">Cells already 44px, no drag handle in the grid, the swipe hint above it, the player name pinned while innings scroll. This part genuinely did not change.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>The grid on a phone <strong>still</strong> scrolls sideways, and the batting number and name <strong>still</strong> stay pinned on the left while it does.<span class="why">⚠ The most likely way to have broken this. Those rules were deliberately left at the phone width.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>The swipe hint above the grid is still there on a phone.<span class="why">See the open decision in Part F — the hint's absence on a tablet is only correct above ~714px.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>⚠ <strong>Now walk Part C again on a phone.</strong> The player profile, the plan template, the evaluation session, the opponent's page — the bigger controls should read as comfortable, not as bloated rows that pushed the content down.<span class="why">This is the genuinely unreviewed surface. If a screen now feels padded out, say which one.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>On a laptop, all six screens look exactly as they always did.<span class="why">None of this applies above 768px. If anything moved on a desktop, that is a finding.</span></span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Fail</button>
+  </div>
+  <textarea class="notes" placeholder="Notes on Part D…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="E">
+  <div class="part-head"><span class="part-key">E</span><h2>The six that were left alone on purpose</h2></div>
+  <p class="part-sub">Not defects to report — decisions to agree or disagree with.</p>
+
+  <div class="note">
+    <span class="kicker">What was deferred</span>
+    <p>
+      The help <strong>“?”</strong> in the top-right corner is 34px on <em>every</em> screen in the
+      portal, and <strong>Save template</strong> sits in the same shared header slot every page's
+      main action uses. Fixing them here would either move every page header in the product or
+      leave one screen out of step with the rest, so both were recorded with a written reason and
+      handed to the portal-wide touch-target project.
+    </p>
+  </div>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span>The help “?” is still small on a tablet, on these screens and every other one. You agree that is a portal-wide fix, not this one.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span><strong>Save template</strong> in the lineup template's header is still small, for the same reason. You agree.<span class="why">If you would rather this one screen's header were raised on its own, say so here — that is a decision, not a bug.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Noted, not fixed: the evaluation session's field is labelled <strong>“Session note (optional)”</strong>, which breaks the standing “mark required, not optional” rule. Left alone deliberately as copy, not sizing.</span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Agreed</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Discuss</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Disagree</button>
+  </div>
+  <textarea class="notes" placeholder="Notes on Part E…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="part" data-part="F">
+  <div class="part-head"><span class="part-key">F</span><h2>Two decisions that are yours</h2></div>
+  <p class="part-sub">Raised by the review after the build. Neither is a defect in what was made — both are boundaries nobody was asked about.</p>
+
+  <div class="note warn">
+    <span class="kicker">1 · It does not reach a current full-size iPad</span>
+    <p>
+      Measured in portrait on the real build. The <strong>iPad Mini (744px)</strong> and
+      <strong>pre-2018 iPads (768px)</strong> get the new screen. The <strong>iPad 9th gen
+      (810px)</strong>, <strong>iPad Air / iPad 10th gen (820px)</strong> and <strong>iPad Pro 11"
+      (834px)</strong> do not — they still show 32px cells, the tiny drag handle, and
+      <strong>110 controls under the standard</strong>.
+    </p>
+    <p style="margin-top:.6rem">
+      The 768 ceiling came from the automated standard, and the three options you were given only
+      ever considered moving it <em>down</em>. Moving it <em>up</em> was never on the table. So the
+      promise — “a coach can operate the lineup builder on a tablet” — currently holds for small and
+      old tablets only.
+    </p>
+  </div>
+
+  <div class="note warn">
+    <span class="kicker">2 · Between ~641 and ~713px the names scroll away</span>
+    <p>
+      In that slice the grid scrolls sideways, but the pinned batting number and player name — and
+      the swipe hint — are still switched off, because they stay below 640px. So a coach scrolls a
+      lineup they cannot read the names in, with nothing saying it scrolls.
+    </p>
+    <p style="margin-top:.6rem">
+      That overflow is <strong>older than this change</strong>. But this pass declared that width a
+      touch band and moved three of the five relevant rules into it. Either the other two follow, or
+      the wording gets corrected — leaving both standing is the thing not to do.
+    </p>
+  </div>
+
+  <ul class="checks">
+    <li><label class="check"><input type="checkbox"><span>You've read both, and you know which way you want to go on the iPad ceiling.<span class="why">Raise the touch standard to cover ~834px, or state in the product that a full-size iPad in portrait is a laptop-style surface.</span></span></label></li>
+    <li><label class="check"><input type="checkbox"><span>You've decided whether the pinned names and swipe hint should follow into 641–713px.</span></label></li>
+    <li><label class="check"><input type="checkbox"><span>Noted: “Game rules ▾” inside the Auto-fill menu is 16px and stays that way.<span class="why">The review caught a rule accidentally inflating it to 44px in a tight settings column and reverted that. Making it a real target needs a small design, not a height — flag it if you want it done.</span></span></label></li>
+  </ul>
+
+  <div class="verdict"><span class="lbl">Verdict</span>
+    <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Noted</button>
+    <button class="vbtn" type="button" data-v="issue" aria-pressed="false">Discuss</button>
+    <button class="vbtn" type="button" data-v="fail" aria-pressed="false">Act now</button>
+  </div>
+  <textarea class="notes" placeholder="Your call on each…"></textarea>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="summary-box">
+  <h2 style="margin-bottom:.5rem">Build the summary</h2>
+  <p style="font-size:.97rem;color:var(--ink-soft)">
+    Produces plain text with every verdict, every unticked item and your notes. Copy it into the
+    chat and the ledger gets updated from it.
+  </p>
+  <div class="actions">
+    <button class="btn btn-go" type="button" id="build">Build summary</button>
+    <button class="btn" type="button" id="copy">Copy to clipboard</button>
+  </div>
+  <textarea id="summary-out" readonly aria-label="Walkthrough summary"></textarea>
+</section>
+
+<footer class="end">
+  Owner QA §115 · built on dev 2026-08-27 · plan: <span class="mono">docs/projects/active/COACH_TABLET_BAND_PLAN.md</span><br>
+  Approved mockups: <span class="mono">claude.ai/code/artifact/005d7400-f546-43a2-8d88-f5f020e4f816</span>
+</footer>
+</div>
+
+<script>
+  var KEY = 'flhq-qa-115-tablet-band';
+
+  function safeGet() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function safeSet(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+  }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('label.check input'));
+  boxes.forEach(function (b, i) { b.dataset.idx = String(i); });
+
+  function partOf(el) { var s = el.closest('section.part'); return s ? s.dataset.part : '?'; }
+
+  function collect() {
+    var s = { boxes: {}, verdicts: {}, notes: {} };
+    boxes.forEach(function (b) { if (b.checked) s.boxes[b.dataset.idx] = 1; });
+    document.querySelectorAll('section.part').forEach(function (sec) {
+      var p = sec.dataset.part;
+      var on = sec.querySelector('.vbtn[aria-pressed="true"]');
+      if (on) s.verdicts[p] = on.dataset.v;
+      var t = sec.querySelector('textarea.notes');
+      if (t && t.value.trim()) s.notes[p] = t.value.trim();
+    });
+    return s;
+  }
+
+  function save() { safeSet(collect()); paint(); }
+
+  function paint() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    var pct = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+    document.getElementById('bar-fill').style.width = pct + '%';
+    document.getElementById('count').textContent = done + ' / ' + boxes.length + ' checked';
+  }
+
+  function restore() {
+    var s = safeGet();
+    boxes.forEach(function (b) { b.checked = !!(s.boxes && s.boxes[b.dataset.idx]); });
+    document.querySelectorAll('section.part').forEach(function (sec) {
+      var p = sec.dataset.part;
+      var v = s.verdicts && s.verdicts[p];
+      sec.querySelectorAll('.vbtn').forEach(function (btn) {
+        btn.setAttribute('aria-pressed', String(btn.dataset.v === v));
+      });
+      var t = sec.querySelector('textarea.notes');
+      if (t && s.notes && s.notes[p]) t.value = s.notes[p];
+    });
+    paint();
+  }
+
+  boxes.forEach(function (b) { b.addEventListener('change', save); });
+
+  document.querySelectorAll('.vbtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('section.part');
+      var was = btn.getAttribute('aria-pressed') === 'true';
+      sec.querySelectorAll('.vbtn').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+      btn.setAttribute('aria-pressed', was ? 'false' : 'true');
+      save();
+    });
+  });
+
+  document.querySelectorAll('textarea.notes').forEach(function (t) {
+    t.addEventListener('input', save);
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick, verdict and note on this walkthrough?')) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    boxes.forEach(function (b) { b.checked = false; });
+    document.querySelectorAll('.vbtn').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    document.querySelectorAll('textarea.notes').forEach(function (t) { t.value = ''; });
+    paint();
+  });
+
+  // The device this walk is being read on decides whether Part A can pass at all.
+  (function () {
+    var el = document.getElementById('vw');
+    var verdict = document.getElementById('vw-verdict');
+    if (!el) return;
+    function paintWidth() {
+      var w = document.documentElement.clientWidth;
+      el.textContent = String(w);
+      if (!verdict) return;
+      if (w <= 768) {
+        verdict.textContent = ' — in the band, so Part A should show the new screen.';
+        verdict.style.color = 'var(--win)';
+      } else {
+        verdict.textContent = ' — ABOVE the 768 ceiling, so Part A will show the OLD screen. That is decision 1 in Part F, not a bug.';
+        verdict.style.color = 'var(--live)';
+      }
+    }
+    paintWidth();
+    window.addEventListener('resize', paintWidth);
+  })();
+
+  var TITLES = {
+    A: 'The lineup grid on a tablet',
+    B: 'The tab strip, and where reorder went',
+    C: 'The other five screens',
+    D: 'The phone — grid untouched, ~40 controls grew',
+    E: 'The six that were left alone on purpose',
+    F: 'Two decisions that are yours'
+  };
+
+  function buildText() {
+    var lines = [];
+    lines.push('OWNER QA §115 — the 641-768 band (coach portal)');
+    lines.push('Six never-measured screens: 318 findings -> 6.');
+    lines.push('Walked on a viewport ' + document.documentElement.clientWidth + 'px wide'
+      + (document.documentElement.clientWidth <= 768 ? ' (in the band).' : ' (ABOVE the 768 ceiling — Part A shows the OLD screen).'));
+    lines.push('');
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    lines.push('Checked: ' + done + ' of ' + boxes.length);
+    lines.push('');
+    document.querySelectorAll('section.part').forEach(function (sec) {
+      var p = sec.dataset.part;
+      var on = sec.querySelector('.vbtn[aria-pressed="true"]');
+      var v = on ? on.textContent.trim().toUpperCase() : 'NOT SET';
+      lines.push('--- PART ' + p + ' · ' + TITLES[p] + ' · ' + v);
+      var missed = [];
+      sec.querySelectorAll('label.check').forEach(function (l) {
+        var cb = l.querySelector('input');
+        if (!cb.checked) {
+          var span = l.querySelector('span').cloneNode(true);
+          var why = span.querySelector('.why');
+          if (why) why.remove();
+          missed.push('    [ ] ' + span.textContent.replace(/\s+/g, ' ').trim());
+        }
+      });
+      if (missed.length) { lines.push('  Not ticked:'); missed.forEach(function (m) { lines.push(m); }); }
+      else { lines.push('  All items ticked.'); }
+      var t = sec.querySelector('textarea.notes');
+      if (t && t.value.trim()) {
+        lines.push('  Notes:');
+        t.value.trim().split('\n').forEach(function (n) { lines.push('    ' + n); });
+      }
+      lines.push('');
+    });
+    lines.push('Deferred by design (not defects): the shared help "?" on five screens and');
+    lines.push('"Save template" in the shared page header — both recorded with reasons and');
+    lines.push('handed to the portal-wide touch-target project.');
+    return lines.join('\n');
+  }
+
+  document.getElementById('build').addEventListener('click', function () {
+    var out = document.getElementById('summary-out');
+    out.value = buildText();
+    out.style.display = 'block';
+    out.scrollIntoView({ block: 'nearest' });
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var out = document.getElementById('summary-out');
+    if (!out.value) out.value = buildText();
+    out.style.display = 'block';
+    out.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(out.value).catch(function () {});
+    }
+    var btn = document.getElementById('copy');
+    var was = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = was; }, 1600);
+  });
+
+  restore();
+</script>

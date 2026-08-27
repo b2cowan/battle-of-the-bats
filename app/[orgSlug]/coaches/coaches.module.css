@@ -1714,6 +1714,11 @@
   color: var(--text-tertiary); font-size: 0.8rem;
 }
 .lineupClearBtn:hover { color: var(--text-secondary); text-decoration: underline; }
+/* 25px, and it empties the whole grid — the smallest control on the screen was the most
+   destructive one on it. Quiet stays quiet; only the target grows. */
+@media (max-width: 768px) {
+  .lineupClearBtn { min-height: var(--tap-min, 44px); }
+}
 
 /* ── Season analytics (Lineups landing page) — collapsible sections, all data from saved lineups ── */
 .lineupAnalyticsBasis { margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--text-tertiary); }
@@ -5013,6 +5018,11 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-primary);
   border-bottom-color: var(--logic-lime);
 }
+/* 38px — the three doors a player's profile is read through, and the first thing a thumb reaches
+   for on the screen. Padding already carries most of the height; this is the last 6px. */
+@media (max-width: 768px) {
+  .playerTab { min-height: var(--tap-min, 44px); }
+}
 
 /* ── Taking a player off the roster ───────────────────────────────────────────────────────
    ⚠ Quiet, and at the FOOT of the form. This is the portal's only delete for a player, and it
@@ -5078,6 +5088,12 @@ a.oneChip:hover { border-color: currentColor; }
   text-decoration: none;
 }
 .contactLink:hover { text-decoration: underline; }
+/* 20px — the player profile's door into that player's money, and the second-smallest control on
+   the screen. `inline-flex` rather than `inline-block` so the height is a real box the finger can
+   land anywhere in, instead of leading text with air above it. */
+@media (max-width: 768px) {
+  .contactLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 
 /* Medical-info flag in the player status row */
 
@@ -5087,6 +5103,14 @@ a.oneChip:hover { border-color: currentColor; }
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+/* ⚠ 15px — the smallest control on any of the six drill-ins measured in the 641–768 pass, and the
+   least defensible of them: `Preview` on a player's profile, the door to what a family reads.
+   ⚠ SCOPED TO THIS ROW, not to `.linkBtn`, which is the portal's shared quiet-action link and
+   appears on ten surfaces. Raising it everywhere is the portal-wide touch-debt decision, not this
+   one. */
+@media (max-width: 768px) {
+  .sectionHeadRow .linkBtn { min-height: var(--tap-min, 44px); }
 }
 
 /* Read-only stat strip (attendance / dues roll-ups) */
@@ -6619,6 +6643,32 @@ a.oneChip:hover { border-color: currentColor; }
   letter-spacing: 0.04em;
 }
 
+/* ⚠ THE LINEUP TOOLBAR REACHES THE FLOOR WHEREVER THE GRID DOES (2026-08-27, the 641–768 pass).
+   A grid a coach can tap, sitting under a Format select and an Auto-fill button they cannot, is
+   half a fix — these are the controls that CHOOSE what the grid contains.
+   ⚠ SCOPED TO THE LINEUP'S OWN WRAPPERS ON PURPOSE. `.select`, `.input` and `.btnSecondary` are
+   the portal's SHARED primitives; stretching them here would move every form in the coaches
+   portal, which is a portal-wide decision with a portal-wide sweep behind it and its own plan
+   (`COACH_TOUCH_TARGET_DEBT_PLAN.md`) — not something to do on the way past. Same reasoning, and
+   the same idiom, as `.commitFields`. */
+/* ⚠⚠ NAMED BUTTON CLASSES, NOT `.lineupControls button` — and the difference is a real control.
+   A descendant selector here has no depth limit, and `.lineupAutoWrap` / `.lineupAutoMenu` nest
+   INSIDE `.lineupControls`, so `button` also caught **"Game rules ▾"** — a bare 12px disclosure
+   link with `padding: 0`, in a 6px-gap settings column — and took it from **16px to 44px**, a tall
+   empty hit area around small text that nobody drew and no mockup showed. `/review` 2026-08-27.
+   ⚠ The rendered check could not have caught it: that menu only exists once Auto-fill is OPEN, and
+   the sweep opens a URL and measures — it cannot click. **A toolbar rule written as
+   `<wrapper> button` reaches into every menu that wrapper opens.** Naming `.btnSecondary` and
+   `.btnPrimary` covers exactly the four real toolbar actions (Auto-fill, Templates, Reshuffle,
+   Generate) and leaves the disclosure link alone. */
+@media (max-width: 768px) {
+  .lineupControlLabel select,
+  .lineupControlLabel input,
+  .lineupControls .btnSecondary,
+  .lineupControls .btnPrimary,
+  .lineupReconcileActions button { min-height: var(--tap-min, 44px); }
+}
+
 .lineupTableWrap {
   overflow-x: auto;
   border: 1px solid var(--border-2);
@@ -6741,6 +6791,46 @@ a.oneChip:hover { border-color: currentColor; }
   box-sizing: border-box;
 }
 
+/* ⚠⚠ THE GRID IS A TOUCH SURFACE UP TO 768, NOT UP TO 640 (owner ruling 2026-08-27, from the
+   true-size mockups at `docs/projects/active/COACH_TABLET_BAND_MOCKUP.html`).
+
+   THE THREE RULES BELOW USED TO LIVE IN THE `max-width: 640px` BLOCK THAT FOLLOWS. Nothing about
+   them changed except the width they answer to, and that is the whole point: the product had
+   already decided a players × innings grid is something a coach TAPS — it raised the cell to the
+   floor, dropped the two gestures that cannot survive a touch screen, and moved reordering to the
+   order view. It just gated that decision at 640, so a coach on an iPad got the MOUSE arrangement
+   of a screen the product itself calls a finger screen. `check:layout` measures 768 as a touch
+   width; the lineup builder is the between-innings tool most likely to be held standing up at a
+   field; and the two lineup editors were carrying 192 of the 318 tap-floor findings the six
+   newly-swept drill-ins returned, all from these three controls.
+
+   ⚠ MEASURED BEFORE IT WAS BUILT, because the brief predicted this would make the grid
+   "considerably wider" and it does not: at 768 the table is 736px in both arrangements and gains
+   NO sideways scroll — the cell's extra 6px comes out of the slack the player column was
+   absorbing. What it costs is height (586px → 730px) and therefore two rows above the fold. The
+   cell also becomes legible: at 58px "Bench" is clipped against its own chevron in all 72 cells.
+
+   ⚠ ONLY THESE THREE MOVE. Everything still in the 640 block below — the swipe hint, the pinned
+   lead columns, the trimmed inning gutters, the narrowed name column — answers a NARROW screen,
+   not a touch screen. At 768 the grid does not overflow, so a scroll hint and a sticky shadow
+   there would be cueing a scroll that never happens. */
+@media (max-width: 768px) {
+  /* Drag-to-reorder is impractical inside a horizontally-scrolling pinned column on
+     touch: a drag and a sideways swipe are indistinguishable at the moment they begin.
+     Chunk C stopped fighting that and MOVED reordering out — the order view is a plain
+     vertical list with nothing competing for the gesture, so press-and-hold drag works
+     there exactly as it does in any phone list. This grid keeps positions only.
+     ⚠ Nothing is stranded by hiding these: the order view's grip and remove are 44px at EVERY
+     width already — verified at 768, not assumed — so both controls are one tab away at full
+     size on exactly the screens this rule takes them off. */
+  .lineupGrip { display: none; }
+  /* The 22px remove ✕ goes with them; removal lives in the order view at full size. */
+  .lineupRemoveBtn { display: none; }
+  /* The per-inning cell reaches the portal's 44px tap floor. `box-sizing: border-box`
+     above makes min-height the FULL box, so this is a real 44 rather than 44 + padding. */
+  .lineupPositionSelect { min-height: var(--tap-min, 44px); width: 64px; }
+}
+
 /* One-time-ish scroll affordance above the grid (mobile only) — the lineup is a
    genuine 2-D grid (players × innings) so it scrolls horizontally; cue it. */
 .lineupScrollHint { display: none; }
@@ -6752,17 +6842,6 @@ a.oneChip:hover { border-color: currentColor; }
     color: var(--text-tertiary);
     font-weight: 600;
   }
-  /* Drag-to-reorder is impractical inside a horizontally-scrolling pinned column on
-     touch: a drag and a sideways swipe are indistinguishable at the moment they begin.
-     Chunk C stopped fighting that and MOVED reordering out — the order view is a plain
-     vertical list with nothing competing for the gesture, so press-and-hold drag works
-     there exactly as it does in any phone list. This grid keeps positions only. */
-  .lineupGrip { display: none; }
-  /* The 22px remove ✕ goes with them; removal lives in the order view at full size. */
-  .lineupRemoveBtn { display: none; }
-  /* The per-inning cell reaches the portal's 44px tap floor. `box-sizing: border-box`
-     above makes min-height the FULL box, so this is a real 44 rather than 44 + padding. */
-  .lineupPositionSelect { min-height: var(--tap-min, 44px); width: 64px; }
   /* A players × innings grid on a 361px screen is a scroller by arithmetic, not by choice — the
      pinned name column plus one inning already fills two thirds of it, which is why the swipe
      hint exists. Trimming the inning gutters buys most of a third inning on the first screenful;
@@ -6892,6 +6971,12 @@ a.oneChip:hover { border-color: currentColor; }
 .lineupMetaText { color: var(--text-tertiary); font-size: 0.9rem; }
 .lineupOnScheduleLink { color: var(--blueprint-light); text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; font-size: 0.9rem; }
 .lineupOnScheduleLink:hover { text-decoration: underline; }
+/* The way from a lineup back to the game it belongs to — 23px, and the only door out of this
+   screen that is not the header arrow. It sits in a summary strip beside the date, so the height
+   is bought with padding rather than type: the sentence must not grow, only the target. */
+@media (max-width: 768px) {
+  .lineupOnScheduleLink { min-height: var(--tap-min, 44px); }
+}
 .lineupReconcileActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
 .lineupNotPlayingTag { font-style: normal; font-size: 0.72rem; color: var(--warning); }
 .lineupPeekFooter { margin-top: 1.1rem; display: flex; justify-content: flex-end; }
@@ -7056,6 +7141,13 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .lineupViewBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.06)); color: var(--text-primary); }
 .lineupViewBtn:disabled { opacity: 0.4; cursor: default; }
+/* ⚠⚠ THIS STRIP IS LOAD-BEARING FOR THE GRID DECISION, WHICH IS WHY IT IS NOT OPTIONAL. Moving
+   the grid's touch arrangement up to 768 takes drag-to-reorder and remove OFF the grid and leaves
+   them in the order view — reachable only through this strip. At 29px a coach could not reliably
+   land on `Batting order`, so the two controls would not have moved, they would have gone. */
+@media (max-width: 768px) {
+  .lineupViewBtn { min-height: var(--tap-min, 44px); }
+}
 .lineupViewBtnActive,
 .lineupViewBtnActive:hover {
   background: rgba(var(--blueprint-blue-rgb), 0.15);
@@ -8252,6 +8344,29 @@ a.oneChip:hover { border-color: currentColor; }
 .devCarryBanner b { color: var(--text-primary); }
 .devCarryActions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
 
+/* The three quiet actions inside a player's Skills & Goals card — Test types, Add focus area,
+   Log a measurable — plus the "Add test" in the shared new-test row. All four are the GLOBAL
+   `btn btn-ghost`, which is 38px and belongs to every surface in the product; this class exists
+   only to give them a floor on the screens this pass owns without moving that global.
+   ⚠ NO VISUAL CHANGE AT REST. It is a tap floor and nothing else — the ghost chrome, the type
+   scale and the icon sizes stay exactly where the component set them. `align-items` is inert
+   because the global `.btn` (app/globals.css) is ALREADY `display: inline-flex; align-items:
+   center`, and all four buttons carry `btn`. It is here only because a CSS-module rule with an
+   EMPTY body is not guaranteed to survive minification, and a dropped rule would make
+   `styles.devSectionAction` resolve to undefined and the floor silently never apply.
+   ⚠ AN EARLIER VERSION OF THIS COMMENT CITED THE WRONG REASON — it claimed all four buttons set
+   `alignItems` inline. Three do; "Add test" in `TestTypesManager` sets only `fontSize`. The
+   conclusion held, the evidence did not (`/review` 2026-08-27), and a future edit that dropped the
+   `btn` class trusting that sentence would have broken the centring silently. **If the reason a
+   rule is safe is a class you did not name, name it.** */
+.devSectionAction { align-items: center; }
+@media (max-width: 768px) {
+  .devSectionAction { min-height: var(--tap-min, 44px); }
+  /* The new-test row's two fields ride with its button — a coach adding a test type types into
+     these and then presses that, and half a raised row is worse than none. */
+  .newTypeRow input { min-height: var(--tap-min, 44px); }
+}
+
 /* ── Warm portal — Stage 1 chrome overrides (gated) ─────────────────────────────
    The token flip in globals.css (html[data-user-theme="warm"] [data-coach-warm-enabled])
    handles every var()-driven colour on the shell + sidebar automatically. These rules cover
@@ -9025,6 +9140,11 @@ a.oneChip:hover { border-color: currentColor; }
   padding: 0.9rem 1rem; border-radius: 12px;
   border: 1px solid var(--border-2); background: var(--card-bg);
 }
+/* What a plan template is called and what it is for — the two fields at the top of the editor.
+   Scoped to this card rather than to `.input`, which is shared portal-wide. */
+@media (max-width: 768px) {
+  .ppHeaderCard .ppField input { min-height: var(--tap-min, 44px); }
+}
 
 /* â”€â”€ Fields â”€â”€ */
 .ppField { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -9071,6 +9191,12 @@ a.oneChip:hover { border-color: currentColor; }
 .ppRestToggle input { width: 1rem; height: 1rem; }
 
 .ppAddRow { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem; }
+/* "Add a block" — a plan template is BUILT out of this button, so it is the one control on the
+   screen a coach presses repeatedly. Its sibling `.ppAddInline` already carries the floor; this
+   row never got one. */
+@media (max-width: 768px) {
+  .ppAddRow button { min-height: var(--tap-min, 44px); }
+}
 .ppAddInline {
   display: inline-flex; align-items: center; gap: 0.3rem;
   align-self: flex-start; min-height: var(--tap-min, 44px);
@@ -9466,6 +9592,18 @@ a.oneChip:hover { border-color: currentColor; }
   margin: 0 0 0.8rem;
 }
 .devSessionWhen .field { min-width: 0; }
+/* An evaluation session's identity fields — what it is called, which event it belongs to, and the
+   note that names the session. Scoped to this screen's own wrappers rather than to `.input` /
+   `.select`, which are the portal's shared primitives (same reasoning as the lineup toolbar above).
+   ⚠ `.devSessionNote` is a SEPARATE selector rather than a third line in the one above, because
+   the note sits OUTSIDE `.devSessionWhen` — it was missed on the first pass for exactly that
+   reason, and survived a run that closed 309 of 318 findings. Two fields that read as one group on
+   screen are not necessarily one group in the markup. */
+@media (max-width: 768px) {
+  .devSessionWhen .field input,
+  .devSessionWhen .field select,
+  .devSessionNote input { min-height: var(--tap-min, 44px); }
+}
 .devSessionEventLink {
   font-size: 0.8rem; color: var(--text-secondary); text-decoration: underline;
   min-height: var(--tap-min, 44px); display: inline-flex; align-items: center;
@@ -9690,6 +9828,14 @@ a.oneChip:hover { border-color: currentColor; }
   padding: 0.2rem 0;
 }
 .tagPickInput::placeholder { color: var(--text-tertiary); }
+/* 28px, in the plan editor's header card. ⚠ SCOPED, not raised on `.tagPickInput` itself: the tag
+   combobox is a shared component that appears on six surfaces, and every one of them wants this
+   floor — but that is the portal-wide touch-debt decision, not this pass's. The practice-plan
+   editor shares this card and moves with it, deliberately: it is the SAME editor, and one of the
+   two reading as tappable while the other does not is worse than both waiting. */
+@media (max-width: 768px) {
+  .ppHeaderCard .tagPickInput { min-height: var(--tap-min, 44px); }
+}
 
 /* Minting a tag is a DIFFERENT act from picking one, so it reads differently — solid, tinted,
    and never mixed in among the suggestions as if it were an existing tag. */
@@ -9952,6 +10098,11 @@ a.oneChip:hover { border-color: currentColor; }
   line-height: 1.5;
   font-family: inherit;
 }
+/* 43px — one pixel short, which is exactly the kind of miss a rendered check exists to catch and
+   a person never would. */
+@media (max-width: 768px) {
+  .scoutBookInput { min-height: var(--tap-min, 44px); }
+}
 .scoutBookInput:focus { outline: none; }
 .scoutBookInput::placeholder { color: var(--text-tertiary); font-style: italic; }
 /* `pre-line` because a book line can legitimately contain newlines and both producers of one
@@ -9995,10 +10146,23 @@ a.oneChip:hover { border-color: currentColor; }
   transition: var(--transition);
 }
 .scoutTagChip:hover { border-color: var(--white-30); color: var(--text-primary); }
+/* 25px × five chips — how an observation gets filed. A coach types the note and then taps one of
+   these, so they are part of the same act as the box above them and want the same floor.
+   `inline-flex` centres the uppercase label in the taller pill; the type scale does not move. */
+@media (max-width: 768px) {
+  .scoutTagChip {
+    display: inline-flex; align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
+}
 /* Active = the rsvpOptionActive recipe (soft tokenized fill + colored border/text), so the
    warm gate re-skins it with no rules of its own — never a solid lime fill with hand-picked ink. */
 .scoutTagChip[data-on="yes"] { background: rgba(var(--success-rgb), 0.16); border-color: var(--success); color: var(--success); }
 .scoutLogSave { margin-left: auto; }
+/* 39px — four short of the floor, and the button that commits the observation. */
+@media (max-width: 768px) {
+  .scoutLogSave { min-height: var(--tap-min, 44px); }
+}
 
 /* Timeline: meetings with observations nested beneath */
 .scoutSeason { margin-bottom: 0.7rem; }
@@ -10073,6 +10237,11 @@ a.oneChip:hover { border-color: currentColor; }
 .scoutPanelLinks { display: flex; justify-content: space-between; gap: 0.6rem; }
 .scoutPanelLink { font-size: 0.8rem; font-weight: 700; color: var(--logic-lime); background: none; border: 0; cursor: pointer; padding: 0; text-decoration: none; }
 .scoutPanelLink:hover { text-decoration: underline; }
+/* 16px — "Same team as…", which merges two opponents into one book. A control that consolidates
+   records should not be the hardest thing on the screen to hit. */
+@media (max-width: 768px) {
+  .scoutPanelLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 /* The capture door in the score-saved confirmation — a quiet link, never a modal. */
 .scoutToastDoor {
   display: inline-flex; align-items: center; gap: 0.35rem;

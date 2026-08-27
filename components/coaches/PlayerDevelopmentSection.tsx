@@ -519,7 +519,7 @@ export default function PlayerDevelopmentSection({
             </span>
           )}
           {canWrite && data.showMeasurables && (
-            <button type="button" className="btn btn-ghost"
+            <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
               style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
               onClick={() => setManageOpen(true)}>
               <Settings2 size={13} /> Test types
@@ -631,7 +631,7 @@ export default function PlayerDevelopmentSection({
             </ul>
           )}
           {canWrite && !goalFormOpen && (
-            <button type="button" className="btn btn-ghost"
+            <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
               style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: '0.55rem 0 1rem' }}
               onClick={() => { setEditingGoalId(null); setGoalFocus(''); setGoalNote(''); setGoalErr(''); setGoalFormOpen(true); }}>
               <Plus size={13} /> Add focus area
@@ -734,7 +734,7 @@ export default function PlayerDevelopmentSection({
             </ul>
           )}
           {canWrite && !logOpen && (
-            <button type="button" className="btn btn-ghost"
+            <button type="button" className={`btn btn-ghost ${styles.devSectionAction}`}
               style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem', margin: '0.55rem 0 1rem' }}
               onClick={() => {
                 setLogOpen(true);

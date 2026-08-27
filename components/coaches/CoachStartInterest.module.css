@@ -72,11 +72,11 @@
   color: var(--text-tertiary);
 }
 
-.labelRequired {
-  color: var(--home-live);
-  font-weight: 700;
-  margin-left: 0.2rem;
-}
+/* ⚖ `.labelRequired` IS RETIRED — DO NOT BRING IT BACK (owner ruling 2026-08-25, portal-wide;
+   `memory/design_decisions.md`; the full reasoning lives on the headstone in coaches.module.css).
+   A required field takes a PLAIN asterisk in the label's own ink — ` *` written inline in the
+   label text. Red in this portal means something has GONE WRONG, and a field is not in error for
+   being required. The rule is deleted rather than merely unused so the next form cannot find it. */
 
 .input,
 .textarea {

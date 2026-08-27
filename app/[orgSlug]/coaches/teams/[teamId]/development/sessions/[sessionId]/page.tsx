@@ -396,7 +396,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
 
       {/* Session note — a label like "post-break testing"; saves on blur/Enter. */}
       {canWrite ? (
-        <div className={styles.field} style={{ maxWidth: 420, margin: '0 0 0.7rem' }}>
+        <div className={`${styles.field} ${styles.devSessionNote}`} style={{ maxWidth: 420, margin: '0 0 0.7rem' }}>
           <label className={styles.label} htmlFor="dev-session-note">Session note (optional)</label>
           <input id="dev-session-note" className={styles.input} type="text" maxLength={200}
             defaultValue={session.note ?? ''} placeholder='e.g. "post-break testing"'

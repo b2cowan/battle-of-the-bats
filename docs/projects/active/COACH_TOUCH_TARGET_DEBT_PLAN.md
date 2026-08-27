@@ -40,6 +40,30 @@ invisible because the fixture the baseline was built from was too empty to rende
 > means the true touch debt is a FLOOR, not a total. Expect this number to rise as fixtures fill out,
 > and do not read a rise as a regression.
 
+## ⚠⚠ 2026-08-27 · a measured restatement, and the number went UP exactly as this file said it would
+
+The 641–768 pass (`COACH_TABLET_BAND_PLAN.md`, ledger §115) touched the shared coaches stylesheet,
+which widens `check:layout` to every screen. That full-portal run returned **175 NEW findings** —
+**none of them caused by that change** (proven by re-measuring every affected screen with the new
+rules switched back off in the browser: caused-by-that-change = 0, while it *removed* sub-floor
+controls elsewhere — the practice-plan editor 71→66 at 768, the Development hub 9→6).
+
+They are **this file’s debt**, newly visible because the UAT fixture has filled out (probe sessions,
+probe plan templates, two sponsors, more staff) and because the shared working copy carries other
+sessions’ in-flight work. That is the reverse-empty-fixture warning below running verbatim: the
+recorded count was always a FLOOR, not a total. **Do not read the rise as a regression, and do not
+baseline them** — §115 deliberately did neither.
+
+**Concentrations worth starting from** (all at 768 unless noted): `coach-staff` 8 controls
+(15–36px), `coach-notifications` (a 28px "Mark all read" plus a real **82px sideways scroll at
+361** and three sub-4.5:1 contrast strings — the only page-overflow in the set, and the one that is
+not merely a tap floor), `coach-practice-plan` 8, `coach-development-templates` 3,
+`coach-fundraisers` / `coach-sponsors-list` (row links at 15–24px), and "Share your season" at
+29px across all five finished-season shelves. The shared header/toolbar family — "Help: …" 34px,
+"Record money" 31px, "Import"/"Export" 33px — recurs across a dozen screens and is the single
+biggest win available here; §115 deferred six of those to this project by name, with reasons
+written into the baseline.
+
 ## What is actually broken
 
 753 entries, but only **345 distinct controls** — the rest is the same control measured across

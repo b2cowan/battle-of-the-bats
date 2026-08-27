@@ -86,18 +86,18 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
           commitment, and your free Coaches Portal stays free.
         </p>
 
-        <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+        <p className={styles.formHint}>* Required</p>
 
         <label className={styles.field}>
-          <span className={styles.label}>Your name <span className={styles.labelRequired}>*</span></span>
+          <span className={styles.label}>Your name *</span>
           <input className={styles.input} type="text" value={name} maxLength={120} onChange={e => { setName(e.target.value); setSaved(false); }} />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>Email <span className={styles.labelRequired}>*</span></span>
+          <span className={styles.label}>Email *</span>
           <input className={styles.input} type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setSaved(false); }} />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>Team or club name <span className={styles.labelRequired}>*</span></span>
+          <span className={styles.label}>Team or club name *</span>
           <input className={styles.input} type="text" value={orgName} maxLength={160} onChange={e => setOrgName(e.target.value)} />
         </label>
         <label className={styles.field}>

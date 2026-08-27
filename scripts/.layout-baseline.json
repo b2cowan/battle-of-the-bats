@@ -1,6 +1,270 @@
 {
   "generated": "2026-08-27T11:24:31.952Z",
   "entries": {
+    "coach-commitment|768|tap-floor|button·Help: Money": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Record money": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Import": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-transactions|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-transactions|390|control-offscreen|button·Around todayJul 27 – Sep 25": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·Last 30 daysJul 27 – Aug 26": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·Last 60 daysJun 27 – Aug 26": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·Last 90 daysMay 28 – Aug 26": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·This monthAug 1–31": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·Last monthJul 1–31": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|button·Whole seasoneverything": {
+      "reason": null,
+      "detail": "96px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|390|control-offscreen|input·To date": {
+      "reason": null,
+      "detail": "88px past the right edge (screen 390px) with no scroller to reveal it"
+    },
+    "coach-transactions|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-transactions|768|tap-floor|button·Rename, merge, or delete your money tags": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|button·Remind all 1": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|button·Remind all 1": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Add Line": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Show Dome Time's payment periods": {
+      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-budget|768|tap-floor|button·Review": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Remind all 1": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Export": {
+      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Set dues for all players": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-dues|768|tap-floor|button·Send due reminders": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Help: Money": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Import": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Export": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-club|768|tap-floor|button·Make a request": {
+      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|361|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|390|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Export": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Add a commitment": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|button·Rename, merge, or delete your money tags": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables|768|tap-floor|a·Player Dues": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Record money": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Import": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Export": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|button·Rename, merge, or delete your money tags": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
+      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
+      "detail": "15px tall (floor 44)"
+    },
     "coach-development-drills|361|tap-floor|button·All 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
@@ -540,10 +804,6 @@
     "coach-roster|390|tap-floor|button·Move Logan Test down": {
       "reason": null,
       "detail": "30px tall (floor 44)"
-    },
-    "coach-schedule|768|tap-floor|button·Add event": {
-      "reason": "As coach-roster Add player — grandfathered desktop height; clears 44 at <=640. Renamed from \"Add Event\" by the phone-symbol aria-label.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-schedule|768|tap-floor|button·Import": {
       "reason": null,
@@ -1325,110 +1585,6 @@
       "reason": "The \"HQ\" of the FieldLogicHQ wordmark. WCAG 1.4.3 exempts text that is part of a logo or brand name, and this segment is deliberately the quietest of the three so the mark reads FIELD-LOGIC-hq. Accepted 2026-08-21 (QA §68 follow-up triage).",
       "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
     },
-    "coach-transactions|361|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables|361|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables|361|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|361|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables-schedule|361|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-transactions|390|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables|390|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables|390|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|390|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables-schedule|390|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-transactions|768|tap-floor|button·Export": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Export": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|button·Add a commitment": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables|768|tap-floor|a·Player Dues": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Import": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|input·<input>": {
-      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Export": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-payables-schedule|768|tap-floor|a·Player Dues": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "15px tall (floor 44)"
-    },
     "coach-accounting|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "34px tall (floor 44)"
@@ -1556,54 +1712,6 @@
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Add Line": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Show Dome Time's payment periods": {
-      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-club|768|tap-floor|button·Export": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-club|768|tap-floor|button·Help: Money": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-club|768|tap-floor|button·Import": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-club|768|tap-floor|button·Make a request": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-depth-chart|1440|contrast|button·Avery A-squad: no. Tap to add.·rgba(70, 55, 30, 0.4)on255,255,255": {
       "reason": null,
@@ -2431,38 +2539,6 @@
     },
     "coach-dues-settlement|768|tap-floor|button·Set dues for all players": {
       "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Export": {
-      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Send due reminders": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Set dues for all players": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "33px tall (floor 44)"
     },
     "coach-fundraiser|768|tap-floor|a·All fundraisers": {
@@ -3765,17 +3841,33 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-commitment|768|tap-floor|button·Help: Money": {
-      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-commitment|768|tap-floor|button·Record money": {
-      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+    "coach-schedule|768|tap-floor|button·Add Event": {
+      "reason": "As coach-roster Add player — grandfathered desktop height; clears 44 at <=640. Name follows the VISIBLE label again (\"Add Event\") since Phase 4b folded this into the shared menu, whose collapseOnPhone aria-label is the label itself — the two had drifted apart in case only.",
       "detail": "31px tall (floor 44)"
     },
-    "coach-commitment|768|tap-floor|button·Import": {
-      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
-      "detail": "33px tall (floor 44)"
+    "coach-lineup-builder|768|tap-floor|button·Help: Lineup builder": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-lineup-template|768|tap-floor|button·Help: Lineup templates": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-template|768|tap-floor|button·Help: Plan templates": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-session|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-opponent|768|tap-floor|button·Help: Opponents": {
+      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-lineup-template|768|tap-floor|button·Save template": {
+      "reason": "DEFERRED, not accepted — SHARED PAGE-HEADER ACTION, same family and same reason as the \"Help:\" entries beside it. \"Save template\" is the shared .btnPrimary in the shared .pageHeaderActions slot, which every coaches page with a primary action uses, so raising it here would either move every page header in the portal or fork this one screen away from the rest. The 641-768 pass raised the controls this screen owns — the lineup grid, the three view tabs, the format and innings selects, the toolbar buttons and the template-name field — and stopped at the header, which is the boundary the commitment page set. Belongs to the portal-wide header/toolbar decision in docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md.",
+      "detail": "31px tall (floor 44)"
     }
   }
 }

@@ -14056,6 +14056,15 @@ screen fails it and names the offending file. It also blanks comments before sca
 that, the thirteen headstones explaining the rule would have satisfied it, which is the shape of a
 guard that passes on its own documentation.
 
+### ➡ THE FOLLOW-ON THIS PASS CREATED
+
+Adding those six screens returned **321 findings, none of them from this change and none at desktop
+width**. They are not fixed here and are deliberately **not baselined** — see
+`COACH_TABLET_BAND_BUILD_PROMPT.md` + `_PM_BRIEF.md`. ⚠ It is **not a fix-list**: ~200 of the 321
+are three controls repeated per player and per inning on the two lineup editors, so the real size
+is ~35 distinct controls — and underneath sits an owner decision about what the 641–768 band means
+to this product.
+
 ### ⚠ What this pass FOUND that was not in its own brief
 
 - **Six of these twelve screens had never been rendered by `check:layout` at all** — not skipped
@@ -14418,3 +14427,203 @@ phase.
 ⚠ **What no automated check covers here:** the sweep renders, it does not type. The editing states —
 a combobox open over the schedule, "Saving…", a refused rename, the unsaved-changes guard — are
 **this walk's job alone**.
+
+## §115 · The 641–768 band — what a tablet is, settled — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/7345c02e-a2bb-4f6c-866b-7e883e442a12`
+>
+> **Checkable walkthrough** — every step below as a real checkbox, a verdict and notes box per
+> part, and a "build summary" button that produces plain text to paste back into the chat. Ticks
+> are saved in the browser as you go, so the walk survives closing the tab.
+>
+> ⚠ **DO THIS ONE ON A TABLET.** Almost every step asks whether a *thumb* can land on something.
+> A mouse pointer passes all of them and tells you nothing.
+
+**Owner ruling 2026-08-27**, approved from the true-size mockups at
+`claude.ai/code/artifact/005d7400-f546-43a2-8d88-f5f020e4f816` (source kept in-repo at
+`docs/projects/active/COACH_TABLET_BAND_MOCKUP.html`). Plan of record:
+`docs/projects/active/COACH_TABLET_BAND_PLAN.md` + `_PM_BRIEF.md`. Build prompt:
+`COACH_TABLET_BAND_BUILD_PROMPT.md`. Design log: `memory/design_decisions.md` 2026-08-27.
+**No migration.** Raised out of §113.
+
+**What changed for a coach.** The coach portal's **touch arrangement now holds up to 768px instead
+of 640px.** On a tablet the lineup grid's inning cells reach the 44px floor and widen enough to
+read "Bench", the grid's drag handle and remove ✕ drop out (reorder and remove live in the
+*Batting order* tab, where they have always been full size), and about forty other controls across
+six screens — a 15px "Preview", a 16px "Same team as…", a 20px "Manage dues →" — become real
+targets. **On a phone and on a laptop nothing changes at all**, which is the point: the tablet is
+being given what the phone already had.
+
+### ⚠⚠ THE QUESTION IN THE BRIEF WAS THE WRONG QUESTION, AND THAT IS THE FINDING
+
+The build prompt asked the owner to decide *"is a 12-player × 6-inning lineup grid a touch
+surface?"* and offered three options. **It is not an open question — the product decided it, built
+the answer and had been shipping it on phones for months.** Below 640px the grid already raised
+every cell to exactly 44px, already removed the grip and the ✕, already pinned the name and already
+moved reordering to the order view. All of it was gated at 640, so an iPad got the **mouse**
+arrangement of a screen the product itself calls a finger screen.
+
+So the decision was never *what a lineup grid is*. It was **where that decision's edge belongs** —
+and shipping arrangement A at 768 while arrangement B runs at 640 means asserting an iPhone has
+fingers and an iPad has a mouse, with the boundary at 640px. Nobody would defend that written down.
+
+### ⚠ MEASURED BEFORE IT WAS BUILT, BECAUSE THE BRIEF'S PREDICTION WAS WRONG
+
+The prompt predicted the grid would become "roughly 530px of rows and considerably wider than it is
+now." Measured in a real browser at 768 by injecting the product's own ≤640 rules: **height
+586 → 730px (+144), width 736 → 736px (+0), and no sideways scroll appears.** The cell's extra 6px
+comes out of slack the player column was absorbing. Cost: **two rows** above the fold (9 → 7).
+Return: sub-floor controls on the page **109 → 13**.
+
+### A · The lineup grid, on a tablet
+
+Lineups → a game → **Positions**. Cells hittable with a thumb; **"Bench" no longer clipped** against
+its own chevron; **no sideways scroll** — all six innings on screen; the grip and ✕ gone from the
+grid; everything above the grid unmoved; about seven players visible before scrolling.
+
+### B · The tab strip — ⚠ load-bearing, and the reason it is not optional
+
+The three view tabs measured **29px**. Moving the grid's touch arrangement up to 768 leaves reorder
+and remove reachable **only** through that strip — at 29px the two controls would not have moved,
+they would have **gone**. Raised to 44px in the same band. Check: land on **Batting order** with a
+thumb, drag a row, confirm the new order survives a switch back to Positions, remove a player with
+the ✕ and confirm they leave the grid too.
+
+### C · The other five screens, and the one beyond them
+
+A lineup template (same editor) · a player's profile (three tabs, Preview, Manage dues →, and the
+three Skills & Goals actions) · a plan template (name, purpose, tag box, Add a block) · an
+evaluation session (date, event picker, session note, and the shared new-test row) · an opponent's
+page (observation box, five filing chips, Save observation, Same team as…).
+
+⚠ **The practice-plan editor moved too, deliberately** — it shares the plan editor's header card,
+and one of the two reading as tappable while the other did not would be worse than both waiting.
+
+### D · The phone — the GRID is untouched, but ~40 controls did grow
+
+⚠⚠ **CORRECTED AFTER `/review` (2026-08-27). This section originally said "nothing on a phone should
+look different", and that was FALSE.** Only the *grid* was verified at phone width and the claim was
+then generalised to the whole change. Every rule here is written at `max-width: 768px`, which
+includes phones — and the six screens' own numbers say so: **37 findings at 361 and 37 at 390 went
+to zero**, so 37 distinct controls got taller on a phone. An improvement (they were under the floor
+there too), but **the mockups were drawn at 768 only, so nobody has looked at any of it at phone
+width** — which is what Part D is now actually for. ⚠ *A media query written for the band you care
+about also applies to every width below it.*
+
+**The grid claim survives and is the narrow thing that was checked:** at 361 it must **still**
+scroll sideways with the batting number and name **pinned** and the swipe hint present — those rules
+were deliberately left at 640. Then **walk Part C again on a phone**: the raised controls should
+read as comfortable, not as bloated rows that pushed the content down. On a laptop none of this
+applies at all.
+
+### E · Six findings survive on purpose, with reasons written down
+
+Five `Help: …` buttons (34px) and `Save template` (31px) — the page header's corner anchor and its
+shared primary-action slot, identical on every screen in the portal. Standing precedent from the
+commitment page: *the shared header and toolbar land on every screen id at once, or it is not the
+fix.* Both are recorded in the baseline **with a full argument**, and belong to
+`COACH_TOUCH_TARGET_DEBT_PLAN.md`.
+
+**⚠ The unexplained share of the baseline did not move: 698 before, 698 after.** Nothing from the
+318 was quietly baselined — **312 fixed, 6 deferred with an argument.** That was the condition the
+build prompt set, and it is the one number worth checking if anyone doubts this pass.
+
+### Result
+
+| | before | after |
+|---|---|---|
+| Findings across the six screens | 318 | **6** |
+| at 361 / 390 / 1440 | 37 / 37 / 0 | **0 / 0 / 0** |
+| at 768 | 244 | **6**, all deferred, all reasoned |
+| Distinct control families | 58 | **6** |
+| Baseline entries with no reason | 698 | **698** |
+
+### F · ⚠⚠ TWO OPEN OWNER DECISIONS — raised by `/review` after the build, deliberately not taken
+
+**1 · IT DOES NOT REACH A CURRENT FULL-SIZE iPAD, AND THAT IS THE HEADLINE.** Measured in portrait
+on the running build: iPad Mini 6 (**744**) and pre-2018 iPads (**768**) get the new arrangement;
+**iPad 9th gen (810), iPad Air / iPad 10th gen (820) and iPad Pro 11" (834) do NOT** — they still
+render 32px cells, the 18px grip and **110 sub-floor controls**. The ceiling came from
+`TAP_FLOOR_MAX_WIDTH`, and the three options put to the owner only ever considered moving it
+**down**; moving it **up** was never on the table. So the PM brief's promise — *a coach can operate
+the lineup builder on a tablet* — currently holds for **small and old tablets only**. ⚠ **If Part A
+fails on the owner's iPad, check the iPad's width before recording a defect** — the walkthrough now
+prints it and says which side of the line the device is on.
+
+**2 · 641–713px SCROLLS WITH THE NAMES SCROLLING AWAY.** Wrapper overflow measured at 73px @641,
+54px @660, 14px @700, **0 from ~714 up** (the table's 680px min-width plus ~34px of shell padding).
+In that slice the grid scrolls sideways while the pinned lead columns and the swipe hint are still
+gated at ≤640 — the two failures those rules exist to prevent. The overflow is **pre-existing**, but
+this pass declared the band a touch band and moved three of the five relevant rules into it. ⚠ Part
+A's own note and the QA walk both said *"at 768 the grid does not overflow, so a hint would cue a
+scroll that never happens"* — **true at 768, false from 641 to 713.** Extend the two rules to that
+boundary or correct the claim; do not leave both standing.
+
+⚠ **The gate cannot see either.** It measures 320/361/390/768/1440 — every width from 391 to 767,
+and everything above 768, is unmeasured by construction. That is how both survived a green run.
+
+### ⚠ What `/review` caught in the build itself (all fixed, gate re-run green)
+
+- **A toolbar rule reached into a menu the sweep cannot open.** `.lineupControls button` had no
+  depth limit, so it also caught **"Game rules ▾"** inside the Auto-fill dropdown — a bare 12px
+  disclosure link with `padding: 0`, in a 6px-gap settings column — and took it **16px → 44px**, a
+  tall empty hit area nobody drew. Verified by measuring with the rule on and off, at 390 **and**
+  768. Now named by class (`.btnSecondary` / `.btnPrimary`), covering the four real toolbar actions
+  and leaving the link at 16px. ⚠ **A rule written as `<wrapper> button` reaches into every menu
+  that wrapper opens**, and a check that opens URLs can never see it.
+- **A comment cited the wrong evidence.** The new marker class was documented as inert because
+  "all four buttons already set `alignItems` inline". Three do; "Add test" sets only `fontSize`.
+  The conclusion held — the global `.btn` is already `inline-flex; align-items: center` — but a
+  future edit dropping `btn` on that button, trusting the sentence, would have broken centring
+  silently. **If the reason a rule is safe is a class you did not name, name it.**
+- Refuted and dropped: a suspected minification risk on the second new class. The rule is never
+  empty, so the failure mode does not apply.
+
+### ⚠ What this pass FOUND that was not in its own brief
+
+- **The brief's inventory was off, and re-deriving it was a condition of starting.** A clean run
+  returned **318, not 321** — a plan template carries 4/4/5, not 5/5/6. The stylesheet writes touch
+  rules at 768 **fifteen** times, not fourteen.
+- **It was TWO problems read as one.** Only **21** of the 58 control families fail solely in the
+  641–768 band (207 findings). The other **37** (111 findings) fail on a phone as well — ordinary
+  touch debt on screens nobody had measured. Answering the tablet question finishes **two** of the
+  six screens, not six. Both piles are closed here; the second never needed the ruling.
+- **A control that fails only where the fixture happens to render it.** The evaluation session's
+  note field sits **outside** the wrapper its two sibling fields share, so the first fix missed
+  it — and that fix still closed **309 of 318**, which is exactly the shape of a miss that reads as
+  success. Caught by re-running the sweep instead of trusting the fix. *Two fields that read as one
+  group on screen are not necessarily one group in the markup.*
+- **A standing copy ruling is being broken on that same screen** — its label reads **"Session note
+  (optional)"**, against the 2026-08-26 *mark required, not optional* ruling. Out of scope for a
+  tap-floor pass, deliberately left alone rather than folded in silently. **Owner call.**
+
+### Gate
+
+Typecheck ✓ · focused lint **0 errors** on every changed file · units **2,633 / 2,633** ✓ ·
+spelling ✓ · CSS-module purity ✓ · demos ✓ (2 presentable) · **no migration**.
+**The six screens: `✓ No new layout findings` at all four widths.**
+
+### ⚠⚠ THE FULL-PORTAL SWEEP EXITS 1 — AND IT IS NOT THIS CHANGE. Read this before reading it as a fail.
+
+Because the coaches stylesheet is shared, the check widens to all 28 coach screens plus marketing.
+That run returns **175 NEW findings, none of them on these six screens** — `coach-notifications`,
+`coach-staff`, `coach-practice-plan`, `coach-fundraisers`, `coach-sponsors-list`, the five
+finished-season shelves and others.
+
+**Proven not-mine two ways, rather than asserted:** every rule this pass adds lives inside
+`max-width: 768px` and only ever *raises* a height, so it cannot apply at 1440 and cannot change a
+box on a screen its selectors do not match; and every affected screen where the selectors *do*
+match was measured twice, once with the new properties switched back off in the browser —
+**caused by this change: 0**, at 390 and 768, on all six screens tested. The change *removes*
+sub-floor controls elsewhere (practice-plan editor 71 → 66 at 768; Development hub 9 → 6).
+
+**What they are:** portal-wide touch debt the baseline never saw, now visible because the UAT
+fixture has filled out (probe sessions, probe plan templates, two sponsors, extra staff) and
+because this shared working copy carries other sessions' in-flight work. `COACH_TOUCH_TARGET_DEBT_PLAN.md`
+predicted exactly this: *"an empty screen also hides RED… the true touch debt is a FLOOR, not a
+total. Do not read a rise as a regression."* ⚠ **Deliberately NOT baselined** — writing a reason
+across 175 findings this pass never examined is the failure the whole project exists to undo. They
+go to the touch-debt project, which now has a measured number to start from.
+
+⚠ **Reported as distinct controls, not findings.** "318 findings fixed" would be theatre when 192
+of them were three controls repeated per player and per inning.

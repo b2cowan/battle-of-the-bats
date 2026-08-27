@@ -3,6 +3,56 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-27 — A TABLET IS A TOUCH DEVICE: the coaches portal's touch arrangement holds to 768, not 640
+
+**Decision (owner, approving the 641–768 pass from true-size mockups opened on a real iPad,
+`claude.ai/code/artifact/005d7400-f546-43a2-8d88-f5f020e4f816`).** Every coach-portal touch
+treatment — the 44px tap floor and the arrangements built around it — applies through the whole
+**641–768** band, not up to 640. `TAP_FLOOR_MAX_WIDTH` in `check-layout-invariants.mjs` stays at
+768; the product moves to meet it. Ledger §115, plan
+`docs/projects/active/COACH_TABLET_BAND_PLAN.md`.
+
+**⚠⚠ THE DURABLE PART IS HOW THE QUESTION WAS WRONG, NOT HOW IT WAS ANSWERED.** The build prompt
+asked whether a 12-player × 6-inning lineup grid *is* a touch surface and drew three options. **The
+product had already decided, built the answer and been shipping it on phones for months** — below
+640 it raised every cell to 44px, removed the 18px grip and 22px ✕, pinned the name and moved
+reordering to the order view, all with the reasoning written down. It just gated that at 640, so an
+iPad got the **mouse** arrangement of a screen the product itself calls a finger screen. **Before
+answering a design question, check whether the codebase already answers it at another
+breakpoint** — an option presented as "most expensive, nobody should believe it until it is drawn"
+turned out to be the shipping design one media query away.
+
+**⚠ THE COST OF A TAP FLOOR IS MEASURED, NEVER ESTIMATED.** The prompt predicted the grid would
+become "roughly 530px of rows and considerably wider than it is now." Rendered at 768 with the
+product's own ≤640 rules injected: **height 586 → 730px, width 736 → 736px, no sideways scroll
+appears** (the cell's extra 6px comes out of slack the player column was absorbing). A prediction
+about pixels that nobody rendered is worth nothing against a screenshot.
+
+**⚠ WHEN A TOUCH ARRANGEMENT MOVES UP A BREAKPOINT, ONLY THE TOUCH RULES MOVE.** The rules that
+answer a NARROW screen — a horizontal-scroll hint, sticky lead columns, trimmed gutters, a capped
+name column — stay where they were. At 768 the grid does not overflow, so a swipe hint there would
+cue a scroll that never happens. **"Touch" and "narrow" are two different questions that happen to
+share a media query on a phone.**
+
+**⚠⚠ HIDING A CONTROL ON TOUCH IS ONLY SAFE IF ITS REPLACEMENT IS ITSELF REACHABLE.** Taking drag
+and remove off the grid left them reachable only through the three view tabs — which measured
+**29px**. Raising them was not a nice-to-have in that pass; without it the two controls would not
+have moved, they would have **gone**. Whenever a control relocates behind a tab, a drawer or a
+second view, **the thing that opens that view inherits the relocated control's floor.**
+
+**⚠ SCOPE A TAP FLOOR TO WHAT THE SCREEN OWNS.** `.input`, `.select` and `.btnSecondary` back many
+sub-floor controls, and stretching them moves every form in the portal — a portal-wide decision
+with a portal-wide sweep behind it (`COACH_TOUCH_TARGET_DEBT_PLAN.md`). Scope to a container the
+screen owns, as `.commitFields` did. **The shared page header stays deferred**: the help "?" and
+the `.pageHeaderActions` primary slot land on every screen id at once or it is not the fix — six
+findings were left, each recorded in the baseline **with a written argument**, and the portal's
+unexplained-entry count did not move (698 before, 698 after).
+
+**⚠ A CSS-MODULE RULE WITH AN EMPTY BODY IS NOT GUARANTEED TO SURVIVE MINIFICATION** — the class
+then resolves to `undefined` and the floor silently never applies. A marker class used only inside
+a media query needs one inert declaration at rest.
+
+---
 ### 2026-08-26 — A MODAL IS FOR A QUESTION, NOT FOR A FIELD — and a record has ONE editor
 
 **Decision (owner, approving Payables Rebuild Part B from
