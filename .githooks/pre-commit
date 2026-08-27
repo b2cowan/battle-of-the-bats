@@ -34,4 +34,15 @@ datefiles=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$')
 pdffiles=$(git diff --cached --name-only --diff-filter=ACM)
 [ -n "$pdffiles" ] && { node --import ./scripts/lib/pdf-node-loader.mjs scripts/check-pdf-documents.mjs --staged $pdffiles || exit 1; }
 
+# Lockfile-sync guardrail — block a dependency change committed WITHOUT its regenerated lockfile.
+# The Amplify build installs with pnpm's CI default of --frozen-lockfile, so a package.json that
+# names a package the lockfile has never heard of fails the deploy at install, before a line is
+# compiled. It cannot be seen locally: the machine that added the package already has it in
+# node_modules, and nothing else here reads the lockfile. That is dev job 267 (2026-08-27) —
+# pdfjs-dist committed on its own, red build ninety seconds in.
+#
+# Reads the INDEX, not the working tree: the failure mode is a correct working copy where only
+# package.json made it into the commit. Runs in milliseconds, offline, on every commit.
+node scripts/check-lockfile-sync.mjs --staged || exit 1
+
 exit 0
