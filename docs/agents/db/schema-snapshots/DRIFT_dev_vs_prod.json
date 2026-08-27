@@ -1,9 +1,9 @@
 {
-  "generated": "2026-08-26",
-  "total": 4,
+  "generated": "2026-08-27",
+  "total": 5,
   "counts": {
     "tables": 0,
-    "columns": 3,
+    "columns": 4,
     "indexes": 0,
     "constraints": 1,
     "rls": 0
@@ -15,6 +15,10 @@
     },
     {
       "key": "column:only-dev:rep_program_years.opening_balance_from_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_tryout_registrations.last_season_team",
       "sig": ""
     },
     {

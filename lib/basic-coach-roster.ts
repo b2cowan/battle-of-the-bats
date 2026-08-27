@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { isCalendarDate } from './timezone';
 
 /**
  * Master roster for org-less Basic coach teams (free-tier Phase 3, table mig 114).
@@ -121,13 +122,6 @@ function toDbPayload(input: BasicCoachTeamPlayerInput): Record<string, unknown> 
   return out;
 }
 
-/** True for 'YYYY-MM-DD' that also parses to a real calendar date. */
-function isValidDateString(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
-}
-
 /**
  * Contact-email format guard — kept in sync with the announcements recipient
  * filter (`EMAIL_RE` in lib/basic-coach-announcements.ts). Validating here, at
@@ -216,7 +210,7 @@ export function normalizeBasicCoachTeamPlayerBody(
   if (body.notes !== undefined) input.notes = trimmedOrNull(body.notes);
   if (body.dateOfBirth !== undefined) {
     const dob = trimmedOrNull(body.dateOfBirth);
-    if (dob !== null && !isValidDateString(dob)) {
+    if (dob !== null && !isCalendarDate(dob)) {
       return { input, error: 'Date of birth must be a valid date (YYYY-MM-DD).' };
     }
     input.dateOfBirth = dob;
@@ -452,7 +446,7 @@ export function buildTournamentRosterSnapshot(params: {
       dob = master.dateOfBirth;
     } else {
       dob = typeof sel.dateOfBirth === 'string' && sel.dateOfBirth.trim() ? sel.dateOfBirth.trim() : null;
-      if (dob !== null && !isValidDateString(dob)) {
+      if (dob !== null && !isCalendarDate(dob)) {
         return { rows: [], error: `Enter a valid date of birth for ${master.name} (YYYY-MM-DD).` };
       }
     }

@@ -15428,6 +15428,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_tryout_registrations",
+        "pos": 32,
+        "column_name": "last_season_team",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_tryout_rubrics",
         "pos": 1,
         "column_name": "id",
@@ -27300,7 +27309,7 @@
         "kind": "CHECK",
         "table_name": "rep_team_tags",
         "detail": "rep_team_tags_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['game'::text, 'expense'::text, 'focus'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['game'::text, 'expense'::text, 'focus'::text, 'staff'::text, 'equipment'::text]))"
       },
       {
         "kind": "CHECK",

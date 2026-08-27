@@ -1184,6 +1184,14 @@ export interface RepTryoutRegistration {
   playerLastName: string;
   playerDateOfBirth: string | null;
   playerNotes: string | null;
+  /**
+   * Where they played last season, in the family's own words (mig 265) — free text, never a
+   * dropdown of levels (A/AA/AAA/Rep/House mean different things per sport and association, and
+   * this product is sport-neutral). A CLAIM, not a verified fact: the coach's Add player form
+   * pre-fills it from a prior-season ROSTER match and labels it as such, but never locks it.
+   * NULL = nobody was asked (every row the public form or club admin wrote); '' = asked, left blank.
+   */
+  lastSeasonTeam: string | null;
   guardianFirstName: string;
   guardianLastName: string;
   guardianEmail: string;

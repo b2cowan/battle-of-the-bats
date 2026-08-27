@@ -153,15 +153,40 @@
 .input:focus { outline: none; border-color: var(--logic-lime); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+/* ⚖ STICKY ACTION BAR — the coach-portal house rule, brought to this stylesheet. See the fuller
+   note in `TryoutCheckIn.module.css`: `coaches.module.css` pins every panel's button strip and
+   made it automatic in 2026-08-21 (owner-directed: "why didn't you fix all of them?"), but that
+   rule is a `:has()` inside THAT module and CSS modules are scoped, so this file's own copy of the
+   modal shape never received it. This one shape serves the whole tryout flow — the day card, the
+   decision board, evaluators, the rubric, the baseline and the report — so any of their dialogs
+   tall enough to scroll was scrolling its buttons off the bottom.
+
+   ⚠ `padding-bottom: 0` on the panel is load-bearing: a sticky strip pins to the top of the
+   panel's bottom PADDING, not its edge, and hovers one padding-width up without it. */
+.modal:has(.modalActions) { padding-bottom: 0; }
 .modalActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex; gap: 0.5rem; justify-content: flex-end;
-  margin-top: 1.25rem;
+  margin: 1.25rem -1.5rem 0;   /* bleed to the side edges (modal side padding = 1.5rem) */
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: #141414;   /* token-exempt: must match .modal's surface exactly, or the strip seams */
 }
 .warnWrap { margin: 0.25rem 0 0.85rem; }
 
 @media (max-width: 640px) {
   .scrim { align-items: flex-end; padding: 0; }
   .modal { max-width: none; border-radius: 14px 14px 0 0; max-height: 90vh; }
+  /* ⚠ Deliberately NOT `display: flex` on the panel — see the note in `TryoutCheckIn.module.css`.
+     The scrim bottom-aligns this sheet and it hugs its content, so the bar is already last; flex
+     would only risk a tall child shrinking instead of scrolling, and this shape serves seven
+     different dialogs. */
+  .modalActions {
+    /* Clear the phone's home indicator, or the gesture bar sits on top of the primary button. */
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ── Live scoreboard (Phase 2B.2) ─────────────────────────────────────────── */
@@ -412,6 +437,12 @@
   background: var(--home-card);
   border-color: var(--home-line);
 }
+/* The sticky action bar is part of the modal surface — a mismatch here reads as a seam across the
+   bottom of the sheet rather than as a divider. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalActions {
+  background: var(--home-card);
+  border-top-color: var(--home-line);
+}
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionRow,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scoreRow {
   background: var(--home-card);
@@ -556,6 +587,10 @@
   color: var(--logic-lime);
   font-family: inherit;
 }
+/* "Last season: Oakville Rangers 11U" — context on the row, not a control. Reads as ordinary meta
+   text rather than borrowing the note toggle's lime, because nothing here is tappable. */
+.lastSeason { margin-left: 0.6rem; font-size: 0.74rem; }
+
 .familyNote {
   margin-top: 0.35rem;
   font-size: 0.78rem; line-height: 1.45;

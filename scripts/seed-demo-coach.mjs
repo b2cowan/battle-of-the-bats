@@ -712,6 +712,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   const registrationRows = TRYOUT_CANDIDATES.map((c, i) => ({
     id: randomUUID(), program_year_id: pyId, team_id: team.id, org_id: org.id,
     player_first_name: c.first, player_last_name: c.last,
+    // The public form requires this, and the printed check-in sheet's Age column is computed from
+    // it — without it the demo's own paper prints 28 blank cells. Derived from the season, not
+    // hard-coded; see the note beside `birthDates`.
+    player_date_of_birth: state.birthDates[i],
     guardian_first_name: c.guardianFirst, guardian_last_name: c.guardianLast,
     guardian_email: demoGuardianEmail(c.last),
     status: 'pending_review', submitted_at: state.submittedAtIso[i],

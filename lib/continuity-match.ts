@@ -90,7 +90,7 @@ function normName(n: string | null): string {
 }
 
 /** Both first+last present and equal after normalization. */
-function strongNameMatch(a: ContinuityIdentity, b: ContinuityIdentity): boolean {
+export function strongNameMatch(a: ContinuityIdentity, b: ContinuityIdentity): boolean {
   const af = normName(a.firstName), bf = normName(b.firstName);
   const al = normName(a.lastName), bl = normName(b.lastName);
   return af !== '' && al !== '' && af === bf && al === bl;
@@ -152,4 +152,52 @@ export function matchPriorIdentities(
   }
   // high first, then possible — stable within tiers (caller's pool order = season order).
   return matches.sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === 'high' ? -1 : 1));
+}
+
+/**
+ * Of everything the matcher found, the ONE prior season that may PRE-FILL "last season's team" on
+ * the coach's Add player form — or null, meaning the coach types it themselves.
+ *
+ * The field is stored as the FAMILY'S CLAIM about their own history and the form captions a filled
+ * value "Filled from last season", so the bar is not "we probably know this person" — it is "we can
+ * STATE this". Two conditions, and each blocks a different way of writing a sentence nothing
+ * supports:
+ *
+ *  · **`roster`, not `registration`.** A prior REGISTRATION means they tried out and did not make
+ *    it. Pre-filling the team's name for them would tell the coach that a child they CUT played for
+ *    the team — and would file that as something the family said.
+ *
+ *  · **A STRONG NAME MATCH — first AND last, both present, both equal.** ⚠ This is deliberately
+ *    NOT `confidence === 'high'`, and the difference is the whole point. `high` is reached by
+ *    `exact DOB + (email OR strong name)`, so a SIBLING WHO SHARES A BIRTHDAY AND THE FAMILY EMAIL
+ *    ADDRESS — twins — reaches `high` with a completely different first name. Filtering on the tier
+ *    reads like the careful choice and lets exactly the wrong case through. The name is what tells
+ *    two children of one family apart, so the name is what this asks about.
+ *
+ *  Nothing further is needed: every match in the list already carries an exact birth-date match or
+ *  a guardian-email match (they are the only two ways into the tiers at all), so "same full name
+ *  AND one hard identifier" is the complete condition.
+ *
+ * ⚠ **THE MOST RECENT QUALIFYING SEASON WINS, and that needs `seasons` to be reliable.** A player
+ * who was on the roster for three years in a row produces three equally-good matches, and the
+ * caller captions the answer *"Filled from 2023 Season"*. Picking the first match in list order
+ * would make that caption depend on the order Postgres happened to return rows in — the prior-pool
+ * query carries no `ORDER BY` — so a coach could be told a returning player last played in a season
+ * two years before the one they actually did. The value itself is the same either way (it is this
+ * team's own name), but the sentence beside it is a claim, and this field's whole discipline is
+ * that its claims are true. Pass the team's program years to rank by; omit them and it falls back
+ * to list order, which is only safe when a caller knows there can be one match.
+ *
+ * Lives here rather than in the route so the rule is testable on its own and has one home.
+ */
+export function priorRosterSeasonForFill(
+  current: ContinuityIdentity,
+  matches: ContinuityMatch[],
+  seasons?: { id: string; year: number }[],
+): ContinuityMatch | null {
+  const eligible = matches.filter(m => m.prior.kind === 'roster' && strongNameMatch(current, m.prior));
+  if (eligible.length <= 1 || !seasons) return eligible[0] ?? null;
+  const yearOf = new Map(seasons.map(s => [s.id, s.year]));
+  return eligible.reduce((best, m) =>
+    (yearOf.get(m.prior.programYearId) ?? -Infinity) > (yearOf.get(best.prior.programYearId) ?? -Infinity) ? m : best);
 }

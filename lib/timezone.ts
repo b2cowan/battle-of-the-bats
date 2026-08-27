@@ -305,6 +305,25 @@ export function parseDateOnlyParts(value: string | null | undefined): { y: numbe
 }
 
 /**
+ * True for a `YYYY-MM-DD` that is also a REAL calendar day — so `2015-02-30` and `2015-13-01` are
+ * rejected, not just misshapen strings. Date-only columns are `date` in Postgres, and a value that
+ * merely LOOKS right reaches the driver as an error the caller cannot attribute to a field.
+ *
+ * ⚠ The `T00:00:00Z` is required and is not the trap this module warns about elsewhere: bare
+ * `new Date('2026-07-16')` is the ambiguous form. Stamping Z makes the round trip exact, which is
+ * the whole technique — a date the calendar does not have comes back as a different string.
+ *
+ * Lives HERE beside `parseDateOnlyParts`, which its own note says was extracted to end precisely
+ * this duplication; it had been hand-rolled in the Basic-coach roster and again on the coaches'
+ * tryout intake.
+ */
+export function isCalendarDate(value: string | null | undefined): boolean {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
+/**
  * "2026-09-30" → "30 Sep". Day first, and no year — for a narrow column heading where the season
  * already supplies the year and every character costs a phone some width.
  *

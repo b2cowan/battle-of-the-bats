@@ -1857,6 +1857,8 @@ export interface TryoutDayState {
   sessions: Array<{ key: string; label: string; date: string; start: string; end: string; startsAtIso: string; endsAtIso: string }>;
   /** ISO instants for registration submissions, oldest first, one per candidate. */
   submittedAtIso: string[];
+  /** `YYYY-MM-DD` per candidate, same order. See the note on where these come from. */
+  birthDates: string[];
   checkedInAtIso: string;
   evaluatorExpiryIso: string;
 }
@@ -1883,6 +1885,22 @@ export function resolveTryoutDayState(now: Date): TryoutDayState {
     ],
     submittedAtIso: TRYOUT_CANDIDATES.map((_, i) =>
       at(orgDateWithOffset(now, -14 + Math.floor(i / 2)), `${String(8 + (i % 12)).padStart(2, '0')}:${i % 2 === 0 ? '10' : '40'}`)),
+    /**
+     * ⚠ EVERY CANDIDATE NEEDS ONE, and the demo went without for months. These 28 arrive through
+     * the PUBLIC tryout form, which REQUIRES a date of birth — so a seeded world where all 28 have
+     * none was a state the product cannot produce, and it showed: the printed check-in sheet's Age
+     * column is computed from this, so a prospect who printed the demo's own sheet got 28 blank
+     * cells and no way to know the product fills them in.
+     *
+     * ⚠ DERIVED FROM THE SEASON, NEVER HARD-CODED — the whole demo is anchored to the org wall
+     * clock, and a literal birth year would quietly turn an 11U tryout into a tryout for
+     * thirteen-year-olds a couple of years from now. `year` is the season being chosen (next
+     * season), so `year - 11` is the birth year of a child who turns 11 during it. Months and days
+     * are spread deterministically, and the day is capped at 27 so no index can land on a date that
+     * does not exist in February.
+     */
+    birthDates: TRYOUT_CANDIDATES.map((_, i) =>
+      `${year - 11}-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 27) + 1).padStart(2, '0')}`),
     checkedInAtIso: at(today, '08:45'),
     evaluatorExpiryIso: at(tomorrow, '23:00'),
   };

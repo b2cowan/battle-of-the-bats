@@ -124,19 +124,84 @@
 .modalTitle { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
 .field { margin-bottom: 0.85rem; }
 .label { display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
-.input {
+.input,
+.textarea {
   width: 100%; background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
   padding: 0.6rem 0.75rem; color: var(--white-90); font-size: 0.9rem; box-sizing: border-box;
+  font-family: inherit;
 }
-.input:focus { outline: none; border-color: var(--logic-lime); }
+.input:focus,
+.textarea:focus { outline: none; border-color: var(--logic-lime); }
+/* The note box is an .input that grows. Everything it shares lives above, so a second copy of
+   the field styling cannot drift away from the first. */
+.textarea { resize: vertical; min-height: 4.5rem; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.modalActions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.25rem; }
+/* ⚖ STICKY ACTION BAR — the coach-portal house rule, brought to this stylesheet.
+   `coaches.module.css` pins every panel's button strip so Save stays on screen while a long form
+   scrolls, and made it automatic in 2026-08-21 (owner-directed, on seeing a partial fix: "why
+   didn't you fix all of them?"). That rule is a `:has()` selector inside THAT module, and CSS
+   modules are scoped — this file holds its own copy of the modal shape, so the fix never reached
+   it. Nobody noticed while Add player was three fields and could not scroll.
+
+   ⚠ `padding-bottom: 0` on the panel is load-bearing, not tidying. A sticky strip inside a
+   scrolling panel pins to the top of the panel's bottom PADDING, not to its edge, so it hovers
+   one padding-width up with bare background beneath it (measured at 25px on the money sheet that
+   first exposed this). Killing the padding lands it on the edge; the bottom bleed then has
+   nothing to bleed into and is omitted with it. */
+.modal:has(.modalActions) { padding-bottom: 0; }
+.modalActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex; gap: 0.5rem; justify-content: flex-end;
+  margin: 1.25rem -1.5rem 0;   /* bleed to the side edges (modal side padding = 1.5rem) */
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: #141414;   /* token-exempt: must match .modal's surface exactly, or the strip shows a seam */
+}
+
+/* ⚖ NO `.required` CLASS HERE, DELIBERATELY. The required marker is a PLAIN asterisk written
+   inline in the label text (` *`), exactly as `CoachStartInterest`/`HeadCoachEditor` write it —
+   `.labelRequired` was RETIRED portal-wide (owner 2026-08-25) and deleted rather than left unused
+   precisely so the next form could not find it. A class + wrapper span for the asterisk is that
+   same abstraction under a new name. Only the player's first name gates the save, so it is the
+   only marked field; nothing carries an "optional" tag, because optional is a field's resting
+   state and tagging every row hides the one that matters (owner 2026-08-26). */
+
+/* "More details" — the reveal that keeps the walk-up two fields and one button while giving the
+   coach entering a squad in advance the whole record. The line NAMES what is behind it rather
+   than saying "more": a coach who never notices it keeps entering thin records, so the label is
+   the mitigation for the option's one real cost. Sized to clear the 44px tap floor — this is a
+   glove-and-sunlight surface. */
+.moreToggle {
+  display: flex; align-items: center; gap: 0.4rem;
+  width: 100%; min-height: 44px; margin: 0.15rem 0 0.85rem;
+  padding: 0.6rem 0; background: none; border: none; cursor: pointer;
+  text-align: left; font-size: 0.82rem; font-weight: 600;
+  color: rgba(255,255,255,0.55);
+}
+.moreToggle:hover { color: var(--white-90); }
+.moreChevron { flex: none; display: inline-flex; transition: transform 0.15s; }
+.moreChevronOpen { transform: rotate(90deg); }
+
+/* Where a pre-filled value came from. Quiet on purpose — it is a provenance note under a box the
+   coach may overwrite, not an instruction. */
+.fieldNote { font-size: 0.72rem; color: rgba(255,255,255,0.42); margin: 0.3rem 0 0; }
 
 @media (max-width: 640px) {
   .scrim { align-items: flex-end; padding: 0; }
   .modal { max-width: none; border-radius: 14px 14px 0 0; }
   .row2 { grid-template-columns: 1fr; }
+  /* ⚠ Deliberately NOT `display: flex` on the panel here, unlike the house rule in
+     `coaches.module.css`. That rule adds a flex column so a short form's bar still reaches the
+     sheet's bottom edge — but those sheets are stretched to a minimum height, and this one is
+     not: the scrim bottom-aligns it and it hugs its content, so the bar is already last. Adding
+     flex would only introduce the risk that a tall child shrinks instead of scrolling. */
+  .modalActions {
+    /* Clear the home indicator, or the phone's gesture bar sits on top of Add & check in. */
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
@@ -177,9 +242,25 @@
 
 /* Search + walk-up inputs: warm paper field, ink text, hairline border (olive focus ring is automatic) */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .search,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .textarea {
   background: var(--home-paper);
   border-color: var(--home-line);
+  color: var(--home-ink);
+}
+/* The sticky action bar is part of the modal surface, so it takes the modal's warm paper — a
+   mismatch here reads as a seam across the bottom of the sheet rather than as a divider. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalActions {
+  background: var(--home-card);
+  border-top-color: var(--home-line);
+}
+/* The reveal + its provenance note. The required asterisk needs no rule — it is inline in the
+   label text and inherits its ink, which the warm block above already moves to --home-ink-soft. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moreToggle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .fieldNote {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moreToggle:hover {
   color: var(--home-ink);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn {

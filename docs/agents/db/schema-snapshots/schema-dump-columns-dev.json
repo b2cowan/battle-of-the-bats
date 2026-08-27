@@ -15426,6 +15426,15 @@
     "ordinal_position": 31
   },
   {
+    "table_name": "rep_tryout_registrations",
+    "column_name": "last_season_team",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
     "table_name": "rep_tryout_rubrics",
     "column_name": "id",
     "data_type": "uuid",

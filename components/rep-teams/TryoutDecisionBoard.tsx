@@ -23,6 +23,9 @@ interface Candidate {
   hasGuardianEmail?: boolean;
   isCheckedIn?: boolean;
   playerNotes?: string | null;
+  /** Where the family says they played last season — free text, and a CLAIM rather than a verified
+   *  fact. Only the coach's Add player form asks, so most candidates carry null. */
+  lastSeasonTeam?: string | null;
   /** Each category's cross-evaluator average, keyed by the scorecard's category key. */
   categoryAverages?: Record<string, number | null>;
   /** What each evaluator, alone, made of this player — highest first. The reason the panel
@@ -543,6 +546,13 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
                       aria-expanded={notesOpenId === c.registrationId}>
                       {notesOpenId === c.registrationId ? '▾' : '▸'} family&apos;s note
                     </button>
+                  )}
+                  {/* Where they played last season (mig 265) — shown OUTRIGHT, not behind a tap
+                      like the note. It is one short line, and a disclosure for four words costs
+                      more attention than it saves. Deliberately worded as a report of what was
+                      said: it is the family's claim, and nothing here has verified it. */}
+                  {c.lastSeasonTeam && (
+                    <span className={styles.lastSeason}>Last season: {c.lastSeasonTeam}</span>
                   )}
                 </div>
                 {notesOpenId === c.registrationId && hasFamilyNote && (

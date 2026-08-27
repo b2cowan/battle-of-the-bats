@@ -101,6 +101,10 @@ export const GET = withObservability(async (_req: Request,
         isCheckedIn: reg?.isCheckedIn ?? false,
         // What the family wrote at signup. No longer gated: the coach is never blind.
         playerNotes: reg?.playerNotes ?? null,
+        // Where they say they played last season (mig 265). Sits beside the note on the row for
+        // the same reason: it is context for the decision, not a number that feeds the ranking.
+        // Only the coach's Add player form collects it, so it is null for most candidates.
+        lastSeasonTeam: reg?.lastSeasonTeam ?? null,
         // The breakdown's second half; the per-category averages already on the ranked row are
         // the first. Empty for a candidate nobody scored, which the board renders as its own
         // sentence rather than an empty panel.

@@ -12,6 +12,8 @@ import {
   getPriorContinuityIdentities,
 } from '@/lib/db';
 import { matchPriorIdentities, type ContinuityKind } from '@/lib/continuity-match';
+import { isCalendarDate } from '@/lib/timezone';
+import { splitTypedName } from '@/lib/coach-roster-name';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
@@ -102,8 +104,42 @@ export const GET = withObservability(async (_req: Request,
   return NextResponse.json({ isAnonymous: tryout?.isAnonymous ?? true, candidates, returning: returningByCandidate });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-candidates' });
 
-// Walk-up add — a candidate who shows up without registering. Player name is enough; guardian
-// details (stored empty for now) can be filled in later. Checked in on add.
+/** Trim + cap one optional text field. `''` for anything that isn't a usable string. */
+function text(v: unknown, max: number): string {
+  return typeof v === 'string' ? v.trim().slice(0, max) : '';
+}
+
+/**
+ * ONE "Guardian name" box on the coach's form, TWO NOT NULL columns underneath.
+ *
+ * The club-admin door asks for first and last separately and the record keeps them apart, but at a
+ * check-in desk that is two taps for one fact — the approved form (Option B, 2026-08-26) asks once.
+ * `splitTypedName` is the shared rule — first token, then everything else, so "Sarah Van Der Berg"
+ * keeps its surname whole and a single word is a first name with an empty last name (exactly what
+ * this path has always written). ⚠ Note the repo also holds the OPPOSITE convention for a legacy
+ * back-compat path; see that helper's warning. The caps stay here because they are this table's.
+ */
+function splitGuardianName(full: string): { first: string; last: string } {
+  const { first, last } = splitTypedName(full);
+  return { first: first.slice(0, 80), last: last.slice(0, 80) };
+}
+
+/**
+ * Add a player to the tryout — a walk-up at the desk, or (the commoner case, and the reason the
+ * button stopped saying "Add walk-up") a coach entering a squad they took registrations for
+ * outside FieldLogicHQ.
+ *
+ * ⚠ THE FIELD LIST HERE IS THE POINT OF THE 2026-08-26 CHANGE. It used to take a name and an
+ * email, which left the coach — the person actually running the tryout — with a thinner door into
+ * the record than either the public form or the club-admin screen, and BROKE THREE SHIPPED
+ * FEATURES for anyone who used it: the printed check-in sheet's Age column (computed from date of
+ * birth) printed blank, the decision board's "no email on file — reach them by phone" flag pointed
+ * at a phone number there was nowhere to record, and the board's "family's note" could never
+ * exist. Confident returning-player matching also needs the birth date. Do not narrow this back.
+ *
+ * Checked in on add — whoever the coach is typing is standing in front of them or has already been
+ * accounted for.
+ */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -113,14 +149,30 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
-  const first = typeof body.playerFirstName === 'string' ? body.playerFirstName.trim().slice(0, 80) : '';
-  const last = typeof body.playerLastName === 'string' ? body.playerLastName.trim().slice(0, 80) : '';
+  const first = text(body.playerFirstName, 80);
+  const last = text(body.playerLastName, 80);
   if (!first) return NextResponse.json({ errors: { playerFirstName: 'Player first name is required' } }, { status: 400 });
 
-  const guardianEmail = typeof body.guardianEmail === 'string' ? body.guardianEmail.trim().slice(0, 200) : '';
+  const guardianEmail = text(body.guardianEmail, 200);
   if (guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)) {
     return NextResponse.json({ errors: { guardianEmail: 'Enter a valid email address' } }, { status: 400 });
   }
+
+  // ⚠ Validated HERE rather than left to Postgres. The column is `date`; a malformed string is a
+  // driver error, which reaches the coach as "Failed to add" with no clue which box is wrong.
+  // `isCalendarDate` checks the shape AND that it is a real day, so 2015-02-30 is caught too.
+  const dob = text(body.playerDateOfBirth, 10);
+  if (dob && !isCalendarDate(dob)) {
+    return NextResponse.json({ errors: { playerDateOfBirth: 'Enter the date as YYYY-MM-DD' } }, { status: 400 });
+  }
+
+  const guardian = splitGuardianName(text(body.guardianName, 160));
+  // ⚠ NULL ≠ '' on this column (mig 265), and THIS DOOR NEVER WRITES NULL. The distinction is
+  // "was anybody asked": the public form and the club-admin screen do not carry this field at all,
+  // so their rows are NULL; this form does carry it, so a blank here is a real answer — asked, left
+  // blank — and must be stored as ''. Coalescing it to NULL (as this line first did) made the empty
+  // string unreachable and quietly turned a documented distinction into one the data can never show.
+  const lastSeasonTeam = text(body.lastSeasonTeam, 120);
 
   const registration = await createRepTryoutRegistration({
     programYearId: r.programYear.id,
@@ -128,11 +180,15 @@ export const POST = withObservability(async (req: Request,
     orgId: r.orgId,
     playerFirstName: first,
     playerLastName: last,
-    // guardian details unknown at walk-up; stored empty (NOT NULL), filled in later
-    guardianFirstName: '',
-    guardianLastName: '',
+    playerDateOfBirth: dob || null,
+    playerNotes: text(body.playerNotes, 500) || null,
+    lastSeasonTeam,
+    // Both NOT NULL: a coach who skipped the contact fields writes empty strings, as this path
+    // always has. The club-admin screen fills them in later.
+    guardianFirstName: guardian.first,
+    guardianLastName: guardian.last,
     guardianEmail,
-    guardianPhone: null,
+    guardianPhone: text(body.guardianPhone, 30) || null,
   });
   await updateRepTryoutCheckin(registration.id, { isCheckedIn: true });
 

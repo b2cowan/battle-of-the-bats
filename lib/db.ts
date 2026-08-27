@@ -4406,6 +4406,7 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     playerLastName: r.player_last_name,
     playerDateOfBirth: r.player_date_of_birth,
     playerNotes: r.player_notes,
+    lastSeasonTeam: r.last_season_team ?? null,
     guardianFirstName: r.guardian_first_name,
     guardianLastName: r.guardian_last_name,
     guardianEmail: r.guardian_email,
@@ -4494,6 +4495,9 @@ export async function createRepTryoutRegistration(fields: {
   playerLastName: string;
   playerDateOfBirth?: string | null;
   playerNotes?: string | null;
+  /** Free-text claim about last season (mig 265). Omit entirely when nobody was asked — see the
+   *  column comment: NULL and '' mean different things and only the coach's form writes it. */
+  lastSeasonTeam?: string | null;
   guardianFirstName: string;
   guardianLastName: string;
   guardianEmail: string;
@@ -4515,6 +4519,7 @@ export async function createRepTryoutRegistration(fields: {
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,
       player_notes: fields.playerNotes ?? null,
+      last_season_team: fields.lastSeasonTeam ?? null,
       guardian_first_name: fields.guardianFirstName,
       guardian_last_name: fields.guardianLastName,
       guardian_email: normalizeGuardianEmailRequired(fields.guardianEmail),

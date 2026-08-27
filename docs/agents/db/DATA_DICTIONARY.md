@@ -3076,6 +3076,9 @@ moment it lands.
 <!-- dict:col:rep_tryout_registrations.player_notes -->
 **`player_notes`** (text, nullable) — **guardian-submitted** free text (≤500); **not** carried to the roster (distinct from `admin_notes`).
 
+<!-- dict:col:rep_tryout_registrations.last_season_team -->
+**`last_season_team`** (text, nullable; **mig 265**) — where the player played last season, **in the family's own words**. ⚠ **Free text by decision, not by omission**: a dropdown of levels (A/AA/AAA/Rep/House) means different things per sport and association, and this product is sport-neutral (`lib/sports.ts`), so a fixed list would be wrong for somebody on day one — and a player arriving from another club, the case this field exists for, would have nowhere to put the truth. ⚠ **A CLAIM, never a verified fact.** The coach's Add player form pre-fills it for a returning player and labels it "Filled from last season", but never locks it; the pre-fill fires **only on a prior-season ROSTER match**, never on a prior tryout registration — a candidate who tried out and was cut did not play for the team, and asserting they did would be a false sentence in front of the coach. **NULL ≠ empty string**: NULL = nobody was asked (rows predating the migration, plus the public form and the club-admin form, neither of which collects it); '' = asked and left blank. Written today only by the coach check-in `Add player` path; read on the decision board row beside the family's note.
+
 <!-- dict:col:rep_tryout_registrations.guardian_first_name -->
 <!-- dict:col:rep_tryout_registrations.guardian_last_name -->
 <!-- dict:col:rep_tryout_registrations.guardian_email -->

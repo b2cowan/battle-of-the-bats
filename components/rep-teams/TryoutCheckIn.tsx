@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Plus, Printer } from 'lucide-react';
+import { Check, ChevronRight, Plus, Printer } from 'lucide-react';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import {
@@ -21,7 +21,38 @@ import styles from './TryoutCheckIn.module.css';
  * names for one thing; this is the smaller half of fixing that. Identifiers below keep the old word
  * (renaming them is churn, not a spelling fix) — the CUSTOMER-visible strings are what moved.
  */
-const BLANK_WALKUP = { first: '', last: '', email: '' };
+/**
+ * ⚠ THE FORM IS THE WHOLE RECORD NOW (owner-approved 2026-08-26). It was first/last/email, which
+ * made the COACH'S door into a tryout record thinner than either the public form's or the club
+ * admin's — and quietly broke three shipped features for every player they added: the printed
+ * check-in sheet's Age column (computed from date of birth) printed a blank cell on the coach's own
+ * paper, the decision board's "no email on file — reach them by phone" flag pointed at a number
+ * there was nowhere to record, and the board's "family's note" could never exist. Confident
+ * returning-player matching needs the birth date too. Do not narrow this back to three fields.
+ */
+const BLANK_WALKUP = {
+  first: '', last: '', dob: '', lastSeasonTeam: '',
+  guardianName: '', phone: '', email: '', notes: '',
+};
+
+/**
+ * Does the coach want the extra fields showing? Remembered for the rest of the browser session,
+ * per device, and deliberately NOT server-side — it is a habit, not a setting, and the two people
+ * who use this button want opposite things on the same team account: the walk-up desk wants two
+ * fields and a button, the coach entering a squad in advance wants all eight and opens the reveal
+ * ONCE rather than fourteen times.
+ *
+ * Read on open and written on toggle — both inside user events, never during render, so there is
+ * no server/client hydration disagreement about a value the server cannot see. Every access is
+ * guarded: a browser with site data blocked throws on the accessor itself.
+ */
+const MORE_PREF_KEY = 'flhq.tryout.addPlayer.moreOpen';
+function readMorePref(): boolean {
+  try { return sessionStorage.getItem(MORE_PREF_KEY) === '1'; } catch { return false; }
+}
+function writeMorePref(open: boolean): void {
+  try { sessionStorage.setItem(MORE_PREF_KEY, open ? '1' : '0'); } catch { /* private mode — the session just forgets */ }
+}
 
 interface Props {
   /** The candidate API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-candidates`. */
@@ -97,6 +128,11 @@ export default function TryoutCheckIn({
   const [walkupOpen, setWalkupOpen] = useState(false);
   const [walkup, setWalkup] = useState(BLANK_WALKUP);
   const [savingWalkup, setSavingWalkup] = useState(false);
+  /** Are the extra fields showing? Seeded from the session habit each time the sheet opens. */
+  const [moreOpen, setMoreOpen] = useState(false);
+  /** Which season a pre-filled "Last season's team" came from — the note under the box. Null once
+   *  the coach edits the field themselves: at that point it is their sentence, not ours. */
+  const [priorSeasonLabel, setPriorSeasonLabel] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
   /** Non-null while the coach is choosing WHICH session this sheet is for. */
   const [sessionChoices, setSessionChoices] = useState<RepTryoutSession[] | null>(null);
@@ -221,6 +257,82 @@ export default function TryoutCheckIn({
     }
   }
 
+  /**
+   * "Last season's team", filled in for a player the team already knows.
+   *
+   * ⚠ WHILE THE COACH HAS NOT TOUCHED THE BOX, ITS CONTENTS ARE OURS AND MIRROR THE LOOKUP
+   * EXACTLY — including going back to empty. A fill must never outlive the match that justified
+   * it: correct a typo in the birth date and the player stops being the returning one, at which
+   * point a leftover "Riverdale Ridge 11U" under a note reading "Filled from last season" is a
+   * sentence nothing supports. The moment the coach types in the field it becomes theirs and
+   * nothing here writes to it again.
+   *
+   * The server decides WHETHER to answer — only a high-confidence prior-ROSTER match fills
+   * anything, for reasons set out in that route. This side deliberately does not restate the rule;
+   * it just asks on a debounce and stops asking when there is too little typed to match on.
+   */
+  const priorSeq = useRef(0);
+  const lastSeasonTouched = useRef(false);
+  useEffect(() => {
+    if (!walkupOpen || !moreOpen || lastSeasonTouched.current) return;
+    const seq = ++priorSeq.current;   // bumped on EVERY change, so an in-flight answer to an older
+                                      // spelling of the name can never land on a newer one
+    const enough = !!walkup.first.trim()
+      && (!!walkup.last.trim() || !!walkup.dob || !!walkup.email.trim());
+    const timer = setTimeout(async () => {
+      /**
+       * ⚠ THE TOUCHED CHECK MUST COME FIRST, AND IT USED TO GUARD ONLY THE FILL.
+       *
+       * Typing in the box sets `lastSeasonTouched` and changes `walkup.lastSeasonTeam` — but that
+       * field is deliberately NOT in this effect's dependency list, so it neither re-runs the
+       * effect nor cancels a timer already in flight, and a ref cannot retroactively cancel one
+       * either. So a timer armed while the form was still too thin to match would wake up 500ms
+       * later and blank the box the coach had typed into in the meantime: first name "Jake", tab
+       * down, type "Eagles 12U", and watch it vanish. Once the box is theirs, nothing here writes
+       * to it — clearing included.
+       */
+      if (lastSeasonTouched.current) return;
+      // Too little typed to match on — including after a DELETION, which is why the clear lives
+      // in here on the same debounce rather than firing the instant a character disappears. A
+      // coach clearing a birth date to retype it should not watch the box below flicker.
+      if (!enough) {
+        setWalkup(w => (w.lastSeasonTeam ? { ...w, lastSeasonTeam: '' } : w));
+        setPriorSeasonLabel(null);
+        return;
+      }
+      try {
+        const res = await fetch(`${apiBase}/prior-season`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerFirstName: walkup.first, playerLastName: walkup.last,
+            playerDateOfBirth: walkup.dob, guardianEmail: walkup.email,
+          }),
+        });
+        if (!res.ok) return;   // a suggestion that didn't arrive is not the coach's problem — the
+        const data = await res.json();   // box is there and typing in it was always the fallback
+        if (seq !== priorSeq.current || lastSeasonTouched.current) return;
+        setWalkup(w => ({ ...w, lastSeasonTeam: data.lastSeasonTeam ?? '' }));
+        setPriorSeasonLabel(data.lastSeasonTeam ? (data.seasonLabel ?? null) : null);
+      } catch { /* offline at the field: same answer as above */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [walkupOpen, moreOpen, walkup.first, walkup.last, walkup.dob, walkup.email, apiBase]);
+
+  /** Open the sheet: a clean form, and the reveal in whatever state this session last left it. */
+  function openWalkup() {
+    setWalkup(BLANK_WALKUP);
+    setPriorSeasonLabel(null);
+    lastSeasonTouched.current = false;
+    priorSeq.current++;   // discard any lookup still in flight from the previous player
+    setMoreOpen(readMorePref());
+    setWalkupOpen(true);
+  }
+
+  function toggleMore() {
+    setMoreOpen(open => { writeMorePref(!open); return !open; });
+  }
+
   async function addWalkup() {
     if (!walkup.first.trim()) return;
     setSavingWalkup(true);
@@ -228,11 +340,31 @@ export default function TryoutCheckIn({
       const res = await fetch(apiBase, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerFirstName: walkup.first, playerLastName: walkup.last, guardianEmail: walkup.email }),
+        body: JSON.stringify({
+          playerFirstName: walkup.first,
+          playerLastName: walkup.last,
+          playerDateOfBirth: walkup.dob,
+          lastSeasonTeam: walkup.lastSeasonTeam,
+          // ONE box on this form, two columns underneath — the server splits it. A check-in desk
+          // should not be asked for a guardian's first and last name separately.
+          guardianName: walkup.guardianName,
+          guardianPhone: walkup.phone,
+          guardianEmail: walkup.email,
+          playerNotes: walkup.notes,
+        }),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.errors?.playerFirstName ?? d.error ?? 'Failed to add'); }
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        // Name the FIELD that was rejected. The server validates three of them now, and a bare
+        // "Failed to add" leaves a coach re-reading eight boxes to find the one it meant.
+        const firstError = d.errors && typeof d.errors === 'object'
+          ? Object.values(d.errors as Record<string, string>)[0] : null;
+        throw new Error(firstError ?? d.error ?? 'Failed to add');
+      }
       setWalkupOpen(false);
       setWalkup(BLANK_WALKUP);
+      setPriorSeasonLabel(null);
+      lastSeasonTouched.current = false;
       await load();
       onChanged?.();
     } catch (e: any) {
@@ -367,7 +499,7 @@ export default function TryoutCheckIn({
           onChange={e => setSearch(e.target.value)}
         />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button type="button" className={styles.addBtn} onClick={() => { setWalkup(BLANK_WALKUP); setWalkupOpen(true); }}>
+          <button type="button" className={styles.addBtn} onClick={openWalkup}>
             <Plus size={15} /> Add player
           </button>
           <button type="button" className={styles.addBtn} onClick={printSheet} disabled={candidates.length === 0 || printing}>
@@ -449,18 +581,96 @@ export default function TryoutCheckIn({
             <h3 className={styles.modalTitle}>Add player</h3>
             <div className={styles.row2}>
               <div className={styles.field}>
-                <label className={styles.label}>First name</label>
-                <input className={styles.input} value={walkup.first} maxLength={80} onChange={e => setWalkup(w => ({ ...w, first: e.target.value }))} />
+                {/* The ONLY marked field on this form — it is the only one that gates the save.
+                    ⚖ A plain asterisk written INLINE in the label text, never a span with its own
+                    class: `.labelRequired` was retired portal-wide (owner 2026-08-25) and deleted
+                    so the next form could not find it, and a class + wrapper span is that same
+                    abstraction under a new name. Red in this portal means something has gone
+                    WRONG, and a field is not in error for being required. Nothing else carries an
+                    "optional" tag, because optional is a field's resting state and tagging every
+                    row hides the one that matters (owner 2026-08-26). */}
+                <label className={styles.label} htmlFor="walkup-first">First name *</label>
+                <input id="walkup-first" className={styles.input} required value={walkup.first} maxLength={80} onChange={e => setWalkup(w => ({ ...w, first: e.target.value }))} />
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Last name</label>
-                <input className={styles.input} value={walkup.last} maxLength={80} onChange={e => setWalkup(w => ({ ...w, last: e.target.value }))} />
+                <label className={styles.label} htmlFor="walkup-last">Last name</label>
+                <input id="walkup-last" className={styles.input} value={walkup.last} maxLength={80} onChange={e => setWalkup(w => ({ ...w, last: e.target.value }))} />
               </div>
             </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Guardian email <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
-              <input className={styles.input} type="email" value={walkup.email} maxLength={200} onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} placeholder="Add now or later" />
-            </div>
+
+            {/* ⚠ THE LINE NAMES WHAT IS BEHIND IT rather than saying "more", and that wording is
+                the mitigation for this design's one real cost: a coach who never notices the
+                reveal goes on entering thin records. (Why the reveal exists at all is on
+                `MORE_PREF_KEY` above.) */}
+            <button
+              type="button"
+              className={styles.moreToggle}
+              onClick={toggleMore}
+              aria-expanded={moreOpen}
+              aria-controls="walkup-more"
+            >
+              <span className={`${styles.moreChevron} ${moreOpen ? styles.moreChevronOpen : ''}`} aria-hidden>
+                <ChevronRight size={14} />
+              </span>
+              <span>More details — birthdate, last season&apos;s team, contact</span>
+            </button>
+
+            {moreOpen && (
+              <div id="walkup-more">
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="walkup-dob">Date of birth</label>
+                  {/* Not decoration: the printed check-in sheet's Age column is computed from
+                      this, and confident returning-player matching needs it. */}
+                  <input id="walkup-dob" className={styles.input} type="date" value={walkup.dob} onChange={e => setWalkup(w => ({ ...w, dob: e.target.value }))} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="walkup-last-season">Last season&apos;s team</label>
+                  {/* ⚠ FREE TEXT, never a dropdown of levels — A/AA/AAA/Rep/House mean different
+                      things in different sports and associations, and a fixed list would be wrong
+                      for somebody on day one. Pre-filled for a returning player and always
+                      editable: it is the family's claim, not a verified fact. */}
+                  <input
+                    id="walkup-last-season"
+                    className={styles.input}
+                    value={walkup.lastSeasonTeam}
+                    maxLength={120}
+                    placeholder="Club and age group"
+                    onChange={e => {
+                      lastSeasonTouched.current = true;
+                      setPriorSeasonLabel(null);   // theirs now — the provenance note goes with it
+                      setWalkup(w => ({ ...w, lastSeasonTeam: e.target.value }));
+                    }}
+                  />
+                  {priorSeasonLabel && (
+                    <p className={styles.fieldNote}>
+                      Filled from {priorSeasonLabel} — edit if it&apos;s wrong.
+                    </p>
+                  )}
+                </div>
+                <div className={styles.field}>
+                  {/* One box, split into the record's two name columns on save. */}
+                  <label className={styles.label} htmlFor="walkup-guardian">Guardian name</label>
+                  <input id="walkup-guardian" className={styles.input} value={walkup.guardianName} maxLength={160} onChange={e => setWalkup(w => ({ ...w, guardianName: e.target.value }))} />
+                </div>
+                <div className={styles.field}>
+                  {/* Above the email on purpose: the decision board tells a coach with no address
+                      on file to "reach them by phone", and until now there was nowhere to have
+                      written the number down. */}
+                  <label className={styles.label} htmlFor="walkup-phone">Phone</label>
+                  <input id="walkup-phone" className={styles.input} type="tel" value={walkup.phone} maxLength={30} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, phone: e.target.value }))} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="walkup-email">Email</label>
+                  <input id="walkup-email" className={styles.input} type="email" value={walkup.email} maxLength={200} placeholder="Add now or later" onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="walkup-notes">Notes</label>
+                  {/* Surfaces as "family's note" on the decision board, one tap from the row. */}
+                  <textarea id="walkup-notes" className={styles.textarea} rows={2} value={walkup.notes} maxLength={500} placeholder="Anything you want on their row" onChange={e => setWalkup(w => ({ ...w, notes: e.target.value }))} />
+                </div>
+              </div>
+            )}
+
             <div className={styles.modalActions}>
               <button type="button" className="btn btn-ghost" onClick={() => guardedWalkupClose()} disabled={savingWalkup}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={addWalkup} disabled={savingWalkup || !walkup.first.trim()}>

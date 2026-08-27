@@ -34,7 +34,7 @@ function mkReg(over: Partial<RepTryoutRegistration> = {}): RepTryoutRegistration
     id: over.id ?? `reg-${seq}`,
     programYearId: 'py-1', teamId: 'team-1', orgId: 'org-1',
     playerFirstName: 'Player', playerLastName: `#${seq}`,
-    playerDateOfBirth: null, playerNotes: null,
+    playerDateOfBirth: null, playerNotes: null, lastSeasonTeam: null,
     guardianFirstName: 'G', guardianLastName: 'Uardian',
     guardianEmail: 'g@example.com', guardianPhone: null,
     status: 'pending_review', adminNotes: null,

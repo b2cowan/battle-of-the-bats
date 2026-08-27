@@ -1,4 +1,5 @@
 import { getCell } from './import/tabular.ts';
+import { splitTypedName } from './coach-roster-name';
 import type { ParsedImportFile } from './import/types.ts';
 
 /**
@@ -60,13 +61,6 @@ export function blankDraftRow(rowNumber: number): DraftRosterPlayer {
   };
 }
 
-/** Split a name string into a first name and everything else ("Maria de la Cruz" → Maria + de la Cruz). */
-function splitName(name: string): { first: string; last: string } {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { first: '', last: '' };
-  return { first: parts[0], last: parts.slice(1).join(' ') };
-}
-
 /**
  * Read one pasted line. Recognized shapes:
  *   `12 Jordan Smith` · `Jordan Smith 12` · `Jordan Smith` · `Jordan, Smith, 12` · `12<TAB>Jordan<TAB>Smith`
@@ -92,7 +86,7 @@ export function parseRosterLine(line: string, rowNumber: number): DraftRosterPla
       row.playerFirstName = nameParts[0];
       row.playerLastName = nameParts.slice(1).join(' ');
     } else if (nameParts.length === 1) {
-      const { first, last } = splitName(nameParts[0]);
+      const { first, last } = splitTypedName(nameParts[0]);
       row.playerFirstName = first;
       row.playerLastName = last;
     }
@@ -112,7 +106,7 @@ export function parseRosterLine(line: string, rowNumber: number): DraftRosterPla
   } else if (tokens.length > 1 && JERSEY_RE.test(tokens[tokens.length - 1])) {
     row.playerNumber = tokens.pop()!;
   }
-  const { first, last } = splitName(tokens.join(' '));
+  const { first, last } = splitTypedName(tokens.join(' '));
   // "12 12" would otherwise peel the first number as a jersey and leave a player named "12".
   // A name made only of digits is not a name — leave it blank so the row is flagged, not created.
   if (first && !last && JERSEY_RE.test(first)) return row;
@@ -167,7 +161,7 @@ export function rowsFromParsedImportFile(file: ParsedImportFile): DraftRosterPla
     }
     // One combined name column, no separate surname column → split it.
     if (row.playerFirstName && !row.playerLastName && !getCell(source, COLUMN_ALIASES.playerLastName).present) {
-      const { first, last } = splitName(row.playerFirstName);
+      const { first, last } = splitTypedName(row.playerFirstName);
       row.playerFirstName = first;
       row.playerLastName = last;
     }
