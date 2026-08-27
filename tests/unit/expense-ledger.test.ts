@@ -25,7 +25,7 @@ const pay = (over: Partial<PayablePayment> = {}): PayablePayment => ({
 describe('ledgerReversalPreview — what deleting would put back on the books', () => {
   test('an unpaid commitment has posted nothing', () => {
     const standing = commitmentStanding([inst()], []);
-    assert.deepEqual(ledgerReversalPreview(standing, null), { amount: 0, legs: 0, owesFamily: false });
+    assert.deepEqual(ledgerReversalPreview(standing, null), { amount: 0, legs: 0, owesFamily: false, owedByFamily: [] });
   });
 
   test('a paid record quotes exactly its payments, however many', () => {
@@ -53,7 +53,7 @@ describe('ledgerReversalPreview — what deleting would put back on the books', 
   });
 
   test('no standing yet (a row still loading) previews as nothing rather than throwing', () => {
-    assert.deepEqual(ledgerReversalPreview(undefined, null), { amount: 0, legs: 0, owesFamily: false });
+    assert.deepEqual(ledgerReversalPreview(undefined, null), { amount: 0, legs: 0, owesFamily: false, owedByFamily: [] });
   });
 
   test('sums stay exact to the cent', () => {
@@ -61,6 +61,80 @@ describe('ledgerReversalPreview — what deleting would put back on the books', 
       [inst({ amount: 0.3 })],
       [pay({ amount: 0.1 }), pay({ id: 'p2', amount: 0.2 })]);
     assert.equal(ledgerReversalPreview(standing, null).amount, 0.3);
+  });
+
+  /* ── P4 (mig 267): one bill, two kinds of payment ───────────────────────────────────────────
+     The whole reason this preview stopped asking the COST who paid. The cases below are the ones
+     the old cost-level answer got wrong by real money in a confirmation a coach acts on. */
+
+  test('⚠⚠ a PARTLY FRONTED bill gives back only the TEAM’s payments', () => {
+    // The owner's case: $600 entry, a parent pays the $200 deposit direct, the team pays $400.
+    const standing = commitmentStanding(
+      [inst({ amount: 200 }), inst({ id: 'i2', installmentNumber: 2, amount: 400, dueDate: '2026-06-01' })],
+      [
+        pay({ id: 'p1', amount: 200, accountingEntryId: null, paidByPlayerId: 'avery' }),
+        pay({ id: 'p2', amount: 400, paidDate: '2026-06-10' }),
+      ]);
+    const preview = ledgerReversalPreview(standing, null);
+    assert.equal(preview.amount, 400, 'the fronted $200 never left the team’s account');
+    assert.equal(preview.legs, 1);
+    assert.equal(preview.owesFamily, true, 'a household IS owed here even though the cost names nobody');
+  });
+
+  test('⚠ the cost-level answer still claims every payment on it', () => {
+    // mig 234's whole-cost mechanism is the ONE-household case of the same rule, unchanged.
+    const standing = commitmentStanding(
+      [inst({ amount: 300 })],
+      [pay({ amount: 180, accountingEntryId: null }), pay({ id: 'p2', amount: 120, accountingEntryId: null })]);
+    const preview = ledgerReversalPreview(standing, 'avery');
+    assert.equal(preview.amount, 0);
+    assert.equal(preview.legs, 0);
+    assert.equal(preview.owesFamily, true);
+  });
+
+  test('two households fronting one cost are both counted out of the cash figure', () => {
+    const standing = commitmentStanding(
+      [inst({ amount: 500 })],
+      [
+        pay({ id: 'p1', amount: 200, accountingEntryId: null, paidByPlayerId: 'avery' }),
+        pay({ id: 'p2', amount: 150, accountingEntryId: null, paidByPlayerId: 'blake', paidDate: '2026-05-20' }),
+        pay({ id: 'p3', amount: 150, paidDate: '2026-05-28' }),
+      ]);
+    assert.equal(ledgerReversalPreview(standing, null).amount, 150);
+  });
+
+  /* ── WHOSE CREDIT GOES — owner ruling 2026-08-27 ────────────────────────────────────────────
+     The delete still goes through; it stops being silent. "A family paid this out of pocket" was
+     true and unactionable — a coach could not tell WHO was about to lose WHAT. */
+
+  test('⚠⚠ it names each household and what they lose, summed per family', () => {
+    const standing = commitmentStanding(
+      [inst({ amount: 500 })],
+      [
+        pay({ id: 'p1', amount: 200, accountingEntryId: null, paidByPlayerId: 'avery' }),
+        // A SECOND payment from the SAME family is ONE debt, not two lines.
+        pay({ id: 'p2', amount: 50, accountingEntryId: null, paidByPlayerId: 'avery', paidDate: '2026-05-18' }),
+        pay({ id: 'p3', amount: 150, accountingEntryId: null, paidByPlayerId: 'blake', paidDate: '2026-05-20' }),
+        pay({ id: 'p4', amount: 100, paidDate: '2026-05-28' }),
+      ]);
+    const preview = ledgerReversalPreview(standing, null);
+    assert.deepEqual(preview.owedByFamily, [
+      { playerId: 'avery', amount: 250 },
+      { playerId: 'blake', amount: 150 },
+    ]);
+    assert.equal(preview.amount, 100, 'and only the team’s own payment comes back as cash');
+  });
+
+  test('a whole cost fronted at COST level names that household too', () => {
+    const standing = commitmentStanding([inst({ amount: 180 })], [pay({ amount: 180, accountingEntryId: null })]);
+    assert.deepEqual(ledgerReversalPreview(standing, 'avery').owedByFamily, [{ playerId: 'avery', amount: 180 }]);
+  });
+
+  test('a cost the team paid for entirely names nobody', () => {
+    const standing = commitmentStanding([inst({ amount: 180 })], [pay({ amount: 180 })]);
+    const preview = ledgerReversalPreview(standing, null);
+    assert.deepEqual(preview.owedByFamily, []);
+    assert.equal(preview.owesFamily, false, 'so the confirmation says nothing about a family at all');
   });
 });
 

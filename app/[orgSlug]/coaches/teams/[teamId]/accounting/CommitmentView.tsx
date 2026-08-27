@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Pencil, Receipt, Trash2 } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
@@ -91,13 +91,20 @@ interface Props {
   onDeleted: () => void;
   /** Is this panel the tab on screen? Only a visible page may hold the navigation guard. */
   tabActive: boolean;
+  /**
+   * Roster names, by player id — for the delete confirmation's "whose credit goes" sentence
+   * (owner ruling 2026-08-27). Optional: without it the sentence degrades to "a family" and still
+   * says the figure, which is the same fallback the money form uses when the roster has not loaded.
+   * ⚠ A NAME, not a roster: this page renders values and must not gain a picker.
+   */
+  playerNameById?: Map<string, string>;
   /** The standing figure, the schedule and the payments — the panel's, unchanged by this phase. */
   children: ReactNode;
 }
 
 export default function CommitmentView({
   orgSlug, teamId, expense, standing, canWrite, categories,
-  tagLibrary, initialTagIds, onCreateTag, backTo, onSaved, onDeleted, tabActive, children,
+  tagLibrary, initialTagIds, onCreateTag, backTo, onSaved, onDeleted, tabActive, playerNameById, children,
 }: Props) {
   /* ── The draft. Seeded ONCE — see the docblock; the caller keys this component by bill. ── */
   const [name, setName] = useState(expense.description);
@@ -255,12 +262,16 @@ export default function CommitmentView({
 
   /* ⚠ THE SAME PREVIEW THE SERVER REVERSES WITH, so the sentence and the outcome cannot drift —
      the rule the modal's Delete already followed, carried down the page with the control.
-     ⚠ NO "a family paid this" BRANCH, and its absence is a fact about the product rather than an
-     omission: this page only ever shows a COMMITMENT, and a commitment can never be paid out of
-     pocket — the form does not offer `Paid by` on one and the create route refuses it ("a payable
-     is billed to the team"). `owesFamily` is therefore always false here, and a branch would be
-     dead code quietly telling the next reader the opposite. The undo confirmation one file over
-     carries the same note, for the same reason. */
+
+     ⚖⚖ THE "no family paid this" NOTE THAT STOOD HERE IS GONE — money centralization P4 (mig 267)
+     made its invariant false, and it is worth recording what it said: *"this page only ever shows a
+     COMMITMENT, and a commitment can never be paid out of pocket… `owesFamily` is therefore always
+     false here, and a branch would be dead code."* True until a family could front ONE PAYMENT of a
+     bill the team otherwise pays — which is the whole of P4. Reading `reversal.amount` alone then
+     told a coach deleting a bill whose only paid piece was fronted that *"nothing has been paid
+     against it, so no money moves"*, while a household's credit was about to vanish by cascade
+     unmentioned. Found by `/simplify`'s altitude lens: a hand-copied UI branch left behind when the
+     shared function underneath it was generalized. */
   const reversal = ledgerReversalPreview(standing, expense.paidByPlayerId);
   const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -466,8 +477,30 @@ export default function CommitmentView({
                   reverse that, so cash on hand goes back up by {money(reversal.amount)}.
                 </p>
               )}
-              {reversal.amount === 0 && (
+              {reversal.amount === 0 && !reversal.owesFamily && (
                 <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
+              )}
+              {/* ⚠⚠ THE HOUSEHOLD IS SAID SEPARATELY, NEVER FOLDED INTO A DOLLAR FIGURE (P4). A
+                  fronted payment moved no team cash, so it contributes nothing to the amount coming
+                  back — but the credit it created disappears by cascade, and that is a change to
+                  what a family is owed. Word for word the sentence the modal's own Delete gives, so
+                  one fact has one phrasing on both doors. */}
+              {/* ⚠ NAMES THE HOUSEHOLD AND THE FIGURE — owner ruling 2026-08-27, same sentence
+                  shape as the modal's Delete so one fact reads one way on both doors. */}
+              {reversal.owesFamily && (
+                <p className={styles.dangerConfirmBody}>
+                  <strong>The credit the team owes will be removed too:</strong>{' '}
+                  {reversal.owedByFamily.map((o, at) => {
+                    const who = playerNameById?.get(o.playerId) ?? '';
+                    return (
+                      <Fragment key={o.playerId}>
+                        {at > 0 ? ', ' : ''}
+                        {who ? <>{who}’s family</> : <>a family</>} <strong>{money(o.amount)}</strong>
+                      </Fragment>
+                    );
+                  })}
+                  {reversal.amount === 0 ? '. No team cash moves.' : '.'}
+                </p>
               )}
               <div className={styles.dangerConfirmActions}>
                 <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>

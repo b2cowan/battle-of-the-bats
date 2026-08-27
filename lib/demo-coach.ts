@@ -1206,8 +1206,21 @@ export interface DemoExpense {
   type: 'expense' | 'tournament_payable';
   /** Lump expenses: when it was paid. Payables leave this null and use the two legs. */
   paidDate: string | null;
-  deposit?: { amount: number; dueDate: string; paidDate: string | null };
-  balance?: { amount: number; dueDate: string; paidDate: string | null };
+  /**
+   * `paidByRosterIndex` — ⚠⚠ THE MOMENT THE SHOP WINDOW GAINED WITH P4 (mig 267): a parent paid
+   * THIS piece of the bill directly, and the team is paying the rest.
+   *
+   * A roster INDEX rather than an id, like every other cross-reference in this module, so the
+   * world stays a description rather than a set of uuids. The seed resolves it and — this is the
+   * load-bearing half — writes the household's `reimbursement` credit in the same breath. A
+   * fronted payment with no credit behind it is a state the app cannot produce and its undo path
+   * refuses to touch, so the demo must never seed one.
+   *
+   * ⚠ Only ever on a piece that is PAID. Fronting is a fact about money that moved; a scheduled
+   * piece has no payer yet, and the product's own register says so.
+   */
+  deposit?: { amount: number; dueDate: string; paidDate: string | null; paidByRosterIndex?: number };
+  balance?: { amount: number; dueDate: string; paidDate: string | null; paidByRosterIndex?: number };
   /**
    * ⚠ A COST THAT REPEATS — 1..n dated pieces, for the bills the deposit/balance pair cannot
    * describe (Payables Rebuild P4). When present it WINS over `deposit`/`balance`, which stay for
@@ -1218,7 +1231,7 @@ export interface DemoExpense {
    * A monthly facility bill is the most recognisable thing a coach pays, and until this the
    * sandbox could not show one.
    */
-  installments?: Array<{ amount: number; dueDate: string; paidDate: string | null }>;
+  installments?: Array<{ amount: number; dueDate: string; paidDate: string | null; paidByRosterIndex?: number }>;
   notes?: string | null;
 }
 
@@ -1238,6 +1251,8 @@ export function demoExpensePlan(e: DemoExpense): Array<{
   amount: number;
   dueDate: string | null;
   paidDate: string | null;
+  /** Who fronted this piece, as a roster index — see `DemoExpense.deposit` (P4, mig 267). */
+  paidByRosterIndex?: number;
 }> {
   /* An explicit n-piece plan wins — the repeating cost (P4). Checked FIRST so a descriptor can
      never be read two ways, and numbered here so the seed states amounts and dates and nothing
@@ -1248,12 +1263,13 @@ export function demoExpensePlan(e: DemoExpense): Array<{
       amount: piece.amount,
       dueDate: piece.dueDate ?? null,
       paidDate: piece.paidDate ?? null,
+      paidByRosterIndex: piece.paidByRosterIndex,
     }));
   }
   if (e.type === 'tournament_payable' && e.deposit && e.balance) {
     return [
-      { installmentNumber: 1, amount: e.deposit.amount, dueDate: e.deposit.dueDate ?? null, paidDate: e.deposit.paidDate ?? null },
-      { installmentNumber: 2, amount: e.balance.amount, dueDate: e.balance.dueDate ?? null, paidDate: e.balance.paidDate ?? null },
+      { installmentNumber: 1, amount: e.deposit.amount, dueDate: e.deposit.dueDate ?? null, paidDate: e.deposit.paidDate ?? null, paidByRosterIndex: e.deposit.paidByRosterIndex },
+      { installmentNumber: 2, amount: e.balance.amount, dueDate: e.balance.dueDate ?? null, paidDate: e.balance.paidDate ?? null, paidByRosterIndex: e.balance.paidByRosterIndex },
     ];
   }
   // A lump expense reads its day off `paidDate`; an un-split payable off its deposit descriptor —
@@ -1608,9 +1624,22 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
       amount: 1200, type: 'tournament_payable', paidDate: null,
       // Paid a couple of days BEFORE it was due, like every other settled row in this world —
       // the only thing running late here is the dues instalment that is meant to be.
-      deposit: { amount: 400, dueDate: dateAt(-30), paidDate: dateAt(-32) },
+      /* ⚠⚠ THE $400 DEPOSIT WAS PAID BY A PARENT, DIRECTLY — the P4 moment (mig 267), and the
+         reason it lives on THIS bill rather than a new one. A prospect opening Payables meets one
+         ordinary tournament entry that happens to hold both kinds of payment: a piece a family
+         fronted (no team cash moved, that household is owed $400) and a balance the team will pay
+         itself. Nothing else in either sandbox could show that a single bill can be both.
+
+         ⚠ IT IS DELIBERATELY THE ALREADY-PAID PIECE. Fronting is a fact about money that moved, so
+         a scheduled piece has no payer — putting one on the balance would seed a claim the product
+         does not make.
+
+         ⚠ ROSTER INDEX 0, WHICH IS NOT THE SHOWCASE PLAYER. The guided tour's "read what a parent
+         gets" step addresses one player's page by id and tells a story about their dues; hanging a
+         $400 credit on that child would rewrite the figures that step narrates. */
+      deposit: { amount: 400, dueDate: dateAt(-30), paidDate: dateAt(-32), paidByRosterIndex: 0 },
       balance: { amount: 800, dueDate: dateAt(21), paidDate: null },
-      notes: 'Balance due four weeks before the first game.',
+      notes: 'Balance due four weeks before the first game. A parent paid the deposit directly.',
     },
     expense('EX-DOME', 'Dome time — January block', 'Facilities', 'Dome Time', 1150, -38),
     /* ⚠ THE REPEATING COST THE SHOP WINDOW WAS MISSING (owner call 2026-08-20, Payables P4). Five

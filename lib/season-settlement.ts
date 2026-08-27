@@ -44,6 +44,15 @@
 // PostgREST as a STRING, and a `Number.isFinite` guard would treat "250.00" as invalid and
 // silently substitute zero — money vanishing quietly is worse than money throwing loudly. The
 // `|| 0` catches only genuine NaN/undefined.
+/* ⚠ The one import, and it stays PURE like everything else here: `lib/payable-standing.ts` touches
+   no database either, and taking "whose money moved?" from it rather than re-deriving the rule is
+   the whole point — a fourth hand-rolled copy of that branch is what this module's own header
+   warns about. */
+import { paymentMovedTeamCash } from './payable-standing';
+
+/** One payment, as much of it as the cash question needs. */
+type PayerBearingPayment = { amount: number; paidByPlayerId?: string | null };
+
 const toCents = (n: number) => Math.round(Number(n) * 100) || 0;
 const toDollars = (c: number) => c / 100;
 
@@ -537,18 +546,37 @@ export function expenseTotals(
    * amount. R1 makes that state unreachable; if it ever happened, counting an unpaid figure as spent
    * would be the wrong way to be wrong on the one number that sets every family's refund.
    */
-  standings: Readonly<Record<string, { paid: number }>>,
+  standings: Readonly<Record<string, { paid: number; payments?: readonly PayerBearingPayment[] }>>,
 ): { paid: number; cashPaid: number } {
   let paidC = 0;
   let cashPaidC = 0;
   for (const e of expenses) {
-    const paid = toCents(standings[e.id]?.paid ?? 0);
+    const standing = standings[e.id];
+    const paid = toCents(standing?.paid ?? 0);
     if (paid === 0) continue;
     paidC += paid;
-    // ⚠ The ONLY difference between the two figures: a family paying the vendor direct spends the
-    // season's money without the team's cash moving. A payable is billed to the team by a third
-    // party and so never has an out-of-pocket leg.
-    if (!e.paidByPlayerId) cashPaidC += paid;
+    /* ⚠ The ONLY difference between the two figures: a family paying the vendor direct spends the
+       season's money without the team's cash moving.
+
+       ⚠⚠ ASKED PER PAYMENT SINCE P4 (mig 267), AND THIS IS THE READER THAT MATTERS MOST. It was
+       `if (!e.paidByPlayerId) cashPaidC += paid` — a complete answer while a cost was fronted or it
+       was not, and the header above already records three readers hand-rolling this branch and
+       beginning to differ. A commitment can now hold a $200 deposit a parent paid direct and a $400
+       balance the team paid; at cost level that bill counts $600 of team cash or $0, and BOTH are
+       wrong by real money. `cashPaid` sets the season's closing pot, which sets every family's
+       refund — so the error would arrive as every household being handed the wrong figure.
+
+       ⚠ A standing WITHOUT its payments falls back to the cost's own answer rather than assuming
+       team cash. Every caller in the product passes `getCommitmentStandings`, which carries them;
+       the fallback exists so a future caller that trims the shape understates the pot (fewer
+       dollars to hand out, corrected on the next read) instead of overstating it. */
+    if (standing?.payments) {
+      for (const p of standing.payments) {
+        if (paymentMovedTeamCash(p, e.paidByPlayerId)) cashPaidC += toCents(p.amount);
+      }
+    } else if (!e.paidByPlayerId) {
+      cashPaidC += paid;
+    }
   }
   return { paid: toDollars(paidC), cashPaid: toDollars(cashPaidC) };
 }

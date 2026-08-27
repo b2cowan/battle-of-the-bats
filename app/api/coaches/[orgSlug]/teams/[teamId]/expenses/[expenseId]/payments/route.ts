@@ -85,6 +85,15 @@ export const POST = withObservability(async (req: Request,
     ? body.installmentId
     : null;
 
+  /* ⚠⚠ WHO ACTUALLY PAID IT (money centralization P4, mig 267) — the $200-deposit case. The form
+     has offered this question since P1 and the answer was DROPPED ON THE FLOOR here, so a coach
+     could name a family, save, and be told the team's cash left while that household was owed
+     nothing. The writer validates the roster and refuses a payer that disagrees with one the cost
+     already names; this only has to stop passing the answer through as a string. */
+  const paidByPlayerId = typeof body.paidByPlayerId === 'string' && body.paidByPlayerId
+    ? body.paidByPlayerId
+    : null;
+
   try {
     const payment = await recordPayablePayment({
       expense,
@@ -94,6 +103,7 @@ export const POST = withObservability(async (req: Request,
       method,
       note,
       installmentId,
+      paidByPlayerId,
       createdBy: ctx!.user.id,
     });
     return NextResponse.json({ payment }, { status: 201 });

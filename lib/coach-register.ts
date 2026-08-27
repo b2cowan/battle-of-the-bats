@@ -154,14 +154,28 @@ export interface RegisterRow {
    */
   overdueDays: number | null;
   /**
-   * ⚠⚠ FALSE ONLY ON AN OUT-OF-POCKET COST, and it is why this field exists rather than a boolean
-   * hidden in the amount. A cost a family paid the vendor direct is real spending on a real record —
-   * it belongs on the book — but no TEAM cash moved, so it must not move the balance. The row shows
-   * its amount in Money out, carries a chip saying the family paid direct, and repeats the previous
-   * balance beside it. Hiding the row would lose a record; moving the balance would break the one
-   * identity this whole screen rests on.
+   * ⚠⚠ FALSE ONLY ON A PAYMENT A FAMILY FRONTED, and it is why this field exists rather than a
+   * boolean hidden in the amount. A cost a family paid the vendor direct is real spending on a real
+   * record — it belongs on the book — but no TEAM cash moved, so it must not move the balance. The
+   * row shows its amount in Money out, carries a chip saying the family paid direct, and repeats the
+   * previous balance beside it. Hiding the row would lose a record; moving the balance would break
+   * the one identity this whole screen rests on.
+   *
+   * ⚠ ASKED PER PAYMENT SINCE P4 (mig 267): one commitment can hold a deposit a parent paid direct
+   * and a balance the team paid, so two rows of one bill can differ here.
    */
   movesCash: boolean;
+  /**
+   * The household that fronted this payment, by name — null on every row the team's cash paid.
+   *
+   * ⚠ SEPARATE FROM `detail`, which is a SENTENCE for the screen. This is the bare name, because
+   * the export needs a column a treasurer can filter and sort on, and a spreadsheet cannot filter
+   * "Avery Test's family paid direct — no team cash moved".
+   *
+   * ⚠ Optional because exactly ONE row kind can carry it — a recorded payment against a cost. Dues,
+   * drives, club money and scheduled rows have no payer to name and are not asked to say so.
+   */
+  paidByName?: string | null;
   open: RegisterOpen | null;
   /** Present only on a SCHEDULED money-out row. Opens Record a payment pre-aimed at this piece,
    *  suggesting its REMAINDER — the coach's override of the application rule (R3), not a lock. */

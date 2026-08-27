@@ -19,6 +19,7 @@ import {
   deriveSettlement,
   closeOutBlockers,
   solveEvenLevel,
+  expenseTotals,
   type SettlementParticipant,
 } from '../../lib/season-settlement';
 
@@ -614,5 +615,67 @@ describe('closeOutBlockers — the one definition of "can this season close?"', 
     const b = closeOutBlockers(noClub);
     assert.equal(b.canClose, true);
     assert.equal(b.pendingClubRequests, 0);
+  });
+});
+
+/**
+ * ⚠⚠ `expenseTotals` — THE TWO FIGURES, AND THE ONE THAT SETS EVERY FAMILY'S REFUND.
+ *
+ * `paid` is what the season COST (a family fronting a bill still spent the season's money).
+ * `cashPaid` is what LEFT THE TEAM'S ACCOUNT, and it feeds the closing pot. Money centralization
+ * P4 (mig 267) moved the question from the cost to the PAYMENT; these cases are the ones the old
+ * cost-level answer got wrong, each by real money in a figure a coach hands out.
+ */
+describe('expenseTotals — what the season cost, and what actually left the account', () => {
+  const payment = (amount: number, paidByPlayerId: string | null = null) =>
+    ({ amount, paidByPlayerId });
+
+  it('an ordinary cost the team paid counts in both figures', () => {
+    const totals = expenseTotals(
+      [{ id: 'e1', paidByPlayerId: null }],
+      { e1: { paid: 400, payments: [payment(400)] } });
+    assert.deepEqual(totals, { paid: 400, cashPaid: 400 });
+  });
+
+  it('⚠ a whole cost a family fronted is spending, but no team cash (mig 234, unchanged)', () => {
+    const totals = expenseTotals(
+      [{ id: 'e1', paidByPlayerId: 'avery' }],
+      { e1: { paid: 180, payments: [payment(180)] } });
+    assert.deepEqual(totals, { paid: 180, cashPaid: 0 });
+  });
+
+  it('⚠⚠ A PARTLY FRONTED BILL SPLITS — the case the cost-level answer could not express', () => {
+    // $600 entry: a parent pays the $200 deposit direct, the team pays the $400 balance.
+    // Asked of the COST this returns cashPaid 600 or 0. Both hand every family the wrong refund.
+    const totals = expenseTotals(
+      [{ id: 'e1', paidByPlayerId: null }],
+      { e1: { paid: 600, payments: [payment(200, 'avery'), payment(400)] } });
+    assert.deepEqual(totals, { paid: 600, cashPaid: 400 });
+  });
+
+  it('two households fronting pieces of one bill are both excluded from cash', () => {
+    const totals = expenseTotals(
+      [{ id: 'e1', paidByPlayerId: null }],
+      { e1: { paid: 500, payments: [payment(200, 'avery'), payment(150, 'blake'), payment(150)] } });
+    assert.deepEqual(totals, { paid: 500, cashPaid: 150 });
+  });
+
+  it('a standing WITHOUT payments falls back to the cost, and understates rather than overstates', () => {
+    // Every caller in the product passes getCommitmentStandings, which carries them. The fallback
+    // exists so a future caller that trims the shape leaves fewer dollars to hand out (corrected on
+    // the next read) rather than promising money the team does not hold.
+    assert.deepEqual(
+      expenseTotals([{ id: 'e1', paidByPlayerId: 'avery' }], { e1: { paid: 180 } }),
+      { paid: 180, cashPaid: 0 });
+    assert.deepEqual(
+      expenseTotals([{ id: 'e1', paidByPlayerId: null }], { e1: { paid: 180 } }),
+      { paid: 180, cashPaid: 180 });
+  });
+
+  it('stays exact to the cent across many fronted pieces', () => {
+    const totals = expenseTotals(
+      [{ id: 'e1', paidByPlayerId: null }],
+      { e1: { paid: 0.3, payments: [payment(0.1, 'avery'), payment(0.1), payment(0.1)] } });
+    assert.equal(totals.cashPaid, 0.2);
   });
 });

@@ -25,7 +25,7 @@ import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabil
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
-import { commitmentStanding, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
+import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -9874,11 +9874,28 @@ export async function recordRepDuesPayout(opts: RepDuesPayoutWrite): Promise<{ p
   // the true state rather than trusting a pre-write read); the payout path is irreversible cash,
   // so it gets the same treatment. The loser of the race undoes ITSELF: void the entry, delete
   // the row, refuse — leaving the winner's payout and the books intact.
-  const allPayouts = await getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId);
-  const trueCeiling = payoutCeiling(credits, []);
+  /* ⚠⚠ THE CREDITS ARE RE-READ TOO, NOT REUSED FROM ABOVE (`/review`, concurrency lens,
+     2026-08-27). This re-read only `allPayouts` and recomputed the ceiling from the `credits`
+     array captured before the insert — so it saw a concurrent PAYOUT and was blind to a concurrent
+     CREDIT SHRINK. The payout reads $500 of credit; a credit shrinks to $200 in the gap; the
+     payout's insert lands; this check compares it against the stale $500 and waves it through. The
+     family is handed cash the team no longer says it owes.
+
+     ⚠⚠ THIS IS NOT A P4 BUG, AND SAYING SO WAS MY FIRST MISTAKE ABOUT IT. I recorded it as "newly
+     reachable because a fronted payment can now be undone" — it is not. Every path that shrinks a
+     credit is ALREADY ON PROD and has been since the Payables Rebuild shipped: undoing a payment on
+     an out-of-pocket cost, deleting one outright, editing its schedule down, and the dues panel's
+     own credit PATCH and DELETE. This window is open in production today. P4 neither introduces nor
+     widens it; it is simply the change that went looking. Verified against `origin/master`, not
+     assumed — the code there is byte-identical to what this replaced. */
+  const [allPayouts, liveCredits] = await Promise.all([
+    getRepDuesPayoutsForPlayer(opts.programYearId, opts.playerId),
+    getRepDuesCreditsForPlayer(opts.programYearId, opts.playerId),
+  ]);
+  const trueCeiling = payoutCeiling(liveCredits, []);
   if (amountsTotal(allPayouts) > trueCeiling + 0.005) {
     await removeRepDuesPayout(payout, opts.team);
-    throw new PayoutExceedsOwedError(payoutCeiling(credits, allPayouts.filter(p => p.id !== payout.id)));
+    throw new PayoutExceedsOwedError(payoutCeiling(liveCredits, allPayouts.filter(p => p.id !== payout.id)));
   }
 
   // Bills go back up: the paid-out dollars stop covering installments, so the paid_at projection
@@ -10116,9 +10133,10 @@ function mapPayablePaymentRow(r: any): PayablePayment {
     method: r.method ?? null,
     note: r.note ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
+    paidByPlayerId: r.paid_by_player_id ?? null,
   };
 }
-const PAYABLE_PAYMENT_COLUMNS = 'id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id';
+const PAYABLE_PAYMENT_COLUMNS = 'id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id, paid_by_player_id';
 
 /** Every installment for a season, grouped by commitment, each list already in due-date order. */
 export async function getPayableInstallmentsByExpense(
@@ -10321,44 +10339,307 @@ async function patchReimbursementCredit(expenseId: string, patch: Record<string,
 }
 
 /**
- * Make the reimbursement credit say what the payments NOW total — compare-and-swap, from live rows.
+ * ⚠⚠ THE PAID-OUT FLOOR — refuse to shrink a credit the team has ALREADY handed back in cash.
+ *
+ * A `reimbursement` credit is payable out like any other (`payoutCeiling` excludes only
+ * `forgiven`). Lower one below what has already gone out of the door and the arithmetic does NOT
+ * go negative — it goes SILENT: `applyCreditsToBills` clamps with `Math.min(paidOut, issued)`, so
+ * `owedBack` and the ceiling both floor at zero and the team is simply out the money with nothing
+ * on any screen saying so.
+ *
+ * Found while drawing P4's gate, and it is REACHABLE ON THE PRE-P4 WHOLE-COST MECHANISM TODAY —
+ * undo the payment on an out-of-pocket cost whose credit was paid out. That is why the guard sits
+ * in the shared reconciler rather than on the new path only: one arithmetic, both doors.
+ *
+ * The test is exact even though payouts are not linked to individual credits: after this change,
+ * would the household's remaining NON-FORGIVEN credits still cover everything already paid out?
+ *
+ * @param newCentsByPlayer what each named household's reimbursement credit is about to become
+ *   (0 = the credit is about to be removed).
+ */
+async function assertPayoutsStillCovered(
+  programYearId: string,
+  expenseId: string,
+  newCentsByPlayer: ReadonlyMap<string, number>,
+): Promise<void> {
+  if (newCentsByPlayer.size === 0) return;
+  const playerIds = [...newCentsByPlayer.keys()];
+
+  /* ⚠ THE NAMES ARE NOT FETCHED HERE, and that is deliberate rather than an omission: they are used
+     ONLY in the refusal sentence at the bottom, which is the rare path. This guard fires on every
+     undo and every schedule edit that touches a fronted payment, and the overwhelmingly common
+     answer is "nothing has been paid out to this household" — a roster read on the way to that
+     answer is a round trip bought and thrown away every time (`/simplify`, efficiency lens). */
+  const [creditRes, payoutRes] = await Promise.all([
+    supabaseAdmin.from('rep_dues_credits')
+      .select('player_id, amount, credit_type, expense_id')
+      .eq('program_year_id', programYearId).in('player_id', playerIds),
+    supabaseAdmin.from('rep_dues_payouts')
+      .select('player_id, amount')
+      .eq('program_year_id', programYearId).in('player_id', playerIds),
+  ]);
+  if (creditRes.error) throw creditRes.error;
+  /* ⚠ A MISSING PAYOUTS TABLE IS NOT A PASS. If this read fails we cannot answer the question, and
+     answering it wrongly is exactly the silent loss the guard exists to stop. */
+  if (payoutRes.error) throw payoutRes.error;
+
+  const cents = (n: unknown) => Math.round(Number(n) * 100);
+  /* ⚠ `totalsByPlayer` (lib/dues-credits), NEVER a reduce written here — it is the one per-player
+     money sum for credits AND payouts, and `tests/unit/dues-definition-guard.test.ts` fails the
+     build on a hand-rolled one. It caught the first draft of this function; five hand-copied
+     versions of that loop preceded the helper. Dollars in, dollars out — converted back to cents
+     for the comparison below, which is exact because the helper summed in cents. */
+  const paidOutByPlayer = totalsByPlayer(
+    (payoutRes.data ?? []).map(p => ({ playerId: p.player_id as string, amount: Number(p.amount) })));
+  if (paidOutByPlayer.size === 0) return; // nothing has left in cash — nothing to protect
+
+  /* Everything the household is issued EXCEPT this cost's own reimbursement credit, which the
+     caller is about to replace with a known figure. Forgiveness is excluded for the reason the
+     whole model rests on: it is debt relief the team GAVE, never money it HOLDS. */
+  const otherCreditsByPlayer = totalsByPlayer((creditRes.data ?? [])
+    .filter(c => c.credit_type !== 'forgiven')
+    .filter(c => !(c.credit_type === 'reimbursement' && c.expense_id === expenseId))
+    .map(c => ({ playerId: c.player_id as string, amount: Number(c.amount) })));
+
+  for (const [playerId, newCents] of newCentsByPlayer) {
+    const paidOut = cents(paidOutByPlayer.get(playerId) ?? 0);
+    if (paidOut === 0) continue;
+    const after = cents(otherCreditsByPlayer.get(playerId) ?? 0) + newCents;
+    if (after >= paidOut) continue;
+
+    // Only now is a name needed — one read, on the path that is about to refuse anyway.
+    const { data: named } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('player_first_name, player_last_name').eq('id', playerId).maybeSingle();
+    const who = named
+      ? [named.player_first_name, named.player_last_name].filter(Boolean).join(' ') || 'that player'
+      : 'that player';
+    const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+    throw new MoneyEditRefusal(
+      `${money(paidOut)} of ${who}’s credit has already been handed back in cash. This change would `
+      + 'take away a credit the team has already paid out. Undo that payout first, then try this again.',
+      409,
+    );
+  }
+}
+
+/**
+ * What each household's reimbursement credit on this cost SHOULD say, given a set of payments —
+ * the one grouping rule, so the pre-flight below and the reconciler cannot answer differently.
+ *
+ * Returns cents, keyed by player id. A payment the team paid contributes to nobody.
+ */
+function reimbursementTotalsByPlayer(
+  expensePaidByPlayerId: string | null | undefined,
+  payments: readonly { amount: number; paidDate?: string; paidByPlayerId?: string | null }[],
+): Map<string, { cents: number; earliestDate: string | null }> {
+  /* ⚠ `totalsByPlayer` (lib/dues-credits) DOES THE MONEY HALF — the one per-player sum, guarded by
+     `tests/unit/dues-definition-guard.test.ts`. Five hand-copied versions of that loop preceded the
+     helper; this file is not adding a sixth. Only the earliest-day part is local, because dates are
+     not money and the helper has no opinion about them. */
+  const owned = payments
+    .map(p => ({ payer: effectivePayerId(p, expensePaidByPlayerId), p }))
+    .filter((x): x is { payer: string; p: typeof x.p } => x.payer !== null);
+
+  const dollars = totalsByPlayer(owned.map(x => ({ playerId: x.payer, amount: x.p.amount })));
+  const out = new Map<string, { cents: number; earliestDate: string | null }>();
+  for (const { payer, p } of owned) {
+    const day = p.paidDate ? String(p.paidDate) : null;
+    const at = out.get(payer);
+    if (!at) {
+      out.set(payer, { cents: Math.round((dollars.get(payer) ?? 0) * 100), earliestDate: day });
+      continue;
+    }
+    if (day && (!at.earliestDate || day < at.earliestDate)) at.earliestDate = day;
+  }
+  return out;
+}
+
+/**
+ * Which households' credits this change would LOWER, and to what — the input the payout floor needs.
+ *
+ * ⚠ SHARED BY THE PRE-FLIGHT AND THE RECONCILER, because they must answer it identically. Written
+ * twice, one could gain a `<=` the other never got, and the guard would then refuse in one path and
+ * wave the same change through in the other.
+ */
+function fallingCreditsAgainst(
+  existing: readonly { player_id: string; amount: number | string }[],
+  want: ReadonlyMap<string, { cents: number }>,
+): Map<string, number> {
+  const falling = new Map<string, number>();
+  for (const row of existing) {
+    const next = want.get(row.player_id)?.cents ?? 0;
+    if (next < Math.round(Number(row.amount) * 100)) falling.set(row.player_id, next);
+  }
+  return falling;
+}
+
+/**
+ * ⚠⚠ THE FLOOR, CHECKED BEFORE THE FIRST WRITE — the pre-flight twin of the check inside the
+ * reconciler.
+ *
+ * The reconciler runs AFTER its caller has already written (a payment deleted, a schedule
+ * restated), because it must read live rows. That is right for the arithmetic and wrong for a
+ * refusal: refusing there would leave the payment gone and the family still credited for it —
+ * a household holding a credit for money nobody paid. So a caller whose write can LOWER a credit
+ * asks first, from the state it is about to create, and refuses before touching anything.
+ */
+async function assertReimbursementFloor(
+  expense: Pick<RepTeamExpense, 'id' | 'programYearId' | 'paidByPlayerId'>,
+  paymentsAfter: readonly { amount: number; paidByPlayerId?: string | null }[],
+): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_credits').select('player_id, amount')
+    .eq('expense_id', expense.id).eq('credit_type', 'reimbursement');
+  if (error) throw error;
+  if (!data || data.length === 0) return; // nothing exists to be lowered
+
+  await assertPayoutsStillCovered(
+    expense.programYearId, expense.id,
+    fallingCreditsAgainst(data, reimbursementTotalsByPlayer(expense.paidByPlayerId, paymentsAfter)));
+}
+
+/**
+ * ⚠⚠ THE CREDIT SET FOR ONE COST, RECONCILED AGAINST ITS PAYMENTS — one `reimbursement` credit per
+ * (cost, household), each holding the sum of that household's payments on it.
+ *
+ * ⚠ THIS REPLACED A SINGLE-CREDIT RESTATE, AND THE GENERALIZATION WAS MANDATORY RATHER THAN TIDY
+ * (money centralization P4, mig 267). Before P4 a cost was fronted by exactly one family or by
+ * nobody, so this read one credit with `.maybeSingle()` and set it to the sum of EVERY payment on
+ * the expense. The moment a cost can carry payments from two households that call throws and the
+ * pre-existing out-of-pocket path breaks with it. The grouping below is the same rule for both:
+ * the whole-cost case is the one-group case, with no row rewritten and no second arithmetic.
  *
  * ⚠⚠ WHY A CAS AND NOT AN ABSOLUTE WRITE (`/review`, concurrency lens, 2026-08-20 — the one
- * systemic finding of P2's review). The credit is a stored AGGREGATE with three independent
+ * systemic finding of P2's review). Each credit is a stored AGGREGATE with three independent
  * writers (record, undo, edit), and "read live, write absolute" only protects a writer against
  * its OWN retry — a second writer completing inside the window is the classic lost update, and it
  * leaves a family owed the wrong amount until something else touches the record. The compare on
  * the amount makes a stale write FAIL instead of landing; the loser re-reads and converges. Three
  * attempts, then an honest "try again" — under real coach traffic a third collision on one
  * commitment inside a second is not a state to silently write through.
+ *
+ * ⚠ THE UNIQUE INDEX IS THE OTHER HALF (mig 267): `(expense_id, player_id) WHERE credit_type =
+ * 'reimbursement'`. Without it a retry racing itself could insert a second row for one household
+ * and that family's figure would silently double.
+ *
+ * ⚠ A COST THAT NAMES A FRONTING FAMILY AND HAS NO CREDIT IS STILL A REFUSAL, not a repair. That
+ * state cannot be produced by the app (both writes go through one door) and inventing a credit for
+ * it here would paper over a corrupted record with real money on it.
  */
-async function restateReimbursementCreditFromPayments(expenseId: string): Promise<void> {
+async function reconcileReimbursementCredits(
+  expense: Pick<RepTeamExpense, 'id' | 'programYearId' | 'description' | 'paidByPlayerId'>,
+  createdBy: string | null = null,
+): Promise<void> {
+  const cents = (n: unknown) => Math.round(Number(n) * 100);
+
   for (let attempt = 0; attempt < 3; attempt++) {
     const [creditRes, payRes] = await Promise.all([
-      supabaseAdmin.from('rep_dues_credits').select('id, amount')
-        .eq('expense_id', expenseId).eq('credit_type', 'reimbursement').maybeSingle(),
-      supabaseAdmin.from('rep_payable_payments').select('amount').eq('expense_id', expenseId),
+      supabaseAdmin.from('rep_dues_credits').select('id, player_id, amount, credit_date')
+        .eq('expense_id', expense.id).eq('credit_type', 'reimbursement'),
+      supabaseAdmin.from('rep_payable_payments').select('amount, paid_date, paid_by_player_id')
+        .eq('expense_id', expense.id),
     ]);
     if (creditRes.error) throw creditRes.error;
     if (payRes.error) throw payRes.error;
-    if (!creditRes.data) {
+
+    /* What SHOULD exist: each household's total, and the day their first dollar went in — the
+       credit is dated from when the family was first out of pocket, not when this ran.
+       ⚠ THE SAME GROUPER THE PRE-FLIGHT USES. It was written out longhand here once; the docstring
+       on `reimbursementTotalsByPlayer` claimed to be "the one grouping rule so the two cannot
+       answer differently" while this loop quietly proved otherwise (`/simplify`, reuse + altitude
+       lenses, 2026-08-27). A comment that asserts an invariant the code does not enforce is worse
+       than no comment. */
+    const want = reimbursementTotalsByPlayer(expense.paidByPlayerId, (payRes.data ?? []).map(p => ({
+      amount: Number(p.amount),
+      paidDate: String(p.paid_date),
+      paidByPlayerId: p.paid_by_player_id ?? null,
+    })));
+
+    const have = new Map((creditRes.data ?? []).map(c => [c.player_id as string, c]));
+
+    /* ⚠ THE COST-LEVEL PROMISE IS CHECKED BEFORE ANY WRITE. A cost that says a family paid it must
+       carry that family's credit; if the row has gone missing, changing anything would leave the
+       household owed the wrong amount, and the honest answer is to say so. */
+    if (expense.paidByPlayerId && !have.has(expense.paidByPlayerId)
+        && want.has(expense.paidByPlayerId)) {
       throw new MoneyEditRefusal(
         'This cost says a family paid it, but the credit the team owed them is missing — so changing '
         + 'it would leave that family owed the wrong amount. Delete this and enter it again.',
         409,
       );
     }
-    const wantCents = (payRes.data ?? []).reduce((s, p) => s + Math.round(Number(p.amount) * 100), 0);
-    const haveCents = Math.round(Number(creditRes.data.amount) * 100);
-    if (wantCents === haveCents) return;
-    const { data: updated, error } = await supabaseAdmin
-      .from('rep_dues_credits')
-      .update({ amount: wantCents / 100 })
-      .eq('id', creditRes.data.id)
-      .eq('amount', creditRes.data.amount)
-      .select('id');
-    if (error) throw error;
-    if (updated && updated.length > 0) return;
+
+    /* ⚖⚖ THIS RECONCILER DOES NOT REFUSE, AND THAT IS A CORRECTION TO MY OWN FIRST DESIGN
+       (`/review`, concurrency lens, 2026-08-27). It called `assertPayoutsStillCovered` here as a
+       "backstop" behind each caller's pre-flight. A backstop that fires AFTER an irreversible write
+       is worse than none: `removePayablePayment` deletes the payment row and then reconciles, so a
+       payout landing in that gap made this throw with the payment already gone — and every retry
+       would recompute the same lower figure and hit the same refusal, leaving the credit stranded
+       above the payments FOREVER with no way to fix it from inside the product.
+
+       The floor is a GATE, and a gate belongs at the door: `assertReimbursementFloor`, run by every
+       caller before it writes anything. This function's one job is to make the credits agree with
+       the payments, and it must always be able to finish doing it. The residue of the lost race is
+       a payout that exceeds a credit — a state the arithmetic already tolerates and an undo of the
+       payout already repairs — rather than two figures that permanently disagree. */
+
+    let raced = false;
+
+    // ── Gone: this household has no fronted payments left on this cost ──
+    for (const [playerId, row] of have) {
+      if (want.has(playerId)) continue;
+      const { data, error } = await supabaseAdmin
+        .from('rep_dues_credits').delete()
+        .eq('id', row.id).eq('amount', row.amount).select('id');
+      if (error) throw error;
+      if (!data || data.length === 0) { raced = true; break; }
+    }
+
+    if (!raced) for (const [playerId, target] of want) {
+      const row = have.get(playerId);
+      if (!row) {
+        /* ── New: a household that had not fronted anything on this cost before ──
+           ⚠⚠ A UNIQUE VIOLATION HERE IS A RACE, NOT A FAILURE (`/review`, data lens, 2026-08-27).
+           The delete and update branches each detect their lost race through the CAS and set
+           `raced`; this INSERT had no equivalent, so two coaches recording the FIRST payment a
+           household fronts on one cost at the same moment would trip mig 267's unique index and
+           throw the raw Postgres error — past `MoneyEditRefusal`, out through the route, and into
+           the coach's face as a 500. It is exactly the shape four other inserts in this file
+           already handle by code. Retry instead: the loser re-reads and restates the row the
+           winner wrote.
+           ⚠ `target.cents` is always ≥ 1: every payment reaching here passed `asMoneyAmount`,
+           whose floor is a cent — so `createReimbursementCreditForExpense`'s own "skip below half a
+           cent" return of null is unreachable from this door, and treating it as "written" is safe.
+           A future caller with unvalidated amounts would have to revisit that. */
+        try {
+          await createReimbursementCreditForExpense({
+            programYearId: expense.programYearId,
+            playerId,
+            expenseId: expense.id,
+            amount: target.cents / 100,
+            description: `Paid out of pocket — ${expense.description}`,
+            creditDate: target.earliestDate ?? tournamentToday(),
+            createdBy,
+          });
+        } catch (err: any) {
+          if (err?.code !== '23505') throw err;
+          raced = true;
+          break;
+        }
+        continue;
+      }
+      if (cents(row.amount) === target.cents) continue;
+      // ── Changed: restate under the CAS ──
+      const { data, error } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ amount: target.cents / 100 })
+        .eq('id', row.id).eq('amount', row.amount).select('id');
+      if (error) throw error;
+      if (!data || data.length === 0) { raced = true; break; }
+    }
+
+    if (!raced) return;
     // A concurrent writer landed between the read and the write — loop with fresh reads.
   }
   throw new MoneyEditRefusal(
@@ -10379,6 +10660,14 @@ async function insertPayablePayment(
     note: string | null;
     installmentId: string | null;
     createdBy: string | null;
+    /**
+     * The family who paid THIS one directly (P4, mig 267). Null for the ordinary case.
+     *
+     * ⚠ NEVER SET WHEN THE COST ALREADY NAMES A PAYER. The cost's own column already claims every
+     * payment against it (`effectivePayerId`), so writing it here too would store one fact twice —
+     * which is how the two start disagreeing. `createOutOfPocketExpense` leaves it null on purpose.
+     */
+    paidByPlayerId?: string | null;
   },
   accountingEntryId: string | null,
 ): Promise<PayablePayment> {
@@ -10395,22 +10684,14 @@ async function insertPayablePayment(
       method:              opts.method,
       note:                opts.note,
       accounting_entry_id: accountingEntryId,
+      paid_by_player_id:   opts.paidByPlayerId ?? null,
       source:              'manual',
       created_by:          opts.createdBy,
     })
-    .select('id, expense_id, installment_id, amount, paid_date, method, note, accounting_entry_id')
+    .select(PAYABLE_PAYMENT_COLUMNS)
     .single();
   if (error) throw error;
-  return {
-    id: data.id,
-    expenseId: data.expense_id,
-    installmentId: data.installment_id ?? null,
-    amount: Number(data.amount),
-    paidDate: data.paid_date,
-    method: data.method ?? null,
-    note: data.note ?? null,
-    accountingEntryId: data.accounting_entry_id ?? null,
-  };
+  return mapPayablePaymentRow(data);
 }
 
 /**
@@ -10421,10 +10702,16 @@ async function insertPayablePayment(
  * payment and nothing shows the money twice. Over-payment is ACCEPTED (R6) — no figure here is
  * compared to the commitment's total, deliberately.
  *
- * ⚠ AN OUT-OF-POCKET COST POSTS NOTHING. A family's money moved and the team's did not (mig 234,
+ * ⚠ AN OUT-OF-POCKET PAYMENT POSTS NOTHING. A family's money moved and the team's did not (mig 234,
  * owner Call 5) — so the entry stays null and the books that follow are the CREDIT the team owes
  * that household, restated to the new paid total. Books first, row last, absolute values, so a
  * failure between the two converges on retry (owner ruling 2026-08-16).
+ *
+ * ⚠⚠ AND THE QUESTION IS NOW ASKED PER PAYMENT (money centralization P4, mig 267). A $600 entry
+ * the team owes can have its $200 deposit paid direct by a parent and its balance paid by the team;
+ * `paidByPlayerId` says so for THIS payment, and `effectivePayerId` folds in the cost's own answer
+ * for the whole-cost case that shipped first. Whichever way it resolves decides ONE thing here:
+ * whether a ledger entry is posted at all.
  */
 export async function recordPayablePayment(opts: {
   expense: RepTeamExpense;
@@ -10435,6 +10722,15 @@ export async function recordPayablePayment(opts: {
   note: string | null;
   /** The coach's override — "this one was for March". Null for the ordinary case (R3). */
   installmentId: string | null;
+  /**
+   * The family who paid THIS payment directly (P4). Null = the team paid it.
+   *
+   * ⚠ REFUSED, NOT IGNORED, when the cost already names a fronting family — see below. The record
+   * form states the cost's answer rather than asking again, so a value arriving here alongside one
+   * is a stale tab or a hand-rolled request, and silently dropping it is the ghost save this very
+   * phase exists to close.
+   */
+  paidByPlayerId?: string | null;
   createdBy: string;
 }): Promise<PayablePayment> {
   const e = opts.expense;
@@ -10454,14 +10750,52 @@ export async function recordPayablePayment(opts: {
     if (!inst) throw new MoneyEditRefusal('That installment is not part of this commitment.', 400);
   }
 
-  if (e.paidByPlayerId) {
-    /* Row first, then the credit from LIVE rows under a CAS — the mirror of the cash path below
-       (entry first, compensating void on failure). If the restate fails, the payment row undoes
+  /* ⚠⚠ ONE ANSWER PER PAYMENT, ASSERTED IN THE WRITER (P4). The cost's own payer claims every
+     payment against it, so a second answer arriving here is a disagreement, not extra detail —
+     and the two doors that could produce one (a stale tab, a direct request) must be told rather
+     than quietly overruled. Refused only when it DISAGREES: re-sending the same household is the
+     harmless echo a retry produces. */
+  if (opts.paidByPlayerId && e.paidByPlayerId && opts.paidByPlayerId !== e.paidByPlayerId) {
+    throw new MoneyEditRefusal(
+      'This cost already says a family paid it, so every payment against it is theirs — a payment '
+      + 'can’t name a different household. Record this as its own cost instead.',
+      409,
+    );
+  }
+  /* Stored only when the cost does NOT already carry it, so the fact has exactly one home. */
+  const ownPayer = e.paidByPlayerId ? null : (opts.paidByPlayerId ?? null);
+
+  if (ownPayer) {
+    /* ⚠ THE ROSTER CHECK IS THE WRITER'S, NOT THE ROUTE'S — the same call the out-of-pocket cost
+       door makes, for the same reason: the credit this mints is real money owed, and a stray or
+       cross-season id must never reach `rep_dues_credits`. A second door in a later phase must not
+       have to remember to re-copy it. */
+    /* ⚠ TEAM AS WELL AS SEASON (`/review`, security lens, 2026-08-27). The season alone is what the
+       out-of-pocket COST door has always asked, and it is sound today only because nothing writes a
+       roster row whose team and program year disagree — an invariant no constraint enforces. This
+       query mints real money owed to a household, so it asserts both. `rep_roster_players.team_id`
+       is NOT NULL, so nothing legitimate is refused by adding it. */
+    const { data: onRoster, error: rosterErr } = await supabaseAdmin
+      .from('rep_roster_players').select('id')
+      .eq('id', ownPayer)
+      .eq('program_year_id', e.programYearId)
+      .eq('team_id', e.teamId)
+      .maybeSingle();
+    if (rosterErr) throw rosterErr;
+    if (!onRoster) {
+      throw new MoneyEditRefusal('That player is not on this season’s roster.', 400);
+    }
+  }
+
+  if (effectivePayerId({ paidByPlayerId: ownPayer }, e.paidByPlayerId)) {
+    /* Row first, then the credits from LIVE rows under a CAS — the mirror of the cash path below
+       (entry first, compensating void on failure). If the reconcile fails, the payment row undoes
        itself so the coach retries clean; if even THAT fails, say so loudly rather than leaving a
        family's figure quietly wrong. */
-    const payment = await insertPayablePayment(e, { ...opts, createdBy: opts.createdBy }, null);
+    const payment = await insertPayablePayment(
+      e, { ...opts, paidByPlayerId: ownPayer, createdBy: opts.createdBy }, null);
     try {
-      await restateReimbursementCreditFromPayments(e.id);
+      await reconcileReimbursementCredits(e, opts.createdBy);
     } catch (err) {
       const { error: undoError } = await supabaseAdmin
         .from('rep_payable_payments').delete().eq('id', payment.id);
@@ -10490,7 +10824,11 @@ export async function recordPayablePayment(opts: {
     opts.createdBy,
   );
   try {
-    return await insertPayablePayment(e, { ...opts, createdBy: opts.createdBy }, entry.id);
+    /* ⚠ EXPLICITLY NULL rather than riding the spread. Reaching this line already proves no family
+       fronted it (the branch above owns every other case), and a payer arriving on a row that also
+       carries a posted cash entry is the one contradiction this table must never hold. */
+    return await insertPayablePayment(
+      e, { ...opts, paidByPlayerId: null, createdBy: opts.createdBy }, entry.id);
   } catch (err) {
     /* The entry is the half that would otherwise survive unreachable — a posted amount no screen
        can find, holding cash on hand down forever. Void it and let the coach retry clean. */
@@ -10534,7 +10872,7 @@ export async function removePayablePayment(opts: {
      team's book reads as "not found", never as something to reverse. */
   const { data: row, error } = await supabaseAdmin
     .from('rep_payable_payments')
-    .select('id, installment_id, amount, paid_date, accounting_entry_id, source')
+    .select('id, installment_id, amount, paid_date, accounting_entry_id, source, paid_by_player_id')
     .eq('id', opts.paymentId)
     .eq('expense_id', e.id)
     .eq('org_id', e.orgId)
@@ -10547,11 +10885,40 @@ export async function removePayablePayment(opts: {
   const amount = Number(row.amount);
   let reversedAmount = 0;
 
+  /* ⚠⚠ ASKED OF THIS PAYMENT, NOT OF THE COST (P4, mig 267). It used to read `!e.paidByPlayerId`,
+     which was a complete answer while a cost was fronted or it was not. A commitment can now hold
+     one payment the team paid and one a family fronted — so undoing the fronted one on a cost the
+     team otherwise pays would have gone hunting for a pre-mig-236 cash entry that never existed,
+     and either found nothing (harmless) or matched the OTHER payment's entry by amount and voided
+     real money the team still owes (not harmless). */
+  const fronted = effectivePayerId(
+    { paidByPlayerId: row.paid_by_player_id ?? null }, e.paidByPlayerId) !== null;
+
+  /* ⚠⚠ THE FLOOR IS ASKED BEFORE ANYTHING IS VOIDED OR DELETED. Undoing this payment lowers a
+     household's credit, and refusing after the row has gone would leave that family credited for
+     money nobody paid — the opposite of the state the guard exists to protect. */
+  if (fronted) {
+    /* ⚠ THE PAYMENTS ALONE, not `getCommitmentRecords` — that reads the installments too and this
+       question has no use for them (`/simplify`, efficiency lens). One read per undo, not two. */
+    const { data: live, error: liveErr } = await supabaseAdmin
+      .from('rep_payable_payments')
+      .select('id, amount, paid_date, paid_by_player_id')
+      .eq('expense_id', e.id);
+    if (liveErr) throw liveErr;
+    await assertReimbursementFloor(e, (live ?? [])
+      .filter(p => p.id !== opts.paymentId)
+      .map(p => ({
+        amount: Number(p.amount),
+        paidDate: String(p.paid_date),
+        paidByPlayerId: p.paid_by_player_id ?? null,
+      })));
+  }
+
   if (row.accounting_entry_id) {
     const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
     await voidEntry(row.accounting_entry_id as string, ledger.id);
     reversedAmount = amount;
-  } else if (!e.paidByPlayerId) {
+  } else if (!fronted) {
     const ledger = await getOrCreateRepTeamLedger(opts.team.orgId, opts.team.id, opts.team.name);
     let installmentNumber: number | null = null;
     if (row.installment_id) {
@@ -10582,13 +10949,17 @@ export async function removePayablePayment(opts: {
     .select('id');
   if (delError) throw delError;
 
-  if (e.paidByPlayerId) {
+  if (fronted) {
     /* AFTER the delete, from live rows, under the CAS — and on BOTH outcomes of the race: the
-       double-tap's loser (zero rows deleted) still restates, so it heals a credit its winner may
+       double-tap's loser (zero rows deleted) still reconciles, so it heals a credit its winner may
        have failed to write. Two undos of two DIFFERENT payments interleaving was the lost-update
-       the snapshot arithmetic here used to lose (`/review`, 2026-08-20). If the restate fails the
-       coach sees the error, and any later family-money action on this record converges it. */
-    await restateReimbursementCreditFromPayments(e.id);
+       the snapshot arithmetic here used to lose (`/review`, 2026-08-20). If the reconcile fails the
+       coach sees the error, and any later family-money action on this record converges it.
+       ⚠ THIS IS ALSO WHERE THE PAID-OUT FLOOR BITES (P4): a credit already handed back in cash
+       cannot be shrunk, so the refusal arrives here rather than as a silent clamp on a dues screen
+       three taps away. The payment row is gone by then and the reconcile is idempotent — retrying
+       after undoing the payout converges. */
+    await reconcileReimbursementCredits(e);
   }
   return { removed: (deleted ?? []).length > 0, reversedAmount };
 }
@@ -10856,8 +11227,14 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
        pre-236 match must refuse BEFORE the first entry has been rewritten and committed. */
     const entryOps: Array<{ entryId: string; amount?: number; entryDate?: string }> = [];
     let ledgerId: string | null = null;
-    if (!before.paidByPlayerId) {
+    {
+      /* ⚠⚠ PER PAYMENT, NOT PER COST (P4, mig 267). This tested `!before.paidByPlayerId` and
+         skipped the whole loop for a fronted cost — correct while a cost was fronted or it was
+         not. A commitment can now hold both kinds, so a schedule edit that restates the TEAM's
+         payment on a partly-fronted bill must still move that payment's ledger entry, and the
+         fronted one beside it must still move nothing. */
       for (const r of restatements) {
+        if (effectivePayerId(r.payment, before.paidByPlayerId)) continue;
         let entryId = r.payment.accountingEntryId;
         if (!entryId) {
           if (!opts?.team) throw new Error('updateRepTeamExpense: a figure edit that reaches the books needs the team');
@@ -10877,6 +11254,21 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
       }
     }
 
+    /* ⚠⚠ THE FLOOR IS ASKED BEFORE THE FIRST WRITE, from the state this edit is about to create.
+       Lowering an installment that has fronted money on it lowers that household's credit, and
+       refusing halfway would leave the payments restated with the credit still claiming the old
+       figure. `paymentRestatements` has already decided every new amount, so the after-state is
+       known here without touching anything. */
+    {
+      const newAmountById = new Map(restatements
+        .filter(r => r.newAmount !== undefined)
+        .map(r => [r.payment.id, r.newAmount as number]));
+      await assertReimbursementFloor(before, payments.map(p => ({
+        amount: newAmountById.get(p.id) ?? p.amount,
+        paidByPlayerId: p.paidByPlayerId ?? null,
+      })));
+    }
+
     for (const op of entryOps) {
       const { entryId, ...entryFields } = op;
       await updateEntry(entryId, ledgerId!, entryFields);
@@ -10890,30 +11282,60 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
       if (error) throw error;
     }
 
-    /* Out of pocket: no entry to move, a debt to keep honest. The credit's AMOUNT tracks the
+    /* Out of pocket: no entry to move, a debt to keep honest. The credit AMOUNTS track the
        payments from LIVE rows under the CAS — the payment patches above have landed, and a
        snapshot-derived figure here was the widest lost-update window of the three (`/review`,
        concurrency lens, 2026-08-20: several awaited writes sit between this function's read and
-       this line). The date and the wording are not aggregates, so they patch plainly. */
-    if (before.paidByPlayerId) {
+       this line). The date and the wording are not aggregates, so they patch plainly.
+       ⚠ THE WORDING PATCH IS COST-LEVEL AND STAYS SO: `patchReimbursementCredit` rewrites every
+       reimbursement credit this cost carries, which is right — they all name the same cost, so
+       renaming it renames all of them. Only the AMOUNTS are per household. */
+    const anyFronted = Boolean(before.paidByPlayerId)
+      || payments.some(p => p.paidByPlayerId);
+    if (anyFronted) {
       const creditPatch: Record<string, unknown> = {};
-      if (fields.paidDate !== undefined) creditPatch.credit_date = fields.paidDate;
+      /* ⚠ ONLY WHEN THE COST ITSELF IS THE FRONTED ONE. A commitment's pieces each carry their own
+         date; stamping one onto a household's credit would date a debt from a day that household
+         may have had nothing to do with. */
+      if (before.paidByPlayerId && fields.paidDate !== undefined) creditPatch.credit_date = fields.paidDate;
       if (fields.description !== undefined && fields.description !== before.description) {
         creditPatch.description = `Paid out of pocket — ${fields.description}`;
       }
       if (Object.keys(creditPatch).length > 0) {
         await patchReimbursementCredit(expenseId, creditPatch);
       }
-      await restateReimbursementCreditFromPayments(expenseId);
+      /* ⚠ The NEW name, not the old one. Nothing in an edit adds a household, so this only matters
+         for a repair-shaped run — but a credit minted under a stale description is a family reading
+         the name of something that no longer exists. */
+      await reconcileReimbursementCredits({
+        ...before,
+        description: fields.description ?? before.description,
+      });
     }
 
     await writeInstallmentPlan(before, desired, stored, payments);
     patch.amount = desired.reduce((s, p) => s + cents(p.amount), 0) / 100;
-  } else if (before?.paidByPlayerId
-    && fields.description !== undefined && fields.description !== before.description) {
+  } else if (before && fields.description !== undefined && fields.description !== before.description) {
     /* A rename alone still reaches the family's ledger: the credit names the cost, and a stale
-       name on real money owed is the wording half of the same rule. */
-    await patchReimbursementCredit(expenseId, { description: `Paid out of pocket — ${fields.description}` });
+       name on real money owed is the wording half of the same rule.
+       ⚠ A COST CAN CARRY CREDITS WITHOUT NAMING A PAYER ITSELF (P4): the households are on its
+       PAYMENTS. Testing `before.paidByPlayerId` here would have left every payment-level credit
+       naming a cost the coach had just renamed. The writer refuses a zero-row update, so it is
+       asked only when a credit actually exists. */
+    let hasCredits = Boolean(before.paidByPlayerId);
+    if (!hasCredits) {
+      const { data: existing, error: creditErr } = await supabaseAdmin
+        .from('rep_dues_credits').select('id')
+        .eq('expense_id', expenseId).eq('credit_type', 'reimbursement').limit(1);
+      if (creditErr) throw creditErr;
+      hasCredits = Boolean(existing && existing.length > 0);
+    }
+    /* ⚠ A COST THAT NAMES A PAYER ASKS UNCONDITIONALLY, so the writer's missing-credit REFUSAL
+       still fires. Only the payment-level case is probed first — there, no credit simply means no
+       payment has been fronted yet, which is an ordinary state rather than a corrupted record. */
+    if (hasCredits) {
+      await patchReimbursementCredit(expenseId, { description: `Paid out of pocket — ${fields.description}` });
+    }
   }
 
   const { data, error } = await supabaseAdmin
@@ -10953,9 +11375,14 @@ export async function adoptLedgerLinksForExpense(
   expense: RepTeamExpense,
   team: { id: string; orgId: string; name: string },
 ): Promise<void> {
-  if (expense.paidByPlayerId) return; // a family's money — no cash entry ever existed to claim
   const { payments } = await getCommitmentRecords(expense.id);
-  const unlinked = payments.filter(p => !p.accountingEntryId);
+  /* ⚠⚠ FILTERED PER PAYMENT (P4, mig 267). This used to bail on the whole cost when a family had
+     fronted it — right while a cost was fronted or it was not. A commitment can now hold both, and
+     bailing would leave the TEAM's own pre-mig-236 payment unadopted, which is the very state this
+     function exists to prevent. A fronted payment never posted a cash entry, so it has nothing to
+     claim and is skipped individually. */
+  const unlinked = payments.filter(p =>
+    !p.accountingEntryId && !effectivePayerId(p, expense.paidByPlayerId));
   if (unlinked.length === 0) return;
 
   const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
@@ -11011,13 +11438,30 @@ export async function deleteRepTeamExpense(
   expense: RepTeamExpense,
   team: { id: string; orgId: string; name: string },
 ): Promise<{ reversedAmount: number }> {
+  /* ⚠⚠ THE FLOOR APPLIES TO DELETE TOO, AND IT WAS MISSED (`/review`, correctness lens,
+     2026-08-27 — the one High of the pass). Every reimbursement credit this cost carries goes by
+     CASCADE, so deleting it takes a household's credit with it without a line of code being asked
+     about it. A family already handed that money back in cash was left with the payout pointing at
+     nothing and the loss clamped silently to zero — the same hole the undo path closed, one door
+     along, and it predates P4 for the whole-cost case.
+     ⚠ `[]` IS THE POINT: after this delete no payments remain, so every household's credit on this
+     cost goes to zero. That is the state the floor is asked about, and it is asked BEFORE the first
+     void — a refusal here must leave the books untouched. */
+  await assertReimbursementFloor(expense, []);
+
   const { payments } = await getCommitmentRecords(expense.id);
   let totalCents = 0;
   const toVoid: string[] = [];
   let ledgerId: string | null = null;
 
-  if (!expense.paidByPlayerId) {
-    const unlinked = payments.filter(p => !p.accountingEntryId);
+  /* ⚠⚠ PER PAYMENT (P4, mig 267). This whole block used to be skipped for a fronted cost. A
+     commitment can now hold a payment the team paid and one a family fronted — deleting it must
+     still give back the team's own cash, and must still give back nothing for the family's.
+     ⚠ The credits go by CASCADE either way (`rep_dues_credits.expense_id`), so a cost that carried
+     only fronted payments still needs no work here. */
+  {
+    const cashPayments = payments.filter(p => !effectivePayerId(p, expense.paidByPlayerId));
+    const unlinked = cashPayments.filter(p => !p.accountingEntryId);
     if (unlinked.length > 0) {
       ledgerId = (await getOrCreateRepTeamLedger(team.orgId, team.id, team.name)).id;
     }
@@ -11030,7 +11474,7 @@ export async function deleteRepTeamExpense(
        posted, and double-counting it would have the confirmation promise more money back than the
        void actually returns. */
     const claimed = new Set<string>();
-    for (const p of payments) {
+    for (const p of cashPayments) {
       if (p.accountingEntryId && !claimed.has(p.accountingEntryId)) {
         claimed.add(p.accountingEntryId);
         toVoid.push(p.accountingEntryId);

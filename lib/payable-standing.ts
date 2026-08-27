@@ -50,6 +50,54 @@ export interface PayablePayment {
    * arithmetic of what is owed.
    */
   accountingEntryId: string | null;
+  /**
+   * The family who paid THIS payment directly — money centralization P4, mig 267.
+   *
+   * ⚠⚠ NOT THE WHOLE ANSWER ON ITS OWN. A cost may name a fronting family at the COST level
+   * (`rep_team_expenses.paid_by_player_id`, mig 234), and then every payment against it is that
+   * household's whether or not this column is set. Ask `effectivePayerId()` below; a reader that
+   * tests this field alone will report the team as having spent cash a family actually fronted.
+   *
+   * ⚠ Optional so that the many pure callers constructing payment-shaped objects for arithmetic
+   * (previews, tests, the plan editor) do not have to answer a question they are not asking.
+   * Absent and null mean the same thing: the payment's own answer is "nobody named".
+   */
+  paidByPlayerId?: string | null;
+}
+
+/**
+ * ⚠⚠ WHOSE MONEY ACTUALLY MOVED — the ONE rule, so that eight readers cannot each invent it.
+ *
+ * A payment's own answer wins; failing that, the cost's. The cost-level column is not a default a
+ * coach may contradict — the record form renders it as a stated fact rather than a question (plan
+ * §8c.8), so the two can only agree. Reading it this way means the whole-cost mechanism that
+ * shipped in mig 234 is exactly the one-household case of the general rule, with no row rewritten
+ * and no second arithmetic.
+ *
+ * Returns null when the team paid, which is the ordinary case and the one worth being cheap.
+ */
+export function effectivePayerId(
+  payment: Pick<PayablePayment, 'paidByPlayerId'>,
+  expensePaidByPlayerId: string | null | undefined,
+): string | null {
+  return payment.paidByPlayerId ?? expensePaidByPlayerId ?? null;
+}
+
+/**
+ * Did the TEAM's cash move for this payment?
+ *
+ * ⚠⚠ THE QUESTION USED TO BE ASKED OF THE WHOLE COST, AND THAT IS THE DEFECT P4 HAD TO FIX IN
+ * THREE READERS AT ONCE (the register's running balance, the season settlement pot, Budget vs.
+ * Actual's cash strip). Before P4 a cost was fronted or it was not, so `!expense.paidByPlayerId`
+ * was a complete answer. A commitment can now hold one payment the team paid and one a family
+ * fronted, and a reader still asking at cost level reports every dollar of a $600 bill as team
+ * cash because the $200 deposit was the only fronted piece — or none of it, because it was.
+ */
+export function paymentMovedTeamCash(
+  payment: Pick<PayablePayment, 'paidByPlayerId'>,
+  expensePaidByPlayerId: string | null | undefined,
+): boolean {
+  return effectivePayerId(payment, expensePaidByPlayerId) === null;
 }
 
 /** ⚠ R4 — `partly_paid` counts as UNPAID everywhere a coach filters, schedules or bulk-edits. */

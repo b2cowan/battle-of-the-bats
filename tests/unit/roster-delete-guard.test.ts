@@ -111,6 +111,12 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
     // SET NULL, not CASCADE — the row survives, it just loses a pointer.
     rep_team_game_moments: 'ON DELETE SET NULL by design — a player leaving must not erase the coach\'s memory of the night.',
     rep_team_expenses:     'paid_by_player_id is SET NULL — loses a provenance pointer, not the expense.',
+    rep_payable_payments:  'paid_by_player_id is SET NULL (mig 267) — the same treatment, one level down: '
+      + 'losing who fronted a payment must never delete the record of money that moved. ⚠ The REAL '
+      + 'protection is elsewhere and is why SET NULL is safe here — rep_dues_credits.player_id is NOT '
+      + 'NULL and IS guarded, so a player carrying a reimbursement credit cannot be removed in the '
+      + 'first place. A fronted payment always carries one, so this SET NULL is a backstop for a '
+      + 'state the app does not produce.',
     // Reached only THROUGH a guarded parent.
     rep_team_lineups:      'lineup ENTRIES are guarded; the lineup itself is not player-scoped.',
     rep_fundraisers:       'fundraiser ENTRIES are guarded; the drive itself is not player-scoped.',
@@ -128,6 +134,17 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
       const re = /CREATE TABLE (?:IF NOT EXISTS )?(?:public\.)?([a-z_]+)\s*\(([\s\S]*?)\n\);/g;
       let m: RegExpExecArray | null;
       while ((m = re.exec(sql)) !== null) {
+        if (/REFERENCES\s+(?:public\.)?rep_roster_players/.test(m[2])) referencing.add(m[1]);
+      }
+      /* ⚠⚠ AND `ALTER TABLE … ADD COLUMN … REFERENCES`, WHICH THIS SCAN WAS BLIND TO. A table that
+         GAINS a roster FK later never appeared in `referencing`, so it was neither guarded nor
+         forced into the list below — the exact guarantee this test exists to make, silently not
+         firing. Found by `/simplify`'s altitude lens when migration 267 added
+         `rep_payable_payments.paid_by_player_id` that way and nothing noticed (money centralization
+         P4). Fixing the SCANNER rather than adding the one table is the point: the next such
+         column would have slipped through too. */
+      const alter = /ALTER TABLE (?:IF EXISTS )?(?:ONLY )?(?:public\.)?([a-z_]+)([\s\S]*?);/g;
+      while ((m = alter.exec(sql)) !== null) {
         if (/REFERENCES\s+(?:public\.)?rep_roster_players/.test(m[2])) referencing.add(m[1]);
       }
     }

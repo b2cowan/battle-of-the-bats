@@ -283,7 +283,12 @@ door that refuses dues and drive money.
   outside it — the public tryout registration form, the public league registration form and one
   platform-admin screen. The ruling's reasoning is about what red means *in this portal*, and those
   are different surfaces; they were left alone deliberately, not missed.
-- **P4 — payer-on-payment** (ruled YES): its own phase; credit unwind on edit/delete is the
+- **P4 — payer-on-payment** (ruled YES): **⏸ GATE 1 DRAWN 2026-08-27, AWAITING OWNER APPROVAL —
+  the working detail is §8c below, which outranks this bullet.** ⚠ Two code-verified findings
+  change the phase: the "Paid by" question **already renders on the record-a-payment form and is
+  silently discarded** (a live ghost save), and **there is no payment editor at all** (POST +
+  DELETE only), so two of the three unwind cases the build prompt names are not reachable.
+  Its own phase; credit unwind on edit/delete is the
   acceptance test.
 - Every phase: **help docs + BOTH demo sandboxes re-read** — the money vocabulary is exactly the
   surface where hand-written demo sentences go stale while pages still render (CLAUDE.md standing
@@ -369,6 +374,326 @@ stays a delta.
 commitment. Any future fix must test **the team's list, not the narrowed view**.
 
 **Owner QA §111.** No migration.
+
+## 8c · P4 — A PAYMENT LEARNS WHO PAID IT — ✅ BUILT ON DEV 2026-08-27 (owner QA §116; mig 267)
+
+Ruled YES on 2026-08-21 (§5.1). Gate 1 drawn 2026-08-27; **owner approved the same day** ("agree
+with your recommendations, go ahead") and the whole phase was built in one pass.
+
+⚖ **THREE THINGS BELOW WERE CORRECTED BY THE BUILD'S OWN REVIEW GATES — read §8c.11 before
+trusting §8c.4/§8c.5.** The floor stopped being a backstop inside the reconciler and became a
+pre-flight only; delete gained the gate it never had; and the credit INSERT learned to read a
+unique violation as a race.
+
+- **PM brief:** `COACH_MONEY_CENTRALIZATION_P4_PM_BRIEF.md`
+- **Drawings (6 named specimens):** `claude.ai/code/artifact/4873ab46-4e1e-4726-b856-d361ecc0e017`
+- **Build prompt:** `COACH_MONEY_CENTRALIZATION_P4_BUILD_PROMPT.md`
+
+### 8c.1 · Two code-verified findings that CHANGE the phase (read before anything else)
+
+**⚠⚠ FINDING 1 — THE QUESTION IS ALREADY ON THE SCREEN, WIRED TO NOTHING. A LIVE GHOST SAVE.**
+`renderPaidBy()` in `accounting/expenses/panel.tsx` returns null only for `isPayableForm ||
+isMoneyInForm`, and is called from inside the shared details fold (`!isMoneyInForm`). A
+**bill-payment** form is neither: `payingBill` is add-mode with `formKind === 'expense'`, so the
+editable **"Paid by"** select renders, offering every roster family — inside a fold whose own label
+reads *"More — paid by, payee, tags, notes"*. `saveBillPayment()` posts `{amount, paidDate, method,
+note, installmentId}` and **drops `form.paidByPlayerId` on the floor.** `consequenceLine()` tests
+`payingBill` *before* the out-of-pocket branch, so the coach is told the team's cash left.
+
+This is the ghost-save shape of owner ruling A (2026-08-23) — an answered question that changes
+nothing while the screen says otherwise. **It ships on dev today, independent of P4.**
+Consequence for the phase: P4 does not add a field. **The layout cost is zero**, which is why
+specimen 1's before and after are the same shape.
+
+**⚠⚠ FINDING 2 — THERE IS NO PAYMENT EDITOR. The build prompt's §1.5 premise is wrong on two of
+three cases.** `payments/[paymentId]/route.ts` exports **DELETE only**; `payments/route.ts` exports
+**POST only**. A recorded payment has two operations. Correcting one is undo-and-record-again.
+So of the prompt's three unwind cases — change the amount, change the payer, delete — only the
+third is reachable, and the second is a refusal rather than an operation.
+**Recommendation: P4 does NOT build a payment editor.** It is a larger decision than this phase and
+would reopen the paid/owed fork ruling B2 closed.
+
+### 8c.2 · Which mechanism P4 extends, and why the other is wrong
+
+`DATA_DICTIONARY.md` `rep_team_money_in` gotcha 1, honoured: *a coach describes both as "a parent
+paid me back", and they are opposites.*
+
+- **Paid out of pocket** — `rep_team_expenses.paid_by_player_id` + a `reimbursement` credit
+  (mig 234). Team cash never moved; the team **owes that family**. **P4 extends this, one level
+  down: from the cost to the payment.**
+- **Money back** — `rep_team_money_in`. Team cash went out and some came back; the team owes
+  **nobody**. Gotcha 3 (`NEVER BOTH`) and gotcha 4 (`NOTHING HERE EVER CHANGES A PAYMENT SCHEDULE`)
+  both apply. **P4 does not touch this table.**
+
+The $200 deposit is unambiguously the first: the team never paid, the parent did, the team owes
+them. Recording it as `money_back` would book $200 of team cash leaving that never left, then $200
+arriving that never arrived, and leave the family owed nothing.
+
+**⚠ And nothing in P4 changes a dues SCHEDULE.** The credit lowers what a family is *asked to
+send*, which is derived at read time by `lib/dues-credits.ts` — the existing behaviour of every
+credit. Gotcha 4 is not bent.
+
+### 8c.3 · The model — ONE arithmetic, generalized, never a second one
+
+**The effective payer of a payment** = `payment.paidByPlayerId ?? expense.paidByPlayerId`.
+
+**The credit set for a cost** = one `reimbursement` credit per **(expense, effective payer)**, whose
+amount is the sum of that payer's payments on that cost. The existing whole-cost case is exactly the
+one-group case, unchanged.
+
+⚠ **This is why the existing helper must be generalized rather than copied.**
+`restateReimbursementCreditFromPayments(expenseId)` today reads
+`.eq('expense_id', …).eq('credit_type','reimbursement').maybeSingle()` and sets `amount = Σ ALL
+payments on the expense`. Left alone, a second payer on one cost makes `maybeSingle()` throw and
+**breaks the existing out-of-pocket path**. It becomes a *reconcile of the whole set*: group live
+payments by effective payer, insert missing credits, restate changed ones, delete emptied ones —
+each write still under the CAS-on-old-amount + retry loop it already has.
+
+⚠ **No new credit-link column is needed.** The credit's natural key is
+`(expense_id, player_id, credit_type='reimbursement')`. Add a **partial UNIQUE index** on that so
+the reconcile cannot produce two rows for one household — verify on dev first that no existing rows
+violate it (only `createOutOfPocketExpense` writes these, one per expense, so it should hold
+trivially).
+
+⚠ **`rep_dues_credits.payment_id` IS ALREADY TAKEN** and means something else — a `rep_dues_payments`
+FK on auto-created `overpayment` credits (dictionary gotcha 6). Do not reuse or overload it.
+
+⚠ **The new kind is not a manual kind.** Nothing is added to `MANUAL_CREDIT_TYPES`. The credit is
+minted by the act of recording, as `reimbursement` already is. Adding it to the picker would be P3's
+400-on-a-refused-kind bug in a mirror.
+
+⚠ **The credit's wording does not change:** `Paid out of pocket — {expense description}`,
+`credit_type = 'reimbursement'`. A parent who fronted a whole cost last month and a deposit this
+month reads one sentence, not two. One spelling everywhere a customer reads it (AGENCY_RULES).
+
+### 8c.4 · THE UNWIND RULES, stated as rules
+
+| Act | The family's credit | How it is made safe |
+|---|---|---|
+| **Record** a payment naming a payer | Restated to Σ that payer's payments on the cost | Row first, then reconcile from **live rows** under CAS; on restate failure the payment removes itself (the `recordPayablePayment` out-of-pocket branch's existing shape) |
+| **Undo** that payment | Restated down; credit row **deleted** when the group empties | Delete re-asserts `expense_id + org_id + team_id + program_year_id` in its own WHERE; a zero-row delete is reported as "already undone", never as a second reversal. Reconcile runs **after** the delete, from live rows, on **both** outcomes of the race (the lost-update fix of 2026-08-20) |
+| **Change the payer** | Nothing — **REFUSED, 409** | Precedent: `expenses/[expenseId]/route.ts` already refuses moving a cost's payer. Sentence: *"Who paid can't be changed after saving — it decides which family the team owes. Undo this payment and record it again."* **There is no move-a-credit-between-households operation to get wrong.** |
+| **Edit the commitment's schedule** so a paid figure restates | Restated to match | The existing `updateRepTeamExpense` → `restateReimbursementCreditFromPayments` path, now reconciling the set. `paymentRestatements` (pure, tested) is unchanged |
+| **Any act that LOWERS a family's credit** | Checked first (see 8c.5) | Refused if it would drop below what has already been paid out in cash |
+| **Delete the cost** | Goes with it | Unchanged — `expense_id` CASCADE; a credit cannot outlive the cost it repays |
+
+⚠ **Check-then-act throughout** (`memory/reference_coach_money_check_then_act.md`): every write
+re-asserts team + org + season + the row's expected state in its own WHERE. This codebase has
+already shipped an approve path that posted a transfer before marking it approved.
+
+### 8c.5 · ⚠⚠ THE PAID-OUT HAZARD — not in the build prompt, and reachable TODAY
+
+A `reimbursement` credit is payable out in cash: `payoutCeiling()` excludes only `forgiven`. If a
+credit is later reduced below what has already been handed over, **the arithmetic does not go
+negative — it goes silent.** `applyCreditsToBills` clamps `Math.min(paidOutC, issuedC)`, so
+`owedBack` and the ceiling both floor at zero and the team is simply out the money with nothing on
+any screen saying so.
+
+**Reachable on the EXISTING whole-cost mechanism right now** (undo the payment on an out-of-pocket
+cost whose credit was paid out). P4 makes it far easier to reach.
+
+**Rule:** before any reconcile that lowers a family's non-forgiven credit, re-assert that the
+family's remaining non-forgiven credits still cover `Σ rep_dues_payouts` for that player in that
+season. If not, refuse — `MoneyEditRefusal`, 409, with a sentence naming the next step:
+
+> *"$200.00 of Avery Test's credit has already been handed back in cash. Undoing this payment would
+> take away a credit the team has already paid out. Undo that payout first, then undo this."*
+
+**⚠ The guard goes on the existing path in the same change**, not only the new one. Two arithmetics
+for one question is the defect this project exists to remove.
+
+### 8c.6 · The migration
+
+**One column, plus one index.** ⚠ Decide it exists from the snapshots / live `information_schema`,
+never from migration files.
+
+- `rep_payable_payments.paid_by_player_id` → `rep_roster_players.id`, **nullable, ON DELETE SET
+  NULL** — the same name and the same action as the cost-level column, because it means the same
+  thing one level down. Partial index on `(expense_id) WHERE paid_by_player_id IS NOT NULL`.
+- Partial **UNIQUE** on `rep_dues_credits (expense_id, player_id) WHERE credit_type =
+  'reimbursement'` — the structural guarantee replacing the old `.maybeSingle()`.
+
+**Same unit of work:** `docs/agents/db/DATA_DICTIONARY.md` (both tables, plus the `rep_dues_credits`
+gotcha that currently says the reimbursement credit is one-per-expense) and
+`npm run refresh:snapshots`. `npm run check:dictionary` fails the build otherwise.
+
+⚠ **A removed roster player (build prompt §4.4).** SET NULL matches the cost-level precedent, but
+the real protection is elsewhere: `rep_dues_credits.player_id` is NOT NULL and the roster
+undo-guard blocks removing a player who carries credits. So the SET NULL is a backstop for a path
+that should not arise; if it ever does, the payment reads *"A family paid direct"* with no name —
+exactly the fallback `lib/coach-register-book.ts` already uses.
+
+### 8c.7 · THE WHOLE SUBTREE — every surface, and which change
+
+**⚠⚠ THE THREE EXPENSIVE ONES.** Each asks *"did a family pay this?"* of the **whole cost** today.
+After P4 one commitment can have a payment that moved team cash and a payment that did not, so each
+must ask it **per payment**.
+
+1. **`lib/coach-register-book.ts`** — `movesCash: !e.paidByPlayerId` on every payment row, and the
+   `detail` line likewise. Must become per-payment. Get this wrong and the register's running
+   balance stops being cash on hand — the one claim `scripts/check-register-balance.mjs` exists to
+   guard.
+2. **`expenseTotals()` in `lib/season-settlement.ts`** — `if (!e.paidByPlayerId) cashPaidC += paid`
+   excludes the **whole** cost. Must exclude the fronted **payments**. Its signature needs
+   per-payment payer data from the standing. ⚠ **Highest-risk reader in the phase: this figure sets
+   every family's end-of-season refund.** Its own header notes three readers hand-rolled this branch
+   before it existed and had begun to differ — do not add a fourth.
+3. **Budget vs. Actual's cash strip** — `familyPaidDirect: !!exp.paid_by_player_id`
+   (`budget-vs-actual/route.ts`). Same shape, same fix.
+
+**Also changes:** the commitment page's payment list (specimen 3 — the payer + the `Family paid`
+badge); the record-a-payment conversation (the field starts working; locks per 8c.8); Player Dues
+(a credit row); the family statement PDF (a credit row — same wording); the money exports (a
+*Paid by* column on the commitments/payments sheet); in-app help; both demo sandboxes.
+
+**Deliberately unchanged:** dues schedules (8c.2), `rep_team_money_in`, club requests, fundraisers,
+tags, the commitment plan editor, `lib/payable-standing.ts`'s arithmetic (a payer is not an
+allocation — R3 is untouched).
+
+**⚠ `lib/payable-standing.ts`'s `owing` is DUAL-PURPOSE** (remaining when unsettled, full face
+amount when settled) — P3 shipped a bug on exactly this. Nothing in P4 needs `owing`; if a drawing
+seems to, re-read the module first.
+
+**⚠ Reading is not writing (§4.5).** The payer must reach the payment **list** and the register
+detail line, not only the record form — a `money: 'read'` assistant never gets an Edit button. A
+player *name* is baseline in this portal, not `rosterPii`, so there is no new privacy gate.
+
+**⚠ A payment is money that MOVED** (P2 ruling B). The payer field must not reopen the paid/owed
+fork. It answers *whose money*, never *whether it moved*.
+
+### 8c.8 · The collision (build prompt §1.6) — prevented, not resolved
+
+A cost that already names an out-of-pocket payer, receiving a payment that names one.
+**Answer: the question is not asked twice.** The form renders `Paid by` as a **locked fact** —
+*"A family, out of pocket — Avery Test · Set on the cost"* — with the hint *"This cost says a
+family paid it. Every payment against it is theirs."* The payment inherits the cost's payer. The
+existing consequence sentence (already in the code, already correct) states the growing credit.
+
+**No double credit, by construction:** each payment's dollars belong to exactly one household under
+8c.3's grouping, whether or not the door is opened.
+
+**Rejected — letting the payment override the cost.** The arithmetic would cope. What would not is
+a coach reading two answers to one question a few inches apart, which is the §8b defect. A cost
+genuinely split between two fronting families is a **third** thing and is recorded as two costs.
+
+**Rejected — refusing the save.** Nothing is wrong with what the coach is doing; refusing would
+send them to delete and re-enter a correct record.
+
+### 8c.9 · Help + demos (both standing rules, not optional)
+
+- **Help** (`lib/help-content/coaches.tsx`) — the money guide explains *money back* vs *paid out of
+  pocket* at the **cost** level only, and its `keywords` array carries "money back vs paid out of
+  pocket" / "a parent paid me back". Both move in the same unit of work, keywords included.
+- **Demos** — ask both questions. *Should a demo moment show this?* (a parent fronting a deposit is
+  a recognisable, sympathetic moment) and *are the demo's existing money sentences still true?*
+  ⚠ `CLAUDE.md` already flags the coach demo's dock lines and most of its money tour as written
+  against the pre-centralization world. ⚠ A seed change needs a **reseed**, not a nightly tick.
+
+### 8c.10 · Gate 2 — when the owner approves
+
+Build the whole approved phase in one pass, then: `npm run verify:changed` · `npm run typecheck` ·
+`npm run check:layout -- --changed` with a dev server up · `/simplify` then `/review` (that order) ·
+`npm run check:demos` · `npm run check:register-balance`. Add an Owner QA Ledger section with a
+walkthrough Artifact carrying real checkboxes. **State honestly what was not verified — a gate that
+did not run is not a gate that passed.**
+
+⚠ `verify:changed` has died at the parity check before its last six checks ran
+(`memory/project_coach_page_actions.md`) — confirm it reached the end.
+
+
+
+### 8c.11 · ⚖ WHAT THE BUILD'S OWN GATES CORRECTED — this outranks §8c.4 and §8c.5
+
+`/simplify` (4 lenses) then `/review` (high-risk tier, 5 lenses) ran on the built phase. Between them
+they found **five real defects, two of them in the design this plan had written down.** Recorded here
+rather than edited silently into the sections above, because two of them reverse a stated rule.
+
+1. ⚠⚠ **THE FLOOR IS A PRE-FLIGHT ONLY. THE RECONCILER DOES NOT REFUSE.** §8c.5 said the check
+   inside `reconcileReimbursementCredits` was "the backstop". It was a **liability**: a backstop
+   that fires after an irreversible write. `removePayablePayment` deletes the payment row and *then*
+   reconciles, so a payout landing in that gap made the reconciler throw with the payment already
+   gone — and **every retry recomputed the same lower figure and hit the same refusal**, leaving the
+   credit stranded above the payments permanently, with no way to repair it from inside the product.
+   The rule now: **the gate belongs at the door** (`assertReimbursementFloor`, before any write), and
+   the reconciler's one job is to make the credits agree with the payments — it must always be able
+   to finish. The residue of a lost race is a payout exceeding a credit, which the arithmetic already
+   tolerates and undoing the payout already repairs. **A wrong number that can be fixed beats a right
+   refusal that cannot.**
+2. **DELETING A COMMITMENT TAKES A FRONTED HOUSEHOLD'S CREDIT WITH NO CHECK.**
+   `deleteRepTeamExpense` now asks the floor first with an empty payment list — after the delete
+   nothing remains, so every household's credit goes to zero, and that is the state to ask about.
+   ⚠ **Predates P4** for the whole-cost case.
+   ⚖ **RE-GRADED HIGH → MEDIUM 2026-08-27 after a peer push-back, and both of us had it partly
+   wrong. Read this before quoting the severity anywhere:**
+   - **What I got wrong:** I claimed it corrupted the figure that sets every family's refund. **It
+     does not.** `lib/coach-season-settlement.ts` deliberately passes the RAW payout total, not the
+     credit-clamped one (its own comment explains why), so a household's "already received" figure
+     survives the cascade intact. And the CASCADE ITSELF IS DESIGN — mig 234, so a reimbursement
+     can never outlive the cost it repaid. "No gate at all" was the wrong description of it.
+   - **What the push-back got wrong:** it is not merely "the coach isn't told". A payout stranded
+     above a household's credits **silently consumes their FUTURE credits**. Verified against
+     `applyCreditsToBills`: $200 paid out with the credit gone, then a $150 fundraiser rebate →
+     `applied: 0`, `leftToSend: 150`. The family earned a rebate that lowers nothing.
+   - **The best observation is the peer's and outlives the grade:** the roster undo-guard REFUSES to
+     remove a player carrying credits; this path TAKES those credits silently. One question, two
+     opposite answers. Logged as an owner ruling in §116, not built.
+3. **A unique violation on the credit INSERT is a RACE, not a failure.** Mig 267's index exists to
+   stop a double-credit; the insert did not read `23505` as "someone else got there first", so a
+   genuine race threw a raw Postgres error past `MoneyEditRefusal` and reached the coach as a 500.
+   Four other inserts in `lib/db.ts` already handled it by code; this one now does too.
+4. ⚠⚠ **`recordRepDuesPayout`'s post-write re-check read STALE credits — AND THIS ONE IS LIVE IN
+   PRODUCTION TODAY.** It re-read payouts and reused the credit snapshot from before its own
+   insert, so it could see a concurrent *payout* and was blind to a concurrent *credit shrink*: the
+   family is handed cash the team no longer says it owes. It re-reads both now.
+   ⚖ **I first recorded this as "newly reachable because a fronted payment can now be undone" and
+   that was WRONG** — corrected 2026-08-27 after checking `origin/master` rather than assuming.
+   Every credit-shrinking path is already on prod and has been since the Payables Rebuild: undoing
+   a payment on an out-of-pocket cost, deleting one, editing its schedule down, and the dues
+   panel's own credit PATCH and DELETE. The buggy code on prod is byte-identical to what this
+   replaced. **P4 neither introduces nor widens the window — it is the change that went looking**,
+   and the fix ships whenever P4 does. It is a narrow interleaving (a payout recorded at the same
+   moment a credit falls), which is why it has survived, but the money is real.
+5. **One arithmetic, asserted but not enforced.** `reimbursementTotalsByPlayer`'s docstring claimed
+   to be "the one grouping rule so the two cannot answer differently" while the reconciler quietly
+   ran its own copy of the loop. A comment asserting an invariant the code does not enforce is worse
+   than no comment. It calls the shared function now, and the money half of it delegates to
+   `totalsByPlayer` — the guarded per-player sum, which `tests/unit/dues-definition-guard.test.ts`
+   correctly failed the build over on the first attempt.
+
+**Also hardened, none of them defects:** the payer's roster check asserts **team as well as season**
+(`rep_roster_players.team_id` is NOT NULL, so nothing legitimate is refused); a roster-name read is
+no longer bought and discarded on every guard call; the undo path stopped reading installments it
+never used; two hand-rolled `||` copies of `effectivePayerId` and three copies of a name join were
+replaced by the shared functions (`formatPlayerFirstLast` is new).
+
+⚠⚠ **AND A GUARD HOLE WAS FOUND AND THE SCANNER WAS FIXED, NOT THE ONE TABLE.**
+`tests/unit/roster-delete-guard.test.ts` only scanned `CREATE TABLE` blocks for roster FKs, so a
+table that **gains** one through `ALTER TABLE … ADD COLUMN` never entered its completeness check —
+its whole guarantee is "a new child table cannot appear without somebody deciding which side it
+belongs on", and mig 267 added exactly that shape with nothing noticing. It scans `ALTER TABLE` now,
+which would have caught the next one too.
+
+### 8c.12 · What proves it, and what does not
+
+**`scripts/probe-p4-fronted-payment.mjs` (new) — 17 checks, all passing.** It drives the real HTTP
+routes with a real coach session: the credit is minted, split per household, removed on undo; a
+payer disagreeing with the cost's own is refused; and the floor refuses **before** anything is
+written on both the undo path and the delete path.
+
+⚠ **It cannot import `lib/db.ts`,** and that is worth recording rather than working around: the file
+uses a TypeScript parameter property, which Node's strip-only TS mode refuses outright — so the money
+writers are unreachable from a plain script. The same untestability shape as the `server-only` import
+that kept `lib/rep-season-rollover.ts` untested until a real defect shipped through it. Going through
+the routes is the honest way in, and it tests more.
+
+⚠ **The probe's FIRST run failed the floor case and the PROBE was wrong, not the code.** It handed a
+family $200 and expected a refusal; that household was owed $380 in other credits, so their balance
+still covered the payout and letting the undo through was correct. **The guard is per HOUSEHOLD, not
+per credit** — payouts carry no `credit_id` and must never carry one — so the only exact question is
+"would this household's remaining credits still cover what has already gone out?".
+
+⚠ **Not verified: anything in a browser.** `check:layout` renders pages but cannot open a modal, so
+the record form, the payment list and both confirmations are unwalked. That is Owner QA §116.
 
 ## 9 · Aftercare / links
 

@@ -6,7 +6,7 @@ import {
   getRepAllocationSplitsForTeam, getCommitmentStandings, getSeasonName,
 } from '@/lib/db';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
-import { installmentLabel, paymentLabel } from '@/lib/payable-standing';
+import { installmentLabel, paymentLabel, effectivePayerId } from '@/lib/payable-standing';
 import { clubRequestIsReimbursement, type ClubRequestType } from '@/lib/coach-club-money';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -984,7 +984,11 @@ export const GET = withObservability(async (req: Request,
         amount: p.amount,
         place: { categoryId: placed.categoryId, categoryName: placed.categoryName, itemId: placed.itemId },
         paidDate: p.paidDate,
-        familyPaidDirect: !!exp.paid_by_player_id,
+        /* ⚠⚠ PER PAYMENT (money centralization P4, mig 267). This read `!!exp.paid_by_player_id`,
+           which was a complete answer while a cost was fronted or it was not. A commitment can now
+           hold a deposit a parent paid direct and a balance the team paid — at cost level the cash
+           strip either subtracts the whole bill from cash the team still holds, or none of it. */
+        familyPaidDirect: effectivePayerId(p, exp.paid_by_player_id as string | null) !== null,
       }));
     }),
     duesPayouts: duesPayouts.map(p => ({

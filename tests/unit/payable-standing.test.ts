@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   commitmentStanding, installmentStatus, installmentStatuses, installmentsInScope, scopeChoiceIsMeaningful,
   PAYABLE_STATUS_DEFAULT,
-  installmentLabel, paymentLabel,
+  installmentLabel, paymentLabel, effectivePayerId, paymentMovedTeamCash,
   type PayableInstallment, type PayablePayment, type EditScope,
 } from '../../lib/payable-standing.ts';
 
@@ -455,5 +455,55 @@ describe('the standing carries its payments, so every screen reads ONE object', 
 
   test('a commitment with nothing recorded carries an empty list, never undefined', () => {
     assert.deepEqual(commitmentStanding([inst({ amount: 450 })], []).payments, []);
+  });
+});
+
+/**
+ * ⚠⚠ WHOSE MONEY MOVED — money centralization P4, mig 267.
+ *
+ * These two functions exist so that eight readers cannot each invent the rule. Three of them
+ * decide load-bearing figures: the register's running balance (which IS cash on hand), the season
+ * settlement pot (which sets every family's refund) and Budget vs. Actual's cash strip. Every case
+ * below is one those three used to get wrong by real money when they asked the COST instead.
+ */
+describe('effectivePayerId / paymentMovedTeamCash — the payer is the payment’s, then the cost’s', () => {
+  test('nobody named anywhere: the team paid it', () => {
+    assert.equal(effectivePayerId({ paidByPlayerId: null }, null), null);
+    assert.equal(paymentMovedTeamCash({ paidByPlayerId: null }, null), true);
+  });
+
+  test('the payment names a family: no team cash moved', () => {
+    assert.equal(effectivePayerId({ paidByPlayerId: 'avery' }, null), 'avery');
+    assert.equal(paymentMovedTeamCash({ paidByPlayerId: 'avery' }, null), false);
+  });
+
+  test('⚠ the COST names a family: every payment against it is theirs (mig 234, unchanged)', () => {
+    assert.equal(effectivePayerId({ paidByPlayerId: null }, 'avery'), 'avery');
+    assert.equal(paymentMovedTeamCash({ paidByPlayerId: null }, 'avery'), false);
+  });
+
+  test('an absent field reads exactly like an explicit null', () => {
+    // Pure callers build payment-shaped objects for arithmetic and must not have to answer a
+    // question they are not asking.
+    assert.equal(effectivePayerId({}, null), null);
+    assert.equal(paymentMovedTeamCash({}, 'avery'), false);
+  });
+
+  test('⚠⚠ ONE BILL, BOTH KINDS — the case the cost-level answer could not express', () => {
+    // The owner's case: $600 entry; a parent pays the $200 deposit direct, the team pays $400.
+    const s = commitmentStanding(
+      [inst({ amount: 200, dueDate: '2026-05-01' }), inst({ amount: 400, dueDate: '2026-06-01' })],
+      [pay({ id: 'dep', amount: 200, paidDate: '2026-05-02', paidByPlayerId: 'avery' }),
+       pay({ id: 'bal', amount: 400, paidDate: '2026-06-02' })],
+    );
+    const cash = s.payments.filter(p => paymentMovedTeamCash(p, null));
+    assert.deepEqual(cash.map(p => p.id), ['bal']);
+    assert.equal(cash.reduce((t, p) => t + p.amount, 0), 400,
+      'asking the cost would have counted $600 of team cash or $0 — both wrong by real money');
+  });
+
+  test('the standing carries the payer through, so a screen reads ONE object', () => {
+    const s = commitmentStanding([inst({ amount: 200 })], [pay({ amount: 200, paidByPlayerId: 'blake' })]);
+    assert.equal(s.payments[0].paidByPlayerId, 'blake');
   });
 });

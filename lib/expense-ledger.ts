@@ -15,7 +15,7 @@
 // now the commitment's own payments — `commitmentStanding().payments`, each carrying the entry it
 // posted — and the delete path reverses those directly.
 
-import type { CommitmentStanding } from './payable-standing';
+import { effectivePayerId, paymentMovedTeamCash, type CommitmentStanding } from './payable-standing';
 import { MAX_MONTHLY_OCCURRENCES } from './coach-monthly-recurrence';
 
 /**
@@ -39,10 +39,17 @@ export function tooManyInstallments(count: number): string {
  * On a part-paid commitment the figure is what was ACTUALLY paid, never the total — §27 Part D's
  * rule, carried across the rebuild.
  *
- * `owesFamily` is separate and NOT money coming back: an out-of-pocket expense carries a credit the
- * team owes a family, which the delete removes by cascade. That changes what a household is owed
- * without a dollar moving through the ledger, so it has to be said in its own sentence rather than
- * folded into an amount — and none of its payments ever posted team cash, so the amount is zero.
+ * `owesFamily` is separate and NOT money coming back: a fronted payment carries a credit the team
+ * owes a family, which the delete removes by cascade. That changes what a household is owed without
+ * a dollar moving through the ledger, so it has to be said in its own sentence rather than folded
+ * into an amount — and a fronted payment never posted team cash, so it contributes nothing to it.
+ *
+ * ⚠⚠ COUNTED PER PAYMENT, NOT PER COST (money centralization P4, mig 267). This asked
+ * `Boolean(paidByPlayerId)` and returned a flat zero for a fronted cost, which was a complete
+ * answer while a cost was fronted or it was not. A commitment can now hold a payment the team paid
+ * and a payment a family fronted, and both halves of the old answer were wrong for it: the
+ * confirmation promised nothing back when real team cash was about to be voided, and it said
+ * nothing about the household at all when the cost itself named no one.
  */
 export function ledgerReversalPreview(
   standing: Pick<CommitmentStanding, 'paid' | 'payments'> | undefined,
@@ -51,12 +58,40 @@ export function ledgerReversalPreview(
   amount: number;
   legs: number;
   owesFamily: boolean;
+  /**
+   * ⚠⚠ WHICH HOUSEHOLDS LOSE WHAT — owner ruling 2026-08-27, and the reason it is HERE rather than
+   * assembled by each confirmation. The product answered one question two opposite ways: removing a
+   * PLAYER who carries credits is refused outright by the roster undo-guard, while deleting the
+   * COST they are owed against took the credit with no word at all. The owner's answer is neither
+   * of the extremes — the delete still goes through, but it must SAY who loses how much.
+   *
+   * The credit itself goes by CASCADE and that stays deliberate (mig 234: a reimbursement must
+   * never outlive the cost it repaid). What was missing was the sentence, and one household's
+   * figure is not something two confirmations should each derive.
+   *
+   * ⚠ Summed per household, in cents: two payments from one family are ONE debt, and a bill can
+   * carry more than one family. Empty when the team paid for everything.
+   */
+  owedByFamily: Array<{ playerId: string; amount: number }>;
 } {
-  const owesFamily = Boolean(paidByPlayerId);
+  const payments = standing?.payments ?? [];
+  const cash = payments.filter(p => paymentMovedTeamCash(p, paidByPlayerId));
+  /* Cents, because the sentence beside this one names the same figure and a penny of drift between
+     "what comes back" and "what was paid" is the class of bug this whole area is built against. */
+  const amountCents = cash.reduce((s, p) => s + Math.round(p.amount * 100), 0);
+
+  const byFamily = new Map<string, number>();
+  for (const p of payments) {
+    const payer = effectivePayerId(p, paidByPlayerId);
+    if (!payer) continue;
+    byFamily.set(payer, (byFamily.get(payer) ?? 0) + Math.round(p.amount * 100));
+  }
+
   return {
-    amount: owesFamily ? 0 : standing?.paid ?? 0,
-    legs: owesFamily ? 0 : standing?.payments.length ?? 0,
-    owesFamily,
+    amount: amountCents / 100,
+    legs: cash.length,
+    owesFamily: byFamily.size > 0,
+    owedByFamily: [...byFamily].map(([playerId, c]) => ({ playerId, amount: c / 100 })),
   };
 }
 

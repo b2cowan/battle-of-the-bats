@@ -14627,3 +14627,232 @@ go to the touch-debt project, which now has a measured number to start from.
 
 ⚠ **Reported as distinct controls, not findings.** "318 findings fixed" would be theatre when 192
 of them were three controls repeated per player and per inning.
+
+---
+
+## §116 · A payment learns who paid it — and the question the form already asked starts working — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/a9c99bab-d975-40f2-92d5-9cff64224068`
+>
+> **Checkable walkthrough** — seven parts as real checkboxes, a verdict and notes box each, and a
+> "build summary" button that produces plain text to paste back into the chat. Ticks are saved in
+> the browser, so the walk survives closing the tab.
+>
+> ⚠ **Parts D and E are the ones to do slowly.** Every gate that renders pages is blind to a modal,
+> so the two confirmations and every sentence in them are entirely unwalked by anything automated.
+
+**Owner approval 2026-08-27**, given at the P4 mockup gate ("agree with your recommendations, go
+ahead") against the six named specimens at
+`claude.ai/code/artifact/4873ab46-4e1e-4726-b856-d361ecc0e017`. Plan of record:
+`COACH_MONEY_CENTRALIZATION_PLAN.md` §8c. Brief:
+`COACH_MONEY_CENTRALIZATION_P4_PM_BRIEF.md`. **Migration 267 — applied to DEV, NOT YET ON PROD.**
+
+**What changed for a coach.** Recording a payment against a bill, they can now say **a family paid
+this one directly** — the $200 deposit on a $600 tournament entry that a parent puts on their own
+card. The bill comes down, **no team cash moves for that piece**, and that household is owed $200
+against their dues, in the same words the product already uses when a family fronts a whole cost.
+The balance the team pays afterwards is an ordinary payment on the same bill: **one bill can now
+hold both kinds**, and the payment list says which is which. Undo takes the credit back and says so
+first.
+
+### ⚠⚠ THE QUESTION WAS ALREADY ON THE SCREEN, AND IT WAS BEING THROWN AWAY
+
+The gate's first finding, and it changes what this phase was. The record-a-payment form has
+rendered a **"Paid by"** dropdown listing every family since P1 — inside the fold whose own label
+reads *"More — paid by, payee, tags, notes"*. `saveBillPayment()` never sent it. A coach could name
+a family, press Save, and be told by the consequence line that **the team's cash left**, while that
+household was owed nothing at all.
+
+That is a **ghost save of exactly the shape owner ruling A (2026-08-23) condemned**, and it has been
+shipping on dev independently of P4. It also means the feature cost the layout **nothing** — the
+before and after of specimen 1 are the same shape, because the field was already drawn.
+
+### ⚠ AND THERE IS NO PAYMENT EDITOR, SO TWO THIRDS OF THE FEARED UNWIND WAS NOT REACHABLE
+
+The build prompt asked for the unwind drawn three ways — change the amount, change the payer,
+delete. A recorded payment has exactly **two** operations: record, and undo. `payments/route.ts`
+exports POST only; `payments/[paymentId]/route.ts` exports DELETE only. So only *delete* existed,
+and **the recommendation taken was to keep it that way** — a payer change is refused in the words
+the cost-level path already uses, which deletes the phase's worst failure mode outright: there is no
+move-a-credit-between-households operation to get wrong, because there is no such operation.
+
+### ⚠⚠ A HAZARD THE PROMPT DID NOT NAME, REACHABLE ON THE OLD MECHANISM TODAY
+
+A `reimbursement` credit can be **handed back in cash** (`payoutCeiling` excludes only `forgiven`).
+Lower one below what has already gone out and the arithmetic does **not** go negative — it goes
+**silent**: `applyCreditsToBills` clamps with `Math.min(paidOut, issued)`, so the figure floors at
+zero and the team is simply out the money with nothing on any screen saying so. Reachable **before
+P4** by undoing the payment on an out-of-pocket cost whose credit was paid out. The floor now
+refuses, on **both** paths, and it is asked **before the first write** — refusing afterwards would
+leave a household credited for money nobody paid.
+
+### THE EXPENSIVE WORK WAS NOT THE DOOR
+
+Three readers asked *"did team cash move?"* of the **whole cost**, which was a complete answer while
+a cost was fronted or it was not. All three now ask per **payment**:
+
+1. **The register's running balance** — which IS cash on hand.
+2. **`expenseTotals().cashPaid`** — the figure that sets **every family's end-of-season refund**.
+3. **Budget vs. Actual's cash strip.**
+
+A fourth was found by `/simplify`'s altitude lens and is the kind of miss this phase was most likely
+to make: the **commitment page's delete confirmation** still branched on the cash figure alone, and
+its comment asserted the very invariant P4 broke (*"a commitment can never be paid out of pocket"*).
+Deleting a bill whose only paid piece was fronted told the coach *"nothing has been paid against it,
+so no money moves"* while a household's credit was about to vanish by cascade.
+
+### PARTS TO WALK
+
+**Part A — the deposit a parent paid.** Money → Payables → open **Summer showcase entry — a parent
+fronted the deposit** (UAT) or **Spring Invitational** (coach demo, 12U). Confirm the payment list
+names the household on the fronted piece and not on the team's, and that the bill's total is
+unchanged by who paid.
+
+**Part B — record one yourself.** Record → *We paid for something* → pick a bill from **Bills you
+owe** → open **More** → set **Paid by** to a family. Check the sentence above the buttons says *no
+team cash moves* and names the family and the amount. Save. Cash on hand must **not** drop by that
+amount; the family must appear in credit on Player Dues.
+
+**Part C — the collision.** Record a payment against a cost that already says a family paid it
+(**Umpire fees**). *Paid by* must be a **stated fact** ("Set on the cost"), not a dropdown.
+
+**Part D — the unwind.** Undo the payment from Part B. The confirmation must say the household's
+credit drops, not that cash comes back. Confirm the credit is gone from Player Dues.
+
+**Part E — the floor.** Pay out that family's credit in cash first, then try to undo the payment.
+It must refuse, name the payout, and leave **both** the payment and the credit exactly as they were.
+
+**Part F — read-only.** Sign in as `uat-asst-money-read`. The payer must be visible on the payment
+list **without** an Edit button anywhere.
+
+**Part G — the reports.** Budget vs. Actual → Months, and the season settlement sheet. The fronted
+piece must count as **spending** but not as **cash the team spent**.
+
+### VERIFICATION — what ran, and what did not
+
+- `npm test` — **2,648 pass, 0 fail.** New coverage: `effectivePayerId`/`paymentMovedTeamCash`,
+  `expenseTotals` per-payment split, `ledgerReversalPreview` on a partly fronted bill.
+- `npm run typecheck` ✓ · `lint` 0 errors ✓
+- `check:layout -- --changed` ✓ — 3 screens × 2 widths, **no new findings**.
+- `check:demos` ✓ · `check-register-balance` ✓ (**2** no-cash rows now, and the register and the
+  money-summary agree at $960.00) · `check:money-report` ✓ (every identity holds).
+- **`scripts/probe-p4-fronted-payment.mjs` — NEW, 17 checks, all pass.** It drives the real HTTP
+  routes with a real coach session, because `lib/db.ts` cannot be imported from a plain script (it
+  uses a TS parameter property, which Node's strip-only mode refuses) — the same untestability shape
+  that let a defect ship through `lib/rep-season-rollover.ts`. It proves the credit is minted, split
+  per household, removed on undo, that a disagreeing payer is refused, and that the payout floor
+  refuses **before** anything is written.
+  ⚠ **Its first run failed the floor case and the PROBE was wrong, not the code** — it handed a
+  family $200 and expected a refusal, but that household was owed $380 in other credits, so their
+  balance still covered the payout and letting the undo through was correct. The guard is **per
+  household, not per credit**, because payouts are not linked to individual credits and must never
+  be.
+- `/simplify` — four lenses. Real findings, all applied: the delete-confirmation miss above; my own
+  comment claiming "the one grouping rule" while two loops existed; a hand-rolled per-player sum the
+  `dues-definition-guard` correctly failed the build on; a roster-name read bought and discarded on
+  every guard call; an installments read discarded on every undo; two hand-rolled `||` copies of
+  `effectivePayerId`; three copies of a name join (now `formatPlayerFirstLast`).
+- **A guard hole was found and the SCANNER was fixed, not just the one table.**
+  `tests/unit/roster-delete-guard.test.ts` only scanned `CREATE TABLE` blocks, so a table that
+  *gains* a roster FK via `ALTER TABLE … ADD COLUMN` never entered its completeness check — mig 267
+  added exactly that and nothing noticed. It now scans `ALTER TABLE` too, which would have caught
+  the next one as well.
+- **`/review` — high-risk tier, five lenses. It found FOUR real defects, and one of them was in my
+  own guard design.** All fixed, and the probe grew two checks to prove the last two.
+  1. ⚠⚠ **The floor was refusing AFTER an irreversible write, which turned a rare race into a
+     PERMANENT stuck state.** The reconciler carried a copy of the check as a "backstop" behind
+     each caller's pre-flight — but `removePayablePayment` deletes the payment row and *then*
+     reconciles, so a payout landing in that gap made it throw with the payment already gone, and
+     **every retry recomputed the same figure and hit the same refusal**: the credit stranded above
+     the payments for ever, unfixable from inside the product. The floor is a **gate**, and a gate
+     belongs at the door. The reconciler no longer refuses — its one job is to make the credits
+     agree with the payments, and it must always be able to finish. The residue of a lost race is
+     now a payout exceeding a credit, which the arithmetic already tolerates and undoing the payout
+     already repairs.
+  2. **Deleting a commitment takes a fronted household's credit with no warning and no check.**
+     ⚖ **RE-GRADED FROM HIGH TO MEDIUM 2026-08-27 after a peer session pushed back, and the
+     push-back was half right.** What I got wrong, and it matters: I said this corrupted "the figure
+     that sets every family's refund". **It does not.** The settlement sheet deliberately reads the
+     RAW payout total rather than the credit-clamped one — its own comment says why — so a family's
+     "already received" figure survives the cascade intact. ⚠ The cascade itself is also **deliberate
+     design** (documented since mig 234: a reimbursement must never outlive the cost it repaid), so
+     "no gate at all" was the wrong words for it.
+     ⚠ **But it is NOT merely "the coach isn't told" either, which is where the push-back overshot.**
+     A payout left stranded above a household's credits **silently consumes their FUTURE credits** —
+     verified against the shared arithmetic: with $200 paid out and the credit deleted, a later $150
+     fundraiser rebate lowers **nothing** and the family is still asked for the full bill. That is
+     money the family earned and does not receive. So the gate stays, at Medium, and it **predates
+     P4** for the whole-cost case.
+     ⚠ **The sharpest observation came from the peer and is worth more than the grade:** the roster
+     undo-guard **refuses** to remove a player who carries credits, while this path **takes** those
+     credits without a word. One asymmetry, two opposite answers. See the open question below.
+  3. **A unique-violation on the new credit insert threw a raw 500** instead of being read as a
+     race and retried — the one INSERT mig 267's index protects was the one place this file's own
+     four-times-used convention had not been applied.
+  4. ⚠⚠ **The payout writer's post-write re-check read STALE credits — AND THAT ONE IS LIVE IN
+     PRODUCTION TODAY.** It re-read payouts and reused the credit snapshot from before its insert,
+     so it saw a concurrent payout and was blind to a concurrent credit shrink: a family handed cash
+     the team no longer says it owes. ⚖ **I first recorded this as "newly reachable because of P4"
+     and that was wrong** — checked against `origin/master` rather than assumed: every
+     credit-shrinking path already shipped with the Payables Rebuild (undoing a payment on an
+     out-of-pocket cost, deleting one, editing its schedule down, and the dues panel's own credit
+     edit and delete), and the code on prod is byte-identical to what this replaced. **P4 neither
+     introduces nor widens the window — it is the change that went looking.** Narrow (it needs a
+     payout recorded at the same moment a credit falls), which is why it survived; the money is real.
+  Also hardened: the new payer's roster check now asserts **team as well as season** (`team_id` is
+  NOT NULL there, so nothing legitimate is refused), and the UAT fixture now removes its own
+  half-seeded bill rather than logging past a failed credit insert.
+- ⚠ **`npm run verify:changed` STOPS at the schema-parity check** and its last six checks never run
+  — the known trap. They were run by hand and all pass. Parity fails because migrations **262–267
+  are on dev and not on prod**; 267 is this phase's, the rest are other sessions'.
+- ⚠ **NOT VERIFIED: anything in a browser.** No screen was opened by a human. `check:layout` renders
+  pages but cannot open a modal, so **the record form, the payment list, both confirmations and
+  every sentence in them are unwalked** — that is what Parts A–G are for.
+- ⚠ **NOT VERIFIED: the coach demo's new moment on a real visit.** `check:demos` reports both worlds
+  presentable and the seed wrote the fronted deposit plus its credit, but nobody has taken the tour
+  and read the new clause against the screen.
+
+### ⚖ ONE OPEN PRODUCT QUESTION FOR THE OWNER (not built, deliberately)
+
+**Should deleting a cost a family fronted require a confirmation that names the family and the
+amount?** It already warns that the credit will be removed. What it does not do is refuse, the way
+removing a *player* who carries credits is refused. So the product answers one question two ways:
+**take a household's credit silently when the COST goes, refuse outright when the PLAYER goes.**
+
+Neither answer is obviously wrong — a cost that never happened probably should take its credit with
+it, while a player leaving should not erase what they are owed. But the asymmetry is undesigned, and
+the case that makes it bite is real: a family fronted, was paid back in cash, the cost is deleted,
+and their next fundraiser rebate is then silently eaten by the stranded payout.
+
+Not built because it is a ruling, not a defect. Raised by the release session while reviewing this
+phase's findings.
+
+### ⚠ ONE LAYOUT FINDING THAT IS NOT THIS PHASE'S — Record money at 768
+
+Sweeping the money screens at the full width set surfaced **Record money at 31px against the 44px
+touch floor, at 768**. It is **not P4's**: the button lives in `accounting/page.tsx`, untouched by
+this phase, and 768 became a touch width with the tablet band (§115, `59341a8e`). Earlier sweeps ran
+361/1440 only, so that screen was never measured at 768. Left for the tablet-band work rather than
+fixed here — editing a shipping session's file mid-release is the collision everyone is avoiding.
+
+### THE STRANDED-PAYOUT REMAINDER — creation closed, history untouched
+
+P4 **refuses** (409, not a warning a coach can click past) on all three money-out paths that could
+strand a payout: undoing a fronted payment, deleting the commitment, editing a schedule down. The
+credit-side doors — editing or deleting a credit directly — turned out to be **already gated before
+P4** by their route's own payout-ceiling refusal. So every door found is now closed.
+
+⚠ **But P4 is entirely forward-looking. A household already in that state stays in it**, and the
+symptom is invisible: their next credit is silently consumed and they are still asked for the full
+bill. **Whether any real household on prod is already stranded is an open DATA question**, raised to
+the owner as its own item rather than folded into this release. A read-only detector was written and
+proved on dev (non-forgiven credits vs cash payouts, per season and player) — **dev is clean: 4
+payout rows, 4 households, 0 stranded.** That says nothing about prod.
+
+### MIGRATION 267 — ✅ COMMITTED `9930796d` 2026-08-27 (dev), NOT YET ON PROD
+
+`rep_payable_payments.paid_by_player_id` (FK → roster, ON DELETE SET NULL) + a partial index, and a
+partial UNIQUE on `rep_dues_credits (expense_id, player_id) WHERE credit_type='reimbursement'` —
+the structural guarantee that replaced a `.maybeSingle()` when one cost gained the ability to carry
+credits for two households. Dictionary and snapshots refreshed in the same unit of work.
+⚠ **Must reach prod BEFORE any promote that carries this code.**

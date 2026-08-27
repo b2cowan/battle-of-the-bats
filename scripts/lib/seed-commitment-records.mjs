@@ -79,6 +79,11 @@ export async function insertCommitmentWithRecords(db, { row, installments, payme
         // ⚠ NULL is the honest value for a seeded payment with no ledger entry behind it — the
         // same state a pre-mig-236 record is in, which every reverse path already handles.
         accounting_entry_id: p.accountingEntryId ?? null,
+        /* Who fronted THIS payment (P4, mig 267). ⚠ A fixture that sets it MUST also seed the
+           household's `reimbursement` credit — a fronted payment with no credit behind it is the
+           broken state the app's compensating deletes exist to prevent, and the undo path refuses
+           to touch one. Seed both or neither, exactly as the whole-cost case already requires. */
+        paid_by_player_id: p.paidByPlayerId ?? null,
         source: 'manual',
       })));
     if (payError) throw new Error(`rep_payable_payments: ${payError.message}`);

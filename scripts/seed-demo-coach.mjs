@@ -395,7 +395,7 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
  * of them must agree exactly — two spellings of the same instant would make a steady day rewrite
  * every row, and the job's whole contract is that it doesn't.
  */
-async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
+async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map(), playerIds = []) {
   /** Descriptor key → the row that was written, so money tags can find their costs by name. */
   const idByKey = new Map();
   /* ⚠⚠ SEEDED AS THE RECORDS THE MONEY SCREENS READ (Payables Rebuild P2): installments and
@@ -417,13 +417,50 @@ async function insertDemoExpenses(team, pyId, expenses, itemIndex = new Map()) {
       created_by: coach.id,
     };
     const pieces = demoExpensePlan(e);
+    /* ⚠⚠ A FRONTED PIECE AND ITS CREDIT ARE ONE ACT (P4, mig 267). `paidByRosterIndex` says a
+       parent paid this piece directly: no team cash moved, and the household is owed it. The
+       product writes both rows through one door for exactly this reason — a fronted payment with
+       no `reimbursement` credit behind it is a state the app cannot produce and its undo path
+       refuses to touch, so a seeder that wrote only the payment would leave the shop window in a
+       shape the product itself would refuse to change. */
+    const fronted = pieces
+      .filter(p => p.paidDate && p.paidByRosterIndex !== undefined)
+      .map(p => ({ piece: p, playerId: playerIds[p.paidByRosterIndex] }))
+      .filter(f => !!f.playerId);
+    const payerOf = new Map(fronted.map(f => [f.piece.installmentNumber, f.playerId]));
+
     const expenseId = await insertCommitmentWithRecords(db, {
       row,
       installments: pieces.map(p => ({ amount: p.amount, dueDate: p.dueDate ?? seedDay })),
       payments: pieces
         .filter(p => p.paidDate)
-        .map(p => ({ amount: p.amount, paidDate: p.paidDate, installmentNumber: p.installmentNumber })),
+        .map(p => ({
+          amount: p.amount,
+          paidDate: p.paidDate,
+          installmentNumber: p.installmentNumber,
+          paidByPlayerId: payerOf.get(p.installmentNumber) ?? null,
+        })),
     });
+
+    /* One credit per household on this cost — the natural key the product reconciles on
+       (`(expense_id, player_id)`, unique since mig 267). Summed rather than one-per-piece, because
+       two pieces fronted by the same parent are one debt. */
+    const owedByPlayer = new Map();
+    for (const f of fronted) {
+      const at = owedByPlayer.get(f.playerId) ?? { cents: 0, day: f.piece.paidDate };
+      at.cents += Math.round(f.piece.amount * 100);
+      if (f.piece.paidDate < at.day) at.day = f.piece.paidDate;
+      owedByPlayer.set(f.playerId, at);
+    }
+    for (const [playerId, owed] of owedByPlayer) {
+      die('insert out-of-pocket credit', (await db.from('rep_dues_credits').insert({
+        program_year_id: pyId, player_id: playerId, expense_id: expenseId,
+        amount: owed.cents / 100,
+        description: `Paid out of pocket — ${e.description}`,
+        credit_type: 'reimbursement', credit_date: owed.day, created_by: coach.id,
+      })).error);
+    }
+
     idByKey.set(e.key, expenseId);
   }
   return idByKey;
@@ -1173,7 +1210,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   await insertAll('rep_budget_lines', budgetRows);
   /* ⚠ TAGS RIDE THE SAME CALL, keyed off the ids it hands back — a second lookup by description
      would break the moment a demo cost is renamed, and this world renames things. */
-  const midSeasonExpenseIds = await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems);
+  const midSeasonExpenseIds = await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems, playerIds);
   await insertDemoMoneyTags(team, MIDSEASON_MONEY_TAGS, midSeasonExpenseIds);
 
   // Waivers: a published template, signed by everyone except one — the beat the roster tells.

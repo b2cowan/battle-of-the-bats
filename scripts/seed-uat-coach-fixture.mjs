@@ -1200,6 +1200,68 @@ if (!existingSplit?.length) {
 }
 
 /**
+ * ⚠⚠ THE PARTLY FRONTED BILL — a commitment the TEAM is paying with ONE piece a parent paid direct.
+ *
+ * This is money centralization P4's whole case ($200 deposit on a $600 entry, mig 267) and it is
+ * the ONLY fixture shape that can tell the two answers apart. Every reader that decides "did team
+ * cash move?" used to ask the COST, which is a complete answer while a cost is fronted or it is
+ * not — so a fixture holding only the two pure shapes below lets a cost-level reader pass every
+ * check while being wrong by real money on this one. Three load-bearing figures depend on it: the
+ * register's running balance, Budget vs. Actual's cash strip and the season settlement pot (which
+ * sets every family's refund).
+ *
+ * ⚠ THE CREDIT IS THE OTHER HALF, exactly as it is for the whole-cost shape below: a fronted
+ * payment with no `reimbursement` credit behind it is a state the app cannot produce and the undo
+ * path refuses to touch. Seed both or neither.
+ */
+const MIXED_DESC = 'Summer showcase entry — a parent fronted the deposit';
+const { data: existingMixed } = await db.from('rep_team_expenses')
+  .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+  .eq('description', MIXED_DESC).limit(1);
+if (!existingMixed?.length && players?.length) {
+  const depDay = `${py.year}-05-14`;
+  const balDay = `${py.year}-07-09`;
+  try {
+    const mixedId = await insertCommitmentWithRecords(db, {
+      row: {
+        org_id: org.id, team_id: team.id, program_year_id: py.id,
+        expense_type: 'tournament_payable', description: MIXED_DESC,
+        category: cats?.[1]?.name ?? cats?.[0]?.name ?? null,
+      },
+      installments: [
+        { amount: 200, dueDate: depDay },
+        { amount: 400, dueDate: balDay },
+      ],
+      payments: [
+        // The parent's $200 — no ledger entry, ever: the team's cash did not move.
+        { amount: 200, paidDate: depDay, installmentNumber: 1, paidByPlayerId: players[0].id },
+        // The team's $400 — an ordinary payment beside it, on the same bill.
+        { amount: 400, paidDate: balDay, installmentNumber: 2 },
+      ],
+    });
+    const mc = await db.from('rep_dues_credits').insert({
+      program_year_id: py.id, player_id: players[0].id, expense_id: mixedId,
+      amount: 200, description: `Paid out of pocket — ${MIXED_DESC}`,
+      credit_type: 'reimbursement', credit_date: depDay,
+    });
+    /* ⚠⚠ BOTH OR NEITHER — the credit failing is NOT a warning to log past (`/review`, data lens).
+       A fronted payment with no credit behind it is the exact state this fixture's own docstring
+       calls one the app cannot produce and the undo path refuses to touch; leaving it would seed a
+       walk that dead-ends on a refusal nobody meant to test. The bill removes itself instead, and
+       the next run seeds it clean. */
+    if (mc.error) {
+      await db.from('rep_team_expenses').delete().eq('id', mixedId);
+      throw new Error(`credit insert failed, bill removed rather than left half-seeded: ${mc.error.message}`);
+    }
+    ok('partly fronted bill seeded ($200 a parent paid direct + $400 the team paid) — the shape a cost-level reader gets wrong');
+  } catch (e) {
+    console.log(`  ! partly-fronted bill skipped (${e.message})`);
+  }
+} else {
+  ok('partly fronted bill already present (or roster empty)');
+}
+
+/**
  * ⚠⚠ THE OUT-OF-POCKET COST, AND IT IS HERE FOR THE REGISTER'S ONE HARD CLAIM.
  *
  * A cost a family paid the vendor DIRECTLY is real spending on a real record, but no team cash

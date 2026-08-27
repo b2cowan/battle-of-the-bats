@@ -24,7 +24,7 @@ import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import {
   installmentStatus, installmentStatuses, installmentLabel, PAYABLE_STATUS_LABEL, PAYABLE_STATUS_ORDER,
-  PAYABLE_STATUS_DEFAULT,
+  PAYABLE_STATUS_DEFAULT, effectivePayerId,
   type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
 } from '@/lib/payable-standing';
 import { whyPlanStrandsPaidMoney } from '@/lib/payable-scope-edit';
@@ -64,7 +64,7 @@ import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
 import {
   useRecordMoneySignal, type ConversationBranch, type RecordMoneyIntent,
 } from '@/lib/coach-record-money';
-import { formatPlayerLastFirst } from '@/lib/player-name';
+import { formatPlayerLastFirst, formatPlayerFirstLast } from '@/lib/player-name';
 import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
 import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
 import { resolveCredit, type CreditUnit } from '@/lib/coach-fundraising';
@@ -1315,7 +1315,10 @@ function MoneyRecordsPanel({
      sentence rather than sharing the expense one with a flipped word. */
   const deletePreview = editing
     ? ledgerReversalPreview(editingStanding, editing.paidByPlayerId)
-    : { amount: 0, legs: 0, owesFamily: false };
+    /* ⚠ The EMPTY shape, matching the function's, not a subset of it — a fallback missing a key
+       makes `deletePreview` a union and every reader of the new key a type error. Nothing is being
+       deleted in this state, so every field is its zero. */
+    : { amount: 0, legs: 0, owesFamily: false, owedByFamily: [] as Array<{ playerId: string; amount: number }> };
   const moneyInDeletePreview = editingMoneyIn ? moneyInReversalPreview(editingMoneyIn) : null;
 
   // Chunk H — the payment schedule: every money-OUT commitment in one list, by due date.
@@ -1997,6 +2000,16 @@ function MoneyRecordsPanel({
           method: form.paymentMethod.trim() || null,
           note: form.notes.trim() || null,
           installmentId: conv.spendInstallmentId || null,
+          /* ⚠⚠ THE ANSWER THE FORM HAD ALREADY BEEN COLLECTING AND THROWING AWAY (money
+             centralization P4). `renderPaidBy()` has drawn an editable roster picker on this branch
+             since P1 — inside the fold whose own label reads "More — paid by, payee, tags, notes" —
+             and this body did not carry it, so a coach could name a family, press Save, and be told
+             by the consequence line that the team's cash left. A ghost save of exactly the shape
+             owner ruling A (2026-08-23) condemned.
+             ⚠ NULL WHEN THE BILL ITSELF NAMES A PAYER: the cost's own answer already claims every
+             payment against it, the field renders as a stated fact rather than a question, and the
+             server refuses a second answer that disagrees. */
+          paidByPlayerId: payingBill?.expense.paidByPlayerId ? null : (form.paidByPlayerId || null),
         }),
       });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
@@ -2672,6 +2685,19 @@ function MoneyRecordsPanel({
    * turn it into a payment against something else, and Payables' Add is a SETUP door for a plan —
    * the one thing this conversation deliberately does not do.
    */
+  /**
+   * Roster names by id — what the bill page's delete confirmation needs to say WHOSE credit goes
+   * (owner ruling 2026-08-27).
+   *
+   * ⚠ MEMOISED, like the two lists above it: the money form lives inside this component, so a bare
+   * `.map` here would rebuild the object on every keystroke in the open form and defeat the prop's
+   * own identity — the same defect `spendLeadGroup`'s header records one field down.
+   */
+  const playerNameById = useMemo(
+    () => new Map(roster.map(p => [p.id, formatPlayerFirstLast(p)])),
+    [roster],
+  );
+
   const spendLeadGroup = useMemo(() => {
     const offer = formMode === 'add' && convBranch === 'spend' && !isPayableForm
       && openCommitments.length > 0;
@@ -3656,6 +3682,34 @@ function MoneyRecordsPanel({
        screen with one meaning between them. */
     if (isPayableForm || isMoneyInForm) return null;
 
+    /* ⚠⚠ THE COLLISION, PREVENTED RATHER THAN RESOLVED (money centralization P4, owner-approved
+       2026-08-27). A bill that already says a family fronted it OWNS every payment against it, so
+       the question is not asked a second time a few inches from its own answer — it is STATED, and
+       the payment inherits it. Two answers to one question on one screen is the defect the filter-
+       count ruling (2026-08-26) named; the server refuses a disagreeing pair for the same reason.
+       ⚠ A cost genuinely split between two fronting households is a THIRD thing and is recorded as
+       two costs. Do not reopen this as an override. */
+    if (payingBill?.expense.paidByPlayerId) {
+      const fronted = roster.find(p => p.id === payingBill.expense.paidByPlayerId);
+      return (
+        <div className={`${styles.field} ${styles.formGridFull}`}>
+          <label className={styles.label}>Paid by</label>
+          <div className={styles.lockedField}>
+            <span>
+              A family, out of pocket
+              {fronted ? <> — {formatPlayerLastFirst(fronted)}</> : null}
+            </span>
+            <span className={styles.lockedTag}>Set on the cost</span>
+          </div>
+          {/* The chip says WHAT; this says WHY — and this is the one screen where a coach could
+              reasonably expect to be asked, so the silence needs a sentence. */}
+          <p className={styles.formHint}>
+            This cost says a family paid it. Every payment against it is theirs.
+          </p>
+        </div>
+      );
+    }
+
     if (editing) {
       if (!form.paidByPlayerId) return null;
       return (
@@ -4316,15 +4370,35 @@ function MoneyRecordsPanel({
        the same rule the bill's own door uses. */
     if (payingBill) {
       const left = Math.max(0, Math.round((payingBill.remaining - amount) * 100) / 100);
-      return line(payingBill.expense.paidByPlayerId
-        ? <><strong>When you save:</strong> no team cash moves — a family paid this direct, and what
-          the team owes them grows by {money} on Player Dues.</>
-        : <><strong>When you save: {money} leaves the team’s books</strong>
-          {form.paidDate ? <> on {fmtDate(form.paidDate)}</> : null}. {payingBill.name}{' '}
-          {left > 0.005
-            ? <>drops to <strong>{fmt(left)} still owing</strong>.</>
-            : <>is <strong>fully paid</strong>.</>}
-          {' '}You can undo it from the bill’s payment details.</>);
+      const balance = left > 0.005
+        ? <>drops to <strong>{fmt(left)} still owing</strong></>
+        : <>is <strong>fully paid</strong></>;
+
+      /* ⚠⚠ WHO PAID IT IS THIS PAYMENT'S ANSWER FIRST, THE COST'S SECOND (money centralization P4).
+         The cost-level sentence was here from P2 and was the ONLY place the product correctly said
+         a family's credit grows — but nothing could reach it from a bill the team otherwise pays,
+         which is exactly the $200-deposit case.
+         ⚠ THROUGH `effectivePayerId`, NOT A HAND-ROLLED `||`. This comment used to say "same rule
+         as the server's" while writing its own copy of it — one more place to drift the day the
+         form's mutual-exclusivity changes (`/simplify`, altitude lens). */
+      const payerId = effectivePayerId(
+        { paidByPlayerId: form.paidByPlayerId || null }, payingBill.expense.paidByPlayerId);
+      if (payerId) {
+        const player = roster.find(p => p.id === payerId);
+        /* ⚠ THE WHOLE PHRASE FALLS BACK, NOT THE NAME — the possessive is what goes, never the
+           grammar. Same fix, same reason, as the cost branch below (`/review`, 2026-08-16). */
+        const named = formatPlayerFirstLast(player);
+        return line(<>
+          <strong>When you save: no team cash moves.</strong> {payingBill.name} {balance}, and the
+          team owes{' '}{named ? <><strong>{named}</strong>’s family</> : <>that family</>} {money}{' '}
+          — saved as a credit you can put against their dues or pay out any time.
+        </>);
+      }
+      return line(<>
+        <strong>When you save: {money} leaves the team’s books</strong>
+        {form.paidDate ? <> on {fmtDate(form.paidDate)}</> : null}. {payingBill.name} {balance}.
+        {' '}You can undo it from the bill’s payment details.
+      </>);
     }
 
     // ── A commitment: the one form in the portal that moves no money ──
@@ -4378,9 +4452,7 @@ function MoneyRecordsPanel({
     // ── A cost. Four states, and the out-of-pocket one is why this exists ──
     if (form.paidByPlayerId) {
       const player = roster.find(p => p.id === form.paidByPlayerId);
-      const named = player
-        ? [player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')
-        : '';
+      const named = formatPlayerFirstLast(player);
       /* ⚠ THE FALLBACK IS A WHOLE PHRASE, NOT A NAME (/review, 2026-08-16). It used to substitute
          the string "that family" into "<name>'s family", which read "that family's family" the
          moment the roster had not loaded — the exact state the stale roster gate above used to
@@ -5808,6 +5880,7 @@ function MoneyRecordsPanel({
           onSaved={refreshAfterWrite}
           onDeleted={leaveBillPage}
           tabActive={tabActive}
+          playerNameById={playerNameById}
         >
           <>
           {drawerStanding ? (
@@ -5989,13 +6062,33 @@ function MoneyRecordsPanel({
                 {drawerStanding.payments.length > 0 && (
                   <>
                     <p className={styles.payDrawerLabel}>Payments recorded</p>
-                    {drawerStanding.payments.map(p => (
+                    {drawerStanding.payments.map(p => {
+                      /* ⚠⚠ WHO PAID IT, ON THE LIST ITSELF (money centralization P4). It is here
+                         rather than behind an Edit because a read-only money assistant never gets
+                         one — the §104 walk found details that existed only behind a button that
+                         account cannot press, and "who is the team out of pocket to?" is not a
+                         detail to hide from whoever is reading the books. */
+                      const payer = drawerExpense
+                        ? effectivePayerId(p, drawerExpense.paidByPlayerId)
+                        : (p.paidByPlayerId ?? null);
+                      const payerPlayer = payer ? roster.find(r => r.id === payer) : undefined;
+                      /* ⚠ A WHOLE PHRASE, never a bare name substituted into a possessive — the
+                         same fallback rule the consequence line follows. A payer whose roster row
+                         has gone (the column is ON DELETE SET NULL) still reads honestly. */
+                      const payerName = formatPlayerFirstLast(payerPlayer);
+                      return (
                       <Fragment key={p.id}>
                         <div className={styles.payDrawerLine}>
                           <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
                           <span className={styles.payDrawerWhat}>
                             {p.method || 'Payment'}
                             {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
+                            {payer && (
+                              <span className={styles.mutedInline}>
+                                {' '}· {payerName ? `${payerName}’s family` : 'A family'} paid direct
+                                {' '}— no team cash moved
+                              </span>
+                            )}
                           </span>
                           <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
                           {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly its
@@ -6025,18 +6118,25 @@ function MoneyRecordsPanel({
                             <p className={styles.dangerConfirmTitle}>
                               Undo the {fmt(p.amount)} payment from {fmtDate(p.paidDate)}?
                             </p>
-                            {/* ⚠ NO "a family paid this" BRANCH, and its absence is a fact about the
-                                product rather than an omission. This panel only ever opens a
-                                COMMITMENT, and a commitment can never be paid out of pocket — the
-                                form does not offer `Paid by` on one and the create route refuses it
-                                ("a payable is billed to the team"). A branch here would be dead
-                                code that quietly told the next reader the opposite. ⚠ If a family
-                                is ever allowed to front a commitment, this sentence is one of the
-                                places that has to learn about it. */}
-                            <p className={styles.dangerConfirmBody}>
-                              Cash on hand goes back <strong>up by {fmt(p.amount)}</strong>, and this
-                              bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing.
-                            </p>
+                            {/* ⚖ THE BRANCH THIS COMMENT PREDICTED HAS ARRIVED (money
+                                centralization P4). It used to read: "a commitment can never be paid
+                                out of pocket… if a family is ever allowed to front a commitment,
+                                this sentence is one of the places that has to learn about it." A
+                                family can now front one PAYMENT of a bill the team otherwise pays,
+                                so the two outcomes are opposites and the coach is told which. */}
+                            {payer ? (
+                              <p className={styles.dangerConfirmBody}>
+                                <strong>No team cash moves</strong> — a family paid this direct. This
+                                bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing,
+                                and what the team owes {payerName ? `${payerName}’s family` : 'that family'}
+                                {' '}drops by <strong>{fmt(p.amount)}</strong>.
+                              </p>
+                            ) : (
+                              <p className={styles.dangerConfirmBody}>
+                                Cash on hand goes back <strong>up by {fmt(p.amount)}</strong>, and this
+                                bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing.
+                              </p>
+                            )}
                             <div className={styles.dangerConfirmActions}>
                               <button className={styles.btnGhost} disabled={undoBusy === p.id}
                                 onClick={() => setUndoAsk(null)}>
@@ -6050,7 +6150,8 @@ function MoneyRecordsPanel({
                           </div>
                         )}
                       </Fragment>
-                    ))}
+                      );
+                    })}
                   </>
                 )}
 
@@ -6361,8 +6462,11 @@ function MoneyRecordsPanel({
                       ⚖ THE "clear this and it waits as an unpaid cost" HALF IS DELETED (owner
                       ruling B2, 2026-08-23) — it was the invisible third door to a commitment, and
                       the field is required now. */}
+                  {/* ⚠ P4: the bill's OWN payer counts too, so paying down a commitment a family
+                      fronted reads the same sentence as fronting a whole cost. `effectivePayerId`
+                      is the server's name for this same either-or. */}
                   <p className={styles.formHint}>
-                    {form.paidByPlayerId
+                    {effectivePayerId({ paidByPlayerId: form.paidByPlayerId || null }, payingBill?.expense.paidByPlayerId)
                       ? 'The day the family paid it. The team owes them from that date.'
                       : 'The day the money actually left.'}
                   </p>
@@ -6612,10 +6716,33 @@ function MoneyRecordsPanel({
                     reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
                   </p>
                 )}
+                {/* ⚠⚠ IT NAMES THE HOUSEHOLD AND THE FIGURE (owner ruling 2026-08-27). "A family
+                    paid this out of pocket" was true and unactionable: a coach deleting a mistyped
+                    cost could not tell WHO was about to lose WHAT, and the credit goes by cascade
+                    the instant they confirm. The ruling settles an asymmetry — removing a PLAYER
+                    who carries credits is refused outright, while deleting the COST they are owed
+                    against went through in silence. The delete still goes through; it just stops
+                    being silent. */}
                 {deletePreview.owesFamily && (
                   <p className={styles.dangerConfirmBody}>
-                    A family paid this out of pocket. <strong>The credit the team owes them will be
-                    removed too</strong> — no team cash moves either way.
+                    {deletePreview.owedByFamily.length > 0 ? (
+                      <>
+                        <strong>The credit the team owes will be removed too:</strong>{' '}
+                        {deletePreview.owedByFamily.map((o, at) => {
+                          const who = formatPlayerFirstLast(roster.find(r => r.id === o.playerId));
+                          return (
+                            <Fragment key={o.playerId}>
+                              {at > 0 ? ', ' : ''}
+                              {who ? <>{who}’s family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
+                            </Fragment>
+                          );
+                        })}
+                        . No team cash moves either way.
+                      </>
+                    ) : (
+                      <>A family paid this out of pocket. <strong>The credit the team owes them will
+                      be removed too</strong> — no team cash moves either way.</>
+                    )}
                   </p>
                 )}
                 {deletePreview.amount === 0 && !deletePreview.owesFamily && (

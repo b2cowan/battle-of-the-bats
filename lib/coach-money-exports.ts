@@ -309,6 +309,13 @@ export const REGISTER_COLUMNS: ExportColumnDef[] = [
   { label: 'Money in',  key: 'moneyIn',  format: 'currency' },
   { label: 'Balance',   key: 'balance',  format: 'currency' },
   { label: 'Status',    key: 'status',   format: 'text' },
+  /* ⚠ APPENDED, NEVER INSERTED (money centralization P4). This module's own header records why:
+     a coach's saved pivot table or accountant's template addresses these columns by POSITION, so a
+     new one goes on the end where nothing shifts under work nobody here can see.
+     ⚠ AND IT IS NOT A SECOND COPY OF `Status`. That column says whether team cash moved; this says
+     WHOSE money did, which is the fact a treasurer needs to reconcile a household's credit against
+     the bill it came from. */
+  { label: 'Paid by',   key: 'paidBy',   format: 'text' },
 ];
 
 export function registerExportRows(
@@ -337,6 +344,9 @@ export function registerExportRows(
        as money that left the account. */
     status: r.overdueDays != null ? `Overdue · ${r.overdueDays}d`
       : r.scheduled ? 'Scheduled' : r.movesCash ? 'Settled' : 'Settled — no team cash',
+    /* Blank rather than a placeholder on the overwhelming majority of rows the team paid: a
+       spreadsheet is filtered and sorted, and "The team" as text would sort in among real names. */
+    paidBy: r.paidByName ?? '',
   }));
 }
 

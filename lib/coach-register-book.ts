@@ -8,7 +8,7 @@ import {
   getRepDuesPayoutsByProgramYear,
   getCommitmentStandings,
 } from './db';
-import { installmentLabel, paymentLabel } from './payable-standing';
+import { effectivePayerId, installmentLabel, paymentLabel } from './payable-standing';
 import { supabaseAdmin } from './supabase-admin';
 import { orgDayKey, tournamentToday, daysBetweenDateStrings } from './timezone';
 import { duesRemainingByInstallment } from './coach-dues-remaining';
@@ -229,6 +229,14 @@ export async function loadSeasonRegisterRows(
     const count = standing?.installments.length ?? 0;
 
     for (const p of standing?.payments ?? []) {
+      /* ⚠⚠ THE PAYER IS THIS PAYMENT'S, NOT THE COST'S (money centralization P4, mig 267). Both
+         lines below read `e.paidByPlayerId` until P4, which was a complete answer while a cost was
+         fronted or it was not. A commitment can now hold a $200 deposit a parent paid direct and a
+         $400 balance the team paid — and asking at cost level got BOTH rows wrong: the whole bill
+         counted as team cash, or none of it did. This book's running balance IS cash on hand
+         (`scripts/check-register-balance.mjs` guards exactly that claim), so getting it wrong here
+         is the register disagreeing with the bank. */
+      const payer = effectivePayerId(p, e.paidByPlayerId);
       rows.push({
         ...base,
         id: `expense-${e.id}-payment-${p.id}`,
@@ -238,14 +246,14 @@ export async function loadSeasonRegisterRows(
         scheduled: false,
         overdueDays: null, // tagged for real below, once every row exists
         /* ⚠⚠ THE ONE ROW THAT DOES NOT MOVE THE BALANCE. A family paid the vendor direct: the
-           season spent the money, the team's cash did not. `expenseTotals().cashPaid` has always
-           excluded it — the book agrees with that figure rather than arguing with it. A payable is
-           billed to the team by a third party, so it never has an out-of-pocket leg. */
-        movesCash: !e.paidByPlayerId,
+           season spent the money, the team's cash did not. `expenseTotals().cashPaid` excludes the
+           same payments — the book agrees with that figure rather than arguing with it. */
+        movesCash: !payer,
         recordPayment: null,
-        detail: e.paidByPlayerId
-          ? `${playerName.get(e.paidByPlayerId) ?? 'A family'} paid direct — no team cash moved`
+        detail: payer
+          ? `${playerName.get(payer) ?? 'A family'} paid direct — no team cash moved`
           : null,
+        paidByName: payer ? (playerName.get(payer) ?? null) : null,
       });
     }
 
@@ -266,6 +274,10 @@ export async function loadSeasonRegisterRows(
         moneyOut: inst.remaining,
         scheduled: true,
         overdueDays: null, // tagged for real below, once every row exists
+        /* ⚠ COST-LEVEL HERE, DELIBERATELY, AND IT IS NOT THE P4 OVERSIGHT IT LOOKS LIKE. A
+           SCHEDULED row is money that has not moved, so no payment exists to carry a payer yet.
+           The cost's own answer is the only fact available and it is the right one: a bill a family
+           has undertaken to front will not move team cash when it is recorded either. */
         movesCash: !e.paidByPlayerId,
         recordPayment: recordPaymentAction(e.id, inst),
         detail: partly
