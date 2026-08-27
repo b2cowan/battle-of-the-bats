@@ -1057,3 +1057,79 @@ export function resolvePracticePlanTagNames(
     })),
   };
 }
+
+/* ==============================================================================================
+ * RE-POINTING staff/equipment TAG IDS INSIDE A PLAN (migration 266)
+ *
+ * ⚠ Lives here, not beside the DB round-trips that call it, because it is pure plan-shape logic
+ * and `rep-practice-plan-tag-repoint.ts` carries `server-only` — which would make the walk
+ * untestable. The four surfaces it must reach are the practice’s own equipment line, each
+ * block’s staff, and each station’s who-runs-it and equipment.
+ */
+
+const NESTED_KIND_FIELD: Record<'staff' | 'equipment', 'staffTagIds' | 'equipmentTagIds'> = {
+  staff: 'staffTagIds',
+  equipment: 'equipmentTagIds',
+};
+
+function repointIds(ids: string[] | undefined, transform: (id: string) => string | null): string[] | undefined {
+  if (!ids?.length) return ids;
+  const next: string[] = [];
+  const seen = new Set<string>();
+  let changed = false;
+  for (const id of ids) {
+    const mapped = transform(id);
+    if (mapped !== id) changed = true;
+    if (mapped === null) continue;
+    if (seen.has(mapped)) { changed = true; continue; } // merge can collapse two picks into one
+    seen.add(mapped);
+    next.push(mapped);
+  }
+  if (!changed) return ids;
+  return next;
+}
+
+/**
+ * Walk one plan, applying `transform` to every id in the given kind's field at every level it
+ * appears. Returns the same object reference when nothing changed, so callers can skip a write.
+ */
+export function repointPracticePlanTags(
+  plan: PracticePlan,
+  kind: 'staff' | 'equipment',
+  transform: (id: string) => string | null,
+): { plan: PracticePlan; changed: boolean } {
+  const field = NESTED_KIND_FIELD[kind];
+  let changed = false;
+
+  const nextStation = (s: PracticeStation): PracticeStation => {
+    if (kind !== 'staff' && kind !== 'equipment') return s;
+    const before = s[field];
+    const after = repointIds(before, transform);
+    if (after === before) return s;
+    changed = true;
+    return { ...s, [field]: after };
+  };
+
+  const nextBlock = (b: PracticePlanBlock): PracticePlanBlock => {
+    let block = b;
+    if (kind === 'staff') {
+      const after = repointIds(b.staffTagIds, transform);
+      if (after !== b.staffTagIds) { changed = true; block = { ...block, staffTagIds: after }; }
+    }
+    if (b.stations?.length) {
+      const stations = b.stations.map(nextStation);
+      if (stations.some((s, i) => s !== b.stations![i])) block = { ...block, stations };
+    }
+    return block;
+  };
+
+  let next = plan;
+  if (kind === 'equipment') {
+    const after = repointIds(plan.equipmentTagIds, transform);
+    if (after !== plan.equipmentTagIds) { changed = true; next = { ...next, equipmentTagIds: after }; }
+  }
+  const blocks = plan.blocks.map(nextBlock);
+  if (blocks.some((b, i) => b !== plan.blocks[i])) next = { ...next, blocks };
+
+  return { plan: next, changed };
+}

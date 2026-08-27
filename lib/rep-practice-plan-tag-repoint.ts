@@ -1,6 +1,10 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import type { PracticePlan, PracticePlanBlock, PracticeStation, RepTagKind } from './types';
+import type { PracticePlan, RepTagKind } from './types';
+// ⚠ The WALK itself is pure plan-shape logic and lives in `rep-practice-plan.ts`, which carries no
+// `server-only` and is therefore unit-testable — see `tests/unit/practice-tag-repoint.test.ts`.
+// Only the DB round-trips below belong in this module.
+import { repointPracticePlanTags } from './rep-practice-plan';
 
 /**
  * Re-pointing 'staff'/'equipment' tag ids embedded inside `PracticePlan` jsonb.
@@ -19,73 +23,6 @@ import type { PracticePlan, PracticePlanBlock, PracticeStation, RepTagKind } fro
  * source of truth for what SHOULD be true; a stray old id just means one plan's picker shows a name
  * that no longer resolves, handled by dropping unresolvable ids at render time), never data loss.
  */
-
-const NESTED_KIND_FIELD: Record<'staff' | 'equipment', 'staffTagIds' | 'equipmentTagIds'> = {
-  staff: 'staffTagIds',
-  equipment: 'equipmentTagIds',
-};
-
-function repointIds(ids: string[] | undefined, transform: (id: string) => string | null): string[] | undefined {
-  if (!ids?.length) return ids;
-  const next: string[] = [];
-  const seen = new Set<string>();
-  let changed = false;
-  for (const id of ids) {
-    const mapped = transform(id);
-    if (mapped !== id) changed = true;
-    if (mapped === null) continue;
-    if (seen.has(mapped)) { changed = true; continue; } // merge can collapse two picks into one
-    seen.add(mapped);
-    next.push(mapped);
-  }
-  if (!changed) return ids;
-  return next;
-}
-
-/**
- * Walk one plan, applying `transform` to every id in the given kind's field at every level it
- * appears. Returns the same object reference when nothing changed, so callers can skip a write.
- */
-export function repointPracticePlanTags(
-  plan: PracticePlan,
-  kind: 'staff' | 'equipment',
-  transform: (id: string) => string | null,
-): { plan: PracticePlan; changed: boolean } {
-  const field = NESTED_KIND_FIELD[kind];
-  let changed = false;
-
-  const nextStation = (s: PracticeStation): PracticeStation => {
-    if (kind !== 'staff' && kind !== 'equipment') return s;
-    const before = s[field];
-    const after = repointIds(before, transform);
-    if (after === before) return s;
-    changed = true;
-    return { ...s, [field]: after };
-  };
-
-  const nextBlock = (b: PracticePlanBlock): PracticePlanBlock => {
-    let block = b;
-    if (kind === 'staff') {
-      const after = repointIds(b.staffTagIds, transform);
-      if (after !== b.staffTagIds) { changed = true; block = { ...block, staffTagIds: after }; }
-    }
-    if (b.stations?.length) {
-      const stations = b.stations.map(nextStation);
-      if (stations.some((s, i) => s !== b.stations![i])) block = { ...block, stations };
-    }
-    return block;
-  };
-
-  let next = plan;
-  if (kind === 'equipment') {
-    const after = repointIds(plan.equipmentTagIds, transform);
-    if (after !== plan.equipmentTagIds) { changed = true; next = { ...next, equipmentTagIds: after }; }
-  }
-  const blocks = plan.blocks.map(nextBlock);
-  if (blocks.some((b, i) => b !== plan.blocks[i])) next = { ...next, blocks };
-
-  return { plan: next, changed };
-}
 
 /**
  * Fetch every one of the team's practice events carrying a plan, repoint the given kind's ids
