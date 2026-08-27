@@ -8,7 +8,7 @@ import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
  *
  * ⚠ **A NEW TAG IS ONLY MINTED ON AN EXPLICIT ACT** (owner ruling 2026-08-01). Typing SEARCHES the
  * team's existing tags; creating a new one takes a second, deliberate press on a clearly-labelled
- * "+ New tag" row. That friction is the entire point: the vocabulary must grow by decision, not by
+ * "+ Create" row. That friction is the entire point: the vocabulary must grow by decision, not by
  * typo. Free text is exactly what this replaced, and it shipped a live defect where two spellings of
  * one word split a library in half.
  *
@@ -67,7 +67,7 @@ export default function TagPicker({
       .slice(0, 12);
   }, [all, selected, q]);
 
-  // An exact (case-insensitive) match must NOT offer "+ New tag" — that is how a coach ends up with
+  // An exact (case-insensitive) match must NOT offer "+ Create" — that is how a coach ends up with
   // two spellings, which is the whole failure this control exists to prevent.
   const exists = !!q && all.some(t => t.name.toLowerCase() === q.toLowerCase());
   const canCreate = !!onCreate && !!q && !exists && !disabled;
@@ -130,7 +130,7 @@ export default function TagPicker({
           ))}
           {canCreate && (
             <button type="button" className={styles.tagCreateChip} onClick={create} disabled={busy}>
-              + New tag “{q}”
+              + Create “{q}”
             </button>
           )}
           {!offered.length && !canCreate && (

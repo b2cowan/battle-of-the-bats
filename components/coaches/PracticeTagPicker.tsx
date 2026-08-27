@@ -17,7 +17,7 @@ import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
  *
  * A legacy name with NO match in the library (nobody has picked "Adam" as a real tag yet, on any
  * plan) renders as its own inert chip with one job: a single explicit press that mints it — the
- * same "+ New tag" deliberateness every other tag gets, just entered from a different door.
+ * same "+ Create" deliberateness every other tag gets, just entered from a different door.
  */
 export default function PracticeTagPicker({
   label, all, ids, legacyNames, onChange, onCreate, disabled, emptyHint,
@@ -73,7 +73,7 @@ export default function PracticeTagPicker({
                 if (made) onChange([...resolvedIds, made.id]);
               }}
             >
-              + Add “{name}” to your {label.toLowerCase()} list
+              + Create “{name}” in your {label.toLowerCase()} list
             </button>
           ))}
         </div>
