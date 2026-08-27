@@ -137,16 +137,18 @@ export function parseDateCell(raw: string): string {
 /**
  * A month column heading → `YYYY-MM`.
  *
- * Understands an explicit year (`2026-09`, `Sep 2026`, `Sep '26` — the app's own export format)
- * and a bare month name. A bare month has no year of its own, so the reader carries one: it
- * starts at the season year and rolls forward when the months wrap round (Sep, Oct, … Jan), which
- * is exactly how a season spreadsheet reads left to right.
+ * Understands an explicit year (`2026-09`, `Sep 2026`, `Sep '26` — the CSV export format — and a
+ * full ISO date like `2026-02-01`, which is what parseXLSX hands over for the Excel export's
+ * date-valued month headers) and a bare month name. A bare month has no year of its own, so the
+ * reader carries one: it starts at the season year and rolls forward when the months wrap round
+ * (Sep, Oct, … Jan), which is exactly how a season spreadsheet reads left to right.
  */
 export function parseMonthHeader(header: string, carriedYear: number): { month: MonthKey; year: number } | null {
   const text = (header ?? '').trim();
   if (!text) return null;
 
-  const isoish = text.match(/^(\d{4})[-/](\d{1,2})$/);
+  // The optional day (a real date cell) is read and dropped — a month column is a month.
+  const isoish = text.match(/^(\d{4})[-/](\d{1,2})(?:[-/]\d{1,2})?$/);
   if (isoish) {
     const m = Number(isoish[2]);
     if (m < 1 || m > 12) return null;
@@ -172,12 +174,22 @@ function isDerivedRow(label: string): boolean {
   return DERIVED_ROW_LABELS.has(label.trim().toLowerCase().replace(/^[—–-]\s*/, ''));
 }
 
-/** The export writes line rows as `  — Entry Fees` under their category. */
-function stripLineIndent(value: string): { text: string; indented: boolean } {
+/**
+ * The CSV export writes line rows as `  — Entry Fees` under their category; the Excel export
+ * (since 2026-08-25) writes them dash-free and nested by STYLING instead — an outline level and a
+ * cell indent, which parseXLSX reads and hands over as the row's `indented` flag. Both spellings
+ * of the same fact, accepted equally; a hand-typed dash works too.
+ *
+ * ⚠ LEADING SPACES ALONE DO NOT — and never have. Every real path pre-trims cell values
+ * (`matrixToParsedRows` trims each cell for xlsx and CSV alike), so the whitespace fallback
+ * below is dead on arrival; it is kept only for a hypothetical untrimmed caller. A coach nesting
+ * hand-typed rows needs the dash (or, in Excel, a real cell indent / outline group) (/review).
+ */
+function stripLineIndent(value: string, styledIndent?: boolean): { text: string; indented: boolean } {
   const raw = value ?? '';
   const match = raw.match(/^\s*[—–-]\s*(.*)$/);
   if (match) return { text: match[1].trim(), indented: true };
-  return { text: raw.trim(), indented: /^\s{2,}/.test(raw) };
+  return { text: raw.trim(), indented: !!styledIndent || /^\s{2,}/.test(raw) };
 }
 
 // ── month-grid reader ────────────────────────────────────────────────────────
@@ -223,7 +235,7 @@ export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): D
 
     if (combined.present && !explicitLine.present) {
       // The app's own export shape: one column, categories flush and lines indented under them.
-      const { text, indented } = stripLineIndent(combined.value);
+      const { text, indented } = stripLineIndent(combined.value, source.indented);
       if (!text) continue;
       if (isDerivedRow(text)) continue;
       if (indented) {
@@ -282,7 +294,7 @@ export function rowsFromList(file: ParsedImportFile): DraftBudgetRow[] {
     let lineName = getCell(source, [...ALIASES.line]).value.trim();
 
     if (combined.present && !lineName) {
-      const { text, indented } = stripLineIndent(combined.value);
+      const { text, indented } = stripLineIndent(combined.value, source.indented);
       if (!text || isDerivedRow(text)) continue;
       if (indented) { lineName = text; categoryName = currentCategory; }
       else { currentCategory = text; continue; }

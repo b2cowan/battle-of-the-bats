@@ -55,6 +55,12 @@ export async function parseXLSX(buffer: ArrayBuffer, maxRows: number): Promise<P
   const rowCeiling = maxRows * 2 + 100;
 
   const matrix: string[][] = [];
+  // Rows the sheet itself marks as nested — an outline (grouping) level or a first-cell indent.
+  // The app's own Excel exports write budget line rows this way with no textual `— ` marker
+  // (2026-08-25), and trimming below would eat leading spaces anyway, so the styling is the only
+  // place the nesting survives. Collapsed (hidden) rows are iterated like any other — a coach
+  // re-importing a file whose groups are still folded shut loses nothing.
+  const indentedRows = new Set<number>();
   let truncated = false;
   worksheet.eachRow({ includeEmpty: true }, row => {
     if (matrix.length >= rowCeiling) { truncated = true; return; }
@@ -62,11 +68,14 @@ export async function parseXLSX(buffer: ArrayBuffer, maxRows: number): Promise<P
     for (let col = 1; col <= maxCols; col += 1) {
       values.push(cellToString(row.getCell(col).value).trim());
     }
+    if ((row.outlineLevel ?? 0) > 0 || (row.getCell(1).alignment?.indent ?? 0) > 0) {
+      indentedRows.add(matrix.length);
+    }
     matrix.push(values);
   });
   if (truncated) {
     console.warn(`[parseXLSX] sheet exceeded ${rowCeiling} rows — only the first ${rowCeiling} were scanned.`);
   }
 
-  return matrixToParsedRows(matrix, maxRows, { format: 'xlsx', metadata });
+  return matrixToParsedRows(matrix, maxRows, { format: 'xlsx', metadata, indentedRows });
 }

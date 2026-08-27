@@ -20,6 +20,14 @@ export interface ExportColumnDef {
   sensitive?: boolean;
   /** Whether to include this column in PDF exports. Default: true. */
   includeInPDF?: boolean;
+  /**
+   * `YYYY-MM` when this column IS a month (the Budget-by-month grid). The Excel header cell is
+   * then written as a real date (displayed "Feb 2026") instead of the label string, so the
+   * column header can be sorted, pivoted and date-mathed like the data it heads. CSV/PDF keep
+   * the label — those formats have no typed cells to gain from it, and the label is the
+   * spelling the import parser has always read.
+   */
+  headerMonth?: string;
 }
 
 /**

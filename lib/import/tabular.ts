@@ -21,7 +21,13 @@ export function isBlankRecord(values: Record<string, string>) {
 export function matrixToParsedRows(
   matrix: unknown[][],
   maxRows: number,
-  options: { format?: ImportFormat; metadata?: Record<string, string> } = {},
+  options: {
+    format?: ImportFormat;
+    metadata?: Record<string, string>;
+    /** MATRIX indices of rows the spreadsheet marked as nested (outline level / cell indent) —
+     *  carried onto each ParsedImportRow as `indented`. Only parseXLSX supplies this. */
+    indentedRows?: Set<number>;
+  } = {},
 ): ParsedImportFile {
   const headerRowIndex = matrix.findIndex(row => row.some(cell => String(cell ?? '').trim().length > 0));
   if (headerRowIndex < 0) throw new ImportParseError('The import file is empty.');
@@ -48,7 +54,7 @@ export function matrixToParsedRows(
       values[header] = String(row[index] ?? '').trim();
     });
     if (isBlankRecord(values)) continue;
-    rows.push({ rowNumber: i + 1, values });
+    rows.push({ rowNumber: i + 1, values, ...(options.indentedRows?.has(i) ? { indented: true } : {}) });
     if (rows.length > maxRows) {
       throw new ImportParseError(`Imports are limited to ${maxRows} data rows.`);
     }

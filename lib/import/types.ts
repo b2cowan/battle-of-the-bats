@@ -4,6 +4,14 @@ export type ImportOperation = 'create' | 'update' | 'unchanged' | 'blocked';
 export type ParsedImportRow = {
   rowNumber: number;
   values: Record<string, string>;
+  /**
+   * The spreadsheet itself marked this row as nested — an Excel outline level or a first-cell
+   * indent (parseXLSX reads both; CSV has neither). The app's own Excel exports write line rows
+   * this way with NO textual marker since 2026-08-25, so shape readers that used to recognize a
+   * line row by its `— `/leading-space prefix must accept this flag as the same signal
+   * (`stripLineIndent` in lib/coach-budget-import.ts does).
+   */
+  indented?: boolean;
 };
 
 export type ParsedImportFile = {

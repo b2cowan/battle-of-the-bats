@@ -10,6 +10,7 @@ export { buildFilename, serializeRows, serializeHeaders } from './table';
 
 export { generateCSV, downloadCSVBlob } from './csv';
 
+export type { XlsxRowStyle } from './xlsx';
 export { downloadXLSX } from './xlsx';
 
 export type { ICSEventInput } from './ics';

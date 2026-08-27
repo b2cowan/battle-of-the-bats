@@ -1027,10 +1027,20 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
   /** Where content starts on a page this sheet added itself. */
   const continuationTop = MARGIN + 4 + 3 + 6;
 
+  /**
+   * What to redraw at the top of a page a BLOCK spills onto — its clock and "(continued)" title.
+   * Set while a block is being drawn, cleared after.
+   *
+   * ⚠ A hook rather than a call at one site: the re-label used to hang off the prose loop alone, so
+   * a block whose ROTATION GRID or group lists spilled opened the next page with a bare band and no
+   * way to tell which part of the night those rows belonged to (/review, 2026-08-24).
+   */
+  let continueBlock: (() => void) | null = null;
   function newPage(): void {
     doc.addPage();
     continuationHeader();
     y = continuationTop;
+    continueBlock?.();
   }
   function ensureRoom(needed: number): void {
     if (y + needed > maxY) newPage();
@@ -1216,19 +1226,38 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
     // Who is in each group, directly beneath the grid it belongs to — an assistant reads one
     // region and has everything, instead of hunting a "Groups" section pages away.
     for (const g of rot.groups) {
-      ensureRoom(RUN_GROUP_LINE_H);
+      // Measured BEFORE the room check, or the check reserves less than the draw consumes.
+      const nameLines = groupLines(g, width);
+      ensureRoom(nameLines.length * RUN_GROUP_LINE_H);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(...RUN_INK);
       const lead = `${g.name} — `;
       doc.text(lead, x, y + 3.2);
-      const nameX = x + doc.getTextWidth(lead);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...RUN_PROSE);
-      const nameLines: string[] = doc.splitTextToSize(g.players, width - (nameX - x));
-      doc.text(nameLines, nameX, y + 3.2);
-      y += Math.max(RUN_GROUP_LINE_H, nameLines.length * RUN_GROUP_LINE_H);
+      doc.text(nameLines, x + doc.getTextWidth(lead), y + 3.2);
+      y += nameLines.length * RUN_GROUP_LINE_H;
     }
+  }
+
+  /**
+   * How a rotation's group-membership line wraps, and therefore how tall it is.
+   *
+   * ⚠⚠ ONE SOURCE FOR MEASURE AND DRAW. This was two copies, and they disagreed: the drawing loop
+   * reserved a single line before printing however many the player list actually wrapped to, and
+   * `measureBlock` counted one line per group as well. A group holding a dozen full names wraps to
+   * three, so the block "fitted" a page it did not fit, and the overflow printed across the footer
+   * or off the paper entirely (/review, high-risk tier, 2026-08-24). Anything that measures this
+   * line must call this, never re-derive it.
+   */
+  function groupLines(g: { name: string; players: string }, width: number): string[] {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    const leadW = doc.getTextWidth(`${g.name} — `);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    return doc.splitTextToSize(g.players, Math.max(10, width - leadW)) as string[];
   }
 
   /**
@@ -1265,7 +1294,8 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     const whoLines = who ? doc.splitTextToSize(who, proseW).length : 0;
-    const beside = 5.2 + titleLines * 4.4 + whoLines * 3.6;
+    // Mirrors the draw exactly (5.6 to the title baseline, +0.6 before a staff/players line).
+    const beside = 5.6 + titleLines * 4.4 + (whoLines ? 0.6 + whoLines * 3.6 : 0);
     const gutter = clockLines(b.time).length * 4.6 + 4;
     return Math.max(12.6, beside, gutter);
   }
@@ -1288,7 +1318,7 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
       doc.setFontSize(8.5);
       for (const n of rot.notes) h += doc.splitTextToSize(n, proseW - 4).length * 3.9 + 1;
       if (rot.notes.length > 0) h += 1.5;
-      h += rot.groups.length * RUN_GROUP_LINE_H;
+      for (const g of rot.groups) h += groupLines(g, proseW).length * RUN_GROUP_LINE_H;
     }
     return h;
   }
@@ -1373,12 +1403,15 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
         y += Math.max(8, cl.length * 4.6 + 3, contLines.length * 4.4 + 2);
       }
 
+      continueBlock = continuationLabel;
       if (b.notes) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         const lines: string[] = doc.splitTextToSize(b.notes, proseW);
         for (const line of lines) {
-          if (y + RUN_LINE_H > maxY) { newPage(); continuationLabel(); }
+          // Line by line, so a long note breaks between whole lines and never mid-sentence.
+          // The re-label rides `newPage` now, so this is a plain room check.
+          ensureRoom(RUN_LINE_H);
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(...RUN_PROSE);
@@ -1412,6 +1445,7 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
       doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
       doc.circle(spineX, top + 2.6, 1.1, 'F');
       doc.setPage(endPage);
+      continueBlock = null;
       y += 4.5;
     }
   }
@@ -1426,25 +1460,37 @@ export function buildPracticeRunSheetDoc(jsPDFClass: any, opts: PracticeSheetOpt
     // too long for any single page simply flows, one name at a time, as before.
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    const focusHeight = opts.focus.reduce(
-      (h, f) => h + doc.splitTextToSize(f.focusAreas, contentWidth - nameW).length * RUN_LINE_H + 1.5,
-      0,
-    );
+    const focusRowLines = (f: { player: string; focusAreas: string }): number => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      const name = doc.splitTextToSize(f.player, nameW - 3).length;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      return Math.max(name, doc.splitTextToSize(f.focusAreas, contentWidth - nameW).length);
+    };
+    const focusHeight = opts.focus.reduce((h, f) => h + focusRowLines(f) * RUN_LINE_H + 1.5, 0);
     sectionLabel('What everyone’s working on',
       focusHeight <= maxY - continuationTop - 10 ? focusHeight : 8);
     for (const f of opts.focus) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       const lines: string[] = doc.splitTextToSize(f.focusAreas, contentWidth - nameW);
-      ensureRoom(lines.length * RUN_LINE_H + 2);
+      // ⚠ The NAME wraps too. It used to be clipped to its first line — the same defect the block
+      // meta line was fixed for, left behind here: a long name printed short with no cue, and the
+      // focus text beside it then read as belonging to somebody else (/review 2026-08-24).
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      const nameLines: string[] = doc.splitTextToSize(f.player, nameW - 3);
+      const rowLines = Math.max(lines.length, nameLines.length);
+      ensureRoom(rowLines * RUN_LINE_H + 2);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(...RUN_INK);
-      doc.text(doc.splitTextToSize(f.player, nameW - 3)[0] ?? '', MARGIN, y);
+      doc.text(nameLines, MARGIN, y);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...RUN_PROSE);
       doc.text(lines, MARGIN + nameW, y);
-      y += lines.length * RUN_LINE_H + 1.5;
+      y += rowLines * RUN_LINE_H + 1.5;
     }
   }
 

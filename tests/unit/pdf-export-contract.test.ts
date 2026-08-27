@@ -936,7 +936,58 @@ describe('the practice run sheet', () => {
       'where it continues, it says so — a page picked up alone still names what it is');
   });
 
+  /**
+   * ⚠ THE CRITICAL ONE (/review, 2026-08-24). A rotation group's player list WRAPS, and both the
+   * per-row page guard and the whole-block measurement counted it as ONE line — so a block that
+   * "fitted" the page printed its last groups across the footer or off the paper entirely. The
+   * invariant is stated as the thing a coach would notice: nothing is ever drawn past the floor.
+   */
+  it('never draws below the footer floor, however far a group list wraps', () => {
+    const huge = 'Alexandria Jean-Baptiste, Maximilian Oyelaran-Whitfield, Genevieve Desjardins, '
+      + 'Bartholomew Fitzgerald, Anastasia Raghunathan, Konstantinos Papadopoulos, Wilhelmina Vandenberg';
+    const floor = 279.4 - 18;      // the sheet's own maxY: page height less the footer band
+    const footerY = 279.4 - 8;     // where stampFooters draws, deliberately, on every page
 
+    // ⚠ SWEPT, not hand-picked. The spill only appears when the wrapped group rows happen to land
+    // within a line of the page bottom, and no single fixture reliably lands there — a one-shot
+    // fixture passed against the reintroduced bug. Walking the filler count walks the block down
+    // the page until it straddles the boundary.
+    for (let fillers = 1; fillers <= 12; fillers++) {
+      const doc: MockDoc = buildPracticeRunSheetDoc(WrappingMockDoc, sheet({
+        blocks: [
+          ...Array.from({ length: fillers }, (_, i) => block({ title: `Filler ${i + 1}` })),
+          block({ title: 'Circuit', rotation: {
+            groupNames: ['A', 'B', 'C'],
+            rounds: [{ round: '1', stations: ['Tee', 'Toss', 'BP'] }],
+            notes: [],
+            groups: [
+              { name: 'Group A', players: huge },
+              { name: 'Group B', players: huge },
+              { name: 'Group C', players: huge },
+            ],
+          } }),
+        ],
+      }));
+      const spilled = doc.texts.filter(t =>
+        (t.y ?? 0) > floor + 0.5 && Math.abs((t.y ?? 0) - footerY) > 0.01);
+      assert.equal(spilled.length, 0,
+        `${fillers} filler block(s): ${spilled.length} line(s) past the footer — "${spilled[0]?.str}"`);
+    }
+  });
+
+  /** ⚠ The focus list clipped a wrapping player NAME to its first line — the same class of defect
+   *  the block meta line had already been fixed for (/review, 2026-08-24). */
+  it('wraps a long focus-area player name instead of clipping it', () => {
+    const name = 'Alexandria Jean-Baptiste Oyelaran-Whitfield';
+    const doc: MockDoc = buildPracticeRunSheetDoc(WrappingMockDoc, sheet({
+      focus: [{ player: name, focusAreas: 'Backhand pickups' }],
+    }));
+    const printed = doc.texts.map(t => t.str).join(' ');
+    for (const word of name.split(' ')) {
+      assert.ok(printed.includes(word),
+        `"${word}" was clipped — a shortened name reads as a different person, with no cue`);
+    }
+  });
 
   it('leaves the focus section ABSENT, not redacted-looking, without the grant', () => {
     const doc: MockDoc = buildPracticeRunSheetDoc(MockDoc, sheet({ focus: [] }));

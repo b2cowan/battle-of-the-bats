@@ -10,12 +10,15 @@ import {
 } from '../../lib/coach-budget-import.ts';
 import type { ParsedImportFile } from '../../lib/import/types.ts';
 
-function sheet(headers: string[], rows: string[][]): ParsedImportFile {
+function sheet(headers: string[], rows: string[][], indentedRows: number[] = []): ParsedImportFile {
   return {
     headers,
     rows: rows.map((cells, i) => ({
       rowNumber: i + 2,
       values: Object.fromEntries(headers.map((h, j) => [h, cells[j] ?? ''])),
+      // What parseXLSX sets on a row nested by Excel styling (outline level / cell indent) —
+      // the Excel export's line-row marker since its labels stopped carrying the `— ` dash.
+      ...(indentedRows.includes(i) ? { indented: true } : {}),
     })),
   };
 }
@@ -58,6 +61,9 @@ describe('month headers', () => {
     assert.equal(parseMonthHeader('Sep 2026', 2020)?.month, '2026-09');
     assert.equal(parseMonthHeader("Mar '26", 2020)?.month, '2026-03');
     assert.equal(parseMonthHeader('September', 2026)?.month, '2026-09');
+    // The Excel export's month header is a real DATE cell, which parseXLSX hands over as a full
+    // ISO date. The day is read and dropped — a month column is a month.
+    assert.equal(parseMonthHeader('2026-02-01', 2020)?.month, '2026-02');
   });
 
   it('ignores a heading that is not a month', () => {
@@ -118,6 +124,30 @@ describe('rowsFromMonthGrid', () => {
     // The "No date yet" column survives the round trip as undated money.
     assert.equal(rows[1].amount, '900');
     assert.equal(rows[1].periods.length, 0);
+  });
+
+  it('re-reads the app’s EXCEL export: dash-free lines nested by styling, date-cell headers', () => {
+    // What parseXLSX produces from the Excel file since 2026-08-25: month headers arrive as full
+    // ISO dates, and line rows carry no `— ` prefix — their nesting is the `indented` flag read
+    // from the row's outline level / cell indent (which also survives the groups being collapsed,
+    // since hidden rows parse like any other).
+    const file = sheet(
+      ['Category / line', 'No date yet', '2026-03-01', '2026-04-01', 'Total'],
+      [
+        ['Tournaments', '900', '1,200', '', '4,500'],
+        ['Entry Fees', '', '1,200', '', '3,600'],
+        ['Uniforms', '900', '', '', '900'],
+        ['Total', '1,450', '2,550', '600', '8,800'],
+      ],
+      [1, 2],
+    );
+    const rows = rowsFromMonthGrid(file, 2026);
+    assert.deepEqual(rows.map(r => [r.categoryName, r.lineName]), [
+      ['Tournaments', 'Entry Fees'],
+      ['Tournaments', 'Uniforms'],
+    ]);
+    assert.deepEqual(rows[0].periods, [{ month: '2026-03', amount: '1200' }]);
+    assert.equal(rows[1].amount, '900');
   });
 
   it('caps a runaway sheet', () => {

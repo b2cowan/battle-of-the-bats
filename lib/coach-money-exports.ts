@@ -16,7 +16,7 @@
  * are called, and how a row is built from a record. One definition each, so the same dataset can
  * never come out two different ways.
  */
-import type { ExportColumnDef } from './export';
+import type { ExportColumnDef, XlsxRowStyle } from './export';
 import {
   buildFilename, serializeHeaders, serializeRows, generateCSV, downloadCSVBlob, downloadXLSX,
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
@@ -32,6 +32,48 @@ export type MoneyExportFormat = 'xlsx' | 'csv' | 'pdf';
 
 /** A row is a flat bag of primitives — the shape `serializeRows` consumes. */
 export type ExportRow = Record<string, string | number>;
+
+/**
+ * What a row IS in a grouped report — how the EXCEL file dresses it (bold bands, collapsible item
+ * groups). Kinds are declared by the builder that pushes the row, never guessed from its text.
+ *
+ * ⚠ THE `  — ` ITEM PREFIX IS STRIPPED FROM THE EXCEL CELLS ONLY (owner call 2026-08-25 — Excel's
+ * own indent carries the nesting there). CSV and PDF keep the dash text: they have no indent of
+ * their own, and it is what their import path reads. The Excel round trip holds a different way —
+ * `parseXLSX` marks each outlined/indented row and `stripLineIndent` accepts that mark as the
+ * line-row signal the dash used to carry. The one degradation, accepted with the call: copy-paste
+ * an exported Excel file's CELLS into a fresh sheet and the styling (hence the line-vs-category
+ * distinction) does not travel; re-importing the downloaded FILE itself is the promise.
+ */
+export type MoneyRowKind = 'section' | 'category' | 'item' | 'total';
+
+/** What each kind means in Excel. Items nest one outline level down, START CLOSED (the file
+ *  opens at category level; the "+" opens a group), with the collapse control on the category
+ *  row above them (`summaryBelow: false` — see downloadXLSX). */
+const ROW_KIND_STYLE: Record<MoneyRowKind, XlsxRowStyle> = {
+  section:  { bold: true },
+  category: { bold: true },
+  item:     { outlineLevel: 1, indent: 1, collapsed: true },
+  total:    { bold: true },
+};
+
+/** The item rows' `  — ` label prefix, stripped for the Excel body only — see MoneyRowKind. */
+const ITEM_PREFIX = /^\s*(?:—\s*)?/;
+
+/**
+ * Excel number formats for a currency column. Display only — the stored value is the raw signed
+ * number either way, so a formatted file re-imports identically (parseXLSX reads cell.value).
+ *
+ *  - `minus`    — `-$1,234.00`, `$0.00`. Matches `money()` and every PDF cell; the default.
+ *  - `brackets` — `($1,234.00)`, and zero shows as `—`. The Budget-vs-Actual notation: that
+ *    report's binding screen rule is brackets-for-negative and em-dash-for-zero (`fmtCell`), and
+ *    its spreadsheet should read like the screen it came from. No other tab's screen uses
+ *    brackets, so no other tab passes this.
+ */
+const CURRENCY_NUMFMT: Record<'minus' | 'brackets', string> = {
+  minus:    '$#,##0.00',
+  brackets: '$#,##0.00;($#,##0.00);"—"',
+};
 
 /**
  * Currency for a PDF cell.
@@ -538,13 +580,18 @@ export type BvaCategorySource = {
  * ⚠ NOT the month grid: its columns depend on the season and its cells on the chosen reading, so
  * it is built by the panel that owns those switches.
  */
-export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
-  if (!data) return [];
+export function bvaCategoryRows(
+  data: BvaCategorySource | null,
+): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
   const rows: ExportRow[] = [];
+  // Index-aligned with `rows` — how the Excel file dresses each one. CSV/PDF never read it.
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
+  if (!data) return { rows, kinds };
 
   /** One category and its items — the same two levels in both sections. */
   const pushCategory = (cat: BvaCategory) => {
-    rows.push({
+    push({
       item: cat.inPlan ? cat.categoryName : `${cat.categoryName} (not budgeted)`,
       // ⚠ BLANK, NEVER ZERO, where nothing was budgeted. A 0 in a spreadsheet is a plan of nothing;
       // an empty cell is the absence of a plan, and those are different facts a treasurer acts on
@@ -552,7 +599,7 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
       budgeted: cat.inPlan ? cat.budgeted : '',
       actual: cat.actual,
       variance: cat.variance,
-    });
+    }, 'category');
     // Every item, planned or not — the file carries the same two levels the screen does, so a
     // coach can reconcile one against the other line for line.
     for (const item of cat.items) {
@@ -564,12 +611,12 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
       const back = item.refundTotal > 0.005
         ? ` — ${item.grossActual.toFixed(2)} less ${item.refundTotal.toFixed(2)} back`
         : '';
-      rows.push({
+      push({
         item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}${back}`,
         budgeted: item.inPlan ? item.budgeted : '',
         actual:   item.actual,
         variance: item.variance,
-      });
+      }, 'item');
     }
   };
 
@@ -578,9 +625,9 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
      records differently from the report it was downloaded from is the two-buttons-one-name defect
      wearing a different hat. */
   if (data.report.revenue.categories.length > 0) {
-    rows.push({ item: 'REVENUE', budgeted: '', actual: '', variance: '' });
+    push({ item: 'REVENUE', budgeted: '', actual: '', variance: '' }, 'section');
     for (const cat of data.report.revenue.categories) pushCategory(cat);
-    rows.push({
+    push({
       item: 'Total revenue',
       budgeted: data.report.revenue.budgeted,
       actual: data.report.revenue.actual,
@@ -588,42 +635,44 @@ export function bvaCategoryRows(data: BvaCategorySource | null): ExportRow[] {
       // number here and on screen; written the other way round, a team that came up $1,350 short
       // saw red on screen and a positive figure in the spreadsheet.
       variance: data.report.revenue.variance,
-    });
-    rows.push({ item: 'EXPENSES', budgeted: '', actual: '', variance: '' });
+    }, 'total');
+    push({ item: 'EXPENSES', budgeted: '', actual: '', variance: '' }, 'section');
   }
 
   for (const cat of data.report.expenses.categories ?? []) pushCategory(cat);
   if (data.buffer > 0) {
-    rows.push({ item: 'Not itemized yet (from your estimate)', budgeted: data.buffer, actual: '', variance: '' });
+    // 'category' for the bolding: the screen renders this row with the category-header
+    // treatment (panel `bufferRow`), and the file should read like the screen (/review find).
+    push({ item: 'Not itemized yet (from your estimate)', budgeted: data.buffer, actual: '', variance: '' }, 'category');
   }
-  rows.push({
+  push({
     item: data.report.revenue.categories.length > 0 ? 'Total expenses' : 'Total',
     budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom,
-  });
+  }, 'total');
   // Named, not added. The rows above already contain every one of these dollars.
   if (data.unbudgeted > 0) {
-    rows.push({ item: '  of which never budgeted', budgeted: '', actual: data.unbudgeted, variance: '' });
+    push({ item: '  of which never budgeted', budgeted: '', actual: data.unbudgeted, variance: '' }, 'item');
   }
 
   if (data.funding) {
     // The server's figure, the same one the screen prints — never a fourth recomputation.
-    rows.push({
+    push({
       item: 'Season net',
       budgeted: data.report.net.budgeted,
       actual: data.report.net.actual,
       variance: data.report.net.variance,
-    });
+    }, 'total');
     // ⚠ Whole totals, INCLUDING unbudgeted spending — the total row above does the same,
     // because this export lists every unbudgeted expense as its own row rather than splitting
     // them into a separate section the way the screen does.
-    rows.push({
+    push({
       item: 'Funded by players',
       budgeted: data.funding.fundedByPlayers,
       actual: data.totalActual - data.funding.actual,
       variance: data.funding.fundedByPlayers - (data.totalActual - data.funding.actual),
-    });
+    }, 'total');
   }
-  return rows;
+  return { rows, kinds };
 }
 
 // ── The one download path ───────────────────────────────────────────────────────────────────
@@ -635,6 +684,12 @@ export interface MoneyDownload {
   title: string;
   columns: ExportColumnDef[];
   rows: ExportRow[];
+  /** What each row IS, index-aligned with `rows` — Excel presentation only (bold bands,
+   *  collapsible item groups). Absent = every row plain, which is right for a flat dataset. */
+  rowKinds?: (MoneyRowKind | undefined)[];
+  /** How the Excel file writes a currency cell. Default `minus` (matches money() and the PDFs);
+   *  the Budget-vs-Actual pair passes `brackets`, its binding screen notation. */
+  currencyNotation?: 'minus' | 'brackets';
   /** Currency pre-formatted for jsPDF. Required only when the caller offers PDF. */
   pdfRows?: (rows: ExportRow[]) => (string | number)[][];
   orgLabel: string;
@@ -677,6 +732,34 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
 
   const headers = serializeHeaders(spec.columns);
   const body = serializeRows(spec.rows, spec.columns);
-  if (format === 'csv') downloadCSVBlob(filename, generateCSV(headers, body));
-  else await downloadXLSX(filename, headers, body, spec.title);
+  if (format === 'csv') { downloadCSVBlob(filename, generateCSV(headers, body)); return; }
+
+  /* The Excel file gets what the flat formats cannot carry: currency-formatted cells on every
+     money column, real dates in month headers, and — where the caller declared row kinds — bold
+     section/category/total bands with the item rows grouped, indented and starting CLOSED under
+     Excel's own +/− controls. The item rows also shed their `  — ` label prefix here, and ONLY
+     here — the indent replaces it (see MoneyRowKind for why the round trip survives that). */
+  spec.rowKinds?.forEach((kind, i) => {
+    // The label is always the first active column in a grouped dataset; `body` is this call's
+    // own serialization, so mutating it cannot reach the CSV or PDF paths above.
+    if (kind === 'item') body[i][0] = String(body[i][0]).replace(ITEM_PREFIX, '');
+  });
+  const numFmt = CURRENCY_NUMFMT[spec.currencyNotation ?? 'minus'];
+  // Aligned with `headers` — the same sensitive-column filter serializeHeaders just applied.
+  const activeCols = spec.columns.filter(c => !c.sensitive);
+  await downloadXLSX(filename, headers, body, spec.title, {
+    columnNumFmts: activeCols.map(c => (c.format === 'currency' ? numFmt : undefined)),
+    rowStyles: spec.rowKinds?.map(k => (k ? ROW_KIND_STYLE[k] : undefined)),
+    // A month column's header becomes the month's real date — UTC midnight, deliberately:
+    // ExcelJS converts dates with pure epoch math, so only a UTC boundary shows the right
+    // month in every timezone (see the downloadXLSX doc).
+    columnHeaderDates: activeCols.map(c => {
+      if (!c.headerMonth) return undefined;
+      const [y, m] = c.headerMonth.split('-').map(Number);
+      // Fail soft on a malformed month: the header keeps its text label rather than
+      // writing an Invalid Date into the cell.
+      if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) return undefined;
+      return new Date(Date.UTC(y, m - 1, 1));
+    }),
+  });
 }
