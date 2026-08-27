@@ -14842,14 +14842,35 @@ strand a payout: undoing a fronted payment, deleting the commitment, editing a s
 credit-side doors — editing or deleting a credit directly — turned out to be **already gated before
 P4** by their route's own payout-ceiling refusal. So every door found is now closed.
 
-⚠ **But P4 is entirely forward-looking. A household already in that state stays in it**, and the
-symptom is invisible: their next credit is silently consumed and they are still asked for the full
-bill. **Whether any real household on prod is already stranded is an open DATA question**, raised to
-the owner as its own item rather than folded into this release. A read-only detector was written and
-proved on dev (non-forgiven credits vs cash payouts, per season and player) — **dev is clean: 4
-payout rows, 4 households, 0 stranded.** That says nothing about prod.
+⚠ **P4 is entirely forward-looking. A household already in that state stays in it**, and the symptom
+is invisible: their next credit is silently consumed and they are still asked for the full bill.
 
-### MIGRATION 267 — ✅ COMMITTED `9930796d` 2026-08-27 (dev), NOT YET ON PROD
+⚖⚖ **CLOSED WITHOUT RUNNING IT — owner, 2026-08-27: THERE ARE NO REAL FAMILIES ON PRODUCTION.** The
+prod scan was raised as its own item and the owner answered the question underneath it: there is
+nobody to be short. Recorded because it also re-frames every "live on prod" statement in this
+section — those are true of the CODE and were never true of a household's money. ⚠ It expires at
+the FIRST live customer (standing ruling, 2026-08-17); the detector below is the thing to run then.
+
+A read-only detector was written and proved on dev (non-forgiven credits vs cash payouts, per season
+and player) — **dev is clean: 4 payout rows, 4 households, 0 stranded**.
+
+### ✅ SHIPPED TO origin/dev 2026-08-27 — `9930796d` (migration) + `0512dee5` (the phase)
+
+**Owner decision 2026-08-27: PUSH IT, ship with the release in flight** — taken knowing this QA
+section is unwalked, which is the standing pre-customer ruling (2026-08-17) applied rather than an
+oversight. The promote range went 48 → 49 commits.
+
+⚠⚠ **AND THE RELEASE SUMMARY INVERTED BECAUSE OF IT.** It had been written as *"a column ships
+inert, no coach sees a difference"*, which was true while only the migration was pushed. Coach money
+BEHAVIOUR changes in this release. The release session was told before promoting.
+
+⚠ **"COMMITTED" IS NOT "PUSHED", AND ON THIS SHARED BRANCH IT IS NOT A HOLD EITHER.** Migration 267
+reached `origin/dev` on ANOTHER session's push, carried along because everyone shares one local
+`dev` — nobody decided to ship it. Anything committed here travels with the next push by anyone.
+Saying "it's on dev" without checking `git log origin/dev..HEAD` is how a release summary ends up
+describing a different release than the one that goes out.
+
+### MIGRATION 267 — the schema half
 
 `rep_payable_payments.paid_by_player_id` (FK → roster, ON DELETE SET NULL) + a partial index, and a
 partial UNIQUE on `rep_dues_credits (expense_id, player_id) WHERE credit_type='reimbursement'` —
