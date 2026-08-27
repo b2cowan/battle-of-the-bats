@@ -2,21 +2,35 @@
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
-> ## ⚠⚠ RELEASE 2026-08-17 — "BUILT ON DEV" AND "DEV ONLY" ARE STALE THROUGHOUT THIS FILE
+> ## ⚠⚠ RELEASE 2026-08-27 — "BUILT ON DEV" AND "DEV ONLY" ARE STALE THROUGHOUT THIS FILE
 >
-> **prod HEAD = `5ae39f10` · Amplify master job **257** SUCCEED · tag `release/2026-08-17` · 72
-> commits promoted · migrations **236–250 all applied to production** that session.**
+> **prod HEAD = `7f21df47` · Amplify master job **260** SUCCEED first time · tag
+> `release/2026-08-27` · 52 commits promoted · migrations **262, 263, 265, 266 and 267 applied to
+> production** that day.**
 > `origin/dev` and `origin/master` are **LEVEL**. Every item below that says "BUILT on dev", "ON
 > DEV", "awaiting production", "not on prod", or names a migration as **DEV ONLY / prod-pending**
-> is describing a state that ended on 2026-08-17. **The migration queue is empty through 250** and
-> the two schemas are byte-identical (verified from both live databases at promote time: 165 tables
-> / 1930 columns / 697 indexes, 0 divergence).
+> is describing a state that ended on 2026-08-27 — this supersedes the 2026-08-17 banner that stood
+> here, and the same caution applies: it will go stale again the moment it stops being re-read.
+>
+> ⚠⚠ **ONE MIGRATION IS DELIBERATELY OUTSTANDING AND NO GATE CAN DETECT IT — 264.** It is a
+> data-only `DELETE` of three retired tryout email templates, held pending owner approval. **Both
+> drift checks compare SCHEMA — tables, columns, indexes, constraints, CHECK clauses — so a deleted
+> ROW is invisible to all of them by construction**, and `check:migrations` reported "prod in sync"
+> while it was outstanding. **Never write "262–267 applied":** it reads true, nothing downstream can
+> contradict it, and it is wrong. Consequence while it waits: a platform admin still sees three
+> editable templates nothing can send (internal only, no customer surface).
 >
 > **Items stay unticked `[ ]` because owner QA is still owed on most of them — not because the code
-> is unshipped.** Shipped-and-live in this release: the whole **Money redesign P1–P4**, **budget
-> item integrity P1–P3**, **membership + history-in-place M1 P1–P3**, **tryout scorecard weights**,
-> **tryout setup checklist**, **club money screens**, **sponsorships**, the **nav regroup**, the
-> **fundraiser drill-in**, and **help batches 7/8/8b**.
+> is unshipped.** Shipped-and-live in this release: **coach money P4** (a family can pay one piece
+> of a bill directly and be credited for it; undo/schedule-edit/**delete** now refuse rather than
+> strand a repayment), **tryout decisions as one tap**, the platform no longer writing the **offer
+> letter**, the **Add player form** at parity with the public form, the **roster rework**,
+> **practice staff/equipment libraries**, **printed posters/cards/brackets**, the **641–768 tablet
+> band**, **"8:00 a.m." everywhere**, and a portal-wide label unification.
+>
+> ⚠ **Owner QA §116 shipped UNWALKED** under the 2026-08-17 ship-then-walk ruling (owner re-confirmed
+> 2026-08-27: no real families on production). Its riskiest surfaces are two confirmation MODALS,
+> which `check:layout` cannot open — the walk is still owed.
 >
 > **📌 OWNER RULING 2026-08-17 — shipping ahead of QA is accepted practice for now:** *"we don't
 > have any live customers yet so I am ok with this pattern during this phase of the business."*
