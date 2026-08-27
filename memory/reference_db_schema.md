@@ -145,7 +145,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 
 ### rep_dues_credits
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount (numeric) NOT NULL, description NOT NULL, credit_date, credit_type, notes, created_by (uuid), created_at, fundraiser_entry_id (uuid) → rep_fundraiser_entries.id, payment_id (uuid) → rep_dues_payments.id, expense_id (uuid) → rep_team_expenses.id
-- Indexes: rep_dues_credits_expense_id_idx, rep_dues_credits_fundraiser_entry_id_idx, rep_dues_credits_payment_id_idx, rep_dues_credits_player_id_idx, rep_dues_credits_program_year_id_idx
+- Indexes: rep_dues_credits_expense_id_idx, rep_dues_credits_fundraiser_entry_id_idx, rep_dues_credits_payment_id_idx, rep_dues_credits_player_id_idx, rep_dues_credits_program_year_id_idx, uniq_rep_dues_credits_reimbursement_per_household
 
 ### rep_dues_payments
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, amount (numeric) NOT NULL, received_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
@@ -168,15 +168,15 @@ id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) �
 - Indexes: rep_payable_installments_expense_idx, rep_payable_installments_number_key, rep_payable_installments_org_id_idx, rep_payable_installments_team_due_idx, rep_payable_installments_year_idx
 
 ### rep_payable_payments
-id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, installment_id (uuid) → rep_payable_installments.id, amount (numeric) NOT NULL, paid_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
-- Indexes: rep_payable_payments_entry_idx, rep_payable_payments_expense_idx, rep_payable_payments_installment_idx, rep_payable_payments_org_id_idx, rep_payable_payments_team_date_idx, rep_payable_payments_year_idx
+id (uuid), expense_id (uuid) → rep_team_expenses.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, installment_id (uuid) → rep_payable_installments.id, amount (numeric) NOT NULL, paid_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at, paid_by_player_id (uuid) → rep_roster_players.id
+- Indexes: idx_rep_payable_payments_paid_by, rep_payable_payments_entry_idx, rep_payable_payments_expense_idx, rep_payable_payments_installment_idx, rep_payable_payments_org_id_idx, rep_payable_payments_team_date_idx, rep_payable_payments_year_idx
 
 ### rep_player_awards
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, award_type_id (uuid) → rep_team_award_types.id NOT NULL, event_id (uuid) → rep_team_events.id, tournament_label, awarded_at NOT NULL, note, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.team_id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.team_id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -196,7 +196,7 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: rep_player_dues_schedules_budget_line_id_idx, rep_player_dues_schedules_org_id_idx, rep_player_dues_schedules_player_id_idx, rep_player_dues_schedules_program_year_id_player_id_key, rep_player_dues_schedules_team_id_idx
 
 ### rep_player_measurables
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.team_id
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_entry_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_player_tryout_baselines

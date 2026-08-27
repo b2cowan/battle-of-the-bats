@@ -1,14 +1,22 @@
 {
   "generated": "2026-08-27",
-  "total": 5,
+  "total": 10,
   "counts": {
     "tables": 0,
-    "columns": 4,
-    "indexes": 0,
-    "constraints": 1,
-    "rls": 0
+    "columns": 5,
+    "indexes": 2,
+    "constraints": 2,
+    "rls": 1
   },
   "items": [
+    {
+      "key": "check:changed:rep_team_tags.rep_team_tags_kind_check",
+      "sig": "(kind = ANY (ARRAY['game'::text, 'expense'::text, 'focus'::text, 'staff'::text, 'equipment'::text])) :: (kind = ANY (ARRAY['game'::text, 'expense'::text, 'focus'::text]))"
+    },
+    {
+      "key": "column:only-dev:rep_payable_payments.paid_by_player_id",
+      "sig": ""
+    },
     {
       "key": "column:only-dev:rep_program_years.opening_balance",
       "sig": ""
@@ -26,7 +34,19 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_payable_payments.rep_payable_payments_paid_by_player_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_program_years.rep_program_years_opening_balance_from_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_payable_payments_paid_by",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:uniq_rep_dues_credits_reimbursement_per_household",
       "sig": ""
     }
   ]

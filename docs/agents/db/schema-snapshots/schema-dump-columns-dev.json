@@ -10584,6 +10584,15 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "rep_payable_payments",
+    "column_name": "paid_by_player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "rep_player_awards",
     "column_name": "id",
     "data_type": "uuid",

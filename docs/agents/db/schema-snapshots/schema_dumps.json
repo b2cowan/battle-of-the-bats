@@ -10586,6 +10586,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_payable_payments",
+        "pos": 15,
+        "column_name": "paid_by_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_player_awards",
         "pos": 1,
         "column_name": "id",
@@ -19681,6 +19690,13 @@
       },
       {
         "table_name": "rep_payable_payments",
+        "column_name": "paid_by_player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_payable_payments_paid_by_player_id_fkey"
+      },
+      {
+        "table_name": "rep_payable_payments",
         "column_name": "program_year_id",
         "foreign_table": "rep_program_years",
         "foreign_column": "id",
@@ -19746,21 +19762,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -19772,16 +19781,23 @@
       },
       {
         "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -19830,14 +19846,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -20061,14 +20077,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -23438,6 +23454,11 @@
         "indexdef": "CREATE INDEX rep_dues_credits_program_year_id_idx ON public.rep_dues_credits USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_dues_credits",
+        "indexname": "uniq_rep_dues_credits_reimbursement_per_household",
+        "indexdef": "CREATE UNIQUE INDEX uniq_rep_dues_credits_reimbursement_per_household ON public.rep_dues_credits USING btree (expense_id, player_id) WHERE ((credit_type = 'reimbursement'::text) AND (expense_id IS NOT NULL))"
+      },
+      {
         "tablename": "rep_dues_payments",
         "indexname": "idx_rep_dues_payments_year_player",
         "indexdef": "CREATE INDEX idx_rep_dues_payments_year_player ON public.rep_dues_payments USING btree (program_year_id, player_id)"
@@ -23586,6 +23607,11 @@
         "tablename": "rep_payable_installments",
         "indexname": "rep_payable_installments_year_idx",
         "indexdef": "CREATE INDEX rep_payable_installments_year_idx ON public.rep_payable_installments USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_payable_payments",
+        "indexname": "idx_rep_payable_payments_paid_by",
+        "indexdef": "CREATE INDEX idx_rep_payable_payments_paid_by ON public.rep_payable_payments USING btree (expense_id) WHERE (paid_by_player_id IS NOT NULL)"
       },
       {
         "tablename": "rep_payable_payments",
