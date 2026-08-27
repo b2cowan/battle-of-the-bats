@@ -105,6 +105,10 @@ export default function AwardCertificatePage({
   return (
     <div className={cert.screen}>
       <div className={cert.bar}>
+        {/* ⚠ THE THIRD AND LAST SURVIVING `CoachBackLink` (back-in-header amendment, 2026-08-26).
+            This is a PRINT surface, not a drill-in: it has never rendered a page header, and its
+            way out lives in this print toolbar beside the Print button — the same reasoning that
+            leaves the game bench console and practice run mode on their own back treatments. */}
         <CoachBackLink href={insightsSectionHref(base, 'awards')}>Awards</CoachBackLink>
         <p className={cert.barNote}>
           Letter, landscape — one page per certificate. Turn on background graphics in your

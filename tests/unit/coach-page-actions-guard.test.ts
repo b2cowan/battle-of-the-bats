@@ -90,10 +90,12 @@ const TAG = '<CoachPageHeader';
 const KNOWN_PROPS = new Set([
   'icon', 'title', 'titleChips', 'actions', 'actionsPhoneHidden', 'actionsPhoneInTitleRow',
   'help', 'helpLabel', 'variant',
-  /* ⚠ PILOT, owner 2026-08-26 — the way UP, in the header's leading corner, mirroring the help "?"
-     at the trailing one. ONE call site may use it (the commitment sub-view); every other drill-in
-     still wears `CoachBackLink` on its own row until the owner rules on the real thing. If a
-     second site appears here without that ruling, it is drift. */
+  /* ⚖ THE WAY UP, in the header's leading corner, mirroring the help "?" at the trailing one.
+     The pilot ENDED on 2026-08-26 (owner ruled the spread after walking the commitment screen):
+     this is now the portal's back treatment on every drill-in that HAS a page header, and a new
+     site is ordinary rather than drift. `CoachBackLink` survives only where there is no header to
+     put an arrow in — two failed-load branches and the certificate print bar, enumerated in the
+     prop's own docblock. A FOURTH `CoachBackLink` call site is what would be drift now. */
   'backTo',
 ]);
 
@@ -208,16 +210,29 @@ const SITES: Site[] = [
   {
     /* ⚖ ONE COMMITMENT — a SUB-VIEW of the Payables tab (`?bill=`), not a page beside the hub,
        matching what `?fundraiser=` already does one tab away. Nested, so the hub's header keeps
-       naming the screen and there is no second "?". Its actions are the bill's own write doors,
-       which moved here out of a modal footer when the drawer became a sub-view. */
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx', occurrence: 1,
+       naming the screen and there is no second "?".
+
+       ⚖⚖ **IT MOVED OUT OF `expenses/panel.tsx` AND ITS ACTIONS SLOT IS NOW EMPTY** (Payables
+       Rebuild Part B, owner approval 2026-08-26). Two changes in one row, both deliberate:
+
+       · **The file.** The page owns live fields now — the bill's name, filing, payee, tags, method
+         and note, each saving itself — so it is its own component rather than four hundred lines
+         inside a panel that was already the largest file in the portal. The panel keeps everything
+         that asks a question or moves money (the schedule, Record, the scoped Change/Remove, the
+         payments and their undo) and passes it in as children. The panel therefore drops from two
+         header call sites to one; its remaining row above is the money faces' own header.
+
+       · **`actions: null`, and this is the phase.** The slot held `Edit details`, which opened a
+         window onto the six fields the page now renders in place — a screen that displayed them and
+         then asked a coach to open a form to change them. The other two actions moved in Part A
+         rather than vanishing: `Record` to the rows that name a payment, `Add an installment` under
+         the schedule it adds to. What is left in the header is the way back, and only that.
+
+       ⚠ `phoneInTitleRow` went with the actions — the flag exists to give a phone's title line a
+       corner for ONE button, and there is no button. */
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/CommitmentView.tsx', occurrence: 0,
     screen: 'Money → Payables → one commitment',
-    variant: 'nested', helpHost: 'masthead',
-    actions: {
-      from: 'inline', slot: 'action',
-      holds: 'Record · Edit (wide only) · Add an installment (wide only)',
-      phoneHidden: null, phoneInTitleRow: 'true',
-    },
+    variant: 'nested', helpHost: 'masthead', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx', occurrence: 0,
@@ -971,6 +986,74 @@ describe('coach page headers — what the actions slot may hold', () => {
       slot.includes('hosted: false'),
       'CoachPageHelpSlot\'s default context stopped defaulting to unhosted. The fallback is the DEFAULT ' +
       'value, not a branch anyone has to remember — that is what makes a missing provider safe.',
+    );
+  });
+
+  /**
+   * ⚖⚖ **THE WAY BACK IS THE HEADER'S ARROW, AND THE OLD ROW IS DOWN TO THREE NAMED SURFACES**
+   * (back-in-header amendment, 2026-08-26 — it amends ONE clause of the 2026-08-11 page-header
+   * ruling, using that ruling's own reasoning about the help "?" being chrome).
+   *
+   * ⚠ **THIS ASSERTION EXISTS BECAUSE THE RESTRICTION IT REPLACES WAS ONLY A COMMENT.** While the
+   * arrow was a pilot, `KNOWN_PROPS` carried the words "ONE call site may use it … a second site
+   * is drift" and **nothing checked it** — a warning a build cannot fail on is a warning that has
+   * already been ignored once. The spread inverted the rule, so the enforcement is inverted with
+   * it: the arrow is now ordinary, and a NEW `CoachBackLink` is what needs a decision.
+   *
+   * The three below are not exceptions of taste — an arrow lives INSIDE a page header, and these
+   * three render no page header for one to sit in. Two are failed-load branches; one is a print
+   * surface. Giving a broken screen its own title row is a separate decision about what a failure
+   * looks like, raised and deliberately not taken (spread ruling §7, "no unrelated header tidying").
+   */
+  const BACK_LINK_FALLBACKS = [
+    /* The team board's failed-load branch — an error line and a way out, no title row. */
+    'app/[orgSlug]/coaches/teams/[teamId]/development/board/page.tsx',
+    /* The awards CERTIFICATE screen — a print surface; its way out rides the print toolbar. */
+    'app/[orgSlug]/coaches/teams/[teamId]/history/awards/certificate/page.tsx',
+    /* Opponent detail's failed-load branch — the same shape as the board's. */
+    'app/[orgSlug]/coaches/teams/[teamId]/history/opponents/[opponentKey]/page.tsx',
+  ];
+
+  /**
+   * ⚠ `embedded` RETURNS BEFORE THE ARROW RENDERS, so the two together are a prop that silently
+   * does nothing (`/review` 2026-08-26, Advisory — a latent footgun, not a live defect). The
+   * `variant` prop exists precisely so "the invalid combinations cannot be written"; this is the
+   * one combination the type system still admits, so it is asserted instead.
+   */
+  it('nobody passes a back arrow to a header shape that cannot draw one', () => {
+    const bad = SCANNED
+      .filter(s => s.props.has('backTo') && s.variant.split('|').includes('embedded'))
+      .map(s => key(s.file, s.occurrence));
+    assert.deepEqual(
+      bad, [],
+      'These call sites pass `backTo` on a header that early-returns before the arrow renders:\n  '
+      + bad.join('\n  ') +
+      '\nAn `embedded` header is a hub tab\'s actions row — it draws no identity chrome at all, so '
+      + 'the way back would vanish with no error. Give the screen a `standard` or `nested` header, '
+      + 'or leave the way back to the header that does draw one.',
+    );
+  });
+
+  it('the old back-link row survives only where there is no header to put an arrow in', () => {
+    /* Comments are blanked first — this file's own prose names the component repeatedly, and so do
+       the headstones left at each converted screen. A guard that counted those would pass on the
+       explanation of the rule instead of the code. */
+    const rendering = SCAN_ROOTS.flatMap(root => walk(root))
+      .filter(full => !repoPath(full).endsWith('components/coaches/CoachBackLink.tsx'))
+      .filter(full => blankComments(readFileSync(full, 'utf8')).text.includes('<CoachBackLink'))
+      .map(repoPath)
+      .sort();
+
+    assert.deepEqual(
+      rendering, [...BACK_LINK_FALLBACKS].sort(),
+      'The set of screens still rendering the OLD back-link row changed.\n' +
+      '  Found: ' + (rendering.join(', ') || '(none)') + '\n' +
+      'A drill-in with a page header takes `backTo` on that header instead — one arrow in the ' +
+      'leading corner, mirroring the help "?" at the trailing one. If a NEW surface genuinely has ' +
+      'no header, take it to the owner, then add it here WITH ITS REASON and update the docblocks ' +
+      'on CoachBackLink and CoachPageHeader#backTo in the same commit. If this list reaches ZERO, ' +
+      'delete CoachBackLink and `.lineupBackLink` outright, each with a headstone naming this ' +
+      'amendment — a component with no callers is the one kind of dead code that reads as alive.',
     );
   });
 });

@@ -18,7 +18,6 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
@@ -1461,9 +1460,10 @@ export function PlayerDuesPanel({
       {/* Header (page-header ruling 2026-08-11: one shape, actions right, phone secondaries
           icon-only, "?" in its fixed corner). The reminder status lines stay stacked under the
           buttons — they're feedback about the action group, so they travel with it. */}
-      {!embedded && (
-        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
-      )}
+      {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
+          It rendered only on the legacy standalone route, and every legacy money route is a
+          permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
+          dead code rather than migrated to the header arrow, which is for live drill-ins. */}
       <CoachPageHeader
         variant={embedded ? 'embedded' : 'standard'}
         icon={Users}

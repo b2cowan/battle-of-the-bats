@@ -33,7 +33,6 @@ import PracticePlanEditor, {
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickableTag } from '@/components/coaches/TagPicker';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
@@ -659,7 +658,6 @@ export default function CoachPracticePlanPage({
   const event = data?.event;
   const header = (
     <>
-      <CoachBackLink href={`${base}/schedule${event ? `?event=${eventId}` : ''}`}>Schedule</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the meta row is BODY content — below the header block,
           not inside it (its lineup-builder twin now reads identically). */}
       <CoachPageHeader
@@ -667,6 +665,7 @@ export default function CoachPracticePlanPage({
         title={event?.name || 'Practice plan'}
         helpLabel="Practice plan"
         help={practiceHelpRequest}
+        backTo={{ href: `${base}/schedule${event ? `?event=${eventId}` : ''}`, label: 'Schedule' }}
       />
       <div className={styles.pageSummaryStrip}>
         <span className={styles.lineupMetaText}>

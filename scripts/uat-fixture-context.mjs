@@ -53,7 +53,8 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
  *                    practiceEventId:string, gameEventId:string, fundraiserId:string,
  *                    sponsorId:string, finishedTeamId:string, finishedYearId:string,
- *                    finishedPracticeEventId:string, receiptPlayerId:string, baseUrl:string}>}
+ *                    finishedPracticeEventId:string, receiptPlayerId:string, commitmentId:string,
+ *                    baseUrl:string}>}
  */
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -213,6 +214,90 @@ export async function resolveUatContext() {
     );
   }
 
+  /**
+   * ⚠⚠ THE THREE DRILL-INS THAT WERE NEVER SWEPT AT ALL (back-in-header spread, 2026-08-26).
+   * A plan template, a lineup template and an evaluation session are real coach screens that no
+   * fixture row addressed, so `check:layout` had no entry for them — not skipped with a reason,
+   * ABSENT, which reads as coverage from every direction. They fail loudly here for the same
+   * reason `pastPractice` above does: a soft fallback builds a URL with `undefined` in it, and the
+   * sweep reports the resulting 404 as a layout failure instead of a missing fixture.
+   */
+  const planTemplate = await db.from('rep_team_plan_templates')
+    .select('id').eq('team_id', team.data.id).eq('is_active', true)
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  if (planTemplate.error) throw new FixtureError(`plan template lookup failed: ${planTemplate.error.message}`);
+  if (!planTemplate.data) {
+    throw new FixtureError(
+      'No plan template on the probe team, so the plan-template editor cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
+  const lineupTemplate = await db.from('rep_team_lineup_templates')
+    .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  if (lineupTemplate.error) throw new FixtureError(`lineup template lookup failed: ${lineupTemplate.error.message}`);
+  if (!lineupTemplate.data) {
+    throw new FixtureError(
+      'No lineup template on the probe team, so the lineup-template editor cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
+  const evalSession = await db.from('rep_team_evaluation_sessions')
+    .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
+    .order('session_date', { ascending: false }).limit(1).maybeSingle();
+  if (evalSession.error) throw new FixtureError(`evaluation session lookup failed: ${evalSession.error.message}`);
+  if (!evalSession.data) {
+    throw new FixtureError(
+      'No evaluation session on the probe team, so that drill-in cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
+  /**
+   * ⚠⚠ ONE COMMITMENT, FOR A PAGE THAT HAD NO FIXTURE AND THEREFORE NO SWEEP AT ALL (Payables
+   * Rebuild Part B, 2026-08-26). Same family as the three drill-ins above: not skipped with a
+   * reason, ABSENT — which reads as coverage from every direction until someone goes looking.
+   *
+   * ⚠ IT MUST BE A `tournament_payable`. A plain cost has no commitment page: `?bill=` addresses
+   * an expense id, and the page looks it up among the team's COMMITMENTS, so a plain cost's id
+   * would render the Payables list and the sweep would measure the wrong screen while passing.
+   *
+   * ⚠ OLDEST FIRST, so the row is stable across reseeds and the sweep's baseline compares like with
+   * like. The seeded fixture's first commitment carries a multi-piece schedule and a recorded
+   * payment, which is the shape worth measuring — a one-line bill would leave the schedule, the
+   * fold and the payments block undrawn.
+   */
+  const commitment = await db.from('rep_team_expenses')
+    .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
+    .eq('expense_type', 'tournament_payable')
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  if (commitment.error) throw new FixtureError(`commitment lookup failed: ${commitment.error.message}`);
+  if (!commitment.data) {
+    throw new FixtureError(
+      'No commitment on the probe team, so the one-commitment page cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
+  /**
+   * ⚠ The opponent scouting book is keyed by the opponent's NAME, not a row id — the book is
+   * derived from played games. Reading it from a real game rather than hard-coding "Ridgeview"
+   * keeps this honest if the seeded opponents are ever renamed.
+   */
+  const scouted = await db.from('rep_team_events')
+    .select('opponent').eq('program_year_id', py.data.id)
+    .not('opponent', 'is', null).not('result', 'is', null)
+    .order('starts_at', { ascending: true }).limit(1).maybeSingle();
+  if (scouted.error) throw new FixtureError(`scouted opponent lookup failed: ${scouted.error.message}`);
+  if (!scouted.data?.opponent) {
+    throw new FixtureError(
+      'No played game with a named opponent, so the opponent drill-in cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   return {
     orgSlug: org.data.slug,
     orgId: org.data.id,
@@ -227,8 +312,18 @@ export async function resolveUatContext() {
     finishedYearId: pastYear.data.id,
     /** A practice in that finished season carrying a plan — the read-only past-plan page (P3 C3). */
     finishedPracticeEventId: pastPractice.data.id,
-    /** The roster player whose attendance receipts the sweep opens (`?player=`, Reports Portal P2). */
+    /** The roster player whose attendance receipts the sweep opens (`?player=`, Reports Portal P2).
+     *  ⚠ ALSO the player whose PROFILE the sweep opens — that drill-in had no entry until the
+     *  back-in-header spread (2026-08-26). One player, two screens; nothing else needs choosing. */
     receiptPlayerId: receiptPlayer.data.id,
+    /** One plan template, one lineup template, one evaluation session — see the block above. */
+    planTemplateId: planTemplate.data.id,
+    lineupTemplateId: lineupTemplate.data.id,
+    evalSessionId: evalSession.data.id,
+    /** One commitment, for the `?bill=` page — a `tournament_payable`, never a plain cost. */
+    commitmentId: commitment.data.id,
+    /** The opponent the scouting drill-in opens, taken from a real played game. */
+    opponentKey: scouted.data.opponent,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

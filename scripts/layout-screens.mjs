@@ -27,7 +27,8 @@
 /**
  * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
  *            fundraiserId:string, sponsorId:string, finishedTeamId:string,
- *            receiptPlayerId:string,
+ *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
+ *            evalSessionId:string, opponentKey:string,
  *            finishedYearId:string}} Ctx
  *
  * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
@@ -91,11 +92,36 @@ export const SCREENS = [
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
   { id: 'coach-depth-chart', session: 'coach', path: (c) => `${team(c)}/depth-chart`, ready: 'h1' },
 
+  /**
+   * ⚠⚠ SIX DRILL-INS JOINED THE SWEEP ON 2026-08-26 (back-in-header spread), and the reason is
+   * the durable part: they were not skipped-with-a-reason, they were ABSENT — a player's profile,
+   * the lineup builder, a lineup template, a plan template, an evaluation session and an
+   * opponent's page had NEVER been rendered by this check. Three of them had no fixture row to
+   * open at all until that pass seeded one. An absent screen reads as coverage from every
+   * direction: nothing in the list says it is missing, and the run reports green.
+   *
+   * **The pass that found them put a NEW CONTROL on every one of them.** Its own build prompt
+   * asserted "every one of these is a page or a sub-view, so the sweep CAN see all of them" —
+   * true of the mechanism, false of the list, which is exactly the gap this comment exists to
+   * stop reopening. ⚠ Before claiming a sweep covers a family of screens, LIST them.
+   */
+  { id: 'coach-player',          session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}` },
+  { id: 'coach-lineup-builder',  session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}` },
+  { id: 'coach-lineup-template', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/templates/${c.lineupTemplateId}` },
+
   // ── Player development (restructured 2026-07-31, QA pending) ────────────────
   { id: 'coach-development',           session: 'coach', path: (c) => `${team(c)}/development`,           ready: 'h1' },
   { id: 'coach-development-drills',    session: 'coach', path: (c) => `${team(c)}/development/drills`,    ready: 'h1' },
   { id: 'coach-development-board',     session: 'coach', path: (c) => `${team(c)}/development/board`,     ready: 'h1' },
   { id: 'coach-development-templates', session: 'coach', path: (c) => `${team(c)}/development/templates`, ready: 'h1' },
+  // Two more of the six — see the block above `coach-player`.
+  { id: 'coach-development-template', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/templates/${c.planTemplateId}` },
+  { id: 'coach-development-session',  session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
 
   // ── Practice plans (Phase 4 slice 1a/1b/2, QA pending) ──────────────────────
   // The hub (2026-08-15) — the list of practices and what still needs a plan. Added with the
@@ -340,6 +366,10 @@ export const SCREENS = [
    */
   { id: 'coach-history-playing-time', session: 'coach', path: (c) => `${team(c)}/history?section=playing-time`, ready: 'h1' },
   { id: 'coach-history-scouting',     session: 'coach', path: (c) => `${team(c)}/history?section=scouting`,     ready: 'h1' },
+  // The last of the six — see the block above `coach-player`. The book is keyed by the opponent's
+  // NAME, so the context reads one off a played game rather than hard-coding it.
+  { id: 'coach-opponent',             session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/history/opponents/${encodeURIComponent(c.opponentKey)}` },
 
   /**
    * ══════════════════════════════════════════════════════════════════════════════════════════

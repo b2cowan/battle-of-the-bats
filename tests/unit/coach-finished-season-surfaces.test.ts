@@ -367,9 +367,23 @@ describe('the look-back layer', () => {
       + 'between-seasons case, where Season\'s End shows the team\'s own working season and '
       + 'carries no year at all.',
     );
+    /* ⚠ RE-AIMED, NOT RELAXED (back-in-header amendment, 2026-08-26). The way out stopped being a
+       row above the page and became the ARROW in the page header's leading corner, so this used to
+       read `<CoachBackLink href=…>` and now reads a `backTo` destination. The CLAIM is unchanged
+       and is the only thing that ever mattered: the season-end href hangs off the TRUE side of
+       `cameFromSeasonEnd`. Pinning markup rather than the claim is why this line needed touching
+       at all — worth remembering the next time a guard is written against a shape. */
     assert.match(
-      code(plan), /cameFromSeasonEnd \? \(\s*<CoachBackLink href=\{`\$\{base\}\/season-end/,
+      code(plan), /cameFromSeasonEnd\s*\?\s*\{\s*href: `\$\{base\}\/season-end/,
       'a coach who arrived from Season\'s End must be sent back to Season\'s End.',
+    );
+    /* And the header carrying that arrow must sit ABOVE the loading/error fork: an arrow inside a
+       header rendered only in the content branch leaves a still-loading or failed plan with no way
+       back at all — this page's own comment calls its link "THE ONLY LINK OUT". */
+    assert.match(
+      code(plan), /backTo=\{backTo\}[\s\S]{0,120}\{loading \?/,
+      'the past-plan page header must render above the loading/error fork, or the two states that '
+      + 'are not the plan lose their way out.',
     );
     assert.match(
       code(plan), /practice-plan\/read`\s*\+ \(yearParam \?/,

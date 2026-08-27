@@ -19,7 +19,6 @@ import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
@@ -4933,9 +4932,10 @@ function MoneyRecordsPanel({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {!embedded && (
-        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
-      )}
+      {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
+          It rendered only on the legacy standalone route, and every legacy money route is a
+          permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
+          dead code rather than migrated to the header arrow, which is for live drill-ins. */}
       {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
           ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
           door the server would refuse. "Tournament" stays retired from the title (D-H9). */}
@@ -5535,8 +5535,10 @@ function MoneyRecordsPanel({
           <CoachPageHeader
             icon={Receipt}
             title={drawerBill.description}
-            /* ⚠ PILOT of the in-header back affordance — this page only, owner 2026-08-26. Every
-               other drill-in still wears `CoachBackLink`; see the prop's own doc for the terms. */
+            /* The in-header back affordance. This screen was its PILOT (owner, 2026-08-26); the
+               owner ruled the spread the same day, so twelve drill-ins now carry it and this is
+               no longer the exception. See the prop's own doc for the argument and for the three
+               surfaces that keep the old row. */
             backTo={{ href: `${base}/accounting?section=payables`, label: 'Payables' }}
             actions={canWriteMoney && drawerBill.expense ? (
               <>

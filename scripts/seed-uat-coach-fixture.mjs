@@ -455,6 +455,69 @@ if (!existingEntries?.length) {
   ok('lineup entries already present');
 }
 
+// ── 11b. THE THREE DRILL-INS THAT HAD NO FIXTURE AT ALL ──────────────────────
+// ⚠ ADDED 2026-08-26 with the back-in-header spread, and the reason is worth keeping: three real
+// coach screens — one plan template, one lineup template, one evaluation session — had NEVER been
+// swept by `check:layout`, because nothing in this fixture created a row for them to open. Not a
+// skipped screen with a reason: an ABSENT one, which reads as coverage from every direction. The
+// spread put a new control on all three, and "the sweep sees all of them" would have been a claim
+// about nine screens made while measuring six.
+//
+// Each is keyed by NAME rather than upserted on id, so a re-run finds its own row instead of
+// growing a second one, and a coach browsing the fixture sees one of each.
+async function ensureOne(table, match, row, label) {
+  const found = await db.from(table).select('id').match(match).limit(1).maybeSingle();
+  if (found.error) { console.error(`✗ ${label} lookup`, found.error.message); process.exit(1); }
+  if (found.data) { ok(`${label} already present`); return found.data.id; }
+  const ins = await db.from(table).insert(row).select('id').single();
+  if (ins.error) { console.error(`✗ ${label} insert`, ins.error.message); process.exit(1); }
+  ok(`${label} seeded`);
+  return ins.data.id;
+}
+
+// A plan template carries a REAL plan — the same one the practice above runs — so the template
+// editor renders blocks, stations and a rotation rather than its empty shell.
+await ensureOne(
+  'rep_team_plan_templates',
+  { team_id: team.id, name: 'Probe plan template' },
+  { org_id: org.id, team_id: team.id, name: 'Probe plan template', plan, is_active: true },
+  'plan template',
+);
+
+// A lineup template with every player seated, so the editor renders the full board. The position
+// vocabulary is the schema's fixed domain (see the note above FIELD_POSITIONS) — a fixture choosing
+// a sport here would be the Sport Pack violation, not the codes themselves.
+await ensureOne(
+  'rep_team_lineup_templates',
+  { team_id: team.id, name: 'Probe lineup template' },
+  {
+    org_id: org.id, team_id: team.id, program_year_id: py.id,
+    name: 'Probe lineup template', lineup_mode: 'everyone_bats', inning_count: INNINGS,
+    entries: ids.map((pid, i) => ({
+      playerId: pid,
+      battingOrder: i + 1,
+      starter: true,
+      inningPositions: Object.fromEntries(
+        Array.from({ length: INNINGS }, (_, n) => [String(n + 1), FIELD_POSITIONS[(i + n) % FIELD_POSITIONS.length]]),
+      ),
+    })),
+  },
+  'lineup template',
+);
+
+// An evaluation session hung off the seeded practice — which is what the screen is for: readings
+// taken AT a practice, with the practice named on the page.
+await ensureOne(
+  'rep_team_evaluation_sessions',
+  { team_id: team.id, event_id: eventId },
+  {
+    org_id: org.id, team_id: team.id, program_year_id: py.id, event_id: eventId,
+    session_date: startsAt.slice(0, 10),
+    note: 'Probe session — readings taken at the seeded practice.',
+  },
+  'evaluation session',
+);
+
 // ── 12. Attendance on the game, so "Who's here" opens onto something true ────
 const { data: gAtt } = await db.from('rep_team_event_attendance').select('id').eq('event_id', gameId).limit(1);
 if (!gAtt?.length) {

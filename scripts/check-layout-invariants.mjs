@@ -175,12 +175,20 @@ if (has('--changed') && !onlyIds) {
     // are the SAME routes rendered against a team with no live season, which is the point of them.
     // `finishedPracticeEventId` maps to the same `[eventId]` folder as the two live event screens —
     // it is the SAME route rendered against a practice in a season that has ended.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__' };
+    // ⚠ The four sentinels added 2026-08-26 are the six new drill-ins' PATH SEGMENTS. Without
+    // them `--changed` builds `.../roster/undefined` and the screen silently never matches its own
+    // route folder — a screen listed in the sweep but unreachable by the changed-file filter, which
+    // is the same "looks covered, is not" shape the entries themselves were added to close.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')
         .replace('__TEAM__', '[teamId]')
-        .replace('__EVENT__', '[eventId]');
+        .replace('__EVENT__', '[eventId]')
+        .replace('__PLAYER__', '[playerId]')
+        .replace('__TEMPLATE__', '[templateId]')
+        .replace('__SESSION__', '[sessionId]')
+        .replace('__OPPONENT__', '[opponentKey]');
     const hit = SCREENS.filter((s) => files.some((f) => f.startsWith(dirOf(s) + '/') || f.startsWith(dirOf(s) + '.')));
     onlyIds = hit.map((s) => s.id);
     if (!onlyIds.length) {

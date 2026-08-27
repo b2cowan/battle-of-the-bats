@@ -9,7 +9,6 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import type { PositionPolicy } from '@/lib/lineup-generator';
@@ -422,12 +421,12 @@ export default function CoachLineupBuilderPage({
   // block, not inside it — and the builder gains the help "?" its practice-plan twin already had.
   const header = (
     <>
-      <CoachBackLink href={`${base}/lineups`}>All lineups</CoachBackLink>
       <CoachPageHeader
         icon={ListOrdered}
         title={gameTitle}
         helpLabel="Lineup builder"
         help={lineupHelpRequest}
+        backTo={{ href: `${base}/lineups`, label: 'All lineups' }}
       />
       <div className={styles.pageSummaryStrip}>
         <span className={styles.lineupMetaText}>{gameMeta || 'Set the batting order and field positions for this game.'}</span>

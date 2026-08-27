@@ -12,7 +12,6 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatInOrgZone } from '@/lib/timezone';
 import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
 import {
@@ -394,12 +393,12 @@ export default function CoachPlanTemplatesPage({
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the blurb's promise ("next Tuesday starts from it") is
           already the empty state's description, where a coach with no templates reads it. */}
       <CoachPageHeader
         icon={BookMarked}
         title="Plan templates"
+        backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
         actions={headerCreate || undefined}
         /* House rule 4: one compact create keeps the title line's corner on a phone rather than
            taking a row of its own. A read-only assistant has no create, so the row drops. */

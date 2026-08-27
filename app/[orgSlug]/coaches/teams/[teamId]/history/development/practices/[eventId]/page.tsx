@@ -4,7 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { ClipboardList, Library } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
@@ -186,6 +185,17 @@ export default function CoachPastPracticePlanPage({
   const runRef = useRef(0);
   const load = useCallback(async () => {
     const myRun = ++runRef.current;
+    /* ⚠⚠ THE OLD PLAN IS DROPPED BEFORE THE NEW ONE IS ASKED FOR, and that became REQUIRED when
+       the header was hoisted above the fork below (back-in-header spread, 2026-08-26; found by
+       `/review`). `load` fires only when the IDENTITY changes — its deps are the event and the
+       year, and nothing else calls it — so surviving `data` is always about a DIFFERENT practice,
+       in possibly a different season. While the header lived inside the loaded branch that was
+       invisible; hoisted, it printed the PREVIOUS practice's name over the new one's spinner —
+       the header disagreeing with the page about which event it is showing, which is the exact
+       failure the run generation above was written to prevent, re-entered through the title.
+       ⚠ Moving an affordance INTO a component makes every state that component now renders in
+       its problem. */
+    setData(null);
     setLoading(true); setError('');
     try {
       const res = await fetch(
@@ -216,19 +226,33 @@ export default function CoachPastPracticePlanPage({
   const plan = data?.plan ?? null;
   const clocks = plan ? computeBlockClocks(plan.blocks, data?.event.startsAt, data?.event.endsAt ?? null) : [];
 
+  /* ⚠ THE ONLY LINK OUT, and it goes back to whichever list sent the coach here, carrying the
+     season. Hard-coding one destination was right while there was one caller and wrong the day
+     there were two — the failure would have been silent, because both destinations render
+     perfectly; the coach would simply have been moved to a different year without being told. */
+  const backTo = cameFromSeasonEnd
+    ? {
+        href: `${base}/season-end${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`,
+        label: "Season's End",
+      }
+    : { href: insightsSectionHref(base, 'development'), label: "Practices you've run" };
+
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* ⚠ THE ONLY LINK OUT, and it goes back to whichever list sent the coach here, carrying the
-          season. Hard-coding one destination was right while there was one caller and wrong the
-          day there were two — the failure would have been silent, because both destinations render
-          perfectly; the coach would simply have been moved to a different year without being told. */}
-      {cameFromSeasonEnd ? (
-        <CoachBackLink href={`${base}/season-end${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`}>
-          Season&apos;s End
-        </CoachBackLink>
-      ) : (
-        <CoachBackLink href={insightsSectionHref(base, 'development')}>Practices you&apos;ve run</CoachBackLink>
-      )}
+      {/* ⚠⚠ THE HEADER IS HOISTED ABOVE THE LOADING/ERROR FORK, and that is why this screen took
+          more than a prop (back-in-header amendment, 2026-08-26). The way out used to sit on its
+          own row ABOVE the fork, so it survived all three states. An arrow lives INSIDE the
+          header — so leaving the header in the content branch would have silently stripped the
+          way back off a plan that is still loading or failed to open, on the one screen whose
+          own comment calls its link "THE ONLY LINK OUT". The title falls back for the same
+          reason; every other state already renders its own words below. */}
+      <CoachPageHeader
+        icon={ClipboardList}
+        title={data?.event.name || 'Practice plan'}
+        helpLabel="Practice plans"
+        help={{ module: 'coaches', sectionIds: ['premium-practice-plans'], fullGuideHref: `/${orgSlug}/coaches/help#premium-practice-plans` }}
+        backTo={backTo}
+      />
 
       {loading ? (
         <div className={styles.loadingState}>Opening the plan…</div>
@@ -236,13 +260,6 @@ export default function CoachPastPracticePlanPage({
         <p className={styles.errorText} role="alert">{error || 'Could not open that plan.'}</p>
       ) : (
         <>
-          <CoachPageHeader
-            icon={ClipboardList}
-            title={data.event.name || 'Practice plan'}
-            helpLabel="Practice plans"
-            help={{ module: 'coaches', sectionIds: ['premium-practice-plans'], fullGuideHref: `/${orgSlug}/coaches/help#premium-practice-plans` }}
-          />
-
           {/* Page-header ruling 2026-08-11: when and where this practice was, and what it was
               tagged, are facts ABOUT the practice — they lead the record instead of hanging under
               the title. */}

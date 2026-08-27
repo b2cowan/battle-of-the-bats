@@ -1138,9 +1138,13 @@
    an action, anchoring a corner on every page at every width to give help "one findable home".
    A way UP is the same kind of thing at the opposite corner — and folding it in deletes a ~40px
    desktop / ~52px phone row.
-   ⚠ PILOT — the commitment page only. `CoachBackLink` is still the treatment on the other 17
-   drill-ins until the owner rules on the real thing. Do NOT spread this by hand; the component's
-   prop doc carries the terms.
+   ⚖ THE PILOT IS OVER — owner ruled the spread 2026-08-26 (§113). TWELVE drill-ins carry this;
+   `CoachBackLink` survives only on the three surfaces that render no header for an arrow to sit
+   in (two failed-load branches, the certificate print bar), enumerated in the component's prop
+   doc and build-enforced in `coach-page-actions-guard`.
+   ⚠ THIS COMMENT WAS THE THIRD COPY OF THE PILOT RESTRICTION AND THE ONE THAT WAS MISSED. The
+   spread's own brief said to lift it "in both places that state it"; there were three, and a
+   stylesheet is not where anyone looks for a rollout rule. Counted wrong, found by `/review`.
    ⚠ INK IS `--text-secondary`, NOT the link blue. On its own row the blue said "this is a link";
    inside the header it would be the loudest thing in a row that also holds the record's NAME.
    Chrome is quiet — the arrow and the hairline carry the meaning. */
@@ -1157,13 +1161,24 @@
   width: 1px; align-self: stretch; margin: 0.15rem 0; flex: none;
   background: var(--border-2);
 }
+/* ⚠⚠ THE TAP FLOOR RUNS TO 768, NOT 640 — and getting that wrong is what this rule records.
+   The floor comes from the SURFACE a control sits on, and this is a NEW slot in the header: it
+   inherits nothing from `.pageHeaderActions`. The pilot knew that and still wrote the floor at
+   ≤640, because it was verified at 390 and nowhere else — so the arrow shipped at 34px through
+   the whole 641–768 band, and the spread multiplied that by twelve.
+   The rendered sweep is what caught it; the pilot's own screen had already BASELINED the failure
+   with the note *"when §113's sweep closes, this entry should close with it rather than being
+   fixed on one screen."* This is that fix. ⚠ VERIFY A NEW CONTROL AT EVERY WIDTH THE CHECK
+   MEASURES, not at the one width the design was drawn for. */
+@media (max-width: 768px) {
+  .pageHeaderBack { min-height: var(--tap-min, 44px); }
+}
 @media (max-width: 640px) {
   /* House rule 3 — on a phone words become symbols. The destination survives in the aria-label,
-     so the arrow keeps naming where it goes for a screen reader.
-     ⚠ The tap floor comes from the SURFACE a control sits on, and this is a NEW slot in the
-     header — it inherits nothing from `.pageHeaderActions`. See the header house-rules memo. */
+     so the arrow keeps naming where it goes for a screen reader. The label going means the target
+     is a SQUARE, so the floor gains a width here; the height above already applies. */
   .pageHeaderBackLabel { display: none; }
-  .pageHeaderBack { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); justify-content: center; }
+  .pageHeaderBack { min-width: var(--tap-min, 44px); justify-content: center; }
   .pageHeaderLeft { gap: 0.6rem; }
 }
 

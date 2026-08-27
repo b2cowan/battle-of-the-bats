@@ -13841,3 +13841,373 @@ parity stays red** on migrations from other work.
 - ⚠ **Migration 263 must still reach prod.** The stamp it adds is written by the names switch and
   read by that baseline — it was NOT orphaned by dropping the receipt line, contrary to a claim made
   mid-session and corrected.
+
+---
+
+## §112 · The coach's Add player form stops being the thinnest door — BUILT, awaiting QA
+
+**Walkthrough:** https://claude.ai/code/artifact/6537e900-caac-4679-b755-20a6ad864b28
+
+**BUILT ON DEV 2026-08-26.** Raised by the owner from a printed check-in sheet with a blank **Age**
+column. The cause was not the sheet: the coach's **Add player** dialog asked for three things
+(first name, last name, guardian email) while the record behind it holds eight, and the public form
+and the club-admin screen both collect the full set. The person actually running the tryout had the
+thinnest door into the record they most need.
+
+### What changed, in the owner's terms
+
+1. **Add player opens exactly as fast as before** — first name, last name, one button. Underneath
+   it, a new line: **"More details — birthdate, last season's team, contact."** Open it and the
+   rest of the record appears: date of birth, last season's team, guardian name, phone, email, note.
+   It **stays open for the rest of that browser session**, so a coach entering a squad in advance
+   opens it once rather than fourteen times.
+2. **Three shipped features stop being broken** for coach-added players — each verified still broken
+   before the change: the printed sheet's **Age** column (computed from the birth date) printed a
+   blank cell; the decision board's **"no email on file — reach them by phone"** flag pointed at a
+   number there was nowhere to record; and the board's **family's note** could never exist.
+3. **Returning-player matching switches back on.** Confident matching needs a birth date, which this
+   form could not collect.
+4. **Last season's team is new** — free text, never a dropdown of levels. For a player who was on
+   the roster last season it fills itself in and says which season it came from; it is always
+   editable. It shows on the candidate's row on the decision board, beside the family's note.
+5. **The "· optional" tag is gone.** One plain asterisk on the first name — the only field that
+   gates the save.
+6. **The action buttons are pinned to the bottom of the dialog.** Cancel and Add & check in stay on
+   screen while the form scrolls, instead of scrolling away below the fold. ⚠ This was the coach
+   portal's house rule already — owner-directed on 2026-08-21 (*"why didn't you fix all of them?"*)
+   — but it lives in the portal's shared stylesheet, and the tryout flow keeps its own copy of the
+   modal shape, so the fix had never reached it. Nobody could see it while Add player was three
+   fields and never scrolled. Applied to **both** tryout stylesheets, so the same shape behind the
+   day card, decision board, evaluators, rubric, baseline and report gained it too.
+
+### The rule this establishes (binding for the next form that pre-fills anything)
+
+A box the product fills in on the coach's behalf, captioned with where the value came from, is
+making a **statement**. The bar is not "we probably know this person" — it is "we can state this."
+For this field that means a prior **roster** row (a candidate who tried out and was cut did not play
+here) **and a full-name match** (first and last). ⚠ It is deliberately **not** the matcher's
+`high` confidence tier: `high` is reached by *exact birth date + (email or name)*, so **twins**
+— same birthday, same family email address — reach it with different first names. Filtering on the
+tier reads like the careful choice and admits exactly the wrong case.
+
+### A · The walk-up is still a walk-up
+
+- Open **Tryout day → Check-in → Add player**. Two boxes and a button, as before. Type a first name
+  only and save. The player appears, checked in.
+- The first name carries a plain **\*** in the label's own ink. **No red.** No other field is marked,
+  and nothing anywhere says "optional".
+
+### B · The squad in advance
+
+- Open **More details**. Fill everything: a birth date, last season's team, guardian name, a phone
+  number, an email, a note. Save.
+- **Print the check-in sheet.** The **Age** column now carries a number for that player.
+- Open **Decide**. The row shows **Last season: …** beside the score line, and **family's note**
+  expands to what you typed. The "no email on file" flag is absent because you gave an email.
+- Close the dialog and press **Add player** again — **More details is already open.** Reload the
+  page and open it again: still open. Open a new browser tab: closed again (it is per session, by
+  design).
+
+### C · Last season's team fills itself — and refuses to when it shouldn't
+
+- On a team with at least one **past season**, add a player using the **exact first and last name
+  and birth date of somebody who was on last season's roster**. The box fills with the team's name
+  and a quiet line: *"Filled from 2025 Season — edit if it's wrong."*
+- **Type in the box.** The provenance line disappears — it is your sentence now — and nothing
+  overwrites it afterwards, however you edit the name.
+- **Change the birth date to a wrong one.** Within a moment the filled value clears itself. A
+  caption saying where a value came from must never outlive the match behind it.
+- ⚠ **The refusals are the point.** Repeat with the name of somebody who **tried out last season and
+  was not taken** — nothing fills. Repeat with a **sibling's** first name over a rostered player's
+  last name, birth date and family email — nothing fills.
+
+### D · Names, and who sees what
+
+- The head coach sees everything here regardless of the helpers-on-bibs switch. There is **no blind
+  condition on this form** — the approved mockup argued for one, and the 2026-08-26 ruling (§110)
+  had already retired it. Confirm a helper's scoring link still shows **bib numbers only**.
+
+### Gate
+
+Typecheck clean · units **2,626 / 2,626** · lint 0 errors on the changed files · spelling ✓ ·
+dictionary ✓ · demo sandboxes ✓ (2 presentable).
+
+⚠ **The new guard was proven to fail before its green was trusted.** Both halves of the pre-fill
+rule were mutated in turn: dropping the roster condition fails the "tried out and was cut" case,
+and swapping the name match for the `high` tier fails the twin case. The twin assertion also caught
+a genuine error in the first version of this rule — it was written against `high` and would have
+shipped pre-filling siblings.
+
+⚠ **The layout sweep for `coach-tryouts` had not completed at write time** — two other sessions were
+running their own sweeps against the same dev server, which AGENTS.md forbids overlapping. It is
+re-run once theirs clear; if it is still red, that is a finding for this section.
+
+### Owed before this ships
+
+- **Migration 265 is on dev only** and must reach prod before the code that reads it. It joins 262,
+  263 and 264 in the same queue.
+- **The demo was reseeded on dev**, which is where the birth dates below come from. **Prod reseed is
+  owed** at release (it is already owed for the tryout-email removal).
+
+### ⚠ Deliberately NOT changed
+
+- **The club-admin "Add Applicant" form.** Checked for drift against the coach's, as the brief asked.
+  The two doors are **not** drifting: "applicant" is that screen's whole vocabulary — the page
+  heading, the exported document title *Tryout Applicants*, its empty states and its notes
+  placeholder, twelve places in all. Renaming one button there would break a coherent local
+  vocabulary to fix a cross-screen difference no single person ever sees.
+- **Its red required asterisks**, which do contravene the plain-marker ruling. That is the
+  **portal-wide** red-marker retirement already scoped as money-centralization P3; doing a fragment
+  of it here would leave a half-swept portal.
+- **Last season's team is not seeded into the demo.** Its 28 candidates arrive through the public
+  form, which does not ask — seeding a value would misrepresent where the data comes from. Their
+  **birth dates**, which the public form *does* require and the seed omitted, were added: the demo's
+  own printed sheet was showing 28 blank Age cells.
+
+---
+
+## §113 · The way back moves into the header — twelve drill-ins — ✅ OWNER QA PASSED 2026-08-26
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/b1129378-5403-4cf9-abb9-ca5dd79dce50`
+>
+> **Checkable walkthrough** — every step below as a real checkbox, a verdict and notes box per
+> part, and a "build summary" button that produces plain text to paste back into the chat. Ticks
+> are saved in the browser as you go, so the walk survives closing the tab.
+>
+> ⚠ **Owner ruling 2026-08-26, standing and portal-wide: EVERY Owner QA section ships with one of
+> these.** *"qa walk throughs need to be artifacts with checkboxes for me to use for my testing."*
+> The ledger section stays the record; the artifact is the instrument. The section below is the
+> same content in prose — keep the two in step when either changes.
+>
+> **✅ SIGNED OFF 2026-08-26.** The owner passed this section. ⚠ **That sign-off covers what a
+> person can see; it does NOT cover the rendered layout check**, which never completed and is
+> still owed below — the two are different gates and one does not stand in for the other.
+
+**Owner ruling 2026-08-26**, after walking the pilot on the Money commitment screen. Design log:
+`memory/design_decisions.md` 2026-08-26 ("THE WAY BACK MOVES INTO THE PAGE HEADER"). Plan §10:
+`docs/projects/archive/COACH_HEADER_ACTIONS_CONSISTENCY_PLAN.md`. **No migration.**
+
+**What changed for a coach.** Every drill-in used to open with a **blue link on a row of its own**
+above the screen's title — "← Roster", "← All lineups", "← Skills & Goals". That row is gone. The
+way back is now a **small grey arrow in the leading corner of the title bar**, separated from the
+record's name by a faint hairline: the mirror of the help **"?"** in the opposite corner. On a phone
+the word drops and the arrow stands alone. **Every drill-in starts about one row higher** — roughly
+40px on a computer, 52px on a phone.
+
+### A · The twelve screens, and the one thing to check on each
+
+Open each, confirm **the blue row is gone**, the **arrow sits left of the icon and title**, and it
+**goes where it says**.
+
+- **A player's profile** — Roster → tap a player. Arrow reads **← Roster**.
+- **Lineup builder** — Lineups → tap a game. **← All lineups**.
+- **A lineup template** — Lineups → Templates → tap one. **← All lineups**.
+- **The practice plan** — Schedule → tap a practice → open its plan. **← Schedule**.
+- **Skills & Goals ×4** — Development → Your drills, Plan templates, one template
+  (**← Plan templates**, not Skills & Goals — it is one level up, not two), an evaluation session.
+- **Team board** — Development → Team board. **← Skills & Goals**.
+- **An opponent** — Reports → Scouting → tap an opponent. **← All opponents**, and the win/loss
+  chip still sits on the title row beside their name.
+- **One fundraiser or sponsor** — Money → Fundraising → tap a drive. **← All fundraisers**.
+
+### B · The phone, where the label disappears and the destination must not
+
+At **390px** on each of the twelve:
+- The arrow is **alone** — no word beside it. The title still fits on one line.
+- ⚠ **It is a real tap target.** Press it with a thumb, not a mouse pointer. It should feel the same
+  size as the help "?" opposite. *A control moved into a new slot inherits nothing from the old one;
+  an export relocated without this once landed at 30px.*
+- **With a screen reader on, the arrow still announces its destination** — "Back to Roster", not
+  "link". The word is hidden, the meaning is not.
+
+### C · The three screens that deliberately still show the old blue row
+
+These have **no title bar for an arrow to sit in**, which is the whole reason. Confirm the old row
+is still there and still works:
+- **Team board when it fails to load** — an error line and a way out.
+- **An opponent's page when it fails to load** — same shape.
+- **Awards → print a certificate** — the way out rides the print toolbar, beside **Print**.
+
+### D · The finished-season practice plan — the one that needed more than a swap
+
+Season's End → **Practices** → open one. Then open the same plan from **Reports → Development**.
+- ⚠ **The arrow must name where you came from** — **← Season's End** from one door, **← Practices
+  you've run** from the other — and going back must land you in **the same year you were reading**.
+- ⚠ **Watch it while it loads.** The arrow must be there **before the plan finishes opening**, and
+  still there if the plan **fails** to open. *Its own code calls this "the only link out"; the
+  header had to be lifted above the loading state or those two moments would have had no way back.*
+
+### E · Money — six dead links removed, nothing a coach should notice
+
+Open **Money** and every tab (Overview, Budget Plan, Budget vs. Actual, Transactions, Payables,
+Player Dues, Fundraising, Club). **Nothing should look different.** Six "Back to Money" links were
+deleted — every one on a route that has permanently redirected into the hub for months, so no coach
+has seen them. If any tab now shows a stray link, or has lost its heading, that is a finding.
+
+### Gate
+
+Typecheck ✓ · lint **0 errors** on every changed file · units **2,626 / 2,626** (page-actions guard
+and the finished-season guard both green) · spelling ✓ · demo sandboxes ✓ (2 presentable) · seed
+re-run idempotent (three new rows, second run reports "already present").
+
+⚠ **The new back-link guard was MUTATED before its green was trusted, in both directions.** Dropping
+one legitimate fallback from the list fails it; adding a fourth `CoachBackLink` to a converted
+screen fails it and names the offending file. It also blanks comments before scanning — without
+that, the thirteen headstones explaining the rule would have satisfied it, which is the shape of a
+guard that passes on its own documentation.
+
+### ⚠ What this pass FOUND that was not in its own brief
+
+- **Six of these twelve screens had never been rendered by `check:layout` at all** — not skipped
+  with a reason, **absent**. Three had no test data to open. All six are now listed and seeded.
+  **This is the finding worth arguing about at the walk:** the brief asserted the sweep already
+  covered them.
+- **Two hand-written copies** of the retired back-link style survived the 2026-08-11 "collapse to
+  one component" pass, on Budget Plan and Budget vs. Actual, because they never imported it.
+- **A seventh back-link style** exists on the free tournament record. Left alone, now written down.
+
+### ⚠⚠ OWED — THE RENDERED SWEEP DID NOT COMPLETE, AND THE REASON IS NOT THIS CHANGE
+
+**The layout sweep is the one gate this pass could not close, and it must not be read as a pass or
+a fail.** What happened, stated exactly:
+
+- The run reached `coach-player @361` and reported **6 findings** on it, then every subsequent
+  screen-width pair reported **"did not render"**. The findings themselves never printed, because
+  the run is killed before its report when it cannot finish.
+- **The cause was the dev server, not the screens.** It had been up since 3:38 PM at a **3,989 MB
+  working set** — at its heap ceiling, with the documented per-request leak — while **a second
+  sweep from another session had been hung against it since 8:38 AM: eleven hours, with its CPU
+  time frozen at 11.4s.** AGENTS.md forbids overlapping sweeps for exactly this reason. A page
+  render was taking upwards of an hour.
+- **The 6 findings on the player profile are most likely pre-existing.** That screen had **never
+  been rendered by this check before** (see the section above), so a newly-listed screen arriving
+  with baseline entries to triage is the expected shape, not evidence about the arrow. ⚠ **But that
+  is a hypothesis, not a result** — the findings were never printed, and nobody should record it
+  either way until a clean run says so.
+
+**To close this:** stop the dev server, delete `.next`, restart, then
+`npm run check:layout -- --only=<the twelve>` followed by the portal-wide run (a shared component
+changed, so `--changed` sweeps everything). Then `npm run check:layout -- --prune`.
+
+⚠ **`--prune` is expected to report ZERO removed, and that is correct.** The plan predicted ~20
+stale phone tap-floor entries falling away with the deleted row; measured before this pass began,
+`scripts/.layout-baseline.json` held **no back-link entries at all** — the shared `.lineupBackLink`
+≤640 rule cleared them in August. Do not read a zero here as "nothing changed".
+
+---
+
+## §114 · The commitment page edits itself — and the bill stops having two editors — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/5f25469a-2091-4364-92b7-b5ea38018b28`
+>
+> **Checkable walkthrough** — every step below as a real checkbox, a verdict and notes box per
+> part, and a "build summary" button that produces plain text to paste back into the chat. Ticks
+> are saved in the browser as you go, so the walk survives closing the tab.
+
+**BUILT 2026-08-26 (dev).** Payables Rebuild **Part B**. **No migration.** Follows §104 Part A3,
+which closed this screen's duplicate doors; B answers the question underneath them. Drawn options
+and the three calls the code forced: `claude.ai/code/artifact/9c42dd82-39f1-4b12-8957-a5f43b2594de`.
+Plan: `COACH_PAYABLES_REBUILD_PLAN.md` (Part B section).
+
+**What changed for a coach.** A commitment's page used to *show* its name, filing, payee, tags,
+payment method and note — and then open a **window** to change any of them. **`Edit details` is
+gone.** All six are live where they are read: click one, change it, and it saves itself about a
+second after you stop typing, with a small **Saved** at the foot of the page. A field you have not
+filled in now shows as an invitation — *"Add a note"* — rather than not being drawn at all, so you
+can tell a bill that has no note from a product that does not offer one. **Delete** moved from the
+form's footer to the foot of the page, keeping the same dollars-first question. The header now
+carries only the way back.
+
+**The line this draws, and it is the phase's whole principle:** *a modal is for a QUESTION, not for
+a field.* **Change** and **Remove** on an installment keep their dialog because they ask a real one
+— this payment, this and the later ones, or all unpaid. **Record** keeps the one conversation.
+Typing a payee asks nothing.
+
+### A · The page edits itself
+
+Money → Payables → tap any bill.
+
+- **The header holds no buttons at all** — an arrow, an icon and the bill's name, nothing else.
+- **The name is the title, and the title is a field.** Click it, change a word. It underlines when
+  you hover it and takes a lime rule when focused.
+- **Filing, Payee, Tags, How, Notes** are all present as rows **even when empty**, each showing what
+  it is for rather than a dash.
+- Change one, stop typing, and watch the foot of the page: **Unsaved changes → Saving… → Saved**.
+- Leave the page and come back — **the change is there**, and so is it on the Payables list behind.
+- ⚠ **There is no Save button and no Cancel.** That is the phase, not an omission.
+
+### B · What still asks a question
+
+- **Change** and **Remove** on an installment still open the scope sheet. **They must.**
+- **Record** on an unpaid row still opens the one money conversation.
+- **Undo** beside a payment still asks in dollars before it reverses anything.
+- **Add an installment** still sits under the schedule, and still opens the plan editor.
+
+### C · The blocking call — a bill now has ONE editor
+
+**This is the part worth the most attention.** Money → **Transactions**.
+
+- A commitment does not appear here as one row: it is **one row per payment plus one per installment
+  still owing**. A five-piece bill with two payments recorded is **five rows**.
+- **Tap any of them.** You should land on **that bill's own page** — not the old money form.
+- **The arrow at the top should say `← Transactions`**, and should take you back there, not to
+  Payables.
+- **Tap a plain cost or an income row** on the same screen. Those **must still open the form** —
+  they have no page of their own and the form is the only editor they have ever had.
+- Payables → **Add a commitment** must still open the **full form**, every field, unchanged.
+
+### D · Read-only money
+
+Sign in as (or grant) a coach who can **read** team money but not change it.
+
+- The commitment page opens and shows **every field as a value** — payee, tags, how, notes.
+  **Nothing is a control**, there is no save strip and no Delete.
+- On **Transactions**, a **commitment's row is still tappable for them** — this is deliberate and
+  new. It is the only place in the product they can read a bill's payee or its tags.
+- Every other row on that screen stays **untappable** for them, because every other row opens an
+  editor.
+
+### E · Delete, at the foot
+
+- Open a bill with **money already paid against it**. Scroll to the foot → **Delete this
+  commitment**.
+- The question must name **dollars** — how much goes back on the books — before you can answer it.
+- Confirm, and you should be **returned to the list you came from**, not left on a dead page.
+- ⚠ Open a bill, press **Add an installment**, and check the form's footer: **there must be no
+  Delete in it.** One delete path, not a quieter second one inside a schedule editor.
+
+### F · The one field that can be refused
+
+Renaming a bill can be turned down by the server when an older payment cannot be matched to its
+books entry — the sentence says so. If you can produce one, the save strip should show
+**the sentence · Retry** and **stop**, and **everything else about the bill should still save**.
+Hard to stage deliberately; check only if you meet it.
+
+### G · Phone
+
+At **390px**: every field is pressable, the schedule still reads, the save strip stays at the foot,
+and the page does not scroll sideways.
+
+---
+
+**Verification run before handoff:** typecheck ✓ · focused lint ✓ (no findings in the new file) ·
+`npm test` 2626/2626 ✓ (page-actions guard included) · `check:register` ✓ · `check:money-report` ✓ ·
+`check:spelling` ✓ · `check:dictionary` ✓ · `check:demos` ✓ · `check:layout` on
+`coach-commitment` + all six money faces ✓.
+
+⚠ **`check:layout` had never seen this screen at all.** Part A shipped it with no sweep entry, so a
+whole page went unmeasured at every width. The entry exists now (`coach-commitment`), and its first
+run found **fifteen** tap-floor failures — eleven of them controls this phase created, including the
+new title field at **21px** on a phone. All eleven are fixed. Four remain and are **baselined with
+written reasons**: three are the Money hub's own chrome (already deferred at 768 on both money
+faces — the fix is the hub, not this screen) and one is the shared back arrow, which belongs to
+§113's owed portal-wide run.
+
+⚠ **Not mine, reported not fixed:** the same sweep found **three findings on `coach-accounting` and
+`coach-budget-vs-actual`** — screens outside this diff, whose panels are modified by another
+session's uncommitted work. They are left alone and unbaselined rather than absorbed into this
+phase.
+
+⚠ **What no automated check covers here:** the sweep renders, it does not type. The editing states —
+a combobox open over the schedule, "Saving…", a refused rename, the unsaved-changes guard — are
+**this walk's job alone**.

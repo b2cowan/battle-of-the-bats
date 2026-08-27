@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use, Fragment } from 'react';
-import Link from 'next/link';
-import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -1006,11 +1005,11 @@ export function BudgetVsActualPanel({
 
   return (
     <div className={styles.page}>
-      {!embedded && (
-        <Link href={`${base}/accounting`} className={shared.lineupBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Back to Money
-        </Link>
-      )}
+      {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
+          It was one of the TWO surviving hand-written copies of the retired back-link style — the
+          shared-component pass missed both because they never imported the component. It rendered
+          only on the legacy standalone route, and every legacy money route is a permanent redirect
+          into the hub, so no coach has seen it since. Deleted as dead code. */}
       {/* Page-header ruling 2026-08-11: one shape, actions right, "?" in its fixed corner. */}
       <CoachPageHeader
         variant={embedded ? 'embedded' : 'standard'}

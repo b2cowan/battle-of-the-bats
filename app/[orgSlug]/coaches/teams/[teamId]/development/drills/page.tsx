@@ -15,7 +15,6 @@ import {
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -423,7 +422,6 @@ export default function CoachDrillsPage({
 
   const header = (
     <>
-      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the blurb's promise ("write it once, four taps after
           that") is already the empty state's description, where a coach with no drills reads it. */}
       {/* ⚠ THE CREATE MOVED TO THE HEADER AND THE TWO CREATES BECAME ONE (Phase 3, 2026-08-25) —
@@ -434,6 +432,7 @@ export default function CoachDrillsPage({
       <CoachPageHeader
         icon={Library}
         title="Your drills"
+        backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
         actions={canWrite ? (
           <CoachToolbarMenu
             label="New drill"

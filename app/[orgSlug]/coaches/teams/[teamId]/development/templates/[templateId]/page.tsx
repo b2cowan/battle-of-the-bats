@@ -7,7 +7,6 @@ import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
 } from '@/lib/rep-plan-templates';
@@ -171,7 +170,6 @@ export default function CoachPlanTemplateEditorPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
-      <CoachBackLink href={`${base}/development/templates`}>Plan templates</CoachBackLink>
       <UnsavedChangesGuard active={dirty} />
 
       <CoachPageHeader
@@ -179,6 +177,7 @@ export default function CoachPlanTemplateEditorPage({
         title={data?.template.name || 'Template'}
         helpLabel="Plan templates"
         help={helpRequest}
+        backTo={{ href: `${base}/development/templates`, label: 'Plan templates' }}
       />
 
       {/* Page-header ruling 2026-08-11: shape and use are facts ABOUT this template, so they lead

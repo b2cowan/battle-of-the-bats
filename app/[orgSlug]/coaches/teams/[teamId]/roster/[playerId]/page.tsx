@@ -14,7 +14,6 @@ import PlayerRecapPreview from '@/components/coaches/PlayerRecapPreview';
 import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
@@ -326,15 +325,15 @@ export default function PlayerDetailPage({
   return (
     <div className={styles.page}>
       <UnsavedChangesGuard active={isDirty} />
-      {/* Drill-in back link (the breadcrumb is globally hidden — this is the one way back). */}
-      <CoachBackLink href={`${base}/roster`}>Roster</CoachBackLink>
-
       {/* Header (page-header ruling 2026-08-11): the player's name + archive chip, nothing
           under the title — jersey number and age are live facts, so they lead the status row
-          the page already had one line down. Season text is the masthead's job. */}
+          the page already had one line down. Season text is the masthead's job.
+          The way back is the ARROW in this header's leading corner (amendment 2026-08-26); the
+          blue row that used to stand above it is gone, and the child's name moved up with it. */}
       <CoachPageHeader
         icon={Users}
         title={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
+        backTo={{ href: `${base}/roster`, label: 'Roster' }}
       />
 
       {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26). What stood here was a "Status"

@@ -3,6 +3,117 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-26 — A MODAL IS FOR A QUESTION, NOT FOR A FIELD — and a record has ONE editor
+
+**Decision (owner, approving Payables Rebuild Part B from
+`claude.ai/code/artifact/9c42dd82-39f1-4b12-8957-a5f43b2594de`).** Two rules, taken together because
+the second is what makes the first survivable.
+
+**1 · A modal is for a QUESTION, not for a field.** A screen that *displays* a value and then opens
+a window to change it is telling on itself. On a commitment's page the six readable things — its
+name, its filing, the payee, the tags, how it is paid, the note — are live controls where they are
+read, and `Edit details` is deleted. What keeps a dialog is what asks something real: **Change** and
+**Remove** on an installment (*this payment, this and the later ones, or all unpaid?*), **Record**
+(the one money conversation, standing ruling), **Undo** and **Delete** (both name dollars before
+they move any). ⚠ The test is not "is this destructive" — it is **"is there a question"**. Typing a
+payee asks nothing.
+
+**2 · A record has ONE editor, and the count is of ROWS, not of screens.** Part B's blocking
+question was that a commitment stayed editable through the shared money form from the Transactions
+register. The trap in it: **a commitment is not one row there** — it is one row per PAYMENT plus one
+per installment still OWING, so a five-piece bill with two payments recorded was **five doors** onto
+the six fields being moved. The register re-points at the bill's page; a plain cost and an arrival
+keep the form, because they have no page of their own. ⚠ The discriminator is the **record's type**,
+never the row's kind — both money-out shapes carry `kind: 'expense'`, and reading the row would have
+sent plain costs to a page that cannot address them.
+
+**⚠ An empty field is drawn, as an invitation.** The block this replaced omitted an unset row on the
+grounds that "a stack of — would be chrome". That is true of a summary and false of an editor: a
+coach could not tell a bill *has* no note from the product not offering one. Empty reads **"Add a
+note"** on the write side and **"No note"** on the read side.
+
+**⚠ Read-only is a capability, not a door.** A commitment row is tappable for a coach who can read
+money but not change it, because the destination is deliberately readable — it is the only place in
+the product they can see a bill's payee or tags. The page renders values instead of controls on that
+same capability. Gate the *editor*, not the *route*.
+
+**⚠ A back arrow must name where it returns to, and return there.** Once two faces can open one
+sub-view, a link fixed to the sub-view's parent quietly moves a coach to a tab they were not on. The
+origin rides the URL and is one-shot.
+
+**⚠⚠ THE DURABLE ENGINEERING RULE THIS COST TO LEARN: a page rendered by a component that is mounted
+twice is a page that exists twice.** The Money hub keeps a visited tab mounted (`display: none`),
+and both money faces are instances of one component, so a query-addressed sub-view was being drawn
+by both — one invisibly. Harmless while it was read-only. The instant it held live controls it would
+have been **two editors of one record running their own save timers in one window**. Before making a
+query-addressed sub-view writable, ask which mounts can see that query.
+
+**Autosave idiom, settled for this family of screens:** the plan-template editor's — debounced
+~0.9s, ONE status strip for the whole page, stop-on-failure with Retry, and its rule verbatim: *an
+explicit submit rejects an empty name; autosave must not, because the coach is mid-typing.* ⚠ **One
+behaviour for every field on a page.** Six fields with five save behaviours is worse than the modal
+being removed. The per-cell quiet ✓ is for table cells; it has nowhere to put a refusal sentence,
+and this page has a field the server can refuse.
+
+---
+### 2026-08-26 — THE WAY BACK MOVES INTO THE PAGE HEADER, portal-wide — amending ONE clause of the 2026-08-11 page-header ruling
+
+**Decision (owner, after walking the pilot on the Money commitment screen):** every coach-portal
+drill-in's way back is an **arrow in the page header's leading corner** — `← Payables` on a
+computer, the bare arrow on a phone — instead of a blue link on a row of its own above the header.
+It is `CoachPageHeader`'s `backTo` prop; ink is `--text-secondary`, a hairline separates it from
+the record's name, and the `aria-label` carries "Back to X" at every width. **Twelve screens.**
+
+**The clause amended, and only this one:** *"the header carries the page's name and its actions,
+and a way back is neither."* **The argument comes from the same ruling**, which decided the help
+**"?"** is *chrome, not an action*, anchoring the top-**right** corner on every page at every width
+so help has *"one findable home portal-wide"*. A way **up** is the same kind of thing at the
+opposite corner. It is **not** a breadcrumb (the retired `.breadcrumb` mechanism stays retired) and
+**not** an action (outside `pageHeaderActions`, behind the hairline). Everything else in the
+2026-08-11 ruling stands. **Worth ~40px desktop / ~52px phone on every drill-in.**
+
+⚠⚠ **THE OLD ROW SURVIVES ON THREE SURFACES, AND THE REASON GENERALISES: AN ARROW NEEDS A HEADER
+TO SIT IN.** Two failed-load branches (team board, opponent detail) and the awards **certificate**
+print screen render no page header at all, so they keep `CoachBackLink`. Giving a broken screen its
+own title row is a separate decision about what a failure looks like — raised and deliberately not
+taken. The list is **build-enforced** in `coach-page-actions-guard`, so a fourth is a decision.
+
+⚠ **The pilot's own restriction was a COMMENT, and that is the durable lesson.** While the arrow was
+a pilot, the guard's `KNOWN_PROPS` carried the words *"ONE call site may use it … a second site is
+drift"* and **nothing checked it**. The spread inverted the rule and the enforcement was inverted
+with it. **A warning a build cannot fail on has already been ignored once.**
+
+⚠ **A GUARD PINNED TO MARKUP HAD TO BE RE-AIMED, NOT RELAXED.** The finished-season guard asserted
+`cameFromSeasonEnd ? (<CoachBackLink href={…season-end…}` — the *shape*, when the *claim* was only
+ever "a coach who arrived from Season's End goes back to Season's End". It now reads the `backTo`
+destination and additionally pins that the header sits **above** that page's loading/error fork.
+**Assert the claim, not the markup**; a shape-pinned guard bills its cost to whoever moves next.
+
+**Three things the spread's own plan got wrong, all found by re-counting the tree — the reason
+that gate exists:**
+1. **22 back-link renders, not 20**, in 19 files — **two were hand-written copies** of the retired
+   style (Budget Plan, Budget vs. Actual) that the shared-component pass missed *because they never
+   imported the component*. **A "collapse to one component" sweep finds importers, not lookalikes.**
+2. **Six of the 22 were unreachable** — `!embedded` branches on Money panels the hub always renders
+   embedded, behind legacy routes that permanently redirect (one folder has no route file at all).
+   The plan flagged **one** as possibly-dead. **Deleted, not migrated.** Live count: **16**.
+3. **"The sweep can see all of them" was false.** Six of the twelve target screens had **no entry in
+   `check:layout` at all** — a player's profile, the lineup builder, a lineup template, a plan
+   template, an evaluation session, an opponent's page — and **three had no fixture row to open**.
+   Not skipped-with-a-reason: **absent**, which reads as coverage from every direction. All six are
+   listed now and the three rows are seeded. ⚠ **Before claiming a sweep covers a family of screens,
+   LIST them.**
+
+⚠ **The layout-debt drop the plan predicted was already banked.** It expected ~20 stale phone
+tap-target baselines to fall away with the row; the shared `.lineupBackLink` ≤640 rule had cleared
+every one of them in August. **Measured: zero back-link entries in the baseline before this pass.**
+A prediction inherited from an earlier state is not a test — and its "if the count does not move,
+something did not change" reasoning would have raised a false alarm here.
+
+**Applies to:** every coach-portal drill-in with a page header; `CoachPageHeader#backTo`;
+`CoachBackLink` (now the enumerated fallback). [[design-principles]] [[design-system]]
+
+---
 ### 2026-08-26 — TWO RULES ABOUT FILTERS: a count on an option is a promise about the list, and a filter never changes the screen's format
 
 Both came out of one owner question on the coaches Money screen, filtered to a single tag:

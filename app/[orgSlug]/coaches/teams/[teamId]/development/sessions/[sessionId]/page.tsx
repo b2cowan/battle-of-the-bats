@@ -5,7 +5,6 @@ import { ClipboardCheck, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { NewTypeFields } from '@/components/coaches/TestTypesManager';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatValue } from '@/lib/measurable-format';
 import styles from '../../../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable } from '@/lib/types';
@@ -341,10 +340,10 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       <CoachPageHeader
         icon={ClipboardCheck}
         title="Evaluation session"
+        backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
         helpLabel="Skills & Goals"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
       />

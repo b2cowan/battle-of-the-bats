@@ -69,6 +69,11 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   if (!data) {
     return (
       <div className={styles.page}>
+        {/* ⚠ ONE OF THE THREE SURVIVING `CoachBackLink`s (back-in-header amendment, 2026-08-26).
+            The board's own header carries the arrow — but THIS is the failed-load branch, which
+            renders an error line and a way out and NO header at all. An arrow needs a header to
+            sit in. Giving a broken screen its own title row is a separate decision about what a
+            failure looks like, and was deliberately not taken on the way past. */}
         <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
         <p className={styles.detailPlaceholder}>
           {error}{' '}
@@ -98,13 +103,13 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
   return (
     <div className={styles.page}>
-      <CoachBackLink href={`${base}/development`}>Skills &amp; Goals</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the coverage framing is REQUIRED wording (binding
           coverage ruling), so it relocates to the first line of the board itself — where the
           roster order it frames actually appears — rather than being deleted with the subtitles. */}
       <CoachPageHeader
         icon={LayoutGrid}
         title="Team board"
+        backTo={{ href: `${base}/development`, label: 'Skills & Goals' }}
         helpLabel="Team board"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
       />

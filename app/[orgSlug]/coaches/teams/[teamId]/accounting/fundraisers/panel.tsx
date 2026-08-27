@@ -12,7 +12,6 @@ import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
@@ -408,9 +407,10 @@ export function FundraisersPanel({
 
   return (
     <div className={styles.page}>
-      {!embedded && (
-        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
-      )}
+      {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
+          It rendered only on the legacy standalone route, and every legacy money route is a
+          permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
+          dead code rather than migrated to the header arrow, which is for live drill-ins. */}
       {/* Page-level action ruling 2026-08-13: "New Fundraiser" creates a FUNDRAISER, and inside
           the Money hub the header above the tabs names the container, not the fundraisers — so
           the create drops into this tab's own toolbar below. This tab had no control row, so it

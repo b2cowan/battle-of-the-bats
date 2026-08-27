@@ -16,7 +16,6 @@ import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
@@ -429,11 +428,6 @@ export function FundraiserDetail({
 
   return (
     <>
-      {/* One level up, IN THE SAME SEASON — the old page's back link dropped `?year=`, so leaving
-          an archived fundraiser quietly ended the archive visit. */}
-      <CoachBackLink href={moneySectionHref(base, 'fundraisers', undefined)}>
-        All fundraisers
-      </CoachBackLink>
       {/* Page-header ruling 2026-08-11: the Active/Closed badge is STATE, so it rides the title
           row; the rebate % and dates are live facts about the entity, so they lead the body.
           `nested`: the hub's own "Money" header is one line up and keeps the h1, the archive chip
@@ -442,6 +436,10 @@ export function FundraiserDetail({
         variant="nested"
         icon={Gift}
         title={fundraiser?.name ?? 'Fundraiser'}
+        /* One level up, IN THE SAME SEASON — the old page's back link dropped `?year=`, so
+           leaving an archived fundraiser quietly ended the archive visit. `moneySectionHref`
+           still carries it; only the affordance moved into the header (amendment 2026-08-26). */
+        backTo={{ href: moneySectionHref(base, 'fundraisers', undefined), label: 'All fundraisers' }}
         titleChips={fundraiser && (
           <>
             <span className={`${styles.badge} ${isSponsor ? styles.badgeSponsor : styles.badgeActive}`}>

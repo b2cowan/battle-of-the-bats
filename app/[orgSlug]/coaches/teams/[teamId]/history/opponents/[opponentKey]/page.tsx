@@ -230,6 +230,9 @@ export default function CoachOpponentCardPage({
     return (
       <div className={styles.page}>
         <p className={styles.errorText}>{error || 'Could not load this opponent'}</p>
+        {/* ⚠ ONE OF THE THREE SURVIVING `CoachBackLink`s (back-in-header amendment, 2026-08-26) —
+            same reason as the team board's: this is the failed-load branch, and it renders no
+            header for an arrow to sit in. The opponent's own header below carries the arrow. */}
         <CoachBackLink href={insightsSectionHref(base, 'scouting')}>All opponents</CoachBackLink>
       </div>
     );
@@ -366,13 +369,14 @@ export default function CoachOpponentCardPage({
 
   return (
     <div className={styles.page}>
-      {/* Page-header ruling 2026-08-11: the way back was a SUBTITLE dressed as a link — it now
-          uses the portal's one back-link treatment, above the header like every other drill-in.
+      {/* Page-header ruling 2026-08-11: the way back was a SUBTITLE dressed as a link. It is now
+          the ARROW in this header's leading corner (amendment 2026-08-26) — the blue row that
+          stood between the two lived here for fifteen days.
           The record chip stays on the title row: it is this opponent's identity, not an action. */}
-      <CoachBackLink href={insightsSectionHref(base, 'scouting')}>All opponents</CoachBackLink>
       <CoachPageHeader
         icon={Telescope}
         title={opponent.displayName}
+        backTo={{ href: insightsSectionHref(base, 'scouting'), label: 'All opponents' }}
         titleChips={
           <span className={styles.scoutRecChip} data-tone={recordTone(opponent.record)}>
             {recordChip(opponent.record)}

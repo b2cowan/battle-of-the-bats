@@ -5,7 +5,6 @@ import { ListOrdered, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
@@ -123,12 +122,12 @@ export default function TemplateBuilderPage({
 
   const header = (
     <>
-      <CoachBackLink href={`${base}/lineups`}>All lineups</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the "reusable base lineup" blurb is deleted — the Lineups
           hub's Templates empty state teaches it, and this page is reached only from there. */}
       <CoachPageHeader
         icon={ListOrdered}
         title={isNew ? 'New template' : 'Edit template'}
+        backTo={{ href: `${base}/lineups`, label: 'All lineups' }}
         actions={canLineups && !loading && !loadError ? (
           /* ⚠ A SAVE, NOT A CREATE — but it takes the header's primary geometry all the same,
              because the slot is what decides the size (plan §2.6, swept in Phase 4b). The inline

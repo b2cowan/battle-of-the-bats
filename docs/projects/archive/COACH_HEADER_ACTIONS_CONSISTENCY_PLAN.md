@@ -1090,3 +1090,121 @@ sequential; each is independently shippable.
   questions, not header-action ones): the Money hub's Import busy-guard sitting on its trigger rather
   than its items, the coach modals declaring `aria-modal` without initial focus or a trap, and
   disabled menu items using native `disabled` rather than `aria-disabled`.
+- **2026-08-26 (later)** — **PILOT APPROVED ON THE REAL SCREEN; the spread is its own session.**
+  Owner, after walking it: *"I approve the model and would like to implement on the other 16."*
+  ⚠ The count is **20 call sites across 17 files**, not 16 — three files carry two each
+  (`development/board`, `history/development/practices/[eventId]`, `history/opponents/[opponentKey]`).
+  Prompt written: `docs/projects/archive/COACH_BACK_LINK_IN_HEADER_BUILD_PROMPT.md`.
+  ⚠⚠ **Its load-bearing warning: only the NESTED shape has been proven.** The pilot was a Money hub
+  sub-view; **15 of the 20 are STANDARD page headers**, where the arrow has never been rendered — an
+  `<h1>`, an actions group, and a phone title row of `title · symbol · ?` it now has to share.
+  ⚠ Until that session ships, the one-call-site restriction in `KNOWN_PROPS` and in the `backTo`
+  docblock **stays true and stays enforced** — a second site appearing without it is drift.
+  ⚠ `.gdBack` and `.ppRunBackLink` remain EXEMPT, as the 2026-08-11 ruling itself lists them.
+
+- **2026-08-26** — **THE PILOT ENDED AND THE ARROW SPREAD, portal-wide.** Owner walked the
+  commitment screen and ruled the spread the same day. Design ruling logged in
+  `memory/design_decisions.md` (2026-08-26, "THE WAY BACK MOVES INTO THE PAGE HEADER"); Owner QA
+  **§113**. Build prompt (now executed, archived):
+  `COACH_BACK_LINK_IN_HEADER_BUILD_PROMPT.md`. No migration.
+
+  **What shipped:** `backTo` on **twelve** drill-in headers — a player's profile, the lineup
+  builder, a lineup template, the live practice plan, the finished-season practice plan, the four
+  Skills & Goals drill-ins (drills, plan templates, one template, an evaluation session), the team
+  board, opponent detail, and one fundraiser/sponsor. Each returns ~40px desktop / ~52px phone.
+
+  ⚠⚠ **THE PROMPT'S OWN INVENTORY WAS WRONG IN FOUR WAYS, AND THE BLOCKING GATE IS WHY THEY WERE
+  FOUND.** §1 required the count to be re-derived from the tree rather than copied from §3. It was,
+  and §3 disagreed with the code on every axis that mattered:
+  1. **22 renders in 19 files, not 20 in 17.** **Two were HAND-WRITTEN copies** of the retired
+     style (Budget Plan, Budget vs. Actual). The 2026-08-11 Pass-2 sweep that "collapsed five
+     treatments to one component" missed them *because they never imported the component* — **a
+     component sweep finds importers, not lookalikes.** Grep the CLASS as well as the symbol.
+  2. **Six were unreachable.** §3 named ONE money site as possibly-dead; all six `!embedded`
+     branches are, because the hub renders every panel embedded and every legacy money route is a
+     permanent redirect (Club has no route file at all). **Deleted, not migrated.**
+  3. **§3's "5 nested Money sub-views" is 1.** The other four were the dead branches above. The
+     nested shape was already proven by the pilot; **fifteen standard headers were the unproven
+     half**, and that is what the phone verification was aimed at.
+  4. **A SEVENTH treatment exists that no ruling names** — `.recordBackLink` on the free tournament
+     record, a shell with no page header. Left alone and **written into the exempt list** so the
+     next reader does not think it was missed.
+
+  ⚠⚠ **"THE SWEEP CAN SEE ALL OF THEM" WAS FALSE, AND THIS IS THE EXPENSIVE ONE.** §5 asserted
+  every target was a page the rendered sweep already covered. **Six of the twelve had no entry in
+  `scripts/layout-screens.mjs` at all** — player profile, lineup builder, lineup template, plan
+  template, evaluation session, opponent detail — and **three of those had no fixture row to open**
+  (`rep_team_plan_templates`, `rep_team_lineup_templates`, `rep_team_evaluation_sessions` were never
+  seeded). Not skipped-with-a-reason: **absent**, which reads as coverage from every direction.
+  All six are listed now, the three rows are seeded idempotently, and `--changed`'s sentinel map
+  gained the four path segments those routes need (without them a listed screen silently never
+  matches its own folder — the same "looks covered, is not" shape one level down).
+  **⚠ Before claiming a sweep covers a family of screens, LIST them.**
+
+  ⚠ **§4's predicted layout-debt drop was already banked, and its self-check would have raised a
+  false alarm.** It expected ~20 stale phone tap-floor baselines to fall away with the row and said
+  *"if the count does not move, something did not actually change."* Measured before touching
+  anything: **zero** back-link entries in `scripts/.layout-baseline.json` — the shared
+  `.lineupBackLink` ≤640 rule cleared them all in August. **A prediction inherited from an earlier
+  state is not a test.**
+
+  **THREE SURFACES KEEP THE OLD ROW, AND THE RULE GENERALISES: AN ARROW NEEDS A HEADER TO SIT IN.**
+  The team board's and opponent detail's **failed-load branches** render an error line and a way out
+  with no title row; the awards **certificate** screen is a print surface that has never rendered a
+  page header. Raised at the gate, owner approved. Giving a broken screen its own header is a
+  separate decision about what a failure looks like and was deliberately not taken (§7). So
+  `CoachBackLink` is **not** deleted — it is now the enumerated fallback, named in its own docblock,
+  in `backTo`'s, and at all three call sites.
+
+  ⚠⚠ **THE RESTRICTION THIS REPLACES WAS ONLY A COMMENT, AND THAT IS THE LESSON WORTH KEEPING.**
+  `KNOWN_PROPS` carried *"ONE call site may use it … a second site is drift"* while **nothing
+  checked it**. The rule inverted with the spread, so the enforcement inverted with it: the guard
+  now asserts the exact set of files still rendering `CoachBackLink` (comments blanked first, or it
+  would pass on the headstones explaining the rule). It fails in both directions — a new fallback
+  and a lost one — and is non-vacuous by construction, since an empty scan cannot equal a
+  three-element list. **A warning a build cannot fail on has already been ignored once.**
+
+  ⚠ **ONE OTHER GUARD HAD TO BE RE-AIMED, NOT RELAXED.** `coach-finished-season-surfaces` pinned
+  `cameFromSeasonEnd ? (<CoachBackLink href={…season-end…}` — the *markup*, when the claim was only
+  ever "a coach who arrived from Season's End is sent back there". It now reads the `backTo`
+  destination, **and gained a second assertion** that the header renders above that page's
+  loading/error fork. **Assert the claim, not the shape.**
+
+  **ONE SCREEN NEEDED MORE THAN A PROP.** The finished-season practice plan's link sat ABOVE its
+  loading/error/content fork, so it survived all three states; its header existed only in the
+  content branch. Moving the affordance without hoisting the header would have **silently stripped
+  the way back off a still-loading or failed plan** — on the one screen whose own comment calls that
+  link "THE ONLY LINK OUT". The header is hoisted, the title falls back, and the new assertion above
+  pins it. *When an affordance moves INTO a component, check every state that component does not
+  render in.*
+
+  ⚠⚠ **THE RENDERED SWEEP IS THE ONE GATE THIS PASS COULD NOT CLOSE — full account in QA §113.**
+  It reached `coach-player @361` (6 findings, never printed) and then reported "did not render" for
+  every remaining pair. **The cause was the dev server, not the screens:** up since 3:38 PM at a
+  3,989 MB working set, with **another session's sweep hung against it since 8:38 AM — eleven
+  hours, CPU frozen at 11.4s.** AGENTS.md forbids overlapping sweeps and this is what it is for.
+  A restart plus a clean re-run is owed; **the 6 findings are probably pre-existing** on a screen
+  that had never been swept, but that is a hypothesis and is recorded as one.
+
+  **Not changed, deliberately:** the exempt field surfaces (`.gdBack`, `.ppRunBackLink`), the
+  tournament record's `.recordBackLink`, the Money hub's own header (§7 — the arrow is for
+  drill-ins), and the wider `!embedded` machinery on the six money panels. Only the dead back links
+  were removed; retiring the whole standalone-panel mode is a separate call.
+
+- **2026-08-26** — **§113 OWNER QA PASSED.** The spread is signed off: the arrow on all twelve
+  drill-ins, the three enumerated fallbacks, and the Money regression. Checkable walkthrough:
+  `claude.ai/code/artifact/b1129378-5403-4cf9-abb9-ca5dd79dce50`.
+
+  ⚠ **The sign-off does NOT cover the rendered layout sweep, which still never ran to completion.**
+  An owner walk and `check:layout` are different gates: the walk sees what a person sees, the sweep
+  measures tap floors and sideways scroll at four widths on screens a person cannot check by eye —
+  including the **six drill-ins this pass added to it, which have still never been measured**. It
+  remains owed in §113 and is the one loose end of this project.
+
+  ⚠ **A STANDING OWNER RULING CAME OUT OF THIS SECTION, and it is portal-wide, not about this
+  project:** *"qa walk throughs need to be artifacts with checkboxes for me to use for my
+  testing."* Every Owner QA section now ships with a checkable artifact alongside the ledger prose
+  — checkbox per step, verdict and notes per part, progress saved in the browser, and a paste-back
+  summary. ⚠ Build the tick state on browser storage, **not** the artifact runtime capability: that
+  one republishes the document and reloads every open view, which loses the walker's place every
+  few ticks. The ledger stays the record; the artifact is the instrument.

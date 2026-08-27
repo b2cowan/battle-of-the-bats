@@ -1,5 +1,7 @@
 'use client';
 import type { ComponentType, ReactNode } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import HelpButton from '@/components/help/HelpButton';
 import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -61,6 +63,7 @@ export default function CoachPageHeader({
   help,
   helpLabel,
   variant = 'standard',
+  backTo,
 }: {
   /** Section icon, drawn at 18px in the shared 36px tile. Omit only where the ruling omits it (Overview). */
   icon?: ComponentType<{ size?: number | string }>;
@@ -116,6 +119,48 @@ export default function CoachPageHeader({
    *   that wants its own help topic is a page.
    */
   variant?: 'standard' | 'embedded' | 'nested';
+  /**
+   * ⚖⚖ THE WAY UP, ANCHORED IN THE HEADER'S LEADING CORNER — `{ href, label }`, e.g.
+   * `{ href: '…/accounting?section=payables', label: 'Payables' }`.
+   *
+   * ⚠⚠ THIS AMENDS ONE CLAUSE OF THE 2026-08-11 PAGE-HEADER RULING, and only that clause. That
+   * ruling put every drill-in's back link on its own row ABOVE this header, reasoning that "the
+   * header carries the page's name and its actions, and a way back is neither." The owner asked
+   * for it back (2026-08-26): the row pushes the whole page down and reads as a stray blue link.
+   *
+   * The argument for the amendment comes from the SAME ruling: it also decided the help "?" is
+   * **chrome, not an action** — anchoring the top-RIGHT corner on every page at every width to give
+   * help "one findable home portal-wide". A way UP is the same kind of thing at the opposite
+   * corner. It is not a breadcrumb (no trail, and the retired `.breadcrumb` mechanism stays
+   * retired), and it is not an action (it sits outside `pageHeaderActions`, behind a hairline).
+   *
+   * ⚠ THE OTHER HALF OF THE RULING STANDS: there is still exactly ONE back treatment. ⚖ THE PILOT
+   * IS OVER — owner ruled the spread on 2026-08-26 after walking the real screen, and this is now
+   * the portal's back treatment on **every drill-in that has a page header**. Twelve screens
+   * carry it; there is no "second site is drift" clause left to trip over.
+   *
+   * ⚠⚠ `CoachBackLink` SURVIVES, ON EXACTLY THREE SURFACES, AND THAT IS THE PART TO READ BEFORE
+   * DELETING IT. The arrow lives in a header, so a surface with no header cannot take one. Three
+   * live back links have no header beside them, enumerated here so a fourth reads as drift:
+   *   1. Team board, FAILED-LOAD branch      — an error message and a way out, no title row.
+   *   2. Opponent detail, FAILED-LOAD branch — the same shape.
+   *   3. The awards CERTIFICATE screen       — a print surface whose back link sits in its own
+   *      print toolbar beside "Print certificate"; it has never rendered a page header at all.
+   * Giving an error state a page header is a separate decision about what a failed screen looks
+   * like, and was deliberately NOT taken here (spread ruling §7: "no unrelated header tidying").
+   *
+   * ⚠ Also still separate, and still correct: the exempt FIELD surfaces (`.gdBack` on the game
+   * bench console, `.ppRunBackLink` in practice run mode) and `.recordBackLink` on the free
+   * tournament record — a shell with no page header of its own. None of these are drill-ins.
+   *
+   * ⚠ On a phone the label drops and the arrow stands alone — house rule 3, "words → symbols".
+   * The accessible name keeps the destination either way.
+   *
+   * ⚠ IT WORKS ON THE `nested` SHAPE TOO, and that is where it is actually needed: a Money
+   * drill-in is a SUB-VIEW of its tab (see `?fundraiser=`, `?bill=`), so it renders a nested
+   * header under the hub's own — which is exactly the case that had to wear a separate back row.
+   */
+  backTo?: { href: string; label: string };
 }) {
   const nested = variant === 'nested';
   /* ⚠ UNCONDITIONAL, and above every early return. The `embedded` and `nested` shapes own no "?"
@@ -132,6 +177,16 @@ export default function CoachPageHeader({
   return (
     <div className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}>
       <div className={styles.pageHeaderLeft}>
+        {backTo && (
+          <>
+            <Link href={backTo.href} className={styles.pageHeaderBack} aria-label={`Back to ${backTo.label}`}>
+              <ArrowLeft size={15} aria-hidden />
+              <span className={styles.pageHeaderBackLabel}>{backTo.label}</span>
+            </Link>
+            {/* Chrome, not part of the record's name — the hairline is what says so. */}
+            <span className={styles.pageHeaderBackRule} aria-hidden />
+          </>
+        )}
         {Icon && (
           <div className={`${styles.headerIcon}${nested ? ` ${styles.headerIconNested}` : ''}`}>
             <Icon size={nested ? 15 : 18} />

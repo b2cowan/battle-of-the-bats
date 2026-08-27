@@ -7,7 +7,6 @@ import {
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachBackLink from '@/components/coaches/CoachBackLink';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import RowEditButton from '@/components/coaches/RowEditButton';
@@ -648,9 +647,10 @@ export function ClubPanel({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {!embedded && (
-        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
-      )}
+      {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
+          It rendered only on the legacy standalone route, and every legacy money route is a
+          permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
+          dead code rather than migrated to the header arrow, which is for live drill-ins. */}
       <CoachPageHeader
         variant={embedded ? 'embedded' : 'standard'}
         icon={Building2}
