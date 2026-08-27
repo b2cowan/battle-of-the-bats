@@ -13848,7 +13848,7 @@ parity stays red** on migrations from other work.
 
 **Walkthrough:** https://claude.ai/code/artifact/6537e900-caac-4679-b755-20a6ad864b28
 
-**BUILT ON DEV 2026-08-26.** Raised by the owner from a printed check-in sheet with a blank **Age**
+**COMMITTED `d7cc0a22` 2026-08-27** (built 2026-08-26). Raised by the owner from a printed check-in sheet with a blank **Age**
 column. The cause was not the sheet: the coach's **Add player** dialog asked for three things
 (first name, last name, guardian email) while the record behind it holds eight, and the public form
 and the club-admin screen both collect the full set. The person actually running the tryout had the
