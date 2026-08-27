@@ -728,6 +728,297 @@ data is the tournament-registration domain — and `check:demos` passes. **What 
 whether the coach sandbox should now SHOW a repeating cost**, which is precisely the judgement
 CLAUDE.md says a check can never make. It is an owner call and it belongs to P5.
 
+### Part A — the duplicate doors close ✅ BUILT 2026-08-26 (dev; QA §104 Part A3)
+
+Thirteen doors onto six acts, revealed rather than created by making the drawer a page. The page's
+own `Record` deleted, `Add an installment` moved under the schedule it acts on, `Edit` renamed
+`Edit details`. Door count and drawn options:
+`claude.ai/code/artifact/86bd02fc-79b5-4d52-8d2f-e2cecb1b811b`.
+
+### Part B — the page edits itself ✅ BUILT 2026-08-26 (dev; QA §114 awaiting the walk)
+
+**Owner approval 2026-08-26**, from the drawn options and the three calls at
+`claude.ai/code/artifact/9c42dd82-39f1-4b12-8957-a5f43b2594de`. **No migration.**
+
+B answers the question underneath Part A's door count — *"if we are making this a screen, why do we
+need Edit to open a modal?"* Six fields (name, filing, payee, tags, method, note) are live controls
+on the commitment's own page and save themselves ~0.9s after the last keystroke; `Edit details` is
+gone and the header carries only the way back; an unset field is drawn as an invitation rather than
+omitted; Delete moved to the foot of the page.
+
+**⚠⚠ THE LINE THIS DRAWS, and it is the phase rather than a detail: a modal is for a QUESTION, not
+for a field.** `Change` / `Remove` keep their scope sheet, `Record` keeps the one conversation,
+`Undo` keeps its dollars-first question. Typing a payee asks nothing.
+
+**The three calls, all taken:**
+
+1. **(a) The register re-points.** A commitment's rows on Transactions open the bill's page, not the
+   shared form. ⚠⚠ **It was never one row** — a commitment appears on the register as one row per
+   PAYMENT plus one per installment still OWING, so a five-piece bill with two payments recorded was
+   five doors onto the same six fields. A plain cost and an arrival keep the form (they have no page
+   of their own), and the test is the RECORD's type, never the row's `open.kind` — both money-out
+   shapes carry `kind: 'expense'`. **`Add a commitment` is untouched**, per the standing P2 ruling
+   that it is a setup form of the same standing as New Fundraiser.
+2. **Commitment rows are tappable for read-only money coaches.** Every other row opens an editor, so
+   the write gate is the right gate for them; a commitment row now opens a page that is deliberately
+   readable, and it is the only place in the product an assistant can read a bill's payee or its
+   tags at all. The page renders values, not controls, on that same capability — the row is a door,
+   not a permission.
+3. **The back arrow names where it returns to.** `?from=transactions` rides beside `?bill=` and is
+   one-shot, like the key it describes; an origin left on the URL is an arrow pointing at last
+   week's journey.
+
+**⚠ Two defects found by reading the screen rather than the plan, both pre-existing, both fixed
+here:**
+
+- **The page was drawn TWICE.** Both money faces are instances of one component and the hub keeps a
+  visited tab mounted (`display: none`), so `?bill=` was read by both. Harmless while the page was
+  read-only — a hidden duplicate of some text. Part B would have made it **two editors of one bill,
+  each running its own save timers**, which is the disease money centralization exists to cure
+  arriving through a door nobody opened. The page now renders on the payables face only. ⚠ Do not
+  simplify that back: the duplicate is invisible by construction, so nothing on screen would say it
+  had returned.
+- **The bill was looked up in the FILTERED list.** `payBills` is narrowed by Status, which hides
+  settled bills by default, so a link to a fully-paid commitment showed the LIST with nothing to say
+  why. Now looked up in `allPayablesRaw` — the same rule `spendLeadGroup` already states in as many
+  words: a coach who filtered a screen has not told the product to forget the rest of their bills.
+
+**⚠ One delete path.** The form's footer Delete is suppressed on a saved commitment. After the
+re-point, the only way that form opens on one is `Add an installment`, launched from the page — so a
+Delete there would be a quieter second door to the same destructive act, sitting inside a schedule
+editor one scroll from the real one. The page's own Delete carries the identical dollars-first
+confirmation, built from `ledgerReversalPreview` (the same function the server reverses with).
+
+**⚠ The save idiom is the plan-template editor's, and the choice is argued rather than assumed:**
+debounced autosave (~0.9s), one status strip, stop-on-failure with Retry, and its rule copied
+verbatim — *an explicit submit rejects an empty name; autosave must not, because the coach is
+mid-typing.* Four of the six fields are compound controls rather than table cells, and one — **the
+name** — can be REFUSED by the server when a rename cannot claim its ledger link unambiguously. A
+per-cell ✓ has nowhere to put that sentence. **One behaviour for all six**; six fields with five save
+behaviours would be worse than the modal this replaces.
+
+**⚠⚠ THIS SCREEN HAD NEVER BEEN SWEPT AT ALL.** Part A shipped it with no `check:layout` entry, so a
+whole page — header, standing figure, schedule, payments — went unmeasured at every width.
+`coach-commitment` exists now, with a `commitmentId` fixture (asserted to be a `tournament_payable`;
+a plain cost's id would render the LIST and pass while measuring the wrong screen) and a
+`data-commitment="loaded"` ready signal that waits on the STANDING rather than the header —
+unblocking on `h1` would have measured "Loading payment details…" and reported the page green.
+
+Its first run found **15** tap-floor failures. **11 were this phase's**, including the new title
+field at **21px at 361, 390 and 768** — the only finding that failed at phone width, and the "a
+relocated control inherits nothing" lesson arriving exactly on schedule. All 11 are fixed by holding
+the new slots to a **768** floor rather than the portal's usual 640: a new surface should not be born
+owing the debt its neighbours are still carrying, and the same controls were already 44px at 390.
+⚠ Scoped to this page's own classes — the controls inside are SHARED components, and stretching them
+from their own stylesheets would move every form in the portal that uses them.
+
+The 4 that remain are baselined **with written reasons**: the Money hub's own chrome ×3 (already
+deferred at 768 on both `coach-payables` and `coach-transactions` — the fix is the hub, and it lands
+on all three screen ids together or it is not the fix), and the shared back arrow ×1, which belongs
+to §113's owed portal-wide run.
+
+⚠ **Reported, not absorbed:** the same sweep found 3 findings on `coach-accounting` and
+`coach-budget-vs-actual` — screens outside this diff, whose panels carry another session's
+uncommitted work. Left alone and unbaselined.
+
+**⚠ CORRECTION 2026-08-27, found by comparing the built page against its own mockup — do this
+on every build, not only when something feels wrong.** B had put the six fields BETWEEN the title
+and `Still owing`, reversing the owner correction of 2026-08-26 (the facts block must not push the
+standing figure and the schedule — what the page is FOR — down the screen), and making it worse
+than before rather than merely repeating it: the block grew from three optional rows to five
+permanent ones carrying two comboboxes and a textarea. The figure now renders in `CommitmentView`
+above the fields, which is the only place it can sit above fields that component owns; the schedule
+and payments stay the panel's. Its top hairline is suppressed there (`.payDrawerTotal.commitStanding`,
+compounded so it cannot be decided by rule order) because the band was designed to FOLLOW content
+and printed a second rule under the header's own. ⚠ Side effect: the back arrow cleared the 768 tap
+floor for the first time — the 44px title field now sets that row's height — so its baseline entry
+was PRUNED rather than left asserting a defect that is gone.
+
+### ⚠ Five fixes from the owner's first walk of the built page, 2026-08-27
+
+All five came from one screenshot. Four are polish; **one was a live false alarm a coach would have
+read as a data problem.**
+
+1. **⚠⚠ "Your change was saved, but these figures could not be refreshed" was appearing over figures
+   that were perfectly current.** The panel's re-read carries a monotonic sequence guard — a
+   response that has been overtaken declines to write, because a slower earlier load landing last is
+   how a payment reverts to Scheduled in front of a coach. It signalled that by returning `false`,
+   **the same value it returns when the read genuinely fails**, and `refreshAfterWrite` turned any
+   falsy answer into that banner. Two writes close together are enough: the loser's
+   `setStaleAfterWrite(true)` can land after the winner's `setStaleAfterWrite(false)`, so the banner
+   sticks.
+   It was survivable for as long as every write went through a modal — two saves a second apart were
+   rare. **Part B's autosave made overlapping re-reads the normal case and the latent lie became a
+   visible one.** `load` now returns `'ok' | 'superseded' | 'failed'` and only `'failed'` raises the
+   banner.
+   **⚠ The durable rule: an overtaken async result is not a failed one.** Collapsing the two into one
+   falsy value is a bug waiting for the first caller that makes races common.
+
+2. **The fields stretched the full width of the screen.** The value column was `1fr`, so a payee name
+   and a one-word method sat in boxes ~1,350px wide and the page read as a full-bleed form rather
+   than a record with a few short facts on it. Capped at **34rem** — in `rem`, not a percentage,
+   because a percentage simply re-expands on a wide screen, which is the thing being fixed.
+
+3. **The tag picker cost a second row while showing nothing.** Chips, then a permanent empty search
+   box beneath them. Right inside a form where every field is a box; wrong in a block a coach is
+   mostly reading. A **`＋` chip** now sits with the tags and reveals the box when it is wanted.
+   ⚠ Opt-in on the shared picker (`addAsChip`), so the three other surfaces keep the shape they were
+   designed with; it changes only where the input is revealed from, never how it behaves.
+
+4. **⚠⚠ THE TITLE WAS EDITABLE AND INVISIBLE — *"why can't we edit the title?"*** It was an input the
+   whole time. Its dashed rule appeared only on `:hover`, so the control announced itself only if a
+   mouse happened to cross it, and **on a touch screen there is no hover at all** — the affordance
+   never arrived for anyone on a phone. The rule is present at rest now, with a pencil beside it,
+   which is what the mockup drew. ⚠ It also had no real width: `.pageTitle` is a flex row, so
+   `width: 100%` resolved against a shrink-to-fit line and sized the box to roughly twenty
+   characters — a long bill name would have scrolled inside a box nobody knew was there.
+   **A control a coach cannot see is a control they do not have.**
+
+5. **The save status had a row of its own and had not earned one.** Delete left, the status right, on
+   the one line that closes the page — the same pairing the plan-template editor's docked footer
+   uses. It stands down while the delete question is open, because a coach being asked about dollars
+   should not be reading a save status at the same time.
+
+⚠ **Reported, not absorbed (again):** the same sweep flagged nine findings on the Fundraising list —
+sponsor rows on a panel another session has uncommitted work in. Left alone.
+
+
+
+### ⚠ Two more from the second walk, 2026-08-27
+
+6. **The standing figure ended where the page ended, not where the block does.** Capping the
+   fields left `$300.00` pinned to the far right of a 1,900px page with three feet of nothing
+   between it and "Still owing" — *"that number looks like it is just floating by itself"*. The
+   band now ends where the fields end, written as the field grid's own arithmetic (lane + gap +
+   cap) rather than as a second magic number that could drift a few pixels out.
+
+7. **⚠⚠ "Saving is taking too long" during a live edit — and the most likely cause was ME.** The
+   attached console shows Fast Refresh rebuilding over and over while the coach was typing: I was
+   editing files and running layout sweeps against the same dev server they were testing on, which
+   AGENTS.md forbids for exactly this reason. A save issued while the server is rebuilding can
+   easily pass the 15s abort. **Retest on a quiet server before treating this as a product
+   defect.** ⚠ The Supabase `NavigatorLockAcquireTimeoutError` beside it is a known DEV-ONLY
+   symptom — its own message names React Strict Mode orphaning the auth lock — and is not this
+   phase's. **But one real contributor was mine and is fixed:** every field save called the
+   panel's FULL refresh inline, so correcting a payee, a method and a note fired three saves and
+   three whole-screen re-reads in a few seconds. The re-read is now a single trailing one ~1.2s
+   after the last save of a burst — deliberately longer than the save debounce, so it lands after
+   the burst rather than inside it.
+
+
+### ⚠ Third walk, 2026-08-27 — the last modal that was not asking a question
+
+8. **The standing figure takes the FIELD GRID, not `space-between`.** Capping the block moved the
+   problem rather than solving it: the figure was still pushed to the far edge, now of the block
+   instead of the page, with a gap between "Still owing" and its own number that nothing occupies.
+   It now begins exactly where every field value begins, so the block has ONE left edge from the
+   figure down to the notes box.
+
+9. **⚖⚖ ADDING AN INSTALLMENT IS INLINE — and it is the phase's own rule finishing its work.**
+   `Add an installment` opened the whole record form with a blank plan row appended: a window over
+   six fields the page already edits, so a coach could type a date and an amount. Part B's
+   objection, one section lower down. It is now two fields and two buttons under the schedule.
+   **⚠ THE LINE HOLDS, AND THIS IS WHICH SIDE ADDING FALLS ON:** `Change` and `Remove` keep their
+   sheet because they ask a real question — *this payment, this and the later ones, or all
+   unpaid?* A NEW row has no such question: nothing before it to reach back to, nothing paid
+   against it. Adding asks nothing, so it gets no window.
+   ⚠ **It sends the whole plan with every row carrying its STORED ID.** The server matches by id
+   and treats an unrecognised row as new, so a plan sent without them reads as "delete all of
+   these and create these" — the exact shape in which a positional row key once re-pointed a
+   recorded payment at the wrong piece. The plan is rebuilt from the LIVE standing at submit, so a
+   payment recorded in another tab cannot be written back out of existence.
+   ⚠ **No client-side copy of the plan rules** — the route owns the ceiling and the per-row
+   sentences, and its refusal is shown as written. Two copies of those checks drifted apart once
+   already.
+
+   ⚠⚠ **THE CONSEQUENCE WORTH STATING: the shared money form is now CREATE-ONLY for commitments.**
+   With the register re-pointed and this button inlined, nothing opens that form on a saved
+   payable. Every act has its own door — the six fields on the page, `Change` / `Remove` /
+   `Record` on a row, `Add an installment` under the schedule, `Delete` at the foot. `Add a
+   commitment` is untouched. **Reinstating a form path to a saved commitment is a decision, not a
+   helper** — it would put a second editor back on the same six fields.
+
+   ⚠ **The sweep cannot see this row**: it is drawn on a click, and the sweep renders rather than
+   clicks. Walk it.
+
+
+10. **The calendar button was stranded at the far right, and the row wrapped.** The shared date
+    control is `width: 100%` of its parent — correct in the Budget Plan form where it fills a
+    column — so dropped into the add row it claimed the whole line, pushed the amount and the
+    buttons onto a second one, and left its calendar icon at the far edge of the page. Fixed by
+    constraining the SLOT, not the control: it is shared with Budget Plan and Generate
+    installments and is not this row's to re-shape.
+    ⚠⚠ **AND IT COULD NOT HAVE BEEN FIXED THE OBVIOUS WAY.** `.dateField` belongs to the BUDGET
+    stylesheet; a `.payAddRow .dateField` rule written in the coaches stylesheet hashes its second
+    half against THAT module and matches nothing — **a rule that reads correctly and is silently
+    inert.** When a shared control misbehaves inside a new layout, size the parent; reaching for
+    the child's class across a CSS-modules boundary is a no-op, not a fix.
+
+
+11. **The Record button now knows which bill you are standing on** (*"should the payable that I
+    am on go in as pre-populated?"*). It was already tab-aware — on Payables it pre-answers *what
+    happened* — but on a bill's own page the screen names ONE record, so it can honestly answer
+    *which one* too. A coach was being made to search a list for the thing they were looking at.
+    ⚠ **PRE-FILLED, NOT LOCKED.** A lock says "this door is about this record" — true of a row's
+    Record, false of the hub's, which is the product-wide door: a coach standing on a bill may be
+    recording a dues payment. Every answer stays changeable, branch included.
+    ⚠ **IT DOES NOT PRE-PICK AN INSTALLMENT**, and that is Part A's distinction surviving rather
+    than being erased: the per-row Record is the precise door — it knows which piece — and this
+    one is deliberately "the row's minus the precision". It behaves exactly as if the bill had
+    been picked in the picker, suggested amount included (the REMAINDER, never the face value).
+    ⚠⚠ **A REAL HAZARD ON THE WAY:** the suggestion reads a REF, not the list it mirrors. The
+    record-signal handler applies an intent **during render** (deliberately — the open must not
+    lag a paint behind the press), and the commitments memo is declared several hundred lines
+    BELOW it. Reading the memo there is a temporal-dead-zone throw on the one path that matters.
+    The ref is written beside the memo so the two cannot drift.
+
+
+### ⚠⚠ A CRASH SHIPPED, 2026-08-27 — and the lesson is about VERIFICATION, not the bug
+
+Pressing **Record** on a commitment page threw *"Cannot access 'openCommitmentsRef' before
+initialization"* and took the screen down. **Cause:** the pre-fill's amount suggestion read a
+binding declared several hundred lines BELOW the render-phase handler that used it. **A ref's
+VALUE is safe to read at any time; its BINDING is not** — moving state into a ref buys nothing
+against ordering. Worst of all, the docblock explaining that exact temporal-dead-zone hazard was
+sitting beside the code that fell into it.
+
+**Fixed by DELETING the thing rather than moving it.** The suggestion could never have worked
+reliably anyway: it runs on the Transactions panel's FIRST render — which pressing Record may
+itself be what mounts — so the list is usually still empty. And it was the wrong figure: it filled
+the whole bill's remainder, while a coach standing on a bill is usually paying ONE installment.
+**The bill still pre-fills** (that half needs no list); the amount is asked for. The ref is gone,
+with a headstone. ⚠ *The fix for a value that is not available yet is usually not to reach harder
+for it.*
+
+⚠⚠ **WHY NOTHING CAUGHT IT, WHICH IS THE PART WORTH KEEPING.** Typecheck, lint, 2,632 unit tests
+and a clean `check:layout` all passed over a page that died on first click. **Every one of them
+looks at the page AT REST.** This ledger already said, twice, that the sweep renders but cannot
+type — and the bug was placed in exactly the state that sentence describes.
+
+A throwaway Playwright probe was written to press the button (open the conversation from the hub
+door and from a row, and open the inline add row) and it caught the crash immediately. It has been
+**deleted** — an unmaintained script in `scripts/` is debris. ⚠ **RECOMMENDATION, owner call: this
+class of check belongs in the UAT specs.** Three clicks would have covered a shipped crash, and
+the money screens now have several states no gate can see (the record conversation, the inline add
+row, every editing state on this page).
+
+⚠ **On the auth-lock console errors seen during the walk:** they did NOT reproduce in a clean run
+of the record conversation from three different doors (Transactions, Player Dues, and a commitment
+page — zero page errors each), nor on plain page loads. They appear under load. **Not this
+phase's, and not attributable to a single door** — my earlier confident attribution to dev-server
+rebuilds was also more than the evidence supported.
+
+**⚠ Two deliberate departures from the mockup, raised for the owner rather than resolved quietly:**
+(1) the fields are **live controls at rest, not values with a pencil** — the drawing showed tap-to-
+edit; built always-live, following the ratified in-place precedent and keeping ONE save behaviour
+across six fields, at the cost of the page reading more like a form at rest; (2) **filing is a
+labelled row rather than the subtitle line**, a consequence of (1) since the grouped picker is a
+compound control. Reverting (1) returns (2).
+
+**⚠ The honest limit:** the sweep renders, it does not type. Every editing state — a combobox open
+over the schedule, "Saving…", a refused rename, the unsaved-changes guard — is owner-QA coverage
+alone (§114).
+
 ### P5 — The tail
 **Almost nothing is left.** The in-app help was brought current in P3 and again in P4; the export
 columns retired in P4 with the cap. What remains:

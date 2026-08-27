@@ -191,6 +191,27 @@ export const SCREENS = [
   { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=transactions`,    ready: 'h1' },
   { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=payables`,        ready: 'h1' },
   { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=payables&tab=schedule`, ready: 'h1' },
+  /* ⚠⚠ ONE COMMITMENT — AND IT HAD NEVER BEEN SWEPT AT ALL (Payables Rebuild Part B, 2026-08-26).
+     Part A shipped this screen as a sub-view of Payables and no entry was added with it, so a whole
+     page — a header, a standing figure, a fields block, an unbounded schedule and a payments list —
+     went unmeasured at every width. It is a `?bill=` URL, not a modal, so nothing here excuses it;
+     the two entries above prove the LIST, and a list is not its drill-in.
+
+     Part B makes the omission expensive rather than merely untidy: the page now draws six live
+     controls (two of them comboboxes) and a docked save strip, all in slots that inherit NO tap
+     floor from anything — which is precisely how a relocated control landed at 30px once before.
+
+     ⚠ WHAT THIS CANNOT SEE: the sweep renders and measures, it does not TYPE. The editing states —
+     a combobox open over the schedule, "Saving…", a refused rename — are owner-QA coverage only and
+     are walked in the ledger section, not here. A green run on this entry is a claim about the page
+     at REST.
+
+     ⚠ `ready` IS NOT `h1` HERE, unlike every other Money entry. The hub's own `<h1>` is on screen
+     before this page's data arrives, so waiting on it would unblock the sweep over "Loading payment
+     details…" and report a green check for a page that had not drawn. The attribute below hangs off
+     the branch that needs the STANDING — the schedule, the payments, the figure — so it cannot be
+     satisfied by a half-loaded screen. */
+  { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=payables&bill=${c.commitmentId}`, ready: '[data-commitment="loaded"]' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.

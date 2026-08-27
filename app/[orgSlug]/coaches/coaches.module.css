@@ -7397,6 +7397,18 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .tagComboChipX { cursor: pointer; opacity: 0.7; font-weight: 700; line-height: 1; background: none; border: none; color: inherit; padding: 0; }
 .tagComboChipX:hover { opacity: 1; }
+/* The `＋` that stands in for the search box in `addAsChip` mode — a chip among chips, so adding a
+   tag costs no row of its own. ⚠ It is a real control on a NEW surface, so it takes the tap floor
+   here rather than inheriting one: the chips beside it are text and have never needed a height. */
+.tagComboAdd {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 0.45rem; min-height: 1.45rem; border-radius: 999px; cursor: pointer;
+  background: none; border: 1px dashed var(--border-2); color: var(--text-tertiary);
+}
+.tagComboAdd:hover { border-color: var(--text-tertiary); color: var(--text-secondary); }
+@media (max-width: 768px) {
+  .tagComboAdd { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+}
 .tagComboDropdown {
   position: absolute; left: 0; right: 0; top: calc(100% + 4px);
   background: var(--card-bg); border: 1px solid var(--border-2);
@@ -11445,8 +11457,44 @@ button.gdChip[aria-pressed='true'] {
    `.pageHeaderActions` or `.panelToolbarActions`, which is exactly how a relocated control landed
    at 30px once before (header house rules, the expensive gotcha). */
 .payDrawerAdd { display: flex; padding: 0.45rem 0 0.15rem; }
-@media (max-width: 640px) {
+/* ⚠ RAISED 640 → 768 (Part B, 2026-08-26). The note above was right that this is a new slot with no
+   inherited floor, and it was still measured at **26px at 768** the first time this page was ever
+   rendered by `check:layout` — because Part A shipped it with no sweep entry at all, so nothing had
+   ever looked. It now matches the floor the rest of this page holds; a control on one screen must
+   not be pressable at 390 and not at 768. */
+@media (max-width: 768px) {
   .payDrawerAdd button { min-height: var(--tap-min, 44px); }
+}
+
+/* Adding one dated payment, in place under the schedule (§114 walk, 2026-08-27) — two fields and
+   two buttons on one line, where the modal used to be.
+   ⚠ THE DATE AND AMOUNT ARE FIXED-WIDTH, not `1fr`: they hold a date and a figure, and the same
+   "a field wider than anything that will be typed into it looks broken" call the fields block took
+   one section up. The row wraps rather than compressing them on a narrow screen.
+   ⚠ NEW SLOTS, SO THE TAP FLOOR IS TAKEN HERE — nothing above this row provides one. */
+.payAddRow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0 0.2rem;
+}
+.payAddRow input { width: 9rem; }
+/* ⚠⚠ THE DATE SLOT, AND IT EXISTS BECAUSE OF A CSS-MODULES BOUNDARY. `DateField` is `width: 100%`
+   of its parent — correct in the Budget Plan form, where it fills a column — so dropped into this
+   flex row it claimed the whole line, wrapped the amount and the buttons onto a second one, and
+   left its calendar button (absolutely positioned at the wrapper's right edge) stranded at the far
+   right of the page.
+   ⚠ IT CANNOT BE FIXED BY REACHING FOR THE CONTROL'S OWN CLASS. `.dateField` is hashed by the
+   BUDGET module; a `.payAddRow .dateField` written here would hash the second half against THIS
+   module and match nothing — a rule that looks right and is silently inert, which is the
+   cross-module trap. Constrain the PARENT instead: the control fills whatever it is given, so the
+   width belongs to the slot, and the button comes back beside the date it belongs to. */
+.payAddDate { display: inline-flex; width: 10.5rem; flex: none; }
+.payAddRow .errorText { flex-basis: 100%; margin: 0.15rem 0 0; }
+@media (max-width: 768px) {
+  .payAddRow input, .payAddRow button { min-height: var(--tap-min, 44px); }
+  /* One field per line on a phone: a date, an amount and two buttons on one row is four controls
+     fighting for 390px, and the amount is the one that loses. */
+  .payAddRow input { width: 100%; }
+  .payAddDate { width: 100%; }
 }
 
 /* ⚠ IT NEEDS ITS OWN AIR NOW. When this block sat LAST it followed a labelled section and inherited
@@ -11472,6 +11520,141 @@ button.gdChip[aria-pressed='true'] {
   .payDrawerFacts { grid-template-columns: 1fr; gap: 0.1rem; }
   .payDrawerFacts dt { padding-top: 0.4rem; }
 }
+
+/* The standing figure when it is the FIRST thing under the commitment page's header (Part B
+   correction, 2026-08-27). `.payDrawerTotal` carries a top hairline because it was designed to
+   FOLLOW content; at the top of a page it lands directly under the header's own rule and prints two
+   hairlines a few pixels apart.
+   ⚠ TWO CLASSES, NOT ONE. A bare `.commitStanding` ties at specificity with `.payDrawerTotal` and
+   would be decided by which rule sits later in this file — the silent-no-op shape this stylesheet
+   has been bitten by before. Compounded, it outranks and stays outranking. */
+/* ⚠⚠ AND IT ENDS WHERE THE FIELDS END (owner, §114 walk 2026-08-27: *"that number looks like it is
+   just floating by itself"*). The band is `space-between` across its container, so once the fields
+   below were capped the figure kept going — pinned to the far right of a 1,900px page with three
+   feet of nothing between it and the words it belongs to. A number that far from its own label has
+   stopped being a pair.
+   ⚠ THE WIDTH IS THE FIELD BLOCK'S, WRITTEN AS ITS ARITHMETIC rather than as a second magic number:
+   label lane + gap + value cap, the three values `.commitFields` is built from. Change the grid and
+   this follows, instead of drifting a few pixels out and looking like a mistake nobody made. */
+/* ⚠⚠ IT TAKES THE FIELD GRID, NOT `space-between` (owner, §114 walk 2026-08-27, second pass). The
+   band inherited a flex row that pushed the figure to the far edge of whatever contained it — first
+   the whole page, then, once capped, the far edge of the block. Both readings put a gap between
+   "Still owing" and its own number that nothing occupies, and a number that far from its label has
+   stopped being a pair.
+   Same two columns as `.commitFields`, so the figure begins exactly where every field value begins
+   and the block has ONE left edge from the standing figure down to the notes box. The label lane
+   does the separating; no space-between required. */
+.payDrawerTotal.commitStanding {
+  margin-top: 0.45rem; padding-top: 0; border-top: 0;
+  display: grid; grid-template-columns: 6rem minmax(0, 34rem);
+  gap: 0.85rem; justify-content: start; align-items: baseline;
+}
+
+/* ── The commitment page's own fields (Payables Rebuild — Part B) ─────────────────────────────
+   ⚖ THIS REPLACES `.payDrawerFacts` ON THAT SCREEN, and the difference is the whole phase: that
+   block was a read-only summary that OMITTED an unset row, so a coach could not tell a bill had no
+   note from the product not offering one. Every row is drawn here, and each holds a live control.
+   ⚠ THE LABEL LANE IS WIDER than the summary block's 5.25rem: these lanes sit beside comboboxes and
+   a textarea rather than beside short strings, and a value that starts at the same x-position as a
+   one-word label reads as a caption rather than a field. */
+/* ⚠⚠ THE VALUE COLUMN IS CAPPED, NOT `1fr` (owner, §114 walk 2026-08-27: *"do we need these fields
+   to stretch all the way across the screen?"*). It was `1fr`, so on a desktop a payee name and a
+   one-word method sat in boxes ~1,350px wide — the page reading as a full-bleed form rather than a
+   record with a few short facts on it. These are SHORT values; a field wider than anything that
+   will ever be typed into it is a field that looks broken.
+   ⚠ 34rem, not a percentage: a cap in `rem` holds at every window width, where a percentage simply
+   re-expands on a wide screen — which is the thing being fixed. The notes box takes the same cap so
+   the block has one right edge rather than a ragged one. */
+.commitFields {
+  display: grid; grid-template-columns: 6rem minmax(0, 34rem); gap: 0.55rem 0.85rem;
+  margin: 0.9rem 0 0.35rem; font-size: 0.82rem; align-items: start;
+}
+.commitFields dt {
+  color: var(--text-tertiary); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding-top: 0.55rem;
+}
+.commitFields dd { margin: 0; color: var(--text-secondary); min-width: 0; overflow-wrap: anywhere; }
+/* A field with nothing in it, read-only. The WRITE side says the same thing in its placeholder —
+   "Add a note" — so an empty row is an invitation on both sides of the capability. */
+.commitEmpty { color: var(--text-tertiary); font-style: italic; }
+.commitReadTags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+@media (max-width: 480px) {
+  /* Stacked, for the same reason the summary block stacks: a 6rem lane plus a combobox is a wrap
+     either way. ⚠ THE TAP FLOOR COMES FROM THE SURFACE — these are new slots and inherit none, so
+     the controls inside them are held at the portal minimum here rather than in a parent. */
+  .commitFields { grid-template-columns: 1fr; gap: 0.15rem; }
+  .commitFields dt { padding-top: 0.55rem; }
+}
+/* ⚠⚠ THE TAP FLOOR, AND IT HOLDS TO 768 RATHER THAN THE PORTAL'S USUAL 640 — deliberate, and the
+   first rendered sweep of this page is why (Part B, 2026-08-26). `check:layout` measures 768 as a
+   touch width, and the money faces carry a whole row of **deferred** 768 tap-floor entries there
+   (`reason: null` in the baseline — acknowledged debt, not an accepted decision). These slots are
+   NEW. A new surface should not be born owing the debt its neighbours are still carrying, and
+   raising the breakpoint on six controls inside one grid costs nothing anyone can see: at 768 there
+   is room, and the same controls are already 44px at 390.
+   ⚠ SCOPED TO `.commitFields` ON PURPOSE. The controls inside are SHARED components — the item
+   picker, the payee search, the tag box, the method box — and stretching them from their own
+   stylesheets would move every form in the portal that uses them. That is a portal-wide decision
+   with a portal-wide sweep behind it, not something to do on the way past. */
+@media (max-width: 768px) {
+  .commitFields dd input,
+  .commitFields dd textarea,
+  .commitFields dd button { min-height: var(--tap-min, 44px); }
+}
+
+/* The name, in the title slot. It must READ as the page title and BEHAVE as a field.
+   ⚠⚠ ITS DASHED RULE IS PRESENT AT REST, and that is a fix rather than a preference (owner, §114
+   walk 2026-08-27: *"why can't we edit the title?"*). The first build showed the underline only on
+   `:hover`, so the control was invisible until a mouse happened to cross it — and on a touch screen
+   there is no hover at all, so the affordance never appeared for anyone on a phone. **A control a
+   coach cannot see is a control they do not have.** The pencil beside it says the same thing a
+   second way, which is what the mockup drew.
+   ⚠ `font: inherit` — the h2 above owns the type scale, and a hard-coded size here would drift from
+   the header the first time that scale moves. */
+.commitTitleField {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  flex: 1 1 auto; min-width: 0; max-width: 34rem;
+}
+.commitTitleInput {
+  font: inherit; color: inherit; flex: 1 1 auto; min-width: 0; width: 100%;
+  background: transparent; border: 0; border-bottom: 1px dashed var(--border-2);
+  padding: 0 0 2px; margin: 0; border-radius: 0;
+}
+.commitTitleInput:hover { border-bottom-color: var(--text-tertiary); }
+.commitTitleInput:focus { outline: none; border-bottom-color: var(--logic-lime, currentColor); }
+.commitTitleInput::placeholder { color: var(--text-tertiary); font-weight: 400; }
+.commitTitlePencil { color: var(--text-tertiary); flex: none; }
+/* ⚠⚠ AND IT NEEDS ITS OWN FLOOR, which is the whole "a relocated control inherits nothing" lesson
+   arriving on schedule. This input sits in the page HEADER, not in `.commitFields`, so the grid's
+   rule above never reached it — the first sweep of this page measured it at **21px at 361, 390 and
+   768**, the worst finding on the screen and the only one that failed at phone width. A title that
+   is now a control has to be pressable like one.
+   ⚠ `align-items` is not in play: the header lays its title row out itself, so the height is taken
+   here and the text stays optically on the title's baseline because the box grows symmetrically. */
+@media (max-width: 768px) {
+  .commitTitleInput { min-height: var(--tap-min, 44px); }
+}
+
+/* Delete, at the foot of the page — quiet, and behind a rule so it cannot be reached by accident
+   while a coach is working the schedule above it.
+   ⚖ THE SAVE STATUS SHARES THIS ROW (owner, §114 walk 2026-08-27): Delete left, "Saved" right, on
+   the one line that closes the page. It had a row of its own and did not earn one. `.saveStatus`
+   pushes itself right with its own `margin-left: auto`, so nothing here has to place it. */
+.commitFoot {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  margin-top: 1.1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-2);
+  min-height: 1.9rem;
+}
+.commitFoot .dangerConfirm { margin: 0; width: 100%; }
+/* Same 768 floor as the fields above, and for the same reason — this control moved out of a modal
+   footer onto a new surface, which is precisely where a floor gets lost. */
+@media (max-width: 768px) {
+  .commitFoot .deleteRecordBtn { min-height: var(--tap-min, 44px); }
+}
+
+/* ⚖ `.commitSaveBar` IS GONE — the save status shares the delete row now (owner, 2026-08-27).
+   Its headstone is here so the next reader does not re-add a strip of its own: the status belongs
+   on the line that closes the page, not on a line below it. */
 
 @media (max-width: 640px) {
   /* ⚠ THE PHONE PASS (§64 Part C's last step: rows become cards, group headers do not eat the

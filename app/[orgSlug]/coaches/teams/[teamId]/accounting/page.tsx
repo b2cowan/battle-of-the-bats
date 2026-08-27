@@ -200,7 +200,13 @@ export default function CoachesAccountingPage({
   // Overview's two rows could each be a real destination. ⚠ It MUST be on this list: left off, a
   // coach who arrived through the Sponsorships row carries `kind=sponsor` to Expenses and back,
   // and every later visit to Fundraising silently hides their drives.
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser', 'kind'];
+  /* ⚠ `bill` joins these for the same reason `fundraiser` did: a commitment is a SUB-VIEW of the
+     Payables tab, so its key must not linger on an unrelated tab's URL.
+     ⚠ `from` is `bill`'s companion (Part B, 2026-08-26): it records which face a coach opened a
+     commitment from, so the page's back arrow names where it returns to. An origin left on the URL
+     after they have moved on is a back arrow pointing at last week's journey — so it is one-shot
+     exactly as the key it describes is. */
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -427,9 +433,26 @@ export default function CoachesAccountingPage({
                 aria-label="Record money"
                 /* Tab-aware (P2): the tab the coach is standing on pre-answers the first question
                    where it honestly can, and the answer stays changeable — see the map's header. */
+                /* ⚖⚖ AND BILL-AWARE WHEN THE COACH IS STANDING ON ONE (owner, §114 walk
+                   2026-08-27: *"should the payable that I am on go in as pre-populated?"*).
+                   The tab could already pre-answer *what happened*; on a commitment's own page the
+                   screen names ONE bill, so it can honestly pre-answer *which one* too — and the
+                   coach was being made to search a list for the record they were already looking
+                   at.
+                   ⚠ PRE-FILLED, NOT LOCKED. A lock says "this door is about this record", which is
+                   true of a row's Record and false of this one: it is the product-wide door, and a
+                   coach standing on a bill may well be recording a dues payment. Every answer here
+                   stays changeable, including the branch.
+                   ⚠ IT DOES NOT PRE-PICK AN INSTALLMENT, and that is Part A's distinction surviving
+                   rather than being quietly erased: the per-row Record is the precise door — it
+                   knows which piece — and this one is deliberately "the row's minus the precision".
+                   Behaving exactly as if the coach had picked the bill in the picker is the whole
+                   claim; see `spendLeadGroup.onPick`, which this must not drift from. */
                 onClick={() => {
                   const branch = RECORD_BRANCH_BY_SECTION[effectiveSection];
-                  requestRecord(branch ? { branch } : undefined);
+                  if (!branch) { requestRecord(undefined); return; }
+                  const bill = effectiveSection === 'payables' ? seasonSearchParams.get('bill') : null;
+                  requestRecord(bill ? { branch, ids: { spendExpenseId: bill } } : { branch });
                 }}
               >
                 <Plus size={15} aria-hidden />

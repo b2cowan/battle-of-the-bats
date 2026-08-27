@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import type { RepTeamTag } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -22,6 +22,7 @@ export default function TagSearchCombobox({
   placeholder = 'Type to find or create a tag…',
   disabled = false,
   showLegend = true,
+  addAsChip = false,
 }: {
   library: RepTeamTag[];
   selectedIds: string[];
@@ -31,6 +32,20 @@ export default function TagSearchCombobox({
   placeholder?: string;
   disabled?: boolean;
   showLegend?: boolean;
+  /**
+   * ⚖ **THE SEARCH BOX HIDES BEHIND A `＋` CHIP UNTIL IT IS WANTED** (owner, §114 walk 2026-08-27).
+   *
+   * The default shape is a form field: a row of chips with a permanent search box under it, which
+   * is right inside a form where every other field is a box the same size. On the commitment page
+   * it is the only control that costs a SECOND ROW while showing nothing — the tags are already
+   * chips, and the box below them is an empty invitation taking a field's worth of height in a
+   * block a coach is reading rather than filling in.
+   *
+   * Opt-in, so the four other surfaces keep the shape they were designed with. ⚠ It changes only
+   * WHERE the input is revealed from — every behaviour below (search, create, keyboard, the
+   * dropUp flip) is the same control.
+   */
+  addAsChip?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -117,6 +132,13 @@ export default function TagSearchCombobox({
 
   const selected = selectedIds.map(id => byId.get(id)).filter((t): t is RepTeamTag => !!t);
 
+  /* In `addAsChip` mode the input is revealed by the `＋` chip and hides again when it is left
+     empty. ⚠ It starts revealed when there is NOTHING selected — a lone `＋` beside an empty Tags
+     label says less than the box does, and the whole point of the chip is to save a row that is
+     otherwise showing chips. */
+  const [revealed, setRevealed] = useState(false);
+  const showInput = !disabled && (!addAsChip || revealed || selected.length === 0);
+
   return (
     <div className={styles.tagCombo}>
       {selected.length > 0 && (
@@ -134,10 +156,21 @@ export default function TagSearchCombobox({
               </span>
             );
           })}
+          {/* The `＋` sits WITH the chips, on their row — that is the whole saving. */}
+          {addAsChip && !disabled && !showInput && (
+            <button
+              type="button"
+              className={styles.tagComboAdd}
+              aria-label="Add a money tag"
+              onClick={() => { setRevealed(true); setTimeout(() => inputRef.current?.focus(), 0); }}
+            >
+              <Plus size={12} aria-hidden />
+            </button>
+          )}
         </div>
       )}
 
-      {!disabled && (
+      {showInput && (
         <div style={{ position: 'relative' }}>
           <input
             ref={inputRef}
@@ -147,7 +180,12 @@ export default function TagSearchCombobox({
             autoComplete="off"
             onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
             onFocus={openDropdown}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onBlur={() => setTimeout(() => {
+              setOpen(false);
+              /* Fold back to the chip only if nothing was typed — a coach mid-word who clicked a
+                 dropdown option must not have the box vanish from under them. */
+              if (addAsChip && !query.trim() && selected.length > 0) setRevealed(false);
+            }, 150)}
             onKeyDown={onKeyDown}
           />
           {open && (query.length > 0 || matches.length > 0) && (

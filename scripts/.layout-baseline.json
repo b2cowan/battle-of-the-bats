@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T18:52:59.523Z",
+  "generated": "2026-08-27T11:24:31.952Z",
   "entries": {
     "coach-development-drills|361|tap-floor|button·All 1": {
       "reason": null,
@@ -3764,6 +3764,18 @@
     "coach-team-hub|768|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Help: Money": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Record money": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Import": {
+      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
+      "detail": "33px tall (floor 44)"
     }
   }
 }
