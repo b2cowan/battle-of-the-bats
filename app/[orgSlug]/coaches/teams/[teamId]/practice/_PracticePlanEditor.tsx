@@ -1,11 +1,11 @@
 'use client';
-import { useId, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ChevronDown, ChevronUp, Library, Pencil, Plus, Repeat, Shuffle, Trash2, Users, X,
 } from 'lucide-react';
 import {
-  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_GROUPS, MAX_SHORT_TEXT_LEN, MAX_STAFF_PER_ITEM,
-  MAX_STATIONS_PER_BLOCK, MAX_TAGS_PER_ITEM, MAX_TEXT_LEN, MAX_TITLE_LEN,
+  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_GROUPS, MAX_SHORT_TEXT_LEN,
+  MAX_STATIONS_PER_BLOCK, MAX_TEXT_LEN, MAX_TITLE_LEN,
   blockRotates, computeBlockClocks, computeRotation, defaultIntervalMinutes, describeSplit, drawGroups, groupLabel,
   newPracticePlanId, startingGroupsForStation,
   type BlockClock, type DrawMode, type PracticeGroup, type PracticePlan, type PracticePlanBlock,
@@ -17,6 +17,7 @@ import {
   type DrillInput, type RepTeamDrill,
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
+import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
@@ -76,89 +77,10 @@ type AttachTarget =
  *  else is NAMED rather than silently dropped. */
 const REPLIED_YES: RepAttendanceStatus[] = ['attending', 'late'];
 
-/** How many previously-used labels to offer inline before it becomes a wall of chips. */
-const MAX_VISIBLE_SUGGESTIONS = 8;
-
 // ── Small shared controls (module level — see the header note) ────────────────
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <span className={styles.ppFieldLabel}>{children}</span>;
-}
-
-/**
- * One reusable-label control, used for staff (D12), equipment and practice types.
- *
- * ⚠ Every list it edits is a LABEL. A staff entry carries no account, no invitation and no
- * capability whatsoever — the reference practice names an outside instructor and a PD coach who
- * aren't portal users at all, which is exactly why a picker limited to team coaches fails. The
- * suggestions come from what this team has typed before, so the vocabulary is theirs and a typo
- * stops being offered as soon as no plan uses it.
- */
-function TagChips({
-  label, values, suggestions, readOnly, onSet, placeholder, max = MAX_TAGS_PER_ITEM, width = '9rem',
-}: {
-  label: string;
-  values?: string[];
-  suggestions: string[];
-  readOnly: boolean;
-  onSet: (next: string[]) => void;
-  placeholder: string;
-  max?: number;
-  width?: string;
-}) {
-  const [draft, setDraft] = useState('');
-  const listId = useId();
-  const current = values ?? [];
-  const unused = suggestions.filter(s => !current.some(c => c.toLowerCase() === s.toLowerCase()));
-  const add = () => {
-    const value = draft.trim();
-    if (!value || current.length >= max) { setDraft(''); return; }
-    if (!current.some(n => n.toLowerCase() === value.toLowerCase())) onSet([...current, value]);
-    setDraft('');
-  };
-  return (
-    <div className={styles.ppFieldRow}>
-      <FieldLabel>{label}</FieldLabel>
-      <div className={styles.ppChipWrap}>
-        {current.map(value => (
-          <span key={value} className={styles.ppChip}>
-            {value}
-            {!readOnly && (
-              <button type="button" className={styles.ppChipX} aria-label={`Remove ${value}`}
-                onClick={() => onSet(current.filter(n => n !== value))}><X size={11} /></button>
-            )}
-          </span>
-        ))}
-        {!readOnly && current.length < max && (
-          <>
-            {/* .inlineField is the portal's primitive for exactly this shape — a fixed-width
-                control in a dense row that goes full width at 640. Composing it (rather than
-                hand-rolling both rules again) is what the CSS file's own header asks for. */}
-            <input className={`${styles.input} ${styles.inlineField}`}
-              style={{ '--inline-field-w': width } as React.CSSProperties}
-              list={listId} value={draft}
-              onChange={e => setDraft(e.target.value)} onBlur={add}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-              placeholder={placeholder} maxLength={MAX_TITLE_LEN} aria-label={label} />
-            <datalist id={listId}>{suggestions.map(s => <option key={s} value={s} />)}</datalist>
-          </>
-        )}
-      </div>
-      {/* ⚠ The suggestions have to be VISIBLE to read as a picker. A datalist alone looks exactly
-          like a plain text box until you happen to type a matching letter, so the control was
-          being taken for free text. These are what this team has used before — tap to add. */}
-      {!readOnly && current.length < max && unused.length > 0 && (
-        <div className={styles.ppSuggestWrap}>
-          {unused.slice(0, MAX_VISIBLE_SUGGESTIONS).map(s => (
-            <button key={s} type="button" className={styles.ppSuggestChip}
-              onClick={() => onSet([...current, s])}>
-              <Plus size={10} aria-hidden />{s}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -265,7 +187,8 @@ function DrillFacts({ station }: { station: PracticeStation }) {
 }
 
 function StationCard({
-  station, index, isRotation, startingGroups, readOnly, withoutPeople, staffSuggestions, equipmentSuggestions,
+  station, index, isRotation, startingGroups, readOnly, withoutPeople,
+  staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag,
   nameOf, onPatch, onRemove, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
   station: PracticeStation;
@@ -276,8 +199,10 @@ function StationCard({
   readOnly: boolean;
   /** A TEMPLATE has no roster and no staff — the practice supplies both. See the module header. */
   withoutPeople: boolean;
-  staffSuggestions: string[];
-  equipmentSuggestions: string[];
+  staffTags: PickableTag[];
+  onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  equipmentTags: PickableTag[];
+  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   nameOf: (playerId: string) => string;
   onPatch: (patch: Partial<PracticeStation>) => void;
   onRemove: () => void;
@@ -359,8 +284,10 @@ function StationCard({
                 placeholder="How it's laid out — where things go, and how far apart"
                 onChange={e => onPatch({ setup: e.target.value })} />
             </label>
-            <TagChips label="Equipment" values={station.equipment} suggestions={equipmentSuggestions}
-              readOnly={readOnly} onSet={next => onPatch({ equipment: next })} placeholder="Add kit…" />
+            <PracticeTagPicker label="Equipment" all={equipmentTags} ids={station.equipmentTagIds ?? []}
+              legacyNames={station.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
+              onChange={next => onPatch({ equipmentTagIds: next })}
+              emptyHint="No equipment yet — type an item to add your first one." />
           </>
         )}
 
@@ -368,9 +295,10 @@ function StationCard({
             lets one template work in April with twelve and July with nine. The controls are absent
             rather than disabled: a control that exists only to refuse should not exist. */}
         {!withoutPeople && (
-          <TagChips label="Who runs it" values={station.staff} suggestions={staffSuggestions}
-            readOnly={readOnly} onSet={next => onPatch({ staff: next })} placeholder="Add a name…"
-            max={MAX_STAFF_PER_ITEM} />
+          <PracticeTagPicker label="Who runs it" all={staffTags} ids={station.staffTagIds ?? []}
+            legacyNames={station.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+            onChange={next => onPatch({ staffTagIds: next })}
+            emptyHint="No staff yet — type a name to add your first one." />
         )}
 
         {/* People live at exactly ONE level. In a rotation that level is the block's groups, so the
@@ -827,7 +755,7 @@ function PromoteDrillDialog({
 function BlockCard({
   block, index, blockCount, clock, blockStartMs, collapsed, readOnly, withoutPeople,
   restTakenElsewhere, drawPool, notReplied,
-  showNotReplied, staffSuggestions, equipmentSuggestions, nameOf,
+  showNotReplied, staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
   onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
   onPromoteStation,
 }: {
@@ -845,8 +773,10 @@ function BlockCard({
   drawPool: PracticeRosterPlayer[];
   notReplied: PracticeRosterPlayer[];
   showNotReplied: boolean;
-  staffSuggestions: string[];
-  equipmentSuggestions: string[];
+  staffTags: PickableTag[];
+  onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  equipmentTags: PickableTag[];
+  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   nameOf: (playerId: string) => string;
   onToggleCollapse: () => void;
   onMove: (delta: number) => void;
@@ -956,8 +886,10 @@ function BlockCard({
           </label>
 
           {!withoutPeople && (
-            <TagChips label="Staff" values={block.staff} suggestions={staffSuggestions} readOnly={readOnly}
-              onSet={next => onPatch({ staff: next })} placeholder="Add a name…" max={MAX_STAFF_PER_ITEM} />
+            <PracticeTagPicker label="Staff" all={staffTags} ids={block.staffTagIds ?? []}
+              legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+              onChange={next => onPatch({ staffTagIds: next })}
+              emptyHint="No staff yet — type a name to add your first one." />
           )}
 
           {/* People live at exactly ONE level. With stations, they belong to the stations (or to
@@ -1026,8 +958,8 @@ function BlockCard({
                 startingGroups={startingGroupsForStation(block.rotation, stationCount, i)}
                 readOnly={readOnly}
                 withoutPeople={withoutPeople}
-                staffSuggestions={staffSuggestions}
-                equipmentSuggestions={equipmentSuggestions}
+                staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+                equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
                 nameOf={nameOf}
                 onPatch={patch => patchStation(station.id, patch)}
                 onRemove={() => onPatch({ stations: stations.filter(s => s.id !== station.id) })}
@@ -1055,8 +987,16 @@ interface Props {
   canViewFocus: boolean;
   attendance: { playerId: string; status: RepAttendanceStatus }[];
   canViewAttendance: boolean;
-  staffSuggestions: string[];
-  equipmentSuggestions: string[];
+  /**
+   * The team's whole 'staff'/'equipment' vocabularies (mig 266) — owned by the page, exactly like
+   * `focusTags` below. REPLACED the free-text suggestion lists (`staffSuggestions`/
+   * `equipmentSuggestions`) this prop pair used to be: those were scraped from past plans' typed
+   * words with no real backing list; these are the real, mintable library `PracticeTagPicker` reads.
+   */
+  staffTags?: PickableTag[];
+  onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  equipmentTags?: PickableTag[];
+  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   /** This team's own drills PLUS the club's shared set, already merged by the API. */
   drills: RepTeamDrill[];
   /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
@@ -1091,8 +1031,9 @@ interface Props {
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
-  staffSuggestions, equipmentSuggestions, drills, onCreateDrill,
+  drills, onCreateDrill,
   focusTags = [], onCreateFocusTag, planTagIds, onChangePlanTags,
+  staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   eventStartsAt, eventEndsAt, readOnly, withoutPeople = false,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -1306,7 +1247,14 @@ export default function PracticePlanEditor({
     const station = block?.stations?.find(s => s.id === promoting.stationId);
     if (!station) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
-    const result = await onCreateDrill(stationToDrillInput(station, tagIds));
+    // A drill's own equipment field is separate from mig 266's library (drills never adopted it —
+    // see the plan doc's scope) and only reads the legacy string. Resolve current tag names onto
+    // it first, or a station edited under the new picker would promote with equipment silently gone.
+    const equipmentByIdForPromote = new Map(equipmentTags.map(t => [t.id, t.name]));
+    const resolvedStation = station.equipmentTagIds?.length
+      ? { ...station, equipment: station.equipmentTagIds.map(id => equipmentByIdForPromote.get(id)).filter((n): n is string => !!n) }
+      : station;
+    const result = await onCreateDrill(stationToDrillInput(resolvedStation, tagIds));
     setPromoteBusy(false);
     if (!result.ok) { setPromoteError(result.error ?? 'Could not save that drill.'); return; }
     // ⚠ Promotion COPIES. Tonight's station is deliberately left exactly as it is — it does not
@@ -1445,9 +1393,10 @@ export default function PracticePlanEditor({
               )}
             </>
           )}
-          <TagChips label="Equipment" values={plan.equipment} suggestions={equipmentSuggestions}
-            readOnly={readOnly} placeholder="Add kit…"
-            onSet={next => onChange({ ...plan, equipment: next })} />
+          <PracticeTagPicker label="Equipment" all={equipmentTags} ids={plan.equipmentTagIds ?? []}
+            legacyNames={plan.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
+            onChange={next => onChange({ ...plan, equipmentTagIds: next })}
+            emptyHint="No equipment yet — type an item to add your first one." />
         </div>
 
         {plan.blocks.map((block, i) => (
@@ -1466,8 +1415,8 @@ export default function PracticePlanEditor({
             drawPool={drawPool}
             notReplied={notReplied}
             showNotReplied={attendanceKnown}
-            staffSuggestions={staffSuggestions}
-            equipmentSuggestions={equipmentSuggestions}
+            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+            equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             nameOf={nameOf}
             onToggleCollapse={() => setCollapsed(c => ({ ...c, [block.id]: !c[block.id] }))}
             onMove={delta => moveBlock(i, delta)}

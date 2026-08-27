@@ -18,7 +18,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import {
   MAX_RECAP_LEN,
   blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
-  formatDuration, isPracticePlanEmpty, newPracticePlanId, resolveStationTeaching,
+  formatDuration, isPracticePlanEmpty, newPracticePlanId, resolvePracticePlanTagNames, resolveStationTeaching,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import {
@@ -26,7 +26,7 @@ import {
 } from '@/lib/rep-plan-templates';
 import { filterTagged } from '@/lib/rep-drills';
 import TagPicker from '@/components/coaches/TagPicker';
-import { useFocusTags } from '@/components/coaches/use-focus-tags';
+import { useFocusTags, useStaffTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
@@ -75,6 +75,9 @@ type LoadState = {
   /** What this practice is about, in the team's shared 'focus' vocabulary. */
   planTagIds: string[];
   focusTags: PickableTag[];
+  /** The 'staff'/'equipment' libraries (mig 266) — same shape and reasoning as `focusTags`. */
+  staffTags: PickableTag[];
+  equipmentTags: PickableTag[];
   templates: PlanTemplateOption[];
   roster: PracticeRosterPlayer[];
   goals: PracticeFocusGoal[];
@@ -178,6 +181,10 @@ export default function CoachPracticePlanPage({
   // which is the part that must not differ between the four surfaces that offer a tag picker.
   const { tags: focusTags, setTags: setFocusTags, createTag: createFocusTag } =
     useFocusTags(orgSlug, teamId, { skipFetch: true });
+  const { tags: staffTags, setTags: setStaffTags, createTag: createStaffTag } =
+    useStaffTags(orgSlug, teamId, { skipFetch: true });
+  const { tags: equipmentTags, setTags: setEquipmentTags, createTag: createEquipmentTag } =
+    useEquipmentTags(orgSlug, teamId, { skipFetch: true });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -232,6 +239,8 @@ export default function CoachPracticePlanPage({
       setRecap(body.recap ?? '');
       setPlanTagIds(body.planTagIds ?? []);
       setFocusTags(body.focusTags ?? []);
+      setStaffTags(body.staffTags ?? []);
+      setEquipmentTags(body.equipmentTags ?? []);
       setDirty(false);
     } catch (e: unknown) {
       if (seq !== loadSeqRef.current) return;
@@ -239,9 +248,10 @@ export default function CoachPracticePlanPage({
     } finally {
       if (seq === loadSeqRef.current) setLoading(false);
     }
-    // `setFocusTags` comes from the shared vocabulary hook rather than a local `useState`, so the
-    // linter can't see that it is a stable setter — it is, and listing it re-runs nothing.
-  }, [orgSlug, teamId, eventId, setFocusTags]);
+    // `setFocusTags`/`setStaffTags`/`setEquipmentTags` come from the shared vocabulary hook rather
+    // than a local `useState`, so the linter can't see they're stable setters — they are, and
+    // listing them re-runs nothing.
+  }, [orgSlug, teamId, eventId, setFocusTags, setStaffTags, setEquipmentTags]);
 
   useEffect(() => {
     if (!ctxLoading && canSchedule) void Promise.resolve().then(load);
@@ -522,7 +532,11 @@ export default function CoachPracticePlanPage({
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
-    const clocks = computeBlockClocks(plan.blocks, event.startsAt, event.endsAt);
+    // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames`. The sheet, like
+    // the run screen, only ever reads `.staff`/`.equipment` as plain strings; this is what lets a
+    // station saved under the new picker still print who's running it and what to bring.
+    const resolved = resolvePracticePlanTagNames(plan, staffTags, equipmentTags);
+    const clocks = computeBlockClocks(resolved.blocks, event.startsAt, event.endsAt);
     const clockByBlock = new Map(clocks.map(c => [c.blockId, c]));
     const nameOf = (id: string) => {
       const p = roster.find(r => r.id === id);
@@ -537,7 +551,7 @@ export default function CoachPracticePlanPage({
     // Each block's start comes from the SAME clock walk as the time column (`clock.startMs`),
     // never a second copy of the arithmetic — an earlier duplicate had already drifted on how a
     // "rest of practice" block advances the cursor, so the sheet and the screen disagreed.
-    const blocks: PracticeSheetBlock[] = plan.blocks.map(block => {
+    const blocks: PracticeSheetBlock[] = resolved.blocks.map(block => {
       const clock = clockByBlock.get(block.id);
       const time = clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : '';
       const notes = [
@@ -643,7 +657,7 @@ export default function CoachPracticePlanPage({
           ...planTagIds.map(id => focusTags.find(t => t.id === id)?.name).filter((n): n is string => !!n),
           ...(plan.practiceTypes ?? []),
         ],
-        equipment: plan.equipment ?? [],
+        equipment: resolved.equipment ?? [],
         blocks, focus, settings,
       },
     );
@@ -941,14 +955,16 @@ export default function CoachPracticePlanPage({
                 canViewFocus={data.canViewFocus}
                 attendance={data.attendance}
                 canViewAttendance={data.canViewAttendance}
-                staffSuggestions={data.staffSuggestions}
-                equipmentSuggestions={data.equipmentSuggestions}
                 drills={data.drills}
                 // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                 // entirely rather than offering a control that only exists to refuse.
                 onCreateDrill={canWrite ? createDrill : undefined}
                 focusTags={focusTags}
                 onCreateFocusTag={canWrite ? createFocusTag : undefined}
+                staffTags={staffTags}
+                onCreateStaffTag={canWrite ? createStaffTag : undefined}
+                equipmentTags={equipmentTags}
+                onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
                 planTagIds={planTagIds}
                 onChangePlanTags={savePlanTags}
                 eventStartsAt={event?.startsAt ?? ''}

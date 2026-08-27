@@ -6,7 +6,7 @@ import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagPicker from '@/components/coaches/TagPicker';
-import { useFocusTags } from '@/components/coaches/use-focus-tags';
+import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
 } from '@/lib/rep-plan-templates';
@@ -101,6 +101,9 @@ export default function CoachPlanTemplateEditorPage({
   // The team's whole shared vocabulary — one hook, so the four surfaces that offer a tag picker
   // cannot drift on how a tag is fetched, created or merged into local state.
   const { tags: focusTags, createTag: createFocusTag } = useFocusTags(orgSlug, teamId);
+  // Equipment (mig 266) — NOT staff: `withoutPeople` below excludes staff entirely, but a
+  // template still carries its own kit list ("the shape and the teaching" includes what to bring).
+  const { tags: equipmentTags, createTag: createEquipmentTag } = useEquipmentTags(orgSlug, teamId);
 
   // ⚠ The signature covers the WHOLE editable state, not just the plan: renaming a template and
   // then closing the tab must be as safe as adding a block and closing the tab.
@@ -233,8 +236,8 @@ export default function CoachPlanTemplateEditorPage({
             canViewFocus={false}
             attendance={[]}
             canViewAttendance={false}
-            staffSuggestions={[]}
-            equipmentSuggestions={[]}
+            equipmentTags={equipmentTags}
+            onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
             drills={drills}
             focusTags={focusTags}
             // A template has no date, so there is no running clock and no block start times —

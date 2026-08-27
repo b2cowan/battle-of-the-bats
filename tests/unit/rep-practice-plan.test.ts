@@ -2,17 +2,16 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   blockRotates,
-  collectPracticeTagSuggestions,
   computeBlockClocks,
   computeRotation,
   defaultIntervalMinutes,
   startingGroupsForStation,
   copyPracticePlanForReuse,
-  collectStaffSuggestions,
   describeSplit,
   drawGroups,
   formatDuration,
   isPracticePlanEmpty,
+  resolvePracticePlanTagNames,
   sanitizePracticePlan,
   totalPlannedMinutes,
 } from '../../lib/rep-practice-plan.ts';
@@ -498,39 +497,87 @@ describe('startingGroupsForStation', () => {
   });
 });
 
-describe('collectPracticeTagSuggestions', () => {
-  it('gathers staff and equipment in one walk, coaches first', () => {
-    const a = sanitizePracticePlan({
-      practiceTypes: ['Hitting'],
-      equipment: ['balls'],
-      blocks: [{ title: 'A', duration: { minutes: 5 }, staff: ['Craig'] }],
-    });
-    const b = sanitizePracticePlan({
-      practiceTypes: ['Fielding', 'hitting'],
+describe('sanitizePracticePlan — staff/equipment tag ids (mig 266)', () => {
+  it('accepts opaque staffTagIds/equipmentTagIds at every level, structurally, with no library check', () => {
+    const plan = sanitizePracticePlan({
+      equipmentTagIds: ['eq-1'],
       blocks: [{
-        title: 'B', duration: { minutes: 5 },
-        stations: [{ name: 'Tees', staff: ['Adam'], equipment: ['tees', 'BALLS'] }],
+        title: 'A', duration: { minutes: 5 }, staffTagIds: ['s-1'],
+        stations: [{ name: 'Tees', staffTagIds: ['s-2'], equipmentTagIds: ['eq-2'] }],
       }],
     });
-    const out = collectPracticeTagSuggestions([a, b], ['Head Coach']);
-    assert.deepEqual(out.staff, ['Head Coach', 'Craig', 'Adam']);
-    assert.deepEqual(out.equipment, ['balls', 'tees'], 'case-insensitive de-dup, first spelling wins');
+    assert.deepEqual(plan?.equipmentTagIds, ['eq-1']);
+    assert.deepEqual(plan?.blocks[0].staffTagIds, ['s-1']);
+    assert.deepEqual(plan?.blocks[0].stations?.[0].staffTagIds, ['s-2']);
+    assert.deepEqual(plan?.blocks[0].stations?.[0].equipmentTagIds, ['eq-2']);
   });
 
-  it('does NOT suggest legacy practice types (Phase 3 — what a practice is about became a tag)', () => {
-    const plan = sanitizePracticePlan({ practiceTypes: ['Hitting'], blocks: [{ title: 'A', duration: { minutes: 5 } }] });
-    // The stored value survives, because the focus rail still matches an old plan on its own
-    // words — but nothing offers it back, since there is no free-text control to offer it into.
-    assert.deepEqual(plan?.practiceTypes, ['Hitting']);
-    assert.deepEqual(
-      collectPracticeTagSuggestions([plan]),
-      { staff: [], equipment: [] },
-      'a suggestion list must not offer words from a vocabulary the product no longer writes',
+  it('drops ids not in the supplied valid set, at every level, when one is passed', () => {
+    const plan = sanitizePracticePlan(
+      {
+        equipmentTagIds: ['eq-real', 'eq-foreign'],
+        blocks: [{ title: 'A', duration: { minutes: 5 }, staffTagIds: ['s-real', 's-foreign'] }],
+      },
+      undefined,
+      new Set(['s-real']),
+      new Set(['eq-real']),
     );
+    assert.deepEqual(plan?.equipmentTagIds, ['eq-real']);
+    assert.deepEqual(plan?.blocks[0].staffTagIds, ['s-real']);
   });
 
-  it('tolerates practices with no plan', () => {
-    assert.deepEqual(collectPracticeTagSuggestions([null, null]), { staff: [], equipment: [] });
+  it('leaves ids untouched when no valid set is supplied (structural-only pass)', () => {
+    const plan = sanitizePracticePlan({
+      blocks: [{ title: 'A', duration: { minutes: 5 }, staffTagIds: ['s-anything'] }],
+    });
+    assert.deepEqual(plan?.blocks[0].staffTagIds, ['s-anything']);
+  });
+
+  it('legacy staff/equipment strings still round-trip untouched beside the new id fields', () => {
+    const plan = sanitizePracticePlan({
+      equipment: ['Tees (4)'],
+      blocks: [{ title: 'A', duration: { minutes: 5 }, staff: ['Coach Dana'] }],
+    });
+    assert.deepEqual(plan?.equipment, ['Tees (4)']);
+    assert.deepEqual(plan?.blocks[0].staff, ['Coach Dana']);
+  });
+});
+
+describe('resolvePracticePlanTagNames (mig 266) — display-only id→name resolution', () => {
+  const STAFF = [{ id: 's-1', name: 'Dana' }];
+  const EQUIPMENT = [{ id: 'eq-1', name: 'Tees (4)' }];
+
+  it('resolves ids to current names at every level when present', () => {
+    const plan = sanitizePracticePlan({
+      equipmentTagIds: ['eq-1'],
+      blocks: [{
+        title: 'A', duration: { minutes: 5 }, staffTagIds: ['s-1'],
+        stations: [{ name: 'Tees', staffTagIds: ['s-1'], equipmentTagIds: ['eq-1'] }],
+      }],
+    })!;
+    const resolved = resolvePracticePlanTagNames(plan, STAFF, EQUIPMENT);
+    assert.deepEqual(resolved.equipment, ['Tees (4)']);
+    assert.deepEqual(resolved.blocks[0].staff, ['Dana']);
+    assert.deepEqual(resolved.blocks[0].stations?.[0].staff, ['Dana']);
+    assert.deepEqual(resolved.blocks[0].stations?.[0].equipment, ['Tees (4)']);
+  });
+
+  it('falls back to the legacy string when a level has no ids', () => {
+    const plan = sanitizePracticePlan({
+      equipment: ['Cones'],
+      blocks: [{ title: 'A', duration: { minutes: 5 }, staff: ['Coach Priya'] }],
+    })!;
+    const resolved = resolvePracticePlanTagNames(plan, STAFF, EQUIPMENT);
+    assert.deepEqual(resolved.equipment, ['Cones']);
+    assert.deepEqual(resolved.blocks[0].staff, ['Coach Priya']);
+  });
+
+  it('silently drops an id with no match in the library rather than showing a blank', () => {
+    const plan = sanitizePracticePlan({
+      blocks: [{ title: 'A', duration: { minutes: 5 }, staffTagIds: ['s-deleted'] }],
+    })!;
+    const resolved = resolvePracticePlanTagNames(plan, STAFF, EQUIPMENT);
+    assert.deepEqual(resolved.blocks[0].staff, []);
   });
 });
 
@@ -596,24 +643,14 @@ describe('copyPracticePlanForReuse (D7 — a copy, never a series write)', () =>
   });
 });
 
-describe('collectStaffSuggestions (D12 — a reusable label, never a grant)', () => {
-  it('gathers distinct names from blocks and stations, newest plan first', () => {
-    const a = sanitizePracticePlan({ blocks: [{ title: 'A', duration: { minutes: 5 }, staff: ['Craig'] }] });
-    const b = sanitizePracticePlan({
-      blocks: [{ title: 'B', duration: { minutes: 5 }, stations: [{ name: 'Tees', staff: ['Adam', 'craig'] }] }],
-    });
-    assert.deepEqual(collectStaffSuggestions([a, b]), ['Craig', 'Adam']);
-  });
-
-  it('tolerates practices with no plan', () => {
-    assert.deepEqual(collectStaffSuggestions([null, null]), []);
-  });
-});
-
 describe('isPracticePlanEmpty', () => {
   it('treats a blank plan and a missing plan the same', () => {
     assert.equal(isPracticePlanEmpty(null), true);
     assert.equal(isPracticePlanEmpty(plan()), true);
     assert.equal(isPracticePlanEmpty(plan({ goal: 'x' })), false);
+  });
+
+  it('a plan holding only equipmentTagIds (mig 266) is not empty', () => {
+    assert.equal(isPracticePlanEmpty(plan({ equipmentTagIds: ['eq-1'] })), false);
   });
 });

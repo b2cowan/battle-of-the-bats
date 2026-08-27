@@ -15,6 +15,7 @@ import {
   type CoachCapabilities,
 } from './coach-capabilities';
 import { resolveCoachTeamRead } from './coach-team-read';
+import { repointTeamPlansOnMerge, repointTeamPlansOnDelete } from './rep-practice-plan-tag-repoint';
 import type { RepTagKind } from './types';
 
 /**
@@ -60,6 +61,15 @@ export interface CoachTagRouteConfig {
   canWrite: (caps: CoachCapabilities) => boolean;
   readDenied: string;
   writeDenied: string;
+  /**
+   * ⚠ **'staff' and 'equipment' ONLY.** Every other kind links by a real FK (`rep_team_event_tags`,
+   * drill/template tag tables), so `merge_rep_team_tags` alone re-points history. Staff/equipment
+   * picks live as ids inside `PracticePlan` jsonb — no FK, nothing for the RPC to reach. These
+   * hooks run in the SAME request as the tag write, so a plan referencing the loser never survives
+   * the merge/delete outliving its target. See `lib/rep-practice-plan-tag-repoint.ts`.
+   */
+  afterMerge?: (teamId: string, winnerTagId: string, loserTagId: string) => Promise<void>;
+  afterDelete?: (teamId: string, tagId: string) => Promise<void>;
 }
 
 type TeamParams = { params: Promise<{ orgSlug: string; teamId: string }> };
@@ -118,6 +128,39 @@ export const FOCUS_TAG_LIBRARY = {
   canWrite: canManageSchedule,
   readDenied: 'You do not have access to this team’s practice planning.',
   writeDenied: 'You do not have access to the schedule.',
+} as const satisfies Omit<CoachTagRouteConfig, 'route'>;
+
+/**
+ * 'staff' and 'equipment' (mig 266) — real libraries behind the practice plan's remaining two
+ * free-text fields. Same read/write gates as `FOCUS_TAG_LIBRARY` — a picker on the same screen
+ * should not answer "who can use this" differently kind to kind.
+ *
+ * ⚠⚠ **The `afterMerge`/`afterDelete` hooks are load-bearing, not optional polish.** See the type's
+ * own doc and `lib/rep-practice-plan-tag-repoint.ts` — without them a merge or delete here leaves a
+ * dangling id sitting inside a coach's saved plan.
+ */
+export const STAFF_TAG_LIBRARY = {
+  kind: 'staff',
+  pluralNoun: 'staff tags',
+  canRead: (c: CoachCapabilities) => canManageSchedule(c) || canViewDevelopmentGoals(c),
+  canWrite: canManageSchedule,
+  readDenied: 'You do not have access to this team’s practice planning.',
+  writeDenied: 'You do not have access to the schedule.',
+  afterMerge: (teamId, winnerTagId, loserTagId) =>
+    repointTeamPlansOnMerge(teamId, 'staff', winnerTagId, loserTagId),
+  afterDelete: (teamId, tagId) => repointTeamPlansOnDelete(teamId, 'staff', tagId),
+} as const satisfies Omit<CoachTagRouteConfig, 'route'>;
+
+export const EQUIPMENT_TAG_LIBRARY = {
+  kind: 'equipment',
+  pluralNoun: 'equipment tags',
+  canRead: (c: CoachCapabilities) => canManageSchedule(c) || canViewDevelopmentGoals(c),
+  canWrite: canManageSchedule,
+  readDenied: 'You do not have access to this team’s practice planning.',
+  writeDenied: 'You do not have access to the schedule.',
+  afterMerge: (teamId, winnerTagId, loserTagId) =>
+    repointTeamPlansOnMerge(teamId, 'equipment', winnerTagId, loserTagId),
+  afterDelete: (teamId, tagId) => repointTeamPlansOnDelete(teamId, 'equipment', tagId),
 } as const satisfies Omit<CoachTagRouteConfig, 'route'>;
 
 /**
@@ -242,8 +285,25 @@ export function coachTagItemRoutes(config: CoachTagRouteConfig) {
     const denied = denyUnless(config.canWrite(resolved.assignment.capabilities), config.writeDenied);
     if (denied) return denied;
 
-    // ⚠ Delete drops the tag's links with NO re-pointing. Merge is the history-preserving path;
-    // this is for a tag that was never really used.
+    // ⚠ Delete drops the tag's RELATIONAL links with NO re-pointing (game/expense/focus). Merge is
+    // the history-preserving path for those; this is for a tag that was never really used.
+    // 'staff'/'equipment' have no relational link to drop — the hook strips the id from every
+    // plan's jsonb directly, run BEFORE the row disappears so a failed strip still leaves a
+    // resolvable (if now-orphaned) tag rather than a silently dangling id.
+    //
+    // ⚠ TRY/CATCH, matching PATCH and merge below — `afterDelete` walks every one of the team's
+    // practice events and writes each one back; unlike the single-row `deleteRepTeamTag` this
+    // used to be the only work here, a failure partway through is a real, reachable case, and
+    // without this it would fall through to a bare framework 500 instead of the same clean
+    // `{ error }` shape every other write on this route gives the coach.
+    try {
+      if (config.afterDelete) await config.afterDelete(teamId, tagId);
+    } catch (error: unknown) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Could not remove that tag from every plan' },
+        { status: 400 },
+      );
+    }
     const deleted = await deleteRepTeamTag(tagId, teamId);
     if (!deleted) return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     return NextResponse.json({ ok: true });
@@ -281,6 +341,10 @@ export function coachTagMergeRoute(config: CoachTagRouteConfig) {
       // Both ids are proved to belong to THIS team before the RPC sees them; the function itself
       // re-checks same-team/same-org/same-kind as a defence-in-depth backstop.
       await mergeRepTeamTags(winnerTagId, loserTagId, teamId);
+      // ⚠ AFTER the RPC, not before: the RPC is what proves same-team/same-org/same-kind. Running
+      // the jsonb walk on an unproven pair would let a cross-team id slip a rewrite into another
+      // team's plans ahead of the check that was supposed to catch it.
+      if (config.afterMerge) await config.afterMerge(teamId, winnerTagId, loserTagId);
       return NextResponse.json({ ok: true });
     } catch (error: unknown) {
       return NextResponse.json(

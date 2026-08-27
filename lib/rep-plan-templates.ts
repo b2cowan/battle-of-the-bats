@@ -82,12 +82,18 @@ function stationForTemplate(station: PracticeStation): PracticeStation {
   const next: PracticeStation = { ...station };
   // ── The PRACTICE half — the people and the moment, which belong to a practice, never here ──
   delete next.staff;
+  // ⚠ mig 266's id-backed picker is the SAME "people" concept as `staff` above, just a different
+  // storage — stripping the name and leaving the id would silently smuggle a specific person (a
+  // real tag id, still resolvable to a name) into every practice this template is loaded onto.
+  delete next.staffTagIds;
   delete next.playerIds;
   delete next.note;         // "just for tonight" — the one field that must never travel either way
   delete next.rotationNote;
   // ⚠ `drillId` and `drillTags` deliberately SURVIVE. A template's stations keep pointing at the
   // drills they came from, so loading one hands the coach the same read-only, still-counted drill
   // stations they picked when they saved it. Stripping them here is the silent-breakage path.
+  // ⚠ `equipment`/`equipmentTagIds` deliberately SURVIVE too — kit is part of the SHAPE a template
+  // carries (what to bring), not people; only staff is an identity claim here.
   return next;
 }
 
@@ -95,6 +101,7 @@ function stationForTemplate(station: PracticeStation): PracticeStation {
 function blockForTemplate(block: PracticePlanBlock): PracticePlanBlock {
   const next: PracticePlanBlock = { ...block };
   delete next.staff;
+  delete next.staffTagIds;  // see stationForTemplate — same "people, not shape" reasoning
   delete next.playerIds;
   if (next.stations) next.stations = next.stations.map(stationForTemplate);
   // A rotation's SHAPE is worth keeping — how often groups move is part of how the practice runs.

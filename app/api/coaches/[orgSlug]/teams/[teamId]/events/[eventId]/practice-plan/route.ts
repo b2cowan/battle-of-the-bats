@@ -28,7 +28,7 @@ import {
   redactRoster,
 } from '@/lib/coach-capabilities';
 import {
-  MAX_RECAP_LEN, collectPracticeTagSuggestions, sanitizePracticePlan,
+  MAX_RECAP_LEN, sanitizePracticePlan,
 } from '@/lib/rep-practice-plan';
 import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
 
@@ -127,7 +127,7 @@ export const GET = withObservability(async (_req: Request,
     .then(all => all.filter(p => p.status === 'active'));
   const [
     players, goals, attendance, previousEvents, sessions, staff, drills,
-    templates, focusTags, eventTagMap, scoutingBridge, hasPastSeasonPlans,
+    templates, focusTags, staffTags, equipmentTags, eventTagMap, scoutingBridge, hasPastSeasonPlans,
   ] = await Promise.all([
     playersPromise,
     // ⚠ Gated at the SOURCE: an assistant without `notes` never receives focus text, so no client
@@ -156,6 +156,11 @@ export const GET = withObservability(async (_req: Request,
     // The team's whole 'focus' vocabulary — every tag it has, not only those already in use, so
     // the picker can never hide a word the coach already created and invite a duplicate.
     getRepTeamTagLibrary(teamId, 'focus', ctx.org.id).catch(() => []),
+    // The team's whole 'staff'/'equipment' vocabularies (mig 266) — same reasoning as `focusTags`
+    // above: every id the picker offers, not only the ones already on this plan, so it can never
+    // hide a name/item another block already uses and invite a near-duplicate.
+    getRepTeamTagLibrary(teamId, 'staff', ctx.org.id).catch(() => []),
+    getRepTeamTagLibrary(teamId, 'equipment', ctx.org.id).catch(() => []),
     // THIS practice's own tags. ⚠ The same `rep_team_event_tags` rows a game's tags live in, told
     // apart by the tag's kind — a practice carrying a 'focus' tag IS a tagged plan (mig 221).
     getRepTeamEventTagsMap([eventId]).catch(() => ({} as Record<string, string[]>)),
@@ -203,15 +208,6 @@ export const GET = withObservability(async (_req: Request,
     caps,
   );
 
-  // The team's reusable vocabulary: staff (D12) plus equipment and practice types, all gathered in
-  // ONE walk of their previous plans. Every one is a LABEL — nothing here confers any access, and
-  // nothing is a fixed list, because "Hitting / Fielding / Pitching" is one sport talking and this
-  // platform serves several.
-  const tagSuggestions = collectPracticeTagSuggestions(
-    previousEvents.map(e => e.practicePlan),
-    staff.map(s => s.displayName ?? ''),
-  );
-
   /**
    * The reader's OWN staff name, so the field screen can pick out the station they're tagged on
    * ("Craig · Jen — that's you", D28) without asking them who they are.
@@ -246,6 +242,9 @@ export const GET = withObservability(async (_req: Request,
     planTagIds,
     focusTags,
     templates: templates.map(t => ({ id: t.id, name: t.name, plan: t.plan, tags: t.tags })),
+    // The 'staff'/'equipment' libraries (mig 266) — same shape and same reasoning as `focusTags`.
+    staffTags,
+    equipmentTags,
     roster,
     // Only what the rail needs. The grouping tag (D16, now mig 221) rides along so the rail can
     // soften off-type areas — it is a label on the AREA, never a judgement about the player, and it
@@ -263,8 +262,6 @@ export const GET = withObservability(async (_req: Request,
     scoutingBridge,
     /** Is the picker's third source worth offering? See the read that produces it. */
     hasPastSeasonPlans,
-    staffSuggestions: tagSuggestions.staff,
-    equipmentSuggestions: tagSuggestions.equipment,
     // ⚠ Sent to anyone who can READ the plan (`schedule`), which is deliberate: an assistant sees
     // the same station text a picked drill produced anyway, so withholding the library would hide
     // nothing while breaking the preview. Drills carry no player data of any kind (D20), so there
@@ -299,7 +296,7 @@ export const PUT = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
 
   // Head coach only (D3). Deliberately NOT `schedule`: an assistant who can create the practice
   // still can't write its plan in 1a. Widening this is a one-line change if coaches ask for it.
@@ -323,10 +320,18 @@ export const PUT = withObservability(async (req: Request,
 
   // Every player reference is re-checked against the CURRENT roster, so a stale client — or a
   // hand-rolled request — can't attach a player from another team, or one who has left this one.
-  const rosterIds = new Set(
-    (await getRepRosterPlayers(programYear.id)).filter(p => p.status === 'active').map(p => p.id),
+  // Staff/equipment tag ids get the same re-check (mig 266) — the library, not just this team's
+  // own tags, since a coach may pick a club-shared entry exactly as the picker offered it.
+  const [rosterPlayers, staffTags, equipmentTags] = await Promise.all([
+    getRepRosterPlayers(programYear.id),
+    getRepTeamTagLibrary(teamId, 'staff', ctx.org.id),
+    getRepTeamTagLibrary(teamId, 'equipment', ctx.org.id),
+  ]);
+  const rosterIds = new Set(rosterPlayers.filter(p => p.status === 'active').map(p => p.id));
+  const plan = sanitizePracticePlan(
+    body.plan, rosterIds,
+    new Set(staffTags.map(t => t.id)), new Set(equipmentTags.map(t => t.id)),
   );
-  const plan = sanitizePracticePlan(body.plan, rosterIds);
 
   const event = await updateRepTeamEventPracticePlan(eventId, teamId, programYear.id, plan);
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });

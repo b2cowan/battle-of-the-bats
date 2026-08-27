@@ -6464,19 +6464,28 @@ function mapRepTeamTag(r: any): RepTeamTag {
  * database layer stops a route from linking one club's drill to another club's tag. This is that
  * check, and it is why the id is proved rather than trusted.
  */
-export async function isTeamFocusTag(tagId: string, orgId: string, teamId: string): Promise<boolean> {
+/** Does `tagId` belong to this org's `kind` vocabulary, and is it usable by this team (its own, or
+ *  the club's shared set)? The one check every write that accepts a client-supplied tag id runs
+ *  before trusting it — never inferred from the id alone. */
+export async function isTeamTagOfKind(
+  tagId: string, orgId: string, teamId: string, kind: RepTagKind,
+): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_tags')
     .select('id, team_id')
     .eq('id', tagId)
     .eq('org_id', orgId)
-    .eq('kind', 'focus')
+    .eq('kind', kind)
     .maybeSingle();
   // ⚠ Check `error` before believing an empty result — a select naming a column that does not exist
   // returns {data:null}, which reads exactly like "no such tag".
   if (error) throw error;
   if (!data) return false;
   return data.team_id === null || data.team_id === teamId;
+}
+
+export async function isTeamFocusTag(tagId: string, orgId: string, teamId: string): Promise<boolean> {
+  return isTeamTagOfKind(tagId, orgId, teamId, 'focus');
 }
 
 export async function getRepTeamTags(teamId: string, kind: RepTagKind = 'game'): Promise<RepTeamTag[]> {

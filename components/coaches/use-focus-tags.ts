@@ -30,8 +30,46 @@ export function useFocusTags(
   teamId: string,
   opts: { seed?: PickableTag[]; skipFetch?: boolean } = {},
 ) {
+  return useTeamTagLibrary(orgSlug, teamId, 'focus-tags', opts);
+}
+
+/**
+ * The 'staff' vocabulary (mig 266) — real, team-wide, behind the practice plan's staff pickers.
+ * ⚠ Rename/merge here also rewrite every plan that used the tag, unlike every kind above it — see
+ * `lib/rep-practice-plan-tag-repoint.ts`. Nothing about THIS hook differs; the asymmetry is
+ * server-side.
+ */
+export function useStaffTags(
+  orgSlug: string,
+  teamId: string,
+  opts: { seed?: PickableTag[]; skipFetch?: boolean } = {},
+) {
+  return useTeamTagLibrary(orgSlug, teamId, 'staff-tags', opts);
+}
+
+/** The 'equipment' vocabulary (mig 266) — see `useStaffTags`, same reasoning. */
+export function useEquipmentTags(
+  orgSlug: string,
+  teamId: string,
+  opts: { seed?: PickableTag[]; skipFetch?: boolean } = {},
+) {
+  return useTeamTagLibrary(orgSlug, teamId, 'equipment-tags', opts);
+}
+
+/**
+ * Shared implementation behind `useFocusTags`/`useStaffTags`/`useEquipmentTags` — one fetch/create/
+ * merge-local-state routine for every coach tag library, the client-side half of the same collapse
+ * `lib/coach-tag-routes.ts` already did server-side. `routeSegment` is the library's own path
+ * segment ('focus-tags', 'staff-tags', 'equipment-tags').
+ */
+function useTeamTagLibrary(
+  orgSlug: string,
+  teamId: string,
+  routeSegment: string,
+  opts: { seed?: PickableTag[]; skipFetch?: boolean } = {},
+) {
   const [tags, setTags] = useState<PickableTag[]>(opts.seed ?? []);
-  const base = `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`;
+  const base = `/api/coaches/${orgSlug}/teams/${teamId}/${routeSegment}`;
 
   const reload = useCallback(async () => {
     try {

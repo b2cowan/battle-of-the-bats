@@ -1434,8 +1434,15 @@ export interface PracticeStation {
   goal?: string;
   coachingPoints?: string[];
   setup?: string;
-  /** Reusable equipment labels (tags), suggested from what this team has used before. */
+  /**
+   * Legacy free-text equipment labels — kept for stations saved before the real 'equipment'
+   * library existed (mig 266). A station carries EITHER this OR `equipmentTagIds`, never edits
+   * both: the picker resolves this against the team's library the moment a coach opens the plan
+   * (best-effort NAME match, no auto-minting), and the next save writes `equipmentTagIds` only.
+   */
   equipment?: string[];
+  /** Real 'equipment' tag ids (mig 266) — the current picker's storage. See `equipment` above. */
+  equipmentTagIds?: string[];
 
   /**
    * PROVENANCE ONLY — which library drill this station was picked from.
@@ -1461,8 +1468,14 @@ export interface PracticeStation {
   drillTags?: string[];
 
   // ── The PRACTICE half — always editable, never written back to the library ──
-  /** Names, never grants — a staff entry carries no account and no capability. */
+  /**
+   * Legacy free-text staff labels — kept for stations saved before the real 'staff' library
+   * existed (mig 266). A station carries EITHER this OR `staffTagIds`, never edits both. Names,
+   * never grants — a staff entry carries no account and no capability, tag or not.
+   */
   staff?: string[];
+  /** Real 'staff' tag ids (mig 266) — the current picker's storage. See `staff` above. */
+  staffTagIds?: string[];
   /** ⚠ Only when the block has stations that do NOT rotate. See `blockRotates`. */
   playerIds?: string[];
   rotationNote?: string;
@@ -1509,7 +1522,10 @@ export interface PracticePlanBlock {
   description?: string;
   goal?: string;
   duration: PracticeDuration;
+  /** Legacy free-text staff labels. A block carries EITHER this OR `staffTagIds`. See `PracticeStation.staff`. */
   staff?: string[];
+  /** Real 'staff' tag ids (mig 266). See `PracticeStation.staffTagIds`. */
+  staffTagIds?: string[];
   /** ⚠ Only when the block has NO stations. */
   playerIds?: string[];
   coachingPoints?: string[];
@@ -1531,8 +1547,10 @@ export interface PracticePlan {
    * areas are off-type never vanishes from a coverage list.
    */
   practiceTypes?: string[];
-  /** Reusable equipment labels (tags) for the whole practice. */
+  /** Legacy free-text equipment labels for the whole practice. A plan carries EITHER this OR `equipmentTagIds`. */
   equipment?: string[];
+  /** Real 'equipment' tag ids (mig 266). See `equipment` above. */
+  equipmentTagIds?: string[];
   blocks: PracticePlanBlock[];
 
   /**
@@ -1788,8 +1806,16 @@ export interface RepTeamLineupTemplate {
  * put on drills and focus areas: the case-insensitive unique index tags have carried since mig 181
  * makes the "Hitting" vs "hitting" split structurally impossible, and `merge_rep_team_tags`
  * atomically re-points history when a coach ends up with two near-duplicates.
+ *
+ * `staff` / `equipment` (mig 266) — real libraries behind the practice plan's two remaining
+ * free-text fields. ⚠ **Different from every kind above them**: `merge_rep_team_tags` re-points
+ * RELATIONAL links, but a plan's staff/equipment picks live as ids inside `PracticePlan` jsonb — no
+ * FK, no cascade. Every merge or delete of a 'staff'/'equipment' tag MUST also walk and rewrite the
+ * team's plans via `lib/rep-practice-plan-tag-repoint.ts`, or the id is left dangling in history.
+ * (COACH_PRACTICE_PLANS_PLAN.md §10.3 chose plain names instead, specifically to avoid this; this
+ * pair of kinds deliberately reopens that call — see mig 266's header.)
  */
-export type RepTagKind = 'game' | 'expense' | 'focus';
+export type RepTagKind = 'game' | 'expense' | 'focus' | 'staff' | 'equipment';
 
 export interface RepTeamTag {
   id: string;

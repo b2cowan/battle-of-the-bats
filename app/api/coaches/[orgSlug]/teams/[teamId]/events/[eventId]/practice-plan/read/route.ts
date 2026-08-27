@@ -3,6 +3,7 @@ import {
   getRepTeamEventById,
   getRepRosterPlayers,
   getRepTeamEventTagsByKind,
+  getRepTeamTagLibrary,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
@@ -41,10 +42,20 @@ import { denyUnless, canReadPastPracticePlans, redactRoster } from '@/lib/coach-
  *   · **No focus areas.** The rail is an instrument for planning tonight; a record does not need
  *     to restate coach-judgement text about a minor, so the `notes`-gated data is simply never
  *     fetched. Nothing to leak.
- *   · **No drills, no templates, no tag library, no suggestions.** All instruments, all live-season
- *     only. The plan renders entirely from its own jsonb — the property Phase 2's copy-on-add
- *     bought: editing a drill since cannot rewrite what June's practice says.
+ *   · **No drills, no templates, no suggestions.** All instruments, all live-season only. The plan
+ *     renders entirely from its own jsonb — the property Phase 2's copy-on-add bought: editing a
+ *     drill since cannot rewrite what June's practice says.
  *   · **No write of any kind.** There is no other verb in this file.
+ *
+ * ⚠⚠ **THE 'staff'/'equipment' LIBRARIES ARE THE ONE DELIBERATE EXCEPTION TO "editing since cannot
+ * rewrite what June's practice says" (owner instruction, 2026-08-27, mig 266).** Unlike a drill's
+ * tags (snapshotted as NAMES at add time, on purpose, for exactly the reason above), staff/equipment
+ * picks are stored as LIVE ids — the same choice `planTagIds`/focus tags already made. A rename or
+ * merge of a staff/equipment tag DOES retroactively change what this archive page shows for a past
+ * practice; that was weighed against the drill precedent and decided the other way, in full
+ * knowledge of the conflict. See `lib/rep-practice-plan-tag-repoint.ts` and
+ * `COACH_PRACTICE_STAFF_EQUIPMENT_TAGS_PLAN.md`. A plan written before mig 266 still carries the old
+ * frozen strings and renders exactly as it always did — nothing here migrates them.
  *
  * ── The container rule ──
  * The unit of work is every page reachable from the door, never the door alone. This route IS the
@@ -60,7 +71,7 @@ export const GET = withObservability(async (req: Request,
   // team's working season, which is how the Development report's own list reaches it.
   const seasonCtx = await resolveCoachHistoryReadFromRequest(req, orgSlug, teamId);
   if ('error' in seasonCtx) return seasonCtx.error;
-  const { programYear, capabilities, isReadOnly } = seasonCtx;
+  const { ctx, programYear, capabilities, isReadOnly } = seasonCtx;
 
   /**
    * ⚠ THE ARCHIVE DOOR IS NOT A HELPER'S DOOR (Phase 4, 2026-08-03).
@@ -109,13 +120,17 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const [tagsByEvent, players] = await Promise.all([
+  const [tagsByEvent, players, staffTags, equipmentTags] = await Promise.all([
     getRepTeamEventTagsByKind([eventId], 'focus').catch(() => ({} as Record<string, { id: string; name: string }[]>)),
     // Only to turn the plan's stored player ids into the names the coach wrote them as.
     // ⚠ A1 (2026-08-03): this used to be conditional on roster visibility. Names are baseline now,
     // and the gate above already decided who reaches this route at all, so the conditional is gone
     // rather than left as a constant nobody can flip.
     getRepRosterPlayers(programYear.id).catch(() => []),
+    // The CURRENT libraries — see the header note on why this route resolves them live rather than
+    // trusting a frozen snapshot the way it does everything else.
+    getRepTeamTagLibrary(teamId, 'staff', ctx.org.id).catch(() => []),
+    getRepTeamTagLibrary(teamId, 'equipment', ctx.org.id).catch(() => []),
   ]);
 
   return NextResponse.json({
@@ -130,6 +145,8 @@ export const GET = withObservability(async (req: Request,
     plan: event.practicePlan,
     recap: event.practiceRecap,
     tags: tagsByEvent[eventId] ?? [],
+    staffTags,
+    equipmentTags,
     // Every player who was on the roster THAT season — including those since departed, because
     // the record must read as it read at the time. Names + number only; a record needs identity,
     // not PII, and redactRoster is the gate that catches the day someone spreads `...p` in here.

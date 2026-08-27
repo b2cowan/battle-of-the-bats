@@ -227,14 +227,21 @@ export default function TagSearchCombobox({
         </div>
       )}
 
+      {/* ⚠⚠ THE SWATCHES WEAR THE SHARED DOT CLASSES, NOT INLINE COLOURS (fixed 2026-08-26, owner
+          walk). They were hand-written `rgba(var(--blueprint-blue-rgb) …)` / `--logic-lime-rgb`
+          styles — and the warm gate remaps BOTH of those tokens to olive, so on cream this legend
+          drew two identical olive squares and then labelled one of them "Shared by your
+          organization". Worse than the dots beside it: an inline style cannot be reached by a theme
+          override at all, so no amount of correcting `.tagComboDot*` would ever have fixed it. Same
+          distinction, same classes, one place to change it. */}
       {showLegend && library.some(t => t.teamId === null) && (
         <div className={styles.tagComboLegend}>
           <span className={styles.tagComboLegendItem}>
-            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} />
+            <span className={`${styles.tagComboLegendDot} ${styles.tagComboDotOrg}`} />
             <span>Shared by your organization</span>
           </span>
           <span className={styles.tagComboLegendItem}>
-            <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} />
+            <span className={`${styles.tagComboLegendDot} ${styles.tagComboDotOwn}`} />
             <span>Your team&rsquo;s own</span>
           </span>
         </div>

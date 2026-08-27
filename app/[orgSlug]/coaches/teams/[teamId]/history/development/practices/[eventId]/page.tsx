@@ -8,7 +8,7 @@ import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
-  blockRotates, computeBlockClocks, formatDuration, resolveStationTeaching,
+  blockRotates, computeBlockClocks, formatDuration, resolvePracticePlanTagNames, resolveStationTeaching,
   type PracticePlan, type PracticePlanBlock, type PracticeStation,
 } from '@/lib/rep-practice-plan';
 // ⚠ SIX levels: [eventId] → practices → development → history → [teamId] → teams → coaches.
@@ -53,6 +53,10 @@ type LoadState = {
   plan: PracticePlan | null;
   recap: string | null;
   tags: { id: string; name: string }[];
+  /** The 'staff'/'equipment' libraries, CURRENT (mig 266) — see the route's header note on why
+   *  this one archive page resolves them live rather than trusting a frozen snapshot. */
+  staffTags: { id: string; name: string }[];
+  equipmentTags: { id: string; name: string }[];
   roster: { id: string; playerFirstName: string; playerLastName: string; playerNumber: string | null }[];
   season: { programYearId: string; name: string; isReadOnly: boolean };
 };
@@ -223,7 +227,12 @@ export default function CoachPastPracticePlanPage({
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
 
-  const plan = data?.plan ?? null;
+  // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames` and the route's
+  // header note. Deliberate: this is the one place this page's own "editing since cannot rewrite
+  // what June's practice says" rule doesn't hold for staff/equipment specifically.
+  const plan = data?.plan
+    ? resolvePracticePlanTagNames(data.plan, data.staffTags ?? [], data.equipmentTags ?? [])
+    : null;
   const clocks = plan ? computeBlockClocks(plan.blocks, data?.event.startsAt, data?.event.endsAt ?? null) : [];
 
   /* ⚠ THE ONLY LINK OUT, and it goes back to whichever list sent the coach here, carrying the

@@ -28,13 +28,13 @@ function planWith(overrides: Record<string, unknown> = {}): PracticePlan {
     goal: 'Hitting night',
     blocks: [{
       title: 'Stations', duration: { minutes: 30 },
-      staff: ['Dana'],
+      staff: ['Dana'], staffTagIds: ['tag-dana'],
       stations: [
         {
           id: 's1', name: 'Four-corner tee work', drillId: 'drill-1', drillTags: ['Hitting'],
           description: 'Four tees at the corners.', goal: 'Front shoulder closed.',
           coachingPoints: ['Weight back'], setup: 'Four tees', equipment: ['tees'],
-          staff: ['Dana'], note: 'only three tees tonight',
+          staff: ['Dana'], staffTagIds: ['tag-dana'], note: 'only three tees tonight',
         },
         { id: 's2', name: 'Short-hop reps', staff: ['Sam'], rotationNote: 'swap halfway' },
       ],
@@ -57,6 +57,13 @@ describe('planToTemplateShape — a template carries the shape and the teaching,
     assert.equal(block.staff, undefined);
     assert.equal(drillStation.staff, undefined);
     assert.equal(block.stations![1].staff, undefined);
+  });
+
+  it('⚠ drops staffTagIds too (mig 266) — the id-backed picker is the same "people" as `staff`', () => {
+    // The exact silent-leak this test exists to catch: a name stripped but its id left behind
+    // would still resolve to a specific person on every practice this template is loaded onto.
+    assert.equal(block.staffTagIds, undefined);
+    assert.equal(drillStation.staffTagIds, undefined);
   });
 
   it('drops players and the rotation GROUPS but keeps the rotation SHAPE', () => {

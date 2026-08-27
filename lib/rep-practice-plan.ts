@@ -91,7 +91,8 @@ export function emptyPracticePlan(): PracticePlan {
 /** True when a plan holds nothing worth storing (so the column goes back to NULL). */
 export function isPracticePlanEmpty(plan: PracticePlan | null | undefined): boolean {
   if (!plan) return true;
-  return !plan.goal?.trim() && !plan.equipment?.length && !plan.practiceTypes?.length && plan.blocks.length === 0;
+  return !plan.goal?.trim() && !plan.equipment?.length && !plan.equipmentTagIds?.length
+    && !plan.practiceTypes?.length && plan.blocks.length === 0;
 }
 
 // ── Sanitiser ────────────────────────────────────────────────────────────────
@@ -194,12 +195,18 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   if (goal) station.goal = goal;
   const equipment = tagList(raw.equipment, MAX_TAGS_PER_ITEM, MAX_TITLE_LEN);
   if (equipment) station.equipment = equipment;
+  // Structural only (opaque id shape, capped/deduped) — LIVE membership in the team's 'equipment'
+  // vocabulary is re-checked by `restrictTagIds` below, the same two-step `playerIds` already uses.
+  const equipmentTagIds = strList(raw.equipmentTagIds, MAX_TAGS_PER_ITEM, 64);
+  if (equipmentTagIds) station.equipmentTagIds = equipmentTagIds;
   const setup = optionalStr(raw.setup, MAX_TEXT_LEN);
   if (setup) station.setup = setup;
   const points = strList(raw.coachingPoints, MAX_COACHING_POINTS, MAX_SHORT_TEXT_LEN);
   if (points) station.coachingPoints = points;
   const staff = strList(raw.staff, MAX_STAFF_PER_ITEM, MAX_TITLE_LEN);
   if (staff) station.staff = staff;
+  const staffTagIds = strList(raw.staffTagIds, MAX_STAFF_PER_ITEM, 64);
+  if (staffTagIds) station.staffTagIds = staffTagIds;
   const playerIds = strList(raw.playerIds, 60, 64);
   if (playerIds) station.playerIds = playerIds;
   const rotationNote = optionalStr(raw.rotationNote, MAX_SHORT_TEXT_LEN);
@@ -319,6 +326,8 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (goal) block.goal = goal;
   const staff = strList(raw.staff, MAX_STAFF_PER_ITEM, MAX_TITLE_LEN);
   if (staff) block.staff = staff;
+  const staffTagIds = strList(raw.staffTagIds, MAX_STAFF_PER_ITEM, 64);
+  if (staffTagIds) block.staffTagIds = staffTagIds;
   const playerIds = strList(raw.playerIds, 60, 64);
   if (playerIds) block.playerIds = playerIds;
   const points = strList(raw.coachingPoints, MAX_COACHING_POINTS, MAX_SHORT_TEXT_LEN);
@@ -370,6 +379,8 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
 export function sanitizePracticePlan(
   input: unknown,
   rosterPlayerIds?: ReadonlySet<string>,
+  validStaffTagIds?: ReadonlySet<string>,
+  validEquipmentTagIds?: ReadonlySet<string>,
 ): PracticePlan | null {
   if (!input || typeof input !== 'object') return null;
   const raw = input as Record<string, unknown>;
@@ -402,8 +413,13 @@ export function sanitizePracticePlan(
   // "kit" was the pre-2026-08-01 free-text spelling of the same idea.
   const equipment = tagList(raw.equipment ?? raw.kit, MAX_TAGS_PER_ITEM, MAX_TITLE_LEN);
   if (equipment) plan.equipment = equipment;
+  const equipmentTagIds = strList(raw.equipmentTagIds, MAX_TAGS_PER_ITEM, 64);
+  if (equipmentTagIds) plan.equipmentTagIds = equipmentTagIds;
 
-  const scoped = rosterPlayerIds ? restrictToRoster(plan, rosterPlayerIds) : plan;
+  let scoped = rosterPlayerIds ? restrictToRoster(plan, rosterPlayerIds) : plan;
+  if (validStaffTagIds || validEquipmentTagIds) {
+    scoped = restrictTagIds(scoped, validStaffTagIds, validEquipmentTagIds);
+  }
   return isPracticePlanEmpty(scoped) ? null : scoped;
 }
 
@@ -434,6 +450,39 @@ function restrictToRoster(plan: PracticePlan, rosterPlayerIds: ReadonlySet<strin
       rotation: block.rotation
         ? { ...block.rotation, groups: block.rotation.groups.map(g => ({ ...g, playerIds: g.playerIds.filter(pid => rosterPlayerIds.has(pid)) })) }
         : block.rotation,
+    })),
+  };
+}
+
+/**
+ * Drop every staff/equipment tag reference that isn't currently in the team's library, at every
+ * level it appears (plan, block, station) — the same "structural sanitize, then live re-check
+ * against the source of truth" split `restrictToRoster` already uses for `playerIds`.
+ *
+ * ⚠ `undefined` for either set means "don't touch that kind" (the PUT route only fetches the sets
+ * it needs), NOT "nothing is valid" — an empty `Set` is what actually strips everything.
+ */
+function restrictTagIds(
+  plan: PracticePlan,
+  validStaffTagIds: ReadonlySet<string> | undefined,
+  validEquipmentTagIds: ReadonlySet<string> | undefined,
+): PracticePlan {
+  const keep = (ids: string[] | undefined, valid: ReadonlySet<string> | undefined) => {
+    if (!ids || !valid) return ids;
+    const filtered = ids.filter(tid => valid.has(tid));
+    return filtered.length ? filtered : undefined;
+  };
+  return {
+    ...plan,
+    equipmentTagIds: keep(plan.equipmentTagIds, validEquipmentTagIds),
+    blocks: plan.blocks.map(block => ({
+      ...block,
+      staffTagIds: keep(block.staffTagIds, validStaffTagIds),
+      stations: block.stations?.map(s => ({
+        ...s,
+        staffTagIds: keep(s.staffTagIds, validStaffTagIds),
+        equipmentTagIds: keep(s.equipmentTagIds, validEquipmentTagIds),
+      })),
     })),
   };
 }
@@ -929,74 +978,7 @@ export function formatRunClock(seconds: number): string {
   return over ? `+${body}` : body;
 }
 
-// ── Reuse helpers (copy-from-previous + the staff vocabulary) ─────────────────
-
-/**
- * The team's whole reusable staff vocabulary, in offer order: the coaching staff first, then every
- * distinct name already used on a previous plan, newest practice first.
- *
- * This IS D12's "team coaches offered automatically; anyone else created on the spot and
- * reusable". A name typed once appears as a suggestion on every later plan, and a typo stops
- * being suggested as soon as no plan uses it — the list self-heals rather than needing curation.
- *
- * ⚠ Every name here is a LABEL. Nothing in this list confers an account, an invitation or any
- * capability whatsoever.
- *
- * The case-insensitive, first-occurrence-wins merge lives here (one answer) rather than being
- * half-implemented again in the route that assembles the two sources.
- */
-export interface PracticeTagSuggestions {
-  staff: string[];
-  equipment: string[];
-  // ⚠ There is deliberately no `practiceTypes` here any more (Phase 3). What a practice is ABOUT
-  // stopped being free text and became a tag from the team's shared 'focus' vocabulary, which the
-  // picker fetches whole — so suggesting past free-text labels would offer a coach words from a
-  // vocabulary the product no longer writes into. The sanitiser still READS legacy
-  // `plan.practiceTypes` so old plans keep matching the focus rail; nothing suggests them.
-}
-
-export function collectStaffSuggestions(
-  plans: readonly (PracticePlan | null)[],
-  leadingNames: readonly string[] = [],
-): string[] {
-  return collectPracticeTagSuggestions(plans, leadingNames).staff;
-}
-
-/**
- * Every reusable label this team has already used — staff and equipment — in offer order,
- * gathered in ONE walk of the plans.
- *
- * ⚠ Both are coach-typed for a reason: a fixed list would hard-code one sport into a platform that
- * serves many, so the vocabulary comes from what this team itself has typed before.
- */
-export function collectPracticeTagSuggestions(
-  plans: readonly (PracticePlan | null)[],
-  leadingStaff: readonly string[] = [],
-): PracticeTagSuggestions {
-  const staff = new Map<string, string>();
-  const equipment = new Map<string, string>();
-  const add = (into: Map<string, string>, value: string | undefined) => {
-    const v = (value ?? '').trim();
-    if (v && !into.has(v.toLowerCase())) into.set(v.toLowerCase(), v);
-  };
-
-  for (const name of leadingStaff) add(staff, name);
-  for (const plan of plans) {
-    if (!plan) continue;
-    for (const e of plan.equipment ?? []) add(equipment, e);
-    for (const block of plan.blocks) {
-      for (const name of block.staff ?? []) add(staff, name);
-      for (const station of block.stations ?? []) {
-        for (const name of station.staff ?? []) add(staff, name);
-        for (const e of station.equipment ?? []) add(equipment, e);
-      }
-    }
-  }
-  return {
-    staff: [...staff.values()],
-    equipment: [...equipment.values()],
-  };
-}
+// ── Reuse helpers (copy-from-previous) ─────────────────────────────────────────
 
 /**
  * Copy a plan onto a different practice: fresh ids throughout, and every player reference
@@ -1023,6 +1005,9 @@ export function copyPracticePlanForReuse(
     ...(scoped.goal ? { goal: scoped.goal } : {}),
     ...(scoped.practiceTypes ? { practiceTypes: scoped.practiceTypes } : {}),
     ...(scoped.equipment ? { equipment: scoped.equipment } : {}),
+    // ⚠ Real tag ids (mig 266) carry forward too — `...block`/`...s` below already copy
+    // `staffTagIds`/`equipmentTagIds` at the block/station level for the same reason.
+    ...(scoped.equipmentTagIds ? { equipmentTagIds: scoped.equipmentTagIds } : {}),
     blocks: scoped.blocks.map(block => ({
       ...block,
       id: newId(),
@@ -1030,6 +1015,45 @@ export function copyPracticePlanForReuse(
       rotation: block.rotation
         ? { ...block.rotation, groups: block.rotation.groups.map(g => ({ ...g, id: newId() })) }
         : block.rotation,
+    })),
+  };
+}
+
+/**
+ * Every READ-ONLY consumer of a plan — the run screen, `_PracticeStationView`, the printed sheet —
+ * still just reads `station.staff`/`.equipment` as plain strings; none of them hold the team's tag
+ * library, and none of them should have to. This resolves the current names for display, WITHOUT
+ * touching the ids: a `staffTagIds`/`equipmentTagIds` present at a level overrides that level's
+ * legacy string field with the tags' CURRENT names (so a rename is visible everywhere at once,
+ * which is the entire point of storing ids); a level with no ids keeps reading whatever legacy
+ * text it already had. An id with no match in the library (deleted, or a cross-team stale read)
+ * is silently dropped rather than shown as a blank/undefined name.
+ *
+ * ⚠ The return value is for DISPLAY ONLY — never feed it back into a save. It intentionally loses
+ * the distinction between "no ids, legacy text" and "ids, resolved text" that the sanitiser and the
+ * editor still need.
+ */
+export function resolvePracticePlanTagNames(
+  plan: PracticePlan,
+  staffTags: readonly { id: string; name: string }[],
+  equipmentTags: readonly { id: string; name: string }[],
+): PracticePlan {
+  const staffById = new Map(staffTags.map(t => [t.id, t.name]));
+  const equipmentById = new Map(equipmentTags.map(t => [t.id, t.name]));
+  const resolve = (ids: string[] | undefined, byId: Map<string, string>, fallback: string[] | undefined) =>
+    ids?.length ? ids.map(id => byId.get(id)).filter((n): n is string => !!n) : fallback;
+
+  return {
+    ...plan,
+    equipment: resolve(plan.equipmentTagIds, equipmentById, plan.equipment),
+    blocks: plan.blocks.map(block => ({
+      ...block,
+      staff: resolve(block.staffTagIds, staffById, block.staff),
+      stations: block.stations?.map(s => ({
+        ...s,
+        staff: resolve(s.staffTagIds, staffById, s.staff),
+        equipment: resolve(s.equipmentTagIds, equipmentById, s.equipment),
+      })),
     })),
   };
 }

@@ -9,11 +9,12 @@ import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
   blockRotates, buildRunSteps, computeBlockClocks, computeRotation, formatDuration, formatRunClock,
-  resolveStationTeaching, runRemainingSeconds, runStepAt,
+  resolvePracticePlanTagNames, resolveStationTeaching, runRemainingSeconds, runStepAt,
   type PracticePlan, type PracticePlanBlock, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
 import PracticeStationView from '../../_PracticeStationView';
 import type { PracticeRosterPlayer } from '../../_PracticePlanEditor';
+import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
 
@@ -47,6 +48,10 @@ type RunData = {
   plan: PracticePlan | null;
   roster: PracticeRosterPlayer[];
   attendance: { playerId: string; status: RepAttendanceStatus }[];
+  /** The 'staff'/'equipment' libraries (mig 266) — resolves a plan's tag ids to current names
+   *  for this read-only screen. Optional so a cached response from before this shipped still works. */
+  staffTags?: PickableTag[];
+  equipmentTags?: PickableTag[];
   viewerName: string | null;
   canViewAttendance: boolean;
   /**
@@ -159,7 +164,14 @@ export default function CoachPracticeRunPage({
     if (!ctxLoading && canSchedule) void Promise.resolve().then(load);
   }, [ctxLoading, canSchedule, load]);
 
-  const plan = data?.plan ?? null;
+  // Resolved to CURRENT tag names for this read-only screen (mig 266) — see
+  // `resolvePracticePlanTagNames`. Every display and match below reads `.staff`/`.equipment` off
+  // THIS, never off `data.plan` directly, so a station saved under the new picker still shows who's
+  // running it instead of a blank line.
+  const plan = useMemo(
+    () => (data?.plan ? resolvePracticePlanTagNames(data.plan, data.staffTags ?? [], data.equipmentTags ?? []) : null),
+    [data],
+  );
   const blocks = useMemo(() => plan?.blocks ?? [], [plan]);
   const eventStartsAt = data?.event.startsAt ?? null;
   const eventEndsAt = data?.event.endsAt ?? null;

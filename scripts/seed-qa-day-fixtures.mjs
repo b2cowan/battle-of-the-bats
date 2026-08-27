@@ -1782,8 +1782,31 @@ async function seedPracticeSheets() {
     id: uid('b'), title, duration: { minutes }, ...extra,
   });
 
-  /** Create-or-update one practice and stamp its plan. */
-  async function practice(name, { dayOffset, startHour, minutes, location, field, arrive, plan }) {
+  // "What this practice is about" is a real tag pick (owner ruling 2026-08-01), not free text —
+  // so the fixture has to create the same `rep_team_tags` / `rep_team_event_tags` rows the live
+  // TagPicker would, rather than embedding a `practiceTypes` string list in the plan jsonb. That
+  // legacy field only still exists to keep pre-tags plans matching the focus rail; a fixture
+  // written today must not manufacture new plans in the shape it replaced.
+  const tagCache = new Map();
+  async function focusTagId(tagName) {
+    const key = tagName.toLowerCase();
+    if (tagCache.has(key)) return tagCache.get(key);
+    const existing = (await db.from('rep_team_tags').select('id')
+      .eq('team_id', team.id).eq('kind', 'focus').ilike('name', tagName).maybeSingle()).data;
+    let id = existing?.id;
+    if (!id) {
+      const ins = await db.from('rep_team_tags')
+        .insert({ org_id: org.id, team_id: team.id, kind: 'focus', name: tagName })
+        .select('id').single();
+      die(`create focus tag ${tagName}`, ins.error);
+      id = ins.data.id;
+    }
+    tagCache.set(key, id);
+    return id;
+  }
+
+  /** Create-or-update one practice, stamp its plan, and re-point its focus tags. */
+  async function practice(name, { dayOffset, startHour, minutes, location, field, arrive, plan, focusTags }) {
     const start = new Date();
     start.setDate(start.getDate() + dayOffset);
     start.setHours(startHour, 0, 0, 0);
@@ -1797,15 +1820,27 @@ async function seedPracticeSheets() {
     };
     const existing = (await db.from('rep_team_events').select('id')
       .eq('program_year_id', year.id).eq('name', name).maybeSingle()).data;
+    let eventId;
     if (existing) {
       die(`${name} refresh`, (await db.from('rep_team_events').update(fields).eq('id', existing.id)).error);
       ok(`${name} — re-anchored and plan rewritten`);
-      return existing.id;
+      eventId = existing.id;
+    } else {
+      const ins = await db.from('rep_team_events').insert(fields).select('id').single();
+      die(`${name} insert`, ins.error);
+      ok(`${name} — created`);
+      eventId = ins.data.id;
     }
-    const ins = await db.from('rep_team_events').insert(fields).select('id').single();
-    die(`${name} insert`, ins.error);
-    ok(`${name} — created`);
-    return ins.data.id;
+    // Re-run must not accumulate stale links, and a practice never carries a 'game'-kind tag, so
+    // clearing every link on the event before re-adding is safe here (unlike the app's own
+    // kind-scoped writer, which has a game-tag sibling on the same table to avoid disturbing).
+    die(`clear focus tags for ${name}`, (await db.from('rep_team_event_tags').delete().eq('event_id', eventId)).error);
+    if (focusTags?.length) {
+      const tagIds = await Promise.all(focusTags.map(focusTagId));
+      die(`link focus tags for ${name}`, (await db.from('rep_team_event_tags')
+        .insert(tagIds.map(tag_id => ({ event_id: eventId, tag_id })))).error);
+    }
+    return eventId;
   }
 
   const WHERE = { location: 'Riverdale Park', field: 'Diamond 2', arrive: '5:45 PM' };
@@ -1813,10 +1848,10 @@ async function seedPracticeSheets() {
   // ── 1 · A TYPICAL NIGHT ──────────────────────────────────────────────────────────────────
   await practice('Practice — a typical night', {
     dayOffset: 2, startHour: 18, minutes: 90, ...WHERE,
+    focusTags: ['Hitting', 'Baserunning'],
     plan: {
       version: 1,
       goal: 'Sharper two-strike at-bats; defensive communication loud enough to hear from the fence.',
-      practiceTypes: ['Hitting', 'Baserunning'],
       equipment: ['Tees (4)', 'Bucket of game balls', 'Cones', 'Stopwatch'],
       blocks: [
         block('Dynamic warm-up & arm care', 10, {
@@ -1856,10 +1891,10 @@ async function seedPracticeSheets() {
   // sentence under the grid — that statement is the artifact a plain document cannot produce.
   await practice('Practice — a heavy night', {
     dayOffset: 4, startHour: 18, minutes: 115, ...WHERE,
+    focusTags: ['Hitting', 'Baserunning', 'Defense'],
     plan: {
       version: 1,
       goal: 'Two-strike at-bats, and defensive communication loud enough to hear from the fence.',
-      practiceTypes: ['Hitting', 'Baserunning', 'Defense'],
       equipment: ['Tees (4)', 'Bucket of game balls', 'Soft-toss bucket', 'Cones (12)', 'L-screen', 'Stopwatch', 'Catcher gear ×2', 'First-aid kit'],
       blocks: [
         block('Dynamic warm-up & arm care', 10, {
@@ -1922,10 +1957,10 @@ async function seedPracticeSheets() {
   // everything after it would show the same start time.
   await practice('Practice — a rotation I haven’t finished', {
     dayOffset: 6, startHour: 18, minutes: 75, ...WHERE,
+    focusTags: ['Hitting'],
     plan: {
       version: 1,
       goal: 'Get the circuit written before Thursday.',
-      practiceTypes: ['Hitting'],
       equipment: ['Tees (4)', 'Cones'],
       blocks: [
         block('Dynamic warm-up & arm care', 10, {
@@ -1960,10 +1995,10 @@ async function seedPracticeSheets() {
   // MAX_GROUPS is 12, so this is the widest a coach can legally make it.
   await practice('Practice — twelve groups', {
     dayOffset: 8, startHour: 18, minutes: 60, ...WHERE,
+    focusTags: ['Skills'],
     plan: {
       version: 1,
       goal: 'Skills carnival — everybody moves, nobody queues.',
-      practiceTypes: ['Skills'],
       equipment: ['Cones (12)', 'Stopwatch'],
       blocks: [
         block('Warm-up', 10, { staff: ['Coach Dana'], playerIds: some(0, 12), description: 'Two laps, then bands.' }),
@@ -2000,10 +2035,10 @@ async function seedPracticeSheets() {
   });
   await practice('Practice — the coach who writes everything down', {
     dayOffset: 10, startHour: 18, minutes: 105, ...WHERE,
+    focusTags: ['Defense', 'Hitting'],
     plan: {
       version: 1,
       goal: 'Everything I have been meaning to say, said once, on paper, so the station coaches do not have to ask me.',
-      practiceTypes: ['Defense', 'Hitting'],
       equipment: ['Tees (4)', 'Bucket of game balls', 'L-screen', 'Cones (12)', 'Catcher gear ×2'],
       blocks: [
         block('Dynamic warm-up & arm care', 10, {
