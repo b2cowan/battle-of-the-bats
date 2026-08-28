@@ -21,7 +21,7 @@ import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
 import { previewCreditLanding, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 import {
-  KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT,
+  KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT, resolveCredit,
   type FundraisingKind, type SponsorStatus, type CreditUnit,
 } from '@/lib/coach-fundraising';
 
@@ -133,6 +133,9 @@ export function FundraiserDetail({
   // Normalized at the fetch boundary (mirror of the server's mapper), so everything below
   // trusts the state as a real mode.
   const [creditApplication, setCreditApplication] = useState<CreditApplicationMode>('last_first');
+  // Sponsor only: dollars of the family credit already handed back in cash (SP-1/A3) — the
+  // Settings sheet warns with this figure before the server's payout floor would refuse.
+  const [sponsorCreditExposure, setSponsorCreditExposure] = useState(0);
   /** The team's money-tag vocabulary — the same library expenses draw on (mig 239). */
   const [moneyTags, setMoneyTags]     = useState<RepTeamTag[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -176,6 +179,28 @@ export function FundraiserDetail({
   const isSponsor = fundraiser?.kind === 'sponsor';
   /** A sponsor's single arrival — the only row it has. Found by its entry, not by position. */
   const sponsorRow = isSponsor ? players.find(p => p.entry !== null) ?? null : null;
+
+  /**
+   * The refusals this sheet can SEE COMING get a dead button, not a doomed round trip (owner,
+   * QA §118 walk 2026-08-28: "shouldn't it just make save unclickable?" — and the approved
+   * mockup drew it disabled). `sponsorCreditExposure` is the dollars of the family's credit
+   * already handed back in cash; while any of the coach's current choices would take the books
+   * below that, Save is disabled and the reason sits beside the field that causes it. The
+   * server's payout floor still stands regardless — a payout can move under an open sheet, so
+   * the button is a courtesy and the 409 is the law.
+   */
+  const editCreditResolved = editPlayerId
+    ? resolveCredit(Number(editAmount) || 0, Number(editCredit) || 0, editCreditUnit === 'amount' ? 'amount' : 'percent').credit
+    : 0;
+  const sponsorWasReceived = isSponsor && (fundraiser?.sponsorStatus ?? 'received') === 'received';
+  const exposureBites = sponsorWasReceived && sponsorCreditExposure > 0.005;
+  const flipRefused  = exposureBites && editStatus === 'pledged';
+  const moveRefused  = exposureBites && editStatus === 'received'
+    && !!sponsorRow?.playerId && editPlayerId !== sponsorRow.playerId;
+  const lowerRefused = exposureBites && editStatus === 'received'
+    && !!sponsorRow?.playerId && editPlayerId === sponsorRow.playerId
+    && editCreditResolved < sponsorCreditExposure - 0.005;
+  const saveForeseeablyRefused = flipRefused || moveRefused || lowerRefused;
 
   useOverlayOpen(showSettings);
 
@@ -226,6 +251,7 @@ export function FundraiserDetail({
       setPlayers(data.players);
       setMoneyTags(data.moneyTags ?? []);
       setCreditApplication(normalizeCreditApplicationMode(data.creditApplication));
+      setSponsorCreditExposure(Number(data.sponsorCreditExposure) || 0);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load fundraiser.');
     } finally {
@@ -386,6 +412,9 @@ export function FundraiserDetail({
       setEditError('A sponsor needs an amount greater than zero.');
       return;
     }
+    // The dead button's belt: Enter in a text field still submits the form, so the foreseeable
+    // refusal is asked here too — same answer, no round trip. The server's floor stands behind both.
+    if (saveForeseeablyRefused) return;
     setEditSaving(true);
     setEditError('');
     try {
@@ -827,11 +856,21 @@ export function FundraiserDetail({
                       </select>
                       {/* ⚠ Only the surprising state explains itself — and here it also warns:
                           moving back to a pledge un-posts the income and removes the family's
-                          credit, which is a consequence a coach should meet before saving. */}
+                          credit, which is a consequence a coach should meet before saving. When
+                          part of that credit has ALREADY been handed back in cash, the warning
+                          names the dollars and says the save will be refused — the server's
+                          payout floor (SP-1) is the guard; this line is the courtesy that keeps
+                          the coach from meeting it cold. */}
                       {editStatus === 'pledged' && (
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                          Moving back to a pledge takes it off the books and removes any family credit.
-                        </p>
+                        sponsorCreditExposure > 0.005 ? (
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
+                            {fmt(sponsorCreditExposure)} of this credit has already been paid out to the family — moving back to a pledge will be refused until that payout is removed.
+                          </p>
+                        ) : (
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
+                            Moving back to a pledge takes it off the books and removes any family credit.
+                          </p>
+                        )
                       )}
                     </div>
                     <div className={styles.field}>
@@ -840,6 +879,11 @@ export function FundraiserDetail({
                         <option value="">Nobody in particular</option>
                         {players.map(p => <option key={p.playerId} value={p.playerId}>{p.playerName}</option>)}
                       </select>
+                      {moveRefused && (
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
+                          {fmt(sponsorCreditExposure)} of {sponsorRow?.playerName ?? 'this family'}&rsquo;s credit has already been paid out in cash — the credit can&rsquo;t move or be removed until that payout is.
+                        </p>
+                      )}
                     </div>
                     {editPlayerId && (
                       <div className={styles.field}>
@@ -867,6 +911,11 @@ export function FundraiserDetail({
                             ))}
                           </div>
                         </div>
+                        {lowerRefused && (
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
+                            {fmt(sponsorCreditExposure)} of this credit is already paid out in cash — it can&rsquo;t drop below that until the payout is removed.
+                          </p>
+                        )}
                       </div>
                     )}
                   </>
@@ -925,7 +974,12 @@ export function FundraiserDetail({
               {editError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{editError}</p>}
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.btnGhost} onClick={closeSettings}>Cancel</button>
-                <button type="submit" className={styles.btnPrimary} disabled={editSaving}>
+                <button
+                  type="submit"
+                  className={styles.btnPrimary}
+                  disabled={editSaving || saveForeseeablyRefused}
+                  title={saveForeseeablyRefused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+                >
                   {editSaving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>

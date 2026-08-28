@@ -19,6 +19,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
+import { creditExposure } from '@/lib/dues-credit-guards';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -178,6 +179,28 @@ export const GET = withObservability(async (_req: Request,
   const totalRaised  = allEntries.reduce((s, e) => s + Number(e.amount_raised), 0);
   const totalRebates = allEntries.reduce((s, e) => s + Number(e.rebate_amount), 0);
 
+  // ⚠ Sponsor only: how many dollars of the family's credit are already spoken for by cash
+  // payouts — the figure the Settings sheet warns with BEFORE the payout floor refuses
+  // (SP-1/A3, sponsorship lifecycle plan). 0 for a drive, an uncredited sponsor, or a family
+  // whose other credits still cover everything paid out.
+  let sponsorCreditExposure = 0;
+  if ((fundraiser.kind ?? 'fundraiser') === 'sponsor') {
+    const entry = allEntries[0] as Record<string, unknown> | undefined;
+    const creditId = (entry?.credit_id as string | null) ?? null;
+    const creditPlayer = (entry?.player_id as string | null) ?? null;
+    if (creditId && creditPlayer) {
+      const familyCredits = (creditsByPlayer.get(creditPlayer) ?? []) as { id: string; amount: number; creditType: string }[];
+      const creditRow = familyCredits.find(c => c.id === creditId);
+      if (creditRow) {
+        sponsorCreditExposure = creditExposure(
+          creditRow,
+          familyCredits,
+          [{ amount: paidOutByPlayer.get(creditPlayer) ?? 0 }],
+        );
+      }
+    }
+  }
+
   // The record's money tags, and the library behind the picker in its Settings sheet. The library
   // is the team's LIVE vocabulary even in an archived season — a tag is an instrument, and the
   // read-only sheet never opens there anyway; what the archive must show correctly is which tags
@@ -214,6 +237,7 @@ export const GET = withObservability(async (_req: Request,
     },
     // The team's credits setting — the "Where it lands" preview walks bills in this direction.
     creditApplication: programYear.creditApplication,
+    sponsorCreditExposure,
     players: playerRows,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });

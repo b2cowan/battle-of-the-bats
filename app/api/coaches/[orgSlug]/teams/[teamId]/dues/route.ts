@@ -138,6 +138,11 @@ export const GET = withObservability(async (_req: Request,
         creditType:  c.credit_type,
         notes:       c.notes ?? null,
         paymentId:   c.payment_id ?? null,
+        // ⚠ THE DRAWER'S NO-PENCIL/NO-TRASH GATE READS THESE (QA §118 A2). Dropping them here
+        // starved the row of the fact that another record authored it, so every sourced credit
+        // rendered live edit/delete buttons — and the delete route had no refusal behind them.
+        fundraiserEntryId: c.fundraiser_entry_id ?? null,
+        expenseId:   c.expense_id ?? null,
         createdAt:   c.created_at,
       }));
       // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.

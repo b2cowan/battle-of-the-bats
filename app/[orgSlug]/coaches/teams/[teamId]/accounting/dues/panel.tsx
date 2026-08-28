@@ -1040,14 +1040,41 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function deleteCredit(creditId: string) {
+  // ⚠ A MONEY DELETE STATES ITS CONSEQUENCE FIRST (owner, QA §118 walk 08-28) — the same
+  // named-dollar confirmation the expense and money-in deletes stand behind. An icon-only trash
+  // that removes money the instant it is touched asks the coach to trust a glyph; the dialog is
+  // where the amount and what happens to the family's balance get said out loud.
+  async function deleteCredit(c: { id: string; amount: number; description: string | null }) {
     if (!selected) return;
+    const name = [selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ') || 'this player';
+    const ok = await confirm({
+      title: 'Remove this credit?',
+      message: `Removes the ${fmt(c.amount)} credit${c.description ? ` — ${c.description} —` : ''} from ${name}'s dues. Whatever it covered goes back to owing.`,
+      confirmText: `Remove ${fmt(c.amount)}`,
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    const creditId = c.id;
     setDeletingCreditId(creditId);
     try {
-      await fetch(
+      // ⚠ A refused delete must SAY so (SP-4, forms review 2026-08-28). This ignored `res.ok`,
+      // so the server's 409s — a credit with a payout against it, or a sourced credit the button
+      // should never have offered — reloaded the list with the row still there and no words at
+      // all: a click that visibly did nothing.
+      const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/players/${selected.player.id}/dues-credits/${creditId}`,
         { method: 'DELETE' },
       );
+      if (!res.ok) {
+        setCreditError((await res.json().catch(() => ({}))).error ?? 'Failed to remove that credit');
+        // Still re-read (/review 2026-08-28): a 404 here usually means the row was already
+        // removed elsewhere (another tab, a sponsor edit) — without the reload the dead row
+        // stayed on screen indefinitely, which the old always-reload behaviour never allowed.
+        await load();
+        return;
+      }
+      setCreditError('');
       await load();
     } finally {
       setDeletingCreditId(null);
@@ -1141,8 +1168,20 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function deletePayment(paymentId: string) {
+  // Same named-consequence confirm as deleteCredit above — a payment is the other transaction
+  // this drawer can remove with one touch of an icon-only button.
+  async function deletePayment(pm: { id: string; amount: number; receivedDate: string }) {
     if (!selected) return;
+    const name = [selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ') || 'this player';
+    const ok = await confirm({
+      title: 'Remove this payment?',
+      message: `Removes the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} from ${name}'s dues and voids its entry in the team's books. Whatever it covered goes back to owing.`,
+      confirmText: `Remove ${fmt(pm.amount)}`,
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    const paymentId = pm.id;
     setDeletingPaymentId(paymentId);
     setPayNotice('');
     try {
@@ -2866,7 +2905,7 @@ export function PlayerDuesPanel({
                                 <button
                                   className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingPaymentId === pm.id}
-                                  onClick={() => deletePayment(pm.id)}
+                                  onClick={() => deletePayment(pm)}
                                   title="Remove payment (voids its ledger entry)"
                                   // An icon-only button has no visible name, so this IS its name.
                                   aria-label={`Remove the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} — this voids its ledger entry`}
@@ -3043,6 +3082,16 @@ export function PlayerDuesPanel({
                         </div>
                       )}
 
+                      {/* ⚠ A refused DELETE must be visible from the LIST (/review 2026-08-28).
+                          The first fix wrote the message into the add/edit form's own error slot
+                          (line above), which only renders while that form is open — a delete is
+                          clicked from the list with the form closed, so the refusal was still
+                          invisible: the exact silent click it claimed to fix. One message, both
+                          homes; hidden while the form is open so it never shows twice. */}
+                      {!addingCredit && creditError && (
+                        <p className={styles.errorText} role="alert" style={{ marginBottom: '0.4rem' }}>{creditError}</p>
+                      )}
+
                       {/* Credits list */}
                       {selected.credits.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -3065,7 +3114,15 @@ export function PlayerDuesPanel({
                               <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {c.description}
                               </span>
-                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
+                              {/* One meta format for every credit: "Type · date" (owner, QA §118
+                                  walk 08-28 — a separate "from fundraiser" tag beside "Fundraiser"
+                                  said the same thing twice). A sourced credit is told apart by
+                                  having no edit/delete buttons; the hover text says where it is
+                                  corrected instead. */}
+                              <span
+                                style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}
+                                title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there' : c.expenseId ? 'Set by the out-of-pocket expense that created it — change it there' : undefined}
+                              >
                                 {CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}
                               </span>
                               {/* ⚠ EDIT ONLY WHAT THE COACH AUTHORED. A credit carrying a
@@ -3075,12 +3132,8 @@ export function PlayerDuesPanel({
                                   the out-of-pocket cost. Typing over any of them here would leave
                                   two disagreeing numbers with no way to tell which is true, and
                                   the next reconcile would quietly overwrite the coach's fix. Those
-                                  are corrected where they are born; the row says so instead. */}
-                              {c.fundraiserEntryId || c.expenseId ? (
-                                <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there' : 'Set by the out-of-pocket expense that created it — change it there'}>
-                                  {c.fundraiserEntryId ? 'from fundraiser' : 'from expense'}
-                                </span>
-                              ) : !c.paymentId && (
+                                  are corrected where they are born; the meta text says so instead. */}
+                              {!(c.fundraiserEntryId || c.expenseId) && !c.paymentId && (
                                 <button
                                   className={styles.rowIconBtn}
                                   style={{ flexShrink: 0 }}
@@ -3094,16 +3147,21 @@ export function PlayerDuesPanel({
                               )}
                               {/* An auto-created overpayment credit rides its payment (DB
                                   CASCADE) — deleting it alone would un-balance the books, so
-                                  the delete lives on the payment row instead. */}
+                                  the delete lives on the payment row instead. And a credit born
+                                  of a fundraiser/sponsor or an expense gets NO delete either
+                                  (SP-4): the server refuses it (CREDIT_HAS_SOURCE — its amount
+                                  is that record's to state), so offering the button was a click
+                                  that silently did nothing. The meta text's hover hint says where
+                                  the record is corrected. */}
                               {c.paymentId ? (
                                 <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
                                   auto
                                 </span>
-                              ) : (
+                              ) : (c.fundraiserEntryId || c.expenseId) ? null : (
                                 <button
                                   className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingCreditId === c.id}
-                                  onClick={() => deleteCredit(c.id)}
+                                  onClick={() => deleteCredit({ id: c.id as string, amount: c.amount as number, description: (c.description as string | null) ?? null })}
                                   title="Remove credit"
                                   aria-label={`Remove the ${fmt(c.amount)} credit, ${c.description}`}
                                 >

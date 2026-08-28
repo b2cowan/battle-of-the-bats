@@ -10,7 +10,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { amountsTotal, payoutCeiling } from '@/lib/dues-credits';
+import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -35,33 +35,21 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 }
 
 /**
- * ⚠ THE ONE RULE BOTH DOORS OBEY: whatever credits remain must still cover what has already been
- * handed to the family. Otherwise they hold cash the books no longer say they were owed — and at
- * season's end that missing credit silently inflates everyone else's share of the pool (mig 234,
- * /review 2026-08-14).
- *
- * ⚠ EDITING A CREDIT DOWN CARRIES THE DELETE'S HAZARD EXACTLY, which is why this is a function and
- * not two copies: the epsilon, the refusal code and the sentence can no longer diverge on a future
- * change to one door and not the other. `projected` is the credit set as it WOULD be after the
- * change — filtered for a delete, amount-substituted for an edit.
- *
- * @returns the 409 to return, or null when the change is safe.
+ * ⚠ THE ONE RULE EVERY CREDIT-SHRINKING DOOR OBEYS: whatever credits remain must still cover what
+ * has already been handed to the family. The rule, the epsilon, the sentence and the 409 code
+ * live in lib/dues-credit-guards.ts — shared with the SPONSOR edit path, which is the "edit it
+ * there" door this route defers sourced credits to. This wrapper only dresses the violation as
+ * this route's 409.
  */
 function payoutCeilingRefusal(
-  /** ⚠ Carries `creditType` because the ceiling EXCLUDES forgiveness — a forgiven balance was
-   *  never the family's money to be handed back. Narrowing this to `{ amount }` would have let a
-   *  forgiveness count toward what the team may pay out. */
   projected: readonly { amount: number; creditType: string }[],
   payouts: readonly { amount: number }[],
   action: string,
 ): NextResponse | null {
-  const paidOut = amountsTotal(payouts);
-  if (paidOut <= payoutCeiling(projected, []) + 0.005) return null;
+  const violation = payoutFloorViolation(projected, payouts);
+  if (!violation) return null;
   return NextResponse.json(
-    {
-      error: `$${paidOut.toFixed(2)} has already been paid out to this family — ${action} would leave the books owing them less than they have received. Remove the payout first.`,
-      code: 'CREDIT_HAS_PAYOUT',
-    },
+    { error: payoutFloorMessage(violation.paidOut, action), code: CREDIT_HAS_PAYOUT },
     { status: 409 },
   );
 }
@@ -196,6 +184,23 @@ export const DELETE = withObservability(async (_req: Request,
     getRepDuesCreditsForPlayer(programYear.id, playerId),
     getRepDuesPayoutsForPlayer(programYear.id, playerId),
   ]);
+
+  // ⚠ SAME RULE AS PATCH, AND IT WAS MISSING HERE (QA §118, 2026-08-28). A credit CREATED BY
+  // another record — a fundraiser rebate, an overpayment, a reimbursement — dies with that record,
+  // never alone: deleting it here left the fundraiser entry still telling the family "$X credited"
+  // through a dangling credit_id, with the credit gone and every later reconcile a silent no-op.
+  const credit = credits.find(c => c.id === creditId);
+  if (!credit) return NextResponse.json({ error: 'Credit not found' }, { status: 404 });
+  if (credit.fundraiserEntryId || credit.paymentId || credit.expenseId) {
+    return NextResponse.json(
+      {
+        error: 'This credit comes from another record — remove it there so the two can never disagree.',
+        code: 'CREDIT_HAS_SOURCE',
+      },
+      { status: 409 },
+    );
+  }
+
   // The rule, stated once: whatever credits remain must still cover what has gone out.
   const refusal = payoutCeilingRefusal(credits.filter(c => c.id !== creditId), payouts, 'removing this credit');
   if (refusal) return refusal;
