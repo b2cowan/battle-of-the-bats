@@ -8,6 +8,45 @@
 
 ---
 
+### 2026-08-28 — The demo tour becomes DOORS, not narration: the deck carries the story in a conversation, the demo carries it for a stranger
+
+**Status:** Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/active/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.
+
+**Decision:** The guided tour in both demo sandboxes keeps its **entry points** and gives up its **explaining**. Concretely: **1,131 words across 14 steps → 457 across 12.** Three coach steps that carried 65% of all the words are cut to a hook plus one proof point; two tournament steps that restated jumps the moments dock already owned are deleted. **The pitch-deck slides now carry the narrative in accompanied prospect conversations.** Season phases (Registration week, Game day, Tryout day, Off-season, Mid-season, Season's End) are untouched.
+
+**Rationale:**
+- **Asked as "remove the guided tour"; measuring it first changed the answer, and the owner took the revised shape.** The tour was not uniformly wordy — **three steps held 730 of the 1,131 words**, all in the coach demo, while the tournament tour averaged 25 words a step. The longest single step was **390 words**, which breaks this repo's own 350-word help standard in a single tooltip. The noise had a location; it was not a property of the tour.
+- **⚠ The 2026-08-10 decision is load-bearing here, and deleting the tour would have partly reversed it.** That entry bought a **zero-contact proof path for every live product** — both demos public, no form, no call. A zero-contact path cannot depend on an accompanied narrator. Moving *all* of the guiding to the deck would have quietly re-coupled the self-service funnel to a sales conversation, which is the opposite of what the doors were opened for.
+- **The tour was doing two jobs, and only one has a replacement.** *Explaining* now has the deck. *Wayfinding* has nothing: several steps are the only signposted route to what they point at — the tryout decision board sits on a stage a bare `/tryouts` does not reach, and practice plans have **no address at all**. The deck cannot substitute for a route inside the product.
+- **Lower ongoing drift risk.** `CLAUDE.md` records demo narration as a recurring source of silent staleness (three pieces found wrong in 2026-08, each having survived a build, a `/simplify` and a `/review`). The copy removed is precisely the kind that goes stale — it quoted figures and named controls. What remains are verb labels, which cannot.
+
+**⚠ The trade-off, stated rather than buried:** an unaccompanied visitor now gets **~60% less explanation than before**. The bet is that the removed words were feature-tour prose nobody read standing up, not the hook — but that is a **hypothesis with no engagement measurement behind it**, and this product has no demo analytics to confirm it. If self-serve conversion from the demo doors ever looks weak, this entry is the first thing to re-examine, and the cheapest reversal is to restore prose to individual steps rather than to rebuild the tour.
+
+**⚠ Deliberately NOT decided:** the **season-phase arrival lines** are a separate text layer and the owner has not ruled on them. They carry the *higher* staleness risk of the two, because unlike the tour's verb labels they make factual claims about what happened. Left open on purpose, not overlooked.
+
+**⚠ Gap this surfaced in this log:** the **Pitch Deck Studio now carries a funnel role** — it is the named replacement for the demo's explaining — **and it has no entry here.** A tool that has become part of how prospects are walked through the product should have its commercial role recorded before more decisions lean on it, as this one does.
+
+**Affects:** GTM / funnel quality (the self-service half of the zero-contact proof path) · the demo sandboxes' maintenance burden · the pitch deck's role in the sales motion. **No price, plan, gate, capacity band, SKU or feature key moves.**
+
+**Handoff:**
+```
+HANDOFF → /marketing — nothing owed today.
+- No live public surface describes or promises the guided tour, so no copy is now false
+  (verified: /pricing, /for-coaches, /for-clubs, the homepage hero doors).
+- FORWARD BRIEF, only when a deck-facing or sales-facing surface is next rewritten: the deck
+  is now the guided narrative for accompanied prospects, and the demo is the self-serve proof.
+  Wording is /marketing's.
+HANDOFF → /plan — one open question, not yet a build.
+- The season-phase arrival lines: same trim, or leave them? Needs an owner ruling first.
+HANDOFF → /strategy (self) — log the Pitch Deck Studio's commercial role.
+- It is now a named part of the funnel and is unrecorded here.
+HANDOFF → /billing — none. No gate, plan or price is touched.
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-08-10 (the doors are open — the zero-contact proof path this decision protects) · 2026-08-02 (the demo is ungated at the door; what gets gated is the room, not the visitor) · 2026-08-11 (`/demos` as a shareable address for outbound contact — the accompanied motion the deck now serves).
+
+---
+
 ### 2026-08-23 — Roster export is an inclusion of the Premium Coaches Portal (standalone coaches export their own roster)
 
 **Status:** Decided (owner, 2026-08-23, on a finding raised by the PDF Export Quality Rosters pass review). **Already true in the shipped product** — this ratifies behaviour rather than changing it.
