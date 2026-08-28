@@ -362,7 +362,7 @@ export interface DemoPractice {
 }
 
 /** Chronological results, oldest → newest: 14-3-1, and "won 4 of the last 5". */
-const MIDSEASON_RESULTS: ReadonlyArray<{ r: 'win' | 'loss' | 'tie'; us: number; them: number }> = [
+export const MIDSEASON_RESULTS: ReadonlyArray<{ r: 'win' | 'loss' | 'tie'; us: number; them: number }> = [
   { r: 'win', us: 7, them: 3 }, { r: 'win', us: 5, them: 4 }, { r: 'loss', us: 2, them: 6 },
   { r: 'win', us: 9, them: 1 }, { r: 'win', us: 4, them: 2 }, { r: 'win', us: 6, them: 5 },
   { r: 'tie', us: 3, them: 3 }, { r: 'win', us: 8, them: 2 }, { r: 'loss', us: 1, them: 4 },
@@ -1950,7 +1950,7 @@ export const TRYOUT_DESCRIPTION =
  * Chronological 26-game season, oldest → newest: 18-6-2 with a five-game win streak (games
  * 8-12) and four one-run games so Wrapped's "closest game" has something to say.
  */
-const SEASONS_END_RESULTS: ReadonlyArray<{ r: 'win' | 'loss' | 'tie'; us: number; them: number }> = [
+export const SEASONS_END_RESULTS: ReadonlyArray<{ r: 'win' | 'loss' | 'tie'; us: number; them: number }> = [
   { r: 'win', us: 6, them: 2 }, { r: 'loss', us: 3, them: 4 }, { r: 'win', us: 8, them: 5 },
   { r: 'win', us: 5, them: 1 }, { r: 'tie', us: 4, them: 4 }, { r: 'loss', us: 2, them: 7 },
   { r: 'win', us: 9, them: 3 }, { r: 'win', us: 4, them: 3 }, { r: 'win', us: 7, them: 2 },

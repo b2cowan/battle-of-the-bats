@@ -42,7 +42,9 @@ import {
   MIDSEASON_DUES, resolveMidSeasonState,
   MIDSEASON_AWARD_TYPES, MIDSEASON_AWARDS, MIDSEASON_SCOUTING,
   SEASON_START_BUDGET_LINES,
+  TRYOUT_CANDIDATES, MIDSEASON_RESULTS, SEASONS_END_RESULTS,
 } from '../lib/demo-coach.ts';
+import { sandboxMoments } from '../lib/sandbox-chrome.ts';
 
 const failures = [];
 const ok = (label) => console.log(`  ✓ ${label}`);
@@ -882,6 +884,59 @@ console.log("\nSeason's End — Riverdale Ridge 13U");
       .select('paid_at').eq('team_id', teamId).is('paid_at', null);
     check((due ?? []).length === 0, 'the money story is settled — every installment paid');
   }
+}
+
+// ── 7. the arrival lines say what the seeded world actually holds ─────────────────────────────
+//
+// ⚠⚠ THE ONLY CHECK IN THIS REPO THAT READS A SENTENCE AND COMPARES IT TO THE WORLD IT
+// DESCRIBES. Everything above proves the demo world is in good order; nothing proved the copy
+// narrating it was still TRUE. That gap is not theoretical — three pieces of demo copy were found
+// pointing at things the product no longer showed (2026-08-05), each having survived a build, a
+// `/simplify` pass and a `/review` pass, because every one of them read perfectly.
+//
+// The expected phrase is COMPUTED FROM THE SEED, never typed here. That makes the guard
+// bidirectional: change the seeded results and the sentence stops matching; reword the sentence
+// and it stops matching. Writing the number in both places would only prove this file agrees with
+// itself.
+//
+// ⚠ SCOPE, STATED SO A GREEN TICK IS NOT MISTAKEN FOR FULL COVERAGE. This guards the COUNTABLE
+// claims. It cannot guard a judgement — "one split opinion to argue about", "two evaluators partway
+// through their scoring", "the recap nine families opened" — those are readings of seeded data, not
+// figures, and a predicate invented to check prose would pass for the wrong reasons. The unguarded
+// ones are named in the output rather than left for someone to assume were covered.
+console.log('');
+console.log('Arrival lines vs. the seeded world');
+{
+  const record = (rows) => {
+    const w = rows.filter(r => r.r === 'win').length;
+    const l = rows.filter(r => r.r === 'loss').length;
+    const t = rows.filter(r => r.r === 'tie').length;
+    return `${w}-${l}-${t}`;
+  };
+  const moments = sandboxMoments('coach', { slug: demoOrg.slug, landingPath: demoOrg.landingPath });
+  const said = (key) => moments.find(m => m.key === key)?.said ?? '';
+
+  const CLAIMS = [
+    { key: 'tryout-day',  phrase: `${TRYOUT_CANDIDATES.length} kids in bibs`, from: 'TRYOUT_CANDIDATES' },
+    { key: 'mid-season',  phrase: record(MIDSEASON_RESULTS),                  from: 'MIDSEASON_RESULTS' },
+    { key: 'seasons-end', phrase: record(SEASONS_END_RESULTS),                from: 'SEASONS_END_RESULTS' },
+  ];
+
+  check(moments.length > 0, 'the coach dock still has moments to narrate',
+    'sandboxMoments returned nothing — this guard would pass while comparing nothing');
+
+  for (const c of CLAIMS) {
+    const line = said(c.key);
+    check(
+      line.length > 0 && line.includes(c.phrase),
+      `${c.key} arrival line says "${c.phrase}"`,
+      line.length === 0
+        ? `the ${c.key} moment has no arrival line at all`
+        : `the seed (${c.from}) now says "${c.phrase}", the sentence does not. Fix the sentence, or fix the seed — do not delete the assertion. Line reads: "${line}"`,
+    );
+  }
+
+  console.log(`  · guarded ${CLAIMS.length} countable claim(s); NOT guarded: the split opinion, the evaluators' progress, the families who opened the recap, the dues and lineup states — judgements, not figures`);
 }
 
 report();

@@ -1,10 +1,10 @@
-import type { DemoOrgKind } from './demo-org';
+import type { DemoOrgKind } from './demo-org.ts';
 import {
   DEMO_TOURNAMENT_SLUG, DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, DEMO_COACH_TEAM_IDS,
   DEMO_COACH_SHOWCASE,
-} from './demo-org';
-import { SEE_IT_LIVE_PATH } from './sandbox-door';
-import { moneySectionHref } from './coach-money-links';
+} from './demo-org.ts';
+import { SEE_IT_LIVE_PATH } from './sandbox-door.ts';
+import { moneySectionHref } from './coach-money-links.ts';
 import { insightsSectionHref } from './coach-insights-links.ts';
 
 // The dock ↔ tournament-provider contract constants live in `lib/demo-org.ts` (the neutral module
@@ -14,7 +14,7 @@ export {
   SANDBOX_TOURNAMENT_DATASET_KEY,
   SANDBOX_TOURNAMENT_CHANGED_EVENT,
   SANDBOX_SELECT_TOURNAMENT_EVENT,
-} from './demo-org';
+} from './demo-org.ts';
 
 /**
  * lib/sandbox-chrome.ts — what the sandbox hat SAYS, for any demo org.
@@ -63,9 +63,20 @@ export interface SandboxMoment {
   operatorPath: string;
   /** Only Game day carries the live dot — it is the only moment that moves. */
   isLive?: boolean;
-  /** What the narration strip says on arrival, per side. Time named first, always. */
-  saidPublic: string;
-  saidOperator: string;
+  /** What the narration strip says on arrival. Time named first, always. */
+  said: string;
+  /**
+   * The variant an OPERATOR is told, when the two audiences are genuinely told different things.
+   *
+   * ⚠ OMIT IT WHEN THE WORLD HAS ONE SEAT. The tournament demo has two real audiences — a
+   * family watching registration fill up is not told what the organizer managing it is told, and
+   * all three tournament moments differ. The COACH demo does not: a coach's world is one seat,
+   * there was never a second audience to write for, and all five coach moments carried the same
+   * sentence pasted into both slots — 5 of 16 lines were byte-identical duplicates. The cost was
+   * never the words; it was that every figure lived in TWO places and had to be changed in both,
+   * inside the one layer whose entire risk is going out of date. Omitted means `said` serves both.
+   */
+  saidOperator?: string;
   /**
    * What the banner's countdown slot shows while standing in this moment. Null = Game day's
    * own replay countdown. A stranger at a finished event must never read "Replays in 38:12" —
@@ -92,7 +103,7 @@ export function sandboxMoments(
       tournamentSlug: DEMO_INVITATIONAL_SLUG,
       fanPath: `/${org.slug}/${DEMO_INVITATIONAL_SLUG}`,
       operatorPath: operatorPath(`${adminBase}/registrations`),
-      saidPublic: 'You’ve jumped three weeks back. Registration is open — eleven teams are in, U11 is already full, and this page is what families are watching fill up.',
+      said: 'You’ve jumped three weeks back. Registration is open — eleven teams are in, U11 is already full, and this page is what families are watching fill up.',
       saidOperator: 'You’ve jumped three weeks back. Fifteen teams are in the pipeline, U11 is full with a waitlist, and this screen is where that week gets managed.',
       bannerNote: 'First pitch in 3 weeks',
     },
@@ -104,7 +115,7 @@ export function sandboxMoments(
       fanPath: org.landingPath,
       operatorPath: operatorPath(`${adminBase}/dashboard`),
       isLive: true,
-      saidPublic: 'Back to game day — the Summer Classic is live right now.',
+      said: 'Back to game day — the Summer Classic is live right now.',
       saidOperator: 'Back to game day — the Summer Classic is live right now, and this dashboard is running it.',
       bannerNote: null,
     },
@@ -115,7 +126,7 @@ export function sandboxMoments(
       tournamentSlug: DEMO_OPENER_SLUG,
       fanPath: `/${org.slug}/${DEMO_OPENER_SLUG}`,
       operatorPath: operatorPath(`${adminBase}/summary`),
-      saidPublic: 'This one wrapped yesterday. The champion is crowned and the final record is preserved — nobody had to type it up.',
+      said: 'This one wrapped yesterday. The champion is crowned and the final record is preserved — nobody had to type it up.',
       saidOperator: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
       bannerNote: 'Wrapped up yesterday',
     },
@@ -150,8 +161,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       // a redirect now. Query-addressed like the Money `?section=` destinations; the chrome's
       // arrival matcher already understands those.
       path: teamPath(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts?stage=tryout-day&view=score'),
-      saidPublic: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
-      saidOperator: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
+      said: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
       bannerNote: 'Evaluations are mid-flight',
     }),
     moment({
@@ -162,8 +172,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       // The Money hub's Budget-vs-Actual TAB (query-addressed) — the standalone page is a legacy
       // redirect now, and the chrome's arrival matcher understands `?section=` destinations.
       path: moneySectionHref(teamPath(DEMO_COACH_TEAM_IDS.offSeason), 'budget-vs-actual'),
-      saidPublic: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
-      saidOperator: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
+      said: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
     }),
     moment({
@@ -172,8 +181,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       sub: 'two weeks in',
       teamId: DEMO_COACH_TEAM_IDS.seasonStart,
       path: teamPath(DEMO_COACH_TEAM_IDS.seasonStart, '/schedule'),
-      saidPublic: 'Two weeks into the year: the whole season already on the calendar, three games played, and the opener\'s lineup saved. This was one evening\'s work in March.',
-      saidOperator: 'Two weeks into the year: the whole season already on the calendar, three games played, and the opener\'s lineup saved. This was one evening\'s work in March.',
+      said: 'Two weeks into the year: the whole season already on the calendar, three games played, and the opener\'s lineup saved. This was one evening\'s work in March.',
       bannerNote: 'Two weeks into the season',
     }),
     moment({
@@ -184,8 +192,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       // Built from the team id like its siblings (this IS the door's landing path — the door's
       // constant and this one agree by both deriving from DEMO_COACH_TEAM_IDS).
       path: teamPath(DEMO_COACH_TEAM_IDS.midSeason),
-      saidPublic: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
-      saidOperator: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
+      said: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
       bannerNote: 'There\'s a game this Saturday',
     }),
     moment({
@@ -200,8 +207,7 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
          portal that turned itself into a read-only copy of itself; it is not true of the one page a
          closed season is now, and every screen would still have rendered perfectly while the
          sentence was wrong. */
-      saidPublic: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
-      saidOperator: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
+      said: 'A finished year, kept on one page: 18-6-2, the recap nine families opened, and the results, the roster, the practices and the money all folded away underneath.',
       bannerNote: 'A finished year, kept',
     }),
   ];

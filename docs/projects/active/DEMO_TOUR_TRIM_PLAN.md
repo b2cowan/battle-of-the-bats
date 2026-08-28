@@ -42,6 +42,23 @@ Two reasons, both argued from the code rather than from preference:
    carry the story in a conversation; it cannot carry it for a stranger at 11pm. Deleting the tour
    optimises the accompanied demo and degrades the unaccompanied one.
 
+## The arrival lines — settled 2026-08-28 (second pass)
+
+Measured after the tour trim, and the measurement changed the answer: **16 lines, 415 words, longest
+33** — not a wall, and nothing here needed cutting for length. Two real findings instead, both acted
+on:
+
+1. **Five of the sixteen lines were byte-identical duplicates.** Every moment stores a family line
+   and an operator line. The tournament’s three genuinely differ; all five coach moments carried the
+   same sentence pasted into both slots, because a coach’s world is one seat and there was never a
+   second audience. The cost was never the words — it was that every figure lived in two places.
+   `saidOperator` is now optional and omitted where a world has one seat.
+2. **The figures stay, and are now guarded.** Stripping numbers would have made the demo blander and
+   unfalsifiable; instead the demo check verifies the countable ones against the seed
+   (`DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md` measure 5).
+
+Mockup the owner ruled from: `claude.ai/code/artifact/45d5a9d5-b8f4-4de5-be6a-db68a22e6ec5`.
+
 ## ⚠ Still open — deliberately not done here
 
 **The season-phase arrival lines are a SEPARATE text layer and were not touched.** The owner has not

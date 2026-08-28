@@ -1,6 +1,6 @@
 # Keeping the demo sandboxes in line with the product — Implementation Plan
 
-**Status:** **MEASURES 1 AND 4 BUILT 2026-08-06 (dev, uncommitted). MEASURES 2 AND 3 PLANNED.**
+**Status:** **MEASURES 1, 4 AND 5 BUILT** (1 + 4 on 2026-08-06; **measure 5 on 2026-08-28**). **MEASURES 2 AND 3 STILL PLANNED.**
 Owner-approved 2026-08-05 (four measures); 1 and 4 approved for immediate build 2026-08-06.
 Companion brief: `DEMO_SANDBOX_DRIFT_GUARDS_PM_BRIEF.md`.
 Covers **both** sandboxes — the tournament one (`riverdale-minor-ball`) and the coach one
@@ -171,6 +171,39 @@ check).
 
 **Catches:** the tab moved, the panel is hidden, the report is empty, the claim is stale.
 **Misses:** the demo failing to show something the product *gained*.
+
+### 5 · Check the SENTENCES against the seeded world — ✅ BUILT 2026-08-28
+
+Added after the arrival-line review (owner ruling 2026-08-28). **Not in the original four**, and it
+exists because measure 3 — the one that would catch a stale claim — is the most expensive of them
+and still unbuilt, while the class of defect it guards had already happened three times.
+
+**What it does.** `check-demo-coach.mjs` now reads the dock's actual arrival sentences via
+`sandboxMoments()` and compares the countable claims in them against the seed constants. The
+expected phrase is **computed from the seed, never typed into the check** — so it fails in both
+directions: change the seeded results and the sentence stops matching; reword the sentence and it
+stops matching. Writing the number in both places would only prove the check agrees with itself.
+
+**Guarded today (3):** "28 kids in bibs" against `TRYOUT_CANDIDATES`; "14-3-1" against
+`MIDSEASON_RESULTS`; "18-6-2" against `SEASONS_END_RESULTS`.
+
+**⚠ Deliberately NOT guarded, and the check says so in its own output:** the split opinion, the
+evaluators' progress, the families who opened the recap, the dues and lineup states. Those are
+readings of seeded data rather than figures, and a predicate invented to "verify" prose would pass
+for the wrong reasons. A green tick here means the countable claims hold — not that the paragraph
+is true.
+
+**Mutation-tested on the way in.** Flipping one seeded tie to a win moved the computed record to
+15-3-0 and the check failed with the sentence quoted back and both fixes named. A guard nobody has
+seen fail is not evidence.
+
+**Catches:** a sentence whose numbers have drifted from the world. **Misses:** everything measure 3
+covers — whether the number actually reaches the screen, whether the panel is empty, whether the
+tab moved. This is the cheap half of measure 3, bought without a browser.
+
+**Relationship to measure 3:** it does NOT replace it. Measure 3 asserts the numbers are *on the
+page*; this asserts they are *true of the data*. A screen can hold a correct figure and still be
+broken, and this will not notice.
 
 ### 4 · Add the demos to the same reflex as the help guides — ✅ BUILT 2026-08-06
 

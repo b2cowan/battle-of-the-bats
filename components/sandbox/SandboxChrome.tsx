@@ -1110,7 +1110,7 @@ export default function SandboxChrome({
             <span className={styles.saidTick} aria-hidden="true">✓</span>
             <span className={styles.saidText}>
               {narratedStep ? narratedStep.said
-                : side === 'operator' ? jumpMoment!.saidOperator : jumpMoment!.saidPublic}
+                : side === 'operator' ? (jumpMoment!.saidOperator ?? jumpMoment!.said) : jumpMoment!.said}
               {/* The payoff for a step whose reward arrives on the tournament's clock rather than
                   on the click. Without this the visitor is told to "keep this page open" and given
                   nothing to watch — which is how a working demo got reported as broken. */}

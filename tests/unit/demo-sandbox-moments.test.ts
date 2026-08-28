@@ -122,8 +122,12 @@ describe('the dock', () => {
     assert.deepEqual(moments.map(m => m.key), ['registration-week', 'game-day', 'morning-after']);
     for (const moment of moments) {
       assert.ok(moment.sub.length > 0, `${moment.key} has no time anchor`);
-      assert.ok(moment.saidPublic.length > 20 && moment.saidOperator.length > 20,
-        `${moment.key} does not narrate both sides — a press must never be silent`);
+      assert.ok(moment.said.length > 20, `${moment.key} does not narrate — a press must never be silent`);
+      // The tournament world has two REAL audiences, so all three of its moments must still differ.
+      assert.ok(moment.saidOperator && moment.saidOperator.length > 20,
+        `${moment.key} lost its operator voice — a family and an organizer are told different things here`);
+      assert.notEqual(moment.saidOperator, moment.said,
+        `${moment.key} says the same words to both sides — omit saidOperator instead of duplicating it`);
     }
   });
 
@@ -206,18 +210,60 @@ describe('the tour, trimmed to its doors', () => {
    * already owns is not a door. Rather than delete the test with the steps, it is inverted into a
    * guard, so re-adding either one fails here instead of quietly re-crowding the screen.
    */
-  test('no tour step re-treads a jump the moments dock already owns', () => {
+  /**
+   * ⚠ SHARING A DOCK DESTINATION IS A DECISION, AND IT HAS TO EARN ITSELF.
+   *
+   * Steps 5 and 6 used to land exactly where the Registration-week and Morning-after chips land
+   * and say roughly what they say — two of six steps spent restating the switcher. They were cut
+   * on 2026-08-28. Step 1 also shares a destination (Game day's public home) and was NOT cut,
+   * because it does something the chip cannot: it arms the live-score watch that then follows the
+   * visitor through the rest of the demo. That is the distinction this guard encodes — not
+   * "never overlap", but "overlap only where the step adds something the dock has no way to do".
+   *
+   * Adding a step that lands on a dock destination and brings nothing extra fails here. If a new
+   * one genuinely earns its place, add it to JUSTIFIED_OVERLAPS with the reason, in the same
+   * change — the way HISTORY_ENDPOINTS makes a year parameter a deliberate decision.
+   */
+  const JUSTIFIED_OVERLAPS: Record<number, string> = {
+    1: 'arms the live-score watch that rides the chrome for the rest of the demo — a dock chip cannot',
+    3: "the tour's one crossing from the family side to the operator side; the chip can only land you "
+       + 'on the side you are already standing on, so it cannot make that handoff',
+  };
+
+  test('a tour step only re-treads a dock jump when it adds something the dock cannot', () => {
     const steps = sandboxTourSteps('tournament', org, { isDemoOrganizer: true });
-    const momentHrefs = new Set(sandboxMoments('tournament', org).map(m => m.href));
-    // Without this the test passes vacuously the day sandboxMoments returns nothing — an empty
-    // set collides with no step, and a green run would read as "no duplicates" when the real
-    // answer is "nothing was compared".
-    assert.ok(momentHrefs.size > 0, 'no dock moments to compare against — this guard has gone blind');
+    // A moment has TWO landing addresses, not one — the public side and the operator side — and a
+    // step can collide with either. An earlier version of this guard read a `href` property that
+    // SandboxMoment does not have, so it compared every step against a set of `undefined`, matched
+    // nothing, and passed while proving nothing. A size check did not save it: a Set holding one
+    // `undefined` still has size 1. Types caught it; the green run never would have.
+    const momentHrefs = new Set(
+      sandboxMoments('tournament', org).flatMap(m => [m.fanPath, m.operatorPath]),
+    );
+    assert.ok(momentHrefs.size >= 2, 'no dock destinations to compare against — this guard has gone blind');
+    for (const href of momentHrefs) {
+      assert.equal(typeof href, 'string', 'a dock destination is not a string — the guard is comparing nothing');
+    }
+
     for (const step of steps) {
+      if (!momentHrefs.has(step.href)) continue;
       assert.ok(
-        !momentHrefs.has(step.href),
-        `step ${step.n} ("${step.label}") lands where a dock moment already goes — the dock owns that jump`,
+        JUSTIFIED_OVERLAPS[step.n],
+        `step ${step.n} ("${step.label}") lands where a dock chip already goes and adds nothing — ` +
+        'the dock owns that jump. Cut it, or record why it earns its place.',
       );
+    }
+  });
+
+  test('every justified overlap still names a step that exists', () => {
+    // An excuse outliving the step it excused is how an allow-list quietly stops meaning anything.
+    // Deliberately NOT asserting a behaviour per entry: the reasons here are editorial judgements
+    // about a tour's shape, and a predicate invented to "verify" prose would pass for the wrong
+    // reasons. This is the HISTORY_ENDPOINTS pattern — a list of DECISIONS someone had to make on
+    // purpose, kept honest by failing when a decision no longer corresponds to anything.
+    const steps = sandboxTourSteps('tournament', org, { isDemoOrganizer: true });
+    for (const n of Object.keys(JUSTIFIED_OVERLAPS).map(Number)) {
+      assert.ok(steps.some(s => s.n === n), `step ${n} is excused for overlapping a dock jump but no longer exists`);
     }
   });
 
