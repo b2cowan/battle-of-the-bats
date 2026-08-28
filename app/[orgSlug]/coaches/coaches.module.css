@@ -11614,13 +11614,36 @@ button.gdChip[aria-pressed='true'] {
    never a missing element; see the block comment at the call site.
    ⚠ Two variants only, because the write cells are row-invariant: a read-only coach gets three
    columns, a writing one gets six. Nothing here varies per ROW except which cells hold content. */
+/* ⚠⚠ THE FONT SIZE IS DECLARED HERE BECAUSE THE ROW IT REPLACED DECLARED IT (regression fixed
+   2026-08-28, found by the owner within minutes of the commit). `.payDrawerLine` — the flex row
+   this grid took over from — ended with `font-size: 0.82rem`, and that one declaration was not
+   carried across. The rows then inherited the page's base size: every piece rendered a third
+   larger than the "Payments recorded" list directly beneath it, which still uses the old class
+   and so still looked right. THAT is what made it visible — one list, two type sizes, six lines
+   apart.
+   ⚠ It sits on the CONTAINER, not on `.paySchedRow`: a `display:contents` row is a legitimate
+   inheritance parent, so either works, but the container is where a reader looks for the block's
+   type and where the next person will think to check.
+   ⚠ THE LESSON, because three review lenses missed this: they compared the new selectors against
+   the old ones for COLLISIONS and found none. Nobody diffed the DECLARATIONS the replaced rule
+   used to make. When a rule is retired, the question is not only "what does the new one clash
+   with" but "what did the old one say that nothing says now". */
 .paySched {
   display: grid; align-items: center; column-gap: 0.5rem;
-  grid-template-columns: 5.25rem minmax(0, 1fr) max-content;
+  font-size: 0.82rem;
+  /* ⚠ THE DATE TRACK IS CONTENT-SIZED, NOT A FIXED 5.25rem, and that is the second half of the
+     same bug. A fixed track cannot grow, so the moment the type got bigger "Aug 3, 2026" wrapped
+     onto two lines and took the row's height with it — a column that was wide enough on the day
+     it was written and is not wide enough after any future type change. `max-content` fits the
+     longest date by construction; `.payDrawerDate`'s own `min-width` still supplies the floor, so
+     narrow dates keep the column steady rather than letting it breathe per bill. */
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
 }
 .paySchedWrite {
-  grid-template-columns: 5.25rem minmax(0, 1fr) max-content max-content max-content max-content;
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content max-content max-content;
 }
+/* A date is one token — it must never be the thing that makes a row two lines tall. */
+.paySched .payDrawerDate { white-space: nowrap; }
 .paySchedRow { display: contents; }
 /* The dashed rule belongs to the CELLS now — a `display:contents` row paints nothing itself. */
 .paySchedRow > * {
