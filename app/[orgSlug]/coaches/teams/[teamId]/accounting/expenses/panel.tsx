@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type 
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Receipt, Plus, AlertTriangle, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -2700,8 +2700,17 @@ function MoneyRecordsPanel({
 
   const spendLeadGroup = useMemo(() => {
     const offer = formMode === 'add' && convBranch === 'spend' && !isPayableForm
-      && openCommitments.length > 0;
+      && (openCommitments.length > 0 || Boolean(conv.spendExpenseId));
     if (!offer) return undefined;
+    /* ⚠⚠ A DOOR CAN NAME A SETTLED BILL — the bill-aware Record button (owner, §114 walk
+       2026-08-27) pre-fills whichever bill the coach is standing on, and that bill may already be
+       fully paid, so it will not be among `openCommitments` (nothing left to pay down there is the
+       whole reason that list excludes it). Same fact `payingBill` already reads from the FULL list
+       for the identical reason — this is that fix reaching the visible field: without it, the
+       field read back blank the moment the pre-filled bill happened to be a paid one. */
+    const selectedSettled = conv.spendExpenseId && !openCommitments.some(c => c.id === conv.spendExpenseId)
+      ? commitmentsAll.find(c => c.id === conv.spendExpenseId)
+      : undefined;
     return {
       label: 'Bills you owe',
       /* These trailing figures ARE debts, so they read as the portal's owing colour — the shared
@@ -2713,6 +2722,7 @@ function MoneyRecordsPanel({
         meta: `${fmt(c.remaining)} owing`,
       })),
       selectedId: conv.spendExpenseId || null,
+      selectedName: selectedSettled?.name,
       /* ⚠ THE OTHER HALF OF THE FIELD CLEARS. One question, one answer: a record carrying both a
          bill and a budget item would be a payment and a new cost at once. The description goes too
          when it is still the item's own name — the same `isItemLabel` rule the picker's own
@@ -2731,7 +2741,7 @@ function MoneyRecordsPanel({
         }));
       },
     };
-  }, [formMode, convBranch, isPayableForm, openCommitments, conv.spendExpenseId]);
+  }, [formMode, convBranch, isPayableForm, openCommitments, conv.spendExpenseId, commitmentsAll]);
 
   /**
    * ⚠⚠ THE ONE PAYABLES LIST, DERIVED ONCE (Rebuild P3) — the bills, their pieces, and what the
@@ -4749,18 +4759,30 @@ function MoneyRecordsPanel({
    * (`installmentStatuses`), and the badge has room for one word — so the date word wins the badge
    * and the middle state is said beside it. This is the wording the payment schedule already used
    * before the rebuild; nothing new is being invented for a coach to learn.
+   *
+   * ⚠ `remaining` IS THE SAME RULE ON A WIDER SURFACE (owner-approved mockup 2026-08-28,
+   * `claude.ai/code/artifact/ca583ce4-1dbc-47e1-b7c4-e2f8e1887a37`). The bill LIST says "· partly
+   * paid" because its Status cell is one narrow column; the commitment page's schedule gives the
+   * whole left half of the row to this sentence, so it can afford the FIGURE instead of the label —
+   * same structure, same separator, more use. Omitted, the wording is byte-identical to before, so
+   * the list is untouched by construction rather than by promise.
    */
-  function payStatusText(badge: PayableRowStatus, days: number, partly: boolean): ReactNode {
+  function payStatusText(
+    badge: PayableRowStatus, days: number, partly: boolean, remaining?: number,
+  ): ReactNode {
     const tone = badge === 'paid' ? styles.payStatePaid
       : badge === 'overdue' ? styles.payStateOverdue
       : partly ? styles.payStatePartly : styles.payStateAhead;
     const words = badge === 'paid' ? 'Paid'
       : badge === 'overdue' ? `${Math.abs(days)} days overdue`
       : days === 0 ? 'Due today' : `In ${days} days`;
+    const aside = !partly || badge === 'paid' ? ''
+      : remaining === undefined ? ' · partly paid'
+      : ` · ${fmt(remaining)} still owing`;
     return (
       <span className={`${styles.payState} ${tone}`}>
         <span className={styles.payStateDot} aria-hidden />
-        {words}{partly && badge !== 'paid' ? ' · partly paid' : ''}
+        {words}{aside}
       </span>
     );
   }
@@ -5912,38 +5934,66 @@ function MoneyRecordsPanel({
                 <p className={styles.payDrawerLabel}>
                   Scheduled{drawerStanding.installments.length > 1 ? ` — ${drawerStanding.installments.length} installments` : ''}
                 </p>
+                {/* ⚠⚠ ONE GRID FOR THE WHOLE SCHEDULE, NOT ONE PER ROW (owner-approved mockup
+                    2026-08-28, `claude.ai/code/artifact/ca583ce4-1dbc-47e1-b7c4-e2f8e1887a37`).
+                    Each row used to be its own flex line with the trailing group packed right, so a
+                    SETTLED piece — which carries no Record button — sized its own columns
+                    differently and pushed its figure out of line with the rows above it. The one
+                    row with nothing left to pay was the one row that did not line up, on a screen
+                    whose figures already ask for tabular numerals.
+                    ⚠ THE ROWS ARE `display:contents`, SO EVERY CELL MUST BE RENDERED. A row that
+                    omits a cell shifts every later cell into the wrong column — which is why the
+                    absent Record is an EMPTY SLOT rather than a missing element. That slot is doing
+                    work: it reads as "nothing owed on this piece" and holds Change and Remove where
+                    the eye already found them.
+                    ⚠ The write cells are row-INVARIANT (`canWriteMoney`, `drawerExpense` and the
+                    piece count are the same for every row of one bill), so the column count cannot
+                    differ between rows; only the Record BUTTON varies, and it keeps its slot. */}
+                <div className={`${styles.paySched} ${canWriteMoney && drawerExpense ? styles.paySchedWrite : ''}`}>
                 {drawerStanding.installments.map(inst => {
-                  const st = installmentStatus(inst, tournamentToday());
+                  const today = tournamentToday();
+                  const st = installmentStatus(inst, today);
                   return (
-                    <div key={inst.id} className={styles.payDrawerLine}>
+                    <div key={inst.id} className={styles.paySchedRow}>
                       <span className={styles.payDrawerDate}>{fmtDate(inst.dueDate)}</span>
-                      <span className={styles.payDrawerWhat}>
-                        {drawerStanding.installments.length > 1
-                          ? `Installment ${inst.installmentNumber}`
-                          : 'One payment'}
+                      {/* ⚠ THE VARIABLE-LENGTH HALF, KEPT TOGETHER ON THE LEFT. A status phrase
+                          wedged between the figure and the buttons pushed both around; beside the
+                          piece it describes it pushes nothing, and the two dollar values on a
+                          part-paid row (its face amount and what is left) end up at opposite ends
+                          of the row instead of side by side with a dot between them. */}
+                      <span className={styles.paySchedMain}>
+                        <span className={styles.paySchedLabel}>
+                          {drawerStanding.installments.length > 1
+                            ? `Installment ${inst.installmentNumber}`
+                            : 'One payment'}
+                        </span>
+                        {/* ⚠⚠ THE LIST'S OWN RENDERER, NOT A SECOND VOCABULARY. This row used to
+                            hand-write "Settled" / "Scheduled" / "$X still owing" with its own icons,
+                            while the bill list one click away said "Paid" / "In 5 days" and the
+                            Status filter that found the bill said "Paid" / "Outstanding". A coach
+                            filtered to Paid, opened a result, and read "Settled". Three vocabularies
+                            for four states is now one. */}
+                        {payStatusText(
+                          st,
+                          daysBetweenDateStrings(today, inst.dueDate),
+                          inst.state === 'partly_paid',
+                          inst.remaining,
+                        )}
                       </span>
                       <span className={styles.payDrawerAmt}>{fmt(inst.amount)}</span>
-                      {st === 'paid' ? (
-                        <span className={`${styles.payState} ${styles.payStatePaid}`}>
-                          <CheckCircle2 size={11} aria-hidden /> Settled
+                      {canWriteMoney && drawerExpense && (
+                        <span className={styles.paySchedCell}>
+                          {st !== 'paid' && (
+                            <button
+                              className={`${styles.btnSecondary} ${styles.compactAction}`}
+                              onClick={() => openRecordPayment(drawerExpense, {
+                                installmentId: inst.id, amount: inst.remaining,
+                              })}
+                            >
+                              Record
+                            </button>
+                          )}
                         </span>
-                      ) : (
-                        <span className={`${styles.payState} ${st === 'overdue' ? styles.payStateOverdue : styles.payStateAhead}`}>
-                          {st === 'overdue' && <AlertTriangle size={11} aria-hidden />}
-                          {inst.state === 'partly_paid'
-                            ? `${fmt(inst.remaining)} still owing`
-                            : st === 'overdue' ? 'Overdue' : 'Scheduled'}
-                        </span>
-                      )}
-                      {st !== 'paid' && canWriteMoney && drawerExpense && (
-                        <button
-                          className={`${styles.btnSecondary} ${styles.compactAction}`}
-                          onClick={() => openRecordPayment(drawerExpense, {
-                            installmentId: inst.id, amount: inst.remaining,
-                          })}
-                        >
-                          Record
-                        </button>
                       )}
                       {/* ⚠⚠ THE SCOPED DOOR (P4, S1–S7). Changing or removing ONE payment in a
                           series is where the three-way question belongs — the form states the whole
@@ -5955,33 +6005,41 @@ function MoneyRecordsPanel({
                           paid row would reverse it silently. */}
                       {canWriteMoney && drawerExpense && (
                         <>
-                          <button
-                            className={`${styles.btnGhost} ${styles.compactAction}`}
-                            aria-label={`Change installment ${inst.installmentNumber}`}
-                            onClick={() => setScopeEdit({
-                              expense: drawerExpense, installmentId: inst.id, mode: 'edit',
-                            })}
-                          >
-                            Change
-                          </button>
-                          {/* R1 — a bill always has a schedule, so the last row cannot be removed.
-                              Deleting the whole bill is the other action, and it gives money back. */}
-                          {drawerStanding.installments.length > 1 && (
+                          <span className={styles.paySchedCell}>
                             <button
                               className={`${styles.btnGhost} ${styles.compactAction}`}
-                              aria-label={`Remove installment ${inst.installmentNumber}`}
+                              aria-label={`Change installment ${inst.installmentNumber}`}
                               onClick={() => setScopeEdit({
-                                expense: drawerExpense, installmentId: inst.id, mode: 'remove',
+                                expense: drawerExpense, installmentId: inst.id, mode: 'edit',
                               })}
                             >
-                              Remove
+                              Change
                             </button>
-                          )}
+                          </span>
+                          {/* R1 — a bill always has a schedule, so the last row cannot be removed.
+                              Deleting the whole bill is the other action, and it gives money back.
+                              ⚠ The CELL is always rendered so the grid keeps its column count; on a
+                              one-piece bill the column collapses to nothing, and there is exactly
+                              one row for it to collapse on. */}
+                          <span className={styles.paySchedCell}>
+                            {drawerStanding.installments.length > 1 && (
+                              <button
+                                className={`${styles.btnGhost} ${styles.compactAction}`}
+                                aria-label={`Remove installment ${inst.installmentNumber}`}
+                                onClick={() => setScopeEdit({
+                                  expense: drawerExpense, installmentId: inst.id, mode: 'remove',
+                                })}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </span>
                         </>
                       )}
                     </div>
                   );
                 })}
+                </div>
 
                 {/* ⚖ THE SCHEDULE'S OWN ACTION, under the schedule (owner ruling 2026-08-26). It sat
                     in the page header until the door count showed why that felt wrong: the

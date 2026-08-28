@@ -14105,7 +14105,16 @@ stale phone tap-floor entries falling away with the deleted row; measured before
 
 ---
 
-## §114 · The commitment page edits itself — and the bill stops having two editors — BUILT, awaiting QA
+## §114 · The commitment page edits itself — and the bill stops having two editors — ✅ OWNER QA PASSED 2026-08-28 (Part G not walked)
+
+> **Walked 2026-08-28. No failures recorded.** A 12/12 · B 7/7 · C 6/6 · D 4/4 · E 5/5 · F 2/2 —
+> all PASS. **G · Phone was SKIPPED**, and it is the one part still owed.
+>
+> ⚠ **Part G is now owed by TWO sections, not one.** The installment schedule on this very page was
+> re-laid-out on 2026-08-28 (§117) with a **phone-specific branch** — above 768 the schedule is a
+> shared column grid, at 768 and below it unwinds to the wrapping rows it replaced. That responsive
+> switch is exactly what Part G would have exercised, and it did not exist when this section was
+> written. Walking G later closes both.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/5f25469a-2091-4364-92b7-b5ea38018b28`
 >
@@ -14877,3 +14886,103 @@ partial UNIQUE on `rep_dues_credits (expense_id, player_id) WHERE credit_type='r
 the structural guarantee that replaced a `.maybeSingle()` when one cost gained the ability to carry
 credits for two households. Dictionary and snapshots refreshed in the same unit of work.
 ⚠ **Must reach prod BEFORE any promote that carries this code.**
+
+---
+
+## §117 · The schedule inside a bill stops speaking a third dialect — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/72b09298-cde4-4155-a9c1-0361be84bf53`
+>
+> **Checkable walkthrough** — every step below as a real checkbox, a verdict and notes box per
+> part, and a "build summary" button producing plain text to paste back into the chat. Ticks are
+> saved in the browser, so the walk survives closing the tab.
+
+**BUILT 2026-08-28 (dev). No migration.** Sits on the commitment page that §114 signed off, and is
+the reason §114's **Part G (phone) is still owed** — the schedule now has a phone-specific branch
+that did not exist when §114 was written.
+
+Approved mockup (three specimens, before/after):
+`claude.ai/code/artifact/ca583ce4-1dbc-47e1-b7c4-e2f8e1887a37`.
+
+**What a coach gets.** Open a bill and its list of installments now reads the same language as the
+screen that sent them there. Three things changed:
+
+1. **One vocabulary instead of three.** A finished piece said **Settled**; the bill list one click
+   away said **Paid**; the Status filter that found the bill said **Paid**. It now says **Paid**
+   everywhere. An upcoming piece said the flat word *Scheduled* and now says **how soon** ("In 35
+   days"); a late one says **how late** ("6 days overdue") instead of just *Overdue*.
+   ⚠⚠ **This was not merely inconsistent, it contradicted a documented term.** The in-app guide
+   defines **Settled** as *"the season is settled with fundraising or another credit doing part of
+   the work — deliberately not Fully paid, because Paid means cash"*. The schedule was using that
+   word for a vendor bill paid in full, in cash — close to the opposite. The guide already defines
+   **Paid** as *"settled in full"*, so **the docs were already right and the screen was wrong**;
+   no help content changed.
+2. **Part-paid gets its own colour.** It rendered in the same grey as an untouched future piece —
+   the one state that needs attention looked like the one that does not. It is now amber, and says
+   what is left ("In 12 days · $400.00 still owing").
+3. **The figures line up.** Each row used to size its own columns, so a settled piece — which
+   carries no **Record** button — pushed its own amount out of line with the rows above it. The
+   whole schedule now shares one set of columns, and **Record keeps a reserved empty slot** on a
+   paid row, which reads as *nothing owed here* and holds Change and Remove still.
+
+**What did NOT change, deliberately.** Button weights are untouched — **Record stays the quiet
+outlined button, not the filled one from the page header.** One primary per screen: promoting it
+would mint a filled button on every unpaid piece, and a six-installment bill would have six.
+Change and Remove stay visible on every row rather than folding into a menu (a drawn alternative,
+rejected — a control a coach cannot see is a control they do not have).
+
+### A · The vocabulary
+- [ ] **Money → Payables. Set the Status filter to `Paid` and note the word.** Open one of the
+      bills it found. Every finished piece inside says **Paid** — not *Settled*. The word you
+      filtered by is the word you land on.
+- [ ] An unpaid piece not yet due says **In N days** (or **Due today**), not *Scheduled*.
+- [ ] An overdue piece says **N days overdue**, not the bare word *Overdue*.
+- [ ] ⚠ **Compare against the bill list one level up.** Fold the bill closed. The status the list
+      shows for the same piece uses the same words. Two screens, one vocabulary.
+
+### B · Part-paid, which was the invisible one
+- [ ] Find (or make) a piece with **some** money against it but not all. It reads
+      **amber**, and says what is still owing — e.g. *"In 12 days · $400.00 still owing"*.
+- [ ] ⚠ **It is no longer the same grey as an untouched future piece.** That was the defect: the
+      one row needing attention wore the calmest colour on the screen.
+- [ ] The bill's own **face amount** is still in the money column on the right; the **remainder**
+      is in the sentence on the left. Two figures, opposite ends — they should never read as one
+      number or as a subtraction.
+
+### C · The columns
+- [ ] **On a bill with at least one PAID piece and one unpaid one**, check the amounts form a
+      straight vertical column. ⚠ **This is the fix worth checking first** — the paid row was the
+      one that used to sit out of line, because it carries no Record button.
+- [ ] The paid row shows a **gap** where Record would be, and **Change** and **Remove** sit in the
+      same place on every row.
+- [ ] The coloured dot sits immediately after *Installment N* and the dots form a column too.
+
+### D · Nothing else moved
+- [ ] **Record** on a row still opens the money conversation aimed at that piece, with that
+      piece's remainder suggested.
+- [ ] **Change** and **Remove** still ask the three-way question (this payment / this and later /
+      all unpaid) — they keep their dialog.
+- [ ] **Change** and **Remove** are still offered on a **settled** piece and nothing is greyed out
+      (the standing 2026-08-16 ruling).
+- [ ] **Add an installment** still adds a row in place under the schedule.
+- [ ] A bill with **one** piece still reads *One payment* and offers no Remove.
+
+### E · Read-only money
+- [ ] As a coach with **read-only** money, open a bill. The schedule shows date, piece, status and
+      amount — and **no buttons at all**. The rows still line up.
+
+### F · Phone — ⚠ THE PART MOST LIKELY TO FIND SOMETHING
+- [ ] At phone width the schedule **unwinds**: rows wrap as they always did rather than holding
+      columns. ⚠ **Six columns cannot fit a phone, so alignment is deliberately a desktop-only
+      promise** — confirm it wraps cleanly and nothing runs off the side.
+- [ ] Every button is still a comfortable tap target.
+- [ ] ⚠ **The reserved Record gap must NOT appear on a phone** — once rows wrap it would read as a
+      hole rather than a held column.
+- [ ] Walking this **also closes §114 Part G**, which was skipped.
+
+**Known, NOT fixed here, and deliberately so.** The dense-row button sizing (`.compactAction`) is
+silently outranked by the button-variant classes it is paired with — measured: the buttons render
+at 14px text where 11.5px was intended. It is **pre-existing and portal-wide** (15 buttons across
+5 files), the 44px phone tap floor is **not** affected, and the codebase already carries a
+deliberate compound-selector workaround for this exact collision elsewhere. Fixing it visibly
+shrinks buttons on several screens, so it is its own decision, not a passenger on this diff.

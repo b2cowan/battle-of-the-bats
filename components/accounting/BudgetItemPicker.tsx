@@ -110,6 +110,13 @@ interface Props {
      */
     metaTone?: 'quiet' | 'owing';
     selectedId: string | null;
+    /**
+     * The name to show at rest when `selectedId` points at something NOT in `options` — a caller
+     * can select an id it deliberately left out of the pickable list (see the coach-money panel's
+     * settled-bill case) without the field reading back blank. Never appears in the open dropdown;
+     * it only answers "what does the closed field say".
+     */
+    selectedName?: string | null;
     onPick: (id: string) => void;
   };
 }
@@ -222,9 +229,11 @@ export default function BudgetItemPicker({
     return new Set([...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k));
   }, [offered]);
 
-  /** A chosen lead option displays as itself — it has no "Category · Item" shape to borrow. */
+  /** A chosen lead option displays as itself — it has no "Category · Item" shape to borrow.
+   *  Falls back to `selectedName` when the id isn't among the offered options (see its own doc). */
   const selectedLead = leadGroup?.selectedId
-    ? leadGroup.options.find(o => o.id === leadGroup.selectedId) ?? null
+    ? leadGroup.options.find(o => o.id === leadGroup.selectedId)
+      ?? (leadGroup.selectedName ? { id: leadGroup.selectedId, name: leadGroup.selectedName } : null)
     : null;
 
   const selectedLabel = (() => {

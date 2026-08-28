@@ -11604,6 +11604,57 @@ button.gdChip[aria-pressed='true'] {
 .payDrawerDate { min-width: 5.25rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .payDrawerWhat { flex: 1; min-width: 8rem; color: var(--text-secondary); }
 .payDrawerAmt { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--text-primary); }
+/* ── THE SCHEDULE: ONE GRID, SHARED BY EVERY ROW (owner-approved 2026-08-28) ──────────────────
+   Each piece used to be its own flex line with the trailing group packed to the right edge. A
+   SETTLED piece carries no Record button, so it sized its own columns differently and its figure
+   sat out of line with the rows above — the one row with nothing left to pay was the one row that
+   did not line up, on a panel whose figures explicitly ask for tabular numerals.
+   ⚠⚠ THE ROWS ARE `display:contents`, so the JSX must render EVERY cell on EVERY row — a row that
+   skips one shifts all its later cells into the wrong columns. The absent Record is an empty slot,
+   never a missing element; see the block comment at the call site.
+   ⚠ Two variants only, because the write cells are row-invariant: a read-only coach gets three
+   columns, a writing one gets six. Nothing here varies per ROW except which cells hold content. */
+.paySched {
+  display: grid; align-items: center; column-gap: 0.5rem;
+  grid-template-columns: 5.25rem minmax(0, 1fr) max-content;
+}
+.paySchedWrite {
+  grid-template-columns: 5.25rem minmax(0, 1fr) max-content max-content max-content max-content;
+}
+.paySchedRow { display: contents; }
+/* The dashed rule belongs to the CELLS now — a `display:contents` row paints nothing itself. */
+.paySchedRow > * {
+  padding: 0.35rem 0; border-bottom: 1px dashed var(--border-2); min-width: 0;
+}
+.paySchedRow:last-child > * { border-bottom: 0; }
+.paySched .payDrawerAmt { text-align: right; }
+/* The variable-length half — the piece's name and how it is doing — kept together on the LEFT,
+   where a ragged edge is what a run of text is supposed to have. */
+.paySchedMain {
+  display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex-wrap: wrap;
+  color: var(--text-secondary);
+}
+.paySchedLabel { color: var(--text-secondary); }
+.paySchedCell { display: flex; justify-content: flex-end; }
+
+/* ⚠⚠ THE GRID IS A DESKTOP ANSWER, AND BELOW 768 IT UNWINDS TO THE WRAPPING ROW IT REPLACED.
+   Six columns — a date, a sentence, a figure and three 44px tap targets — cannot fit a 390px
+   phone, and a grid does not wrap: it would overflow the panel with nothing to scroll it, which is
+   the exact failure `.payAddRow` above records one section down. Alignment is a luxury of having
+   room; on a phone the row stacks, as it always did, and the reserved Record slot has no meaning
+   once cells are no longer in columns — so it is removed rather than left as a mystery gap. */
+@media (max-width: 768px) {
+  .paySched, .paySchedWrite { display: block; }
+  .paySchedRow {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    padding: 0.35rem 0; border-bottom: 1px dashed var(--border-2);
+  }
+  .paySchedRow > * { padding: 0; border-bottom: 0; }
+  .paySchedRow:last-child { border-bottom: 0; }
+  /* An empty cell is a hole in a wrapped row; in the grid it was a held column. */
+  .paySchedCell:empty { display: none; }
+}
+
 .payDrawerTotal {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
   margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--border-2);
