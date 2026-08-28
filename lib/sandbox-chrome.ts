@@ -429,26 +429,6 @@ export function sandboxTourSteps(
       ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_TOURNAMENT_SLUG } : {}),
       anchor: '[data-sandbox-tour="schedule-health"]',
       said: 'Drag any game onto a slot that is already busy. The health score reacts as you drop it — and nothing you do here is saved.',
-      nextLabel: 'Next: three weeks back',
-    },
-    // Steps 5–6 are the moments dock wearing its guided handle: same jumps, same arrival
-    // narration discipline. The tour now walks the year, not just the Saturday.
-    {
-      n: 5,
-      label: 'Go back three weeks',
-      href: operatorHref(`${adminBase}/registrations`),
-      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_INVITATIONAL_SLUG } : {}),
-      anchor: '[data-sandbox-tour="registration-health"]',
-      said: 'Three weeks before first pitch, the work looks like this: fifteen teams in the pipeline, U11 full with a waitlist forming, and the health score naming exactly who still owes what.',
-      nextLabel: 'Next: the morning after',
-    },
-    {
-      n: 6,
-      label: 'Skip to the morning after',
-      href: operatorHref(`${adminBase}/summary`),
-      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_OPENER_SLUG } : {}),
-      anchor: '[data-sandbox-tour="post-event-summary"]',
-      said: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
     },
   ];
 }
@@ -552,7 +532,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // portal knows the difference. The demo's sponsor is deliberately club-wide and credited to
       // nobody, so this sentence must never imply a family's bill moved (see MIDSEASON_SPONSOR:
       // the three pins the clause above depends on survive precisely because it does not).
-      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, two families are behind — and one pays in small e-transfers, its installment sitting at $90 of $120, recorded exactly as it arrived. One family owes nothing at all on their last bill: their player sold $240 of bottles, half of it came straight off the dues, and the row reads "covered by fundraising" instead of asking them for it. Which bill that lands on is your call, set once — Player Dues prints the answer under the table, and Team settings is where it changes. Money coming in is not all one thing either: beside the bottle drive sits a $750 sponsor, recorded as one arrival rather than a roster of blank rows, and marked received — a pledge would sit in the plan and count as nothing in the books until the cheque lands.',
+      said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
     {
@@ -638,7 +618,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          ⚠ IT CLAIMS NO FIGURES, for the fourth time on this step and the same reason. The seeded
          world (`EX-SPRING`, roster index 0) re-anchors nightly, so naming the amount or the family
          would let a steady day make this sentence wrong. */
-      said: 'Every dollar this season moved, in date order, with the balance running down the side — and the figure at the top is not a summary, it is the team\'s cash, to the cent. Not just what this coach typed: dues arriving, the bottle drive, the sponsor, and what the club has billed all land on the same book, each tagged with where it came from and one tap from the screen that owns it. Turn on what is scheduled and it keeps going past today — the entry fee due in three weeks, the next round of dues — so the last line is what the account will hold once they land. Tap one of those scheduled rows and you land on the bill itself: its whole payment plan, what is still owing, who it is paid to and any note the coach left — and there is no Edit button, because every one of those is changed where it is read and saves itself. Some of what has been paid was never the team\'s money: a parent put the tournament deposit on their own card, so the bill came down, the balance stayed exactly where it was, and that family is owed it back against their dues — one bill holding a payment the team made and a payment a family fronted, each saying which it is. The club\'s own side has a screen of its own: $900 of shared permits billed across three installments with one still ahead, $180 the club agreed to pay back for a permit this coach fronted, and a $95 share still waiting on an answer — money that shows here as undecided and counts toward nothing until they say yes. And writing any of it down is one green button, up beside Import: Record asks a coach what happened in their own words — a family paid, the drive brought money in, we paid a bill — and files it wherever it belongs, from whichever screen they happen to be standing on. One more control worth a look: the coach\'s own labels. A budget word says what kind of cost something was; a label says which occasion it belonged to — so tick one and the book narrows to that weekend, across every category it touched, and states what it came to.',
+      said: 'Every dollar this season moved, in date order, with the balance running down the side. The figure at the top is not a summary — it is the team’s cash, to the cent. Tap any row to open the bill behind it.',
       nextLabel: 'Next: playing time',
     },
     {
@@ -672,7 +652,7 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          being wrong costs a child's arm.
          ⚠ AND THE GRID ONLY VARIES BECAUSE THE SEED WAS FIXED THE SAME DAY: all six saved lineups
          used one authored grid, so every cell said the same number. See `midseasonLineupGrid`. */
-      said: 'Every report this coach has sits behind one row of tabs — results, attendance, playing time, development, awards, the scouting book — and this is the playing-time one. One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Underneath, a grid of every player against every position: how many days since each of them last stood there, and a dash where no saved lineup ever has — because a position listed on a roster is an intention, not a game anyone played. Then each pitcher\'s rest, against the per-game cap this coach set themselves, which is the only ceiling in here: the product keeps no weekly innings budget of its own and will not invent one. Nobody typed any of this in.',
+      said: 'One row per player, from the lineups you already saved. Most of the team has 24 to 30 innings; one player has 12, and has sat back-to-back six times. Nobody typed any of this in.',
       nextLabel: 'Next: what a parent sees',
     },
     {

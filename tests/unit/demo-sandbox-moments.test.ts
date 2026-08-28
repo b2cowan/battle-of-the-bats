@@ -190,23 +190,41 @@ describe('the dock', () => {
   });
 });
 
-describe('the tour, grown to six', () => {
-  test('six steps, numbered 1..6, and the count never changes with who is looking', () => {
+describe('the tour, trimmed to its doors', () => {
+  test('four steps, numbered 1..4, and the count never changes with who is looking', () => {
     const asOrganizer = sandboxTourSteps('tournament', org, { isDemoOrganizer: true });
     const asVisitor = sandboxTourSteps('tournament', org, { isDemoOrganizer: false });
-    assert.deepEqual(asOrganizer.map(s => s.n), [1, 2, 3, 4, 5, 6]);
+    assert.deepEqual(asOrganizer.map(s => s.n), [1, 2, 3, 4]);
     assert.equal(asVisitor.length, asOrganizer.length);
   });
 
-  test('steps 5 and 6 land on the moments and narrate them', () => {
+  /**
+   * This test used to assert the OPPOSITE — that steps 5 and 6 landed on the two moments and
+   * narrated them. They did, and that was the problem: the dock already offers both jumps, so the
+   * tour was spending two of its steps restating the season switcher. Owner ruling 2026-08-28,
+   * from measured copy: the tour keeps its DOORS and gives up its prose, and a door the dock
+   * already owns is not a door. Rather than delete the test with the steps, it is inverted into a
+   * guard, so re-adding either one fails here instead of quietly re-crowding the screen.
+   */
+  test('no tour step re-treads a jump the moments dock already owns', () => {
     const steps = sandboxTourSteps('tournament', org, { isDemoOrganizer: true });
-    const five = steps.find(s => s.n === 5)!;
-    const six = steps.find(s => s.n === 6)!;
-    assert.ok(five.href.endsWith('/registrations'));
-    assert.equal(five.tournamentSlug, DEMO_INVITATIONAL_SLUG);
-    assert.ok(six.href.endsWith('/summary'));
-    assert.equal(six.tournamentSlug, DEMO_OPENER_SLUG);
-    assert.ok(five.said.length > 20 && six.said.length > 20);
+    const momentHrefs = new Set(sandboxMoments('tournament', org).map(m => m.href));
+    // Without this the test passes vacuously the day sandboxMoments returns nothing — an empty
+    // set collides with no step, and a green run would read as "no duplicates" when the real
+    // answer is "nothing was compared".
+    assert.ok(momentHrefs.size > 0, 'no dock moments to compare against — this guard has gone blind');
+    for (const step of steps) {
+      assert.ok(
+        !momentHrefs.has(step.href),
+        `step ${step.n} ("${step.label}") lands where a dock moment already goes — the dock owns that jump`,
+      );
+    }
+  });
+
+  test('every remaining step still says something — a door with no sentence is a dead end', () => {
+    for (const step of sandboxTourSteps('tournament', org, { isDemoOrganizer: true })) {
+      assert.ok(step.said.length > 20, `step ${step.n} narrates nothing`);
+    }
   });
 
   test('every operator step names its event for an organizer — three tournaments share one admin', () => {
