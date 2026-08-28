@@ -14110,11 +14110,16 @@ stale phone tap-floor entries falling away with the deleted row; measured before
 > **Walked 2026-08-28. No failures recorded.** A 12/12 · B 7/7 · C 6/6 · D 4/4 · E 5/5 · F 2/2 —
 > all PASS. **G · Phone was SKIPPED**, and it is the one part still owed.
 >
-> ⚠ **Part G is now owed by TWO sections, not one.** The installment schedule on this very page was
-> re-laid-out on 2026-08-28 (§117) with a **phone-specific branch** — above 768 the schedule is a
-> shared column grid, at 768 and below it unwinds to the wrapping rows it replaced. That responsive
-> switch is exactly what Part G would have exercised, and it did not exist when this section was
-> written. Walking G later closes both.
+> ⚠ **Part G is now HALF closed, and this note originally overstated it.** §117 (2026-08-28)
+> re-laid-out the installment schedule on this very page with a phone-specific branch — above 768
+> it is a shared column grid, at 768 and below it unwinds to wrapping rows. **§117 Part F passed on
+> 2026-08-28** and covers two of G's four claims: *the schedule still reads* and *the page does not
+> scroll sideways*.
+>
+> **Still owed on a phone, from this section alone:** the **six editable fields are pressable at
+> 390px**, and the **save strip stays at the foot**. §117 never touched either, so nothing has
+> tested them. An earlier version of this note said walking §117's phone part would close G
+> outright; it does not, and the difference is those two checks.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/5f25469a-2091-4364-92b7-b5ea38018b28`
 >
@@ -14889,7 +14894,18 @@ credits for two households. Dictionary and snapshots refreshed in the same unit 
 
 ---
 
-## §117 · The schedule inside a bill stops speaking a third dialect — BUILT, awaiting QA
+## §117 · The schedule inside a bill stops speaking a third dialect — ✅ OWNER QA PASSED 2026-08-28
+
+> **Walked 2026-08-28, all six parts PASS, 20/20 steps, no failures recorded.** A 4/4 · B 3/3 ·
+> C 3/3 · D 5/5 · E 1/1 · **F 4/4 — including the phone**, the part flagged as most likely to
+> find something.
+>
+> ⚠ **This does NOT fully close §114 Part G, and an earlier note in §114 claimed it did.** That
+> claim was checked against Part G's actual wording and found overstated. G asks four things at
+> 390px: the six editable fields are pressable · the schedule still reads · the save strip stays
+> at the foot · the page does not scroll sideways. **Part F below covers the middle two.** The
+> **six editable fields** and the **save strip** are still unwalked on a phone — a small residual,
+> recorded rather than absorbed.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/72b09298-cde4-4155-a9c1-0361be84bf53`
 >
@@ -14932,53 +14948,53 @@ Change and Remove stay visible on every row rather than folding into a menu (a d
 rejected — a control a coach cannot see is a control they do not have).
 
 ### A · The vocabulary
-- [ ] **Money → Payables. Set the Status filter to `Paid` and note the word.** Open one of the
+- [x] **Money → Payables. Set the Status filter to `Paid` and note the word.** Open one of the
       bills it found. Every finished piece inside says **Paid** — not *Settled*. The word you
       filtered by is the word you land on.
-- [ ] An unpaid piece not yet due says **In N days** (or **Due today**), not *Scheduled*.
-- [ ] An overdue piece says **N days overdue**, not the bare word *Overdue*.
-- [ ] ⚠ **Compare against the bill list one level up.** Fold the bill closed. The status the list
+- [x] An unpaid piece not yet due says **In N days** (or **Due today**), not *Scheduled*.
+- [x] An overdue piece says **N days overdue**, not the bare word *Overdue*.
+- [x] ⚠ **Compare against the bill list one level up.** Fold the bill closed. The status the list
       shows for the same piece uses the same words. Two screens, one vocabulary.
 
 ### B · Part-paid, which was the invisible one
-- [ ] Find (or make) a piece with **some** money against it but not all. It reads
+- [x] Find (or make) a piece with **some** money against it but not all. It reads
       **amber**, and says what is still owing — e.g. *"In 12 days · $400.00 still owing"*.
-- [ ] ⚠ **It is no longer the same grey as an untouched future piece.** That was the defect: the
+- [x] ⚠ **It is no longer the same grey as an untouched future piece.** That was the defect: the
       one row needing attention wore the calmest colour on the screen.
-- [ ] The bill's own **face amount** is still in the money column on the right; the **remainder**
+- [x] The bill's own **face amount** is still in the money column on the right; the **remainder**
       is in the sentence on the left. Two figures, opposite ends — they should never read as one
       number or as a subtraction.
 
 ### C · The columns
-- [ ] **On a bill with at least one PAID piece and one unpaid one**, check the amounts form a
+- [x] **On a bill with at least one PAID piece and one unpaid one**, check the amounts form a
       straight vertical column. ⚠ **This is the fix worth checking first** — the paid row was the
       one that used to sit out of line, because it carries no Record button.
-- [ ] The paid row shows a **gap** where Record would be, and **Change** and **Remove** sit in the
+- [x] The paid row shows a **gap** where Record would be, and **Change** and **Remove** sit in the
       same place on every row.
-- [ ] The coloured dot sits immediately after *Installment N* and the dots form a column too.
+- [x] The coloured dot sits immediately after *Installment N* and the dots form a column too.
 
 ### D · Nothing else moved
-- [ ] **Record** on a row still opens the money conversation aimed at that piece, with that
+- [x] **Record** on a row still opens the money conversation aimed at that piece, with that
       piece's remainder suggested.
-- [ ] **Change** and **Remove** still ask the three-way question (this payment / this and later /
+- [x] **Change** and **Remove** still ask the three-way question (this payment / this and later /
       all unpaid) — they keep their dialog.
-- [ ] **Change** and **Remove** are still offered on a **settled** piece and nothing is greyed out
+- [x] **Change** and **Remove** are still offered on a **settled** piece and nothing is greyed out
       (the standing 2026-08-16 ruling).
-- [ ] **Add an installment** still adds a row in place under the schedule.
-- [ ] A bill with **one** piece still reads *One payment* and offers no Remove.
+- [x] **Add an installment** still adds a row in place under the schedule.
+- [x] A bill with **one** piece still reads *One payment* and offers no Remove.
 
 ### E · Read-only money
-- [ ] As a coach with **read-only** money, open a bill. The schedule shows date, piece, status and
+- [x] As a coach with **read-only** money, open a bill. The schedule shows date, piece, status and
       amount — and **no buttons at all**. The rows still line up.
 
 ### F · Phone — ⚠ THE PART MOST LIKELY TO FIND SOMETHING
-- [ ] At phone width the schedule **unwinds**: rows wrap as they always did rather than holding
+- [x] At phone width the schedule **unwinds**: rows wrap as they always did rather than holding
       columns. ⚠ **Six columns cannot fit a phone, so alignment is deliberately a desktop-only
       promise** — confirm it wraps cleanly and nothing runs off the side.
-- [ ] Every button is still a comfortable tap target.
-- [ ] ⚠ **The reserved Record gap must NOT appear on a phone** — once rows wrap it would read as a
+- [x] Every button is still a comfortable tap target.
+- [x] ⚠ **The reserved Record gap must NOT appear on a phone** — once rows wrap it would read as a
       hole rather than a held column.
-- [ ] Walking this **also closes §114 Part G**, which was skipped.
+- [x] Walking this **also closes §114 Part G**, which was skipped.
 
 **Known, NOT fixed here, and deliberately so.** The dense-row button sizing (`.compactAction`) is
 silently outranked by the button-variant classes it is paired with — measured: the buttons render
