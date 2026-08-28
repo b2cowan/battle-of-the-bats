@@ -3,6 +3,98 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-28 — TYPE HAS NO SCALE: 61 sizes, seven roles, and size is the WRONG INSTRUMENT below 13px
+
+**Decision (owner, approving the true-size before/after mockup
+`claude.ai/code/artifact/5b5c426b-d093-45f6-ba50-4d714cd214c6`).** The coaches portal adopts a
+**seven-step, role-named type ladder**: `figure` 24px · `title` 20px · `heading` 16px · `body` 14px ·
+`support` 12px · `label` 11px · `token` 10px. Phase 2 (the Money hub's own screen, the shared page
+header, the shared tab bar, the masthead, the button family) is built; Phases 1 and 3 are staged and
+open. Named for **role, never for size** — the 2026-08-18 ink ruling's lesson, one axis over.
+
+**⚠⚠ THE TRIGGER WAS A FALSE REPORT, AND CHASING IT HONESTLY IS WHAT FOUND THE REAL DEFECT.** The
+owner asked whether the Money headers had *grown* recently. They had not — measured against git, the
+page title had gone **down** (28px → 22.4px on 08-19) and the sidebar links with it. Answering only
+the question asked would have closed the thread with "no, nothing changed." The evidence was wider
+than the ask: **there were 61 distinct font sizes across the portal, 26 of them under 16px, many
+separated by fractions of a pixel.** There was no scale to violate, which is exactly why nobody had
+violated one.
+
+**⚠⚠ THE DEFECT IS AN INTERVAL, NOT A SIZE — AND THIS IS THE PART THAT GENERALISES.** Two sizes 10%
+apart do not read as a hierarchy; they read as a near-miss, and neither wins. The page title sat at
+22.4px against a card figure at 24.8px. **The ranking was never wrong** — a dashboard's hero figure
+*should* out-size the page title, because the number is the content and the title is chrome. Only the
+interval was. **Adjacent steps differ by ≥15%, or they are the same value; nothing in between.** Five
+of the 61 values (0.72 / 0.73 / 0.74 / 0.75 / 0.76rem) lived inside a 0.7px window and could never
+have signalled anything to anyone.
+
+**⚠⚠ BELOW ~13px, SIZE HAS NO RESOLUTION — DIFFERENTIATE BY TREATMENT.** Six values occupied
+9.3–12.5px, all uppercase, all letter-spaced, all bold, serving six unrelated jobs. They were
+**over-differentiated by size and under-differentiated by treatment.** So the ladder's top four steps
+separate by size (1.14×–1.25×) and its **bottom three separate by case, tracking, weight and ink** —
+their tight size gaps are the design, not debt to tidy later. Concretely: primary navigation (11.5px
+uppercase mono) was *tying* the 12.5px uppercase column headings of the tables it navigates to, so
+nav now reads as **sentence-case body text** and column headings stay **uppercase support**. Fixed
+**upward** — the 08-15 heading ruling stands and was not unwound to make room.
+
+**⚠ THE SUB-11px FLOOR IS A ROLE QUESTION, NOT A SIZE QUESTION.** "Nothing under 11px" would have
+silently reversed the 2026-05-23 `btn-data` / admin-badge decision. A **badge** is recognised by shape
+and colour without being read (10px, fine, kept). A **card title** must be read to know what the
+number beneath it means — `COLLECTIONS` at 9.9px was **a heading rendered at badge size**, quieter
+than the chip floating beside it, and that single mismatch was doing most of the "screen feels flat"
+work.
+
+**⚠⚠ TWO CORRECT DECISIONS COMPOSED INTO A DEFECT BECAUSE NEITHER COULD SEE THE OTHER.** The column
+headings went **up** on 08-15 (a measured legibility fix) and the page header came **down** on 08-19
+(direction E). Four days apart, both right, and together they produced the inversion. That is what a
+missing scale actually costs — not bad decisions, but good ones that cannot compose.
+
+**⚠ A SIZING MOCKUP THAT NEVER DREW A PHONE IS A SIZING MOCKUP WITH A HOLE IN IT.** The approved
+frames were 1120px. The masthead detail line was drawn at the `support` step (12px) and **overflowed
+the phone masthead by 3px** — that line cannot wrap at ≤640 (only the club name may shrink; season
+and record are rigid by design), so the extra width had nowhere to go. It shipped at `label` (11px),
+one value at every width. **Draw the narrow frame too, or the sweep will draw it for you.**
+
+**⚠ A TYPE CHANGE DOES NOT CAUSE OVERFLOW — IT EXPOSES MISSING CONTAINMENT.** Both regressions the
+layout sweep caught (`.ledgerTitle`, `.railName`) sat in `minmax(0, 1fr)` cells with **no
+`overflow`/`text-overflow`**, and in both cases the element's own immediate sibling already had the
+treatment. They fit at the old size by luck. The fix is the containment, never a smaller font.
+
+**⚠ REMOVING AN UPPERCASE TRANSFORM PUBLISHES WHATEVER IT WAS HIDING.** Dropping the tab row's caps
+exposed a live copy split — Money and Insights write Title Case ("Budget Plan", "Playing Time") while
+the tryout flow writes sentence case ("Tryout day", "Build team"). Deliberately **not** normalised in
+this pass: it reaches foot links, rail links and help articles, and doing half of it would leave one
+thing wearing two names. Logged as a follow-up.
+
+**⚠⚠ THE LADDER AS APPROVED HAS NO STEP ABOVE 24px, AND THAT IS A HOLE IN IT — FOUND WHILE SIZING
+PHASE 3, NOT WHILE DESIGNING IT.** The seven steps were derived from the Money screen, **which has
+no scoreboard on it.** The portal does: the game-day score (30px / 28px on phones), the season
+record hero (32px / 27px), insight stat values and the tournament record (26px), the tryout rating
+value (28px) — 14 declarations that are legitimately display type. A scoreboard number and a
+dashboard card figure are **different jobs**, so snapping them to `figure` would be wrong. **Phase 3
+must rule on a `display` step (~32px) before it touches them.** Two further values (96px and 144px,
+painted at 7% opacity as a team-header watermark) are **graphics, not type**, and want a documented
+exemption rather than ladder membership. Generalises: **a ladder derived from one screen inherits
+that screen's blind spots — check it against the loudest surface in the product, not the one that
+prompted it.**
+
+**⚠ "LONG TAIL" AND "INVISIBLE" ARE NOT THE SAME SET, AND CONFLATING THEM ALMOST SHIPPED A VISIBLE
+CHANGE AS A TIDY-UP.** Phase 1 was scoped as "values used ≤5 times — every move under half a pixel."
+Both halves were true separately and false together: the long tail also contained the entire display
+tier, so a blind snap-to-nearest-**step** would have moved 144px → 24px. The correct operation is
+snap to nearest **neighbour** (any ladder step *or* any already-popular value), and then keep only
+the moves under 0.5px: **22 declarations, 15 values, largest move 0.48px.** The other 27 were held
+for the display-step ruling. **Scope a mechanical sweep by how far each value MOVES, never by how
+rarely it is used.**
+
+**Measured result of Phases 1 + 2 over the same 62 coach stylesheets:** 62 → 49 distinct sizes,
+on-ladder declarations 70 → 119, total declarations unchanged, **zero layout regressions across 12
+swept screens.**
+
+**Applies to:** global — coaches portal first, admin shell to follow. Mockup + staging:
+`docs/projects/active/COACH_TYPE_SCALE_MOCKUP.html`.
+
+---
 ### 2026-08-27 — A TABLET IS A TOUCH DEVICE: the coaches portal's touch arrangement holds to 768, not 640
 
 **Decision (owner, approving the 641–768 pass from true-size mockups opened on a real iPad,

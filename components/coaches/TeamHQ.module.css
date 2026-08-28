@@ -58,7 +58,7 @@
 
 .hqItem strong {
   color: var(--text-primary);
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   font-weight: 850;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -68,7 +68,7 @@
    than a bare stat number since it carries a label + amount ("Entry fee · $250 owed"). */
 .hqItem strong.hqFeeAlert {
   color: var(--danger-strong);
-  font-size: 0.94rem;
+  font-size: 0.95rem;
 }
 
 .hqItem p {
@@ -184,7 +184,7 @@
   }
 
   .hqItem strong {
-    font-size: 1.12rem;
+    font-size: 1.1rem;
   }
 
   .hqItem strong.hqFeeAlert {

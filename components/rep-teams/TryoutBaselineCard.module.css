@@ -50,7 +50,7 @@
   color: rgba(255, 255, 255, 0.45);
 }
 .playerLine {
-  font-size: 1.02rem; font-weight: 700;
+  font-size: 1rem; font-weight: 700;
   color: var(--white-90);
   margin: 0.15rem 0 0.2rem;
 }

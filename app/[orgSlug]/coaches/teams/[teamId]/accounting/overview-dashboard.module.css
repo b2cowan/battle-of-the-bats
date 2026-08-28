@@ -54,11 +54,11 @@
 }
 .eye {
   font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--home-dim, var(--white-45));
+  color: var(--text-secondary);
 }
 
 .chip {
@@ -66,7 +66,7 @@
   align-items: center;
   gap: 0.25rem;
   font-family: var(--font-data);
-  font-size: 0.6rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.14rem 0.5rem;
@@ -90,7 +90,7 @@
 }
 
 .big {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -98,7 +98,7 @@
   font-variant-numeric: tabular-nums;
 }
 .big small {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--home-dim, var(--white-45));
   letter-spacing: 0;
@@ -131,7 +131,7 @@
   display: flex;
   gap: 0.85rem;
   flex-wrap: wrap;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
 }
 .legend b { color: var(--white-80); font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -165,7 +165,7 @@
   display: flex;
   gap: 0.85rem;
   justify-content: flex-end;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
 }
 .planSwatch {
@@ -192,13 +192,13 @@
   margin-bottom: 0.25rem;
 }
 .planRowLabel {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--white-90);
 }
 .planRowNums {
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-align: right;
   color: var(--home-dim, var(--white-45));
   font-variant-numeric: tabular-nums;
@@ -254,14 +254,14 @@
   flex-wrap: wrap;
   gap: 0 0.3rem;
   margin: 0.15rem 0 0;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
 }
 .planGenLink {
   display: inline-flex;
   align-items: center;
   min-height: 44px; /* same tap floor as every other quiet link on this screen */
-  font-size: 0.7rem;
+  font-size: 0.875rem;
   font-weight: 650;
   color: var(--home-olive, var(--primary-light));
   text-decoration: none;
@@ -278,7 +278,7 @@
 }
 .flowLabel {
   font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--home-dim, var(--white-45));
@@ -293,7 +293,7 @@
 .flowIn { background: var(--success); }
 .flowOut { background: var(--home-rust, var(--warning)); }
 .flowAmt {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--white-80);
@@ -301,7 +301,7 @@
 }
 
 .footNote {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   color: var(--home-dim, var(--white-45));
   margin: 0;
@@ -323,7 +323,7 @@
   align-items: center;
   gap: 0.25rem;
   min-height: 44px; /* tap floor — same rule the tab bar learned the hard way */
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 650;
   color: var(--home-olive, var(--primary-light));
   text-decoration: none;
@@ -339,7 +339,7 @@
   flex-wrap: wrap;
 }
 .ledgerSummary {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
   min-width: 0;
 }
@@ -358,7 +358,7 @@
   background: none;
   cursor: pointer;
   font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--home-dim, var(--white-45));
@@ -382,7 +382,7 @@
 .ledgerWhen { display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start; }
 .ledgerDate {
   font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -393,7 +393,7 @@
 
 .badge {
   font-family: var(--font-data);
-  font-size: 0.55rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   padding: 0.1rem 0.4rem;
@@ -417,10 +417,23 @@
 }
 
 .ledgerMain { min-width: 0; }
-.ledgerTitle { margin: 0; font-size: 0.82rem; font-weight: 650; color: var(--white-90); }
+/* ⚠ The ellipsis is not optional, and `.ledgerSub` directly below has always had it. This sits in
+   a `minmax(0, 1fr)` grid cell whose parent already sets `min-width: 0`, so the CELL shrinks — but
+   a text node with no `overflow` still paints straight out of it. At 0.82rem the longest seeded
+   title happened to fit and the gap was invisible; the type-ladder move to 0.875rem (2026-08-28)
+   pushed it 6px past the card edge at 361px and the layout sweep caught it. Match the sibling. */
+.ledgerTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--white-90);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .ledgerSub {
   margin: 0.05rem 0 0;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
   overflow: hidden;
   text-overflow: ellipsis;
@@ -429,7 +442,7 @@
 
 .ledgerEnd { display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
 .ledgerAmt {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--white-80);
@@ -443,7 +456,7 @@
   min-height: 44px;
   padding: 0 0.55rem;
   font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -457,13 +470,13 @@
   margin: 0;
   padding: 0.5rem 0 0.1rem;
   border-top: 1px solid var(--home-line, var(--border-2));
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-style: italic;
   color: var(--home-dim, var(--white-45));
 }
 .ledgerAllClear {
   margin: 0.3rem 0;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--home-dim, var(--white-45));
 }
 
@@ -478,7 +491,7 @@
   margin: 0;
   padding: 0.5rem 0 0.1rem;
   font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -566,7 +579,11 @@
        siblings instead of as label-and-contents; the hairlines were papering over
        it. #4A4235 measures 9.90:1 on the white card, --white-70 on the dark one. */
     color: var(--home-ink-soft, var(--white-70));
-    font-size: 0.6rem;
+    /* 0.6rem until 2026-08-28 — the phone override now matches the base rule's ladder step, so
+       this marker is one size at every width. The comment above still holds: it is separated from
+       the card eyebrow beside it by INK, which is what was actually doing the work; the 0.02rem
+       it also carried was never visible and only made the marker a second value. */
+    font-size: 0.625rem;
   }
 }
 
@@ -606,9 +623,21 @@
 .railDotRust { background: var(--home-rust, var(--warning)); }
 .railDotPlum { background: var(--home-plum, var(--warning)); }
 .railDotOlive { background: var(--home-olive, var(--success)); }
-.railName { font-size: 0.78rem; font-weight: 650; color: var(--white-90); }
+/* ⚠ Same containment gap as `.ledgerTitle` above, same cause. `.railRow`'s middle track is
+   `minmax(0, 1fr)` and `.railStat` beside it is `nowrap`, so the NAME is the segment that has to
+   give way — but it had no `overflow`, so at 0.875rem (type ladder, 2026-08-28) "Sponsorships"
+   painted 14px past the card at 361px instead of ellipsing. */
+.railName {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--white-90);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .railStat {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--home-dim, var(--white-45));
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -639,4 +668,4 @@
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
 }
-.errorText { margin: 0.3rem 0; font-size: 0.8rem; color: var(--home-live, var(--danger)); }
+.errorText { margin: 0.3rem 0; font-size: 0.875rem; color: var(--home-live, var(--danger)); }

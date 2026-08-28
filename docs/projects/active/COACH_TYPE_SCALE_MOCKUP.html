@@ -1,0 +1,687 @@
+<title>Seven Steps, Not Sixty-One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ══ DOCUMENT CHROME — theme-aware. Cool and technical, deliberately NOT the product's warm
+      ground, so the product frames below read as specimens on a bench rather than as this page. ══ */
+:root{
+  --ground:#ECEEF2; --surface:#FFFFFF; --sunk:#E3E7ED;
+  --ink:#14181E; --muted:#5B6573; --faint:#8791A0;
+  --rule:#D2D8E0; --rule-soft:#E2E6EC;
+  --accent:#1E4FD9; --accent-soft:rgba(30,79,217,.09);
+  --flag:#A8321C; --flag-soft:rgba(168,50,28,.10);
+  --pass:#1C6B5A; --pass-soft:rgba(28,107,90,.11);
+  --hold:#8A6100; --hold-soft:rgba(138,97,0,.12);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1216; --surface:#171B21; --sunk:#12161B;
+    --ink:#E7EAEE; --muted:#98A2B0; --faint:#6D7787;
+    --rule:#252B33; --rule-soft:#1D232A;
+    --accent:#7BA3FF; --accent-soft:rgba(123,163,255,.13);
+    --flag:#FF8266; --flag-soft:rgba(255,130,102,.13);
+    --pass:#4FC7AE; --pass-soft:rgba(79,199,174,.13);
+    --hold:#E0A93B; --hold-soft:rgba(224,169,59,.13);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1216; --surface:#171B21; --sunk:#12161B;
+  --ink:#E7EAEE; --muted:#98A2B0; --faint:#6D7787;
+  --rule:#252B33; --rule-soft:#1D232A;
+  --accent:#7BA3FF; --accent-soft:rgba(123,163,255,.13);
+  --flag:#FF8266; --flag-soft:rgba(255,130,102,.13);
+  --pass:#4FC7AE; --pass-soft:rgba(79,199,174,.13);
+  --hold:#E0A93B; --hold-soft:rgba(224,169,59,.13);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1220px; margin:0 auto; padding:56px 28px 96px; display:flex; flex-direction:column; gap:56px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; margin:0; text-wrap:balance; line-height:1.12}
+h1{font-size:44px; font-weight:700; letter-spacing:-.015em}
+h2{font-size:26px; font-weight:700; letter-spacing:-.005em}
+h3{font-size:17px; font-weight:600}
+p{margin:0; max-width:68ch}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+.doc-head{display:flex; flex-direction:column; gap:18px; padding-bottom:36px; border-bottom:2px solid var(--rule)}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.16em;
+        text-transform:uppercase; color:var(--accent)}
+.dek{font-size:17px; color:var(--muted); max-width:66ch}
+.meta-row{display:flex; flex-wrap:wrap; gap:10px 26px; font-family:"IBM Plex Mono",monospace;
+          font-size:11.5px; color:var(--faint); padding-top:4px}
+.meta-row b{color:var(--muted); font-weight:600}
+
+section{display:flex; flex-direction:column; gap:20px}
+.sec-head{display:flex; flex-direction:column; gap:9px; border-left:3px solid var(--accent); padding-left:16px}
+.sec-no{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em;
+        text-transform:uppercase; color:var(--faint)}
+
+.tag{display:inline-flex; align-items:center; gap:5px; font-family:"IBM Plex Mono",monospace;
+     font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+     padding:3px 8px; border-radius:3px; border:1px solid; white-space:nowrap; vertical-align:middle}
+.t-new{color:var(--pass); border-color:var(--pass); background:var(--pass-soft)}
+.t-re{color:var(--accent); border-color:var(--accent); background:var(--accent-soft)}
+.t-un{color:var(--faint); border-color:var(--rule); background:transparent}
+.t-flag{color:var(--flag); border-color:var(--flag); background:var(--flag-soft)}
+.t-hold{color:var(--hold); border-color:var(--hold); background:var(--hold-soft)}
+
+/* ══ THE RULER — every value plotted on a true px axis ══ */
+.ruler{background:var(--surface); border:1px solid var(--rule); border-radius:4px; padding:26px 28px 20px}
+.ruler-lane{position:relative; height:104px}
+.ruler-lane + .ruler-lane{margin-top:26px}
+.lane-label{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+            text-transform:uppercase; color:var(--muted); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.lane-label span{color:var(--faint); letter-spacing:0; text-transform:none; font-weight:400}
+.axis{position:absolute; left:0; right:0; bottom:22px; height:1px; background:var(--rule)}
+.tick{position:absolute; bottom:22px; width:1px; background:var(--flag); transform:translateX(-.5px)}
+.tick.step{background:var(--pass); width:2px}
+.axnum{position:absolute; bottom:2px; font-family:"IBM Plex Mono",monospace; font-size:10px;
+       color:var(--faint); transform:translateX(-50%); white-space:nowrap}
+.steplab{position:absolute; bottom:66px; font-family:"IBM Plex Mono",monospace; font-size:9.5px;
+         font-weight:600; color:var(--pass); transform:translateX(-50%); white-space:nowrap}
+.ruler-note{font-size:13px; color:var(--muted); border-top:1px solid var(--rule-soft); padding-top:14px; margin-top:18px}
+
+/* ══ SPECIMEN BENCH ══ */
+.bench{display:flex; flex-direction:column; gap:18px}
+.spec{background:var(--surface); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.spec-top{display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:13px 18px;
+          border-bottom:1px solid var(--rule-soft); background:var(--sunk)}
+.spec-top h3{flex:1; min-width:200px}
+.spec-body{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule-soft)}
+@media (max-width:820px){.spec-body{grid-template-columns:1fr}}
+.half{background:#FFFFFF; padding:20px 18px; display:flex; flex-direction:column; gap:12px}
+.half-tag{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; letter-spacing:.13em;
+          text-transform:uppercase; color:#8791A0}
+.half-tag.now{color:#A8321C}
+.half-tag.next{color:#1C6B5A}
+.measure{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:#5B6573; line-height:1.5;
+         font-variant-numeric:tabular-nums; border-top:1px dashed #D2D8E0; padding-top:10px; margin-top:auto}
+.measure b{color:#14181E; font-weight:600}
+.spec-why{padding:14px 18px; border-top:1px solid var(--rule-soft); font-size:13.5px; color:var(--muted); background:var(--sunk)}
+.spec-why b{color:var(--ink); font-weight:600}
+
+.refbar{display:flex; flex-wrap:wrap; align-items:flex-end; gap:22px; background:var(--surface);
+        border:1px dashed var(--accent); border-radius:4px; padding:18px 20px}
+.ref{display:flex; flex-direction:column; gap:5px; align-items:flex-start}
+.ref-swatch{color:var(--ink); font-family:"IBM Plex Sans",sans-serif; font-weight:600; line-height:1}
+.ref-cap{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--faint)}
+
+/* ══ PRODUCT FRAME — locked to the real warm palette in BOTH themes. A specimen must not
+      change with the reader's theme, or the mockup lies about the product. ══ */
+.stage{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--sunk); padding:18px}
+.frame{
+  --paper:#F8F4ED; --card:#FFFFFF; --pink:#241E15; --pink-soft:#4A4235; --pdim:#6A635C;
+  --pline:rgba(70,55,30,.12); --pline-2:rgba(70,55,30,.20);
+  --olive:#57651E; --live:#B03A22; --win:#34662A; --lime:#D9F99D; --black:#0A0A0A;
+  width:1120px; background:var(--paper); color:var(--pink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.45;
+  border:1px solid var(--pline-2); border-radius:3px; overflow:hidden;
+}
+.frame *{box-sizing:border-box}
+.f-mast{display:flex; align-items:flex-start; gap:14px; padding:14px 22px; background:var(--card);
+        border-bottom:1px solid var(--pline)}
+.f-mast-l{flex:1; display:flex; flex-direction:column; gap:4px}
+.f-namerow{display:flex; align-items:center; gap:9px}
+.f-name{font-weight:700; color:var(--pink); line-height:1.15}
+.f-role{font-family:"IBM Plex Mono",monospace; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+        color:var(--pink-soft); border:1px solid var(--pline-2); border-radius:3px; padding:2px 7px}
+.f-meta{font-family:"IBM Plex Mono",monospace; color:var(--pdim); display:flex; gap:7px; align-items:center}
+.f-help{width:30px; height:30px; border-radius:999px; border:1px solid var(--pline-2); color:var(--pdim);
+        display:flex; align-items:center; justify-content:center; font-size:13px; flex:none}
+.f-page{padding:20px 22px 0}
+.f-phead{display:flex; align-items:center; gap:11px; margin-bottom:14px}
+.f-tile{border-radius:8px; background:rgba(87,101,30,.10); border:1px solid rgba(87,101,30,.28);
+        color:var(--olive); display:flex; align-items:center; justify-content:center; flex:none; font-weight:700}
+.f-title{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; color:var(--pink);
+         line-height:1.1; margin-right:auto}
+.f-btn{border-radius:5px; border:1px solid var(--pline-2); background:var(--card); color:var(--pink);
+       padding:7px 13px; font-weight:600; font-family:inherit; display:inline-flex; align-items:center; gap:6px}
+.f-btn.lime{background:var(--lime); border-color:var(--lime); color:var(--black)}
+.f-tabs{display:flex; gap:2px; border-bottom:1px solid var(--pline); margin-bottom:18px}
+.f-tab{padding:9px 12px 8px; color:var(--pdim); border-bottom:2px solid transparent; white-space:nowrap}
+.f-tab.on{color:var(--olive); border-bottom-color:var(--olive)}
+.f-tab.caps{font-family:"IBM Plex Mono",monospace; font-weight:700; letter-spacing:.045em; text-transform:uppercase}
+.f-tab.sent{font-family:"IBM Plex Sans",sans-serif; font-weight:600; letter-spacing:0}
+.f-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; padding-bottom:22px}
+.f-card{background:var(--card); border:1px solid var(--pline); border-radius:7px; padding:15px 16px;
+        display:flex; flex-direction:column; gap:9px; min-height:236px}
+.f-card.alert{border-left:3px solid var(--live)}
+.f-crow{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:20px}
+.f-eye{font-family:"IBM Plex Mono",monospace; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--pdim)}
+.f-chip{font-family:"IBM Plex Mono",monospace; font-weight:700; letter-spacing:.05em; border-radius:999px;
+        padding:2px 8px; white-space:nowrap; display:inline-flex; align-items:center; gap:4px}
+.f-chip.bad{color:var(--live); background:rgba(176,58,34,.10); border:1px solid rgba(176,58,34,.3)}
+.f-chip.good{color:var(--olive); background:rgba(87,101,30,.10); border:1px solid rgba(87,101,30,.25)}
+.f-big{font-weight:800; letter-spacing:-.02em; line-height:1.1; color:var(--pink); font-variant-numeric:tabular-nums}
+.f-big small{font-weight:600; color:var(--pdim); letter-spacing:0}
+.f-bar{height:8px; border-radius:4px; background:rgba(70,55,30,.10); overflow:hidden; display:flex}
+.f-bar i{display:block; height:100%}
+.f-legend{display:flex; flex-wrap:wrap; gap:5px 13px; color:var(--pink-soft); font-variant-numeric:tabular-nums}
+.f-legend span{display:inline-flex; align-items:center; gap:5px}
+.f-dot{width:8px; height:8px; border-radius:2px; flex:none}
+.f-note{color:var(--pdim); line-height:1.45}
+.f-srow{display:flex; align-items:center; justify-content:space-between; gap:10px; font-variant-numeric:tabular-nums}
+.f-srow b{font-weight:600; color:var(--pink)}
+.f-srow em{font-style:normal; color:var(--pink-soft)}
+.f-foot{margin-top:auto; padding-top:11px; border-top:1px solid var(--pline); display:flex; gap:16px}
+.f-foot a{color:var(--olive); text-decoration:none; font-weight:600}
+
+/* ── BEFORE: the sizes measured from the shipping stylesheets ── */
+.frame.before .f-name{font-size:16.8px}
+.frame.before .f-role{font-size:9.3px}
+.frame.before .f-meta{font-size:10.6px}
+.frame.before .f-tile{width:36px; height:36px; font-size:17px}
+.frame.before .f-title{font-size:22.4px; font-weight:900}
+.frame.before .f-btn{font-size:14.1px}
+.frame.before .f-tab{font-size:11.5px}
+.frame.before .f-eye{font-size:9.9px}
+.frame.before .f-chip{font-size:9.6px}
+.frame.before .f-big{font-size:24.8px}
+.frame.before .f-big small{font-size:12.8px}
+.frame.before .f-legend{font-size:11.2px}
+.frame.before .f-note{font-size:11.8px}
+.frame.before .f-srow{font-size:12.5px}
+.frame.before .f-foot{font-size:12.8px}
+
+/* ── AFTER: the seven-step ladder ── */
+.frame.after .f-name{font-size:16px}
+.frame.after .f-role{font-size:10px}
+.frame.after .f-meta{font-size:11px}
+.frame.after .f-tile{width:34px; height:34px; font-size:16px}
+.frame.after .f-title{font-size:20px; font-weight:700}
+.frame.after .f-btn{font-size:14px}
+.frame.after .f-tab{font-size:14px}
+.frame.after .f-eye{font-size:11px; color:var(--pink-soft)}
+.frame.after .f-chip{font-size:10px}
+.frame.after .f-big{font-size:24px}
+.frame.after .f-big small{font-size:12px}
+.frame.after .f-legend{font-size:12px}
+.frame.after .f-note{font-size:12px}
+.frame.after .f-srow{font-size:12px}
+.frame.after .f-foot{font-size:14px}
+
+.stage-cap{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:11px}
+.stage-cap h3{margin-right:auto}
+.stage-hint{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--faint)}
+
+.tbl-wrap{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:680px}
+th,td{text-align:left; padding:11px 15px; border-bottom:1px solid var(--rule-soft); vertical-align:middle}
+th{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+   text-transform:uppercase; color:var(--muted); background:var(--sunk); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.tok{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--accent); font-weight:500; white-space:nowrap}
+td.val{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.role{font-size:13.5px; color:var(--muted)}
+td.samp{color:var(--ink)}
+td.gap{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint)}
+
+.call{border:1px solid var(--rule); border-left:3px solid var(--hold); background:var(--surface);
+      border-radius:4px; padding:18px 20px; display:flex; flex-direction:column; gap:10px}
+.call.flag{border-left-color:var(--flag)}
+.call.pass{border-left-color:var(--pass)}
+.call h3{font-size:15px}
+.call p{font-size:14px; color:var(--muted)}
+.call ul{margin:0; padding-left:19px; font-size:14px; color:var(--muted); display:flex; flex-direction:column; gap:7px}
+.call b{color:var(--ink); font-weight:600}
+
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+.foot{border-top:2px solid var(--rule); padding-top:22px; font-size:13px; color:var(--faint); display:flex; flex-direction:column; gap:8px}
+.foot b{color:var(--muted)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Coaches portal · type audit · 2026-08-28</div>
+    <h1>Seven steps, not sixty-one</h1>
+    <p class="dek">Nothing on the Money screen got bigger. The problem is that the portal has no type
+      scale at all — 61 hand-picked text sizes, three of which land in the wrong place. This is what
+      the screen looks like before and after a seven-step ladder.</p>
+    <div class="meta-row">
+      <span><b>Frames</b> 1120px, fixed — they do not reflow</span>
+      <span><b>Type</b> drawn 1:1 at real pixel sizes</span>
+      <span><b>Palette</b> the portal's real warm tokens</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">01 — The evidence</div>
+      <h2>Every text size in the portal, on one ruler</h2>
+      <p class="dek">Each red tick is one size in use; taller means more places use it. The clustering
+        is the whole argument — five separate decisions live between 11.5 and 12.2 pixels, a span no
+        eye can resolve.</p>
+    </div>
+    <div class="ruler">
+      <div class="ruler-lane">
+        <div class="lane-label">Today <span>— 61 distinct values across 1,212 declarations</span></div>
+        <div class="axis"></div>
+        <div id="ticksNow"></div>
+        <div id="axNow"></div>
+      </div>
+      <div class="ruler-lane">
+        <div class="lane-label">Proposed <span>— 7 role-named steps</span></div>
+        <div class="axis"></div>
+        <div id="ticksNext"></div>
+        <div id="axNext"></div>
+      </div>
+      <p class="ruler-note">Two more values (96px and 144px) sit off the end of this ruler — decorative
+        numerals on empty states, out of scope. Note the long tail: half the 61 values carry only 55
+        declarations between them, so removing them costs almost nothing.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">02 — Calibration</div>
+      <h2>True-size reference</h2>
+      <p class="dek">Everything below is drawn at these exact pixel sizes. If this row looks wrong on
+        your screen, the page is zoomed — reset to 100% before judging anything else.</p>
+    </div>
+    <div class="refbar">
+      <div class="ref"><span class="ref-swatch" style="font-size:24px">Aa 24</span><span class="ref-cap">24px · figure</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:20px">Aa 20</span><span class="ref-cap">20px · title</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:16px">Aa 16</span><span class="ref-cap">16px · heading</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:14px">Aa 14</span><span class="ref-cap">14px · body</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:12px">Aa 12</span><span class="ref-cap">12px · support</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:11px">Aa 11</span><span class="ref-cap">11px · label</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:10px">Aa 10</span><span class="ref-cap">10px · token</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">03 — The screen you screenshotted</div>
+      <h2>Money · Overview — today</h2>
+      <p class="dek">Read the card titles first. <b>COLLECTIONS</b> is the name of the thing the card is
+        about, and it is drawn smaller than the status chip floating beside it.</p>
+    </div>
+    <div class="stage-cap">
+      <h3>Before <span class="tag t-flag">as shipped</span></h3>
+      <span class="stage-hint">1120px frame · type at true size</span>
+    </div>
+    <div class="stage"><div class="frame before" id="frameBefore"></div></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">04 — The same screen, on the ladder</div>
+      <h2>Money · Overview — proposed</h2>
+      <p class="dek">Same layout, same data, same card heights. Only the type assignment moved, and
+        nothing has been pushed below the fold.</p>
+    </div>
+    <div class="stage-cap">
+      <h3>After <span class="tag t-re">restyled</span></h3>
+      <span class="stage-hint">1120px frame · type at true size</span>
+    </div>
+    <div class="stage"><div class="frame after" id="frameAfter"></div></div>
+    <div class="call pass">
+      <h3>What actually moved</h3>
+      <ul>
+        <li><b>Card titles 9.9px → 11px.</b> The card's own name now leads the chip beside it. This single change does most of the work.</li>
+        <li><b>Page title 22.4px → 20px.</b> Opens a clean step under the figure instead of a 10% near-tie.</li>
+        <li><b>Tab row 11.5px → 14px, sentence case.</b> Navigation stops competing with column headings — see specimen B.</li>
+        <li><b>Masthead detail line 10.6px → 11px.</b> It is text you read, so it leaves badge size.</li>
+        <li><b>Buttons unified at 14px.</b> Record, Import, ghost and danger actions were 14.1 / 14.1 / 13.6 / 13.6.</li>
+      </ul>
+    </div>
+    <div class="call">
+      <h3>Built 2026-08-28 — two things changed on the way in <span class="tag t-hold">as-built</span></h3>
+      <ul>
+        <li><b>The masthead detail line landed at 11px, not the 12px drawn above.</b> 12px overflowed
+          the phone masthead by 3px, caught by the layout sweep. At phone width that line cannot wrap
+          — only the club name may shrink, while the season and record are rigid by design — so the
+          extra width had nowhere to go. 11px is the ladder's <i>label</i> step and is arguably its
+          right home anyway: a dense strip of secondary facts. It is one value at every width.
+          <b>This frame is drawn at the as-built size.</b></li>
+        <li><b>The tab labels stayed Title Case</b> ("Budget Plan", "Playing Time") rather than the
+          sentence case drawn above. Removing the uppercase exposed a split the transform had been
+          hiding — the tryout flow writes sentence case ("Tryout day", "Build team") while Money and
+          Insights write Title Case. Normalising that is a copy change that also reaches foot links,
+          rail links and help articles; doing half of it would leave one thing wearing two names.
+          Logged as a follow-up rather than smuggled in here.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">05 — The decisions</div>
+      <h2>Four specimens, at true size</h2>
+      <p class="dek">These are the calls worth arguing with. Everything else follows mechanically from
+        the ladder.</p>
+    </div>
+
+    <div class="bench">
+
+      <div class="spec">
+        <div class="spec-top">
+          <h3>A · The card title</h3>
+          <span class="tag t-re">restyled</span><span class="tag t-flag">the headline defect</span>
+        </div>
+        <div class="spec-body">
+          <div class="half">
+            <div class="half-tag now">Today</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:9.9px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#6A635C">Collections</div>
+            <div style="font-size:24.8px; font-weight:800; color:#241E15; letter-spacing:-.02em">$1,875.00</div>
+            <div class="measure">Title <b>9.9px</b> · chip beside it <b>9.6px</b><br>A heading drawn at badge size.</div>
+          </div>
+          <div class="half">
+            <div class="half-tag next">Proposed</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#4A4235">Collections</div>
+            <div style="font-size:24px; font-weight:800; color:#241E15; letter-spacing:-.02em">$1,875.00</div>
+            <div class="measure">Title <b>11px</b> · chip <b>10px</b><br>The name now leads the number.</div>
+          </div>
+        </div>
+        <div class="spec-why">You must read this word to know what the number underneath means — that
+          makes it a <b>heading</b>, not a badge. Badges stay small because you recognise them by shape
+          and colour without reading them. A card title has no such shortcut.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top">
+          <h3>B · The tab row against a column heading</h3>
+          <span class="tag t-re">restyled</span><span class="tag t-hold">needs your call</span>
+        </div>
+        <div class="spec-body">
+          <div class="half">
+            <div class="half-tag now">Today — they tie</div>
+            <div style="display:flex; gap:14px; border-bottom:1px solid rgba(70,55,30,.12)">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:.045em; text-transform:uppercase; color:#57651E; border-bottom:2px solid #57651E; padding-bottom:7px">Player dues</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:.045em; text-transform:uppercase; color:#6A635C; padding-bottom:7px">Fundraising</span>
+            </div>
+            <div style="display:flex; gap:24px; padding-top:5px">
+              <span style="font-size:12.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#4A4235">Player</span>
+              <span style="font-size:12.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#4A4235">Owed</span>
+            </div>
+            <div class="measure">Nav <b>11.5px</b> · column heading <b>12.5px</b><br>Navigation loses to a column label.</div>
+          </div>
+          <div class="half">
+            <div class="half-tag next">Proposed — different kinds of thing</div>
+            <div style="display:flex; gap:16px; border-bottom:1px solid rgba(70,55,30,.12)">
+              <span style="font-size:14px; font-weight:600; color:#57651E; border-bottom:2px solid #57651E; padding-bottom:7px">Player dues</span>
+              <span style="font-size:14px; font-weight:600; color:#6A635C; padding-bottom:7px">Fundraising</span>
+            </div>
+            <div style="display:flex; gap:24px; padding-top:5px">
+              <span style="font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#4A4235">Player</span>
+              <span style="font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#4A4235">Owed</span>
+            </div>
+            <div class="measure">Nav <b>14px sentence case</b> · heading <b>12px caps</b><br>No competition — they differ by case.</div>
+          </div>
+        </div>
+        <div class="spec-why"><b>This is the one that answers your uppercase question.</b> The tab row
+          has been all caps since the Money hub got tabs on 11 August. Dropping the caps is the
+          cleanest fix: below 13px, size has no resolution left, so navigation and column headings can
+          only be told apart by <b>treatment</b>. If you would rather keep the caps, the conservative
+          alternative is nav at 12px uppercase, leaning on the olive underline to carry rank — weaker,
+          but a smaller change.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top">
+          <h3>C · Page title against the figure below it</h3>
+          <span class="tag t-re">restyled</span>
+        </div>
+        <div class="spec-body">
+          <div class="half">
+            <div class="half-tag now">Today — a 10% near-tie</div>
+            <div style="display:flex; align-items:center; gap:10px">
+              <span style="width:36px;height:36px;border-radius:8px;background:rgba(87,101,30,.10);border:1px solid rgba(87,101,30,.28);color:#57651E;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">$</span>
+              <span style="font-family:'IBM Plex Sans Condensed',sans-serif; font-size:22.4px; font-weight:700; color:#241E15">Money</span>
+            </div>
+            <div style="font-size:24.8px; font-weight:800; color:#241E15; letter-spacing:-.02em">$1,875.00</div>
+            <div class="measure">Title <b>22.4px</b> · figure <b>24.8px</b><br>10% apart — reads as a mistake, not a rank.</div>
+          </div>
+          <div class="half">
+            <div class="half-tag next">Proposed — a clean step</div>
+            <div style="display:flex; align-items:center; gap:10px">
+              <span style="width:34px;height:34px;border-radius:8px;background:rgba(87,101,30,.10);border:1px solid rgba(87,101,30,.28);color:#57651E;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">$</span>
+              <span style="font-family:'IBM Plex Sans Condensed',sans-serif; font-size:20px; font-weight:700; color:#241E15">Money</span>
+            </div>
+            <div style="font-size:24px; font-weight:800; color:#241E15; letter-spacing:-.02em">$1,875.00</div>
+            <div class="measure">Title <b>20px</b> · figure <b>24px</b><br>20% apart — the figure clearly leads.</div>
+          </div>
+        </div>
+        <div class="spec-why">The figure <b>should</b> be the largest thing on a dashboard — the number
+          is the content and the title is chrome. The defect was never the ranking, it was the
+          interval: two sizes 10% apart read as a near-miss rather than a hierarchy.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top">
+          <h3>D · Buttons and filters — the drift you spotted by eye</h3>
+          <span class="tag t-re">restyled</span><span class="tag t-new">now one value</span>
+        </div>
+        <div class="spec-body">
+          <div class="half">
+            <div class="half-tag now">Today — three siblings, two sizes</div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <span style="font-size:14.1px;font-weight:600;background:#D9F99D;color:#0A0A0A;border-radius:5px;padding:7px 13px">+ Record</span>
+              <span style="font-size:14.1px;font-weight:600;background:#FFF;border:1px solid rgba(70,55,30,.20);border-radius:5px;padding:7px 13px">Import</span>
+              <span style="font-size:13.6px;font-weight:600;color:#4A4235;padding:7px 4px">Cancel</span>
+            </div>
+            <div style="display:flex; gap:7px; flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:600;border:1px solid rgba(70,55,30,.20);border-radius:999px;padding:4px 11px;color:#4A4235">Money filter</span>
+              <span style="font-size:11.8px;font-weight:600;border:1px solid rgba(70,55,30,.20);border-radius:999px;padding:4px 11px;color:#4A4235">Lineup filter</span>
+            </div>
+            <div class="measure">Buttons <b>14.1 / 14.1 / 13.6</b> · filters <b>12.0 / 11.8</b><br>One role, two screens, different values.</div>
+          </div>
+          <div class="half">
+            <div class="half-tag next">Proposed</div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <span style="font-size:14px;font-weight:600;background:#D9F99D;color:#0A0A0A;border-radius:5px;padding:7px 13px">+ Record</span>
+              <span style="font-size:14px;font-weight:600;background:#FFF;border:1px solid rgba(70,55,30,.20);border-radius:5px;padding:7px 13px">Import</span>
+              <span style="font-size:14px;font-weight:600;color:#4A4235;padding:7px 4px">Cancel</span>
+            </div>
+            <div style="display:flex; gap:7px; flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:600;border:1px solid rgba(70,55,30,.20);border-radius:999px;padding:4px 11px;color:#4A4235">Money filter</span>
+              <span style="font-size:12px;font-weight:600;border:1px solid rgba(70,55,30,.20);border-radius:999px;padding:4px 11px;color:#4A4235">Lineup filter</span>
+            </div>
+            <div class="measure">All buttons <b>14px</b> · all filters <b>12px</b><br>One role, one value.</div>
+          </div>
+        </div>
+        <div class="spec-why">You named this before the audit found it — <i>"filter vs. button text"</i>.
+          A half-pixel difference between two sibling buttons communicates nothing to anyone and can
+          only ever be a maintenance cost.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">06 — The proposal</div>
+      <h2>Seven steps, named for the job they do</h2>
+      <p class="dek">Named for role, never for size — the same rule your ink ruling landed on in
+        August, when one value turned out to mean both "meta text" and "hairline" and neither could
+        move without the other.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>Size</th><th>Owns</th><th>Sample</th><th>Gap</th></tr></thead>
+        <tbody>
+          <tr><td class="tok">--type-figure</td><td class="val">24px</td><td class="role">The number a card exists to show</td><td class="samp" style="font-size:24px;font-weight:800;letter-spacing:-.02em">$8,380</td><td class="gap">—</td></tr>
+          <tr><td class="tok">--type-title</td><td class="val">20px</td><td class="role">Page title</td><td class="samp" style="font-size:20px;font-weight:700;font-family:'IBM Plex Sans Condensed',sans-serif">Money</td><td class="gap">1.20×</td></tr>
+          <tr><td class="tok">--type-heading</td><td class="val">16px</td><td class="role">Masthead identity, section headings</td><td class="samp" style="font-size:16px;font-weight:700">UAT Test Team</td><td class="gap">1.25×</td></tr>
+          <tr><td class="tok">--type-body</td><td class="val">14px</td><td class="role">Body, buttons, links, form values, navigation</td><td class="samp" style="font-size:14px">Player dues</td><td class="gap">1.14×</td></tr>
+          <tr><td class="tok">--type-support</td><td class="val">12px</td><td class="role">Meta text, filter chips, column headings</td><td class="samp" style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">Owed</td><td class="gap">1.17×</td></tr>
+          <tr><td class="tok">--type-label</td><td class="val">11px</td><td class="role">Uppercase eyebrows and card titles</td><td class="samp mono" style="font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase">Collections</td><td class="gap">1.09×</td></tr>
+          <tr><td class="tok">--type-token</td><td class="val">10px</td><td class="role">Badges and inline table actions — glance only</td><td class="samp mono" style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Head coach</td><td class="gap">1.10×</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cols">
+      <div class="call pass">
+        <h3>The load-bearing property</h3>
+        <p>The <b>top four</b> steps separate by <b>size</b> — gaps of 1.14× to 1.25×, all plainly
+          visible. The <b>bottom three</b> separate by <b>treatment</b> — case, letter-spacing, weight
+          and ink — and their size gaps are deliberately tiny.</p>
+        <p>That is the point, not a flaw to tidy up later. Below about 13 pixels a one-pixel step is
+          invisible, so trying to build rank out of size down there is exactly what produced six
+          values inside a three-pixel window in the first place.</p>
+      </div>
+      <div class="call">
+        <h3>Deliberately unchanged <span class="tag t-un">unchanged</span></h3>
+        <ul>
+          <li><b>Table column headings hold at 12px.</b> They were raised on 15 August to fix a measured legibility defect. That ruling stands and is not being unwound here.</li>
+          <li><b>Badges and inline table actions stay at 10px.</b> Glance tokens, decided 23 May. Untouched.</li>
+          <li><b>The figure stays the biggest thing on the card.</b> It moves 0.8px and nobody will see it.</li>
+          <li><b>No layout, spacing, colour or card-height changes.</b> Type assignment only.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">07 — If you approve</div>
+      <h2>Three phases, and only one of them is expensive</h2>
+    </div>
+    <div class="cols">
+      <div class="call pass">
+        <h3>Phase 1 — clear the drift</h3>
+        <p><b>55 places.</b> Thirty of the 61 values are used five times or fewer. Each snaps to its
+          nearest neighbour; every move is under half a pixel, so nothing visibly changes. Halves the
+          value count for almost nothing.</p>
+      </div>
+      <div class="call pass">
+        <h3>Phase 2 — this mockup</h3>
+        <p><b>About ten places.</b> Card titles, page title, tab row, buttons, the masthead line. This
+          is the part you actually noticed, and it can ship on its own.</p>
+      </div>
+      <div class="call">
+        <h3>Phase 3 — adopt the ladder <span class="tag t-hold">later</span></h3>
+        <p><b>1,157 places.</b> Mechanical but genuinely expensive, and the only phase with real risk:
+          type changes reflow tables, and reflowed tables overflow sideways. Best run <b>after</b> the
+          coach money forms review, and not close to the tablet band that was only just settled.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div><b>Open this on the device you want to judge it on.</b> Every size here is drawn 1:1 in
+      pixels — a laptop at 125% display scaling, or a zoomed tab, will show you the wrong answer.</div>
+    <div class="mono">Sizes measured from the shipping stylesheets, 2026-08-28 · frames use the portal's real warm palette · nothing here has been built</div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var now = [[8.80,7],[8.96,7],[9.00,1],[9.28,13],[9.60,20],[9.92,38],[10.24,10],[10.40,1],[10.56,25],
+    [10.72,1],[10.88,64],[11.20,51],[11.52,98],[11.68,7],[11.84,38],[12.00,30],[12.16,59],[12.48,139],
+    [12.64,2],[12.80,105],[13.12,110],[13.28,13],[13.44,17],[13.60,87],[13.76,22],[14.08,45],[14.40,51],
+    [14.72,17],[15.00,1],[15.04,1],[15.20,32],[15.68,2],[16.00,21],[16.32,3],[16.80,12],[17.28,2],
+    [17.60,7],[17.92,2],[18.24,1],[18.40,5],[18.88,1],[19.20,6],[19.52,1],[20.00,2],[20.80,2],[21.12,1],
+    [21.60,6],[22.40,4],[23.20,4],[24.00,1],[24.80,2],[25.60,2],[26.40,2],[27.20,3],[28.00,2],[30.40,1],
+    [32.00,1],[35.20,2]];
+  var next = [[10,'token'],[11,'label'],[12,'support'],[14,'body'],[16,'heading'],[20,'title'],[24,'figure']];
+  var MIN = 8, MAX = 36, MAXC = 139;
+  function pos(px){ return ((px - MIN) / (MAX - MIN)) * 100; }
+
+  var tn = document.getElementById('ticksNow');
+  now.forEach(function(d){
+    var el = document.createElement('div');
+    el.className = 'tick';
+    el.style.left = pos(d[0]) + '%';
+    el.style.height = (10 + Math.sqrt(d[1] / MAXC) * 52) + 'px';
+    el.title = d[0].toFixed(2) + 'px — ' + d[1] + ' uses';
+    tn.appendChild(el);
+  });
+
+  var tx = document.getElementById('ticksNext');
+  next.forEach(function(d){
+    var el = document.createElement('div');
+    el.className = 'tick step';
+    el.style.left = pos(d[0]) + '%';
+    el.style.height = '42px';
+    el.title = d[0] + 'px — ' + d[1];
+    tx.appendChild(el);
+    var lb = document.createElement('div');
+    lb.className = 'steplab';
+    lb.style.left = pos(d[0]) + '%';
+    lb.textContent = d[1];
+    tx.appendChild(lb);
+  });
+
+  ['axNow','axNext'].forEach(function(id){
+    var host = document.getElementById(id);
+    [8,12,16,20,24,28,32,36].forEach(function(v){
+      var n = document.createElement('div');
+      n.className = 'axnum';
+      n.style.left = pos(v) + '%';
+      n.textContent = v + (v === 36 ? 'px' : '');
+      host.appendChild(n);
+    });
+  });
+
+  // The product frame is built once and stamped twice, so BEFORE and AFTER can differ only by
+  // their type assignment — never by a hand-edited difference in markup.
+  var TABS = ['Overview','Budget Plan','Player Dues','Fundraising','Transactions','Payables','Club','Budget vs. Actual'];
+
+  function frame(mode){
+    var cls = mode === 'before' ? 'f-tab caps' : 'f-tab sent';
+    var tabs = TABS.map(function(t,i){
+      return '<div class="' + cls + (i === 0 ? ' on' : '') + '">' + t + '</div>';
+    }).join('');
+    return '<div class="f-mast">'
+      + '<div class="f-mast-l">'
+      +   '<div class="f-namerow"><span class="f-name">UAT Test Team</span>'
+      +     '<span class="f-role">Head coach</span></div>'
+      +   '<div class="f-meta"><span>UAT Test Org</span><span>·</span><span>2026 Season</span><span>·</span><span>3-2-1</span></div>'
+      + '</div><div class="f-help">?</div></div>'
+      + '<div class="f-page">'
+      +   '<div class="f-phead"><span class="f-tile">$</span><span class="f-title">Money</span>'
+      +     '<span class="f-btn lime">+ Record</span><span class="f-btn">Import</span></div>'
+      +   '<div class="f-tabs">' + tabs + '</div>'
+      +   '<div class="f-cards">'
+      +     '<div class="f-card alert">'
+      +       '<div class="f-crow"><span class="f-eye">Collections</span>'
+      +         '<span class="f-chip bad">&#9888; 1 overdue</span></div>'
+      +       '<div class="f-big">$1,875.00 <small>of $3,750.00 · 50%</small></div>'
+      +       '<div class="f-bar"><i style="width:50%;background:#57651E"></i>'
+      +         '<i style="width:33%;background:repeating-linear-gradient(45deg,#B03A22,#B03A22 3px,rgba(176,58,34,.35) 3px,rgba(176,58,34,.35) 6px)"></i></div>'
+      +       '<div class="f-legend"><span><i class="f-dot" style="background:#57651E"></i>$1,875.00 in</span>'
+      +         '<span><i class="f-dot" style="background:#B03A22"></i>$1,250.00 overdue</span>'
+      +         '<span><i class="f-dot" style="background:rgba(70,55,30,.18)"></i>$625.00 to come</span></div>'
+      +       '<div class="f-foot"><a href="#">Player Dues &rarr;</a></div>'
+      +     '</div>'
+      +     '<div class="f-card">'
+      +       '<div class="f-crow"><span class="f-eye">Cash on hand</span></div>'
+      +       '<div class="f-big" style="color:#34662A">$960.00</div>'
+      +       '<div class="f-srow"><em>IN</em><span class="f-bar" style="flex:1;margin:0 10px"><i style="width:92%;background:#34662A"></i></span><b>$2,900.00</b></div>'
+      +       '<div class="f-srow"><em>OUT</em><span class="f-bar" style="flex:1;margin:0 10px"><i style="width:78%;background:#B03A22"></i></span><b>$2,440.00</b></div>'
+      +       '<div class="f-note">Cash actually received and actually paid — not what\'s still owed.</div>'
+      +       '<div class="f-foot"><a href="#">Transactions &rarr;</a></div>'
+      +     '</div>'
+      +     '<div class="f-card">'
+      +       '<div class="f-crow"><span class="f-eye">Budget</span><span class="f-chip good">on plan</span></div>'
+      +       '<div class="f-big">$8,380.00 <small>headroom</small></div>'
+      +       '<div class="f-legend" style="justify-content:flex-end">'
+      +         '<span><i class="f-dot" style="background:#57651E"></i>actual</span>'
+      +         '<span><i class="f-dot" style="background:rgba(70,55,30,.18)"></i>planned</span></div>'
+      +       '<div class="f-srow"><b>Spending</b><em>$2,520.00 of $10,900.00</em></div>'
+      +       '<div class="f-bar"><i style="width:23%;background:#57651E"></i></div>'
+      +       '<div class="f-srow"><b>Player dues</b><em>$1,875.00 of $3,750.00</em></div>'
+      +       '<div class="f-bar"><i style="width:50%;background:#57651E"></i></div>'
+      +       '<div class="f-srow"><b>Fundraising</b><em>$500.00 of $1,800.00</em></div>'
+      +       '<div class="f-bar"><i style="width:28%;background:#57651E"></i></div>'
+      +       '<div class="f-foot"><a href="#">Budget plan &rarr;</a><a href="#">Budget vs. Actual &rarr;</a></div>'
+      +     '</div>'
+      +   '</div></div>';
+  }
+
+  document.getElementById('frameBefore').innerHTML = frame('before');
+  document.getElementById('frameAfter').innerHTML  = frame('after');
+})();
+</script>

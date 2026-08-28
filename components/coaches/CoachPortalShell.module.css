@@ -130,7 +130,7 @@
   gap: 0.3rem;
   min-width: 0;
   font-family: var(--font-display, sans-serif);
-  font-size: 1.22rem;
+  font-size: 1.2rem;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.01em;
@@ -417,7 +417,7 @@
 .railTeamName {
   margin: 0.2rem 0 0.3rem;
   font-family: var(--font-display, sans-serif);
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-weight: 800;
   line-height: 1.2;
   color: var(--text-primary);

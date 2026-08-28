@@ -151,7 +151,7 @@
   background: var(--home-card, var(--white-05));
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.79rem;
+  font-size: 0.78rem;
 }
 .cellInput:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
 .cellInputNum { text-align: right; font-variant-numeric: tabular-nums; min-width: 84px; }

@@ -495,7 +495,7 @@
      only at large sizes or uppercase". Inter 700 matches the sidebar's team name, which is
      the treatment the owner finds readable. A name is data; the UI sans is the data voice. */
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -519,7 +519,7 @@
    same day). Chips are the portal's identity/state vocabulary; quantities still never chip. */
 .teamHeaderRole {
   font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -538,7 +538,13 @@
   gap: 0.5rem;
   flex-wrap: wrap;
   font-family: var(--font-data);
-  font-size: 0.66rem;
+  /* 0.66rem until 2026-08-28 (type ladder). ⚠ THE LADDER'S `support` STEP (0.75rem) WAS TRIED
+     FIRST AND OVERFLOWED THE PHONE MASTHEAD BY 3px — this is a nowrap mono strip at ≤640, where
+     only the club name may shrink (see the phone block below); the season and record are rigid by
+     design, so widening them has nowhere to go. `label` is the honest step for it anyway: a dense
+     strip of secondary facts, read but not read FOR. One value at every width rather than a
+     responsive split, so this line can never be two sizes. */
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
   margin-top: 0.12rem;
 }
@@ -692,7 +698,7 @@
 
 @media (max-width: 900px) {
   .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
-  .teamHeaderName { font-size: 0.98rem; max-width: 100%; }
+  .teamHeaderName { font-size: 1rem; max-width: 100%; }
   /* ── The SCROLLED state — PHONE ONLY, and deliberately so ──────────────────────────────────
      Eyebrow, meta and the right slot fold away, leaving the bare team name on one slim line.
 
@@ -1244,11 +1250,13 @@
 }
 
 .headerIcon {
-  /* 48px until 2026-08-18 (direction E). This is the number that sets the whole title row's
-     height — the heading has never been tall enough to drive it — so it is the one that had to
-     move for the band to shrink. */
-  width: 36px;
-  height: 36px;
+  /* 48px until 2026-08-18 (direction E), 36px until 2026-08-28. This is the number that sets the
+     whole title row's height — the heading has never been tall enough to drive it — so it is the
+     one that had to move for the band to shrink. It follows `.pageTitle` down to the type ladder's
+     `title` step for the same reason it followed it down in direction E: the pair is read as one
+     unit, and a tile that out-measures its own heading reads as a bullet. */
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius);
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
@@ -1260,11 +1268,21 @@
 }
 
 .pageTitle {
-  /* 1.75rem until 2026-08-18 (direction E). Dropped WITH the tile, not instead of it: left at
-     1.75rem beside a 36px tile the heading would out-measure its own icon and the row would read
-     as a heading with a bullet, rather than the icon-and-title pair the ruling describes. */
-  font-size: 1.4rem;
-  font-weight: 900;
+  /* 1.75rem until 2026-08-18 (direction E), 1.4rem/900 until 2026-08-28. Dropped WITH the tile,
+     not instead of it: left large beside a small tile the heading would out-measure its own icon
+     and the row would read as a heading with a bullet, rather than the icon-and-title pair the
+     ruling describes.
+
+     ⚠ THE 2026-08-28 MOVE IS THE TYPE-LADDER ONE, AND ITS REASON IS AN INTERVAL, NOT A SIZE.
+     At 1.4rem (22.4px) this sat 10% under the Money hub's own card figure (1.55rem / 24.8px) —
+     and two sizes 10% apart do not read as a hierarchy, they read as a near-miss. Neither won.
+     The figure SHOULD lead on a dashboard (the number is the content, the title is chrome), so
+     the title moved to the ladder's `title` step and the figure to `figure`, opening a clean
+     1.2x gap. Weight came off with it: the standing rule is "heavy condensed type only at large
+     sizes or uppercase" (see .teamHeaderName), and 900 was already borrowed against that at
+     22.4px mixed-case. */
+  font-size: 1.25rem;
+  font-weight: 700;
   font-family: var(--font-display);
   margin: 0;
   color: var(--text-primary);
@@ -1297,7 +1315,7 @@
    Adding a fourth nested override? Put it HERE, below the base rules, or it will do nothing. */
 .pageHeaderNested { margin-bottom: 0.75rem; }
 .headerIconNested { width: 28px; height: 28px; border-radius: 8px; }
-.pageTitleNested { font-size: 1.1rem; font-weight: 800; }
+.pageTitleNested { font-size: 1rem; font-weight: 600; }
 
 /* The BODY SUMMARY STRIP: the entity facts a page used to print under its title — a template's
    "shape · started N plans", an evaluation session's date, a past practice's when-and-where, the
@@ -1646,7 +1664,7 @@
    what it would give them. Smaller because these values are words, not figures. */
 .snapshotValue[data-tone="muted"] {
   color: var(--text-tertiary);
-  font-size: 1.12rem;
+  font-size: 1.1rem;
   font-weight: 700;
 }
 .snapshotSub {
@@ -1834,7 +1852,7 @@
   color: var(--text-tertiary);
   padding: 0.26rem 0.66rem;
   min-height: 30px;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s, color 0.1s;
@@ -1951,7 +1969,7 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    the values `.th` and `.moneyGrid thead th` carry. This heading had drifted furthest of the four:
    0.65rem at --white-35, i.e. the faintest text in the portal labelling columns of --white-90 data.
    Padding stays tight and the wrapper still scrolls, so the wider heading costs no page overflow. */
-.insightsTable th { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
+.insightsTable th { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
 .insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--text-primary); }
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
@@ -2180,7 +2198,7 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
   margin: 0.1rem 0 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.32rem;
+  font-size: 1.35rem;
   letter-spacing: -0.01em;
   color: var(--text-primary);
   line-height: 1.18;
@@ -2309,7 +2327,7 @@ a.oneChip:hover { border-color: currentColor; }
 
 @media (max-width: 640px) {
   .oneThing { padding: 0.95rem 1rem 1.05rem; }
-  .oneHeadline { font-size: 1.14rem; }
+  .oneHeadline { font-size: 1.15rem; }
   /* ⚠ The primary keeps the 44px phone floor but NOT its own full-width row. Giving it one is what
      made the phone the worst case — the card ran to 267px and pushed the board's first row past
      the fold. It shares the headline's row and grows to fill only if the headline forces it to
@@ -3013,7 +3031,7 @@ a.oneChip:hover { border-color: currentColor; }
 .th {
   text-align: left;
   padding: 0.6rem 1rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -5713,7 +5731,7 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-secondary);
 }
 .calMonthMoreDots {
-  font-size: 0.67rem; color: var(--text-tertiary); padding: 0 2px;
+  font-size: 0.66rem; color: var(--text-tertiary); padding: 0 2px;
   background: none; border: none; cursor: pointer; text-align: left; display: block;
 }
 .calMonthMoreDots:hover { color: var(--text-secondary); }
@@ -6991,7 +7009,7 @@ a.oneChip:hover { border-color: currentColor; }
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: var(--logic-lime); color: var(--pitch-black);
   border: none; border-radius: 6px; padding: 0.45rem 0.9rem;
-  font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+  font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
 }
 .btnPrimary:hover { opacity: 0.88; }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -7013,14 +7031,14 @@ a.oneChip:hover { border-color: currentColor; }
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: var(--home-card, rgba(255,255,255,0.07)); color: var(--text-secondary);
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); border-radius: 6px;
-  padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  padding: 0.45rem 0.9rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;
 }
 .btnSecondary:hover { background: var(--home-olive-soft, rgba(255,255,255,0.11)); }
 
 .btnGhost {
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: none; border: none; color: var(--text-tertiary);
-  font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
+  font-size: 0.875rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
 .btnGhost:hover { color: var(--text-primary); }
 
@@ -7028,7 +7046,7 @@ a.oneChip:hover { border-color: currentColor; }
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: rgba(var(--danger-rgb), 0.12); color: var(--danger);
   border: 1px solid rgba(var(--danger-rgb), 0.25); border-radius: 6px;
-  padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  padding: 0.4rem 0.85rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;
 }
 .btnDanger:hover { background: rgba(var(--danger-rgb), 0.2); }
 .btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -7438,11 +7456,26 @@ a.oneChip:hover { border-color: currentColor; }
   min-height: 44px;
   padding: 0.55rem 0.85rem;
   white-space: nowrap;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
+  /* ⚠⚠ SENTENCE-WEIGHT SANS, NOT THE UPPERCASE MONO LABEL IT WAS UNTIL 2026-08-28 (type-ladder
+     pass). This bar was 0.72rem/700 uppercase mono in --font-data, which put PRIMARY NAVIGATION
+     at 11.5px — BELOW the 12.5px uppercase column headings of the very tables these tabs
+     navigate to. Both were uppercase, letter-spaced and bold, so nav did not merely lose to a
+     column label, it TIED one, and a tie reads as "these are peers".
+
+     The fix is upward and by TREATMENT, not by shrinking the headings — those were deliberately
+     raised on 2026-08-15 to end a measured legibility defect (headings 2.4x fainter than their
+     own data rows) and that ruling stands. Below ~13px a one-pixel step is invisible, so size
+     cannot separate these two roles at all; case can. Navigation now reads as sentence-case body
+     text and column headings stay uppercase support — different KINDS of thing, no competition.
+
+     ⚠ The tab LABELS are still Title Case as their callers write them ("Budget Plan", "Playing
+     Time") while the tryout flow writes sentence case ("Tryout day", "Build team"). The uppercase
+     transform was hiding that split. Normalising it is a COPY change that also reaches foot
+     links, rail links and help content, so it is deliberately NOT done here — half of it would
+     leave one thing wearing two names, which the spelling ruling forbids. */
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--text-tertiary);
   background: none;
   border: none;
@@ -7461,7 +7494,11 @@ a.oneChip:hover { border-color: currentColor; }
      under a fixed, viewport-wide header) this tab bar is nested inside .page's own
      padding — a negative-margin bleed here escaped that padding box and caused the
      whole document to scroll sideways by a couple pixels (caught by check:layout). */
-  .coachTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
+  /* Padding tightens on a phone; the SIZE deliberately does not. A phone override of 0.66rem
+     (10.6px) used to live here, and re-adding one now would mint an off-ladder value purely to
+     fit more tabs on screen — but this strip already scrolls, with arrow affordances on both
+     edges, so fitting more was never its job. */
+  .coachTabBtn { padding: 0.5rem 0.6rem; }
 }
 
 /* The grey .backLink that used to live here is RETIRED (page-header ruling 2026-08-11):
@@ -8538,7 +8575,7 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .wrappedTileValue {
   display: block;
-  font-size: 0.98rem;
+  font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
@@ -9044,7 +9081,7 @@ a.oneChip:hover { border-color: currentColor; }
   align-items: flex-start;
   gap: 0.4rem;
   margin: 0;
-  font-size: 0.79rem;
+  font-size: 0.78rem;
   line-height: 1.45;
   color: var(--text-primary);
 }
@@ -9293,7 +9330,7 @@ a.oneChip:hover { border-color: currentColor; }
 /* The shared column-heading recipe (see `.insightsTable th`) — the fourth and last of the four
    that had drifted apart. `.ppGridScroll` already scrolls, so the wider heading stays contained. */
 .ppGrid thead th {
-  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-secondary); font-weight: 700;
 }
 .ppGrid tbody th {
