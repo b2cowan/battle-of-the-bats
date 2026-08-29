@@ -15404,15 +15404,24 @@ content).
 
 **What changed.** The Fundraising tab is TWO BANDS: drives keep their cards and leaderboard
 drill-in; sponsors are a compact ledger (Sponsor · Pledged · In · To come · Credits) whose rows
-EXPAND IN PLACE with the promise line, the dated cheques with Undo, the family split, Record and
-Settings — the sponsor "record page" (Q11) retired after one day, its content becoming the row.
-Sponsors are created by **"Log a pledge"** (a pure expectation sheet — pledged amount,
+EXPAND IN PLACE with the dated cheques with Undo, the family split, Record and Edit — the
+sponsor "record page" (Q11) retired after one day, its content becoming the row. **Owner walk
+feedback 08-29, applied same day:** the doors became siblings (**"+ Fundraiser"** on its band,
+**"+ Sponsorship"** on its — same weight, same spot); the expansion was compacted to only what
+the row can't say (the old promise line restated the columns above it — gone; the payment method
+rides the date cell; one meta line carries expected-by + the credit split); and "Settings"
+became **"✎ Edit"** opening **"Edit sponsorship"**, the house verb for reopening a record.
+Sponsors are created by **"New sponsorship"** (a pure expectation sheet — pledged amount,
 **expected-by** (Q13, mig 269), credit families, tags; "nothing moves" said out loud) or by
 recording their first cheque through the one conversation, whose sponsor branch now leads with
 **"Which sponsor?"** — pledges first with what they still owe, "a new sponsor…" as one option.
 The fused "New fundraiser or sponsor" modal is drives-only ("New fundraiser"); the kind question
 and the Status dropdown no longer exist anywhere. The pledge past-due cue is live: a quiet
-sentence on the row and a clause on the Money overview once the date passes. Deep links kept:
+sentence on the sponsor's own row once the date passes. ⚖ **The Money-overview clause is
+REMOVED (owner, mid-§121 walk at step A2, 2026-08-29 — narrowing Q13 for that one row):** "in ·
+pledged" is already a lot for the little More-in-Money line, so it carries no third clause; the
+past-due fact lives where a coach can act on it, on the band's own row. Walk A2 expects the
+landing + scroll only. Deep links kept:
 a sponsor's `?fundraiser=` expands its row; `?kind=sponsor` scrolls to the band. The arrivals
 engine underneath (mig 268, §120, the 6/6 lifecycle spec) is untouched.
 

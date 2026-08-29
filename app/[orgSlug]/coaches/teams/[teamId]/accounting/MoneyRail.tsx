@@ -122,18 +122,18 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
     // keeps. "$500 · $2,000 pledged" is honest; "$2,500" would be a season flattering itself with
     // a cheque nobody has received.
     stat: s => {
-      const { sponsorReceived, sponsorPledged, sponsorCount, sponsorPledgesPastDue } = s.fundraisers;
+      const { sponsorReceived, sponsorPledged, sponsorCount } = s.fundraisers;
       // Shows at ZERO, the way the drives row above introduces itself — a coach who has never
       // recorded a sponsor is exactly the coach who does not know they can.
       if (sponsorCount === 0) return <>None yet · <b>add one</b></>;
+      // ⚖ NO past-expected clause here (owner, §121 walk step A2, 2026-08-29 — narrowing Q13 for
+      // THIS row): "in · pledged" is already a lot for this little row. The fact is not lost —
+      // the sponsor band the row lands on states "past its expected date" on the pledge itself,
+      // which is where a coach can act on it.
       return (
         <>
           {sponsorReceived > 0 ? <><b>{fmt(sponsorReceived)}</b> in</> : <>{sponsorCount} recorded</>}
           {sponsorPledged > 0.005 && <> · {fmt(sponsorPledged)} pledged</>}
-          {/* Q13's one quiet clause: only once a promise's expected-by has actually passed. */}
-          {(sponsorPledgesPastDue ?? 0) > 0 && (
-            <> · {sponsorPledgesPastDue === 1 ? '1 past its expected date' : `${sponsorPledgesPastDue} past their expected dates`}</>
-          )}
         </>
       );
     },
