@@ -1,6 +1,8 @@
 # Coach Payables Rebuild — a commitment holds many payments
 
-**Approved 2026-08-19 from mockups. Build starting.** Plan:
+**Approved 2026-08-19 from mockups. P1–P5 built and ON PRODUCTION in the 2026-08-27 release**
+(prod HEAD `7f21df47`, Amplify job 260). **Dead legacy columns dropped — mig 270, applied to dev
+2026-08-28; prod owed.** Plan:
 `docs/projects/active/COACH_PAYABLES_REBUILD_PLAN.md` · PM brief: `_PM_BRIEF.md` ·
 Owner QA **§64** · Mockup (binding spec): `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`
 
@@ -99,7 +101,35 @@ changes) · **P2** record a payment + undo · **P3** the screen (one list, `Grou
 
 **✅ P5 CLOSED 2026-08-20 by two owner calls.** The coach sandbox now shows a **repeating dome bill** (5 payments, 2 settled) — a judgement no check could make, since `check:demos` proves breakage and never absence. And the **shared touch-target fix** landed: the filter pills cleared the 44px floor, so all four money screens pass and three stale entries were pruned. ⚠⚠ Two lessons: the obvious fix was wrong twice by adding WIDTH to solve a HEIGHT problem (an `inline-flex` link stops wrapping; moving a media guard dropped the register’s compact sizing) — add height only, never width; and `--init` **silently baselined a regression I had just caused**, caught only by diffing the baseline against HEAD. **Audit what `--init` ADDED, not the count.**
 
-**⚠ P1–P5 ARE ALL ON DEV.** §64 Parts A+B walked 2026-08-20; **C+D walked 2026-08-21**; E, F, G, H owed.
+**⚠ P1–P5 ARE ALL ON PRODUCTION** (2026-08-27 release, prod HEAD `7f21df47`, Amplify job 260).
+§64 Parts A+B walked 2026-08-20; **C+D walked 2026-08-21**; **E walked and passed**; **F, G and H
+closed UNWALKED by the owner 2026-08-21** and restated as the release check in the plan.
+
+⚠⚠ **THAT DEFERRAL'S REASONING HAS EXPIRED, and the note is the point.** F/G/H were deferred
+because *"none of this work is on production"* — it shipped on 2026-08-27, so they are checks
+against LIVE behaviour now, and **H (the demo's money story + the in-app help wording) is overdue
+rather than pending**. A perishable negative going stale is exactly the drift AGENCY_RULES bans;
+this is a clean specimen.
+
+**✅ THE DEAD COLUMNS ARE DROPPED — mig 270, applied to dev 2026-08-28 (prod owed).** Nine columns
+off `rep_team_expenses` (`expense_paid_at`, the deposit and balance amount/due/paid trios, and the
+two per-half ledger links), plus two FK constraints and two partial indexes. `amount` STAYS — it is
+the sum of the installments (R2) and was never in scope.
+- ⚠ **Prove dead, do not assume dead.** `deposit_amount` alone has ~93 occurrences and nearly all
+  are the TOURNAMENT fee block (`tournaments.`/`divisions.deposit_amount`) or in-memory field names
+  in the coach budget importer, which still speaks deposit/balance because coaches' own
+  spreadsheets do while storing installments. **Attribute every grep hit to its table** before
+  believing it. The only real readers were the row mapping, the type it filled, and three fixtures.
+- ⚠ **Prove lossless too.** Before dropping: of 57 dev commitments every one had an installment,
+  every legacy paid stamp was mirrored by a real payment row, and every per-half ledger link was
+  already carried on a payment's own entry. Nothing recorded there existed only there.
+- ⚠⚠ **A DROP IS INVISIBLE TO `check:migrations`** — that gate only reports prod-BEHIND-dev, so a
+  column prod still has and dev does not passes it silently. Same blind spot as mig 264's data-only
+  DELETE. **`check:schema-parity` is the gate that sees it**, and its baseline now carries the 13
+  prod-only items as debt that clears when mig 270 reaches prod.
+- ⚠ A bare expense INSERT is now a real hazard: with no installment the row is invisible to every
+  money screen. The UAT money fixture was doing exactly that and was rewritten to seed a plan (and
+  a payment for the settled one) — its own `Record` assertions could never have passed otherwise.
 
 **⚠⚠ THE C+D WALK FOUND FIVE THINGS AND EVERY ONE WAS AN ABSENCE OR A FALSE SENTENCE** — never a
 broken control. Three lessons worth more than the fixes:

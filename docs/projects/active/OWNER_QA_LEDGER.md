@@ -8823,11 +8823,20 @@ not the same fact and this ledger has drifted on exactly that before:**
   still owed); G the three §27 re-runs that prove the re-expressed books still move money correctly;
   H the demo's story and the in-app help wording, neither of which has been re-read since "Mark
   paid" stopped being how money is recorded.
-- ⚠ **F, G and H matter most at the moment this ships**, not today — none of this work is on
-  production, so nothing a customer or a prospect can reach is affected by their being unwalked.
-  **H in particular is a release-day item**: both demo worlds are fully public on production and
-  their sentences are written by hand, so the money story a prospect reads will go stale the
-  instant this release lands, not before.
+- ⚠⚠ **THAT DEFERRAL RESTED ON A FACT THAT HAS SINCE EXPIRED — read this before treating F/G/H as
+  future work.** The bullet above originally continued: *"none of this work is on production, so
+  nothing a customer or a prospect can reach is affected by their being unwalked… the money story a
+  prospect reads will go stale the instant this release lands, not before."* **This work shipped:
+  the rebuild is on production in the 2026-08-27 release (prod HEAD `7f21df47`, Amplify job 260;
+  mig 255 and `lib/payable-standing.ts` both present on `origin/master`).** So F, G and H are no
+  longer pre-release checks against a dev-only feature — they are checks against **live** behaviour,
+  and **H is overdue rather than pending**: the coach demo's money narration was written for the
+  six-doors-to-record world, was only partly trued up in the 08-25 release, and had nothing adjusted
+  for P4. It is the same drift the root CLAUDE.md now flags across three consecutive releases.
+  ⚠ Recorded here rather than quietly rewritten, because a perishable negative going stale IS the
+  failure mode the anti-drift rule exists for, and this is a clean specimen of it.
+- **The restatement of F/G/H as release checks in the rebuild plan stands unchanged** (owner,
+  2026-08-28). What changed is only *when* they became due, not whose item they are.
 
 
 **Parts A and B ✅ WALKED AND PASSED 2026-08-20** (owner-walked against the artifact walkthrough
@@ -14105,10 +14114,11 @@ stale phone tap-floor entries falling away with the deleted row; measured before
 
 ---
 
-## §114 · The commitment page edits itself — and the bill stops having two editors — ✅ OWNER QA PASSED 2026-08-28 (Part G not walked)
+## §114 · The commitment page edits itself — and the bill stops having two editors — ✅ OWNER QA PASSED 2026-08-28 (Part G residue closed by owner direction 2026-08-28)
 
 > **Walked 2026-08-28. No failures recorded.** A 12/12 · B 7/7 · C 6/6 · D 4/4 · E 5/5 · F 2/2 —
-> all PASS. **G · Phone was SKIPPED**, and it is the one part still owed.
+> all PASS. **G · Phone was SKIPPED** — half of it was later covered by §117's own walk, and the
+> remaining two checks were **closed by owner direction 2026-08-28** (see the end of this note).
 >
 > ⚠ **Part G is now HALF closed, and this note originally overstated it.** §117 (2026-08-28)
 > re-laid-out the installment schedule on this very page with a phone-specific branch — above 768
@@ -14116,10 +14126,16 @@ stale phone tap-floor entries falling away with the deleted row; measured before
 > 2026-08-28** and covers two of G's four claims: *the schedule still reads* and *the page does not
 > scroll sideways*.
 >
-> **Still owed on a phone, from this section alone:** the **six editable fields are pressable at
-> 390px**, and the **save strip stays at the foot**. §117 never touched either, so nothing has
-> tested them. An earlier version of this note said walking §117's phone part would close G
-> outright; it does not, and the difference is those two checks.
+> **The residue §117 did not cover, named exactly:** the **six editable fields are pressable at
+> 390px**, and the **save strip stays at the foot**. §117 never touched either, so nothing walked
+> them. An earlier version of this note said walking §117's phone part would close G outright; it
+> does not, and the difference is those two checks.
+>
+> **✅ THAT RESIDUE IS CLOSED BY OWNER DIRECTION 2026-08-28** — closed, **not walked**, and the
+> distinction is the whole reason this note is written this way. Nobody has put a thumb on those
+> six fields at 390px. What is recorded is a decision to stop holding §114 open for them, not
+> evidence that they pass. **§114 is therefore complete: A–F walked and passed 2026-08-28, G half
+> walked (via §117 Part F) and half closed by direction.**
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/5f25469a-2091-4364-92b7-b5ea38018b28`
 >

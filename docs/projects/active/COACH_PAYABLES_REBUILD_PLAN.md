@@ -1,6 +1,9 @@
 # Coach Payables Rebuild — a commitment holds many payments
 
-**Status:** approved 2026-08-19, build starting. **Owner mockup (binding spec):**
+**Status:** P1–P5 built; **on production in the 2026-08-27 release** (prod HEAD `7f21df47`,
+Amplify job 260). QA §64 closed by owner 2026-08-21 (A–E walked; F/G/H restated as the release
+check below). **Dead legacy columns dropped — mig 270, applied to dev 2026-08-28; prod owed.**
+**Owner mockup (binding spec):**
 `claude.ai/code/artifact/da11c0eb-07e4-4da4-bf8f-f27eb3b5cf7f`.
 **PM brief:** `COACH_PAYABLES_REBUILD_PM_BRIEF.md`. **QA:** Owner QA Ledger §64.
 **Origin:** owner walked QA §27 on 2026-08-19. It **passed clean** — and in passing, surfaced four
@@ -293,8 +296,11 @@ Over-payment (R6). **Undo** on any recorded payment, reversing the books by its 
   deleted; every writer (create form, edit form, delete, the bulk importer, all three fixture
   seeders, the demo seed and nightly re-anchor) writes installments and payments directly, and
   **nothing writes the legacy deposit/balance/paid columns any more**. The one legacy column still
-  written is `amount`, kept equal to the sum of the installments (R2). Dropping the dead columns
-  remains a separate migration and a separate decision (mig 255's note).
+  written is `amount`, kept equal to the sum of the installments (R2). ✅ **The dead columns were
+  dropped by mig 270 (applied to dev 2026-08-28, prod owed)** — the separate migration mig 255's
+  note promised, taken once the sweep proved every candidate had no reader and the data probe proved
+  every legacy stamp was already mirrored by a real payment row. Nine columns, two FK constraints
+  and two partial indexes; `amount` stays.
 - The three PATCH mark-paid actions are removed; a stale tab's `action` gets a sentence pointing at
   the new door. The register and payment schedule offer **Record a payment** on every unsettled
   piece — including part-paid ones, which the old door structurally could not offer.
@@ -1178,7 +1184,13 @@ built. The shared primitives are `MultiSelectDropdown`, `SingleSelectDropdown` a
 "more of the same walking" — they are the checks that only pay off at the moment this reaches
 production, and they are restated here so closing the QA section does not lose them.
 
-**Run these as part of promoting this work, not before:**
+⚠⚠ **THIS SECTION'S FRAMING HAS EXPIRED — the four items below have NOT.** It was written on
+2026-08-21 as "run these when this ships"; **this work shipped on 2026-08-27** (prod HEAD
+`7f21df47`, Amplify job 260). So these are no longer pre-release checks against a dev-only feature —
+they are checks against live behaviour, and **item 4 is overdue rather than pending**. The items
+themselves are unchanged and still the owner's, per his 2026-08-21 call.
+
+**The four checks:**
 
 1. **The neighbours still agree.** Overview's next-30-days counts a partly-paid installment for what
    is STILL OWED, not its full amount. Budget vs. Actual shows what was actually paid, in the month
