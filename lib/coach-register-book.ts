@@ -80,6 +80,7 @@ export async function loadSeasonRegisterRows(
     duesPayouts,
     schedules,
     fundraiserRes,
+    sponsorRecordRes,
     splitsRes,
     requestsRes,
     rosterRes,
@@ -97,8 +98,15 @@ export async function loadSeasonRegisterRows(
        columns it reads, so "realised" cannot mean two things. */
     supabaseAdmin
       .from('rep_fundraiser_entries')
-      .select('id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id)')
+      .select('id, fundraiser_id, amount_raised, created_at, received_date, rep_fundraisers!inner(name, kind, sponsor_status, program_year_id)')
       .eq('rep_fundraisers.program_year_id', programYear.id),
+    /* ⚠ The PLEDGE line reads the RECORD, not entries (mig 268) — a pledged sponsor has no
+       entries at all, and a part-paid one's outstanding promise is pledged minus arrived. */
+    supabaseAdmin
+      .from('rep_fundraisers')
+      .select('id, name, pledged_amount, created_at')
+      .eq('program_year_id', programYear.id)
+      .eq('kind', 'sponsor'),
     supabaseAdmin
       .from('rep_allocation_splits')
       .select('id, budget_item_id, budget_category_id, rep_cost_allocations ( description )')
@@ -381,40 +389,70 @@ export async function loadSeasonRegisterRows(
 
   // ── Derived: Fundraising — drives and sponsors ────────────────────────────
   type FundraiserEntryRow = {
-    id: string; amount_raised: number; created_at: string; received_date: string | null;
+    id: string; fundraiser_id: string; amount_raised: number; created_at: string;
+    received_date: string | null;
     rep_fundraisers: { name: string; kind: string | null; sponsor_status: string | null } | null;
   };
+  const arrivedBySponsor = new Map<string, number>();
   for (const raw of (fundraiserRes.data ?? []) as unknown as FundraiserEntryRow[]) {
     const parent = raw.rep_fundraisers;
     if (!parent) continue;
     const isSponsor = parent.kind === 'sponsor';
-    // A drive's money is realised as recorded; a sponsor's is realised only once it has ARRIVED.
+    // ⚠ Since mig 268 an entry IS money that arrived — a pledge has no entries. The belt stays:
+    // an unrealised row, if one ever exists again, must never read as cash.
     const realised = !isSponsor || parent.sponsor_status === 'received';
+    if (!realised) continue;
     const amount = Number(raw.amount_raised ?? 0);
     if (!(amount > 0)) continue;
+    if (isSponsor) {
+      arrivedBySponsor.set(raw.fundraiser_id, (arrivedBySponsor.get(raw.fundraiser_id) ?? 0) + amount);
+    }
     rows.push({
       id: `fundraiser-${raw.id}`,
-      /* ⚠ THE DAY THE MONEY ARRIVED when the record knows it (mig 261 — the recording
-         conversation asks; owner ruling 2026-08-23: logged late still lands in its period), and
-         the day the coach RECORDED it for legacy rows, which carry only `created_at` — the row's
-         detail says which. A PLEDGE has no date at all: it has not arrived, and nothing records
-         when it is expected. */
-      date: realised ? (raw.received_date ?? orgDayKey(raw.created_at)) : null,
+      /* ⚠ THE DAY THE MONEY ARRIVED when the record knows it (mig 261/268 — sponsor arrivals
+         always carry it; owner ruling 2026-08-23: logged late still lands in its period), and
+         the day the coach RECORDED it for legacy drive rows, which carry only `created_at` —
+         the row's detail says which. */
+      date: raw.received_date ?? orgDayKey(raw.created_at),
       kind: 'fundraising',
       description: parent.name,
       categoryName: null,
       itemName: null,
       moneyOut: 0,
       moneyIn: amount,
-      scheduled: !realised,
+      scheduled: false,
+      overdueDays: null,
+      movesCash: true,
+      open: { kind: 'workspace', section: 'fundraisers' },
+      recordPayment: null,
+      sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
+      detail: raw.received_date ? 'The day the money arrived' : 'Recorded on this date',
+    });
+  }
+  /* The PLEDGE line — what a sponsor has promised and not sent, read from the record itself
+     (mig 268). No date: it has not arrived, and nothing records when it is expected (Q13 owns
+     that). A part-paid pledge shows only what is STILL to come, beside its arrivals above. */
+  type SponsorRecordRow = { id: string; name: string; pledged_amount: number | string | null; created_at: string };
+  for (const s of (sponsorRecordRes.data ?? []) as unknown as SponsorRecordRow[]) {
+    const pledged = s.pledged_amount != null ? Number(s.pledged_amount) : 0;
+    const remaining = Math.max(0, Math.round((pledged - (arrivedBySponsor.get(s.id) ?? 0)) * 100) / 100);
+    if (!(remaining > 0.005)) continue;
+    rows.push({
+      id: `sponsor-pledge-${s.id}`,
+      date: null,
+      kind: 'fundraising',
+      description: s.name,
+      categoryName: null,
+      itemName: null,
+      moneyOut: 0,
+      moneyIn: remaining,
+      scheduled: true,
       overdueDays: null, // a pledge has no due date to be overdue against
       movesCash: true,
       open: { kind: 'workspace', section: 'fundraisers' },
       recordPayment: null,
       sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
-      detail: realised
-        ? (raw.received_date ? 'The day the money arrived' : 'Recorded on this date')
-        : 'Pledged — not arrived yet',
+      detail: 'Pledged — not arrived yet',
     });
   }
 

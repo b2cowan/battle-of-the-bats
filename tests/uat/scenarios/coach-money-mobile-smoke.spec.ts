@@ -378,8 +378,8 @@ test.describe('Money on a phone @360x740', () => {
       ['Money hub', `${base()}/accounting`],
       ['Season Budget Plan', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
-      ['Transactions', `${base()}/accounting?section=transactions`],
-      ['Payables', `${base()}/accounting?section=payables`],
+      ['Ledger — Timeline', `${base()}/accounting?section=ledger&view=timeline`],
+      ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
       ['Player Dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
@@ -393,11 +393,10 @@ test.describe('Money on a phone @360x740', () => {
       await expectNoClippedAmounts(page, label);
     }
 
-    // The commitment list is a sub-view of Payables (Money split P1, 2026-08-16) — the tab opens
-    // on its Schedule, so this switches to the list the assertions below are about.
-    await open(page, `${base()}/accounting?section=payables`);
+    // The bills live on the Ledger's By-bill view (Payables→Ledger fold, 2026-08-28) — addressed
+    // directly, so the assertions below are about the grouped list.
+    await open(page, `${base()}/accounting?section=ledger&view=bills`);
     const main = page.locator('main[class*="coachesMain"]');
-    await main.getByRole('button', { name: /^commitments/i }).click();
     await expect(main.getByText('Provincials entry')).toBeVisible();
     // Payables Rebuild P2: the expanded details list the plan piece by piece, each unsettled one
     // offering Record a payment as a full-width card action (Mark deposit/balance paid retired).
@@ -549,8 +548,8 @@ test.describe('Money on a phone @360x740', () => {
       ['Money hub', `${base()}/accounting`],
       ['Season Budget Plan', `${base()}/accounting?section=budget`],
       ['Budget vs. Actual', `${base()}/accounting?section=budget-vs-actual`],
-      ['Transactions', `${base()}/accounting?section=transactions`],
-      ['Payables', `${base()}/accounting?section=payables`],
+      ['Ledger — Timeline', `${base()}/accounting?section=ledger&view=timeline`],
+      ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
@@ -565,11 +564,13 @@ test.describe('Money on a phone @360x740', () => {
         main.getByRole('button', {
           /* ⚠ The verbs converged in money centralization P2 (2026-08-23): "Record a payment",
              "Log amount", "Mark paid" and Transactions' "Add" all became **Record** or, where
-             the act asks nothing, **Record as paid**. "Add a commitment" survives — Payables
-             keeps its own setup door — and "Edit amount" survives because editing is not
-             recording. This list is what a write-capable coach may see and a read-only one
-             may not, so a converged name has to be spelled here or the guard stops guarding. */
-          name: /record|record as paid|undo|add line|add expense|add a commitment|recategorize|new request|new fundraiser|settings|edit amount|generate installments|start — about a minute/i,
+             the act asks nothing, **Record as paid**. "Add a bill" survives — the Ledger keeps
+             its own setup door (it was "Add a commitment" until the 2026-08-28 fold's word
+             sweep; both spellings guarded so a stale build cannot slip past) — and "Edit
+             amount" survives because editing is not recording. This list is what a
+             write-capable coach may see and a read-only one may not, so a converged name has
+             to be spelled here or the guard stops guarding. */
+          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|generate installments|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);
@@ -979,7 +980,7 @@ test.describe('Money by month @360x740', () => {
     // page must say so in words, naming the month.
     await expect(main.getByText(/you go short in \w+ \d{4}/i)).toBeVisible();
     // Each reading now states its OWN basis rather than one sentence naming the lens.
-    await expect(main.getByText(/budget is your plan, not your commitments/i)).toBeVisible();
+    await expect(main.getByText(/budget is your plan, not your bills/i)).toBeVisible();
   });
 
   /* ⚠ THE PRIOR-SEASON COLUMN TEST WAS DELETED HERE (owner, 2026-08-24). The column it walked was
@@ -1031,15 +1032,15 @@ test.describe('Money by month @360x740', () => {
 });
 
 /**
- * ⚠⚠ REWRITTEN FOR THE ONE PAYABLES LIST (Rebuild P3, 2026-08-20). The `Schedule | Commitments`
- * toggle and its `Unpaid | Paid | All` pills are gone — one list, a `Group by` arrangement, and a
- * four-option Status dropdown that can finally express "partly paid".
+ * ⚠⚠ REWRITTEN FOR THE ONE PAYABLES LIST (Rebuild P3, 2026-08-20), AND AGAIN FOR THE FOLD
+ * (2026-08-28): the Payables tab retired into the one Ledger, whose **View** pill (Timeline ·
+ * Bills · Payment schedule) is `Group by` widened by one option and promoted to the page.
  *
- * ⚠ `?tab=schedule` IS STILL ADDRESSED HERE ON PURPOSE. It is a live URL contract (the Money hub's
- * "See full schedule", Budget vs. Actual's Scheduled drill-in, the legacy-address mapper) and this
- * spec is what proves it still lands somewhere honest rather than on a blank view.
+ * ⚠ THE LEGACY `?section=payables&tab=schedule` ADDRESS IS STILL SENT HERE ON PURPOSE. Years of
+ * bookmarks carry it, and the hub rewrites it to `?section=ledger&view=due` — this spec is what
+ * proves the old contract still lands somewhere honest rather than on a blank view.
  */
-test.describe('The one Payables list (Payables Rebuild P3)', () => {
+test.describe('The one owed-money list (Payables Rebuild P3 + the 2026-08-28 fold)', () => {
   test.use({ viewport: PHONE });
 
   test('a saved "schedule" link lands on the dated arrangement, and Status narrows it', async ({ page }) => {
@@ -1047,12 +1048,14 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
     await open(page, `${base()}/accounting?section=payables&tab=schedule`);
     const main = page.locator('main[class*="coachesMain"]');
 
-    await expect(main.getByRole('heading', { name: /^payables$/i })).toBeVisible();
+    await expect(main.getByRole('heading', { name: /^ledger$/i })).toBeVisible();
     // The retired toggle must not have left a stub behind.
     expect(await main.getByRole('button', { name: 'Commitments', exact: true }).count()).toBe(0);
-    // The URL chose the arrangement — Group by sits first and reads "Due date".
-    await expect(main.getByText('Group by')).toBeVisible();
-    await expect(main.getByText('Due date', { exact: true })).toBeVisible();
+    // The legacy URL chose the arrangement — View sits first and reads "Payment schedule"
+    // (place-named views, fold round 3). `.first()`: the due view's Export button carries the
+    // same two words, deliberately — the view and its file are one name.
+    await expect(main.getByText('View', { exact: true })).toBeVisible();
+    await expect(main.getByText('Payment schedule', { exact: true }).first()).toBeVisible();
 
     // The seeded bill's first piece was due 5 days ago; its second is 30 days out. The list opens
     // on Outstanding + Overdue, so both are here and the overdue one says how late it is.
@@ -1066,7 +1069,7 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
 
   test('the same rows under both arrangements — nothing appears, nothing disappears', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=payables&tab=schedule`);
+    await open(page, `${base()}/accounting?section=ledger&view=due`);
     const main = page.locator('main[class*="coachesMain"]');
     await expect(main.getByRole('table')).toBeVisible();
 
@@ -1088,16 +1091,16 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
     const byDate = await pieces();
     expect(byDate).toBeGreaterThan(0);
 
-    await main.getByText('Group by').click();
-    await main.getByRole('button', { name: 'Commitment', exact: true }).click();
-    await expect(main.getByText('Commitment', { exact: true }).first()).toBeVisible();
+    await main.getByText('View', { exact: true }).click();
+    await main.getByRole('button', { name: 'Bills', exact: true }).click();
+    await expect(main.getByText('Bills', { exact: true }).first()).toBeVisible();
     await openAll();
     expect(await pieces()).toBe(byDate);
   });
 
   test('the list opens folded — one clean line per bill, each still saying what it owes', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=payables&tab=commitments`);
+    await open(page, `${base()}/accounting?section=ledger&view=bills`);
     const main = page.locator('main[class*="coachesMain"]');
     await expect(main.getByRole('table')).toBeVisible();
 
@@ -1110,14 +1113,14 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
     await expect(main.getByRole('button', { name: /^record$/i }).first()).toBeVisible();
 
     // …and the dated arrangement opens the other way, because a period band is only a label.
-    await main.getByText('Group by').click();
-    await main.getByRole('button', { name: 'Due date', exact: true }).click();
+    await main.getByText('View', { exact: true }).click();
+    await main.getByRole('button', { name: 'Payment schedule', exact: true }).click();
     expect(await main.locator('tr[class*="payPieceRow"]').count()).toBeGreaterThan(0);
   });
 
   test('⚠ defect 3 — a fully paid bill opens, with Edit live', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
-    await open(page, `${base()}/accounting?section=payables&tab=commitments`);
+    await open(page, `${base()}/accounting?section=ledger&view=bills`);
     const main = page.locator('main[class*="coachesMain"]');
 
     // Settled bills are hidden by the considered default, so ask for them by name.
@@ -1152,7 +1155,7 @@ test.describe('The one Payables list (Payables Rebuild P3)', () => {
     // …but no cell offers a way into an editor.
     expect(await main.locator('a[href*="section=budget&line="]').count()).toBe(0);
 
-    await open(page, `${base()}/accounting?section=payables&tab=schedule`);
+    await open(page, `${base()}/accounting?section=ledger&view=due`);
     const sched = page.locator('main[class*="coachesMain"]');
     /* ⚠ THE PIECE'S WORDS ARE ON TWO LINES NOW — the bill's name, then "Installment 1 of 2" in the
        row's own meta line — where the old single-column schedule joined them with an em dash. Same
@@ -1311,7 +1314,7 @@ test.describe('Importing a budget @360x740', () => {
     const main = page.locator('main[class*="coachesMain"]');
     expect(await main.getByRole('button', { name: /^import$/i }).count()).toBe(0);
 
-    await open(page, `${base()}/accounting?section=payables`);
+    await open(page, `${base()}/accounting?section=ledger&view=bills`);
     const payablesMain = page.locator('main[class*="coachesMain"]');
     expect(await payablesMain.getByRole('button', { name: /import payables/i }).count()).toBe(0);
   });
@@ -1328,7 +1331,7 @@ test.describe('Import templates (D-G1: structure, never amounts)', () => {
 
     // Every shape, one at a time — a template that leaked an example dollar would be the
     // product proposing a figure, which is forbidden across all of Money.
-    for (const shape of [/month grid/i, /simple list/i, /payables schedule/i]) {
+    for (const shape of [/month grid/i, /simple list/i, /bills schedule/i]) {
       const sheet = page.locator('[class*="modal"]').filter({ hasText: /import a spreadsheet/i }).first();
       await sheet.getByRole('button', { name: shape }).click();
 

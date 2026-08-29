@@ -85,6 +85,8 @@ export interface MoneySummary {
     sponsorCount: number;
     sponsorReceived: number;
     sponsorPledged: number;
+    /** Q13: promises past their expected-by with money still to come — one quiet clause's count. */
+    sponsorPledgesPastDue: number;
   };
   expenses: { paidTotal: number; loggedCount: number; unpaidCount: number; upcomingDueCount: number };
   allocations: { count: number; totalAllocated: number; outstanding: number; overdueCount: number };

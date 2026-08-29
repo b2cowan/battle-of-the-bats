@@ -70,6 +70,12 @@ export interface RecordMoneyIntent {
     spendExpenseId?: string;
     /** ALLOCATION, not identity — stays editable even under a lock (owner ruling A). */
     spendInstallmentId?: string;
+    /**
+     * An EXISTING sponsor (mig 268 arrivals): the record page's Record door. Locked, the sponsor
+     * branch records an ARRIVAL against this record — amount, date, method — earning the stored
+     * credit plan's families as the money lands, instead of creating a new sponsor.
+     */
+    sponsorId?: string;
   };
   /** A suggested amount the door already knows (what a family is holding, what a bill has left). */
   amount?: string;

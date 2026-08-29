@@ -208,17 +208,34 @@ export default function InstallmentPlanEditor({
   }
 
   return (
-    <section className={shared.formSection}>
+    <section className={`${shared.formSection} ${styles.planEditor}`}>
+      {/* ⚖ ONE HEADER LINE (Add-a-bill design pass D1, owner-approved 2026-08-29): the title left,
+          the two tools right. This supersedes the two-row header the fold pass left behind — the
+          empty band between the title and the right-hung tools was half of what read as "awful".
+          Both tools keep their button chrome and their pairing, which is what the fold's finding 5
+          actually ruled (its target was Repeat monthly dressed as a LINK, not the row it sat on). */}
       <div className={shared.discHead}>
         <h4 className={shared.formSectionTitle}>Payment schedule</h4>
-        <button
-          type="button"
-          className={repeatOpen ? shared.discHide : styles.periodQuietBtn}
-          onClick={() => { setRepeatOpen(o => !o); setBuildError(''); }}
-        >
-          {repeatOpen ? 'Never mind' : 'Repeat monthly'}
-        </button>
+        <span className={styles.planEditorTools}>
+          <button
+            type="button"
+            className={repeatOpen ? shared.discHide : styles.addPeriodBtn}
+            onClick={() => { setRepeatOpen(o => !o); setBuildError(''); }}
+          >
+            {repeatOpen ? 'Never mind' : 'Repeat monthly'}
+          </button>
+          <button
+            type="button"
+            className={styles.addPeriodBtn}
+            onClick={() => onChange([...rows, { ...BLANK_PLAN_ROW }])}
+          >
+            + Add
+          </button>
+        </span>
       </div>
+      {/* The count keeps its settled rule — it appears only once there is genuinely more than one
+          thing to count (fold finding 4) — and now stands alone under the header line. */}
+      {rows.length > 1 && <span className={shared.label}>{rows.length} payments</span>}
 
       {/* ── The rule, when the coach asks for one ─────────────────────────────────────────────
           ⚠ It BUILDS the list and then gets out of the way. Nothing here is stored: a repeating
@@ -295,16 +312,22 @@ export default function InstallmentPlanEditor({
         </div>
       )}
 
-      <div className={styles.genInstallmentsSection}>
-        <div className={styles.genInstallmentsHeader}>
-          <span className={shared.label}>{rows.length === 1 ? 'One payment' : `${rows.length} payments`}</span>
-          <button
-            type="button"
-            className={styles.addPeriodBtn}
-            onClick={() => onChange([...rows, { ...BLANK_PLAN_ROW }])}
-          >
-            + Add
-          </button>
+      {/* ⚠ NO INNER CARD ANY MORE (design pass D1): `.genInstallmentsSection` was the white card
+          inside the tinted section — two borders and two fills wrapping one concept, the owner's
+          finding 1. The rows sit directly on the section's tint now, under real column headings.
+          The class itself is untouched: the dues sheet's Generate Installments still wears it. */}
+      <div>
+        {/* D2 — the column-headings row, the budget sheet's own idiom over this exact row shape
+            (its `.periodColHead` carries the same drift warning). Desktop only; at ≤640 every
+            field carries its own stacked label. aria-hidden because every input already announces
+            itself ("Due date for installment n"). The num and trailing-X cells render only when
+            the rows have numbers and removes — a lone payment's row fills the section edge to
+            edge (owner, mockup round 3). */}
+        <div className={styles.planColHead} aria-hidden="true">
+          {rows.length > 1 && <span className={styles.planColNum} />}
+          <span className={styles.planColDate}>Due date</span>
+          <span className={styles.planColAmt}>Amount ($)</span>
+          {rows.length > 1 && <span className={styles.planColX} />}
         </div>
 
         {rows.map((row, at) => (
@@ -321,7 +344,10 @@ export default function InstallmentPlanEditor({
                 </button>
               )}
             </div>
-            <span className={styles.installmentNum}>#{at + 1}</span>
+            {/* ⚠ "#1" on a one-row list is noise (finding 4) — numbers appear from the second row.
+                The span now renders only when there is a number to hold: with one payment the row
+                runs the section's full width, and the headings above track the same rule. */}
+            {rows.length > 1 && <span className={styles.installmentNum}>{`#${at + 1}`}</span>}
             <label className={`${styles.periodFieldLabel} ${styles.periodFieldDate}`}>
               <span className={styles.periodFieldLabelText}>Due date</span>
               <DateField

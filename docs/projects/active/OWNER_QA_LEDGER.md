@@ -15002,3 +15002,422 @@ at 14px text where 11.5px was intended. It is **pre-existing and portal-wide** (
 5 files), the 44px phone tap floor is **not** affected, and the codebase already carries a
 deliberate compound-selector workaround for this exact collision elsewhere. Fixing it visibly
 shrinks buttons on several screens, so it is its own decision, not a passenger on this diff.
+
+---
+
+## §118 · The coaches portal gets a type scale — 62 text sizes become 12 — ✅ OWNER QA PASSED 2026-08-28
+
+> **Walked 2026-08-28. Owner reported the walkthrough complete with no issues raised.**
+>
+> ⚠ **Recorded at the grain the owner gave it.** Unlike §117, this entry does NOT claim a per-part
+> or per-step tally, because the walkthrough's paste-back summary was not returned to the chat — so
+> there is no record of which of the 28 steps were ticked, which parts carried a verdict, or which
+> screens were reachable in UAT at the time. The walkthrough explicitly warned that a screen with no
+> data (no live game, no closed season, no tournament) is **"needs a call", not a pass**; whether
+> any step hit that is unknown. **The pass stands on the owner's word, not on a captured tally** —
+> that distinction is written down rather than smoothed over, because a ledger that reads as though
+> it holds detail it never had is worse than one that admits the gap. If the summary is still in the
+> browser, pasting it will upgrade this note to the usual per-part record.
+
+> ### ✅ WALKTHROUGH — `claude.ai/code/artifact/0198b575-1f70-40e3-925c-a2fe74794e1a`
+>
+> **Checkable walkthrough** — 28 steps across 8 parts, each a real checkbox, with a three-way
+> verdict and notes box per part and a "build summary" button producing plain text to paste back
+> into the chat. Ticks are saved in the browser, so the walk survives closing the tab.
+>
+> ⚠ **Reset zoom to 100% before starting.** The whole change is about size; a zoomed tab answers
+> the wrong question — which is literally how this thread began.
+> ⚠ **Restart the dev server first** (stop, delete `.next`, restart). Six layout sweeps ran against
+> it and 62 stylesheets changed.
+> **Sign in as** `uat-coach@uat-test-org.local` (password = `UAT_COACH_PASSWORD` in `.env.local`)
+> at `http://localhost:3000`, team **UAT Test Team** — the team in the owner's original screenshot.
+
+**BUILT 2026-08-28 (dev). No migration. CSS only — no component, route or data change.**
+Owner-approved from two true-size mockups: the ladder itself
+(`claude.ai/code/artifact/5b5c426b-d093-45f6-ba50-4d714cd214c6`) and the display-step options sheet
+(`claude.ai/code/artifact/1baf0fba-a8d7-4008-8e2c-f85c1be84cac`). Rulings in
+`memory/design_decisions.md` (2026-08-28 and 2026-08-28 P3).
+
+**How this started, because it explains the shape of it.** The owner asked whether the Money
+headers had got *bigger* recently. They had not — measured against git, the page title had gone
+**down** (28px → 22.4px on 08-19) and the sidebar links with it. Answering only the question asked
+would have closed the thread. The evidence was wider than the ask: **62 distinct font sizes across
+the portal, 26 of them under 16px, many separated by fractions of a pixel.** There was no scale to
+violate, which is why nobody had violated one.
+
+**What a coach gets.** Nothing the product *does* changed. What changed is that every piece of text
+now comes from one of **eight named steps** — display 32 · figure 24 · title 20 · heading 16 ·
+body 14 · support 12 · label 11 · token 10 — instead of from whichever value the screen's author
+picked that week. Concretely, on screen:
+
+1. **A card's own name stops being quieter than the chip beside it.** `COLLECTIONS` /
+   `CASH ON HAND` / `BUDGET` were **9.9px — a heading rendered at badge size**. You must read that
+   word to know what the number underneath means, so it is a heading. Now 11px and darker. This one
+   change does most of the "the screen feels flat" work.
+2. **Navigation stops tying the table it navigates to.** The Money/Insights tab row was 11.5px
+   uppercase mono — *below* the 12.5px uppercase column headings of the very tables those tabs open.
+   Both were bold, uppercase and letter-spaced, so nav did not merely lose, it **tied**, and a tie
+   reads as "these are peers". Tabs are now **sentence-case body text at 14px**; headings stay
+   uppercase support at 12px. Different kinds of thing, no competition.
+3. **The page title stops arguing with the figure below it.** 22.4px against a 24.8px card figure is
+   10% apart — a near-miss, not a hierarchy. The figure *should* lead on a dashboard (the number is
+   the content, the title is chrome), so the title went to 20px and the figure to 24px.
+4. **The game-day score is now one size everywhere, and bigger.** It was 1.7rem on a desktop and
+   1.9rem on a phone — **the one number a coach glances at from the bench was smaller on the big
+   screen.** Now `display` (32px) at every width.
+5. **Buttons and filter chips stop being four values for two jobs** (14.1 / 14.1 / 13.6 / 13.6 and
+   12.0 / 11.8). The owner spotted this by eye before the audit found it.
+
+**⚠⚠ THE MARQUEE CASE FOR THE NEW DISPLAY STEP DID NOT EXIST.** The argument for a step above 24px
+was led by a 32px season-record hero on Overview. It had **zero usages** — dead CSS from a replaced
+card, carrying a phone override for good measure. It was deleted, not ruled on. **A size inventory
+counts DECLARATIONS, and a declaration nobody renders still argues for a step.**
+
+**What did NOT change, deliberately.**
+- **Table column headings hold at 12px.** They were raised on 2026-08-15 to end a *measured*
+  legibility defect (headings 2.4× fainter than their own data rows). That ruling stands and was
+  **not** unwound to make room for this one.
+- **Badges and inline table actions stay ~10px.** A badge is recognised by shape and colour without
+  being read — the 2026-05-23 `btn-data`/badge decision is upheld, not reversed.
+- **Icons and the watermark are ladder-exempt**, with the reason written at each declaration. A star
+  glyph sizes to its 40/44px tap target; the Team HQ monogram is a 7%-opacity graphic that happens
+  to be a numeral. Four declarations carry a `LADDER-EXEMPT` comment — **an undocumented exemption
+  is indistinguishable from drift six months later.**
+- **No layout, spacing, colour, card-height or copy change anywhere.** Type assignment only.
+
+**Two deviations from the approved mockups, both recorded on the mockups themselves.**
+- The **masthead detail line ships at 11px, not the 12px drawn**. 12px overflowed the phone masthead
+  by 3px — that line cannot wrap at ≤640 (only the club name may shrink; season and record are rigid
+  by design). ⚠ **The mockup was drawn at 1120px and never drew a phone. A sizing mockup without a
+  narrow frame has a hole in it.**
+- **Tab labels stay Title Case.** Removing the uppercase exposed a live copy split — Money and
+  Insights write Title Case, the tryout flow writes sentence case. Normalising it reaches foot links,
+  rail links and help articles; half of it would leave one thing wearing two names.
+
+**Verification already done, so the walk is looking for what a machine cannot see.**
+- **57 coach screens swept at four widths, before and after: findings identical at 180, ZERO
+  regressions.** The baseline was established by reverting all 62 files and re-sweeping — twice.
+- Static gates pass (tokens, CSS purity, spelling, contrast, dates, schema, org-context).
+- **1,442 declarations now consume a ladder token; 4 documented exemptions remain; 62 → 12 distinct
+  sizes.**
+- ⚠ **Three regressions were found and fixed during the work**, and two were the same bug: a card
+  title and a rail name sat in shrinkable grid cells with **no ellipsis**, and in both cases the
+  element's own sibling already had one — they fit at the old size by luck. **A type change does not
+  CAUSE overflow, it EXPOSES missing containment.** The third: dropdown option rows snapped to
+  `support` and took three controls further under the tap floor; they are rows you read *and* click,
+  so they are `body`. **When nearest-step produces a worse control, the ROLE was mis-assigned all
+  along.**
+
+**⚠ 180 pre-existing layout findings remain and are NOT from this work** — mostly tap-floor debt
+carried in the sweep's baseline. They were there before and are their own piece of work.
+
+**Open follow-ups, none blocking.** (a) the Title-Case/sentence-case tab-label split; (b)
+`.nowScoreline` is dead CSS, left for a deliberate dead-CSS pass rather than widened into this diff;
+(c) the **admin shell** still uses literals — when it follows it consumes these same eight tokens
+and does not mint a ninth.
+
+### A · Money — the screen that started this
+### B · Game day — the number that got bigger
+### C · End of season — the one number that got smaller
+### D · Card figures across the portal
+### E · Things that must NOT have changed (icons, watermark, badges)
+### F · Dropdowns, tables and chrome
+### G · Phone at 390px — ⚠ THE MASTHEAD LINE IS THE PART MOST LIKELY TO FIND SOMETHING
+### H · Tablet at 768px
+
+⚠ **A screen with no data is "needs a call", not a pass.** UAT may have no live game, no closed
+season and no tournament. A step that could not be reached is not a step that passed — the
+walkthrough says so and the summary reports unticked steps by name.
+
+
+## §118 · The payout floor reaches the sponsor's own door — sponsorship lifecycle Phase A — ✅ OWNER QA PASSED 2026-08-28
+
+> **Walked 2026-08-28, all six parts PASS, 18/18 steps.** The walk earned its keep twice before
+> passing: the FIRST attempt failed A2 (the delete suppression read fields the dues feed never
+> sent, and the delete door had no source guard — both fixed same day, see the build note below),
+> and mid-walk the owner asked why a foreseeable refusal left Save clickable — ruled dead-button
+> (matching the scope sheet and the approved mockup), built for all four refusal paths the same
+> hour, and Part C re-walked against the new behaviour. /review (4 lenses) also ran between
+> walks: 5 confirmed findings fixed (incl. the error strip that only rendered inside the closed
+> form), 2 refuted, 3 pre-existing follow-ups logged in the plan.
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/d015eab5-65a6-451f-9e75-d161c9719833`
+>
+> **Checkable walkthrough** — 18 steps in six parts (build the fixture · the warning · four
+> refusals · a floor not a lock · drawer refusals · cleanup + the undo path), each a real
+> checkbox with a per-part verdict and notes, and a summary button whose output names unticked
+> steps so a step that could not be reached never reads as passed. Ticks save in the browser.
+
+**BUILT ON DEV 2026-08-28 (uncommitted at time of writing). No migration.** First build phase of
+the sponsorship lifecycle project (owner-ruled the same day —
+`docs/projects/active/COACH_SPONSORSHIP_LIFECYCLE_PLAN.md`).
+
+**What changed.** The sponsor edit was the one credit-shrinking door with no payout floor:
+lowering a received sponsor's amount, moving or removing the credited family, or flipping back
+to a pledge silently shrank or deleted a family credit that cash had already been handed back
+against. Now all four ask the floor BEFORE anything is written and refuse with the dues doors'
+own sentence; the floor lives in one shared module so the doors cannot drift apart again. Two
+courtesy fixes ride along: the dues drawer no longer offers delete on a sponsor- or
+expense-sourced credit (the server refused it and the screen swallowed the refusal — a click
+that visibly did nothing), and any refusal it does meet now shows as words; the Settings sheet's
+pledge-flip hint names the at-risk dollars before the coach ever meets the guard.
+
+**Verification at build time:** 12 new unit tests on the guard's arithmetic (projection, action
+naming, forgiveness exclusion, the exposure figure); full unit suite 2,679 green; typecheck
+clean. ⚠ The UAT money-lifecycle spec's paid-out case is still owed (needs the Playwright
+fixture session) — this walk is the human coverage until then.
+
+---
+
+## §119 · One Ledger — Payables folds into the money book, and the object is a bill — ✅ PASSED, closed by owner 2026-08-29
+
+**BUILT 2026-08-28 (dev), same session as the owner-led planning rounds. NO migration.** The
+owner-led fold decision reserved by centralization ruling 2 was taken and approved with all six
+decision points ("ok, I agree with your recommendations"): the Payables tab RETIRES; the one
+**Ledger** tab holds three views — **Timeline** (the register, unchanged, default on first visit) ·
+**By bill** · **By due date** — behind a View pill that is Payables' old Group-by widened by one
+option; the view is REMEMBERED per team on the device; the object is a **bill** everywhere a coach
+reads (door "Add a bill", export "Bills", Import menu "Bills", rail rows "Ledger"/"Bills",
+"Upcoming Bills"); the future-date refusal says "money you've agreed to pay later is a bill" and
+offers **Make it a bill instead**; every old address (three generations: `expenses`,
+`transactions`/`payables`, `?tab=`) rewrites in place onto `?section=ledger&view=…`; the bill
+form is tidied (no intro paragraph, "Filed under *", fold named "More — payee, tags, notes",
+consequence pinned with the sticky footer, "One payment"/"#1" noise gone, Repeat monthly wears
+button chrome). The bill's own page (§114/§117) is untouched except its words and its back arrow
+("Ledger", returning to the remembered view).
+
+**⚠ Five recorded deviations from the approved mockups, each forced by a standing ruling** — plan
+§0 carries them (Add-a-bill lives in the Ledger toolbar not the page title row · Save stays "Save"
+· picker-before-description order kept · empty-state doors use the existing empty-state shape ·
+Timeline description sentence merged not replaced).
+
+**Verified at build:** typecheck ✓ (post-typegen) · **2,679/2,679 unit tests** ✓ · check:spelling ✓
+· lint 0 errors. **⚠ OWED to a dev-server session before this ships:** check:layout (the three
+re-pointed money screens + coach-commitment), check:register, check:money-report, check:demos, and
+a UAT money-smoke re-run — ⚠ that spec's "defect 3 drawer" test was stale from Part B BEFORE this
+change (expects a modal with Edit; Part B made the bill a page). Help merged into one "The Ledger:
+one book, three views" article; demo tour step 5 re-pointed and its whole narration re-read (all
+sentences still true; Payables never had a stop). Plan:
+`COACH_PAYABLES_LEDGER_FOLD_PLAN.md` · mockups (approved spec):
+`claude.ai/code/artifact/91f2c3e7-8138-48f2-a20f-3727fb96a2f5`
+
+### ✅ WALK IT HERE — `claude.ai/code/artifact/43eabbdb-7795-4f4c-9927-ef00b8577651`
+
+**Checkable walkthrough** — real checkboxes, ticks saved in the browser, a Build-summary button
+producing paste-back text. Parts: A one tab · B Timeline unchanged · C the View switch and its
+memory · D old addresses land honestly · E the bill form · F the two doors · G the word sweep ·
+H phone at 390px. ⚠ A step with no data behind it is "needs a call", not a pass.
+
+**⚠ §119 WALK — FIRST FINDINGS (owner, 2026-08-28, at step A3), all fixed same session:**
+1. **Step A3 itself was WRONG, not the product** — the operating Overview's "More in Money" rail
+   deliberately shows only what the three story cards don't already own, so the Ledger/Bills rows
+   the step promised live on the SETUP-stage index. The walkthrough step is corrected; the durable
+   lesson is the walkthrough-writing one: a step must be written against the STAGE the fixture is
+   actually in.
+2. **The middle card's footer still said "Transactions →"** — a missed string in the word sweep
+   (the href was already re-aimed; only the label lagged). Now "Ledger →".
+3. **The Next-30-days chip printed the RAW LANE ID** — "payable" on screen, and an org row would
+   have said "org" against the 08-17 "Club, not Org" ruling. The chip now speaks the product's
+   words (bill / club / dues) through a display map; ids stay internal. The coming-due panel's
+   "Team Payables" lane heading became "Team Bills" with it.
+
+**⚖ §119 ROUND-3 RULINGS (owner, mid-walk, 2026-08-28) — RULED AND BUILT SAME DAY:** "I kind of
+like A and C. I am fine to keep bills as the name." (1) **A′ — the views are place-names:**
+`Timeline · Bills · Payment schedule` (were "By bill" / "By due date") — the fold's management
+answer: "Bills" names the home it already was. (2) **C — Record's picker gains a "Not paid yet"
+hand-off row** ("We'll owe this later — set up a bill · Nothing moves today") sharing one code
+path with the future-date refusal; **ruling B (08-23) stands AMENDED, not reversed** — the
+conversation may hand off visibly, never fork, and still creates no unpaid money itself. The
+direct **Add a bill** door stays through this walk. The walkthrough gained step **F4** and its
+C/D steps wear the new view names; typecheck ✓ · 2,679/2,679 tests ✓ · spelling ✓ after the
+round-3 build.
+
+**⚠ §119 WALK — PART E FINDINGS (owner screenshot of the live Add-a-bill form, 2026-08-28), both
+fixed same session:**
+1. **The picker's placeholder survived the label rename** — "Filed under *" sat over a box still
+   hinting "Search what this is…", the circularity finding 2 existed to kill. The bill form now
+   hints the act ("Choose a budget item — e.g. Tournaments · Entry fees"); the conversation's
+   call sites keep their question-shaped hints, which still match THEIR labels.
+2. **The schedule's Due/Amount microlabels were hidden at desktop** — they existed but the budget
+   sheet's stylesheet shows them only on phones (its rows sit under a labelled header; this
+   editor's do not). The bill editor now opts into labels at every width; the budget sheet keeps
+   its default. The bare "yyyy-mm-dd" the owner saw is the browser's own empty-date format hint —
+   correct once a label sits above it.
+- ⚖ **Recorded as deliberately NOT done: finding 9's uniform input grounds** (Description/amount
+  tinted, picker/date white — two rendering families, cosmetic). Left for the money forms review,
+  which owns form-consistency questions portal-wide.
+
+**⚖ §119 PART E — VISUAL COMPOSITION MOVED TO THE FORMS REVIEW (owner call, 2026-08-28: "this
+still looks pretty awful, should I move this over to the forms review project?" — yes).** The
+form's STRUCTURE and WORDS stand as §119 tests them (title/subtitle, Filed under + act-shaped
+placeholder, de-noised schedule, named fold, pinned consequence). Its PRESENTATION — the nested
+grey-on-grey chrome, desktop microlabels for the date/amount row, and the two input rendering
+families — is now a named scope item in `COACH_MONEY_FORMS_REVIEW_PLANNING_PROMPT.md`. ⚠ The
+walk's microlabel attempt was REVERTED same session (labels rendered beside their inputs and
+clipped the row — the rows' stylesheet is a row flex; a real fix needs the review's mockups).
+Walk Part E against structure/words only.
+
+**⚖ §119 PART E — CORRECTION (owner, 2026-08-28, superseding the note above):** the form's
+presentation does NOT go to the forms review (that session is a separate body of work, currently
+on sponsorships — not standard form formatting). It is the Ledger work's own, and gets a
+**dedicated design + UX pass**: `COACH_ADD_A_BILL_FORM_DESIGN_PASS_PROMPT.md` (mockup gate first,
+Playwright-verified build, shared-class trap named, rider on this section). Part E still walks
+structure/words only until that pass ships.
+
+**⚠ §119 WALK — STEP G3 FINDING (owner, 2026-08-28), fixed same session, and it PREDATES the
+fold:** the "?" on the Money hub opened the generic Money intro on EVERY tab. The panels' own
+help wiring has been inert inside the hub all along — the embedded header shape renders no "?" —
+so Payables' and Transactions' help subtopics were exactly as unreachable before today; G3 is
+what made it visible. **The hub's "?" is now TAB-AWARE**: each of the seven tabs opens its own
+article (Ledger → "The Ledger: one book, three views", Dues → the dues article, Club → the club
+one, and so on). Re-press the "?" on the Ledger to tick G3.
+
+**⚠ §119 WALK — G2/G3 FOLLOW-UP (owner, 2026-08-28), both handled same session:**
+1. **G2 was written against the wrong STAGE again** (the A3 mistake's twin): "Upcoming Bills" is
+   the SETUP-stage Money Overview's panel, which an operating team never renders. Step corrected
+   to the Club-tab half (checkable); the rename is in code and the same panel serves the org
+   admin's Rep Teams page.
+2. **The tab-aware "?" was landing on the right article but the drawer never SCROLLED to it** —
+   `subtopicId` pre-expanded the target accordion while the drawer opened at the section top, and
+   Money runs to twenty sub-topics, so the answer sat below the fold and the fix looked like a
+   no-op. The drawer now scrolls the targeted sub-topic to the top of its body on open (and
+   re-aims if the request changes while open). Platform-wide improvement: every "?" with a
+   targeted answer gains it, not just Money.
+
+**✅ §119 RIDER — THE ADD-A-BILL DESIGN PASS SHIPPED (2026-08-29), AND THE PART E CAVEAT IS
+LIFTED: walk Part E in full now, presentation included.** The dedicated pass
+(`COACH_ADD_A_BILL_FORM_DESIGN_PASS_PROMPT.md`) ran its mockup gate first — three rounds on one
+artifact (`claude.ai/code/artifact/299f6bbc-4a6e-4cde-ba89-b85016676f0b`): round 1 drew the three
+findings and one answer; round 2 fixed the annotation chips sitting on the elements they labelled
+and collapsed the schedule's header to ONE line (title left, Repeat monthly + Add right — both
+keep button chrome and pairing; the fold's finding 5 targeted the LINK dressing, not the row);
+round 3, from the owner's own mark-up, removed the number gutter on a single payment so the lone
+row fills the section edge to edge (the gutter appears only when the #s do). Owner approved
+round 3: *"looks good, go for it."*
+
+**Built as approved, all three decisions:** D1 one surface (the white inner card dissolved; rows
+sit on the section's tint; the phone's per-installment cards go white-on-tint instead of
+tint-on-white-on-tint; the repeat tray loses its white fill too) · D2 a real Due date / Amount ($)
+column-headings row at desktop, the budget sheet's own idiom — a NEW element, never the reverted
+label force (the stylesheet headstone now points at it) · D3 one grounds story — the picker
+(per-caller opt-in, bill branch only) and the date fields wear the portal's standard paper ground
+beside the amount and description that already did. **The Part E "deliberately NOT done" entry
+above (finding 9's uniform input grounds) is hereby DONE.** Rider on the floor: the editor's
+controls meet the 44px tap floor at ≤768 (Repeat monthly / + Add / the row removes measured ~25px
+before, 44px after — the 2026-08-27 touch-band ruling outranks the mockup's drawn size).
+
+**Playwright-verified against the live dev form (UAT fixture), 1440 and 390:** picker,
+description, date and amount all measure the identical computed ground (paper `rgb(248,244,237)`,
+6px radius, strong hairline); headings left-align with their fields to the pixel in both the
+one-payment and 3-payment states; the rows' wrapper paints nothing (no inner card); zero
+horizontal overflow at both widths; at 390 the headings stand down, the stacked labels show, and
+each row card renders white on the tint. **The shared-class trap held:** every restyle is scoped
+under the editor's own variant classes — the budget line editor was re-rendered live and wears
+its own clothes untouched, and the dues sheet's Generate Installments classes were never edited
+(the stylesheet diff is append-only plus two comments). Gates: typecheck · unit suite 2,692 green
+· check:css-purity · check:spelling · lint:focused (0 errors) — all clean.
+
+**⚖ §119 RIDER 2 — THE BILL HAND-OFF IS REVERSIBLE, AND ITS ROW IS AN ANSWER (owner, 2026-08-29,
+from using the live form).** The owner's finding: every "What happened?" answer could be changed
+in place *except* "set up a bill" — the one choice with no way back short of Cancel discarding the
+typing. Ruled and built: the row now reads **"We agreed to pay something later"** (an answer — the
+agreement is a real event; same grammar as the refusal's own sentence) with sub "Nothing moves
+today — set up a bill on your payment schedule", and a coach handed into the bill form from the
+conversation (the row or the future-date refusal) **keeps the "What happened?" control**, standing
+on the bill row; picking any other answer hands back with typing carried — the mirror of the trip
+in, with a future schedule date deliberately left behind (money that moved cannot have moved
+tomorrow). Ruling B2 untouched where it rules: the toolbar's Add a bill still asks nothing.
+⚠⚠ **A live defect found and fixed in the same change: the forward carry was silently dropping
+the amount and date** — the hand-off wrote them into the `dueDate` field the Payables Rebuild P4
+had deleted, so the bill form opened with a blank schedule while the refusal promised "your
+amount… come(s) with you" (wrong since the fold shipped). The typed figures now seed the
+schedule's first row. Logged in `memory/design_decisions.md` (2026-08-29). Help updated (the
+Record tip teaches the new words and the way back). **Playwright-verified live end to end:** row
+present with new words · old words gone repo-wide · hand-off carries amount 225.50 + date +
+description into the schedule row · way back restores them into the conversation · toolbar door
+still question-free. Gates: typecheck · 2,692 unit green · spelling · lint 0 errors.
+**Walk it in §119 Part F territory:** Record → type an amount → pick "We agreed to pay something
+later" → see your figures on the schedule → change the answer back → see them return.
+
+**✅ §119 CLOSED BY OWNER 2026-08-29** ("looks good, you can mark QA 119 and this item as
+complete") — the fold, the Add-a-bill design pass (rider 1) and the reversible hand-off (rider 2)
+all land under this closure, and the fold project is COMPLETE: plan + PM brief moved to
+`docs/projects/archive/`, committed to dev the same day. The walk's own findings (A3, Part E,
+G2/G3, round 3) were all fixed-in-session and are recorded above.
+
+## §120 · An entry is an arrival — the sponsor keeps its promise in cheques — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/9b72eeb4-7b7f-431a-b452-875f0bec9208`
+>
+> **Checkable walkthrough** — 22 steps in eight parts (the promise · the record page · the first
+> cheque · the second · two families share one sponsor · undo behind the floor · the paper ·
+> cleanup), real checkboxes, per-part verdicts and notes, paste-back summary naming unticked
+> steps. Ticks save in the browser.
+
+**BUILT ON DEV 2026-08-28 (uncommitted at time of writing) · MIGRATION 268 APPLIED TO DEV
+(snapshots refreshed, dictionary updated, schema-parity re-baselined as the accepted dev-ahead
+state) · ⚠ 268 MUST REACH PROD BEFORE ANY PROMOTE CARRYING THIS CODE.** Phases B + C of the
+sponsorship lifecycle, shipped together because the old thin sponsor screen could not survive the
+model change (`COACH_SPONSORSHIP_LIFECYCLE_PLAN.md`; owner rulings Q1–Q3, Q11, Q12, Q15, Q16 all
+executed here; Q7/Q13/Q14 remain for the next phase).
+
+**What changed.** A sponsor's promise now lives on the record (`pledged_amount`), and an entry
+means exactly one thing everywhere: money that ARRIVED — dated, with a method, several per
+sponsor. A pledged sponsor has ZERO entries. The credited families moved to a credit PLAN
+(`rep_fundraiser_credit_plan`, one row per family, $ or % each — Q16, both doors), whose credits
+accrue per arrival as cheques land (percent earns on each arrival; dollar shares fill
+proportionally and true up on the cheque that reaches the pledge). Status is DERIVED — recording
+an arrival makes a sponsor received, undoing the last one returns it to a pledge, and the old
+hand flip is a 409 with directions. Clicking a sponsor opens its RECORD (Q11 option B): the
+promise line, each arrival with its real day, the plan in words, Record (the conversation, locked
+to the sponsor) and Sponsor settings (the agreement: pledge + plan; no status dropdown). The
+creation modal is titled "New fundraiser or sponsor", asks "Which kind?", takes Date received +
+Method when the money is in hand, and states its consequence in dollars with every family named.
+The export splits Received / Pledged (Q15). Every "pledged" reader flipped from entries to the
+column (money summary, BvA forward lens, register's scheduled pledge line, the fundraisers list)
+— the counted sweep that found them is in the plan.
+
+**Verification at build time:** unit suite 2,691 green (12 new accrual-arithmetic tests);
+typecheck clean; verify:changed green end to end (demos reseeded and presentable — the demo
+sponsor now keeps its $750 pledge in two dated cheques, with the check pinning both); **the UAT
+money-lifecycle spec was REWRITTEN for arrivals and RUN — 6/6 green against the live dev
+server**, walking promise → cheque → cheque → undo → undo through all three money readers,
+including the pinned 409 on a hand status-flip and the payout floor. ⚠ The §118/§119 numbering
+note: two same-day sessions both claimed §118 (the type scale and the payout floor); the numbers
+stand as walked — this entry takes §120 to keep the sequence honest.
+
+
+## §121 · Promises and cheques — the Fundraising tab becomes two bands — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/02ca276f-39a2-4078-b6a7-c7f0a3361b1c`
+>
+> **Checkable walkthrough** — 16 steps in six parts (the split tab · log a pledge · expand in
+> place · the one money form with its sponsor picker · settings and undo in the row · drives
+> untouched), paste-back summary naming unticked steps.
+
+**BUILT ON DEV 2026-08-29 (uncommitted at time of writing) · MIGRATION 269 (`expected_by`)
+APPLIED TO DEV (snapshots + dictionary + parity re-baselined) · ⚠ 268 AND 269 must reach prod
+before any promote carrying this code.** Direction A of the owner-ruled fundraising rework
+(proposal artifact "Promises and Cheques", ruled 2026-08-29 the same day §120's walk raised the
+two findings that motivated it: the duplicated sponsor form, and a record page too big for its
+content).
+
+**What changed.** The Fundraising tab is TWO BANDS: drives keep their cards and leaderboard
+drill-in; sponsors are a compact ledger (Sponsor · Pledged · In · To come · Credits) whose rows
+EXPAND IN PLACE with the promise line, the dated cheques with Undo, the family split, Record and
+Settings — the sponsor "record page" (Q11) retired after one day, its content becoming the row.
+Sponsors are created by **"Log a pledge"** (a pure expectation sheet — pledged amount,
+**expected-by** (Q13, mig 269), credit families, tags; "nothing moves" said out loud) or by
+recording their first cheque through the one conversation, whose sponsor branch now leads with
+**"Which sponsor?"** — pledges first with what they still owe, "a new sponsor…" as one option.
+The fused "New fundraiser or sponsor" modal is drives-only ("New fundraiser"); the kind question
+and the Status dropdown no longer exist anywhere. The pledge past-due cue is live: a quiet
+sentence on the row and a clause on the Money overview once the date passes. Deep links kept:
+a sponsor's `?fundraiser=` expands its row; `?kind=sponsor` scrolls to the band. The arrivals
+engine underneath (mig 268, §120, the 6/6 lifecycle spec) is untouched.
+
+**Verification at build time:** suite 2,692 green; typecheck clean; verify:changed green
+(including the token ratchet catching two hex fallbacks in the new band — fixed to the semantic
+token). Known debt, deliberately parked: the drill-in's sponsor half is UNREACHABLE dead code
+marked for the /simplify sweep; the in-app fundraising help articles now describe the previous
+shape and need the /docs pass.

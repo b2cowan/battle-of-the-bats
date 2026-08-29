@@ -1,0 +1,38 @@
+/* The credit-family rows (Q16) — ONE layout for the three doors that draw them (the create
+   modal, the sponsor settings sheet, the recording conversation's sponsor branch).
+
+   The first cut crammed family + share + unit pills into the single-input `unitField` strip and
+   the owner met it squished on first contact (§120 walk, 2026-08-29). The row now owns its
+   geometry: the family select breathes at full flexible width, and the share (input + $/% pills
+   + remove) travels as ONE group that wraps whole onto its own line when the row runs out of
+   room — so a phone never splits a number from its unit. */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.family {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+/* The share group: the number, its unit, and the remove — inseparable. */
+.share {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+  flex: 0 0 auto;
+}
+
+.shareValue {
+  width: 6.5rem;
+  flex: 0 1 auto;
+}
+
+.addBtn {
+  align-self: flex-start;
+}

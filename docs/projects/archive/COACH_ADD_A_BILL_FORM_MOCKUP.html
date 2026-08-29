@@ -1,0 +1,738 @@
+<title>Add-a-bill Design Pass</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+<style>
+  /* ── Document chrome (theme-aware). Specimens below are FIXED warm-portal literals. ── */
+  :root {
+    --pg-bg: #E9EAED;
+    --pg-panel: #FFFFFF;
+    --pg-ink: #1C1F26;
+    --pg-muted: #5A6070;
+    --pg-line: rgba(28,31,38,0.14);
+    --pg-accent: #57651E;
+    --find: #B03A22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --pg-bg: #15171B;
+      --pg-panel: #1E2127;
+      --pg-ink: #E9EAEE;
+      --pg-muted: #9AA1AE;
+      --pg-line: rgba(233,234,238,0.14);
+      --pg-accent: #A9BE4B;
+      --find: #E06A50;
+    }
+  }
+  :root[data-theme="dark"] {
+    --pg-bg: #15171B;
+    --pg-panel: #1E2127;
+    --pg-ink: #E9EAEE;
+    --pg-muted: #9AA1AE;
+    --pg-line: rgba(233,234,238,0.14);
+    --pg-accent: #A9BE4B;
+    --find: #E06A50;
+  }
+
+  body {
+    background: var(--pg-bg);
+    color: var(--pg-ink);
+    font-family: 'Archivo', -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1220px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  header.doc { margin-bottom: 34px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--pg-accent); margin: 0 0 10px;
+  }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 10px; text-wrap: balance; }
+  .lede { font-size: 15px; line-height: 1.55; color: var(--pg-muted); max-width: 68ch; margin: 0; }
+  .lede strong { color: var(--pg-ink); font-weight: 600; }
+
+  h2 { font-size: 19px; font-weight: 700; margin: 56px 0 6px; letter-spacing: -0.005em; }
+  h2 .no { color: var(--pg-accent); font-weight: 800; margin-right: 8px; }
+  .h2sub { font-size: 13.5px; color: var(--pg-muted); line-height: 1.55; margin: 0 0 18px; max-width: 78ch; }
+  .h2sub strong { color: var(--pg-ink); font-weight: 600; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 22px 0 0; }
+  .legend .item { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--pg-muted); }
+  .findmark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto;
+    background: var(--find); color: #fff; font-size: 11px; font-weight: 800;
+  }
+
+  /* Finding cards */
+  .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+  .finding {
+    background: var(--pg-panel); border: 1px solid var(--pg-line); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .finding .head { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+  .finding .head b { font-size: 13.5px; font-weight: 700; }
+  .finding p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--pg-muted); }
+  .finding p strong { color: var(--pg-ink); font-weight: 600; }
+
+  /* Decision cards */
+  .decisions { display: grid; gap: 12px; margin-top: 18px; }
+  .decision {
+    background: var(--pg-panel); border: 1px solid var(--pg-line); border-left: 3px solid var(--pg-accent);
+    border-radius: 10px; padding: 15px 18px;
+  }
+  .decision b { font-size: 13.5px; }
+  .decision p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: var(--pg-muted); }
+  .decision p strong { color: var(--pg-ink); font-weight: 600; }
+
+  /* Specimen stage — a fixed warm-dark ground standing in for the product's modal overlay,
+     deliberately unlike the document chrome so frames read as specimens, not as page. */
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 1180px) { .pair { grid-template-columns: 1fr; } }
+  .stagecap {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--pg-muted); margin: 0 0 8px;
+  }
+  .stagecap .b { color: var(--pg-ink); }
+  .stage {
+    background: #5E584E;
+    border-radius: 14px;
+    padding: 26px 22px;
+    overflow-x: auto;
+  }
+  .stage-inner { width: max-content; margin: 0 auto; }
+  .stagenote { font-size: 12px; color: var(--pg-muted); margin: 8px 0 0; line-height: 1.5; }
+  .stagenote strong { color: var(--pg-ink); font-weight: 600; }
+
+  /* ══ SPECIMENS — shipped warm-portal palette, fixed literals ══
+     paper #F8F4ED · card #FFFFFF · ink #241E15 · ink-soft #4A4235 · dim #6A635C
+     line rgba(70,55,30,.12) · line-strong rgba(70,55,30,.20)
+     olive #57651E · olive-soft rgba(87,101,30,.10) · lime #D9F99D · win #34662A */
+  .fl {
+    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #241E15;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .fl * { box-sizing: border-box; }
+
+  /* Inline annotation chips — they sit BESIDE their element in the flow, never over it. */
+  .tagi {
+    display: inline-block; vertical-align: 1px;
+    font-size: 8.5px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+    border-radius: 4px; padding: 2px 5px 1px; line-height: 1.4;
+    font-family: 'Archivo', sans-serif;
+  }
+  .tagi.new     { color: #FFFFFF; background: #134FD3; }
+  .tagi.restyle { color: #FFFFFF; background: #835006; }
+  .tagi.same    { color: #FFFFFF; background: #8A8177; }
+  .tagi.push    { margin-left: auto; }
+  .fpin {
+    position: absolute; z-index: 3;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #B03A22; color: #fff; font-size: 11.5px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35); pointer-events: none;
+    font-family: 'Archivo', sans-serif;
+  }
+  .anno { position: relative; }
+
+  .fl-modal {
+    width: 520px;
+    background: #FFFFFF;
+    border: 1px solid rgba(87,101,30,0.3);
+    border-radius: 12px;
+    padding: 24px 24px 0;
+    position: relative;
+  }
+  .fl-mhead { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .fl-mtitle { font-size: 16px; font-weight: 700; margin: 0; }
+  .fl-mtitle .tagi { margin-left: 8px; }
+  .fl-msub { margin: 2px 0 0; font-size: 12px; color: #6A635C; line-height: 1.4; max-width: 44ch; }
+  .fl-x { color: #6A635C; font-size: 15px; line-height: 1; padding: 4px; }
+
+  .fl-grid { display: grid; gap: 14px; }
+  .fl-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; color: #6A635C;
+    text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;
+  }
+  /* The ONE field ground (after-state, and today's plain inputs): paper + strong hairline, r6 */
+  .fl-input {
+    width: 100%; display: block;
+    background: #F8F4ED; border: 1px solid rgba(70,55,30,0.20);
+    border-radius: 6px; padding: 8px 12px; font-size: 14px; color: #241E15;
+  }
+  .fl-input .ph { color: #6A635C; }
+  /* BEFORE-state deviants: the picker and the date field render white, r8, faint hairline */
+  .fl-input.was-white { background: #FFFFFF; border-color: rgba(70,55,30,0.12); border-radius: 8px; padding: 9px 12px; }
+  .fl-datewrap { position: relative; display: block; }
+  .fl-datewrap .fl-input { padding-right: 34px; }
+  .fl-cal {
+    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; color: #4A4235;
+  }
+
+  /* Schedule section — the tinted formSection (both states) */
+  .fl-section {
+    background: rgba(87,101,30,0.10);
+    border: 1px solid rgba(70,55,30,0.20);
+    border-radius: 8px;
+    padding: 13px 14px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  /* AFTER: the header collapses to ONE line — title left, the two tools right. */
+  .fl-sechead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .fl-sectitle {
+    margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6A635C;
+    display: flex; align-items: center; gap: 8px;
+  }
+  /* BEFORE: the white inner card the rows sit in */
+  .fl-innercard {
+    background: #FFFFFF;
+    border: 1px solid rgba(70,55,30,0.12);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .fl-schedhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .fl-count { font-size: 12px; font-weight: 600; color: #6A635C; text-transform: uppercase; letter-spacing: 0.04em; }
+  .fl-tools { display: flex; gap: 6px; flex: 0 0 auto; }
+  .fl-toolbtn {
+    background: none; border: 1px solid rgba(70,55,30,0.15); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; color: #4A4235; white-space: nowrap;
+  }
+  /* NEW: the column-headings row (desktop only) — the budget sheet's own idiom */
+  .fl-colhead {
+    display: flex; gap: 8px; align-items: center; padding: 2px 0 1px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6A635C;
+  }
+  .fl-colhead .c-num { width: 24px; flex: 0 0 auto; }
+  .fl-colhead .c-date { flex: 0 0 168px; }
+  .fl-colhead .c-amt { flex: 1; display: flex; align-items: center; }
+  /* Rows */
+  .fl-rows { display: flex; flex-direction: column; gap: 8px; }
+  .fl-row { display: flex; gap: 8px; align-items: center; }
+  .fl-rownum { width: 24px; flex: 0 0 auto; text-align: right; font-size: 12px; font-weight: 700; color: #6A635C; }
+  .fl-rowdate { flex: 0 0 168px; }
+  .fl-rowamt { flex: 1; position: relative; }
+  .fl-rowamt .fl-input { padding-right: 50px; }
+  .fl-auto {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #57651E; background: rgba(87,101,30,0.14); padding: 1px 5px; border-radius: 3px;
+  }
+  .fl-rowx { width: 22px; flex: 0 0 auto; text-align: center; color: #6A635C; font-size: 13px; }
+  /* The annotation rail — its cells share the row columns, so a chip sits UNDER the thing it
+     tags instead of on top of it. Document furniture, not product. */
+  .fl-annorail { display: flex; gap: 8px; align-items: center; margin-top: 2px; }
+  .fl-annorail .c-num { width: 24px; flex: 0 0 auto; }
+  .fl-annorail .c-date { flex: 0 0 168px; }
+  .fl-annorail .c-amt { flex: 1; }
+  /* Reconcile sentence */
+  .fl-recon {
+    display: flex; gap: 8px; align-items: center; margin: 0;
+    padding: 9px 12px; border-radius: 9px; font-size: 14px;
+    background: rgba(52,102,42,0.12); color: #34662A;
+  }
+  .fl-recon .mk { font-weight: 800; }
+  .fl-recon .tx { flex: 1; }
+  /* More fold */
+  .fl-more {
+    display: flex; align-items: center; gap: 7px;
+    border: 1px dashed rgba(70,55,30,0.22); border-radius: 8px;
+    padding: 9px 11px; font-size: 13px; color: #4A4235;
+  }
+  .fl-more .car { font-size: 10px; color: #6A635C; }
+  /* Footer */
+  .fl-foot {
+    margin: 20px -24px 0; padding: 14px 24px 16px;
+    border-top: 1px solid rgba(70,55,30,0.12);
+    background: #FFFFFF; border-radius: 0 0 12px 12px;
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center;
+  }
+  .fl-conseq { flex-basis: 100%; margin: 0; font-size: 12px; color: #6A635C; line-height: 1.5; }
+  .fl-conseq strong { color: #241E15; }
+  .fl-foot .tagi { margin-right: auto; }
+  .fl-ghost { color: #6A635C; font-size: 14px; padding: 6px 8px; }
+  .fl-save {
+    background: #D9F99D; color: #241E15; font-weight: 700; font-size: 14px;
+    border-radius: 6px; padding: 7px 16px;
+  }
+
+  /* ── Phone frame (390px) ── */
+  .fl-phone {
+    width: 390px; background: #FFFFFF; border-radius: 18px; overflow: hidden;
+    border: 1px solid rgba(87,101,30,0.3);
+    display: flex; flex-direction: column; height: 800px;
+  }
+  .fl-phead { display: flex; align-items: flex-start; gap: 8px; padding: 18px 18px 14px; }
+  .fl-back { color: #4A4235; font-size: 18px; line-height: 1; padding-top: 1px; }
+  .fl-pbody { flex: 1; overflow: hidden; padding: 0 18px; display: flex; flex-direction: column; gap: 14px; }
+  .fl-pfoot {
+    border-top: 1px solid rgba(70,55,30,0.12); background: #FFFFFF;
+    padding: 12px 18px 22px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center;
+  }
+  .fl-pfoot .tagi { margin-right: auto; }
+  /* Mobile schedule row card (stacked labels — the existing ≤640 shape) */
+  .fl-rowcard { border: 1px solid rgba(70,55,30,0.12); border-radius: 9px; padding: 10px 11px; }
+  .fl-rowcard.was { background: rgba(87,101,30,0.10); }   /* before: tint on white inner card */
+  .fl-rowcard.now { background: #FFFFFF; }                 /* after: card on the tinted section */
+  .fl-rchead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; gap: 8px; }
+  .fl-rcnum { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6A635C; display: flex; align-items: center; gap: 7px; }
+  .fl-rcrem { font-size: 12px; font-weight: 600; color: #6A635C; }
+  .fl-stack { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .fl-stack:last-child { margin-bottom: 0; }
+  .fl-stacklabel { font-size: 12px; font-weight: 600; color: #4A4235; }
+
+  .footnote {
+    margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--pg-line);
+    font-size: 12.5px; line-height: 1.6; color: var(--pg-muted); max-width: 82ch;
+  }
+  .footnote strong { color: var(--pg-ink); font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <p class="eyebrow">Coach money · mockup gate · round 2 · 2026-08-29</p>
+    <h1>The Add-a-bill form, made to belong</h1>
+    <p class="lede">Out of the §119 fold walk: the form's structure and words are settled — the verdict was on its <strong>presentation</strong>. This sheet draws the three defects and one coherent answer, in the shipped warm-portal palette, at true widths (520px modal · 390px phone). <strong>Nothing builds until this is approved.</strong> Round 2: annotation chips now sit beside their elements instead of on top of them, and the schedule's header collapses to one line.</p>
+    <div class="legend">
+      <span class="item"><span class="findmark">1</span> owner finding (on the before frames)</span>
+      <span class="item"><span class="tagi new">New</span> element that doesn't exist today</span>
+      <span class="item"><span class="tagi restyle">Restyled</span> same element, new clothes</span>
+      <span class="item"><span class="tagi same">Unchanged</span> untouched — words, structure, behaviour</span>
+    </div>
+  </header>
+
+  <h2><span class="no">1</span>What the owner judged wrong</h2>
+  <div class="findings">
+    <div class="finding">
+      <div class="head"><span class="findmark">1</span><b>Grey-on-grey nesting</b></div>
+      <p>The tinted "Payment schedule" card holds a <strong>white inner card</strong> holding the rows — two borders and two fills wrapping one concept, and the heaviest thing on the form.</p>
+    </div>
+    <div class="finding">
+      <div class="head"><span class="findmark">2</span><b>Unlabelled rows at desktop</b></div>
+      <p>Due/Amount labels exist but render only on phones. The row shape is borrowed from the budget sheet, whose desktop columns sit under its own headings — which this editor never renders.</p>
+    </div>
+    <div class="finding">
+      <div class="head"><span class="findmark">3</span><b>Two input families</b></div>
+      <p>Plain inputs wear the warm paper ground; the picker and the date field render <strong>white, rounder, fainter-edged</strong>. One row holds both families side by side.</p>
+    </div>
+  </div>
+
+  <h2><span class="no">2</span>The whole modal — before and after</h2>
+  <p class="h2sub">As rendered at desktop (the modal is 520px wide). Every word is today's exact copy — the settled structure is untouched; only the surfaces and grounds change. Region-level tags here; the row-level detail is Section 3's job.</p>
+  <div class="pair">
+    <div>
+      <p class="stagecap"><span class="b">Before</span> — today on dev</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-modal">
+          <div class="fl-mhead">
+            <div>
+              <h3 class="fl-mtitle">Add a bill</h3>
+              <p class="fl-msub">Money the team owes but hasn&rsquo;t paid — nothing moves today</p>
+            </div>
+            <span class="fl-x">✕</span>
+          </div>
+          <div class="fl-grid">
+            <div class="anno">
+              <span class="fpin" style="top:24px; right:-9px;">3</span>
+              <span class="fl-label">Filed under *</span>
+              <div class="fl-input was-white"><span class="ph">Choose a budget item — e.g. Tournaments · Entry fees</span></div>
+            </div>
+            <div>
+              <span class="fl-label">Description *</span>
+              <div class="fl-input"><span class="ph">e.g. Spring tournament entry, summer dome block</span></div>
+            </div>
+            <div class="fl-section anno">
+              <span class="fpin" style="top:34px; left:-9px;">1</span>
+              <h4 class="fl-sectitle">Payment schedule</h4>
+              <div class="fl-innercard">
+                <div class="fl-schedhead">
+                  <span></span>
+                  <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+                </div>
+                <div class="fl-rows anno">
+                  <span class="fpin" style="top:-11px; left:96px;">2</span>
+                  <div class="fl-row">
+                    <span class="fl-rownum"></span>
+                    <span class="fl-rowdate fl-datewrap">
+                      <span class="fl-input was-white">2026-09-15</span>
+                      <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    <span class="fl-rowamt"><span class="fl-input">500.00</span></span>
+                  </div>
+                </div>
+              </div>
+              <p class="fl-recon"><span class="mk">✓</span><span class="tx">One payment of <strong>$500.00</strong>.</span></p>
+            </div>
+            <div class="fl-more"><span class="car">▸</span> More — payee, tags, notes</div>
+          </div>
+          <div class="fl-foot">
+            <p class="fl-conseq"><strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no family is affected. This joins your payment schedule, due Sep 15, 2026 — record payments against it as the money actually leaves.</p>
+            <span class="fl-ghost">Cancel</span>
+            <span class="fl-save">Save</span>
+          </div>
+        </div>
+      </div></div>
+      <p class="stagenote">① tint → white card → rows: two fills, two borders. ② the date/amount row carries no labels. ③ picker and date render white and rounder than Description one field away.</p>
+    </div>
+    <div>
+      <p class="stagecap"><span class="b">After</span> — proposed</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-modal">
+          <div class="fl-mhead">
+            <div>
+              <h3 class="fl-mtitle">Add a bill<span class="tagi same">Unchanged</span></h3>
+              <p class="fl-msub">Money the team owes but hasn&rsquo;t paid — nothing moves today</p>
+            </div>
+            <span class="fl-x">✕</span>
+          </div>
+          <div class="fl-grid">
+            <div>
+              <span class="fl-label">Filed under * <span class="tagi restyle">Restyled</span></span>
+              <div class="fl-input"><span class="ph">Choose a budget item — e.g. Tournaments · Entry fees</span></div>
+            </div>
+            <div>
+              <span class="fl-label">Description * <span class="tagi same">Unchanged</span></span>
+              <div class="fl-input"><span class="ph">e.g. Spring tournament entry, summer dome block</span></div>
+            </div>
+            <div class="fl-section">
+              <div class="fl-sechead">
+                <h4 class="fl-sectitle">Payment schedule<span class="tagi restyle">Restyled</span></h4>
+                <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+              </div>
+              <div>
+                <div class="fl-colhead"><span class="c-date">Due date</span><span class="c-amt">Amount ($)<span class="tagi new push">New</span></span></div>
+                <div class="fl-rows">
+                  <div class="fl-row">
+                    <span class="fl-rowdate fl-datewrap">
+                      <span class="fl-input">2026-09-15</span>
+                      <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    <span class="fl-rowamt"><span class="fl-input">500.00</span></span>
+                  </div>
+                </div>
+              </div>
+              <p class="fl-recon"><span class="mk">✓</span><span class="tx">One payment of <strong>$500.00</strong>.</span><span class="tagi same">Unchanged</span></p>
+            </div>
+            <div class="fl-more"><span class="car">▸</span> More — payee, tags, notes<span class="tagi same push">Unchanged</span></div>
+          </div>
+          <div class="fl-foot">
+            <p class="fl-conseq"><strong>When you save: nothing moves.</strong> Cash on hand is unchanged and no family is affected. This joins your payment schedule, due Sep 15, 2026 — record payments against it as the money actually leaves.</p>
+            <span class="tagi same">Unchanged</span>
+            <span class="fl-ghost">Cancel</span>
+            <span class="fl-save">Save</span>
+          </div>
+        </div>
+      </div></div>
+      <p class="stagenote">One tinted surface, one header line — title left, the two tools right — then the headings and the row, which fills the section edge to edge. Every field on the form wears the same paper ground.</p>
+    </div>
+  </div>
+
+  <h2><span class="no">3</span>The schedule editor's rows</h2>
+  <p class="h2sub">The two states the owner asked for. The chips under the rows sit in their own annotation rail — document furniture, not part of the product. In the 3-payment state the <strong>Auto</strong> badges, the <strong>#n</strong> numbers, the per-row remove and the count label all keep their settled places.</p>
+  <div class="pair">
+    <div>
+      <p class="stagecap"><span class="b">Before</span> — 3-payment state</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-section" style="width:472px;">
+          <h4 class="fl-sectitle">Payment schedule</h4>
+          <div class="fl-innercard anno">
+            <span class="fpin" style="top:-10px; right:-10px;">1</span>
+            <div class="fl-schedhead">
+              <span class="fl-count">3 payments</span>
+              <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+            </div>
+            <div class="fl-rows anno">
+              <span class="fpin" style="top:-11px; left:96px;">2</span>
+              <div class="fl-row">
+                <span class="fl-rownum">#1</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input was-white">2026-09-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt anno"><span class="fpin" style="top:8px; right:-10px; width:18px; height:18px; font-size:10.5px;">3</span><span class="fl-input">333.33</span><span class="fl-auto">Auto</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+              <div class="fl-row">
+                <span class="fl-rownum">#2</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input was-white">2026-10-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input">333.33</span><span class="fl-auto">Auto</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+              <div class="fl-row">
+                <span class="fl-rownum">#3</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input was-white">2026-11-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input">333.34</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+            </div>
+          </div>
+          <p class="fl-recon"><span class="mk">✓</span><span class="tx"><strong>3 payments</strong>, <strong>$1,000.00</strong> in total.</span></p>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <p class="stagecap"><span class="b">After</span> — 3-payment state</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-section" style="width:472px;">
+          <div class="fl-sechead">
+            <h4 class="fl-sectitle">Payment schedule<span class="tagi restyle">Restyled</span></h4>
+            <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+          </div>
+          <span class="fl-count">3 payments</span>
+          <div>
+            <div class="fl-colhead"><span class="c-num"></span><span class="c-date">Due date</span><span class="c-amt">Amount ($)<span class="tagi new push">New</span></span></div>
+            <div class="fl-rows">
+              <div class="fl-row">
+                <span class="fl-rownum">#1</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input">2026-09-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input">333.33</span><span class="fl-auto">Auto</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+              <div class="fl-row">
+                <span class="fl-rownum">#2</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input">2026-10-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input">333.33</span><span class="fl-auto">Auto</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+              <div class="fl-row">
+                <span class="fl-rownum">#3</span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input">2026-11-01</span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input">333.34</span></span>
+                <span class="fl-rowx">✕</span>
+              </div>
+            </div>
+            <div class="fl-annorail">
+              <span class="c-num"></span>
+              <span class="c-date"><span class="tagi restyle">Restyled</span></span>
+              <span class="c-amt"><span class="tagi same">Unchanged</span></span>
+            </div>
+          </div>
+          <p class="fl-recon"><span class="mk">✓</span><span class="tx"><strong>3 payments</strong>, <strong>$1,000.00</strong> in total.</span><span class="tagi same">Unchanged</span></p>
+        </div>
+      </div></div>
+      <p class="stagenote">Under the rail: the <strong>date field</strong> joins the paper family; the <strong>amount field and its Auto badge</strong> were already right and don't move.</p>
+    </div>
+  </div>
+  <p class="stagenote" style="margin-top:14px;">The one-payment state, same rules — no "#1", no count label, <strong>no number gutter</strong> (the lone row fills the section edge to edge), and the headings quietly double as the row's labels:</p>
+  <div class="pair" style="margin-top:8px;">
+    <div>
+      <p class="stagecap"><span class="b">Before</span> — one-payment state</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-section" style="width:472px;">
+          <h4 class="fl-sectitle">Payment schedule</h4>
+          <div class="fl-innercard">
+            <div class="fl-schedhead">
+              <span></span>
+              <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+            </div>
+            <div class="fl-rows">
+              <div class="fl-row">
+                <span class="fl-rownum"></span>
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input was-white"><span class="ph">yyyy-mm-dd</span></span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input"><span class="ph">0.00</span></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <p class="stagecap"><span class="b">After</span> — one-payment state</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-section" style="width:472px;">
+          <div class="fl-sechead">
+            <h4 class="fl-sectitle">Payment schedule</h4>
+            <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+          </div>
+          <div>
+            <div class="fl-colhead"><span class="c-date">Due date</span><span class="c-amt">Amount ($)<span class="tagi new push">New</span></span></div>
+            <div class="fl-rows">
+              <div class="fl-row">
+                <span class="fl-rowdate fl-datewrap">
+                  <span class="fl-input"><span class="ph">yyyy-mm-dd</span></span>
+                  <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <span class="fl-rowamt"><span class="fl-input"><span class="ph">0.00</span></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <h2><span class="no">4</span>The phone frame at 390px</h2>
+  <p class="h2sub">The modal already reflows to a full-height sheet with stacked, labelled rows — that shape is <strong>kept</strong>. What follows the redesign down: the one paper ground on every field, the one-line schedule header, and each installment card going white on the tinted section instead of tint-on-white-on-tint.</p>
+  <div class="pair">
+    <div>
+      <p class="stagecap"><span class="b">Before</span> — 390px</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-phone">
+          <div class="fl-phead">
+            <span class="fl-back">‹</span>
+            <div>
+              <h3 class="fl-mtitle">Add a bill</h3>
+              <p class="fl-msub">Money the team owes but hasn&rsquo;t paid — nothing moves today</p>
+            </div>
+          </div>
+          <div class="fl-pbody">
+            <div>
+              <span class="fl-label">Filed under *</span>
+              <div class="fl-input was-white"><span class="ph">Choose a budget item — e.g. Tournaments · Entry fees</span></div>
+            </div>
+            <div>
+              <span class="fl-label">Description *</span>
+              <div class="fl-input">Spring tournament entry</div>
+            </div>
+            <div class="fl-section">
+              <h4 class="fl-sectitle">Payment schedule</h4>
+              <div class="fl-innercard">
+                <div class="fl-schedhead">
+                  <span class="fl-count">2 payments</span>
+                  <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+                </div>
+                <div class="fl-rows">
+                  <div class="fl-rowcard was">
+                    <div class="fl-rchead"><span class="fl-rcnum">Installment 1</span><span class="fl-rcrem">Remove ✕</span></div>
+                    <div class="fl-stack">
+                      <span class="fl-stacklabel">Due date</span>
+                      <span class="fl-datewrap"><span class="fl-input was-white">2026-09-01</span>
+                      <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                    </div>
+                    <div class="fl-stack">
+                      <span class="fl-stacklabel">Amount ($)</span>
+                      <span class="fl-rowamt"><span class="fl-input">250.00</span></span>
+                    </div>
+                  </div>
+                  <div class="fl-rowcard was">
+                    <div class="fl-rchead"><span class="fl-rcnum">Installment 2</span><span class="fl-rcrem">Remove ✕</span></div>
+                    <div class="fl-stack">
+                      <span class="fl-stacklabel">Due date</span>
+                      <span class="fl-datewrap"><span class="fl-input was-white">2026-10-01</span>
+                      <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                    </div>
+                    <div class="fl-stack">
+                      <span class="fl-stacklabel">Amount ($)</span>
+                      <span class="fl-rowamt"><span class="fl-input">250.00</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="fl-recon"><span class="mk">✓</span><span class="tx"><strong>2 payments</strong>, <strong>$500.00</strong> in total.</span></p>
+            </div>
+          </div>
+          <div class="fl-pfoot">
+            <p class="fl-conseq"><strong>When you save: nothing moves.</strong> All 2 payments join your payment schedule, the first Sep 1, 2026 — record payments against them as the money actually leaves.</p>
+            <span class="fl-ghost">Cancel</span>
+            <span class="fl-save">Save</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <p class="stagecap"><span class="b">After</span> — 390px</p>
+      <div class="stage"><div class="stage-inner">
+        <div class="fl fl-phone">
+          <div class="fl-phead">
+            <span class="fl-back">‹</span>
+            <div>
+              <h3 class="fl-mtitle">Add a bill<span class="tagi same">Unchanged</span></h3>
+              <p class="fl-msub">Money the team owes but hasn&rsquo;t paid — nothing moves today</p>
+            </div>
+          </div>
+          <div class="fl-pbody">
+            <div>
+              <span class="fl-label">Filed under * <span class="tagi restyle">Restyled</span></span>
+              <div class="fl-input"><span class="ph">Choose a budget item — e.g. Tournaments · Entry fees</span></div>
+            </div>
+            <div>
+              <span class="fl-label">Description * <span class="tagi same">Unchanged</span></span>
+              <div class="fl-input">Spring tournament entry</div>
+            </div>
+            <div class="fl-section">
+              <div class="fl-sechead">
+                <h4 class="fl-sectitle">Payment schedule<span class="tagi restyle">Restyled</span></h4>
+                <span class="fl-tools"><span class="fl-toolbtn">Repeat monthly</span><span class="fl-toolbtn">+ Add</span></span>
+              </div>
+              <span class="fl-count">2 payments</span>
+              <div class="fl-rows">
+                <div class="fl-rowcard now">
+                  <div class="fl-rchead"><span class="fl-rcnum">Installment 1<span class="tagi restyle">Restyled</span></span><span class="fl-rcrem">Remove ✕</span></div>
+                  <div class="fl-stack">
+                    <span class="fl-stacklabel">Due date</span>
+                    <span class="fl-datewrap"><span class="fl-input">2026-09-01</span>
+                    <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                  </div>
+                  <div class="fl-stack">
+                    <span class="fl-stacklabel">Amount ($)</span>
+                    <span class="fl-rowamt"><span class="fl-input">250.00</span></span>
+                  </div>
+                </div>
+                <div class="fl-rowcard now">
+                  <div class="fl-rchead"><span class="fl-rcnum">Installment 2</span><span class="fl-rcrem">Remove ✕</span></div>
+                  <div class="fl-stack">
+                    <span class="fl-stacklabel">Due date</span>
+                    <span class="fl-datewrap"><span class="fl-input">2026-10-01</span>
+                    <svg class="fl-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                  </div>
+                  <div class="fl-stack">
+                    <span class="fl-stacklabel">Amount ($)</span>
+                    <span class="fl-rowamt"><span class="fl-input">250.00</span></span>
+                  </div>
+                </div>
+              </div>
+              <p class="fl-recon"><span class="mk">✓</span><span class="tx"><strong>2 payments</strong>, <strong>$500.00</strong> in total.</span><span class="tagi same">Unchanged</span></p>
+            </div>
+          </div>
+          <div class="fl-pfoot">
+            <p class="fl-conseq"><strong>When you save: nothing moves.</strong> All 2 payments join your payment schedule, the first Sep 1, 2026 — record payments against them as the money actually leaves.</p>
+            <span class="tagi same">Unchanged</span>
+            <span class="fl-ghost">Cancel</span>
+            <span class="fl-save">Save</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+  <p class="stagenote" style="margin-top:10px;">No desktop column headings down here — each field already carries its own label inside the card, exactly as today. The 44px tap floor holds on every control through the 641–768 touch band.</p>
+
+  <h2><span class="no">5</span>The three decisions this draws</h2>
+  <div class="decisions">
+    <div class="decision">
+      <b>D1 — One surface, one header line.</b>
+      <p>The quiet olive tint <strong>is</strong> the schedule's surface; the white inner card dissolves. The header collapses to one line — the title left, <strong>Repeat monthly</strong> and <strong>+ Add</strong> right, keeping their button chrome and their pairing; only the empty band between the two old header rows goes. The count sits under it when there is genuinely more than one payment. On the phone, each installment keeps a card of its own (that grouping is real work down there), now white on the tint instead of tint on white on tint.</p>
+    </div>
+    <div class="decision">
+      <b>D2 — Column headings, the budget sheet's own idiom.</b>
+      <p>A <strong>Due date / Amount ($)</strong> headings row above the rows at desktop — the same device the budget sheet renders over this exact row shape, which this editor borrowed without. On one row the headings quietly double as the row's labels, so the browser's bare yyyy-mm-dd finally has a name over it — and the number gutter doesn't exist yet, so the row fills the section's full width, appearing only once there are #s to hold. At phone width the headings stand down and the existing stacked per-row labels carry on, unchanged.</p>
+    </div>
+    <div class="decision">
+      <b>D3 — One grounds story: every field wears paper.</b>
+      <p>The picker and the date field stop rendering white and take the portal's standard field ground — paper fill, the stronger hairline, 6px radius — the ground Description and Amount already wear. One family of inputs on one form; required-ness is carried by the plain asterisk alone, never by which component a field happens to be built from.</p>
+    </div>
+  </div>
+
+  <p class="footnote"><strong>What this pass never touches:</strong> every word, the field order, the picker-before-description rule, the Repeat monthly / + Add pairing, the reconcile sentence, the Auto badges, the More fold, the footer-pinned consequence and the plain "Save" — all settled in the §119 fold. The one-line header is the single structural nudge this sheet asks approval for, and it changes placement only — both tools keep their chrome and their pairing. <strong>Build discipline:</strong> all restyles land as variant classes scoped to this editor and this form; the budget sheet and the dues sheet render byte-identical before/after (screenshot-proven), and the reverted desktop-label override is not re-attempted — the headings row is a new element, not a CSS force. Verification is Playwright against the live form at 1440 and 390.</p>
+</div>

@@ -811,7 +811,7 @@ export default function MoneyMonthGrid({
         )}
         {lens === 'budget' && (
           <p className={styles.note}>
-            <strong>Budget is your plan</strong>, not your commitments — the dues installments you set,
+            <strong>Budget is your plan</strong>, not your bills — the dues installments you set,
             your expected fundraising and sponsorship, and the months you gave your costs.
             {showUndated && ` ${fmt(lensUndated(grid.totals.undated, lens) + lensUndated(revenueGrid.totals.undated, lens))} with no date yet is in the Total and in no month.`}
           </p>
@@ -831,7 +831,7 @@ export default function MoneyMonthGrid({
             behaviour, and the most expensive, because a reader believes it. */}
         {(lens === 'actual' || lens === 'scheduled') && (
           <p className={styles.note}>
-            {lens === 'actual' ? 'Spending' : 'A commitment'} sits on the <strong>item</strong> it names, so a
+            {lens === 'actual' ? 'Spending' : 'A bill'} sits on the <strong>item</strong> it names, so a
             category is what its rows add up to. Money recorded without an item sits on that
             category’s <strong>Not itemized</strong> row. Tap a <strong>category’s</strong> figure to see
             what makes it up.

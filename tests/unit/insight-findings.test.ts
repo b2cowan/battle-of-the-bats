@@ -270,9 +270,12 @@ describe('digest formatting', () => {
   });
 
   it('leads with one good-news segment, then ladder order, capped with ⚠ on warns', () => {
+    // No money specimen here on purpose: the digest job stopped supplying dues (owner 2026-08-28),
+    // so no money finding can reach this formatter in production. The formatter itself stays
+    // tier-agnostic — the engine's dues tests above still exercise the dormant money rules.
     const digest = formatInsightDigest([
       F('safety', 'warn', 'Riley P. went over the pitching cap in 1 game.'),
-      F('money', 'warn', "3 players haven't paid anything yet — $420 outstanding."),
+      F('fairness', 'warn', 'Sam T. has sat the bench most — 12 innings, including 2 back-to-back games.'),
       F('attendance', 'warn', 'Jordan K. has made 2 of 8 tracked sessions this season.'),
       F('good-news', 'good', "You've won 3 straight."),
     ]);
@@ -280,7 +283,7 @@ describe('digest formatting', () => {
     assert.equal(digest.title, 'Your week in review');
     assert.equal(
       digest.body,
-      "You've won 3 straight · ⚠ Riley P. went over the pitching cap in 1 game · ⚠ 3 players haven't paid anything yet — $420 outstanding.",
+      "You've won 3 straight · ⚠ Riley P. went over the pitching cap in 1 game · ⚠ Sam T. has sat the bench most — 12 innings, including 2 back-to-back games.",
     );
     assert.equal(digest.body.split(' · ').length, DIGEST_MAX_SEGMENTS);
   });

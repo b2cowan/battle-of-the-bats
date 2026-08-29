@@ -186,7 +186,7 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               in, the Next-N-days ledger below for everything dated — and the caveat sentence above
               already points at them without spending this link on it. */}
           <div className={styles.foot}>
-            <Link href={hrefs.transactions} className={styles.footLink}>Transactions →</Link>
+            <Link href={hrefs.transactions} className={styles.footLink}>Ledger →</Link>
           </div>
         </div>
 

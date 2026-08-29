@@ -10,9 +10,10 @@
 //    engine (lib/insight-findings.ts), so the push can never say something the
 //    page wouldn't.
 //  • Per coach on the team: filter the inputs down to what that coach's
-//    capabilities allow (an assistant without money never hears about dues),
-//    run the engine, and send ONE notify() per recipient (notify() is
-//    one-body-per-call — per-recipient bodies require per-recipient calls).
+//    capabilities allow (an assistant without the schedule grant never hears
+//    about results), run the engine, and send ONE notify() per recipient
+//    (notify() is one-body-per-call — per-recipient bodies require
+//    per-recipient calls).
 //  • Quiet week ⇒ no send. formatInsightDigest() returns null when nothing
 //    fired; silence is a feature, not a bug.
 //
@@ -20,8 +21,6 @@
 //  • Games scope = the dashboard's WLT DEFAULTS (league + tournament, no
 //    scrimmage). The coach's personal scope toggle lives in localStorage and is
 //    unreadable server-side; defaults are the shared baseline.
-//  • Dues rows mirror the dues route's math (outstanding = schedule total −
-//    paid installments; credits deliberately excluded, as on the dashboard).
 //  • Attendance rows mirror the attendance route: active players only,
 //    untracked players ride along as 0/0 (the engine never judges them).
 //
@@ -29,15 +28,16 @@
 // (migration 183) - Sunday 23:00 UTC = 6pm Toronto, plus a Monday 13:00 UTC
 // catch-up that the 6-day dedupe turns into a no-op for teams already served.
 //
-// MONEY STAYS IN THIS PUSH (owner decision 2026-08-19). The "no money in
-// Insights" ruling governs the PAGE - a screen a coach chooses to open. A
-// notification is the opposite: it is the product deciding what is worth
-// interrupting someone for, and an unpaid instalment before a Friday deadline
-// qualifies. Note the ranking means money is not an extra line - it competes
-// for one of three slots, so removing it would have SWAPPED IN the next-ranked
-// finding rather than shortening anything. The one input that would reverse
-// this is the `dues:` argument passed into the findings engine below; the
-// money RULES are shared with the page, which simply stops supplying dues.
+// NO MONEY IN THIS PUSH (owner decision 2026-08-28, reversing 2026-08-19's
+// "money stays"). The push now follows the same rule as the Insights page it
+// links to: money's homes are the team Overview and the Money hub. Kept out
+// STRUCTURALLY, the way the page does it — this job no longer fetches dues at
+// all, so no `dues:` input ever reaches the findings engine (the fetch is the
+// gate; tests/unit/coach-insights-portal.test.ts pins both consumers). The
+// engine's money rules remain as registry entries with no supplier — a rule
+// whose input is absent never fires, by the engine's own design. Note money
+// competed for one of the digest's three slots, so its removal swaps in the
+// next-ranked finding rather than shortening the push.
 // ─────────────────────────────────────────────────────────────────────────────
 import {
   getInsightsDigestTeams,
@@ -47,15 +47,9 @@ import {
   getRepRosterPlayers,
   getRepTeamSeasonLineups,
   getRepTeamLineupTemplates,
-  getRepPlayerDuesSchedules,
-  getRepDuesInstallmentsBySchedules,
-  getRepDuesPaymentsByProgramYear,
-  getRepDuesCreditsByProgramYear,
-  getRepDuesPayoutsByProgramYear,
   getRepTeamAttendanceReliability,
   type InsightsDigestTeam,
 } from './db';
-import type { RepPlayerDuesInstallment } from './types';
 import { notify } from './notify';
 import { excludeDemoOrgTeams } from './demo-org';
 import { getSportPack, DEFAULT_SPORT } from './sports';
@@ -64,15 +58,10 @@ import { computeSeasonLineupAnalytics } from './lineup-season-analytics';
 import {
   computeInsightFindings,
   formatInsightDigest,
-  summarizeDuesForFindings,
   type FindingsGameSummary,
   type FindingsAttendanceRow,
-  type FindingsDuesRow,
 } from './insight-findings';
-import { resolveCoachCapabilities, canViewMoney } from './coach-capabilities';
-import { outstandingForSchedule } from './dues-status';
-import { duesPaidAmount, paymentsTotalByPlayer } from './dues-payments';
-import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from './dues-credits';
+import { resolveCoachCapabilities } from './coach-capabilities';
 import type { RepTeamEvent } from './types';
 
 /** One digest per team per window — just under a week so a Sunday job never
@@ -160,62 +149,16 @@ async function digestTeam(
   };
   if (coaches.length === 0) return { sent: 0, preview };
 
-  const [events, players, lineups, templates, schedules, reliability, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
+  const [events, players, lineups, templates, reliability] = await Promise.all([
     getRepTeamEvents(team.programYearId),
     getRepRosterPlayers(team.programYearId),
     getRepTeamSeasonLineups(team.programYearId),
     getRepTeamLineupTemplates(team.teamId, team.programYearId),
-    getRepPlayerDuesSchedules(team.programYearId),
     getRepTeamAttendanceReliability(team.programYearId),
-    getRepDuesPaymentsByProgramYear(team.programYearId),
-    getRepDuesCreditsByProgramYear(team.programYearId),
-    getRepDuesPayoutsByProgramYear(team.programYearId),
   ]);
 
-  // Dues rows — same per-player math as the dues route (credits excluded, like the
-  // dashboard), but installments fetched in ONE batched query for the whole team.
-  const scheduleMap = new Map(schedules.map(s => [s.playerId, s]));
-  const allInstallments = await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id));
-  const installmentsBySchedule = new Map<string, RepPlayerDuesInstallment[]>();
-  for (const i of allInstallments) {
-    const list = installmentsBySchedule.get(i.scheduleId);
-    if (list) list.push(i); else installmentsBySchedule.set(i.scheduleId, [i]);
-  }
-  const paymentsByPlayer = paymentsTotalByPlayer(seasonPayments);
-  const creditsByPlayer = groupByPlayer(seasonCredits);
-  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
-  const duesRows: FindingsDuesRow[] = players.map(p => {
-    const schedule = scheduleMap.get(p.id) ?? null;
-    const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
-    // Paid = payment FACTS capped at the schedule total (mig 232) — same figure the dues route
-    // serves, so the digest's sentence and the Money page cannot disagree about one family.
-    const paymentsTotal = paymentsByPlayer.get(p.id) ?? 0;
-    const paidAmount = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
-    // Per-installment remainders so the proximity sentence quotes what the family is asked to
-    // SEND — cash then credits, the shared assembly (deriveDuesPosition). Allocation only needs
-    // the dollar total here (dates decide nothing about coverage), so one synthetic payment
-    // stands in for the list.
-    const { position, toSendById } = deriveDuesPosition({
-      installments: installments.map(i => ({ id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, paidAt: i.paidAt })),
-      payments: paymentsTotal > 0 ? [{ id: 'total', amount: paymentsTotal, receivedDate: '' }] : [],
-      credits: creditsByPlayer.get(p.id) ?? [],
-      paidOut: paidOutByPlayer.get(p.id) ?? 0,
-      mode: team.creditApplication,
-    });
-    return {
-      // ONE shared definition (lib/dues-status.ts), matching the dues route and the Ask answers.
-      outstanding: outstandingForSchedule(schedule, paidAmount),
-      paidAmount,
-      leftToSend: position.leftToSend,
-      installments: installments.map(i => ({
-        paidAt: i.paidAt,
-        dueDate: i.dueDate,
-        amount: i.amount,
-        remainingAmount: toSendById.get(i.id) ?? i.amount,
-      })),
-    };
-  });
-  const duesSummary = summarizeDuesForFindings(duesRows, todayISO);
+  // No dues fetch, deliberately — see the header block. The digest can only say
+  // what it asked about, and it no longer asks about money.
 
   // Attendance rows — same shaping as the attendance route + dashboard mapping.
   const attendanceRows: FindingsAttendanceRow[] = players
@@ -272,7 +215,7 @@ async function digestTeam(
       // A1 (2026-08-03): keyed on the attendance grant, matching the report and its route. It read
       // roster visibility because the rows name players; names are baseline now.
       attendance: caps.attendance ? attendanceRows : null,
-      dues: canViewMoney(caps) ? duesSummary : null,
+      // No `dues:` input — money left this push by owner decision 2026-08-28 (header block).
       todayISO,
     });
     const digest = formatInsightDigest(findings);

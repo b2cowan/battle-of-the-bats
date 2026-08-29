@@ -177,7 +177,7 @@ export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullSche
       {/* Header row */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.panelTitle}>Upcoming Payables</span>
+          <span className={styles.panelTitle}>Upcoming Bills</span>
           {!loading && totalOverdue > 0 && (
             <span className={styles.overduePill}>{totalOverdue} overdue</span>
           )}

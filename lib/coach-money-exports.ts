@@ -385,7 +385,12 @@ export const FUNDRAISER_COLUMNS: ExportColumnDef[] = [
   { label: 'Rebate %',       key: 'rebate',   format: 'number' },
   { label: 'Starts',         key: 'starts',   format: 'date' },
   { label: 'Ends',           key: 'ends',     format: 'date' },
-  { label: 'Total raised',   key: 'raised',   format: 'currency' },
+  // ⚠ RECEIVED AND PLEDGED ARE SEPARATE COLUMNS (owner ruling Q15, 2026-08-28 — the forms
+  // review's SP-3). The old single "Total raised" mixed cash with promises, so a treasurer
+  // pivoting the sheet counted a $2,000 pledge as raised money with only the Status column to
+  // save them. Now a sum of Received is money; a sum of Pledged is what is still to come.
+  { label: 'Received',       key: 'raised',   format: 'currency' },
+  { label: 'Pledged',        key: 'pledged',  format: 'currency' },
   { label: 'Player credits', key: 'credits',  format: 'currency' },
   { label: 'Team net',       key: 'net',      format: 'currency' },
   { label: 'Players',        key: 'players',  format: 'number' },
@@ -404,7 +409,7 @@ export function fundraiserRows(
     name: string; playerRebatePercent: number; startDate: string | null; endDate: string | null;
     totalRaised: number; totalCredits: number; teamNet: number; playerCount: number;
     kind?: 'fundraiser' | 'sponsor'; sponsorStatus?: 'pledged' | 'received' | null;
-    isActive?: boolean; tagIds?: string[];
+    isActive?: boolean; tagIds?: string[]; stillToCome?: number | null;
   }>,
   tagById: Map<string, { name: string }> = new Map(),
 ): ExportRow[] {
@@ -420,6 +425,8 @@ export function fundraiserRows(
     starts: f.startDate ?? '',
     ends: f.endDate ?? '',
     raised: f.totalRaised,
+    // What is still to come on the promise (mig 268) — zero for a drive or a fully-kept pledge.
+    pledged: f.stillToCome ?? 0,
     credits: f.totalCredits,
     net: f.teamNet,
     players: f.playerCount,

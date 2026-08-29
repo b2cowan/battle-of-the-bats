@@ -204,7 +204,7 @@ function ClubExplainer() {
       <p className={`${styles.moneyKindTest} ${styles.moneyKindTestStart}`}>
         <strong>There&apos;s no button for the first one, and that isn&apos;t an oversight</strong> — only
         your club can bill your team. And neither is the same as an expense: anything you owe a supplier
-        outside the club belongs on <strong>Payables</strong>.
+        outside the club is a <strong>bill</strong> on the Ledger.
       </p>
     </>
   );

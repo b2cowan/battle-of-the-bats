@@ -22,8 +22,7 @@ export type CoachMoneySection =
   | 'budget'
   | 'dues'
   | 'fundraisers'
-  | 'transactions'
-  | 'payables'
+  | 'ledger'
   | 'club'
   | 'budget-vs-actual';
 
@@ -33,26 +32,33 @@ export type CoachMoneySection =
  * no tab at all.
  *
  * ⚠ AND SO ARE `allocations` / `payment-requests` (money redesign P4, 2026-08-17) — the mirror
- * move. Two tabs became ONE (`club`), so both old ids name no tab either. Removing them from the
- * type rather than aliasing them is what makes the compiler find every caller; the ones that should
- * keep working do so through `legacyMoneyAddress` below.
+ * move. Two tabs became ONE (`club`), so both old ids name no tab either.
+ *
+ * ⚠⚠ AND NOW `transactions` / `payables` JOIN THEM (Payables→Ledger fold, owner-approved
+ * 2026-08-28) — the mirror of the mirror: the two tabs the split made became ONE `ledger` with a
+ * `?view=` arrangement (timeline / bills / due). Removing retired ids from the type rather than
+ * aliasing them is what makes the compiler find every caller; the ones that should keep working do
+ * so through `legacyMoneyAddress` below.
  */
-export type LegacyMoneySection = 'expenses' | 'allocations' | 'payment-requests';
+export type LegacyMoneySection =
+  | 'expenses' | 'allocations' | 'payment-requests' | 'transactions' | 'payables';
 
 /**
  * Where a saved address that names a retired tab lands now.
  *
- * ⚠⚠ FOR `expenses`, THE SUB-VIEW DECIDES THE TAB, NOT JUST THE SECTION. The old screen's four
- * sub-tabs divided cleanly into happened (Expenses, Money in) and owed (Payables, Payment schedule),
- * and that division is exactly where the split was made — so `&tab=payables` and `&tab=schedule`
- * have to cross to the OTHER tab, while the two happened-side values stay put. A mapping that read
- * the section alone would land half of every bookmarked link on a screen that cannot show what it
- * pointed at.
+ * ⚠⚠ THE SUB-VIEW DECIDES THE VIEW, NOT JUST THE SECTION. Three generations of address land here:
+ * the pre-split `expenses` screen (whose four sub-tabs divided into happened and owed), the
+ * split-era `transactions` / `payables` pair, and the payables `?tab=` arrangements the rebuild
+ * kept as a live contract. Every one of them resolves to the ONE `ledger` tab plus the `?view=`
+ * that says what the link always meant — a mapping that read the section alone would land half of
+ * every bookmark on a reading that cannot show what it pointed at.
  *
- * ⚠ FOR THE TWO CLUB IDS THERE IS NOTHING TO DECIDE, and that is the point of the merge: both halves
- * of the relationship are on one screen, so both addresses resolve to it with no sub-view and no
- * loss. A deep link to the old Payments tab does not need to scroll anywhere — the requests are
- * visible on the same page as the bills.
+ * ⚠ `?bill=` RIDES ALONG UNTOUCHED — the callers carry the rest of the query through, so a saved
+ * link to one bill's page still opens that bill.
+ *
+ * ⚠ FOR THE TWO CLUB IDS THERE IS NOTHING TO DECIDE, and that is the point of the merge: both
+ * halves of the relationship are on one screen, so both addresses resolve to it with no sub-view
+ * and no loss.
  *
  * Pure and framework-free (node scripts import this module), and the ONE home for the rule — the
  * legacy standalone routes and the hub's own address normaliser all call it.
@@ -60,17 +66,23 @@ export type LegacyMoneySection = 'expenses' | 'allocations' | 'payment-requests'
 export function legacyMoneyAddress(
   section: string | null | undefined,
   tab: string | null | undefined,
-): { section: CoachMoneySection; tab?: string } | null {
+): { section: CoachMoneySection; view?: string } | null {
   if (section === 'allocations' || section === 'payment-requests') return { section: 'club' };
+  if (section === 'transactions') return { section: 'ledger', view: 'timeline' };
+  if (section === 'payables') {
+    // The split-era tab's own arrangements: schedule → the dated view, commitments (and the
+    // pre-rebuild default) → the grouped one. A bare ?section=payables always meant "what we owe".
+    return { section: 'ledger', view: tab === 'schedule' ? 'due' : 'bills' };
+  }
   if (section !== 'expenses') return null;
-  if (tab === 'payables') return { section: 'payables', tab: 'commitments' };
-  if (tab === 'schedule') return { section: 'payables', tab: 'schedule' };
+  if (tab === 'payables') return { section: 'ledger', view: 'bills' };
+  if (tab === 'schedule') return { section: 'ledger', view: 'due' };
   /* ⚠ `tab=money-in` NO LONGER NAMES A VIEW (money redesign P3). The arrivals list is gone; the
      register holds income and money back as two separate FILTERS of one book. A bookmark that said
      "money in" meant both kinds, so the only non-lossy landing is the whole book — sending it to the
      Income filter would hide exactly the refunds that list was half made of. Same for `tab=expenses`
      and anything unrecognised: the happened side, unfiltered. */
-  return { section: 'transactions' };
+  return { section: 'ledger', view: 'timeline' };
 }
 
 /**

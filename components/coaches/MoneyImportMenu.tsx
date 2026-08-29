@@ -190,12 +190,11 @@ export default function MoneyImportMenu({
               hint="A month grid or a simple list, from a file or pasted"
               onSelect={() => { void openImport('budget'); }}
             />
-            {/* ⚠ THE IMPORT ONLY EVER MADE COMMITMENTS (Money split P1, 2026-08-16). Its label
-                said "Expenses & payables" because that was the SCREEN they landed on, not what it
-                creates — every imported row carries a due date and joins the payment schedule. The
-                screen has split, so the label can finally name the thing. */}
+            {/* ⚠ THE IMPORT ONLY EVER MADE BILLS (Money split P1, 2026-08-16; word settled by fold
+                decision 6A, 2026-08-28 — "bill" is the one name for the object). Every imported
+                row carries a due date and joins the payment schedule. */}
             <CoachToolbarMenuItem
-              label="Commitments"
+              label="Bills"
               hint="What you owe and when"
               onSelect={() => { void openImport('payables'); }}
             />
@@ -256,14 +255,14 @@ export default function MoneyImportMenu({
 const DATASET_WORDS: Record<RepTeamImportEvent['dataset'], string> = {
   budget_lines: 'Budget lines',
   // ⚠ The stored dataset KEY stays `payables` (it is history, already written); only the word a
-  // coach reads follows the split.
-  payables: 'Commitments',
+  // coach reads follows the vocabulary (fold decision 6A: "bill").
+  payables: 'Bills',
 };
 
 const SHAPE_WORDS: Record<RepTeamImportEvent['shape'], string> = {
   'month-grid': 'month grid',
   list: 'simple list',
-  payables: 'payables schedule',
+  payables: 'bills schedule',
 };
 
 /**
@@ -294,7 +293,7 @@ function RecentImportsSheet({
         ) : imports.length === 0 ? (
           <p className={shared.muted}>
             Nothing has been imported into this season yet. When you bring in a budget or a
-            payables schedule, it will be listed here.
+            bills schedule, it will be listed here.
           </p>
         ) : (
           <ul className={styles.historyList}>

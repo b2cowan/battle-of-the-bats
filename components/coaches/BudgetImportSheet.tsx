@@ -47,8 +47,8 @@ const SHAPES: Array<{ id: BudgetImportShape; title: string; blurb: string }> = [
   },
   {
     id: 'payables',
-    title: 'Payables schedule',
-    blurb: 'What you owe and when — becomes payables on your payment schedule.',
+    title: 'Bills schedule',
+    blurb: 'What you owe and when — becomes bills on your payment schedule.',
   },
 ];
 

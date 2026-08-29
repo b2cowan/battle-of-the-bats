@@ -11,7 +11,7 @@
    copy that had already drifted once (and broke Import/Add Line alignment) can't drift again. */
 
 .muted { color: var(--text-tertiary); padding: 2rem; }
-.errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
+.errorText { color: var(--danger-light); font-size: var(--type-body); margin: 0.5rem 0; }
 
 /* ── The plan card ───────────────────────────────────────────────────────────
    Round 3 of this panel's summary (owner-approved mockup artifact d37d62e3, 2026-08-13;
@@ -37,7 +37,7 @@
 }
 
 .planCap {
-  font-size: 0.66rem;
+  font-size: var(--type-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
@@ -58,7 +58,7 @@
 
 .planKey {
   display: block;
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-weight: 700;
@@ -69,7 +69,7 @@
 /* The line count beside a category's name — quiet, and never competing with the money. */
 .planCount {
   margin-left: 0.35rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -78,7 +78,7 @@
 
 .planVal {
   display: block;
-  font-size: 1.35rem;
+  font-size: var(--type-title);
   font-weight: 800;
   letter-spacing: -0.015em;
   font-variant-numeric: tabular-nums;
@@ -98,7 +98,7 @@
    confirmation, not a warning (owner ruling 2026-08-13). */
 .planCapNote {
   display: block;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   margin-top: 0.1rem;
 }
@@ -111,7 +111,7 @@
 .planBadgeEst,
 .planBadgeOff {
   display: inline-block;
-  font-size: 0.56rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.08em;
   border-radius: 4px;
@@ -131,7 +131,7 @@
   padding: 13px 0;
   margin: -13px 0;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--blueprint-blue, var(--link));
   cursor: pointer;
   text-decoration: underline;
@@ -148,7 +148,7 @@
   margin: 0.6rem 0 0.15rem;
 }
 .ladderEditorLabel {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -236,7 +236,7 @@
   border: none;
   padding: 0;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--danger-light);
   text-decoration: underline;
@@ -273,7 +273,7 @@
   flex: 1;
   text-align: left;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   padding: 0.5rem 0.65rem;
   border-radius: 9px;
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
@@ -291,13 +291,13 @@
 .kindOption small {
   display: block;
   font-weight: 400;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   margin-top: 0.1rem;
 }
 .kindHint {
   margin: 0.5rem 0 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }
@@ -321,7 +321,7 @@
 }
 .segmented button {
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   /* 44px is the portal's tap floor; the rendered baseline check enforces it. */
   min-height: 44px;
   padding: 0.3rem 0.85rem;
@@ -369,7 +369,7 @@
 }
 .periodGridYear {
   text-align: center !important;
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   letter-spacing: 0.14em;
   color: var(--text-tertiary);
 }
@@ -403,7 +403,7 @@
 .periodGrid tbody tr.periodGridFunding.periodGridFunding td { color: var(--success-light); }
 .periodGridNote {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -429,11 +429,11 @@
   font-weight: 700;
   color: var(--success-light);
   margin: 0 0 0.3rem;
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
 }
 
 .generateSub {
-  font-size: 0.83rem;
+  font-size: var(--type-body);
   color: var(--text-tertiary);
   margin: 0;
   max-width: 500px;
@@ -452,7 +452,7 @@
 
 .label {
   display: block;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.4rem;
@@ -466,7 +466,7 @@
 
 .formHint {
   margin: 0 0 1rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   line-height: 1.4;
 }
@@ -478,7 +478,7 @@
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
@@ -537,7 +537,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
@@ -565,7 +565,7 @@
   border: 1px solid var(--home-line, rgba(255,255,255,0.15));
   border-radius: 6px;
   padding: 0.25rem 0.6rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s;
@@ -593,7 +593,7 @@
   gap: 0.35rem;
   flex-wrap: wrap;
   margin: 0 0 0.4rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 .splitStepNum { font-weight: 700; color: var(--text-secondary); }
@@ -609,7 +609,7 @@
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
   border-radius: 999px;
   padding: 0.27rem 0.75rem;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
@@ -639,7 +639,7 @@
   align-items: center;
   /* Reserve the trailing remove button's width so "Amount" sits over the amount field. */
   padding: 0 1.85rem 0.3rem 0;
-  font-size: 0.66rem;
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -662,14 +662,14 @@
 .periodRowMsg, .periodRowMsgBad {
   flex: 1 1 100%;
   margin: 0.15rem 0 0;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 .periodRowMsgBad { color: var(--danger-light); }
 
 .periodEmpty {
   margin: 0.25rem 0 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -687,7 +687,7 @@
   background: none;
   border: none;
   padding: 0.25rem 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   text-decoration: underline;
   cursor: pointer;
@@ -705,14 +705,14 @@
   padding: 0.4rem 0.6rem;
   border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.2));
   border-radius: 8px;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 .periodUndo button {
   background: none;
   border: none;
   padding: 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--home-olive, var(--logic-lime));
   text-decoration: underline;
@@ -729,7 +729,7 @@
   border: 1px solid rgba(var(--danger-rgb), 0.45);
   border-radius: 999px;
   padding: 0.25rem 0.7rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--danger-light);
   cursor: pointer;
@@ -750,6 +750,12 @@
 .periodFieldLabel > .input,
 .periodFieldLabel > .select { width: 100%; }
 .periodFieldLabelText { display: none; }
+/* ⚠ A `planEditorLabeled` variant briefly forced these labels visible at desktop for the bill
+   form (§119 walk, 2026-08-28) and was REVERTED the same day: `.periodFieldLabel` is a row flex,
+   so the label rendered BESIDE its input and clipped the row. The sanctioned answer shipped with
+   the Add-a-bill design pass (2026-08-29): `.planColHead` below — a real column-headings row, a
+   NEW element above the rows, never a CSS force on these hidden labels. Do not re-attempt the
+   one-line override. */
 
 .periodGroupHead { display: none; }
 
@@ -757,7 +763,7 @@
   flex-shrink: 0;
   min-width: 70px;
   text-align: right;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
@@ -777,7 +783,7 @@
 .periodSumRow {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   margin-top: 0.5rem;
   padding-top: 0.5rem;
@@ -789,7 +795,7 @@
 
 /* ── Generate installments modal ─────────────────────────────────────────── */
 .genInstructions {
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   margin: 0 0 1.25rem;
   line-height: 1.5;
@@ -812,12 +818,77 @@
 }
 
 .installmentNum {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--text-tertiary);
   width: 24px;
   flex-shrink: 0;
   text-align: right;
+}
+
+/* ── The bill form's schedule editor (Add-a-bill design pass, owner-approved mockup 2026-08-29) ──
+   Variant classes scoped under `.planEditor`, which ONLY InstallmentPlanEditor's root carries —
+   nothing here may reach the budget sheet or the dues sheet, which share the row skeleton below.
+
+   D1 — ONE SURFACE: the editor stopped rendering `.genInstallmentsSection` (the white inner card),
+   so its rows sit directly on the tinted form section; the header collapsed to one line (title +
+   the two tools) with the count beneath it only when there is more than one payment.
+   D2 — the column-headings row (`.planColHead`), the budget sheet's own idiom over this exact row
+   shape. Desktop only: at ≤640 every field already carries its own stacked label.
+   D3 — one grounds story: the date fields (this sheet's `.input`) take the portal's standard
+   field ground, matching the shared amount input beside them. */
+.planEditor { gap: 0.6rem; }
+.planEditorTools { display: flex; gap: 0.4rem; align-items: center; }
+
+.planColHead {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+/* These three MUST track the row's own flex values (.installmentNum 24px / .periodFieldDate 1.5 /
+   .periodFieldLabel 2) or the headings drift off their columns — the budget sheet's own
+   .periodColHead carries the same warning. .planColX reserves the trailing remove button's slot;
+   the num and X cells render only when the rows actually have numbers and removes (>1 payment) —
+   a lone payment's row fills the section edge to edge (owner, round 3). */
+.planColNum  { width: 24px; flex: 0 0 auto; }
+.planColDate { flex: 1.5; min-width: 0; }
+.planColAmt  { flex: 2; min-width: 0; }
+.planColX    { flex: 0 0 26px; }
+
+/* D3: the paper ground on this sheet's own .input (the DateFields, in the rows and the repeat
+   box). Two-class specificity beats the base rule regardless of order; tokens resolve per theme
+   exactly as the shared portal input does. */
+.planEditor .input {
+  background: var(--white-05, rgba(255,255,255,0.05));
+  border-color: var(--home-line-strong, rgba(255,255,255,0.12));
+  border-radius: 6px;
+}
+/* D1: the repeat tray loses its white card too — a hairline tool tray on the section's own tint. */
+.planEditor .repeatBox { background: transparent; }
+/* The reconcile strip is the section's last word; the section's own gap spaces it. */
+.planEditor .reconStrip { margin: 0; }
+
+@media (max-width: 640px) {
+  .planColHead { display: none; }
+  /* D1 on the phone: each installment keeps its card (real grouping down here), white on the
+     section's tint instead of tint-on-white-on-tint. */
+  .planEditor .periodInputRow { background: var(--home-card, rgba(255,255,255,0.04)); }
+}
+
+@media (max-width: 768px) {
+  /* The 641–768 band is a TOUCH band (owner ruling 2026-08-27), and phones sit below it: every
+     control this editor owns meets the 44px floor there. min-height grows the hit box without
+     spending width (a button centres its own label); desktop keeps the quiet 25px chrome.
+     Measured before this rule: Repeat monthly / + Add / the row removes were all ~25px. */
+  .planEditorTools > button,
+  .planEditor .removePeriodBtn,
+  .planEditor .periodGroupRemove { min-height: var(--tap-min, 44px); }
 }
 
 /* ── Preview table ───────────────────────────────────────────────────────── */
@@ -860,9 +931,9 @@
 .basisCardOff { opacity: 0.6; cursor: not-allowed; }
 
 .basisRadio { grid-row: span 2; align-self: center; margin: 0; accent-color: var(--home-olive); }
-.basisName { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
+.basisName { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .basisMath {
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
@@ -870,7 +941,7 @@
 .basisValue {
   grid-row: span 2;
   text-align: right;
-  font-size: 1.05rem;
+  font-size: var(--type-heading);
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
@@ -878,19 +949,19 @@
 }
 .basisValue small {
   display: block;
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
-.basisValueMuted { font-size: 0.8rem; font-weight: 600; color: var(--text-tertiary); }
+.basisValueMuted { font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); }
 
 /* The budget offer that used to be a WALL, kept as a door. */
 .basisNudge {
   display: inline-block;
   margin: -0.4rem 0 0.9rem;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--blueprint-blue, var(--link));
   text-decoration: none;
   border-bottom: 1px solid currentColor;
@@ -911,13 +982,13 @@
   border-radius: 8px;
   background: var(--home-card, rgba(255,255,255,0.03));
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
   min-width: 0;
 }
 .autoChip {
   flex: 0 0 auto;
-  font-size: 0.58rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -939,11 +1010,11 @@
   margin: 0 0 0.9rem;
   padding: 0.55rem 0.75rem;
   border-radius: 9px;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 .reconMark { font-weight: 800; flex: 0 0 auto; }
-.reconAside { display: block; font-size: 0.76rem; opacity: 0.85; margin-top: 0.1rem; }
+.reconAside { display: block; font-size: var(--type-support); opacity: 0.85; margin-top: 0.1rem; }
 .reconShort { background: rgba(var(--warning-rgb), 0.13); color: var(--warning); }
 .reconOver  { background: rgba(var(--danger-rgb),  0.12); color: var(--danger-light); }
 .reconMatch { background: rgba(var(--success-rgb), 0.12); color: var(--success-light); }
@@ -958,7 +1029,7 @@
   border-radius: 9px;
   background: var(--home-olive-soft);
   color: var(--text-primary);
-  font-size: 0.84rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 
@@ -968,7 +1039,7 @@
   border: 1px solid var(--home-line, rgba(255,255,255,0.07));
   border-radius: 8px;
   overflow: hidden;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
 }
 
 .previewHeader, .previewRow {
@@ -981,7 +1052,7 @@
 
 .previewHeader {
   background: var(--home-card, rgba(255,255,255,0.04));
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -1007,7 +1078,7 @@
 
 .previewMore {
   padding: 0.5rem 0.75rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   text-align: center;
   background: var(--home-card, rgba(255,255,255,0.02));
@@ -1019,7 +1090,7 @@
   padding: 1.5rem 0;
   color: var(--success-light);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
 }
 
 /* The named per-player arrangements a bulk re-run would flatten (2026-08-14 re-run guard).
@@ -1035,7 +1106,7 @@
   border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
   background: color-mix(in srgb, var(--warning) 9%, transparent);
   color: var(--text-primary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 500;
 }
 
@@ -1057,13 +1128,13 @@
 }
 
 .checklistLabel {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .checklistSummary {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
   min-width: 0;
 }
@@ -1073,7 +1144,7 @@
   background: none;
   border: none;
   padding: 0.3rem 0.2rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--logic-lime);
   cursor: pointer;
@@ -1100,7 +1171,7 @@
   background: none;
   border: none;
   padding: 0.32rem 0.2rem 0.32rem 0.65rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--text-primary);
   cursor: pointer;
@@ -1120,7 +1191,7 @@
 
 .checklistFoot {
   margin: 0.5rem 0 0;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -1134,7 +1205,7 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -1149,7 +1220,7 @@
   border-left: 3px solid var(--success);
   background: rgba(var(--success-rgb), 0.08);
   border-radius: 0 8px 8px 0;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
 }
 
@@ -1202,7 +1273,7 @@
   right: 0.5rem;
   transform: translateY(-50%);
   pointer-events: none;
-  font-size: 0.58rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1222,7 +1293,7 @@
   /* Plan card at phone width: tighter frame, smaller figures. (The stacking itself moves
      with the SHELL breakpoint — see the ≤900 block above the form styles.) */
   .plan { padding: 0.85rem 1rem 0.9rem; }
-  .planVal { font-size: 1.25rem; }
+  .planVal { font-size: var(--type-title); }
 
   /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */
   .kindChoice { flex-direction: column; }
@@ -1268,7 +1339,7 @@
     margin-bottom: 0.5rem;
   }
   .periodGroupNum {
-    font-size: 0.68rem;
+    font-size: var(--type-label);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -1281,7 +1352,7 @@
     background: none;
     border: none;
     padding: 0.3rem 0.1rem;
-    font-size: 0.78rem;
+    font-size: var(--type-support);
     font-weight: 600;
     color: var(--text-tertiary);
     cursor: pointer;
@@ -1298,7 +1369,7 @@
   .periodFieldLabel:last-of-type { margin-bottom: 0; }
   .periodFieldLabelText {
     display: block;
-    font-size: 0.72rem;
+    font-size: var(--type-support);
     font-weight: 600;
     color: var(--text-secondary);
   }

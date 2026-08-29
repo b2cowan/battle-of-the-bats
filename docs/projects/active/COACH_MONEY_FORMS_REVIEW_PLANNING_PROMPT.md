@@ -118,6 +118,20 @@ Found while the owner was looking at the Fundraising New form on the day P2 clos
    *fundraiser or sponsor?*. **P2 caused this collision by moving the phrase**, which makes it this
    project's to clean up. Suggested: *"Which kind?"* here, freeing the phrase to mean one thing.
 
+Found 2026-08-28 by the org-money re-validation session (carry these in too; it did not fix them):
+
+3. **The Club tab's unfiled-bill sentence is false.** `club/panel.tsx:842` reads *"Until it's
+   filed, this bill doesn't appear on Budget vs. Actual"* — but the report deliberately counts
+   unfiled club money under "Not itemized" (the BvA route says so in its own comment). The copy
+   teaches the opposite of the design.
+4. **One filing question, two labels one section apart on the Club tab:** the bill-filing modal is
+   titled *"What was this bill for?"*; the request window's field is *"What is it for?"*.
+
+⚠ **The org-money build will REWORK the request window's money-in half** (the *From the club*
+branch gains a required "New money, or money back?" ask and a side-switching picker — see
+`COACH_ORG_MONEY_IN_THE_BUDGET_PLAN.md` §3.2). Evaluate that form as it is, but don't invest
+polish recommendations in the half that is being redrawn.
+
 ⚠ Also verified that day and **NOT** gaps: the Fundraiser/Sponsor radio pair is legitimately exempt
 from the dropdown convention (test 5); the per-sponsor credit control does exist; the Pledged
 default and its *"counts toward the plan, never as money in"* line are good and should not move.
@@ -163,3 +177,10 @@ before that walk.
   (mockups 01–06), `claude.ai/code/artifact/e5936cd3-…` (frames A–D),
   `claude.ai/code/artifact/d92be400-…` (the P2 questions A/B/C).
 - Owner QA: §80 (P1, passed) and §87 (P2) — the walks that show what the grammar had to survive.
+
+---
+
+*(A 2026-08-28 scope addition about the Add-a-bill form's visual composition was placed here for
+a few hours and REMOVED by owner direction the same day — that form is the Ledger fold's own
+work, and it has its own dedicated pass:
+`COACH_ADD_A_BILL_FORM_DESIGN_PASS_PROMPT.md`. This session's scope is unchanged.)*

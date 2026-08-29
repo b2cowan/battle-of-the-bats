@@ -608,7 +608,7 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   it('a dues panel offers the ledger and the family’s own screen', () => {
     assert.deepEqual(
       labels(cellPanelSpec({ group: 'dues' }, 'actual', null)),
-      ['Open Player Dues', 'Open Transactions']);
+      ['Open Player Dues', 'Open the Ledger']);
   });
 
   /* ⚠ "Here is the ledger entry" and "here is the thing that earned it" are different answers, and a
@@ -616,11 +616,11 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
      second door is the hub — the right grain rather than no door at all. */
   it('a drive opens THAT drive; the whole group opens the hub', () => {
     const one = cellPanelSpec({ group: 'fundraising' }, 'actual', { id: 'drive-1', name: 'Bottle drive' });
-    assert.deepEqual(labels(one), ['Open Bottle drive', 'Open Transactions']);
+    assert.deepEqual(labels(one), ['Open Bottle drive', 'Open the Ledger']);
     assert.deepEqual(one.doors[0].extra, { fundraiser: 'drive-1' });
     assert.deepEqual(
       labels(cellPanelSpec({ group: 'fundraising' }, 'actual', null)),
-      ['Open Fundraisers', 'Open Transactions']);
+      ['Open Fundraisers', 'Open the Ledger']);
     // Gross, so the panel's own sum is what was RAISED — the rebate is a note on a row, not a figure.
     assert.equal(one.totalLabel, 'Total raised');
   });
@@ -630,14 +630,14 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   it('money back offers two doors from the club and one from your own records', () => {
     assert.deepEqual(
       labels(cellPanelSpec({ group: 'moneyback' }, 'actual', { id: 'moneyback:club', name: 'Repaid by the club' })),
-      ['Open Club', 'Open Transactions']);
+      ['Open Club', 'Open the Ledger']);
     assert.deepEqual(
       labels(cellPanelSpec({ group: 'moneyback' }, 'actual', { id: 'moneyback:recorded', name: 'Money back you recorded' })),
-      ['Open Transactions']);
+      ['Open the Ledger']);
   });
 
   it('typed income has one door, because there is nothing else to open', () => {
-    assert.deepEqual(labels(cellPanelSpec({ group: 'other' }, 'actual', null)), ['Open Transactions']);
+    assert.deepEqual(labels(cellPanelSpec({ group: 'other' }, 'actual', null)), ['Open the Ledger']);
   });
 
   /* ⚠⚠ ONE WORD IS WHAT STOPS A COACH BANKING MONEY NOBODY HAS AGREED TO SEND. */
@@ -659,14 +659,14 @@ describe('cellPanelSpec — the doors, and the word over the total', () => {
   it('money paid back to a family answers to dues and to the ledger', () => {
     assert.deepEqual(
       labels(cellPanelSpec({ group: null, payout: true }, 'actual', { id: 'p1', name: 'Maya Ledger' })),
-      ['Open Player Dues', 'Open Transactions']);
+      ['Open Player Dues', 'Open the Ledger']);
   });
 
   /* ⚠ THE EXPENSE BAND'S OWN TWO ANSWERS LIVE IN THE SAME FUNCTION, and that is deliberate: they are
      the same decision — which book does this figure belong to — and keeping them apart is how the
      two halves of one table drift into two vocabularies. */
   it('an ordinary cost lands on the book its lens belongs to', () => {
-    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'actual', null)), ['Open Transactions']);
+    assert.deepEqual(labels(cellPanelSpec({ group: null }, 'actual', null)), ['Open the Ledger']);
     assert.deepEqual(labels(cellPanelSpec({ group: null }, 'scheduled', null)), ['Open the payment schedule']);
   });
 });

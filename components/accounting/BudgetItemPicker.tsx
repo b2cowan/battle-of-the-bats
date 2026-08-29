@@ -40,6 +40,17 @@ interface Props {
   categories: BudgetCategoryWithItems[];
   value: BudgetItemSelection | null;
   onChange: (v: BudgetItemSelection) => void;
+  /** Override the box's own hint. Added for the bill form (fold form redesign, finding 2): its
+   *  label became "Filed under", so the default "Search what this is…" placeholder went back to
+   *  being circular against a question the label no longer asks. Callers that keep a
+   *  question-shaped label leave this unset and get the built-in hints. */
+  placeholder?: string;
+  /** Opt the combobox into the portal's standard field ground — paper fill, strong hairline,
+   *  6px radius — instead of this control's own white/r8 clothes. Added for the bill form
+   *  (Add-a-bill design pass D3, owner-approved 2026-08-29): that form has ONE grounds story,
+   *  and this control was one of its two deviants. Per-caller on purpose: the Budget Plan and
+   *  Org Budget keep their own rendering until the money forms review rules portal-wide. */
+  paperGround?: boolean;
   /**
    * Which side of the books this control is choosing for (mig 246).
    * `out` = money the team spends · `in` = money it receives. Required: every surface knows the
@@ -140,6 +151,8 @@ export default function BudgetItemPicker({
   disabled = false,
   manageHint,
   leadGroup,
+  placeholder,
+  paperGround = false,
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -492,12 +505,13 @@ export default function BudgetItemPicker({
             aria-label="Category and item"
             autoComplete="off"
             disabled={disabled}
-            className={`${styles.input} ${invalid ? styles.inputBad : ''} ${(value?.itemId || selectedLead) && !open ? styles.inputChosen : ''}`}
-            placeholder={leadGroup && leadGroup.options.length > 0
-              ? 'Search a bill you owe, or what the cost was for'
-              : direction === 'in'
-                ? 'Search what this is — e.g. “sponsorship”, “grant”'
-                : 'Search what this is — e.g. “diamond”, “entry”'}
+            className={`${styles.input} ${paperGround ? styles.inputPaper : ''} ${invalid ? styles.inputBad : ''} ${(value?.itemId || selectedLead) && !open ? styles.inputChosen : ''}`}
+            placeholder={placeholder
+              ?? (leadGroup && leadGroup.options.length > 0
+                ? 'Search a bill you owe, or what the cost was for'
+                : direction === 'in'
+                  ? 'Search what this is — e.g. “sponsorship”, “grant”'
+                  : 'Search what this is — e.g. “diamond”, “entry”')}
             value={open ? query : (selectedLabel || query)}
             onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
             onFocus={() => { setQuery(''); openDropdown(); }}

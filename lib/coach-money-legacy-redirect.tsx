@@ -52,7 +52,8 @@ export function moneyLegacyExpensesRedirectPage() {
     delete carried.tab;
     permanentRedirect(moneyLegacyRedirectHref(orgSlug, teamId, target.section, {
       ...carried,
-      ...(target.tab ? { tab: target.tab } : {}),
+      // The fold's addresses speak `?view=` (timeline / bills / due), never the retired `?tab=`.
+      ...(target.view ? { view: target.view } : {}),
     }));
   };
 }

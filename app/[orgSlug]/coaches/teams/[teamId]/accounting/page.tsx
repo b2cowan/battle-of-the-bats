@@ -27,14 +27,12 @@ import styles from '../../../coaches.module.css';
 const BudgetPlanPanel = dynamic(() => import('./budget/panel').then(m => m.BudgetPlanPanel), { ssr: false });
 const PlayerDuesPanel = dynamic(() => import('./dues/panel').then(m => m.PlayerDuesPanel), { ssr: false });
 const FundraisersPanel = dynamic(() => import('./fundraisers/panel').then(m => m.FundraisersPanel), { ssr: false });
-/* ⚠ TWO TABS, ONE MODULE (Money split P1, 2026-08-16). Transactions and Payables are two faces of
-   the same panel rather than two files: they share the record form, the money-tag library, the
-   taxonomy picker, the importer and every fetch, and copying ~1,500 lines to separate them would
-   put the one form the whole release turns on in two places at once. The hub mounts each face
-   independently, exactly as it mounts Allocations and Payments. P3 replaces the Transactions face
-   wholesale with the register, at which point the shared body shrinks to Payables' own. */
-const TransactionsPanel = dynamic(() => import('./expenses/panel').then(m => m.TransactionsPanel), { ssr: false });
-const PayablesPanel = dynamic(() => import('./expenses/panel').then(m => m.PayablesPanel), { ssr: false });
+/* ⚖⚖ ONE TAB WHERE TWO WERE, AGAIN (Payables→Ledger fold, owner-approved 2026-08-28). The split's
+   two faces (Transactions / Payables) were always one module behind one flag; the fold retires the
+   flag and the second tab with it. The Ledger is the whole money book — Timeline, Bills and the
+   Payment schedule are its `?view=` arrangements, not tabs. (A stale comment here used to sketch the
+   OPPOSITE fold; the owner-led 2026-08-28 session settled the direction.) */
+const LedgerPanel = dynamic(() => import('./expenses/panel').then(m => m.LedgerPanel), { ssr: false });
 /* ⚠ ONE TAB WHERE TWO WERE (money redesign P4, 2026-08-17). Allocations and Payments were two
    halves of one relationship — money the club bills the team, money the team asks of the club — and
    a coach had to hold both to answer the only question either existed for. Merged into `./club`,
@@ -56,8 +54,7 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget', Component: BudgetPlanPanel },
   { id: 'dues', Component: PlayerDuesPanel },
   { id: 'fundraisers', Component: FundraisersPanel },
-  { id: 'transactions', Component: TransactionsPanel },
-  { id: 'payables', Component: PayablesPanel },
+  { id: 'ledger', Component: LedgerPanel },
   { id: 'club', Component: ClubPanel },
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
 ];
@@ -80,17 +77,36 @@ type SectionId = 'overview' | CoachMoneySection;
  * Budget vs. Actual is a report — none of them is about one kind of event, so Record opens on the
  * question, exactly as it always has from Overview.
  *
- * ⚠ Payables answers "we paid for something" — NOT "add a commitment". Record is for money that
- * moved (owner ruling B2); the bills the team owes are the first group in that branch's own picker,
- * so pressing Record on Payables lands one field away from paying one down. Creating a commitment
- * is what that tab's own "Add a commitment" button is for, and it keeps it.
+ * ⚠ The Ledger answers "we paid for something" — NOT "add a bill". Record is for money that moved
+ * (owner ruling B2); the bills the team owes are the first group in that branch's own picker, so
+ * pressing Record on the Ledger lands one field away from paying one down. Creating a bill is what
+ * the tab's own "Add a bill" button is for, and it keeps it (fold decision 2: visible in every
+ * view).
  */
 const RECORD_BRANCH_BY_SECTION: Partial<Record<SectionId, ConversationBranch>> = {
-  dues:         'dues',
-  fundraisers:  'drive',
-  club:         'club',
-  transactions: 'spend',
-  payables:     'spend',
+  dues:        'dues',
+  fundraisers: 'drive',
+  club:        'club',
+  ledger:      'spend',
+};
+
+/**
+ * ⚖ THE HUB'S "?" FOLLOWS THE TAB (found in the §119 walk, 2026-08-28). Inside the hub the
+ * panels' own headers are the `embedded` shape, which renders no "?" — so this page's help door
+ * is the ONLY one a coach can press, and it was hard-wired to the Money intro on every tab. That
+ * predates the fold (Payables' and Transactions' help subtopics were exactly as unreachable);
+ * the walk's step G3 is simply what made it visible. One subtopic per tab, all of them real ids
+ * in the coaches guide — a tab without its own natural article would fall back to the intro,
+ * but today every tab has one.
+ */
+const HELP_SUBTOPIC_BY_SECTION: Record<SectionId, string> = {
+  overview:           'premium-money-cards',
+  budget:             'premium-money-budget',
+  dues:               'premium-money-dues',
+  fundraisers:        'premium-money-fundraisers',
+  ledger:             'premium-money-ledger',
+  club:               'premium-money-org',
+  'budget-vs-actual': 'premium-money-report-shapes',
 };
 
 /**
@@ -158,14 +174,16 @@ export default function CoachesAccountingPage({
   const rawSection = seasonSearchParams.get('section');
   const legacyAddress = legacyMoneyAddress(rawSection, seasonSearchParams.get('tab'));
   const legacySection = legacyAddress?.section;
-  const legacyTab = legacyAddress?.tab;
+  const legacyView = legacyAddress?.view;
   useEffect(() => {
     if (!legacySection) return;
     const qp = new URLSearchParams(seasonSearchParams.toString());
     qp.set('section', legacySection);
-    if (legacyTab) qp.set('tab', legacyTab); else qp.delete('tab');
+    // The fold's addresses speak `?view=`; the retired `?tab=` never survives a rewrite.
+    if (legacyView) qp.set('view', legacyView);
+    qp.delete('tab');
     router.replace(`${base}/accounting?${qp.toString()}`, { scroll: false });
-  }, [legacySection, legacyTab, seasonSearchParams, router, base]);
+  }, [legacySection, legacyView, seasonSearchParams, router, base]);
 
   const activeSection = (legacySection ?? (rawSection as SectionId | null)) ?? 'overview';
   // Seed with the section a coach actually LANDS on (a hard refresh, bookmark, or
@@ -206,7 +224,11 @@ export default function CoachesAccountingPage({
      commitment from, so the page's back arrow names where it returns to. An origin left on the URL
      after they have moved on is a back arrow pointing at last week's journey — so it is one-shot
      exactly as the key it describes is. */
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from'];
+  /* ⚠ `view` joined the list with the fold (2026-08-28): it is the Ledger's own lens, exactly as
+     `duesView` is the Dues tab's — it means nothing off its tab, and the Ledger remembers it per
+     device anyway, so an address never needs to carry it anywhere else. `from` stays listed so
+     saved pre-fold URLs that carry it are still scrubbed, though nothing writes it any more. */
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -233,7 +255,7 @@ export default function CoachesAccountingPage({
    * functions, and a second wire for them is how two ways to open one form start to drift.
    */
   const requestRecord = useCallback((intent?: RecordMoneyIntent) => {
-    setVisited(v => v.has('transactions') ? v : new Set(v).add('transactions'));
+    setVisited(v => v.has('ledger') ? v : new Set(v).add('ledger'));
     // Set BEFORE the nonce so the panel, reading both at the same render, can never see a new
     // nonce beside the previous request's intent.
     setRecordIntent(intent ?? null);
@@ -335,12 +357,12 @@ export default function CoachesAccountingPage({
     { id: 'budget', label: 'Budget Plan' },
     { id: 'dues', label: 'Player Dues' },
     { id: 'fundraisers', label: 'Fundraising' },
-    /* ⚠ TWO TABS WHERE ONE SCREEN WAS (Money split P1, 2026-08-16). "Expenses & Payables" named a
-       screen doing two jobs — recording what happened, and managing what is owed — and the
-       ampersand in its own label was the tell. They sit adjacent and in that order because the
-       money flows that way: a commitment on Payables settles INTO Transactions. */
-    { id: 'transactions', label: 'Transactions' },
-    { id: 'payables', label: 'Payables' },
+    /* ⚖⚖ ONE LEDGER WHERE THE SPLIT'S TWO TABS WERE (fold, owner-ruled 2026-08-28). "Ledger" is
+       the word the org accounting module and house league already use for the same idea — a dated
+       book of entries — so a treasurer moving between club and team meets one word for one
+       concept. What was Transactions is its Timeline view; what was Payables is its Bills /
+       Payment schedule views. */
+    { id: 'ledger', label: 'Ledger' },
     /* ⚠ ONE WORD, AND IT IS THE ONE COACHES USE (owner ruling 1, 2026-08-17). "Allocations" and
        "Payments" named two lists; "Club" names the relationship both lists are about — and the
        register's own chip and filter on these exact rows have read `Club` / `from Club` since P3,
@@ -365,21 +387,24 @@ export default function CoachesAccountingPage({
     // same door wearing two names.
     fundraisers: sectionHref('fundraisers', { kind: 'fundraiser' }),
     sponsorships: sectionHref('fundraisers', { kind: 'sponsor' }),
-    transactions: sectionHref('transactions'),
-    payables: sectionHref('payables'),
+    /* ⚠ The KEY NAMES predate the fold and stay (internal identifiers reaching every Overview
+       consumer); the DESTINATIONS all moved to the one Ledger with an explicit `?view=` — a link
+       that names its view can never be silently re-aimed by the panel's per-device view memory. */
+    transactions: sectionHref('ledger', { view: 'timeline' }),
+    payables: sectionHref('ledger', { view: 'bills' }),
     budgetStarter: sectionHref('budget', { starter: '1' }),
     budgetGenerate: sectionHref('budget', { generate: '1' }),
-    // Payables already opens on the schedule; naming it anyway keeps the caller's INTENT in the
-    // link, so a change of default view can never silently redirect "see the full schedule".
-    payablesSchedule: sectionHref('payables', { tab: 'schedule' }),
+    payablesSchedule: sectionHref('ledger', { view: 'due' }),
     /* ⚠ `scheduled=1` IS NOT REDUNDANT even though the overlay defaults to on. A coach who turned
        it off would otherwise follow a link about money that has not moved yet and land on a book
        that deliberately excludes it — the link would appear broken, and the row they clicked would
-       be the one thing missing. The address states the intent. */
+       be the one thing missing. The address states the intent. (`filter`/`scheduled` force the
+       Timeline view in the panel, so no `view` param is needed — stating one anyway would be a
+       second way of saying the same thing.) */
     registerFrom: {
-      dues:    sectionHref('transactions', { filter: 'dues', scheduled: '1' }),
-      expense: sectionHref('transactions', { filter: 'expense', scheduled: '1' }),
-      club:    sectionHref('transactions', { filter: 'club', scheduled: '1' }),
+      dues:    sectionHref('ledger', { filter: 'dues', scheduled: '1' }),
+      expense: sectionHref('ledger', { filter: 'expense', scheduled: '1' }),
+      club:    sectionHref('ledger', { filter: 'club', scheduled: '1' }),
     },
     // One destination where two were (P4). Both rail rows collapse into it — see MoneyRail.
     ...(showOrgTabs ? { club: sectionHref('club') } : {}),
@@ -451,7 +476,7 @@ export default function CoachesAccountingPage({
                 onClick={() => {
                   const branch = RECORD_BRANCH_BY_SECTION[effectiveSection];
                   if (!branch) { requestRecord(undefined); return; }
-                  const bill = effectiveSection === 'payables' ? seasonSearchParams.get('bill') : null;
+                  const bill = effectiveSection === 'ledger' ? seasonSearchParams.get('bill') : null;
                   requestRecord(bill ? { branch, ids: { spendExpenseId: bill } } : { branch });
                 }}
               >
@@ -473,7 +498,7 @@ export default function CoachesAccountingPage({
         actionsPhoneHidden={!canWrite}
         actionsPhoneInTitleRow
         helpLabel="Money"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-cards', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: HELP_SUBTOPIC_BY_SECTION[effectiveSection], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
       />
 
       {/* What the header's data menus have to say — an import result, or why an export couldn't be

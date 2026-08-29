@@ -93,7 +93,7 @@ export const GET = withObservability(async (_req: Request,
       .eq('status', 'active'),
     supabaseAdmin
       .from('rep_fundraisers')
-      .select('id, is_active, kind')
+      .select('id, is_active, kind, sponsor_status, pledged_amount, expected_by')
       .eq('program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_allocation_splits')
@@ -226,30 +226,52 @@ export const GET = withObservability(async (_req: Request,
   }
 
   // ── Fundraising: drives and sponsors, counted apart ──────────────────────
-  const fundraisers = (fundraisersRes.data ?? []) as Array<{ id: string; is_active: boolean; kind?: string | null }>;
+  const fundraisers = (fundraisersRes.data ?? []) as Array<{
+    id: string; is_active: boolean; kind?: string | null;
+    sponsor_status?: string | null; pledged_amount?: number | string | null;
+    expected_by?: string | null;
+  }>;
   let fundraisingRaised = 0;
   let creditsIssued = 0;
   let driveRaised = 0;
   let sponsorReceived = 0;
   let sponsorPledged = 0;
+  // Q13 (mig 269): promises past their expected-by with money still to come — a COUNT for the
+  // overview's one quiet clause, never a reminder.
+  let sponsorPledgesPastDue = 0;
+  const arrivedBySponsor = new Map<string, number>();
   if (fundraisers.length > 0) {
     for (const en of await getSeasonFundraiserEntries(programYear.id)) {
       /**
-       * ⚠ THE PLEDGE LANE IS THE ONLY THING THAT MAY SEE AN UNREALISED ROW, and it is a LABEL, not
-       * a total: nothing below adds `sponsorPledged` to anything. Every other figure here — the
-       * headline "Money in", the fundraising card, the cash-on-hand subtraction — is realised-only,
-       * because a pledged sponsor's entry exists to record the arrangement while no income has
-       * posted and no credit exists. Counting it as banked is the review's worst finding
-       * (2026-08-15) and this is the one place in the route where that distinction is made.
+       * ⚠ Since mig 268 every entry IS money — a pledged sponsor has no entries at all (its
+       * promise lives in `pledged_amount`, summed below). The realised belt stays anyway: if a
+       * pledged row ever exists again it must not count as banked, which was the review's worst
+       * finding (2026-08-15).
        */
-      if (!en.realised) {
-        if (en.kind === 'sponsor') sponsorPledged += en.amountRaised;
-        continue;
-      }
+      if (!en.realised) continue;
       fundraisingRaised += en.amountRaised;
       creditsIssued += en.rebateAmount;
-      if (en.kind === 'sponsor') sponsorReceived += en.amountRaised;
-      else driveRaised += en.amountRaised;
+      if (en.kind === 'sponsor') {
+        sponsorReceived += en.amountRaised;
+        arrivedBySponsor.set(en.fundraiserId, (arrivedBySponsor.get(en.fundraiserId) ?? 0) + en.amountRaised);
+      } else {
+        driveRaised += en.amountRaised;
+      }
+    }
+    /**
+     * ⚠ THE PLEDGE FIGURE READS THE COLUMN, NOT ENTRIES (mig 268 reader flip), and it is a
+     * LABEL, not a total — nothing below adds `sponsorPledged` to anything. It is what is STILL
+     * TO COME: each sponsor's promise minus what has arrived, floored at zero, so a part-paid
+     * pledge reads "$250 in · $250 pledged" rather than flattering the season with both.
+     */
+    for (const f of fundraisers) {
+      if ((f.kind ?? 'fundraiser') !== 'sponsor') continue;
+      const pledged = f.pledged_amount != null ? Number(f.pledged_amount) : 0;
+      if (pledged <= 0) continue;
+      const arrived = arrivedBySponsor.get(f.id) ?? 0;
+      const remaining = Math.max(0, Math.round((pledged - arrived) * 100) / 100);
+      sponsorPledged += remaining;
+      if (remaining > 0.005 && f.expected_by && f.expected_by < today) sponsorPledgesPastDue += 1;
     }
   }
   const driveCount = fundraisers.filter(f => (f.kind ?? 'fundraiser') !== 'sponsor').length;
@@ -426,6 +448,7 @@ export const GET = withObservability(async (_req: Request,
       sponsorCount,
       sponsorReceived: r2(sponsorReceived),
       sponsorPledged: r2(sponsorPledged),
+      sponsorPledgesPastDue,
     },
     expenses: {
       paidTotal: r2(expensesPaid),

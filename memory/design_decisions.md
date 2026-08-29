@@ -3,6 +3,122 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-29 — A HAND-OFF DRESSED AS AN ANSWER MUST BE REVISABLE LIKE ONE, and its words name the event, not the instruction
+
+**Decision (owner, out of using the live form):** the Record conversation's bill row reads
+**"We agreed to pay something later"** — an *answer* to "What happened?" (the agreement is a real
+event even though no money moved; the refusal already spoke this grammar: "Money you've agreed to
+pay later is a bill") — replacing "We'll owe this later — set up a bill", an instruction posing as
+an answer. And the hand-off it triggers is now **reversible**: a coach handed into the Add-a-bill
+form from the conversation keeps the "What happened?" control, standing on the bill row; picking
+any other answer hands them back with their typing carried — the mirror of the trip in. **The
+principle:** every choice offered inside one control must be equally take-backable; one option
+that quietly exits the form is a trap wearing the control's clothes. **Ruling B2 is untouched
+where it rules:** the bill's own doors (the toolbar's Add a bill) asked no question and still show
+none. Found and fixed in the same change: the forward carry's amount/date had been silently
+dropped since the schedule replaced the old due-date field — the typed figures now seed the
+schedule's first row, as the hand-off always claimed.
+**Applies to:** the Record conversation + Add-a-bill form; the principle portal-wide.
+
+---
+### 2026-08-28 — Ledger views are PLACE-NAMES, and Record may HAND OFF to the bill form (ruling B amended)
+
+**Decision (owner, fold round 3, mid-§119 walk):** the Ledger's views are named as places —
+**Timeline · Bills · Payment schedule** — never as sort orders ("By bill" read as an arrangement;
+"Bills" names the management home it actually is). And the Record conversation's picker gains a
+third group, **"Not paid yet"**, whose one row hands the coach into the Add-a-bill form with their
+typing kept. **Ruling B (2026-08-23, "Record is for money that moved") stands AMENDED, not
+reversed:** the conversation still never *creates* unpaid money — no fork, no in-modal schedule
+editor — but it may **hand off, visibly**: the window retitles, states "nothing moves today", and
+the change of acts is announced. The old fork failed because a record could become unpaid
+mid-entry unnoticed; a hand-off cannot fail that way. The word stays **bill** (re-examined against
+payable / commitment / act-named alternatives; sentence test in the fold mockups' round 3).
+**Applies to:** coach Ledger + the Record conversation. The direct Add-a-bill door stays alongside
+the picker row (at least through QA §119).
+
+---
+### 2026-08-28 — The Payables fold is APPROVED, and the object a coach owes money on is a "bill"
+
+**Decision (owner, fold round 3: "ok, I agree with your recommendations"):** the fold proceeds —
+one **Ledger** tab, three views (Timeline · By bill · By due date), the view remembered per team
+per device, *Add a bill* in every view's toolbar — and **decision 6A: the object is a "bill"**
+everywhere a customer reads (door, export title, Import menu, rail, panels, help, refusal copy).
+"Commitment" retired from copy; identifiers, dataset keys and stored history keep their names.
+**Rationale:** the product already said both ("Bills you owe" in the Record picker beside "Add a
+commitment") — one object, two names, the drift class the one-word rule exists for; "bill" is the
+word a treasurer says, and it makes the two doors a clean opposition (*Add a bill — nothing moves ·
+Record — money moved*).
+**Applies to:** coach Money, portal-wide copy. Built 2026-08-28 (QA §119). ⚠ Build note recorded in
+the plan's §0: three OLDER rulings outranked the approved mockup's details (page-actions 08-13,
+bare-"Save" 08-16, picker-first 08-15) — a mockup approval never overrides a standing ruling it
+did not name.
+
+---
+### 2026-08-28 — The coach money book is called "Ledger"
+
+**Decision (owner, Payables-fold planning round 2):** if the Payables→one-book fold proceeds, the
+surviving tab is named **Ledger**, not Transactions. Ruled ahead of the fold's go/no-go so the
+mockups could be drawn with the real word.
+**Rationale:** "Ledger" is the word the org accounting module and the house-league season already
+use for the same concept — a dated book of entries — so a treasurer moving between club and team
+meets one word for one idea. Verified this is a harmony, not an "Outstanding"-style two-meanings
+collision, before accepting.
+**Applies to:** coach Money hub tab + section addressing (with legacy rewrite), help, exports, tour
+— lands with the fold release, not before. Plan: `COACH_PAYABLES_LEDGER_FOLD_PLAN.md`.
+
+---
+### 2026-08-28 (P3) — THE LADDER CLOSES AT EIGHT STEPS: a display tier, and the rule that an icon is not type
+
+**Decision (owner, approving Option A from the true-size options sheet
+`claude.ai/code/artifact/1baf0fba-a8d7-4008-8e2c-f85c1be84cac`).** The type ladder gains an eighth
+step — **`--type-display` 32px** — and the coaches portal is **fully migrated onto it**: 1,442
+declarations now consume a role-named token, four documented exemptions remain, and the portal's
+distinct text sizes finished at **12 (8 steps + 4 exemptions), from 62**. The eight tokens live in
+`app/globals.css`; the admin shell follows later and **consumes these eight rather than minting a
+ninth**. Extends the ruling immediately below, which stands unchanged.
+
+**⚠⚠ THE MARQUEE CASE FOR THE NEW STEP DID NOT EXIST.** The argument for a display tier was led by a
+32px season-record hero on the Overview. It had **zero usages** — a leftover from a replaced card,
+carrying a phone override for good measure. It was deleted, not ruled on. **A size inventory counts
+DECLARATIONS, and a declaration nobody renders still argues for a step**; check usage before letting
+a value shape a scale. (`.nowScoreline` is dead by the same test and was deliberately left for a
+dead-CSS pass rather than widened into this one.)
+
+**⚠⚠ THE SPLIT THAT DECIDED IT IS DISTANCE, NOT SIZE.** A **card figure** is a number read at a
+desk, inside a card whose title says what it means — identical work to `$1,875.00` on Money, which
+was already `figure` 24px. A **display** number is one read from the bench, the stands or across a
+room: the score, and the record at the end of a season. Only the second is a job the ladder lacked.
+So five things went **up** to `display` and five came **down** to `figure`, and an oversized 26.4px
+component *title* went to `title` 20px, because a title is a title however large it grew.
+
+**⚠ THE PRODUCT ALREADY KNEW, AT ONE WIDTH ONLY.** The game-day score was **1.7rem on a desktop and
+1.9rem on a phone** — the one number a coach reads at a glance from the bench was SMALLER on the big
+screen. The phone override is deleted and the score is `display` everywhere. When a responsive
+override contradicts the desktop value's *intent*, the override is usually the honest one and the
+base is the bug.
+
+**⚠⚠ NOT EVERYTHING WITH A `font-size` IS TYPE — and this is the exemption rule.** An **icon glyph**
+(★ filling a 40/44px control) sizes to its tap target, not to a reading scale; a **watermark**
+(96/144px at 7% opacity, aria-hidden, bleeding off the edge) is a graphic that happens to be a
+numeral. Four declarations carry a **`LADDER-EXEMPT` comment stating why** — grep that token before
+assuming a large value is drift. **An undocumented exemption is indistinguishable from drift six
+months later**, which is the entire reason the comment is mandatory rather than nice-to-have.
+
+**⚠ A MECHANICAL SNAP FINDS ROLE ERRORS THE EYE MISSED.** Dropdown option rows were `0.82rem`;
+nearest-step would have made them `support`, taking three controls further under the tap floor at
+768. They are things you **read and click** — an interactive list item, the same job as a nav tab —
+so they are `body`. **When "nearest step" produces a worse control, the size was never the
+question: the role was mis-assigned all along.**
+
+**Measured, whole-portal:** 1,442 declarations tokenised across 61 stylesheets; 62 → 12 distinct
+sizes; **57 coach screens swept at four widths before and after — findings identical at 180, zero
+regressions.** ⚠ 180 pre-existing findings remain and are NOT from this work; the tap-floor debt
+they mostly represent is carried in the sweep's baseline and is a separate piece of work.
+
+**Applies to:** global — coaches portal migrated, admin shell to follow. Options sheet:
+`docs/projects/active/COACH_TYPE_SCALE_P3_MOCKUP.html`.
+
+---
 ### 2026-08-28 — TYPE HAS NO SCALE: 61 sizes, seven roles, and size is the WRONG INSTRUMENT below 13px
 
 **Decision (owner, approving the true-size before/after mockup

@@ -46,6 +46,12 @@ interface LedgerRow {
   amount: number;
 }
 
+/* ⚠ THE CHIP SPEAKS THE PRODUCT'S WORDS, NEVER THE LANE ID (found in the §119 walk, 2026-08-28:
+ * a row's badge printed the raw internal id — "payable" on screen, and an org row would have said
+ * "org" against the 08-17 "Club, not Org" ruling). The ids stay as they are (they key styles and
+ * the API contract); only what a coach reads goes through this map. */
+const LANE_WORD: Record<LaneKind, string> = { dues: 'dues', payable: 'bill', org: 'club' };
+
 /* Direction is a property of the lane, never stored per-row: dues are money
  * coming in; every other lane is money going out. */
 const LANE_KIND_BY_ID: Record<string, LaneKind> = {
@@ -241,7 +247,7 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
                     <span className={`${styles.badge} ${styles.badgeLate}`}>{Math.abs(row.daysUntilDue)}d late</span>
                   ) : (
                     <span className={`${styles.badge} ${isIn(row.lane) ? styles.badgeDues : styles.badgeOut}`}>
-                      {row.lane}
+                      {LANE_WORD[row.lane]}
                     </span>
                   )}
                 </span>

@@ -10,7 +10,7 @@
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 
 .label {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--white-60, rgba(255,255,255,0.6));
 }
@@ -27,7 +27,7 @@
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   color: var(--white-90);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
@@ -35,6 +35,17 @@
 .select:focus, .input:focus {
   outline: none;
   border-color: var(--blueprint-blue);
+}
+
+/* The caller-opt-in paper ground (`paperGround` prop — Add-a-bill design pass D3). The bill form
+   has ONE grounds story: every field wears the portal's standard input recipe, and this control's
+   own white/r8 clothes made it one of the form's two deviants. Declared AFTER .select/.input so
+   the equal-specificity override wins by source order inside this module. Tokens, not literals,
+   so both themes resolve it exactly as they resolve the shared portal input. */
+.inputPaper {
+  background: var(--white-05, rgba(255,255,255,0.05));
+  border-color: var(--home-line-strong, rgba(255,255,255,0.12));
+  border-radius: 6px;
 }
 
 /* The picker became a REQUIRED field with mig 240 — the item is what names a budget line — so it
@@ -88,7 +99,7 @@
 
 .optGroup {
   padding: 0.4rem 0.75rem 0.2rem;
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--white-40, rgba(255,255,255,0.4));
@@ -116,7 +127,7 @@
 .optMeta {
   margin-left: auto;
   flex: 0 0 auto;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   color: var(--white-60, rgba(255,255,255,0.6));
@@ -136,7 +147,7 @@
   border: 0;
   padding: 0.4rem 0.75rem;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   color: var(--white-90);
   cursor: pointer;
 }
@@ -148,7 +159,7 @@
 
 .optOffside {
   margin-left: auto;
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   color: var(--warning);
 }
 
@@ -166,7 +177,7 @@
 .optTier {
   margin-left: auto;
   flex: 0 0 auto;
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border: 1px solid;
@@ -204,14 +215,14 @@
 
 .dropEmpty {
   padding: 0.7rem 0.75rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--white-40, rgba(255,255,255,0.4));
 }
 
 /* The side a new word is being filed under — stated, never asked (mig 246). */
 .sideNote {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--white-60, rgba(255,255,255,0.6));
 }
 
@@ -245,13 +256,13 @@
 }
 
 .error {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--danger-light);
   margin: 0;
 }
 
 .hint {
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   color: var(--white-40, rgba(255,255,255,0.4));
   margin: 0;
 }

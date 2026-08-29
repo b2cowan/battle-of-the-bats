@@ -186,7 +186,10 @@ export interface CellPanelSpec {
   doors: PanelDoor[];
 }
 
-const TRANSACTIONS_DOOR: PanelDoor = { section: 'transactions', label: 'Open Transactions' };
+/* ⚖ One Ledger since the fold (2026-08-28): the book door lands on the Timeline view, the
+   schedule door (below) on By due date — both stated explicitly so the panel's per-device view
+   memory can never re-aim a link. */
+const TRANSACTIONS_DOOR: PanelDoor = { section: 'ledger', extra: { view: 'timeline' }, label: 'Open the Ledger' };
 const DUES_DOOR: PanelDoor = { section: 'dues', label: 'Open Player Dues' };
 const CLUB_DOOR: PanelDoor = { section: 'club', label: 'Open Club' };
 const SPONSORS_DOOR: PanelDoor = { section: 'fundraisers', extra: { kind: 'sponsor' }, label: 'Open Sponsors' };
@@ -225,10 +228,11 @@ export function cellPanelSpec(
     if (row.payout) return { totalLabel: 'Total', doors: [DUES_DOOR, TRANSACTIONS_DOOR] };
     return lens === 'actual'
       ? { totalLabel: 'Total', doors: [TRANSACTIONS_DOOR] }
-      /* ⚠ THE TWO LENSES LAND ON DIFFERENT TABS (Money split P1, 2026-08-16), which is what the
-         grid was always describing: an Actual cell is money that moved and belongs on Transactions,
-         a Scheduled cell is money still owed and belongs on the payment schedule. */
-      : { totalLabel: 'Total', doors: [{ section: 'payables', extra: { tab: 'schedule' }, label: 'Open the payment schedule' }] };
+      /* ⚠ THE TWO LENSES LAND ON DIFFERENT VIEWS of the one Ledger (fold, 2026-08-28 — they were
+         different TABS from the 2026-08-16 split until then), which is what the grid was always
+         describing: an Actual cell is money that moved (Timeline), a Scheduled cell is money still
+         owed (the payment schedule, By due date). */
+      : { totalLabel: 'Total', doors: [{ section: 'ledger', extra: { view: 'due' }, label: 'Open the payment schedule' }] };
   }
   if (lens === 'scheduled') {
     switch (row.group) {

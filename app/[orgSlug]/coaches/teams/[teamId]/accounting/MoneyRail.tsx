@@ -122,7 +122,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
     // keeps. "$500 · $2,000 pledged" is honest; "$2,500" would be a season flattering itself with
     // a cheque nobody has received.
     stat: s => {
-      const { sponsorReceived, sponsorPledged, sponsorCount } = s.fundraisers;
+      const { sponsorReceived, sponsorPledged, sponsorCount, sponsorPledgesPastDue } = s.fundraisers;
       // Shows at ZERO, the way the drives row above introduces itself — a coach who has never
       // recorded a sponsor is exactly the coach who does not know they can.
       if (sponsorCount === 0) return <>None yet · <b>add one</b></>;
@@ -130,6 +130,10 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
         <>
           {sponsorReceived > 0 ? <><b>{fmt(sponsorReceived)}</b> in</> : <>{sponsorCount} recorded</>}
           {sponsorPledged > 0.005 && <> · {fmt(sponsorPledged)} pledged</>}
+          {/* Q13's one quiet clause: only once a promise's expected-by has actually passed. */}
+          {(sponsorPledgesPastDue ?? 0) > 0 && (
+            <> · {sponsorPledgesPastDue === 1 ? '1 past its expected date' : `${sponsorPledgesPastDue} past their expected dates`}</>
+          )}
         </>
       );
     },
@@ -141,9 +145,11 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
    * rides ALONGSIDE the money, never instead of it") was being used to cram a whole second surface
    * into a qualifier. Now each row answers its own question and neither has to compete.
    */
+  /* ⚖ TWO ROWS, ONE TAB since the fold (2026-08-28) — the Fundraisers/Sponsorships precedent:
+     each row answers its own question and lands on its own VIEW of the one Ledger. */
   transactions: {
     dot: styles.railDotRust,
-    name: 'Transactions',
+    name: 'Ledger',
     /**
      * ⚠ THE ROW SPEAKS IN THE REGISTER'S OWN TWO COLUMNS (money redesign P3), and that is NOT the
      * two-unrelated-facts problem the note above describes. "$4,120 paid · 3 due" crammed two
@@ -160,7 +166,7 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
   },
   payables: {
     dot: styles.railDotRust,
-    name: 'Payables',
+    name: 'Bills',
     /* ⚠ THE COUNT IS THE FACT HERE, not a qualifier on someone else's figure — this row exists to
        answer "is anything coming due?", so an empty answer is good news and says so plainly rather
        than reading as missing data. */

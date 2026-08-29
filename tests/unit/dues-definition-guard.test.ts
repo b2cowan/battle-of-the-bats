@@ -47,7 +47,11 @@ const REQUIRED_IMPORTERS = [
      family still owes, and who has not paid anything yet — are answered on the Money hub's Player
      Dues screen, which is already listed above via its own route. No dues-quoting surface lost its
      guard; one stopped existing. */
-  'lib/insights-digest.ts',
+  /* ⚠ `lib/insights-digest.ts` is GONE from this list because the digest stopped quoting dues at
+     all (owner decision 2026-08-28, reversing 2026-08-19's "money stays in the push"): the Sunday
+     job no longer fetches or shapes a single dues figure — the fetch is the gate, pinned in
+     tests/unit/coach-insights-portal.test.ts. No dues-quoting surface lost its guard; one stopped
+     quoting. If money ever returns to the push, this entry returns with it. */
   'lib/insight-findings.ts',
   // The season settlement's assembly — every figure the sheet quotes starts in the shared model.
   'lib/coach-season-settlement.ts',

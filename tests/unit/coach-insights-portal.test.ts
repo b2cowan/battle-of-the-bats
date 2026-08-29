@@ -303,9 +303,10 @@ describe('no money anywhere in Insights', () => {
   /**
    * ⚠⚠ THE FETCH IS THE GATE, NOT THE RENDER. A tile hidden over a request still made is how a
    * money figure leaks into a finding: `computeInsightFindings` fires its money rules only when a
-   * `dues` summary is passed, so NOT ASKING is what makes this structural. (The engine keeps those
-   * rules on purpose — the Sunday "week in review" digest is a second consumer and is not this
-   * screen.)
+   * `dues` summary is passed, so NOT ASKING is what makes this structural. The engine keeps those
+   * rules as registry entries, but since 2026-08-28 they have NO supplier: the Sunday "week in
+   * review" push — formerly the second consumer (owner 2026-08-19) — dropped money by owner
+   * reversal 2026-08-28, the same way this page did.
    */
   it('the hub never asks for dues, and never passes them to the findings engine', () => {
     const hubCode = HUB.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -318,6 +319,21 @@ describe('no money anywhere in Insights', () => {
       /\bdues:/.test(hubCode), false,
       'the hub passes a `dues` input to computeInsightFindings — which is the one thing that would '
       + 'let a money finding render here.',
+    );
+  });
+
+  it('the Sunday digest job never asks for dues either (owner 2026-08-28)', () => {
+    const digestSrc = readFileSync(join(process.cwd(), 'lib', 'insights-digest.ts'), 'utf8');
+    const digestCode = digestSrc.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.equal(
+      /summarizeDuesForFindings|getRepPlayerDuesSchedules|getRepDues\w+ByProgramYear|getRepDuesInstallmentsBySchedules/.test(digestCode), false,
+      'the weekly digest fetches or shapes dues again. Money left this push by owner decision '
+      + '2026-08-28 (reversing 2026-08-19); the fetch is the gate here exactly as on the hub.',
+    );
+    assert.equal(
+      /\bdues:/.test(digestCode), false,
+      'the digest passes a `dues` input to computeInsightFindings — the one thing that would let '
+      + 'a money sentence reach a push notification.',
     );
   });
 

@@ -187,10 +187,18 @@ export const SCREENS = [
          measured. It is also the live URL contract the Money hub and the Scheduled drill-in send,
          so this entry proves that link lands on something real as well.
 
-     Both are needed. Dropping either leaves half the screen unmeasured. */
-  { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=transactions`,    ready: 'h1' },
-  { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=payables`,        ready: 'h1' },
-  { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=payables&tab=schedule`, ready: 'h1' },
+     Both are needed. Dropping either leaves half the screen unmeasured.
+
+     ⚖⚖ AND THE TABS BECAME ONE LEDGER WITH THREE VIEWS (Payables→Ledger fold, 2026-08-28) — the
+     ADDRESSES moved; the three entries stay, because each still measures a shape the others cannot:
+     the Timeline (register, sticky toolbar), By bill FOLDED (headers + fold controls, no rows),
+     and By due date OPEN (rows, bands, totals). ⚠ The IDS deliberately keep their pre-fold names —
+     the accepted-findings baseline is keyed on them, and renaming an id silently discards its
+     accepted entries (this file's own lesson). Every path states `?view=` explicitly so the
+     panel's per-device view memory can never re-aim a sweep entry. */
+  { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1' },
+  { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=bills`,    ready: 'h1' },
+  { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=due`,      ready: 'h1' },
   /* ⚠⚠ ONE COMMITMENT — AND IT HAD NEVER BEEN SWEPT AT ALL (Payables Rebuild Part B, 2026-08-26).
      Part A shipped this screen as a sub-view of Payables and no entry was added with it, so a whole
      page — a header, a standing figure, a fields block, an unbounded schedule and a payments list —
@@ -211,7 +219,7 @@ export const SCREENS = [
      details…" and report a green check for a page that had not drawn. The attribute below hangs off
      the branch that needs the STANDING — the schedule, the payments, the figure — so it cannot be
      satisfied by a half-loaded screen. */
-  { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=payables&bill=${c.commitmentId}`, ready: '[data-commitment="loaded"]' },
+  { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&bill=${c.commitmentId}`, ready: '[data-commitment="loaded"]' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.
