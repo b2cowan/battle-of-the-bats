@@ -83,6 +83,26 @@ export default function HelpDrawer({
     };
   }, [open]);
 
+  /* ⚖ SCROLL TO THE PAGE'S OWN ANSWER (found in the §119 walk, 2026-08-28). A targeted
+     `subtopicId` pre-EXPANDS its accordion, but the drawer still opened scrolled to the section's
+     top — and the Money section runs to twenty sub-topics, so the expanded answer sat far below
+     the fold and the tab-aware "?" looked like it did nothing. On open (or when a new request
+     re-targets an already-open drawer), bring the target into view at the top of the scroll body.
+     ⚠ `behavior: 'auto'` deliberately: the drawer is still sliding in under its own animation,
+     and a second smooth scroll inside a moving panel reads as jitter (the reduced-motion guard
+     also settles the slide instantly — an auto jump matches both states). Keyed on the request's
+     subtopic, not just `open`, so switching Money tabs while the drawer is up re-aims it. */
+  const targetSubtopicId = request?.subtopicId ?? null;
+  useEffect(() => {
+    if (!open || !targetSubtopicId) return;
+    // After paint: the portal's content must exist before it can be found.
+    const raf = requestAnimationFrame(() => {
+      const target = panelRef.current?.querySelector<HTMLElement>(`#${CSS.escape(targetSubtopicId)}`);
+      target?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, targetSubtopicId]);
+
   // ── In-context "I want to…" shortcuts (help Layer 3 / Phase 5a fast-follow) ──
   // The drawer sits inside Org + Tournament context on admin pages, so it can
   // surface the same lifecycle-filtered shortcuts the dashboard rail shows — on

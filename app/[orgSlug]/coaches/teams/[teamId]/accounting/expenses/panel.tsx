@@ -1800,8 +1800,14 @@ function MoneyRecordsPanel({
     selectBranch(intent.branch);
     if (intent.lock) setConvLock(intent.lock);
     if (intent.ids) {
-      const ids = intent.ids;
-      prefillConv(c => ({ ...c, ...ids }));
+      /* ⚠ `sponsorNewName` is NOT a conv key — it maps onto the picker's own two ("new" +
+         the typed name) rather than riding the spread, or a stray property lands in conv. */
+      const { sponsorNewName, ...ids } = intent.ids;
+      prefillConv(c => ({
+        ...c,
+        ...ids,
+        ...(sponsorNewName !== undefined ? { sponsorPicked: 'new', sponsorName: sponsorNewName } : {}),
+      }));
       // The drive branch's leaderboard is fetched when a drive is CHOSEN; a door that already
       // chose one has to ask for it, or the player list never arrives.
       if (ids.driveId && !driveDetail[ids.driveId]) void loadDriveDetail(ids.driveId);

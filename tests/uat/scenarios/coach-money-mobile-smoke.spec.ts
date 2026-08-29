@@ -214,16 +214,38 @@ test.beforeAll(async () => {
   ]);
   if (plErr) throw plErr;
 
-  // ── Expenses: one paid (no action cell → must not draw a blank card line), one unpaid (action),
-  // and a tournament payable with BOTH a deposit and a balance (the two-across split).
-  const { error: eErr } = await admin.from('rep_team_expenses').insert([
-    { program_year_id: programYearId, team_id: repTeamId, org_id: orgId, expense_type: 'expense', description: 'Diamond rental — May long weekend', category: 'Umpire fees', amount: 420, expense_paid_at: new Date().toISOString() },
+  /* ── Commitments: one settled (no action cell → must not draw a blank card line), one still owed
+     (action), and a tournament payable in TWO pieces — a deposit already past due and a balance a
+     month out (the two-across split).
+
+     ⚠⚠ EVERY COMMITMENT IS SEEDED WITH ITS PLAN, AND A SETTLED ONE WITH ITS PAYMENT (Payables
+     Rebuild R1, and the reason mig 270 could drop the legacy deposit/balance/paid columns this
+     fixture used to write). A bare expense row has no installment, which makes it invisible to the
+     payment schedule, $0 in Budget vs. Actual and impossible to record a payment against — so the
+     'Record' assertions below would have nothing to find. */
+  const { data: expenseRows, error: eErr } = await admin.from('rep_team_expenses').insert([
+    { program_year_id: programYearId, team_id: repTeamId, org_id: orgId, expense_type: 'expense', description: 'Diamond rental — May long weekend', category: 'Umpire fees', amount: 420 },
     { program_year_id: programYearId, team_id: repTeamId, org_id: orgId, expense_type: 'expense', description: 'Umpire fees', category: 'Umpire fees', amount: 275 },
     // ⚠ expense_type is CHECK-constrained to 'expense' | 'tournament_payable' — 'tournament'
     // is silently rejected (cost a run; the error-check is why it surfaced as itself).
-    { program_year_id: programYearId, team_id: repTeamId, org_id: orgId, expense_type: 'tournament_payable', description: 'Provincials entry', category: 'Tournaments', amount: 1600, deposit_amount: 800, deposit_due_date: day(-5), balance_amount: 800, balance_due_date: day(30) },
-  ]);
+    { program_year_id: programYearId, team_id: repTeamId, org_id: orgId, expense_type: 'tournament_payable', description: 'Provincials entry', category: 'Tournaments', amount: 1600 },
+  ]).select('id, description');
   if (eErr) throw eErr;
+  const expenseIdBy = new Map((expenseRows ?? []).map((e: { id: string; description: string }) => [e.description, e.id]));
+  const scope = { org_id: orgId, team_id: repTeamId, program_year_id: programYearId };
+  const { data: instRows, error: piErr } = await admin.from('rep_payable_installments').insert([
+    { ...scope, expense_id: expenseIdBy.get('Diamond rental — May long weekend')!, installment_number: 1, amount: 420, due_date: day(-3) },
+    { ...scope, expense_id: expenseIdBy.get('Umpire fees')!, installment_number: 1, amount: 275, due_date: day(14) },
+    { ...scope, expense_id: expenseIdBy.get('Provincials entry')!, installment_number: 1, amount: 800, due_date: day(-5) },
+    { ...scope, expense_id: expenseIdBy.get('Provincials entry')!, installment_number: 2, amount: 800, due_date: day(30) },
+  ]).select('id, expense_id, installment_number');
+  if (piErr) throw piErr;
+  const paidPiece = (instRows ?? []).find((i: { expense_id: string; installment_number: number }) =>
+    i.expense_id === expenseIdBy.get('Diamond rental — May long weekend') && i.installment_number === 1);
+  const { error: ppErr } = await admin.from('rep_payable_payments').insert([
+    { ...scope, expense_id: expenseIdBy.get('Diamond rental — May long weekend')!, installment_id: paidPiece!.id, amount: 420, paid_date: day(-3) },
+  ]);
+  if (ppErr) throw ppErr;
 
   // ── Fundraiser with one logged entry (ranked row) and one player without (unranked row).
   const { data: fr, error: frErr } = await admin.from('rep_fundraisers')

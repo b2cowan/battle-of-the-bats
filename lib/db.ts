@@ -23,7 +23,7 @@ import { DEFAULT_SPORT } from './sports';
 import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
-import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, orgDayAsStoredInstant } from './timezone';
+import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
@@ -10067,13 +10067,6 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     budgetItemId: r.budget_item_id ?? null,
     budgetCategoryId: r.budget_category_id ?? null,
     amount: Number(r.amount),
-    expensePaidAt: r.expense_paid_at ?? null,
-    depositAmount: r.deposit_amount != null ? Number(r.deposit_amount) : null,
-    depositDueDate: r.deposit_due_date ?? null,
-    depositPaidAt: r.deposit_paid_at ?? null,
-    balanceAmount: r.balance_amount != null ? Number(r.balance_amount) : null,
-    balanceDueDate: r.balance_due_date ?? null,
-    balancePaidAt: r.balance_paid_at ?? null,
     eventId: r.event_id ?? null,
     notes: r.notes ?? null,
     paymentMethod: r.payment_method ?? null,
@@ -10081,8 +10074,6 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     payeePayer: r.payee_payer ?? null,
     paidByPlayerId: r.paid_by_player_id ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
-    depositEntryId: r.deposit_entry_id ?? null,
-    balanceEntryId: r.balance_entry_id ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,

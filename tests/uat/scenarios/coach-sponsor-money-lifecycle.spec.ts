@@ -5,7 +5,10 @@ import path from 'path';
 import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
 
 /**
- * A SPONSOR'S MONEY, END TO END — pledged → received → pledged again.
+ * A SPONSOR'S MONEY, END TO END — promise → first cheque → second cheque → undone, cheque by
+ * cheque (rewritten for ARRIVALS, mig 268 / owner rulings Q12+Q16 2026-08-28: the pledge lives on
+ * the record, an entry means money that arrived, the credit is a plan of family shares earning as
+ * each cheque lands, and status is DERIVED — the old hand flip is a pinned 409 below).
  *
  * ⚠⚠ THIS IS THE TEST THAT WOULD HAVE CAUGHT THE WORST FINDING OF THE SPONSORSHIPS REVIEW BEFORE A
  * HUMAN DID. A sponsor's entry is written the moment the sponsor is recorded — it holds the
@@ -76,13 +79,26 @@ const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 const YEAR = new Date().getFullYear() + 3;
 
-/** The sponsor's cheque, and the family's agreed share of it. Round numbers on purpose: every
- *  assertion below is an equality, and a figure that needs rounding to compare is a figure whose
- *  failure message argues about cents instead of about the bug. */
+/** The sponsor's promise, its two cheques, and the family's agreed share. Round numbers on
+ *  purpose: every assertion below is an equality, and a figure that needs rounding to compare is
+ *  a figure whose failure message argues about cents instead of about the bug.
+ *
+ *  ⚠ ARRIVALS (mig 268, owner ruling Q12 2026-08-28): the pledge lives on the record
+ *  (`pledged_amount`) and an entry means money that ARRIVED — dated, several per sponsor. The
+ *  lifecycle this spec walks is therefore no longer a status flip: it is promise → first cheque
+ *  → second cheque → undo → undo, with every reader asked at every step. Arrival dates are fixed
+ *  PAST dates — the writer refuses a future arrival, and "today" computed in the wrong timezone
+ *  is a flake this suite has met before. */
 const SPONSOR_AMOUNT = 2000;
 const CREDIT_PERCENT = 25;
-const CREDIT_DOLLARS = 500;      // 25% of $2,000
-const TEAM_KEEPS = 1500;         // what Budget vs. Actual counts: raised less the family's share
+const ARRIVAL_1 = 800;
+const ARRIVAL_2 = 1200;
+const ARRIVAL_1_DATE = '2026-01-10';
+const ARRIVAL_2_DATE = '2026-02-10';
+const CREDIT_1 = 200;            // 25% of the first cheque
+const CREDIT_DOLLARS = 500;      // 25% of the full $2,000, once both cheques land
+const TEAM_KEEPS_1 = 600;        // Budget vs. Actual after one cheque: 800 arrived − 200 rebated
+const TEAM_KEEPS = 1500;         // and after both: raised less the family's share
 /** Budgeted expected sponsorship, so the report has a row to compare an actual against at all. */
 const SPONSORSHIP_BUDGET = 2000;
 
@@ -273,10 +289,10 @@ async function moneyPicture(page: Page) {
   };
 }
 
-test.describe('a sponsor’s money follows its status, in every reader', () => {
+test.describe('a sponsor’s money follows its arrivals, in every reader', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test('pledged records the arrangement and banks nothing; received banks it; back unwinds it', async ({ page }) => {
+  test('a pledge banks nothing; each arrival banks its share; undoing unwinds, cheque by cheque', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
 
     // ── Baseline. Asserted rather than assumed: if the fixture already carried money, every
@@ -287,7 +303,7 @@ test.describe('a sponsor’s money follows its status, in every reader', () => {
     expect(before.bvaFundingActual).toBe(0);
     expect(before.familyCredits).toBe(0);
 
-    // ── 1. PLEDGED ────────────────────────────────────────────────────────────────────────────
+    // ── 1. THE PROMISE ────────────────────────────────────────────────────────────────────────
     const created = await call(page, `${api()}/fundraisers`, {
       method: 'POST',
       body: {
@@ -295,9 +311,8 @@ test.describe('a sponsor’s money follows its status, in every reader', () => {
         name: `${MARK} Pledged Sponsor`,
         sponsorStatus: 'pledged',
         sponsorAmount: SPONSOR_AMOUNT,
-        broughtInById: playerId,
-        creditValue: CREDIT_PERCENT,
-        creditUnit: 'percent',
+        // Q16: the credit is a PLAN of family rows — this is the array shape both doors send.
+        creditPlan: [{ playerId, value: CREDIT_PERCENT, unit: 'percent' }],
       },
     });
     expect(created.status, 'a coach with money-write may record a sponsor').toBe(201);
@@ -313,64 +328,108 @@ test.describe('a sponsor’s money follows its status, in every reader', () => {
     expect(pledged.bvaFundingActual, 'a pledge is not an actual against the plan').toBe(0);
     expect(pledged.familyCredits, 'a pledge credits nobody — the cheque has not come').toBe(0);
 
-    // The belt, one level below the readers: no credit ROW may exist yet. A reader could be fixed
-    // while the writer still creates the credit, which is the same bug wearing the other face.
+    // The belt, one level below the readers (mig 268 sharpened it): a pledge has NO entry rows
+    // at all — an entry means money that arrived — and therefore no credit rows either.
+    const { data: pledgeEntries } = await admin.from('rep_fundraiser_entries')
+      .select('id').eq('fundraiser_id', sponsorId);
+    expect(pledgeEntries ?? [], 'a pledge writes ZERO entries — the promise lives on the record').toHaveLength(0);
     const { data: earlyCredits } = await admin.from('rep_dues_credits')
       .select('id').eq('program_year_id', programYearId);
     expect(earlyCredits ?? [], 'no dues credit is written for a pledge').toHaveLength(0);
 
-    // ── 2. RECEIVED ───────────────────────────────────────────────────────────────────────────
-    const received = await call(page, `${api()}/fundraisers/${sponsorId}`, {
+    // ── 2. STATUS IS DERIVED — the old flip is refused with directions ───────────────────────
+    const flipped = await call(page, `${api()}/fundraisers/${sponsorId}`, {
       method: 'PATCH',
-      body: { sponsorStatus: 'received', sponsorAmount: SPONSOR_AMOUNT },
+      body: { sponsorStatus: 'received' },
     });
-    expect(received.status).toBe(200);
+    expect(flipped.status, 'status follows the money — a hand flip is refused').toBe(409);
+    expect((flipped.body as { code?: string }).code).toBe('SPONSOR_STATUS_IS_DERIVED');
 
-    const banked = await moneyPicture(page);
-    expect(banked.hubMoneyIn, 'the cheque landed: it is money in').toBe(SPONSOR_AMOUNT);
-    expect(banked.hubSponsorReceived).toBe(SPONSOR_AMOUNT);
-    expect(banked.hubSponsorPledged, 'and it is no longer a promise').toBe(0);
+    // ── 3. THE FIRST CHEQUE ───────────────────────────────────────────────────────────────────
+    const first = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE, method: 'cheque' },
+    });
+    expect(first.status, 'an arrival is recorded against the sponsor').toBe(201);
+    const firstEntryId = (first.body as { entryId: string }).entryId;
+
+    const partPaid = await moneyPicture(page);
+    expect(partPaid.hubMoneyIn, 'the first cheque is money in').toBe(ARRIVAL_1);
+    expect(partPaid.hubSponsorReceived).toBe(ARRIVAL_1);
+    expect(partPaid.hubSponsorPledged, 'the promise shrinks to what is STILL TO COME').toBe(SPONSOR_AMOUNT - ARRIVAL_1);
     // The actual against an expected-funding line is the TEAM'S SHARE — everything that arrived,
     // less what was rebated to the family, because that rebate already lowers their own dues.
-    expect(banked.bvaFundingActual, 'the report counts what the team KEPT').toBe(TEAM_KEEPS);
-    expect(banked.familyCredits, 'the family who brought it in is credited their share').toBe(CREDIT_DOLLARS);
+    expect(partPaid.bvaFundingActual, 'the report counts what the team KEPT of what ARRIVED').toBe(TEAM_KEEPS_1);
+    expect(partPaid.familyCredits, 'the family earns their share of THIS cheque, not of the promise').toBe(CREDIT_1);
 
-    // ── 3. BACK TO PLEDGED ────────────────────────────────────────────────────────────────────
-    // The direction with no create-time path to lean on, and the one that strands a credit on a
-    // real family's bill for money the team no longer has.
-    const unwound = await call(page, `${api()}/fundraisers/${sponsorId}`, {
-      method: 'PATCH',
-      body: { sponsorStatus: 'pledged', sponsorAmount: SPONSOR_AMOUNT },
+    // ── 4. THE SECOND CHEQUE keeps the pledge in full ────────────────────────────────────────
+    const second = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: ARRIVAL_2, receivedDate: ARRIVAL_2_DATE, method: 'etransfer' },
     });
-    expect(unwound.status).toBe(200);
+    expect(second.status).toBe(201);
+    const secondEntryId = (second.body as { entryId: string }).entryId;
+
+    const banked = await moneyPicture(page);
+    expect(banked.hubMoneyIn, 'both cheques landed: the full promise is money in').toBe(SPONSOR_AMOUNT);
+    expect(banked.hubSponsorReceived).toBe(SPONSOR_AMOUNT);
+    expect(banked.hubSponsorPledged, 'nothing is still to come').toBe(0);
+    expect(banked.bvaFundingActual, 'the report counts what the team KEPT').toBe(TEAM_KEEPS);
+    expect(banked.familyCredits, 'the family’s credit reaches their full agreed share').toBe(CREDIT_DOLLARS);
+
+    const { data: bothEntries } = await admin.from('rep_fundraiser_entries')
+      .select('id, received_date').eq('fundraiser_id', sponsorId);
+    expect(bothEntries ?? [], 'two arrivals, two entries').toHaveLength(2);
+    expect((bothEntries ?? []).every(e => !!e.received_date), 'every arrival knows its day').toBe(true);
+
+    // ── 5. UNDO, CHEQUE BY CHEQUE — the direction with no create-time path to lean on ────────
+    const undoSecond = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals/${secondEntryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(undoSecond.status, 'an arrival can be undone').toBe(200);
+
+    const backToOne = await moneyPicture(page);
+    expect(backToOne.hubMoneyIn, 'the second cheque is off the books').toBe(ARRIVAL_1);
+    expect(backToOne.hubSponsorPledged, 'and its amount is a promise again').toBe(SPONSOR_AMOUNT - ARRIVAL_1);
+    expect(backToOne.familyCredits, 'the family keeps only the first cheque’s share').toBe(CREDIT_1);
+
+    const undoFirst = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals/${firstEntryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(undoFirst.status).toBe(200);
+    expect((undoFirst.body as { nowPledged?: boolean }).nowPledged,
+      'undoing the LAST arrival returns the sponsor to a pledge').toBe(true);
 
     const after = await moneyPicture(page);
-    expect(after.hubMoneyIn, 'un-receiving takes it back off the books').toBe(0);
+    expect(after.hubMoneyIn, 'un-arriving takes it all back off the books').toBe(0);
     expect(after.hubSponsorReceived).toBe(0);
-    expect(after.hubSponsorPledged, 'it is a promise again, and says so').toBe(SPONSOR_AMOUNT);
+    expect(after.hubSponsorPledged, 'it is a full promise again, and says so').toBe(SPONSOR_AMOUNT);
     expect(after.bvaFundingActual, 'and off the report').toBe(0);
     expect(after.familyCredits, '⚠ and OFF THE FAMILY’S BILL — the credit must not be stranded').toBe(0);
 
     const { data: leftCredits } = await admin.from('rep_dues_credits')
       .select('id').eq('program_year_id', programYearId);
-    expect(leftCredits ?? [], 'no credit row survives the un-receive').toHaveLength(0);
+    expect(leftCredits ?? [], 'no credit row survives the unwind').toHaveLength(0);
+    const { data: leftEntries } = await admin.from('rep_fundraiser_entries')
+      .select('id').eq('fundraiser_id', sponsorId);
+    expect(leftEntries ?? [], 'no arrival row survives it either').toHaveLength(0);
   });
 
   test('the per-player drive endpoints refuse a sponsor rather than posting its money twice', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
     // These two routes predate sponsors and enforce a DRIVE's rules only. Pointed at a sponsor by
     // a coach who legitimately holds money-write they would post real income and write a real dues
-    // credit for a sponsorship still marked pledged, and add a second entry to a record every
-    // sponsor read assumes has exactly one. Fixed in review; pinned here because the fix lives in
-    // two files a later refactor could easily merge back into the drive path.
+    // credit against a sponsorship — outside the arrivals writer and its payout floor entirely.
+    // Fixed in review; pinned here because the fix lives in two files a later refactor could
+    // easily merge back into the drive path.
     const logged = await call(page, `${api()}/fundraisers/${sponsorId}/entries`, {
       method: 'POST',
       body: { playerId, amountRaised: 50 },
     });
-    expect(logged.status, 'a sponsor is one amount on the sponsor, never logged per player').toBe(400);
+    expect(logged.status, 'a sponsor’s money moves through arrivals, never logged per player').toBe(400);
 
     const { data: entries } = await admin.from('rep_fundraiser_entries')
       .select('id').eq('fundraiser_id', sponsorId);
-    expect(entries ?? [], 'a sponsor still has exactly ONE entry').toHaveLength(1);
+    expect(entries ?? [], 'and no entry appeared — the sponsor is still a clean pledge').toHaveLength(0);
   });
 });

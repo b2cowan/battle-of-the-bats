@@ -580,7 +580,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
             why the entry list excludes them, and why that exclusion is asserted rather than
             trusted. */
     const { data: drives } = await db.from('rep_fundraisers')
-      .select('id, name, end_date, is_active, player_rebate_percent, kind, sponsor_status')
+      .select('id, name, end_date, is_active, player_rebate_percent, kind, sponsor_status, pledged_amount')
       .eq('program_year_id', py.id);
     const drive = (drives ?? []).find(f => f.name === MIDSEASON_FUNDRAISER.name);
     check(!!drive && !drive.is_active && drive.end_date < today,
@@ -623,11 +623,20 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       sponsor ? `kind ${sponsor.kind}, status ${sponsor.sponsor_status}` : 'no sponsor found');
     if (sponsor) {
       const { data: sponsorEntries } = await db.from('rep_fundraiser_entries')
-        .select('player_id, amount_raised, rebate_amount, credit_id').eq('fundraiser_id', sponsor.id);
+        .select('player_id, amount_raised, rebate_amount, credit_id, received_date').eq('fundraiser_id', sponsor.id);
       const rows = sponsorEntries ?? [];
-      check(rows.length === 1 && Number(rows[0].amount_raised) === MIDSEASON_SPONSOR.amount,
-        `it is ONE arrival of $${MIDSEASON_SPONSOR.amount} — a sponsor is its single entry, never a roster of them`,
-        `${rows.length} entries`);
+      const arrived = rows.reduce((s, e) => s + Number(e.amount_raised), 0);
+      /* Mig 268 (arrivals): a sponsor's entries are DATED ARRIVALS, several per record, and the
+         promise lives in pledged_amount. Two arrivals keeping the pledge exactly is the demo's
+         proof the feature exists — one row would sweep it in its emptiest believable state. */
+      check(rows.length === MIDSEASON_SPONSOR.arrivals.length && arrived === MIDSEASON_SPONSOR.amount,
+        `its ${MIDSEASON_SPONSOR.arrivals.length} arrivals sum to the $${MIDSEASON_SPONSOR.amount} pledge — kept in full, in pieces`,
+        `${rows.length} arrivals, $${arrived}`);
+      check(Number(sponsor.pledged_amount ?? 0) === MIDSEASON_SPONSOR.amount,
+        `the promise itself rides the record — pledged_amount $${MIDSEASON_SPONSOR.amount} (mig 268)`,
+        `pledged_amount ${sponsor.pledged_amount}`);
+      check(rows.every(e => e.received_date),
+        'every arrival knows the day its money came in — the record page dates each cheque');
       check(rows.every(e => e.player_id === null && Number(e.rebate_amount) === 0 && !e.credit_id),
         'it is CLUB-WIDE and credits nobody — so it cannot clear the overdue bills the tour narrates');
     }

@@ -15387,7 +15387,17 @@ note: two same-day sessions both claimed §118 (the type scale and the payout fl
 stand as walked — this entry takes §120 to keep the sequence honest.
 
 
-## §121 · Promises and cheques — the Fundraising tab becomes two bands — BUILT, awaiting QA
+## §121 · Promises and cheques — the Fundraising tab becomes two bands — ✅ PASSED, owner walked 2026-08-29
+
+**✅ WALK RESULT (owner paste-back, 2026-08-29): ALL SIX PARTS PASS, 15/15 steps** — A the tab
+split 2/2 · B log a pledge 2/2 · C expands in place 2/2 · D one money form 4/4 · E edit and undo
+2/2 · F drives + cleanup 3/3. The walk was LIVE-FIXED as it ran, every finding ruled and built
+same-session (recorded in the blocks below): the A2 rail trim, the cheque-in-hand hand-off, the
+"+ Pledge" rename, the facts-only meta line (logged as a binding design rule), and the sibling
+forms' alignment (Sponsor * on both + Notes at pledge time). **Still owed after this pass:**
+the §121 build's COMMIT (its session's, with migs 268+269 — both must reach prod before any
+promote carrying this code), the /docs pass on the fundraising help articles, and the /simplify
+sweep of the drill-in's dead sponsor half.
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/02ca276f-39a2-4078-b6a7-c7f0a3361b1c`
 >
@@ -15430,3 +15440,54 @@ engine underneath (mig 268, §120, the 6/6 lifecycle spec) is untouched.
 token). Known debt, deliberately parked: the drill-in's sponsor half is UNREACHABLE dead code
 marked for the /simplify sweep; the in-app fundraising help articles now describe the previous
 shape and need the /docs pass.
+
+**⚖ §121 WALK — "+ Sponsorship" GAINS THE CHEQUE-IN-HAND HAND-OFF (owner, mid-walk 2026-08-29,
+built same session).** The owner's finding at the pledge sheet: "I should be able to add money
+that came in or pledged, not just pledged." Two shapes were put to him — arrival fields inside
+the sheet (which would resurrect the duplicated sponsor form this rework was born to kill and
+break Direction A's money-never-has-a-form-here rule) or the hand-off pattern ratified twice this
+week — and he chose the **hand-off**. The New sponsorship sheet keeps its promise purity and
+carries one visible line above the footer: *"Cheque already in hand? **Record it instead** — the
+sponsor is created with its first cheque, and your name and amount come with you."* Clicking it
+closes the sheet (no discard prompt — the typing travels) and opens Record on **"A sponsor came
+through → A new sponsor…"** with the typed name and amount pre-filled; one save creates the
+sponsor with its first cheque, exactly walk step D4's path. Expected-by, credit families and tags
+typed on the sheet do not travel (the conversation asks credit families and tags itself; the
+sentence states what carries). Playwright-verified live: line present, sheet closes, picker lands
+on "A new sponsor…", name and $450 carried. Typecheck clean · lint 0 errors.
+
+**⚖ §121 WALK — THE DOOR IS "+ Pledge" (owner, mid-walk 2026-08-29, reconsidering his own
+same-day sibling-naming call with eyes open; built same session).** "Sponsorship" claims the
+whole relationship, cheques included — the owner himself pressed "+ Sponsorship" holding arrived
+money, which is the button failing its one job on first contact. "Pledge" is the sponsor-world's
+"bill" (fold decision 6A: the object noun carries the timing), and it names WHICH of the sponsor
+band's two doors this is — Record is the other. The sheet retitled **"Log a pledge"** (subtitle
+unchanged; "Edit sponsorship" stays — it edits the whole agreement); the empty state and the help
+article teach the new name and the hand-off. The sibling symmetry with "+ Fundraiser" keeps its
+weight and position; the name asymmetry is earned by a structural one (a drive can only be
+created empty; a sponsorship can be born with money). Walk step B1 and the standfirst
+republished to match. ⚠ The taxonomy word is untouched: the Sponsorships row, column headings,
+report groups and export split all keep their names.
+
+**⚖ §121 WALK — THE META LINE GOES FACTS-ONLY (owner + /design, at step C1, 2026-08-29, built
+same session; logged in `memory/design_decisions.md`):** three trims in sequence — **"of each
+arrival"** (mechanics; they live in the credit plan editor and help), **"— the promise stands"**
+(narration), and then, on the owner's "is this the best format? check with design", the design
+review named why the trims kept coming: **the whole "nothing has arrived yet" fragment restates
+the In / To come columns one row above it**, which the §121 compaction already forbids. The
+pledge expansion now reads **"Expected by Jul 31 · Credits Frankie Test 10%"** — facts, no state
+sentence, no separators dangling. Guard: a pledge with no expected-by AND no credit plan keeps a
+lone "Nothing has arrived yet" (an empty line over two buttons reads as broken). Same lens as
+the A2 rail trim. Walk step C1 republished to match.
+
+**⚖ §121 WALK — THE SIBLING FORMS ALIGN (owner + /design, 2026-08-29, built same session):** the
+owner asked why Log a pledge and Edit sponsorship differ. Verdict: the earned differences stay
+(titles; the create sheet's teaching + hand-off; the edit form's arrived-money hint and
+payout-floor refusals), and the two drift items were fixed — **the identity field says
+"Sponsor *" on BOTH forms** (it read "Name *" on edit: one field, two names on sibling forms),
+and **Log a pledge gains Notes** (the edit form always had them, so a coach who knew the story
+at creation had to create-reopen-edit to write it down; the create writer already accepted the
+field). Playwright round-trip verified: a note typed at pledge time reads back in Edit
+sponsorship. Walk step E1's field list republished ("sponsor, notes, …"). ⚠ A fixture pledge
+"ZZ QA Notes Roundtrip" ($120) was created on the UAT team by the verification — parked with
+the walk's other ZZ rows per step F3.

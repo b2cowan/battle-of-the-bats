@@ -1,12 +1,173 @@
 {
-  "generated": "2026-08-27",
-  "total": 0,
+  "generated": "2026-08-29",
+  "total": 40,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 1,
+    "columns": 21,
+    "indexes": 7,
+    "constraints": 8,
+    "rls": 3
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_share_unit_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_share_value_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_fundraiser_entries.rep_fundraiser_entries_method_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.fundraiser_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.share_unit",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.share_value",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_entries.method",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraisers.expected_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraisers.pledged_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.balance_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.balance_due_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.balance_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.balance_paid_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.deposit_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.deposit_due_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.deposit_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.deposit_paid_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_team_expenses.expense_paid_at",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_fundraiser_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_fundraiser_id_player_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:rep_team_expenses.rep_team_expenses_balance_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:rep_team_expenses.rep_team_expenses_deposit_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_credit_plan_fundraiser_id_player_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_credit_plan_fundraiser_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_credit_plan_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_credit_plan_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_fundraiser_credit_plan_player_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:idx_rep_team_expenses_balance_entry",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:idx_rep_team_expenses_deposit_entry",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_fundraiser_credit_plan",
+      "sig": ""
+    }
+  ]
 }

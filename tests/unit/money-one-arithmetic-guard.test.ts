@@ -28,9 +28,11 @@
  *   · **the report** — `lib/coach-budget-rollup.ts`, and now only there. This file guards that.
  *
  * TWO RULES, catching different failures — neither subsumes the other:
- *   1. **the paid stamps have ONE reader.** `deposit_paid_at` / `balance_paid_at` /
- *      `expense_paid_at` may only be turned into money by `paidMovements`
- *      (`lib/coach-expense-movements.ts`). A second walk of them is literally the defect above.
+ *   1. **what a commitment has paid has ONE reader.** It may only be turned into money by
+ *      `paidMovements` (`lib/coach-expense-movements.ts`). A second walk of it is literally the
+ *      defect above. ⚠ The rule is named after the three legacy paid stamps it was written for;
+ *      those columns were dropped by mig 270, and its subject is now the two tables that replaced
+ *      them — see `PAID_STAMPS` below.
  *   2. **category identity is not derived privately.** The Months grid must key categories with the
  *      rollup's own `categoryKey`, or the two views of one report bucket it two different ways —
  *      which shipped, and put a cost and the refund netting against it under two different headings.
@@ -60,17 +62,20 @@ const ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.t
 /**
  * What the route may not turn into money for itself.
  *
- * The three legacy paid stamps, which used to be the answer to "what has this paid?" and are still
- * present on the table — and, since the Payables Rebuild (P1, mig 255), **the two tables that
- * replaced them**. That second half is the load-bearing addition: the rule "the paid stamps have one
- * reader" would otherwise have been satisfied trivially the moment the columns stopped being read,
- * while a fresh private walk of `rep_payable_payments` reintroduced the identical defect under a new
- * name. What the rule has always meant is **the report does not decide for itself what a commitment
- * has paid** — `getCommitmentStandings` decides, `paidMovements` dates it, and this route reads the
- * answer.
+ * ⚠ THE THREE LEGACY PAID STAMPS ARE GONE FROM THIS LIST, AND THE RULE DID NOT SHRINK WITH THEM
+ * (mig 270, 2026-08-28). `expense_paid_at` / `deposit_paid_at` / `balance_paid_at` were the original
+ * subject here — the answer to "what has this paid?" that the route was forbidden to compute for
+ * itself. They are dropped columns now, so naming them guards nothing: a route that mentioned one
+ * would not compile against the schema, let alone do arithmetic on it.
+ *
+ * What is left is the half that was always load-bearing — **the two tables that replaced them**
+ * (Payables Rebuild P1). Adding those is what stopped this rule being satisfied trivially the moment
+ * the columns stopped being read, while a fresh private walk of `rep_payable_payments`
+ * reintroduced the identical defect under a new name. What the rule has always meant is **the report
+ * does not decide for itself what a commitment has paid** — `getCommitmentStandings` decides,
+ * `paidMovements` dates it, and this route reads the answer.
  */
 const PAID_STAMPS = [
-  'expense_paid_at', 'deposit_paid_at', 'balance_paid_at',
   'rep_payable_payments', 'rep_payable_installments',
 ];
 

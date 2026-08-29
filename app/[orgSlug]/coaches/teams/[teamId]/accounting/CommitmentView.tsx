@@ -178,7 +178,7 @@ export default function CommitmentView({
     /* ⚠⚠ AUTOSAVE DOES NOT REJECT AN EMPTY NAME — the coach is mid-word. It simply does not save
        yet; nothing typed is discarded and the strip says why. An explicit submit would refuse. */
     if (!name.trim()) {
-      setSaveError('Give this commitment a name to save it.');
+      setSaveError('Give this bill a name to save it.');
       return;
     }
     const sigAtSave = sigRef.current;
@@ -207,7 +207,7 @@ export default function CommitmentView({
         }),
         signal: abort.signal,
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save this commitment.');
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save this bill.');
       await res.json().catch(() => ({}));
       /* Only settle if nothing changed while the request was in flight — otherwise the coach's
          later keystrokes would be marked saved by an earlier save that never carried them. */
@@ -217,7 +217,7 @@ export default function CommitmentView({
       setSaveError(
         e instanceof DOMException && e.name === 'AbortError'
           ? 'Saving is taking too long — check your connection.'
-          : e instanceof Error ? e.message : 'Could not save this commitment.',
+          : e instanceof Error ? e.message : 'Could not save this bill.',
       );
       setState('dirty');
     } finally {
@@ -246,10 +246,10 @@ export default function CommitmentView({
     setSaveError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expense.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete this commitment.');
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete this bill.');
       onDeleted();
     } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : 'Could not delete this commitment.');
+      setSaveError(e instanceof Error ? e.message : 'Could not delete this bill.');
       setConfirmDelete(false);
       setDeleting(false);
     }
@@ -307,8 +307,8 @@ export default function CommitmentView({
               className={styles.commitTitleInput}
               value={name}
               onChange={e => touch(setName)(e.target.value)}
-              aria-label="Commitment name"
-              placeholder="Name this commitment"
+              aria-label="Bill name"
+              placeholder="Name this bill"
               maxLength={200}
             />
             <Pencil size={13} aria-hidden className={styles.commitTitlePencil} />
@@ -512,7 +512,7 @@ export default function CommitmentView({
           ) : (
             <>
               <button className={styles.deleteRecordBtn} onClick={() => setConfirmDelete(true)} disabled={deleting}>
-                <Trash2 size={13} aria-hidden /> Delete this commitment
+                <Trash2 size={13} aria-hidden /> Delete this bill
               </button>
               {/* ── The save strip, ON THE DELETE ROW ──────────────────────────────────────────
                   ⚖ IT HAD A ROW OF ITS OWN AND DID NOT EARN ONE (owner, §114 walk 2026-08-27).

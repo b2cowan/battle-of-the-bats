@@ -265,10 +265,15 @@ describe('whyPaidDateIsRefused', () => {
 /**
  * ⚠⚠ A CHOSEN DAY, STORED AS AN INSTANT — the off-by-one that back-dating opened up.
  *
- * `expense_paid_at` is a timestamptz, and every screen turns it back into a day through the ORG's
+ * `expense_paid_at` was a timestamptz, and every screen turned it back into a day through the ORG's
  * clock. Write the bare `2026-07-04` and Postgres reads UTC midnight, which is still July 3rd in
  * Toronto: the coach picks the 4th and the row reports the 3rd. Nothing throws, the month is
  * usually still right, and it would have survived review — so it is pinned here instead.
+ *
+ * ⚠ THAT COLUMN IS GONE (mig 270) AND THIS TEST IS NOT. A payment's `paid_date` is a bare `date`,
+ * so the hazard has no caller in the money code today — `orgDayAsStoredInstant` currently has none
+ * at all. It is kept because the trap belongs to the SHAPE, not to that column: the next
+ * coach-chosen day stored as a timestamptz walks into it, and this is the pin that stops it.
  */
 describe('orgDayAsStoredInstant', () => {
   test('the stored instant reads back as the SAME day the coach picked', () => {

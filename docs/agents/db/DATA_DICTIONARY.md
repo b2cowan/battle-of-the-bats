@@ -3429,7 +3429,7 @@ moment it lands.
 - **THE DUAL BUDGET-LINE TRAP — check the FK target before every join.** Two unrelated "budget line" tables coexist: `rep_budget_lines` (TEAM, this domain, keyed by UUID `program_year_id`) and `org_budget_lines` (ORG Accounting, keyed by integer `season_year`). The `budget_line_id`-shaped FKs point at **different** ones — `rep_budget_periods.budget_line_id` and `rep_player_dues_schedules.budget_line_id` → **`rep_budget_lines`** (team), but `rep_cost_allocations.source_budget_line_id` and `rep_team_payment_requests.budget_line_id` → **`org_budget_lines`** (org). Joining the wrong one returns nothing.
 - **Status/method enums are CHECK-enforced — copy the values verbatim.** `rep_allocation_splits.split_method` `percentage|sessions|fixed`; `.payment_schedule` `standard|custom`; `rep_player_dues_installments.source` `manual|budget_generated`; `rep_dues_credits.credit_type` `contribution|fundraiser|overpayment|other`; `rep_team_expenses.expense_type` `expense|tournament_payable`; `rep_team_payment_requests.request_type` `payment_to_org|charge_to_org`; `rep_team_payment_requests.status` `pending|approved|denied`. **Unlike `team_entitlements.status`, none of these carry a US/UK spelling variant** — there is no `cancelled`/`canceled` doublet to guard; match the single spelling exactly.
 - **Reconciliation is mostly APP-enforced, not DB-enforced.** The only DB guarantees are the per-row positivity CHECKs and the UNIQUE keys. Sum relationships are enforced only in route code, and only on some paths: allocation splits must sum **≤** `allocation.total_amount` (under-allocation allowed, +$0.001 tol); a split's installments must sum **=** `split.amount` (±$0.01); budget periods must sum **=** `line.total_amount` (±$0.02); a dues schedule's `total_amount` is checked against its installments **only on the manual POST path**. Editing children later can silently desync the parent total.
-- **`accounting_entry_id` ≠ "paid", and is unpopulated on several tables.** It is a back-link to the org ledger, written **only** by the dues-installment and fundraiser-entry pay paths. On `rep_allocation_installments`, `rep_team_expenses`, and `rep_team_payment_requests` it exists but **no code writes it** — the org-ledger entry is authoritative with no back-reference. Use `paid_at` / `*_paid_at` / `status` for payment state, never the presence of `accounting_entry_id`.
+- **`accounting_entry_id` ≠ "paid", and where it lives has MOVED.** It is a back-link to the org ledger, not a payment flag. Written by the dues-installment and fundraiser-entry pay paths, and — since the Payables Rebuild — by a commitment's **payments** (`rep_payable_payments.accounting_entry_id`), which is what reversal and adoption read. On `rep_allocation_installments`, `rep_team_expenses` and `rep_team_payment_requests` the column exists but **no code writes it**; on `rep_team_expenses` it is the vestige of mig 236, whose per-half twins mig 270 removes (applied to dev 2026-08-28). ⚠ **Do not reach for `*_paid_at` on `rep_team_expenses` — mig 270 removes them** (applied to dev 2026-08-28). For a commitment, payment state is `getCommitmentStandings` over its installments and payments; elsewhere use `paid_at` / `status`, never the presence of `accounting_entry_id`.
 - **Three schema/code-drift bugs were verified at commit `5479605` (the exact class this dictionary exists to surface — confirmed against live dev+prod via `information_schema`, 2026-06-09). Status after the 2026-06-09 follow-up fix pass:**
   1. **✓ FIXED 2026-06-09 (migration 119, dev+prod):** **`rep_team_expenses` had no `notes` column**, yet `createRepTeamExpense`/`updateRepTeamExpense` and the coach expenses form's Notes textarea all used it → every save/edit errored `column "notes" does not exist`. Migration 119 added the nullable `notes text` to both envs.
   2. **✓ FIXED 2026-06-09:** **`org_id` is `NOT NULL` with no default and no trigger** on both `rep_allocation_installments` and `rep_player_dues_installments`. The insert helpers (`createRepCostAllocationWithSplits`, `replaceRepDuesInstallments` + its caller, and the `generate-installments` route) now populate `org_id` and the denormalized `team_id`.
@@ -3823,17 +3823,36 @@ moment it lands.
 <!-- dict:col:rep_fundraisers.kind -->
 **`kind`** (text, NOT NULL, default `'fundraiser'`, CHECK `fundraiser|sponsor`) — **migration 237**.
 `fundraiser` = the whole team takes part; its rows are roster players. `sponsor` = one business /
-grant / arrival; the record **is** the row and carries **exactly one** `rep_fundraiser_entries`
-row. ⚠ **Create-time only** — a drive's rows are players and a sponsor is a single arrival, so
-switching afterwards has nothing sensible to do with what is already recorded; nothing in the DB
-enforces that, the write path does.
+grant; **since migration 268 (2026-08-28)** its entries are **ARRIVALS** — zero while pledged, one
+per cheque once money lands (Q12, arrivals). ⚠ 237's "carries exactly one entry" is RETIRED.
+⚠ **Create-time only** — a drive's rows are players and a sponsor's are arrivals, so switching
+afterwards has nothing sensible to do with what is already recorded; nothing in the DB enforces
+that, the write path does.
 
 <!-- dict:col:rep_fundraisers.sponsor_status -->
 **`sponsor_status`** (text, nullable, CHECK: `pledged|received` when `kind='sponsor'`, NULL when
-`kind='fundraiser'`) — **migration 237**. ⚠ **`pledged` means NO money yet:** the entry exists (it
-records the arrangement) but **no `accounting_entries` income row and no `rep_dues_credits` row are
-written** until it flips to `received`. Budget vs. Actual counts receipts only. A drive uses
-`is_active` for the same job, which is why this is NULL there.
+`kind='fundraiser'`) — **migration 237; semantics tightened by 268 (2026-08-28)**. ⚠ **`pledged`
+means ZERO entries and no money**: no arrival rows, no `accounting_entries` income, no
+`rep_dues_credits` — the promise lives in `pledged_amount` alone. `received` means ≥1 arrival
+exists. **The writers maintain it as DERIVED truth**: recording an arrival sets `received`;
+undoing the last arrival returns it to `pledged`; nothing flips it by hand any more. Budget vs.
+Actual counts receipts only. A drive uses `is_active` for the same job, which is why this is NULL
+there.
+
+<!-- dict:col:rep_fundraisers.pledged_amount -->
+**`pledged_amount`** (numeric, nullable) — **migration 268 (2026-08-28)**. SPONSOR ONLY: the
+agreed amount — the promise, whether or not money has arrived. NULL on a drive. "Still to come" =
+`pledged_amount − Σ(arrivals)`, floored at 0, per sponsor. Backfilled at 268 from each sponsor's
+then-single entry. ⚠ Every "pledged" figure in the product reads THIS column since 268 — a
+pledged sponsor has no entries to sum (the 268 reader flip; sites listed in
+`COACH_SPONSORSHIP_LIFECYCLE_PLAN`).
+
+<!-- dict:col:rep_fundraisers.expected_by -->
+**`expected_by`** (date, nullable) — **mig 269 (2026-08-29)**, SPONSOR ONLY, optional (owner
+ruling Q13): the day the pledged money is expected. NULL = no date promised. Quiet by design —
+one sentence on the sponsor band's row and a clause on the Money overview once passed; **not** a
+due date (nothing schedules or notifies against it; BvA's forward view keeps pledges in "No date
+yet"). NULL on a fundraiser.
 
 <!-- dict:col:rep_fundraisers.is_active -->
 **`is_active`** (bool, NOT NULL, default true) — soft open/closed; gates new entries (gotcha 4).
@@ -3841,11 +3860,14 @@ written** until it flips to `received`. Budget vs. Actual counts receipts only. 
 ### `rep_fundraiser_entries`
 <!-- dict:table:rep_fundraiser_entries -->
 
-**Purpose:** one row per player per fundraiser — how much that player raised and the resulting dues rebate. The hub of a cross-domain triple-write.
+**Purpose:** for a DRIVE, one row per player — how much that player raised and the resulting dues
+rebate. For a SPONSOR (**since mig 268**), one row per **ARRIVAL** — a dated cheque, `player_id`
+always NULL, its family credits hanging off `rep_dues_credits.fundraiser_entry_id` per the
+`rep_fundraiser_credit_plan`. The hub of a cross-domain triple-write either way.
 
 **Gotchas (read first):**
 1. **Recording an entry triple-writes across two domains, non-transactionally.** POST creates (1) an `accounting_entries` income row in the **org** ledger (category `fundraising`, status `posted`), (2) this entry row, and (3) — only if `rebate_amount > 0` — a `rep_dues_credits` row, then a 4th write back-linking `credit_id`. There is **no rollback**: if the credit insert fails, the entry + accounting row persist with `credit_id=NULL`.
-2. **UNIQUE `(fundraiser_id, player_id)`** — one entry per player per fundraiser (POST 409s if it exists → "use PATCH").
+2. **UNIQUE `(fundraiser_id, player_id)`** — one entry per player per DRIVE (POST 409s if it exists → "use PATCH"). ⚠ Does **not** cap a sponsor's arrivals: they all carry `player_id` NULL, and SQL NULLs are distinct for uniqueness — deliberate (mig 268).
 3. **No DELETE route** — an entry can't be removed, only PATCHed. Setting amount to 0 zeroes the rebate and **deletes the linked credit**, but the entry row and its (now-$0) accounting income row remain.
 4. **`rebate_percent` is a SNAPSHOT** copied from the fundraiser at POST and **never recomputed** from the live fundraiser; PATCH uses the stored snapshot. **`rebate_amount = round(amount_raised × rebate_percent / 100, 2)`**, computed and stored (not DB-generated); recomputed on PATCH.
 5. **CHECK `amount_raised >= 0`** (`rep_fundraiser_entries_amount_raised_check`) — note `>= 0`, not `> 0`: a player can be recorded with $0 raised.
@@ -3859,11 +3881,12 @@ written** until it flips to `received`. Budget vs. Actual counts receipts only. 
 <!-- dict:col:rep_fundraiser_entries.player_id -->
 **`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, **NULLABLE since migration 237**) — parent campaign + scope + the player; UNIQUE `(fundraiser_id, player_id)`; indexes `fundraiser_idx`, `player_idx`.
 
-⚠ **`player_id` IS NULLABLE AND THAT REACHES ~20 READERS (mig 237).** A club-wide **sponsor**
-belongs to no family, so the entry recording it has no player. A **fundraiser's** entry always names
-one — nothing in the DB enforces that split, because the constraint would have to reach across to
-the parent's `kind` on every insert; the write path that creates them is the single place that
-knows. **A null player means no dues credit is possible: there is nobody to credit.**
+⚠ **`player_id` IS NULLABLE AND THAT REACHES ~20 READERS (mig 237; semantics widened by 268).**
+A **sponsor's** entry (an arrival) is **always** NULL since 268 — the credited families live on
+`rep_fundraiser_credit_plan`, and one arrival can fund several families' credits via
+`rep_dues_credits.fundraiser_entry_id`. A **fundraiser's** entry always names a player — nothing
+in the DB enforces that split; the write path is the single place that knows. (268 supersedes
+237's "a null player means no dues credit is possible.")
 
 <!-- dict:col:rep_fundraiser_entries.amount_raised -->
 **`amount_raised`** (numeric, NOT NULL, CHECK `>= 0`) — dollars raised by this player (gotcha 5).
@@ -3876,13 +3899,55 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 **`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — the posted org-ledger income row; always set in practice (gotcha 6).
 
 <!-- dict:col:rep_fundraiser_entries.credit_id -->
-**`credit_id`** (FK → `rep_dues_credits.id`, nullable) — reverse half of the circular FK; null when `rebate_amount = 0`.
+**`credit_id`** (FK → `rep_dues_credits.id`, nullable) — reverse half of the circular FK; null when `rebate_amount = 0`. ⚠ **DRIVES ONLY since mig 268** — retired from the sponsor write path (an arrival can credit several families, found via `rep_dues_credits.fundraiser_entry_id`); kept for drives and history.
+
+<!-- dict:col:rep_fundraiser_entries.method -->
+**`method`** (text, nullable, CHECK in `etransfer|cash|cheque|card|other`) — **mig 268
+(2026-08-28)**. How this arrival came in — the product-wide five-token list (mig 260). NULL on
+every pre-268 row and optional after; sponsor doors write it, nothing writes it for drive entries
+yet.
 
 <!-- dict:col:rep_fundraiser_entries.received_date -->
 **`received_date`** (date, nullable; **mig 261**, 2026-08-23) — the day the money ARRIVED (org-timezone date, coach-typed via the recording conversation; owner ruling: logged late still lands in its period). Also the date stamped on the entry's ledger row and its rebate credit at creation. **NULL on every pre-261 row and on rows from doors that don't ask yet** (the drive's own Log-amount until money-centralization P2) — readers fall back to `created_at`, which is what the register always used; the register row's detail line says which of the two it is showing.
 
 <!-- dict:col:rep_fundraiser_entries.notes -->
 **`notes`** (text, nullable) — free text.
+
+### `rep_fundraiser_credit_plan`
+<!-- dict:table:rep_fundraiser_credit_plan -->
+
+**Purpose:** SPONSOR ONLY — the agreed split of a sponsor's credit among families, one row per
+family, $ or % each (**mig 268**, owner ruling Q16 2026-08-28). The PLAN is the agreement; the
+money is the `rep_dues_credits` rows that accrue per ARRIVAL as cheques land.
+
+**Gotchas (read first):**
+1. **Accrual arithmetic lives in `lib/sponsor-arrivals.ts`, nowhere else:** a `percent` share
+   earns pct × each arrival; an `amount` share fills proportionally against
+   `rep_fundraisers.pledged_amount` and trues up on the arrival that reaches the pledge (no
+   pledge → whole on first arrival). Each accrued piece is its own `rep_dues_credits` row
+   pointing at the arrival via `fundraiser_entry_id`.
+2. **Editing the plan re-derives every arrival's credits from scratch** behind the payout floor
+   (`lib/dues-credit-guards.ts`), per family, pre-flight — never patched in place.
+3. **UNIQUE `(fundraiser_id, player_id)`** — one share per family per sponsor.
+4. **Drives never have rows here** — their per-player credits stay snapshotted on their entries.
+5. Backfilled at 268 from each sponsor entry's `player_id` + rebate provenance (percent when a
+   rate was agreed, dollars otherwise).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_fundraiser_credit_plan.org_id -->
+<!-- dict:col:rep_fundraiser_credit_plan.team_id -->
+<!-- dict:col:rep_fundraiser_credit_plan.fundraiser_id -->
+<!-- dict:col:rep_fundraiser_credit_plan.player_id -->
+**`org_id`** / **`team_id`** / **`fundraiser_id`** (FK → `rep_fundraisers`, CASCADE) /
+**`player_id`** (FK → `rep_roster_players`, CASCADE) — scope + the sponsor + the credited family;
+RLS mirrors `rep_fundraiser_entries` (org members read; team coaches / org money roles write).
+
+<!-- dict:col:rep_fundraiser_credit_plan.share_value -->
+<!-- dict:col:rep_fundraiser_credit_plan.share_unit -->
+**`share_value`** (numeric, NOT NULL, CHECK `> 0`) / **`share_unit`** (text, NOT NULL, CHECK
+`amount|percent`) — the family's share as agreed: dollars, or a rate. Validation at the write
+path: Σ dollar-shares + Σ percent-shares × pledged ≤ pledged.
 
 ### `rep_cost_allocations`
 <!-- dict:table:rep_cost_allocations -->
@@ -3994,15 +4059,15 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 ### `rep_team_expenses`
 <!-- dict:table:rep_team_expenses -->
 
-**Purpose:** a coach-authored ledger of money the team spends or owes. Two shapes share the row via `expense_type`: a one-shot **expense** (single `amount`/`expense_paid_at`) vs a **tournament_payable** that splits into a deposit leg + a balance leg.
+**Purpose:** a coach-authored ledger of money the team spends or owes — a **commitment**. `expense_type` still separates a one-shot **expense** from a **tournament_payable**, but the difference is now vocabulary, not shape: since the Payables Rebuild (mig 255) BOTH are a plan of 1..n dated pieces in `rep_payable_installments`, settled by 0..n rows in `rep_payable_payments`. ⚠ **Mig 270 (applied to dev 2026-08-28) drops the nine legacy columns that used to answer "what does this owe and what has it paid?"** (`deposit_*`, `balance_*`, `expense_paid_at`, and the two per-half ledger links) — this table no longer answers that question at all; the two records tables do.
 
 **Gotchas (read first):**
 1. **`notes` column — was missing, now ✓ FIXED (migration 119, dev+prod, 2026-06-09).** At commit `5479605` the row had only 23 columns with **no `notes`**, yet `createRepTeamExpense`/`updateRepTeamExpense` and the coach expenses form's Notes textarea all used `notes` → every save/edit errored `column "notes" does not exist` (the exact schema-drift class this dictionary exists to surface). Migration 119 added the nullable `notes text` to both envs; the feature now works as designed.
-2. **Two-payment model is by `expense_type`, NOT by arithmetic.** `expense`: fully paid when `expense_paid_at` is set; the deposit/balance fields are ignored. `tournament_payable`: fully paid when BOTH `deposit_paid_at` AND `balance_paid_at` are set; paid amount = (deposit_paid_at ? deposit_amount : 0) + (balance_paid_at ? balance_amount : 0). **`deposit_amount + balance_amount == amount` is NOT enforced** (no CHECK, no app validation). Worse, mark-deposit/mark-balance fall back to the FULL `amount` when the leg amount is NULL, so a payable with null split amounts can post the full amount twice. There is no single "is paid" flag.
-3. **`expense_type` CHECK `expense|tournament_payable`** — `tournament_payable` = money owed to a tournament/host (deposit+balance schedule). `upcoming-payables` surfaces rows by deposit/balance **due dates only**, regardless of `expense_type`, so lump `expense` rows (no due dates) never appear there.
-4. **`accounting_entry_id` IS written — this gotcha was stale and is corrected 2026-08-16.** It described the pre-migration-236 behaviour ("the route creates a team-ledger entry but discards its id"), which stopped being true when mig 236 added the link and the delete path started using it to reverse exactly the right entry rather than matching on an editable description. Both doors that post a cash entry now record it: mark-paid (`markExpensePaid` / `markDepositPaid` / `markBalancePaid`, into `accounting_entry_id` / `deposit_entry_id` / `balance_entry_id`) and `createPaidExpense`, the create-time already-paid path added 2026-08-16.
+2. **⚠⚠ THE TWO-PAYMENT MODEL IS GONE — do not reason about this table with it (Payables Rebuild, mig 255; the columns go with mig 270, applied to dev 2026-08-28).** It used to read: an `expense` was fully paid when `expense_paid_at` was set, a `tournament_payable` when BOTH `deposit_paid_at` AND `balance_paid_at` were; `deposit_amount + balance_amount == amount` was never enforced, and mark-deposit/mark-balance fell back to the FULL `amount` when a leg amount was NULL, so a payable with null split amounts could post the full amount twice. **All of that is unrepresentable now.** What a commitment OWES is the sum of its `rep_payable_installments` (R1: at least one, always); what it has PAID is the sum of its `rep_payable_payments`; and `getCommitmentStandings` (lib) is the single answer to "where does this stand". A commitment can be part-paid, which the boolean pair could not express.
+3. **`expense_type` CHECK `expense|tournament_payable`** — `tournament_payable` = money owed to a tournament/host. ⚠ **It no longer selects a SHAPE, only wording** (gotcha 2): both kinds carry a plan. `upcoming-payables` surfaces rows by their **installments' due dates**, so a lump `expense` with a future piece appears there too — it used to key off the deposit/balance date columns and could not.
+4. **`accounting_entry_id` on THIS table is no longer written or read.** History, because it has been wrong in both directions: it was documented as "never written", then mig 236 started writing it (with per-half twins `deposit_entry_id`/`balance_entry_id` for a payable), and the Payables Rebuild moved the link onto the **payment** row. Mig 255 carried each half's existing entry onto the payment it became, mig 270 dropped the two twins, and this column was left in place only as the link a pre-mig-236 row still has. **Every reversal and adoption path reads `rep_payable_payments.accounting_entry_id`** — see `adoptLedgerLinksForExpense` / the delete path in lib/db.ts. ⚠ A NULL here has never meant "unpaid".
 5. **`payee_id` (→ org `org_payees`) vs `payee_payer` (text) are mutually exclusive** — picking a structured org payee sets `payee_id` (clears `payee_payer`); a free-text name sets `payee_payer` (clears `payee_id`); both set at create only. **`category` is free text** and is the (name-based, case-insensitive) join key to `rep_budget_lines` categories in budget-vs-actual — a typo silently drops the expense into "unbudgeted".
-6. **CHECK `amount > 0`** (only `amount`; the deposit/balance amounts have no CHECK and are nullable).
+6. **CHECK `amount > 0`, and `amount` is DERIVED, not typed (R2).** It is the sum of the row's installments, written by `createRepTeamExpense` / `insertCommitmentWithRecords` and re-derived on every plan edit. It is the one legacy column the rebuild kept, deliberately: the older readers that sum spending still work. ⚠ **Nothing enforces the sum in the database** — a direct INSERT that skips the installments produces a commitment invisible to every money screen, which is why fixtures go through `scripts/lib/seed-commitment-records.mjs` rather than inserting bare rows.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -4024,35 +4089,38 @@ knows. **A null player means no dues credit is possible: there is nobody to cred
 **`notes`** (text, nullable) — free-text note on the expense; added in migration 119 (gotcha 1). Written by `createRepTeamExpense`/`updateRepTeamExpense`; read into `RepTeamExpense.notes` and shown on the coach expenses list.
 
 <!-- dict:col:rep_team_expenses.amount -->
-**`amount`** (numeric, NOT NULL, CHECK `> 0`) — full cost; for `tournament_payable` NOT validated against deposit+balance (gotcha 2).
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — the full cost. ⚠ **DERIVED, not typed** (gotcha 6): the sum of the row's installments, kept in step by every writer. The one legacy column the Payables Rebuild kept.
 
 <!-- dict:col:rep_team_expenses.expense_paid_at -->
-**`expense_paid_at`** (timestamptz, nullable) — marks a lump `expense` paid (not used for payables).
-⚠ **It answers WHICH DAY money moved, and is written at ORG NOON** (2026-08-16). Every reader turns
-it back into a calendar day — some through the org's clock, some by slicing the ISO string — so the
-stored instant has to land on the intended day under both. Noon is twelve hours from either
-midnight, which no timezone the platform serves can cross; a bare `YYYY-MM-DD` becomes UTC midnight
-and reads as the PREVIOUS day in Toronto, and a real `now()` late in the evening slices into the
-NEXT day (and, on the 31st, the next month). Write it with `orgDayAsStoredInstant()`
-(`lib/timezone.ts`); read it with `formatStoredDate()`, never a hand-rolled `new Date(...)`.
-⚠ **It is a coach-chosen date, not a system timestamp** — the money form asks for it, and all three
-mark-paid actions accept one, so it may be back-dated to any real past day (never a future one).
-
 <!-- dict:col:rep_team_expenses.deposit_amount -->
 <!-- dict:col:rep_team_expenses.deposit_due_date -->
 <!-- dict:col:rep_team_expenses.deposit_paid_at -->
-**`deposit_amount`** (numeric, nullable) / **`deposit_due_date`** (date, nullable) / **`deposit_paid_at`** (timestamptz, nullable) — the deposit leg of a `tournament_payable` (gotcha 2).
-
+<!-- dict:col:rep_team_expenses.deposit_entry_id -->
 <!-- dict:col:rep_team_expenses.balance_amount -->
 <!-- dict:col:rep_team_expenses.balance_due_date -->
 <!-- dict:col:rep_team_expenses.balance_paid_at -->
-**`balance_amount`** (numeric, nullable) / **`balance_due_date`** (date, nullable) / **`balance_paid_at`** (timestamptz, nullable) — the balance leg (gotcha 2).
+<!-- dict:col:rep_team_expenses.balance_entry_id -->
+> ⚖ **NINE COLUMNS ARE LEAVING HERE — mig 270, applied to dev 2026-08-28; PROD still carries them until
+> that migration is applied there.** `expense_paid_at`, `deposit_amount` / `deposit_due_date` /
+> `deposit_paid_at`, `balance_amount` / `balance_due_date` / `balance_paid_at`, and the per-half ledger
+> links `deposit_entry_id` / `balance_entry_id`. They are anchored above deliberately: the coverage gate
+> reads the LIVE schema of both environments, and a column prod still has must stay documented.
+>
+> Together they were the old answer to *what does this owe, and what has it paid* — a payable's two
+> halves plus a lump expense's single stamp. Mig 255 replaced them with `rep_payable_installments` +
+> `rep_payable_payments` and carried each half's ledger entry onto the payment it became; mig 270 drops
+> the columns now that nothing reads them. **Two FK constraints and two partial indexes go with the entry
+> columns** (`rep_team_expenses_deposit_entry_id_fkey`, `..._balance_entry_id_fkey`,
+> `idx_rep_team_expenses_deposit_entry`, `idx_rep_team_expenses_balance_entry`), which is why they
+> left the dev snapshot in the same refresh. **Delete this whole note once mig 270 reaches prod.**
+>
+> ⚠ **A hit on `deposit_amount` in this repo is almost certainly the TOURNAMENT fee block**
+> (`tournaments.deposit_amount`, `divisions.deposit_amount`) or an in-memory field name in the coach
+> budget importer, which still speaks deposit/balance because coaches' own spreadsheets do while
+> storing installments. Attribute the hit to its table before believing it.
 
 <!-- dict:col:rep_team_expenses.event_id -->
 **`event_id`** (FK → `rep_team_events.id`, nullable; **Rep operations**) — optional link to a team event.
-
-<!-- dict:col:rep_team_expenses.accounting_entry_id -->
-**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — never written (gotcha 4).
 
 <!-- dict:col:rep_team_expenses.payment_method -->
 **`payment_method`** (text, nullable) — free-text label.
@@ -4065,13 +4133,7 @@ mark-paid actions accept one, so it may be back-dated to any real past day (neve
 **`paid_by_player_id`** (FK → `rep_roster_players.id`, nullable, ON DELETE SET NULL; mig 234) — **out-of-pocket**: a family covered this cost directly (owner Call 5, 2026-08-14). NULL = the team paid. When set, three things hold at once and must not be conflated: the cost **counts in the budget and in Budget vs. Actual exactly as a team-paid expense** (it is a real cost either way); **no cash left the team's account**, so every CASH figure excludes it (`money-summary` money-out, the Pass 3 pot); and the team now **owes that family**, carried as an ordinary `reimbursement` credit in `rep_dues_credits` with the same three-way lifecycle as any other credit. ⚠ The alternative design — posting an income entry from the family plus an expense — nets to zero but invents money-in from a family that sent none; deliberately rejected.
 
 <!-- dict:col:rep_team_expenses.accounting_entry_id -->
-**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL) — the ledger entry created when a **lump expense** was marked paid, so deleting the expense can void it. ⚠ **The column pre-dates mig 236 but was never written until it** — `markExpensePaid` created the entry and discarded the id (`void entry`) under a comment claiming the table had no such column, which sent readers away from the fix for months. NULL on payables (they use the two half-columns below) and NULL on anything paid before 2026-08-15. **A NULL here does NOT mean unpaid** — `expense_paid_at` answers that; it means the reversal has to find the entry by matching instead (see gotcha 6).
-
-<!-- dict:col:rep_team_expenses.deposit_entry_id -->
-**`deposit_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL; mig 236) — the ledger entry created when a **payable's deposit** was marked paid. Separate from `balance_entry_id` because the two halves post independently, often months apart, and either may need reversing on its own — which is precisely why one `accounting_entry_id` could not serve a payable. NULL while the deposit is unpaid, or if it was paid before 2026-08-15. Partial index `idx_rep_team_expenses_deposit_entry`.
-
-<!-- dict:col:rep_team_expenses.balance_entry_id -->
-**`balance_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL; mig 236) — same rule as `deposit_entry_id`, other half. Partial index `idx_rep_team_expenses_balance_entry`.
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable, ON DELETE SET NULL) — the org-ledger entry a lump expense's payment created (mig 236), so a delete could void exactly it instead of matching on an editable description. ⚠ **Nothing writes or reads it any more.** Since the Payables Rebuild the link lives on the PAYMENT (`rep_payable_payments.accounting_entry_id`), which is what `adoptLedgerLinksForExpense` and the delete path read; its per-half twins `deposit_entry_id` / `balance_entry_id` go with mig 270 (applied to dev 2026-08-28) and this one was kept only because it is the only link a pre-mig-236 row has. **A NULL here has never meant "unpaid"** (gotcha 4).
 
 <!-- dict:col:rep_team_expenses.budget_item_id -->
 **`budget_item_id`** (FK → `budget_items.id`, nullable, **ON DELETE SET NULL**; mig 240) — **what this cost IS, in the same words the budget uses**, and the key Budget vs. Actual groups on. It implies the category too, since an item belongs to exactly one. NULL for a row recorded before this shipped, and for one whose item was later deleted; those fall back to `budget_category_id` and then to the free-text `category`. ⚠ **Whether the cost was BUDGETED is not stored anywhere** — it is derived, by asking whether a budget line exists for the same category + item. That is what let the old "Not in the budget" declaration be deleted outright. ⚠ **ON DELETE SET NULL is load-bearing:** removing an item from the library must never delete or orphan a record of money. Partial index `idx_rep_team_expenses_budget_item`. **No backfill** (see gotcha 7).

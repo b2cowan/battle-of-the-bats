@@ -10107,6 +10107,87 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "fundraiser_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "share_value",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "share_unit",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
     "table_name": "rep_fundraiser_entries",
     "column_name": "id",
     "data_type": "uuid",
@@ -10233,6 +10314,15 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "rep_fundraiser_entries",
+    "column_name": "method",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "rep_fundraisers",
     "column_name": "id",
     "data_type": "uuid",
@@ -10357,6 +10447,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_fundraisers",
+    "column_name": "pledged_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_fundraisers",
+    "column_name": "expected_by",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
   },
   {
     "table_name": "rep_payable_installments",
@@ -13132,69 +13240,6 @@
   },
   {
     "table_name": "rep_team_expenses",
-    "column_name": "expense_paid_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "deposit_amount",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 10
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "deposit_due_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "deposit_paid_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 12
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "balance_amount",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "balance_due_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "balance_paid_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 15
-  },
-  {
-    "table_name": "rep_team_expenses",
     "column_name": "event_id",
     "data_type": "uuid",
     "udt_name": "uuid",
@@ -13282,24 +13327,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 25
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "deposit_entry_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 26
-  },
-  {
-    "table_name": "rep_team_expenses",
-    "column_name": "balance_entry_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 27
   },
   {
     "table_name": "rep_team_expenses",

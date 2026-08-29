@@ -76,6 +76,14 @@ export interface RecordMoneyIntent {
      * credit plan's families as the money lands, instead of creating a new sponsor.
      */
     sponsorId?: string;
+    /**
+     * A NEW sponsor's typed name (owner, §121 walk, 2026-08-29): the pledge sheet's hand-off.
+     * Opens the sponsor branch on "A new sponsor…" with this name pre-filled, so a coach who
+     * started logging a promise and then said "actually, the cheque is in my hand" keeps their
+     * typing — the same carry the bill form's hand-off makes, in the other direction. May be
+     * empty (the door still lands on the unfolded new-sponsor form).
+     */
+    sponsorNewName?: string;
   };
   /** A suggested amount the door already knows (what a family is holding, what a bill has left). */
   amount?: string;

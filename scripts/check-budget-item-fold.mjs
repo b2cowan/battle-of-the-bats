@@ -122,7 +122,8 @@ async function main() {
         program_year_id: programYearId, team_id: teamId, org_id: orgId,
         expense_type: 'expense', description, amount,
         budget_item_id: item.id, budget_category_id: category.id, category: category.name,
-        expense_paid_at: new Date().toISOString().slice(0, 10),
+        /* No paid stamp — the legacy column went with mig 270, and this check only ever asked
+           where a cost FILES (its item and category), never whether it settled. */
       }).select().single();
       if (error) throw new Error(`expense: ${error.message}`);
       made.expenses.push(data.id);

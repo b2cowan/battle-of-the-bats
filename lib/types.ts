@@ -2392,13 +2392,6 @@ export interface RepTeamExpense {
   /** The item's category — derived from it, and the surviving link if that item is deleted. */
   budgetCategoryId: string | null;
   amount: number;
-  expensePaidAt: string | null;
-  depositAmount: number | null;
-  depositDueDate: string | null;
-  depositPaidAt: string | null;
-  balanceAmount: number | null;
-  balanceDueDate: string | null;
-  balancePaidAt: string | null;
   eventId: string | null;
   notes: string | null;
   paymentMethod: string | null;
@@ -2408,14 +2401,15 @@ export interface RepTeamExpense {
    *  budget exactly as a team-paid expense; NO team cash left, so cash figures exclude it; and
    *  the team owes that family, carried as an ordinary `reimbursement` credit. */
   paidByPlayerId: string | null;
-  /** The ledger entry a LUMP expense's payment created, so a delete can void it (mig 236).
-   *  Null on payables, and null on anything paid before 2026-08-15 — a null here does NOT mean
-   *  unpaid; `expensePaidAt` answers that. */
+  /** The ledger entry a lump expense's payment created (mig 236), so a delete could void exactly
+   *  it rather than matching on an editable description.
+   *  ⚠ NOTHING READS THIS ANY MORE. Since the Payables Rebuild every payment carries its own
+   *  `accountingEntryId`, and that is what adoption and reversal read — see
+   *  `adoptLedgerLinksForExpense`. Its per-half twins (`depositEntryId`/`balanceEntryId`) went
+   *  with mig 270's dead columns; this one was left in place deliberately, because it is the only
+   *  link a pre-mig-236 row has and dropping it was not in that migration's scope. A null here has
+   *  never meant unpaid — the commitment's payments answer that. */
   accountingEntryId: string | null;
-  /** Same, for a payable's deposit half. The two halves post months apart, so each needs its own. */
-  depositEntryId: string | null;
-  /** Same, for a payable's balance half. */
-  balanceEntryId: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;

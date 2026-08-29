@@ -4,8 +4,6 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getActiveRepProgramYear,
-  getOrCreateRepTeamLedger,
-  createEntry,
   getRepTeamTagLibrary,
   getRepTeamFundraiserTagsMap,
   setRepTeamFundraiserTags,
@@ -16,16 +14,19 @@ import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { tournamentToday } from '@/lib/timezone';
-import { isFundraisingKind, isSponsorStatus, resolveCredit } from '@/lib/coach-fundraising';
+import { isFundraisingKind, isSponsorStatus } from '@/lib/coach-fundraising';
+import { accrueArrival, creditPlanProblem, stillToCome, type CreditPlanShare } from '@/lib/sponsor-arrivals';
+import { writeSponsorArrivalRow } from '@/lib/sponsor-arrivals-server';
 
 /** The list shape a freshly-created record answers with — the table needs every column it prints. */
 function mapNewRecord(
   row: Record<string, any>,
-  money?: { amount: number; credit: number },
+  money?: { arrived: number; credit: number },
   tagIds: string[] = [],
 ) {
-  const amount = money?.amount ?? 0;
+  const arrived = money?.arrived ?? 0;
   const credit = money?.credit ?? 0;
+  const pledged = row.pledged_amount != null ? Number(row.pledged_amount) : null;
   return {
     id:                  row.id,
     kind:                row.kind ?? 'fundraiser',
@@ -37,129 +38,53 @@ function mapNewRecord(
     endDate:             row.end_date   ?? null,
     isActive:            row.is_active,
     createdAt:           row.created_at,
-    totalRaised:         amount,
-    teamNet:             Math.round((amount - credit) * 100) / 100,
+    totalRaised:         arrived,
+    teamNet:             Math.round((arrived - credit) * 100) / 100,
     totalCredits:        credit,
     playerCount:         0,
     broughtInBy:         null,
     broughtInById:       null,
+    // Arrivals model (mig 268): the promise and what is still to come ride the record itself.
+    pledgedAmount:       pledged,
+    stillToCome:         stillToCome(pledged, arrived),
     tagIds,
   };
 }
 
 /**
- * Write a sponsor's single arrival: the entry always, the books and the family's credit ONLY once
- * the money is actually in.
- *
- * ⚠ PLEDGED IS NOT MONEY. The entry exists either way because it records the arrangement — the
- * amount, who brought it in, what was agreed — but a pledge posts nothing to the team's books and
- * lands nothing on a family's dues. A season that counted promises as income would flatter itself,
- * and a family whose bill dropped on a cheque that never arrived would have to be un-credited by
- * hand.
+ * The credit plan a sponsor create/edit sends (Q16): `creditPlan: [{playerId, value, unit}]`.
+ * Legacy single-family fields (`broughtInById`/`creditValue`/`creditUnit`) map to one row so the
+ * recording conversation and any not-yet-reworked caller keep working through the transition.
  */
-async function writeSponsorArrival(args: {
-  team: { id: string; orgId: string; name: string };
-  programYear: { id: string };
-  record: Record<string, any>;
-  amount: number;
-  credit: number;
-  percent: number;
-  playerId: string | null;
-  userId: string;
-}): Promise<{ entryId: string } | { error: Response }> {
-  const { team, programYear, record, amount, credit, percent, playerId, userId } = args;
-  const received = record.sponsor_status === 'received';
-  const today = tournamentToday();
-
-  let accountingEntryId: string | null = null;
-  if (received) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
-    const posted = await createEntry(
-      ledger.id,
-      {
-        entryDate:   today,
-        description: `Sponsorship — ${record.name}`,
-        amount,
-        entryType:   'income',
-        status:      'posted',
-        category:    'fundraising',
-      },
-      userId,
-    );
-    accountingEntryId = posted.id;
-  }
-
-  const { data: entry, error: entryErr } = await supabaseAdmin
-    .from('rep_fundraiser_entries')
-    .insert({
-      fundraiser_id:       record.id,
-      org_id:              team.orgId,
-      team_id:             team.id,
-      // Null for a club-wide sponsor — the whole reason migration 237 relaxed this column.
-      player_id:           playerId,
-      amount_raised:       amount,
-      rebate_percent:      percent,
-      rebate_amount:       credit,
-      accounting_entry_id: accountingEntryId,
-    })
-    .select()
-    .single();
-
-  if (entryErr) {
-    /**
-     * ⚠ UNDO THE POSTING. There is no transaction across these writes, and the income row was
-     * created first — so without this the team's books keep real income for a sponsor that has no
-     * entry, the list shows it as $0 raised (totals come from entries), and every later edit dies
-     * on "this sponsor has no record to update". Money on the books that no screen can explain is
-     * worse than a failed save (review, 2026-08-15).
-     */
-    if (accountingEntryId) {
-      await supabaseAdmin.from('accounting_entries').delete().eq('id', accountingEntryId);
+function parseCreditPlan(body: Record<string, any>): CreditPlanShare[] | { error: string } {
+  if (Array.isArray(body.creditPlan)) {
+    const plan: CreditPlanShare[] = [];
+    for (const row of body.creditPlan) {
+      const playerId = typeof row?.playerId === 'string' ? row.playerId : '';
+      const value = Number(row?.value);
+      const unit = row?.unit === 'amount' ? 'amount' : row?.unit === 'percent' ? 'percent' : null;
+      if (!playerId || !unit) return { error: 'Every credit row needs a family and a $ or % share.' };
+      if (!Number.isFinite(value) || value <= 0) continue; // a zero share is "not credited"
+      plan.push({ playerId, value, unit });
     }
-    return { error: NextResponse.json({ error: entryErr.message }, { status: 500 }) };
+    return plan;
   }
-
-  if (received && playerId && credit > 0) {
-    const { data: creditRow, error: creditErr } = await supabaseAdmin
-      .from('rep_dues_credits')
-      .insert({
-        program_year_id:     programYear.id,
-        player_id:           playerId,
-        amount:              credit,
-        description:         `Sponsorship — ${record.name}`,
-        credit_type:         'fundraiser',
-        credit_date:         today,
-        created_by:          userId,
-        fundraiser_entry_id: entry.id,
-      })
-      .select()
-      .single();
-    /**
-     * ⚠ A FAILED CREDIT MUST NOT READ AS A GIVEN ONE. The entry already carries `rebate_amount`,
-     * so swallowing this error left the screen and the export both saying a family had been
-     * credited while their dues were untouched — the one direction of this bug a coach would
-     * never notice, because the number they check says what they expect.
-     */
-    if (creditErr || !creditRow) {
-      console.error('[sponsor] credit insert failed', { entryId: entry.id, error: creditErr });
-      await supabaseAdmin
-        .from('rep_fundraiser_entries')
-        .update({ rebate_amount: 0, rebate_percent: 0, updated_at: new Date().toISOString() })
-        .eq('id', entry.id);
-      return {
-        error: NextResponse.json({
-          error: 'The sponsor was saved, but the family credit could not be applied. Open it and set the credit again.',
-        }, { status: 500 }),
-      };
-    }
-    await supabaseAdmin
-      .from('rep_fundraiser_entries')
-      .update({ credit_id: creditRow.id, updated_at: new Date().toISOString() })
-      .eq('id', entry.id);
+  const legacyId = body.broughtInById;
+  const legacyValue = Number(body.creditValue ?? 0);
+  const legacyUnit = body.creditUnit === 'amount' ? 'amount' : 'percent';
+  if (legacyId && Number.isFinite(legacyValue) && legacyValue > 0) {
+    return [{ playerId: legacyId, value: legacyValue, unit: legacyUnit }];
   }
-
-  return { entryId: entry.id };
+  return [];
 }
+
+/**
+ * ⚠ THE SINGLE-ARRIVAL WRITER IS GONE (mig 268). A pledge writes NO entry — the promise lives in
+ * `pledged_amount` — and received money is written as a dated ARRIVAL through
+ * lib/sponsor-arrivals-server.ts, the one writer all three sponsor doors share. What follows in
+ * this file is only the create-time orchestration: record row, plan rows, then (if received) the
+ * first arrival.
+ */
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -211,41 +136,48 @@ export const GET = withObservability(async (_req: Request,
   }
 
   const fundraiserIds = fundraisers.map(f => f.id);
-  const [{ data: entries }, tagsByFundraiserId] = await Promise.all([
+  const [{ data: entries }, { data: planRows }, tagsByFundraiserId] = await Promise.all([
     supabaseAdmin
       .from('rep_fundraiser_entries')
       .select('fundraiser_id, player_id, amount_raised, rebate_amount')
       .in('fundraiser_id', fundraiserIds),
+    supabaseAdmin
+      .from('rep_fundraiser_credit_plan')
+      .select('fundraiser_id, player_id, share_value, share_unit')
+      .in('fundraiser_id', fundraiserIds)
+      .order('created_at', { ascending: true }),
     getRepTeamFundraiserTagsMap(fundraiserIds),
   ]);
 
+  // Entries are ARRIVALS for a sponsor (mig 268) and per-player rows for a drive — the sum works
+  // for both, and a pledged sponsor deliberately has none: its figure is the pledge column.
   const totalsMap = new Map<string, { totalRaised: number; totalRebates: number; playerCount: number }>();
-  // A SPONSOR's one entry names the family who brought it in — the two muted words the list keeps
-  // beside a sponsor's name, and the reason a coach scans a sponsor list at all. A club-wide
-  // sponsor has no player (migration 237), which is an ABSENCE on the row rather than an em-dash.
-  const attributedPlayerId = new Map<string, string>();
   for (const e of entries ?? []) {
     const existing = totalsMap.get(e.fundraiser_id) ?? { totalRaised: 0, totalRebates: 0, playerCount: 0 };
     totalsMap.set(e.fundraiser_id, {
       totalRaised:  existing.totalRaised  + Number(e.amount_raised),
       totalRebates: existing.totalRebates + Number(e.rebate_amount),
       // Only a real player counts toward "how many have logged something" — a sponsor's
-      // playerless entry must not read as a player.
+      // playerless arrivals must not read as players.
       playerCount:  existing.playerCount  + (e.player_id ? 1 : 0),
     });
-    if (e.player_id && !attributedPlayerId.has(e.fundraiser_id)) {
-      attributedPlayerId.set(e.fundraiser_id, e.player_id as string);
-    }
   }
 
-  // One lookup for every attributed family, not one per row.
-  const playerIds = [...new Set(attributedPlayerId.values())];
+  // The credited families live on the PLAN since mig 268 — the muted words beside a sponsor's
+  // name come from here, never from an entry's player.
+  const planByFundraiser = new Map<string, { playerId: string; value: number; unit: string }[]>();
+  for (const p of planRows ?? []) {
+    const list = planByFundraiser.get(p.fundraiser_id) ?? [];
+    list.push({ playerId: p.player_id as string, value: Number(p.share_value), unit: p.share_unit as string });
+    planByFundraiser.set(p.fundraiser_id, list);
+  }
+  const planPlayerIds = [...new Set((planRows ?? []).map(p => p.player_id as string))];
   const nameById = new Map<string, string>();
-  if (playerIds.length) {
+  if (planPlayerIds.length) {
     const { data: players } = await supabaseAdmin
       .from('rep_roster_players')
       .select('id, player_first_name, player_last_name')
-      .in('id', playerIds);
+      .in('id', planPlayerIds);
     for (const p of players ?? []) {
       nameById.set(p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' '));
     }
@@ -253,7 +185,10 @@ export const GET = withObservability(async (_req: Request,
 
   const result = fundraisers.map(f => {
     const t = totalsMap.get(f.id) ?? { totalRaised: 0, totalRebates: 0, playerCount: 0 };
-    const attributed = attributedPlayerId.get(f.id);
+    const isSponsor = (f.kind ?? 'fundraiser') === 'sponsor';
+    const plan = isSponsor ? (planByFundraiser.get(f.id) ?? []) : [];
+    const first = plan[0]?.playerId ?? null;
+    const pledged = isSponsor && f.pledged_amount != null ? Number(f.pledged_amount) : null;
     return {
       id:                  f.id,
       kind:                f.kind ?? 'fundraiser',
@@ -265,13 +200,18 @@ export const GET = withObservability(async (_req: Request,
       endDate:             f.end_date   ?? null,
       isActive:            f.is_active,
       createdAt:           f.created_at,
+      // ARRIVED money — zero for a pledge, whose figure is pledgedAmount below.
       totalRaised:         Math.round(t.totalRaised  * 100) / 100,
       teamNet:             Math.round((t.totalRaised - t.totalRebates) * 100) / 100,
       totalCredits:        Math.round(t.totalRebates * 100) / 100,
       playerCount:         t.playerCount,
-      // Sponsor only — null on a drive, and null on a club-wide sponsor.
-      broughtInBy:         f.kind === 'sponsor' && attributed ? (nameById.get(attributed) ?? null) : null,
-      broughtInById:       f.kind === 'sponsor' ? (attributed ?? null) : null,
+      // First credited family (the muted words beside the name); the whole plan rides too.
+      broughtInBy:         first ? (nameById.get(first) ?? null) : null,
+      broughtInById:       first,
+      creditFamilies:      plan.map(p => ({ ...p, name: nameById.get(p.playerId) ?? null })),
+      pledgedAmount:       pledged,
+      stillToCome:         stillToCome(pledged, t.totalRaised),
+      expectedBy:          isSponsor ? (f.expected_by ?? null) : null,
       // ⚠ Tags travel with the RECORD, never onto the list row (row-density ruling 2026-08-15) —
       // the list carries them only so the export can, and so opening a record does not need a
       // second fetch to know what it is already labelled.
@@ -300,13 +240,11 @@ export const POST = withObservability(async (req: Request,
     playerRebatePercent = 0,
     startDate = null,
     endDate   = null,
-    // ── Sponsor-only ──
+    // ── Sponsor-only ── (the credit families arrive via `creditPlan` — or the legacy single
+    // `broughtInById`/`creditValue`/`creditUnit` trio, mapped in parseCreditPlan)
     kind = 'fundraiser',
     sponsorStatus = 'received',
     sponsorAmount = 0,
-    broughtInById = null,
-    creditValue = 0,
-    creditUnit = 'percent',
   } = body;
 
   if (!name?.trim()) {
@@ -355,40 +293,66 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ fundraiser: mapNewRecord(data, undefined, tagIds) }, { status: 201 });
   }
 
-  // ── A SPONSOR: one record AND its single arrival, written together. ──
-  //
-  // ⚠ The entry is what makes every existing reader work unchanged — totals, exports, the archive
-  // and deletion all read entries, so a sponsor that stored its amount on the record instead would
-  // need a parallel path through all of them.
+  // ── A SPONSOR: the record (with its promise), the credit plan, and — if the money is already
+  // in — its FIRST ARRIVAL through the one shared arrival writer (mig 268). ──
   if (!isSponsorStatus(sponsorStatus)) {
     return NextResponse.json({ error: 'sponsorStatus must be pledged or received' }, { status: 400 });
   }
-  const amount = Number(sponsorAmount);
+  const amount = Number(sponsorAmount); // the AGREEMENT — pledged_amount either way
   if (isNaN(amount) || amount <= 0) {
     return NextResponse.json({ error: 'A sponsor needs an amount greater than zero.' }, { status: 400 });
   }
-  if (creditUnit !== 'amount' && creditUnit !== 'percent') {
-    return NextResponse.json({ error: 'creditUnit must be amount or percent' }, { status: 400 });
+
+  const planParsed = parseCreditPlan(body);
+  if (!Array.isArray(planParsed)) {
+    return NextResponse.json({ error: planParsed.error }, { status: 400 });
   }
+  const plan = planParsed;
+  const planProblem = creditPlanProblem(plan, amount);
+  if (planProblem) return NextResponse.json({ error: planProblem }, { status: 400 });
 
-  // Nobody to credit means no credit, whatever was typed — the field is disabled in the UI for
-  // exactly this case, and a client that sends one anyway must not create an orphan.
-  const { credit, percent } = broughtInById
-    ? resolveCredit(amount, Number(creditValue), creditUnit)
-    : { credit: 0, percent: 0 };
-
-  if (broughtInById) {
-    const { data: player } = await supabaseAdmin
+  if (plan.length) {
+    const { data: players } = await supabaseAdmin
       .from('rep_roster_players')
       .select('id')
-      .eq('id', broughtInById)
-      .eq('program_year_id', programYear.id)
-      .maybeSingle();
-    if (!player) {
+      .in('id', plan.map(p => p.playerId))
+      .eq('program_year_id', programYear.id);
+    if ((players ?? []).length !== plan.length) {
       return NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 });
     }
   }
 
+  const received = sponsorStatus === 'received';
+  // The promise's own date (Q13, optional): when the pledged money is expected. Quiet — never a
+  // due date. Accepted on either status (a part-paid pledge can still have one).
+  let expectedBy: string | null = null;
+  if (body.expectedBy !== undefined && body.expectedBy !== null && body.expectedBy !== '') {
+    if (typeof body.expectedBy !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.expectedBy)) {
+      return NextResponse.json({ error: 'expectedBy must be a date (YYYY-MM-DD)' }, { status: 400 });
+    }
+    expectedBy = body.expectedBy;
+  }
+  let receivedDate = '';
+  let method: string | null = null;
+  if (received) {
+    receivedDate = typeof body.receivedDate === 'string' ? body.receivedDate : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) {
+      return NextResponse.json({ error: 'Enter the date the money arrived.' }, { status: 400 });
+    }
+    if (receivedDate > tournamentToday()) {
+      return NextResponse.json({ error: 'That hasn’t happened yet — an arrival is money that has already come in. Record it as a pledge instead.' }, { status: 400 });
+    }
+    const m = typeof body.method === 'string' && body.method ? body.method : null;
+    if (m && !['etransfer', 'cash', 'cheque', 'card', 'other'].includes(m)) {
+      return NextResponse.json({ error: 'method must be one of etransfer, cash, cheque, card, other' }, { status: 400 });
+    }
+    method = m;
+  }
+
+  // ⚠ Inserted as PLEDGED regardless of what was asked: the status follows the money, and the
+  // arrival writer below is the only thing that may flip it. If the arrival then fails, the
+  // sponsor survives honestly as a pledge with its plan — never as "received" with no money.
+  const singlePct = plan.length === 1 && plan[0].unit === 'percent' ? plan[0].value : 0;
   const { data: record, error: recErr } = await supabaseAdmin
     .from('rep_fundraisers')
     .insert({
@@ -396,12 +360,13 @@ export const POST = withObservability(async (req: Request,
       team_id:              team.id,
       program_year_id:      programYear.id,
       kind:                 'sponsor',
-      sponsor_status:       sponsorStatus,
+      sponsor_status:       'pledged',
+      pledged_amount:       amount,
+      expected_by:          expectedBy,
       name:                 name.trim(),
       description:          description?.trim() || null,
-      // The sponsor's own rate, kept for the same reason a drive keeps one: it explains the
-      // credit after the fact ("50% of $250") without anyone re-deriving it.
-      player_rebate_percent: percent,
+      // Provenance only when the whole plan is one percent share — the plan table is the truth.
+      player_rebate_percent: singlePct,
       start_date:           startDate || null,
       end_date:             endDate   || null,
     })
@@ -410,13 +375,51 @@ export const POST = withObservability(async (req: Request,
 
   if (recErr) return NextResponse.json({ error: recErr.message }, { status: 500 });
 
-  const money = await writeSponsorArrival({
-    team, programYear, record, amount, credit, percent,
-    playerId: broughtInById, userId: ctx!.user.id,
-  });
-  if ('error' in money) return money.error;
+  if (plan.length) {
+    const { error: planErr } = await supabaseAdmin.from('rep_fundraiser_credit_plan').insert(
+      plan.map(p => ({
+        org_id: team.orgId,
+        team_id: team.id,
+        fundraiser_id: record.id,
+        player_id: p.playerId,
+        share_value: p.value,
+        share_unit: p.unit,
+      })),
+    );
+    if (planErr) {
+      await supabaseAdmin.from('rep_fundraisers').delete().eq('id', record.id);
+      return NextResponse.json({ error: planErr.message }, { status: 500 });
+    }
+  }
+
+  let arrivedCredit = 0;
+  if (received) {
+    const money = await writeSponsorArrivalRow({
+      team,
+      programYearId: programYear.id,
+      fundraiser: { id: record.id, name: record.name, pledged_amount: amount },
+      amount,
+      receivedDate,
+      method,
+      notes: null,
+      userId: ctx!.user.id,
+    });
+    if ('error' in money) {
+      // The arrival unwound itself; the sponsor stands as a pledge. Say so rather than 500-ing
+      // into mystery — the coach's typing became a real, recoverable record.
+      return NextResponse.json({
+        error: 'The sponsor was saved as a pledge, but the arrival could not be recorded. Open it and record the arrival again.',
+      }, { status: 500 });
+    }
+    record.sponsor_status = 'received';
+    arrivedCredit = accrueArrival({
+      plan, pledged: amount, arrivalAmount: amount, priorArrivalsTotal: 0, priorAccrued: new Map(),
+    }).reduce((s, r) => s + r.credit, 0);
+  }
 
   if (tagIds.length > 0) await setRepTeamFundraiserTags(record.id, tagIds);
 
-  return NextResponse.json({ fundraiser: mapNewRecord(record, { amount, credit }, tagIds) }, { status: 201 });
+  return NextResponse.json({
+    fundraiser: mapNewRecord(record, { arrived: received ? amount : 0, credit: Math.round(arrivedCredit * 100) / 100 }, tagIds),
+  }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers' });

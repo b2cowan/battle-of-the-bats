@@ -417,8 +417,31 @@ export const GET = withObservability(async (req: Request,
   const familyName = (playerId: string | null) =>
     (playerId ? playerName.get(playerId) : null) ?? 'A family';
   const realisedEntries = allEntries.filter(e => e.realised);
-  /** What a sponsor has promised and not sent. Undated by nature — nothing records when it lands. */
-  const sponsorPledges = allEntries.filter(e => !e.realised && e.kind === 'sponsor');
+  /**
+   * What a sponsor has promised and not sent. ⚠ READ FROM THE RECORD, NOT ENTRIES (mig 268): a
+   * pledged sponsor has zero entries now — its promise lives in `pledged_amount` — and a
+   * part-paid one's outstanding promise is pledged minus arrived. Undated by nature until an
+   * expected-by date exists (Q13, phase D).
+   */
+  const arrivedBySponsor = new Map<string, number>();
+  for (const e of realisedEntries) {
+    if (e.kind === 'sponsor') {
+      arrivedBySponsor.set(e.fundraiserId, (arrivedBySponsor.get(e.fundraiserId) ?? 0) + e.amountRaised);
+    }
+  }
+  const { data: sponsorRecordRows } = await supabaseAdmin
+    .from('rep_fundraisers')
+    .select('id, name, pledged_amount, created_at')
+    .eq('program_year_id', programYear.id)
+    .eq('kind', 'sponsor');
+  const sponsorPledges = (sponsorRecordRows ?? [])
+    .map(s => ({
+      fundraiserId: s.id as string,
+      fundraiserName: (s.name as string) ?? '',
+      remaining: Math.max(0, Math.round(((Number(s.pledged_amount) || 0) - (arrivedBySponsor.get(s.id as string) ?? 0)) * 100) / 100),
+      recordedDay: orgDayKey(s.created_at as string),
+    }))
+    .filter(s => s.remaining > 0.005);
 
   for (const line of fundingLines) {
     learnCategory(
@@ -1252,10 +1275,10 @@ export const GET = withObservability(async (req: Request,
     const subject = { id: e.fundraiserId, name: e.fundraiserName };
     revenueRow('sponsorship', subject);
     pushRevenueDetail('scheduled', 'sponsorship', null, {
-      id: `sponsor-pledge-${e.id}`, subject, amount: e.amountRaised,
-      description: 'Pledged', note: `recorded ${fmtDay(e.receivedDate ?? orgDayKey(e.createdAt))}`,
+      id: `sponsor-pledge-${e.fundraiserId}`, subject, amount: e.remaining,
+      description: 'Pledged', note: `recorded ${fmtDay(e.recordedDay)}`,
     });
-    revenueScheduled.push(revenueEvent('sponsorship', null, e.amountRaised, subject));
+    revenueScheduled.push(revenueEvent('sponsorship', null, e.remaining, subject));
   }
   for (const r of allClubRequests) {
     /* ⚠ INCOMING ONLY, and this MATCHES the expense band rather than diverging from it: club money

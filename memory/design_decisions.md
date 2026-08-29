@@ -3,6 +3,25 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-29 — A META LINE CARRIES FACTS, NOT NARRATION — and never restates the columns above it
+
+**Decision (owner + /design, §121 walk — reached by three same-day trims of one line):** an
+in-place expansion's meta line states the record's facts ("Expected by Jul 31 · Credits Frankie
+Test 10%") and nothing else. Cut in sequence from the sponsor band's pledge expansion: "of each
+arrival" (mechanics — they live in the editor that decides them, and in help), "— the promise
+stands" (narration), and finally the whole "nothing has arrived yet" state fragment — because it
+**restated the In / To come columns one row above**, which the §121 compaction already forbids
+("the expansion holds only what the row can't say"). Same rule applied to the Money overview's
+Sponsorships rail row the same day (the past-expected clause removed; "in · pledged" is enough).
+**Guard:** a state sentence survives only where dropping it leaves an expansion that reads as
+broken — a pledge with no expected-by and no credit plan keeps its lone "Nothing has arrived
+yet". **Rationale:** dense money surfaces are scanned, not read; every clause beyond the facts
+competes with the figures, and a fragment that keeps needing trims is a fragment answering a
+question the columns already answered.
+**Applies to:** the sponsor band's expansion + the Money overview rail; the principle to every
+in-place expansion and meta line in the coach portal.
+
+---
 ### 2026-08-29 — A HAND-OFF DRESSED AS AN ANSWER MUST BE REVISABLE LIKE ONE, and its words name the event, not the instruction
 
 **Decision (owner, out of using the live form):** the Record conversation's bill row reads

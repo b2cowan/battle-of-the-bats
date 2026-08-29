@@ -7,8 +7,22 @@ guard module (`lib/dues-credit-guards.ts` — the per-credit route now imports t
 the dues drawer stops offering the delete the server refuses and surfaces refusals it does show,
 and the pledge-flip hint names the at-risk dollars via `sponsorCreditExposure` on the record
 read. 12 new unit tests (`tests/unit/sponsor-credit-floor.test.ts`); full suite 2,679 green;
-typecheck clean. ⚠ The UAT lifecycle spec's paid-out case is still OWED (Phase A item, needs the
-Playwright fixture session). Phases B–E not started.**
+typecheck clean. **PHASES B + C BUILT ON DEV 2026-08-28 (owner QA §120 owed; uncommitted at time of
+writing): migration 268 APPLIED TO DEV (⚠ prod owed before any promote; snapshots refreshed,
+dictionary updated, schema parity re-baselined as accepted dev-ahead), `lib/sponsor-arrivals.ts`
+(pure accrual, 12 tests) + `lib/sponsor-arrivals-server.ts` (the one writer: post/undo/re-derive,
+floor inside), all three doors reworked (modal with Date received + Method + credit-family rows +
+dated consequence + Q1/Q2 words; the record page replacing the thin screen, Q11, with per-arrival
+undo; the conversation's sponsor branch with both a cold create and the sponsorId-locked ARRIVAL
+mode), every pledged reader flipped to the column (money summary, BvA forward lens, register
+scheduled line, list GET), export split Received/Pledged (Q15), fixtures + demo reseeded (demo
+sponsor keeps its $750 in two dated cheques, pinned by check), and the UAT lifecycle spec
+REWRITTEN FOR ARRIVALS AND RUN — 6/6 green against live dev, incl. the pinned 409 on a hand
+status flip. Suite 2,691 green; verify:changed green. Known follow-ups: the record-page header
+buttons share the money chrome's pre-existing 768px tap-height issue (tablet-band follow-up);
+SP-8 chip label + SP-10 register naming ride the words phase; the §118 A-item (UAT paid-out
+case) is superseded — the rewritten spec exercises the floor on undo.** Phases D–E (expected-by
+Q13, guarded delete Q14, pledge door Q7, remaining words) not started.**
 Born from the money-forms review planning session (2026-08-28) — the first walked workflow.
 Rulings artifact: `claude.ai/code/artifact/4916c9ae-68c9-42e1-9a54-0aba40c30fe0` (§1, the
 sponsorship deep dive; owner ruled all ten questions the same day). PM brief:
@@ -42,6 +56,37 @@ doesn't restate the row, is what the record page finally honours).
 Findings register (SP-1…SP-12, F-1…F-5, F-9) lives in the artifact §1.2; this plan cites them.
 
 ## 2 · The decided model, in one place
+
+**⚠ RESOLVED AT PHASE-B BUILD TIME (2026-08-28) — the three questions §2's first draft left open:**
+
+1. **The pledge lives on the SPONSOR ROW, and a pledged sponsor has ZERO entries.** New column
+   `rep_fundraisers.pledged_amount` (numeric, NULL for drives). An entry means exactly one thing
+   after this phase: **money that actually landed** — dated, methodized, possibly several per
+   sponsor. This is the honest model and it deliberately pays the reader-flip cost: every figure
+   that today derives "pledged" from an unrealised entry switches to the column (the sweep in
+   §Phase B lists every site — counted, per the truncated-grep lesson). Backfill: each sponsor's
+   single entry sets `pledged_amount`; a PLEDGED sponsor's entry is then DELETED (it was never
+   money — no accounting row, no credit, by the realised invariant); a RECEIVED one's entry
+   becomes its first arrival (`received_date` backfilled from its accounting entry's date, else
+   its created date).
+2. **The credit plan is a TABLE** — `rep_fundraiser_credit_plan(id, fundraiser_id FK, player_id
+   FK, share_value numeric, share_unit 'amount'|'percent')`, one row per credited family (Q16).
+   Backfill from each sponsor entry's `player_id` + rebate provenance (percent when
+   `rebate_percent > 0`, else dollars from `rebate_amount`). Sponsor arrivals carry
+   `player_id = NULL` from now on — the plan owns the families; "brought in by" renders from the
+   plan. Validation: Σ dollar-shares + Σ percent-shares × pledged ≤ pledged.
+3. **Accrual arithmetic (per arrival, per plan row):** a percent share earns pct × the arrival's
+   amount (over-pledge keeps accruing — 15% of everything that arrives). A dollar share accrues
+   proportionally, share × (arrival ÷ pledged), and the arrival that reaches the pledge takes
+   the remainder so the family's total equals the share exactly; with no pledged amount the
+   dollar share lands whole on the first arrival. Each accrued piece is its own
+   `rep_dues_credits` row pointing at the arrival (`fundraiser_entry_id`); the arrival's
+   `rebate_amount` = the sum of its credit rows (keeping every team-net reader true), its
+   `rebate_percent` snapshots the plan's percent when exactly one percent row exists, else 0;
+   `credit_id` is never written again. Editing the PLAN re-derives every arrival's credits from
+   scratch (re-derived, never patched), floor-guarded per family before any write. Flipping to
+   Pledged requires zero arrivals — arrivals are undone first, one by one, each undo reversing
+   its dated income row and its credit rows behind the same floor.
 
 - **A sponsor is one row** (`rep_fundraisers`, `kind='sponsor'`): name, notes, status
   (pledged/received), expected-by (new, Q13), tags, and a **credit plan** — the list of families

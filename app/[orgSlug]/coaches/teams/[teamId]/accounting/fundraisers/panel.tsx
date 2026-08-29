@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Gift, Plus, ChevronRight, TrendingUp, Handshake } from 'lucide-react';
+import { Gift, Plus, ChevronRight, TrendingUp } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -20,11 +20,10 @@ import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import {
-  KIND_LABEL, KIND_HINT, FUNDRAISING_KINDS,
-  SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT, SPONSOR_STATUSES,
-  resolveCredit, rollUpFundraising, normalizeKindFilter,
-  type FundraisingKind, type SponsorStatus, type CreditUnit, type KindFilter,
+  rollUpFundraising, normalizeKindFilter,
+  type FundraisingKind, type SponsorStatus,
 } from '@/lib/coach-fundraising';
+import SponsorBand from './SponsorBand';
 import { FundraiserDetail, fmt } from './detail';
 
 interface Fundraiser {
@@ -49,32 +48,21 @@ interface Fundraiser {
   /** Money tags on the RECORD (mig 239). Not drawn on the row — see the row-density ruling —
    *  but carried here so the export can print them without a second read. */
   tagIds: string[];
+  /** Arrivals model (mig 268/269) — sponsor only, null/zero on a drive. */
+  pledgedAmount: number | null;
+  stillToCome: number;
+  expectedBy: string | null;
+  creditFamilies: { playerId: string; value: number; unit: string; name: string | null }[];
 }
 
-/** What the status column says for either kind — a drive is running or it isn't, a sponsor has
- *  arrived or it hasn't, and the two questions deserve their own words. */
+/** The DRIVE band's status words — sponsors have no status chip any more: their band's
+ *  In / To come columns say it in numbers (Direction A, owner-ruled 2026-08-29). */
 function statusLabel(f: Fundraiser): string {
-  if (f.kind === 'sponsor') return SPONSOR_STATUS_LABEL[f.sponsorStatus ?? 'received'];
   return f.isActive ? 'Active' : 'Closed';
 }
-
-/** ⚠ A PLEDGE IS NOT A FAILURE AND NOT A SUCCESS — it is money that has not arrived, so it takes
- *  the warning treatment rather than the green one. Reading it as "done" is exactly the flattering
- *  the pledged/received split exists to prevent. */
 function statusBadgeClass(f: Fundraiser): string {
-  if (f.kind === 'sponsor') {
-    return f.sponsorStatus === 'pledged' ? styles.badgeCompleted : styles.badgeActive;
-  }
   return f.isActive ? styles.badgeActive : styles.badgeArchived;
 }
-
-const KIND_FILTERS: { id: KindFilter; label: string }[] = [
-  { id: 'all',        label: 'All' },
-  // ⚠ "Fundraisers" here is CORRECT and stays. It names a KIND, not the tab — the tab is
-  // "Fundraising" because it holds both. This chip was mistaken for a stale label once.
-  { id: 'fundraiser', label: 'Fundraisers' },
-  { id: 'sponsor',    label: 'Sponsors' },
-];
 
 function fmtDate(d: string | null) {
   if (!d) return null;
@@ -101,18 +89,13 @@ export function FundraisersPanel({
   const [error, setError]   = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const [formKind, setFormKind]             = useState<FundraisingKind>('fundraiser');
+  // The New-fundraiser modal — DRIVES ONLY since Direction A (2026-08-29): a sponsor is made by
+  // "Log a pledge" on its band, or by recording its first cheque through the conversation.
   const [formName, setFormName]             = useState('');
   const [formDesc, setFormDesc]             = useState('');
   const [formRebate, setFormRebate]         = useState('0');
   const [formStart, setFormStart]           = useState('');
   const [formEnd, setFormEnd]               = useState('');
-  // Sponsor-only fields
-  const [formAmount, setFormAmount]         = useState('');
-  const [formStatus, setFormStatus]         = useState<SponsorStatus>('received');
-  const [formPlayerId, setFormPlayerId]     = useState('');
-  const [formCredit, setFormCredit]         = useState('0');
-  const [formCreditUnit, setFormCreditUnit] = useState<CreditUnit>('percent');
   const [formTags, setFormTags]             = useState<string[]>([]);
   const [saving, setSaving]                 = useState(false);
   const [formError, setFormError]           = useState('');
@@ -161,26 +144,49 @@ export function FundraisersPanel({
    */
   const router = useRouter();
   const pathname = usePathname();
+  /* `?kind=` survives as a DESTINATION only (ruling R2, Direction A): the overview's
+     Sponsorships row still deep-links `?kind=sponsor`, which now scrolls its band into view —
+     the filter itself retired when the list became two bands. */
   const kindFilter = normalizeKindFilter(seasonSearchParams.get('kind'));
-  function setKindFilter(next: KindFilter) {
+  /* ── DIRECTION A (owner-ruled 2026-08-29): the tab is TWO BANDS, not one filtered list. ── */
+  const driveRows = fundraisers.filter(f => f.kind === 'fundraiser');
+  const sponsorRows = fundraisers
+    .filter(f => f.kind === 'sponsor')
+    .map(f => ({
+      id: f.id,
+      name: f.name,
+      description: f.description,
+      totalRaised: f.totalRaised,
+      totalCredits: f.totalCredits,
+      pledgedAmount: f.pledgedAmount,
+      stillToCome: f.stillToCome,
+      expectedBy: f.expectedBy,
+      creditFamilies: f.creditFamilies ?? [],
+      tagIds: f.tagIds,
+    }));
+
+  /** `?fundraiser=` now means two things by KIND: a drive still drills into its leaderboard; a
+   *  sponsor EXPANDS its band row in place — deep links from the register and reports land open
+   *  either way, with no dead pages. */
+  const openRecord = openFundraiserId ? fundraisers.find(f => f.id === openFundraiserId) ?? null : null;
+  const openSponsorId = openRecord?.kind === 'sponsor' ? openRecord.id : null;
+  const setOpenFundraiserParam = useCallback((id: string | null) => {
     const sp = new URLSearchParams(seasonSearchParams.toString());
-    if (next === 'all') sp.delete('kind'); else sp.set('kind', next);
+    if (id) sp.set('fundraiser', id); else sp.delete('fundraiser');
     const qs = sp.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
+  }, [seasonSearchParams, router, pathname]);
 
-  const visibleRows = kindFilter === 'all' ? fundraisers : fundraisers.filter(f => f.kind === kindFilter);
-  // The other unit, in words. Derived at render rather than stored, so it can never disagree with
-  // what is in the two inputs.
-  const creditPreview = (() => {
-    const amount = Number(formAmount) || 0;
-    const { credit, percent } = resolveCredit(amount, Number(formCredit) || 0, formCreditUnit);
-    if (credit <= 0.005) return 'Zero keeps it all with the team.';
-    const who = roster.find(p => p.id === formPlayerId)?.name ?? 'that family';
-    return formCreditUnit === 'percent'
-      ? `= ${fmt(credit)} off ${who}'s dues.`
-      : `= ${percent}% of what this sponsor gave.`;
-  })();
+  /** The overview's Sponsorships row deep-links `?kind=sponsor` — under two bands that means
+   *  "land on the band", once, not a filter (ruling R2). */
+  const sponsorBandRef = useRef<HTMLDivElement | null>(null);
+  const scrolledToBand = useRef(false);
+  useEffect(() => {
+    if (kindFilter === 'sponsor' && !loading && !scrolledToBand.current && sponsorBandRef.current) {
+      scrolledToBand.current = true;
+      sponsorBandRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }, [kindFilter, loading]);
   // ⚠ The season figures come from EVERY record, never from what the filter is showing — a
   // summary that moved when you flipped a filter would be answering a different question from the
   // one its labels ask.
@@ -194,8 +200,7 @@ export function FundraisersPanel({
   // the guard exists to protect, and a form that only watched the text fields would drop it
   // silently — the same fork-shaped oversight the Settings sheet's sponsor fields already fixed.
   const formDirty = Boolean(
-    formName || formDesc || formStart || formEnd || formRebate !== '0'
-    || formAmount || formTags.length > 0,
+    formName || formDesc || formStart || formEnd || formRebate !== '0' || formTags.length > 0,
   );
   const closeModal = useDiscardGuard({
     dirty: formDirty,
@@ -294,7 +299,6 @@ export function FundraisersPanel({
      same creation POST now, instead of navigating here to open this modal pre-set. */
 
   function openModal() {
-    setFormKind('fundraiser');
     setFormName('');
     setFormDesc('');
     // ⚠ PRE-FILLED, NOT GOVERNED (migration 237). The team's standard split lands here as a
@@ -303,11 +307,6 @@ export function FundraisersPanel({
     setFormRebate(String(defaultCreditPercent));
     setFormStart('');
     setFormEnd('');
-    setFormAmount('');
-    setFormStatus('received');
-    setFormPlayerId('');
-    setFormCredit(String(defaultCreditPercent));
-    setFormCreditUnit('percent');
     setFormTags([]);
     setFormError('');
     setShowModal(true);
@@ -317,17 +316,12 @@ export function FundraisersPanel({
     e.preventDefault();
     setFormError('');
     if (!formName.trim()) {
-      setFormError(formKind === 'sponsor' ? 'The sponsor needs a name.' : 'Name is required.');
+      setFormError('Name is required.');
       return;
     }
     const rebate = Number(formRebate);
-    if (formKind === 'fundraiser' && (isNaN(rebate) || rebate < 0 || rebate > 100)) {
+    if (isNaN(rebate) || rebate < 0 || rebate > 100) {
       setFormError('Player credit % must be between 0 and 100.');
-      return;
-    }
-    const amount = Number(formAmount);
-    if (formKind === 'sponsor' && (isNaN(amount) || amount <= 0)) {
-      setFormError('A sponsor needs an amount greater than zero.');
       return;
     }
     setSaving(true);
@@ -335,7 +329,7 @@ export function FundraisersPanel({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formKind === 'fundraiser' ? {
+        body: JSON.stringify({
           kind:               'fundraiser',
           name:               formName.trim(),
           description:        formDesc.trim() || null,
@@ -343,18 +337,6 @@ export function FundraisersPanel({
           startDate:          formStart || null,
           endDate:            formEnd   || null,
           tagIds:             formTags,
-        } : {
-          kind:          'sponsor',
-          name:          formName.trim(),
-          description:   formDesc.trim() || null,
-          sponsorStatus: formStatus,
-          sponsorAmount: amount,
-          tagIds:        formTags,
-          // No family means no credit — the server enforces the same thing, because a client
-          // that sent one anyway must not be able to create a credit with nobody to credit.
-          broughtInById: formPlayerId || null,
-          creditValue:   formPlayerId ? Number(formCredit) || 0 : 0,
-          creditUnit:    formCreditUnit,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
@@ -382,7 +364,11 @@ export function FundraisersPanel({
   // The tab's sub-view REPLACES its list rather than sitting beside it: the leaderboard is a
   // six-column table and the list is a five-column one, so a split would give neither enough
   // column to be read (binding mockup, "the list is replaced, not pushed aside").
-  if (openFundraiserId) {
+  /* ⚠ ONLY A DRIVE DRILLS IN (Direction A) — a sponsor's `?fundraiser=` expands its band row on
+     the list below instead, so the gate waits for the list to know the KIND. While it loads, the
+     ordinary loading state renders; an id that matches nothing (deleted, other season) simply
+     shows the list rather than a dead page. */
+  if (openRecord?.kind === 'fundraiser') {
     return (
       <div className={styles.page}>
         {/* `key` on the id, so one drive can never inherit another's half-typed form. The only
@@ -395,10 +381,10 @@ export function FundraisersPanel({
             and a guard belonging to a panel the coach has switched away from must stop hijacking
             clicks on the tab they ARE looking at (the same contract every hub panel keeps). */}
         <FundraiserDetail
-          key={openFundraiserId}
+          key={openRecord.id}
           orgSlug={orgSlug}
           teamId={teamId}
-          fundraiserId={openFundraiserId}
+          fundraiserId={openRecord.id}
           tabActive={tabActive}
         />
       </div>
@@ -428,53 +414,24 @@ export function FundraisersPanel({
 
       {fundraisers.length > 0 && (
         <div className={styles.panelToolbar}>
-          {/* ⚠ A KIND FILTER, NOT A TAG FILTER (owner ruling 2026-08-15). The tag filter bar this
-              screen nearly grew was cut: money tags stay on the record and still reach the export
-              and the tag report, but with five rows a filter earns nothing. The kind switch is
-              different — it is the split the tab exists to show. */}
-          <div className={styles.viewToggle} role="group" aria-label="Show">
-            {KIND_FILTERS.map(k => (
-              <button
-                key={k.id}
-                type="button"
-                className={`${styles.viewToggleBtn} ${kindFilter === k.id ? styles.viewToggleBtnActive : ''}`}
-                aria-pressed={kindFilter === k.id}
-                onClick={() => setKindFilter(k.id)}
-              >
-                {k.label}
-              </button>
-            ))}
-          </div>
+          {/* ⚠ THE KIND FILTER RETIRED WITH DIRECTION A (owner-ruled 2026-08-29): the tab is two
+              BANDS now — drives, then sponsors — so "which kind" is answered by scrolling, and
+              the overview's two rows deep-link to their band. The export keeps BOTH kinds; its
+              Received/Pledged split (Q15) is what keeps a spreadsheet honest about the mix. */}
           <div className={styles.panelToolbarActions}>
-            {/* ⚠ Per-fundraiser TOTALS only — the per-player breakdown names children beside the
-                money they raised and stays on the fundraiser's own page. Not write-gated:
-                reading is not writing. */}
-            {/* ⚠ EXPORTS WHAT IS ON SCREEN, not the whole season. That is the hub-wide rule for
-                why Export lives on a tab's own toolbar at all — "what a tab exports depends on the
-                view and the filters the coach has set" — and it only started to matter here when
-                the kind filter became a real, addressable view. The scope label says which kind,
-                so a spreadsheet can never be mistaken for the full picture. */}
             <MoneyExportButton
               label="Fundraisers"
               formats={['xlsx', 'csv']}
               build={() => ({
                 dataset: 'fundraisers',
-                title: kindFilter === 'sponsor' ? 'Sponsors' : kindFilter === 'fundraiser' ? 'Fundraisers' : 'Fundraising',
+                title: 'Fundraising',
                 columns: FUNDRAISER_COLUMNS,
-                rows: fundraiserRows(visibleRows, new Map(moneyTags.map(t => [t.id, t]))),
-                scopeLabel: [
-                  page.programYearName,
-                  kindFilter === 'sponsor' ? 'Sponsors only' : kindFilter === 'fundraiser' ? 'Fundraisers only' : '',
-                ].filter(Boolean).join(' · '),
+                rows: fundraiserRows(fundraisers, new Map(moneyTags.map(t => [t.id, t]))),
+                scopeLabel: page.programYearName ?? '',
                 teamName: '',
                 emptyMessage: 'This season has no fundraisers to export yet.',
               })}
             />
-            {canWriteMoney && (
-              <button className={styles.btnPrimary} onClick={openModal}>
-                <Plus size={16} aria-hidden /> New
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -483,20 +440,6 @@ export function FundraisersPanel({
         <CoachLoading label="Loading your drives…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
-      ) : fundraisers.length === 0 ? (
-        <div className={styles.emptyState}>
-          <p className={styles.emptyStateTitle}>Nothing raised yet</p>
-          <p className={styles.emptyStateSub}>
-            Run a <strong>fundraiser</strong> and the whole team takes part — log what each player
-            raises and their share comes off their dues. Record a <strong>sponsor</strong> when a
-            business or grant gives directly, and credit the family who brought it in.
-          </p>
-          {canWriteMoney && (
-            <button className={styles.btnPrimary} onClick={openModal} style={{ marginTop: '1.25rem' }}>
-              <Plus size={15} /> New fundraiser or sponsor
-            </button>
-          )}
-        </div>
       ) : (
         /* ⚠ WAS A HAND-BUILT CARD LIST until 2026-08-13 (Money-hub table consistency, approved
            render `14181bd3`). Each card printed its OWN "Raised / Team keeps / Credits" headings,
@@ -514,6 +457,7 @@ export function FundraisersPanel({
             question — how much of this season is funded by families selling things versus by
             sponsors — which is the whole reason the two kinds exist. The pledged figure rides
             ALONGSIDE the received one rather than inside it: a promise is not money in. */}
+        {fundraisers.length > 0 && (
         <div className={styles.summaryGrid} style={{ marginBottom: '1.25rem' }}>
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Raised — fundraisers</span>
@@ -539,7 +483,26 @@ export function FundraisersPanel({
             <span className={styles.summaryCardValue} style={{ color: 'var(--home-plum, #a855f7)' }}>{fmt(rollup.creditedToFamilies)}</span>
           </div>
         </div>
+        )}
 
+        {/* ── BAND ONE: FUNDRAISERS — campaigns; the roster is their list; drill in for the
+            leaderboard. Each band's create door sits in ITS OWN heading row, same spot, same
+            weight, sibling labels — "+ Fundraiser" / "+ Sponsorship" (owner, §121 walk). ── */}
+        <div className={styles.panelToolbar} style={{ marginBottom: '0.5rem' }}>
+          <h3 className={styles.panelSubhead}>Fundraisers</h3>
+          {canWriteMoney && (
+            <div className={styles.panelToolbarActions}>
+              <button className={styles.btnSecondary} onClick={openModal}>
+                <Plus size={15} aria-hidden /> Fundraiser
+              </button>
+            </div>
+          )}
+        </div>
+        {driveRows.length === 0 ? (
+          <p className={styles.muted} style={{ margin: '0 0 0.5rem' }}>
+            No drives yet.{canWriteMoney && <> Press <strong>+ Fundraiser</strong> to run one — the whole team takes part, and each player&rsquo;s share comes off their dues.</>}
+          </p>
+        ) : (
         <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
           <table className={styles.table}>
             <thead>
@@ -553,7 +516,7 @@ export function FundraisersPanel({
               </tr>
             </thead>
             <tbody>
-              {visibleRows.map(f => (
+              {driveRows.map(f => (
                 <tr key={f.id} className={styles.tr}>
                   {/* ⚠ ONE LINE (owner ruling 2026-08-15: "this looks like a lot of text").
                       The finding worth keeping is that the FIGURES were never the problem —
@@ -568,27 +531,16 @@ export function FundraisersPanel({
                       the record a real target to open in a new tab. */}
                   <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Name">
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexWrap: 'wrap' }}>
-                      {f.kind === 'sponsor'
-                        ? <Handshake size={15} aria-hidden style={{ color: 'var(--blueprint-blue)', flexShrink: 0 }} />
-                        : <TrendingUp size={15} aria-hidden style={{ color: 'var(--success-light)', flexShrink: 0 }} />}
+                      <TrendingUp size={15} aria-hidden style={{ color: 'var(--success-light)', flexShrink: 0 }} />
                       {/* ⚠ Through the shared builder, carrying the SEASON: the old link was a
                           hand-built `/accounting/fundraisers/{id}` with no `?year=`, so opening a
                           past season's drive silently landed in the live one. */}
                       <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id })} className={styles.playerNameLink}>
                         {f.name}
                       </Link>
-                      <span className={`${styles.badge} ${f.kind === 'sponsor' ? styles.badgeSponsor : styles.badgeActive}`}>
-                        {KIND_LABEL[f.kind]}
-                      </span>
-                      {/* The ONE piece of text kept: two muted words naming the family who brought
-                          a sponsor in — the fact a sponsor list is scanned for. ABSENT, never an
-                          em-dash, when a sponsor belongs to nobody. */}
-                      {f.broughtInBy && (
-                        <span className={styles.muted} style={{ fontSize: '0.78rem', padding: 0 }}>· {f.broughtInBy}</span>
-                      )}
                     </span>
                   </td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ color: f.kind === 'sponsor' ? 'var(--blueprint-blue)' : 'var(--success-light)', fontWeight: 700 }}>
+                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ color: 'var(--success-light)', fontWeight: 700 }}>
                     {fmt(f.totalRaised)}
                   </td>
                   <td className={`${styles.td} ${styles.tdNum}`} data-label="Team keeps" style={{ fontWeight: 700 }}>
@@ -617,14 +569,26 @@ export function FundraisersPanel({
             </tbody>
           </table>
         </div>
-        {/* A filter that hides everything must say so — an empty table under an active filter
-            reads as "you have none of these" rather than "none of these match". */}
-        {visibleRows.length === 0 && (
-          <p className={styles.muted} style={{ marginTop: '0.85rem' }}>
-            No {kindFilter === 'sponsor' ? 'sponsors' : 'fundraisers'} this season.{' '}
-            <button type="button" className={styles.linkBtn} onClick={() => setKindFilter('all')}>Show everything</button>
-          </p>
         )}
+
+        {/* ── BAND TWO: SPONSORS — a ledger of promises and cheques that expands in place
+            (Direction A). Its two expectation forms — Log a pledge, Sponsor settings — live
+            inside the band; money moves only through the conversation's Record door. ── */}
+        <div ref={sponsorBandRef}>
+          <SponsorBand
+            orgSlug={orgSlug}
+            teamId={teamId}
+            sponsors={sponsorRows}
+            roster={roster}
+            defaultCreditPercent={defaultCreditPercent}
+            moneyTags={moneyTags}
+            onCreateTag={addMoneyTag}
+            canWriteMoney={canWriteMoney}
+            openId={openSponsorId}
+            onOpenChange={setOpenFundraiserParam}
+            onChanged={() => { void load(true); bumpMoneyRevision(); }}
+          />
+        </div>
         </>
       )}
 
@@ -634,50 +598,26 @@ export function FundraisersPanel({
               footer's edge-bleed sat on top of the last field — the owner found the date row
               under the action bar (2026-08-15). */}
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <CoachModalHeader title="New" onClose={closeModal} titleTag="h2" closeIconSize={18} />
+            {/* Drives only since Direction A (owner-ruled 2026-08-29): sponsors are made by
+                "Log a pledge" on their band or by recording their first cheque through the
+                conversation — the fused kind-picker modal retired with the split. */}
+            <CoachModalHeader title="New fundraiser" onClose={closeModal} titleTag="h2" closeIconSize={18} />
             <form onSubmit={handleCreate}>
               <div className={styles.formGrid}>
-                {/* ⚠ THE KIND IS PICKED FIRST BECAUSE IT DECIDES THE REST OF THE FORM. Two cards
-                    rather than a dropdown: each needs a sentence, and it is the one choice that
-                    cannot be changed afterwards — a drive's rows are players and a sponsor is a
-                    single arrival, so a switch would have nothing sensible to do with whatever had
-                    already been recorded. */}
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>What is this?</label>
-                  <div className={styles.kindPick} role="radiogroup" aria-label="What is this?">
-                    {FUNDRAISING_KINDS.map(k => (
-                      <button
-                        key={k}
-                        type="button"
-                        role="radio"
-                        aria-checked={formKind === k}
-                        className={`${styles.kindOption} ${formKind === k ? styles.kindOptionOn : ''}`}
-                        onClick={() => setFormKind(k)}
-                      >
-                        <span className={styles.kindOptionName}>
-                          {k === 'sponsor' ? <Handshake size={14} aria-hidden /> : <TrendingUp size={14} aria-hidden />}
-                          {KIND_LABEL[k]}
-                        </span>
-                        <span className={styles.kindOptionHint}>{KIND_HINT[k]}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>{formKind === 'sponsor' ? 'Sponsor *' : 'Fundraiser Name *'}</label>
+                  <label className={styles.label}>Fundraiser Name *</label>
                   <input
                     className={styles.input}
                     type="text"
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
-                    placeholder={formKind === 'sponsor' ? 'e.g. Riverdale Dental' : 'e.g. Chocolate Sale 2026'}
+                    placeholder="e.g. Chocolate Sale 2026"
                     autoFocus
                     required
                   />
                 </div>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>{formKind === 'sponsor' ? 'Notes' : 'Description'}</label>
+                  <label className={styles.label}>Description</label>
                   <textarea
                     className={styles.textarea}
                     value={formDesc}
@@ -686,9 +626,7 @@ export function FundraisersPanel({
                     rows={2}
                   />
                 </div>
-
-                {formKind === 'fundraiser' ? (
-                  <>
+                <>
                     <div className={styles.field}>
                       <label className={styles.label}>Player credit %</label>
                       <input
@@ -715,83 +653,6 @@ export function FundraisersPanel({
                       <input className={styles.input} type="date" value={formEnd} onChange={e => setFormEnd(e.target.value)} />
                     </div>
                   </>
-                ) : (
-                  <>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Amount *</label>
-                      <input
-                        className={styles.input}
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={formAmount}
-                        onChange={e => setFormAmount(e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Status</label>
-                      <select className={styles.select} value={formStatus} onChange={e => setFormStatus(e.target.value as SponsorStatus)}>
-                        {SPONSOR_STATUSES.map(s => <option key={s} value={s}>{SPONSOR_STATUS_LABEL[s]}</option>)}
-                      </select>
-                      {/* ⚠ ONLY THE SURPRISING ONE IS EXPLAINED. "Received" means what it says, and
-                          spending three lines saying so pushed the form past the window and left
-                          the next field sliced by the action bar. A pledge is the state that needs
-                          a sentence, because it deliberately does nothing to the books. */}
-                      {formStatus === 'pledged' && (
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                          {SPONSOR_STATUS_HINT.pledged}
-                        </p>
-                      )}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Brought in by</label>
-                      <select className={styles.select} value={formPlayerId} onChange={e => setFormPlayerId(e.target.value)}>
-                        <option value="">Nobody in particular</option>
-                        {roster.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                    </div>
-                    {/* ⚠ NO FAMILY, NO CREDIT — there is nobody to credit, so the field stands down
-                        rather than accepting a figure that would go nowhere. */}
-                    {/* Sits BESIDE "Brought in by" rather than under it — the two are one thought
-                        ("who, and how much do they keep"), and the form was tall enough that a
-                        full-width row here put the last field under the action bar. */}
-                    {formPlayerId && (
-                      <div className={styles.field}>
-                        <label className={styles.label}>Credit to that family</label>
-                        <div className={styles.unitField}>
-                          <input
-                            className={styles.input}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={formCredit}
-                            onChange={e => setFormCredit(e.target.value)}
-                            placeholder="0"
-                          />
-                          <div className={styles.unitPick} role="group" aria-label="Credit unit">
-                            {(['amount', 'percent'] as CreditUnit[]).map(u => (
-                              <button
-                                key={u}
-                                type="button"
-                                aria-pressed={formCreditUnit === u}
-                                className={`${styles.unitBtn} ${formCreditUnit === u ? styles.unitBtnOn : ''}`}
-                                onClick={() => setFormCreditUnit(u)}
-                              >
-                                {u === 'amount' ? '$' : '%'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        {/* Whichever unit was typed, the OTHER is stated in plain words — nobody
-                            should have to trust a percentage they cannot see the dollars of. */}
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                          {creditPreview}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
 
                 {/* ⚠ TAGS ARE ON THE RECORD, AND ONLY ON THE RECORD (owner ruling 2026-08-15). The
                     tag FILTER was cut from the list — with five rows it earns nothing — and the

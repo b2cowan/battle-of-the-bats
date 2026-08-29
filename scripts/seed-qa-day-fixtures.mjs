@@ -1130,10 +1130,13 @@ async function seedMoneyLab() {
   // A payable with a deposit paid and a balance still owed NEXT month — this is the row the
   // Payment schedule tab's Unpaid default exists for, and the one that creates a shortfall. It
   // shares Entry Fees with the two paid entries, so the item's actual is a deposit plus two costs.
+  /* ⚠ CAMEL-CASE ON PURPOSE — these are this fixture's own words, not columns. The snake_case
+     twins they used to borrow (deposit_amount, balance_due_date, …) were dropped by mig 270, and a
+     seed literal wearing a dead column's name reads as if it writes one. It writes a PLAN. */
   const PAYABLE = {
     desc: 'Fall Showdown entry', cat: 'Tournaments', item: 'Entry Fees',
-    amount: 600, deposit_amount: 200, deposit_due_date: dayIn(-1, 15), deposit_paid_at: dayIn(-1, 14),
-    balance_amount: 400, balance_due_date: dayIn(1, 10),
+    amount: 600, depositAmount: 200, depositDue: dayIn(-1, 15), depositPaid: dayIn(-1, 14),
+    balanceAmount: 400, balanceDue: dayIn(1, 10),
   };
   {
     const { data: existing } = await db.from('rep_team_expenses')
@@ -1185,10 +1188,10 @@ async function seedMoneyLab() {
           expense_type: 'tournament_payable', description: PAYABLE.desc, ...tax,
         },
         installments: [
-          { amount: PAYABLE.deposit_amount, dueDate: PAYABLE.deposit_due_date },
-          { amount: PAYABLE.balance_amount, dueDate: PAYABLE.balance_due_date },
+          { amount: PAYABLE.depositAmount, dueDate: PAYABLE.depositDue },
+          { amount: PAYABLE.balanceAmount, dueDate: PAYABLE.balanceDue },
         ],
-        payments: [{ amount: PAYABLE.deposit_amount, paidDate: PAYABLE.deposit_paid_at, installmentNumber: 1 }],
+        payments: [{ amount: PAYABLE.depositAmount, paidDate: PAYABLE.depositPaid, installmentNumber: 1 }],
       });
       added++;
     }

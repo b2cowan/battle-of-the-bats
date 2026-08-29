@@ -522,22 +522,16 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'budget-vs-actual'),
       exactPath: true,
       anchor: '[data-sandbox-tour="budget-variance"]',
-      // ⚠ The Bottle Drive clause (seeded 2026-08-14 with the season settlement sheet).
-      // Fundraising lowering a family's bill is the most sympathetic thing this product does, and
-      // until that seed the demo could not show it at all. If the drive is ever un-seeded, this
-      // sentence goes with it — `check-demo-coach` pins the world it describes.
-      //
-      // ⚠ The closing clause was added 2026-08-14 when the two team-wide dues settings moved to
-      // Team settings → Money. It is the demo's only mention of them, and deliberately so: WHERE
-      // credits land is the reason the row above reads the way it does, so a prospect who has just
-      // been shown the effect is the one prospect who cares that it is a choice. The seed states
-      // both settings (DEMO_DUES_SETTINGS) rather than inheriting them, so this stays true.
-      // ⚠ The sponsor clause (seeded 2026-08-15 with the sponsorships follow-ups). It is one
-      // sentence because it earns one: the DISTINCTION is the product's idea — a drive asks what
-      // each player raised, a sponsor is a single arrival — and the tour had no way to say the
-      // portal knows the difference. The demo's sponsor is deliberately club-wide and credited to
-      // nobody, so this sentence must never imply a family's bill moved (see MIDSEASON_SPONSOR:
-      // the three pins the clause above depends on survive precisely because it does not).
+      // ⚠ THIS STEP ONCE CARRIED THREE MORE CLAUSES — the Bottle Drive, the team-wide dues
+      // settings, and the sponsor — and `ea8ddd14` (owner ruling 2026-08-28: a hook plus ONE
+      // proof point per step) cut them deliberately. The narration now says nothing about
+      // fundraising ON PURPOSE; do not read their absence as drift, and do not re-grow this step
+      // to mention a fundraising change. The seeded WORLD still shows all of it — the drive
+      // (MIDSEASON_FUNDRAISER) and the sponsor (MIDSEASON_SPONSOR, since mig 268 a pledge kept
+      // by dated arrivals), both pinned by `check-demo-coach` — so a prospect who walks into
+      // Fundraising finds the real thing with no sentence over it to go stale.
+      // (Re-read for Direction A, 2026-08-29: no narration anywhere in this tour speaks of
+      // sponsors or fundraising, so the two-bands rework stales nothing here.)
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
@@ -557,7 +551,16 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
        */
       n: 5,
       label: 'Read the season one row at a time',
-      href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'transactions'),
+      /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
+           · *Are the existing sentences still true?* Yes, all three — the tab is named Ledger now
+             and opens on the same Timeline this step describes (`view` stated explicitly so a
+             prospect's remembered view can never re-aim the stop); the cash identity is untouched;
+             rows still open the bill's page. Payables had no stop of its own to go stale.
+           · *Should a demo moment show this?* The View switch is the fold's one new control, and
+             the "Tap any row" clause already walks a prospect into the By-bill world through a
+             bill's page — a ninth stop for an arrangement control would be ceremony. Nothing
+             added, nothing stale. */
+      href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'ledger', { view: 'timeline' }),
       exactPath: true,
       anchor: '[data-sandbox-tour="register-balance"]',
       /* ⚠⚠ THE CLAIM IN THE FIRST SENTENCE IS LOAD-BEARING, AND ITS CHECK IS NOT AUTOMATIC.

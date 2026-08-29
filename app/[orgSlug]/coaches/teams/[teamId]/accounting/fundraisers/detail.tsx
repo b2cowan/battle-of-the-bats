@@ -6,7 +6,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useBumpMoneyRevision, useMoneyRevision } from '@/lib/coach-money-refresh';
 import { moneySectionHref } from '@/lib/coach-money-links';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 /* The hub's one wire (money centralization P2): this screen's Record door opens the shared
    recording conversation, which lives in a sibling panel it cannot call directly. */
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
@@ -14,6 +14,7 @@ import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import SponsorCreditPlanEditor from '@/components/coaches/SponsorCreditPlanEditor';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
@@ -21,11 +22,22 @@ import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
 import { previewCreditLanding, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 import {
-  KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT, resolveCredit,
+  KIND_LABEL, SPONSOR_STATUS_LABEL, SPONSOR_STATUS_HINT,
   type FundraisingKind, type SponsorStatus, type CreditUnit,
 } from '@/lib/coach-fundraising';
+import {
+  deriveAllArrivalCredits, stillToCome, creditPlanProblem, type CreditPlanShare,
+} from '@/lib/sponsor-arrivals';
+import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 
 /**
+ * ⚠⚠ DRIVES ONLY SINCE DIRECTION A (owner-ruled 2026-08-29): the panel routes a sponsor's
+ * `?fundraiser=` to its BAND ROW (SponsorBand.tsx), never here — the sponsor "record page"
+ * lived one day (QA §120) and was superseded. The sponsor-only state, the agreement-sheet fork
+ * and the undo machinery below are UNREACHABLE dead code awaiting the /simplify sweep; do not
+ * extend them, extend SponsorBand.
+ *
  * ONE fundraiser — a STATE OF THE FUNDRAISERS TAB, not a page beside it (2026-08-14, binding
  * mockup: Artifact "Fundraiser Drill-In").
  *
@@ -133,9 +145,18 @@ export function FundraiserDetail({
   // Normalized at the fetch boundary (mirror of the server's mapper), so everything below
   // trusts the state as a real mode.
   const [creditApplication, setCreditApplication] = useState<CreditApplicationMode>('last_first');
-  // Sponsor only: dollars of the family credit already handed back in cash (SP-1/A3) — the
-  // Settings sheet warns with this figure before the server's payout floor would refuse.
-  const [sponsorCreditExposure, setSponsorCreditExposure] = useState(0);
+  // Sponsor only (arrivals model, mig 268): the record page's raw material — the promise, each
+  // arrival, the credit plan, and how many dollars of each family's accrued credit are already
+  // handed back in cash (the agreement sheet warns with those before the payout floor refuses).
+  const [pledgedAmount, setPledgedAmount] = useState<number | null>(null);
+  const [sponsorArrivals, setSponsorArrivals] = useState<{
+    entryId: string; amount: number; receivedDate: string | null; method: string | null;
+    notes: string | null; credited: number;
+  }[]>([]);
+  const [sponsorPlan, setSponsorPlan] = useState<{ playerId: string; playerName: string | null; value: number; unit: string }[]>([]);
+  const [exposureByFamily, setExposureByFamily] = useState<{ playerId: string; exposure: number }[]>([]);
+  const [arrivalsError, setArrivalsError] = useState('');
+  const [undoingId, setUndoingId] = useState<string | null>(null);
   /** The team's money-tag vocabulary — the same library expenses draw on (mig 239). */
   const [moneyTags, setMoneyTags]     = useState<RepTeamTag[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -162,12 +183,11 @@ export function FundraiserDetail({
   const [editActive, setEditActive]     = useState(true);
   const [editSaving, setEditSaving]     = useState(false);
   const [editError, setEditError]       = useState('');
-  // Sponsor-only edit fields
-  const [editStatus, setEditStatus]         = useState<SponsorStatus>('received');
-  const [editAmount, setEditAmount]         = useState('');
-  const [editPlayerId, setEditPlayerId]     = useState('');
-  const [editCredit, setEditCredit]         = useState('0');
-  const [editCreditUnit, setEditCreditUnit] = useState<CreditUnit>('percent');
+  // Sponsor-only edit fields (arrivals model, mig 268: the sheet edits the AGREEMENT — the
+  // pledged amount and the credit plan. Status is DERIVED from the money and never edited here;
+  // the arrivals themselves are recorded and undone on the record page.)
+  const [editPledged, setEditPledged]       = useState('');
+  const [editPlan, setEditPlan]             = useState<{ playerId: string; value: string; unit: CreditUnit }[]>([]);
   const [editTags, setEditTags]             = useState<string[]>([]);
 
   // Which SEASON is on screen, read exactly as the surrounding panels read it. ⚠ The read-only
@@ -177,30 +197,46 @@ export function FundraiserDetail({
   const canWriteMoney = (page.capabilities?.money === 'write');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const isSponsor = fundraiser?.kind === 'sponsor';
-  /** A sponsor's single arrival — the only row it has. Found by its entry, not by position. */
-  const sponsorRow = isSponsor ? players.find(p => p.entry !== null) ?? null : null;
 
   /**
    * The refusals this sheet can SEE COMING get a dead button, not a doomed round trip (owner,
    * QA §118 walk 2026-08-28: "shouldn't it just make save unclickable?" — and the approved
-   * mockup drew it disabled). `sponsorCreditExposure` is the dollars of the family's credit
+   * mockup drew it disabled). `exposureByFamily` is the dollars of each family's accrued credit
    * already handed back in cash; while any of the coach's current choices would take the books
    * below that, Save is disabled and the reason sits beside the field that causes it. The
    * server's payout floor still stands regardless — a payout can move under an open sheet, so
    * the button is a courtesy and the 409 is the law.
    */
-  const editCreditResolved = editPlayerId
-    ? resolveCredit(Number(editAmount) || 0, Number(editCredit) || 0, editCreditUnit === 'amount' ? 'amount' : 'percent').credit
-    : 0;
-  const sponsorWasReceived = isSponsor && (fundraiser?.sponsorStatus ?? 'received') === 'received';
-  const exposureBites = sponsorWasReceived && sponsorCreditExposure > 0.005;
-  const flipRefused  = exposureBites && editStatus === 'pledged';
-  const moveRefused  = exposureBites && editStatus === 'received'
-    && !!sponsorRow?.playerId && editPlayerId !== sponsorRow.playerId;
-  const lowerRefused = exposureBites && editStatus === 'received'
-    && !!sponsorRow?.playerId && editPlayerId === sponsorRow.playerId
-    && editCreditResolved < sponsorCreditExposure - 0.005;
-  const saveForeseeablyRefused = flipRefused || moveRefused || lowerRefused;
+  const editPlanShares: CreditPlanShare[] = editPlan
+    .filter(r => r.playerId && Number(r.value) > 0)
+    .map(r => ({ playerId: r.playerId, value: Number(r.value), unit: r.unit }));
+  const editPlanProblem = isSponsor && showSettings
+    ? creditPlanProblem(editPlanShares, Number(editPledged) || null)
+    : null;
+  // Replay the arrivals through the EDITED agreement (the same arithmetic the writer runs) and
+  // compare each family's projected credit against what is already paid out in cash — any family
+  // that would fall below their exposure is a refusal this sheet can see coming.
+  const agreementRefusals = (() => {
+    if (!isSponsor || !showSettings || exposureByFamily.length === 0 || editPlanProblem) return [];
+    const rounds = deriveAllArrivalCredits({
+      plan: editPlanShares,
+      pledged: Number(editPledged) || null,
+      arrivalAmounts: sponsorArrivals.map(a => a.amount),
+    });
+    const projected = new Map<string, number>();
+    for (const round of rounds) for (const s of round) {
+      projected.set(s.playerId, (projected.get(s.playerId) ?? 0) + s.credit);
+    }
+    return exposureByFamily
+      .filter(f => (projected.get(f.playerId) ?? 0) < f.exposure - 0.005)
+      .map(f => ({
+        ...f,
+        name: sponsorPlan.find(p => p.playerId === f.playerId)?.playerName
+          ?? players.find(p => p.playerId === f.playerId)?.playerName
+          ?? 'this family',
+      }));
+  })();
+  const saveForeseeablyRefused = agreementRefusals.length > 0;
 
   useOverlayOpen(showSettings);
 
@@ -220,11 +256,12 @@ export function FundraiserDetail({
     || editTags.some(id => !fundraiser.tagIds.includes(id))
     || (isSponsor
       ? (
-        editStatus !== (fundraiser.sponsorStatus ?? 'received')
-        || editAmount !== String(summary?.totalRaised ?? '')
-        || editPlayerId !== (sponsorRow?.playerId ?? '')
-        || editCredit !== String(fundraiser.playerRebatePercent)
-        || editCreditUnit !== 'percent'
+        editPledged !== String(pledgedAmount ?? '')
+        // The plan compared as a SET of rows — the sheet re-seeds from the stored plan on open,
+        // so any difference in family, value or unit is real typing.
+        || editPlanShares.length !== sponsorPlan.length
+        || editPlanShares.some(r => !sponsorPlan.some(p =>
+          p.playerId === r.playerId && Number(p.value) === r.value && p.unit === r.unit))
       )
       : (
         editRebate !== String(fundraiser.playerRebatePercent)
@@ -251,7 +288,10 @@ export function FundraiserDetail({
       setPlayers(data.players);
       setMoneyTags(data.moneyTags ?? []);
       setCreditApplication(normalizeCreditApplicationMode(data.creditApplication));
-      setSponsorCreditExposure(Number(data.sponsorCreditExposure) || 0);
+      setPledgedAmount(data.pledgedAmount != null ? Number(data.pledgedAmount) : null);
+      setSponsorArrivals(Array.isArray(data.sponsorArrivals) ? data.sponsorArrivals : []);
+      setSponsorPlan(Array.isArray(data.sponsorCreditPlan) ? data.sponsorCreditPlan : []);
+      setExposureByFamily(Array.isArray(data.sponsorExposureByFamily) ? data.sponsorExposureByFamily : []);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load fundraiser.');
     } finally {
@@ -285,6 +325,7 @@ export function FundraiserDetail({
    * here as well would fetch this screen twice per save.
    */
   const saved = useCallback(() => { bumpMoneyRevision(); }, [bumpMoneyRevision]);
+  const confirmDialog = useConfirm();
 
   /**
    * Open a player's row to CORRECT an amount already logged (money centralization P2).
@@ -386,14 +427,14 @@ export function FundraiserDetail({
     setEditStart(fundraiser.startDate ?? '');
     setEditEnd(fundraiser.endDate ?? '');
     setEditActive(fundraiser.isActive);
-    // A sponsor edits its arrival, not a campaign: what came in, whether it has, and who keeps
-    // part of it. The credit opens as the AGREED SHARE rather than the dollars, so correcting the
-    // cheque re-figures the family's cut instead of silently keeping the old amount.
-    setEditStatus(fundraiser.sponsorStatus ?? 'received');
-    setEditAmount(String(summary?.totalRaised ?? ''));
-    setEditPlayerId(sponsorRow?.playerId ?? '');
-    setEditCredit(String(fundraiser.playerRebatePercent));
-    setEditCreditUnit('percent');
+    // A sponsor edits its AGREEMENT (mig 268): the pledge and the credit plan, seeded from the
+    // stored rows so the shares re-figure the arrivals' credits rather than restating dollars.
+    setEditPledged(pledgedAmount != null ? String(pledgedAmount) : '');
+    setEditPlan(
+      sponsorPlan.length
+        ? sponsorPlan.map(p => ({ playerId: p.playerId, value: String(p.value), unit: (p.unit === 'amount' ? 'amount' : 'percent') as CreditUnit }))
+        : [{ playerId: '', value: '0', unit: 'percent' as CreditUnit }],
+    );
     setEditTags(fundraiser.tagIds);
     setEditError('');
     setShowSettings(true);
@@ -407,11 +448,12 @@ export function FundraiserDetail({
       setEditError('Player credit % must be between 0 and 100.');
       return;
     }
-    const amount = Number(editAmount);
+    const amount = Number(editPledged);
     if (isSponsor && (isNaN(amount) || amount <= 0)) {
       setEditError('A sponsor needs an amount greater than zero.');
       return;
     }
+    if (isSponsor && editPlanProblem) { setEditError(editPlanProblem); return; }
     // The dead button's belt: Enter in a text field still submits the form, so the foreseeable
     // refusal is asked here too — same answer, no round trip. The server's floor stands behind both.
     if (saveForeseeablyRefused) return;
@@ -426,11 +468,9 @@ export function FundraiserDetail({
           body: JSON.stringify(isSponsor ? {
             name:          editName.trim(),
             description:   editDesc.trim() || null,
-            sponsorStatus: editStatus,
-            sponsorAmount: amount,
-            broughtInById: editPlayerId || null,
-            creditValue:   editPlayerId ? Number(editCredit) || 0 : 0,
-            creditUnit:    editCreditUnit,
+            // The agreement (mig 268): status is derived from the money and never sent.
+            pledgedAmount: amount,
+            creditPlan:    editPlanShares,
             tagIds:        editTags,
           } : {
             name:               editName.trim(),
@@ -450,6 +490,40 @@ export function FundraiserDetail({
       setEditError(e.message);
     } finally {
       setEditSaving(false);
+    }
+  }
+
+  /**
+   * Undo one arrival — its credits, its dated income row and the entry go together, and undoing
+   * the last one returns the sponsor to a pledge. Confirmed in dollars (never a bare "sure?"),
+   * refused by the payout floor when cash already went back out against its credits.
+   */
+  async function undoArrival(a: { entryId: string; amount: number; receivedDate: string | null; credited: number }) {
+    setArrivalsError('');
+    const lastOne = sponsorArrivals.length === 1;
+    const ok = await confirmDialog({
+      title: 'Undo this arrival?',
+      message: `Removes the ${fmt(a.amount)} that arrived ${a.receivedDate ? formatStoredDate(a.receivedDate) : 'undated'} from the team’s books`
+        + (a.credited > 0.005 ? `, and takes back the ${fmt(a.credited)} credited to families from it` : '')
+        + (lastOne ? '. This is the last arrival, so the sponsor returns to a pledge.' : '.'),
+      confirmText: `Undo ${fmt(a.amount)}`,
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setUndoingId(a.entryId);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}/arrivals/${a.entryId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        setArrivalsError((await res.json().catch(() => ({}))).error ?? 'That arrival could not be undone.');
+        return;
+      }
+      saved(); // money moved — the hub re-reads, and the revision effect brings this page back too
+    } finally {
+      setUndoingId(null);
     }
   }
 
@@ -488,9 +562,37 @@ export function FundraiserDetail({
           </>
         )}
         actions={canWriteMoney && fundraiser && (
-          <button className={styles.btnSecondary} onClick={openSettings} title="Edit fundraiser settings" aria-label="Fundraiser settings">
-            <Settings size={15} aria-hidden /> <span className={styles.headerBtnLabel}>Settings</span>
-          </button>
+          <>
+            {/* The record door LEADS (house rule 4: the create goes first, every width) — an
+                arrival is money that MOVED, so it goes through the one recording conversation,
+                locked to this sponsor (mig 268), never a private form here. */}
+            {isSponsor && recordSignal && (
+              <button
+                className={styles.btnPrimary}
+                onClick={() => recordSignal.request({
+                  branch: 'sponsor',
+                  lock: {
+                    subject: fundraiser.name,
+                    detail: stillToCome(pledgedAmount, summary?.totalRaised ?? 0) > 0.005
+                      ? `${fmt(stillToCome(pledgedAmount, summary?.totalRaised ?? 0))} still to come`
+                      : 'opened from its record',
+                  },
+                  ids: { sponsorId: fundraiser.id },
+                })}
+                aria-label={`Record money from ${fundraiser.name}`}
+              >
+                Record
+              </button>
+            )}
+            <button
+              className={styles.btnSecondary}
+              onClick={openSettings}
+              title={isSponsor ? 'Edit the agreement — pledge and credit plan' : 'Edit fundraiser settings'}
+              aria-label={isSponsor ? 'Sponsor settings' : 'Fundraiser settings'}
+            >
+              <Settings size={15} aria-hidden /> <span className={styles.headerBtnLabel}>Settings</span>
+            </button>
+          </>
         )}
       />
       {fundraiser && (
@@ -558,39 +660,11 @@ export function FundraiserDetail({
             </div>
           </div>
 
-          {/* ⚠ A SPONSOR HAS NO LEADERBOARD. Drawing the roster here would put fifteen "—" rows
-              against one arrival, which is the exact shape sponsorships were added to stop. What
-              a sponsor has instead is one line: who brought it in and what they kept. */}
-          {isSponsor ? (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>Brought in by</th>
-                    <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                    <th className={`${styles.th} ${styles.thNum}`}>Credited to them</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className={styles.tr}>
-                    <td className={styles.td} data-label="Brought in by">
-                      {sponsorRow?.playerName
-                        ? <span className={styles.playerName}>{sponsorRow.playerName}</span>
-                        : <span className={styles.muted}>Nobody in particular — a club-wide sponsor</span>}
-                    </td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
-                      {fmt(summary.totalRaised)}
-                    </td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Credited to them">
-                      {summary.totalCredits > 0.005
-                        ? <span style={{ color: 'var(--home-plum, #a855f7)', fontWeight: 600 }}>{fmt(summary.totalCredits)}</span>
-                        : <span className={styles.muted}>— all to the team</span>}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          ) : players.length === 0 ? (
+          {/* ⚠ A SPONSOR HAS NO LEADERBOARD — IT HAS A STORY (owner ruling Q11 option B,
+              2026-08-28): the promise, each arrival with the day it actually came in, what each
+              cheque credited, and what is still to come. The old screen restated the list row in
+              four cards; this one tells the record. */}
+          {players.length === 0 ? (
             <div className={styles.emptyState}>
               <p className={styles.emptyStateTitle}>No roster players found</p>
               <p className={styles.emptyStateSub}>Add active players to this team's roster to start logging fundraising amounts.</p>
@@ -812,7 +886,9 @@ export function FundraiserDetail({
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) closeSettings(); }}>
           {/* Same shape, same fields, same fix as the create modal beside it (2026-08-15). */}
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
-            <CoachModalHeader title={isSponsor ? "Sponsor" : "Fundraiser Settings"} onClose={closeSettings} titleTag="h2" closeIconSize={18} />
+            {/* Named for the act on both forks (forms review F-4, 2026-08-28) — one door, one
+                naming scheme, whichever kind is behind it. */}
+            <CoachModalHeader title={isSponsor ? 'Sponsor settings' : 'Fundraiser settings'} onClose={closeSettings} titleTag="h2" closeIconSize={18} />
             <form onSubmit={saveSettings}>
               <div className={styles.formGrid}>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -836,88 +912,45 @@ export function FundraiserDetail({
                 </div>
                 {isSponsor ? (
                   <>
+                    {/* THE AGREEMENT (mig 268): the pledge and the credit plan. Status is not a
+                        field any more — it follows the money (record or undo arrivals to move
+                        it), and the sheet says so instead of offering a dropdown the server
+                        would refuse. */}
                     <div className={styles.field}>
-                      <label className={styles.label}>Amount *</label>
+                      <label className={styles.label}>Pledged amount *</label>
                       <input
                         className={styles.input}
                         type="number"
                         min={0}
                         step="0.01"
-                        value={editAmount}
-                        onChange={e => setEditAmount(e.target.value)}
+                        value={editPledged}
+                        onChange={e => setEditPledged(e.target.value)}
                       />
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
+                        {sponsorArrivals.length === 0
+                          ? 'Nothing has arrived yet — changing the promise moves no money.'
+                          : `${fmt(summary?.totalRaised ?? 0)} has arrived — dollar shares re-figure against the new promise.`}
+                      </p>
                     </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Status</label>
-                      <select className={styles.select} value={editStatus} onChange={e => setEditStatus(e.target.value as SponsorStatus)}>
-                        {(['pledged', 'received'] as SponsorStatus[]).map(s => (
-                          <option key={s} value={s}>{SPONSOR_STATUS_LABEL[s]}</option>
-                        ))}
-                      </select>
-                      {/* ⚠ Only the surprising state explains itself — and here it also warns:
-                          moving back to a pledge un-posts the income and removes the family's
-                          credit, which is a consequence a coach should meet before saving. When
-                          part of that credit has ALREADY been handed back in cash, the warning
-                          names the dollars and says the save will be refused — the server's
-                          payout floor (SP-1) is the guard; this line is the courtesy that keeps
-                          the coach from meeting it cold. */}
-                      {editStatus === 'pledged' && (
-                        sponsorCreditExposure > 0.005 ? (
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
-                            {fmt(sponsorCreditExposure)} of this credit has already been paid out to the family — moving back to a pledge will be refused until that payout is removed.
-                          </p>
-                        ) : (
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                            Moving back to a pledge takes it off the books and removes any family credit.
-                          </p>
-                        )
-                      )}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Brought in by</label>
-                      <select className={styles.select} value={editPlayerId} onChange={e => setEditPlayerId(e.target.value)}>
-                        <option value="">Nobody in particular</option>
-                        {players.map(p => <option key={p.playerId} value={p.playerId}>{p.playerName}</option>)}
-                      </select>
-                      {moveRefused && (
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
-                          {fmt(sponsorCreditExposure)} of {sponsorRow?.playerName ?? 'this family'}&rsquo;s credit has already been paid out in cash — the credit can&rsquo;t move or be removed until that payout is.
+                    <div className={`${styles.field} ${styles.formGridFull}`}>
+                      <label className={styles.label}>Credit families</label>
+                      <SponsorCreditPlanEditor
+                        rows={editPlan}
+                        onChange={setEditPlan}
+                        families={players.map(p => ({ id: p.playerId, name: p.playerName }))}
+                        problem={editPlanProblem}
+                      />
+                      {/* The refusals this sheet can SEE COMING get a dead button (owner ruling,
+                          QA §118): replaying the arrivals through the edited plan, any family
+                          whose credit would fall below what is already paid out in cash is named
+                          here, and Save goes dead until the payout is removed or the share
+                          restored. The server's floor stands regardless. */}
+                      {agreementRefusals.map(f => (
+                        <p key={f.playerId} style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
+                          {fmt(f.exposure)} of {f.name}&rsquo;s credit has already been paid out in cash — this change would take it below that. Remove the payout first.
                         </p>
-                      )}
+                      ))}
                     </div>
-                    {editPlayerId && (
-                      <div className={styles.field}>
-                        <label className={styles.label}>Credit to that family</label>
-                        <div className={styles.unitField}>
-                          <input
-                            className={styles.input}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={editCredit}
-                            onChange={e => setEditCredit(e.target.value)}
-                          />
-                          <div className={styles.unitPick} role="group" aria-label="Credit unit">
-                            {(['amount', 'percent'] as CreditUnit[]).map(u => (
-                              <button
-                                key={u}
-                                type="button"
-                                aria-pressed={editCreditUnit === u}
-                                className={`${styles.unitBtn} ${editCreditUnit === u ? styles.unitBtnOn : ''}`}
-                                onClick={() => setEditCreditUnit(u)}
-                              >
-                                {u === 'amount' ? '$' : '%'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        {lowerRefused && (
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
-                            {fmt(sponsorCreditExposure)} of this credit is already paid out in cash — it can&rsquo;t drop below that until the payout is removed.
-                          </p>
-                        )}
-                      </div>
-                    )}
                   </>
                 ) : (
                   <>

@@ -5,237 +5,50 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getRepFundraiser,
-  getOrCreateRepTeamLedger,
-  createEntry,
   setRepTeamFundraiserTags,
-  getRepDuesCreditsForPlayer,
-  getRepDuesPayoutsForPlayer,
 } from '@/lib/db';
-import {
-  projectSponsorCreditChange,
-  payoutFloorViolation,
-  payoutFloorMessage,
-  CREDIT_HAS_PAYOUT,
-} from '@/lib/dues-credit-guards';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { tournamentToday } from '@/lib/timezone';
-import { isSponsorStatus, resolveCredit } from '@/lib/coach-fundraising';
+import { isSponsorStatus } from '@/lib/coach-fundraising';
+import { creditPlanProblem, type CreditPlanShare } from '@/lib/sponsor-arrivals';
+import { applySponsorAgreement, getSponsorCreditPlan } from '@/lib/sponsor-arrivals-server';
 
 /**
- * Re-derive a sponsor's money from what it is now.
+ * ⚠ THE SINGLE-ENTRY EDITOR IS GONE (mig 268). applySponsorMoney, resolveSponsorEffective and
+ * the route-local payout-floor guard all lived on "a sponsor is one entry" — an edit re-derived
+ * the one entry's amount, family and credit together. Under arrivals the PATCH edits the
+ * AGREEMENT instead: the pledged amount and the credit plan. The money itself moves only through
+ * the arrivals routes, and the payout floor now lives inside the one shared writer
+ * (lib/sponsor-arrivals-server.ts), asked per family before any row is touched.
  *
- * ⚠ RE-DERIVED, NOT PATCHED. The amount, the family and the status decide TOGETHER whether an
- * income row and a dues credit should exist; applying them one at a time is how an edit leaves a
- * credit sitting on a family's bill for money that was never received, or leaves the books
- * carrying income for a cheque that turned back into a pledge. So the whole picture is recomputed
- * and the three linked rows are brought into line with it.
- *
- * The single entry is the sponsor's record of the arrangement and always survives; what comes and
- * goes is the accounting row and the credit.
+ * Status is DERIVED truth: an arrival makes a sponsor received; undoing the last one returns it
+ * to a pledge. A status write that disagrees with the money is refused below, with directions.
  */
-/**
- * What a sponsor edit RESOLVES TO — one derivation, two readers (/review 2026-08-28).
- *
- * The pre-write floor guard and applySponsorMoney used to hand-copy these fallback chains; a
- * future sponsor field added to one and not the other would let the guard judge a different edit
- * than the writer then writes — the exact divergence the shared guard module exists to prevent,
- * one layer up. `sponsorStatus` is a parameter because the two callers stand on opposite sides
- * of the header write: the guard resolves body-else-existing, the writer reads the updated row.
- * "Nobody to credit means no credit, whatever was typed"; when the amount changes but the split
- * does not, the AGREED SHARE survives, not the old dollars — "half" stays half when a cheque is
- * corrected from $250 to $300.
- */
-function resolveSponsorEffective(
-  entry: Record<string, any>,
-  body: Record<string, any>,
-  sponsorStatus: string | null,
-): { received: boolean; playerId: string | null; amount: number; credit: number; percent: number } {
-  const received = sponsorStatus === 'received';
-  const playerId = body.broughtInById !== undefined
-    ? (body.broughtInById || null)
-    : ((entry.player_id as string | null) ?? null);
-  const amount = body.sponsorAmount !== undefined ? Number(body.sponsorAmount) : Number(entry.amount_raised);
-  const { credit, percent } = playerId
-    ? (body.creditValue !== undefined
-        ? resolveCredit(amount, Number(body.creditValue), body.creditUnit === 'amount' ? 'amount' : 'percent')
-        : resolveCredit(amount, Number(entry.rebate_percent) || 0, 'percent'))
-    : { credit: 0, percent: 0 };
-  return { received, playerId, amount, credit, percent };
-}
-
-async function applySponsorMoney(args: {
-  team: { id: string; orgId: string; name: string };
-  programYear: { id: string };
-  record: Record<string, any>;
-  body: Record<string, any>;
-  userId: string;
-}): Promise<{ ok: true } | { error: Response }> {
-  const { team, programYear, record, body, userId } = args;
-
-  const { data: entry } = await supabaseAdmin
-    .from('rep_fundraiser_entries')
-    .select('*')
-    .eq('fundraiser_id', record.id)
-    .maybeSingle();
-  if (!entry) return { error: NextResponse.json({ error: 'This sponsor has no record to update.' }, { status: 404 }) };
-
-  const { received, playerId, amount, credit, percent } =
-    resolveSponsorEffective(entry, body, (record.sponsor_status as string | null) ?? null);
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return { error: NextResponse.json({ error: 'A sponsor needs an amount greater than zero.' }, { status: 400 }) };
-  }
-
-  if (playerId && body.broughtInById !== undefined) {
-    const { data: player } = await supabaseAdmin
-      .from('rep_roster_players')
-      .select('id')
-      .eq('id', playerId)
-      .eq('program_year_id', programYear.id)
-      .maybeSingle();
-    if (!player) {
-      return { error: NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 }) };
+function parseAgreementPlan(body: Record<string, any>): CreditPlanShare[] | { error: string } | null {
+  if (Array.isArray(body.creditPlan)) {
+    const plan: CreditPlanShare[] = [];
+    for (const row of body.creditPlan) {
+      const playerId = typeof row?.playerId === 'string' ? row.playerId : '';
+      const value = Number(row?.value);
+      const unit = row?.unit === 'amount' ? 'amount' : row?.unit === 'percent' ? 'percent' : null;
+      if (!playerId || !unit) return { error: 'Every credit row needs a family and a $ or % share.' };
+      if (!Number.isFinite(value) || value <= 0) continue;
+      plan.push({ playerId, value, unit: unit as 'amount' | 'percent' });
     }
+    return plan;
   }
-
-  const today = tournamentToday();
-
-  // ── The books ──
-  let accountingEntryId: string | null = entry.accounting_entry_id ?? null;
-  if (received && !accountingEntryId) {
-    const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);
-    const posted = await createEntry(ledger.id, {
-      entryDate: today,
-      description: `Sponsorship — ${record.name}`,
-      amount,
-      entryType: 'income',
-      status: 'posted',
-      category: 'fundraising',
-    }, userId);
-    accountingEntryId = posted.id;
-  } else if (received && accountingEntryId) {
-    await supabaseAdmin.from('accounting_entries')
-      .update({ amount, description: `Sponsorship — ${record.name}`, updated_at: new Date().toISOString() })
-      .eq('id', accountingEntryId);
-  } else if (!received && accountingEntryId) {
-    // Back to a pledge: the money is not the team's, so the books must stop saying it is.
-    await supabaseAdmin.from('accounting_entries').delete().eq('id', accountingEntryId);
-    accountingEntryId = null;
+  // Legacy single-family trio (the pre-arrivals Settings sheet): undefined means "not editing
+  // the plan"; a named family maps to one row; an explicit empty family means "nobody".
+  if (body.broughtInById === undefined && body.creditValue === undefined) return null;
+  const legacyId = body.broughtInById;
+  const legacyValue = Number(body.creditValue ?? 0);
+  const legacyUnit = body.creditUnit === 'amount' ? 'amount' : 'percent';
+  if (legacyId && Number.isFinite(legacyValue) && legacyValue > 0) {
+    return [{ playerId: legacyId, value: legacyValue, unit: legacyUnit as 'amount' | 'percent' }];
   }
-
-  // ── The family's credit ──
-  let creditId: string | null = entry.credit_id ?? null;
-  const wantsCredit = received && !!playerId && credit > 0.005;
-  if (wantsCredit && !creditId) {
-    const { data: row, error: creditErr } = await supabaseAdmin.from('rep_dues_credits').insert({
-      program_year_id: programYear.id,
-      player_id: playerId,
-      amount: credit,
-      description: `Sponsorship — ${record.name}`,
-      credit_type: 'fundraiser',
-      credit_date: today,
-      created_by: userId,
-      fundraiser_entry_id: entry.id,
-    }).select().single();
-    // ⚠ Same rule as the create path: the entry must never claim a credit the family never got.
-    if (creditErr || !row) {
-      console.error('[sponsor] credit insert failed on edit', { entryId: entry.id, error: creditErr });
-      return { error: NextResponse.json({
-        error: 'The sponsor was saved, but the family credit could not be applied. Set the credit again.',
-      }, { status: 500 }) };
-    }
-    creditId = row.id;
-  } else if (wantsCredit && creditId) {
-    await supabaseAdmin.from('rep_dues_credits')
-      .update({ amount: credit, player_id: playerId, description: `Sponsorship — ${record.name}` })
-      .eq('id', creditId);
-  } else if (!wantsCredit && creditId) {
-    await supabaseAdmin.from('rep_dues_credits').delete().eq('id', creditId);
-    creditId = null;
-  }
-
-  await supabaseAdmin.from('rep_fundraiser_entries').update({
-    player_id: playerId,
-    amount_raised: amount,
-    rebate_percent: percent,
-    rebate_amount: credit,
-    accounting_entry_id: accountingEntryId,
-    credit_id: creditId,
-    updated_at: new Date().toISOString(),
-  }).eq('id', entry.id);
-
-  return { ok: true };
-}
-
-/**
- * ⚠ THE PAYOUT FLOOR, ASKED BEFORE ANYTHING IS WRITTEN (SP-1, sponsorship lifecycle plan Phase A).
- *
- * This door shipped 2026-08-15 without it: lowering a received sponsor's amount, moving or
- * removing the credited family, or flipping back to a pledge silently shrank/deleted a
- * `rep_dues_credits` row that cash had already been paid out against — the exact hazard the
- * per-credit route guards, and the route it defers sourced credits to ("edit it there") was this
- * unguarded one. The projection and the sentence live in lib/dues-credit-guards.ts, shared with
- * that route, so the two doors cannot drift apart again.
- *
- * Runs BEFORE the header update — a refusal after `rep_fundraisers` is written would leave the
- * status saying one thing and the books another (the P4 lesson: a guard that refuses after an
- * irreversible write strands the record).
- *
- * ⚠ Known residual, stated honestly (/review 2026-08-28 corrected an earlier overclaim here):
- * there is NO post-write re-check on this door, and the payout writer's own re-check
- * (recordRepDuesPayout, mig 234) narrows but does NOT close the gap — its post-write read can
- * land before this request's credit write commits, in which case BOTH writes survive and the
- * floor is breached with neither request ever refusing. The same applies to two sponsor edits
- * racing each other. Closing it needs a post-write re-check that self-undoes three linked rows,
- * which is arrivals-phase work; what this pre-flight does close is the entire sequential class —
- * every non-racing save, which is all of them in practice for a one-treasurer team.
- */
-async function sponsorPayoutFloorRefusal(args: {
-  record: { id: string; sponsor_status: string | null };
-  body: Record<string, any>;
-  programYearId: string;
-}): Promise<NextResponse | null> {
-  const { record, body, programYearId } = args;
-
-  const { data: entry } = await supabaseAdmin
-    .from('rep_fundraiser_entries')
-    .select('id, credit_id, player_id, amount_raised, rebate_percent')
-    .eq('fundraiser_id', record.id)
-    .maybeSingle();
-  if (!entry?.credit_id) return null; // no credit exists, so nothing can be stranded
-
-  const { data: creditRow } = await supabaseAdmin
-    .from('rep_dues_credits')
-    .select('id, player_id, amount')
-    .eq('id', entry.credit_id)
-    .maybeSingle();
-  if (!creditRow?.player_id) return null;
-
-  // The same derivation applySponsorMoney will run — ONE function, so they cannot drift.
-  const next = resolveSponsorEffective(
-    entry,
-    body,
-    (body.sponsorStatus !== undefined ? body.sponsorStatus : record.sponsor_status) ?? null,
-  );
-  if (!Number.isFinite(next.amount) || next.amount <= 0) return null; // the 400 downstream owns bad amounts
-
-  const change = projectSponsorCreditChange({
-    existing: { id: creditRow.id, playerId: creditRow.player_id, amount: Number(creditRow.amount) },
-    familyCredits: await getRepDuesCreditsForPlayer(programYearId, creditRow.player_id),
-    next: { received: next.received, playerId: next.playerId, credit: next.credit },
-    wasReceived: record.sponsor_status === 'received',
-  });
-  if (!change) return null; // the credit keeps or grows on the same family — no floor question
-
-  const payouts = await getRepDuesPayoutsForPlayer(programYearId, creditRow.player_id);
-  const violation = payoutFloorViolation(change.projected, payouts);
-  if (!violation) return null;
-  return NextResponse.json(
-    { error: payoutFloorMessage(violation.paidOut, change.action), code: CREDIT_HAS_PAYOUT },
-    { status: 409 },
-  );
+  return [];
 }
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -311,17 +124,25 @@ export const PATCH = withObservability(async (req: Request,
   if (body.startDate !== undefined) updates.start_date = body.startDate || null;
   if (body.endDate   !== undefined) updates.end_date   = body.endDate   || null;
   if (body.isActive  !== undefined) updates.is_active  = Boolean(body.isActive);
+  // Q13 (mig 269): the pledge's optional expected-by date — edited on the agreement sheet.
+  if (body.expectedBy !== undefined) {
+    if (body.expectedBy !== null && body.expectedBy !== '' &&
+        (typeof body.expectedBy !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.expectedBy))) {
+      return NextResponse.json({ error: 'expectedBy must be a date (YYYY-MM-DD)' }, { status: 400 });
+    }
+    updates.expected_by = body.expectedBy || null;
+  }
 
   /**
-   * ── A SPONSOR'S OWN FIELDS ─────────────────────────────────────────────────────────────────
+   * ── A SPONSOR'S OWN FIELDS: THE AGREEMENT (mig 268) ────────────────────────────────────────
    *
-   * ⚠ THE KIND IS NEVER IN `updates`. A drive's rows are players and a sponsor is one arrival, so
-   * switching afterwards has nothing sensible to do with what is already recorded — the picker is
+   * ⚠ THE KIND IS NEVER IN `updates`. A drive's rows are players and a sponsor's are arrivals,
+   * so switching afterwards has nothing sensible to do with what is recorded — the picker is
    * create-time only and the server refuses it here rather than trusting that.
    *
-   * The money is re-derived rather than patched: amount, credit and status decide together
-   * whether an income row and a family credit should exist, so writing them one at a time is how
-   * a half-applied edit leaves a credit on a bill for money that was never received.
+   * What a sponsor edit means now: the PLEDGED AMOUNT and the CREDIT PLAN — the agreement. The
+   * money itself moves only through the arrivals routes, and STATUS follows the money: a status
+   * write that disagrees with the arrivals is refused with directions rather than obeyed.
    */
   const isSponsor = existing.kind === 'sponsor';
   if (body.kind !== undefined && body.kind !== existing.kind) {
@@ -329,26 +150,71 @@ export const PATCH = withObservability(async (req: Request,
       error: 'A fundraiser cannot become a sponsor, or the other way round — its records mean different things.',
     }, { status: 400 });
   }
-  const touchesSponsorMoney = ['sponsorAmount', 'sponsorStatus', 'broughtInById', 'creditValue']
-    .some(k => body[k] !== undefined);
-  if (touchesSponsorMoney && !isSponsor) {
+  const planEdit = isSponsor ? parseAgreementPlan(body) : null;
+  if (planEdit && !Array.isArray(planEdit)) {
+    return NextResponse.json({ error: planEdit.error }, { status: 400 });
+  }
+  const pledgedEdit = body.pledgedAmount !== undefined ? body.pledgedAmount
+    : body.sponsorAmount !== undefined ? body.sponsorAmount : undefined;
+  const touchesSponsorMoney = pledgedEdit !== undefined || planEdit !== null || body.sponsorStatus !== undefined;
+  if (!isSponsor && (touchesSponsorMoney || Array.isArray(body.creditPlan))) {
     return NextResponse.json({ error: 'Those fields belong to a sponsor.' }, { status: 400 });
   }
+
   if (isSponsor && body.sponsorStatus !== undefined) {
     if (!isSponsorStatus(body.sponsorStatus)) {
       return NextResponse.json({ error: 'sponsorStatus must be pledged or received' }, { status: 400 });
     }
-    updates.sponsor_status = body.sponsorStatus;
+    // Status is DERIVED from the money (mig 268). Sending the current value is a no-op the old
+    // Settings sheet still does; asking to CHANGE it gets directions, not obedience.
+    if (body.sponsorStatus !== existing.sponsor_status) {
+      return NextResponse.json({
+        error: existing.sponsor_status === 'received'
+          ? 'A sponsor’s status follows the money — undo its arrivals to return it to a pledge.'
+          : 'A sponsor’s status follows the money — record an arrival to mark it received.',
+        code: 'SPONSOR_STATUS_IS_DERIVED',
+      }, { status: 409 });
+    }
   }
 
-  // The payout floor is asked while NOTHING has been written — see the guard's own doc block.
-  if (isSponsor && touchesSponsorMoney) {
-    const refusal = await sponsorPayoutFloorRefusal({
-      record: { id: existing.id, sponsor_status: existing.sponsor_status ?? null },
-      body,
+  let newPledged: number | null = existing.pledged_amount != null ? Number(existing.pledged_amount) : null;
+  let newPlan: CreditPlanShare[] | null = null;
+  if (isSponsor && (pledgedEdit !== undefined || Array.isArray(planEdit))) {
+    if (pledgedEdit !== undefined) {
+      const amt = Number(pledgedEdit);
+      if (!Number.isFinite(amt) || amt <= 0) {
+        return NextResponse.json({ error: 'A sponsor needs an amount greater than zero.' }, { status: 400 });
+      }
+      newPledged = amt;
+      updates.pledged_amount = amt;
+    }
+    newPlan = Array.isArray(planEdit) ? planEdit : await getSponsorCreditPlan(existing.id);
+    const problem = creditPlanProblem(newPlan, newPledged);
+    if (problem) return NextResponse.json({ error: problem }, { status: 400 });
+    if (newPlan.length) {
+      const { data: players } = await supabaseAdmin
+        .from('rep_roster_players')
+        .select('id')
+        .in('id', newPlan.map(p => p.playerId))
+        .eq('program_year_id', programYear.id);
+      if ((players ?? []).length !== newPlan.length) {
+        return NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 });
+      }
+    }
+    // ⚠ The floor is asked inside the shared writer, per family, BEFORE any row is touched —
+    // and before the header write below, so a refusal leaves nothing half-changed.
+    const applied = await applySponsorAgreement({
+      team,
       programYearId: programYear.id,
+      fundraiser: { id: existing.id, name: (updates.name as string | undefined) ?? existing.name },
+      newPlan,
+      newPledged,
+      userId: ctx!.user.id,
     });
-    if (refusal) return refusal;
+    if ('error' in applied) return applied.error;
+    // Provenance snapshot mirrors the create path: one percent share, else 0.
+    updates.player_rebate_percent =
+      newPlan.length === 1 && newPlan[0].unit === 'percent' ? newPlan[0].value : 0;
   }
 
   const { data, error } = await supabaseAdmin
@@ -359,13 +225,6 @@ export const PATCH = withObservability(async (req: Request,
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  if (isSponsor && touchesSponsorMoney) {
-    const applied = await applySponsorMoney({
-      team, programYear, record: data, body, userId: ctx!.user.id,
-    });
-    if ('error' in applied) return applied.error;
-  }
 
   if (tagIds !== null) await setRepTeamFundraiserTags(fundraiserId, tagIds);
 

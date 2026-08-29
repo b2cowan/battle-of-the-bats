@@ -1125,14 +1125,16 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     }
   }
 
-  // The sponsor — one record, one arrival, no family (mig 237/239). See MIDSEASON_SPONSOR for why
-  // it is deliberately club-wide: a credited family would land money on a bill the guided tour
-  // narrates by name, and could clear the very debt it points at.
+  // The sponsor — one record, its promise, and TWO dated arrivals (mig 268). Still deliberately
+  // club-wide: a credited family would land money on a bill the guided tour narrates by name,
+  // and could clear the very debt it points at.
   {
     const sponsorId = randomUUID();
     die('insert 12U sponsor', (await db.from('rep_fundraisers').insert({
       id: sponsorId, org_id: org.id, team_id: team.id, program_year_id: pyId,
       kind: 'sponsor', sponsor_status: 'received',
+      // The promise lives on the record (mig 268); the arrivals below keep it fully.
+      pledged_amount: MIDSEASON_SPONSOR.amount,
       name: MIDSEASON_SPONSOR.name, description: MIDSEASON_SPONSOR.description,
       // No family, so no share: the whole cheque stays with the team.
       player_rebate_percent: 0,
@@ -1140,13 +1142,17 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       end_date: null,
       is_active: true,
     })).error);
-    // A sponsor IS its entry — every total, export and archive reads entries, which is why the
-    // record alone would show as $0 raised.
-    die('insert 12U sponsor entry', (await db.from('rep_fundraiser_entries').insert({
-      id: randomUUID(), fundraiser_id: sponsorId, org_id: org.id, team_id: team.id,
-      player_id: null,
-      amount_raised: MIDSEASON_SPONSOR.amount, rebate_percent: 0, rebate_amount: 0,
-    })).error);
+    // An entry is an ARRIVAL — dated, with a method; the two together keep the pledge exactly,
+    // so every figure downstream reads the same $750 it always has.
+    for (const arrival of MIDSEASON_SPONSOR.arrivals) {
+      die('insert 12U sponsor arrival', (await db.from('rep_fundraiser_entries').insert({
+        id: randomUUID(), fundraiser_id: sponsorId, org_id: org.id, team_id: team.id,
+        player_id: null,
+        amount_raised: arrival.amount, rebate_percent: 0, rebate_amount: 0,
+        received_date: orgDateWithOffset(now, arrival.offset),
+        method: arrival.method,
+      })).error);
+    }
   }
 
   // The money WITH THE CLUB — the two tabs a Club-plan buyer is shopping for, and the two this

@@ -559,9 +559,20 @@ export const MIDSEASON_FUNDRAISER = {
 export const MIDSEASON_SPONSOR = {
   name: 'Riverdale Dental',
   description: 'Season sponsor — banner at the diamond and a name on the practice jerseys.',
+  /** The PLEDGE — the agreed sponsorship (mig 268: lives on the record as pledged_amount). */
   amount: 750,
   /** Received, relative to the anchored clock (days). Well inside the season already played. */
   receivedOffset: -34,
+  /**
+   * TWO ARRIVALS, deliberately (mig 268 — a sponsor's cheques are dated arrivals now, and a
+   * record page swept with a single row would demo the feature in its emptiest believable
+   * state). They sum to `amount`, so every roll-up, pin and tour sentence that reads the total
+   * is untouched by construction; still club-wide, still credited to nobody, same rule as ever.
+   */
+  arrivals: [
+    { amount: 450, offset: -34, method: 'cheque' },
+    { amount: 300, offset: -13, method: 'etransfer' },
+  ],
 } as const;
 
 /**

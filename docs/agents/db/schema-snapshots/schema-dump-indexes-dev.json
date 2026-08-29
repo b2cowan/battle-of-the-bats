@@ -1875,6 +1875,31 @@
     "indexdef": "CREATE INDEX rep_dues_payouts_team_id_idx ON public.rep_dues_payouts USING btree (team_id)"
   },
   {
+    "tablename": "rep_fundraiser_credit_plan",
+    "indexname": "rep_fundraiser_credit_plan_fundraiser_id_player_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_credit_plan_fundraiser_id_player_id_key ON public.rep_fundraiser_credit_plan USING btree (fundraiser_id, player_id)"
+  },
+  {
+    "tablename": "rep_fundraiser_credit_plan",
+    "indexname": "rep_fundraiser_credit_plan_fundraiser_idx",
+    "indexdef": "CREATE INDEX rep_fundraiser_credit_plan_fundraiser_idx ON public.rep_fundraiser_credit_plan USING btree (fundraiser_id)"
+  },
+  {
+    "tablename": "rep_fundraiser_credit_plan",
+    "indexname": "rep_fundraiser_credit_plan_org_idx",
+    "indexdef": "CREATE INDEX rep_fundraiser_credit_plan_org_idx ON public.rep_fundraiser_credit_plan USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_fundraiser_credit_plan",
+    "indexname": "rep_fundraiser_credit_plan_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_credit_plan_pkey ON public.rep_fundraiser_credit_plan USING btree (id)"
+  },
+  {
+    "tablename": "rep_fundraiser_credit_plan",
+    "indexname": "rep_fundraiser_credit_plan_player_idx",
+    "indexdef": "CREATE INDEX rep_fundraiser_credit_plan_player_idx ON public.rep_fundraiser_credit_plan USING btree (player_id)"
+  },
+  {
     "tablename": "rep_fundraiser_entries",
     "indexname": "rep_fundraiser_entries_accounting_entry_id_idx",
     "indexdef": "CREATE INDEX rep_fundraiser_entries_accounting_entry_id_idx ON public.rep_fundraiser_entries USING btree (accounting_entry_id)"
@@ -2581,18 +2606,8 @@
   },
   {
     "tablename": "rep_team_expenses",
-    "indexname": "idx_rep_team_expenses_balance_entry",
-    "indexdef": "CREATE INDEX idx_rep_team_expenses_balance_entry ON public.rep_team_expenses USING btree (balance_entry_id) WHERE (balance_entry_id IS NOT NULL)"
-  },
-  {
-    "tablename": "rep_team_expenses",
     "indexname": "idx_rep_team_expenses_budget_item",
     "indexdef": "CREATE INDEX idx_rep_team_expenses_budget_item ON public.rep_team_expenses USING btree (budget_item_id) WHERE (budget_item_id IS NOT NULL)"
-  },
-  {
-    "tablename": "rep_team_expenses",
-    "indexname": "idx_rep_team_expenses_deposit_entry",
-    "indexdef": "CREATE INDEX idx_rep_team_expenses_deposit_entry ON public.rep_team_expenses USING btree (deposit_entry_id) WHERE (deposit_entry_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_expenses",

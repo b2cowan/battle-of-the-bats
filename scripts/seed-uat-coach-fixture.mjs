@@ -1381,26 +1381,46 @@ if (!existingFr?.length) {
  * has — a name in "Brought in by", a plum figure in "Credited to them", and the received chip —
  * and a screen swept in its emptiest state is the trap this repo keeps re-learning.
  */
+// ⚠ Keyed on STATUS, like the pledged guard below — "any sponsor" also matched the pledged one,
+// so a deleted received sponsor was never re-seeded while its sibling stood (found 2026-08-28).
 const { data: existingSponsor } = await db.from('rep_fundraisers')
-  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').limit(1);
+  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').eq('sponsor_status', 'received').limit(1);
 
 if (!existingSponsor?.length) {
   const sp = await db.from('rep_fundraisers').insert({
     org_id: org.id, team_id: team.id, program_year_id: py.id,
     kind: 'sponsor', sponsor_status: 'received',
+    // Arrivals model (mig 268): the promise lives on the record; entries are dated arrivals.
+    pledged_amount: 500,
     name: 'Northside Physio', description: 'Season sponsor — banner at the diamond.',
     player_rebate_percent: 20, is_active: true,
   }).select('id').single();
   if (sp.error) console.log(`  ! sponsor skipped (${sp.error.message})`);
   else {
-    // A sponsor IS its single entry — the record alone reads as $0 raised everywhere.
-    const en = await db.from('rep_fundraiser_entries').insert({
+    // The credited family lives on the PLAN (mig 268), never on an entry's player_id.
+    if (ids[0]) {
+      const plan = await db.from('rep_fundraiser_credit_plan').insert({
+        org_id: org.id, team_id: team.id, fundraiser_id: sp.data.id,
+        player_id: ids[0], share_value: 20, share_unit: 'percent',
+      });
+      if (plan.error) console.log(`  ! sponsor credit plan skipped (${plan.error.message})`);
+    }
+    // ⚠ TWO ARRIVALS, deliberately (the record page's defining render — a part-kept promise
+    // with a history; a single-arrival fixture would sweep the arrivals table in its emptiest
+    // believable state). $300 + $200 keep the $500 total every downstream claim already uses,
+    // and each arrival carries its share of the 20% plan: $60 + $40 = the same $100 credit.
+    const en1 = await db.from('rep_fundraiser_entries').insert({
       fundraiser_id: sp.data.id, org_id: org.id, team_id: team.id,
-      player_id: ids[0] ?? null,
-      amount_raised: 500, rebate_percent: 20, rebate_amount: 100,
+      player_id: null, amount_raised: 300, rebate_percent: 20, rebate_amount: 60,
+      received_date: '2026-05-10', method: 'cheque',
     });
-    if (en.error) console.log(`  ! sponsor entry skipped (${en.error.message})`);
-    else ok('sponsor seeded (received, attributed, $500 with a $100 family share)');
+    const en2 = await db.from('rep_fundraiser_entries').insert({
+      fundraiser_id: sp.data.id, org_id: org.id, team_id: team.id,
+      player_id: null, amount_raised: 200, rebate_percent: 20, rebate_amount: 40,
+      received_date: '2026-06-14', method: 'etransfer',
+    });
+    if (en1.error || en2.error) console.log(`  ! sponsor arrivals skipped (${(en1.error ?? en2.error).message})`);
+    else ok('sponsor seeded (received in TWO arrivals, $500 total, 20% plan → $100 family share)');
   }
 } else {
   ok('sponsor already present');
@@ -1427,22 +1447,20 @@ const { data: existingPledge } = await db.from('rep_fundraisers')
   .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').eq('sponsor_status', 'pledged').limit(1);
 
 if (!existingPledge?.length) {
+  // ⚠ ZERO ENTRIES, BY THE MODEL (mig 268): a pledge is a promise on the record itself —
+  // `pledged_amount` — and an entry now means money that arrived. Seeding a pledge WITH an
+  // entry would recreate the exact shape the migration deleted.
   const pl = await db.from('rep_fundraisers').insert({
     org_id: org.id, team_id: team.id, program_year_id: py.id,
-    kind: 'sponsor', sponsor_status: 'pledged',
+    kind: 'sponsor', sponsor_status: 'pledged', pledged_amount: 250,
+    // Q13 (mig 269): dated in the PAST so the quiet past-due cue — the band row's sentence and
+    // the overview clause — has a live instance to be swept and walked against.
+    expected_by: '2026-06-01',
     name: 'Riverbend Tire', description: 'Promised for the spring — cheque not sent yet.',
     player_rebate_percent: 0, is_active: true,
   }).select('id').single();
   if (pl.error) console.log(`  ! pledged sponsor skipped (${pl.error.message})`);
-  else {
-    const en = await db.from('rep_fundraiser_entries').insert({
-      fundraiser_id: pl.data.id, org_id: org.id, team_id: team.id,
-      player_id: null,
-      amount_raised: 250, rebate_percent: 0, rebate_amount: 0,
-    });
-    if (en.error) console.log(`  ! pledged sponsor entry skipped (${en.error.message})`);
-    else ok('pledged sponsor seeded ($250 promised, never received — the forward view’s own row)');
-  }
+  else ok('pledged sponsor seeded ($250 promised, never received — the forward view’s own row)');
 } else {
   ok('pledged sponsor already present');
 }

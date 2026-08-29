@@ -179,25 +179,77 @@ export const GET = withObservability(async (_req: Request,
   const totalRaised  = allEntries.reduce((s, e) => s + Number(e.amount_raised), 0);
   const totalRebates = allEntries.reduce((s, e) => s + Number(e.rebate_amount), 0);
 
-  // ⚠ Sponsor only: how many dollars of the family's credit are already spoken for by cash
-  // payouts — the figure the Settings sheet warns with BEFORE the payout floor refuses
-  // (SP-1/A3, sponsorship lifecycle plan). 0 for a drive, an uncredited sponsor, or a family
-  // whose other credits still cover everything paid out.
-  let sponsorCreditExposure = 0;
+  // ⚠ Sponsor only (arrivals model, mig 268): the record page's raw material — the credit PLAN,
+  // each ARRIVAL, and how many dollars of each family's accrued credit are already spoken for by
+  // cash payouts (the figure the agreement sheet warns with BEFORE the payout floor refuses).
+  let sponsorCreditExposure = 0; // legacy scalar: the LARGEST family exposure, kept for the sheet
+  const sponsorExposureByFamily: { playerId: string; exposure: number }[] = [];
+  let sponsorCreditPlan: { playerId: string; playerName: string | null; value: number; unit: string }[] = [];
+  let sponsorArrivals: {
+    entryId: string; amount: number; receivedDate: string | null; method: string | null;
+    notes: string | null; credited: number;
+  }[] = [];
   if ((fundraiser.kind ?? 'fundraiser') === 'sponsor') {
-    const entry = allEntries[0] as Record<string, unknown> | undefined;
-    const creditId = (entry?.credit_id as string | null) ?? null;
-    const creditPlayer = (entry?.player_id as string | null) ?? null;
-    if (creditId && creditPlayer) {
-      const familyCredits = (creditsByPlayer.get(creditPlayer) ?? []) as { id: string; amount: number; creditType: string }[];
-      const creditRow = familyCredits.find(c => c.id === creditId);
-      if (creditRow) {
-        sponsorCreditExposure = creditExposure(
-          creditRow,
-          familyCredits,
-          [{ amount: paidOutByPlayer.get(creditPlayer) ?? 0 }],
-        );
+    const nameByPlayer = new Map((roster ?? []).map(p => [p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
+    const { data: planRows } = await supabaseAdmin
+      .from('rep_fundraiser_credit_plan')
+      .select('player_id, share_value, share_unit')
+      .eq('fundraiser_id', fundraiserId)
+      .order('created_at', { ascending: true });
+    sponsorCreditPlan = (planRows ?? []).map(p => ({
+      playerId: p.player_id as string,
+      playerName: nameByPlayer.get(p.player_id as string) ?? null,
+      value: Number(p.share_value),
+      unit: p.share_unit as string,
+    }));
+
+    const entryIds = allEntries.map(e => e.id as string);
+    const creditsByEntry = new Map<string, number>();
+    const sponsorAccrued = new Map<string, number>(); // per family, from THIS sponsor
+    if (entryIds.length) {
+      const { data: linked } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .select('id, player_id, amount, fundraiser_entry_id')
+        .in('fundraiser_entry_id', entryIds);
+      for (const c of linked ?? []) {
+        const eid = c.fundraiser_entry_id as string;
+        creditsByEntry.set(eid, Math.round(((creditsByEntry.get(eid) ?? 0) + Number(c.amount)) * 100) / 100);
+        if (c.player_id) {
+          sponsorAccrued.set(c.player_id, Math.round(((sponsorAccrued.get(c.player_id) ?? 0) + Number(c.amount)) * 100) / 100);
+        }
       }
+    }
+    sponsorArrivals = allEntries
+      .slice()
+      .sort((a, b) => String(a.received_date ?? '').localeCompare(String(b.received_date ?? '')) || String(a.created_at).localeCompare(String(b.created_at)))
+      .map(e => ({
+        entryId: e.id as string,
+        amount: Number(e.amount_raised),
+        receivedDate: (e.received_date as string | null) ?? null,
+        method: (e.method as string | null) ?? null,
+        notes: (e.notes as string | null) ?? null,
+        credited: creditsByEntry.get(e.id as string) ?? 0,
+      }));
+
+    // Exposure per family: how much of THIS sponsor's accrued credit is already paid out, given
+    // the family's other credits. The sheet warns with it; the floor refuses on it.
+    for (const [playerId, accrued] of sponsorAccrued) {
+      const familyCredits = (creditsByPlayer.get(playerId) ?? []) as { id: string; amount: number; creditType: string }[];
+      const exposure = creditExposure(
+        { id: `sponsor:${fundraiserId}:${playerId}`, amount: accrued },
+        [
+          // This sponsor's slice as one synthetic credit beside the family's OTHER credits —
+          // creditExposure excludes by id, so the sponsor's own linked rows are re-shaped here.
+          { id: `sponsor:${fundraiserId}:${playerId}`, amount: accrued, creditType: 'fundraiser' },
+          ...familyCredits.filter(c => {
+            const viaSponsor = allEntries.some(e => (c as Record<string, unknown>).fundraiserEntryId === e.id);
+            return !viaSponsor;
+          }),
+        ],
+        [{ amount: paidOutByPlayer.get(playerId) ?? 0 }],
+      );
+      if (exposure > 0.005) sponsorExposureByFamily.push({ playerId, exposure });
+      if (exposure > sponsorCreditExposure) sponsorCreditExposure = exposure;
     }
   }
 
@@ -218,6 +270,7 @@ export const GET = withObservability(async (_req: Request,
       // sponsor, which is the exact shape sponsorships were added to stop.
       kind:                fundraiser.kind ?? 'fundraiser',
       sponsorStatus:       fundraiser.sponsor_status ?? null,
+      expectedBy:          fundraiser.expected_by ?? null,
       name:                fundraiser.name,
       description:         fundraiser.description ?? null,
       playerRebatePercent: Number(fundraiser.player_rebate_percent),
@@ -238,6 +291,11 @@ export const GET = withObservability(async (_req: Request,
     // The team's credits setting — the "Where it lands" preview walks bills in this direction.
     creditApplication: programYear.creditApplication,
     sponsorCreditExposure,
+    // The record page's raw material (arrivals model, mig 268) — empty/zero for a drive.
+    sponsorCreditPlan,
+    sponsorArrivals,
+    sponsorExposureByFamily,
+    pledgedAmount: fundraiser.pledged_amount != null ? Number(fundraiser.pledged_amount) : null,
     players: playerRows,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });
