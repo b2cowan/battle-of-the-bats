@@ -15507,3 +15507,119 @@ field). Playwright round-trip verified: a note typed at pledge time reads back i
 sponsorship. Walk step E1's field list republished ("sponsor, notes, …"). ⚠ A fixture pledge
 "ZZ QA Notes Roundtrip" ($120) was created on the UAT team by the verification — parked with
 the walk's other ZZ rows per step F3.
+
+## §122 · Guarded deletes for Fundraising — an empty shell goes, money on the books refuses — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/cf860db9-e202-4274-b572-d5f29284aca0`
+>
+> **Checkable walkthrough** — 24 steps in six parts (a promise with no money · a sponsor holding
+> a cheque · removing one player's entry · the drive's refusal and the softer tool · the payout
+> floor · cleanup), paste-back summary naming unticked steps.
+
+**BUILT ON DEV 2026-08-30 · NO MIGRATION.** Closes the last two open questions of the
+sponsorship-lifecycle work: **Q14** (sponsors — ruled *guarded delete* before the build) and
+**R5** (drives — the owner ruled **A**, per-entry Remove plus refuse-until-empty, on 2026-08-30,
+agreeing with the recommendation over cascade-with-stated-totals and sponsors-only).
+
+**The state it replaced.** *Nothing in Fundraising could be deleted at all.* The record route
+exported PATCH only, and a drive's per-player entry could be edited but never removed — so a
+sponsorship or a fundraiser opened by mistake was permanent, and a drive amount logged against
+the wrong player could only ever be corrected to something else. Sponsor arrivals already had
+their Undo (§120/§121); that was the one unwind door in the whole tab.
+
+**What a coach sees now.** One grammar in three places: **an empty shell deletes on a plain
+confirm; money on the books kills the button and puts the reason beside it**, with the way out
+named in the same sentence (the owner's foreseeable-refusal ruling, §118, read one level up).
+· **Delete this sponsorship** at the foot of *Edit sponsorship*: live for a pledge with no
+cheques ("no money moves"), dead once any arrival exists ("$200.00 on the team's books across 1
+arrival — undo it from the row first").
+· **Remove** on each drive leaderboard row, beside *Edit amount*, confirming in **both** figures —
+what comes off the team's books and what comes off that family's dues.
+· **Delete this fundraiser** at the foot of *Fundraiser settings*: dead while the board has rows,
+naming the total and the count and then the softer tool — *"If it's simply finished, set it to
+**Closed** instead: closing keeps every credit."* That clause drops itself once the drive is
+already closed.
+
+**⚖ REMOVE STAYS LIVE ON A CLOSED DRIVE, and Edit amount does not.** Deliberate asymmetry, decided
+during the build: closing a drive means no new money comes in, which is a statement about
+recording, not about correcting. Had Remove followed Edit's gate, a closed drive's entries could
+never be unwound — and the whole-drive delete would then refuse with directions nobody could
+follow, which is the dead-end this portal's standing rule forbids.
+
+**⚠⚠ WHY REFUSE RATHER THAN CASCADE, and why this is the load-bearing half.** `rep_fundraiser_entries`
+is ON DELETE CASCADE from `rep_fundraisers`, so a single unguarded delete would have silently erased
+every arrival and every player entry — and NOT their income rows, which hang off the entries by a
+SET NULL link and would have been left standing with nothing on any screen to explain them (the
+mig-030 hazard exactly). Beyond that it cannot be consented to honestly: cash on hand would move by
+a compound figure no confirm can state, and it would have to half-fail the moment one family's
+credit was already paid out. Unwinding row by row fires every guard in order. **The same SET NULL
+is why the per-entry Remove deletes the credit and the income row itself, in that order, rather
+than trusting the database** — and why the payout floor is asked pre-flight, before a single row is
+touched.
+
+**Also true, and stated rather than hidden:** a row created between the entry count and the record
+delete would be swept by that cascade. One round trip on a single team's own record; closing it
+properly needs a transaction this stack does not give a route — the same documented gap the sponsor
+writer records for its guard-to-write race.
+
+**⚖ THE DELETE SITS ON THE CLOSING ROW, NOT A RULE OF ITS OWN (owner, 2026-08-30, built same
+session).** The first cut gave it a strip below the footer; the owner’s read was that a modal which
+already scrolls should not spend a whole row on a control used once in a record’s life — and the
+label shortened to plain **Delete** (the sheet is titled *Edit sponsorship* and the confirm names
+the record, so spelling out the object was belt-and-braces). Same call he made on the bill page at
+the §114 walk: delete left, the closing affordance right, one line. **One amendment held:** the
+refusal SENTENCE keeps its own quiet line above the row — it carries the way out (“undo it from the
+row first to delete it”) and does not fit beside Cancel and Save at any width; shrinking it to a
+tooltip would make the reason something a coach has to go and find, which is exactly what the
+dead-button grammar exists to prevent. The confirm takes the whole row while it is open, so Cancel
+and Save stand down — the same standing-down the bill page’s save strip does.
+
+**One new shared piece:** the record-editor footer (delete left, the sheet’s own actions right, the
+refusal line above it, the confirm taking the row) is a component used by both sheets. The bill’s
+own delete predates it and was deliberately NOT migrated in the same change — that is a separate,
+verifiable move.
+
+**⚠⚠ /review CAUGHT A REAL ONE, AND IT WAS THE FEATURE’S OWN FAILURE MODE (High, fixed same
+session).** The drive-delete’s client-side guard counted the LEADERBOARD, and the leaderboard is
+built by walking the **active** roster and hanging each player’s entry off it. So an entry whose
+player had since been marked inactive — an ordinary, reversible toggle — was not on screen at all,
+while its row and its dollars stayed on the books. The count read ZERO, the delete went live, and
+the confirm promised “no money moves” over a record that held money; the server then refused it,
+with directions pointing at a board that could not show the row. A false confirm AND a permanently
+undeletable record — precisely the dead-end this whole feature exists to prevent, reintroduced one
+level down. Fixed by counting from the SUMMARY (which counts every entry regardless of roster
+status, exactly as the server does), and the refusal now names any entries the board cannot show
+and says how to reach them: make those players active again. **A sixth UAT test pins the contract**
+— with the player inactive the board reports 0 entries while the summary still reports 1 — so the
+trap cannot silently reopen. Second finding (low) also fixed: the post-delete navigation could
+still race a re-read of the deleted record, because `router.push` does not synchronously unmount;
+ordering alone was not enough, so a flag now refuses the read outright.
+
+**/simplify (4 lenses) before it:** both fundraiser routes moved onto the shared coach route
+context helper (six byte-identical private copies existed in that directory; two more were about
+to be pinned), the refusal sentence adopted the shared money formatter and `pluralize`, a dead
+tooltip branch went, the lookup dropped a bespoke tagged union for the file’s own idiom, and the
+footer CSS merged with the bill page’s copies as a COMMA LIST — deliberately not `:where()`, which
+carries zero specificity and would have quietly demoted a shipped rule. ⚖ `lib/dues-credit-guards.ts`
+now lists FOUR doors: its header is the anti-drift record of everything that shrinks a family’s
+credits, and the new drive-entry delete had made it stale. Skipped with reasons: folding the bill
+page’s hand-rolled delete into the shared footer (different semantics — always live, reverses
+money, variable label; a shipped, walked screen and its own unit of work — now named in the
+component’s header so the second owner is not a surprise), and sharing the “violation → 409”
+wrapper across all three payout-floor doors (real, but the other two are shipped money routes well
+outside this diff).
+
+**Verification at build time:** unit suite green (**2,692** at build; 2,702 once a concurrent session added its own); typecheck and lint clean (0 errors); typecheck clean; `verify:changed` green
+end to end (the semantic-ink gate caught a shade token in the new strip's reason line during the
+run and it was moved to the role token). **The UAT money-lifecycle spec gained three tests and was
+RUN — 9/9 green against the live dev server**: the sponsor's 409 with its rows asserted intact
+afterwards, undo-then-delete, the drive's 409 with the entry surviving it, the per-entry Remove
+taking the credit AND the income row with it, and the payout-floor refusal proved to leave both the
+entry and the credit untouched. Help articles gained a sentence per door plus their search terms.
+⚠ `check:layout` on the four fundraising screens reports findings, **none of them from this change**
+— all are pre-existing 44px tap-floor misses at the 768 band on controls that were already there
+(Record money, + Pledge, + Fundraiser, Import, Help), and the cause is that **these four screens
+have never been in the layout baseline at all**. Not baselined here: recording ~20 genuine
+tap-floor defects as accepted decisions is not a tidy-up. Worth its own look.
+
+---

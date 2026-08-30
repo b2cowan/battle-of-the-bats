@@ -1,0 +1,425 @@
+<title>Guarded Deletes Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+/* ══ The SAME INSTRUMENT as the §118 type-ladder and §121 fundraising walks — one programme, one
+      clipboard. Sticky progress, large tap targets, verdict pills, notes, paste-back summary.
+      Deliberately not re-styled: the owner walks these in sequence, and a new look each time
+      would be a cost with no benefit. ══ */
+:root{
+  --ground:#F2F1EE; --card:#FFFFFF; --sunk:#E9E7E2;
+  --ink:#1A1917; --muted:#5C5A55; --faint:#8B8880;
+  --rule:#D8D5CE; --rule-soft:#E6E3DC;
+  --accent:#57651E; --accent-soft:rgba(87,101,30,.10);
+  --pass:#2F6B3A; --pass-soft:rgba(47,107,58,.12);
+  --issue:#A8321C; --issue-soft:rgba(168,50,28,.11);
+  --call:#8A6100; --call-soft:rgba(138,97,0,.13);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#141412; --card:#1C1C19; --sunk:#181815;
+  --ink:#EDEBE6; --muted:#A5A29A; --faint:#78756D;
+  --rule:#2C2C27; --rule-soft:#232320;
+  --accent:#A9BE55; --accent-soft:rgba(169,190,85,.14);
+  --pass:#63C177; --pass-soft:rgba(99,193,119,.14);
+  --issue:#FF8266; --issue-soft:rgba(255,130,102,.14);
+  --call:#E0A93B; --call-soft:rgba(224,169,59,.14);
+}}
+:root[data-theme="dark"]{
+  --ground:#141412; --card:#1C1C19; --sunk:#181815;
+  --ink:#EDEBE6; --muted:#A5A29A; --faint:#78756D;
+  --rule:#2C2C27; --rule-soft:#232320;
+  --accent:#A9BE55; --accent-soft:rgba(169,190,85,.14);
+  --pass:#63C177; --pass-soft:rgba(99,193,119,.14);
+  --issue:#FF8266; --issue-soft:rgba(255,130,102,.14);
+  --call:#E0A93B; --call-soft:rgba(224,169,59,.14);
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:860px; margin:0 auto; padding:0 20px 120px}
+
+.bar{position:sticky; top:0; z-index:20; background:var(--ground);
+     border-bottom:1px solid var(--rule); padding:12px 20px; margin:0 -20px 26px}
+.bar-in{max-width:820px; margin:0 auto; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.bar-count{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--ink);
+           font-variant-numeric:tabular-nums; white-space:nowrap}
+.bar-track{flex:1; min-width:120px; height:8px; border-radius:99px; background:var(--sunk); overflow:hidden}
+.bar-fill{height:100%; background:var(--accent); width:0%; transition:width .18s ease; border-radius:99px}
+.bar-btn{font:inherit; font-size:13px; font-weight:600; padding:7px 14px; border-radius:7px;
+         border:1px solid var(--rule); background:var(--card); color:var(--ink); cursor:pointer; min-height:40px}
+.bar-btn:hover{border-color:var(--accent)}
+.bar-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.bar-btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar-btn.primary{color:#141412}}
+:root[data-theme="dark"] .bar-btn.primary{color:#141412}
+
+header.top{padding:34px 0 8px; display:flex; flex-direction:column; gap:14px}
+h1{margin:0; font-size:32px; font-weight:700; line-height:1.15; letter-spacing:-.01em; text-wrap:balance}
+.dek{margin:0; color:var(--muted); max-width:62ch}
+.kick{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.15em;
+      text-transform:uppercase; color:var(--accent)}
+
+.box{background:var(--card); border:1px solid var(--rule); border-radius:10px; padding:18px 20px;
+     display:flex; flex-direction:column; gap:11px; margin-bottom:22px}
+.box h2{margin:0; font-size:17px; font-weight:700}
+.box p{margin:0; font-size:14.5px; color:var(--muted)}
+.box.warn{border-left:4px solid var(--call)}
+.box code{font-family:"IBM Plex Mono",monospace; font-size:13px; background:var(--sunk);
+          padding:2px 6px; border-radius:4px; color:var(--ink)}
+.box b{color:var(--ink)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:14.5px; align-items:baseline}
+.kv dt{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint); text-transform:uppercase; letter-spacing:.08em; white-space:nowrap}
+.kv dd{margin:0; color:var(--ink)}
+
+.part{background:var(--card); border:1px solid var(--rule); border-radius:10px;
+      margin-bottom:20px; overflow:hidden}
+.part-h{display:flex; align-items:baseline; gap:11px; flex-wrap:wrap; padding:16px 20px;
+        background:var(--sunk); border-bottom:1px solid var(--rule-soft)}
+.part-l{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--accent)}
+.part-h h3{margin:0; font-size:17px; font-weight:700; flex:1; min-width:180px}
+.part-n{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint); white-space:nowrap}
+.part-sub{padding:13px 20px 0; font-size:14px; color:var(--muted)}
+
+ol.steps{list-style:none; margin:0; padding:8px 0 4px}
+ol.steps li{border-bottom:1px solid var(--rule-soft)}
+ol.steps li:last-child{border-bottom:0}
+label.step{display:flex; gap:13px; padding:13px 20px; cursor:pointer; align-items:flex-start;
+           min-height:44px; transition:background .12s}
+label.step:hover{background:var(--accent-soft)}
+label.step input{appearance:none; flex:none; width:22px; height:22px; margin-top:1px; border-radius:6px;
+                 border:2px solid var(--rule); background:var(--card); cursor:pointer; position:relative}
+label.step input:checked{background:var(--accent); border-color:var(--accent)}
+label.step input:checked::after{content:""; position:absolute; left:6px; top:2px; width:5px; height:10px;
+                 border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(43deg)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) label.step input:checked::after{border-color:#141412}}
+:root[data-theme="dark"] label.step input:checked::after{border-color:#141412}
+label.step input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.step-t{display:flex; flex-direction:column; gap:3px; min-width:0}
+.step-do{font-size:15px; font-weight:600}
+.step-look{font-size:13.5px; color:var(--muted)}
+.step-look b{color:var(--ink); font-weight:600}
+label.step input:checked ~ .step-t .step-do{color:var(--faint); text-decoration:line-through; text-decoration-thickness:1px}
+.num{font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--sunk); padding:1px 6px;
+     border-radius:4px; color:var(--ink); white-space:nowrap}
+.dead{font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--issue-soft);
+     padding:1px 6px; border-radius:4px; color:var(--issue); white-space:nowrap}
+
+.verdict{display:flex; flex-wrap:wrap; gap:9px; padding:14px 20px 4px; align-items:center}
+.verdict-l{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em;
+           text-transform:uppercase; color:var(--faint); margin-right:2px}
+.vbtn{font:inherit; font-size:13.5px; font-weight:600; padding:8px 14px; min-height:44px;
+      border-radius:8px; border:1.5px solid var(--rule); background:var(--card); color:var(--muted); cursor:pointer}
+.vbtn:hover{border-color:var(--faint)}
+.vbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--pass-soft); border-color:var(--pass); color:var(--pass)}
+.vbtn[aria-pressed="true"][data-v="issue"]{background:var(--issue-soft); border-color:var(--issue); color:var(--issue)}
+.vbtn[aria-pressed="true"][data-v="call"]{background:var(--call-soft); border-color:var(--call); color:var(--call)}
+.notes{padding:10px 20px 18px}
+.notes textarea{width:100%; min-height:64px; resize:vertical; font:inherit; font-size:14px;
+      padding:10px 12px; border-radius:8px; border:1px solid var(--rule); background:var(--ground);
+      color:var(--ink); line-height:1.5}
+.notes textarea:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.notes label{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em;
+      text-transform:uppercase; color:var(--faint); margin-bottom:6px}
+
+#sumWrap{display:none}
+#sumWrap.on{display:block}
+#sumOut{width:100%; min-height:260px; font-family:"IBM Plex Mono",monospace; font-size:12.5px;
+      line-height:1.5; padding:14px; border-radius:10px; border:1px solid var(--rule);
+      background:var(--card); color:var(--ink); resize:vertical; white-space:pre}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0}
+.hint{font-size:13px; color:var(--faint)}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; scroll-behavior:auto !important}}
+</style>
+
+<div class="bar">
+  <div class="bar-in">
+    <span class="bar-count" id="cnt">0 / 0</span>
+    <span class="bar-track"><span class="bar-fill" id="fill"></span></span>
+    <button class="bar-btn primary" id="mkSum" type="button">Build summary</button>
+    <button class="bar-btn" id="reset" type="button">Reset</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="kick">Owner QA · §122 · coach money</div>
+    <h1>Nothing in Fundraising could be deleted. Now some of it can.</h1>
+    <p class="dek">A sponsorship or a fundraiser started by mistake was permanent — you could edit it
+      forever and never remove it. Both can go now, but only while they are empty shells. The moment
+      money has landed, the delete button dies where it stands and tells you which door to use
+      instead. Ticks save in this browser, so you can close the tab and come back.</p>
+  </header>
+
+  <div class="box">
+    <h2>Before you start</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> — the dev server must be running</dd>
+      <dt>Sign in</dt><dd><code>uat-coach@uat-test-org.local</code> — password is the
+        <code>UAT_COACH_PASSWORD</code> value in <code>.env.local</code></dd>
+      <dt>Screen</dt><dd><b>Money → Fundraising</b> on any team you can write money for</dd>
+      <dt>Restart first</dt><dd>A new shared component and two new server verbs landed. Stop the dev
+        server, delete <code>.next</code>, restart — a stale cache will make you chase ghosts.</dd>
+    </dl>
+  </div>
+
+  <div class="box warn">
+    <h2>The one thing this walk is really testing</h2>
+    <p><b>The refusal, not the delete.</b> Underneath, a fundraiser's rows are wired to vanish with
+      it — so an unguarded delete would silently erase several dated income rows at once and leave
+      their money on the books with nothing to explain it. Everything greyed out in this walk is the
+      only thing standing between a mis-tap and that.</p>
+    <p><b>So a greyed-out button is a PASS, not a bug.</b> What would be a bug: a delete that looks
+      available and then fails, a refusal that doesn't say how much money is in the way, or a
+      refusal that points you at a door you can't actually reach.</p>
+  </div>
+
+  <div id="parts"></div>
+
+  <div id="sumWrap">
+    <h2 style="font-size:19px; margin:26px 0 4px">Summary — paste this back into the chat</h2>
+    <p class="hint" style="margin:0 0 10px">Copies as plain text. Anything you left blank is marked
+      so, rather than assumed to have passed.</p>
+    <textarea id="sumOut" readonly aria-label="Walkthrough summary"></textarea>
+    <div class="row">
+      <button class="bar-btn primary" id="copy" type="button">Copy to clipboard</button>
+      <span class="hint" id="copied" role="status"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var KEY = 'flhq-fundraising-deletes-qa-v1';
+
+  var PARTS = [
+    { id:'A', title:'A promise with no money deletes cleanly', where:'Money → Fundraising → Sponsors band',
+      steps:[
+        ['Press <b>+ Pledge</b> and log a sponsor called <b>ZZ Delete Me</b> for $500 — no cheque, just the promise',
+         'It lands in the Sponsors band: <b>$500.00</b> under Pledged, a dash under In.'],
+        ['Click its row to open it, then press <b>✎ Edit</b>',
+         'The <b>Edit sponsorship</b> sheet opens.'],
+        ['Scroll to the closing row of the sheet',
+         '<b>Delete</b> sits on the <b>same row</b> as Cancel and Save changes, pushed to the far left. No rule of its own — one line closes the record. <span class="num">one row, not two</span>'],
+        ['Press it',
+         'The whole row is taken over by a question — <b>Delete “ZZ Delete Me”?</b> — with a sentence naming <b>$500.00</b> and saying <b>no money moves</b>. Cancel and Save stand down while it is open. Two buttons: <b>Keep it</b> and <b>Delete</b>. <span class="num">no second pop-up window</span>'],
+        ['Press <b>Keep it</b>',
+         'The question folds away and the normal row comes back — Delete left, Cancel and Save right. Nothing was deleted, and your fields are as they were.'],
+        ['Press Delete again, then confirm',
+         'The sheet closes on its own, the row is gone from the band, and the Sponsors figures drop by $500.00. No stray confirmation box asks you about unsaved changes.']
+      ]},
+
+    { id:'B', title:'A sponsor holding a cheque refuses, and says why',
+      where:'Money → Fundraising → Sponsors band',
+      steps:[
+        ['Press <b>+ Pledge</b>, log <b>ZZ Keeps Its Cheque</b> for $400, then open its row and press <b>Record</b> to record a $200 cheque',
+         'The row now reads $400.00 pledged, <b>$200.00</b> in, $200.00 to come.'],
+        ['Open <b>✎ Edit</b> on it and scroll to the closing row',
+         '<b>Delete</b> is <b>greyed out</b> in the row, and the reason sits on its own quiet line just above it: <i>“This sponsor has <b>$200.00</b> on the team’s books across 1 arrival — undo it from the row first to delete it.”</i> The sentence gets a line because it carries the way out — it must never shrink to a tooltip only. <span class="dead">dead button + reason</span>'],
+        ['Try pressing it, and hover over it',
+         'Nothing happens on the press. Hovering shows the same sentence as a tooltip — the reason is never something you have to go and find.'],
+        ['Close the sheet, press <b>Undo</b> on the $200 arrival in the row, then reopen <b>✎ Edit</b>',
+         'The delete is live again, and its question now names <b>$400.00</b> and says no money moves — because nothing has arrived any more.'],
+        ['Delete it',
+         'Gone, same as part A.']
+      ]},
+
+    { id:'C', title:'Removing one player’s entry from a drive',
+      where:'Money → Fundraising → open a fundraiser',
+      steps:[
+        ['Open a fundraiser that has amounts logged against players — or make one, set the player credit to 25%, and record $100 for a player',
+         'You are on the drive’s leaderboard: one row per player, with what they raised and the credit they earned.'],
+        ['Find a player row that has an amount, and look at the buttons on the right',
+         'Beside <b>Edit amount</b> there is now a <b>Remove</b> in red. A player with nothing logged shows only <b>Record</b> — no Remove, because there is nothing to remove.'],
+        ['Press <b>Remove</b>',
+         'A question names <b>both</b> figures: the amount coming off the team’s books, <b>and</b> the credit coming off that family’s dues. Never a bare “are you sure?”.'],
+        ['Cancel it',
+         'The row is untouched — the amount and the credit are exactly as they were.'],
+        ['Press <b>Remove</b> again and confirm',
+         'The row falls back to <b>Record</b>, the drive’s total drops by that amount, and that family’s <b>Left to send</b> goes UP by the credit they just lost.'],
+        ['Go to <b>Money → Player Dues</b> and open that family',
+         '⚠ The fundraiser credit is <b>gone from their list</b> — not sitting there orphaned. This is the one that matters: the credit and the income row have to leave together.']
+      ]},
+
+    { id:'D', title:'The drive refuses too — and names the softer tool',
+      where:'Money → Fundraising → a drive with entries → Settings',
+      steps:[
+        ['On a drive that still has amounts logged, press <b>Settings</b> and scroll to the closing row',
+         '<b>Delete</b> is greyed in the row, with the reason on the line above naming the amount and the number of entries — and then: <i>“If it’s simply finished, set it to <b>Closed</b> instead: closing keeps every credit.”</i>'],
+        ['Set <b>Status</b> to <b>Closed</b> and save',
+         'The drive closes. Every credit families already earned is still on their dues — closing takes nothing away.'],
+        ['Reopen <b>Settings</b> on the now-closed drive and read the refusal again',
+         'It still names the money, but the “set it to Closed” half is <b>gone</b> — it is already closed, and a suggestion you have already taken is noise.'],
+        ['Look at a player row on the closed drive',
+         '<b>Edit amount</b> is greyed (“Fundraiser is closed”) but <b>Remove</b> is still live. Deliberate: closing means no new money comes in, not that a mistake becomes permanent.'],
+        ['Remove every entry from the leaderboard, then open <b>Settings</b> once more',
+         'With the board empty the delete is live, and its question says no money moves and no credit changes.'],
+        ['Confirm the delete',
+         'You land back on <b>All fundraisers</b> — the drive you were looking at no longer exists, so the screen does not sit there showing a record that is gone.']
+      ]},
+
+    { id:'E', title:'The floor holds — cash already handed back',
+      where:'Optional. Needs a family who has been paid out.',
+      steps:[
+        ['Pick a family whose fundraiser credit you can pay back in cash, and record a payout to them for the full credit',
+         'Money → Player Dues → that family → pay out what the team owes them.'],
+        ['Go back to the drive and press <b>Remove</b> on that family’s entry',
+         'It is <b>refused</b>, naming the dollars already paid out and telling you to remove the payout first. <span class="dead">the payout floor</span>'],
+        ['Check the leaderboard and the family’s dues',
+         '⚠ The entry and the credit are both <b>still there</b>. The refusal happened before anything was touched — a guard that fires after the write would have stranded the record forever.'],
+        ['Remove the payout, then Remove the entry again',
+         'It goes through. The refusal was about the cash, not about the row.']
+      ]},
+
+    { id:'F', title:'Clean up after the walk', where:'Money → Fundraising',
+      steps:[
+        ['Delete any ZZ pledges and ZZ drives this walk created',
+         'They should all be empty by now, so each one deletes on a plain confirm.'],
+        ['Check the Fundraising tab and the Money overview read the way they did before you started',
+         'No leftover totals, no stray rows, no credit sitting on a family from a ZZ record.']
+      ]}
+  ];
+
+  var state = { checks:{}, verdicts:{}, notes:{} };
+  function load(){
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var p = JSON.parse(raw);
+        state.checks = p.checks || {}; state.verdicts = p.verdicts || {}; state.notes = p.notes || {}; }
+    } catch (e) { /* private window, blocked storage — the walk still works, it just won't persist */ }
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  load();
+
+  var host = document.getElementById('parts');
+  var total = 0;
+  PARTS.forEach(function(part){
+    total += part.steps.length;
+    var el = document.createElement('section');
+    el.className = 'part';
+    var stepHtml = part.steps.map(function(s, i){
+      var id = part.id + i;
+      var on = state.checks[id] ? ' checked' : '';
+      return '<li><label class="step"><input type="checkbox" data-c="' + id + '"' + on + '>' +
+             '<span class="step-t"><span class="step-do">' + s[0] + '</span>' +
+             '<span class="step-look">' + s[1] + '</span></span></label></li>';
+    }).join('');
+    var v = state.verdicts[part.id] || '';
+    el.innerHTML =
+      '<div class="part-h"><span class="part-l">' + part.id + '</span>' +
+      '<h3>' + part.title + '</h3>' +
+      '<span class="part-n" data-n="' + part.id + '">0/' + part.steps.length + '</span></div>' +
+      '<p class="part-sub">' + part.where + '</p>' +
+      '<ol class="steps">' + stepHtml + '</ol>' +
+      '<div class="verdict"><span class="verdict-l">Verdict</span>' +
+      ['pass','issue','call'].map(function(k){
+        var lbl = k === 'pass' ? 'Pass' : k === 'issue' ? 'Issue found' : 'Needs a call';
+        return '<button type="button" class="vbtn" data-v="' + k + '" data-p="' + part.id +
+               '" aria-pressed="' + (v === k) + '">' + lbl + '</button>';
+      }).join('') + '</div>' +
+      '<div class="notes"><label for="n' + part.id + '">Notes for ' + part.id + '</label>' +
+      '<textarea id="n' + part.id + '" data-t="' + part.id + '" placeholder="Anything that looked wrong, or a step you could not reach"></textarea></div>';
+    host.appendChild(el);
+    el.querySelector('textarea').value = state.notes[part.id] || '';
+  });
+
+  function refresh(){
+    var done = 0;
+    PARTS.forEach(function(part){
+      var n = 0;
+      part.steps.forEach(function(_, i){ if (state.checks[part.id + i]) n++; });
+      done += n;
+      var badge = document.querySelector('[data-n="' + part.id + '"]');
+      if (badge) badge.textContent = n + '/' + part.steps.length;
+    });
+    document.getElementById('cnt').textContent = done + ' / ' + total;
+    document.getElementById('fill').style.width = (total ? (done / total) * 100 : 0) + '%';
+  }
+
+  host.addEventListener('change', function(e){
+    var c = e.target.getAttribute && e.target.getAttribute('data-c');
+    if (c) { state.checks[c] = e.target.checked; save(); refresh(); }
+  });
+  host.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.vbtn');
+    if (!b) return;
+    var p = b.getAttribute('data-p'), v = b.getAttribute('data-v');
+    state.verdicts[p] = (state.verdicts[p] === v) ? '' : v;
+    Array.prototype.forEach.call(document.querySelectorAll('.vbtn[data-p="' + p + '"]'), function(x){
+      x.setAttribute('aria-pressed', String(x.getAttribute('data-v') === state.verdicts[p]));
+    });
+    save();
+  });
+  host.addEventListener('input', function(e){
+    var t = e.target.getAttribute && e.target.getAttribute('data-t');
+    if (t) { state.notes[t] = e.target.value; save(); }
+  });
+
+  document.getElementById('reset').addEventListener('click', function(){
+    if (!confirm('Clear every tick, verdict and note on this walkthrough?')) return;
+    state = { checks:{}, verdicts:{}, notes:{} };
+    save();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-c]'), function(x){ x.checked = false; });
+    Array.prototype.forEach.call(document.querySelectorAll('.vbtn'), function(x){ x.setAttribute('aria-pressed','false'); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function(x){ x.value = ''; });
+    refresh();
+    document.getElementById('sumWrap').classList.remove('on');
+  });
+
+  document.getElementById('mkSum').addEventListener('click', function(){
+    var lines = ['§122 — guarded deletes for Fundraising — OWNER QA', ''];
+    var done = 0, issues = 0, calls = 0, blank = 0;
+    PARTS.forEach(function(part){
+      var n = 0;
+      part.steps.forEach(function(_, i){ if (state.checks[part.id + i]) n++; });
+      done += n;
+      var v = state.verdicts[part.id];
+      var word = v === 'pass' ? 'PASS' : v === 'issue' ? 'ISSUE FOUND' : v === 'call' ? 'NEEDS A CALL' : 'NO VERDICT GIVEN';
+      if (v === 'issue') issues++;
+      if (v === 'call') calls++;
+      if (!v) blank++;
+      lines.push(part.id + ' · ' + part.title);
+      lines.push('   ' + n + '/' + part.steps.length + ' steps · ' + word);
+      part.steps.forEach(function(s, i){
+        if (!state.checks[part.id + i]) {
+          lines.push('   [ ] unticked: ' + s[0].replace(/<[^>]+>/g, ''));
+        }
+      });
+      var nt = (state.notes[part.id] || '').trim();
+      if (nt) lines.push('   notes: ' + nt.replace(/\n/g, '\n          '));
+      lines.push('');
+    });
+    lines.push('---');
+    lines.push('Steps ticked: ' + done + ' / ' + total);
+    lines.push('Parts with an issue: ' + issues + ' · needing a call: ' + calls + ' · no verdict: ' + blank);
+    document.getElementById('sumOut').value = lines.join('\n');
+    document.getElementById('sumWrap').classList.add('on');
+    document.getElementById('sumWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
+  document.getElementById('copy').addEventListener('click', function(){
+    var ta = document.getElementById('sumOut');
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    if (navigator.clipboard && !ok) {
+      navigator.clipboard.writeText(ta.value).then(function(){
+        document.getElementById('copied').textContent = 'Copied.';
+      }, function(){ document.getElementById('copied').textContent = 'Select the text above and copy.'; });
+    } else {
+      document.getElementById('copied').textContent = ok ? 'Copied.' : 'Select the text above and copy.';
+    }
+  });
+
+  refresh();
+})();
+</script>

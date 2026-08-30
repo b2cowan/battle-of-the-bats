@@ -9,6 +9,9 @@ import {
 } from '@/lib/db';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
+import { fmt } from '@/lib/coach-money-summary';
+import { pluralize } from '@/lib/utils';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { isSponsorStatus } from '@/lib/coach-fundraising';
@@ -51,28 +54,6 @@ function parseAgreementPlan(body: Record<string, any>): CreditPlanShare[] | { er
   return [];
 }
 
-async function resolveCoachContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
-
-  return { ctx, team, assignment, programYear };
-}
-
 // PATCH /api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]
 // Updates fundraiser header fields (name, description, rebate %, dates, isActive).
 // Changing player_rebate_percent only affects future entries — existing entries
@@ -80,7 +61,7 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
+  const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, team, assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
@@ -245,4 +226,87 @@ export const PATCH = withObservability(async (req: Request,
          POST, the record GET) always sends it. The only client of this PATCH refetches. */
     },
   });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]' });
+
+/**
+ * DELETE — remove a fundraising record entirely (sponsors Q14 + drives R5-A, owner-ruled).
+ *
+ * ⚖ EMPTY SHELL DELETES; MONEY ON THE BOOKS REFUSES. The grammar is the owner's
+ * foreseeable-refusal ruling (§118) read one level up: a record that never moved money is just a
+ * plan entry and goes on a plain confirm, while one that DID is unwound row by row through the
+ * doors that already state their own amounts and already carry the payout floor. The screens
+ * render the same two states, so the refusal is normally seen before it is hit; this is the belt
+ * against a stale screen, and it is the only one that binds.
+ *
+ * ⚠⚠ WHY REFUSE RATHER THAN CASCADE, since the FK would happily do it: `rep_fundraiser_entries`
+ * is ON DELETE CASCADE from this table, so a single unguarded delete here would silently erase
+ * every arrival and every player entry — and NOT their income rows, which hang off the entries by
+ * a SET NULL link and would be left standing with nothing to explain them. That is the mig-030
+ * hazard exactly. Beyond the orphan risk it cannot be consented to honestly: cash on hand would
+ * move by a compound figure no confirm can state, and it would have to half-fail the moment one
+ * family's credit is already paid out. Unwinding one row at a time fires every guard in order.
+ *
+ * ⚠ RESIDUAL, stated rather than hidden: a row created between the count below and the delete
+ * would be swept by that cascade. The window is one round trip on a single team's own record, and
+ * closing it properly needs a transaction this stack does not give a route — the same documented
+ * gap the sponsor writer records for the guard-to-write race.
+ */
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
+  const { orgSlug, teamId, fundraiserId } = await params;
+  const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, team, assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
+
+  // Scoped to the ACTIVE season, like the PATCH above — a finished season's record is not deleted
+  // from an archived hub either.
+  const existing = await getRepFundraiser(fundraiserId, team.id, programYear.id);
+  if (!existing) return NextResponse.json({ error: 'Fundraiser not found' }, { status: 404 });
+
+  const { data: rows, error: countErr } = await supabaseAdmin
+    .from('rep_fundraiser_entries')
+    .select('amount_raised')
+    .eq('fundraiser_id', fundraiserId)
+    .eq('team_id', team.id);
+  if (countErr) {
+    console.error('[fundraiser-delete] entry count failed', { fundraiserId, error: countErr });
+    return NextResponse.json({ error: 'Could not check what this record holds. Try again.' }, { status: 500 });
+  }
+  const count = (rows ?? []).length;
+  const total = Math.round((rows ?? []).reduce((s, r) => s + Number(r.amount_raised), 0) * 100) / 100;
+  const isSponsor = (existing.kind ?? 'fundraiser') === 'sponsor';
+
+  if (count > 0) {
+    /* `fmt` and `pluralize` are the shared ones — this sentence quotes dollars and counts the
+       way every other surface does, rather than growing a fourth hand-rolled copy of each. */
+    const them = count === 1 ? 'it' : 'them';
+    return NextResponse.json({
+      error: isSponsor
+        ? `This sponsor has ${fmt(total)} on the team's books across ${pluralize(count, 'arrival')} — undo ${them} from the sponsor's row first.`
+        : `This fundraiser has ${fmt(total)} logged across ${pluralize(count, 'entry', 'entries')} — remove ${them} from the leaderboard first.`,
+      code: 'FUNDRAISER_HAS_MONEY',
+      entryCount: count,
+      total,
+    }, { status: 409 });
+  }
+
+  /* The credit plan and the tag links go by cascade (both ON DELETE CASCADE from this row), and
+     an empty record owns nothing else — a pledge posts no money, and a drive with no entries has
+     never posted any either. Re-asserting org, team AND season in the WHERE rather than trusting
+     the id the URL carried. */
+  const { error: delErr } = await supabaseAdmin
+    .from('rep_fundraisers')
+    .delete()
+    .eq('id', fundraiserId)
+    .eq('org_id', ctx!.org.id)
+    .eq('team_id', team.id)
+    .eq('program_year_id', programYear.id);
+  if (delErr) {
+    console.error('[fundraiser-delete] delete failed', { fundraiserId, error: delErr });
+    return NextResponse.json({ error: 'That record could not be deleted. Try again.' }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]' });

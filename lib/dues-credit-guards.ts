@@ -7,7 +7,7 @@
  * missing credit silently inflates everyone else's share of the pool (mig 234, /review
  * 2026-08-14).
  *
- * Three doors shrink credits today, and all three must speak this file's sentence:
+ * Four doors shrink credits today, and all four must speak this file's sentence:
  *   1. Editing a coach-authored credit down  (players/[playerId]/dues-credits/[creditId] PATCH)
  *   2. Deleting a coach-authored credit      (same route, DELETE)
  *   3. Editing a SPONSOR — amount down, family changed/removed, or flipped back to a pledge
@@ -15,6 +15,10 @@
  *      WITHOUT the floor and carried it silently for two weeks; the general credit route refuses
  *      sponsor credits with "edit it there" specifically so the sponsor route can be the one safe
  *      editor — which it is only while it calls this guard.
+ *   4. REMOVING a drive's per-player entry   (fundraisers/[fundraiserId]/entries/[entryId] DELETE)
+ *      ⚠ Added with the guarded deletes (2026-08-30). It is the ONLY door that unwinds a drive
+ *      entry — the general credit route refuses a credit carrying `fundraiser_entry_id` and sends
+ *      the coach here — so if it ever stops asking, nothing else is left to ask on its behalf.
  *
  * ⚠ PURE ON PURPOSE. No next/server import — the violation is returned as data and each route
  * wraps it in its own 409, so this file stays unit-testable and importable from anywhere. The

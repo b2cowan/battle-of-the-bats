@@ -128,6 +128,9 @@ async function cleanup() {
       }
       await admin.from('rep_fundraisers').delete().eq('program_year_id', y.id);
       await admin.from('rep_dues_credits').delete().eq('program_year_id', y.id);
+      // Payouts too: the guarded-delete tests below write one to prove the payout floor refuses,
+      // and a surviving payout row keeps its player undeletable.
+      await admin.from('rep_dues_payouts').delete().eq('program_year_id', y.id);
       const { data: scheds } = await admin.from('rep_player_dues_schedules').select('id').eq('program_year_id', y.id);
       for (const s of scheds ?? []) await admin.from('rep_player_dues_installments').delete().eq('schedule_id', s.id);
       await admin.from('rep_player_dues_schedules').delete().eq('program_year_id', y.id);
@@ -431,5 +434,212 @@ test.describe('a sponsor’s money follows its arrivals, in every reader', () =>
     const { data: entries } = await admin.from('rep_fundraiser_entries')
       .select('id').eq('fundraiser_id', sponsorId);
     expect(entries ?? [], 'and no entry appeared — the sponsor is still a clean pledge').toHaveLength(0);
+  });
+  /**
+   * ── GUARDED DELETES (sponsors Q14 + drives R5-A, owner-ruled 2026-08-30) ────────────────────
+   *
+   * ⚠⚠ THE POINT OF THESE IS THE REFUSAL, NOT THE DELETE. `rep_fundraiser_entries` is ON DELETE
+   * CASCADE from `rep_fundraisers`, so an unguarded delete here would take every arrival and
+   * every player entry with it — and NOT their income rows, which hang off the entries by a SET
+   * NULL link and would be left standing with nothing to explain them. The 409s below are the
+   * only thing between a mis-tap and that state, so each one is asserted with the rows still
+   * present afterwards: a guard that refuses AFTER writing is not a guard.
+   */
+  test('a sponsor holding cheques refuses to be deleted; emptied of them, the pledge deletes clean', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    // Put one cheque back on the books so there is something to refuse over.
+    const arrival = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE, method: 'cheque' },
+    });
+    expect(arrival.status).toBe(201);
+    const entryId = (arrival.body as { entryId: string }).entryId;
+
+    const refused = await call(page, `${api()}/fundraisers/${sponsorId}`, { method: 'DELETE', body: undefined });
+    expect(refused.status, 'money on the books refuses the delete').toBe(409);
+    const refusalBody = refused.body as { code?: string; error?: string; entryCount?: number };
+    expect(refusalBody.code).toBe('FUNDRAISER_HAS_MONEY');
+    expect(refusalBody.entryCount, 'and says how many arrivals stand in the way').toBe(1);
+    expect(refusalBody.error, 'the refusal names the dollars, never a bare "cannot"').toContain('800.00');
+
+    // ⚠ NOTHING WAS TOUCHED BY THE REFUSAL. This is the assertion that would catch a guard moved
+    // below the delete in some later tidy-up.
+    const { data: survivors } = await admin.from('rep_fundraisers').select('id').eq('id', sponsorId);
+    expect(survivors ?? [], 'the sponsor is still there').toHaveLength(1);
+    const stillBanked = await moneyPicture(page);
+    expect(stillBanked.hubMoneyIn, 'and its money is still on the books').toBe(ARRIVAL_1);
+
+    // The way out the refusal names: undo the arrival from the row.
+    const undone = await call(page, `${api()}/fundraisers/${sponsorId}/arrivals/${entryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(undone.status).toBe(200);
+
+    const deleted = await call(page, `${api()}/fundraisers/${sponsorId}`, { method: 'DELETE', body: undefined });
+    expect(deleted.status, 'an empty promise deletes on a plain confirm').toBe(200);
+
+    const { data: gone } = await admin.from('rep_fundraisers').select('id').eq('id', sponsorId);
+    expect(gone ?? [], 'the record is gone').toHaveLength(0);
+    const { data: planLeft } = await admin.from('rep_fundraiser_credit_plan')
+      .select('id').eq('fundraiser_id', sponsorId);
+    expect(planLeft ?? [], 'and its credit plan went with it').toHaveLength(0);
+
+    const after = await moneyPicture(page);
+    expect(after.hubSponsorCount, 'the band is empty again').toBe(0);
+    expect(after.familyCredits, 'and no credit was stranded on the family').toBe(0);
+  });
+
+  test('a drive entry removes cleanly, and the drive will not go while its leaderboard has rows', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const made = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: { kind: 'fundraiser', name: `${MARK} bottle drive`, playerRebatePercent: CREDIT_PERCENT },
+    });
+    expect(made.status).toBe(201);
+    const driveId = (made.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    const logged = await call(page, `${api()}/fundraisers/${driveId}/entries`, {
+      method: 'POST',
+      body: { playerId, amountRaised: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE },
+    });
+    expect(logged.status, 'a player logs what they raised').toBe(201);
+
+    const raised = await moneyPicture(page);
+    expect(raised.hubMoneyIn, 'the drive money is on the books').toBe(ARRIVAL_1);
+    expect(raised.familyCredits, 'and the family earned its share').toBe(CREDIT_1);
+
+    const refused = await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+    expect(refused.status, 'a drive with entries refuses to be deleted').toBe(409);
+    expect((refused.body as { entryCount?: number }).entryCount).toBe(1);
+
+    const { data: stillThere } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
+    expect(stillThere ?? [], '⚠ and the entry SURVIVED the refusal — no silent cascade').toHaveLength(1);
+    const entryId = (stillThere ?? [])[0].id as string;
+    const { data: entryRow } = await admin.from('rep_fundraiser_entries')
+      .select('accounting_entry_id').eq('id', entryId).single();
+    const ledgerId = entryRow!.accounting_entry_id as string | null;
+    expect(ledgerId, 'the entry posted a real income row').toBeTruthy();
+
+    // The way out the refusal names: remove the entry from the leaderboard.
+    const removed = await call(page, `${api()}/fundraisers/${driveId}/entries/${entryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(removed.status).toBe(200);
+
+    const unwound = await moneyPicture(page);
+    expect(unwound.hubMoneyIn, 'the amount came off the books').toBe(0);
+    expect(unwound.familyCredits, '⚠ and the credit came off the family — never stranded').toBe(0);
+    const { data: ledgerLeft } = await admin.from('accounting_entries').select('id').eq('id', ledgerId!);
+    expect(ledgerLeft ?? [], 'and the income row went with it, rather than being orphaned').toHaveLength(0);
+
+    const nowDeleted = await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+    expect(nowDeleted.status, 'an empty drive deletes').toBe(200);
+    const { data: driveLeft } = await admin.from('rep_fundraisers').select('id').eq('id', driveId);
+    expect(driveLeft ?? [], 'the drive is gone').toHaveLength(0);
+  });
+
+  test('removing an entry is refused when that family has already been paid out in cash', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const made = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: { kind: 'fundraiser', name: `${MARK} raffle`, playerRebatePercent: CREDIT_PERCENT },
+    });
+    const driveId = (made.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    const logged = await call(page, `${api()}/fundraisers/${driveId}/entries`, {
+      method: 'POST',
+      body: { playerId, amountRaised: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE },
+    });
+    expect(logged.status).toBe(201);
+    const { data: rows } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
+    const entryId = (rows ?? [])[0].id as string;
+
+    // The family has been handed their whole credit back in cash. Removing the entry would leave
+    // the books owing them less than they have already received — the payout floor's whole job.
+    const payoutId = await insert('rep_dues_payouts', {
+      program_year_id: programYearId, player_id: playerId, org_id: orgId, team_id: repTeamId,
+      amount: CREDIT_1, paid_date: ARRIVAL_2_DATE, method: 'etransfer',
+    });
+
+    const refused = await call(page, `${api()}/fundraisers/${driveId}/entries/${entryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(refused.status, 'the payout floor refuses the removal').toBe(409);
+    expect((refused.body as { code?: string }).code).toBe('CREDIT_HAS_PAYOUT');
+
+    // ⚠⚠ THE REFUSAL CAME BEFORE ANY WRITE. A guard that fires after an irreversible delete
+    // strands the record forever, which is why both halves are asserted rather than just the code.
+    const { data: entryLeft } = await admin.from('rep_fundraiser_entries').select('id').eq('id', entryId);
+    expect(entryLeft ?? [], 'the entry is untouched').toHaveLength(1);
+    const { data: creditLeft } = await admin.from('rep_dues_credits').select('id').eq('fundraiser_entry_id', entryId);
+    expect(creditLeft ?? [], 'and so is the credit it created').toHaveLength(1);
+
+    // Remove the payout and the same call goes through — the refusal was about the cash, not the row.
+    await admin.from('rep_dues_payouts').delete().eq('id', payoutId);
+    const allowed = await call(page, `${api()}/fundraisers/${driveId}/entries/${entryId}`, {
+      method: 'DELETE', body: undefined,
+    });
+    expect(allowed.status, 'with the payout gone the removal is allowed').toBe(200);
+
+    await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+  });
+  /**
+   * ⚠⚠ THE CONTRACT THE DRIVE-DELETE GUARD STANDS ON (/review finding, 2026-08-30, High).
+   *
+   * The leaderboard is built by walking the ACTIVE roster and hanging each player's entry off it,
+   * so an entry whose player has since been marked inactive is NOT in `players` — while its row
+   * and its dollars are still on the books, and the server's delete still counts it. The first cut
+   * of the client guard counted `players`, read ZERO for a drive that had money in it, went live,
+   * and promised "no money moves" over a delete the server then refused — pointing at a board that
+   * could not show the row.
+   *
+   * The fix reads `summary.playerCount`, so this test pins the two halves of that contract:
+   * the summary counts EVERY entry regardless of roster status, and the board does not.
+   */
+  test('an inactive player’s entry leaves the leaderboard but never leaves the summary', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const made = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: { kind: 'fundraiser', name: `${MARK} bake sale`, playerRebatePercent: CREDIT_PERCENT },
+    });
+    const driveId = (made.body as { fundraiser: { id: string } }).fundraiser.id;
+    const logged = await call(page, `${api()}/fundraisers/${driveId}/entries`, {
+      method: 'POST',
+      body: { playerId, amountRaised: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE },
+    });
+    expect(logged.status).toBe(201);
+
+    const before = await call(page, `${api()}/fundraisers/${driveId}/entries`);
+    expect(before.status).toBe(200);
+    const b = before.body as { summary: { playerCount: number; totalRaised: number }; players: { entry: unknown }[] };
+    expect(b.summary.playerCount, 'the entry is counted while the player is active').toBe(1);
+    expect(b.players.filter(p => p.entry), 'and visible on the board').toHaveLength(1);
+
+    // The ordinary, reversible roster toggle that opens the hole.
+    await admin.from('rep_roster_players').update({ status: 'inactive' }).eq('id', playerId);
+
+    const after = await call(page, `${api()}/fundraisers/${driveId}/entries`);
+    const a = after.body as { summary: { playerCount: number; totalRaised: number }; players: { entry: unknown }[] };
+    expect(a.players.filter(p => p.entry),
+      'the board cannot show it — this is the trap').toHaveLength(0);
+    expect(a.summary.playerCount,
+      '⚠ but the SUMMARY still counts it, which is what the delete guard must read').toBe(1);
+    expect(a.summary.totalRaised, 'and its money is still on the books').toBe(ARRIVAL_1);
+
+    // And the server refuses the delete on that hidden entry alone — the client guard and the
+    // server guard must agree, or the screen offers a delete that cannot happen.
+    const refused = await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+    expect(refused.status, 'the drive still refuses to be deleted').toBe(409);
+    expect((refused.body as { entryCount?: number }).entryCount).toBe(1);
+
+    // Put the fixture back the way the other tests expect it, then clean up.
+    await admin.from('rep_roster_players').update({ status: 'active' }).eq('id', playerId);
+    const { data: rows } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
+    await call(page, `${api()}/fundraisers/${driveId}/entries/${(rows ?? [])[0].id}`, { method: 'DELETE', body: undefined });
+    await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
   });
 });

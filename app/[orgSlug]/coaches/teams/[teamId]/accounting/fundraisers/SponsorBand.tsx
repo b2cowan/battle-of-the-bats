@@ -30,6 +30,7 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
+import RecordEditorFooter from '@/components/coaches/RecordEditorFooter';
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod, type RepTeamTag } from '@/lib/types';
@@ -38,6 +39,7 @@ import {
   deriveAllArrivalCredits, stillToCome, creditPlanProblem, type CreditPlanShare,
 } from '@/lib/sponsor-arrivals';
 import { fmt } from './detail';
+import { pluralize } from '@/lib/utils';
 
 export interface SponsorRowData {
   id: string;
@@ -246,6 +248,45 @@ export default function SponsorBand({
   const [agTags, setAgTags] = useState<string[]>([]);
   const [agError, setAgError] = useState('');
   const [agSaving, setAgSaving] = useState(false);
+  const [agDeleting, setAgDeleting] = useState(false);
+
+  /**
+   * ── The delete's two states (Q14, owner-ruled) ──────────────────────────────────────────────
+   * A pledge is a promise on the plan and nothing else, so it goes on a plain confirm. A sponsor
+   * whose cheques have landed cannot: the arrivals are dated income rows and family credits, and
+   * the honest way out is the Undo already sitting on each of them — the door that states its own
+   * amount and asks the payout floor. So the button dies and says which door to use.
+   *
+   * ⚠ COUNTED FROM THE EXPANSION WHEN IT IS LOADED, and from the row's own `In` column when it is
+   * not. Edit is only reachable from an open row today, so the first branch is the live one — but
+   * a sheet that opened without the count must still refuse, not offer a delete it cannot honour.
+   */
+  const agArrivals = agreeFor && expanded && expandedFor === agreeFor.id ? expanded.arrivals : null;
+  const agArrivalCount = agArrivals ? agArrivals.length : (agreeFor && agreeFor.totalRaised > 0.005 ? 1 : 0);
+  const agHasMoney = Boolean(agreeFor && (agreeFor.totalRaised > 0.005 || agArrivalCount > 0));
+
+  async function deleteSponsor() {
+    if (!agreeFor) return;
+    setAgDeleting(true);
+    setAgError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${agreeFor.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        setAgError((await res.json().catch(() => ({}))).error ?? 'That sponsor could not be deleted.');
+        return;
+      }
+      /* Straight past the discard guard, deliberately: there is no record left to keep changes
+         for. The row collapses too — an expanded id that no longer exists would refetch into an
+         error the coach did nothing to cause. */
+      setAgreeFor(null);
+      onOpenChange(null);
+      onChanged();
+    } finally {
+      setAgDeleting(false);
+    }
+  }
 
   const agShares: CreditPlanShare[] = agPlan
     .filter(r => r.playerId && Number(r.value) > 0)
@@ -545,17 +586,33 @@ export default function SponsorBand({
                 </div>
               </div>
               {agError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{agError}</p>}
-              <div className={styles.modalFooter}>
+
+              {/* ── Delete (Q14) — ON the closing row, not a rule of its own (owner 2026-08-30) ── */}
+              <RecordEditorFooter
+                refusal={agHasMoney
+                  ? <>This sponsor has <strong>{fmt(agreeFor.totalRaised)}</strong> on the team&rsquo;s books
+                      {agArrivals ? <> across {pluralize(agArrivalCount, 'arrival')}</> : null}
+                      {' '}— undo {agArrivalCount === 1 ? 'it' : 'them'} from the row first to delete it.</>
+                  : null}
+                confirmTitle={`Delete “${agreeFor.name}”?`}
+                confirmBody={<>
+                  Removes the <strong>{fmt(Number(agPledged) || agreeFor.pledgedAmount || 0)}</strong> promise
+                  from the plan and the forward view, along with its expected-by date, credit split and tags.{' '}
+                  <strong>No money moves</strong> — nothing has arrived from this sponsor.
+                </>}
+                deleting={agDeleting}
+                onDelete={() => void deleteSponsor()}
+              >
                 <button type="button" className={styles.btnGhost} onClick={closeAgreement}>Cancel</button>
                 <button
                   type="submit"
                   className={styles.btnPrimary}
-                  disabled={agSaving || agForeseeablyRefused}
+                  disabled={agSaving || agDeleting || agForeseeablyRefused}
                   title={agForeseeablyRefused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
                 >
                   {agSaving ? 'Saving…' : 'Save changes'}
                 </button>
-              </div>
+              </RecordEditorFooter>
             </form>
           </div>
         </div>

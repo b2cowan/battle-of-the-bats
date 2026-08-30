@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Gift, Settings, X, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -19,6 +20,7 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
+import { pluralize } from '@/lib/utils';
 import type { RepTeamTag } from '@/lib/types';
 import { previewCreditLanding, normalizeCreditApplicationMode, type CreditApplicationMode } from '@/lib/dues-credits';
 import {
@@ -30,6 +32,7 @@ import {
 } from '@/lib/sponsor-arrivals';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import RecordEditorFooter from '@/components/coaches/RecordEditorFooter';
 
 /**
  * ⚠⚠ DRIVES ONLY SINCE DIRECTION A (owner-ruled 2026-08-29): the panel routes a sponsor's
@@ -138,6 +141,9 @@ export function FundraiserDetail({
 }) {
   const { loading: ctxLoading } = useCoaches();
   const bumpMoneyRevision = useBumpMoneyRevision();
+  /* Deleting the record this view is OF has to leave it — the list is one level up, in the same
+     season, by the same href the header's back arrow uses. */
+  const router = useRouter();
 
   const [fundraiser, setFundraiser]   = useState<FundraiserDetail | null>(null);
   const [summary, setSummary]         = useState<Summary | null>(null);
@@ -183,6 +189,26 @@ export function FundraiserDetail({
   const [editActive, setEditActive]     = useState(true);
   const [editSaving, setEditSaving]     = useState(false);
   const [editError, setEditError]       = useState('');
+  /** One entry being unwound (R5-A) — its Remove shows the wait, the rest of the board stays live. */
+  const [removingEntryId, setRemovingEntryId] = useState<string | null>(null);
+  const [deletingRecord, setDeletingRecord]   = useState(false);
+
+  /**
+   * What the drive's delete has to answer for.
+   *
+   * ⚠⚠ COUNTED FROM THE SUMMARY, NEVER FROM THE LEADERBOARD (/review, 2026-08-30, High). The
+   * board is built by walking the ACTIVE roster and hanging each player's entry off it, so an
+   * entry belonging to a player since marked inactive is not on screen at all — while its row and
+   * its dollars are still very much on the books. Deriving the count from `players` therefore read
+   * ZERO for a drive that had money in it: the delete went live, the confirm promised "no money
+   * moves", and the server refused with directions pointing at a board that could not show the
+   * row. Both halves wrong, and the record permanently undeletable. `summary` counts every entry
+   * regardless of roster status, which is exactly what the server counts.
+   */
+  const driveEntryCount   = summary?.playerCount ?? 0;
+  const driveTotal        = summary?.totalRaised ?? 0;
+  /** Entries the board cannot show, because their player is no longer active. Usually zero. */
+  const hiddenEntryCount  = Math.max(0, driveEntryCount - players.filter(p => p.entry).length);
   // Sponsor-only edit fields (arrivals model, mig 268: the sheet edits the AGREEMENT — the
   // pledged amount and the credit plan. Status is DERIVED from the money and never edited here;
   // the arrivals themselves are recorded and undone on the record page.)
@@ -276,7 +302,13 @@ export function FundraiserDetail({
     noun: 'change to the fundraiser',
   });
 
+  /* ⚠ Set the moment the record is deleted, and never cleared. `load()` refuses afterwards —
+     see `deleteFundraiser`. A ref, not state, because it has to be true for any read that has
+     ALREADY been scheduled, without waiting for a re-render. */
+  const deletedRef = useRef(false);
+
   const load = useCallback(async () => {
+    if (deletedRef.current) return;
     setLoading(true);
     setError('');
     try {
@@ -524,6 +556,89 @@ export function FundraiserDetail({
       saved(); // money moved — the hub re-reads, and the revision effect brings this page back too
     } finally {
       setUndoingId(null);
+    }
+  }
+
+  /**
+   * ── Remove one player's entry from the drive (R5-A, owner-ruled 2026-08-30) ─────────────────
+   *
+   * ⚠⚠ THIS EXISTS BECAUSE IT IS THE ONLY DOOR. A drive entry's family credit carries its
+   * provenance, and the dues drawer refuses to touch a credit that has one — it says "unwind it
+   * where it came from" and points back here. Until now here had no way to unwind: an amount
+   * could be corrected but never removed, so a drive logged against the wrong player was
+   * permanent, and the guarded whole-drive delete below would have refused with directions
+   * nobody could follow.
+   *
+   * ⚠ AVAILABLE EVEN WHEN THE DRIVE IS CLOSED, unlike **Edit amount** beside it. Closing means
+   * "no more money comes in", which is a statement about recording, not about correcting; if
+   * removal stopped at the same line, a closed drive's entries could never be unwound and its
+   * delete would dead-end on a refusal with no reachable way out — a link that 404s wearing a
+   * politer face.
+   *
+   * The confirm states BOTH figures (owner's standing rule that a money dialog names dollars):
+   * what comes off the team's books, and what comes off that family's dues.
+   */
+  async function removeEntry(player: PlayerRow) {
+    const entry = player.entry;
+    if (!entry) return;
+    setLogError('');
+    const ok = await confirmDialog({
+      title: 'Remove this entry?',
+      message: `Takes the ${fmt(entry.amountRaised)} logged for ${player.playerName} off the team’s books`
+        + (entry.rebateAmount > 0.005
+          ? `, and takes back the ${fmt(entry.rebateAmount)} it credited to their family.`
+          : '. No family credit was earned on it.'),
+      confirmText: `Remove ${fmt(entry.amountRaised)}`,
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setRemovingEntryId(entry.id);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}/entries/${entry.id}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        setLogError((await res.json().catch(() => ({}))).error ?? 'That entry could not be removed.');
+        return;
+      }
+      saved();
+    } finally {
+      setRemovingEntryId(null);
+    }
+  }
+
+  /**
+   * ── Delete the whole drive (R5-A) ──────────────────────────────────────────────────────────
+   * Only ever reachable with an empty leaderboard — the strip refuses otherwise, and the server
+   * refuses behind it. Leaves for the list, because the record this view is OF no longer exists.
+   */
+  async function deleteFundraiser() {
+    setEditError('');
+    setDeletingRecord(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${fundraiserId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        setEditError((await res.json().catch(() => ({}))).error ?? 'That fundraiser could not be deleted.');
+        return;
+      }
+      setShowSettings(false);
+      /* ⚠⚠ THE BUMP MUST NOT COME BACK HERE (/review, 2026-08-30). This screen re-reads itself on
+         every money bump — its own deliberate exception, noted at the load effect — so `saved()`
+         would send a GET for the record just deleted: a guaranteed 404 that flashes "could not be
+         loaded" over a delete that actually worked. Ordering alone does NOT fix it: `router.push`
+         does not synchronously unmount, so the bump can still reach this component first. The flag
+         is what makes it certain; the ordering is just tidiness on top.
+         The bump itself still has to happen — the list behind and the hub totals must lose the
+         drive too. */
+      deletedRef.current = true;
+      router.push(moneySectionHref(base, 'fundraisers', undefined));
+      saved();
+    } finally {
+      setDeletingRecord(false);
     }
   }
 
@@ -842,6 +957,7 @@ export function FundraiserDetail({
                                ⚠ Without a hub around this screen there is no conversation to
                                open, so the Record half falls back to the in-place editor rather
                                than rendering a button that does nothing. */
+                            <>
                             <button
                               className={styles.btnGhost}
                               onClick={() => {
@@ -864,6 +980,23 @@ export function FundraiserDetail({
                             >
                               {player.entry ? 'Edit amount' : 'Record'}
                             </button>
+                            {/* ⚖ REMOVE SITS BESIDE EDIT, and only where there is something to
+                                remove (R5-A). It is the drive's only unwind door — the family's
+                                dues drawer refuses this credit and sends the coach here — which
+                                is also why it stays live on a CLOSED drive while Edit does not:
+                                see `removeEntry`. */}
+                            {player.entry && (
+                              <button
+                                className={styles.btnGhost}
+                                onClick={() => void removeEntry(player)}
+                                style={{ fontSize: '0.82rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
+                                disabled={removingEntryId === player.entry.id}
+                                aria-label={`Remove the ${fmt(player.entry.amountRaised)} logged for ${player.playerName}`}
+                              >
+                                {removingEntryId === player.entry.id ? 'Removing…' : 'Remove'}
+                              </button>
+                            )}
+                            </>
                           ) : null}
                         </td>
                       </tr>
@@ -1005,17 +1138,65 @@ export function FundraiserDetail({
                 </div>
               </div>
               {editError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{editError}</p>}
-              <div className={styles.modalFooter}>
-                <button type="button" className={styles.btnGhost} onClick={closeSettings}>Cancel</button>
-                <button
-                  type="submit"
-                  className={styles.btnPrimary}
-                  disabled={editSaving || saveForeseeablyRefused}
-                  title={saveForeseeablyRefused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+
+              {/* ── Delete (R5-A) — ON the closing row (owner 2026-08-30) ───────────────────────
+                  ⚖ REFUSES WHILE THE LEADERBOARD HAS ROWS, and names the softer tool in the same
+                  breath. A cascade here would erase several dated income rows at once — cash on
+                  hand would move by a compound figure no confirm can honestly state, and it would
+                  have to half-fail the moment one family's credit was already paid out. Removing
+                  entries one at a time fires every guard in order, and "set it to Closed" is what
+                  most coaches actually mean when a drive is over.
+                  ⚠ The sponsor branch keeps the plain footer: this file's sponsor half is dead
+                  code awaiting /simplify, and a sponsor is deleted on its band row. */}
+              {!isSponsor ? (
+                <RecordEditorFooter
+                  refusal={driveEntryCount > 0
+                    ? <>This fundraiser has <strong>{fmt(driveTotal)}</strong> logged across{' '}
+                        {pluralize(driveEntryCount, 'entry', 'entries')} — remove {driveEntryCount === 1 ? 'it' : 'them'}{' '}
+                        from the leaderboard first to delete it.
+                        {/* ⚠ NAMES THE ENTRIES THE BOARD CANNOT SHOW, and how to reach them. Without
+                            this the refusal sends a coach to look for rows that are not there — the
+                            politer face of a dead end. Marking the player active again brings their
+                            entry back to the board, where Remove can reach it. */}
+                        {hiddenEntryCount > 0 && <> {pluralize(hiddenEntryCount, 'entry', 'entries')}{' '}
+                          {hiddenEntryCount === 1 ? 'belongs' : 'belong'} to players who are no longer active
+                          on the roster, so {hiddenEntryCount === 1 ? 'it is' : 'they are'} not on the board —
+                          make {hiddenEntryCount === 1 ? 'that player' : 'those players'} active again to reach{' '}
+                          {hiddenEntryCount === 1 ? 'it' : 'them'}.</>}
+                        {editActive && <> If it&rsquo;s simply finished, set it to{' '}
+                        <strong>Closed</strong> instead: closing keeps every credit.</>}</>
+                    : null}
+                  confirmTitle={`Delete “${fundraiser?.name ?? 'this fundraiser'}”?`}
+                  confirmBody={<>
+                    Nothing has been logged against it, so <strong>no money moves</strong> and no family
+                    credit changes. The fundraiser and its tags go.
+                  </>}
+                  deleting={deletingRecord}
+                  onDelete={() => void deleteFundraiser()}
                 >
-                  {editSaving ? 'Saving…' : 'Save Changes'}
-                </button>
-              </div>
+                  <button type="button" className={styles.btnGhost} onClick={closeSettings}>Cancel</button>
+                  <button
+                    type="submit"
+                    className={styles.btnPrimary}
+                    disabled={editSaving || deletingRecord || saveForeseeablyRefused}
+                    title={saveForeseeablyRefused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+                  >
+                    {editSaving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </RecordEditorFooter>
+              ) : (
+                <div className={styles.modalFooter}>
+                  <button type="button" className={styles.btnGhost} onClick={closeSettings}>Cancel</button>
+                  <button
+                    type="submit"
+                    className={styles.btnPrimary}
+                    disabled={editSaving || saveForeseeablyRefused}
+                    title={saveForeseeablyRefused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+                  >
+                    {editSaving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>
