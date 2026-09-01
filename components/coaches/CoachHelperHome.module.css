@@ -17,7 +17,7 @@
 
 .eyebrow {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -26,7 +26,7 @@
 
 .title {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: var(--type-figure);
   line-height: 1.2;
   letter-spacing: -0.015em;
   color: var(--text-primary);
@@ -42,12 +42,12 @@
   gap: 0.35rem;
 }
 
-.when { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
-.where { margin: 0; font-size: 0.85rem; color: var(--text-tertiary); }
+.when { margin: 0; font-size: var(--type-heading); font-weight: 600; color: var(--text-primary); }
+.where { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); }
 
 .lede {
   margin: 0.45rem 0 0;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -65,7 +65,7 @@
 /* ── Coming up ───────────────────────────────────────────────────────────── */
 .sectionLabel {
   margin: 0 0 0.2rem;
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -85,6 +85,6 @@
 
 .row:last-child { border-bottom: 0; }
 
-.rowDay { font-size: 0.86rem; font-weight: 600; color: var(--text-primary); }
+.rowDay { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 /* Wraps rather than overflowing — a school gym's full name is longer than a phone is wide. */
-.rowMeta { font-size: 0.8rem; color: var(--text-tertiary); text-align: right; overflow-wrap: anywhere; }
+.rowMeta { font-size: var(--type-support); color: var(--text-tertiary); text-align: right; overflow-wrap: anywhere; }

@@ -1,0 +1,1512 @@
+<title>The Dues Forms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────────
+   PAGE CHROME — deliberately the same reading surface as "The Forms Left Behind"
+   (the 08-28 first pass), so walk two reads as walk one continued.
+   PRODUCT DRAWINGS below use the SHIPPED warm literals, not these.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --ground:  #FBFAF7;
+  --ink:     #1B1913;
+  --ink-2:   #45403A;
+  --muted:   #6E685E;
+  --rule:    rgba(28,26,22,0.11);
+  --rule-2:  rgba(28,26,22,0.22);
+  --accent:  #57651E;
+  --accent-soft: rgba(87,101,30,0.10);
+  --ok:      #34662A;
+  --ok-soft: rgba(52,102,42,0.10);
+  --flag:    #A33A1E;
+  --flag-soft: rgba(163,58,30,0.09);
+  --warn:    #8A6A1B;
+  --warn-soft: rgba(138,106,27,0.12);
+  --card:    #FFFFFF;
+  --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #17160F; --ink: #EFEBE0; --ink-2: #C4BEB0; --muted: #948E82;
+    --rule: rgba(239,235,224,0.13); --rule-2: rgba(239,235,224,0.26);
+    --accent: #B4C96A; --accent-soft: rgba(180,201,106,0.12);
+    --ok: #86C57A; --ok-soft: rgba(134,197,122,0.12);
+    --flag: #E58267; --flag-soft: rgba(229,130,103,0.12);
+    --warn: #D9B45C; --warn-soft: rgba(217,180,92,0.13);
+    --card: #201E15;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #17160F; --ink: #EFEBE0; --ink-2: #C4BEB0; --muted: #948E82;
+  --rule: rgba(239,235,224,0.13); --rule-2: rgba(239,235,224,0.26);
+  --accent: #B4C96A; --accent-soft: rgba(180,201,106,0.12);
+  --ok: #86C57A; --ok-soft: rgba(134,197,122,0.12);
+  --flag: #E58267; --flag-soft: rgba(229,130,103,0.12);
+  --warn: #D9B45C; --warn-soft: rgba(217,180,92,0.13);
+  --card: #201E15;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  margin: 0; padding: 0 1.25rem 5rem; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+
+header { padding: 3.25rem 0 1.6rem; border-bottom: 2px solid var(--ink); }
+.kicker {
+  font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; margin: 0 0 0.9rem;
+}
+h1 {
+  font-family: var(--serif); font-weight: 600; font-size: clamp(2.1rem, 5.2vw, 3.3rem);
+  line-height: 1.06; margin: 0 0 1.1rem; text-wrap: balance; letter-spacing: -0.015em;
+}
+h1 em { font-style: italic; color: var(--accent); }
+.lede { font-size: 1.02rem; color: var(--ink-2); max-width: 64ch; margin: 0 0 0.85rem; }
+.lede strong { color: var(--ink); font-weight: 650; }
+
+h2 {
+  font-family: var(--serif); font-weight: 600; font-size: 1.72rem; line-height: 1.15;
+  margin: 3.4rem 0 0.3rem; padding-top: 1.4rem; border-top: 1px solid var(--rule-2);
+  display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; text-wrap: balance;
+}
+h2 .num {
+  font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.05em;
+  color: var(--accent); font-weight: 600; flex: 0 0 auto;
+}
+h3 {
+  font-size: 0.86rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; margin: 2.1rem 0 0.7rem;
+}
+.sub { color: var(--muted); font-size: 0.95rem; margin: 0.35rem 0 1.4rem; max-width: 74ch; }
+.sub strong { color: var(--ink); font-weight: 650; }
+p { max-width: 74ch; }
+p strong { font-weight: 650; }
+code, .fig { font-family: var(--mono); font-size: 0.88em; }
+.fig { font-variant-numeric: tabular-nums; }
+
+/* verdict chips on a carried finding */
+.chip {
+  display: inline-block; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.14rem 0.44rem; border-radius: 3px; vertical-align: 0.1em;
+  white-space: nowrap;
+}
+.chip.stands  { background: var(--flag-soft); color: var(--flag); }
+.chip.worse   { background: var(--flag); color: #fff; }
+.chip.down    { background: var(--warn-soft); color: var(--warn); }
+.chip.gone    { background: var(--ok-soft); color: var(--ok); }
+.chip.newf    { background: var(--accent); color: #fff; }
+.chip.measured{ background: transparent; color: var(--muted); border: 1px solid var(--rule-2); }
+
+/* a finding block */
+.find {
+  display: grid; grid-template-columns: 5.4rem 1fr; gap: 0 0.95rem;
+  padding: 0.85rem 0; border-top: 1px solid var(--rule);
+}
+.find:last-of-type { border-bottom: 1px solid var(--rule); }
+.find .id {
+  font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink);
+  padding-top: 0.05rem;
+}
+.find .id small { display: block; font-family: var(--sans); font-size: 0.66rem; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-top: 0.2rem; }
+.find .body { font-size: 0.93rem; color: var(--ink-2); }
+.find .body strong { color: var(--ink); font-weight: 650; }
+.find .body p { margin: 0.35rem 0 0; }
+
+/* callouts */
+.note {
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+  padding: 0.9rem 1.05rem; margin: 1.4rem 0; font-size: 0.93rem; color: var(--ink-2);
+}
+.note.alarm { border-left-color: var(--flag); }
+.note.clean { border-left-color: var(--ok); }
+.note .lab {
+  display: block; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-weight: 800; margin-bottom: 0.35rem; color: var(--accent);
+}
+.note.alarm .lab { color: var(--flag); }
+.note.clean .lab { color: var(--ok); }
+.note strong { color: var(--ink); font-weight: 650; }
+.note p { margin: 0.5rem 0 0; max-width: none; }
+
+/* evidence: the executed arithmetic */
+pre.run {
+  font-family: var(--mono); font-size: 0.775rem; line-height: 1.65;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 0.9rem 1rem; overflow-x: auto; margin: 1rem 0; color: var(--ink-2);
+}
+pre.run b { color: var(--flag); font-weight: 600; }
+pre.run i { color: var(--ok); font-style: normal; }
+
+/* ── SPECIMEN FRAMES ───────────────────────────────────────────────────────────
+   Everything inside .warm is drawn in the SHIPPED warm portal literals.
+   Tags sit in a right-hand gutter BESIDE the element — never over it. */
+.pair {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 1.5rem; margin: 1.5rem 0 0.5rem; align-items: start;
+}
+.spec { min-width: 0; }
+.spec > .caphead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem;
+  margin-bottom: 0.5rem; flex-wrap: wrap;
+}
+.spec .capname { font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase;
+  font-weight: 700; color: var(--muted); }
+.spec .capstate {
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.14rem 0.46rem; border-radius: 3px;
+}
+.capstate.today { background: var(--rule); color: var(--ink-2); }
+.capstate.rec   { background: var(--accent); color: #fff; }
+.spec .capnote { font-size: 0.83rem; color: var(--muted); margin: 0.6rem 0 0; max-width: none; }
+.spec .capnote strong { color: var(--ink); font-weight: 650; }
+
+/* the tagged row: element left, tag in its own gutter right */
+.tagrow { display: grid; grid-template-columns: 1fr 5.6rem; gap: 0.55rem; align-items: center; }
+.tagrow > .el { min-width: 0; }
+.tag {
+  font-size: 0.575rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  text-align: left; line-height: 1.25; padding-left: 0.5rem; border-left: 2px solid transparent;
+}
+.tag.new  { color: var(--accent); border-left-color: var(--accent); }
+.tag.res  { color: var(--warn);   border-left-color: var(--warn); }
+.tag.unch { color: var(--muted);  border-left-color: var(--rule-2); }
+.tag.del  { color: var(--flag);   border-left-color: var(--flag); }
+
+/* THE WARM PORTAL — shipped literals only */
+.warm {
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15;
+  --home-ink-soft: #4A4235; --home-dim: #6A635C;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20);
+  --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --home-live: #B03A22; --home-amber: #835006; --home-win: #34662A;
+  --home-fill: rgba(70,55,30,0.08);
+  background: var(--home-paper); color: var(--home-ink);
+  border: 1px solid var(--home-line-strong); border-radius: 10px;
+  padding: 0.9rem; font-size: 13px; line-height: 1.45;
+  font-family: var(--sans);
+  box-shadow: 0 1px 2px rgba(70,55,30,0.05), 0 6px 18px rgba(70,55,30,0.07);
+}
+/* A TRUE-SIZE phone: 360 CSS px of content, the width the measurements were taken at. */
+.warm.phone { width: 360px; max-width: 100%; }
+.warm .drawerbar {
+  display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--home-line); margin-bottom: 0.7rem;
+  font-weight: 700; color: var(--home-ink);
+}
+.warm .drawerbar .x { margin-left: auto; color: var(--home-dim); font-weight: 400; }
+.warm .lab {
+  display: block; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  font-weight: 700; color: var(--home-dim); margin-bottom: 0.2rem;
+}
+.warm .box {
+  background: var(--home-card); border: 1px solid var(--home-line-strong);
+  border-radius: 6px; padding: 0.4rem 0.5rem; color: var(--home-ink);
+  font-size: 12.5px; min-height: 30px; display: flex; align-items: center;
+}
+.warm .box.ph { color: var(--home-dim); }
+.warm .box.sel { justify-content: space-between; }
+.warm .box.sel::after { content: "▾"; color: var(--home-dim); font-size: 11px; }
+.warm .fieldstack { display: flex; flex-direction: column; gap: 0.55rem; }
+.warm .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.warm .card {
+  background: var(--home-card); border: 1px solid var(--home-line);
+  border-radius: 8px; padding: 0.6rem 0.7rem;
+}
+.warm .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.warm .tile .t { font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); }
+.warm .tile .v { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.warm .btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; padding: 0.42rem 0.75rem; font-size: 12px; font-weight: 650;
+  border: 1px solid var(--home-line-strong); background: var(--home-card); color: var(--home-ink);
+}
+.warm .btn.primary { background: var(--home-olive); border-color: var(--home-olive); color: #fff; }
+.warm .btn.ghost { background: transparent; border-color: transparent; color: var(--home-dim); }
+.warm .foot { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.75rem; }
+.warm .conseq {
+  font-size: 11.5px; line-height: 1.5; color: var(--home-ink-soft);
+  background: var(--home-olive-soft); border-radius: 6px; padding: 0.5rem 0.6rem;
+}
+.warm .conseq strong { color: var(--home-ink); }
+.warm .recon {
+  font-size: 11.5px; line-height: 1.5; display: flex; gap: 0.4rem; align-items: flex-start;
+  border-radius: 6px; padding: 0.45rem 0.6rem;
+  background: rgba(52,102,42,0.10); color: #2C561F;
+}
+.warm .recon.short { background: rgba(176,58,34,0.10); color: var(--home-live); }
+.warm .refuse {
+  font-size: 11.5px; line-height: 1.5; color: var(--home-live);
+  background: rgba(176,58,34,0.09); border-radius: 6px; padding: 0.5rem 0.6rem;
+}
+.warm .refuse strong { color: var(--home-live); }
+.warm .instrow {
+  display: flex; gap: 0.4rem; align-items: center;
+}
+.warm .instrow .n { font-size: 11px; color: var(--home-dim); width: 1.3rem; text-align: right; flex: 0 0 auto; }
+.warm .instrow .amt { width: 112px; flex: 0 0 auto; }
+.warm .instrow .dt { flex: 1 1 auto; min-width: 0; }
+.warm .instrow .rm {
+  flex: 0 0 auto; width: 21px; height: 21px; display: flex; align-items: center;
+  justify-content: center; color: var(--home-dim); font-size: 13px;
+}
+.warm .instrow .rm.big { width: 44px; height: 44px; border: 1px solid var(--home-line); border-radius: 6px; }
+.warm .instcard {
+  background: var(--home-card); border: 1px solid var(--home-line);
+  border-radius: 8px; padding: 0.55rem 0.6rem; display: flex; flex-direction: column; gap: 0.45rem;
+}
+.warm .instcard .head { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 650; }
+.warm .instcard .head .rmw { color: var(--home-dim); font-weight: 500; font-size: 11px; }
+.warm .opt {
+  border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 0.5rem 0.6rem;
+  background: var(--home-card);
+}
+.warm .opt.on { border-color: rgba(52,102,42,0.45); background: rgba(52,102,42,0.07); }
+.warm .opt .ot { font-size: 12.5px; font-weight: 650; display: block; }
+.warm .opt .os { font-size: 11px; color: var(--home-dim); display: block; }
+.warm .rowline {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem;
+  border-radius: 6px; border: 1px solid rgba(52,102,42,0.14);
+  background: rgba(52,102,42,0.05); font-size: 12px;
+}
+.warm .rowline .amt { color: var(--home-win); font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.warm .rowline .desc { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--home-ink-soft); }
+.warm .rowline .meta { color: var(--home-dim); font-size: 10.5px; flex: 0 0 auto; }
+.warm .hr { height: 1px; background: var(--home-line); margin: 0.7rem 0; }
+.warm .sechead {
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+  color: var(--home-dim); display: flex; align-items: center; justify-content: space-between;
+}
+
+/* register */
+.regwrap { overflow-x: auto; margin: 1.2rem 0 0; border: 1px solid var(--rule); border-radius: 9px; background: var(--card); }
+table.reg { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.86rem; }
+table.reg th {
+  text-align: left; font-size: 0.65rem; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 800; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--rule-2);
+  white-space: nowrap;
+}
+table.reg td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--rule); color: var(--ink-2); vertical-align: top; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg td.k { font-family: var(--mono); font-size: 0.78rem; color: var(--ink); white-space: nowrap; }
+table.reg td.w { color: var(--muted); white-space: nowrap; font-size: 0.8rem; }
+table.reg td.sev { white-space: nowrap; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; }
+.sevH  { color: var(--flag); }
+.sevMH { color: var(--flag); opacity: 0.82; }
+.sevM  { color: var(--warn); }
+.sevL  { color: var(--muted); }
+
+/* walk + rulings */
+.walkbox {
+  display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.7rem;
+  letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; color: var(--muted);
+  cursor: pointer; user-select: none;
+}
+.walkbox input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.q {
+  background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  border-radius: 0 9px 9px 0; padding: 1rem 1.1rem; margin: 1.6rem 0;
+}
+.q .qh { font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.4rem; }
+.q .qq { margin: 0 0 0.75rem; font-size: 0.97rem; color: var(--ink); max-width: none; }
+.opts { display: flex; flex-direction: column; gap: 0.4rem; }
+.opt-btn {
+  text-align: left; padding: 0.55rem 0.7rem; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--rule-2); background: transparent; color: var(--ink);
+  font: inherit; font-size: 0.9rem; line-height: 1.45;
+}
+.opt-btn:hover { border-color: var(--accent); }
+.opt-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt-btn.sel { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+.opt-btn small { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; margin-top: 0.15rem; }
+.opt-btn .rec { color: var(--accent); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; margin-left: 0.4rem; }
+.q textarea {
+  width: 100%; margin-top: 0.6rem; min-height: 3.1rem; resize: vertical;
+  border: 1px solid var(--rule-2); border-radius: 7px; padding: 0.5rem 0.6rem;
+  font: inherit; font-size: 0.88rem; background: transparent; color: var(--ink);
+}
+.q textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.copybar { display: flex; align-items: center; gap: 0.9rem; margin-top: 1.4rem; flex-wrap: wrap; }
+#copyRulings {
+  font: inherit; font-size: 0.9rem; font-weight: 650; cursor: pointer;
+  background: var(--accent); color: var(--ground); border: 0; border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+}
+#copyRulings:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+#copyStatus { font-size: 0.85rem; color: var(--ok); font-weight: 650; }
+
+ol.order { max-width: 74ch; padding-left: 1.2rem; }
+ol.order li { margin: 0.55rem 0; color: var(--ink-2); }
+ol.order li strong { color: var(--ink); font-weight: 650; }
+ul.plain { max-width: 74ch; padding-left: 1.2rem; }
+ul.plain li { margin: 0.4rem 0; color: var(--ink-2); }
+ul.plain li strong { color: var(--ink); font-weight: 650; }
+
+footer.foot {
+  margin-top: 3.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule);
+  font-size: 0.82rem; color: var(--muted); max-width: 80ch;
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="kicker">Coach portal · Money forms review · walk two · 2026-08-30</p>
+  <h1>The dues forms, read from <em>the code</em></h1>
+  <p class="lede">
+    The sponsorship cluster was walked and rebuilt (§121). This is the same first pass over the
+    <strong>Player Dues</strong> cluster: the bulk generator, the single-player schedule editor, Add a
+    credit, the payment correction and the season-settlement refund sheet.
+  </p>
+  <p class="lede">
+    <strong>Eleven carried findings were re-checked against today's tree — three are gone or
+    downgraded, and eight new ones surfaced, two of them on the write path.</strong> Where a number
+    appears it was measured on the live dev server at the width it claims, or produced by executing
+    the product's own arithmetic. Where the first pass overstated something, this page says so.
+  </p>
+</header>
+
+<h2><span class="num">00</span>Before you walk — what changed under the carried list</h2>
+<p class="sub">
+  The 08-28 register is two days old and three of its rows have already moved. All three moved in the
+  product's favour, and one of them closes a defect the owner deferred back in August.
+</p>
+
+<div class="find">
+  <div class="id">Carried&nbsp;1<small>Gone</small></div>
+  <div class="body">
+    <strong>"The preview is computed from the budget while the write uses the typed amounts" is
+    fixed.</strong> The generator now sends the previewed rows back verbatim as the payload — the
+    figures a coach approved are literally the figures written. <em>This was the defect deferred on
+    2026-08-13 "to the upcoming modal upgrade". It does not need this project.</em>
+  </div>
+</div>
+<div class="find">
+  <div class="id">Carried&nbsp;2<small>Answered</small></div>
+  <div class="body">
+    <strong>"A re-run flattens hand-built schedules" is now a question the coach answers.</strong>
+    The refusal names the affected families out loud and offers <em>"Keep the 3 I set by hand"</em> as
+    the primary button, with "Apply to everyone" as the quieter one. The accepted risk stands, but it
+    is no longer silent — it is a choice with the names attached.
+  </div>
+</div>
+<div class="find">
+  <div class="id">S-1<small>Clean now</small></div>
+  <div class="body">
+    <strong>The missing "re-figures what every family owes" warning is no longer a gap.</strong> The
+    dues tab shows those two settings <em>only before any dues exist</em> — when there is nothing to
+    re-figure. The moment a schedule exists, the tab shows a read-only policy line and a link out.
+    One editable home, correctly warned. <em>Take this row off the list.</em>
+  </div>
+</div>
+<div class="find">
+  <div class="id">Carried&nbsp;3<small>Not here</small></div>
+  <div class="body">
+    <strong>The "What is this?" phrase collision does not touch this cluster.</strong> No dues form
+    asks a filing question — dues money is filed by being dues. Q5 stays with the budget and club
+    walks.
+  </div>
+</div>
+
+<div class="note">
+  <span class="lab">How to walk this</span>
+  Sections <strong>01</strong> and <strong>02</strong> are not forms — they are the write path and the
+  grammar underneath the forms, and they carry the two findings worth reading before you look at
+  anything. Then <strong>03–07</strong> are the five forms in door order. Tick each as you go; stamp
+  rulings in the boxes; the button at the end copies the lot out.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">01</span>The floor under the schedule editors
+  <label class="walkbox"><input type="checkbox" data-walk="s01"> walked</label>
+</h2>
+<p class="sub">
+  Two write-path defects, both on <strong>the doors that change what a family owes</strong> — the
+  single-player <em>Edit schedule</em> form and the bulk generator. Neither is visible on screen;
+  both were produced by running the product's own arithmetic.
+</p>
+
+<div class="note alarm">
+  <span class="lab">Why this section is first</span>
+  The review's sharpest finding so far was <strong>SP-1</strong> — a sponsor edit shrinking a credit
+  that had already been handed back in cash. That hole was closed on the fundraising side five days
+  ago, and a shared guard now exists for exactly this question. <strong>Neither dues-schedule door
+  asks it.</strong>
+</div>
+
+<h3>D-12 · A dues change credits the family, and the next dues change credits them again</h3>
+<p>
+  When a coach lowers a player's total below what the family has already sent, the difference is
+  saved as an overpayment credit — correct, and stated out loud. But those credits are written
+  <strong>standalone</strong>, and every later reconcile only looks at credits attached to a payment.
+  So the credit it created a moment ago is <strong>invisible to itself</strong>.
+</p>
+<p>
+  Run the product's own reconcile three times over one family who paid <span class="fig">$1,200</span>
+  in full:
+</p>
+<pre class="run">A · the coach lowers the total twice
+   lower to $800   →  credits: [$400]                      total credit  $400
+   lower to $600   →  credits: [$400, $600]                total credit <b>$1,000</b>
+   true excess at a $600 total                                          <i>  $600</i>
+                                                     <b>over-credited by $400</b>
+
+B · the coach puts the total back
+   lower to $800   →  credits: [$400]                      total credit  $400
+   restore $1,200  →  credits: [$400]                      total credit <b>  $400</b>
+   true excess at a $1,200 total                                        <i>    $0</i>
+                              <b>a family keeps $400 off a bill they owe in full</b>
+
+C · control — the same reconcile on a RECORD-TIME overpayment
+   family overpays →  credits: [$400 · linked to the receipt]
+   restore $1,200  →  credits: [ ]                                      <i>correct</i></pre>
+<p>
+  C is the proof this is a seam and not a design: the identical arithmetic is right when the credit
+  carries a receipt and wrong when it does not. The unit test that covers this exercises the pure
+  function in isolation — where the stale credit is passed in by hand — so it passes while the query
+  that feeds it returns nothing.
+</p>
+<p><strong>Both doors are affected</strong>, and the bulk one reports the wrong figure to the coach as
+  well: re-run the generator at a lower total twice and its success state announces the full excess
+  as "saved as overpayment credits" the second time too.</p>
+
+<h3>D-13 · Raising a total can delete the credit that a cash payout was standing on</h3>
+<p>
+  A family overpays by <span class="fig">$200</span>; the coach hands the <span class="fig">$200</span>
+  back in cash. Correcting the schedule total upward afterwards makes that credit stale, and the
+  reconcile deletes it — leaving the books saying the family was owed nothing and the family holding
+  two hundred dollars.
+</p>
+<p>
+  This is the same hole as SP-1, on a door nobody looked at. The refusal already exists, in a shared
+  module, with its sentence written: <em>"$200.00 has already been paid out to this family — …
+  would leave the books owing them less than they have received. Remove the payout first."</em>
+  Three doors speak it today. These two do not call it, and neither route reads the payout table at
+  all.
+</p>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Edit schedule · today</span><span class="capstate today">today</span></div>
+    <div class="warm phone">
+      <div class="drawerbar">Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><span class="lab">Total amount *</span><div class="box">1400</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.2rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save schedule</span></div></div>
+          <div class="tag del">saves — silently</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — nothing is checked. $200 of this family's credit is
+      already out the door in cash; pressing Save deletes it and says nothing.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Edit schedule · with the floor</span><span class="capstate rec">recommended</span></div>
+    <div class="warm phone">
+      <div class="drawerbar">Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><span class="lab">Total amount *</span><div class="box">1400</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="refuse"><strong>$200.00 has already been paid out to this
+            family</strong> — raising this total would leave the books owing them less than they have
+            received. Remove the payout first.<br>
+            <span style="text-decoration:underline">Open Riley's payouts</span></div></div>
+          <div class="tag new">new — the shared sentence, and a door</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.2rem"><span class="btn ghost">Cancel</span><span class="btn primary" style="opacity:0.45">Save schedule</span></div></div>
+          <div class="tag res">refuses before it writes</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — the payables sentence, word for word, asked
+      <em>before</em> anything is written, and carrying the door the review's Q8 asks for anyway.</p>
+  </div>
+</div>
+
+<div class="q" data-q="Q17">
+  <p class="qh">Q17 · Your ruling — the write-path fix</p>
+  <p class="qq">Both defects are in the same shared reconcile. How far should the fix go?</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q17" data-v="A">Both, together — the reconcile counts every overpayment credit it has ever created, and both schedule doors ask the shared payout floor before writing<span class="rec">recommended</span><small>One unit of work; the guard already exists and the reconcile change is the query, not the arithmetic. A regression test on the seam, not the pure function.</small></button>
+    <button class="opt-btn" data-q="Q17" data-v="B">The payout floor first (D-13), the stacking fix second<small>Money already out the door is the sharper harm. Splits it into two commits.</small></button>
+    <button class="opt-btn" data-q="Q17" data-v="C">Refuse the whole edit whenever any credit would shrink — the simplest possible rule<small>Safest, bluntest: a coach correcting a typo on a family with credits gets sent to undo things first.</small></button>
+  </div>
+  <textarea data-qnotes="Q17" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">02</span>One grammar — the rule that stops at the dues door
+  <label class="walkbox"><input type="checkbox" data-walk="s02"> walked</label>
+</h2>
+<p class="sub">
+  <strong>"Record is for money that has already moved"</strong> is the flagship habit of the whole
+  centralization — the refusal that names the right door and carries the coach's typing to it. It is
+  enforced on money out. It is enforced on sponsor arrivals, as of five days ago. <strong>It does not
+  exist anywhere on the dues side.</strong>
+</p>
+
+<div class="find">
+  <div class="id">D-14<small>New · Med-High</small></div>
+  <div class="body">
+    <strong>A dues receipt can be dated any day in the future, through every door, with no refusal
+    anywhere.</strong> The recording conversation's dues branch checks only that a date was entered.
+    The correction form's date picker carries no ceiling <span class="chip measured">measured: no max attribute</span>.
+    Neither server route checks. The receipt then posts a books entry <em>dated that future day</em> —
+    so the family's bill drops today while the money lands in next March's income and next March's
+    Budget vs. Actual.
+    <p>One branch across in the same conversation, the identical act is refused with a door. The
+    sentence to copy already ships: <em>"That hasn't happened yet — an arrival is money that has
+    already come in."</em></p>
+  </div>
+</div>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Record → a family paid their dues · today</span><span class="capstate today">today</span></div>
+    <div class="warm phone">
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><span class="lab">Amount *</span><div class="box">250.00</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Date received *</span><div class="box">2027-03-01</div></div>
+          <div class="tag del">accepts a future date</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="conseq"><strong>Riley P.'s bill drops to $0.00</strong>. Shows on the ledger right away.</div></div>
+          <div class="tag del">and it isn't true</div>
+        </div>
+      </div>
+      <div class="foot"><span class="btn ghost">Cancel</span><span class="btn primary">Record</span></div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — the bill drops today, the cash lands in March, and the
+      consequence line promises "right away". Money out, one branch across, refuses this outright.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Record → a family paid their dues · with the rule</span><span class="capstate rec">recommended</span></div>
+    <div class="warm phone">
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><span class="lab">Amount *</span><div class="box">250.00</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Date received *</span><div class="box">2027-03-01</div></div>
+          <div class="tag res">picker capped at today</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="refuse"><strong>That hasn't happened yet</strong> — a payment is
+            money that has already come in. If the family has agreed to send it later, that is what
+            their installment schedule is for.</div></div>
+          <div class="tag new">new — the arrivals sentence</div>
+        </div>
+      </div>
+      <div class="foot"><span class="btn ghost">Cancel</span><span class="btn primary" style="opacity:0.45">Record</span></div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — the same words the sponsor door already speaks,
+      on all three dues doors and both servers. Unlike the spend branch there is no door to hand the
+      coach to: the schedule <em>is</em> the promise, so the sentence names it and stops.</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="lab">Scope note</span>
+  The drive branch's <em>Date received</em> shares the same field and the same absence of a check.
+  That is the fundraisers walk's row, not this one — but it means the gap is
+  <strong>money-in generally</strong>, not dues alone, and whoever builds this should fix both in one
+  pass rather than leaving one door out of step for a third time.
+</div>
+
+<div class="q" data-q="Q18">
+  <p class="qh">Q18 · Your ruling — future dates on money in</p>
+  <p class="qq">Should a dues receipt be refused a date in the future?</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q18" data-v="A">Yes — picker ceiling, client sentence and server refusal on all three dues doors, in the sponsor arrival's exact words<span class="rec">recommended</span><small>Closes the last money-in door without the rule. One sentence, already written and shipping elsewhere.</small></button>
+    <button class="opt-btn" data-q="Q18" data-v="B">Yes, and do the drive branch in the same commit — every money-in door at once<small>Larger, but ends the class rather than shrinking it. Overlaps the fundraisers walk.</small></button>
+    <button class="opt-btn" data-q="Q18" data-v="C">Cap the picker only — no server refusal<small>Cheapest; leaves a typed date accepted and the books datable into the future.</small></button>
+    <button class="opt-btn" data-q="Q18" data-v="D">Leave it — a coach recording a post-dated cheque may genuinely want the future date<small>Then the consequence line's "right away" is what needs fixing instead.</small></button>
+  </div>
+  <textarea data-qnotes="Q18" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">03</span>Generate Player Installments
+  <label class="walkbox"><input type="checkbox" data-walk="s03"> walked</label>
+</h2>
+<p class="sub">
+  <strong>Still the model citizen, and now more so.</strong> The live reconcile sentence before
+  Preview, the full player-by-installment table before Confirm, the honest replace step that names
+  the families at risk, the proven phone layout, correct gating, a discard guard that survives a tab
+  switch. Two of the three defects it carried into this walk are gone. What is left is a name.
+</p>
+
+<div class="find">
+  <div class="id">D-4<small>Stands · worse</small></div>
+  <div class="body">
+    <strong>One act, three names — and the count went up, not down.</strong> The dues tab's door says
+    <em>Set dues for all players</em>. The budget tab, the money overview, the setup checklist and the
+    help guide all say <em>Generate installments</em>. The window that opens says <em>Generate Player
+    Installments</em>, and its final button says <em>Confirm &amp; Generate for 12 Players</em>.
+    <p>The first pass called this Low. It is the only finding in the cluster a coach meets four times
+    in one sitting, and "Generate Player Installments" is also the last Title-Cased window title in
+    money.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-12/13<small>See §01</small></div>
+  <div class="body">
+    <strong>This door shares the schedule editor's write path.</strong> Everything above about
+    stacking credits and the missing payout floor applies here too, at roster scale — and the success
+    state <em>reports</em> the double credit as though it were correct.
+  </div>
+</div>
+<div class="find">
+  <div class="id">—<small>Named clean</small></div>
+  <div class="body">
+    The three amount modes with their arithmetic printed on each card before it is chosen; the
+    <code>Auto</code> outputs drawn as outputs; the roster-empty blocker; the sandbox's own answer;
+    the named failures. <strong>Nothing here should change except the name and the floor.</strong>
+  </div>
+</div>
+
+<div class="q" data-q="Q20">
+  <p class="qh">Q20 · Your ruling — one name for the bulk act</p>
+  <p class="qq">Four labels for one act. Which one wins everywhere?</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q20" data-v="A">"Set dues for all players" — the door's plain name wins on the window and every entry point<span class="rec">recommended</span><small>Says what pressing it makes, in the words a coach would use. Retires the last Title-Cased money window and the "Generate" dialect with it.</small></button>
+    <button class="opt-btn" data-q="Q20" data-v="B">"Generate installments" everywhere — sentence-cased, including the window title<small>Keeps the word the budget tab, overview, checklist and help guide already use; fewer places to change.</small></button>
+    <button class="opt-btn" data-q="Q20" data-v="C">Keep both by context — the door names the outcome, the window names the mechanism<small>Documented as deliberate rather than fixed. Leaves a coach reading two names in one click.</small></button>
+  </div>
+  <textarea data-qnotes="Q20" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">04</span>Edit schedule — one player
+  <label class="walkbox"><input type="checkbox" data-walk="s04"> walked</label>
+</h2>
+<p class="sub">
+  The single-player twin of the generator, reached from <em>Edit schedule</em> in a player's drawer
+  (or <em>Set dues schedule</em> when there is none). It replaces the drawer contents in place. Every
+  habit its bulk sibling has, this one lacks — and it is the form a coach reaches for when a family
+  needs something different from everyone else, which is exactly when care matters most.
+</p>
+
+<div class="find">
+  <div class="id">D-1<small>Stands</small></div>
+  <div class="body">
+    <strong>Both of its doors are shown to a read-only money assistant, and only the server stops
+    them.</strong> Precisely two controls, both inside the drawer: <em>Edit schedule</em> in the
+    actions row and <em>Set dues schedule</em> in the no-schedule empty state. The tab's own toolbar
+    and its empty state gate correctly, and so does every payment and payout control beside them —
+    which is what makes these two read as an oversight rather than a policy.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-2<small>Stands · measured</small></div>
+  <div class="body">
+    <strong>No heading, and the sum rule arrives as a scolding.</strong> Opened at 360px the form
+    reads, in order: <span class="fig">TOTAL AMOUNT * · NOTES · INSTALLMENTS · #1 · #2 · #3</span> —
+    nothing says what this form is or whose schedule it is beyond the drawer's own title bar.
+    <p>The installments-must-equal-total rule speaks only <em>after</em> Save, as
+    <em>"Installments sum ($800.00) must equal total ($1,200.00)"</em>. Its bulk sibling runs the same
+    comparison live, in plain words, before the coach has committed to anything.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-3<small>Re-framed · measured</small></div>
+  <div class="body">
+    <strong>The phone is fine; the desktop is the problem.</strong> The first pass said the rows
+    "crush at phone width". They do not — at 360px the amount box measures
+    <span class="fig">112px</span> and the date <span class="fig">157px</span>, tight but working.
+    <p>On a 1280px desktop the same row renders an amount box of <span class="fig">112px</span> beside
+    a date input of <span class="fig">809px</span> <span class="chip measured">measured</span> — the
+    date field is seven times the width of the money field, because one is pinned and the other is
+    told to fill. That is the composition defect, and it is on the wide screen, not the small one.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-15<small>New · Med</small></div>
+  <div class="body">
+    <strong>One stray click outside the drawer throws the whole schedule away, with no
+    warning.</strong> Typed a five-installment hardship plan, clicked the backdrop:
+    <span class="chip measured">measured</span> the drawer closed, no confirmation appeared, and
+    reopening showed the old figures.
+    <p>The bulk generator — the identical act for the whole roster — refuses to close on
+    <em>"You haven't saved what you entered on this form. Leave without saving it?"</em> and guards
+    against navigating away as well.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-16<small>New · Med-Low · measured</small></div>
+  <div class="body">
+    <strong>The remove-installment control is a 21×21px "×" with no accessible name</strong>, and
+    <em>+ Add installment</em> measures <span class="fig">119×25px</span> — both well under the 44px
+    tap floor that holds to 768px across this portal. They survive because the layout gate
+    <strong>cannot open a drawer</strong>, so nothing has ever measured them.
+  </div>
+</div>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Player drawer · 360px</span><span class="capstate today">today</span></div>
+    <div class="warm phone">
+      <div class="drawerbar">Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><span class="lab">Total amount *</span><div class="box">1200</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Notes</span><div class="box ph">Optional notes</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Installments&nbsp;&nbsp;?</span></div>
+          <div class="tag del">no form heading</div>
+        </div>
+        <div class="tagrow">
+          <div class="el">
+            <div class="instrow"><span class="n">#1</span><div class="box amt">400</div><div class="box dt">2026-10-01</div><span class="rm">×</span></div>
+          </div>
+          <div class="tag del">× is 21px, unnamed</div>
+        </div>
+        <div class="tagrow">
+          <div class="el">
+            <div class="instrow"><span class="n">#2</span><div class="box amt">400</div><div class="box dt">2026-11-01</div><span class="rm">×</span></div>
+          </div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="btn ghost" style="padding-left:0">+ Add installment</span></div>
+          <div class="tag del">25px tall</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.2rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save schedule</span></div></div>
+          <div class="tag del">the sum rule speaks only here</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — nothing names the form, the rows fit but the controls
+      don't meet the tap floor, and the reconcile arrives after the fact as an error message quoting
+      two figures.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Player drawer · 360px</span><span class="capstate rec">recommended</span></div>
+    <div class="warm phone">
+      <div class="drawerbar">Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><div style="font-weight:700;font-size:14px">Dues schedule</div>
+            <div style="font-size:11px;color:var(--home-dim)">Just this family. Everyone else keeps theirs.</div></div>
+          <div class="tag new">new — the form names itself · the drawer already says who</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Total amount *</span><div class="box">1200</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="lab">Notes</span><div class="box ph">Optional notes</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el">
+            <div class="instcard">
+              <div class="head"><span>Installment 1</span><span class="rmw">Remove ✕</span></div>
+              <div><span class="lab">Amount ($)</span><div class="box">400</div></div>
+              <div><span class="lab">Due date</span><div class="box">Oct 1, 2026</div></div>
+            </div>
+          </div>
+          <div class="tag res">restyled — the generator's own row card</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><span class="btn" style="width:100%;min-height:44px">+ Add installment</span></div>
+          <div class="tag res">44px</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="recon"><span>✓</span><span><strong>3 installments, $1,200</strong> — matches the total.</span></div></div>
+          <div class="tag new">new — live, in the sibling's words</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.2rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save schedule</span></div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — a heading that names the <em>form</em> and what
+      it does not touch (the drawer's own bar already says whose record this is — saying "Riley P."
+      twice an inch apart is the restatement the §121 walk deleted), the generator's proven row card
+      borrowed one component over, controls at the tap floor, and the sum rule running live instead of
+      arriving as a refusal.</p>
+  </div>
+</div>
+
+<h3>The same form on a desktop — where the real shape defect is</h3>
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Drawer · 1040px wide</span><span class="capstate today">today</span></div>
+    <div class="warm">
+      <div class="tagrow">
+        <div class="el">
+          <div class="instrow"><span class="n">#1</span><div class="box amt">400</div><div class="box dt">2026-10-01</div><span class="rm">×</span></div>
+          <div class="instrow" style="margin-top:0.4rem"><span class="n">#2</span><div class="box amt">400</div><div class="box dt">2026-11-01</div><span class="rm">×</span></div>
+        </div>
+        <div class="tag del">112px vs 809px</div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — the money field is pinned to seven rems and the date
+      field absorbs everything left over. A treasurer's eye lands on the least important column.</p>
+  </div>
+  <div class="spec">
+    <div class="caphead"><span class="capname">Drawer · 1040px wide</span><span class="capstate rec">recommended</span></div>
+    <div class="warm">
+      <div class="tagrow">
+        <div class="el">
+          <div style="display:grid;grid-template-columns:1.6rem 1fr 1fr 44px;gap:0.5rem;align-items:end">
+            <span class="n" style="width:auto;padding-bottom:0.5rem">#1</span>
+            <div><span class="lab">Amount ($)</span><div class="box">400</div></div>
+            <div><span class="lab">Due date</span><div class="box">Oct 1, 2026</div></div>
+            <span class="rm big">✕</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6rem 1fr 1fr 44px;gap:0.5rem;align-items:end;margin-top:0.5rem">
+            <span class="n" style="width:auto;padding-bottom:0.5rem">#2</span>
+            <div><div class="box">400</div></div>
+            <div><div class="box">Nov 1, 2026</div></div>
+            <span class="rm big">✕</span>
+          </div>
+        </div>
+        <div class="tag res">restyled — equal columns, labelled once, 44px control</div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — the two fields share the row equally, the labels
+      appear once at the head, and the remove control is a real target. Any restyle here must ship
+      variant classes scoped to this surface: these row classes are shared with the budget sheet and
+      the bill editor.</p>
+  </div>
+</div>
+
+<div class="q" data-q="Q19">
+  <p class="qh">Q19 · Your ruling — the schedule editor</p>
+  <p class="qq">How much of the single-player form should be brought up to its bulk sibling?</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q19" data-v="A">All of it — heading, live reconcile, the generator's row card on the phone, equal columns on the desktop, 44px controls, and a discard guard<span class="rec">recommended</span><small>It is one form and one pass. The pieces already exist one component over; splitting them means touching the same file four times.</small></button>
+    <button class="opt-btn" data-q="Q19" data-v="B">Words and safety only — heading, live reconcile, discard guard. Leave the row geometry alone<small>Cheapest useful cut; the 112px-vs-809px desktop row survives.</small></button>
+    <button class="opt-btn" data-q="Q19" data-v="C">Retire the form — a single player's schedule is set through the bulk door with everyone else kept<small>One editor for one act. But the generator writes the same schedule to everyone, so the per-family case would need a mode it does not have.</small></button>
+  </div>
+  <textarea data-qnotes="Q19" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<div class="q" data-q="Q21">
+  <p class="qh">Q21 · Your ruling — losing your typing</p>
+  <p class="qq">The drawer's forms discard silently on a stray click; the generator refuses to.</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q21" data-v="A">Guard the schedule form and the credit form the way the generator is guarded<span class="rec">recommended</span><small>Same helper, same sentence. A hand-built schedule is the most expensive typing in the hub.</small></button>
+    <button class="opt-btn" data-q="Q21" data-v="B">Don't close on a backdrop click while a form is open — no dialog, just ignore the click<small>Quieter: nothing to dismiss, and the X and Cancel still work. Half the protection, none of the interruption.</small></button>
+    <button class="opt-btn" data-q="Q21" data-v="C">Leave it — the drawer is a light surface and a prompt on it would nag<small>Accepts that a mis-click loses a hardship plan.</small></button>
+  </div>
+  <textarea data-qnotes="Q21" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">05</span>Add a credit
+  <label class="walkbox"><input type="checkbox" data-walk="s05"> walked</label>
+</h2>
+<p class="sub">
+  <em>+ Add Credit</em> in the drawer's Credits section — amount, date, description, type, notes,
+  saved in place. The old debt item is genuinely closed: the picker offers exactly the kinds the
+  server accepts, the kind is locked once set because it is provenance, and a credit born of another
+  record now shows no edit or delete at all rather than offering a button that silently did nothing.
+</p>
+
+<div class="find">
+  <div class="id">D-5<small>Stands</small></div>
+  <div class="body">
+    <strong>The whole credit cluster is offered to a read-only money assistant</strong> — the
+    <em>+ Add Credit</em> door, the edit pencil and the delete. The payments and payouts lists
+    directly above hide their write controls correctly, which is what makes this the sharpest gating
+    break in the review: the same drawer does it right twice and wrong once.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-6<small>Downgraded · measured</small></div>
+  <div class="body">
+    <strong>The first pass overstated this one.</strong> Measured at 360px the two-column rows give
+    <span class="fig">Amount 133px · Date 157px · Description 300px · Type 145px · Notes 145px</span>,
+    and nothing clips — the type dropdown's content fits its box exactly.
+    <p>It is <em>tight</em>, not broken. Worth stacking in the same pass as the schedule form, not
+    worth a row of its own on a defect list.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-7<small>Stands</small></div>
+  <div class="body">
+    <strong>No consequence line</strong> <span class="chip measured">measured: no "When you save"
+    anywhere in the form</span> — yet the answer is already computed by the same shared arithmetic
+    the conversation and the fundraiser preview use, and it depends on a team setting the coach may
+    have picked months ago. Its neighbours all state theirs.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-17<small>New · Low</small></div>
+  <div class="body">
+    <strong>Two capitalization schemes on one screen.</strong> <em>+ Add Credit</em>, <em>Save
+    Credit</em> and <em>Send Due Reminders</em> sit beside <em>Set dues for all players</em>,
+    <em>Save schedule</em>, <em>Save correction</em> and <em>Record as paid</em>. The same button even
+    switches scheme with its own state: <em>Save Credit</em> when adding, <em>Save changes</em> when
+    editing.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-18<small>New · Low</small></div>
+  <div class="body">
+    <strong>The credit form's default date is fixed when the page loads, not when the form opens.</strong>
+    A coach who leaves the Money hub open overnight and adds a credit in the morning gets yesterday's
+    date pre-filled, silently. One-line fix; it is the only date in the cluster set this way.
+  </div>
+</div>
+<div class="find">
+  <div class="id">SP-8<small>Carried · visible here</small></div>
+  <div class="body">
+    <strong>A sponsorship credit still calls itself "Fundraiser" on this row</strong> — the
+    description says <em>Sponsorship — Riverdale Dental</em> and the chip an inch to the right says
+    <em>Fundraiser</em>, with a hover that reads "Set by the fundraiser that earned it". Since the
+    §121 rebuild made <em>sponsorship</em> the settled word, this reads worse than it did.
+    <em>It belongs to the sponsorship package's words commit — noted here so the walk sees it, not
+    booked twice.</em>
+  </div>
+</div>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Credits · 360px</span><span class="capstate today">today</span></div>
+    <div class="warm phone">
+      <div class="sechead"><span>Credits</span><span class="btn" style="padding:0.2rem 0.5rem;font-size:11px">+ Add Credit</span></div>
+      <div class="hr"></div>
+      <div class="card">
+        <div class="fieldstack">
+          <div class="tagrow">
+            <div class="el"><div style="font-size:11px;color:var(--home-dim)">* Required</div></div>
+            <div class="tag del">no heading, no consequence</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><div class="two">
+              <div><span class="lab">Amount *</span><div class="box">60</div></div>
+              <div><span class="lab">Date *</span><div class="box">2026-08-28</div></div>
+            </div></div>
+            <div class="tag unch">fits — 133 / 157px</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><span class="lab">Description *</span><div class="box ph">e.g. Player bat contribution</div></div>
+            <div class="tag unch">unchanged</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><div class="two">
+              <div><span class="lab">Type</span><div class="box sel">Contribution</div></div>
+              <div><span class="lab">Notes</span><div class="box ph">Optional notes</div></div>
+            </div></div>
+            <div class="tag unch">fits — 145px each</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save Credit</span></div></div>
+            <div class="tag del">Title Case</div>
+          </div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="tagrow">
+        <div class="el"><div class="rowline"><span class="amt">($75.00)</span><span class="desc">Sponsorship — Riverdale Dental</span><span class="meta">Fundraiser · Aug 28</span></div></div>
+        <div class="tag del">two words, one credit</div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — the form appears with no name and no sentence about what
+      the credit does to the family's bill, and a read-only assistant is shown the door.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Credits · 360px</span><span class="capstate rec">recommended</span></div>
+    <div class="warm phone">
+      <div class="sechead"><span>Credits</span><span class="btn" style="padding:0.2rem 0.5rem;font-size:11px">+ Add a credit</span></div>
+      <div class="hr"></div>
+      <div class="card">
+        <div class="fieldstack">
+          <div class="tagrow">
+            <div class="el"><div style="font-weight:700;font-size:13px">Add a credit</div></div>
+            <div class="tag new">new — names the act</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><span class="lab">Amount *</span><div class="box">60</div></div>
+            <div class="tag res">stacked on the shared grid</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><span class="lab">Date *</span><div class="box">Aug 30, 2026</div></div>
+            <div class="tag res">today, at open</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><span class="lab">Description *</span><div class="box ph">e.g. Player bat contribution</div></div>
+            <div class="tag unch">unchanged</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><span class="lab">Type</span><div class="box sel">Contribution</div></div>
+            <div class="tag unch">unchanged</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><div class="conseq"><strong>When you save:</strong> nothing changes hands —
+              Riley's family owes <strong>$60.00</strong> less, taken off their last payment first.</div></div>
+            <div class="tag new">new — follows the team's credits setting</div>
+          </div>
+          <div class="tagrow">
+            <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save credit</span></div></div>
+            <div class="tag res">sentence case</div>
+          </div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="tagrow">
+        <div class="el"><div class="rowline"><span class="amt">($75.00)</span><span class="desc">Sponsorship — Riverdale Dental</span><span class="meta">Sponsorship · Aug 28</span></div></div>
+        <div class="tag res">label only — never a third credit kind</div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — named for what it does, stacked on the shared
+      grid, the landing sentence quoting the team's own credits rule, and hidden entirely from a
+      read-only assistant.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">06</span>Payment correction
+  <label class="walkbox"><input type="checkbox" data-walk="s06"> walked</label>
+</h2>
+<p class="sub">
+  Reached only by the pencil on an existing receipt — adding one moved to the conversation. This is
+  the strongest of the drawer's forms: prefilled from the real receipt, a live consequence line that
+  correctly nets the row being replaced out of the overpayment arithmetic, and the 2026-08-14
+  Critical is structurally dead because the blank-open path no longer exists.
+</p>
+
+<div class="find">
+  <div class="id">D-8<small>Downgraded · measured</small></div>
+  <div class="body">
+    <strong>Same two-column rows as Add a credit, and the same verdict:</strong> at 360px they measure
+    <span class="fig">133 / 157 / 145 / 145px</span> with nothing clipped. Tight, not broken — fold it
+    into the same stacking pass.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-8b<small>New · Med-Low</small></div>
+  <div class="body">
+    <strong>Nothing on screen says this is a correction until you reach the button.</strong> Measured
+    at 360px, the drawer's first eight lines are the player's name and the four money tiles; the form
+    then opens straight into <em>Amount received</em>. The only tell that this replaces an existing
+    receipt is the consequence line halfway down and the footer reading <em>Save correction</em> —
+    which is <em>exactly the residual risk the code's own comment names</em> after the Critical was
+    fixed: <em>"nothing on screen says which row a blank form is pointed at."</em> The structural fix
+    landed; the sign never did.
+  </div>
+</div>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Correction · 360px</span><span class="capstate today">today</span></div>
+    <div class="warm phone">
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><div class="two">
+            <div><span class="lab">Amount received *</span><div class="box">120</div></div>
+            <div><span class="lab">Date received *</span><div class="box">2026-08-12</div></div>
+          </div></div>
+          <div class="tag del">no ceiling on the date</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="two">
+            <div><span class="lab">Method</span><div class="box sel">E-transfer</div></div>
+            <div><span class="lab">Note</span><div class="box ph">e.g. paid at practice</div></div>
+          </div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="conseq">Replaces this receipt: the old books entry is voided and
+            <strong>$120.00</strong> is posted afresh, dated Aug 12, 2026.</div></div>
+          <div class="tag unch">unchanged — this line is good</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save correction</span></div></div>
+          <div class="tag del">the only heading is this button</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — a good form wearing no sign. A coach who opened the
+      pencil, scrolled, and came back has nothing above the fields telling them which receipt they
+      are holding.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Correction · 360px</span><span class="capstate rec">recommended</span></div>
+    <div class="warm phone">
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><div style="font-weight:700;font-size:13px">Correct a receipt — $120.00, Aug 12</div></div>
+          <div class="tag new">new — names the receipt being replaced</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="two">
+            <div><span class="lab">Amount received *</span><div class="box">120</div></div>
+            <div><span class="lab">Date received *</span><div class="box">Aug 12, 2026</div></div>
+          </div></div>
+          <div class="tag res">capped at today (§02)</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="two">
+            <div><span class="lab">Method</span><div class="box sel">E-transfer</div></div>
+            <div><span class="lab">Note</span><div class="box ph">e.g. paid at practice</div></div>
+          </div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="conseq">Replaces this receipt: the old books entry is voided and
+            <strong>$120.00</strong> is posted afresh, dated Aug 12, 2026.</div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save correction</span></div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — one heading quoting the receipt in dollars and a
+      date, which is the whole fix. Everything else on this form already works.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2>
+  <span class="num">07</span>Set refund — the settlement's per-family sheet
+  <label class="walkbox"><input type="checkbox" data-walk="s07"> walked</label>
+</h2>
+<p class="sub">
+  Season settlement → a family's row. Three choices for what this family takes out of the surplus,
+  plus forgiving a balance, plus undoing that. Correctly gated, correctly scoped, and the forgiveness
+  arithmetic is derived rather than typed. Its three findings are all about what it <em>says</em>.
+</p>
+
+<div class="find">
+  <div class="id">D-9<small>Stands · High</small></div>
+  <div class="body">
+    <strong>A failed save shows nothing at all.</strong> The error is written into the settlement
+    window's own error slot, which is behind this sheet. On screen the Save button simply stops
+    spinning and the sheet stays open — the coach's only signal is that nothing happened.
+    <p>This is the one form in the product where a refusal is invisible, and it sits on the screen
+    that hands families money.</p>
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-10<small>Stands · Med-High</small></div>
+  <div class="body">
+    <strong>A blank or garbled "set amount" saves as $0.00</strong>, no warning, no refusal — the
+    field is read as a number, and anything that isn't one becomes zero. On this sheet zero means a
+    family takes nothing home.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-11<small>Stands · worse than written</small></div>
+  <div class="body">
+    <strong>Only the option already saved states its dollars — and it stops the moment you touch
+    another one.</strong> Pick "no share" on a family currently taking an even share and the even
+    card's <em>"$210 — $150 owed back plus one of 4 shares"</em> is replaced by <em>"Puts Riley back
+    in the split with everyone else"</em>. The one figure the sheet exists to compare vanishes exactly
+    when the coach starts comparing.
+  </div>
+</div>
+<div class="find">
+  <div class="id">D-19<small>New · Low</small></div>
+  <div class="body">
+    <strong>The three options are plain buttons with no selected state exposed.</strong> Sighted
+    coaches see the tint; a screen reader hears three buttons and no answer to "which one is chosen".
+  </div>
+</div>
+
+<div class="pair">
+  <div class="spec">
+    <div class="caphead"><span class="capname">Settlement sheet</span><span class="capstate today">today</span></div>
+    <div class="warm">
+      <div class="drawerbar">Set refund — Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><div class="opt on"><span class="ot">An even share</span><span class="os">$210.00 — $150.00 owed back plus one of 4 shares</span></div></div>
+          <div class="tag del">dollars only while it's the saved answer</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="opt"><span class="ot">A set amount</span><span class="os">Their owed-back money is paid either way; this replaces the share</span></div></div>
+          <div class="tag del">no dollars</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="opt"><span class="ot">No share — leave it to the team</span><span class="os">The rest goes to the other families, raising every other share</span></div></div>
+          <div class="tag del">no dollars</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save</span></div></div>
+          <div class="tag del">a failure renders behind this window</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Now</strong> — two of the three options carry no figure, an empty
+      amount means zero without saying so, and a refusal lands on a screen the coach cannot see.</p>
+  </div>
+
+  <div class="spec">
+    <div class="caphead"><span class="capname">Settlement sheet</span><span class="capstate rec">recommended</span></div>
+    <div class="warm">
+      <div class="drawerbar">Set refund — Riley P.<span class="x">✕</span></div>
+      <div class="fieldstack">
+        <div class="tagrow">
+          <div class="el"><div class="opt on"><span class="ot">An even share — $210.00</span><span class="os">$150.00 owed back plus one of 4 even shares</span></div></div>
+          <div class="tag res">dollars in the title, always</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="opt"><span class="ot">A set amount</span><span class="os">You type it — whatever it frees up moves to the other families</span></div></div>
+          <div class="tag res">restyled</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="opt"><span class="ot">No share — $0.00</span><span class="os">Frees $210.00 across the other 3 families</span></div></div>
+          <div class="tag new">new — states what it produces</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="refuse"><strong>Enter an amount for this family</strong> — leave
+            it blank and they take nothing home. Pick "No share" if that is what you mean.</div></div>
+          <div class="tag new">new — an empty box refuses</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="refuse"><strong>That could not be saved</strong> — the settlement
+            changed under you. It has been re-read; check the figures and try again.</div></div>
+          <div class="tag new">new — the refusal lands inside this sheet</div>
+        </div>
+        <div class="tagrow">
+          <div class="el"><div class="foot" style="margin-top:0.1rem"><span class="btn ghost">Cancel</span><span class="btn primary">Save</span></div></div>
+          <div class="tag unch">unchanged</div>
+        </div>
+      </div>
+    </div>
+    <p class="capnote"><strong>Recommended</strong> — every option states what it produces whether or
+      not it is chosen, blank refuses rather than meaning zero, and a failure appears on the sheet the
+      coach is looking at.</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="lab">Q4 lands here</span>
+  The consequence-line sweep question from the first pass is still unruled, and three of its seven
+  forms are in this cluster — <strong>D-2</strong> (the schedule form's reconcile), <strong>D-7</strong>
+  (the credit's landing sentence) and <strong>D-11</strong> (the refund options' dollars). Ruling Q4
+  "all seven" settles all three; ruling "money-movers only" keeps D-7 and D-11 and drops D-2.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2><span class="num">08</span>The gap register</h2>
+<p class="sub">
+  Severity-ranked, this cluster only. <strong>Kind</strong> says what fixing it costs.
+  Anything at Low is a fair candidate for "not worth it" — say so on the walk and it comes off.
+</p>
+
+<div class="regwrap">
+<table class="reg">
+  <thead><tr><th>#</th><th>Where</th><th>Finding</th><th>Severity</th><th>Kind</th></tr></thead>
+  <tbody>
+    <tr><td class="k">D-13</td><td class="w">Both schedule doors</td><td>No payout floor — raising a total deletes the credit a cash payout was standing on</td><td class="sev sevH">defect High</td><td class="w">write-path (guard)</td></tr>
+    <tr><td class="k">D-12</td><td class="w">Both schedule doors</td><td>Schedule-change credits are invisible to the next reconcile — they stack, and stale ones never clear</td><td class="sev sevH">defect High</td><td class="w">write-path (query)</td></tr>
+    <tr><td class="k">D-9</td><td class="w">Set refund</td><td>A failed save shows nothing — the message renders behind the open sheet</td><td class="sev sevH">defect High</td><td class="w">plumbing</td></tr>
+    <tr><td class="k">D-5</td><td class="w">Add a credit</td><td>Whole credit cluster (add / edit / delete) offered to a read-only assistant</td><td class="sev sevH">rule High</td><td class="w">gating — cheap</td></tr>
+    <tr><td class="k">D-1</td><td class="w">Edit schedule</td><td>Both doors offered to a read-only assistant; refused only at Save</td><td class="sev sevH">rule High</td><td class="w">gating — cheap</td></tr>
+    <tr><td class="k">D-14</td><td class="w">Every dues money-in door</td><td>A receipt can be dated in the future — no picker cap, no client check, no server refusal</td><td class="sev sevMH">gap Med-High</td><td class="w">words + guard · Q18</td></tr>
+    <tr><td class="k">D-10</td><td class="w">Set refund</td><td>A blank or invalid "set amount" silently saves as $0.00</td><td class="sev sevMH">defect Med-High</td><td class="w">validation</td></tr>
+    <tr><td class="k">D-11</td><td class="w">Set refund</td><td>Un-chosen options state no dollars — and the chosen one loses its figure the moment you switch</td><td class="sev sevM">gap Med</td><td class="w">shape · Q4</td></tr>
+    <tr><td class="k">D-2</td><td class="w">Edit schedule</td><td>No heading; the sum rule arrives as an error after Save, not as a live sentence</td><td class="sev sevM">gap Med</td><td class="w">shape · Q4/Q19</td></tr>
+    <tr><td class="k">D-15</td><td class="w">Edit schedule</td><td>A stray backdrop click discards a hand-built schedule with no warning</td><td class="sev sevM">defect Med</td><td class="w">shape · Q21</td></tr>
+    <tr><td class="k">D-7</td><td class="w">Add a credit</td><td>No consequence line, though the landing arithmetic already exists and depends on a team setting</td><td class="sev sevM">gap Med</td><td class="w">words · Q4</td></tr>
+    <tr><td class="k">D-4</td><td class="w">Generate installments</td><td>Four names for one act across door, window, help and confirm button</td><td class="sev sevM">words Med</td><td class="w">words · Q20</td></tr>
+    <tr><td class="k">D-3</td><td class="w">Edit schedule</td><td>Desktop row: a 112px amount box beside an 809px date field</td><td class="sev sevM">shape Med</td><td class="w">shape · Q19</td></tr>
+    <tr><td class="k">D-8b</td><td class="w">Payment correction</td><td>Nothing above the fields says a receipt is being replaced — the code's own noted residual risk</td><td class="sev sevM">gap Med-Low</td><td class="w">words (+1 line)</td></tr>
+    <tr><td class="k">D-16</td><td class="w">Edit schedule</td><td>Remove-installment "×" at 21×21px and unnamed; "+ Add installment" at 25px tall</td><td class="sev sevM">shape Med-Low</td><td class="w">shape (CSS)</td></tr>
+    <tr><td class="k">D-6</td><td class="w">Add a credit</td><td>Two-column rows at 360px — tight but nothing clips <em>(downgraded from the first pass)</em></td><td class="sev sevL">shape Low</td><td class="w">shape (CSS)</td></tr>
+    <tr><td class="k">D-8</td><td class="w">Payment correction</td><td>Same two-column rows, same verdict <em>(downgraded)</em></td><td class="sev sevL">shape Low</td><td class="w">shape (CSS)</td></tr>
+    <tr><td class="k">D-17</td><td class="w">Dues tab + drawer</td><td>Title Case and sentence case side by side; one button switches scheme with its own state</td><td class="sev sevL">words Low</td><td class="w">words</td></tr>
+    <tr><td class="k">D-18</td><td class="w">Add a credit</td><td>Default date frozen at page load — a tab left open overnight pre-fills yesterday</td><td class="sev sevL">defect Low</td><td class="w">one line</td></tr>
+    <tr><td class="k">D-19</td><td class="w">Set refund</td><td>Option cards expose no selected state to assistive tech</td><td class="sev sevL">rule Low</td><td class="w">one attribute</td></tr>
+    <tr><td class="k">SP-8</td><td class="w">Dues drawer</td><td>A sponsorship credit's chip and hover still say "Fundraiser" <em>(sponsorship package's row — not booked here)</em></td><td class="sev sevL">words Low</td><td class="w">words</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Named clean, so the list can be trusted</h3>
+<p>
+  <strong>Generate Player Installments</strong> — the three priced amount modes, the honest replace
+  step, the named failures, the sandbox's own voice, the discard guard, the <code>Auto</code> outputs
+  drawn as outputs. <strong>The payment correction's consequence line</strong>, including the
+  overpayment clause that correctly nets out the row being replaced. <strong>The one-taps</strong> and
+  their dollar-quoting confirm. <strong>The credit type picker</strong> — locked once set, always
+  showing its real kind, offering exactly what the server accepts. <strong>The sourced-credit
+  refusal</strong>, now visible from the list where the delete is actually clicked. <strong>The
+  forgiveness path</strong> — derived, never typed, one per family, and correctly excluded from what
+  the team may hand back in cash. <strong>The dues tab's settings block</strong> — editable only
+  before any family owes anything, read-only after.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2><span class="num">09</span>Suggested order, if it becomes a project</h2>
+<ol class="order">
+  <li><strong>A · The floor (no rulings needed beyond Q17).</strong> The payout guard and the
+    reconcile query on both schedule doors, with a regression test on the <em>seam</em> — the existing
+    test covers the pure function and passes while the query returns nothing.</li>
+  <li><strong>B · Truth &amp; safety, small.</strong> The refund sheet's invisible failure and its $0
+    save (D-9, D-10); gate the two read-only clusters (D-1, D-5). No design, no rulings.</li>
+  <li><strong>C · One grammar (per Q18).</strong> The future-date rule on every dues money-in door,
+    in the arrival sentence's exact words.</li>
+  <li><strong>D · The words commit (per Q20).</strong> One name for the bulk act everywhere; the
+    capitalization sweep (D-17); the correction's heading (D-8b); the credit form's default date
+    (D-18).</li>
+  <li><strong>E · The consequence sweep (scope per Q4).</strong> The credit's landing sentence, the
+    refund options' dollars, the schedule form's live reconcile.</li>
+  <li><strong>F · Shape (per Q19, Q21).</strong> The schedule form's heading and row cards, the
+    desktop column proportions, the 44px controls, the stacking pass shared with the credit and
+    correction forms, and the discard guard.</li>
+</ol>
+
+<h3>Deliberately not in this cluster</h3>
+<ul class="plain">
+  <li>The <strong>one-taps</strong> — <em>Record as paid</em> and <em>Record rest as paid</em> stay
+    question-free forever. That is a ruling, not a gap.</li>
+  <li><strong>Recording a dues payment cold</strong> — the one conversation owns it, and its dues
+    branch was walked with centralization. Only its <em>date</em> is in scope here, under §02.</li>
+  <li><strong>Team settings → Money</strong> and the club tab's installments — other walks.</li>
+  <li><strong>Phone money tables</strong> — their own sequenced session. Form layout at 360px is fair
+    game; the dues table is not.</li>
+  <li><strong>The dues drawer's four money tiles</strong> — measured at 360px, they hold
+    (<span class="fig">63 / 79 / 63 / 54px</span>, nothing clipped). Not a finding.</li>
+  <li><strong>SP-8's relabel</strong> — the sponsorship package's words commit, not this one.</li>
+</ul>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<h2><span class="num">10</span>Your rulings</h2>
+<p class="sub">
+  Choices and notes save on this device as you go. When the walk is done, copy the summary and paste
+  it back into the chat — that paste-back is the record, and it becomes the spec.
+</p>
+
+<div class="q" data-q="Q4">
+  <p class="qh">Q4 · Carried from the first pass — still unruled</p>
+  <p class="qq">The consequence-line sweep. Seven forms are missing their "When you save:" sentence; three of them are in this cluster (D-2, D-7, D-11).</p>
+  <div class="opts">
+    <button class="opt-btn" data-q="Q4" data-v="A">All seven — one grammar everywhere a coach saves money<span class="rec">recommended</span><small>The money-movers land first in sequence; the "nothing moves" setup lines follow in the same pass.</small></button>
+    <button class="opt-btn" data-q="Q4" data-v="B">Money-movers only — keeps D-7 and D-11, drops D-2's live reconcile<small>Half the writing; leaves the setup forms silent where their siblings speak.</small></button>
+  </div>
+  <textarea data-qnotes="Q4" placeholder="Notes / amendments…"></textarea>
+</div>
+
+<div class="copybar">
+  <button id="copyRulings" type="button">Copy my rulings</button>
+  <span id="copyStatus" role="status"></span>
+</div>
+
+<footer class="foot">
+  Read from the code 2026-08-30 · five forms audited · every pixel figure measured on the live dev
+  server at the width it names, on the UAT coach fixture · the arithmetic in §01 produced by running
+  the product's own reconcile · the owner's walk turns this into the project spec.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'dues-forms-walk-v1';
+  var state = { walk: {}, q: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var QTEXT = {
+    Q17: 'The write-path fix (payout floor + reconcile)',
+    Q18: 'Future dates on money in',
+    Q19: 'The single-player schedule editor',
+    Q20: 'One name for the bulk act',
+    Q21: 'Losing your typing (discard guard)',
+    Q4:  'Consequence-line sweep scope (carried)'
+  };
+
+  document.querySelectorAll('.opt-btn').forEach(function (btn) {
+    var q = btn.getAttribute('data-q'), v = btn.getAttribute('data-v');
+    if (state.q[q] === v) btn.classList.add('sel');
+    btn.addEventListener('click', function () {
+      state.q[q] = v; save();
+      document.querySelectorAll('.opt-btn[data-q="' + q + '"]').forEach(function (b) {
+        b.classList.toggle('sel', b === btn);
+      });
+    });
+  });
+
+  document.querySelectorAll('textarea[data-qnotes]').forEach(function (ta) {
+    var q = ta.getAttribute('data-qnotes');
+    if (state.notes[q]) ta.value = state.notes[q];
+    ta.addEventListener('input', function () { state.notes[q] = ta.value; save(); });
+  });
+
+  document.querySelectorAll('input[data-walk]').forEach(function (cb) {
+    var k = cb.getAttribute('data-walk');
+    cb.checked = !!state.walk[k];
+    cb.addEventListener('change', function () { state.walk[k] = cb.checked; save(); });
+  });
+
+  function optionLabel(q, v) {
+    var btn = document.querySelector('.opt-btn[data-q="' + q + '"][data-v="' + v + '"]');
+    if (!btn) return v;
+    var clone = btn.cloneNode(true);
+    var small = clone.querySelector('small'); if (small) small.remove();
+    var rec = clone.querySelector('.rec'); if (rec) rec.remove();
+    return clone.textContent.trim();
+  }
+
+  document.getElementById('copyRulings').addEventListener('click', function () {
+    var lines = ['MONEY FORMS REVIEW - DUES WALK - OWNER RULINGS', ''];
+    var walked = [];
+    document.querySelectorAll('input[data-walk]').forEach(function (cb) {
+      if (cb.checked) {
+        var h = cb.closest('h2');
+        if (h) walked.push(h.textContent.replace(/walked/i, '').replace(/^\s*\d+\s*/, '').trim());
+      }
+    });
+    lines.push('Walked: ' + (walked.length ? walked.join(' · ') : '(none ticked)'), '');
+    Object.keys(QTEXT).forEach(function (q) {
+      var v = state.q[q];
+      lines.push(q + ' — ' + QTEXT[q] + ': ' + (v ? '[' + v + '] ' + optionLabel(q, v) : '(not ruled)'));
+      if (state.notes[q] && state.notes[q].trim()) lines.push('    notes: ' + state.notes[q].trim());
+    });
+    var text = lines.join('\n');
+    var status = document.getElementById('copyStatus');
+    function done() { status.textContent = 'copied'; setTimeout(function () { status.textContent = ''; }, 2000); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { window.prompt('Copy the summary:', text); });
+    } else { window.prompt('Copy the summary:', text); }
+  });
+})();
+</script>

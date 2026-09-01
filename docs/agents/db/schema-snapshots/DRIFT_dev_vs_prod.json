@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-29",
-  "total": 40,
+  "generated": "2026-09-01",
+  "total": 43,
   "counts": {
     "tables": 1,
-    "columns": 21,
+    "columns": 22,
     "indexes": 7,
     "constraints": 8,
-    "rls": 3
+    "rls": 5
   },
   "items": [
     {
@@ -19,6 +19,14 @@
     },
     {
       "key": "check:only-dev:rep_fundraiser_entries.rep_fundraiser_entries_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_payment_requests.rep_team_payment_requests_meaning_is_incoming_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_payment_requests.rep_team_payment_requests_money_in_meaning_check",
       "sig": ""
     },
     {
@@ -67,6 +75,10 @@
     },
     {
       "key": "column:only-dev:rep_fundraisers.pledged_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_payment_requests.money_in_meaning",
       "sig": ""
     },
     {

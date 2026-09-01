@@ -11,10 +11,13 @@ import {
   getRepDuesPaymentsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepDuesPaymentsForPlayer,
+  getRepDuesPayoutsForPlayer,
+  getRepDuesCreditsForPlayer,
   upsertRepPlayerDuesSchedule,
   syncDuesPaidProjection,
   reconcileOverpaymentCredits,
 } from '@/lib/db';
+import { payoutFloorViolation, payoutFloorMessage, projectScheduleTotalChange, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
@@ -257,6 +260,51 @@ export const POST = withObservability(async (req: Request,
     );
   }
 
+  /* The player must belong to THIS season — the same membership check the payment POST has
+     always made, and this door was the one dues write missing it (/review 2026-08-30, Medium):
+     without it a foreign or stale player id sailed past every scoped read below (they all just
+     return empty for it) and the upsert stamped this team's org/team onto another team's player. */
+  const { data: playerRow } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('program_year_id', programYear.id)
+    .single();
+  if (!playerRow) {
+    return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });
+  }
+
+  /* ⚠⚠ THE PAYOUT FLOOR, ASKED PRE-FLIGHT (QA §123 Phase A2) — before the upsert, never after.
+     Raising a paid-up family's total makes the reconcile below delete the overpayment credit any
+     cash already handed back was standing on, and the books would then say the family was owed
+     nothing. This door and the bulk re-run are doors 5 and 6 in lib/dues-credit-guards.ts's list;
+     the P4 lesson is binding — a guard that refuses after an irreversible write strands the
+     record forever. Payments are fetched here (not after the write, as before) so the projection
+     and the post-write reconcile read the same rows.
+     ⚠ Pre-flight is the STRUCTURE, not a transaction: a payout committed between this read and
+     the reconcile below slips the floor — the same documented guard-to-write window doors 1–4
+     accept (no route here gets a transaction), self-healing on the next write to this player's
+     credits. What this check closes is every non-raced path, which before it was ALL of them. */
+  const [playerPayments, playerPayouts] = await Promise.all([
+    getRepDuesPaymentsForPlayer(programYear.id, playerId),
+    getRepDuesPayoutsForPlayer(programYear.id, playerId),
+  ]);
+  const paymentsTotal = amountsTotal(playerPayments);
+  if (playerPayouts.length > 0) {
+    const familyCredits = await getRepDuesCreditsForPlayer(programYear.id, playerId);
+    const projected = projectScheduleTotalChange({ familyCredits, paymentsTotal, newScheduleTotal: totalAmount });
+    const violation = payoutFloorViolation(projected, playerPayouts);
+    if (violation) {
+      return NextResponse.json(
+        {
+          error: payoutFloorMessage(violation.paidOut, "raising this player's dues total"),
+          code: CREDIT_HAS_PAYOUT,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const result = await upsertRepPlayerDuesSchedule({
     programYearId: programYear.id,
     playerId,
@@ -275,14 +323,19 @@ export const POST = withObservability(async (req: Request,
   // and reconcile the automatic overpayment credit BOTH ways — before this, editing one player's
   // total below what their family had sent silently capped the difference out of every figure
   // (review 2026-08-13, Critical 2), and only the bulk path did any of this.
-  const playerPayments = await getRepDuesPaymentsForPlayer(programYear.id, playerId);
+  // ⚠ The payments are RE-READ here, never the pre-flight's snapshot (peer review 2026-08-30):
+  // the floor's read above happens before the upsert, and a payment recorded in that window
+  // would be invisible to a reconcile fed the stale total — the credit would come out short.
+  // Same check-then-act discipline as every coach-money write; the extra read costs one query
+  // on the paid-player path only.
   if (playerPayments.length > 0) {
     await syncDuesPaidProjection(programYear.id, playerId);
+    const freshPayments = await getRepDuesPaymentsForPlayer(programYear.id, playerId);
     await reconcileOverpaymentCredits({
       programYearId: programYear.id,
       playerId,
       scheduleTotal: totalAmount,
-      paymentsTotal: Math.round(playerPayments.reduce((s, p) => s + Math.round(p.amount * 100), 0)) / 100,
+      paymentsTotal: amountsTotal(freshPayments),
       creditDate: tournamentToday(),
       createdBy: resolved.ctx!.user.id,
       paymentId: null,

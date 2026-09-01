@@ -25,6 +25,16 @@ import { installmentToSend } from '@/lib/dues-installment-view';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+/* The shared installment-row skeleton (QA §123 Phase F1) — the generator's own layout, worn here
+   through the `.duesScheduleEditor` SCOPED VARIANT. The shared classes also dress the budget
+   sheet and the bill editor; the variant is what keeps this surface's choices off theirs. */
+import budgetStyles from '../budget/budget.module.css';
+/* The generator's discard guard (owner Q21) — a typed hardship plan is the most expensive typing
+   in the hub, and a stray backdrop click used to throw it away silently. */
+import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
+import { CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { fmt } from '@/lib/coach-money-summary';
@@ -307,13 +317,31 @@ interface InstallmentRow {
 
 const BLANK_SCHEDULE_FORM = { totalAmount: '', notes: '' };
 
-const BLANK_CREDIT_FORM = {
+/** Cents-safe sum-vs-total for a typed schedule — ONE computation feeding both the live
+ *  reconcile strip and the save-time refusal (/simplify, QA §123: the two were independently
+ *  hand-rolled, one in cents and one in float dollars with a 0.01 tolerance, so the sentence a
+ *  coach read while typing and the one that bound at Save could disagree by a cent). Rows
+ *  without a parseable amount count as zero — they are refused separately before any sum
+ *  matters. */
+function scheduleGapC(rows: readonly InstallmentRow[], totalAmount: number) {
+  const sumC = rows.reduce((s, r) => {
+    const a = parseFloat(r.amount);
+    return s + (Number.isFinite(a) ? Math.round(a * 100) : 0);
+  }, 0);
+  const totalC = Math.round(totalAmount * 100);
+  return { sumC, totalC, gapC: totalC - sumC };
+}
+
+/** A function, not a constant (QA §123 Phase D): `tournamentToday()` evaluated at module load
+ *  meant a tab left open overnight pre-filled YESTERDAY into every new credit. Computed when the
+ *  form opens, the date is the day the coach is actually typing. */
+const blankCreditForm = () => ({
   amount:     '',
   description:'',
   creditType: 'contribution' as DuesCreditType,
   creditDate: tournamentToday(),
   notes:      '',
-};
+});
 
 /* ⚖ `BLANK_PAYOUT_FORM` went with the in-drawer payout sheet (money centralization P2,
    2026-08-23) — handing a family their credit back is recorded in the one conversation now. */
@@ -372,6 +400,15 @@ export function PlayerDuesPanel({
   ]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  /** The payout floor said no (QA §123 Phase A2). Its refusal has nowhere else to send anyone,
+   *  so it carries a door — back to this player's record, where the payouts are listed. */
+  const [floorRefusal, setFloorRefusal] = useState(false);
+  /** What the schedule editor opened WITH (Q21) — dirtiness is "moved off this", the structured
+   *  twin of the money forms' BLANK-compare (see useDiscardGuard's snapshotEqual). */
+  const [scheduleBaseline, setScheduleBaseline] = useState<{ form: typeof BLANK_SCHEDULE_FORM; rows: InstallmentRow[] } | null>(null);
+  /** Same idea for the credit form — its blank carries today's date, so the baseline is the
+   *  instance the opener actually seeded, never a fresh blank compared later. */
+  const [creditBaseline, setCreditBaseline] = useState<ReturnType<typeof blankCreditForm> | null>(null);
   const [marking, setMarking] = useState<Record<string, boolean>>({});
   /** The portal's own confirm (never window.confirm) — mounted for every coach screen. */
   const confirm = useConfirm();
@@ -382,7 +419,7 @@ export function PlayerDuesPanel({
 
   // Credits
   const [addingCredit, setAddingCredit] = useState(false);
-  const [creditForm, setCreditForm] = useState(BLANK_CREDIT_FORM);
+  const [creditForm, setCreditForm] = useState(blankCreditForm);
   const [creditSaving, setCreditSaving] = useState(false);
   const [creditError, setCreditError] = useState('');
   const [deletingCreditId, setDeletingCreditId] = useState<string | null>(null);
@@ -436,6 +473,11 @@ export function PlayerDuesPanel({
   const [choiceKind, setChoiceKind] = useState<'even' | 'fixed' | 'no_share'>('even');
   const [choiceAmount, setChoiceAmount] = useState('');
   const [choiceSaving, setChoiceSaving] = useState(false);
+  /** The sheet's OWN failure line (QA §123 Phase B). `settlementError` renders inside the
+   *  settlement window — BEHIND this open sheet — so a failed save here used to show as the
+   *  button merely stopping its spin. The settlement window keeps its channel for its own
+   *  failures; this one renders where the coach is actually looking. */
+  const [choiceError, setChoiceError] = useState('');
 
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
@@ -820,10 +862,12 @@ export function PlayerDuesPanel({
     }
   }
 
-  /** An even share / a set amount / no share / forgive the balance — one door, four choices. */
+  /** An even share / a set amount / no share / forgive the balance — one door, four choices.
+   *  Every caller lives INSIDE the Set-refund sheet, so its failures land in the sheet's own
+   *  error line (`choiceError`) — never `settlementError`, which the open sheet covers up. */
   async function saveRowChoice(playerId: string, kind: 'even' | 'fixed' | 'no_share' | 'forgive' | 'unforgive', amount = 0) {
     setChoiceSaving(true);
-    setSettlementError('');
+    setChoiceError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus/adjustments`, {
         method: 'POST',
@@ -836,7 +880,7 @@ export function PlayerDuesPanel({
       // Forgiveness changes what the family owes, so the dues table above must catch up too.
       if (kind === 'forgive' || kind === 'unforgive') await load();
     } catch (e) {
-      setSettlementError(e instanceof Error ? e.message : 'Save failed');
+      setChoiceError(e instanceof Error ? e.message : 'Save failed');
     } finally {
       setChoiceSaving(false);
     }
@@ -898,26 +942,30 @@ export function PlayerDuesPanel({
   }
 
   function openEdit(p: PlayerWithDues) {
-    setSelected(p);
-    setForm({
+    const nextForm = {
       totalAmount: p.schedule ? String(p.schedule.totalAmount) : '',
       notes: p.schedule?.notes ?? '',
-    });
-    setInstallmentRows(
-      p.installments.length
-        ? p.installments.map(i => ({
-            installmentNumber: i.installmentNumber,
-            amount: String(i.amount),
-            dueDate: i.dueDate,
-          }))
-        : [{ installmentNumber: 1, amount: '', dueDate: '' }],
-    );
+    };
+    const nextRows = p.installments.length
+      ? p.installments.map(i => ({
+          installmentNumber: i.installmentNumber,
+          amount: String(i.amount),
+          dueDate: i.dueDate,
+        }))
+      : [{ installmentNumber: 1, amount: '', dueDate: '' }];
+    setSelected(p);
+    setForm(nextForm);
+    setInstallmentRows(nextRows);
+    // The discard guard's baseline (Q21): the exact objects the form opened with.
+    setScheduleBaseline({ form: nextForm, rows: nextRows });
     setEditingSchedule(true);
     setSaveError('');
+    setFloorRefusal(false);
   }
 
   async function saveSchedule(playerId: string) {
     setSaveError('');
+    setFloorRefusal(false);
     setSaving(true);
     try {
       const totalAmount = parseFloat(form.totalAmount);
@@ -930,16 +978,25 @@ export function PlayerDuesPanel({
       if (installments.some(i => isNaN(i.amount) || !i.dueDate)) {
         throw new Error('All installments need a valid amount and due date');
       }
-      const instSum = installments.reduce((s, i) => s + i.amount, 0);
-      if (Math.abs(instSum - totalAmount) > 0.01) {
-        throw new Error(`Installments sum (${fmt(instSum)}) must equal total (${fmt(totalAmount)})`);
+      // The SAME cents computation the live strip renders from (scheduleGapC) — refusing on any
+      // cent of mismatch, exactly where the strip stops saying "matches the total".
+      const { sumC, totalC, gapC } = scheduleGapC(installmentRows, totalAmount);
+      if (gapC !== 0) {
+        throw new Error(`Installments sum (${fmt(sumC / 100)}) must equal total (${fmt(totalC / 100)})`);
       }
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId, totalAmount, notes: form.notes || null, installments }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // The payout floor's 409 (Phase A2) gets its door — the error text is the server's
+        // one floor sentence, and the flag renders "Open <name>'s payouts" beside it. The code
+        // is the guard file's exported constant, never a re-typed literal.
+        if (data.code === CREDIT_HAS_PAYOUT) setFloorRefusal(true);
+        throw new Error(data.error ?? 'Save failed');
+      }
       setEditingSchedule(false);
       await load();
     } catch (e: unknown) {
@@ -988,13 +1045,15 @@ export function PlayerDuesPanel({
   function openEditCredit(c: DuesCredit) {
     closeMoneySheets();
     setEditingCreditId(c.id);
-    setCreditForm({
+    const prefill = {
       amount:      String(c.amount),
       description: c.description,
       creditType:  c.creditType,
       creditDate:  c.creditDate,
       notes:       c.notes ?? '',
-    });
+    };
+    setCreditForm(prefill);
+    setCreditBaseline(prefill);
     setCreditError('');
     setAddingCredit(true);
   }
@@ -1031,7 +1090,7 @@ export function PlayerDuesPanel({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to save credit');
       setAddingCredit(false);
       setEditingCreditId(null);
-      setCreditForm(BLANK_CREDIT_FORM);
+      setCreditForm(blankCreditForm());
       await load();
     } catch (e: unknown) {
       setCreditError(e instanceof Error ? e.message : 'Failed to save credit');
@@ -1107,6 +1166,37 @@ export function PlayerDuesPanel({
     setCreditError('');
   }
 
+  // ── The discard guards (owner Q21, QA §123 Phase F4) ─────────────────────────────────────────
+  // The generator's protection, brought to the drawer's two build-a-thing forms: measured before
+  // this, typing a total and clicking the backdrop closed the drawer with no confirmation and the
+  // typing was gone. Dirtiness is "moved off what the form opened with" (snapshotEqual — the
+  // structured-baseline idiom), so a clean form still closes silently.
+  const scheduleDirty = editingSchedule && scheduleBaseline !== null
+    && !snapshotEqual({ form, rows: installmentRows }, scheduleBaseline);
+  const creditDirty = addingCredit && creditBaseline !== null
+    && !snapshotEqual(creditForm, creditBaseline);
+  const drawerFormDirty = scheduleDirty || creditDirty;
+
+  /** Every way OUT of the drawer goes through this one guarded closer — backdrop, ✕ and the back
+   *  arrow alike, exactly as every money-sheet reset goes through closeMoneySheets above. */
+  const closeDrawerGuarded = useDiscardGuard({
+    dirty: drawerFormDirty,
+    close: () => { setSelected(null); setEditingSchedule(false); setScheduleBaseline(null); setCreditBaseline(null); closeMoneySheets(); },
+    noun: scheduleDirty ? 'dues schedule' : 'credit',
+  });
+  /** The schedule editor's own Cancel — back to the drawer, not out of it. */
+  const cancelScheduleEdit = useDiscardGuard({
+    dirty: scheduleDirty,
+    close: () => { setEditingSchedule(false); setSaveError(''); setFloorRefusal(false); setScheduleBaseline(null); },
+    noun: 'dues schedule',
+  });
+  /** The credit form's Cancel. */
+  const closeCreditFormGuarded = useDiscardGuard({
+    dirty: creditDirty,
+    close: () => { closeMoneySheets(); setCreditBaseline(null); },
+    noun: 'credit',
+  });
+
   /** Open the payment sheet on an existing receipt, prefilled. */
   function openEditPayment(pm: RepDuesPayment) {
     closeMoneySheets();
@@ -1131,6 +1221,11 @@ export function PlayerDuesPanel({
       const amount = parseFloat(payForm.amount);
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid payment amount');
       if (!payForm.receivedDate) throw new Error('Date received is required');
+      /* Record is for money that has already moved (QA §123 Phase C). The picker's `max` blocks
+         the calendar; this catches the TYPED date. The server refuses it too — this is the
+         courtesy, and both read the ONE sentence in lib/money-date-guards.ts. */
+      const futureRefusal = futureReceivedDateRefusal(payForm.receivedDate, 'payment');
+      if (futureRefusal) throw new Error(futureRefusal);
       // ⚠ An edit is a CORRECTION, not an update: the server voids the old ledger entry and posts
       // a new one, because a posted entry is never rewritten in this product. The coach sees an
       // edit; the books keep the trail.
@@ -1260,6 +1355,12 @@ export function PlayerDuesPanel({
   // see the list but no send buttons.
   const moneyCanWrite = (page.capabilities?.money === 'write');
 
+  /** The receipt the correction form is pointed at — ONE lookup, shared by the form's heading
+   *  and its consequence line (each used to run its own .find over the same list). */
+  const editingReceipt = selected && editingPaymentId
+    ? selected.payments.find(p => p.id === editingPaymentId)
+    : undefined;
+
   /* ⚖ The over-ceiling sentence went with `savePayout` — the conversation states its own, from
      the same figure, and the server owns the refusal either way. */  /** One rendering of the payout error — beside the payout receipts, where Remove can fail. */
   const payoutErrorNote = payoutError
@@ -1343,7 +1444,20 @@ export function PlayerDuesPanel({
     setChoiceFor(row);
     setChoiceKind(row.choice === 'fixed' ? 'fixed' : row.choice === 'none' ? 'no_share' : 'even');
     setChoiceAmount(row.choice === 'fixed' ? String(row.cashShare) : '');
-    setSettlementError('');
+    setChoiceError('');
+  }
+
+  /** The Save button's one gate (Phase B): a blank or garbled "set amount" used to fall through
+   *  `parseFloat(x) || 0` and save as $0 — which on this sheet means a family takes nothing home.
+   *  Refused with the honest alternative named instead. */
+  function saveChoice(playerId: string) {
+    if (choiceKind !== 'fixed') { void saveRowChoice(playerId, choiceKind); return; }
+    const amount = parseFloat(choiceAmount);
+    if (choiceAmount.trim() === '' || !Number.isFinite(amount) || amount < 0) {
+      setChoiceError('Enter an amount for their share — or pick ‘No share’ if that is what you mean.');
+      return;
+    }
+    void saveRowChoice(playerId, 'fixed', amount);
   }
 
   // ── Season totals (owner ruling 2026-08-13, mockup artifact `c19d8500`) ────────────────────
@@ -1471,7 +1585,7 @@ export function PlayerDuesPanel({
                  reminders" while sighted users watch "Sending…" (/review finding). */
               aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
             >
-              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send Due Reminders'}</span>
+              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send due reminders'}</span>
             </button>
             </>
             )}
@@ -2353,16 +2467,24 @@ export function PlayerDuesPanel({
 
       {/* Player slide-over */}
       {selected && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); })?.(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) void closeDrawerGuarded(); }}>
+          {/* Route-level cover for the same typed work (Q21): tab close and in-app navigation.
+              ⚠ The generator's tabActive lesson applies — a guard armed on a background tab
+              intercepts clicks across the whole app, so the interceptor is gated on it. */}
+          <UnsavedChangesGuard
+            active={drawerFormDirty}
+            interceptClicks={drawerFormDirty && tabActive}
+            message="You haven't saved what you entered on this form. Leave without saving it?"
+          />
           <div className={`${styles.slideOver} ${styles.slideOverLedger}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
+              <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { void closeDrawerGuarded(); }}>
                 <ArrowLeft size={20} />
               </button>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
                 {[selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ')}
               </span>
-              <button className={styles.modalCloseBtn} onClick={() => { setSelected(null); setEditingSchedule(false); closeMoneySheets(); }}>
+              <button className={styles.modalCloseBtn} onClick={() => { void closeDrawerGuarded(); }}>
                 <X size={18} />
               </button>
             </div>
@@ -2506,9 +2628,14 @@ export function PlayerDuesPanel({
                           {remindingId === selected.player.id ? 'Sending…' : 'Remind'}
                         </button>
                       )}
-                      <button className={styles.btnGhost} onClick={() => openEdit(selected)} style={{ fontSize: '0.78rem' }}>
-                        Edit schedule
-                      </button>
+                      {/* ⚠ Gated like the payments and payouts lists beside it (QA §123 Phase B):
+                          a read-only money assistant must be offered NO door the server will
+                          refuse — this one opened a whole editor whose Save always 403'd. */}
+                      {moneyCanWrite && (
+                        <button className={styles.btnGhost} onClick={() => openEdit(selected)} style={{ fontSize: '0.78rem' }}>
+                          Edit schedule
+                        </button>
+                      )}
                       {/* ⚖⚖ THIS DOOR RE-POINTS AT THE ONE CONVERSATION (money centralization P2,
                           owner ruling A, 2026-08-23). It used to open the panel below in ADD mode;
                           that panel is now reached only by the pencil on an existing receipt, and
@@ -2568,7 +2695,17 @@ export function PlayerDuesPanel({
                         background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
                         border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                       }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        {/* ⚠ THE FORM NAMES THE RECEIPT IT REPLACES (owner, QA §123 Phase D) —
+                            "$120.00, Aug 12", NOT the player: the drawer's title bar already
+                            carries the name, and this line is the residual risk the August
+                            Critical's structural fix left open (a blank-looking form with a
+                            stale id had nothing on screen saying which row it pointed at). */}
+                        {editingReceipt && (
+                          <p style={{ margin: '0 0 0.6rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+                            Correct a receipt — {fmt(editingReceipt.amount)}, {fmtDate(editingReceipt.receivedDate, { withYear: false })}
+                          </p>
+                        )}
+                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
                           <div>
                             <label className={styles.label}>Amount received *</label>
                             <input
@@ -2586,12 +2723,13 @@ export function PlayerDuesPanel({
                             <input
                               className={styles.input}
                               type="date"
+                              max={tournamentToday()}
                               value={payForm.receivedDate}
                               onChange={e => setPayForm(f => ({ ...f, receivedDate: e.target.value }))}
                             />
                           </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                        <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
                           <div>
                             <label className={styles.label}>Method</label>
                             <DuesMethodSelect
@@ -2624,13 +2762,10 @@ export function PlayerDuesPanel({
                           // ⚠ On a correction the row being replaced must come OUT of the running
                           // total first — otherwise the preview counts the old receipt and the
                           // new one together and warns about an overpayment that will never
-                          // exist.
-                          const editingRow = editingPaymentId
-                            ? selected.payments.find(p => p.id === editingPaymentId)
-                            : undefined;
+                          // exist. (`editingReceipt` is the shared lookup the heading also uses.)
                           const excess = overpaymentExcess(
                             selected.schedule.totalAmount,
-                            paymentsTotal - (editingRow?.amount ?? 0),
+                            paymentsTotal - (editingReceipt?.amount ?? 0),
                             amt,
                           );
                           return (
@@ -2979,13 +3114,21 @@ export function PlayerDuesPanel({
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                           Credits
                         </span>
-                        {!addingCredit && (
+                        {/* moneyCanWrite, like every write control in this drawer (Phase B) —
+                            the whole credit cluster rendered for read-only assistants. */}
+                        {moneyCanWrite && !addingCredit && (
                           <button
                             className={styles.btnGhost}
                             style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                            onClick={() => { closeMoneySheets(); setAddingCredit(true); setCreditForm(BLANK_CREDIT_FORM); }}
+                            onClick={() => {
+                              closeMoneySheets();
+                              setAddingCredit(true);
+                              const fresh = blankCreditForm();
+                              setCreditForm(fresh);
+                              setCreditBaseline(fresh);
+                            }}
                           >
-                            <Plus size={12} /> Add Credit
+                            <Plus size={12} /> Add a credit
                           </button>
                         )}
                       </div>
@@ -2997,10 +3140,15 @@ export function PlayerDuesPanel({
                           background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
                           border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                         }}>
+                          {/* The form names the act (approved mockup, QA §123) — the drawer's
+                              title bar already says whose record this is. */}
+                          <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+                            {editingCreditId ? 'Edit this credit' : 'Add a credit'}
+                          </p>
                           <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
                             * Required
                           </p>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
                               <label className={styles.label}>Amount *</label>
                               <input
@@ -3032,7 +3180,7 @@ export function PlayerDuesPanel({
                               onChange={e => setCreditForm(f => ({ ...f, description: e.target.value }))}
                             />
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
                               <label className={styles.label}>Type</label>
                               {/* ⚠ FIXED ONCE SET. The type is PROVENANCE — where this money came
@@ -3072,11 +3220,36 @@ export function PlayerDuesPanel({
                               />
                             </div>
                           </div>
+                          {/* The landing sentence (owner Q4, QA §123 Phase E) — what saving does,
+                              quoting the team's own credits-reduce setting. No sums of its own:
+                              the amount is the coach's, the clause is the setting's. */}
+                          {(() => {
+                            const amt = parseFloat(creditForm.amount);
+                            if (isNaN(amt) || amt <= 0 || creditMode === null) return null;
+                            const first = selected.player.playerFirstName || 'This player';
+                            const subject = editingCreditId
+                              ? <>this credit becomes {fmt(amt)}</>
+                              : creditMode === 'keep_separate'
+                                ? <>the team owes {first}&apos;s family {fmt(amt)} more</>
+                                : <>{first}&apos;s family owes {fmt(amt)} less</>;
+                            const clause = creditMode === 'keep_separate'
+                              ? 'settled at season’s end — their installments don’t move'
+                              : creditMode === 'next_first'
+                                ? 'taken off their next payment first'
+                                : 'taken off their last payment first';
+                            return (
+                              <p style={{ margin: '0 0 0.6rem', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                                <strong>When you save:</strong> nothing changes hands — {subject}, {clause}.
+                              </p>
+                            );
+                          })()}
                           {creditError && <p className={styles.errorText}>{creditError}</p>}
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button className={styles.btnGhost} onClick={() => closeMoneySheets()} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                            <button className={styles.btnGhost} onClick={() => { void closeCreditFormGuarded(); }} style={{ fontSize: '0.8rem' }}>Cancel</button>
+                            {/* Sentence case beside its neighbours (Phase D) — the button used to
+                                change capitalization scheme with its own state. */}
                             <button className={styles.btnPrimary} disabled={creditSaving} onClick={saveCredit} style={{ fontSize: '0.8rem' }}>
-                              {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save Credit'}
+                              {creditSaving ? 'Saving…' : editingCreditId ? 'Save changes' : 'Save credit'}
                             </button>
                           </div>
                         </div>
@@ -3133,7 +3306,7 @@ export function PlayerDuesPanel({
                                   two disagreeing numbers with no way to tell which is true, and
                                   the next reconcile would quietly overwrite the coach's fix. Those
                                   are corrected where they are born; the meta text says so instead. */}
-                              {!(c.fundraiserEntryId || c.expenseId) && !c.paymentId && (
+                              {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && (
                                 <button
                                   className={styles.rowIconBtn}
                                   style={{ flexShrink: 0 }}
@@ -3157,7 +3330,7 @@ export function PlayerDuesPanel({
                                 <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
                                   auto
                                 </span>
-                              ) : (c.fundraiserEntryId || c.expenseId) ? null : (
+                              ) : (c.fundraiserEntryId || c.expenseId) || !moneyCanWrite ? null : (
                                 <button
                                   className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingCreditId === c.id}
@@ -3183,9 +3356,13 @@ export function PlayerDuesPanel({
                 ) : (
                   <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                     <p className={styles.muted} style={{ marginBottom: '1rem' }}>No dues schedule set for this player.</p>
-                    <button className={styles.btnPrimary} onClick={() => openEdit(selected)}>
-                      Set dues schedule
-                    </button>
+                    {/* Same gate as Edit schedule above (Phase B) — the read-only empty state
+                        keeps its sentence and loses the door the server would refuse. */}
+                    {moneyCanWrite && (
+                      <button className={styles.btnPrimary} onClick={() => openEdit(selected)}>
+                        Set dues schedule
+                      </button>
+                    )}
                   </div>
                 )}
                 {saveError && <p className={styles.errorText} style={{ marginTop: '0.5rem' }}>{saveError}</p>}
@@ -3199,9 +3376,17 @@ export function PlayerDuesPanel({
                 saveError={saveError}
                 saving={saving}
                 onSave={() => saveSchedule(selected.player.id)}
-                onCancel={() => { setEditingSchedule(false); setSaveError(''); }}
+                onCancel={() => { void cancelScheduleEdit(); }}
                 addRow={() => addInstallmentRow(installmentRows, setInstallmentRows)}
                 removeRow={(idx) => removeInstallmentRow(idx, installmentRows, setInstallmentRows)}
+                payoutDoor={floorRefusal ? {
+                  label: `Open ${selected.player.playerFirstName || 'this player'}’s payouts`,
+                  /* Through the GUARDED closer (/review 2026-08-30): this door is an exit from
+                     the form like any other, and the first cut closed it directly — the one
+                     unguarded exit in the build that added the guards. A coach who also fixed a
+                     date alongside the refused total keeps that typing behind the same prompt. */
+                  open: () => { void cancelScheduleEdit(); },
+                } : null}
               />
             )}
           </div>
@@ -3247,17 +3432,32 @@ export function PlayerDuesPanel({
                   <X size={18} />
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
+              {/* ⚠ EVERY OPTION STATES WHAT IT PRODUCES, chosen or not (owner Q4, QA §123 Phase E).
+                  Only the saved option used to show dollars — and the figure the sheet exists to
+                  compare vanished exactly when the coach started comparing. Every figure here is
+                  the SERVER's own (this row's refund, share and owed-back) — a sentence that does
+                  its own sums is a sentence that can disagree with the write, so the un-chosen
+                  even option states its composition rather than inventing a projection. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }} role="group" aria-label="What this family takes">
                 {([
-                  ['even', 'An even share', row.choice === 'even'
-                    ? `${fmt(row.refund)} — ${fmt(row.owedBack)} owed back plus one of ${evenTakers} shares`
-                    : `Puts ${name} back in the split with everyone else`],
-                  ['fixed', 'A set amount', 'Their owed-back money is paid either way; this replaces the share'],
-                  ['no_share', 'No share — leave it to the team', 'The rest goes to the other families, raising every other share'],
+                  ['even',
+                    row.choice === 'even' ? `An even share — ${fmt(row.refund)}` : 'An even share',
+                    row.choice === 'even'
+                      ? `${fmt(row.owedBack)} owed back plus one of ${evenTakers} even share${evenTakers === 1 ? '' : 's'}`
+                      : `Puts ${name} back in the split — one of ${evenTakers + 1} even shares, plus their ${fmt(row.owedBack)} owed back`],
+                  ['fixed',
+                    row.choice === 'fixed' ? `A set amount — ${fmt(row.refund)} today` : 'A set amount',
+                    `You type it — whatever it frees up moves to the other families. Their ${fmt(row.owedBack)} owed back is paid either way`],
+                  ['no_share', 'No share — leave it to the team',
+                    `${row.cashShare > 0.005 ? `Frees their ${fmt(row.cashShare)} share for the other families` : 'The rest goes to the other families, raising every other share'} — their ${fmt(row.owedBack)} owed back is still paid`],
                 ] as Array<[typeof choiceKind, string, string]>).map(([value, title, sub]) => (
                   <button
                     key={value}
                     onClick={() => setChoiceKind(value)}
+                    /* The tint alone told a screen reader nothing — three buttons and no answer
+                       to "which is chosen" (F6). aria-pressed is the portal's idiom for a
+                       stateful button card (the budget sheet's split-mode cards). */
+                    aria-pressed={choiceKind === value}
                     style={{
                       textAlign: 'left', padding: '0.6rem 0.8rem', borderRadius: 8, cursor: 'pointer',
                       background: choiceKind === value ? 'color-mix(in srgb, var(--success-light) 8%, transparent)' : 'var(--home-card, rgba(255,255,255,0.03))',
@@ -3326,12 +3526,18 @@ export function PlayerDuesPanel({
                   </button>
                 </div>
               )}
+              {/* The sheet's own failure line — behind it, the settlement window's channel is
+                  invisible while this sheet is open (Phase B). role=alert so a screen reader
+                  hears the refusal the moment it lands. */}
+              {choiceError && (
+                <p className={styles.errorText} role="alert" style={{ margin: '0 0 0.75rem' }}>{choiceError}</p>
+              )}
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button className={styles.btnGhost} onClick={() => setChoiceFor(null)}>Cancel</button>
                 <button
                   className={styles.btnPrimary}
                   disabled={choiceSaving}
-                  onClick={() => saveRowChoice(row.playerId, choiceKind, parseFloat(choiceAmount) || 0)}
+                  onClick={() => saveChoice(row.playerId)}
                 >
                   {choiceSaving ? 'Saving…' : 'Save'}
                 </button>
@@ -3397,17 +3603,31 @@ interface ScheduleFormProps {
   onCancel: () => void;
   addRow: () => void;
   removeRow: (idx: number) => void;
+  /** Rendered when the payout floor refused the save (Phase A2): the refusal's one door,
+   *  landing back on this player's record where the payouts are listed. */
+  payoutDoor?: { label: string; open: () => void } | null;
 }
 
 /** ONE player's dues schedule. The roster-wide version is not this form any more — it is the
- *  shared Generate Installments modal (see the toolbar button), which is why the configurable
+ *  shared Set-dues-for-all-players modal (see the toolbar button), which is why the configurable
  *  save label that used to live here is gone with its only caller. */
 function ScheduleForm({
   form, setForm, installmentRows, setInstallmentRows,
-  saveError, saving, onSave, onCancel, addRow, removeRow,
+  saveError, saving, onSave, onCancel, addRow, removeRow, payoutDoor = null,
 }: ScheduleFormProps) {
   return (
     <div>
+      {/* ⚠ THE HEADING SAYS WHAT THE TITLE BAR CANNOT (owner, QA §123 F3) — which form this is,
+          and what it does not touch. NOT the player's name: the drawer's bar carries it in both
+          states, and repeating it an inch below is the restatement the §121 walk deleted. */}
+      <div style={{ marginBottom: '0.85rem' }}>
+        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+          Dues schedule
+        </p>
+        <p className={styles.mutedInline} style={{ margin: '0.15rem 0 0', fontSize: '0.78rem' }}>
+          Just this family. Everyone else keeps theirs.
+        </p>
+      </div>
       <div className={styles.formGrid} style={{ marginBottom: '1rem' }}>
         <div className={`${styles.field} ${styles.formGridFull}`}>
           <label className={styles.label}>Total amount *</label>
@@ -3434,42 +3654,125 @@ function ScheduleForm({
           body="An installment is one payment in a dues schedule. For example, a $500 annual due might be split into 5 monthly installments of $100 each."
         />
       </p>
-      {installmentRows.map((row, idx) => (
-        <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', width: '1.5rem', textAlign: 'right', flexShrink: 0 }}>#{row.installmentNumber}</span>
-          <input
-            className={styles.input}
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="Amount"
-            style={{ width: '7rem' }}
-            value={row.amount}
-            onChange={e => {
-              const updated = installmentRows.map((r, i) => i === idx ? { ...r, amount: e.target.value } : r);
-              setInstallmentRows(updated);
-            }}
-          />
-          <input
-            className={styles.input}
-            type="date"
-            style={{ flex: 1 }}
-            value={row.dueDate}
-            onChange={e => {
-              const updated = installmentRows.map((r, i) => i === idx ? { ...r, dueDate: e.target.value } : r);
-              setInstallmentRows(updated);
-            }}
-          />
-          {installmentRows.length > 1 && (
-            <button className={styles.btnGhost} onClick={() => removeRow(idx)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>×</button>
-          )}
+      {/* ── The rows, on the generator's own skeleton (F1) ──────────────────────────────────────
+          The hand-rolled layout this replaced pinned the amount to 7rem and told the date to
+          `flex: 1` — 112px beside 809px in a 1040px drawer. The shared `periodInputRow` family
+          gives equal labelled columns on a desktop and a labelled card below 640, through the
+          `.duesScheduleEditor` scoped variant (see budget.module.css — the shared classes also
+          dress the budget sheet and the bill editor, and must not move). The rows are plain JSX
+          in this component, never a component defined inside render — that shape remounts its
+          inputs and presents as focus loss per keystroke. */}
+      <div className={budgetStyles.duesScheduleEditor}>
+        <div className={budgetStyles.duesSchedColHead} aria-hidden>
+          <span className={budgetStyles.duesSchedColNum} />
+          <span className={budgetStyles.duesSchedCol}>Amount ($)</span>
+          <span className={budgetStyles.duesSchedCol}>Due date</span>
+          {installmentRows.length > 1 && <span className={budgetStyles.duesSchedColX} />}
         </div>
-      ))}
-      <button className={styles.btnGhost} onClick={addRow} style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>
+        {installmentRows.map((row, idx) => (
+          <div key={idx} className={budgetStyles.periodInputRow}>
+            <div className={budgetStyles.periodGroupHead}>
+              <span className={budgetStyles.periodGroupNum}>Installment {row.installmentNumber}</span>
+              {installmentRows.length > 1 && (
+                <button
+                  type="button"
+                  className={budgetStyles.periodGroupRemove}
+                  onClick={() => removeRow(idx)}
+                >
+                  Remove <X size={12} aria-hidden />
+                </button>
+              )}
+            </div>
+            <span className={budgetStyles.installmentNum}>#{row.installmentNumber}</span>
+            <label className={budgetStyles.periodFieldLabel}>
+              <span className={budgetStyles.periodFieldLabelText}>Amount ($)</span>
+              <input
+                className={styles.input}
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Amount"
+                aria-label={`Amount for installment ${row.installmentNumber}`}
+                value={row.amount}
+                onChange={e => {
+                  const updated = installmentRows.map((r, i) => i === idx ? { ...r, amount: e.target.value } : r);
+                  setInstallmentRows(updated);
+                }}
+              />
+            </label>
+            <label className={budgetStyles.periodFieldLabel}>
+              <span className={budgetStyles.periodFieldLabelText}>Due date</span>
+              <input
+                className={styles.input}
+                type="date"
+                aria-label={`Due date for installment ${row.installmentNumber}`}
+                value={row.dueDate}
+                onChange={e => {
+                  const updated = installmentRows.map((r, i) => i === idx ? { ...r, dueDate: e.target.value } : r);
+                  setInstallmentRows(updated);
+                }}
+              />
+            </label>
+            {installmentRows.length > 1 && (
+              /* A real target with a real name (F2) — the 21×21px unnamed "×" this replaced
+                 survived because check:layout cannot open a drawer. */
+              <button
+                type="button"
+                className={budgetStyles.removePeriodBtn}
+                aria-label={`Remove installment ${row.installmentNumber}`}
+                onClick={() => removeRow(idx)}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className={`${styles.btnGhost} ${budgetStyles.duesSchedAdd}`}
+        onClick={addRow}
+        style={{ fontSize: '0.78rem', marginTop: '0.35rem' }}
+      >
         + Add installment
       </button>
 
-      {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
+      {/* ── The live reconcile, in the bulk sibling's words (owner Q4, Phase E) ─────────────────
+          "3 installments, $1,200 — matches the total." — running while the coach types, instead
+          of arriving after Save as "Installments sum ($800.00) must equal total ($1,200.00)".
+          Cents arithmetic; the save-time check below is unchanged and still binds. */}
+      {(() => {
+        const total = parseFloat(form.totalAmount);
+        if (!(total > 0)) return null;
+        const { sumC, totalC, gapC } = scheduleGapC(installmentRows, total);
+        if (sumC <= 0) return null;
+        const n = installmentRows.length;
+        const state = gapC === 0 ? 'match' : gapC > 0 ? 'short' : 'over';
+        const tone = state === 'match' ? budgetStyles.reconMatch
+          : state === 'short' ? budgetStyles.reconShort
+          : budgetStyles.reconOver;
+        return (
+          <p className={`${budgetStyles.reconStrip} ${tone}`} style={{ marginTop: '0.6rem' }}>
+            <span aria-hidden className={budgetStyles.reconMark}>{state === 'match' ? '✓' : '!'}</span>
+            <span>
+              <strong>{n} installment{n !== 1 ? 's' : ''}, {fmt(sumC / 100)}</strong>
+              {state === 'match'
+                ? <> — matches the total.</>
+                : <> — {fmt(Math.abs(gapC) / 100)} {state === 'short' ? 'short of' : 'more than'} the {fmt(totalC / 100)} total.</>}
+            </span>
+          </p>
+        );
+      })()}
+
+      {saveError && <p className={styles.errorText} role="alert" style={{ marginTop: '0.75rem' }}>{saveError}</p>}
+      {/* The payout floor's refusal carries its door (Phase A2, the Q8 pattern arriving early):
+          this refusal has nowhere else to send anyone, so it lands the coach back on the record
+          where the payout it names is listed — one click from Remove. */}
+      {payoutDoor && (
+        <button className={styles.btnSecondary} onClick={payoutDoor.open} style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
+          {payoutDoor.label}
+        </button>
+      )}
 
       <div className={styles.modalFooter}>
         <button className={styles.btnGhost} onClick={onCancel}>Cancel</button>

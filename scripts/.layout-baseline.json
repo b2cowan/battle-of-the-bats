@@ -1,6 +1,486 @@
 {
-  "generated": "2026-08-27T11:24:31.952Z",
+  "generated": "2026-09-01T14:28:57.587Z",
   "entries": {
+    "coach-fundraisers|361|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|361|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|361|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|361|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|390|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|390|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·Chocolate sale": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·Bottle drive": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·ZZ QA floor test": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|390|tap-floor|button·Riverbend Tire": {
+      "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Record money": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Import": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Export": {
+      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Fundraiser": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Pledge": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraisers|768|tap-floor|button·Open Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Help: Money": {
+      "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Record money": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Import": {
+      "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Export": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Fundraiser": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Close Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Edit amount": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Remove the $486.00 logged for Avery Test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Record": {
+      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons. · RE-KEYED 2026-08-23 (money centralization P2): the same control, renamed \"Log amount\" → \"Record\" when every door onto the recording conversation converged on one verb. Nothing about its size or placement changed.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Edit": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Pledge": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-fundraiser|768|tap-floor|button·Open Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Help: Money": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Record money": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Import": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Export": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Fundraiser": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open Chocolate sale": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open Bottle drive": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Pledge": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open ZZ QA Notes Roundtrip": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open ZZ QA Maple Hardware": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open ZZ QA Twin Oaks": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open ZZ QA Hilltop": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Open ZZ QA floor test": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "17px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Close Riverbend Tire": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Record": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-sponsor|768|tap-floor|button·Edit": {
+      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
+      "detail": "33px tall (floor 44)"
+    },
     "coach-commitment|768|tap-floor|button·Help: Money": {
       "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
       "detail": "34px tall (floor 44)"
@@ -2541,82 +3021,6 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-fundraiser|768|tap-floor|a·All fundraisers": {
-      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-fundraiser|768|tap-floor|button·Fundraiser settings": {
-      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-fundraiser|768|tap-floor|button·Help: Money": {
-      "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-fundraiser|768|tap-floor|button·Import": {
-      "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-fundraisers|361|tap-floor|a·Bottle drive": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|361|tap-floor|a·Chocolate sale": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|390|tap-floor|a·Bottle drive": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|390|tap-floor|a·Chocolate sale": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|a·Bottle drive": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|a·Chocolate sale": {
-      "reason": "The fundraiser NAME, a text link inside its row. Deliberate: the same row carries a full-width \"Open fundraiser\" control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a text link to 44px would put a button-sized gap between every fundraiser and its own description.",
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|a·Open Bottle drive": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|a·Open Chocolate sale": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·All": {
-      "reason": "The Fundraising tab kind filter (All / Fundraisers / Sponsors), at the portal standing DESKTOP control size. Deliberate: desktop keeps the coach portal grandfathered compact heights, and the 44px floor is enforced at the phone breakpoint — where this control now clears it, because the shared .viewToggleBtn gained a min-height on 2026-08-15 (it never had one; 27px made these the smallest tap targets in Money, and the baseline reasons covering the sibling toggles contradicted themselves by claiming they cleared a floor they were recorded as failing).",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·Fundraisers": {
-      "reason": "The Fundraising tab kind filter (All / Fundraisers / Sponsors), at the portal standing DESKTOP control size. Deliberate: desktop keeps the coach portal grandfathered compact heights, and the 44px floor is enforced at the phone breakpoint — where this control now clears it, because the shared .viewToggleBtn gained a min-height on 2026-08-15 (it never had one; 27px made these the smallest tap targets in Money, and the baseline reasons covering the sibling toggles contradicted themselves by claiming they cleared a floor they were recorded as failing).",
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·New": {
-      "reason": "The Fundraising create button at the portal standing DESKTOP size, matching every other primary action in Money. Clean at 361 and 390, where a finger is involved.",
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-fundraisers|768|tap-floor|button·Sponsors": {
-      "reason": "The Fundraising tab kind filter (All / Fundraisers / Sponsors), at the portal standing DESKTOP control size. Deliberate: desktop keeps the coach portal grandfathered compact heights, and the 44px floor is enforced at the phone breakpoint — where this control now clears it, because the shared .viewToggleBtn gained a min-height on 2026-08-15 (it never had one; 27px made these the smallest tap targets in Money, and the baseline reasons covering the sibling toggles contradicted themselves by claiming they cleared a floor they were recorded as failing).",
-      "detail": "27px tall (floor 44)"
-    },
     "coach-help|361|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
       "reason": null,
       "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
@@ -3812,10 +4216,6 @@
     "coach-team-hub|361|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-fundraiser|768|tap-floor|button·Record": {
-      "reason": "This screen own control at the portal standing desktop size. Deliberate: desktop keeps the coach portal compact control heights (a grandfathered portal-wide decision), and the 44px floor is enforced at the phone breakpoint — coach-fundraiser is green at both 361 and 390, where a coach actually taps. Raising it here alone would make the drill-in the only Money surface with tall desktop buttons. · RE-KEYED 2026-08-23 (money centralization P2): the same control, renamed \"Log amount\" → \"Record\" when every door onto the recording conversation converged on one verb. Nothing about its size or placement changed.",
-      "detail": "26px tall (floor 44)"
     },
     "coach-overview|768|tap-floor|button·Season setup, 4 of 5 done": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",

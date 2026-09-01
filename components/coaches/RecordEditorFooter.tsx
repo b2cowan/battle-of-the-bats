@@ -8,31 +8,36 @@
  * used once in a record's life. Same call the owner made on the bill page at the §114 walk —
  * "delete sits left, the closing affordance right, on the one line that closes the record".
  *
- * ⚖ Two states and nothing between them (the foreseeable-refusal ruling, §118, applied to
- * deleting rather than saving):
- *   · nothing on the books → a live button, then a confirm that RESTATES what goes
- *   · money on the books   → the button is DEAD, with the reason on its own line above the row
+ * ⚖⚖ AND THE REASON WAITS TO BE ASKED (owner, §122 walk 2026-08-30, mockup option A —
+ * `claude.ai/code/artifact/7e787b34-9d0f-4512-9601-99fe16ae9bfe`). The refusal used to sit
+ * PERMANENTLY above the footer whenever money was on the books, which for any sponsor that has
+ * ever been paid is always. The owner's read: *"users have to constantly see why they can't delete
+ * something even if they didn't have any intention of deleting it"* — two lines of rent, taken
+ * from a form that already scrolls, to answer a question most coaches never ask.
  *
- * ⚠ THE REASON GETS ITS OWN LINE, and that is not a hedge against the one-row ruling. It is a
- * SENTENCE about the record — "$200.00 on the team's books across 1 arrival, undo it from the row
- * first" — and it does not fit beside Cancel and Save at any width. Squeezing it into a `title`
- * would make the reason something a coach has to go and find, which is the thing the dead-button
- * grammar exists to prevent. So: dead button in the row, reason on the line above it.
+ * So the row answers for itself. Press Delete and it becomes ONE of two things, in the same place
+ * and by the same mechanism:
+ *   · nothing in the way → the confirm question
+ *   · money on the books → the reason, and the way out
+ * Cancel and Save stand down while either is open, exactly as the bill page's save strip does.
  *
- * ⚠ THE ROW STANDS DOWN WHILE THE DELETE QUESTION IS OPEN — the confirm takes the whole footer,
- * exactly as the bill page's save strip does. A coach being asked about dollars should not be
- * reading a Save button at the same time.
+ * ⚠⚠ THIS COSTS THE DEAD-BUTTON GRAMMAR, DELIBERATELY AND WITH THE OWNER'S EYES OPEN. Delete is
+ * no longer disabled — it has to be pressable to answer. That bends the §118 foreseeable-refusal
+ * ruling ("show it, don't make them discover it"), and the argument for the bend is that ONE PRESS
+ * IS NOT LOST WORK: that ruling exists to stop a coach filling in a form and being bounced, which
+ * this does not do. **Do not re-disable this button to "restore" §118** — you would be reinstating
+ * the permanent sentence the owner removed, or leaving a dead control with no reason at all.
  *
- * ⚠ THE BILL PAGE STILL HAS ITS OWN HAND-ROLLED COPY of this grammar (CommitmentView's delete
- * strip), and it is deliberately NOT folded in here. Its delete is always live, it reverses money
- * rather than refusing, and its confirm button changes label with the amount — absorbing it needs
- * an "always allowed" mode and a label prop, which is a change to a shipped, walked screen and
- * belongs in its own unit of work. **Named here so the second owner is not a surprise:** a tweak
- * to this grammar has to be made in both places until that happens.
+ * ⚠ A TOOLTIP IS NOT THE ANSWER EITHER (option C, rejected at the same walk): there is no hover on
+ * a phone, so on the devices coaches actually use it degrades to a dead button explaining nothing.
+ *
+ * ⚠ THE SERVER REFUSES REGARDLESS. Everything here is courtesy; the binding refusal is the route's.
  */
 import { useState, type ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+
+type Mode = 'rest' | 'reason' | 'confirm';
 
 export default function RecordEditorFooter({
   refusal,
@@ -42,7 +47,7 @@ export default function RecordEditorFooter({
   onDelete,
   children,
 }: {
-  /** When set, delete is dead and this reads on its own line above the row: the fact AND the way out. */
+  /** When set, Delete explains itself instead of asking: the fact AND the way out. */
   refusal: ReactNode | null;
   confirmTitle: string;
   /** What the delete actually does, in the coach's own figures. Never a bare "Are you sure?". */
@@ -52,17 +57,41 @@ export default function RecordEditorFooter({
   /** The sheet's own actions — Cancel and Save. They sit right; delete sits left. */
   children: ReactNode;
 }) {
-  const [confirming, setConfirming] = useState(false);
+  const [mode, setMode] = useState<Mode>('rest');
   const refused = refusal != null;
 
-  if (confirming && !refused) {
+  /* The record can change under an open panel (an arrival undone in another tab, a refetch after a
+     save), so the mode is reconciled against the CURRENT refusal rather than trusted. Asking the
+     confirm question about a record that just became undeletable is the failure worth preventing. */
+  const showing: Mode =
+    mode === 'confirm' && refused ? 'reason'
+    : mode === 'reason' && !refused ? 'rest'
+    : mode;
+
+  if (showing === 'reason') {
+    return (
+      <div className={styles.modalFooter}>
+        <div className={styles.dangerConfirm} role="alertdialog" aria-label="This cannot be deleted yet">
+          <p className={styles.dangerConfirmTitle}>This can’t be deleted yet</p>
+          <p className={styles.dangerConfirmBody}>{refusal}</p>
+          <div className={styles.dangerConfirmActions}>
+            <button type="button" className={styles.btnGhost} onClick={() => setMode('rest')}>
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showing === 'confirm') {
     return (
       <div className={styles.modalFooter}>
         <div className={styles.dangerConfirm} role="alertdialog" aria-label={confirmTitle}>
           <p className={styles.dangerConfirmTitle}>{confirmTitle}</p>
           <p className={styles.dangerConfirmBody}>{confirmBody}</p>
           <div className={styles.dangerConfirmActions}>
-            <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setConfirming(false)}>
+            <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setMode('rest')}>
               Keep it
             </button>
             <button type="button" className={styles.btnDanger} disabled={deleting} onClick={onDelete}>
@@ -75,27 +104,18 @@ export default function RecordEditorFooter({
   }
 
   return (
-    <>
-      {refused && <p className={styles.deleteReason}>{refusal}</p>}
-      <div className={styles.modalFooter}>
-        {/* ⚠ `type="button"` is load-bearing — this sits inside a <form>, where a bare button
-            submits it. A delete control that saves the record instead is worse than one that
-            does nothing. */}
-        {/* ⚠ NO `title` FALLBACK. An earlier cut carried one "in case the reason is a string" —
-            but `refusal` is a ReactNode every caller builds as JSX, so the branch could never
-            fire, and a tooltip would be the wrong answer anyway: the reason renders as visible
-            text directly above this row. A dead branch that implies a tooltip sometimes appears
-            costs the next reader more than it ever saved. */}
-        <button
-          type="button"
-          className={styles.deleteRecordBtn}
-          onClick={() => setConfirming(true)}
-          disabled={refused || deleting}
-        >
-          <Trash2 size={13} aria-hidden /> Delete
-        </button>
-        {children}
-      </div>
-    </>
+    <div className={styles.modalFooter}>
+      {/* ⚠ `type="button"` is load-bearing — this sits inside a <form>, where a bare button submits
+          it. A delete control that saves the record instead is worse than one that does nothing. */}
+      <button
+        type="button"
+        className={styles.deleteRecordBtn}
+        onClick={() => setMode(refused ? 'reason' : 'confirm')}
+        disabled={deleting}
+      >
+        <Trash2 size={13} aria-hidden /> Delete
+      </button>
+      {children}
+    </div>
   );
 }

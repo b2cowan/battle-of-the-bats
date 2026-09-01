@@ -1,0 +1,432 @@
+<title>Fundraiser Drill-In Redesign</title>
+<style>
+  /* ── Document chrome: cool slate, deliberately NOT the product's warm paper, so the
+     product frames read as specimens sitting on a review desk. ───────────────────── */
+  :root {
+    --doc-bg: #E9EDF2;
+    --doc-card: #FFFFFF;
+    --doc-ink: #17202B;
+    --doc-ink-soft: #46586C;
+    --doc-dim: #6C7E92;
+    --doc-line: rgba(23, 42, 66, 0.14);
+    --doc-accent: #2E5573;
+    --tag-new-bg: #DCEAF5; --tag-new-ink: #1D4E75;
+    --tag-restyled-bg: #E7E3F3; --tag-restyled-ink: #4A3D7A;
+    --tag-unchanged-bg: #E2E8E2; --tag-unchanged-ink: #3D5540;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg: #11161D;
+      --doc-card: #1A222C;
+      --doc-ink: #E6ECF2;
+      --doc-ink-soft: #A9BACB;
+      --doc-dim: #7C8DA0;
+      --doc-line: rgba(200, 220, 240, 0.14);
+      --doc-accent: #7FB0D4;
+      --tag-new-bg: #1D3A52; --tag-new-ink: #A9CFEC;
+      --tag-restyled-bg: #322B4E; --tag-restyled-ink: #C3B8EC;
+      --tag-unchanged-bg: #263326; --tag-unchanged-ink: #AFCBB2;
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #11161D;
+    --doc-card: #1A222C;
+    --doc-ink: #E6ECF2;
+    --doc-ink-soft: #A9BACB;
+    --doc-dim: #7C8DA0;
+    --doc-line: rgba(200, 220, 240, 0.14);
+    --doc-accent: #7FB0D4;
+    --tag-new-bg: #1D3A52; --tag-new-ink: #A9CFEC;
+    --tag-restyled-bg: #322B4E; --tag-restyled-ink: #C3B8EC;
+    --tag-unchanged-bg: #263326; --tag-unchanged-ink: #AFCBB2;
+  }
+
+  body {
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+    padding: 2.25rem 1.25rem 4rem;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 2.5rem; }
+
+  .docHead h1 { margin: 0 0 0.4rem; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; }
+  .docHead p { margin: 0; max-width: 68ch; color: var(--doc-ink-soft); font-size: 0.95rem; }
+  .docKicker {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--doc-accent); margin: 0 0 0.6rem;
+  }
+
+  .decisions { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 1.4rem 1.6rem; }
+  .decisions h2 { margin: 0 0 0.9rem; font-size: 1.05rem; }
+  .decisions ol { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.65rem; }
+  .decisions li { font-size: 0.92rem; color: var(--doc-ink-soft); max-width: 80ch; }
+  .decisions li strong { color: var(--doc-ink); }
+
+  section h2 { margin: 0; font-size: 1.15rem; font-weight: 750; }
+  section > .sectionSub { margin: 0.35rem 0 1.1rem; color: var(--doc-ink-soft); font-size: 0.9rem; max-width: 78ch; }
+
+  .frameRow { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+  .frameRow.single { grid-template-columns: 1fr; }
+  @media (max-width: 1020px) { .frameRow { grid-template-columns: 1fr; } }
+
+  .specimen { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
+  .specCaption { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+  .specCaption .capTitle { font-size: 0.85rem; font-weight: 700; }
+  .specCaption .capNote { font-size: 0.78rem; color: var(--doc-dim); }
+  .tag {
+    display: inline-block; font-family: ui-monospace, Consolas, monospace;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.14rem 0.45rem; border-radius: 3px;
+  }
+  .tagNew { background: var(--tag-new-bg); color: var(--tag-new-ink); }
+  .tagRestyled { background: var(--tag-restyled-bg); color: var(--tag-restyled-ink); }
+  .tagUnchanged { background: var(--tag-unchanged-bg); color: var(--tag-unchanged-ink); }
+
+  .annot {
+    font-family: ui-monospace, Consolas, monospace; font-size: 0.72rem; color: var(--doc-dim);
+    margin: 0; padding-left: 0.1rem;
+  }
+  .annot em { font-style: normal; color: var(--doc-accent); }
+
+  /* ── Product frames: the coach portal's REAL warm-theme tokens, committed. ────── */
+  .frame {
+    --fp-paper: #F8F4ED; --fp-card: #FFFFFF;
+    --fp-ink: #241E15; --fp-ink-soft: #4A4235; --fp-dim: #6A635C;
+    --fp-line: rgba(70,55,30,0.12); --fp-line-strong: rgba(70,55,30,0.20);
+    --fp-olive: #57651E; --fp-amber: #835006; --fp-blue: #134FD3;
+    --fp-plum: #7B4B6E; --fp-win: #34662A;
+    --fp-badge-success-ink: #2A5222;
+    background: var(--fp-paper);
+    color: var(--fp-ink);
+    border: 1px solid var(--doc-line);
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 2px 10px rgba(20, 35, 55, 0.10);
+  }
+  .frameInner { min-width: 880px; padding: 18px 22px 22px; font-size: 14px; }
+  .frameInner.narrow { min-width: 0; }
+  .frame * { box-sizing: border-box; }
+
+  .fpBadge {
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .fpBadgeActive { background: rgba(34,197,94,0.12); color: var(--fp-badge-success-ink); border: 1px solid rgba(34,197,94,0.25); }
+  .fpBadgeClosed { background: rgba(70,55,30,0.05); color: var(--fp-dim); border: 1px solid var(--fp-line-strong); }
+  .fpBtn {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+    padding: 7px 14px; border-radius: 9px; background: var(--fp-card);
+    border: 1px solid var(--fp-line-strong); color: var(--fp-ink); white-space: nowrap;
+  }
+  .fpBtnPrimary { background: var(--fp-olive); border-color: var(--fp-olive); color: #FBFAF6; }
+  .fpBtnGhost { border-color: transparent; background: transparent; color: var(--fp-ink-soft); }
+
+  .fpMutedLine { color: var(--fp-dim); font-size: 14px; margin: 10px 0 0; }
+  .fpTagChip {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+    background: rgba(30,58,138,0.07); border: 1px solid rgba(30,58,138,0.2); color: var(--fp-ink-soft);
+  }
+
+  .fpTableCard { background: var(--fp-card); border: 1px solid rgba(30,58,138,0.12); border-radius: 8px; overflow: hidden; }
+  .fpTable { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .fpTable th {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--fp-ink-soft); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--fp-line);
+  }
+  .fpTable td { padding: 11px 14px; border-bottom: 1px solid var(--fp-line); font-variant-numeric: tabular-nums; }
+  .fpTable tr:last-child td { border-bottom: none; }
+  .fpTable .num { text-align: right; }
+  .fpDash { color: rgba(70,55,30,0.30); }
+  .fpMoneyIn { color: var(--fp-win); font-weight: 700; }
+  .fpCredit { color: var(--fp-plum); font-weight: 600; }
+  .fpSoft { color: var(--fp-ink-soft); }
+  .fpRowActions { white-space: nowrap; text-align: right; }
+  .fpRowActions a { font-size: 13px; color: var(--fp-ink-soft); font-weight: 600; margin-left: 12px; }
+  .fpRowActions a.danger { color: #A33A2A; }
+  .fpRowActions a.dead { color: rgba(70,55,30,0.30); }
+  .fpPlayer { font-weight: 600; }
+  .fpNameLink { color: var(--fp-blue); font-weight: 600; }
+
+  /* the expansion: sibling rows on a quiet tint — the sponsor band's own construction */
+  .fpTable td.sub { background: rgba(70,55,30,0.035); font-size: 13px; padding-top: 8px; padding-bottom: 8px; }
+  .fpTable .metaCell { color: var(--fp-dim); font-size: 12.5px; }
+  .fpSubhead { font-size: 14px; font-weight: 700; margin: 22px 0 8px; display: flex; align-items: center; justify-content: space-between; }
+  .fpSubhead:first-child { margin-top: 0; }
+  .fpSubhead .fpBtn { padding: 5px 11px; font-size: 12.5px; }
+
+  .fpInput {
+    display: inline-block; background: var(--fp-card); border: 1px solid var(--fp-line-strong);
+    border-radius: 7px; padding: 5px 9px; font-size: 13px; color: var(--fp-ink);
+  }
+  .fpInput .ph { color: var(--fp-dim); }
+
+  a { color: inherit; text-decoration: none; }
+  .callouts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 1020px) { .callouts { grid-template-columns: 1fr; } }
+  .callout { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 1.1rem 1.3rem; }
+  .callout h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+  .callout p { margin: 0; font-size: 0.87rem; color: var(--doc-ink-soft); }
+</style>
+
+<div class="wrap">
+
+  <header class="docHead">
+    <p class="docKicker">Approved direction · Money → Fundraisers · Round 3</p>
+    <h1>Fundraiser Drill-In Redesign</h1>
+    <p>The accepted approach, drawn alone: a drive expands in place inside the Fundraisers list —
+       entries-first, on the sponsor band's construction — and the separate drill-in view retires.
+       Every frame below is the AFTER; earlier rounds' comparisons live in this artifact's version
+       history.</p>
+  </header>
+
+  <section class="decisions">
+    <h2>What ships</h2>
+    <ol>
+      <li><strong>One tab, one grammar.</strong> Drives and sponsors are two bands of one list, and
+          both open in place. The drill-in view, its back link, its page header, its four tiles and
+          its Rank column all retire. Deep links that used to open the drill-in now land on the tab
+          with that drive's row open, scrolled into view — the way sponsor links already behave.</li>
+      <li><strong>The board shows entries, not the roster.</strong> One row per logged amount,
+          sharing the parent table's columns. Un-logged players are a fraction on the meta line and
+          the Record window's own player list — not eleven rows of dashes. Money logged for a
+          player later removed from the active roster stays visible.</li>
+      <li><strong>The meta line follows the 08-29 ruling — facts only:</strong> the credit rule,
+          the participation fraction, the dates, the tags. Nothing that restates the columns above
+          it. The floating "15% player rebate" line and the dues column are gone entirely.</li>
+      <li><strong>The doors keep their meanings.</strong> Record (primary) opens the one recording
+          window locked to this drive. Edit (the house verb — no more "Settings") opens the
+          existing sheet: name, credit %, dates, status, tags, and the guarded delete. Edit amount
+          and Remove stay on the entry row. A closed drive takes no new money but still allows
+          corrections — exactly today's rules, relocated.</li>
+      <li><strong>One word for the 15%: credit.</strong> "Rebate" leaves this surface's headings
+          and labels wherever it still appears (column heading, Edit sheet's field label).</li>
+    </ol>
+  </section>
+
+  <!-- ══════════════ MAIN FRAME ══════════════ -->
+  <section>
+    <h2>The tab, working <span class="tag tagNew">New</span></h2>
+    <p class="sectionSub">"Chocolate sale" open with three entries — its busiest realistic day.
+       "Bottle drive" and the sponsors sit at rest below; the four-tile season rollup above the
+       bands is unchanged and not drawn.</p>
+    <div class="frameRow single">
+      <div class="specimen">
+        <div class="frame"><div class="frameInner">
+          <div class="fpSubhead"><span>Fundraisers</span><span class="fpBtn">+ Fundraiser</span></div>
+          <div class="fpTableCard"><table class="fpTable">
+            <thead><tr>
+              <th>Name</th><th class="num">Amount</th><th class="num">Team keeps</th>
+              <th class="num">Credits</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="fpNameLink">Chocolate sale</span></td>
+                <td class="num fpMoneyIn">$680.00</td>
+                <td class="num" style="font-weight:700;">$578.00</td>
+                <td class="num fpCredit">$102.00</td>
+                <td><span class="fpBadge fpBadgeActive">Active</span></td>
+                <td class="fpRowActions"><a href="#m">Close ▴</a></td>
+              </tr>
+              <tr>
+                <td class="sub metaCell" colspan="6">Credits families <strong>15%</strong>
+                  · <strong>3 of 12</strong> players logged · Jun 1 → Jun 30
+                  · <span class="fpTagChip">Team trip</span></td>
+              </tr>
+              <tr>
+                <td class="sub">Avery Test <span style="color:var(--fp-dim);">· Jun 14</span></td>
+                <td class="sub num fpMoneyIn">$500.00</td>
+                <td class="sub num"></td>
+                <td class="sub num fpCredit">$75.00</td>
+                <td class="sub"></td>
+                <td class="sub fpRowActions"><a href="#m">Edit amount</a><a href="#m" class="danger">Remove</a></td>
+              </tr>
+              <tr>
+                <td class="sub">Blake Test <span style="color:var(--fp-dim);">· Jun 12</span></td>
+                <td class="sub num fpMoneyIn">$120.00</td>
+                <td class="sub num"></td>
+                <td class="sub num fpCredit">$18.00</td>
+                <td class="sub"></td>
+                <td class="sub fpRowActions"><a href="#m">Edit amount</a><a href="#m" class="danger">Remove</a></td>
+              </tr>
+              <tr>
+                <td class="sub">Casey Test <span style="color:var(--fp-dim);">· Jun 9</span></td>
+                <td class="sub num fpMoneyIn">$60.00</td>
+                <td class="sub num"></td>
+                <td class="sub num fpCredit">$9.00</td>
+                <td class="sub"></td>
+                <td class="sub fpRowActions"><a href="#m">Edit amount</a><a href="#m" class="danger">Remove</a></td>
+              </tr>
+              <tr>
+                <td class="sub" colspan="6">
+                  <span class="fpBtn fpBtnPrimary" style="margin-right:8px;">Record</span>
+                  <span class="fpBtn">✎ Edit</span>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="fpNameLink">Bottle drive</span></td>
+                <td class="num fpMoneyIn">$240.00</td>
+                <td class="num" style="font-weight:700;">$240.00</td>
+                <td class="num fpDash">—</td>
+                <td><span class="fpBadge fpBadgeActive">Active</span></td>
+                <td class="fpRowActions"><a href="#m">Open ▾</a></td>
+              </tr>
+            </tbody>
+          </table></div>
+          <div class="fpSubhead"><span>Sponsors</span><span class="fpBtn">+ Pledge</span></div>
+          <div class="fpTableCard"><table class="fpTable">
+            <thead><tr>
+              <th>Sponsor</th><th class="num">Pledged</th><th class="num">In</th>
+              <th class="num">To come</th><th class="num">Credits</th><th></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="fpPlayer">Riverdale Dental</td>
+                <td class="num">$1,000.00</td>
+                <td class="num" style="font-weight:700;">$600.00</td>
+                <td class="num"><strong>$400.00</strong></td>
+                <td class="num fpCredit">$90.00</td>
+                <td class="fpRowActions"></td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div></div>
+        <p class="annot">entry amounts sit under <em>Amount</em>, credits under <em>Credits</em> — sibling rows sharing the parent's columns,
+          never a nested table (the §122 alignment lesson) · row click or the trailing link toggles, matching sponsors
+          · meta line grammar: "Credits families 15%", per the 08-29 facts-only ruling</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ EDGE STATES ══════════════ -->
+  <section>
+    <h2>The two edges <span class="tag tagNew">New</span></h2>
+    <p class="sectionSub">A drive just created, and a drive that's over. The fresh drive keeps one
+       state sentence — the 08-29 ruling's own guard: dropping it would leave an expansion that
+       reads as broken. The closed drive takes no new money but still allows corrections, exactly
+       today's rules: Record leaves, Edit amount goes quiet, Remove stays live.</p>
+    <div class="frameRow">
+      <div class="specimen">
+        <div class="specCaption"><span class="capTitle">Fresh — nothing logged yet</span></div>
+        <div class="frame"><div class="frameInner narrow">
+          <div class="fpTableCard"><table class="fpTable">
+            <tbody>
+              <tr>
+                <td><span class="fpNameLink">Bottle drive</span></td>
+                <td class="num fpDash">—</td>
+                <td class="num fpDash">—</td>
+                <td><span class="fpBadge fpBadgeActive">Active</span></td>
+              </tr>
+              <tr>
+                <td class="sub metaCell" colspan="4">Credits families <strong>15%</strong>
+                  · <strong>0 of 12</strong> players logged</td>
+              </tr>
+              <tr>
+                <td class="sub metaCell" colspan="4">Nothing logged yet.</td>
+              </tr>
+              <tr>
+                <td class="sub" colspan="4">
+                  <span class="fpBtn fpBtnPrimary" style="margin-right:8px;">Record</span>
+                  <span class="fpBtn">✎ Edit</span>
+                </td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div></div>
+        <p class="annot">an empty shell deletes cleanly from the Edit sheet — the guarded delete is unchanged</p>
+      </div>
+      <div class="specimen">
+        <div class="specCaption"><span class="capTitle">Closed — corrections only</span></div>
+        <div class="frame"><div class="frameInner narrow">
+          <div class="fpTableCard"><table class="fpTable">
+            <tbody>
+              <tr>
+                <td><span class="fpNameLink">Car wash</span></td>
+                <td class="num fpMoneyIn">$310.00</td>
+                <td class="num fpCredit">$46.50</td>
+                <td><span class="fpBadge fpBadgeClosed">Closed</span></td>
+              </tr>
+              <tr>
+                <td class="sub metaCell" colspan="4">Credits families <strong>15%</strong>
+                  · <strong>2 of 12</strong> players logged · May 3 → May 4</td>
+              </tr>
+              <tr>
+                <td class="sub">Avery Test <span style="color:var(--fp-dim);">· May 4</span></td>
+                <td class="sub num fpMoneyIn">$200.00</td>
+                <td class="sub num fpCredit">$30.00</td>
+                <td class="sub fpRowActions"><a href="#e" class="dead" title="Fundraiser is closed">Edit amount</a><a href="#e" class="danger">Remove</a></td>
+              </tr>
+              <tr>
+                <td class="sub" colspan="4"><span class="fpBtn">✎ Edit</span></td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div></div>
+        <p class="annot">no Record door on a closed drive · Remove stays — it is the only unwind door,
+          and the dues drawer sends coaches here</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ EDIT AMOUNT IN PLACE ══════════════ -->
+  <section>
+    <h2>Correcting an amount <span class="tag tagRestyled">Restyled</span></h2>
+    <p class="sectionSub">Edit amount swaps the entry's row for the same inline editor the drill-in
+       has today — amount, date received, notes — living where the row lives. Recording new money
+       still goes through the Record window; this is corrections only, which is why it stays in
+       place.</p>
+    <div class="frameRow single">
+      <div class="specimen">
+        <div class="frame"><div class="frameInner narrow">
+          <div class="fpTableCard"><table class="fpTable">
+            <tbody>
+              <tr>
+                <td><span class="fpNameLink">Chocolate sale</span></td>
+                <td class="num fpMoneyIn">$680.00</td>
+                <td class="num fpCredit">$102.00</td>
+                <td><span class="fpBadge fpBadgeActive">Active</span></td>
+              </tr>
+              <tr>
+                <td class="sub" colspan="4">
+                  <span class="fpPlayer" style="margin-right:10px;">Avery Test</span>
+                  <span class="fpInput" style="width:90px;">500.00</span>
+                  <span class="fpInput" style="margin-left:6px;">2026-06-14 ▾</span>
+                  <span class="fpInput" style="margin-left:6px; width:150px;"><span class="ph">Notes (optional)</span></span>
+                  <span class="fpBtn fpBtnPrimary" style="margin-left:10px; padding:5px 12px;">✓ Save</span>
+                  <span class="fpBtn fpBtnGhost" style="padding:5px 10px;">✕ Cancel</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="sub">Blake Test <span style="color:var(--fp-dim);">· Jun 12</span></td>
+                <td class="sub num fpMoneyIn">$120.00</td>
+                <td class="sub num fpCredit">$18.00</td>
+                <td class="sub fpRowActions"><a href="#c">Edit amount</a><a href="#c" class="danger">Remove</a></td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div></div>
+        <p class="annot">back-dating still moves the ledger row and the family's credit with it — behaviour unchanged, only the address</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="callouts">
+    <div class="callout">
+      <h3>Untouched by this change <span class="tag tagUnchanged">Unchanged</span></h3>
+      <p>The Record window and its "where it lands" preview; the Edit sheet's fields, foreseeable-refusal
+         dead-Save and guarded delete (only its title stops saying Settings); the season rollup tiles
+         at the top of the tab; the sponsor band; export; and the phone behaviour — the list already
+         stacks to cards at phone width, and the expansion rows ride that the same way the sponsor
+         band's do.</p>
+    </div>
+    <div class="callout">
+      <h3>Accepted tradeoffs</h3>
+      <p>A fully-logged drive opens tall (~one row per player who took part) and scrolls with the
+         page, like a busy sponsor. Rank retires — the entries can simply sort largest-first, which
+         is the leaderboard, wordlessly. If a real season shows a coach living inside one big drive
+         daily, a drives-only drill-in can return; nothing here forecloses it.</p>
+    </div>
+  </div>
+
+</div>

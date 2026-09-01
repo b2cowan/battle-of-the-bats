@@ -7,7 +7,7 @@
 
 .intro {
   margin: 0 0 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.55;
   color: var(--text-secondary);
 }
@@ -22,7 +22,7 @@
   padding: 0;
   margin: 0 0 0.7rem;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--primary-light);
   cursor: pointer;
 }
@@ -48,8 +48,8 @@
 .shapeCard:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
 .shapeCardOn { border-color: var(--primary-light); }
 
-.shapeTitle { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
-.shapeBlurb { font-size: 0.78rem; line-height: 1.5; color: var(--text-tertiary); }
+.shapeTitle { font-weight: 600; font-size: var(--type-body); color: var(--text-primary); }
+.shapeBlurb { font-size: var(--type-support); line-height: 1.5; color: var(--text-tertiary); }
 
 /* ── step 2: templates + input ───────────────────────────────────────────── */
 
@@ -68,7 +68,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -76,7 +76,7 @@
 
 .templateNote {
   margin: 0 0 1rem;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-tertiary);
 }
@@ -86,7 +86,7 @@
 
 .hint {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -106,14 +106,14 @@
   border-collapse: collapse;
   width: 100%;
   min-width: 620px;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
 }
 
 .reviewTable th {
   text-align: left;
   padding: 0.4rem 0.5rem;
   font-family: var(--font-data, inherit);
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   font-weight: 500;
@@ -133,7 +133,7 @@
 
 .rowNum {
   font-family: var(--font-data, inherit);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -151,7 +151,7 @@
   background: var(--home-card, var(--white-05));
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 .cellInput:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
 .cellInputNum { text-align: right; font-variant-numeric: tabular-nums; min-width: 84px; }
@@ -159,16 +159,16 @@
 .cellMeta {
   display: block;
   margin-top: 0.15rem;
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   color: var(--text-tertiary);
 }
 
-.datesCell { font-size: 0.74rem; color: var(--text-secondary); white-space: nowrap; }
+.datesCell { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
 
 .chip {
   display: inline-block;
   font-family: var(--font-data, inherit);
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border-radius: 999px;
@@ -184,7 +184,7 @@
 .why {
   display: block;
   margin-top: 0.2rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
   max-width: 34ch;
@@ -195,7 +195,7 @@
   align-items: flex-start;
   gap: 0.4rem;
   margin: 0 0 0.6rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -203,8 +203,8 @@
 
 /* ── the content breakpoint ──────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .reviewTable { font-size: 0.74rem; min-width: 560px; }
-  .cellInput { min-width: 92px; font-size: 0.75rem; }
+  .reviewTable { font-size: var(--type-support); min-width: 560px; }
+  .cellInput { min-width: 92px; font-size: var(--type-support); }
   .why { max-width: 26ch; }
   .templateRow { flex-direction: column; align-items: stretch; }
   .templateBtns { display: flex; }

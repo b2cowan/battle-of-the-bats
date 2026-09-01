@@ -348,28 +348,26 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // on real bills rather than a promise. An open drive has issued nothing and the picture would
     // be a leaderboard with an empty Rebate column.
     path: `${COACH_TEAM('midSeason')}/accounting?section=fundraisers`,
-    // ⚠ The door's LABEL is on `aria-label`, not in the link's text — `a:has-text()` reads text
+    // ⚠ The door's LABEL is on `aria-label`, not in the element's text — `:has-text()` reads text
     // content and finds nothing here, which is a silent 20-second wait rather than an error.
-    ready: 'a[aria-label="Open Bottle Drive"]',
-    // ⚠ The drill-in's own URL carries the fundraiser's row id, which is regenerated on every
-    // reseed — so this navigates by the door instead. The drive's NAME is a world constant
-    // (`MIDSEASON_FUNDRAISER.name`), which is what makes the door itself stable.
-    prepare: ['a[aria-label="Open Bottle Drive"]'],
-    readyAfterPrepare: 'th:has-text("Rebate Earned")',
-    // COMPOSED (slide #04): the four totals — including what the drive issued as credits — and
-    // the families who raised something. ⚠ A union is a RECTANGLE: the drive's own name, its
-    // rebate percentage and its dates sit above the tiles and are therefore in frame, which the
-    // alt text says rather than describing only the matched elements.
-    // ⚠ The `h2` is in the union to pull the rectangle's TOP up past the drive's totals — the
-    // tiles (what was raised, what the team keeps, what went back to families as credit, how many
-    // took part) sit between the heading and the table and are the half of this picture the claim
-    // is actually about. A first crop started at the table header and lost all four of them.
-    clipAll: 'h2, th:has-text("Rebate Earned"), tbody tr:nth-child(-n+5)',
+    // ⚠ A BUTTON since 2026-08-31: the drill-in retired and the drive expands IN PLACE, so the
+    // old `a[aria-label=…]` Link is now the row's toggle button. The drive's NAME is still the
+    // world constant (`MIDSEASON_FUNDRAISER.name`) that keeps the door stable across reseeds.
+    ready: 'button[aria-label="Open Bottle Drive"]',
+    prepare: ['button[aria-label="Open Bottle Drive"]'],
+    // The expansion's meta line — "Credits families 50% · N of M players logged" — is the first
+    // thing only the OPEN state renders, so it is the wait.
+    readyAfterPrepare: 'td:has-text("players logged")',
+    // COMPOSED (slide #04, reframed 2026-08-31 for the band): the drives band heading, then the
+    // drive's own row (raised · team keeps · credits · Closed) with its expansion — the meta line
+    // and each family's entry sharing the table's columns. ⚠ A union is a RECTANGLE: the rows
+    // between the heading and the last matched row are all in frame.
+    clipAll: 'h3:has-text("Fundraisers"), tbody tr:nth-child(-n+8)',
     width: 1280,
     size: { w: 958, h: 546 },
     takenAt: '2026-08-21',
-    alt: 'A closed team fundraiser: a headline row of totals — everything raised, the share the team keeps, the amount issued back to families as dues credit, and how many families took part — above a ranked table naming each family with what they raised, the rebate they earned, and what is left of their own bill to send.',
-    caption: 'A fundraiser’s own page — what each family raised, what it took off their bill, and what is left for them to pay. Nobody has to work it out afterwards.',
+    alt: 'A closed team fundraiser open inside the Fundraisers list: its row shows everything raised, the share the team keeps, and what went back to families as dues credit — and beneath it, one line per family naming what they raised and the credit it earned them, with the drive’s credit rule and how many families took part on a quiet line above.',
+    caption: 'A fundraiser opens right in the list — what each family raised and what it took off their bill. Nobody has to work it out afterwards.',
   },
   {
     id: 'coach-lineup-board',

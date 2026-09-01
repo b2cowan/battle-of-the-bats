@@ -1,0 +1,370 @@
+<title>The Refusal That Waits To Be Asked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+/* ══ A MOCKUP OF A PRODUCT SURFACE, so the specimens are a faithful reproduction of the coach
+      portal's warm light theme at TRUE SIZE (640px modal, the width it renders at on the owner's
+      screen) — not a re-design. The page around them is the studio frame: quieter, cooler, so the
+      eye reads the specimen as the product and the frame as commentary.
+      Single-theme on purpose: it is showing ONE product surface that has one look. Every colour is
+      painted explicitly so the page holds on either host ground. ══ */
+:root{
+  /* frame */
+  --paper:#E8E4DC; --frame-ink:#26251F; --frame-mid:#5E5B52; --frame-faint:#8C887D;
+  --rule:#D2CCC0; --accent:#57651E; --accent-soft:rgba(87,101,30,.10);
+  --good:#2F6B3A; --bad:#A8321C; --bad-soft:rgba(168,50,28,.10);
+  /* the product, reproduced */
+  --p-ground:#F1EDE5; --p-modal:#FFFFFF; --p-ink:#1A1917; --p-label:#46443E;
+  --p-help:#6E6B64; --p-field:#F7F4EE; --p-field-line:#E3DDD1; --p-line:#E8E2D6;
+  --p-primary:#CDE88C; --p-danger:#B3402A; --p-danger-soft:#FAEDE9; --p-sub:#E9E5DC;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--frame-ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 22px 100px}
+header.top{padding:44px 0 6px;display:flex;flex-direction:column;gap:13px}
+.kick{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--accent)}
+h1{margin:0;font-size:33px;line-height:1.12;letter-spacing:-.015em;font-weight:700;text-wrap:balance;max-width:20ch}
+.dek{margin:0;color:var(--frame-mid);max-width:64ch}
+h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.005em}
+
+.opt{margin:38px 0 0;border-top:1px solid var(--rule);padding-top:22px}
+.opt-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:5px}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.tag.now{background:var(--bad-soft);color:var(--bad)}
+.tag.rec{background:var(--accent-soft);color:var(--accent)}
+.tag.alt{background:#DFDACF;color:var(--frame-mid)}
+.note{margin:0 0 16px;color:var(--frame-mid);font-size:14.5px;max-width:64ch}
+.note b{color:var(--frame-ink)}
+
+/* ── the product specimen ── */
+.stage{background:var(--p-ground);border:1px solid var(--rule);border-radius:12px;
+  padding:26px;display:flex;justify-content:center}
+.modal{width:640px;max-width:100%;background:var(--p-modal);border-radius:14px;
+  box-shadow:0 12px 34px rgba(38,37,31,.14);overflow:hidden;color:var(--p-ink);
+  font-size:14px;line-height:1.5}
+.m-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 6px}
+.m-title{font-size:17px;font-weight:700}
+.m-x{color:var(--p-help);font-size:17px}
+.m-body{padding:6px 24px 18px;display:flex;flex-direction:column;gap:14px}
+.f-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--p-label);display:block;margin-bottom:5px}
+.f-in{background:var(--p-field);border:1px solid var(--p-field-line);border-radius:8px;
+  padding:9px 11px;font-size:14px;color:var(--p-ink)}
+.f-in.ph{color:#A8A399}
+.f-ta{height:62px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.f-help{margin:5px 0 0;font-size:12.5px;color:var(--p-help);line-height:1.42}
+.row3{display:grid;grid-template-columns:1fr 88px 40px 40px;gap:8px}
+.seg{background:var(--p-field);border:1px solid var(--p-field-line);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--p-label)}
+.seg.on{background:#E7F0CF;border-color:#CBDDA4}
+
+/* the closing row — the whole subject of this page */
+.m-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:14px 24px;border-top:1px solid var(--p-line);background:var(--p-modal)}
+.btn{font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;padding:9px 16px;
+  border:1px solid transparent;cursor:pointer;min-height:38px}
+.btn-primary{background:var(--p-primary);color:#1A1917}
+.btn-ghost{background:transparent;color:#3A3833}
+.btn-del{background:none;border:none;color:var(--p-danger);font:inherit;font-size:13.5px;
+  font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  padding:8px 0;margin-right:auto;min-height:38px}
+.btn-del[disabled]{opacity:.45;cursor:not-allowed}
+.btn-del:not([disabled]):hover{text-decoration:underline}
+.btn-danger{background:var(--p-danger-soft);border:1px solid rgba(179,64,42,.35);color:var(--p-danger)}
+.reason-perm{margin:0;padding:0 24px 2px;font-size:13px;color:var(--p-help);line-height:1.45}
+.reason-perm b{color:var(--p-ink)}
+.confirm{width:100%;background:var(--p-danger-soft);border:1px solid rgba(179,64,42,.3);
+  border-radius:9px;padding:13px 15px;display:flex;flex-direction:column;gap:9px}
+.confirm-t{margin:0;font-weight:700;font-size:14px;color:var(--p-ink)}
+.confirm-b{margin:0;font-size:13px;color:#5C453E;line-height:1.45}
+.confirm-b b{color:var(--p-ink)}
+.confirm-a{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+
+/* annotation chips sit BESIDE the specimen, never over it */
+.beside{display:grid;grid-template-columns:1fr;gap:9px;margin-top:14px}
+.chip{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--frame-mid);
+  background:#F0ECE4;border:1px solid var(--rule);border-radius:9px;padding:10px 13px}
+.chip .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap;flex:none;margin-top:1px}
+.k.cost{background:var(--bad-soft);color:var(--bad)}
+.k.win{background:var(--accent-soft);color:var(--accent)}
+.k.watch{background:#F0E4C4;color:#7A5B12}
+.chip b{color:var(--frame-ink)}
+
+.try{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;
+  font-size:13px;color:var(--frame-faint);font-family:"IBM Plex Mono",monospace}
+.try .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+.pick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.pick button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:7px;
+  border:1px solid var(--rule);background:#F0ECE4;color:var(--frame-mid);cursor:pointer;min-height:36px}
+.pick button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.pick button:focus-visible,.btn:focus-visible,.btn-del:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.verdict{margin:40px 0 0;border-top:2px solid var(--frame-ink);padding-top:20px}
+.verdict p{margin:0 0 11px;max-width:66ch;color:var(--frame-mid)}
+.verdict p b{color:var(--frame-ink)}
+@media (max-width:700px){
+  .modal{width:100%}
+  h1{font-size:27px}
+  .stage{padding:14px}
+  .two,.row3{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="kick">Coach money · Edit sponsorship · the closing row</div>
+  <h1>The refusal that waits to be asked</h1>
+  <p class="dek">Deleting a sponsorship is a once-in-a-record act. Explaining why you <em>can’t</em>
+    is currently permanent furniture — two lines above the footer, on every visit, answering a
+    question most coaches never ask. Three ways to give the answer only when it is wanted.
+    <b>Specimens are true size</b> (640px, the width this modal renders at) — press the buttons.</p>
+</header>
+
+<!-- ─────────────────────────── TODAY ─────────────────────────── -->
+<section class="opt">
+  <div class="opt-h"><h2>What ships today</h2><span class="tag now">the cost</span></div>
+  <p class="note">The reason sits above the footer whenever money is on the books — which, for any
+    sponsor that has ever been paid, is <b>always</b>.</p>
+
+  <div class="stage">
+    <div class="modal">
+      <div class="m-head"><span class="m-title">Edit sponsorship</span><span class="m-x">✕</span></div>
+      <div class="m-body">
+        <div><span class="f-label">Sponsor *</span><div class="f-in">ZZ Keeps Its Cheque</div></div>
+        <div><span class="f-label">Notes</span><div class="f-in f-ta"></div></div>
+        <div class="two">
+          <div><span class="f-label">Pledged amount *</span><div class="f-in">400</div>
+            <p class="f-help">$200.00 has arrived — dollar shares re-figure against the new promise.</p></div>
+          <div><span class="f-label">Expected by</span><div class="f-in ph">yyyy-mm-dd</div></div>
+        </div>
+        <div><span class="f-label">Credit families</span>
+          <div class="row3"><div class="f-in">Nobody in particular</div><div class="f-in">0</div>
+            <div class="seg">$</div><div class="seg on">%</div></div></div>
+        <div><span class="f-label">Tags</span><div class="f-in ph">Type to find or create a money tag…</div></div>
+      </div>
+      <p class="reason-perm">This sponsor has <b>$200.00</b> on the team’s books across 1 arrival —
+        undo it from the row first to delete it.</p>
+      <div class="m-foot">
+        <button class="btn-del" disabled>🗑 Delete</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="beside">
+    <div class="chip"><span class="k cost">Rent</span><span>Two lines of permanent height for a control used <b>once in a record’s life</b> — and the sheet already scrolls, so the form loses that space every visit.</span></div>
+    <div class="chip"><span class="k cost">Unasked</span><span>It answers <b>“why can’t I delete this?”</b> to a coach who came to change the pledged amount and never looked at Delete.</span></div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── OPTION A ─────────────────────────── -->
+<section class="opt">
+  <div class="opt-h"><h2>A · The button answers for itself</h2><span class="tag rec">recommended</span></div>
+  <p class="note">The footer already knows how to become something else — that is how the confirm
+    question works. Use the same move for the refusal. <b>Nothing above the footer, ever.</b></p>
+
+  <div class="pick" id="pickA">
+    <button type="button" data-a="blocked" aria-pressed="true">Sponsor with a cheque on the books</button>
+    <button type="button" data-a="clear" aria-pressed="false">Pledge with nothing arrived</button>
+  </div>
+  <p class="try"><span class="dot"></span> press <b>Delete</b> in the specimen</p>
+
+  <div class="stage">
+    <div class="modal">
+      <div class="m-head"><span class="m-title">Edit sponsorship</span><span class="m-x">✕</span></div>
+      <div class="m-body">
+        <div><span class="f-label">Sponsor *</span><div class="f-in" id="aName">ZZ Keeps Its Cheque</div></div>
+        <div><span class="f-label">Notes</span><div class="f-in f-ta"></div></div>
+        <div class="two">
+          <div><span class="f-label">Pledged amount *</span><div class="f-in">400</div>
+            <p class="f-help" id="aHelp">$200.00 has arrived — dollar shares re-figure against the new promise.</p></div>
+          <div><span class="f-label">Expected by</span><div class="f-in ph">yyyy-mm-dd</div></div>
+        </div>
+        <div><span class="f-label">Credit families</span>
+          <div class="row3"><div class="f-in">Nobody in particular</div><div class="f-in">0</div>
+            <div class="seg">$</div><div class="seg on">%</div></div></div>
+        <div><span class="f-label">Tags</span><div class="f-in ph">Type to find or create a money tag…</div></div>
+      </div>
+      <div class="m-foot" id="footA"></div>
+    </div>
+  </div>
+
+  <div class="beside">
+    <div class="chip"><span class="k win">Space</span><span>The two lines come back to the form. The closing row is the same height it was before any of this.</span></div>
+    <div class="chip"><span class="k win">On demand</span><span>The reason arrives the instant it is wanted and never before — and <b>one press is not lost work</b>, which is what the foreseeable-refusal ruling was protecting.</span></div>
+    <div class="chip"><span class="k watch">Your call</span><span>Delete stops being greyed out — it has to be pressable to answer. That is the trade, and it bends your §118 “show it, don’t make them discover it” ruling. I think it keeps the spirit; you own the ruling.</span></div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── OPTION B ─────────────────────────── -->
+<section class="opt">
+  <div class="opt-h"><h2>B · The reason carries a door</h2><span class="tag alt">A, plus one button</span></div>
+  <p class="note">Identical to A until the refusal appears — then it doesn’t just explain, it
+    <b>takes you there</b>: closing the sheet onto the row where each cheque has its Undo.
+    The same hand-off you approved for the bill door and the sponsor date.</p>
+
+  <p class="try"><span class="dot"></span> press <b>Delete</b></p>
+  <div class="stage">
+    <div class="modal">
+      <div class="m-head"><span class="m-title">Edit sponsorship</span><span class="m-x">✕</span></div>
+      <div class="m-body">
+        <div><span class="f-label">Sponsor *</span><div class="f-in">ZZ Keeps Its Cheque</div></div>
+        <div><span class="f-label">Notes</span><div class="f-in f-ta"></div></div>
+        <div class="two">
+          <div><span class="f-label">Pledged amount *</span><div class="f-in">400</div>
+            <p class="f-help">$200.00 has arrived — dollar shares re-figure against the new promise.</p></div>
+          <div><span class="f-label">Expected by</span><div class="f-in ph">yyyy-mm-dd</div></div>
+        </div>
+        <div><span class="f-label">Credit families</span>
+          <div class="row3"><div class="f-in">Nobody in particular</div><div class="f-in">0</div>
+            <div class="seg">$</div><div class="seg on">%</div></div></div>
+        <div><span class="f-label">Tags</span><div class="f-in ph">Type to find or create a money tag…</div></div>
+      </div>
+      <div class="m-foot" id="footB"></div>
+    </div>
+  </div>
+
+  <div class="beside">
+    <div class="chip"><span class="k win">Finishes the thought</span><span>“Undo it from the row first” stops being an instruction and becomes a button. The coach never has to work out where the row is.</span></div>
+    <div class="chip"><span class="k watch">Cost</span><span>One more control on a rare path, and it silently discards nothing — the sheet has no unsaved work worth keeping when they came to delete. Small, but it is extra.</span></div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── OPTION C ─────────────────────────── -->
+<section class="opt">
+  <div class="opt-h"><h2>C · Greyed, with the reason on hover</h2><span class="tag alt">not recommended</span></div>
+  <p class="note">Keeps today’s dead button and moves the sentence into a tooltip. It reclaims the
+    space — and it is the option I would argue against.</p>
+
+  <div class="stage">
+    <div class="modal" style="padding-bottom:2px">
+      <div class="m-head"><span class="m-title">Edit sponsorship</span><span class="m-x">✕</span></div>
+      <div class="m-body" style="padding-bottom:10px">
+        <div><span class="f-label">Tags</span><div class="f-in ph">Type to find or create a money tag…</div></div>
+      </div>
+      <div class="m-foot">
+        <button class="btn-del" disabled title="This sponsor has $200.00 on the team’s books across 1 arrival — undo it from the row first to delete it.">🗑 Delete</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="beside">
+    <div class="chip"><span class="k cost">Touch</span><span>There is no hover on a phone or a tablet, so on the devices a coach most often uses this becomes <b>a dead button with no reason at all</b>.</span></div>
+    <div class="chip"><span class="k cost">Hunting</span><span>Even on a desktop the coach has to go looking. That is the thing your §118 ruling exists to prevent — and unlike A, it never gives a straight answer.</span></div>
+  </div>
+</section>
+
+<section class="verdict">
+  <h2>Where I land</h2>
+  <p><b>A, and I’d take B if you like the hand-off.</b> Both reclaim the space; the difference is
+    whether the refusal only explains or also delivers. C reclaims the same space and pays for it
+    with a control that says nothing on touch, which is a worse product than what ships today.</p>
+  <p><b>The drive’s Settings sheet carries the identical strip and should move with it</b> —
+    whichever you pick, the two doors keep one grammar.</p>
+  <p style="color:var(--frame-faint);font-size:13.5px">Nothing here is built yet. Say which and it
+    goes in with the rest of the §122 work, and Part G of the walkthrough gains a step for it.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var ICON = '🗑 ';
+
+  function el(html){ var d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+  function restRow(foot, opts){
+    foot.innerHTML='';
+    var del=el('<button class="btn-del">'+ICON+'Delete</button>');
+    var cancel=el('<button class="btn btn-ghost">Cancel</button>');
+    var save=el('<button class="btn btn-primary">Save changes</button>');
+    del.addEventListener('click', opts.onDelete);
+    foot.appendChild(del); foot.appendChild(cancel); foot.appendChild(save);
+  }
+
+  function reasonRow(foot, opts){
+    foot.innerHTML='';
+    var box=el('<div class="confirm"></div>');
+    box.appendChild(el('<p class="confirm-t">This can’t be deleted yet</p>'));
+    box.appendChild(el('<p class="confirm-b">This sponsor has <b>$200.00</b> on the team’s books across 1 arrival — undo it from the row first.</p>'));
+    var acts=el('<div class="confirm-a"></div>');
+    if(opts.withDoor){
+      acts.appendChild(mk('btn btn-ghost','Back', function(){ restRow(foot,opts); }));
+      acts.appendChild(mk('btn btn-danger','Close and show the arrivals', function(){ restRow(foot,opts); }));
+    } else {
+      acts.appendChild(mk('btn btn-ghost','Got it', function(){ restRow(foot,opts); }));
+    }
+    box.appendChild(acts); foot.appendChild(box);
+  }
+
+  function confirmRow(foot, opts){
+    foot.innerHTML='';
+    var box=el('<div class="confirm"></div>');
+    box.appendChild(el('<p class="confirm-t">Delete “ZZ Pledge Only”?</p>'));
+    box.appendChild(el('<p class="confirm-b">Removes the <b>$400.00</b> promise from the plan and the forward view, along with its expected-by date, credit split and tags. <b>No money moves</b> — nothing has arrived from this sponsor.</p>'));
+    var acts=el('<div class="confirm-a"></div>');
+    acts.appendChild(mk('btn btn-ghost','Keep it', function(){ restRow(foot,opts); }));
+    acts.appendChild(mk('btn btn-danger','Delete', function(){ restRow(foot,opts); }));
+    box.appendChild(acts); foot.appendChild(box);
+  }
+
+  function mk(cls,label,fn){
+    var b=el('<button class="'+cls+'">'+label+'</button>');
+    b.addEventListener('click',fn); return b;
+  }
+
+  // ── A: switchable between a blocked sponsor and a clear pledge ──
+  var footA=document.getElementById('footA');
+  var stateA='blocked';
+  function wireA(){
+    restRow(footA, { onDelete: function(){
+      if(stateA==='blocked') reasonRow(footA,{ withDoor:false, onDelete:null });
+      else confirmRow(footA,{ onDelete:null });
+      // re-arm whichever row comes back
+      setTimeout(function(){ rearm(footA, wireA); },0);
+    }});
+  }
+  function rearm(foot, wire){
+    var obs=new MutationObserver(function(){
+      var del=foot.querySelector('.btn-del');
+      if(del && !del._wired){ del._wired=true; wire(); obs.disconnect(); }
+    });
+    obs.observe(foot,{childList:true});
+  }
+  wireA();
+
+  document.getElementById('pickA').addEventListener('click', function(e){
+    var b=e.target.closest('button[data-a]'); if(!b) return;
+    stateA=b.getAttribute('data-a');
+    Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){
+      x.setAttribute('aria-pressed', String(x===b)); });
+    document.getElementById('aName').textContent = stateA==='blocked' ? 'ZZ Keeps Its Cheque' : 'ZZ Pledge Only';
+    document.getElementById('aHelp').textContent = stateA==='blocked'
+      ? '$200.00 has arrived — dollar shares re-figure against the new promise.'
+      : 'Nothing has arrived yet — changing the promise moves no money.';
+    wireA();
+  });
+
+  // ── B: the refusal with a door ──
+  var footB=document.getElementById('footB');
+  function wireB(){
+    restRow(footB, { onDelete: function(){
+      reasonRow(footB,{ withDoor:true, onDelete:null });
+      setTimeout(function(){ rearm(footB, wireB); },0);
+    }});
+  }
+  wireB();
+})();
+</script>

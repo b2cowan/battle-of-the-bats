@@ -323,10 +323,20 @@
 /* inlineField — a compact fixed-width control inside a dense row (a table cell, a
    toolbar); goes full width once that row stacks. Width comes from the caller:
    style={{ '--inline-field-w': '90px' }}. Exists because inline `width: 90px` on an
-   input cannot be overridden by a media query. */
-.inlineField { width: var(--inline-field-w, 110px); }
+   input cannot be overridden by a media query.
+
+   ⚠⚠ DOUBLED SELECTOR ON PURPOSE (owner caught the symptom 2026-08-31: the drive band's inline
+   editor rendered every field FULL WIDTH, nothing like the mockup). Every caller pairs this with
+   `.input`, whose own `width: 100%` sits ~4,000 lines below — equal single-class specificity, so
+   SOURCE ORDER let `.input` win and this class had silently never worked. It went unseen for
+   weeks because the old call sites all sat inside narrow cells that clamped a 100%-width input to
+   roughly the intended size; the band's editor spans the whole table, and the defect finally had
+   room to show. `.inlineField.inlineField` (0-2-0) outranks `.input` regardless of where either
+   rule lives — the same trap family as `.compactAction` vs `.block640` at the top of this file,
+   solved by specificity instead of by a fragile ordering promise between rules a screen apart. */
+.inlineField.inlineField { width: var(--inline-field-w, 110px); }
 @media (max-width: 640px) {
-  .inlineField { width: 100%; }
+  .inlineField.inlineField { width: 100%; }
 }
 
 /* stickyActionBar — generic safe-area sticky footer for action rows that must
@@ -11400,6 +11410,33 @@ button.gdChip[aria-pressed='true'] {
    budget words, none of its money reaches Budget vs. Actual. */
 .clubFiling { font-size: var(--type-support); color: var(--text-secondary); }
 .clubFilingCat { color: var(--text-tertiary); }
+
+/* ── A request row's classification: what it MEANS, what it files under, and the door to change
+      both (mig 271, mockup frame 2) ─────────────────────────────────────────────────────────────
+   ⚠ ONE CELL, THREE PARTS, WRAPPING. On a phone the cell is a card row under its data-label attribute, and
+   the three parts are read together — "New money · Grants · Association support · Change" — so they
+   share one flex line rather than stacking into three labelled rows. */
+.clubFilingStack {
+  display: inline-flex;
+  /* ⚠ CENTER, not baseline: this row holds a real button beside its text since the bespoke link was
+     retired, and a button baseline-aligned against prose sits visibly low. */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+/* ⚠ THE MEANING IS THE STRONGEST WORD IN THE CELL, deliberately: it is the thing that decides which
+   row of the report tells the truth, and the filing beside it is a label. Not a badge — a badge here
+   would read as a status, and this is neither a state nor something the club decided. */
+.clubMeaningWord {
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.clubMeaningWord::after { content: ' ·'; color: var(--text-tertiary); font-weight: 400; }
+/* ⚰ `.clubFileLink` STOOD HERE and is deleted (`/simplify`, 2026-08-30). It styled the request
+   row's "File it" / "Change" as an underlined text link while the BILL row two tables up renders
+   the identical two words as `.btnSecondary.compactAction` — one screen, one verb, two looks. The
+   request row uses the shared button now, so a restyle of a row action lands in one place. */
 .clubFilingRow {
   display: flex;
   align-items: center;
@@ -12266,14 +12303,38 @@ button.gdChip[aria-pressed='true'] {
    sheet’s Cancel/Save sit right. No strip of its own: a modal that already scrolls does not spend
    a row on a control used once in a record’s life.
 
-   The refusal SENTENCE keeps its own line above the row, because it carries the way out
-   ("undo it from the row first") and will not fit beside two buttons at any width. Quiet ink, not
-   danger ink — it is a fact about the record, and the dead button already carries the tone. */
-.deleteReason {
-  margin: 0.9rem 0 0;
-  font-size: var(--type-support);
-  line-height: 1.45;
-  color: var(--text-secondary);
-}
+   ⚰ `.deleteReason` IS GONE (owner, §122 walk 2026-08-30). It held the refusal on its own line
+   above the row — permanently, for any record with money on it, which is most of them. The owner
+   called it what it was: rent paid to answer a question the coach had not asked. The row now
+   answers when Delete is PRESSED, so the sentence needs no standing home. See
+   components/coaches/RecordEditorFooter.tsx for why the button stopped being disabled. */
 /* The confirm-takes-the-whole-row rule and the 44px tap floor live with the bill page’s copies
    further up — one definition each, since both surfaces wear the same treatment. */
+
+/* ── A band's expanded rows (the sponsor band since §122, the drive band since 2026-08-31) ───
+   ⚖ The expansion is SIBLING ROWS of the band's table, not a table inside it (owner, §122
+   walk 2026-08-30: "these columns do not seem to be lined up with each other or the headers").
+   A nested table sizes its own columns from its own content and cannot see its parent's, so it
+   could never line up — this class is what tells the shared rows apart instead, now that they
+   sit in the parent's own grid. Ground only: the alignment comes from the columns.
+   (Renamed from `.bandSubCell` on 2026-09-01 when the drive band adopted it — a name that
+   said "sponsor" on a drive's row was lying to the next reader.) */
+.bandSubCell {
+  background: var(--home-fill, rgba(255, 255, 255, 0.03));
+}
+/* The first cell of an expanded row steps in, so a dated arrival reads as belonging to the
+   sponsor above it rather than as another sponsor. */
+.bandSubCell:first-child { padding-left: 1.5rem; }
+/* ⚠ An arrival has no Pledged and no To come — those are the SPONSOR's facts, not the cheque's,
+   so those two cells are deliberately empty to hold the columns open on a desktop. Once the table
+   reflows to cards they would print a heading with nothing under it, so they stand down. */
+@media (max-width: 640px) {
+  .bandSubCell:empty { display: none; }
+  /* ⚠ NO TINT IN CARD MODE (rendered sweep, 2026-09-01). Each card already paints
+     `--home-olive-soft` on its own row; this class stacked `--home-fill` on top, and the doubled
+     ground took the tertiary ink under the 4.5:1 floor at 13px on every expansion line — the meta
+     line, the dates, the ghost Edit/Remove, the sponsor band's "Nothing has arrived yet". The card
+     border and the stacked order already say "belongs to the record above"; the tint was only
+     ever the desktop table's way of saying it. */
+  .bandSubCell { background: transparent; }
+}

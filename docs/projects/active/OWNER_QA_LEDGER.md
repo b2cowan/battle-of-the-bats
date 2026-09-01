@@ -15508,13 +15508,17 @@ sponsorship. Walk step E1's field list republished ("sponsor, notes, …"). ⚠ 
 "ZZ QA Notes Roundtrip" ($120) was created on the UAT team by the verification — parked with
 the walk's other ZZ rows per step F3.
 
-## §122 · Guarded deletes for Fundraising — an empty shell goes, money on the books refuses — BUILT, awaiting QA
+
+## §122 · Guarded deletes for Fundraising — an empty shell goes, money on the books refuses — ✅ PASSED 2026-09-01 (45/45, walked with §125 as one amended walk; every part PASS, zero issues, zero calls)
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/cf860db9-e202-4274-b572-d5f29284aca0`
 >
-> **Checkable walkthrough** — 24 steps in six parts (a promise with no money · a sponsor holding
-> a cheque · removing one player's entry · the drive's refusal and the softer tool · the payout
-> floor · cleanup), paste-back summary naming unticked steps.
+> **Checkable walkthrough** — nine parts, paste-back summary naming unticked steps.
+> ⚠ **AMENDED 2026-08-31 (owner direction) for the §125 drive-band rework:** part N (the drive
+> opens in place) and part W (credit vocabulary + help) are NEW, and parts C and D were rewritten
+> for the in-place shape (✎ Edit, not Settings; the delete stays on the list) — so this ONE walk
+> now settles **§122 and §125 together**. Unchanged steps kept any existing ticks; rewritten
+> steps return unticked by construction.
 
 **BUILT ON DEV 2026-08-30 · NO MIGRATION.** Closes the last two open questions of the
 sponsorship-lifecycle work: **Q14** (sponsors — ruled *guarded delete* before the build) and
@@ -15623,3 +15627,534 @@ have never been in the layout baseline at all**. Not baselined here: recording ~
 tap-floor defects as accepted decisions is not a tidy-up. Worth its own look.
 
 ---
+
+## §123 · The dues forms, read from the code — money-forms review, walk two — ✅ RULED, owner walked 2026-08-30
+
+**⚠ THIS IS A REVIEW WALK, NOT A QA WALK — nothing was built to be tested.** The owner read an
+evaluation of the five Player Dues forms and ruled on it. What follows is the record of that
+reading; the build it authorises has its own plan and has not started.
+
+**✅ WALK RESULT (owner paste-back, 2026-08-30): ALL SEVEN SECTIONS WALKED, ALL SIX QUESTIONS
+RULED — every one option A, no amendments and no additional findings raised.**
+
+> ### THE EVALUATION — `claude.ai/code/artifact/b0038f4f-411b-4ffe-99c6-9a32794b3b57`
+>
+> "The dues forms, read from the code" — seven sections (the write path · the future-date rule ·
+> Generate installments · Edit schedule · Add a credit · Payment correction · Set refund), a
+> 21-row severity-ranked register, before/after specimens at true 360px and at desktop width, and
+> six ruling boxes with paste-back. Source kept at
+> `docs/projects/active/COACH_MONEY_DUES_FORMS_MOCKUP.html`.
+
+### The rulings
+
+| # | Question | Ruling |
+|---|---|---|
+| **Q17** | The write-path fix | **A** — both together: the reconcile counts every overpayment credit it has ever created, and **both** schedule doors ask the shared payout floor before writing |
+| **Q18** | Future dates on money in | **A** — picker ceiling, client sentence and server refusal on all three dues doors, in the sponsor arrival's exact words |
+| **Q19** | The single-player schedule editor | **A** — all of it: heading, live reconcile, the generator's row card on the phone, equal columns on the desktop, 44px controls, discard guard |
+| **Q20** | One name for the bulk act | **A** — **"Set dues for all players"** wins on the window title and every entry point |
+| **Q21** | Losing your typing | **A** — guard the schedule form and the credit form the way the generator is guarded |
+| **Q4** | Consequence-line sweep (carried from the 08-28 first pass) | **A** — **all seven forms**, one grammar everywhere a coach saves money |
+
+⚖ **Q4 was carried and is now settled for the WHOLE review, not just this cluster.** It covers
+three dues forms (the schedule reconcile, the credit's landing sentence, the refund options'
+dollars) and four outside it (the sponsor consequence, the fundraiser edit twins, the budget line's
+"nothing moves"). The later walks inherit it as a decided input.
+
+### What the walk was ruling on — the two write-path defects
+
+Neither is visible on screen, and both were produced by **executing the product's own reconcile**
+rather than reading it:
+
+1. **Schedule-change overpayment credits are invisible to the next reconcile.** They are written
+   standalone, and every later reconcile only counts credits attached to a payment — so the credit
+   it created a moment ago cannot see itself. Executed: a family who paid $1,200 in full, lowered
+   to $800 then $600, holds **$1,000 of credit against a true excess of $600**; restore the total
+   and a stale $400 credit never clears. The same arithmetic is CORRECT for a record-time
+   overpayment, which is what proves it a seam and not a design. **The existing unit test passes
+   through it** — it exercises the pure function with the stale credit passed in by hand, while the
+   query that feeds it returns nothing.
+2. **No payout floor on either schedule door.** Overpay → hand the money back in cash → correct the
+   total upward, and the credit the payout was standing on is deleted. This is SP-1's hole on a door
+   nobody checked; the shared guard and its sentence already ship and are called by three other
+   doors.
+
+Both defects reach **the bulk generator as well as the single-player form**, and the generator
+*reports* the double credit in its success state as though it were correct.
+
+### Carried findings — what today's code says about the 08-28 register
+
+**Closed, take them off the list:** the deferred "preview computed from the budget while the write
+uses the typed amounts" defect (the previewed rows are now the payload verbatim); the "a re-run
+flattens hand-built schedules" accepted risk (the refusal names the families and offers *"Keep the
+3 I set by hand"* as the PRIMARY button); **S-1** (the dues tab shows those settings only before any
+dues exist — nothing to re-figure — and a read-only policy line afterwards).
+
+**Downgraded on measurement:** **D-6** and **D-8**, the "hard-wired two columns that can't stack".
+Measured at 360px the boxes are 133 / 157 / 300 / 145 / 145px and **nothing clips**. Tight, not
+broken — folded into the shape pass rather than carried as defects.
+
+**Re-framed:** **D-3**. The first pass said the schedule rows crush on a phone. They do not. The
+defect is on the **desktop**, where the amount box is pinned at 112px beside a date field measured
+at **809px**.
+
+**Stand as written:** D-1, D-2, D-4 (worse — four names for one act), D-5, D-7, D-9, D-10,
+D-11 (worse — the chosen option loses its dollars the moment you switch away from it).
+
+**New this walk:** the two write-path defects above (D-12, D-13); **D-14** the future-date gap;
+**D-15** a stray backdrop click discarding a hand-built schedule with no warning (measured);
+**D-16** a 21×21px unnamed remove control and a 25px-tall add button against the 44px floor
+(measured); **D-8b** nothing saying a receipt is being replaced until the footer button — *the
+residual risk the code's own comment named when the August Critical was fixed*; **D-17**
+two capitalization schemes side by side; **D-18** a default date frozen at page load; **D-19**
+option cards exposing no selected state.
+
+⚠ **Why D-16 survived:** the layout gate cannot open a drawer, so nothing has ever measured these
+controls. Same structural blind spot as §122's note about the four unbaselined fundraising screens.
+
+### Owner feedback taken during the walk
+
+**"Does the form need to say Riley P in 2 headers?"** — no, and it was wrong in three specimens,
+not one. The drawer's own title bar carries the player's name in both states, so a heading repeating
+it is the restatement §121 deleted from the sponsorship expansion. Corrected in the artifact: the
+schedule form heads **"Dues schedule"** (with *"Just this family. Everyone else keeps theirs."* —
+the fact the title bar cannot supply), the credit form **"Add a credit"**, the correction
+**"Correct a receipt — $120.00, Aug 12"**. The settlement sheet keeps **"Set refund — Riley P."**:
+it is a modal over the settlement table, where nothing else on screen says whose money it is.
+
+**The rule this leaves behind:** a heading inside that drawer must earn its line by saying what the
+title bar does not — which form this is, and what it does NOT touch.
+
+### Named clean, so the register can be trusted
+
+Generate installments' three priced amount modes, honest replace step, named failures, sandbox
+voice, discard guard and `Auto` outputs · the payment correction's consequence line including the
+overpayment clause that nets out the row being replaced · the one-taps and their dollar-quoting
+confirm · the credit type picker (locked once set, always showing its real kind) · the
+sourced-credit refusal, now visible from the list where the delete is clicked · the forgiveness
+path (derived not typed, one per family, correctly excluded from what may be handed back in cash) ·
+the dues tab's settings block.
+
+**Next:** `docs/projects/active/COACH_DUES_FORMS_PLAN.md` + PM brief, and a build prompt for a
+fresh chat at `docs/projects/active/COACH_DUES_FORMS_BUILD_PROMPT.md` (Phase A — the payout floor
+and the reconcile — is its own first commit and its own gate). No code was written in this session
+and nothing was staged.
+
+---
+
+## §124 · New money, or money back — the club stops having its mind read — BUILT, awaiting QA
+
+**BUILT ON DEV 2026-08-30 · MIGRATION 271 (dev only, prod-owed behind 264 held / 268 / 269 / 270).**
+Plan: `COACH_ORG_MONEY_IN_THE_BUDGET_PLAN.md` (status line stamped) · PM brief beside it · binding
+mockups `claude.ai/code/artifact/7edf39c2-f2f8-4a3c-8b5f-ec9e4ca57389`. All five ratified decisions
+(D1–D5) shipped. ⚠ **This sits on top of §49, which is on production and still unwalked.**
+
+### What changed, in the order a coach meets it
+
+1. **The request window's *From the club* branch asks one new question first** — **"New money, or
+   money back?"**, a required dropdown with the two sub-lined answers exactly as drawn. The answer
+   switches the *What is it for?* list to the **income** words or the **spending** words; the same
+   search box either way, the same inline `+ Add "…" to your list` door. Changing the answer clears
+   a word already picked, because the list changed sides.
+2. **Every request row prints its meaning** beside its filing — *New money · Grants · Association
+   support* — with **File it** / **Change** opening a small dialog holding only the ask and the
+   picker. The record window is untouched: pencil while pending, eye once answered.
+3. **Budget vs. Actual routes by the answer.** A grant is its own revenue row under its filed name,
+   dash in Budget, no budget line ever created. A repayment nets into the cost it repaid, exactly as
+   before. On Months a grant joins **Other income** marked *From the club*; *Repaid by the club*
+   goes back to meaning only money back; *Asked of the club* stays pending-only.
+4. **The expense band's Scheduled column gained unpaid club instalments**, in their due month, under
+   the bill's own filing.
+5. **The Money hub's Budget card adopted the report's arithmetic** — headline, Spending row and bar
+   together — with a one-line note, shown only when there is a difference to explain.
+
+### Measured on the fixture, not asserted (QA Money Lab / QA Mid Season U14)
+
+| | before | after |
+|---|---|---|
+| Money hub headroom | **$1,980** | **$1,555** |
+| Report headroom | $1,555 | $1,555 — **they agree** |
+| Expense-band Scheduled | **$0** (club money absent) | **$1,570**, across five due months, every row openable |
+| The $325 answered *New money* | netted into a cost | its own revenue row · **season net unchanged at −$3,545** |
+
+That last line is the mockup's central claim and it holds to the cent: revenue rose $325 and
+expenses rose $325. The fixture was flipped to measure it and **reverted** — it is back to
+`money_in_meaning IS NULL` on every row, verified, so the walk starts from the legacy state.
+
+### ⚠⚠ ONE DELIBERATE WIDENING BEYOND THE MOCKUP — please rule on it
+
+Frame 6 annotates the headroom fix as club money only. The card was **equally blind to money back a
+coach records** against a vendor refund — the report nets those, the card never did — so the same
+one-click-apart disagreement survived for any team that has ever been refunded a dollar, club or no
+club. D5's wording is *"netted money-back returns"*, not *club* money-back, so **both halves
+shipped**. Leaving one would have made the card's new note say "counts the club's repayments but
+not yours".
+
+⚠ **The QA fixture cannot test that half** — it holds zero recorded money-back rows, so a
+re-measure shows agreement with that term multiplied by nought. The arithmetic is a pure function
+with each term pinned in `tests/unit/coach-money-summary.test.ts` instead. **If you want the card
+scoped to club money only, say so — it is one term to remove.**
+
+### Two things left as they were, on purpose — both worth a glance on the walk
+
+- **The request window's title and its Submit button** ("New club request" / "Submit request", where
+  the frames draw "Make a request" / "Send to the club") and the *What is it for?* label are the
+  **forms review's** to reconcile; the build prompt hands them to it explicitly.
+- **The tour's step 5 sentence "Tap any row to open the bill behind it"** is the widest claim in the
+  coach demo's money narration: a club row opens the Club screen and a dues row opens Player Dues,
+  so "the bill" is the common case rather than the universal one. **Pre-existing, not caused by this
+  build**, and approved narration is yours to change — flagged rather than quietly rewritten.
+
+### The demo world, re-read as the rule requires
+
+The 12U's club money was **entirely unfiled**, which is a legal state and a poor shop window — a
+prospect opening Budget vs. Actual found the club's money under *Not itemized*. It is now filed, and
+carries **one grant and one repayment** so the fork is visible rather than implied; one pending row
+stays unfiled so **File it** is on screen. Every figure is asserted in `check-demo-coach.mjs`,
+including that no incoming request is left unanswered (a blank would report as a repayment — the
+defect this release fixes, on display).
+
+**Both money sentences were re-read and MEASURED.** Step 4's *"Diamond rentals are over plan"* was
+the one at risk: the club's bill now files against that very line. Planned $3,200, actual **$3,870**
+(it was $3,450) — **still over, and now truer.** No copy changed: `ea8ddd14`'s standing ruling caps
+each step at a hook plus one proof point and says outright not to re-grow step 4, so the grant is
+shown by the seeded world rather than narrated. ⚠ **Four stale comment blocks on step 5 were
+deleted** — they described clauses the 08-28 prose-trim had removed, which is how the planning
+session came to record that the tour still had a club sentence. It does not.
+
+### Verification run
+
+`npm test` (2,702 pass) · `npm run typecheck` · `npm run verify:changed` (all gates, including
+spelling, dictionary, snapshot freshness, schema parity, demos) · `check:money-report` (every
+identity, all breaking shapes present) · `check:register` · `check:demos` — both worlds presentable.
+Migration 271's dev-only divergence is baselined the same way 268–270's are.
+
+⚠ **The budget-line-kind guard fired during the build and was obeyed rather than exempted.** The
+new three-way club classifier collides on two words (`cost`, `funding`) with the budget-line enum
+that guard protects. Exempting the files would have blinded it to a real `line_kind === 'funding'`
+in the very route that reads both; instead the callers dispatch through an exhaustive record of
+handlers, so a fourth answer is a compile error rather than a silent fall-through.
+
+### The cleanup pass, and two things in it you should see
+
+`/simplify` ran over the diff (reuse · simplification · efficiency · altitude). Efficiency came back
+clean — no new query, no render or listener regression. Five findings were fixed: the request row's
+**File it / Change** now uses the **same button as the bill row** (it had shipped as a bespoke
+underlined link, so one screen had two looks for one verb — ~20 lines of dead CSS gone); the item
+picker's side is now derived from the report side rather than restating the rule; the two
+"answer changed, so clear the word" handlers became one; and the "**NULL means legacy**" fallback,
+which had already been hand-written in two display places on day one, now has a single home.
+
+⚠⚠ **A BOUNDARY I CROSSED, DELIBERATELY — tell me if you disagree.** The build prompt hands the Club
+tab's **false sentence** ("Until it's filed, this bill doesn't appear on Budget vs. Actual" — the
+report has always counted unfiled club money under *Not itemized*) to the forms review. I had to
+rewrite that dialog's copy anyway, since it now serves two kinds of record — which left the DIALOG
+saying "reports under Not itemized" and the ROW still saying "doesn't appear". **Two answers to one
+fact on one screen is worse than either alone**, so I corrected both. ⚠ **The forms review should
+strike this from its list rather than do it twice.**
+
+⚠⚠ **THE HUB'S HEADROOM IS A SECOND ARITHMETIC, AND IT ALWAYS WAS.** The altitude lens called this
+the build's weakest point: this repo's standing doctrine is one arithmetic per money question, and
+the Budget card computes "how did we do against plan?" with its own subtraction instead of the
+report's. **That predates this build** — it is what made the card read $1,980 against the report's
+$1,555 — and this build made the two agree rather than creating the split. I did **not** fold it into
+the report's own pass: the hub loads on every Money screen and the report needs the whole plan with
+its categories, items and periods joined, which is the heaviest read in the portal. **What I did
+instead was stop it being invisible**: the build-blocking one-arithmetic guard scanned exactly one
+file and could never have seen this. It now covers the hub too, and I verified it FAILS on the old
+code — reintroducing last week's line makes the build go red, naming it. A third hand-rolled variant
+can no longer land quietly. **If you would rather pay the query cost and have one arithmetic for
+real, that is a clean follow-up and I would not argue against it.**
+
+Skipped deliberately: inlining a small named intermediate on the Budget card (the name is what its
+explanation hangs off).
+
+**Nothing is committed.** The tree also holds other sessions' work; staging is explicit-pathspec
+only when you give the word.
+
+---
+
+## §124 · The dues forms, built — the floor, the grammar, the name and the shape — BUILT, awaiting QA
+
+> ### ✅ WALK IT HERE — `claude.ai/code/artifact/0b7619dc-a4ea-41dc-a9b6-e124bbf0ecc1`
+>
+> **Checkable walkthrough** — 24 steps in six parts (the floor · truth and safety · one grammar ·
+> one name · consequences · shape), ticks saved on-device, paste-back summary naming unticked steps.
+
+**BUILT ON DEV 2026-08-30 · NO MIGRATION.** Executes every §123 ruling — all six questions, option
+A, no amendments — in the phase order the review proposed (A floor → B safety → C grammar → D words
+→ E consequences → F shape). Started only after §122's commit (`c5ef8be6`) landed, per the build
+prompt's own precondition.
+
+**The floor (Phase A — D-12/D-13, its own gate).** `reconcileOverpaymentCredits` now counts EVERY
+`overpayment` credit for the player-season — the whole decision moved into a pure, unit-tested
+planner (`planOverpaymentReconcile`, lib/dues-payments.ts) and the executor's query stopped
+filtering on `payment_id`, which was how the reconcile could not see the standalone credits it
+writes on a schedule change. Both prompt sequences pinned end to end: lowering twice tops up to the
+truth (never $1,000 carried for a $600 truth), restoring removes the stale credit. And both
+schedule doors now ask the payout floor **pre-flight** — doors 5 and 6 in
+lib/dues-credit-guards.ts's list, via a new `projectScheduleTotalChange` beside the sponsor
+projection. The per-player refusal speaks `payoutFloorMessage` verbatim and carries an
+*"Open ⟨name⟩'s payouts"* door back to the record; the bulk run refuses only the affected families,
+**by name with the dollars** (`payoutFloorRefusals`, a subset of `playersFailed` so
+`playersProcessed + playersSkipped + playersFailed.length === players.length` still holds), and the
+generator's success sentence was re-worded to name the credit **created by this run** — under A1 a
+re-run tops up rather than re-credits, so "payments beyond the total" and "credit created now" can
+honestly differ.
+
+**Truth and safety (B).** The Set-refund sheet gained its own error line (`choiceError` — failures
+used to render behind the open sheet in the settlement window's slot); a blank or garbled set
+amount **refuses** — *"Enter an amount for their share — or pick 'No share' if that is what you
+mean."* — instead of `parseFloat(x) || 0` saving a family out of their refund; and the three
+read-only leaks closed: Edit schedule, the empty state's Set dues schedule, and the whole credit
+cluster (+ Add a credit / pencil / trash) now gate on `moneyCanWrite`, copying the payments and
+payouts lists beside them.
+
+**One grammar (C — Q18).** A future date is refused on every dues door and both servers — the dues
+branch of the conversation (it validates `receivedDate`, which is why the spend branch's
+`paidDate` refusal never covered it), the correction form (picker `max` + client sentence + the
+PATCH's refusal placed BEFORE the remove, so a refused correction strands nothing), and the POST.
+The sentence stops on purpose — *"…The installment schedule is the promise of what's still to
+come."* — no invented hand-off. **The drive door came along in the same pass** (scope note
+honoured): client check + picker cap on the drive branch, refusal in the entries POST.
+
+**One name (D — Q20).** *Set dues for all players* on: the window title (retiring the last
+Title-Cased window in money), its confirm button, the Budget tab's ladder link and CTA band,
+SetupOverview, OverviewDashboard's empty dues row, and four help strings with their
+keywords/searchText (old term kept as a search alias). The correction form is headed
+*"Correct a receipt — $120.00, Aug 12"* (the receipt, never the player — the drawer's bar carries
+the name); + Add a credit / Save credit / Send due reminders went sentence case; the credit form's
+default date is computed at open (`blankCreditForm()` — a tab left overnight pre-filled yesterday).
+The read-only guard regex in the mobile smoke spec learned the new name and kept the old (the
+stale-build precedent).
+
+**Consequences (E — Q4's three).** Add a credit states its landing, following the team's credits
+setting (*"When you save: nothing changes hands — ⟨name⟩'s family owes $60.00 less, taken off
+their last payment first."*; next-first and keep-separate teams read their own words; an edit says
+what the credit becomes). The schedule editor runs the live reconcile in the sibling's words —
+*"3 installments, $1,200.00 — matches the total."* / short / over — while the save-time check still
+binds. The refund options each state what they produce, chosen or not, from the SERVER's own row
+figures only (the un-chosen even option states its composition rather than inventing a projection
+that could disagree with the write).
+
+**Shape (F — Q19 "all of it", Q21).** The schedule form: heading *"Dues schedule — Just this
+family. Everyone else keeps theirs."* (what the title bar cannot say — never the player's name);
+rows on the generator's `periodInputRow` skeleton through a **`.duesScheduleEditor` scoped
+variant** (the `.planEditor` precedent — its own ≤640 card ground, its own ≤768 floors, ZERO edits
+to shared classes: the stylesheet diff is additions-only, which is the proof the budget sheet and
+bill editor did not move). Desktop columns equal (460/460 measured at 1280 — was 112 vs 809).
+**Tap floor proved by throwaway Playwright measurement on the UAT coach fixture** (`check:layout`
+cannot open a drawer): + Add installment 119×44 at 360 and 768; the remove control 66×44 at 360
+(labelled "Remove" in the card head) and 44×44 at 768, with an accessible name at every width. The
+28px pencil/trash stay — the 2026-08-14 owner call. Both drawer build-forms carry the generator's
+discard guard (`useDiscardGuard` + `UnsavedChangesGuard`, interceptor gated on `tabActive`),
+dirtiness measured against the opened-with baseline so a clean form still closes silently. The
+credit and correction forms' two-column rows ride the shared `.formGrid` (stack at 640 — the
+downgraded D-6/D-8, along for the pass). The refund options expose `aria-pressed`.
+
+**Left alone, per the prompt:** the one-taps; recording a dues payment cold; SP-8's "Fundraiser"
+chip (sponsorship words commit); Team settings → Money; phone money tables; no new credit kind
+anywhere — everything here is a label, a guard or a query.
+
+**Verification at build time:** unit suite **2,712 green** (new seam suite
+`dues-overpayment-reconcile.test.ts`: both prompt sequences, newest-first reduction across the
+whole mixed set, "credits stay credits" never touched, the floor projection composed with the
+forgiveness exclusion); typecheck clean; CSS-module purity and spelling gates green; the
+**money-lifecycle UAT spec gained three tests and was RUN — 13/13 against the live dev server**
+(both sequences through the real doors; the per-player 409 with credit AND schedule asserted
+untouched; the bulk run's named refusal with the invariant asserted). `check:layout` ran clean
+(exit 0) with **zero findings on the dues screen** — every reported finding is the pre-existing
+never-baselined set §122 already recorded (Record money / Add a bill / the fundraiser chips at
+768), none from this change; the sweep still cannot open a drawer, which is why F2's floor was
+proved by measurement instead. `verify-changed` focused lint: 0 errors. ⚠ `verify:changed`'s FULL
+chain dies at schema parity for EVERY tree state while migration 271 is dev-only (a concurrent
+stream's, not this build's) — attributed, not chased. Demo narration re-read: no dock line or tour
+step names the renamed door and none claims anything the date rule changed — nothing to adjust.
+
+---
+
+**Post-build passes (owner-directed, same day): `/simplify` → `/review` → `/docs`, in that order so
+the review saw the cleaned-up code.**
+· **/simplify** (4 lenses): the two new future-date sentences moved to ONE home
+(`lib/money-date-guards.ts`, pure/isomorphic — six hand copies rewired; the two pre-existing
+sponsor-door copies are booked there for their next touch, having already drifted from each
+other); a dead import dropped; `amountsTotal` and `groupByPlayer` replace two hand-rolled
+computations; the panel branches on the exported `CREDIT_HAS_PAYOUT` constant, never a re-typed
+literal; the correction form's two independent receipt lookups became one; and the schedule form's
+live strip and its save-time check now share one cents computation (`scheduleGapC`) — which also
+tightened the save check from a float 1¢ tolerance to exact cents, so the strip and the refusal
+tell one story. Skipped with reasons: inline-closure style notes (the panel's established idiom)
+and a cross-component reconcile merge (the generator's strip compares against the funding
+yardstick, not the typed total — different quantities).
+· **/review** (high-risk tier: deterministic gate green, then 5 finder lenses, adversarial
+verify): **three confirmed and fixed** — (1) the bulk refusal report was keyed by DISPLAY NAME, so
+two same-named players (twins, or two "Unnamed player" rows) could hide one's unrelated failure
+behind the other's refusal: refusals now carry the player id and the exclusion is count-aware,
+pinned in the UAT test; (2) the refusal's "Open ⟨name⟩'s payouts" door was the ONE unguarded exit
+from the schedule form — the same silent-discard this build's own guards closed — now routed
+through the guarded closer; (3) pre-existing (Medium, not this build's): the schedule POST was the
+one dues write missing the player-belongs-to-this-season check its sibling doors make, letting a
+foreign player id be stamped with this team's identity — the sibling's membership check added,
+pinned by a 404 assertion in the UAT spec. **Refuted / accepted-by-ruling, recorded not changed**:
+a hand-typed "Overpayment" credit is now subject to the reconcile (the ruling says every
+overpayment credit, HOWEVER born — the §124 walk's Part 1 exercises exactly this class);
+newest-first reduction can trim a payment-linked row before a standalone one (ruled order;
+numerically identical); and three TOCTOU notes on the pre-flight floor — the same documented
+guard-to-write window doors 1–4 accept, self-healing, and strictly narrower exposure than the
+no-check state it replaced (the route comment now says so honestly).
+· **/docs**: three help articles gained their sentences + search terms (the payment FAQ's
+future-date rule; the redo-dues FAQ's payout-floor refusal, per-family by name; the fundraising
+FAQ's entry-dated-on-arrival clause), and the review's grep caught a FIFTH prose site still
+naming "Generate installments" that the build's four-string sweep missed — fixed, and rendered
+help prose now greps clean of the old name.
+· Gates after everything: typecheck clean · unit suite green · focused lint 0 errors · spelling ·
+CSS purity. Lifecycle spec re-run on a clean server pending the shared dev-server restart
+(another session's cache defect, unrelated to this build).
+· Two late catches, both applied: the club-money session's cross-review found the schedule POST
+reusing its pre-flight payments snapshot across the write — the reconcile now RE-READS the
+payments after the upsert (check-then-act, one extra query on the paid-player path only). And the
+lifecycle spec's fixture was stranding its own test user: §123's tests record real payments, a
+removed payment VOIDS its ledger entry (the books only grow), and the surviving rows FK-blocked
+the user's deletion — silently, because the fixture never checked that delete. Cleanup now clears
+the fixture's ledger rows first and THROWS on a failed user delete. Final state: lifecycle spec
+green on every test of this build's (the one red in the last run is a peer session's just-added
+§122 test racing its own edit, owned and re-running on their side) · unit 2,713 · typecheck clean.
+· A peer session's run saw ONE flaky pass-on-retry in the sequence-1+2 reconcile test and rightly
+refused to let it stand. Chased on a quiet tree: five independent clean runs green, finishing with
+the full file at --retries=0 — **14/14 first attempt**. The only red ever recorded sat inside that
+session's own two-file-revert recompile window, with no failure output surviving; the test's
+assertions are scoped to a player it creates itself (no cross-test order dependence, checked).
+Verdict: transient compile churn, high confidence — and the clean-cache re-run queued behind the
+owner's server restart is the belt; a quiet-tree red at any point flips this to race-until-proven-
+otherwise.
+
+---
+
+## §125 · A fundraiser opens in place — the drill-in retires — ✅ PASSED 2026-09-01 (inside §122's amended walk: 45/45, parts N and W clean, zero issues)
+
+> ### ✅ WALKED INSIDE §122's AMENDED WALKTHROUGH — `claude.ai/code/artifact/cf860db9-e202-4274-b572-d5f29284aca0`
+>
+> **Owner direction 2026-08-31: no separate walk.** §122's guarded-deletes walkthrough was amended
+> in place for the band — its new part **N** (the drive opens in place: entries-first board, the
+> inline editor's date rules, the inactive-player entry, deep links, phone) and part **W** (credit
+> vocabulary + help) carry this build's coverage, and parts **C** and **D** were rewritten to walk
+> the new shape (✎ Edit, not Settings; a delete that stays on the list). One walk settles §122 AND
+> §125 together. The standalone §125 walkthrough (`bac0cb60…`) is SUPERSEDED — ignore it.
+
+**BUILT ON DEV 2026-08-31 · NO MIGRATION.** Owner-approved direction (design session, three mockup
+rounds — Artifact `a7efae7e`, round 3 binding; design-log ruling 2026-08-31): drives take the
+sponsor band's expand-in-place treatment, and the `?fundraiser=` drill-in state retires. Plan:
+`docs/projects/active/COACH_FUNDRAISER_BAND_PLAN.md`.
+
+**What shipped:** the drives table's rows expand into a facts-only meta line ("Credits families
+15% · 3 of 12 players logged · dates · tags"), sibling entry rows sharing the parent columns
+(§122 construction), and the two doors — Record (conversation, drive pre-picked, player asked)
+and **Edit** (the sheet, renamed from Settings per §121's house verb). **Entries-first is the
+load-bearing change:** the board draws logged money, largest first (Rank retired — the sort IS
+the leaderboard), never one-row-per-roster-player; an inactive player's entry stays visible and
+marked (the old board dropped it silently — the §122-era undeletable-drive defect class). The
+"Left to send" dues column is REMOVED (owner call, round 2); the floating rebate line died with
+the drill-in; **credit** replaced "rebate" in every customer-visible string it still held
+(export column, credit descriptions on new writes, seven help passages); `detail.tsx` deleted
+whole (its sponsor half was already dead), `fmt` re-homed to `lib/coach-fundraising`.
+
+**Server:** the entries route serves a flat `entries` array (every entry, roster status
+regardless, player name + active flag) and `rosterCount`; the roster-projected `players` array
+stays for the Record window. No write-path changes.
+
+**Verified this session:** typecheck clean; `verify:changed` green end to end (one token-gate
+catch fixed — a carried-over hex fallback); the sponsor/drive money lifecycle spec 15/15 against
+the live dev server; the phone smoke's ten Money surfaces (the open band included) clean at
+360px. **Two pre-existing spec drifts found and one fixed:** the membership smoke's
+between-season fundraiser test had been timing out since the season-close gate (2026-08-18) —
+rewritten to assert the gate itself, with a note that its content assertion returns with the
+closed-season money shelf (P4); ⚠ the rest of that describe block passes VACUOUSLY on the same
+redirect (the Season's End masthead satisfies "Complete + no write buttons") and needs its own
+truth-up as season-close work. The money mobile smoke's Ledger By-bill drill waits on a control
+the §119 fold renamed — left for the fold's own spec fix, named here so it isn't rediscovered.
+
+**Owed beyond the walk:** a `check:layout` reseed+sweep (not run — the rule against sweeping a
+server the owner is actively using; the phone smoke covered the open band's overflow risk), and
+a RETAKE of marketing slide #04 (`coach-fundraiser-credit` — selectors re-pointed at the band,
+image still shows the old page).
+
+**Addendum, same day (owner wording review):** the Record form's **"Where it lands" preview is
+RETIRED** — its two prose branches could both render for a family with nothing owing, and its
+"open bills" wording collided with the Ledger's Bill object. The form now states the consequence
+in one sentence: *"the drive's total rises by $126.00 · $18.90 is credited to Avery Test's
+family (15%)"* — "credited", not "owed", because a credit usually lowers what the family still
+sends and is owed back only when nothing is left to lower. The preview's helper and the entries
+route's per-player dues derivation went with it; help copy swept. Design-log entry the same day.
+Walk impact: none — no §122/§125 step names the preview.
+
+**Second addendum, same day (owner: "can we clean up and retire these old pages?"):** the **eight
+legacy Money redirect routes are DELETED outright** — `accounting/budget`, `/budget-vs-actual`,
+`/dues`, `/expenses`, `/fundraisers`, `/fundraisers/[id]`, `/allocations`, `/payment-requests` —
+along with their shared redirect module and href builder. They existed only to catch bookmarks
+from before the hub (2026-08-13 sweep); pre-customer, the only bookmarks at risk are our own, so
+the shims' job is done. ⚠ **What stays, deliberately:** the hub's in-page normaliser for retired
+`?section=`/`?tab=` QUERY names (`?section=payables&tab=schedule` → the Ledger's schedule view) —
+that is a live contract the mobile smoke asserts, and it is unrelated to the deleted route files.
+Walk impact: step N4 no longer promises old bookmarks land (edited + republished). Typecheck +
+gate suite green after route-type regeneration. The panels' `embedded` prop and their
+"standalone route" defensive branches are now dead code — flagged for a /simplify sweep rather
+than half-trimmed here.
+
+**Third addendum, same day (owner: "this doesn't look like the format from the mockup"):** the
+band's inline amount editor rendered every field FULL WIDTH, stacked — because `.inlineField`
+had **silently never worked**: every caller pairs it with `.input`, whose `width: 100%` sits
+~4,000 lines later in the same stylesheet and won the equal-specificity tie by source order. It
+went unseen for weeks only because the old call sites all sat inside narrow cells that clamped
+the damage; the band's full-width editor cell finally gave it room to show. Fixed at the ROOT
+(`.inlineField.inlineField`, 0-2-0 — order-proof), which repairs the drills page's and the
+Budget panel's compact fields in the same line. Same trap family as `.compactAction` vs
+`.block640`, now noted at the rule.
+
+**Fourth addendum (2026-09-01, owner walking part E early):** the payout floor's refusal on
+Remove was **arriving silently** — the 409's sentence (dollars + "remove the payout first", the
+exact contract part E walks) was written into the inline editor's error slot, which only renders
+while the editor is open, so the confirm closed and nothing explained why the entry stayed. It
+now draws as its own row in the expansion (`role=alert`), standing until the coach's next act.
+The floor itself is unchanged and family-aggregate by design — see the owner Q&A in session
+notes: it never matches a payout to one fundraiser; it only refuses when removal would leave the
+family having been handed more cash than they were ever owed across all sources. **The sentence
+itself was then re-worded at owner direction (option A of four):** *"The team has already paid
+$42.90 back to this family — removing this entry would make that more than they were ever owed.
+Remove the payout first."* — one sentence, every door (`payoutFloorMessage`), with the sponsor
+sheet's foreseeable-refusal note trued to the same voice and the unit pin updated (12/12). ⚠ The
+dues-forms MOCKUP still shows the pre-ruling wording in its §124 specimen — a mockup is a
+point-in-time record; this ruling outranks it on the live screen.
+
+**/simplify + /review, post-walk (2026-09-01, owner-directed).** Simplify (four lenses): the
+bands' shared rows moved to `BandRows.tsx` (message row, doors row, the SIX-column invariant in
+one home); `sponsorSubCell` → `bandSubCell`; the inline editor became its own `EntryEditor`
+(six state vars and two prop bundles gone); the one-day duplicate `fmt` retired for the hub's one
+formatter; the panel's band rows memoised (a fresh array per render had been re-fetching the open
+expansion on every keystroke in the create form) and its per-write double fetch removed; the
+entries route's season credits/payouts reads moved into the sponsor-only block; sponsor band
+parity (name as a real button, deep-link scroll). Review (five lenses, high-risk tier): security,
+data-contract and blast-radius came back clean with evidence; **Confirmed and fixed:** the entry
+PATCH route had no future-date refusal (the create path did — the inline editor's server side
+was the one money-moved door missing the rule); the expansion read had no stamp-and-drop (a slow
+old answer could paint drive A's entries under drive B and strand it on "Loading…"); the
+deep-link scroll fired once per mount (the tab stays mounted, so every later arrival skipped);
+the old amount showed for a full round trip after a save (the row now re-reads at once); Cancel
+could unmount a save in flight; the delete race guard the drill-in had was reinstated in both
+bands; the sponsor name button rendered at 12px. **Rendered check** widened to the portal (shared
+stylesheet touched) and then scoped to the three fundraising screens: three real phone-width
+regressions fixed — the Record/Edit doors sat outside the card-mode 44px rule, the sponsor row had
+no visible toggle (so its name was its only target), and the sub-row tint doubled the ground under
+the tertiary ink to 4.12:1 (the sponsor band's own state sentence failed the same way) — then the
+screens re-baselined with reasons: the name buttons at phone widths carry the standing "the row
+has a full-height Open control" reason, and the tablet-width items the standing desktop-size
+reason. Advisory, not fixed: the shared confirm dialog keeps one pending answer at a time, so two
+overlapping confirms would orphan the first — its modal overlay makes that unreachable by mouse;
+noted for the provider's own hardening. **Walk impact: none** — every fix is behind a walked
+step's existing expectation.
+
+**VERDICT (2026-09-01):** the owner walked all nine parts — A/B (sponsor deletes), N (the band),
+C/D (drive remove + refusal), E (the payout floor, now speaking), G (the date rule — which also
+settles the date-consistency item that rode this walk; its D1 ruling on the dues credit date
+stays open), W (one word) and F (cleanup) — **45/45 ticked, every part PASS, zero issues, zero
+needing a call.** §122 and §125 close together. Still owed, as ops rather than QA: the
+`check:layout` reseed+sweep and the marketing slide #04 retake.

@@ -15,7 +15,7 @@
 .fenceEyebrow {
   display: inline-block;
   margin: 0 0 0.5rem;
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.13em;
@@ -24,20 +24,20 @@
 
 .fenceTeam {
   margin: 0 0 0.25rem;
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .fenceTeamMeta {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-tertiary);
 }
 
 .fenceDisclaimer {
   margin: 0 0 0.8rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-style: italic;
   line-height: 1.45;
   color: var(--text-secondary);
@@ -48,7 +48,7 @@
 /* ── Budget tab ── */
 .cat {
   margin: 0.7rem 0 0.15rem;
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -61,7 +61,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.28rem 0.1rem;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
 }
 
 .rowName {
@@ -79,7 +79,7 @@
 .rowNote {
   margin: -0.1rem 0 0.15rem;
   padding-left: 0.85rem;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -91,7 +91,7 @@
   margin-top: 0.7rem;
   padding: 0.55rem 0.1rem 0.1rem;
   border-top: 2px solid var(--logic-lime);
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 800;
   color: var(--text-primary);
 }
@@ -104,7 +104,7 @@
 /* ── Budget-vs-actual tab (the comparison stays a grid — Chunk A D1) ── */
 .bvaGrid {
   min-width: 420px;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
 }
 
@@ -117,7 +117,7 @@
 }
 
 .bvaHead {
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;

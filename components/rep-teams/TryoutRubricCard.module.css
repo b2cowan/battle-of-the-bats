@@ -38,7 +38,7 @@
   padding: 1.05rem 1.4rem 0.85rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
-.title { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0; }
+.title { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); margin: 0; }
 .closeBtn {
   flex: 0 0 auto;
   width: 32px; height: 32px;
@@ -75,7 +75,7 @@
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 .summary {
-  font-size: 0.78rem; line-height: 1.4;
+  font-size: var(--type-support); line-height: 1.4;
   color: rgba(255,255,255,0.45);
   font-variant-numeric: tabular-nums;
 }
@@ -94,18 +94,18 @@
 .field { margin-bottom: 1rem; }
 .fieldLast { margin-bottom: 0; }
 .label {
-  display: block; font-size: 0.8rem; font-weight: 700;
+  display: block; font-size: var(--type-support); font-weight: 700;
   color: rgba(255,255,255,0.7); margin-bottom: 0.35rem;
 }
 .labelSoft { font-weight: 500; color: rgba(255,255,255,0.4); }
-.hint { font-size: 0.76rem; color: rgba(255,255,255,0.45); margin: 0.35rem 0 0; line-height: 1.45; }
+.hint { font-size: var(--type-support); color: rgba(255,255,255,0.45); margin: 0.35rem 0 0; line-height: 1.45; }
 .input {
   width: 100%;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 0.58rem 0.72rem;
-  color: var(--white-90); font-size: 0.9rem;
+  color: var(--white-90); font-size: var(--type-body);
   box-sizing: border-box; font-family: inherit;
 }
 .input:focus { outline: none; border-color: var(--logic-lime); }
@@ -118,7 +118,7 @@
   border-radius: 9px;
 }
 .segBtn {
-  font-family: inherit; font-size: 0.82rem; font-weight: 700;
+  font-family: inherit; font-size: var(--type-body); font-weight: 700;
   font-variant-numeric: tabular-nums;
   padding: 0.34rem 0.9rem; border: 0; border-radius: 6px;
   background: transparent; color: rgba(255,255,255,0.5); cursor: pointer;
@@ -150,15 +150,15 @@
 .trackOn { background: var(--logic-lime); border-color: var(--logic-lime); }
 .trackOn::after { transform: translateX(17px); background: var(--pitch-black); }
 .toggleText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.toggleLabel { font-size: 0.84rem; font-weight: 700; color: var(--white-90); }
-.toggleHint { font-size: 0.75rem; color: rgba(255,255,255,0.45); line-height: 1.45; }
+.toggleLabel { font-size: var(--type-body); font-weight: 700; color: var(--white-90); }
+.toggleHint { font-size: var(--type-support); color: rgba(255,255,255,0.45); line-height: 1.45; }
 
 /* Two notes that only appear when they are true. */
 .noteWarn,
 .noteInfo {
   display: flex; gap: 0.45rem; align-items: flex-start;
   margin-top: 0.6rem; padding: 0.5rem 0.65rem;
-  font-size: 0.78rem; line-height: 1.45;
+  font-size: var(--type-support); line-height: 1.45;
   border-radius: 8px;
 }
 .noteWarn {
@@ -219,14 +219,14 @@
   display: inline-flex; align-items: center; justify-content: center;
   border: 0; background: transparent;
   color: rgba(255,255,255,0.7);
-  font-family: inherit; font-size: 0.95rem; font-weight: 700; line-height: 1;
+  font-family: inherit; font-size: var(--type-heading); font-weight: 700; line-height: 1;
   cursor: pointer;
 }
 .stepBtn:hover:not(:disabled) { background: rgba(var(--logic-lime-rgb),0.1); color: var(--white-90); }
 .stepBtn:disabled { opacity: 0.3; cursor: default; }
 .stepVal {
   min-width: 30px; line-height: 26px; text-align: center;
-  font-size: 0.8rem; font-weight: 700; color: var(--white-90);
+  font-size: var(--type-support); font-weight: 700; color: var(--white-90);
   font-variant-numeric: tabular-nums;
   border-left: 1px solid rgba(255,255,255,0.12);
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -243,7 +243,7 @@
 }
 .pct {
   flex: 0 0 auto; min-width: 3.1rem; text-align: right;
-  font-size: 0.82rem; font-weight: 800; color: var(--white-90);
+  font-size: var(--type-body); font-weight: 800; color: var(--white-90);
   font-variant-numeric: tabular-nums;
 }
 .pctEqual { font-weight: 700; color: rgba(255,255,255,0.7); }
@@ -253,7 +253,7 @@
 .notesOnly {
   flex: 1 1 auto; align-self: center; max-width: max-content;
   display: inline-flex; align-items: center; gap: 0.3rem;
-  font-size: 0.74rem; font-weight: 700;
+  font-size: var(--type-support); font-weight: 700;
   color: var(--warning-light);
   background: rgba(var(--warning-rgb),0.1);
   border: 1px solid rgba(var(--warning-rgb),0.38);
@@ -263,14 +263,14 @@
 /* Note collapses to a link — six always-open inputs were most of the modal's height. */
 .noteLine { margin: 0.45rem 0 0 calc(22px + 0.45rem); }
 .noteBtn {
-  font-family: inherit; font-size: 0.76rem; font-weight: 600;
+  font-family: inherit; font-size: var(--type-support); font-weight: 600;
   color: var(--logic-lime); background: transparent;
   border: 0; padding: 0; cursor: pointer; text-align: left;
 }
 .noteBtn:hover { text-decoration: underline; text-underline-offset: 2px; }
 .noteRead {
   display: flex; gap: 0.4rem; align-items: baseline;
-  font-size: 0.78rem; line-height: 1.45; color: rgba(255,255,255,0.7);
+  font-size: var(--type-support); line-height: 1.45; color: rgba(255,255,255,0.7);
 }
 .noteReadLabel { flex: 0 0 auto; color: rgba(255,255,255,0.45); }
 .noteReadText { flex: 1 1 auto; min-width: 0; }
@@ -279,14 +279,14 @@
   display: inline-flex; align-items: center; gap: 0.35rem;
   margin-top: 0.6rem;
   padding: 0.48rem 0.8rem;
-  font-family: inherit; font-size: 0.83rem; font-weight: 600;
+  font-family: inherit; font-size: var(--type-body); font-weight: 600;
   border: 1px dashed rgba(255,255,255,0.22);
   border-radius: 8px; background: transparent;
   color: rgba(255,255,255,0.8); cursor: pointer;
 }
 .addBtn:hover { border-color: var(--logic-lime); color: var(--white-90); }
 
-.formError { color: var(--danger-light); font-size: 0.82rem; margin: 0.85rem 0 0; }
+.formError { color: var(--danger-light); font-size: var(--type-body); margin: 0.85rem 0 0; }
 
 /* ── Helper preview ──────────────────────────────────────────────────────── */
 /* The coach is authoring a form somebody ELSE fills in, on a phone, once a year. This is the
@@ -294,7 +294,7 @@
    "note for evaluators" field explain itself. */
 .preview { min-width: 0; }
 .previewCap {
-  display: block; font-size: 0.72rem; font-weight: 700;
+  display: block; font-size: var(--type-support); font-weight: 700;
   letter-spacing: 0.04em; text-transform: uppercase;
   color: rgba(255,255,255,0.45); margin-bottom: 0.5rem;
 }
@@ -308,13 +308,13 @@
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .phoneBib {
-  font-size: 0.9rem; font-weight: 800; color: var(--logic-lime);
+  font-size: var(--type-body); font-weight: 800; color: var(--logic-lime);
   font-variant-numeric: tabular-nums;
 }
-.phoneName { font-size: 0.9rem; font-weight: 700; color: var(--white-90); margin-left: 0.4rem; }
+.phoneName { font-size: var(--type-body); font-weight: 700; color: var(--white-90); margin-left: 0.4rem; }
 .phoneBody { padding: 0.65rem 0.8rem 0.85rem; display: flex; flex-direction: column; gap: 0.8rem; }
-.pCatLabel { font-size: 0.84rem; font-weight: 700; color: var(--white-90); }
-.pCatHint { font-size: 0.72rem; color: rgba(255,255,255,0.45); line-height: 1.4; margin-top: 0.12rem; }
+.pCatLabel { font-size: var(--type-body); font-weight: 700; color: var(--white-90); }
+.pCatHint { font-size: var(--type-support); color: rgba(255,255,255,0.45); line-height: 1.4; margin-top: 0.12rem; }
 /* Five columns, matching the real field scorer exactly — 1–5 is one row, 1–10 is an even 5 + 5.
    A preview that tidied up a layout the phone doesn't produce would be worse than no preview. */
 .pScale {
@@ -327,24 +327,24 @@
   min-width: 0; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid rgba(255,255,255,0.14); border-radius: 7px;
-  font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7);
+  font-size: var(--type-support); font-weight: 700; color: rgba(255,255,255,0.7);
   font-variant-numeric: tabular-nums;
 }
 .phoneFoot {
   padding: 0.5rem 0.8rem 0.7rem;
   border-top: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.7rem; line-height: 1.45; color: rgba(255,255,255,0.4);
+  font-size: var(--type-label); line-height: 1.45; color: rgba(255,255,255,0.4);
 }
 .previewEmpty {
-  font-size: 0.78rem; color: rgba(255,255,255,0.4);
+  font-size: var(--type-support); color: rgba(255,255,255,0.4);
   padding: 0.8rem; text-align: center;
 }
 
 /* ── The card body (outside the modal) ───────────────────────────────────── */
-.readMeta { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 0.6rem; }
+.readMeta { font-size: var(--type-support); color: rgba(255,255,255,0.5); margin-bottom: 0.6rem; }
 .readShare {
   flex: 0 0 auto; white-space: nowrap;
-  font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.7);
+  font-size: var(--type-support); font-weight: 700; color: rgba(255,255,255,0.7);
   font-variant-numeric: tabular-nums;
 }
 .readShareMuted { color: rgba(255,255,255,0.45); font-weight: 600; }

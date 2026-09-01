@@ -11,6 +11,7 @@ import {
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { tournamentToday } from '@/lib/timezone';
@@ -340,7 +341,12 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Enter the date the money arrived.' }, { status: 400 });
     }
     if (receivedDate > tournamentToday()) {
-      return NextResponse.json({ error: 'That hasn’t happened yet — an arrival is money that has already come in. Record it as a pledge instead.' }, { status: 400 });
+      /* ⚖ ONE SENTENCE, FROM THE MAP. These two doors each carried their own copy and had already
+         DRIFTED apart (one offered "record it as a pledge instead", the other said nothing) — which
+         is exactly what lib/money-date-guards.ts exists to stop, and what its own header asked to be
+         fixed the next time these routes were touched. The shared sentence now hands off to the
+         pledge's expected-by date, which is the control the coach actually wanted. */
+      return NextResponse.json({ error: futureReceivedDateRefusal(receivedDate, 'sponsor cheque')! }, { status: 400 });
     }
     const m = typeof body.method === 'string' && body.method ? body.method : null;
     if (m && !['etransfer', 'cash', 'cheque', 'card', 'other'].includes(m)) {

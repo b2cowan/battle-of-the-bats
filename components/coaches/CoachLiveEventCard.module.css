@@ -46,7 +46,7 @@
   border-radius: var(--radius-sm);
   padding: 0.18rem 0.5rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -94,13 +94,13 @@
 
 .name {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   min-width: 0;
 }
 
 .dates {
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 

@@ -21,25 +21,25 @@
   min-width: 0;
 }
 .season {
-  font-size: 0.64rem; font-weight: 700;
+  font-size: var(--type-token); font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: rgba(255,255,255,0.4);
   margin-bottom: 0.15rem;
 }
 .composite {
-  font-size: 1.15rem; font-weight: 700;
+  font-size: var(--type-title); font-weight: 700;
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   color: var(--white-90);
   line-height: 1.15;
 }
-.scale { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.4); }
-.decision { font-size: 0.72rem; color: rgba(255,255,255,0.55); margin-top: 0.1rem; }
+.scale { font-size: var(--type-support); font-weight: 600; color: rgba(255,255,255,0.4); }
+.decision { font-size: var(--type-support); color: rgba(255,255,255,0.55); margin-top: 0.1rem; }
 
 .mid { display: flex; align-items: center; justify-content: center; }
 .delta {
   display: inline-flex; align-items: center;
-  font-size: 0.76rem; font-weight: 700;
+  font-size: var(--type-support); font-weight: 700;
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   padding: 0.18rem 0.55rem;
@@ -59,13 +59,13 @@
   background: rgba(251,191,36,0.07);   /* token-exempt: warning alpha tint, no -rgb token exists */
 }
 .sideBySide {
-  font-size: 0.68rem; font-weight: 600;
+  font-size: var(--type-label); font-weight: 600;
   color: rgba(255,255,255,0.4);
   white-space: nowrap;
 }
 
 .note {
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   color: rgba(255,255,255,0.42);
   margin: 0.4rem 0 0;
 }
@@ -74,7 +74,7 @@
   margin-top: 0.35rem;
   padding: 0;
   border: none; background: none;
-  font-size: 0.72rem; font-weight: 700;
+  font-size: var(--type-support); font-weight: 700;
   color: var(--logic-lime);
   cursor: pointer;
 }
@@ -91,7 +91,7 @@
 .catRow {
   display: grid; grid-template-columns: 1fr auto 46px;
   gap: 0.6rem; align-items: baseline;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
 }
 .catLabel { color: rgba(255,255,255,0.6); min-width: 0; }
 .catNums {

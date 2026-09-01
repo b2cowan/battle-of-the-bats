@@ -9,7 +9,7 @@
   background: var(--white-03, rgba(255, 255, 255, 0.03));
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-secondary);
 }

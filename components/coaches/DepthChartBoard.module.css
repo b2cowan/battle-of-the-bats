@@ -24,12 +24,12 @@
 /* ── caps context strip (the season "Lineup rules" that frame the board; edit lives in Settings) ── */
 .capsBar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
-  margin-bottom: 12px; padding: 10px 14px; font-size: 0.78rem; color: var(--ink-70);
+  margin-bottom: 12px; padding: 10px 14px; font-size: var(--type-support); color: var(--ink-70);
   background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius);
 }
 .capsBar b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 .dot { color: var(--ink-45); }
-.editlink { margin-left: auto; color: var(--okay-fg); font-weight: 600; font-size: 0.75rem; text-decoration: none; white-space: nowrap; }
+.editlink { margin-left: auto; color: var(--okay-fg); font-weight: 600; font-size: var(--type-support); text-decoration: none; white-space: nowrap; }
 .editlink:hover { text-decoration: underline; }
 .capsNone { color: var(--ink-45); font-style: italic; }
 
@@ -45,7 +45,7 @@
 /* legend lives inside the grid card header, not a bare floating row */
 .legend {
   display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
-  padding: 11px 16px; font-size: 0.72rem; color: var(--ink-70);
+  padding: 11px 16px; font-size: var(--type-support); color: var(--ink-70);
   border-bottom: 1px solid var(--line-soft);
 }
 .swatch { display: inline-flex; align-items: center; gap: 6px; }
@@ -66,7 +66,7 @@
 .table th, .table td { text-align: center; padding: 0; }
 .table thead th {
   position: sticky; top: 0; background: var(--panel); z-index: 3;
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; color: var(--ink-70);
+  font-size: var(--type-label); font-weight: 700; letter-spacing: 0.03em; color: var(--ink-70);
   height: 40px; border-bottom: 1px solid var(--line-soft);
 }
 .colPitch { color: var(--best-fg); }
@@ -86,14 +86,14 @@
 .table tbody tr:nth-child(even) td.cPitch,
 .table tbody tr:nth-child(even) td.cASquad { background: var(--panel); }
 .table td { border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.05)); }
-.pnum { color: var(--ink-45); font-size: 0.72rem; font-weight: 600; margin-right: 8px; font-variant-numeric: tabular-nums; }
-.pname { font-weight: 600; font-size: 0.84rem; color: var(--ink); }
+.pnum { color: var(--ink-45); font-size: var(--type-support); font-weight: 600; margin-right: 8px; font-variant-numeric: tabular-nums; }
+.pname { font-weight: 600; font-size: var(--type-body); color: var(--ink); }
 
 .cellbtn {
   width: 44px; height: 36px; margin: 0 auto; border-radius: var(--radius-sm);
   border: 1px solid var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 0.8rem; font-variant-numeric: tabular-nums; transition: all 0.1s ease; user-select: none;
+  font-weight: 800; font-size: var(--type-support); font-variant-numeric: tabular-nums; transition: all 0.1s ease; user-select: none;
 }
 .cellbtn:hover { border-color: var(--line); }
 .cellbtn:disabled { cursor: default; opacity: 0.5; } /* view-only cue (matches .iconBtn) */
@@ -105,19 +105,22 @@
 .pchip {
   min-height: 34px; display: inline-flex; align-items: center; /* dense-grid touch target */
   padding: 4px 12px; border-radius: 999px; border: 1px solid var(--best-bd);
-  background: var(--best-bg); color: var(--best-fg); font-weight: 800; font-size: 0.72rem; cursor: pointer;
+  background: var(--best-bg); color: var(--best-fg); font-weight: 800; font-size: var(--type-support); cursor: pointer;
 }
 .pchip.off { border-color: var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45); font-weight: 700; }
 .pchip:disabled { cursor: default; opacity: 0.5; }
 .capInput {
   width: 54px; min-height: 30px; text-align: center; background: var(--home-card, rgba(255, 255, 255, 0.04)); border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm); color: var(--okay-fg); font-size: 0.66rem; font-weight: 600; padding: 3px 4px;
+  border-radius: var(--radius-sm); color: var(--okay-fg); font-size: var(--type-label); font-weight: 600; padding: 3px 4px;
   font-variant-numeric: tabular-nums;
 }
 .capInput::placeholder { color: var(--ink-45); font-weight: 400; }
 .capInput:focus { outline: none; border-color: var(--line); }
 .capInput:disabled { opacity: 0.5; }
 
+/* ⚠ LADDER-EXEMPT: an ICON, not type (type ladder P3, 2026-08-28). This is a star GLYPH filling
+   a 40px control — its size answers to the tap target it has to fill, not to a reading scale.
+   Snapping it to a text step would shrink the affordance to serve a rule about prose. */
 .star {
   width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; /* ≥36 dense-grid target */
   font-size: 1.35rem; line-height: 1; cursor: pointer; color: var(--text-tertiary); /* warm-remaps to --home-dim so the empty-star outline stays visible on cream */
@@ -130,20 +133,20 @@
 .saveBar { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 0 2px; }
 .iconBtn {
   width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line-soft);
-  background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink-70); cursor: pointer; font-size: 1rem;
+  background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink-70); cursor: pointer; font-size: var(--type-heading);
   display: inline-flex; align-items: center; justify-content: center;
 }
 .iconBtn:disabled { opacity: 0.4; cursor: default; }
-.saveStat { color: var(--ink-70); font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; }
+.saveStat { color: var(--ink-70); font-size: var(--type-support); display: inline-flex; align-items: center; gap: 6px; }
 .saveStat .chk { color: var(--success); font-weight: 800; }
-.saveRetry { background: none; border: none; color: var(--danger); font-weight: 700; font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 0; }
+.saveRetry { background: none; border: none; color: var(--danger); font-weight: 700; font-size: var(--type-support); cursor: pointer; text-decoration: underline; padding: 0; }
 .autofill {
-  margin-left: auto; padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.76rem;
+  margin-left: auto; padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: var(--type-support);
   border: 1px solid var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink); text-decoration: none; white-space: nowrap;
 }
 .autofill:hover { border-color: var(--line); }
 
-.foot { margin-top: 12px; font-size: 0.72rem; color: var(--ink-45); padding: 0 4px; }
+.foot { margin-top: 12px; font-size: var(--type-support); color: var(--ink-45); padding: 0 4px; }
 
 /* ── responsive: grid on desktop/tablet, accordion on phone ── */
 .desktopGrid { display: block; }
@@ -164,28 +167,29 @@
 .pcardHead { display: flex; align-items: center; gap: 8px; padding: 11px 12px; cursor: pointer; min-height: 52px; width: 100%; background: none; border: none; text-align: left; }
 .miniChips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 2px; flex: 1 1 auto; }
 .miniChip {
-  font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+  font-size: var(--type-label); font-weight: 700; padding: 2px 7px; border-radius: 999px;
   border: 1px solid var(--line-soft); background: transparent; color: var(--ink-70); font-variant-numeric: tabular-nums;
 }
-.miniPit { font-size: 0.66rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--best-bd); background: var(--best-bg); color: var(--best-fg); }
-.miniStarHead { color: var(--gold); font-size: 1rem; text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.4); }
-.chev { color: var(--ink-45); font-size: 0.8rem; transition: 0.15s; flex: 0 0 auto; display: inline-flex; }
+.miniPit { font-size: var(--type-label); font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--best-bd); background: var(--best-bg); color: var(--best-fg); }
+.miniStarHead { color: var(--gold); font-size: var(--type-heading); text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.4); }
+.chev { color: var(--ink-45); font-size: var(--type-support); transition: 0.15s; flex: 0 0 auto; display: inline-flex; }
 .pcardRow.open .chev { transform: rotate(90deg); }
 .pcardBody { padding: 4px 12px 14px; border-top: 1px solid var(--line-soft); }
-.grpLbl { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-45); margin: 14px 0 8px; }
+.grpLbl { font-size: var(--type-label); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-45); margin: 14px 0 8px; }
 
 .pitchRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.checkLabel { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--ink); min-height: 40px; }
+.checkLabel { display: inline-flex; align-items: center; gap: 8px; font-size: var(--type-body); cursor: pointer; color: var(--ink); min-height: 40px; }
 .rankSelect, .capNum {
   background: var(--home-card, rgba(255, 255, 255, 0.05)); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
-  color: var(--ink); font-size: 0.82rem; padding: 9px 10px; min-height: 40px;
+  color: var(--ink); font-size: var(--type-body); padding: 9px 10px; min-height: 40px;
 }
 .rankSelect:focus, .capNum:focus { outline: none; border-color: var(--line); }
 .fieldMini { display: flex; flex-direction: column; gap: 5px; }
-.fieldMini label { font-size: 0.68rem; color: var(--ink-45); }
+.fieldMini label { font-size: var(--type-label); color: var(--ink-45); }
 .aSquadRow { display: flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 44px; }
-.aSquadRow .lab { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
-.sub { font-size: 0.7rem; color: var(--ink-45); margin: 2px 0 0; }
+.aSquadRow .lab { font-size: var(--type-body); font-weight: 600; color: var(--ink); }
+.sub { font-size: var(--type-label); color: var(--ink-45); margin: 2px 0 0; }
+/* ⚠ LADDER-EXEMPT: an ICON, not type — same reasoning as `.star` above, in a 44px control. */
 .miniStar {
   margin-left: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; /* ≥40 mobile target */
   font-size: 1.6rem; color: var(--text-tertiary); cursor: pointer; background: none; border: none; padding: 0;
@@ -194,9 +198,9 @@
 .miniStar:disabled { cursor: default; opacity: 0.5; }
 
 /* empty / read-only states */
-.empty { padding: 28px 18px; text-align: center; color: var(--ink-70); font-size: 0.85rem; }
+.empty { padding: 28px 18px; text-align: center; color: var(--ink-70); font-size: var(--type-body); }
 .empty a { color: var(--okay-fg); text-decoration: none; font-weight: 600; }
-.readOnlyNote { font-size: 0.72rem; color: var(--ink-45); margin: 10px 2px 0; }
+.readOnlyNote { font-size: var(--type-support); color: var(--ink-45); margin: 10px 2px 0; }
 
 /* ── Warm portal — ratified depth-chart palette (TH-5 ③), gated ──────────────────
    The board defines its own near-white ink + pastel tri-tier palette for the DARK surface;

@@ -14591,6 +14591,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 21,
+        "column_name": "money_in_meaning",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_plan_template_tags",
         "pos": 1,
         "column_name": "template_id",
@@ -27350,6 +27359,18 @@
         "table_name": "rep_team_payment_requests",
         "detail": "rep_team_payment_requests_amount_check",
         "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_meaning_is_incoming_check",
+        "check_clause": "((money_in_meaning IS NULL) OR (request_type = 'charge_to_org'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_money_in_meaning_check",
+        "check_clause": "((money_in_meaning IS NULL) OR (money_in_meaning = ANY (ARRAY['funding'::text, 'reimbursement'::text])))"
       },
       {
         "kind": "CHECK",

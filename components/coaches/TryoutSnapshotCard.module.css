@@ -24,19 +24,19 @@
 }
 .title {
   margin: 0;
-  font-size: 0.9rem; font-weight: 700;
+  font-size: var(--type-body); font-weight: 700;
   color: var(--text-primary);
   display: inline-flex; align-items: center; gap: 0.35rem;
 }
 .meta {
-  font-size: 0.73rem;
+  font-size: var(--type-support);
   color: rgba(255, 255, 255, 0.45);
   white-space: nowrap;
 }
 
 /* Inline variant — inside the walkthrough step, where the card chrome already exists. */
 .inlineLabel {
-  font-size: 0.68rem; font-weight: 700;
+  font-size: var(--type-label); font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
   margin: 1rem 0 0.5rem;
@@ -47,11 +47,11 @@
 .composite {
   display: flex; align-items: baseline; gap: 0.35rem;
   margin: 0.6rem 0 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: rgba(255, 255, 255, 0.5);
 }
 .compositeValue {
-  font-size: 1.05rem; font-weight: 700;
+  font-size: var(--type-heading); font-weight: 700;
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -60,7 +60,7 @@
 /* The audience line — rendered ON the card, per R3's "state the audience on screen" precedent. */
 .note {
   margin: 0.75rem 0 0;
-  font-size: 0.73rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.45);
 }

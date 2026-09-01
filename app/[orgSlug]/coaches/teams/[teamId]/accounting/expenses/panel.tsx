@@ -80,12 +80,9 @@ import {
 import { taxonomyKey } from '@/lib/coach-money-derived';
 /* The one "what lands beyond what is owed" rule — shared with the dues receipt book, cents-safe. */
 import { overpaymentExcess } from '@/lib/dues-payments';
-/* The "Where it lands" preview and the credit-application rule it runs under — shared with the
-   drive leaderboard, which drew this same block until its logging door moved here (P2). */
-import {
-  previewCreditLanding, normalizeCreditApplicationMode,
-  type CreditApplicationMode, type OpenBillForPreview,
-} from '@/lib/dues-credits';
+import { futureReceivedDateRefusal, moneyMovedMaxDate } from '@/lib/money-date-guards';
+/* ⚰ The "Where it lands" preview imports left with the preview (owner ruling 2026-08-31 —
+   see the note where it used to render, in the drive branch). */
 /* ⚠ `MONEY_IN_SOURCES` / `MONEY_IN_SOURCE_LABEL` ARE NO LONGER IMPORTED — the "Who paid it back"
    select they rendered is gone (P2 §2.4). The constants stay in the module: the route still
    validates against them, so a saved label survives an edit and an export. */
@@ -713,14 +710,10 @@ interface ConvDuesPlayer { id: string; name: string; outstanding: number; payabl
 interface ConvDrive { id: string; name: string }
 interface ConvDriveDetail {
   rebatePercent: number;
-  /** The team's credit-application rule — the preview must land money the way saving will. */
-  creditApplication: CreditApplicationMode;
   players: {
     playerId: string;
     playerName: string;
     logged: number | null;
-    /** For the "Where it lands" preview (binding mockup §2) — carried by the same route read. */
-    openBills: OpenBillForPreview[];
   }[];
 }
 interface ConvClubBill {
@@ -1895,18 +1888,12 @@ function MoneyRecordsPanel({
         ...prev,
         [driveId]: {
           rebatePercent: Number(data.fundraiser?.playerRebatePercent ?? 0),
-          /* ⚠ NORMALISED, NEVER TRUSTED RAW — the same door every other reader of this setting
-             goes through, so an unknown value falls back to the documented default instead of
-             quietly landing credits in a mode that does not exist. */
-          creditApplication: normalizeCreditApplicationMode(data.creditApplication),
           players: ((data.players ?? []) as Array<{
             playerId: string; playerName: string; entry: { amountRaised?: number } | null;
-            openBills?: OpenBillForPreview[];
           }>).map(p => ({
             playerId: p.playerId,
             playerName: p.playerName,
             logged: p.entry ? Number(p.entry.amountRaised ?? 0) : null,
-            openBills: p.openBills ?? [],
           })),
         },
       }));
@@ -2213,6 +2200,11 @@ function MoneyRecordsPanel({
       if (!conv.duesPlayerId) throw new Error('Pick which player the payment is for.');
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
       if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
+      /* ⚠ Record is for money that has already moved (QA §123 Phase C). The spend branch's
+         refusal reads `form.paidDate`; this branch runs on `form.receivedDate`, which is why it
+         was never covered. The server refuses too — one sentence, lib/money-date-guards.ts. */
+      const duesFutureRefusal = futureReceivedDateRefusal(form.receivedDate, 'payment');
+      if (duesFutureRefusal) throw new Error(duesFutureRefusal);
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/players/${conv.duesPlayerId}/dues-payments`, {
           method: 'POST',
@@ -2230,6 +2222,10 @@ function MoneyRecordsPanel({
       if (!conv.drivePlayerId) throw new Error('Pick which player it counts for.');
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
       if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
+      // The same grammar as the dues branch above (Phase C) — the third money-in door, kept in
+      // step in the same pass rather than left behind for a third release.
+      const driveFutureRefusal = futureReceivedDateRefusal(form.receivedDate, 'drive entry');
+      if (driveFutureRefusal) throw new Error(driveFutureRefusal);
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${conv.driveId}/entries`, {
           method: 'POST',
@@ -2255,6 +2251,14 @@ function MoneyRecordsPanel({
     } else if (convBranch === 'sponsor') {
       if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
       if (!form.receivedDate) throw new Error('Enter the day the money arrived.');
+      /* ⚠ THE FOURTH MONEY-IN DOOR (owner-raised 2026-08-30, walking §122). Phase C wired the dues
+         and drive branches and its own header called the drive "the third money-in door" — there
+         are four, and this was the one left open: the arrivals route refused a future date while
+         this form still offered one, so a coach filled the whole thing in and learned on save. A
+         foreseeable refusal must be shown, not discovered (§118). The picker now caps too; this is
+         the belt, because a typed date can still get past a `max`. */
+      const sponsorFutureRefusal = futureReceivedDateRefusal(form.receivedDate, 'sponsor cheque');
+      if (sponsorFutureRefusal) throw new Error(sponsorFutureRefusal);
       if (conv.sponsorId) {
         /* An ARRIVAL against an existing sponsor (mig 268) — the record page's locked door. The
            stored credit plan earns as the money lands; this branch only says what came and when. */
@@ -4138,7 +4142,7 @@ function MoneyRecordsPanel({
           <div className={styles.field}>
             <label className={styles.label}>Date received *</label>
             <input
-              className={styles.input} type="date"
+              className={styles.input} type="date" max={moneyMovedMaxDate()}
               value={form.receivedDate}
               onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
             />
@@ -4219,7 +4223,7 @@ function MoneyRecordsPanel({
                   {loggedCount > 0 && (
                     <p className={styles.formHint}>
                       {loggedCount === 1 ? '1 player already has' : `${loggedCount} players already have`}{' '}
-                      an amount logged — change those from the drive&apos;s own leaderboard.
+                      an amount logged — change those from the drive&apos;s own row on Fundraising.
                     </p>
                   )}
                 </>
@@ -4234,52 +4238,26 @@ function MoneyRecordsPanel({
           <div className={styles.field}>
             <label className={styles.label}>Date received *</label>
             <input
-              className={styles.input} type="date"
+              className={styles.input} type="date" max={moneyMovedMaxDate()}
               value={form.receivedDate}
               onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
             />
           </div>
           {convNoteField('Optional')}
-          {/* ⚠⚠ "WHERE IT LANDS" CAME WITH THE DOOR (money centralization P2, 2026-08-23).
-              It is binding mockup §2 and it lived on the drive's leaderboard, where it rendered
-              for NEW entries only — the exact case this conversation absorbed. Re-pointing the
-              door without it would have deleted the preview from the product while leaving its
-              code behind a condition that can no longer be true. Same helper, same shared
-              application arithmetic, same rows: which of this family’s bills the rebate lowers,
-              and by how much, before anything saves. */}
-          {detail && selPlayer && credit > 0.005 && (() => {
-            const landing = previewCreditLanding(selPlayer.openBills, credit, detail.creditApplication);
-            return (
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>
-                  Where it lands — {fmt(credit)} credit ({detail.rebatePercent}% of {fmt(amount)})
-                </label>
-                {landing.rows.length === 0 ? (
-                  <p className={styles.formHint}>
-                    {detail.creditApplication === 'keep_separate'
-                      ? 'Credits are kept separate on this team — bills don’t move; the amount is owed back at season’s end.'
-                      : 'No open bills — the credit becomes money owed back to this family.'}
-                  </p>
-                ) : landing.rows.map(r => (
-                  <p key={r.installmentNumber} className={styles.formHint}>
-                    Installment #{r.installmentNumber}{r.dueDate ? ` — due ${fmtDate(r.dueDate)}` : ''}:{' '}
-                    {r.newToSend <= 0.005
-                      ? 'covered — nothing to send'
-                      : `was ${fmt(r.wasToSend)} to send — now ${fmt(r.newToSend)}`}
-                  </p>
-                ))}
-                {landing.leftover > 0.005 && detail.creditApplication !== 'keep_separate' && (
-                  <p className={styles.formHint}>
-                    {fmt(landing.leftover)} more than the open bills — owed back to this family.
-                  </p>
-                )}
-              </div>
-            );
-          })()}
+          {/* ⚰ THE "WHERE IT LANDS" PREVIEW IS RETIRED (owner ruling 2026-08-31 — "keep it
+              simple", superseding binding mockup §2's preview with eyes open). It computed which
+              of the family's dues installments the credit would lower — and its two prose branches
+              could BOTH render on a family with nothing owing, saying the same fact twice in
+              words the owner himself couldn't parse ("open bills" — a word the Ledger fold had
+              meanwhile claimed for money the TEAM owes). What a coach needs before saving is one
+              sentence, and the consequence line below is it: the family is CREDITED — true in
+              every application mode, whether the credit lowers what they still send or becomes
+              money owed back. The landing arithmetic still runs where it always really lived:
+              in the save itself, and on the family's own dues screen. */}
           {detail && selPlayer && amount > 0 && consequence(<>
-            <strong>the drive&apos;s total rises {fmt(amount)}</strong>
-            {credit > 0.005 && <> · {selPlayer.playerName}&apos;s family earns{' '}
-              <strong>{fmt(credit)} off dues</strong> ({detail.rebatePercent}% player credit)</>}.
+            <strong>the drive&apos;s total rises by {fmt(amount)}</strong>
+            {credit > 0.005 && <> · <strong>{fmt(credit)}</strong> is credited to{' '}
+              {selPlayer.playerName}&apos;s family ({detail.rebatePercent}%)</>}.
             {' '}Shows on the ledger as fundraising income.
           </>)}
         </>
@@ -4388,6 +4366,7 @@ function MoneyRecordsPanel({
               <label className={styles.label}>Date received *</label>
               <input
                 className={styles.input} type="date"
+                max={moneyMovedMaxDate()}
                 value={form.receivedDate}
                 onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
               />
@@ -4449,6 +4428,7 @@ function MoneyRecordsPanel({
             <label className={styles.label}>Date received *</label>
             <input
               className={styles.input} type="date"
+              max={moneyMovedMaxDate()}
               value={form.receivedDate}
               onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
             />
@@ -4540,7 +4520,7 @@ function MoneyRecordsPanel({
           <div className={styles.field}>
             <label className={styles.label}>Date paid *</label>
             <input
-              className={styles.input} type="date" max={tournamentToday()}
+              className={styles.input} type="date" max={moneyMovedMaxDate()}
               value={form.paidDate}
               onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
             />
@@ -5548,7 +5528,7 @@ function MoneyRecordsPanel({
 
           It is NOT a duplicate of Record, and the asymmetry is a ruling rather than an oversight
           (B2, 2026-08-23): Record is for money that MOVED; a bill is a PLAN — nothing moves when
-          one is saved. This button's standing is New Fundraiser's and Generate installments': a
+          one is saved. This button's standing is New Fundraiser's and Set dues for all players': a
           setup form for an expectation, on the screen that expectation lives on. ⚠ Do not "finish
           the job" by retiring it; there would then be no door to a payment schedule anywhere.
 
@@ -6677,7 +6657,7 @@ function MoneyRecordsPanel({
                   ⚠ EDIT MODE IS UNTOUCHED: a saved record never switches kind. */}
               {/* ⚠⚠ THE COMMITMENT DOOR ASKS NO "WHAT HAPPENED?" EITHER (owner ruling B2,
                   2026-08-23). Payables' "Add a commitment" is a SETUP form for a plan — the same
-                  standing as New Fundraiser or Generate installments — and the conversation is for
+                  standing as New Fundraiser or Set dues for all players — and the conversation is for
                   money that MOVED. Offering the eight sentences here would put the seven answers
                   that record real money on a door that records none of them, and would re-open the
                   paid/owed fork through the back way. So it states its kind, exactly as an edit
@@ -6895,7 +6875,7 @@ function MoneyRecordsPanel({
                   <input
                     className={styles.input}
                     type="date"
-                    max={tournamentToday()}
+                    max={moneyMovedMaxDate()}
                     value={form.paidDate}
                     onChange={e => setForm(f => ({ ...f, paidDate: e.target.value }))}
                   />
@@ -6957,6 +6937,7 @@ function MoneyRecordsPanel({
                   <input
                     className={styles.input}
                     type="date"
+                    max={moneyMovedMaxDate()}
                     value={form.receivedDate}
                     onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
                   />

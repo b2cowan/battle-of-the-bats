@@ -594,6 +594,24 @@ export const MIDSEASON_SPONSOR = {
  * neighbouring tab competes with it, and a club refusing this coach is a sour note in a shop
  * window. Both states are covered in the help guide instead. What this shows is the mechanism
  * working: a bill part-paid with one instalment ahead, and money moving both directions.
+ *
+ * ⚠⚠ **AND IT IS FILED, SINCE 2026-08-30 — the point of the screen was invisible before.** Every
+ * row here was left with no category and no item, which is a legal state and a terrible
+ * demonstration: a prospect opening Budget vs. Actual found the club's money sitting under
+ * *Not itemized*, the one row that says the product could not tell them anything about it. Filing
+ * the bill and the requests is what makes club money report under the team's OWN words, which is
+ * the reason the Club screen exists at all.
+ *
+ * ⚠⚠ **THE THIRD REQUEST IS A GRANT, AND IT IS HERE TO SHOW THE FORK** (mig 271). Money arriving
+ * from a club is either new money or a repayment, the coach says which, and the two land on
+ * opposite sides of the report. With only a repayment seeded, the demo would show the answer
+ * without ever showing there is a question — which is exactly how the product read before this
+ * release.
+ *
+ * ⚠ **STILL CREDITED TO NOBODY AND STILL TOUCHING NO FAMILY'S BILL.** The grant belongs to the
+ * team, not to a player: no rebate, no credit, no payer — the same rule MIDSEASON_SPONSOR was made
+ * club-wide under. The tour's pinned $240-across-two-families and its $90-of-$120 part-paid row
+ * survive untouched, and check-demo-coach.mjs asserts it.
  */
 export const MIDSEASON_CLUB_MONEY = {
   /** What the club has billed the team — one shared cost, split, three instalments. */
@@ -603,6 +621,9 @@ export const MIDSEASON_CLUB_MONEY = {
     orgTotal: 6300,
     teamShare: 900,
     notes: 'Your share of the club’s summer permit block, split by home dates.',
+    /** The team's own words for it — the same pair its budget plans diamond rentals under, so the
+     *  club's bill and the team's own spending on permits meet on ONE row of the report. */
+    files: { category: 'Facilities', item: 'Diamond Permits' },
     /** Two settled, one ahead — the state a well-run team is actually in mid-season. */
     installments: [
       { number: 1, amount: 300, dueOffset: -62, paidOffset: -64 },
@@ -610,10 +631,12 @@ export const MIDSEASON_CLUB_MONEY = {
       { number: 3, amount: 300, dueOffset: 12, paidOffset: null },
     ],
   },
-  /** Both directions, and both live states. */
+  /** Both directions, both incoming meanings, and both live states. */
   requests: [
     {
       requestType: 'charge_to_org',
+      /** The club paying back a cost this coach fronted — it NETS into the permit line. */
+      moneyInMeaning: 'reimbursement',
       amount: 180,
       description: 'Diamond permit — paid the city direct',
       paymentMethod: 'E-Transfer',
@@ -621,6 +644,26 @@ export const MIDSEASON_CLUB_MONEY = {
       status: 'approved',
       createdOffset: -26,
       reviewedOffset: -21,
+      files: { category: 'Facilities', item: 'Diamond Permits' },
+    },
+    {
+      requestType: 'charge_to_org',
+      /** New money — its own revenue row, with a dash under Budget because nobody planned for it.
+       *  ⚠ Modest on purpose: large enough to be a real row, small enough that it can never look
+       *  like the answer to the overdue families the tour is pointing at two tabs away. */
+      moneyInMeaning: 'funding',
+      amount: 250,
+      description: 'Association development grant',
+      paymentMethod: 'E-Transfer',
+      notes: 'Club board approved it for the spring skills block.',
+      status: 'approved',
+      createdOffset: -17,
+      reviewedOffset: -12,
+      /** ⚠ A REAL PLATFORM INCOME WORD, not an invented one. "Grant" is the money-IN side of
+       *  Fundraising in the shared library, so the demo shows a coach picking a word the product
+       *  already offers them — and the picker only offers income words once the answer above is
+       *  "new money", which is the behaviour this row exists to demonstrate. */
+      files: { category: 'Fundraising', item: 'Grant' },
     },
     {
       requestType: 'payment_to_org',
@@ -631,6 +674,10 @@ export const MIDSEASON_CLUB_MONEY = {
       status: 'pending',
       createdOffset: -4,
       reviewedOffset: null,
+      /** ⚠ THE ONE UNFILED ROW, ON PURPOSE — it is what makes the row's "File it" affordance
+       *  visible in the demo, and it is the harmless one to leave: nothing is settled on it, so it
+       *  sits in the forward view and moves no reported figure. */
+      files: null,
     },
   ],
 } as const;
@@ -690,7 +737,7 @@ export const MIDSEASON_MONEY_TAGS = [
  *
  * ⚠ DO NOT "FIX" THIS BY RE-DERIVING IT FROM `MIDSEASON_BUDGET_LINES`. Every other demo team sets
  * its estimate to exactly its itemized total, which is tidy and, on this one team, would hide the
- * feature it is here to show. The Generate Player Installments sheet offers a coach three ways to
+ * feature it is here to show. The Set-dues-for-all-players sheet offers a coach three ways to
  * price a season — split the itemized lines, split the estimate, or type the amounts — and the
  * first two are the SAME subtraction against two different tops. Where the tops are equal, two of
  * the three cards print an identical figure and the choice reads as decoration.

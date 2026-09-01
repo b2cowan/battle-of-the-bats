@@ -17,14 +17,14 @@
   margin: 0 0 0.4rem;
 }
 .prevLabel {
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
 .prevTag {
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   font-weight: 700;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.12);
@@ -48,17 +48,17 @@
   flex-shrink: 0;
   object-fit: contain;
 }
-.paperName { font-weight: 800; font-size: 0.92rem; color: #14141f; line-height: 1.25; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
-.paperSub { font-size: 0.68rem; color: #5c5c70; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperName { font-weight: 800; font-size: var(--type-body); color: #14141f; line-height: 1.25; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperSub { font-size: var(--type-label); color: #5c5c70; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
 .paperDivide { border-top: 1px solid #d6d6de; margin: 0 0.8rem; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
-.paperTitle { padding: 0.45rem 0.8rem 0.1rem; font-weight: 700; font-size: 0.8rem; color: #14141f; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTitle { padding: 0.45rem 0.8rem 0.1rem; font-weight: 700; font-size: var(--type-support); color: #14141f; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
 .paperTable {
   margin: 0.4rem 0.8rem 0.6rem;
   border: 1px solid #e2e2ea; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
   border-radius: 2px;
   overflow: hidden;
 }
-.paperTr { display: flex; font-size: 0.62rem; color: #2a2a38; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+.paperTr { display: flex; font-size: var(--type-token); color: #2a2a38; } /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
 .paperTr > span {
   flex: 1;
   padding: 0.22rem 0.4rem;
@@ -73,7 +73,7 @@
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.3rem 0.8rem 0.5rem;
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   color: #8c8c9b; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
   flex-wrap: wrap;
 }
@@ -88,7 +88,7 @@
   object-fit: contain;
   flex-shrink: 0;
 }
-.fromClub { font-size: 0.7rem; color: var(--text-tertiary); font-style: italic; }
+.fromClub { font-size: var(--type-label); color: var(--text-tertiary); font-style: italic; }
 .swatchInput {
   width: 34px;
   height: 34px;
@@ -100,11 +100,11 @@
 }
 .hexInput {
   font-family: var(--font-data, ui-monospace, monospace);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   width: 92px;
 }
 .chipBtn {
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
   background: var(--home-card, rgba(255, 255, 255, 0.05));
   border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));

@@ -16,13 +16,13 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .title {
-  font-size: 0.9rem; font-weight: 800; color: var(--white-90); margin: 0;
+  font-size: var(--type-body); font-weight: 800; color: var(--white-90); margin: 0;
   display: flex; align-items: center; gap: 0.5rem;
 }
 /* Portal voice, not the admin data face (owner 2026-08-17): sans + tabular numerals — the same
    treatment the scoreboard's figures use, never --font-data (that's tournament-admin idiom). */
 .progress {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: rgba(255,255,255,0.5);
   font-variant-numeric: tabular-nums;
 }
@@ -49,16 +49,16 @@
 
 .rowMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.05rem; }
 .rowTitle {
-  font-size: 0.88rem; font-weight: 700; color: var(--white-90);
+  font-size: var(--type-body); font-weight: 700; color: var(--white-90);
   display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
 }
-.rowStatus { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
-.rowStatusFilled { font-size: 0.78rem; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
+.rowStatus { font-size: var(--type-support); color: rgba(255,255,255,0.45); }
+.rowStatusFilled { font-size: var(--type-support); color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
 
 /* No `composes` — the Turbopack non-transitivity trap; the two tags carry the recipe directly.
    Sans micro-label, the .nextLabel idiom — mono/2px-radius tags are the ADMIN badge recipe. */
 .tagReq, .tagOpt {
-  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  font-size: var(--type-token); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
   padding: 0.12rem 0.45rem; border-radius: var(--radius-sm);
 }
 .tagReq { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.12); }

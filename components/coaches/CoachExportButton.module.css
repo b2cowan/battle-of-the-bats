@@ -75,14 +75,14 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
   color: var(--text-primary);
 }
 /* The extension is the technical half — there for the coach who wants it, quiet for the one who
    doesn't. */
 .ext {
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-secondary);
   opacity: 0.8;
@@ -92,7 +92,7 @@
    Wraps under the name on a narrow phone rather than squeezing the name. */
 .hint {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   font-weight: 600;
   line-height: 1.35;
   color: var(--text-secondary);

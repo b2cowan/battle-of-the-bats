@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { DUES_PAYMENT_METHODS } from '@/lib/types';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -56,6 +57,14 @@ export const POST = withObservability(async (req: Request,
   }
   if (typeof receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) {
     return NextResponse.json({ error: 'receivedDate must be a YYYY-MM-DD date' }, { status: 400 });
+  }
+  /* ⚠ RECORD IS FOR MONEY THAT HAS ALREADY MOVED (QA §123 Phase C — the one grammar, same as
+     money-out and sponsor arrivals). The books entry is dated this field, so a future receipt
+     drops the family's bill today while landing the income in a later month's reports. The
+     sentence — and why it offers no door — lives ONCE, in lib/money-date-guards.ts. */
+  const futureRefusal = futureReceivedDateRefusal(receivedDate, 'payment');
+  if (futureRefusal) {
+    return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
   if (!METHODS.includes(method)) {
     return NextResponse.json({ error: 'Invalid method' }, { status: 400 });

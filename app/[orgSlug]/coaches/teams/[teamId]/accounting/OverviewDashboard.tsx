@@ -16,7 +16,7 @@ import styles from './overview-dashboard.module.css';
  * "how is the plan tracking", and two of the plan's three funding streams live
  * elsewhere as their own facts. Deliberately no lime CTA and no write action
  * anywhere here (owner call 2026-08-11): the dashboard reports; acting happens
- * one click deeper — the dues row's "Generate installments" door is the same
+ * one click deeper — the dues row's "Set dues for all players" door is the same
  * kind of empty-state door the card already keeps for "no budget yet". */
 
 interface Props {
@@ -86,7 +86,17 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
   const pct = dues.expected > 0 ? Math.round((dues.collected / dues.expected) * 100) : 0;
   const toCome = Math.max(dues.expected - dues.collected - dues.overdueAmount, 0);
   const allCollected = dues.expected > 0 && dues.outstanding <= 0.005;
-  const spent = summary.expenses.paidTotal;
+  /* ⚠⚠ THE REPORT'S SPEND, NOT THE TEAM'S OWN (owner D5, 2026-08-30). This read
+     `expenses.paidTotal` — costs the team logged and nothing else — while `headroom` three lines
+     down now counts the club's bill and nets every refund. Left as it was, the card's own
+     subtraction would not hold: the Spending row and its bar would say one thing and the headline
+     above them another, on one card, which is worse than the disagreement with the report that D5
+     set out to fix. `expenses.paidTotal` stays what its name says and keeps its own reader. */
+  const spent = budget.spentAgainstPlan;
+  /* The difference the card has to explain — club money and money back, in one figure. Zero on a
+     standalone team that has never been refunded, which is why the note below is conditional: a
+     sentence about club money on a team with none is noise where a coach reads most carefully. */
+  const spendAdjustment = Math.round((spent - summary.expenses.paidTotal) * 100) / 100;
   const overBudget = summary.headroom != null && summary.headroom < 0;
   const flowMax = Math.max(summary.moneyIn.total, summary.moneyOut.total, 1);
   // The Budget card's shared dollar scale — every planned AND actual figure it
@@ -234,6 +244,19 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                     </span>
                   </div>
                   <PlanBar actual={spent} target={budget.effectiveTotal} scaleMax={scaleMax} />
+                  {/* ⚠ THE CARD SAYS WHAT ITS FIGURE COUNTS (D5) — and only when there is something
+                      to say. The words are the report's, so a coach comparing the two screens reads
+                      one vocabulary rather than working out that "club bills" and "allocations" are
+                      the same thing. New money is deliberately unmentioned: it is revenue, it never
+                      enters this figure, and naming it here would invite the reading that it should. */}
+                  {Math.abs(spendAdjustment) > 0.005 && (
+                    <p className={styles.planEmptyNote}>
+                      <span>
+                        Counts what your club bills you, less anything paid back — the same as
+                        Budget vs. Actual.
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Player dues: collected climbs TO what is actually SCHEDULED — the real
@@ -276,7 +299,7 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                         {/* Live seasons only: an archived season must not grow a door into a
                             write flow (payablesApiUrl is absent exactly there). */}
                         {payablesApiUrl && (
-                          <Link href={hrefs.budgetGenerate} className={styles.planGenLink}>Generate installments →</Link>
+                          <Link href={hrefs.budgetGenerate} className={styles.planGenLink}>Set dues for all players →</Link>
                         )}
                       </p>
                     </>

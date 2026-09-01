@@ -34,6 +34,16 @@ export interface MoneySummary {
   budget: {
     /** The optional ESTIMATED total. When set it IS `effectiveTotal`, in both directions. */
     seasonTotal: number | null;
+    /**
+     * What the season has spent against that plan, on the REPORT's basis — `headroom` is
+     * `effectiveTotal` less this, and the Budget card's Spending row draws this.
+     *
+     * ⚠ NOT `expenses.paidTotal`, and the difference is the whole of D5. That field is the team's
+     * OWN costs and stays what it says; this one adds what the club billed and subtracts what came
+     * back, so the card and Budget vs. Actual answer "can we afford this?" with one voice. See
+     * `spendAgainstPlan` for why each term is there.
+     */
+    spentAgainstPlan: number;
     /** Σ cost lines. Expected funding is never in here. */
     itemizedTotal: number;
     effectiveTotal: number;
@@ -160,6 +170,57 @@ export interface DashboardHrefs {
  * The CSV/PDF exports do NOT come through here (lib/coach-money-exports.ts formats its own), so
  * spreadsheet parsing is unaffected.
  */
+/**
+ * ═══ WHAT THE SEASON HAS SPENT AGAINST ITS PLAN — the hub card's half of ONE arithmetic ═══
+ *
+ * ⚠⚠ WHY THIS EXISTS: TWO SCREENS ONE CLICK APART ANSWERED "can we afford this?" DIFFERENTLY, and
+ * the owner found it (2026-08-15, ratified as D5 on 2026-08-30). The Money hub's Budget card read
+ * the team's own expenses and nothing else, while Budget vs. Actual — reachable from the same card
+ * — counted club money and netted every refund. On the QA fixture that is **$1,980 against
+ * $1,555**. Neither number was wrong on its own terms; the DISAGREEMENT was the bug, because a
+ * coach cannot tell which one to plan from.
+ *
+ * The three corrections, and they are the report's own, not a third opinion:
+ *   · **club COSTS subtract** — a paid instalment of the club's bill and an approved *To the club*
+ *     request are spending, exactly like any other cost. The card could not see either.
+ *   · **money back RETURNS** — a repayment nets into the cost it repaid rather than being revenue,
+ *     on the report and therefore here. Both sources of it: what the club paid back, and what a
+ *     coach recorded coming back from anyone else.
+ *   · **new money NEVER ENTERS** — a club grant is REVENUE (mig 271). Headroom is a cost figure;
+ *     letting a grant shrink it would say the team may spend more because it was given more, which
+ *     is a budgeting opinion the product has no business holding.
+ *
+ * ⚠⚠ IT IS AN APPROXIMATION OF `rollupMoneyReport`, AND THAT HAS TO BE SAID OUT LOUD. The report's
+ * figure is the sum of its category rows; this route does not run the rollup (it is the heaviest
+ * read in the portal and the hub loads on every Money screen), so it re-derives the same total from
+ * the same records. The two can differ in exactly one case, by construction: a refund filed against
+ * an item that is REVENUE and nothing else nets on the revenue side there (`sideForRefund`) and is
+ * subtracted from spending here. That needs an item with no cost side at all, which the money-back
+ * form cannot produce — its picker offers the spending words — so it takes a word being moved
+ * between sides after the fact. Stated rather than silently accepted: if it ever bites, the fix is
+ * this function learning the rule, not the card growing a caveat.
+ *
+ * ⚠ PURE, so it can be tested without a database — which is the point. The QA fixture carries no
+ * recorded money back at all, so a re-measure of it would show the hub and the report agreeing and
+ * prove nothing about that term. This function's tests are the evidence for it.
+ */
+export function spendAgainstPlan(x: {
+  /** The season's own costs, at BUDGET basis — a cost a family fronted is spending the season did. */
+  expensesPaid: number;
+  /** Instalments of the club's bill the team has actually paid. */
+  clubBillsPaid: number;
+  /** Approved requests where the team sends the club money. */
+  clubPaymentsOut: number;
+  /** Approved *From the club* requests the coach answered "money back" — and legacy ones. */
+  clubMoneyBack: number;
+  /** Money back the coach recorded from anyone else (`rep_team_money_in`, kind `money_back`). */
+  recordedMoneyBack: number;
+}): number {
+  return Math.round((
+    x.expensesPaid + x.clubBillsPaid + x.clubPaymentsOut - x.clubMoneyBack - x.recordedMoneyBack
+  ) * 100) / 100;
+}
+
 export function fmt(n: number) {
   const abs = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return n < 0 ? `($${abs})` : `$${abs}`;

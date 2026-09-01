@@ -148,7 +148,7 @@
   padding-top: 1.05rem;
 }
 .bandLead {
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -257,7 +257,7 @@
 
 .note {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-tertiary);
 }
@@ -271,7 +271,7 @@
   border-left: 3px solid var(--danger);
   background: rgba(var(--danger-rgb), 0.08);
   border-radius: 0 8px 8px 0;
-  font-size: 0.84rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
 }
 .shortfall strong { color: var(--text-primary); }
@@ -287,10 +287,10 @@
   gap: 0.8rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--home-line, var(--border));
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .detailDesc { display: flex; flex-direction: column; }
-.detailMeta { font-size: 0.72rem; color: var(--text-tertiary); }
+.detailMeta { font-size: var(--type-support); color: var(--text-tertiary); }
 .detailAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .detailTotal {
   border-bottom: none;
@@ -307,7 +307,7 @@
 
 .chooserSub {
   margin: 0 0 0.5rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -323,7 +323,7 @@
   padding: 0.6rem 0.5rem;
   margin: 0 -0.5rem;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: inherit;
   text-decoration: none;
 }
@@ -340,12 +340,12 @@
      truncates into ambiguity — it wraps. */
   min-width: 0;
 }
-.chooserWhen { font-size: 0.72rem; color: var(--text-tertiary); }
+.chooserWhen { font-size: var(--type-support); color: var(--text-tertiary); }
 .chooserAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
 .chooserFoot {
   margin: 0.7rem 0 0;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 

@@ -110,8 +110,14 @@ let playerId = '';
 let sponsorId = '';
 
 async function cleanup() {
-  const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  const marked = (users?.users ?? []).filter(u => u.email === HEAD_EMAIL);
+  // Page through rather than trusting page 1 — cheap robustness against a growing dev DB.
+  const marked: { id: string }[] = [];
+  for (let page = 1; page <= 25; page++) {
+    const { data: users } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    const batch = users?.users ?? [];
+    marked.push(...batch.filter(u => u.email === HEAD_EMAIL));
+    if (batch.length < 200) break;
+  }
 
   const { data: teams } = await admin.from('rep_teams').select('id').like('name', `${MARK}%`);
   for (const t of teams ?? []) {
@@ -131,6 +137,8 @@ async function cleanup() {
       // Payouts too: the guarded-delete tests below write one to prove the payout floor refuses,
       // and a surviving payout row keeps its player undeletable.
       await admin.from('rep_dues_payouts').delete().eq('program_year_id', y.id);
+      // And payments (QA §123: the reconcile tests record real receipts) — same reason.
+      await admin.from('rep_dues_payments').delete().eq('program_year_id', y.id);
       const { data: scheds } = await admin.from('rep_player_dues_schedules').select('id').eq('program_year_id', y.id);
       for (const s of scheds ?? []) await admin.from('rep_player_dues_installments').delete().eq('schedule_id', s.id);
       await admin.from('rep_player_dues_schedules').delete().eq('program_year_id', y.id);
@@ -146,7 +154,15 @@ async function cleanup() {
   }
   for (const u of marked) {
     await admin.from('organization_members').delete().eq('user_id', u.id);
-    await admin.auth.admin.deleteUser(u.id);
+    /* ⚠ THE BOOKS OUTLIVE THE TEAMS (found 2026-08-30, the first run after §123's tests recorded
+       real dues payments): a removed payment VOIDS its ledger entry rather than deleting it — the
+       books only grow — so accounting rows stamped created_by=this user survive every table wipe
+       above, their FK blocks auth deleteUser, and the failure was SILENT (unchecked), stranding
+       the user so every later run collided at createUser. Fixture rows in a fixture ledger:
+       delete them, then delete the user, and THROW if that fails rather than hiding it again. */
+    await admin.from('accounting_entries').delete().eq('created_by', u.id);
+    const { error: delUserErr } = await admin.auth.admin.deleteUser(u.id);
+    if (delUserErr) throw new Error(`fixture user could not be deleted (${delUserErr.message}) — later runs will collide at createUser`);
   }
 }
 
@@ -641,5 +657,297 @@ test.describe('a sponsor’s money follows its arrivals, in every reader', () =>
     const { data: rows } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
     await call(page, `${api()}/fundraisers/${driveId}/entries/${(rows ?? [])[0].id}`, { method: 'DELETE', body: undefined });
     await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+  });
+  /**
+   * ⚠⚠ WHY THE REFUSAL CAN SAFELY QUOTE MONEY — the invariant a review challenged.
+   *
+   * The drive-delete refusal gates on the entry COUNT but names the TOTAL, and a review argued
+   * that a $0 entry would make it read "$0.00 logged across 1 entry" — a sentence arguing against
+   * itself — because both writers validate the amount as merely non-negative.
+   *
+   * It cannot happen, and the reason is a table away from the code that looks responsible:
+   * `accounting_entries.amount` carries CHECK (amount > 0) (mig 016), and every drive entry posts
+   * one. So the DATABASE refuses a zero-amount entry at creation, and refuses an edit down to zero
+   * the same way — leaving the original amount untouched, which is the part worth pinning, because
+   * a half-applied edit here would be worse than a refused one.
+   *
+   * This test is the guard on that reasoning. If someone ever relaxes the CHECK, this fails and
+   * points at the sentence that would start lying — rather than the sentence quietly starting to.
+   */
+  test('a zero-amount drive entry cannot be created or edited into', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const made = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: { kind: 'fundraiser', name: `${MARK} zero drive`, playerRebatePercent: CREDIT_PERCENT },
+    });
+    const driveId = (made.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    // 1 — Creating one at $0 is refused, and leaves nothing behind.
+    const atZero = await call(page, `${api()}/fundraisers/${driveId}/entries`, {
+      method: 'POST',
+      body: { playerId, amountRaised: 0, receivedDate: ARRIVAL_1_DATE },
+    });
+    expect(atZero.status, 'the books refuse a $0 income row, so the entry never exists').not.toBe(201);
+    const { data: afterZero } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
+    expect(afterZero ?? [], 'and no half-written entry survives the refusal').toHaveLength(0);
+
+    // 2 — A real entry, then an edit down to $0: also refused, amount UNCHANGED.
+    const logged = await call(page, `${api()}/fundraisers/${driveId}/entries`, {
+      method: 'POST',
+      body: { playerId, amountRaised: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE },
+    });
+    expect(logged.status).toBe(201);
+    const { data: rows } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', driveId);
+    const entryId = (rows ?? [])[0].id as string;
+
+    const toZero = await call(page, `${api()}/fundraisers/${driveId}/entries/${entryId}`, {
+      method: 'PATCH', body: { amountRaised: 0 },
+    });
+    expect(toZero.status, 'editing down to $0 is refused too').not.toBe(200);
+    const { data: still } = await admin.from('rep_fundraiser_entries')
+      .select('amount_raised').eq('id', entryId).single();
+    expect(Number(still!.amount_raised),
+      '⚠ and the amount is UNCHANGED — a refused edit must not half-apply').toBe(ARRIVAL_1);
+
+    // 3 — So the refusal always has real money to name. Never "$0.00".
+    const refused = await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+    expect(refused.status).toBe(409);
+    const msg = (refused.body as { error: string }).error;
+    expect(msg, 'the figure it quotes is the real one').toContain('800.00');
+    expect(msg, 'and it can never be the self-defeating one').not.toContain('$0.00');
+
+    await call(page, `${api()}/fundraisers/${driveId}/entries/${entryId}`, { method: 'DELETE', body: undefined });
+    const gone = await call(page, `${api()}/fundraisers/${driveId}`, { method: 'DELETE', body: undefined });
+    expect(gone.status, 'emptied, it deletes').toBe(200);
+  });
+  /**
+   * ── MONEY THAT MOVED HAS A DATE IN THE PAST — every door, both layers ───────────────────────
+   * (owner-raised 2026-08-30 walking §122: "we at least have to be consistent between types of
+   * transactions". Plan: COACH_MONEY_DATE_CONSISTENCY_PLAN.md.)
+   *
+   * ⚠ THE POINT IS THE SERVER, NOT THE PICKER. Three pickers gained a cap in the same change, and
+   * a cap is worth exactly nothing on its own — a typed date, a stale tab or any other caller
+   * walks straight past it. These assertions are the half that binds.
+   *
+   * ⚠ AND THE FORWARD-LOOKING DATES MUST STILL ACCEPT THE FUTURE. A pledge's expected-by is the
+   * whole reason the sponsor refusal can hand off to it; if a tidy-up ever caps that too, the
+   * refusal starts pointing at a door that no longer opens. Asserted here on purpose.
+   */
+  test('every money-that-moved door refuses a future date — and the forward-looking ones still take one', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const tomorrow = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    // ── 1. A sponsor cheque dated ahead: refused, and the refusal NAMES the way out.
+    const pledge = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: {
+        kind: 'sponsor', sponsorStatus: 'pledged', name: `${MARK} date rules`,
+        sponsorAmount: 500, creditPlan: [],
+      },
+    });
+    expect(pledge.status).toBe(201);
+    const dateSponsorId = (pledge.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    const aheadCheque = await call(page, `${api()}/fundraisers/${dateSponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: 100, receivedDate: tomorrow, method: 'cheque' },
+    });
+    expect(aheadCheque.status, 'a cheque cannot arrive tomorrow').toBe(400);
+    expect((aheadCheque.body as { error: string }).error,
+      '⚠ and the refusal hands off to the control that DOES take a future date')
+      .toContain('expected-by');
+
+    /* The same money on a date that HAS happened still records — the rule is about the date, not
+       the door. Deliberately a fixed past date rather than a computed "today": the server compares
+       against the ORG clock, and re-deriving that here in UTC is how a spec starts failing for one
+       hour a day in a timezone nobody runs it in. */
+    const arrived = await call(page, `${api()}/fundraisers/${dateSponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: 100, receivedDate: ARRIVAL_1_DATE, method: 'cheque' },
+    });
+    expect(arrived.status, 'a cheque that has arrived still records').toBe(201);
+
+    // ── 2. Income and money back: the server hole this change closed.
+    for (const kind of ['income', 'money_back']) {
+      const ahead = await call(page, `${api()}/money-in`, {
+        method: 'POST',
+        body: { kind, amount: 25, receivedDate: tomorrow, description: `${MARK} ahead` },
+      });
+      expect(ahead.status, `${kind} cannot be dated ahead either`).toBe(400);
+      expect((ahead.body as { error: string }).error, 'and it says why in words, not a code')
+        .toContain('happened yet');
+    }
+
+    // ── 3. ⚠ THE OTHER HALF: a PLEDGE's expected-by must still accept the future.
+    const expected = await call(page, `${api()}/fundraisers/${dateSponsorId}`, {
+      method: 'PATCH',
+      body: { expectedBy: tomorrow },
+    });
+    expect(expected.status,
+      '⚠ a promise is SUPPOSED to point ahead — capping this would break the refusal above').toBe(200);
+
+    // Cleanup: unwind the arrival, then the record.
+    const { data: arrivals } = await admin.from('rep_fundraiser_entries').select('id').eq('fundraiser_id', dateSponsorId);
+    for (const a of arrivals ?? []) {
+      await call(page, `${api()}/fundraisers/${dateSponsorId}/arrivals/${a.id}`, { method: 'DELETE', body: undefined });
+    }
+    await call(page, `${api()}/fundraisers/${dateSponsorId}`, { method: 'DELETE', body: undefined });
+  });
+});
+
+/**
+ * ── THE RECONCILE COUNTS THE CREDITS IT WRITES, AND BOTH SCHEDULE DOORS ASK THE FLOOR ──────────
+ * (QA §123 Phase A — the dues-forms build.)
+ *
+ * The unit suite pins the pure planner; these walk the SEAM the unit test cannot reach — the real
+ * query feeding the real function through the real doors, signed in as a real coach. Both owner-
+ * prompt sequences were reachable from either schedule door and invisible on screen; both were
+ * found by executing the arithmetic, so both are pinned by executing it here.
+ */
+test.describe('a family’s overpayment credit follows the schedule, both doors guarded', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  let p2Id = '';
+  const P2_FIRST = `${MARK}Reconcile`;
+
+  /** The player's overpayment credit rows, amounts only, for exact-set assertions. */
+  async function overpaymentCredits(): Promise<number[]> {
+    const { data } = await admin.from('rep_dues_credits')
+      .select('amount, credit_type').eq('program_year_id', programYearId).eq('player_id', p2Id);
+    return (data ?? []).filter(c => c.credit_type === 'overpayment').map(c => Number(c.amount)).sort((a, b) => a - b);
+  }
+
+  const setTotal = (page: Page, total: number) => call(page, `${api()}/dues`, {
+    method: 'POST',
+    body: { playerId: p2Id, totalAmount: total, installments: [{ installmentNumber: 1, amount: total, dueDate: `${YEAR}-09-01` }] },
+  });
+
+  test('lowering twice tops up to the truth, and restoring removes the stale credit (sequence 1 + 2)', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    p2Id = await insert('rep_roster_players', {
+      program_year_id: programYearId, team_id: repTeamId, org_id: orgId,
+      player_first_name: P2_FIRST, player_last_name: 'Family',
+      status: 'active', source: 'admin_manual',
+    });
+
+    // The membership gate first (/review 2026-08-30): a player id outside this season must 404,
+    // never be written — this door was the one dues write missing the check its siblings make.
+    const bogus = await call(page, `${api()}/dues`, {
+      method: 'POST',
+      body: { playerId: '00000000-0000-0000-0000-000000000000', totalAmount: 100, installments: [{ installmentNumber: 1, amount: 100, dueDate: `${YEAR}-09-01` }] },
+    });
+    expect(bogus.status, 'a foreign player id is refused, never written').toBe(404);
+
+    // The season as the prompt states it: a $1,200 schedule, paid in full.
+    expect((await setTotal(page, 1200)).status).toBe(201);
+    const paid = await call(page, `${api()}/players/${p2Id}/dues-payments`, {
+      method: 'POST',
+      body: { amount: 1200, receivedDate: ARRIVAL_1_DATE, method: 'etransfer' },
+    });
+    expect(paid.status, 'the family pays the year in full').toBe(201);
+    expect(await overpaymentCredits(), 'paid exactly the total: no credit yet').toEqual([]);
+
+    // Lower to $800 → one $400 credit, standalone by design (schedule-change credits carry no
+    // payment link, which is exactly why the old query could not see them).
+    expect((await setTotal(page, 800)).status).toBe(201);
+    expect(await overpaymentCredits()).toEqual([400]);
+
+    // ⚠ SEQUENCE 1 — lower again to $600. The defect stacked a second $600 credit here ($1,000
+    // carried for a $600 truth); the fix tops up by the $200 difference.
+    expect((await setTotal(page, 600)).status).toBe(201);
+    const afterSecondLower = await overpaymentCredits();
+    expect(afterSecondLower.reduce((s, a) => s + a, 0), 'the truth is $600, never $1,000').toBe(600);
+
+    // ⚠ SEQUENCE 2 — restore to $1,200. The defect left the whole credit standing; the fix
+    // removes every overpayment row, because nothing is stranded any more.
+    expect((await setTotal(page, 1200)).status).toBe(201);
+    expect(await overpaymentCredits(), 'no stale credit survives the restore').toEqual([]);
+
+    // And the drawer agrees: the dues payload shows no credit on this family.
+    const dues = await call(page, `${api()}/dues`);
+    const fam = (dues.body as { players: { player: { id: string }; totalCredits: number }[] })
+      .players.find(p => p.player.id === p2Id);
+    expect(fam!.totalCredits).toBe(0);
+  });
+
+  test('the per-player door asks the payout floor before writing (Phase A2)', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    // Overpaid by $400, then handed the $400 back in cash — the credit is spoken for.
+    expect((await setTotal(page, 800)).status).toBe(201);
+    expect(await overpaymentCredits()).toEqual([400]);
+    const payoutId = await insert('rep_dues_payouts', {
+      program_year_id: programYearId, player_id: p2Id, org_id: orgId, team_id: repTeamId,
+      amount: 400, paid_date: ARRIVAL_2_DATE, method: 'etransfer',
+    });
+
+    // Raising the total back to $1,200 would make the reconcile delete that credit.
+    const refused = await setTotal(page, 1200);
+    expect(refused.status, 'the floor refuses, pre-flight').toBe(409);
+    expect((refused.body as { code?: string }).code).toBe('CREDIT_HAS_PAYOUT');
+    expect((refused.body as { error?: string }).error, 'the refusal names the dollars').toContain('400.00');
+
+    // ⚠ NOTHING WAS WRITTEN. The refusal must come before the upsert — a guard that fires after
+    // an irreversible write strands the record forever (the P4 lesson, binding).
+    expect(await overpaymentCredits(), 'the credit the payout stands on is untouched').toEqual([400]);
+    const { data: sched } = await admin.from('rep_player_dues_schedules')
+      .select('total_amount').eq('program_year_id', programYearId).eq('player_id', p2Id).single();
+    expect(Number(sched!.total_amount), 'and the schedule total did not move').toBe(800);
+
+    // The way out the refusal names: remove the payout, and the same save goes through.
+    await admin.from('rep_dues_payouts').delete().eq('id', payoutId);
+    expect((await setTotal(page, 1200)).status).toBe(201);
+    expect(await overpaymentCredits(), 'with the cash back, the reconcile claws the credit cleanly').toEqual([]);
+  });
+
+  test('the roster-wide re-run refuses the paid-out family BY NAME and completes for everyone else', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    // Same standing: overpaid at $800, whole credit handed back in cash.
+    expect((await setTotal(page, 800)).status).toBe(201);
+    const payoutId = await insert('rep_dues_payouts', {
+      program_year_id: programYearId, player_id: p2Id, org_id: orgId, team_id: repTeamId,
+      amount: 400, paid_date: ARRIVAL_2_DATE, method: 'etransfer',
+    });
+
+    // A team-wide $1,200 re-run. The fixture family writes clean; this family must be refused.
+    const run = await call(page, `${api()}/budget-plan/generate-installments`, {
+      method: 'POST',
+      body: {
+        replace: true,
+        basis: 'manual',
+        installments: [{ installmentNumber: 1, dueDate: `${YEAR}-10-01`, amount: 1200 }],
+      },
+    });
+    expect(run.status, 'the run itself succeeds — a floor refusal never fails the roster').toBe(201);
+    const r = run.body as {
+      playersProcessed: number; playersSkipped: number; playersFailed: string[];
+      payoutFloorRefusals: { name: string; paidOut: number }[];
+    };
+    expect(r.payoutFloorRefusals, 'the refused family — id, name and the dollars').toEqual(
+      [{ playerId: p2Id, name: `${P2_FIRST} Family`, paidOut: 400 }],
+    );
+    expect(r.playersFailed, 'counted in the failed bucket so the roster still adds up').toContain(`${P2_FIRST} Family`);
+    expect(r.playersProcessed + r.playersSkipped + r.playersFailed.length,
+      'the route’s own invariant holds').toBe(2);
+
+    // The refused family is untouched: old total, credit still standing.
+    const { data: sched } = await admin.from('rep_player_dues_schedules')
+      .select('total_amount').eq('program_year_id', programYearId).eq('player_id', p2Id).single();
+    expect(Number(sched!.total_amount)).toBe(800);
+    expect(await overpaymentCredits()).toEqual([400]);
+
+    // Unwind: payout off, receipts out through their own door (voiding their ledger entries).
+    await admin.from('rep_dues_payouts').delete().eq('id', payoutId);
+    const { data: pays } = await admin.from('rep_dues_payments')
+      .select('id').eq('program_year_id', programYearId).eq('player_id', p2Id);
+    for (const p of pays ?? []) {
+      const gone = await call(page, `${api()}/players/${p2Id}/dues-payments/${p.id}`, { method: 'DELETE', body: undefined });
+      expect(gone.status).toBe(200);
+    }
+    expect(await overpaymentCredits(), 'removing the receipts reconciles the credit away with them').toEqual([]);
   });
 });

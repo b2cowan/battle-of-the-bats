@@ -19,15 +19,19 @@ import styles from './budget/budget.module.css';
  * second stop would just be furniture in the tab order.
  *
  * It lives in its own file rather than inside a panel because the Budget Plan line form and the
- * Generate Installments modal are two screens that must not drift into two different date
+ * Set-dues-for-all-players modal are two screens that must not drift into two different date
  * controls — the fix above is too expensive to have to make twice.
  */
-export default function DateField({ value, onChange, ariaLabel, inputId, min }: {
+export default function DateField({ value, onChange, ariaLabel, inputId, min, max }: {
   value: string;
   onChange: (value: string) => void;
   ariaLabel: string;
   inputId?: string;
   min?: string;
+  /** Latest selectable day. For money that MOVED pass `moneyMovedMaxDate()` — see
+   *  lib/money-date-guards.ts. The control had a `min` and no `max` for months, which is why
+   *  three money screens hand-rolled the cap and three others simply forgot it. */
+  max?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -39,6 +43,7 @@ export default function DateField({ value, onChange, ariaLabel, inputId, min }: 
         type="date"
         value={value}
         min={min}
+        max={max}
         aria-label={ariaLabel}
         onChange={e => onChange(e.target.value)}
       />

@@ -645,13 +645,21 @@ console.log('\nMid-season — Riverdale Ridge 12U');
        showed EMPTY until 2026-08-16. A prospect on the Club plan is shopping for exactly this
        relationship, so "the screens render" is not the bar: they have to have something in them. */
     const { data: splits } = await db.from('rep_allocation_splits')
-      .select('id, amount, notes, rep_cost_allocations ( description )').eq('team_id', teamId);
+      .select('id, amount, notes, budget_item_id, budget_items ( name ), rep_cost_allocations ( description )')
+      .eq('team_id', teamId);
     const split = (splits ?? [])[0];
     check((splits ?? []).length === 1
        && split?.rep_cost_allocations?.description === MIDSEASON_CLUB_MONEY.allocation.description
        && Number(split.amount) === MIDSEASON_CLUB_MONEY.allocation.teamShare,
       `the club has billed the 12U $${MIDSEASON_CLUB_MONEY.allocation.teamShare} — Org Allocations is not an empty screen`,
       split ? `${(splits ?? []).length} split(s), $${split.amount}` : 'no allocation split found');
+
+    /* ⚠ FILED, NOT MERELY PRESENT. An unfiled bill is a legal state and a terrible demonstration:
+       it counts on Budget vs. Actual under "Not itemized", which is the one row that tells a
+       prospect nothing. The demo has to show club money reporting under the team's OWN words. */
+    check(split?.budget_items?.name === MIDSEASON_CLUB_MONEY.allocation.files.item,
+      `the bill is FILED under ${MIDSEASON_CLUB_MONEY.allocation.files.category} · ${MIDSEASON_CLUB_MONEY.allocation.files.item} — so it reports under the team's own words, not "Not itemized"`,
+      split ? `filed as ${split.budget_items?.name ?? 'nothing'}` : 'no split');
 
     if (split) {
       const { data: insts } = await db.from('rep_allocation_installments')
@@ -669,7 +677,8 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     }
 
     const { data: reqs } = await db.from('rep_team_payment_requests')
-      .select('request_type, amount, status').eq('team_id', teamId);
+      .select('request_type, money_in_meaning, amount, status, budget_item_id, budget_items ( name )')
+      .eq('team_id', teamId);
     const rq = reqs ?? [];
     check(rq.length === MIDSEASON_CLUB_MONEY.requests.length
        && rq.some(r => r.request_type === 'charge_to_org' && r.status === 'approved')
@@ -678,6 +687,33 @@ console.log('\nMid-season — Riverdale Ridge 12U');
       `${rq.length} request(s): ${rq.map(r => `${r.request_type}/${r.status}`).join(', ')}`);
     check(!rq.some(r => r.status === 'denied'),
       'and none of them is DECLINED — a club refusing this coach is a sour note in a shop window');
+
+    /* ⚠⚠ THE FORK IS THE THING (mig 271). Money from a club is either new money or a repayment, and
+       the coach says which — with only one of them seeded, the demo shows the answer and never
+       shows that a question exists, which is precisely how the product read before this release.
+       One of each, both approved, so both appear on Budget vs. Actual on OPPOSITE sides. */
+    const grant = rq.find(r => r.money_in_meaning === 'funding');
+    const repaid = rq.find(r => r.money_in_meaning === 'reimbursement');
+    check(!!grant && !!repaid && grant.status === 'approved' && repaid.status === 'approved',
+      'club money arrives BOTH ways — a grant that becomes its own revenue row, and a repayment that nets into the cost it repaid',
+      `meanings: ${rq.map(r => r.money_in_meaning ?? '—').join(', ')}`);
+    /* ⚠ A LEGACY-SHAPED ROW WOULD BE A DEMO BUG, not merely old data. NULL means "read me as a
+       repayment", so a grant seeded without its answer would be reported as one — the exact defect
+       this release fixed, on display in the shop window. */
+    check(!rq.some(r => r.request_type === 'charge_to_org' && !r.money_in_meaning),
+      'and every incoming request has ANSWERED that question — a blank would report as a repayment',
+      `unanswered: ${rq.filter(r => r.request_type === 'charge_to_org' && !r.money_in_meaning).length}`);
+    /* The grant files against an INCOME word — which is the half the shipped product could not do,
+       and the half the picker only offers once the coach answers "new money". */
+    check(grant?.budget_items?.name === 'Grant',
+      'the grant is filed against an INCOME word, so it reports as revenue under a name a coach chose',
+      `grant filed as ${grant?.budget_items?.name ?? 'nothing'}`);
+    /* ⚠ AND ONE ROW STAYS UNFILED ON PURPOSE — the pending one, which settles nothing and moves no
+       reported figure. It is what makes the row's own "File it" affordance visible to a prospect. */
+    check(rq.filter(r => !r.budget_item_id).length === 1
+       && !rq.find(r => !r.budget_item_id)?.money_in_meaning,
+      'exactly one row is left unfiled — the pending one, so "File it" is on screen without any settled money hiding in "Not itemized"',
+      `unfiled: ${rq.filter(r => !r.budget_item_id).length}`);
 
     const { data: roster } = await db.from('rep_roster_players')
       .select('id, guardian_email').eq('program_year_id', py.id).eq('status', 'active');

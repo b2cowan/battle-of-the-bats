@@ -25,6 +25,7 @@ import { duesStatusLabel } from './dues-status';
 import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals';
 import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
+import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 import type { CommitmentStanding } from './payable-standing';
 
@@ -382,7 +383,9 @@ export const FUNDRAISER_COLUMNS: ExportColumnDef[] = [
   // undifferentiated list cannot be pivoted to answer it (2026-08-15).
   { label: 'Kind',           key: 'kind',     format: 'text' },
   { label: 'Status',         key: 'status',   format: 'text' },
-  { label: 'Rebate %',       key: 'rebate',   format: 'number' },
+  // "Credit", never "rebate", in anything a customer reads (vocabulary ruling 2026-08-31 — the
+  // dues side already said credit everywhere). The KEY stays `rebate`: it is an identifier.
+  { label: 'Credit %',       key: 'rebate',   format: 'number' },
   { label: 'Starts',         key: 'starts',   format: 'date' },
   { label: 'Ends',           key: 'ends',     format: 'date' },
   // ⚠ RECEIVED AND PLEDGED ARE SEPARATE COLUMNS (owner ruling Q15, 2026-08-28 — the forms
@@ -492,6 +495,12 @@ export const PAYMENT_REQUEST_COLUMNS: ExportColumnDef[] = [
   { label: 'Direction',   key: 'type',        format: 'text' },
   { label: 'Description', key: 'description', format: 'text' },
   // See the note on ALLOCATION_COLUMNS — same two columns, same reason.
+  /* ⚠ THE MEANING SITS BEFORE THE FILING, because it is what decides how the filing is READ
+     (mig 271). A spreadsheet showing "From the club · Facilities · Diamond Permits · $325" cannot
+     be reconciled against the report without it: the same four columns describe a grant that added
+     $325 of revenue and a repayment that took $325 off a cost. Blank on anything going TO the club,
+     where there is nothing to say. */
+  { label: 'New money or money back', key: 'meaning', format: 'text' },
   { label: 'Category',    key: 'category',    format: 'text' },
   { label: 'Item',        key: 'item',        format: 'text' },
   { label: 'Amount',      key: 'amount',      format: 'currency' },
@@ -510,7 +519,8 @@ const REQUEST_STATUS_LABEL: Record<string, string> = {
 
 export function paymentRequestRows(
   requests: Array<{
-    requestType: 'payment_to_org' | 'charge_to_org'; amount: number; description: string;
+    requestType: ClubRequestType; moneyInMeaning?: ClubMoneyInMeaning | null;
+    amount: number; description: string;
     budgetCategoryName?: string | null; budgetItemName?: string | null;
     paymentMethod: string | null; status: string; createdAt: string; reviewedAt: string | null;
   }>,
@@ -521,6 +531,11 @@ export function paymentRequestRows(
     // use the same word the screen does, and this pair was the last place saying otherwise.
     type: r.requestType === 'payment_to_org' ? 'To the club' : 'From the club',
     description: r.description,
+    /* ⚠ THE SAME TWO WORDS THE ROW PRINTS, from the module that owns them — including what a
+       LEGACY row (no answer) reads as, which is decided there rather than here. A blank column and
+       a wrong word are both worse than the truth: the report has counted these as repayments since
+       they were approved. */
+    meaning: clubMoneyInWord(r) ?? '',
     category: r.budgetCategoryName ?? '',
     item: r.budgetItemName ?? '',
     amount: r.amount,

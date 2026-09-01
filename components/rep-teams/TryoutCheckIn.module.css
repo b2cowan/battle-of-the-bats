@@ -26,7 +26,7 @@
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   margin-bottom: 0.5rem;
 }
-.progressText { font-size: 0.95rem; font-weight: 800; color: var(--white-90); }
+.progressText { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); }
 .progressText .total { color: rgba(255,255,255,0.45); font-weight: 600; }
 .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
 .barFill { height: 100%; background: var(--success); transition: width 0.2s; }
@@ -36,14 +36,14 @@
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px; padding: 0.6rem 0.75rem;
-  color: var(--white-90); font-size: 0.9rem; box-sizing: border-box;
+  color: var(--white-90); font-size: var(--type-body); box-sizing: border-box;
 }
 .search:focus { outline: none; border-color: var(--logic-lime); }
 
 .addBtn {
   margin-top: 0.6rem;
   display: inline-flex; align-items: center; gap: 0.35rem;
-  padding: 0.5rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+  padding: 0.5rem 0.85rem; font-size: var(--type-body); font-weight: 600;
   border: 1px dashed rgba(255,255,255,0.22); border-radius: 8px;
   background: transparent; color: rgba(255,255,255,0.8); cursor: pointer;
 }
@@ -71,19 +71,19 @@
 .bib {
   flex: 0 0 auto; min-width: 2.2rem;
   font-family: var(--font-data, 'IBM Plex Mono', monospace);
-  font-size: 1.15rem; font-weight: 800; color: var(--white-90);
+  font-size: var(--type-title); font-weight: 800; color: var(--white-90);
 }
 .main { flex: 1 1 auto; min-width: 0; }
-.name { font-size: 0.95rem; font-weight: 600; color: var(--white-90); }
-.meta { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.05rem; }
-.bibOnly { font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.55); }
+.name { font-size: var(--type-heading); font-weight: 600; color: var(--white-90); }
+.meta { font-size: var(--type-support); color: rgba(255,255,255,0.4); margin-top: 0.05rem; }
+.bibOnly { font-size: var(--type-heading); font-weight: 600; color: rgba(255,255,255,0.55); }
 
 /* "Tried out in 2025" (Chunk F, D-F1). A quiet second line, not a chip competing with the
    check-in state on the right — this row's job is still one tap. */
 .returning {
   display: block;
   margin-top: 0.1rem;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--home-amber, var(--warning-strong, var(--warning)));
 }
@@ -97,18 +97,18 @@
 }
 .iconOn { background: var(--logic-lime); color: var(--pitch-black); }
 .iconOff { border: 2px solid rgba(255,255,255,0.25); color: transparent; }
-.stateLabel { font-size: 0.78rem; font-weight: 600; }
+.stateLabel { font-size: var(--type-support); font-weight: 600; }
 .labelOn { color: var(--success); }
 .labelOff { color: rgba(255,255,255,0.4); }
 @media (max-width: 420px) { .stateLabel { display: none; } } /* icon+structure carry it on tiny screens */
 
 .undo {
   flex: 0 0 auto;
-  font-size: 0.75rem; font-weight: 700; color: var(--logic-lime);
+  font-size: var(--type-support); font-weight: 700; color: var(--logic-lime);
   background: transparent; border: none; cursor: pointer; padding: 0.35rem 0.4rem;
 }
 
-.empty { font-size: 0.9rem; color: rgba(255,255,255,0.45); padding: 1.5rem 0; text-align: center; }
+.empty { font-size: var(--type-body); color: rgba(255,255,255,0.45); padding: 1.5rem 0; text-align: center; }
 
 /* Walk-up sheet (reuses the TryoutDayCard modal shape) */
 .scrim {
@@ -121,14 +121,14 @@
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 14px; padding: 1.25rem 1.5rem;
 }
-.modalTitle { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
+.modalTitle { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
 .field { margin-bottom: 0.85rem; }
-.label { display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
+.label { display: block; font-size: var(--type-support); font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
 .input,
 .textarea {
   width: 100%; background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
-  padding: 0.6rem 0.75rem; color: var(--white-90); font-size: 0.9rem; box-sizing: border-box;
+  padding: 0.6rem 0.75rem; color: var(--white-90); font-size: var(--type-body); box-sizing: border-box;
   font-family: inherit;
 }
 .input:focus,
@@ -178,7 +178,7 @@
   display: flex; align-items: center; gap: 0.4rem;
   width: 100%; min-height: 44px; margin: 0.15rem 0 0.85rem;
   padding: 0.6rem 0; background: none; border: none; cursor: pointer;
-  text-align: left; font-size: 0.82rem; font-weight: 600;
+  text-align: left; font-size: var(--type-body); font-weight: 600;
   color: rgba(255,255,255,0.55);
 }
 .moreToggle:hover { color: var(--white-90); }
@@ -187,7 +187,7 @@
 
 /* Where a pre-filled value came from. Quiet on purpose — it is a provenance note under a box the
    coach may overwrite, not an instruction. */
-.fieldNote { font-size: 0.72rem; color: rgba(255,255,255,0.42); margin: 0.3rem 0 0; }
+.fieldNote { font-size: var(--type-support); color: rgba(255,255,255,0.42); margin: 0.3rem 0 0; }
 
 @media (max-width: 640px) {
   .scrim { align-items: flex-end; padding: 0; }
@@ -295,12 +295,12 @@
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px; padding: 0.7rem 0.85rem;
-  color: var(--white-90); font-size: 0.9rem; font-weight: 600;
+  color: var(--white-90); font-size: var(--type-body); font-weight: 600;
 }
 .sessionBtn:hover { border-color: var(--logic-lime); }
 .sessionWhen { min-width: 0; }
 .sessionHint {
-  flex: none; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  flex: none; font-size: var(--type-label); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--logic-lime);
 }
 

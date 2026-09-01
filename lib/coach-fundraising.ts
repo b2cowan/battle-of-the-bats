@@ -2,15 +2,23 @@
  * THE KIND DECIDES WHAT A ROW IS — the one idea behind sponsorships (owner-approved 2026-08-15,
  * `docs/projects/active/COACH_SPONSORSHIPS_PLAN.md`).
  *
- * A **fundraiser** asks "what did each player raise?", so the whole roster is its list and it keeps
- * a screen of its own. A **sponsor** asks "what came in, and who brought it?" — it IS one arrival,
- * so it is a row in the Fundraising list and opens an edit sheet rather than a screen.
+ * A **fundraiser** asks "what did each player raise?" — its row expands into the logged entries.
+ * A **sponsor** asks "what came in, and who brought it?" — its row expands into its arrivals.
+ * Both are rows of the Fundraising tab that open IN PLACE (drives joined sponsors on 2026-08-31;
+ * the drive's separate drill-in screen retired with the move).
  *
  * Everything downstream follows from that distinction, which is why it lives in one small module
  * rather than as a string compared in nine places.
  */
 
 export type FundraisingKind = 'fundraiser' | 'sponsor';
+
+/* ⚰ A local `fmt` lived here for one day (2026-08-31, re-homed from the retired detail.tsx) and
+   was retired by /simplify: `lib/coach-money-summary.ts` already exports the hub's ONE money
+   formatter under the same name — identical output for the non-negative figures fundraising
+   prints, and it parenthesises a negative instead of dropping its sign. Two same-named
+   formatters with different contracts in one lib/ tree is exactly the drift the one-word rulings
+   exist to catch. Import `fmt` from there. */
 export type SponsorStatus = 'pledged' | 'received';
 
 export const FUNDRAISING_KINDS: FundraisingKind[] = ['fundraiser', 'sponsor'];

@@ -12,6 +12,7 @@ import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { orgDayKey } from '@/lib/timezone';
 
 /**
@@ -99,6 +100,12 @@ export const PATCH = withObservability(async (req: Request,
     if (typeof body.receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.receivedDate)) {
       return NextResponse.json({ error: 'receivedDate must be a YYYY-MM-DD date' }, { status: 400 });
     }
+    /* ⚠ THE SAME RULE AS EVERY OTHER MONEY-MOVED DOOR (/review, 2026-09-01, High): the create path
+       refuses a future date and this correction path did not — so the band's inline editor capped
+       the calendar client-side while the server would happily re-date a ledger row and a family's
+       credit into next month. One sentence, from lib/money-date-guards, same as the POST. */
+    const futureRefusal = futureReceivedDateRefusal(body.receivedDate, 'drive entry');
+    if (futureRefusal) return NextResponse.json({ error: futureRefusal }, { status: 400 });
     updates.received_date = body.receivedDate;
   }
   /**
@@ -197,7 +204,7 @@ export const PATCH = withObservability(async (req: Request,
           program_year_id:    programYear.id,
           player_id:          entry.player_id,
           amount:             rebateAmount,
-          description:        `Fundraiser rebate — updated`,
+          description:        `Fundraiser credit — updated`,
           credit_type:        'fundraiser',
           credit_date:        arrivalDay,
           created_by:         ctx!.user.id,

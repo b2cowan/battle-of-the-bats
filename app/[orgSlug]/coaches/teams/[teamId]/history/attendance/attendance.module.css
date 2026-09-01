@@ -29,7 +29,7 @@
    whole point of this phase, so nothing here sets a max-width or an inset. */
 .note {
   margin: 0 0 0.6rem;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--white-45);
   line-height: 1.5;
 }
@@ -80,7 +80,7 @@
   min-height: var(--tap-min, 44px);
   cursor: pointer;
   list-style: none;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--white-45);
 }
 .methodHead::-webkit-details-marker { display: none; }
@@ -93,7 +93,7 @@
 .methodBody {
   margin: 0 0 0.9rem;
   max-width: 640px;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.6;
   color: var(--white-45);
 }
@@ -147,7 +147,7 @@
 }
 .receiptsHead {
   margin: 0 0 0.45rem;
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -155,7 +155,7 @@
 }
 .receiptsNone {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--text-tertiary);
 }
 .receiptsList {
@@ -164,7 +164,7 @@
   list-style: none;
   display: grid;
   gap: 0.3rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
 }
 .receiptsList li {
@@ -180,7 +180,7 @@
   font-weight: 600;
 }
 .receiptsKind {
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -192,7 +192,7 @@
 .receiptsDetail { color: var(--text-secondary); }
 .receiptsNote {
   margin: 0.55rem 0 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 

@@ -280,7 +280,21 @@ export const DELETE = withObservability(async (_req: Request,
 
   if (count > 0) {
     /* `fmt` and `pluralize` are the shared ones — this sentence quotes dollars and counts the
-       way every other surface does, rather than growing a fourth hand-rolled copy of each. */
+       way every other surface does, rather than growing a fourth hand-rolled copy of each.
+
+       ⚠ A REVIEW ASKED WHY THIS QUOTES MONEY WHEN THE GATE IS THE COUNT, on the theory that a $0
+       entry would make it read "$0.00 logged across 1 entry" — a sentence arguing against itself.
+       It cannot happen: `accounting_entries.amount` carries `CHECK (amount > 0)` (mig 016), and
+       every drive entry posts one, so a zero-amount entry is refused by the DATABASE at creation,
+       and an edit down to zero is refused the same way. This route's own `amountRaised >= 0`
+       validation is therefore not the last word on it. `total` is greater than zero whenever
+       `count` is, so the money clause is always true and a branch for the other case would be dead
+       code. Pinned by the UAT spec — "a zero-amount drive entry cannot be created or edited into".
+
+       ⚠ AND IF THAT CONSTRAINT EVER GOES, THE FIX IS STILL NOT TO GATE ON MONEY. A $0 entry would
+       still have posted a row, and letting the delete through would cascade the entry and strand
+       it — the same orphan this guard exists to stop, just worth nothing instead of $800. The gate
+       stays on the count; only the wording would need to change. */
     const them = count === 1 ? 'it' : 'them';
     return NextResponse.json({
       error: isSponsor

@@ -24,7 +24,7 @@
   border-radius: 8px;
   background: none;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -44,7 +44,7 @@
   background: var(--home-card, var(--white-05));
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   resize: vertical;
   margin-bottom: 0.7rem;
@@ -64,7 +64,7 @@
   align-items: center;
   gap: 0.35rem;
   margin: 0 0 0.5rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -77,7 +77,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.4rem 0;
-  font-size: 0.84rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
 }
 
@@ -91,7 +91,7 @@
   border: none;
   padding: 0.35rem 0.2rem;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--primary-light);
   cursor: pointer;
 }
@@ -102,7 +102,7 @@
 
 .summary {
   margin: 0 0 0.8rem;
-  font-size: 0.84rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
 }
 .summary strong { color: var(--text-primary); }
@@ -140,7 +140,7 @@
   background: var(--home-card, var(--white-05));
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   min-width: 0;
 }
 .cellDate { flex: 1.2; }
@@ -156,7 +156,7 @@
   flex-shrink: 0;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
   border-radius: 6px;
   background: none;
   color: var(--text-tertiary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   cursor: pointer;
 }
 .rowDrop:hover { color: var(--danger); border-color: var(--danger); }
@@ -190,7 +190,7 @@
 
 .reason {
   margin: 0.4rem 0 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -200,7 +200,7 @@
   align-items: center;
   gap: 0.3rem;
   margin: 0.3rem 0 0;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--warning);
 }
 

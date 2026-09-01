@@ -71,7 +71,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
 
   // Explicit, not by elimination. The page only mounts SetupOverview for a non-operate
   // season, so today `stage` can only be 'collect' here — but the type still admits
-  // 'operate', and a future caller that passed one would get "generate installments"
+  // 'operate', and a future caller that passed one would get "set dues for all players"
   // copy shown to a team that already has them. The old renderAnchor returned null for
   // anything it did not recognise; that guarantee is kept (review, 2026-08-12).
   if (summary.stage !== 'collect') return null;
@@ -100,7 +100,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
           ) : needsLines ? (
             <Link href={hrefs.budget} className="btn btn-lime btn-sm">Add line items <ArrowRight size={14} /></Link>
           ) : (
-            <Link href={hrefs.budgetGenerate} className="btn btn-lime btn-sm">Generate installments <ArrowRight size={14} /></Link>
+            <Link href={hrefs.budgetGenerate} className="btn btn-lime btn-sm">Set dues for all players <ArrowRight size={14} /></Link>
           )}
           <Link href={hrefs.dues} className={styles.nowSecondary}>Set dues manually <ArrowRight size={13} /></Link>
         </div>

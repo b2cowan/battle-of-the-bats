@@ -79,8 +79,8 @@ describe('buildActualCashStrip', () => {
         entry(640, '2025-10-18', '2025-11-01T14:00:00Z', 'fundraiser'),
       ],
       clubRequests: [
-        { ...outRec(180), isReimbursement: true, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' },
-        { ...outRec(95), isReimbursement: false, reviewedAt: '2025-11-06T15:00:00Z', createdAt: '2025-11-02T15:00:00Z' },
+        { ...outRec(180), side: 'reimbursement' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' },
+        { ...outRec(95), side: 'cost' as const, reviewedAt: '2025-11-06T15:00:00Z', createdAt: '2025-11-02T15:00:00Z' },
       ],
       expensePayments: [
         { ...outRec(1200), paidDate: '2025-09-10', familyPaidDirect: false },
@@ -157,9 +157,9 @@ describe('buildActualCashStrip', () => {
     const strip = buildActualCashStrip({
       ...empty(),
       clubRequests: [
-        { ...outRec(400), isReimbursement: false, reviewedAt: '2025-12-02T12:00:00Z', createdAt: '2025-11-20T12:00:00Z' },
+        { ...outRec(400), side: 'cost' as const, reviewedAt: '2025-12-02T12:00:00Z', createdAt: '2025-11-20T12:00:00Z' },
         // Never reviewed (defensive: an approved row should always carry the stamp) → filing day.
-        { ...outRec(60), isReimbursement: true, reviewedAt: null, createdAt: '2025-11-21T12:00:00Z' },
+        { ...outRec(60), side: 'reimbursement' as const, reviewedAt: null, createdAt: '2025-11-21T12:00:00Z' },
       ],
     });
     assert.deepEqual(strip.out, { '2025-12': 400 });
@@ -240,7 +240,7 @@ describe('buildActualCashStrip — the revenue band', () => {
         entry(750, '2025-11-03', '2025-11-03T12:00:00Z', 'sponsor'),
       ],
       // The club repaying a cost is the same species of arrival as a vendor refunding one.
-      clubRequests: [{ ...outRec(180), isReimbursement: true, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
+      clubRequests: [{ ...outRec(180), side: 'reimbursement' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
     });
     assert.deepEqual(groups(strip), {
       dues: 2400,
@@ -262,10 +262,52 @@ describe('buildActualCashStrip — the revenue band', () => {
     assert.deepEqual(groups(strip), { fundraising: 100, sponsorship: 250 });
   });
 
+  /* ⚠⚠ THE TWO INCOMING ANSWERS ARE THE SAME CASH AND DIFFERENT ROWS (mig 271, owner D1). Every
+     arrival from the club landed in "Repaid by the club" until 2026-08-30, so a grant was reported
+     as a repayment on the one band a treasurer scans top to bottom. Both are still a dollar
+     arriving — this is a cash strip — which is why the test asserts the TOTAL is unchanged and only
+     the group moves. Getting that backwards in either direction is a money defect no total can
+     catch. */
+  it('new money from the club joins OTHER INCOME under its filed word; a repayment stays in Money back', () => {
+    const grant = buildActualCashStrip({
+      ...empty(),
+      clubRequests: [{ ...outRec(325), side: 'funding' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
+    });
+    assert.deepEqual(groups(grant), { other: 325 });
+    assert.equal(grant.expenses.length, 0);
+    // Its row is the WORD it was filed under — the only grouping a grant has (D4).
+    assert.equal(grant.revenue[0].subject.name, 'Dome time');
+    assert.equal(grant.revenue[0].subject.id, 'item-1');
+    // And the club is named on the row rather than earning a sixth revenue group.
+    assert.equal(grant.revenue[0].kind, 'From the club');
+
+    const repaid = buildActualCashStrip({
+      ...empty(),
+      clubRequests: [{ ...outRec(325), side: 'reimbursement' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z' }],
+    });
+    assert.deepEqual(groups(repaid), { moneyback: 325 });
+    assert.equal(repaid.revenue[0].subject.name, 'Repaid by the club');
+    // Same cash, same month, either way — the answer moves a row, never a dollar.
+    assert.deepEqual(grant.in, repaid.in);
+  });
+
+  /* An unfiled grant still arrives, and still has to sit somewhere a coach can open. */
+  it('a grant with nothing filed against it is its own “Not itemized” row rather than a dropped dollar', () => {
+    const strip = buildActualCashStrip({
+      ...empty(),
+      clubRequests: [{
+        ...outRec(120), itemName: null, place: { categoryId: null, categoryName: null, itemId: null },
+        side: 'funding' as const, reviewedAt: '2025-11-05T15:00:00Z', createdAt: '2025-11-01T15:00:00Z',
+      }],
+    });
+    assert.deepEqual(groups(strip), { other: 120 });
+    assert.equal(strip.revenue[0].subject.name, 'Not itemized');
+  });
+
   it('an outgoing club request is a COST filed where the request was filed, never negative revenue', () => {
     const strip = buildActualCashStrip({
       ...empty(),
-      clubRequests: [{ ...outRec(400), isReimbursement: false, reviewedAt: '2025-12-02T12:00:00Z', createdAt: '2025-11-20T12:00:00Z' }],
+      clubRequests: [{ ...outRec(400), side: 'cost' as const, reviewedAt: '2025-12-02T12:00:00Z', createdAt: '2025-11-20T12:00:00Z' }],
     });
     assert.deepEqual(strip.revenue, []);
     assert.equal(strip.expenses.length, 1);
@@ -363,7 +405,7 @@ describe('buildActualCashStrip — who the money came from', () => {
         categoryName: 'Officials', itemName: 'Clinic fees',
       }],
       clubRequests: [{
-        ...outRec(180), description: 'Dome permit share', isReimbursement: true,
+        ...outRec(180), description: 'Dome permit share', side: 'reimbursement' as const,
         reviewedAt: '2026-08-05T15:00:00Z', createdAt: '2026-08-01T15:00:00Z',
       }],
     });

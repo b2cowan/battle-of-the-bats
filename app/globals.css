@@ -596,6 +596,43 @@ body:has([data-chat-fullbleed]) {
   /* Data font — new, doesn't conflict with --font-sans / --font-display */
   --font-data: var(--font-mono, 'IBM Plex Mono'), monospace;
 
+  /* ── THE TYPE LADDER (owner ruling 2026-08-28) ─────────────────────────────────────────────
+     Eight steps, NAMED FOR THE JOB EACH DOES — never for the size it is. That naming is the
+     whole point and comes straight from the 2026-08-18 ink ruling: `--white-45` meant "white at
+     45%", so it was used for meta TEXT *and* for hairlines and neither could move without the
+     other. A presentational name cannot carry a role, so every consumer has to be edited by hand,
+     forever. Sizes had it worse — there was no token layer at all, and 62 distinct font sizes
+     accumulated across the coaches portal because there was nothing to violate.
+
+     ⚠ TWO PROPERTIES ARE LOAD-BEARING AND A FUTURE CHANGE MUST PRESERVE BOTH:
+
+     1. **Adjacent steps differ by >=15%, or they are the same value. Nothing in between.**
+        Two sizes 10% apart do not read as a hierarchy, they read as a near-miss, and neither
+        wins — that was the original defect: a 22.4px page title against a 24.8px card figure.
+
+     2. **The top four separate by SIZE; the bottom three separate by TREATMENT.**
+        Below ~13px a one-pixel step is invisible, so `support` / `label` / `token` are told apart
+        by case, letter-spacing, weight and ink, and their tight size gaps are DELIBERATE. Do not
+        "fix" them into a smooth ratio — six values inside a three-pixel window is precisely what
+        this ladder replaced.
+
+     ⚠ NOT EVERYTHING WITH A font-size IS TYPE. An icon glyph's size answers to the tap target it
+     fills, and a decorative watermark is a graphic that happens to be a numeral. Those carry a
+     `LADDER-EXEMPT` comment at their declaration; grep that token before assuming a large value
+     is drift.
+
+     ⚠ Coaches portal is fully migrated. The admin shell still uses literals — when it follows,
+     it consumes these same eight and does not mint a ninth. */
+  --type-display: 2rem;      /* 32px — a number read from the bench or across a room: the score,
+                                the season record. NOT a big card figure. */
+  --type-figure:  1.5rem;    /* 24px — the number a card exists to show, with its title above it */
+  --type-title:   1.25rem;   /* 20px — a page or panel title */
+  --type-heading: 1rem;      /* 16px — masthead identity, section headings, card titles */
+  --type-body:    0.875rem;  /* 14px — body, buttons, links, form values, navigation */
+  --type-support: 0.75rem;   /* 12px — meta text, filter chips, table column headings */
+  --type-label:   0.6875rem; /* 11px — uppercase eyebrows: reads like a label, must still be READ */
+  --type-token:   0.625rem;  /* 10px — badges, inline table actions: recognised, never read */
+
   /* Ink for text sitting ON a name-hash team/opponent colour badge (avatars, monograms).
      Those backgrounds are theme-STABLE saturated colours, so the text must stay light in
      EVERY theme — it must NOT flow through the white→ink warm remap (which would render it

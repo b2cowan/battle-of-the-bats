@@ -14,7 +14,7 @@
 }
 
 .sectionTitle {
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -43,7 +43,7 @@
 /* ── Labels + inputs ──────────────────────────────────────────────────────── */
 .label {
   display: block;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: rgba(255,255,255,0.6);
   margin-bottom: 0.35rem;
@@ -62,7 +62,7 @@
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   color: var(--white-90);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   box-sizing: border-box;
   transition: border-color 0.15s;
   font-family: inherit;
@@ -79,13 +79,13 @@
 }
 
 .errorMsg {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--danger-light);
   margin: 0.25rem 0 0;
 }
 
 .hint {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: rgba(255,255,255,0.4);
   margin: 0.25rem 0 0;
 }
@@ -113,7 +113,7 @@
   cursor: pointer;
 }
 .consentText {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: rgba(255,255,255,0.72);
 }
@@ -129,7 +129,7 @@
   background: rgba(248,113,113,0.1);
   border: 1px solid rgba(248,113,113,0.3);
   color: var(--danger-light);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin-bottom: 0.85rem;
 }
 
@@ -137,7 +137,7 @@
 .submitBtn {
   width: 100%;
   padding: 0.9rem;
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 700;
   background: var(--logic-lime);
   color: var(--pitch-black);
@@ -175,7 +175,7 @@
 }
 
 .successTitle {
-  font-size: 1.3rem;
+  font-size: var(--type-title);
   font-weight: 800;
   color: var(--white-90);
   margin: 0 0 0.6rem;
@@ -183,7 +183,7 @@
 }
 
 .successBody {
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   color: rgba(255,255,255,0.6);
   line-height: 1.65;
   max-width: 440px;
@@ -196,7 +196,7 @@
   border-radius: 8px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: rgba(255,255,255,0.5);
 }
 .refCode {

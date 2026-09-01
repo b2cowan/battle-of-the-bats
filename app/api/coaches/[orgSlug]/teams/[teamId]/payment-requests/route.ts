@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
-import { mapClubRequest } from '@/lib/coach-club-money';
+import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
@@ -96,12 +96,25 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'description is required and must be 500 characters or fewer' }, { status: 400 });
   }
 
+  /* ⚠⚠ NEW MONEY, OR MONEY BACK — REQUIRED, AND THE SERVER IS WHERE THAT IS DECIDED (mig 271,
+     owner D1). The standing rule is "never guess a reversal", and until this release the product
+     guessed one on every single arrival. Requiring the answer at CREATE is what satisfies the rule
+     without a default existing: there is no value for a new record to fall back to.
+     ⚠ It refuses on `payment_to_org` rather than ignoring it — the column carries a CHECK saying
+     the same thing, and a body field silently dropped is how a caller comes to believe it landed. */
+  const meaning = resolveMoneyInMeaning(requestType, body?.moneyInMeaning);
+  if (!meaning.ok) return NextResponse.json({ error: meaning.error }, { status: 400 });
+
   /* ⚠⚠ WHAT THIS REQUEST IS FOR (mig 250). Without it, an approved request reached NO part of Budget
      vs. Actual — the report reads neither this table nor the allocations, so on a club-run team the
      largest line of the season was missing from the screen that compares spending to plan.
 
      ⚠ The category is DERIVED from the item, never taken from the caller: an item belongs to exactly
-     one category, and the report reads the two levels in different orders. */
+     one category, and the report reads the two levels in different orders.
+     ⚠ WHICH SIDE OF THE LIBRARY the item came from is not checked here, and that is unchanged
+     rather than overlooked: no column, CHECK or resolver has ever enforced a side on club money —
+     the picker does, exactly as it does for `rep_team_money_in` (mig 250's own note). What mig 271
+     changes is which side the picker OFFERS, which is now the coach's answer above. */
   const item = await resolveBudgetItem(body?.budgetItemId, ctx.org.id, teamId, team.sport);
   if (!item.ok) return NextResponse.json({ error: item.error }, { status: 400 });
 
@@ -114,6 +127,7 @@ export const POST = withObservability(async (req: Request,
       team_id:         team.id,
       program_year_id: programYear.id,
       request_type:    requestType,
+      money_in_meaning: meaning.value,
       amount,
       description:     description.trim(),
       payment_method:  paymentMethod?.trim() || null,

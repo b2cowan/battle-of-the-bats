@@ -9,7 +9,7 @@
 .howBtn {
   display: inline-flex; align-items: center; gap: 0.3rem;
   margin-left: auto; align-self: center; flex: 0 0 auto;
-  font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.6);
+  font-size: var(--type-support); font-weight: 600; color: rgba(255,255,255,0.6);
   background: transparent; border: none; cursor: pointer; padding: 0.2rem 0.3rem;
   white-space: nowrap; font-family: inherit;
 }
@@ -23,18 +23,18 @@
   border-radius: 8px; background: rgba(var(--logic-lime-rgb),0.06);
 }
 .nextMain { flex: 1 1 auto; min-width: 0; }
-.nextLabel { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime); }
-.nextText { font-size: 0.9rem; font-weight: 700; color: var(--white-90); margin: 0.1rem 0 0.1rem; }
-.nextHint { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin: 0; }
+.nextLabel { font-size: var(--type-label); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime); }
+.nextText { font-size: var(--type-body); font-weight: 700; color: var(--white-90); margin: 0.1rem 0 0.1rem; }
+.nextHint { font-size: var(--type-support); color: rgba(255,255,255,0.55); margin: 0; }
 .nextBtn {
   flex: 0 0 auto;
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.6rem 1rem; border-radius: 8px; border: none; cursor: pointer;
-  font-size: 0.85rem; font-weight: 800; font-family: inherit;
+  font-size: var(--type-body); font-weight: 800; font-family: inherit;
   background: var(--logic-lime); color: var(--pitch-black); text-decoration: none;
 }
 .nextBtn:hover { background: rgba(var(--logic-lime-rgb), 0.82); }
-.doneNote { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0.9rem 0 0; }
+.doneNote { font-size: var(--type-body); color: rgba(255,255,255,0.6); margin: 0.9rem 0 0; }
 
 /* ── "Do this first" — a tab opened ahead of the tryout's stage (guide-don't-gate, 2026-08-17).
    A compact cousin of .next: same lime voice, quieter — one sentence + an outline jump button,
@@ -46,13 +46,13 @@
   border-radius: 8px; background: rgba(var(--logic-lime-rgb),0.06);
 }
 .preMain { flex: 1 1 auto; min-width: 200px; }
-.preLabel { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime); }
-.preText { font-size: 0.85rem; font-weight: 600; color: var(--white-90); margin: 0.05rem 0 0; }
+.preLabel { font-size: var(--type-label); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime); }
+.preText { font-size: var(--type-body); font-weight: 600; color: var(--white-90); margin: 0.05rem 0 0; }
 .preBtn {
   flex: 0 0 auto;
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.45rem 0.8rem; border-radius: 8px; cursor: pointer;
-  font-size: 0.78rem; font-weight: 800; font-family: inherit;
+  font-size: var(--type-support); font-weight: 800; font-family: inherit;
   background: transparent; color: var(--logic-lime);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
 }
@@ -60,9 +60,9 @@
 
 /* ── "How tryouts work" overview — below the tab row it opens from ─────────── */
 .how { margin: 0 0 1.15rem; padding: 0.9rem 1rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.02); }
-.howStep { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; font-size: 0.85rem; line-height: 1.5; }
+.howStep { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; font-size: var(--type-body); line-height: 1.5; }
 .howStep:last-child { margin-bottom: 0; }
-.howNum { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: rgba(var(--logic-lime-rgb),0.15); color: var(--logic-lime); font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-top: 0.05rem; }
+.howNum { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: rgba(var(--logic-lime-rgb),0.15); color: var(--logic-lime); font-size: var(--type-support); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-top: 0.05rem; }
 /* "You are here" — the ring ties the guide's Do-this-next prompt back to the step map. */
 .howNumHere { box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.55); }
 .howStep strong { color: var(--white-90); }
@@ -83,7 +83,7 @@
 .tab {
   display: inline-flex; align-items: center; gap: 0.45rem; flex: 0 0 auto;
   padding: 0.7rem 0.95rem; border: none; background: transparent; cursor: pointer;
-  font-family: inherit; font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  font-family: inherit; font-size: var(--type-body); font-weight: 700; color: rgba(255,255,255,0.5);
   border-bottom: 2px solid transparent; white-space: nowrap; margin-bottom: -1px;
   text-decoration: none;
 }
@@ -92,7 +92,7 @@
 .tabNum {
   width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.7rem; font-weight: 800;
+  font-size: var(--type-label); font-weight: 800;
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.55);
 }
 .tabActive .tabNum { background: var(--logic-lime); color: var(--pitch-black); }
@@ -108,7 +108,7 @@
 
 .panelHidden { display: none; }
 .panelIntro { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 0.9rem; }
-.panelIntroText { flex: 1 1 240px; font-size: 0.82rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
+.panelIntroText { flex: 1 1 240px; font-size: var(--type-body); color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
 .panelAction { flex: 0 0 auto; display: inline-flex; gap: 0.45rem; flex-wrap: wrap; }
 
 /* ── Tryout-day faces — Live board · Check-in · Score (One-Room build, 2026-08-23) ──
@@ -123,13 +123,13 @@
 .face {
   display: inline-flex; align-items: center;
   padding: 0.45rem 0.95rem; border-radius: 7px;
-  font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.55);
+  font-size: var(--type-body); font-weight: 700; color: rgba(255,255,255,0.55);
   text-decoration: none; white-space: nowrap;
 }
 .face:hover { color: rgba(255,255,255,0.85); }
 .faceOn { background: var(--logic-lime); color: var(--pitch-black); }
 .faceOn:hover { color: var(--pitch-black); }
-.faceHint { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
+.faceHint { font-size: var(--type-support); color: rgba(255,255,255,0.45); }
 @media (max-width: 768px) {
   .face { min-height: 44px; }
 }

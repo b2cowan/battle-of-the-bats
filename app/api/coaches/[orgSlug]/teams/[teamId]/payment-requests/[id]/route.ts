@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
-import { mapClubRequest } from '@/lib/coach-club-money';
+import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
@@ -69,6 +69,16 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'description is required and must be 500 characters or fewer' }, { status: 400 });
   }
 
+  /* ⚠⚠ AND SO IS THE MEANING (mig 271). Same three rules again: a correction may not produce a
+     request the create door would have refused, and "new money or money back" is one of them.
+     ⚠ THE FLIP IS THE CASE TO HOLD IN MIND. A coach may still change a pending request's DIRECTION
+     here — that is what makes this door a correction rather than a re-type — and a request turned
+     round to *To the club* is a cost, which has no second reading. `resolveMoneyInMeaning` returns
+     null for that direction, and the column's CHECK agrees, so the stale answer cannot survive the
+     edit that made it meaningless. */
+  const meaning = resolveMoneyInMeaning(requestType, body?.moneyInMeaning);
+  if (!meaning.ok) return NextResponse.json({ error: meaning.error }, { status: 400 });
+
   /* ⚠⚠ THE FILING IS PART OF THE CORRECTION, NOT AN EXTRA (mig 250). This handler names every
      column it writes, so a request edited here would otherwise keep whatever it was filed under
      while the coach watched the picker show something else — and the report would follow the stale
@@ -110,6 +120,7 @@ export const PATCH = withObservability(async (req: Request,
     .from('rep_team_payment_requests')
     .update({
       request_type:   requestType,
+      money_in_meaning: meaning.value,
       amount,
       description:    description.trim(),
       payment_method: paymentMethod?.trim() || null,

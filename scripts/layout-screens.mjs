@@ -228,10 +228,12 @@ export const SCREENS = [
      entry sweeps the real thing rather than a fixture-only mode. */
   { id: 'coach-dues-settlement',   session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&settlement=open`, ready: 'h1' },
   { id: 'coach-fundraisers',       session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers`,      ready: 'h1' },
-  /* ⚠ THE DRILL-IN IS ITS OWN SHAPE, and it was never swept while it was a page of its own: a
-     six-column leaderboard with an inline edit form in the trailing cell, under a NESTED header
-     (h2 + smaller icon tile) that exists nowhere else in the portal. `coach-fundraisers` above
-     measures the list and would stay green through anything that happened one level in. */
+  /* ⚠ AN OPEN DRIVE IS ITS OWN SHAPE — since 2026-08-31 the drill-in is gone and `?fundraiser=`
+     expands the drive's ROW in place: a facts meta line, sibling entry rows sharing the parent
+     table's six columns, and a doors row, none of which the at-rest list draws. The 361px
+     sideways-overflow defect of 2026-08-14 lived on exactly this surface's ancestor, so the
+     open state stays swept — `coach-fundraisers` above would stay green through anything that
+     happened inside the expansion. */
   { id: 'coach-fundraiser',        session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.fundraiserId}`, ready: 'h1' },
   /* ⚠ A SPONSOR IS NOT THE SAME SCREEN, and until 2026-08-15 nothing automated had opened one. The
      entry above draws a drive: a six-column leaderboard with an inline edit form. A sponsor

@@ -76,7 +76,8 @@ function dayLabel(d: number | 'last'): string {
  * (Payables Rebuild P4, plan §4.1).
  *
  * ⚠⚠ IT IS THE DUES SHEET'S SHAPE, ON PURPOSE, AND ONE THING DIFFERS. The owner's explicit
- * instruction was that this reuse `Generate Player Installments` verbatim: the numbered
+ * instruction was that this reuse `Generate Player Installments` (now titled "Set dues for all
+ * players" — the one-name ruling, QA §123) verbatim: the numbered
  * `Installment 1..n` list, `+ Add` appending, `Remove` on every row, a due date and an amount per
  * row, amounts filling in automatically and badged **Auto**, and a plain-language reconcile line
  * that is a SENTENCE, NEVER A BARRIER. All of that is here.
@@ -315,7 +316,7 @@ export default function InstallmentPlanEditor({
       {/* ⚠ NO INNER CARD ANY MORE (design pass D1): `.genInstallmentsSection` was the white card
           inside the tinted section — two borders and two fills wrapping one concept, the owner's
           finding 1. The rows sit directly on the section's tint now, under real column headings.
-          The class itself is untouched: the dues sheet's Generate Installments still wears it. */}
+          The class itself is untouched: the dues sheet's Set-dues-for-all-players window still wears it. */}
       <div>
         {/* D2 — the column-headings row, the budget sheet's own idiom over this exact row shape
             (its `.periodColHead` carries the same drift warning). Desktop only; at ≤640 every

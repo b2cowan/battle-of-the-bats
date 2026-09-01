@@ -163,7 +163,8 @@ export default function CoachesAccountingPage({
   /* ── Saved addresses from before the split (Money split P1, 2026-08-16) ──────────────────────
      `?section=expenses` names a tab that no longer exists. Every such address still works, and
      WHICH tab it resolves to depends on the sub-view it carried — the rule lives in
-     `legacyMoneyAddress`, shared with the standalone route's redirect so the two cannot disagree.
+     `legacyMoneyAddress`, and since the legacy standalone ROUTES were deleted (2026-08-31,
+     pre-customer) this normaliser is the one place old addresses are still honoured.
 
      ⚠ THE ADDRESS IS THEN REWRITTEN, not merely interpreted. A coach who arrives from a bookmark
      and copies the URL out of the bar to send to their treasurer must hand over a link to the tab

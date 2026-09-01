@@ -12,11 +12,15 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import SublinedChoice from '@/components/coaches/SublinedChoice';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useSharedMoneyRead, useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
-import { CLUB_MONEY_ITEM_DIRECTION, type ClubRequest, type ClubRequestType } from '@/lib/coach-club-money';
+import {
+  CLUB_MONEY_ITEM_DIRECTION, CLUB_MONEY_IN_ASK, clubMoneyInWord, clubRequestItemDirection,
+  type ClubMoneyInMeaning, type ClubRequest, type ClubRequestType,
+} from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import type { RepAllocationInstallment, BudgetCategoryWithItems } from '@/lib/types';
@@ -151,6 +155,31 @@ function toSelection(
   };
 }
 
+/**
+ * Answering the meaning CLEARS the word already picked — one rule, both places that ask it.
+ *
+ * ⚠⚠ NOT TIDINESS. The two answers read from OPPOSITE SIDES of the item library (income words for
+ * new money, spending words for a repayment), and `BudgetItemPicker` deliberately keeps a saved
+ * record's own word offered whichever way it points — so a word chosen under one answer SURVIVES
+ * the switch to the other and files real money on the wrong side of the report. Nothing would
+ * fail; the figure would simply be in the wrong band.
+ *
+ * ⚠ It exists as one function because it shipped as two copies, in the record window and the
+ * filing dialog (`/simplify`, 2026-08-30). Two hand-kept copies of a rule this quiet is how one of
+ * them gets a fix and the other does not.
+ */
+function onMeaningAnswered(
+  current: ClubMoneyInMeaning | null,
+  setMeaning: (v: ClubMoneyInMeaning) => void,
+  clearItem: (v: null) => void,
+) {
+  return (next: ClubMoneyInMeaning) => {
+    if (next === current) return;
+    setMeaning(next);
+    clearItem(null);
+  };
+}
+
 /** `Category · Item`, or the honest gap. One renderer, three tables. */
 function Filing({ category, item }: { category: string | null; item: string | null }) {
   if (!item && !category) return <span className={styles.mutedInline}>Not filed</span>;
@@ -249,14 +278,24 @@ export function ClubPanel({
   const [formMethod, setFormMethod] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [formItem, setFormItem] = useState<BudgetItemSelection | null>(null);
+  /* The ask (mig 271). Null is "not answered yet", which the field says rather than defaulting —
+     the standing rule is never to guess a reversal, and a default IS a guess. */
+  const [formMeaning, setFormMeaning] = useState<ClubMoneyInMeaning | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
 
-  // ── Filing a club bill ───────────────────────────────────────────────────
+  // ── Filing a club bill, or re-filing a request ───────────────────────────
   const [filingSplit, setFilingSplit] = useState<AllocationSplit | null>(null);
+  /* ⚖ D3: THE RECORD LOCKS, THE TEAM'S LABEL DOES NOT (owner, 2026-08-30). An answered request
+     opens read-only — it records what the club acted on — but what the team FILES it under, and
+     what the team reads the arrival as, are the team's own layer on top. A bill has had exactly
+     this dialog since mig 250; this gives a request the same one, which is why the row says
+     "File it" / "Change" in both places. Re-filing moves no money. */
+  const [filingRequest, setFilingRequest] = useState<ClubRequest | null>(null);
   const [filingItem, setFilingItem] = useState<BudgetItemSelection | null>(null);
+  const [filingMeaning, setFilingMeaning] = useState<ClubMoneyInMeaning | null>(null);
   const [filingSaving, setFilingSaving] = useState(false);
   const [filingError, setFilingError] = useState('');
 
@@ -265,7 +304,7 @@ export function ClubPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const today = tournamentToday();
 
-  useOverlayOpen(showForm || !!filingSplit);
+  useOverlayOpen(showForm || !!filingSplit || !!filingRequest);
 
   /* Money is three-state (off|read|write), and a finished season withdraws every write regardless.
      Read off `assignments`/`closedAssignments` directly because this is needed ABOVE the
@@ -306,8 +345,9 @@ export function ClubPanel({
         method: editing.paymentMethod ?? '',
         notes:  editing.notes ?? '',
         itemId: editing.budgetItemId ?? '',
+        meaning: editing.moneyInMeaning,
       }
-    : { type: 'payment_to_org', amount: '', desc: '', method: '', notes: '', itemId: '' };
+    : { type: 'payment_to_org', amount: '', desc: '', method: '', notes: '', itemId: '', meaning: null as ClubMoneyInMeaning | null };
 
   const formDirty = !readOnly && (
     formType !== original.type ||
@@ -315,6 +355,7 @@ export function ClubPanel({
     formDesc !== original.desc ||
     formMethod !== original.method ||
     formNotes !== original.notes ||
+    formMeaning !== original.meaning ||
     (formItem?.itemId ?? '') !== original.itemId
   );
 
@@ -334,12 +375,16 @@ export function ClubPanel({
 
      ⚠ Dirty is measured against what the modal OPENED with — the split's stored filing — never
      "is anything selected", or re-opening a bill that is already filed and closing it would prompt. */
-  const filingDirty = !!filingSplit
-    && (filingItem?.itemId ?? '') !== (filingSplit.budgetItemId ?? '');
+  const filingDirty = filingSplit
+    ? (filingItem?.itemId ?? '') !== (filingSplit.budgetItemId ?? '')
+    : !!filingRequest && (
+      (filingItem?.itemId ?? '') !== (filingRequest.budgetItemId ?? '')
+      || filingMeaning !== filingRequest.moneyInMeaning
+    );
 
   const closeFiling = useDiscardGuard({
     dirty: filingDirty,
-    close: () => setFilingSplit(null),
+    close: () => { setFilingSplit(null); setFilingRequest(null); },
     noun: 'filing',
   });
 
@@ -495,26 +540,56 @@ export function ClubPanel({
 
   function openFiling(split: AllocationSplit) {
     setFilingSplit(split);
+    setFilingRequest(null);
     setFilingError('');
     setFilingItem(toSelection(split));
+    setFilingMeaning(null);
+  }
+
+  /** The same dialog, on a REQUEST — the ask (when the money comes in) and the picker, nothing else. */
+  function openRequestFiling(r: ClubRequest) {
+    setFilingRequest(r);
+    setFilingSplit(null);
+    setFilingError('');
+    setFilingItem(toSelection(r));
+    setFilingMeaning(r.moneyInMeaning);
   }
 
   async function saveFiling() {
-    if (!filingSplit) return;
+    /* ⚠ ONE SUBMIT, TWO OBJECTS, TWO ROUTES — and the route is chosen from which one is open rather
+       than from a mode flag, so a state where both are set cannot exist to be got wrong (the two
+       openers clear each other). A bill files through the allocations door; a request through its
+       own filing-only door, which is deliberately NOT the correction PATCH: that one refuses
+       anything the club has answered, and the whole point of D3 is that this does not. */
+    const target = filingSplit
+      ? {
+        url: `/api/coaches/${orgSlug}/teams/${teamId}/allocations`,
+        body: { splitId: filingSplit.id, budgetItemId: filingItem?.itemId ?? null },
+        failure: 'Failed to file this bill.',
+      }
+      : filingRequest
+        ? {
+          url: `/api/coaches/${orgSlug}/teams/${teamId}/payment-requests/${filingRequest.id}/filing`,
+          body: { budgetItemId: filingItem?.itemId ?? null, moneyInMeaning: filingMeaning },
+          failure: 'Failed to file this request.',
+        }
+        : null;
+    if (!target) return;
     setFilingSaving(true);
     setFilingError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/allocations`, {
+      const res = await fetch(target.url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ splitId: filingSplit.id, budgetItemId: filingItem?.itemId ?? null }),
+        body: JSON.stringify(target.body),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error ?? 'Failed to file this bill.');
+      if (!res.ok) throw new Error(data?.error ?? target.failure);
       setFilingSplit(null);
+      setFilingRequest(null);
       await refreshAfterWrite();
     } catch (e: any) {
-      setFilingError(e.message ?? 'Failed to file this bill.');
+      setFilingError(e.message ?? target.failure);
     } finally {
       setFilingSaving(false);
     }
@@ -528,14 +603,28 @@ export function ClubPanel({
     setFormMethod('');
     setFormNotes('');
     setFormItem(null);
+    setFormMeaning(null);
     setFormError('');
     setConfirmWithdraw(false);
     setShowForm(true);
   }
 
+  /**
+   * The direction the item picker offers, on the record window and in the filing dialog.
+   *
+   * ⚠⚠ CHANGING THE ANSWER CLEARS THE CHOSEN WORD, and that is deliberate rather than tidy. The two
+   * answers read from OPPOSITE SIDES of the item library — income words for new money, spending
+   * words for a repayment — and the picker always keeps a saved record's own word offered, so a
+   * word chosen under one answer would survive under the other and file real money on the wrong
+   * side of the report. Losing one tap is the cheap half of that trade.
+   */
+  const answerMeaning = onMeaningAnswered(formMeaning, setFormMeaning, setFormItem);
+  const answerFilingMeaning = onMeaningAnswered(filingMeaning, setFilingMeaning, setFilingItem);
+
   /** Open an existing request — editable while pending, read-only once the club has acted. */
   function openRecord(r: ClubRequest) {
     setEditing(r);
+    setFormMeaning(r.moneyInMeaning);
     setFormType(r.requestType);
     setFormAmount(r.amount.toFixed(2));
     setFormDesc(r.description);
@@ -552,6 +641,12 @@ export function ClubPanel({
     const amount = parseFloat(formAmount);
     if (isNaN(amount) || amount <= 0) { setFormError('Enter an amount greater than 0.'); return; }
     if (!formDesc.trim()) { setFormError('Say what this request is for.'); return; }
+    /* ⚠ THE SERVER ENFORCES THIS TOO (mig 271) — this is the sentence a coach reads, not the rule.
+       The rule is that a new arrival never gets a guessed meaning. */
+    if (formType === 'charge_to_org' && !formMeaning) {
+      setFormError('Say whether this is new money or the club paying you back.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -566,6 +661,7 @@ export function ClubPanel({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             requestType:   formType,
+            moneyInMeaning: formType === 'charge_to_org' ? formMeaning : null,
             amount,
             description:   formDesc.trim(),
             paymentMethod: formMethod || null,
@@ -640,9 +736,18 @@ export function ClubPanel({
     if (!money) {
       return <>Enter an amount and the club will see a request for it{formItem?.itemId ? <>{filed}</> : null}. Nothing moves until they approve it.</>;
     }
-    return formType === 'payment_to_org'
-      ? <>The club sees a request to send them <strong>{money}</strong>{filed}. Nothing leaves your books until they approve it{editing ? ', and you can change or withdraw it until then' : ''}.</>
-      : <>The club sees a request for <strong>{money}</strong>{filed}. Nothing arrives on your books until they approve it{editing ? ', and you can change or withdraw it until then' : ''}.</>;
+    if (formType === 'payment_to_org') {
+      return <>The club sees a request to send them <strong>{money}</strong>{filed}. Nothing leaves your books until they approve it{editing ? ', and you can change or withdraw it until then' : ''}.</>;
+    }
+    /* ⚠ THE LINE SAYS WHAT THE ANSWER DOES TO THE REPORT, because that is the only difference
+       between the two answers a coach can see anywhere. Both are cash the moment the club approves;
+       one becomes a revenue row and the other shrinks a cost. */
+    const lands = formMeaning === 'funding'
+      ? <> and report as <strong>new money</strong> on Budget vs. Actual</>
+      : formMeaning === 'reimbursement'
+        ? <> and <strong>net into the cost it repaid</strong> on Budget vs. Actual</>
+        : null;
+    return <>The club sees a request for <strong>{money}</strong>{filed}{lands}. Nothing arrives on your books until they approve it{editing ? ', and you can change or withdraw it until then' : ''}.</>;
   }
 
   return (
@@ -837,9 +942,18 @@ export function ClubPanel({
                             {split.budgetItemId ? 'Change' : 'File it'}
                           </button>
                         )}
+                        {/* ⚠⚠ THIS SENTENCE WAS FALSE, and it is corrected here rather than left
+                            for the forms review that owns it — a deliberate boundary crossing,
+                            recorded so it is not done twice. The report deliberately COUNTS unfiled
+                            club money under "Not itemized" (its own route says so), so this taught
+                            a coach the opposite of the design on the screen where they would act on
+                            it. The filing dialog's copy had to be rewritten in this build anyway;
+                            leaving the row saying "doesn't appear" while the dialog said "reports
+                            under Not itemized" would have put two answers to one fact on one
+                            screen, which is worse than either alone. */}
                         {!split.budgetItemId && (
                           <span className={styles.clubFilingHint}>
-                            Until it&apos;s filed, this bill doesn&apos;t appear on Budget vs. Actual.
+                            Until it&apos;s filed, this bill reports under <strong>Not itemized</strong>.
                           </span>
                         )}
                       </div>
@@ -1002,8 +1116,41 @@ export function ClubPanel({
                             onClick={() => { if (window.getSelection()?.toString()) return; openRecord(r); }}
                           >
                             <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Request">{r.description}</td>
+                            {/* ⚠⚠ THE ROW SAYS ITS MEANING OUT LOUD, beside the filing (mockup
+                                frame 2). A mis-read is only fixable where it is visible, which is
+                                the same reason the recording form names the family on the Paid-by
+                                line before saving.
+                                ⚠ THE DOOR IS ON THE ROW AND NOT IN THE WINDOW, because the window
+                                LOCKS once the club answers and this does not (D3). Tapping it must
+                                not also open the record, which is what the stopPropagation is for —
+                                the row itself is tappable. */}
                             <td className={styles.td} data-label="Files under">
-                              <Filing category={r.budgetCategoryName} item={r.budgetItemName} />
+                              <span className={styles.clubFilingStack}>
+                                {/* ⚠ WHAT A LEGACY ROW READS AS IS DECIDED IN `coach-club-money`,
+                                    not here — the same rule the report applies, so the label and
+                                    the figure can never disagree about one record. */}
+                                {clubMoneyInWord(r) && (
+                                  <span className={styles.clubMeaningWord}>{clubMoneyInWord(r)}</span>
+                                )}
+                                <Filing category={r.budgetCategoryName} item={r.budgetItemName} />
+                                {/* ⚠ THE SAME CONTROL THE BILL ROW USES, not a second idiom for one
+                                    verb (`/simplify`, 2026-08-30). This shipped as a bespoke
+                                    underlined text link while the bill's own "File it" / "Change"
+                                    — the identical two words, two tables up this same screen — is a
+                                    `btnSecondary compactAction` button. One screen cannot have two
+                                    looks for one act; that is the drift `RowEditButton` was
+                                    extracted to end for the row-OPEN action, reappearing on
+                                    row-FILE. */}
+                                {canWriteMoney && (
+                                  <button
+                                    type="button"
+                                    className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                    onClick={e => { e.stopPropagation(); openRequestFiling(r); }}
+                                  >
+                                    {r.budgetItemId ? 'Change' : 'File it'}
+                                  </button>
+                                )}
+                              </span>
                             </td>
                             <td className={styles.td} data-label="Direction"><DirectionBadge type={r.requestType} /></td>
                             <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>{fmt(r.amount)}</td>
@@ -1032,25 +1179,48 @@ export function ClubPanel({
         </>
       )}
 
-      {/* ── Filing a club bill ─────────────────────────────────────────────── */}
-      {filingSplit && (
+      {/* ── Filing a club bill, or re-filing a request ─────────────────────────
+          ⚠⚠ ONE DIALOG, TWO OBJECTS, AND IT HOLDS ONLY THE CLASSIFICATION (D3). A bill has opened
+          it since mig 250; a request opens it now, because an answered request LOCKS its record
+          window and the team's own label must outlive that lock. Amount, direction, wording and the
+          club's decision all stay behind the read-only record — this moves which row of the report
+          tells the story, and no money at all. */}
+      {(filingSplit || filingRequest) && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (filingSaving ? undefined : closeFiling)?.(); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader
-              title="What was this bill for?"
-              subtitle={filingSplit.allocationDescription}
+              title={filingSplit ? 'What was this bill for?' : 'What was this for?'}
+              subtitle={filingSplit ? filingSplit.allocationDescription : filingRequest?.description ?? ''}
               onClose={filingSaving ? () => {} : closeFiling}
             />
             <div className={styles.formGrid}>
+              {/* The ask, on money coming IN — the same question the request window asks, from the
+                  one module that owns its words. A bill never carries it: a club cannot grant a team
+                  money by billing it. */}
+              {filingRequest?.requestType === 'charge_to_org' && (
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label} htmlFor="club-filing-meaning">{CLUB_MONEY_IN_ASK.label} *</label>
+                  <SublinedChoice
+                    id="club-filing-meaning"
+                    label={CLUB_MONEY_IN_ASK.label}
+                    options={CLUB_MONEY_IN_ASK.options}
+                    value={filingMeaning}
+                    onChange={answerFilingMeaning}
+                    disabled={filingSaving}
+                  />
+                </div>
+              )}
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="club-bill-item">Category &amp; item</label>
-                {/* ⚠ THE MONEY-OUT SIDE. A club bill is a cost; there is no direction question here.
-                    (A request is the interesting case — see the picker in the record window.) */}
+                {/* ⚠ A BILL IS ALWAYS THE MONEY-OUT SIDE — there is no direction question on one.
+                    A request takes the side its own answer names (mig 271). */}
                 <BudgetItemPicker
                   categories={categories}
                   value={filingItem}
                   onChange={setFilingItem}
-                  direction={CLUB_MONEY_ITEM_DIRECTION}
+                  direction={filingRequest
+                    ? clubRequestItemDirection({ requestType: filingRequest.requestType, moneyInMeaning: filingMeaning })
+                    : CLUB_MONEY_ITEM_DIRECTION}
                   createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                   createItemMode="coach"
                   teamId={teamId}
@@ -1060,15 +1230,32 @@ export function ClubPanel({
                 />
               </div>
               <p className={`${styles.formGridFull} ${styles.formHint} ${styles.formHintConsequence}`}>
-                {filingItem?.itemId
-                  ? <>Every installment of this bill will report under <strong>{filingItem.categoryName} · {filingItem.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
-                  : <>Until this bill is filed under one of your budget words, it won&apos;t appear on Budget vs. Actual at all.</>}
+                {filingSplit
+                  ? (filingItem?.itemId
+                    ? <>Every installment of this bill will report under <strong>{filingItem.categoryName} · {filingItem.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
+                    /* ⚠ THIS SENTENCE USED TO BE FALSE, and it was found by the planning session
+                       that led here: it read "it won't appear on Budget vs. Actual at all", while
+                       the report deliberately counts unfiled club money under "Not itemized" and
+                       its own route says so in a comment. It taught a coach the opposite of the
+                       design, on the screen where they would act on it. */
+                    : <>Until this bill is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>)
+                  : (filingItem?.itemId
+                    ? <>This will report under <strong>{filingItem.categoryName} · {filingItem.itemName}</strong> on Budget vs. Actual. Re-filing moves no money.</>
+                    : <>Until this is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>)}
               </p>
               {filingError && <p className={`${styles.errorText} ${styles.formGridFull}`}>{filingError}</p>}
             </div>
             <div className={styles.modalFooter}>
               <button type="button" className={styles.btnGhost} onClick={closeFiling} disabled={filingSaving}>Cancel</button>
-              <button type="button" className={styles.btnPrimary} onClick={saveFiling} disabled={filingSaving}>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={saveFiling}
+                /* ⚠ THE ASK IS REQUIRED HERE TOO — a legacy row opens with no answer, and saving
+                   without one would write back the same NULL that means "read me as a repayment",
+                   while the coach believed they had just classified it. */
+                disabled={filingSaving || (filingRequest?.requestType === 'charge_to_org' && !filingMeaning)}
+              >
                 {filingSaving ? 'Saving…' : 'Save'}
               </button>
             </div>
@@ -1133,13 +1320,60 @@ export function ClubPanel({
                       type="button"
                       className={`${styles.clubDirectionPick} ${formType === 'payment_to_org' ? styles.clubDirectionOn : ''}`}
                       data-side="out"
-                      onClick={() => setFormType('payment_to_org')}
+                      /* ⚠ TURNING THE REQUEST ROUND DROPS THE ANSWER. Money the team SENDS the club
+                         is a cost, which has no second reading — the server refuses a meaning on
+                         this direction and the column's own CHECK agrees, so a stale answer left
+                         in state would be a 400 the coach cannot see the cause of. */
+                      onClick={() => { setFormType('payment_to_org'); setFormMeaning(null); }}
                       aria-pressed={formType === 'payment_to_org'}
                     >
                       <span className={styles.clubDirectionHead}><ArrowUpRight size={14} aria-hidden /> To the club</span>
                       <span className={styles.clubDirectionSub}>We send them money</span>
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* ⚠⚠ THE ASK — the one decision about club money that belongs to the coach (mig 271,
+                  owner ruling 2026-08-15, ratified D1 2026-08-30). A grant and a repayment arrive as
+                  the SAME transaction: same direction, same amount, same club, same approval. The
+                  product read every one of them as a repayment, so a genuine grant vanished into a
+                  cost line it was never about and the club's contribution appeared nowhere.
+                  ⚠ ONLY ON THE INCOMING BRANCH. Money the team SENDS the club is a cost; there is
+                  no second reading of it, and asking would be a question with one answer.
+                  ⚠ IT SITS ABOVE THE PICKER because the answer decides which SIDE of the item
+                  library the picker offers — asking it after would show a list built on a guess. */}
+              {formType === 'charge_to_org' && (
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <label className={styles.label} htmlFor="club-meaning">
+                    {CLUB_MONEY_IN_ASK.label} {!readOnly && '*'}
+                  </label>
+                  {readOnly ? (
+                    <p className={styles.recordValue}>
+                      {formMeaning
+                        ? CLUB_MONEY_IN_ASK.options.find(o => o.value === formMeaning)?.name
+                        /* ⚠ A LEGACY ROW SAYS WHAT IT REPORTS AS, not "—". These were approved
+                           before the question existed and they report as repayments; a dash would
+                           read as "nobody knows", which is worse than the truth and unactionable.
+                           The row's own "Change" is where a coach fixes one. */
+                        : 'Paying us back for a cost'}
+                    </p>
+                  ) : (
+                    <SublinedChoice
+                      id="club-meaning"
+                      label={CLUB_MONEY_IN_ASK.label}
+                      options={CLUB_MONEY_IN_ASK.options}
+                      value={formMeaning}
+                      onChange={answerMeaning}
+                      disabled={saving}
+                    />
+                  )}
+                  {!readOnly && (
+                    <p className={styles.formHint}>
+                      Only you know which one this is. It decides which row of Budget vs. Actual
+                      tells the truth — and <strong>neither answer changes anyone&apos;s dues</strong>.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -1196,12 +1430,16 @@ export function ClubPanel({
                   report reads neither this table nor the allocations — so on a club-run team the
                   season's largest money was missing from the screen that compares spending to plan.
 
-                  ⚠⚠ THE MONEY-**OUT** SIDE, ON BOTH DIRECTIONS. A "From the club" request brings
-                  money IN, but what it is FOR is a cost — it is a reimbursement, and the refund rule
-                  applies: the direction flips the money, never the list. Filing it as revenue would
-                  count the season twice, which is the arithmetic `rep_team_money_in`'s own table
-                  comment spells out. The constant is imported rather than typed as a literal so the
-                  rule has one home. */}
+                  ⚠⚠ THE SIDE IS THE ANSWER ABOVE, NOT THE DIRECTION (mig 271). Until 2026-08-30
+                  this was the money-OUT list on both directions, on the reasoning that a "From the
+                  club" request brings money in but what it is FOR is a cost — true of a
+                  REIMBURSEMENT, and the refund rule that the direction flips the money and never the
+                  list still holds for one. It was never true of a GRANT, which is new money and
+                  files against the income words. `clubRequestItemDirection` owns the choice, so
+                  the same rule reaches this picker and the filing dialog below without either
+                  spelling it out.
+                  ⚠ One search box either way, and its create door stays the picker's own inline
+                  add — one door by construction, never one per kind. */}
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="club-item">What is it for?</label>
                 {readOnly ? (
@@ -1213,7 +1451,7 @@ export function ClubPanel({
                     categories={categories}
                     value={formItem}
                     onChange={setFormItem}
-                    direction={CLUB_MONEY_ITEM_DIRECTION}
+                    direction={clubRequestItemDirection({ requestType: formType, moneyInMeaning: formMeaning })}
                     createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                     createItemMode="coach"
                     teamId={teamId}

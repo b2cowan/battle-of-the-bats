@@ -24,7 +24,7 @@
    copy that had already drifted once (Export collapsing left) can't drift again. */
 
 .muted { color: var(--text-tertiary); padding: 2rem; }
-.errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
+.errorText { color: var(--danger-light); font-size: var(--type-body); margin: 0.5rem 0; }
 
 /* ── The result strip ────────────────────────────────────────────────────────
    ⚠⚠ ONE ROW, WHERE A THREE-TILE BANNER AND A FOUR-TILE DUES CARD USED TO STACK
@@ -53,7 +53,7 @@
 }
 
 .stripLabel {
-  font-size: 0.68rem;
+  font-size: var(--type-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -61,7 +61,7 @@
 }
 
 .stripValue {
-  font-size: 1.45rem;
+  font-size: var(--type-figure);
   font-weight: 700;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
@@ -75,7 +75,7 @@
    colours, and the rendered sweep had never drawn this banner because the layout fixture had
    no budget in it). `--text-tertiary` is the portal's third text tier and the floor the ladder
    is capped at. */
-.stripState { font-size: 0.85rem; color: var(--text-secondary); }
+.stripState { font-size: var(--type-body); color: var(--text-secondary); }
 
 .stripRule {
   width: 1px;
@@ -85,7 +85,7 @@
 }
 
 .stripSupport {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
@@ -94,7 +94,7 @@
 /* The plan's own lines exceeding the estimate this report measures against — the only thing on
    the page that explains a disagreement with the budget plan screen, so it sits INLINE on the
    result rather than pushing the strip to a second row. */
-.stripWarn { font-size: 0.8rem; color: var(--danger-light); }
+.stripWarn { font-size: var(--type-support); color: var(--danger-light); }
 
 /* ── Monthly chart card ──────────────────────────────────────────────────── */
 .chartCard {
@@ -106,7 +106,7 @@
 }
 
 .chartTitle {
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -118,7 +118,7 @@
    months it was never assigned to, so the chart names what it is not plotting. */
 .chartNote {
   margin: 0 0 0.75rem;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 .chartNoteLink {
@@ -165,7 +165,7 @@
 .monthPagerBtn:hover:not(:disabled) { border-color: var(--text-tertiary); }
 .monthPagerBtn:disabled { color: var(--text-tertiary); cursor: default; opacity: 0.55; }
 .monthPagerRange {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
   padding: 0 0.4rem;
   font-variant-numeric: tabular-nums;
@@ -255,7 +255,7 @@
   padding: 0.5rem 0.75rem;
   background: var(--home-card, rgba(255,255,255,0.05));
   border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -267,7 +267,7 @@
 .sectionBandInner {
   text-transform: none;
   letter-spacing: 0.01em;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   background: transparent;
   border-top: none;
   padding-left: 1.4rem;
@@ -281,7 +281,7 @@
   padding: 0.55rem 0.75rem;
   border-top: 1px solid var(--home-line, rgba(255,255,255,0.09));
   font-weight: 640;
-  font-size: 0.86rem;
+  font-size: var(--type-body);
 }
 
 /* Where both shapes end, on the same number, because they are the same money.
@@ -310,7 +310,7 @@
    four fixed money columns. */
 .fundingNote {
   margin: 0.6rem 0 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }
@@ -376,7 +376,7 @@
 }
 
 .emptyHint {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin: 0.4rem 0 0;
 }
 
@@ -467,7 +467,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -498,13 +498,13 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.22rem 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 .bridgeRow dt { margin: 0; }
 .bridgeRow dd { margin: 0; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 /* The itemised family-paid costs sit under the line they explain. */
-.bridgeSub { padding-left: 1rem; font-size: 0.73rem; opacity: 0.85; }
+.bridgeSub { padding-left: 1rem; font-size: var(--type-support); opacity: 0.85; }
 .bridgeOut {
   border-top: 1px solid var(--border-2);
   margin-top: 0.25rem;
@@ -518,7 +518,7 @@
   border: 0;
   padding: 0.15rem 0;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--primary-light);
   cursor: pointer;

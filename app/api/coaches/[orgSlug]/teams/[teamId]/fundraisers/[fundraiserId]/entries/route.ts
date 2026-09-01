@@ -5,7 +5,6 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getOrCreateRepTeamLedger,
-  getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
   getRepDuesPayoutsByProgramYear,
   getRepFundraiser,
@@ -18,7 +17,8 @@ import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, orgDayKey } from '@/lib/timezone';
-import { deriveDuesPosition, groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
+import { groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 import { creditExposure } from '@/lib/dues-credit-guards';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -93,7 +93,13 @@ export const GET = withObservability(async (_req: Request,
   const fundraiser = await getRepFundraiser(fundraiserId, teamId, programYear.id);
   if (!fundraiser) return NextResponse.json({ error: 'Fundraiser not found' }, { status: 404 });
 
-  const [{ data: entries }, { data: roster }] = await Promise.all([
+  /* ⚠ THE WHOLE ROSTER, status included — not just the active slice. The band's entries list
+     (2026-08-31) shows every logged amount REGARDLESS of the player's roster status: the old
+     roster-projected board silently dropped an inactive player's entry while its dollars stayed
+     on the books, which once left a drive undeletable with directions pointing at rows the board
+     could not show. Everything that always worked on the active slice (dues positions, the
+     Record window's player list, sponsor plan names) keeps reading exactly that slice below. */
+  const [{ data: entries }, { data: fullRoster }] = await Promise.all([
     supabaseAdmin
       .from('rep_fundraiser_entries')
       .select('*')
@@ -101,68 +107,28 @@ export const GET = withObservability(async (_req: Request,
       .order('amount_raised', { ascending: false }),
     supabaseAdmin
       .from('rep_roster_players')
-      .select('id, player_first_name, player_last_name')
-      .eq('program_year_id', programYear.id)
-      .eq('status', 'active'),
+      .select('id, player_first_name, player_last_name, status')
+      .eq('program_year_id', programYear.id),
   ]);
+  const roster = (fullRoster ?? []).filter(p => p.status === 'active');
 
-  // Each player's dues position, derived the ONE way every dues surface derives it (owner model
-  // 2026-08-14): payments allocate to installments, credits land on the cash remainders in the
-  // team's application mode. The previous version summed paid STAMPS (reading a part-paid family
-  // as having paid nothing) and clamped a credits-subtracted figure it called "outstanding" — a
-  // different number wearing the shared definition's word.
-  const rosterIds = (roster ?? []).map(p => p.id);
-  const [{ data: allInstallments }, seasonPayments, seasonCredits, seasonPayouts] = await Promise.all([
-    supabaseAdmin
-      .from('rep_player_dues_installments')
-      .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
-      .in('player_id', rosterIds),
-    getRepDuesPaymentsByProgramYear(programYear.id),
-    getRepDuesCreditsByProgramYear(programYear.id),
-    getRepDuesPayoutsByProgramYear(programYear.id),
-  ]);
-  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
-
-  const instsByPlayer = new Map<string, any[]>();
-  for (const i of (allInstallments ?? []) as any[]) {
-    if (!instsByPlayer.has(i.player_id)) instsByPlayer.set(i.player_id, []);
-    instsByPlayer.get(i.player_id)!.push(i);
-  }
-  const paysByPlayer = groupByPlayer(seasonPayments); // generic {playerId} grouper
-  const creditsByPlayer = groupByPlayer(seasonCredits);
+  /* ⚰ THE PER-PLAYER DUES POSITION LEFT THIS ROUTE (owner ruling 2026-08-31). It fed exactly two
+     things, both retired the same day their surfaces were: the "Left to send" column (the dues
+     figure the drill-in borrowed onto a fundraiser board) and the "Where it lands" preview's
+     `openBills` (the Record form now states the credit in one sentence instead of computing its
+     landing). The family's real position still lives where dues are managed. The season credits
+     and payouts reads that used to sit here moved INTO the sponsor block below (/simplify
+     efficiency lens, 2026-09-01): only the payout-floor exposure needs them, and a drive's
+     expansion was paying for two whole-season table reads it never looked at. */
 
   const entryMap = new Map<string, Record<string, unknown>>();
   for (const e of entries ?? []) entryMap.set(e.player_id as string, e as Record<string, unknown>);
 
   const playerRows = (roster ?? []).map(p => {
-    const insts = instsByPlayer.get(p.id) ?? [];
-    const { position } = deriveDuesPosition({
-      installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
-      payments: paysByPlayer.get(p.id) ?? [],
-      credits: creditsByPlayer.get(p.id) ?? [],
-      paidOut: paidOutByPlayer.get(p.id) ?? 0,
-      mode: programYear.creditApplication,
-    });
-    const instById = new Map(insts.map((i: any) => [i.id as string, i]));
     const entry = entryMap.get(p.id);
-
     return {
       playerId:       p.id,
       playerName:     [p.player_first_name, p.player_last_name].filter(Boolean).join(' '),
-      // What this family is still asked to SEND — the honest name for the figure the old
-      // payload called remainingDues (plan §7.6).
-      leftToSend:     position.leftToSend,
-      // The open bills, for the "Where it lands" preview: the sheet shows which bills a new
-      // rebate would lower BEFORE the coach saves (mockup §2).
-      openBills: position.perInstallment
-        .filter(b => b.toSend > 0.005)
-        .map(b => ({
-          installmentNumber: b.installmentNumber,
-          dueDate: (instById.get(b.installmentId)?.due_date as string | undefined) ?? null,
-          // Same insts list built both maps — the id is always present.
-          amount: Number(instById.get(b.installmentId)!.amount),
-          toSend: b.toSend,
-        })),
       entry:          entry ? mapEntry(entry) : null,
     };
   });
@@ -179,6 +145,19 @@ export const GET = withObservability(async (_req: Request,
   const totalRaised  = allEntries.reduce((s, e) => s + Number(e.amount_raised), 0);
   const totalRebates = allEntries.reduce((s, e) => s + Number(e.rebate_amount), 0);
 
+  /* The band's raw material (2026-08-31): the ENTRIES, flat, largest first (the select's own
+     order), each carrying its player's name and whether that player is still active. This is the
+     record itself; `players` below stays the roster PROJECTION the Record window's player list
+     still reads. */
+  const nameByAnyPlayer = new Map((fullRoster ?? []).map(p =>
+    [p.id as string, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
+  const activeIds = new Set(roster.map(p => p.id as string));
+  const driveEntries = allEntries.map(e => ({
+    ...mapEntry(e as Record<string, unknown>),
+    playerName:   nameByAnyPlayer.get(e.player_id as string) ?? 'Unknown player',
+    playerActive: activeIds.has(e.player_id as string),
+  }));
+
   // ⚠ Sponsor only (arrivals model, mig 268): the record page's raw material — the credit PLAN,
   // each ARRIVAL, and how many dollars of each family's accrued credit are already spoken for by
   // cash payouts (the figure the agreement sheet warns with BEFORE the payout floor refuses).
@@ -190,6 +169,13 @@ export const GET = withObservability(async (_req: Request,
     notes: string | null; credited: number;
   }[] = [];
   if ((fundraiser.kind ?? 'fundraiser') === 'sponsor') {
+    // Sponsor-only reads: the family's other credits and its payouts, for the payout floor.
+    const [seasonCredits, seasonPayouts] = await Promise.all([
+      getRepDuesCreditsByProgramYear(programYear.id),
+      getRepDuesPayoutsByProgramYear(programYear.id),
+    ]);
+    const paidOutByPlayer = totalsByPlayer(seasonPayouts);
+    const creditsByPlayer = groupByPlayer(seasonCredits);
     const nameByPlayer = new Map((roster ?? []).map(p => [p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
     const { data: planRows } = await supabaseAdmin
       .from('rep_fundraiser_credit_plan')
@@ -288,8 +274,6 @@ export const GET = withObservability(async (_req: Request,
       totalCredits: Math.round(totalRebates * 100) / 100,
       playerCount:  allEntries.length,
     },
-    // The team's credits setting — the "Where it lands" preview walks bills in this direction.
-    creditApplication: programYear.creditApplication,
     sponsorCreditExposure,
     // The record page's raw material (arrivals model, mig 268) — empty/zero for a drive.
     sponsorCreditPlan,
@@ -297,6 +281,10 @@ export const GET = withObservability(async (_req: Request,
     sponsorExposureByFamily,
     pledgedAmount: fundraiser.pledged_amount != null ? Number(fundraiser.pledged_amount) : null,
     players: playerRows,
+    entries: driveEntries,
+    // The meta line's denominator — the ACTIVE roster, which is also what its numerator counts
+    // (an inactive player's entry is on the board but outside the fraction).
+    rosterCount: roster.length,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });
 
@@ -351,6 +339,13 @@ export const POST = withObservability(async (req: Request,
      omitted = today, exactly the old behaviour. */
   if (receivedDate !== null && (typeof receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate))) {
     return NextResponse.json({ error: 'receivedDate must be a YYYY-MM-DD date' }, { status: 400 });
+  }
+  // Record is for money that has already moved (QA §123 Phase C) — the third money-in door,
+  // brought in step with dues receipts and sponsor arrivals in the same pass. The sentence
+  // lives once, in lib/money-date-guards.ts.
+  const futureRefusal = receivedDate !== null ? futureReceivedDateRefusal(receivedDate, 'drive entry') : null;
+  if (futureRefusal) {
+    return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
 
   const { data: player } = await supabaseAdmin
@@ -430,7 +425,9 @@ export const POST = withObservability(async (req: Request,
         program_year_id:    programYear.id,
         player_id:          playerId,
         amount:             rebateAmount,
-        description:        `Fundraiser rebate — ${fundraiser.name}`,
+        // "Credit", never "rebate", in anything a customer reads (2026-08-31) — this line shows
+        // in the family's dues drawer. Existing rows keep their old wording: they are history.
+        description:        `Fundraiser credit — ${fundraiser.name}`,
         credit_type:        'fundraiser',
         credit_date:        receivedDay,
         notes:              null,

@@ -10,7 +10,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -45,7 +45,7 @@
 .purposeLead {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.86rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 
@@ -57,7 +57,7 @@
 .purposeAside {
   margin: 0;
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.4;
 }
 
@@ -84,7 +84,7 @@
 .summaryItem span {
   display: block;
   margin-bottom: 0.15rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -92,7 +92,7 @@
   display: block;
   overflow-wrap: anywhere;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -125,7 +125,7 @@
 .blockTitle {
   margin: 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
 }
 
@@ -141,7 +141,7 @@
 .legacyTitle {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.86rem;
+  font-size: var(--type-body);
   font-weight: 700;
 }
 
@@ -151,13 +151,13 @@
 .blockSub {
   margin: 0.1rem 0 0;
   color: var(--text-tertiary);
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.4;
 }
 
 .blockMeta {
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 
 .empty {
@@ -208,7 +208,7 @@
   align-items: baseline;
   gap: 0.35rem;
   color: var(--text-primary);
-  font-size: 0.92rem;
+  font-size: var(--type-body);
   font-weight: 700;
 }
 
@@ -223,7 +223,7 @@
   flex-shrink: 0;
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 
 .playerTotals {
@@ -233,14 +233,14 @@
   gap: 0.08rem;
   text-align: right;
   color: var(--text-tertiary);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-variant-numeric: tabular-nums;
 }
 
 .noFees {
   margin: 0;
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 
 /* Remainder line when SOME players have fees: quiet count + a real (app-standard
@@ -251,7 +251,7 @@
   margin: 0.1rem 0 0;
   padding: 0.35rem 0.1rem 0.1rem;
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
 }
 
 /* No player fees yet (but a legacy "Other fee" exists): a quiet explain-only
@@ -264,7 +264,7 @@
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 
@@ -297,7 +297,7 @@
   background: transparent;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -334,7 +334,7 @@
   background: rgba(var(--logic-lime-rgb), 0.12);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
   border-radius: var(--radius-sm);
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   font-weight: 700;
   font-family: var(--font-data, monospace);
   white-space: nowrap;
@@ -345,7 +345,7 @@
   color: var(--text-tertiary);
   background: none;
   border: none;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -371,7 +371,7 @@
 
 .name {
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,7 +380,7 @@
 
 .meta {
   color: var(--text-tertiary);
-  font-size: 0.73rem;
+  font-size: var(--type-support);
   overflow-wrap: anywhere;
 }
 
@@ -428,7 +428,7 @@
   gap: 0.4rem;
   align-self: flex-start;
   padding: 0.55rem 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.06);
@@ -467,7 +467,7 @@
 
 .fieldLabel {
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   font-weight: 600;
 }
 
@@ -488,7 +488,7 @@
   flex: 1;
   height: 34px;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
@@ -508,7 +508,7 @@
 .assignNote {
   margin: -0.15rem 0 0.1rem;
   color: var(--text-tertiary);
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.4;
 }
 
@@ -575,7 +575,7 @@
   gap: 0.3rem;
   align-self: flex-start;
   padding: 0.2rem 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--logic-lime);
   background: transparent;
@@ -601,7 +601,7 @@
   gap: 0.35rem;
   flex: 1;
   height: 42px;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 700;
   border-radius: var(--radius-sm);
   cursor: pointer;

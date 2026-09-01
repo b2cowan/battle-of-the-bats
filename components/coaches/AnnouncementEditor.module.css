@@ -11,7 +11,7 @@
 .notice {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   border-radius: var(--radius-sm);
 }
 
@@ -36,7 +36,7 @@
   gap: 0.45rem;
   margin: 0;
   color: var(--text-tertiary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 .recipientBar strong { color: var(--text-primary); font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -62,12 +62,12 @@
   display: block;
   margin-bottom: 0.15rem;
   color: var(--text-tertiary);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
 }
 .summaryItem strong {
   display: block;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -77,7 +77,7 @@
   gap: 0.4rem;
   margin: 0;
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.45;
 }
 .recipientNoteIcon {
@@ -99,7 +99,7 @@
   background: rgba(var(--warning-rgb), 0.08);
   border: 1px solid rgba(var(--warning-rgb), 0.25);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   line-height: 1.45;
 }
 
@@ -122,7 +122,7 @@
   background: rgba(var(--warning-rgb), 0.08);
   border: 1px solid rgba(var(--warning-rgb), 0.25);
   border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 
@@ -147,7 +147,7 @@
   background: transparent;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -170,7 +170,7 @@
   margin: 0;
   padding: 0.5rem 0;
   color: var(--text-tertiary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.55;
 }
 
@@ -199,7 +199,7 @@
   background: rgba(var(--blueprint-blue-rgb), 0.10);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
   border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 
@@ -248,7 +248,7 @@
 .formHint {
   margin-right: auto;
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.4;
 }
 
@@ -264,7 +264,7 @@
   background: var(--logic-lime);
   border: 1px solid var(--logic-lime);
   border-radius: var(--radius-sm);
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 800;
   cursor: pointer;
   transition: filter 0.15s, opacity 0.15s;
@@ -314,13 +314,13 @@
 .blockTitle {
   margin: 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
 }
 
 .blockMeta {
   color: var(--text-tertiary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-variant-numeric: tabular-nums;
 }
 
@@ -379,7 +379,7 @@
 
 .name {
   color: var(--text-primary);
-  font-size: 0.92rem;
+  font-size: var(--type-body);
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -388,14 +388,14 @@
 
 .meta {
   color: var(--text-tertiary);
-  font-size: 0.73rem;
+  font-size: var(--type-support);
 }
 
 .preview {
   display: -webkit-box;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -428,7 +428,7 @@
 .bodyFull {
   margin-top: 0.4rem;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -444,7 +444,7 @@
   background: transparent;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   font-weight: 700;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;

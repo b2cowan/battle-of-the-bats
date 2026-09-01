@@ -238,16 +238,10 @@ const SITES: Site[] = [
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx', occurrence: 0,
     screen: 'Money → Fundraising', variant: 'embedded|standard', helpHost: 'masthead', actions: null,
   },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx', occurrence: 0,
-    screen: 'Money → Fundraising → one drive',
-    // `nested` — a hub tab drilled into ONE record. Its "?" is the hub's, one line up.
-    variant: 'nested', helpHost: 'masthead',
-    actions: {
-      from: 'inline', slot: 'action', holds: 'Edit / archive controls for this one drive',
-      phoneHidden: null, phoneInTitleRow: null,
-    },
-  },
+  /* ⚰ `fundraisers/detail.tsx` ("Money → Fundraising → one drive") LEFT THIS INVENTORY on
+     2026-08-31: the drive drill-in retired when drives joined sponsors in expanding their band
+     row in place, and the file was deleted with it. The band (`fundraisers/DriveBand.tsx`)
+     renders no CoachPageHeader of its own — the hub's header one level up names the screen. */
 
   // ── The team hub ─────────────────────────────────────────────────────────────────────────────
   {

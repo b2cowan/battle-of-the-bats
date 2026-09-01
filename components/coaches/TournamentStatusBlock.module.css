@@ -16,7 +16,7 @@
 }
 
 .label {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -32,18 +32,18 @@
 }
 
 .muted {
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   color: var(--text-tertiary);
 }
 
 .due {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
 .note {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -67,7 +67,7 @@
 .feePreviewLabel {
   color: var(--text-tertiary);
   font-family: var(--font-data, monospace);
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -76,7 +76,7 @@
 .feePreviewAmount {
   color: var(--text-primary);
   font-family: var(--font-data, monospace);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 800;
 }
 
@@ -96,7 +96,7 @@
 .payPanelLabel {
   margin: 0;
   font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -105,7 +105,7 @@
 
 .payInstructions {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -116,7 +116,7 @@
 
 .payNote {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }

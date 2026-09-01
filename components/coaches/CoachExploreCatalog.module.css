@@ -6,7 +6,7 @@
 
 .intro {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   line-height: 1.55;
   color: var(--text-secondary);
 }
@@ -47,14 +47,14 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.92rem;
+  font-size: var(--type-body);
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .free {
   font-family: var(--font-data, monospace);
-  font-size: 0.56rem;
+  font-size: var(--type-token);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -65,7 +65,7 @@
 }
 
 .desc {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }
@@ -78,7 +78,7 @@
   gap: 0.3rem;
   padding: 0.35rem 0.65rem;
   cursor: pointer;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--on-lime);
   background: var(--logic-lime);
@@ -93,7 +93,7 @@
   flex-shrink: 0;
   align-self: flex-start;
   padding: 0.35rem 0.65rem;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--logic-lime);
   background: transparent;
@@ -110,7 +110,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -145,7 +145,7 @@
 .premiumEyebrow {
   align-self: flex-start;
   font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -157,7 +157,7 @@
 
 .premiumHeading {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--text-primary);
@@ -165,7 +165,7 @@
 
 .premiumBody {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.55;
   color: var(--text-secondary);
 }
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.83rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -207,18 +207,18 @@
 }
 
 .premiumReassure {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
 .premiumPrice {
   font-family: var(--font-data, monospace);
-  font-size: 1.05rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   color: var(--text-primary);
 }
 .premiumPriceUnit {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-tertiary);
   margin-left: 0.12rem;
@@ -229,7 +229,7 @@
   display: inline-flex;
   align-items: center;
   padding: 0.55rem 0.95rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 800;
   color: var(--home-lime-ink);
   background: var(--home-lime);
@@ -247,7 +247,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 0.95rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.45;
   color: var(--text-tertiary);
   background: var(--white-02, rgba(255, 255, 255, 0.02));

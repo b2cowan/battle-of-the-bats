@@ -22,6 +22,10 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
+import { spendAgainstPlan } from '@/lib/coach-money-summary';
+import {
+  clubRequestReportSide, type ClubMoneyInMeaning, type ClubRequestType,
+} from '@/lib/coach-club-money';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -103,7 +107,9 @@ export const GET = withObservability(async (_req: Request,
     // Season-scoped since migration 247 — see note 3 in the header.
     supabaseAdmin
       .from('rep_team_payment_requests')
-      .select('request_type, amount, status')
+      // `money_in_meaning` rides along for headroom only (mig 271) — cash counts both answers
+      // identically, so nothing else on this route reads it.
+      .select('request_type, money_in_meaning, amount, status')
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
     getRepTeamMoneyIn(programYear.id),
@@ -294,13 +300,25 @@ export const GET = withObservability(async (_req: Request,
   }
 
   // ── Payment requests ─────────────────────────────────────────────────────
-  const requests = (requestsRes.data ?? []) as Array<{ request_type: string; amount: number; status: string }>;
+  const requests = (requestsRes.data ?? []) as Array<{
+    request_type: ClubRequestType; money_in_meaning: ClubMoneyInMeaning | null;
+    amount: number; status: string;
+  }>;
   const pendingRequestCount = requests.filter(rq => rq.status === 'pending').length;
-  const orgFunding = requests
-    .filter(rq => rq.status === 'approved' && rq.request_type === 'charge_to_org')
+  const approvedRequests = requests.filter(rq => rq.status === 'approved');
+  /* ⚠ EVERY APPROVED ARRIVAL, BOTH ANSWERS — this is the CASH term, and a dollar arrived either
+     way. Only headroom below splits them (mig 271). */
+  const orgFunding = approvedRequests
+    .filter(rq => rq.request_type === 'charge_to_org')
     .reduce((s, rq) => s + (rq.amount ?? 0), 0);
-  const orgPayments = requests
-    .filter(rq => rq.status === 'approved' && rq.request_type === 'payment_to_org')
+  const orgPayments = approvedRequests
+    .filter(rq => rq.request_type === 'payment_to_org')
+    .reduce((s, rq) => s + (rq.amount ?? 0), 0);
+  /* What the club paid BACK — the half of `orgFunding` that nets into a cost on the report rather
+     than standing as revenue. A legacy row (NULL meaning) is one of these, which is the reading it
+     has reported under since it was approved. */
+  const orgMoneyBack = approvedRequests
+    .filter(rq => clubRequestReportSide({ requestType: rq.request_type, moneyInMeaning: rq.money_in_meaning }) === 'reimbursement')
     .reduce((s, rq) => s + (rq.amount ?? 0), 0);
 
   // ── Budget reconciliation ────────────────────────────────────────────────
@@ -338,7 +356,22 @@ export const GET = withObservability(async (_req: Request,
   // Money OUT is a CASH question — out-of-pocket costs never left the team's account, and money
   // handed back to families did. Headroom stays a BUDGET question, so it keeps the full spend.
   const moneyOutTotal = expensesCashPaid + allocationsPaid + orgPayments + payoutsTotal;
-  const headroom = effectiveTotal > 0 ? effectiveTotal - expensesPaid : null;
+
+  /* ⚠⚠ HEADROOM IS THE **REPORT'S** ARITHMETIC NOW (owner D5, 2026-08-30), and it was not before.
+     This read `effectiveTotal - expensesPaid` — the team's own costs and nothing else — while the
+     report one click away counted the club's bill and netted every refund. On the QA fixture the
+     two read $1,980 and $1,555, and the disagreement WAS the bug: a coach cannot plan from two
+     answers to "can we afford this?". Every term, and why, is in `spendAgainstPlan`.
+     ⚠ NEW MONEY IS ABSENT FROM IT ON PURPOSE — a club grant is revenue, and headroom is a cost
+     figure. */
+  const spentAgainstPlan = spendAgainstPlan({
+    expensesPaid,
+    clubBillsPaid: allocationsPaid,
+    clubPaymentsOut: orgPayments,
+    clubMoneyBack: orgMoneyBack,
+    recordedMoneyBack,
+  });
+  const headroom = effectiveTotal > 0 ? effectiveTotal - spentAgainstPlan : null;
 
   /**
    * ⚠⚠ CASH ON HAND COMES FROM THE REGISTER'S OWN ARITHMETIC, and this list IS the contract.
@@ -407,6 +440,7 @@ export const GET = withObservability(async (_req: Request,
       seasonTotal,
       itemizedTotal,
       effectiveTotal,
+      spentAgainstPlan: r2(spentAgainstPlan),
       /** The un-itemized part of the estimate. Now SIGNED: negative means the lines have
        *  outgrown the estimate, which used to be reported as a separate boolean and a total
        *  that quietly ignored the coach's own number. */

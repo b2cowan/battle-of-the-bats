@@ -385,57 +385,10 @@ export function applyCreditsToBills(opts: {
   };
 }
 
-/** One open bill, as the fundraiser-entries route serves them for the "Where it lands" preview. */
-export interface OpenBillForPreview {
-  installmentNumber: number;
-  dueDate: string | null;
-  amount: number;
-  toSend: number;
-}
-
-/**
- * The "Where it lands" preview — which of a family's bills a not-yet-saved fundraiser rebate
- * would lower, and by how much, BEFORE the coach saves (binding mockup §2).
- *
- * ⚠⚠ THE SHARED APPLICATION ARITHMETIC, NEVER A LOCAL RE-DERIVATION. It runs `applyCreditsToBills`
- * over the open bills the entries route served, with the pending rebate as the one credit — so the
- * preview shows exactly what saving will do, in the same mode the team is set to.
- *
- * ⚠ IT LIVES HERE BECAUSE TWO SCREENS DRAW IT (money centralization P2, 2026-08-23). It was a
- * private function on the drive leaderboard until the ONE recording conversation absorbed that
- * screen's logging door; leaving it there would have meant the preview appearing on the door that
- * no longer logs and vanishing from the one that does — or a second copy, which is how one
- * arithmetic becomes two that disagree.
- */
-export function previewCreditLanding(
-  openBills: readonly OpenBillForPreview[],
-  rebate: number,
-  mode: CreditApplicationMode,
-) {
-  const position = applyCreditsToBills({
-    coverage: openBills.map(b => ({
-      installmentId: String(b.installmentNumber),
-      installmentNumber: b.installmentNumber,
-      allocated: 0,
-      remaining: b.toSend,
-      covered: false,
-      completedOn: null,
-    })),
-    credits: [{ id: 'preview', amount: rebate, creditType: 'fundraiser', creditDate: '9999-01-01' }],
-    mode,
-  });
-  const byNumber = new Map(position.perInstallment.map(c => [c.installmentNumber, c]));
-  const rows = openBills
-    .map(b => {
-      const after = byNumber.get(b.installmentNumber);
-      if (!after || after.creditApplied <= 0.005) return null;
-      return {
-        installmentNumber: b.installmentNumber,
-        dueDate: b.dueDate,
-        wasToSend: b.toSend,
-        newToSend: after.toSend,
-      };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-  return { rows, leftover: position.owedBack };
-}
+/* ⚰ `previewCreditLanding` and `OpenBillForPreview` are GONE (owner ruling 2026-08-31). The
+   "Where it lands" preview they served — binding mockup §2 of money centralization P2 — was
+   retired from the drive record form with eyes open: it computed which dues installments a
+   not-yet-saved credit would lower, and the owner ruled the form should simply state the credit
+   ("$18.90 is credited to Avery Test's family") without the landing arithmetic. The application
+   arithmetic itself is untouched above — the save still lands credits through it, and the
+   family's own dues screen still shows where they landed. */

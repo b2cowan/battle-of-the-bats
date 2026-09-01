@@ -107,7 +107,7 @@ describe('payoutFloorViolation — the floor arithmetic', () => {
   it('the sentence names the dollars and the act', () => {
     assert.equal(
       payoutFloorMessage(40, 'lowering this credit'),
-      '$40.00 has already been paid out to this family — lowering this credit would leave the books owing them less than they have received. Remove the payout first.',
+      'The team has already paid $40.00 back to this family — lowering this credit would make that more than they were ever owed. Remove the payout first.',
     );
   });
 });

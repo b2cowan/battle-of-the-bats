@@ -11,7 +11,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -102,7 +102,7 @@
 
 .name {
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -115,7 +115,7 @@
 }
 
 .meta {
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -150,13 +150,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 600;
 }
 .tournamentTag {
   flex-shrink: 0;
   font-family: var(--font-data);
-  font-size: 0.56rem;
+  font-size: var(--type-token);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 700;
@@ -173,7 +173,7 @@
   gap: 0.3rem;
   font-family: var(--font-data);
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   color: var(--danger);
   font-variant-numeric: tabular-nums;
 }
@@ -192,11 +192,11 @@
   gap: 0.35rem;
   font-family: var(--font-data);
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-.result { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; }
+.result { font-size: var(--type-label); font-weight: 800; letter-spacing: 0.04em; }
 .result_win { color: var(--success); }
 .result_loss { color: var(--danger); }
 .result_tie { color: var(--warning); }
@@ -247,7 +247,7 @@
   gap: 0.4rem;
   align-self: flex-start;
   padding: 0.55rem 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.06);
@@ -297,7 +297,7 @@
   flex: 1;
   height: 34px;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
@@ -316,13 +316,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 
 .formHint {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 
@@ -380,7 +380,7 @@
   gap: 0.3rem;
   align-self: flex-start;
   padding: 0.2rem 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--logic-lime);
   background: transparent;
@@ -407,7 +407,7 @@
   gap: 0.35rem;
   flex: 1;
   height: 42px;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 700;
   border-radius: var(--radius-sm);
   cursor: pointer;

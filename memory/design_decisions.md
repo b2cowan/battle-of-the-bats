@@ -3,6 +3,87 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 ---
+### 2026-08-31 — THE "WHERE IT LANDS" PREVIEW RETIRES — a form states the consequence in ONE sentence, not an arithmetic
+
+**Decision (owner, reviewing the drive record form's wording — supersedes the preview half of
+money centralization P2's binding mockup §2, with eyes open):** the Record form for drive money
+says **"$18.90 is credited to Avery Test's family"** and stops there — no computation of which
+dues installments the credit would lower, no "more than the open bills" remainder line. *"Keep it
+simple — you don't need to calculate what they currently have outstanding."* The landing
+arithmetic still runs in the save and still reads on the family's own dues screen; only the
+form-side preview is gone.
+
+- **The preview had earned its retirement three ways.** Its two prose branches could BOTH render
+  for a family with nothing owing — the same fact stated twice, once nonsensically ("$18.90 more
+  than the open bills" when there were no bills). Its word "bills" had meanwhile been claimed by
+  the Ledger fold to mean money the TEAM owes, so the preview said "open bills" about money a
+  FAMILY owes — one word, both directions — while its own detail rows said "Installment #1". And
+  its consequence line ("earns $18.90 off dues") contradicted the preview above it whenever the
+  credit was actually owed back rather than applied.
+- **⚖ "IS CREDITED" IS THE WORD, deliberately — not "owed to the family"** (the owner's first
+  phrasing). A credit usually LOWERS what the family still sends; it is owed back only when
+  nothing is left to lower. "Credited" is true in every application mode, so the sentence can
+  never contradict what actually happens — which is the property the preview lost.
+- **The principle worth keeping:** a recording form owes the coach the CONSEQUENCE ("what saving
+  does"), in one sentence, in words that are true in every mode — not a projection of downstream
+  arithmetic. The projection belongs on the screen that owns the downstream record.
+
+**Applies to:** the Record conversation's drive branch (the preview, its shared helper and its
+server-side `openBills`/`leftToSend` derivation all removed 2026-08-31); the principle to any
+future consequence line in the conversation.
+
+---
+### 2026-08-31 — A DRIVE OPENS IN PLACE — the fundraiser drill-in retires, and the board shows ENTRIES, not the roster
+
+**Decision (owner, /design round 3 — mockup Artifact "Fundraiser Drill-In Redesign",
+`docs/projects/active/FUNDRAISER_DETAIL_DESIGN_MOCKUP.html`, round-3 version is the approved one):**
+a drive takes the sponsor band's treatment — its list row expands in place into a meta line, one
+sibling row per logged entry sharing the parent table's columns (never a nested table — the §122
+alignment lesson), and the two doors (Record primary, Edit secondary). The `?fundraiser=` drill-in
+STATE of the Fundraisers tab retires for drives as it already did for sponsors: no back link, no
+nested page header, no four-tile per-drive summary, no Rank column. Deep links land on the tab with
+the row open, scrolled into view, exactly as sponsor links do.
+
+- **⚠ THE ENABLING MOVE IS ENTRIES-FIRST, and it is what made "a whole page" feel wrong.** The old
+  board was roster-projected — one row per ACTIVE player, dashes for everyone who hadn't taken
+  part — which is why one entry needed twelve rows and a place of its own. The board now draws
+  money that exists; "who hasn't yet" is a fraction on the meta line ("3 of 12 players logged") and
+  the Record window's own player list (it already only offers players with nothing logged). This
+  also un-hides entries whose player later left the active roster — today they drop off the board
+  while staying on the books (the defect that once made a drive undeletable with directions
+  pointing at rows the board could not show).
+- **A MODAL WAS ASKED FOR AND REFUSED, by the owner's own 2026-08-26 ruling** (a modal is for a
+  QUESTION, not a working surface) — plus Record opens the recording window, which would stack a
+  window on a window. What the owner actually liked about sponsorships was expand-in-place; the
+  only modals there are the agreement forms, and the drive keeps that same split (its Edit sheet
+  stays a modal, unchanged).
+- **The meta line obeys the 08-29 facts-only ruling:** "Credits families 15% · 3 of 12 players
+  logged · Jun 1 → Jun 30 · tags" — the base of the % ("of what they raise") lives in the editor
+  and help, as the sponsor band's "of each arrival" trim decided. A fresh drive keeps one state
+  sentence ("Nothing logged yet.") under that ruling's own guard.
+- **Doors keep today's rules, relocated:** closed drive = no Record door, Edit amount dead, Remove
+  live (it is the only unwind door and the dues drawer sends coaches to it). Edit amount swaps the
+  entry row for the same inline amount/date/notes editor. The drive's reopen door says **Edit**,
+  not Settings (the §121 house-verb ruling — the drill-in's "Settings" was drift).
+- **One act at a time (owner amendment, 2026-09-01):** while an entry's inline editor is open,
+  the drive's OTHER doors step back — the Record/Edit row and the sibling entries' Edit
+  amount/Remove all hide until Save or Cancel. Record would have stacked the recording window
+  over a half-typed correction, and pressing another row's Edit amount silently discarded the
+  typing (one editor state — a quiet loss the drill-in had too). Hidden, not greyed: the state
+  explains itself, and a dead button would owe a tooltip nobody needs here.
+- **Swept with it (rounds 1–2, owner-accepted):** the floating "15% player rebate" line is deleted
+  (the % lives on the meta line); the "Left to send" dues column is REMOVED ENTIRELY — it was the
+  family's dues balance on a screen that isn't about dues; the recording window's "where it lands"
+  preview owns that question at the moment it matters. Vocabulary settles on **credit** (never
+  "rebate") in every customer-visible string on this surface, matching the dues side.
+
+**Rationale:** the drive was the last money-in record with a place of its own; entries-first makes
+it small enough to live where sponsors live, so the whole tab reads as one list with one
+interaction grammar.
+**Applies to:** the Fundraisers tab (drives band + drill-in retirement); the entries-first
+principle to any future board tempted to draw the roster instead of the record.
+
+---
 ### 2026-08-29 — A META LINE CARRIES FACTS, NOT NARRATION — and never restates the columns above it
 
 **Decision (owner + /design, §121 walk — reached by three same-day trims of one line):** an

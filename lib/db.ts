@@ -9132,7 +9132,7 @@ export async function markRepPlayerDuesInstallmentPaid(
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
-import { allocateDuesPayments, duesPaidAmount, strandedExcess } from './dues-payments';
+import { allocateDuesPayments, duesPaidAmount, planOverpaymentReconcile } from './dues-payments';
 import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {
@@ -9927,11 +9927,20 @@ export async function removeRepDuesPayout(
 /**
  * THE automatic overpayment credit, made symmetric (owner ruling 5 + review 2026-08-13 Criticals
  * 1–2): whenever money-received and the schedule total change relative to each other, the
- * payment-LINKED credits are reconciled to `max(0, paymentsTotal − scheduleTotal)` —
+ * `overpayment`-type credits are reconciled to `max(0, paymentsTotal − scheduleTotal)` —
  * created/topped-up when dues drop below what a family sent, SHRUNK OR REMOVED when dues rise
  * back past it (a stale credit is a dollar subtracted twice: it labels money already inside
- * paymentsTotal). Only `payment_id`-carrying credits are ever touched — manual, fundraiser and
- * contribution credits are the owner's "credits stay credits" ruling and are never adjusted.
+ * paymentsTotal). Manual, fundraiser and contribution credits are the owner's "credits stay
+ * credits" ruling and are never adjusted — the planner selects by TYPE and touches nothing else.
+ *
+ * ⚠ EVERY overpayment credit counts, HOWEVER BORN (QA §123 Phase A1). This used to select
+ * `payment_id IS NOT NULL` — but the credits it writes on a schedule change are deliberately
+ * standalone (`payment_id: null`), so it could not see its own work: lowering a paid-up family's
+ * total twice stacked a second credit on the first, and restoring the total left the stale credit
+ * standing. The whole decision now lives in `planOverpaymentReconcile` (lib/dues-payments.ts),
+ * pure and unit-tested; this function only fetches the full set and executes the plan. A
+ * payment-linked credit keeps its link (its payment's DB CASCADE still removes it); a
+ * schedule-change credit stays standalone and manually deletable.
  *
  * Every path that moves either side calls this: recording a payment, removing one, the bulk
  * dues re-run, and the per-player schedule edit.
@@ -9947,26 +9956,27 @@ export async function reconcileOverpaymentCredits(opts: {
    *  reconciles — those credits are standalone and manually deletable. */
   paymentId?: string | null;
 }): Promise<{ created: number; reduced: number }> {
-  const { data: linkedRows, error } = await supabaseAdmin
+  const { data: creditRows, error } = await supabaseAdmin
     .from('rep_dues_credits')
-    .select('id, amount')
+    .select('id, amount, credit_type')
     .eq('program_year_id', opts.programYearId)
     .eq('player_id', opts.playerId)
-    .not('payment_id', 'is', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  const linkedTotal = creditsTotal((linkedRows ?? []).map((c: any) => ({ amount: Number(c.amount) })));
-  const trueExcess = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, 0);
-  const createAmt = strandedExcess(opts.paymentsTotal, opts.scheduleTotal, linkedTotal);
-  const reduceAmt = Math.max(0, Math.round((linkedTotal - trueExcess) * 100) / 100);
 
-  if (createAmt > 0.005) {
+  const plan = planOverpaymentReconcile(
+    (creditRows ?? []).map((c: any) => ({ id: c.id as string, amount: Number(c.amount), creditType: c.credit_type as string })),
+    opts.paymentsTotal,
+    opts.scheduleTotal,
+  );
+
+  if (plan.create > 0.005) {
     const { error: cErr } = await supabaseAdmin
       .from('rep_dues_credits')
       .insert({
         program_year_id: opts.programYearId,
         player_id: opts.playerId,
-        amount: createAmt,
+        amount: plan.create,
         description: opts.paymentId ? 'Overpayment' : 'Overpayment (dues changed)',
         credit_type: 'overpayment',
         credit_date: opts.creditDate,
@@ -9974,30 +9984,22 @@ export async function reconcileOverpaymentCredits(opts: {
         created_by: opts.createdBy,
       });
     if (cErr) throw cErr;
-    return { created: createAmt, reduced: 0 };
+    return { created: plan.create, reduced: 0 };
   }
 
-  if (reduceAmt > 0.005) {
-    // Shrink newest-first until the stale amount is gone — delete a credit the reduction
-    // swallows whole, trim the one it only partly reaches.
-    let leftC = Math.round(reduceAmt * 100);
-    for (const row of (linkedRows ?? []) as Array<{ id: string; amount: number }>) {
-      if (leftC <= 0) break;
-      const amtC = Math.round(Number(row.amount) * 100);
-      if (amtC <= leftC) {
-        const { error: dErr } = await supabaseAdmin.from('rep_dues_credits').delete().eq('id', row.id);
-        if (dErr) throw dErr;
-        leftC -= amtC;
-      } else {
-        const { error: uErr } = await supabaseAdmin
-          .from('rep_dues_credits')
-          .update({ amount: (amtC - leftC) / 100 })
-          .eq('id', row.id);
-        if (uErr) throw uErr;
-        leftC = 0;
-      }
+  if (plan.reduced > 0.005) {
+    for (const id of plan.remove) {
+      const { error: dErr } = await supabaseAdmin.from('rep_dues_credits').delete().eq('id', id);
+      if (dErr) throw dErr;
     }
-    return { created: 0, reduced: reduceAmt };
+    if (plan.trim) {
+      const { error: uErr } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ amount: plan.trim.amount })
+        .eq('id', plan.trim.id);
+      if (uErr) throw uErr;
+    }
+    return { created: 0, reduced: plan.reduced };
   }
 
   return { created: 0, reduced: 0 };

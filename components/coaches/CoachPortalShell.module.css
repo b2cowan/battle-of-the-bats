@@ -113,7 +113,7 @@
 
 .mhEyebrow {
   font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -130,7 +130,7 @@
   gap: 0.3rem;
   min-width: 0;
   font-family: var(--font-display, sans-serif);
-  font-size: 1.2rem;
+  font-size: var(--type-title);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.01em;
@@ -172,7 +172,7 @@
   gap: 0.5rem;
   margin-top: 0.3rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -194,7 +194,7 @@
   border: 1px solid transparent;
   border-radius: 999px;
   font-family: var(--font-data, monospace);
-  font-size: 0.56rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -268,7 +268,7 @@
   padding: 0 0.7rem;
   border-bottom: 2px solid transparent;
   font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.045em;
   text-transform: uppercase;
@@ -334,7 +334,7 @@
 .switchLabel {
   padding: 0.7rem 0.95rem 0.3rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.58rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -350,7 +350,7 @@
   border: 0;
   background: none;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-weight: 650;
   color: var(--text-primary);
   text-align: left;
@@ -373,7 +373,7 @@
 .switchFoot {
   border-top: 1px solid var(--border-2);
   padding: 0.55rem 0.95rem;
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -407,7 +407,7 @@
 
 .railEyebrow {
   font-family: var(--font-data, monospace);
-  font-size: 0.56rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -417,7 +417,7 @@
 .railTeamName {
   margin: 0.2rem 0 0.3rem;
   font-family: var(--font-display, sans-serif);
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   line-height: 1.2;
   color: var(--text-primary);
@@ -429,7 +429,7 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
+  font-size: var(--type-token);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -441,7 +441,7 @@
   margin: 0.2rem 0 0.3rem;
   font: inherit;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   background: var(--surface-2, var(--surface));
   border: 1px solid var(--border-2);
@@ -469,7 +469,7 @@
   color: var(--text-secondary);
   text-decoration: none;
   font-family: var(--font-data, monospace);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 700;
   position: relative;
   transition: background 0.15s, color 0.15s;
@@ -522,7 +522,7 @@
 
 .railLive {
   font-family: var(--font-data, monospace);
-  font-size: 0.58rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;

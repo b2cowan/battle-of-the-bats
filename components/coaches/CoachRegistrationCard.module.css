@@ -39,7 +39,7 @@
 
 .cardTitle {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -51,7 +51,7 @@
   flex-wrap: wrap;
   gap: 0.3rem 0.75rem;
   margin-top: 0.25rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 

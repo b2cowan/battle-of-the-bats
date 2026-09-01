@@ -1,0 +1,539 @@
+<title>What Happens Above 24px</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ══ Round 2 of the type-ladder program. Same visual system as the as-built sheet on purpose —
+      these are meant to read as a series. Chrome stays cool and technical so the warm product
+      frames read as specimens on a bench. ══ */
+:root{
+  --ground:#ECEEF2; --surface:#FFFFFF; --sunk:#E3E7ED;
+  --ink:#14181E; --muted:#5B6573; --faint:#8791A0;
+  --rule:#D2D8E0; --rule-soft:#E2E6EC;
+  --accent:#1E4FD9; --accent-soft:rgba(30,79,217,.09);
+  --flag:#A8321C; --flag-soft:rgba(168,50,28,.10);
+  --pass:#1C6B5A; --pass-soft:rgba(28,107,90,.11);
+  --hold:#8A6100; --hold-soft:rgba(138,97,0,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0F1216; --surface:#171B21; --sunk:#12161B;
+  --ink:#E7EAEE; --muted:#98A2B0; --faint:#6D7787;
+  --rule:#252B33; --rule-soft:#1D232A;
+  --accent:#7BA3FF; --accent-soft:rgba(123,163,255,.13);
+  --flag:#FF8266; --flag-soft:rgba(255,130,102,.13);
+  --pass:#4FC7AE; --pass-soft:rgba(79,199,174,.13);
+  --hold:#E0A93B; --hold-soft:rgba(224,169,59,.13);
+}}
+:root[data-theme="dark"]{
+  --ground:#0F1216; --surface:#171B21; --sunk:#12161B;
+  --ink:#E7EAEE; --muted:#98A2B0; --faint:#6D7787;
+  --rule:#252B33; --rule-soft:#1D232A;
+  --accent:#7BA3FF; --accent-soft:rgba(123,163,255,.13);
+  --flag:#FF8266; --flag-soft:rgba(255,130,102,.13);
+  --pass:#4FC7AE; --pass-soft:rgba(79,199,174,.13);
+  --hold:#E0A93B; --hold-soft:rgba(224,169,59,.13);
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1220px; margin:0 auto; padding:56px 28px 96px; display:flex; flex-direction:column; gap:54px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; margin:0; text-wrap:balance; line-height:1.12}
+h1{font-size:44px; font-weight:700; letter-spacing:-.015em}
+h2{font-size:26px; font-weight:700}
+h3{font-size:17px; font-weight:600}
+p{margin:0; max-width:68ch}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+.doc-head{display:flex; flex-direction:column; gap:18px; padding-bottom:34px; border-bottom:2px solid var(--rule)}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.16em;
+        text-transform:uppercase; color:var(--accent)}
+.dek{font-size:17px; color:var(--muted); max-width:66ch}
+.meta-row{display:flex; flex-wrap:wrap; gap:10px 26px; font-family:"IBM Plex Mono",monospace;
+          font-size:11.5px; color:var(--faint); padding-top:4px}
+.meta-row b{color:var(--muted); font-weight:600}
+
+section{display:flex; flex-direction:column; gap:20px}
+.sec-head{display:flex; flex-direction:column; gap:9px; border-left:3px solid var(--accent); padding-left:16px}
+.sec-no{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em;
+        text-transform:uppercase; color:var(--faint)}
+
+.tag{display:inline-flex; align-items:center; gap:5px; font-family:"IBM Plex Mono",monospace;
+     font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+     padding:3px 8px; border-radius:3px; border:1px solid; white-space:nowrap; vertical-align:middle}
+.t-new{color:var(--pass); border-color:var(--pass); background:var(--pass-soft)}
+.t-re{color:var(--accent); border-color:var(--accent); background:var(--accent-soft)}
+.t-un{color:var(--faint); border-color:var(--rule); background:transparent}
+.t-flag{color:var(--flag); border-color:var(--flag); background:var(--flag-soft)}
+.t-hold{color:var(--hold); border-color:var(--hold); background:var(--hold-soft)}
+.t-rec{color:#fff; border-color:var(--pass); background:var(--pass)}
+
+.call{border:1px solid var(--rule); border-left:3px solid var(--hold); background:var(--surface);
+      border-radius:4px; padding:18px 20px; display:flex; flex-direction:column; gap:10px}
+.call.flag{border-left-color:var(--flag)}
+.call.pass{border-left-color:var(--pass)}
+.call h3{font-size:15px}
+.call p{font-size:14px; color:var(--muted)}
+.call ul{margin:0; padding-left:19px; font-size:14px; color:var(--muted); display:flex; flex-direction:column; gap:7px}
+.call b{color:var(--ink); font-weight:600}
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:16px}
+
+.refbar{display:flex; flex-wrap:wrap; align-items:flex-end; gap:22px; background:var(--surface);
+        border:1px dashed var(--accent); border-radius:4px; padding:18px 20px}
+.ref{display:flex; flex-direction:column; gap:5px; align-items:flex-start}
+.ref-swatch{color:var(--ink); font-weight:600; line-height:1}
+.ref-cap{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--faint)}
+.ref.isnew .ref-swatch{color:var(--pass)}
+.ref.isnew .ref-cap{color:var(--pass); font-weight:600}
+
+/* option cards */
+.opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px}
+.opt{background:var(--surface); border:1px solid var(--rule); border-radius:4px; overflow:hidden;
+     display:flex; flex-direction:column}
+.opt.rec{border-color:var(--pass); box-shadow:0 0 0 1px var(--pass)}
+.opt-h{padding:14px 18px; border-bottom:1px solid var(--rule-soft); background:var(--sunk);
+       display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.opt-h h3{flex:1; min-width:150px}
+.opt-b{padding:16px 18px; display:flex; flex-direction:column; gap:11px; flex:1}
+.opt-b p{font-size:13.5px; color:var(--muted)}
+.opt-cost{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
+          border-top:1px dashed var(--rule); padding-top:11px; margin-top:auto}
+.opt-cost b{color:var(--ink)}
+
+/* specimen bench */
+.spec{background:var(--surface); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.spec-top{display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:13px 18px;
+          border-bottom:1px solid var(--rule-soft); background:var(--sunk)}
+.spec-top h3{flex:1; min-width:210px}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule-soft)}
+@media (max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.grid4{grid-template-columns:1fr}}
+.cell{background:#F8F4ED; padding:18px 16px; display:flex; flex-direction:column; gap:10px; min-height:150px}
+.cell.white{background:#FFFFFF}
+.cell-tag{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; letter-spacing:.12em;
+          text-transform:uppercase; color:#8791A0}
+.cell-tag.now{color:#A8321C}
+.cell-tag.a{color:#1C6B5A}
+.cell-tag.b{color:#1E4FD9}
+.cell-tag.c{color:#8A6100}
+.cell-m{font-family:"IBM Plex Mono",monospace; font-size:11px; color:#5B6573;
+        font-variant-numeric:tabular-nums; margin-top:auto; border-top:1px dashed #D2D8E0; padding-top:9px}
+.cell-m b{color:#14181E; font-weight:600}
+.spec-why{padding:14px 18px; border-top:1px solid var(--rule-soft); font-size:13.5px; color:var(--muted); background:var(--sunk)}
+.spec-why b{color:var(--ink); font-weight:600}
+
+/* product ink — locked warm, never theme-reactive */
+.pink{color:#241E15} .pdim{color:#6A635C} .psoft{color:#4A4235}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700;
+         letter-spacing:.09em; text-transform:uppercase; color:#6A635C}
+.figure{font-weight:800; letter-spacing:-.02em; line-height:1.05; color:#241E15; font-variant-numeric:tabular-nums}
+.scoreface{font-family:"IBM Plex Mono",monospace; font-weight:700; line-height:1.05; color:#241E15;
+           font-variant-numeric:tabular-nums}
+
+/* whole-screen stage */
+.stage{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--sunk); padding:18px}
+.gd{width:900px; background:#F8F4ED; border:1px solid rgba(70,55,30,.20); border-radius:3px;
+    font-family:"IBM Plex Sans",system-ui,sans-serif; color:#241E15; overflow:hidden}
+.gd-top{display:flex; align-items:center; gap:12px; padding:12px 18px; background:#FFFFFF;
+        border-bottom:1px solid rgba(70,55,30,.12)}
+.gd-live{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.09em;
+         text-transform:uppercase; color:#B03A22; border:1px solid rgba(176,58,34,.35);
+         background:rgba(176,58,34,.09); border-radius:999px; padding:2px 9px}
+.gd-team{font-size:16px; font-weight:700; margin-right:auto}
+.gd-clock{font-family:"IBM Plex Mono",monospace; font-size:12px; color:#6A635C}
+.gd-body{padding:20px 18px; display:flex; gap:18px; align-items:stretch; flex-wrap:wrap}
+.gd-scorebtn{flex:0 0 260px; background:#FFFFFF; border:1px solid rgba(70,55,30,.20); border-radius:9px;
+             padding:14px 16px; display:flex; flex-direction:column; gap:6px; align-items:center; text-align:center}
+.gd-scorelbl{font-family:"IBM Plex Mono",monospace; font-size:9.3px; font-weight:600; letter-spacing:.08em;
+             text-transform:uppercase; color:#6A635C}
+.gd-rest{flex:1; min-width:260px; display:flex; flex-direction:column; gap:9px}
+.gd-row{display:flex; align-items:center; gap:10px; background:#FFFFFF; border:1px solid rgba(70,55,30,.12);
+        border-radius:7px; padding:9px 12px}
+.gd-num{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:700; color:#57651E; width:26px}
+.gd-nm{font-size:14px; font-weight:600; margin-right:auto}
+.gd-pos{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em;
+        text-transform:uppercase; color:#6A635C}
+.stage-cap{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:11px}
+.stage-cap h3{margin-right:auto}
+.stage-hint{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--faint)}
+
+.tbl-wrap{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:720px}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:middle}
+th{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+   text-transform:uppercase; color:var(--muted); background:var(--sunk); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.el{font-size:13.5px}
+td.n{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.n.up{color:var(--pass)} td.n.dn{color:var(--flag)} td.n.same{color:var(--faint)}
+.foot{border-top:2px solid var(--rule); padding-top:22px; font-size:13px; color:var(--faint);
+      display:flex; flex-direction:column; gap:8px}
+.foot b{color:var(--muted)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Coaches portal · type ladder · round 2 · 2026-08-28</div>
+    <h1>What happens above 24px</h1>
+    <p class="dek">Phase 3 is blocked on one ruling. The ladder you approved tops out at 24px because
+      it was drawn from the Money screen — which has no scoreboard on it. Here is everything in the
+      portal that sits above that ceiling, and three ways to handle it.</p>
+    <div class="meta-row">
+      <span><b>Type</b> drawn 1:1 at real pixel sizes</span>
+      <span><b>Round 1</b> the as-built sheet — Phases 1 &amp; 2, shipped</span>
+      <span><b>Decides</b> whether Phase 3 can start</span>
+    </div>
+    <div class="call pass" style="margin-top:6px">
+      <h3>Ruled: Option A, and built <span class="tag t-rec">as-built 2026-08-28</span></h3>
+      <p>The owner approved <b>Option A</b> and Phase 3 shipped the same day. The five display
+        numbers are 32px, the card figures came down to 24px, the icon and watermark carry written
+        exemptions, and the dead 32px rule was deleted. The eight steps are now published as tokens
+        and <b>fully consumed across the coaches portal: 1,442 declarations, 62 → 12 distinct
+        sizes.</b> All 57 coach screens were swept at four widths before and after — <b>findings
+        identical at 180, zero regressions.</b></p>
+      <p>One thing changed on the way in that is not drawn below: dropdown option rows were going to
+        snap to 12px, which took three controls further under the tap floor. They are rows you
+        <i>read and click</i>, so they became <b>body 14px</b> — a role correction the sweep forced
+        into the open. Everything else shipped exactly as drawn.</p>
+    </div>
+  </header>
+
+  <!-- 01 · THE RESHAPE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">01 — Before the options, a correction</div>
+      <h2>The number I called the marquee case doesn't exist</h2>
+    </div>
+    <div class="call flag">
+      <h3>The 32px "season record hero" is dead code <span class="tag t-flag">delete, don't rule on it</span></h3>
+      <p>When I told you the ladder needed an eighth step, the largest live example I gave was a 32px
+        season-record hero on the Overview. <b>It has no usages anywhere in the product.</b> It and
+        its phone override are leftovers from a card that was replaced, and Phase 3 should delete
+        them rather than assign them a step.</p>
+      <p>That matters because it shrinks the question. Once the dead rule is out, only
+        <b>five things</b> in the whole portal genuinely live above 24px — and they split cleanly
+        into two different jobs, which is what makes the ruling easy.</p>
+    </div>
+  </section>
+
+  <!-- 02 · THE POPULATION -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">02 — The whole population</div>
+      <h2>Everything above the ceiling, sorted by what it actually is</h2>
+      <p class="dek">Three groups, and only the first one needs a new step.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>What it is</th><th>Where you see it</th><th>Today</th><th>Group</th></tr></thead>
+        <tbody>
+          <tr><td class="el"><b>Season Wrapped record</b></td><td class="el">The closed-season page</td><td class="n">35.2px</td><td class="el">Display</td></tr>
+          <tr><td class="el"><b>Score sheet entry</b></td><td class="el">Game day — typing the score</td><td class="n">35.2px</td><td class="el">Display</td></tr>
+          <tr><td class="el"><b>Game-day score</b></td><td class="el">Game day — the running score</td><td class="n">27.2px <span class="mono" style="color:#8791A0">(30.4 on a phone)</span></td><td class="el">Display</td></tr>
+          <tr><td class="el"><b>Live schedule score</b></td><td class="el">Schedule — the big card</td><td class="n">27.2px</td><td class="el">Display</td></tr>
+          <tr><td class="el"><b>Celebration record</b></td><td class="el">Team HQ, after a win</td><td class="n">25.6px</td><td class="el">Display</td></tr>
+          <tr><td class="el">Summary card value</td><td class="el">Five places across the portal</td><td class="n">28px</td><td class="el">Card figure</td></tr>
+          <tr><td class="el">Standings rank</td><td class="el">Tournament record</td><td class="n">28px</td><td class="el">Card figure</td></tr>
+          <tr><td class="el">Tryout rating</td><td class="el">Tryout day</td><td class="n">28px</td><td class="el">Card figure</td></tr>
+          <tr><td class="el">Insight stat value</td><td class="el">Insights</td><td class="n">26.4px</td><td class="el">Card figure</td></tr>
+          <tr><td class="el">Tournament record title</td><td class="el">Tournament record</td><td class="n">26.4px</td><td class="el">A <i>title</i>, oversized</td></tr>
+          <tr><td class="el">Favourite star ★</td><td class="el">Depth chart</td><td class="n">25.6px</td><td class="el">Not type — an icon</td></tr>
+          <tr><td class="el">Watermark monogram</td><td class="el">Team HQ, behind the header</td><td class="n">96 / 144px</td><td class="el">Not type — a graphic</td></tr>
+          <tr><td class="el" style="opacity:.55">Season record hero</td><td class="el" style="opacity:.55">Nowhere — unused</td><td class="n" style="opacity:.55">32px</td><td class="el" style="opacity:.55">Dead — delete</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="call pass">
+      <h3>The split that decides it</h3>
+      <p><b>A card figure is a number you read while sitting at a desk.</b> It lives inside a card and
+        the card's title tells you what it means — the same job as <span class="mono">$1,875.00</span>
+        on the Money screen, which is already the ladder's 24px <span class="mono">figure</span> step.</p>
+      <p><b>A display number is one you read from the bench, from the stands, or across a room</b> —
+        the score, and the record at the end of a season. That is a genuinely different job, and it is
+        the only thing that needs a step the ladder doesn't have.</p>
+    </div>
+  </section>
+
+  <!-- 03 · CALIBRATION -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">03 — Calibration</div>
+      <h2>True-size reference</h2>
+      <p class="dek">Everything below is drawn at these exact sizes. If this looks wrong on your
+        screen, reset zoom to 100% before judging anything.</p>
+    </div>
+    <div class="refbar">
+      <div class="ref isnew"><span class="ref-swatch" style="font-size:36px">36</span><span class="ref-cap">36px · option B only</span></div>
+      <div class="ref isnew"><span class="ref-swatch" style="font-size:32px">32</span><span class="ref-cap">32px · proposed display</span></div>
+      <div class="ref isnew"><span class="ref-swatch" style="font-size:28px">28</span><span class="ref-cap">28px · option B only</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:24px">24</span><span class="ref-cap">24px · figure (exists)</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:20px">20</span><span class="ref-cap">20px · title (exists)</span></div>
+      <div class="ref"><span class="ref-swatch" style="font-size:16px">16</span><span class="ref-cap">16px · heading (exists)</span></div>
+    </div>
+  </section>
+
+  <!-- 04 · THE OPTIONS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">04 — The ruling</div>
+      <h2>Three ways to close the ladder</h2>
+    </div>
+    <div class="opts">
+      <div class="opt rec">
+        <div class="opt-h"><h3>A · One display step at 32px</h3><span class="tag t-rec">recommended</span></div>
+        <div class="opt-b">
+          <p>Add <b>one</b> step. The five display numbers go to <b>32px</b>. The card figures come
+            <b>down to 24px</b>, joining the figure they already are. Icons and the watermark become
+            documented exemptions. The dead rule is deleted.</p>
+          <p>Ladder ends at <b>8 steps</b> and governs everything. Nothing above 24px is left
+            unmanaged.</p>
+          <div class="opt-cost">Scores get <b>bigger</b> (+18% on the game-day console).<br>
+            Card figures get <b>smaller</b> (−6% to −14%).<br>14 places move · 2 documented exemptions</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><h3>B · Two steps, 28px and 36px</h3><span class="tag t-hold">lowest risk</span></div>
+        <div class="opt-b">
+          <p>Add <b>two</b> steps so almost nothing has to move far. Card figures stay at 28px rather
+            than dropping to 24px, and the biggest numbers round up to 36px.</p>
+          <p>Ladder ends at <b>9 steps</b>. Safer, but 24px and 28px sit close enough that the pair
+            does very little work — the same near-tie problem the whole exercise was about.</p>
+          <div class="opt-cost">Almost nothing visibly moves (max ~12%).<br>
+            But adds a step that <b>earns little</b>.<br>14 places move · 2 documented exemptions</div>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><h3>C · No new step</h3><span class="tag t-flag">not recommended</span></div>
+        <div class="opt-b">
+          <p>Leave the ladder at seven steps and treat <b>everything</b> above 24px as a per-surface
+            exemption, each documented individually.</p>
+          <p>Nothing moves at all — but 12 sizes stay outside the system, which is precisely how the
+            portal ended up with 62 of them. It preserves today's look at the cost of the thing the
+            ladder exists to prevent.</p>
+          <div class="opt-cost">Zero visible change.<br>
+            <b>12 sizes remain unmanaged.</b><br>0 places move · 12 exemptions</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · SPECIMENS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">05 — The same numbers, all three ways</div>
+      <h2>Specimens, at true size</h2>
+      <p class="dek">Every figure below is drawn at the exact pixel size that option would give it.</p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px">
+
+      <div class="spec">
+        <div class="spec-top"><h3>The game-day score — the one that moves most</h3>
+          <span class="tag t-re">restyled in A</span></div>
+        <div class="grid4">
+          <div class="cell white"><div class="cell-tag now">Today</div>
+            <div class="eyebrow">US — THEM</div>
+            <div class="scoreface" style="font-size:27.2px">3 – 2</div>
+            <div class="cell-m"><b>27.2px</b> on a desktop<br>30.4px on a phone — bigger on the small screen</div></div>
+          <div class="cell white"><div class="cell-tag a">Option A</div>
+            <div class="eyebrow">US — THEM</div>
+            <div class="scoreface" style="font-size:32px">3 – 2</div>
+            <div class="cell-m"><b>32px</b>, both widths<br>+18% on desktop, one size everywhere</div></div>
+          <div class="cell white"><div class="cell-tag b">Option B</div>
+            <div class="eyebrow">US — THEM</div>
+            <div class="scoreface" style="font-size:28px">3 – 2</div>
+            <div class="cell-m"><b>28px</b><br>+3% — near enough to today</div></div>
+          <div class="cell white"><div class="cell-tag c">Option C</div>
+            <div class="eyebrow">US — THEM</div>
+            <div class="scoreface" style="font-size:27.2px">3 – 2</div>
+            <div class="cell-m"><b>27.2px</b><br>unchanged, stays outside the ladder</div></div>
+        </div>
+        <div class="spec-why">This is the number a coach checks with a glance from the bench, mid-play,
+          often in sunlight. It is currently <b>smaller on a desktop than on a phone</b> — the product
+          already believes it should be bigger when it matters, it just says so in only one place.
+          Option A is the only one that settles it at a single size.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top"><h3>The Season Wrapped record</h3><span class="tag t-re">restyled in A</span></div>
+        <div class="grid4">
+          <div class="cell"><div class="cell-tag now">Today</div>
+            <div class="eyebrow">Season Wrapped · 2026</div>
+            <div class="figure" style="font-size:35.2px">12–4–1</div>
+            <div class="cell-m"><b>35.2px</b></div></div>
+          <div class="cell"><div class="cell-tag a">Option A</div>
+            <div class="eyebrow">Season Wrapped · 2026</div>
+            <div class="figure" style="font-size:32px">12–4–1</div>
+            <div class="cell-m"><b>32px</b> — −9%</div></div>
+          <div class="cell"><div class="cell-tag b">Option B</div>
+            <div class="eyebrow">Season Wrapped · 2026</div>
+            <div class="figure" style="font-size:36px">12–4–1</div>
+            <div class="cell-m"><b>36px</b> — +2%</div></div>
+          <div class="cell"><div class="cell-tag c">Option C</div>
+            <div class="eyebrow">Season Wrapped · 2026</div>
+            <div class="figure" style="font-size:35.2px">12–4–1</div>
+            <div class="cell-m"><b>35.2px</b> — unchanged</div></div>
+        </div>
+        <div class="spec-why">The single largest piece of type a coach ever sees in the portal, and the
+          emotional centre of the closed-season page. Under A it comes down 3px — worth looking at
+          closely, because this is the one specimen where A is a genuine <b>reduction</b> in impact.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top"><h3>Card figures — insight stat, tryout rating, summary value</h3>
+          <span class="tag t-re">restyled in A</span></div>
+        <div class="grid4">
+          <div class="cell white"><div class="cell-tag now">Today</div>
+            <div class="eyebrow">Minutes played</div>
+            <div class="figure" style="font-size:26.4px">184</div>
+            <div class="eyebrow" style="margin-top:6px">Rating</div>
+            <div class="figure" style="font-size:28px">4.2</div>
+            <div class="cell-m"><b>26.4px</b> and <b>28px</b><br>two values, one job</div></div>
+          <div class="cell white"><div class="cell-tag a">Option A</div>
+            <div class="eyebrow">Minutes played</div>
+            <div class="figure" style="font-size:24px">184</div>
+            <div class="eyebrow" style="margin-top:6px">Rating</div>
+            <div class="figure" style="font-size:24px">4.2</div>
+            <div class="cell-m"><b>24px</b> — the existing figure step<br>−9% and −14%</div></div>
+          <div class="cell white"><div class="cell-tag b">Option B</div>
+            <div class="eyebrow">Minutes played</div>
+            <div class="figure" style="font-size:28px">184</div>
+            <div class="eyebrow" style="margin-top:6px">Rating</div>
+            <div class="figure" style="font-size:28px">4.2</div>
+            <div class="cell-m"><b>28px</b> — a new step<br>+6% and unchanged</div></div>
+          <div class="cell white"><div class="cell-tag c">Option C</div>
+            <div class="eyebrow">Minutes played</div>
+            <div class="figure" style="font-size:26.4px">184</div>
+            <div class="eyebrow" style="margin-top:6px">Rating</div>
+            <div class="figure" style="font-size:28px">4.2</div>
+            <div class="cell-m"><b>26.4</b> / <b>28px</b><br>the two values survive</div></div>
+        </div>
+        <div class="spec-why">These sit inside a card with a title above them telling you what they
+          mean — the same construction as <span class="mono">$1,875.00</span> on the Money screen,
+          which is already 24px. <b>Under A they stop being a special case and simply become figures.</b>
+          Under C the portal keeps two sizes for one job, which is the pattern that started all this.</div>
+      </div>
+
+      <div class="spec">
+        <div class="spec-top"><h3>The two that are not type at all</h3><span class="tag t-un">exempt in every option</span></div>
+        <div class="grid4" style="grid-template-columns:1fr 1fr">
+          <div class="cell white" style="min-height:130px"><div class="cell-tag">Depth chart · favourite</div>
+            <div style="display:flex; align-items:center; gap:10px">
+              <span style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:25.6px;color:#B8860B">★</span>
+              <span style="font-size:14px" class="psoft">A 25.6px star inside a 44px button</span>
+            </div>
+            <div class="cell-m">It is an <b>icon</b>. Sizing it as type would be a category error — an
+              icon's size answers to its tap target, not to a reading ladder.</div></div>
+          <div class="cell white" style="min-height:130px"><div class="cell-tag">Team HQ · celebration</div>
+            <div style="position:relative; height:56px; overflow:hidden; border-radius:6px; background:#FFF">
+              <span style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); font-size:96px;
+                     font-family:'IBM Plex Sans Condensed',sans-serif; font-weight:700; color:#57651E; opacity:.07; line-height:1">14</span>
+              <span style="position:relative; font-size:14px; font-weight:600" class="pink">Riverdale Ridge</span>
+            </div>
+            <div class="cell-m">A <b>96/144px watermark at 7% opacity</b>, bleeding off the edge. It is
+              a graphic that happens to be a numeral — nobody reads it.</div></div>
+        </div>
+        <div class="spec-why">Both want a <b>documented exemption</b> rather than ladder membership, in
+          whichever option you pick. Writing down <i>why</i> is the point — an undocumented exemption
+          is indistinguishable from drift six months later.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 06 · WHOLE SCREEN -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">06 — The cumulative view</div>
+      <h2>Game day, before and after Option A</h2>
+      <p class="dek">The screen where A costs the most and buys the most. Type is drawn at true size;
+        the surrounding chrome is schematic.</p>
+    </div>
+
+    <div class="stage-cap"><h3>Today <span class="tag t-flag">as shipped</span></h3>
+      <span class="stage-hint">900px frame · type at true size</span></div>
+    <div class="stage">
+      <div class="gd">
+        <div class="gd-top"><span class="gd-live">● Live</span>
+          <span class="gd-team">Riverdale Ridge vs. Northside</span>
+          <span class="gd-clock">2nd · 08:14</span></div>
+        <div class="gd-body">
+          <div class="gd-scorebtn">
+            <span class="gd-scorelbl">US — THEM</span>
+            <span class="scoreface" style="font-size:27.2px">3 – 2</span>
+          </div>
+          <div class="gd-rest">
+            <div class="gd-row"><span class="gd-num">7</span><span class="gd-nm">Avery Chen</span><span class="gd-pos">Pitcher</span></div>
+            <div class="gd-row"><span class="gd-num">12</span><span class="gd-nm">Jordan Blake</span><span class="gd-pos">Catcher</span></div>
+            <div class="gd-row"><span class="gd-num">4</span><span class="gd-nm">Sam Okafor</span><span class="gd-pos">First base</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-cap" style="margin-top:8px"><h3>Option A <span class="tag t-re">restyled</span></h3>
+      <span class="stage-hint">900px frame · type at true size</span></div>
+    <div class="stage">
+      <div class="gd">
+        <div class="gd-top"><span class="gd-live">● Live</span>
+          <span class="gd-team">Riverdale Ridge vs. Northside</span>
+          <span class="gd-clock">2nd · 08:14</span></div>
+        <div class="gd-body">
+          <div class="gd-scorebtn">
+            <span class="gd-scorelbl">US — THEM</span>
+            <span class="scoreface" style="font-size:32px">3 – 2</span>
+          </div>
+          <div class="gd-rest">
+            <div class="gd-row"><span class="gd-num">7</span><span class="gd-nm">Avery Chen</span><span class="gd-pos">Pitcher</span></div>
+            <div class="gd-row"><span class="gd-num">12</span><span class="gd-nm">Jordan Blake</span><span class="gd-pos">Catcher</span></div>
+            <div class="gd-row"><span class="gd-num">4</span><span class="gd-nm">Sam Okafor</span><span class="gd-pos">First base</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="call pass">
+      <h3>What the whole screen tells you that the specimen doesn't</h3>
+      <p>The score card does not get taller — it has slack above and below the number, so the +18%
+        is absorbed and the roster rows beside it do not move. The gain is that the score now clearly
+        outranks everything else in the frame, which is what a game-day screen is for.</p>
+    </div>
+  </section>
+
+  <!-- 07 · AFTER THE RULING -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">07 — What Phase 3 does next</div>
+      <h2>Once this is settled</h2>
+    </div>
+    <div class="cols">
+      <div class="call pass">
+        <h3>The 44 real decisions</h3>
+        <p>This sheet covers 14 of them. The remaining 30 are mid-size cases — an oversized component
+          title at 26.4px that is really a 20px title, a handful of headings between 17 and 22px —
+          each a small judgement, none of them load-bearing.</p>
+      </div>
+      <div class="call pass">
+        <h3>The 1,290 invisible ones</h3>
+        <p>Everything else moves half a pixel or less. Mechanical, and the layout sweep is the check —
+          run across the <b>whole</b> portal, because an invisible move can still expose a missing
+          ellipsis, as two did in Phase 2.</p>
+      </div>
+      <div class="call">
+        <h3>Timing <span class="tag t-hold">not yet</span></h3>
+        <p>After the coach-money forms review, away from the tablet band, and ideally when the shared
+          portal stylesheet is quiet — another session committed into it four times during Phase 2.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div><b>Open this on the device you want to judge it on.</b> Every size is drawn 1:1 in pixels — a
+      laptop at 125% display scaling, or a zoomed tab, will show you the wrong answer.</div>
+    <div class="mono">Sizes measured from the shipping stylesheets, 2026-08-28 · round 1 (as-built, Phases 1 &amp; 2) is a separate sheet · nothing here has been built</div>
+  </footer>
+</div>

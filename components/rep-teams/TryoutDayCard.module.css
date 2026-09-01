@@ -27,7 +27,7 @@
   flex-wrap: wrap;
 }
 .title {
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   color: var(--white-90);
   margin: 0;
@@ -36,7 +36,7 @@
   gap: 0.5rem;
 }
 .subtitle {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: rgba(255,255,255,0.45);
   margin: 0.15rem 0 0;
 }
@@ -50,7 +50,7 @@
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   color: rgba(255,255,255,0.4);
   margin: 0.4rem 0 0;
 }
@@ -61,7 +61,7 @@
 .revealBtn {
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.45rem 0.8rem;
-  font-size: 0.82rem; font-weight: 700;
+  font-size: var(--type-body); font-weight: 700;
   border: 1px solid rgba(var(--logic-lime-rgb),0.4);
   border-radius: 8px;
   background: rgba(var(--logic-lime-rgb),0.08);
@@ -85,8 +85,8 @@
   background: rgba(255,255,255,0.02);
 }
 .sessionMain { flex: 1 1 auto; min-width: 0; }
-.sessionWhen { font-size: 0.88rem; font-weight: 600; color: var(--white-90); }
-.sessionMeta { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+.sessionWhen { font-size: var(--type-body); font-weight: 600; color: var(--white-90); }
+.sessionMeta { font-size: var(--type-support); color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
 .sessionActions { display: flex; gap: 0.25rem; flex: 0 0 auto; }
 .iconBtn {
   width: 34px; height: 34px;
@@ -101,7 +101,7 @@
 .iconDanger:hover { color: var(--danger-light); border-color: rgba(248,113,113,0.4); } /* token-exempt: danger-light alpha tint, no -rgb token exists */
 
 .empty {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: rgba(255,255,255,0.4);
   padding: 0.5rem 0 0.75rem;
 }
@@ -110,7 +110,7 @@
 .addBtn {
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.5rem 0.85rem;
-  font-size: 0.85rem; font-weight: 600;
+  font-size: var(--type-body); font-weight: 600;
   border: 1px dashed rgba(255,255,255,0.22);
   border-radius: 8px;
   background: transparent;
@@ -135,10 +135,10 @@
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
 }
-.modalTitle { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
+.modalTitle { font-size: var(--type-heading); font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
 .field { margin-bottom: 0.85rem; }
 .label {
-  display: block; font-size: 0.8rem; font-weight: 600;
+  display: block; font-size: var(--type-support); font-weight: 600;
   color: rgba(255,255,255,0.6); margin-bottom: 0.35rem;
 }
 .input {
@@ -147,7 +147,7 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
-  color: var(--white-90); font-size: 0.9rem;
+  color: var(--white-90); font-size: var(--type-body);
   box-sizing: border-box; font-family: inherit;
 }
 .input:focus { outline: none; border-color: var(--logic-lime); }
@@ -201,7 +201,7 @@
 .evalChips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
 .evalChip {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  font-size: 0.75rem; font-weight: 600;
+  font-size: var(--type-support); font-weight: 600;
   color: rgba(255,255,255,0.7);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 999px;
@@ -232,7 +232,7 @@
 .rank {
   flex: 0 0 auto;
   min-width: 2rem;
-  font-size: 0.9rem; font-weight: 800;
+  font-size: var(--type-body); font-weight: 800;
   color: rgba(255,255,255,0.5);
   text-align: center;
 }
@@ -260,15 +260,15 @@
 .ratingBtn:hover { opacity: 0.78; }
 .ratingBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 .ratingVal {
-  font-size: 1.75rem; font-weight: 800; line-height: 1;
+  font-size: var(--type-figure); font-weight: 800; line-height: 1;
   color: var(--white-90);
   font-variant-numeric: tabular-nums;
 }
 /* Unscored is a smaller, dimmer dash — an empty rating must not carry the same visual weight as a
    real one, or a board of un-scored kids reads as a board of low scores. */
-.ratingNone { font-size: 1.25rem; color: rgba(255,255,255,0.35); }
+.ratingNone { font-size: var(--type-title); color: rgba(255,255,255,0.35); }
 .ratingUnit {
-  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.01em;
+  font-size: var(--type-token); font-weight: 600; letter-spacing: 0.01em;
   color: rgba(255,255,255,0.45);
   white-space: nowrap; margin-top: 0.12rem;
 }
@@ -287,7 +287,7 @@
   background: rgba(var(--logic-lime-rgb),0.06);
 }
 .breakdownHead {
-  font-size: 0.66rem; font-weight: 700;
+  font-size: var(--type-label); font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
   color: rgba(255,255,255,0.55);
 }
@@ -295,16 +295,16 @@
 .catRow {
   display: grid; grid-template-columns: 9.5rem 1fr 2.4rem;
   align-items: center; gap: 0.6rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 @media (max-width: 560px) {
-  .catRow { grid-template-columns: 6.5rem 1fr 2.2rem; font-size: 0.72rem; }
+  .catRow { grid-template-columns: 6.5rem 1fr 2.2rem; font-size: var(--type-support); }
 }
 .catLabel { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
 .catLabel b { font-weight: 600; color: var(--white-90); }
 /* The SHARE, never the raw weight (owner ruling, scorecard weights): a coach set "3" and needs to
    read "40% of the score". */
-.catLabel span { font-size: 0.64rem; color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; }
+.catLabel span { font-size: var(--type-token); color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; }
 .catTrack {
   height: 8px; border-radius: 999px;
   background: rgba(255,255,255,0.1);
@@ -322,7 +322,7 @@
 .evalRow { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .evalScore {
   display: inline-flex; align-items: baseline; gap: 0.3rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   padding: 0.18rem 0.5rem; border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.04);
@@ -330,7 +330,7 @@
 }
 .evalScore b { font-weight: 800; color: var(--white-90); font-variant-numeric: tabular-nums; }
 .breakdownNote {
-  margin: 0; font-size: 0.72rem; line-height: 1.45;
+  margin: 0; font-size: var(--type-support); line-height: 1.45;
   color: rgba(255,255,255,0.6);
 }
 .breakdownNote strong { color: var(--warning); font-weight: 700; }
@@ -341,10 +341,10 @@
 }
 .compositeWrap { flex: 0 0 auto; text-align: right; }
 .composite {
-  font-size: 1.15rem; font-weight: 800; color: var(--white-90);
+  font-size: var(--type-title); font-weight: 800; color: var(--white-90);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
-.compositeUnit { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+.compositeUnit { font-size: var(--type-support); color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
 
 /* ── Decision board (Phase 2B.3) ──────────────────────────────────────────── */
 .tally {
@@ -354,15 +354,15 @@
   border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
   background: rgba(255,255,255,0.02);
 }
-.tallyItem { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
-.tallyItem strong { font-size: 1rem; color: var(--white-90); margin-right: 0.3rem; font-variant-numeric: tabular-nums; }
+.tallyItem { font-size: var(--type-support); color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.tallyItem strong { font-size: var(--type-heading); color: var(--white-90); margin-right: 0.3rem; font-variant-numeric: tabular-nums; }
 
 .choiceGroup { display: flex; gap: 0.35rem; flex: 0 0 auto; }
 .choiceBtn {
   min-height: 40px; padding: 0 0.7rem;
   border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
   background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.7);
-  font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  font-size: var(--type-support); font-weight: 700; cursor: pointer; font-family: inherit;
   white-space: nowrap;
 }
 .choiceBtn:disabled { opacity: 0.55; cursor: default; }
@@ -371,7 +371,7 @@
 .choice_cut     { background: rgba(248,113,113,0.9); border-color: rgba(248,113,113,0.9); color: var(--pitch-black); } /* token-exempt: danger-light alpha tint, no -rgb token exists */
 .acceptedChip {
   display: inline-flex; align-items: center; gap: 0.3rem; flex: 0 0 auto;
-  font-size: 0.78rem; font-weight: 700; color: var(--logic-lime);
+  font-size: var(--type-support); font-weight: 700; color: var(--logic-lime);
 }
 
 /* The line that says what the buttons cannot: nothing goes out, and the Offering pile is what
@@ -379,7 +379,7 @@
 .sortNote {
   margin: 0 0 0.7rem;
   padding: 0.5rem 0.65rem;
-  font-size: 0.78rem; line-height: 1.5;
+  font-size: var(--type-support); line-height: 1.5;
   color: var(--white-55);
   background: rgba(var(--logic-lime-rgb), 0.06);
   border-left: 2px solid rgba(var(--logic-lime-rgb), 0.5);
@@ -393,7 +393,7 @@
   align-self: flex-end;
   padding: 0.28rem 0.55rem;
   background: transparent; border: 1px solid var(--border-2); border-radius: 6px;
-  font-family: inherit; font-size: 0.72rem; font-weight: 600;
+  font-family: inherit; font-size: var(--type-support); font-weight: 600;
   color: var(--white-55); cursor: pointer;
 }
 .undoBtn:hover:not(:disabled) { color: var(--fl-text); border-color: var(--white-45); }
@@ -405,7 +405,7 @@
   min-height: 40px; padding: 0 0.85rem;
   border: 1px solid var(--logic-lime); border-radius: 8px;
   background: rgba(var(--logic-lime-rgb),0.12); color: var(--logic-lime);
-  font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
+  font-size: var(--type-support); font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
 }
 .acceptRosterBtn:hover { background: rgba(var(--logic-lime-rgb),0.2); }
 .acceptRosterBtn:disabled { opacity: 0.55; cursor: default; }
@@ -571,7 +571,7 @@
    address on file has to be flagged where the decision is made. */
 .noEmailChip {
   display: inline-block; margin-left: 0.5rem;
-  font-size: 0.64rem; font-weight: 700; letter-spacing: 0.02em;
+  font-size: var(--type-token); font-weight: 700; letter-spacing: 0.02em;
   color: var(--warning-light);
   background: rgba(var(--warning-rgb), 0.10);
   border: 1px solid rgba(var(--warning-rgb), 0.35);
@@ -583,17 +583,17 @@
 .noteToggle {
   background: transparent; border: none; cursor: pointer; padding: 0;
   margin-left: 0.6rem;
-  font-size: 0.74rem; font-weight: 600;
+  font-size: var(--type-support); font-weight: 600;
   color: var(--logic-lime);
   font-family: inherit;
 }
 /* "Last season: Oakville Rangers 11U" — context on the row, not a control. Reads as ordinary meta
    text rather than borrowing the note toggle's lime, because nothing here is tappable. */
-.lastSeason { margin-left: 0.6rem; font-size: 0.74rem; }
+.lastSeason { margin-left: 0.6rem; font-size: var(--type-support); }
 
 .familyNote {
   margin-top: 0.35rem;
-  font-size: 0.78rem; line-height: 1.45;
+  font-size: var(--type-support); line-height: 1.45;
   color: rgba(255,255,255,0.65);
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);

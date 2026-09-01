@@ -583,10 +583,11 @@ test.describe('no write control survives on a finished working season', () => {
    */
   const DEEP_PAGES = [
     { path: '/accounting', label: 'Money hub' },
-    // The one Money screen that became two (Money split P1, 2026-08-16) — both need the probe,
-    // because a season leak one level down is exactly what this sweep exists to catch.
-    { path: '/accounting?section=transactions', label: 'Transactions' },
-    { path: '/accounting?section=payables', label: 'Payables' },
+    // The Money screen that became two tabs (2026-08-16) and then one Ledger with views
+    // (2026-08-28 fold) — every view needs the probe, because a season leak one level down is
+    // exactly what this sweep exists to catch.
+    { path: '/accounting?section=ledger&view=timeline', label: 'Ledger — Timeline' },
+    { path: '/accounting?section=ledger&view=bills', label: 'Ledger — By bill' },
     { path: '/accounting?section=dues', label: 'Dues' },
     { path: '/accounting?section=budget', label: 'Budget' },
     { path: '/accounting?section=fundraisers', label: 'Fundraisers' },
@@ -628,23 +629,29 @@ test.describe('no write control survives on a finished working season', () => {
   }
 
   /**
-   * ⚠ THE ROSTER IS THE ASSERTION HERE, not the absence of buttons. Opening a fundraiser used to
-   * leave the hub for a page with no season resolution, which showed the finished drive beside a
-   * different season's roster — wrong data, presented confidently, on a screen that otherwise
-   * passed every read-only check in this file.
+   * ⚠⚠ REWRITTEN 2026-08-31, and the discovery matters more than the rewrite. The original opened
+   * the finished drive and asserted THAT season's roster on its leaderboard — but since the
+   * season-close ruling (2026-08-18, "a closed season is ONE PAGE") the server-side gate sends a
+   * no-live-season team's `?section=fundraisers` to the Season's End page before any Money screen
+   * mounts, so the old assertion had been timing out against a page with no fundraisers on it at
+   * all. It only surfaced when the drive band rework ran this file: ⚠ every OTHER test in this
+   * describe block "passes" on the SAME redirect — the Season's End masthead shows "Complete" and
+   * offers no Add/Edit buttons, so the record-not-editor assertions go green without ever seeing
+   * the screen they name. Green over a redirect is the empty-fixture trap wearing a new face.
+   *
+   * Today's honest assertion is the GATE ITSELF. The content assertion (that season's entries,
+   * read-only) comes back when the closed-season page grows its money shelf (season-close plan
+   * P4 — owner mockup session required first).
    */
-  test('a fundraiser opened from the list shows THAT season’s roster', async ({ page }) => {
+  test('a finished season’s fundraisers URL lands on Season’s End, not a live Money screen', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
     await open(page, `${between()}/accounting?section=fundraisers`);
-    await main(page).getByRole('link', { name: new RegExp(`${MARK} Finished drive`) }).first().click();
 
-    await expect(main(page).getByText(`${MARK}Between Player`),
-      'the season’s own player must be on the leaderboard').toBeVisible({ timeout: 30_000 });
-
-    for (const name of [/^Settings$/i, /log amount/i, /edit amount/i, /^(Add|Edit|Delete|Remove)\b/i]) {
-      await expect(main(page).getByRole('button', { name }),
-        'a finished season’s fundraiser is offering a write control').toHaveCount(0);
-    }
+    await expect(main(page).getByText(/That's a wrap/i),
+      'a no-live-season team’s money URL must land on the one closed-season page')
+      .toBeVisible({ timeout: 30_000 });
+    await expect(main(page).getByRole('button', { name: new RegExp(`${MARK} Finished drive`) }),
+      'no live fundraising surface may render for a finished season').toHaveCount(0);
   });
 
   /**

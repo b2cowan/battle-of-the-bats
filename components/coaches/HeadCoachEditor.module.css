@@ -31,7 +31,7 @@
 
 .intro {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -43,14 +43,14 @@
 }
 
 .label {
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .formHint {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 
@@ -83,7 +83,7 @@
 
 .hint {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 
@@ -92,7 +92,7 @@
 .routing {
   margin: 0;
   padding: 0.5rem 0.7rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-secondary);
   background: var(--surface-2);
@@ -107,7 +107,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -117,7 +117,7 @@
 .success {
   margin: 0;
   padding: 0.55rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.1);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -132,7 +132,7 @@
   align-self: flex-start;
   height: 44px;
   padding: 0 1.1rem;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-weight: 700;
   /* Dark text on lime — matches the global .btn-lime convention. */
   color: var(--on-lime);

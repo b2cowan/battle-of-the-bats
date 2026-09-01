@@ -4,6 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, get
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -91,6 +92,13 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (typeof receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) {
     return NextResponse.json({ error: 'Enter the date the money arrived.' }, { status: 400 });
+  }
+  // The same future-date refusal as the POST (Phase C; the sentence lives in
+  // lib/money-date-guards.ts) — a correction writes the same row, and it must be asked BEFORE
+  // the remove below, or the refusal leaves the original receipt gone.
+  const futureRefusal = futureReceivedDateRefusal(receivedDate, 'payment');
+  if (futureRefusal) {
+    return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
   if (!DUES_PAYMENT_METHODS.includes(method as DuesPaymentMethod)) {
     return NextResponse.json({ error: 'Choose how the money arrived.' }, { status: 400 });

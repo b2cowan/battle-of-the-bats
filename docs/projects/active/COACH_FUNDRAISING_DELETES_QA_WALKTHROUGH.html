@@ -151,10 +151,14 @@ a{color:var(--accent)}
   <header class="top">
     <div class="kick">Owner QA · §122 · coach money</div>
     <h1>Nothing in Fundraising could be deleted. Now some of it can.</h1>
-    <p class="dek">A sponsorship or a fundraiser started by mistake was permanent — you could edit it
+    <p class="dek">This walk covers two changes to the same screens: the guarded deletes, and one rule about dates.
+      A sponsorship or a fundraiser started by mistake was permanent — you could edit it
       forever and never remove it. Both can go now, but only while they are empty shells. The moment
       money has landed, the delete button dies where it stands and tells you which door to use
-      instead. Ticks save in this browser, so you can close the tab and come back.</p>
+      instead. Ticks save in this browser, so you can close the tab and come back.
+      <b>Amended 2026-08-31:</b> a fundraiser now opens <b>in place</b> in the list — the separate
+      drive screen is gone — so part N is new and parts C and D walk the new shape. Steps whose
+      behaviour changed come back unticked on purpose.</p>
   </header>
 
   <div class="box">
@@ -164,8 +168,9 @@ a{color:var(--accent)}
       <dt>Sign in</dt><dd><code>uat-coach@uat-test-org.local</code> — password is the
         <code>UAT_COACH_PASSWORD</code> value in <code>.env.local</code></dd>
       <dt>Screen</dt><dd><b>Money → Fundraising</b> on any team you can write money for</dd>
-      <dt>Restart first</dt><dd>A new shared component and two new server verbs landed. Stop the dev
-        server, delete <code>.next</code>, restart — a stale cache will make you chase ghosts.</dd>
+      <dt>Restart first</dt><dd>The drive band rework deleted one screen component and added
+        another since this walk was written. Stop the dev server, delete <code>.next</code>,
+        restart — a stale cache will make you chase ghosts.</dd>
     </dl>
   </div>
 
@@ -173,11 +178,15 @@ a{color:var(--accent)}
     <h2>The one thing this walk is really testing</h2>
     <p><b>The refusal, not the delete.</b> Underneath, a fundraiser's rows are wired to vanish with
       it — so an unguarded delete would silently erase several dated income rows at once and leave
-      their money on the books with nothing to explain it. Everything greyed out in this walk is the
+      their money on the books with nothing to explain it. Every refusal in this walk is the
       only thing standing between a mis-tap and that.</p>
-    <p><b>So a greyed-out button is a PASS, not a bug.</b> What would be a bug: a delete that looks
-      available and then fails, a refusal that doesn't say how much money is in the way, or a
-      refusal that points you at a door you can't actually reach.</p>
+    <p><b>So a delete that refuses is a PASS, not a bug.</b> What would be a bug: a delete that
+      goes through when money is on the books, a refusal that doesn't say how much is in the way,
+      or a refusal that points you at a door you can't actually reach.</p>
+    <p><b>⚖ One thing changed after you saw it (mockup option A).</b> The reason used to sit
+      permanently above the footer. It doesn't any more — <b>press Delete and the row answers</b>,
+      with either the confirm question or the reason. So the delete button looks ordinary until you
+      press it. That is the new behaviour, not a regression.</p>
   </div>
 
   <div id="parts"></div>
@@ -197,7 +206,26 @@ a{color:var(--accent)}
 
 <script>
 (function(){
-  var KEY = 'flhq-fundraising-deletes-qa-v1';
+  /* ⚠⚠ ONE STABLE KEY, NEVER VERSIONED AGAIN (owner, 2026-08-30: "only if your work updated a
+     task and requires a new look should it get unchecked"). Bumping the key wiped every tick on
+     every edit, including steps that had not changed — the crude fix for a real problem, which
+     was that ticks were stored BY POSITION and an inserted step shifted them all onto the wrong
+     rows. Content keys solve it properly: an unchanged step keeps its tick wherever it moves, a
+     changed step gets a different key and so comes back unticked BY CONSTRUCTION, and a new step
+     starts unticked. There is no longer any reason to bump this string — don't. */
+  var KEY = 'flhq-fundraising-deletes-qa';
+
+  /** A short, stable hash of a step's own words. Two steps with identical text share a key, which
+   *  is fine — they are the same instruction. */
+  function hash(str){
+    var h = 5381;
+    for (var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  /** The tick's identity: which part, and WHAT THE STEP SAYS. Never its index. */
+  function stepKey(part, step){
+    return part.id + ':' + hash(step[0] + '|' + step[1]);
+  }
 
   var PARTS = [
     { id:'A', title:'A promise with no money deletes cleanly', where:'Money → Fundraising → Sponsors band',
@@ -221,48 +249,69 @@ a{color:var(--accent)}
       steps:[
         ['Press <b>+ Pledge</b>, log <b>ZZ Keeps Its Cheque</b> for $400, then open its row and press <b>Record</b> to record a $200 cheque',
          'The row now reads $400.00 pledged, <b>$200.00</b> in, $200.00 to come.'],
-        ['Open <b>✎ Edit</b> on it and scroll to the closing row',
-         '<b>Delete</b> is <b>greyed out</b> in the row, and the reason sits on its own quiet line just above it: <i>“This sponsor has <b>$200.00</b> on the team’s books across 1 arrival — undo it from the row first to delete it.”</i> The sentence gets a line because it carries the way out — it must never shrink to a tooltip only. <span class="dead">dead button + reason</span>'],
-        ['Try pressing it, and hover over it',
-         'Nothing happens on the press. Hovering shows the same sentence as a tooltip — the reason is never something you have to go and find.'],
+        ['Open <b>✎ Edit</b> on it and look at the closing row BEFORE pressing anything',
+         '⚖ <b>Nothing above the footer.</b> The row reads <b>Delete · Cancel · Save changes</b> and no more — the form keeps the two lines the old permanent warning used to take. <span class="num">the space is the point</span>'],
+        ['Now press <b>Delete</b>',
+         'The row is taken over by the answer: <b>“This can’t be deleted yet”</b>, then <i>“This sponsor has <b>$200.00</b> on the team’s books across 1 arrival — undo it from the row first to delete it.”</i> Cancel and Save stand down while it is open. <span class="dead">the reason arrives when asked</span>'],
+        ['Press <b>Got it</b>',
+         'The ordinary row comes back — Delete, Cancel, Save — with your fields untouched. Nothing was saved and nothing was deleted.'],
         ['Close the sheet, press <b>Undo</b> on the $200 arrival in the row, then reopen <b>✎ Edit</b>',
          'The delete is live again, and its question now names <b>$400.00</b> and says no money moves — because nothing has arrived any more.'],
         ['Delete it',
          'Gone, same as part A.']
       ]},
 
-    { id:'C', title:'Removing one player’s entry from a drive',
-      where:'Money → Fundraising → open a fundraiser',
+    { id:'N', title:'The drive opens in place — the drill-in is gone',
+      where:'New, 2026-08-31. Money → Fundraising → the drives band',
       steps:[
-        ['Open a fundraiser that has amounts logged against players — or make one, set the player credit to 25%, and record $100 for a player',
-         'You are on the drive’s leaderboard: one row per player, with what they raised and the credit they earned.'],
-        ['Find a player row that has an amount, and look at the buttons on the right',
-         'Beside <b>Edit amount</b> there is now a <b>Remove</b> in red. A player with nothing logged shows only <b>Record</b> — no Remove, because there is nothing to remove.'],
-        ['Press <b>Remove</b>',
+        ['Open <b>Money → Fundraising</b> and read the drives table',
+         'Name · Amount · Team keeps · Credits · Status. Nothing on a drive links to a separate screen any more — and the old floating <i>“15% player rebate”</i> line, the four summary tiles, the Rank column and <i>“Left to send”</i> are nowhere on this tab.'],
+        ['Click a drive’s name (or anywhere on its row)',
+         'It expands beneath, sponsor-style: a quiet facts line — <b>“Credits families 25% · 1 of 12 players logged”</b>, plus dates and tags where set — then one line per <b>amount logged</b>, largest first, each with the day it arrived and the credit it earned. <span class="num">players who haven’t taken part are not drawn as dash rows</span>'],
+        ['Click it again (or <b>Close ▴</b>)',
+         'It folds in place. The page doesn’t jump, and the Sponsors band below never moved.'],
+        ['Deep-link into one: <b>Budget → months view → open a drive’s door</b>, or paste a URL ending <span class="num">?fundraiser=…</span>',
+         'The tab loads with that drive’s row already open and on screen.'],
+        ['Press <b>Edit amount</b> on an entry, change ONLY the amount, and save',
+         'The line becomes an inline editor — amount · date received · notes — right in the row. ⚠ The entry’s <b>date must not move</b>: an untouched date box sends nothing, so an old entry’s money stays in its month. Check its Ledger row if in doubt. <span class="dead">the silent month-shift trap</span>'],
+        ['Edit again, this time back-dating <b>Date received</b>',
+         'The Ledger row and the family’s credit follow it into that month — back-dating is how catch-up paperwork lands in the right period.'],
+        ['Mark a player who has an entry <b>inactive</b> on the Roster, then reopen the drive',
+         '⚠ Their entry is <b>still on the board</b>, marked “no longer on roster” — the old screen silently dropped it while the money stayed on the books. And the “X of Y players logged” fraction doesn’t count them.'],
+        ['Squeeze the window to phone width (or open this screen on your phone)',
+         'The list stacks into cards; an open drive’s entries and its Record / Edit buttons read cleanly; nothing scrolls sideways.']
+      ]},
+
+    { id:'C', title:'Removing one player’s entry from a drive',
+      where:'Money → Fundraising → an open drive',
+      steps:[
+        ['Open a drive that has amounts logged — or make one: <b>+ Fundraiser</b>, player credit 25%, then <b>Record</b> $100 for a player',
+         'The open row lists the logged entries. Each entry line ends in <b>Edit amount</b> and a red <b>Remove</b>. A player with nothing logged has no line at all — <b>Record</b> is the only way in for new money.'],
+        ['Press <b>Remove</b> on an entry',
          'A question names <b>both</b> figures: the amount coming off the team’s books, <b>and</b> the credit coming off that family’s dues. Never a bare “are you sure?”.'],
         ['Cancel it',
-         'The row is untouched — the amount and the credit are exactly as they were.'],
+         'The line is untouched — the amount and the credit are exactly as they were.'],
         ['Press <b>Remove</b> again and confirm',
-         'The row falls back to <b>Record</b>, the drive’s total drops by that amount, and that family’s <b>Left to send</b> goes UP by the credit they just lost.'],
+         'The line leaves the list (a drive with nothing left says <b>“Nothing logged yet.”</b>), the drive’s row figures drop by that amount, and the season tiles above follow.'],
         ['Go to <b>Money → Player Dues</b> and open that family',
-         '⚠ The fundraiser credit is <b>gone from their list</b> — not sitting there orphaned. This is the one that matters: the credit and the income row have to leave together.']
+         '⚠ The fundraiser credit is <b>gone from their list</b> and what they’re asked to send went back up — not sitting there orphaned. This is the one that matters: the credit and the income row have to leave together.']
       ]},
 
     { id:'D', title:'The drive refuses too — and names the softer tool',
-      where:'Money → Fundraising → a drive with entries → Settings',
+      where:'Money → Fundraising → an open drive with entries → ✎ Edit',
       steps:[
-        ['On a drive that still has amounts logged, press <b>Settings</b> and scroll to the closing row',
-         '<b>Delete</b> is greyed in the row, with the reason on the line above naming the amount and the number of entries — and then: <i>“If it’s simply finished, set it to <b>Closed</b> instead: closing keeps every credit.”</i>'],
+        ['On a drive that still has amounts logged, press <b>✎ Edit</b>, then press <b>Delete</b> in the closing row',
+         'The sheet is <b>“Edit fundraiser”</b> now — the word <i>Settings</i> is gone from this screen, matching the sponsor’s verb. Same refusal grammar: the row becomes <b>“This can’t be deleted yet”</b>, naming the amount and the number of entries — remove them from its list first — then: <i>“If it’s simply finished, set it to <b>Closed</b> instead: closing keeps every credit.”</i> ⚠ Before you press, the footer shows nothing but the three ordinary controls. <span class="num">every entry the refusal counts is visible on the board</span>'],
         ['Set <b>Status</b> to <b>Closed</b> and save',
          'The drive closes. Every credit families already earned is still on their dues — closing takes nothing away.'],
-        ['Reopen <b>Settings</b> on the now-closed drive and read the refusal again',
+        ['Reopen <b>✎ Edit</b> on the now-closed drive and press Delete again',
          'It still names the money, but the “set it to Closed” half is <b>gone</b> — it is already closed, and a suggestion you have already taken is noise.'],
-        ['Look at a player row on the closed drive',
-         '<b>Edit amount</b> is greyed (“Fundraiser is closed”) but <b>Remove</b> is still live. Deliberate: closing means no new money comes in, not that a mistake becomes permanent.'],
-        ['Remove every entry from the leaderboard, then open <b>Settings</b> once more',
-         'With the board empty the delete is live, and its question says no money moves and no credit changes.'],
+        ['Look at the closed drive’s open row',
+         '<b>Record</b> has left the buttons row — a closed drive takes no new money. On each entry, <b>Edit amount</b> is greyed (“Fundraiser is closed”) but <b>Remove</b> is still live: a mistake never becomes permanent.'],
+        ['Remove every entry, then open <b>✎ Edit</b> once more',
+         'With nothing logged the delete is live, and its question says no money moves and no credit changes.'],
         ['Confirm the delete',
-         'You land back on <b>All fundraisers</b> — the drive you were looking at no longer exists, so the screen does not sit there showing a record that is gone.']
+         'The row leaves the list and <b>you stay exactly where you are</b> — there is no separate page to be thrown back from any more. The sponsors band and the rest of the tab sit untouched.']
       ]},
 
     { id:'E', title:'The floor holds — cash already handed back',
@@ -272,10 +321,35 @@ a{color:var(--accent)}
          'Money → Player Dues → that family → pay out what the team owes them.'],
         ['Go back to the drive and press <b>Remove</b> on that family’s entry',
          'It is <b>refused</b>, naming the dollars already paid out and telling you to remove the payout first. <span class="dead">the payout floor</span>'],
-        ['Check the leaderboard and the family’s dues',
+        ['Check the drive’s list and the family’s dues',
          '⚠ The entry and the credit are both <b>still there</b>. The refusal happened before anything was touched — a guard that fires after the write would have stranded the record forever.'],
         ['Remove the payout, then Remove the entry again',
          'It goes through. The refusal was about the cash, not about the row.']
+      ]},
+
+    { id:'G', title:'A date that hasn’t happened yet', where:'Money → Record, and the Fundraising tab',
+      steps:[
+        ['Press <b>Record</b>, answer <b>a sponsor came through</b>, and pick your ZZ sponsor',
+         'The form asks <b>Amount</b> and <b>Date received</b>. This is the screen that started this part — the calendar used to offer days that hadn’t happened.'],
+        ['Open the <b>Date received</b> calendar and try to pick a day next week',
+         'You <b>can’t</b> — days after today are greyed out. <span class="num">the picker now caps</span>'],
+        ['Type a future date straight into the box instead, and press save',
+         'It refuses, and — this is the bit worth reading — it does not just say no: <i>“That date hasn’t arrived yet — a cheque you’re expecting isn’t recorded, it’s promised. Set it as the pledge’s expected-by date instead.”</i> It names the control you actually wanted.'],
+        ['Now open that sponsor’s row → <b>✎ Edit</b> and look at <b>Expected by</b>',
+         '⚠ That calendar <b>does</b> let you pick next week — and it must. A promise is supposed to point ahead; if this one ever stops accepting future dates, the refusal above is pointing at a door that no longer opens.'],
+        ['Record money the ordinary way — a cheque dated today or earlier',
+         'Saves exactly as before. The rule is about the date, not about the door.'],
+        ['Same check on two more screens: <b>Record → money came in</b> (income), and a fundraiser’s <b>Start / End date</b>',
+         'Income’s <b>Date received</b> should refuse the future like the sponsor’s. A drive’s <b>Start</b> and <b>End</b> dates should still accept it — a drive that runs until December is not a mistake.']
+      ]},
+
+    { id:'W', title:'One word, everywhere a coach reads',
+      where:'New, 2026-08-31. The Fundraising tab, the export, and Help',
+      steps:[
+        ['Sweep the tab with fresh eyes',
+         'Nowhere reads <b>“rebate”</b> or <b>“Left to send”</b> any more — the word is <b>credit</b>, matching Dues. Export the fundraisers: the old “Rebate %” column now says <b>Credit %</b>.'],
+        ['Press the <b>?</b> on the Fundraising tab',
+         'The guide describes the in-place flow — no mention of a fundraiser page, a leaderboard, or a back link.']
       ]},
 
     { id:'F', title:'Clean up after the walk', where:'Money → Fundraising',
@@ -300,6 +374,35 @@ a{color:var(--accent)}
   }
   load();
 
+  /* ── ONE-TIME RESCUE of ticks made under the old positional stores ────────────────────────────
+     Three versioned keys were burned before the bug was understood, and the owner's ticks went
+     with them. They can be recovered SAFELY only where the step text is unchanged. The 2026-08-31
+     drive-band amendment narrowed the carry-over again: C and E left this map because their steps
+     were rewritten for the in-place shape — "requires a new look" is exactly the rule.
+     Runs once: it writes into the new store and is a no-op thereafter. (Ticks already made under
+     the CURRENT key are safe regardless — content keys mean an unchanged step keeps its tick and
+     a rewritten one comes back unticked by construction.) */
+  (function rescue(){
+    if (Object.keys(state.checks).length) return;          // already has its own state
+    var UNCHANGED = { A:1, F:1 };
+    var carried = 0;
+    ['flhq-fundraising-deletes-qa-v2', 'flhq-fundraising-deletes-qa-v1'].forEach(function(oldKey){
+      if (carried) return;
+      var raw; try { raw = localStorage.getItem(oldKey); } catch (e) { return; }
+      if (!raw) return;
+      var old; try { old = JSON.parse(raw); } catch (e) { return; }
+      PARTS.forEach(function(part){
+        if (!UNCHANGED[part.id]) return;
+        part.steps.forEach(function(st, i){
+          if (old.checks && old.checks[part.id + i]) { state.checks[stepKey(part, st)] = true; carried++; }
+        });
+        if (old.verdicts && old.verdicts[part.id]) state.verdicts[part.id] = old.verdicts[part.id];
+        if (old.notes && old.notes[part.id]) state.notes[part.id] = old.notes[part.id];
+      });
+    });
+    if (carried) save();
+  })();
+
   var host = document.getElementById('parts');
   var total = 0;
   PARTS.forEach(function(part){
@@ -307,7 +410,7 @@ a{color:var(--accent)}
     var el = document.createElement('section');
     el.className = 'part';
     var stepHtml = part.steps.map(function(s, i){
-      var id = part.id + i;
+      var id = stepKey(part, s);
       var on = state.checks[id] ? ' checked' : '';
       return '<li><label class="step"><input type="checkbox" data-c="' + id + '"' + on + '>' +
              '<span class="step-t"><span class="step-do">' + s[0] + '</span>' +
@@ -336,7 +439,7 @@ a{color:var(--accent)}
     var done = 0;
     PARTS.forEach(function(part){
       var n = 0;
-      part.steps.forEach(function(_, i){ if (state.checks[part.id + i]) n++; });
+      part.steps.forEach(function(st){ if (state.checks[stepKey(part, st)]) n++; });
       done += n;
       var badge = document.querySelector('[data-n="' + part.id + '"]');
       if (badge) badge.textContent = n + '/' + part.steps.length;
@@ -376,11 +479,11 @@ a{color:var(--accent)}
   });
 
   document.getElementById('mkSum').addEventListener('click', function(){
-    var lines = ['§122 — guarded deletes for Fundraising — OWNER QA', ''];
+    var lines = ['§122 — guarded deletes for Fundraising (amended 2026-08-31 for the drive band) — OWNER QA', ''];
     var done = 0, issues = 0, calls = 0, blank = 0;
     PARTS.forEach(function(part){
       var n = 0;
-      part.steps.forEach(function(_, i){ if (state.checks[part.id + i]) n++; });
+      part.steps.forEach(function(st){ if (state.checks[stepKey(part, st)]) n++; });
       done += n;
       var v = state.verdicts[part.id];
       var word = v === 'pass' ? 'PASS' : v === 'issue' ? 'ISSUE FOUND' : v === 'call' ? 'NEEDS A CALL' : 'NO VERDICT GIVEN';
@@ -389,9 +492,9 @@ a{color:var(--accent)}
       if (!v) blank++;
       lines.push(part.id + ' · ' + part.title);
       lines.push('   ' + n + '/' + part.steps.length + ' steps · ' + word);
-      part.steps.forEach(function(s, i){
-        if (!state.checks[part.id + i]) {
-          lines.push('   [ ] unticked: ' + s[0].replace(/<[^>]+>/g, ''));
+      part.steps.forEach(function(st){
+        if (!state.checks[stepKey(part, st)]) {
+          lines.push('   [ ] unticked: ' + st[0].replace(/<[^>]+>/g, ''));
         }
       });
       var nt = (state.notes[part.id] || '').trim();

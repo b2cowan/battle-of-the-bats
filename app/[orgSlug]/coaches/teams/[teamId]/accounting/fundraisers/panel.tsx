@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, use } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Gift, Plus, ChevronRight, TrendingUp } from 'lucide-react';
+import { Gift } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -17,14 +16,14 @@ import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
-import { moneySectionHref } from '@/lib/coach-money-links';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import {
   rollUpFundraising, normalizeKindFilter,
   type FundraisingKind, type SponsorStatus,
 } from '@/lib/coach-fundraising';
+import { fmt } from '@/lib/coach-money-summary';
 import SponsorBand from './SponsorBand';
-import { FundraiserDetail, fmt } from './detail';
+import DriveBand from './DriveBand';
 
 interface Fundraiser {
   id: string;
@@ -53,20 +52,6 @@ interface Fundraiser {
   stillToCome: number;
   expectedBy: string | null;
   creditFamilies: { playerId: string; value: number; unit: string; name: string | null }[];
-}
-
-/** The DRIVE band's status words — sponsors have no status chip any more: their band's
- *  In / To come columns say it in numbers (Direction A, owner-ruled 2026-08-29). */
-function statusLabel(f: Fundraiser): string {
-  return f.isActive ? 'Active' : 'Closed';
-}
-function statusBadgeClass(f: Fundraiser): string {
-  return f.isActive ? styles.badgeActive : styles.badgeArchived;
-}
-
-function fmtDate(d: string | null) {
-  if (!d) return null;
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function FundraisersPanel({
@@ -114,7 +99,6 @@ export function FundraisersPanel({
   // Money is three-state (off|read|write); the create route already refuses a read-only
   // coach, so offering the form and failing at submit is a broken affordance.
   const canWriteMoney = (page.capabilities?.money === 'write');
-  const base = `/${orgSlug}/coaches/teams/${teamId}`;
   /**
    * ONE fundraiser open, addressed by `?fundraiser=` — the tab's own sub-view (2026-08-14).
    *
@@ -148,9 +132,13 @@ export function FundraisersPanel({
      Sponsorships row still deep-links `?kind=sponsor`, which now scrolls its band into view —
      the filter itself retired when the list became two bands. */
   const kindFilter = normalizeKindFilter(seasonSearchParams.get('kind'));
-  /* ── DIRECTION A (owner-ruled 2026-08-29): the tab is TWO BANDS, not one filtered list. ── */
-  const driveRows = fundraisers.filter(f => f.kind === 'fundraiser');
-  const sponsorRows = fundraisers
+  /* ── DIRECTION A (owner-ruled 2026-08-29): the tab is TWO BANDS, not one filtered list. ──
+     ⚠ MEMOISED, AND THAT IS LOAD-BEARING (/simplify efficiency lens, 2026-09-01). Both bands key
+     their open expansion's re-read on this array so a money bump refreshes it — which means a
+     FRESH ARRAY ON EVERY RENDER re-fetched the open record's entries on every keystroke in the
+     New-fundraiser form. The bands' effects see a new reference only when the list itself does. */
+  const driveRows = useMemo(() => fundraisers.filter(f => f.kind === 'fundraiser'), [fundraisers]);
+  const sponsorRows = useMemo(() => fundraisers
     .filter(f => f.kind === 'sponsor')
     .map(f => ({
       id: f.id,
@@ -163,13 +151,14 @@ export function FundraisersPanel({
       expectedBy: f.expectedBy,
       creditFamilies: f.creditFamilies ?? [],
       tagIds: f.tagIds,
-    }));
+    })), [fundraisers]);
 
-  /** `?fundraiser=` now means two things by KIND: a drive still drills into its leaderboard; a
-   *  sponsor EXPANDS its band row in place — deep links from the register and reports land open
-   *  either way, with no dead pages. */
+  /** `?fundraiser=` means ONE thing since 2026-08-31: the open row. Both kinds expand their band
+   *  row in place (drives joined sponsors when the drill-in retired) — deep links from the
+   *  register, the budget month doors and old bookmarks land open, with no dead pages. */
   const openRecord = openFundraiserId ? fundraisers.find(f => f.id === openFundraiserId) ?? null : null;
   const openSponsorId = openRecord?.kind === 'sponsor' ? openRecord.id : null;
+  const openDriveId = openRecord?.kind === 'fundraiser' ? openRecord.id : null;
   const setOpenFundraiserParam = useCallback((id: string | null) => {
     const sp = new URLSearchParams(seasonSearchParams.toString());
     if (id) sp.set('fundraiser', id); else sp.delete('fundraiser');
@@ -232,31 +221,28 @@ export function FundraisersPanel({
   }, [orgSlug, teamId]);
 
   const bumpMoneyRevision = useBumpMoneyRevision();
-  /* Mount loud, bump quiet — the shared convention — with ONE panel-specific twist.
+  /* Mount loud, bump quiet — the shared convention.
    *
-   * ⚠ NOT WHILE A DRIVE IS OPEN. The early return further down decides what RENDERS, not which
-   * effects run, so without this guard every amount logged inside a fundraiser would also fetch a
-   * list nobody is looking at, once per save. The guard sits in BOTH places on purpose: the effect
-   * skips the fetch while the drive is open and re-fires on the way back out (which is exactly
-   * when the fresh totals are wanted, and why closing a drive is a quiet re-read rather than a
-   * blank tab), and the bump callback skips it for the same reason. */
-  const listShown = !openFundraiserId;
-  /* ⚠ ALWAYS LOUD (/review, 2026-08-26). This read `load(loadSeq.current > 0)` — "quiet if we have
-     loaded before" — which is the boolean-latch mistake `useOnMoneyRevisionBump`'s header warns
-     about wearing a different hat: `load` increments that counter SYNCHRONOUSLY, so StrictMode's
-     second mount invocation saw 1 and went quiet, and being second it was also the call that WON.
-     A failed first load then set no error, cleared the spinner and rendered "Nothing raised yet" —
-     the exact empty-state lie this whole pass exists to remove. Quiet belongs to the revision bump
-     below, where there is a last good screen to keep; a load this effect fires is either a mount or
-     a return from a drive, and neither is a background refresh. */
-  useEffect(() => { if (listShown) void load(); }, [load, listShown]);
-  const quietReload = useCallback(() => { if (listShown) void load(true); }, [load, listShown]);
+   * ⚰ The `listShown` guard that stood here ("not while a drive is open") retired with the
+   * drill-in (2026-08-31): the list is now ALWAYS the screen — an open drive is rows of this
+   * list — so a money bump must refresh it precisely when a drive is open (the row's own totals
+   * and the expansion, which re-reads off the reloaded list, are what the coach is looking at).
+   *
+   * ⚠ ALWAYS LOUD on mount (/review, 2026-08-26). This read `load(loadSeq.current > 0)` — "quiet
+     if we have loaded before" — the boolean-latch mistake `useOnMoneyRevisionBump`'s header warns
+     about: `load` increments that counter SYNCHRONOUSLY, so StrictMode's second mount invocation
+     saw 1 and went quiet, and being second it was also the call that WON. A failed first load then
+     rendered "Nothing raised yet" — the exact empty-state lie. Quiet belongs to the revision bump,
+     where there is a last good screen to keep. */
+  useEffect(() => { void load(); }, [load]);
+  const quietReload = useCallback(() => { void load(true); }, [load]);
   useOnMoneyRevisionBump(quietReload);
 
   /** The roster and the team's standard split, loaded once alongside the list. Both only matter
-   *  when the create form opens, but fetching them there would put a spinner inside a modal. */
+   *  when the create form opens, but fetching them there would put a spinner inside a modal.
+   *  (The `openFundraiserId` skip retired with the drill-in — the list is always on screen.) */
   useEffect(() => {
-    if (!canWriteMoney || openFundraiserId) return;
+    if (!canWriteMoney) return;
     let cancelled = false;
     (async () => {
       try {
@@ -283,7 +269,7 @@ export function FundraisersPanel({
       } catch { /* the form still works; it just starts at zero with no roster to attribute to */ }
     })();
     return () => { cancelled = true; };
-  }, [orgSlug, teamId, canWriteMoney, openFundraiserId]);
+  }, [orgSlug, teamId, canWriteMoney]);
 
   /** Create a money tag from inside the picker, returning it so the box can select it at once. */
   async function addMoneyTag(name: string): Promise<RepTeamTag | null> {
@@ -361,35 +347,10 @@ export function FundraisersPanel({
     );
   }
 
-  // The tab's sub-view REPLACES its list rather than sitting beside it: the leaderboard is a
-  // six-column table and the list is a five-column one, so a split would give neither enough
-  // column to be read (binding mockup, "the list is replaced, not pushed aside").
-  /* ⚠ ONLY A DRIVE DRILLS IN (Direction A) — a sponsor's `?fundraiser=` expands its band row on
-     the list below instead, so the gate waits for the list to know the KIND. While it loads, the
-     ordinary loading state renders; an id that matches nothing (deleted, other season) simply
-     shows the list rather than a dead page. */
-  if (openRecord?.kind === 'fundraiser') {
-    return (
-      <div className={styles.page}>
-        {/* `key` on the id, so one drive can never inherit another's half-typed form. The only
-            link out of the detail is back to the list, but browser history and a pasted URL can
-            both step straight from `?fundraiser=A` to `?fundraiser=B` with no render in between —
-            React would reuse the instance, refetch correctly, and leave the inline "log amount"
-            row open holding A's amount against one of B's players.
-
-            `tabActive` travels with it: the Settings modal inside carries an unsaved-changes guard,
-            and a guard belonging to a panel the coach has switched away from must stop hijacking
-            clicks on the tab they ARE looking at (the same contract every hub panel keeps). */}
-        <FundraiserDetail
-          key={openRecord.id}
-          orgSlug={orgSlug}
-          teamId={teamId}
-          fundraiserId={openRecord.id}
-          tabActive={tabActive}
-        />
-      </div>
-    );
-  }
+  /* ⚰ THE DRILL-IN BRANCH THAT STOOD HERE IS GONE (owner-ruled 2026-08-31). A drive's
+     `?fundraiser=` no longer replaces the list with a separate leaderboard screen — it expands
+     the drive's own row in the band below, exactly as a sponsor's has since Direction A. An id
+     that matches nothing (deleted, other season) simply shows the list, as before. */
 
   return (
     <div className={styles.page}>
@@ -462,14 +423,14 @@ export function FundraisersPanel({
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Raised — fundraisers</span>
             <span className={styles.summaryCardValue} style={{ color: 'var(--success-light)' }}>{fmt(rollup.fundraiserRaised)}</span>
-            <span className={styles.muted} style={{ fontSize: '0.72rem', padding: 0 }}>
+            <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}>
               {rollup.fundraiserCount} {rollup.fundraiserCount === 1 ? 'drive' : 'drives'}
             </span>
           </div>
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Raised — sponsors</span>
             <span className={styles.summaryCardValue} style={{ color: 'var(--blueprint-blue)' }}>{fmt(rollup.sponsorReceived)}</span>
-            <span className={styles.muted} style={{ fontSize: '0.72rem', padding: 0 }}>
+            <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}>
               {rollup.sponsorCount} {rollup.sponsorCount === 1 ? 'sponsor' : 'sponsors'}
               {rollup.sponsorPledged > 0.005 && ` · ${fmt(rollup.sponsorPledged)} pledged`}
             </span>
@@ -485,91 +446,24 @@ export function FundraisersPanel({
         </div>
         )}
 
-        {/* ── BAND ONE: FUNDRAISERS — campaigns; the roster is their list; drill in for the
-            leaderboard. Each band's create door sits in ITS OWN heading row, same spot, same
-            weight, sibling labels — "+ Fundraiser" / "+ Sponsorship" (owner, §121 walk). ── */}
-        <div className={styles.panelToolbar} style={{ marginBottom: '0.5rem' }}>
-          <h3 className={styles.panelSubhead}>Fundraisers</h3>
-          {canWriteMoney && (
-            <div className={styles.panelToolbarActions}>
-              <button className={styles.btnSecondary} onClick={openModal}>
-                <Plus size={15} aria-hidden /> Fundraiser
-              </button>
-            </div>
-          )}
-        </div>
-        {driveRows.length === 0 ? (
-          <p className={styles.muted} style={{ margin: '0 0 0.5rem' }}>
-            No drives yet.{canWriteMoney && <> Press <strong>+ Fundraiser</strong> to run one — the whole team takes part, and each player&rsquo;s share comes off their dues.</>}
-          </p>
-        ) : (
-        <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Name</th>
-                <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                <th className={`${styles.th} ${styles.thNum}`}>Team keeps</th>
-                <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
-                <th className={`${styles.th} ${styles.tdShrink}`}>Status</th>
-                <th className={styles.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {driveRows.map(f => (
-                <tr key={f.id} className={styles.tr}>
-                  {/* ⚠ ONE LINE (owner ruling 2026-08-15: "this looks like a lot of text").
-                      The finding worth keeping is that the FIGURES were never the problem —
-                      right-aligned tabular columns are what a table is for. It was three stacked
-                      lines of prose in this cell. The rebate %, the dates, the progress count, the
-                      notes and the tags all moved INSIDE the record; the test was "would a coach
-                      scanning for 'how are we doing?' need it, or are they only asking it about
-                      one record?".
-
-                      The NAME stays the link, not the row. A row-level onClick is unreachable by
-                      keyboard and invisible to a screen reader; an anchor is both, and it gives
-                      the record a real target to open in a new tab. */}
-                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Name">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexWrap: 'wrap' }}>
-                      <TrendingUp size={15} aria-hidden style={{ color: 'var(--success-light)', flexShrink: 0 }} />
-                      {/* ⚠ Through the shared builder, carrying the SEASON: the old link was a
-                          hand-built `/accounting/fundraisers/{id}` with no `?year=`, so opening a
-                          past season's drive silently landed in the live one. */}
-                      <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id })} className={styles.playerNameLink}>
-                        {f.name}
-                      </Link>
-                    </span>
-                  </td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ color: 'var(--success-light)', fontWeight: 700 }}>
-                    {fmt(f.totalRaised)}
-                  </td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Team keeps" style={{ fontWeight: 700 }}>
-                    {fmt(f.teamNet)}
-                  </td>
-                  <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: f.totalCredits > 0.005 ? 'var(--home-plum, #a855f7)' : 'var(--home-dim, rgba(255,255,255,0.35))', fontWeight: 700 }}>
-                    {f.totalCredits > 0.005 ? fmt(f.totalCredits) : '—'}
-                  </td>
-                  {/* ⚠ SHRINK-TO-CONTENT, CHIPS LEFT (owner ruling 2026-08-15). Right-aligning was
-                      tried and read as a mistake: right-alignment lines up DECIMALS, and a status
-                      chip is an object with no decimal — so it only moved the ragged edge to the
-                      left. Centring would have shared the raggedness rather than removing its
-                      cause, which is a column far wider than the chip in it. The column now takes
-                      the width its widest chip needs and the slack goes to the name. */}
-                  <td className={`${styles.td} ${styles.tdShrink}`} data-label="Status">
-                    <span className={`${styles.badge} ${statusBadgeClass(f)}`}>{statusLabel(f)}</span>
-                  </td>
-                  <td className={`${styles.td} ${styles.cardActionCell} ${styles.tdNum}`}>
-                    <Link href={moneySectionHref(base, 'fundraisers', { fundraiser: f.id })} className={styles.linkBtn} aria-label={`Open ${f.name}`}>
-                      <span className={styles.cardActionLabel}>Open</span>
-                      <ChevronRight size={16} aria-hidden />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        )}
+        {/* ── BAND ONE: FUNDRAISERS — campaigns that expand IN PLACE (owner-ruled 2026-08-31; the
+            drill-in retired). The band owns its toolbar, table, expansion rows and Edit sheet —
+            the create door stays this panel's own New-fundraiser modal, passed through. Each
+            band's create door sits in ITS OWN heading row, same spot, same weight, sibling
+            labels — "+ Fundraiser" / "+ Pledge" (owner, §121 walk). ── */}
+        <DriveBand
+          orgSlug={orgSlug}
+          teamId={teamId}
+          drives={driveRows}
+          moneyTags={moneyTags}
+          canWriteMoney={canWriteMoney}
+          onCreate={openModal}
+          openId={openDriveId}
+          onOpenChange={setOpenFundraiserParam}
+          onChanged={bumpMoneyRevision}
+          onCreateTag={addMoneyTag}
+          tabActive={tabActive}
+        />
 
         {/* ── BAND TWO: SPONSORS — a ledger of promises and cheques that expands in place
             (Direction A). Its two expectation forms — Log a pledge, Sponsor settings — live
@@ -586,7 +480,7 @@ export function FundraisersPanel({
             canWriteMoney={canWriteMoney}
             openId={openSponsorId}
             onOpenChange={setOpenFundraiserParam}
-            onChanged={() => { void load(true); bumpMoneyRevision(); }}
+            onChanged={bumpMoneyRevision}
           />
         </div>
         </>

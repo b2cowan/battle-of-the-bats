@@ -11,7 +11,7 @@
 
 .muted {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -19,7 +19,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -29,7 +29,7 @@
 .success {
   margin: 0;
   padding: 0.55rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.1);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -38,7 +38,7 @@
 
 .hint {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   color: var(--text-secondary);
 }
 
@@ -47,7 +47,7 @@
   align-items: flex-start;
   gap: 0.4rem;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-primary);
 }
@@ -74,14 +74,14 @@
 
 .intro {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-secondary);
 }
 
 .reqLine {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -92,7 +92,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.3rem 0.6rem;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.08);
@@ -152,7 +152,7 @@
   place-items: center;
   padding: 0 0.4rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-weight: 700;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.08);
@@ -164,7 +164,7 @@
   flex: 1;
   min-width: 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -206,7 +206,7 @@
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-secondary);
   cursor: pointer;
@@ -261,7 +261,7 @@
   flex: 1;
   min-width: 0;
   color: var(--text-primary);
-  font-size: 0.92rem;
+  font-size: var(--type-body);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -269,7 +269,7 @@
 }
 
 .readMeta {
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -282,7 +282,7 @@
   align-self: flex-start;
   height: 44px;
   padding: 0 1.1rem;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   font-weight: 700;
   /* Dark text on lime — matches the global .btn-lime convention. */
   color: var(--on-lime);

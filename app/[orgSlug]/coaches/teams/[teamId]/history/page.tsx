@@ -39,12 +39,14 @@ import { formatRecord } from '@/lib/coach-season-record';
 // and what is left on this Dashboard tab is the three things that were always
 // ABOUT the whole season rather than about one report.
 //
-// ⚠⚠ NO MONEY, ANYWHERE (owner ruling 3, 2026-08-18). No dues tile, no dues
-// fetch, no money finding, nowhere. Insights is player and team stats for
-// COACHES; money's homes are the team Overview and the Money hub. The findings
-// engine still HAS money rules — the Sunday "week in review" digest is a second
-// consumer and is not this page — and the way they are kept off this screen is
-// that the `dues` input is never supplied. See `REPORT_SECTION` below.
+// ⚠⚠ NO MONEY, ANYWHERE (owner ruling 3, 2026-08-18; extended to the Sunday
+// "week in review" push 2026-08-28). No dues tile, no dues fetch, no money
+// finding, nowhere. Insights is player and team stats for COACHES; money's
+// homes are the team Overview and the Money hub. The findings engine still HAS
+// money rules — registry entries that fire only when a `dues` input is
+// supplied, and since 2026-08-28 nothing supplies one — and the way they are
+// kept off every surface is that the input is never passed. See
+// `REPORT_SECTION` below.
 //
 // ⚠ LIVE SEASON ONLY, STRUCTURALLY. `CoachTeamSeasonGate` sends a team with no
 // live season to its closed-season page before any live screen mounts, so this

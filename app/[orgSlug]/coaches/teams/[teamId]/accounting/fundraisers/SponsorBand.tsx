@@ -20,8 +20,9 @@
  * the pledge sheet carries a visible "Record it instead" that opens the conversation on
  * "A new sponsor…" with the typed name and amount — see `handOffToRecord`.
  */
-import { useState, useCallback, useEffect, type ReactNode } from 'react';
-import { Plus, Pencil } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { BandMessageRow, BandDoorsRow, BAND_COL_COUNT } from './BandRows';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -38,7 +39,7 @@ import type { CreditUnit } from '@/lib/coach-fundraising';
 import {
   deriveAllArrivalCredits, stillToCome, creditPlanProblem, type CreditPlanShare,
 } from '@/lib/sponsor-arrivals';
-import { fmt } from './detail';
+import { fmt } from '@/lib/coach-money-summary';
 import { pluralize } from '@/lib/utils';
 
 export interface SponsorRowData {
@@ -104,12 +105,19 @@ export default function SponsorBand({
   const [expandError, setExpandError] = useState('');
   const [undoingId, setUndoingId] = useState<string | null>(null);
 
+  /* Stamp-and-drop — the Money-panel loading convention (lib/coach-money-refresh.tsx), applied to
+     the expansion read (/review, 2026-09-01, High — the drive band's twin fix): a slow OLD answer
+     landing after a toggle to another sponsor painted the wrong arrivals and left the open row on
+     "Loading…" with nothing left to re-fire for it. */
+  const expansionSeq = useRef(0);
   const loadExpansion = useCallback(async (sponsorId: string) => {
+    const seq = ++expansionSeq.current;
     setExpandError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsorId}/entries`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
+      if (seq !== expansionSeq.current) return; // an older answer loses
       setExpanded({
         arrivals: Array.isArray(data.sponsorArrivals) ? data.sponsorArrivals : [],
         plan: Array.isArray(data.sponsorCreditPlan) ? data.sponsorCreditPlan : [],
@@ -117,16 +125,30 @@ export default function SponsorBand({
       });
       setExpandedFor(sponsorId);
     } catch (e) {
+      if (seq !== expansionSeq.current) return;
       setExpandError(e instanceof Error ? e.message : 'This sponsor could not be loaded.');
       setExpandedFor(sponsorId);
       setExpanded(null);
     }
   }, [orgSlug, teamId]);
 
+  /* The just-deleted id must not be re-read: `deleteSponsor` clears the open id through an ASYNC
+     router.replace while its bump lands in the same render pass — see DriveBand's twin note. */
+  const deletedIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (openId) void loadExpansion(openId);
+    if (openId && openId !== deletedIdRef.current) void loadExpansion(openId);
     else { setExpanded(null); setExpandedFor(null); }
   }, [openId, loadExpansion, sponsors]);
+
+  /* Deep links land OPEN and IN VIEW — the drive band's pattern, back-ported (/simplify altitude
+     lens, 2026-09-01): the two bands share one `?fundraiser=` contract, and a sponsor far down the
+     list was landing expanded but off-screen. On EVERY change of the open id (the tab stays
+     mounted for the whole visit, so a once-flag would skip every arrival after the first);
+     `nearest` makes an ordinary click a no-op. */
+  const openRowRef = useRef<HTMLTableRowElement | null>(null);
+  useEffect(() => {
+    if (openId) openRowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [openId]);
 
   async function undoArrival(s: SponsorRowData, a: ExpandedData['arrivals'][number]) {
     setExpandError('');
@@ -151,6 +173,9 @@ export default function SponsorBand({
         setExpandError((await res.json().catch(() => ({}))).error ?? 'That arrival could not be undone.');
         return;
       }
+      /* Re-read now AND bump: the bump's list reload re-triggers this read a round trip later,
+         and until then the row still showed the arrival just undone (/review, 2026-09-01). */
+      void loadExpansion(s.id);
       onChanged();
     } finally {
       setUndoingId(null);
@@ -278,8 +303,9 @@ export default function SponsorBand({
         return;
       }
       /* Straight past the discard guard, deliberately: there is no record left to keep changes
-         for. The row collapses too — an expanded id that no longer exists would refetch into an
-         error the coach did nothing to cause. */
+         for. Marked dead first (`deletedIdRef`), then the row collapses — an expanded id that no
+         longer exists would otherwise refetch into an error the coach did nothing to cause. */
+      deletedIdRef.current = agreeFor.id;
       setAgreeFor(null);
       onOpenChange(null);
       onChanged();
@@ -425,6 +451,9 @@ export default function SponsorBand({
                 <th className={`${styles.th} ${styles.thNum}`}>In</th>
                 <th className={`${styles.th} ${styles.thNum}`}>To come</th>
                 <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
+                {/* Header-less action column. The arrivals below hang their Undo here so the
+                    three money columns stay pure figures under their own headings. */}
+                <th className={styles.th} aria-label="Row actions" />
               </tr>
             </thead>
             <tbody>
@@ -436,6 +465,7 @@ export default function SponsorBand({
                     key={s.id}
                     s={s}
                     open={open}
+                    openRowRef={open ? openRowRef : null}
                     expect={expect}
                     expanded={open && expandedFor === s.id ? expanded : null}
                     expandError={open ? expandError : ''}
@@ -576,7 +606,9 @@ export default function SponsorBand({
                   />
                   {agRefusals.map(f => (
                     <p key={f.playerId} style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>
-                      {fmt(f.exposure)} of {f.name}&rsquo;s credit has already been paid out in cash — this change would take it below that. Remove the payout first.
+                      {/* Same voice as payoutFloorMessage (owner wording 2026-09-01) — the sheet's
+                          foreseeable-refusal note and the server's 409 must read as one rule. */}
+                      The team has already paid {fmt(f.exposure)} back to {f.name}&rsquo;s family — this change would make that more than they were ever owed. Remove the payout first.
                     </p>
                   ))}
                 </div>
@@ -626,11 +658,12 @@ export default function SponsorBand({
 
 /** One sponsor: its ledger row, and — when open — the expansion row beneath it. */
 function SponsorRows({
-  s, open, expect, expanded, expandError, undoingId, canWriteMoney, hasRecordDoor,
+  s, open, openRowRef, expect, expanded, expandError, undoingId, canWriteMoney, hasRecordDoor,
   onToggle, onRecord, onEdit, onUndo, planWords,
 }: {
   s: SponsorRowData;
   open: boolean;
+  openRowRef: React.Ref<HTMLTableRowElement> | null;
   expect: { text: string; past: boolean } | null;
   expanded: ExpandedData | null;
   expandError: string;
@@ -643,16 +676,50 @@ function SponsorRows({
   onUndo: (a: ExpandedData['arrivals'][number]) => void;
   planWords: (plan: ExpandedData['plan']) => ReactNode;
 }) {
+  /* ⚖ FACTS ONLY (owner + /design, §121 walk): expected-by and the credit split — never a
+     sentence restating the columns an inch above. Built once here so the row markup below stays
+     readable, and so the "nothing has arrived yet" fallback has ONE definition: it survives only
+     where it would otherwise leave an empty line over the buttons. */
+  const metaLine: ReactNode = (() => {
+    if (!expanded) return null;
+    const hasPlan = expanded.plan.length > 0;
+    if (!expect && !hasPlan) {
+      return expanded.arrivals.length === 0
+        ? <span className={styles.mutedInline}>Nothing has arrived yet</span>
+        : null;
+    }
+    return (
+      <>
+        {expect && <span style={{ color: expect.past ? 'var(--danger)' : undefined }}>{expect.text}</span>}
+        {expect && hasPlan && <> · </>}
+        {hasPlan && planWords(expanded.plan)}
+      </>
+    );
+  })();
+
   return (
     <>
       <tr
+        ref={openRowRef ?? undefined}
         className={styles.tr}
         onClick={onToggle}
         style={{ cursor: 'pointer' }}
         aria-expanded={open}
       >
         <td className={styles.td} data-label="Sponsor">
-          <span className={styles.playerName}>{s.name}</span>
+          {/* A real BUTTON (parity with the drive band, 2026-09-01): a row-level onClick alone is
+              unreachable by keyboard and invisible to a screen reader. */}
+          <button
+            type="button"
+            className={`${styles.linkBtn} ${styles.playerName}`}
+            // `.linkBtn`'s 12px is declared after `.playerName`'s 14px and wins the tie by source
+            // order — the same trap the drive band's name button already sidesteps inline.
+            style={{ textAlign: 'left', fontSize: 'var(--type-body)' }}
+            onClick={e => { e.stopPropagation(); onToggle(); }}
+            aria-expanded={open}
+          >
+            {s.name}
+          </button>
           {expect?.past && (
             <span style={{ marginLeft: '0.5rem', fontSize: '0.72rem', color: 'var(--danger)' }}>
               past its expected date
@@ -660,113 +727,100 @@ function SponsorRows({
           )}
         </td>
         <td className={`${styles.td} ${styles.tdNum}`} data-label="Pledged">
-          {s.pledgedAmount != null ? fmt(s.pledgedAmount) : <span className={styles.muted}>—</span>}
+          {s.pledgedAmount != null ? fmt(s.pledgedAmount) : <span className={styles.mutedInline}>—</span>}
         </td>
         <td className={`${styles.td} ${styles.tdNum}`} data-label="In" style={{ fontWeight: 700 }}>
-          {s.totalRaised > 0.005 ? fmt(s.totalRaised) : <span className={styles.muted}>—</span>}
+          {s.totalRaised > 0.005 ? fmt(s.totalRaised) : <span className={styles.mutedInline}>—</span>}
         </td>
         <td className={`${styles.td} ${styles.tdNum}`} data-label="To come">
-          {s.stillToCome > 0.005 ? <strong>{fmt(s.stillToCome)}</strong> : <span className={styles.muted}>—</span>}
+          {s.stillToCome > 0.005 ? <strong>{fmt(s.stillToCome)}</strong> : <span className={styles.mutedInline}>—</span>}
         </td>
         <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits">
           {s.totalCredits > 0.005
             ? <span style={{ color: 'var(--home-plum)', fontWeight: 600 }}>{fmt(s.totalCredits)}</span>
-            : <span className={styles.muted}>—</span>}
+            : <span className={styles.mutedInline}>—</span>}
+        </td>
+        <td className={`${styles.td} ${styles.cardActionCell}`} data-label="">
+          {/* The row's one full-height touch target on a phone (the card-mode rule stretches a
+              trailing control to 44px) and the visible affordance a click-to-open row was missing
+              — parity with the drive band (rendered sweep, 2026-09-01). */}
+          <button
+            type="button"
+            className={styles.linkBtn}
+            onClick={e => { e.stopPropagation(); onToggle(); }}
+            aria-label={`${open ? 'Close' : 'Open'} ${s.name}`}
+          >
+            <span className={styles.cardActionLabel}>{open ? 'Close' : 'Open'}</span>
+            {open ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+          </button>
         </td>
       </tr>
-      {open && (
+      {/* ── THE EXPANSION IS SIBLING ROWS OF THIS TABLE, NOT A TABLE INSIDE IT ──────────────
+          ⚖ IT USED TO BE A NESTED 4-COLUMN TABLE in a colSpan cell, and could not line up with
+          the five headings above it BY CONSTRUCTION — a nested table sizes its own columns from
+          its own content and cannot see its parent's, so any apparent alignment was coincidence.
+          The owner caught the drift on the §122 walk. Sharing the parent's columns is the one
+          arrangement that cannot drift again: an arrival's amount is under **In** and its credit
+          under **Credits** because it is literally in those columns.
+          ⚠ Keep the cell COUNT identical on every row here (six, including the action cell —
+          BAND_COL_COUNT in BandRows.tsx). One short row silently re-flows the whole table's
+          widths. */}
+      {open && expandError && <BandMessageRow tone="error">{expandError}</BandMessageRow>}
+      {open && !expanded && !expandError && <BandMessageRow tone="muted">Loading…</BandMessageRow>}
+      {/* ⚖ The meta line holds ONLY what the columns can't say (owner, §121 walk): expected-by
+          and the credit split, FACTS ONLY. The "nothing has arrived yet" fallback survives just
+          where it would otherwise leave an empty line above the buttons. */}
+      {open && metaLine && (
         <tr className={styles.tr}>
-          <td className={styles.td} colSpan={5} style={{ background: 'var(--home-fill, rgba(255,255,255,0.03))' }}>
-            {/* ⚖ The expansion holds ONLY what the row can't say (owner, §121 walk 2026-08-29):
-                the old promise line restated Pledged/In/To come — the columns one inch above it —
-                and the extra lines were the "empty space" the walk flagged. Meta line = expected-by
-                + credit split, FACTS ONLY (the pledge-state sentence went the same way as the
-                promise line, same rule — see the note at the pledge branch below); the payment
-                method rides the date cell so an unrecorded one costs nothing. */}
-            <div style={{ padding: '0.35rem 0.15rem 0.5rem' }}>
-              {expandError && <p className={styles.errorText} role="alert">{expandError}</p>}
-              {!expanded && !expandError ? (
-                <p className={styles.muted} style={{ margin: 0, fontSize: '0.8rem' }}>Loading…</p>
-              ) : expanded && expanded.arrivals.length === 0 ? (
-                /* ⚖ FACTS ONLY, no state sentence (owner + /design, §121 walk 2026-08-29 — the
-                   third trim of this line in one day, and the design review named why they kept
-                   coming: "nothing has arrived yet" RESTATES the In/To come columns one row up,
-                   which is exactly what the §121 compaction forbids the expansion to do. The meta
-                   line carries the agreement's facts; the columns carry the state.) The sentence
-                   survives only when it would otherwise be an empty line over two buttons — a
-                   pledge with no expected-by and no credit plan. */
-                <p style={{ margin: '0 0 0.45rem', fontSize: '0.85rem' }}>
-                  {expect && (
-                    <span style={{ color: expect.past ? 'var(--danger)' : undefined }}>{expect.text}</span>
-                  )}
-                  {expect && expanded.plan.length > 0 && <> · </>}
-                  {expanded.plan.length > 0 && planWords(expanded.plan)}
-                  {!expect && expanded.plan.length === 0 && (
-                    <span className={styles.muted}>Nothing has arrived yet</span>
-                  )}
-                </p>
-              ) : expanded && (
-                <>
-                  {(expect || expanded.plan.length > 0) && (
-                    <p style={{ margin: '0 0 0.45rem', fontSize: '0.82rem' }}>
-                      {expect && (
-                        <><span style={{ color: expect.past ? 'var(--danger)' : undefined }}>{expect.text}</span>
-                        {expanded.plan.length > 0 && <> · </>}</>
-                      )}
-                      {expanded.plan.length > 0 && planWords(expanded.plan)}
-                    </p>
-                  )}
-                  <div className={styles.tableWrap} style={{ margin: '0 0 0.5rem' }}>
-                  <table className={styles.table} style={{ fontSize: '0.85rem' }}>
-                    <tbody>
-                      {expanded.arrivals.map(a => (
-                        <tr key={a.entryId} className={styles.tr}>
-                          <td className={styles.td} data-label="Arrived">
-                            {a.receivedDate ? formatStoredDate(a.receivedDate) : <span className={styles.muted}>—</span>}
-                            {a.method && (
-                              <span className={styles.muted}> · {(DUES_PAYMENT_METHOD_LABEL[a.method as DuesPaymentMethod] ?? a.method).toLowerCase()}</span>
-                            )}
-                          </td>
-                          <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>{fmt(a.amount)}</td>
-                          <td className={`${styles.td} ${styles.tdNum}`} data-label="Credited">
-                            {a.credited > 0.005
-                              ? <span style={{ color: 'var(--home-plum)', fontWeight: 600 }}>{fmt(a.credited)} credited</span>
-                              : <span className={styles.muted}>—</span>}
-                          </td>
-                          <td className={`${styles.td} ${styles.tdNum}`} data-label="">
-                            {canWriteMoney && (
-                              <button
-                                className={styles.btnGhost}
-                                onClick={e => { e.stopPropagation(); onUndo(a); }}
-                                disabled={undoingId === a.entryId}
-                                aria-label={`Undo the ${fmt(a.amount)} arrival`}
-                              >
-                                {undoingId === a.entryId ? '…' : 'Undo'}
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  </div>
-                </>
-              )}
-              {canWriteMoney && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {hasRecordDoor && (
-                    <button className={styles.btnPrimary} onClick={e => { e.stopPropagation(); onRecord(); }}>
-                      Record
-                    </button>
-                  )}
-                  <button className={styles.btnSecondary} onClick={e => { e.stopPropagation(); onEdit(); }}>
-                    <Pencil size={14} aria-hidden /> Edit
-                  </button>
-                </div>
-              )}
-            </div>
+          <td className={`${styles.td} ${styles.bandSubCell}`} colSpan={BAND_COL_COUNT} style={{ fontSize: '0.82rem' }}>
+            {metaLine}
           </td>
         </tr>
+      )}
+      {open && expanded && expanded.arrivals.map(a => (
+        <tr key={a.entryId} className={styles.tr}>
+          <td className={`${styles.td} ${styles.bandSubCell}`} data-label="Arrived">
+            {a.receivedDate ? formatStoredDate(a.receivedDate) : <span className={styles.mutedInline}>—</span>}
+            {/* ⚠⚠ THE DOT LOOKED ORPHANED BECAUSE OF `.muted`, NOT BECAUSE OF THE WORDS (owner,
+                §122 walk, twice — my first fix changed the wording and missed the cause). `.muted`
+                is the EMPTY-STATE BLOCK: it carries `padding: 2rem`, so greying this span pushed it
+                32px clear of the date and the separator stopped reading as a separator. Its own rule
+                warns about exactly this and names the fix — `.mutedInline` is colour only. The same
+                misuse was shifting every em-dash in this table off the right edge of its column,
+                which is the third symptom that warning lists. "by" stays: it earns its place now
+                that the phrase sits where it belongs. */}
+            {a.method && (
+              <span className={styles.mutedInline}> · by {(DUES_PAYMENT_METHOD_LABEL[a.method as DuesPaymentMethod] ?? a.method).toLowerCase()}</span>
+            )}
+          </td>
+          <td className={`${styles.td} ${styles.tdNum} ${styles.bandSubCell}`} data-label="Pledged" />
+          <td className={`${styles.td} ${styles.tdNum} ${styles.bandSubCell}`} data-label="In" style={{ fontWeight: 700 }}>
+            {fmt(a.amount)}
+          </td>
+          <td className={`${styles.td} ${styles.tdNum} ${styles.bandSubCell}`} data-label="To come" />
+          {/* ⚠ The figure alone — the word "credited" that used to trail it is what the Credits
+              heading already says, and it was making the column read ragged. */}
+          <td className={`${styles.td} ${styles.tdNum} ${styles.bandSubCell}`} data-label="Credits">
+            {a.credited > 0.005
+              ? <span style={{ color: 'var(--home-plum)', fontWeight: 600 }}>{fmt(a.credited)}</span>
+              : <span className={styles.mutedInline}>—</span>}
+          </td>
+          <td className={`${styles.td} ${styles.cardActionCell} ${styles.bandSubCell}`} data-label="">
+            {canWriteMoney && (
+              <button
+                className={styles.btnGhost}
+                onClick={e => { e.stopPropagation(); onUndo(a); }}
+                disabled={undoingId === a.entryId}
+                aria-label={`Undo the ${fmt(a.amount)} arrival`}
+              >
+                {undoingId === a.entryId ? '…' : 'Undo'}
+              </button>
+            )}
+          </td>
+        </tr>
+      ))}
+      {open && canWriteMoney && (
+        <BandDoorsRow onRecord={hasRecordDoor ? onRecord : null} onEdit={onEdit} />
       )}
     </>
   );

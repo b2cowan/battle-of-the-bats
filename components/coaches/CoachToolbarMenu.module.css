@@ -21,7 +21,7 @@
   border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.12));
   border-radius: 6px;
   padding: 0.45rem 0.9rem;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -51,7 +51,7 @@
 
 .heading {
   padding: 0.45rem 0.6rem 0.35rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -85,7 +85,7 @@
   position: absolute;
   left: 0.95rem;
   color: var(--text-tertiary);
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   line-height: 1;
 }
 
@@ -96,8 +96,8 @@
 }
 
 .itemText { display: grid; gap: 0.1rem; min-width: 0; }
-.itemLabel { font-size: 0.86rem; font-weight: 650; line-height: 1.25; }
-.itemHint { font-size: 0.74rem; line-height: 1.35; color: var(--text-secondary); }
+.itemLabel { font-size: var(--type-body); font-weight: 650; line-height: 1.25; }
+.itemHint { font-size: var(--type-support); line-height: 1.35; color: var(--text-secondary); }
 
 .separator {
   height: 1px;

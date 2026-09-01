@@ -53,7 +53,7 @@
   gap: 0.35rem;
   color: var(--warning);
   font-family: var(--font-data, monospace);
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -61,14 +61,14 @@
 
 .changeBody {
   color: var(--text-primary);
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 600;
   line-height: 1.45;
 }
 
 .changeMeta {
   color: var(--text-tertiary);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
 }
 
 /* ── Game list ────────────────────────────────────────────────────────────── */
@@ -88,7 +88,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--highlight-top);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 /* B2.1 — the row that moved. Border only (never a fill): the row still has to read as a
@@ -103,7 +103,7 @@
   flex: 1 0 100%;
   margin: 0;
   color: var(--warning);
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   font-weight: 600;
 }
 
@@ -145,7 +145,7 @@
   background: rgba(var(--logic-lime-rgb), 0.12);
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -159,7 +159,7 @@
   flex: 0 1 auto;
   min-width: 0;
   max-width: 38%;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
 }
 
 /* Reads as a link (approved mockups), not the muted grey the shared LocationLink's
@@ -220,7 +220,7 @@
   font-family: var(--font-data, monospace);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
   color: var(--text-primary);
   white-space: nowrap;
 }
@@ -239,7 +239,7 @@
 .cancelChip {
   flex: 0 0 auto;
   font-family: var(--font-data, monospace);
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -279,7 +279,7 @@
   align-self: start;
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
-  font-size: 0.66rem;
+  font-size: var(--type-label);
   font-weight: 800;
   letter-spacing: 0.1em;
 }
@@ -326,7 +326,7 @@
 .sideName {
   color: var(--text-primary);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: var(--type-body);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -342,28 +342,28 @@
   font-family: var(--font-data, monospace);
   font-variant-numeric: tabular-nums;
   font-weight: 850;
-  font-size: 1.7rem;
+  font-size: var(--type-display);
   line-height: 1;
   color: var(--text-primary);
 }
 
 .bcSep {
   color: var(--text-tertiary);
-  font-size: 1.2rem;
+  font-size: var(--type-title);
   font-weight: 700;
 }
 
 .bcAwaiting {
   color: var(--text-secondary);
   font-family: var(--font-data, monospace);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
 .bcMeta {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
 }
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
@@ -375,10 +375,10 @@
   }
 
   .bcScore {
-    font-size: 1.45rem;
+    font-size: var(--type-figure);
   }
 
   .sideName {
-    font-size: 0.85rem;
+    font-size: var(--type-body);
   }
 }

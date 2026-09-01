@@ -47,7 +47,7 @@
 .hqLabel {
   color: var(--text-tertiary);
   font-family: var(--font-data, monospace);
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -58,7 +58,7 @@
 
 .hqItem strong {
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: var(--type-heading);
   font-weight: 850;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -68,13 +68,13 @@
    than a bare stat number since it carries a label + amount ("Entry fee · $250 owed"). */
 .hqItem strong.hqFeeAlert {
   color: var(--danger-strong);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
 }
 
 .hqItem p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.35;
   /* Theme 3 (D-1): long "Next event" labels must wrap, not clip the tile. */
   overflow-wrap: anywhere;
@@ -99,7 +99,7 @@
   margin-left: 0.45rem;
   color: var(--danger-strong);
   font-family: var(--font-data, monospace);
-  font-size: 0.66rem;
+  font-size: var(--type-label);
   font-weight: 800;
   letter-spacing: 0.1em;
   vertical-align: 0.12em;
@@ -134,7 +134,7 @@
      for text this size. That token was corrected to #6A635C on 2026-08-02 (5.91:1), so --home-dim
      is now a legitimate choice for this line if the lighter step ever reads better. */
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: var(--type-heading);
   font-weight: 750;
 }
 
@@ -148,7 +148,7 @@
   min-height: 24px;
   margin-top: 0.15rem;
   padding: 0.1rem 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   color: var(--logic-lime);
   font-weight: 600;
   text-decoration: none;
@@ -179,16 +179,16 @@
      37px. At 0.64rem/0.045em it fits on one line from 390px up, and `overflow-wrap` above catches
      the 320–360px case as a wrap instead of a spill. */
   .hqLabel {
-    font-size: 0.64rem;
+    font-size: var(--type-token);
     letter-spacing: 0.045em;
   }
 
   .hqItem strong {
-    font-size: 1.1rem;
+    font-size: var(--type-heading);
   }
 
   .hqItem strong.hqFeeAlert {
-    font-size: 0.9rem;
+    font-size: var(--type-body);
   }
 }
 
@@ -215,7 +215,7 @@
      order — correct today, since the wide tile has neither state, and correct if it ever does: a
      description or an alarm should not be sized like a headline figure.) */
   .hqItemWide strong {
-    font-size: 1.25rem;
+    font-size: var(--type-title);
   }
 }
 
@@ -294,6 +294,10 @@
 }
 
 /* Oversized watermark monogram bleeding off the right edge (celebration only). */
+/* ⚠ LADDER-EXEMPT: a GRAPHIC that happens to be a numeral (type ladder P3, 2026-08-28). Painted
+   at 7% opacity, bleeding off the edge, aria-hidden and unselectable — nobody reads it, so no
+   reading step applies. It is the largest "font-size" in the portal and the one most likely to
+   be mistaken for drift by a future inventory; that is exactly why the reason is written here. */
 .heroWatermark {
   position: absolute;
   right: -0.5rem;
@@ -361,7 +365,7 @@
 .heroTitle {
   margin: 0;
   color: var(--text-primary);
-  font-size: 1.15rem;
+  font-size: var(--type-title);
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.01em;
@@ -371,7 +375,7 @@
 .heroSub {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -381,7 +385,7 @@
 .heroSubOrg {
   margin: 0;
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -389,7 +393,7 @@
 .heroCountdown {
   margin: 0.35rem 0 0.6rem;
   color: var(--text-secondary);
-  font-size: 0.92rem;
+  font-size: var(--type-body);
 }
 
 .heroCountdown strong,
@@ -402,7 +406,7 @@
 .heroDates {
   margin: 0 0 0.6rem;
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
 }
 
 /* The checklist HUD, fee preview, fee glance strip, today-card, and hero contact lines
@@ -448,7 +452,7 @@
   gap: 0.45rem;
   margin: 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 800;
 }
 
@@ -456,7 +460,7 @@
    and "Event complete · {dates}" is the timestamp under it, not a title competing with it. */
 .heroResultOnly .heroResultLead {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -476,7 +480,7 @@
 .heroResultRecordLabel {
   color: var(--text-tertiary);
   font-family: var(--font-data, monospace);
-  font-size: 0.64rem;
+  font-size: var(--type-token);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -486,12 +490,12 @@
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: var(--type-heading);
 }
 
 /* The one number the coach came back for. */
 .heroResultOnly .heroResultRecord strong {
-  font-size: 1.6rem;
+  font-size: var(--type-display);
   line-height: 1.05;
   letter-spacing: -0.01em;
 }
@@ -499,19 +503,19 @@
 .heroResultNote {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 .heroResultLink {
   align-self: flex-start;
   color: var(--logic-lime);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 700;
   text-decoration: none;
 }
 
 .heroResultOnly .heroResultLink {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
 }
 
 .heroResultLink:hover {

@@ -7,7 +7,7 @@
  * missing credit silently inflates everyone else's share of the pool (mig 234, /review
  * 2026-08-14).
  *
- * Four doors shrink credits today, and all four must speak this file's sentence:
+ * Six doors shrink credits today, and all six must speak this file's sentence:
  *   1. Editing a coach-authored credit down  (players/[playerId]/dues-credits/[creditId] PATCH)
  *   2. Deleting a coach-authored credit      (same route, DELETE)
  *   3. Editing a SPONSOR — amount down, family changed/removed, or flipped back to a pledge
@@ -19,6 +19,13 @@
  *      ⚠ Added with the guarded deletes (2026-08-30). It is the ONLY door that unwinds a drive
  *      entry — the general credit route refuses a credit carrying `fundraiser_entry_id` and sends
  *      the coach here — so if it ever stops asking, nothing else is left to ask on its behalf.
+ *   5. RAISING a player's dues total          (the per-player schedule POST — /dues)
+ *   6. The roster-wide dues re-run            (budget-plan/generate-installments POST)
+ *      ⚠ 5 and 6 added QA §123 Phase A2. Neither route touches a credit row itself — the
+ *      reconcile they trigger does, deleting the overpayment credit a payout may be standing on.
+ *      `projectScheduleTotalChange` below is their projection, asked PRE-FLIGHT (before the
+ *      upsert): a guard that refuses after an irreversible write strands the record forever.
+ *      The bulk door asks PER FAMILY and refuses only the families it cannot safely write.
  *
  * ⚠ PURE ON PURPOSE. No next/server import — the violation is returned as data and each route
  * wraps it in its own 409, so this file stays unit-testable and importable from anywhere. The
@@ -26,13 +33,18 @@
  * hand copies before this file existed.
  */
 import { amountsTotal, payoutCeiling } from './dues-credits';
+import { strandedExcess } from './dues-payments';
 
 /** The 409 code every payout-floor refusal carries — clients may branch on it. */
 export const CREDIT_HAS_PAYOUT = 'CREDIT_HAS_PAYOUT';
 
 /** The one sentence, stated once. `action` reads like "lowering this credit". */
 export function payoutFloorMessage(paidOut: number, action: string): string {
-  return `$${paidOut.toFixed(2)} has already been paid out to this family — ${action} would leave the books owing them less than they have received. Remove the payout first.`;
+  /* Owner wording, 2026-09-01 (option A of four): "more than they were EVER OWED" states the
+     aggregate rule exactly — the floor never matches a payout to one record, it protects the
+     family's whole balance. Replaced "would leave the books owing them less than they have
+     received", which read backwards to the owner on the live screen. ONE sentence, every door. */
+  return `The team has already paid $${paidOut.toFixed(2)} back to this family — ${action} would make that more than they were ever owed. Remove the payout first.`;
 }
 
 /**
@@ -81,6 +93,31 @@ export function creditExposure(
  * from this one's set — the receiving family's ceiling can only rise, so only the losing side
  * is asked.)
  */
+/**
+ * The schedule change's projection (QA §123 Phase A2): what a player's credit set WOULD be after
+ * their dues total moves, computable pre-flight from three facts the routes already hold.
+ *
+ * After the write, the reconcile (planOverpaymentReconcile) makes the player's total
+ * `overpayment` credit equal `strandedExcess(paymentsTotal, newScheduleTotal, 0)` — so the
+ * projected set is the family's NON-overpayment credits plus one overpayment credit of exactly
+ * that value. Hand the result to `payoutFloorViolation` with the family's payouts; the action
+ * word for the refusal sentence is "raising this player's dues total" (a LOWER total only grows
+ * the credit, so only a rise can reach the floor).
+ */
+export function projectScheduleTotalChange(args: {
+  /** The family's full credit set as it stands. */
+  familyCredits: readonly { amount: number; creditType: string }[];
+  paymentsTotal: number;
+  newScheduleTotal: number;
+}): { amount: number; creditType: string }[] {
+  const { familyCredits, paymentsTotal, newScheduleTotal } = args;
+  const projected = familyCredits.filter(c => c.creditType !== 'overpayment')
+    .map(c => ({ amount: c.amount, creditType: c.creditType }));
+  const excess = strandedExcess(paymentsTotal, newScheduleTotal, 0);
+  if (excess > 0.005) projected.push({ amount: excess, creditType: 'overpayment' });
+  return projected;
+}
+
 export function projectSponsorCreditChange(args: {
   /** The credit as it stands, on the family that holds it. */
   existing: { id: string; playerId: string; amount: number };

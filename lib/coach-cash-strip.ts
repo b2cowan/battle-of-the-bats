@@ -6,6 +6,10 @@ import {
   monthKeyOf, PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME,
   type MonthKey, type RevenueGroupKey,
 } from './coach-budget-months';
+/* ⚠ THE TYPE ONLY. This module stays pure and framework-free; the club vocabulary's home is
+   `coach-club-money`, and importing the union rather than re-declaring three strings is what stops
+   a fourth answer reaching the report and silently missing the cash bands. */
+import type { ClubRequestReportSide } from './coach-club-money';
 
 /**
  * The Months view's CASH arithmetic — every dollar that actually moved, by the month it moved,
@@ -97,12 +101,21 @@ export interface CashStripInputs {
   }>;
   /**
    * Approved club requests, settled the day they were DECIDED (approval posts the transfer).
-   * A reimbursement (`charge_to_org`) is cash in — and lands in the Money back group, because the
-   * club repaying a cost is the same species of arrival as a vendor refunding one. Anything else is
-   * cash out, filed where the request itself was filed.
+   *
+   * ⚠⚠ `side` IS THE COACH'S ANSWER, NOT THE DIRECTION (mig 271, owner D1) — and it decides which
+   * ROW of the revenue band an arrival joins, never whether it is cash. Both incoming answers are a
+   * dollar arriving; this is a cash strip, and cash does not care what a dollar means:
+   *   · `reimbursement` → the **Money back** group, because the club repaying a cost is the same
+   *     species of arrival as a vendor refunding one ("Repaid by the club");
+   *   · `funding`       → **Other income**, on the row it was FILED under, exactly as a typed
+   *     arrival groups — because that is the only grouping a grant has;
+   *   · `cost`          → cash out, filed where the request itself was filed.
+   *
+   * ⚠ "Repaid by the club" now means only money back, which it did not before this release: every
+   * arrival was in that row, so a grant read as a repayment on the one screen a treasurer scans.
    */
   clubRequests: Array<CashOutRecord & {
-    isReimbursement: boolean; reviewedAt: string | null; createdAt: string;
+    side: ClubRequestReportSide; reviewedAt: string | null; createdAt: string;
     /** The item's word, for the "repaid Facilities / Dome time" line — `place` carries only its id. */
     itemName: string | null;
   }>;
@@ -339,13 +352,26 @@ export function buildActualCashStrip(x: CashStripInputs): CashStrip {
   }
   for (const r of x.clubRequests) {
     const settledOn = orgDayKey(r.reviewedAt ?? r.createdAt);
-    if (r.isReimbursement) {
+    if (r.side === 'reimbursement') {
       income('moneyback', settledOn, r.amount, {
         id: r.id,
         subject: MONEY_BACK_CLUB,
         kind: 'Money back',
         description: r.description,
         note: repaidLabel({ categoryName: r.place.categoryName, itemName: r.itemName }),
+      });
+    } else if (r.side === 'funding') {
+      /* ⚠ THE SAME SHAPE AS TYPED INCOME, DELIBERATELY. A grant's only grouping is what it was
+         filed under, so it takes the filed word as its subject — which means a club grant and an
+         arrival the coach typed against the same item share one row, as they should: they are the
+         same money against the same word. ⚠ THE CLUB IS NAMED IN THE **KIND**, so the row says
+         where it came from without inventing a sixth revenue group for one source (D2's reasoning,
+         applied to the band: filing already answers "whose dollar is this?"). */
+      income('other', settledOn, r.amount, {
+        id: r.id,
+        subject: { id: r.place.itemId, name: r.itemName?.trim() || 'Not itemized' },
+        kind: 'From the club',
+        description: r.description,
       });
     } else spend(r, settledOn);
   }

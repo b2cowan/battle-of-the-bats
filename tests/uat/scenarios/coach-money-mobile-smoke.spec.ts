@@ -404,7 +404,10 @@ test.describe('Money on a phone @360x740', () => {
       ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
       ['Player Dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
-      ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
+      // Since 2026-08-31 this URL expands the drive's row IN PLACE (the drill-in retired) — the
+      // open state draws sibling entry rows + a doors row the at-rest list never renders, so it
+      // stays its own surface here.
+      ['Fundraiser open in place', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ];
@@ -592,7 +595,7 @@ test.describe('Money on a phone @360x740', () => {
              amount" survives because editing is not recording. This list is what a
              write-capable coach may see and a read-only one may not, so a converged name has
              to be spelled here or the guard stops guarding. */
-          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|generate installments|start — about a minute/i,
+          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|generate installments|set dues for all players|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);

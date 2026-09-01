@@ -24,7 +24,7 @@
 .barNote {
   flex: 1;
   min-width: 12rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--white-55);
   line-height: 1.45;
 }
@@ -60,7 +60,7 @@
 
 .org {
   font-family: var(--font-data);
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-weight: 700;
@@ -77,7 +77,7 @@
 }
 
 .to {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: #5B5B5B; /* token-exempt: print ink */
 }
 
@@ -89,12 +89,12 @@
 }
 
 .meta {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   color: #5B5B5B; /* token-exempt: print ink */
 }
 
 .note {
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-style: italic;
   color: #5B5B5B; /* token-exempt: print ink */
   max-width: 46ch;
@@ -108,7 +108,7 @@
   width: 46%;
   border-top: 1px solid #9A9A9A; /* token-exempt: print ink */
   padding-top: 0.35rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #5B5B5B; /* token-exempt: print ink */

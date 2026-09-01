@@ -532,6 +532,26 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // Fundraising finds the real thing with no sentence over it to go stale.
       // (Re-read for Direction A, 2026-08-29: no narration anywhere in this tour speaks of
       // sponsors or fundraising, so the two-bands rework stales nothing here.)
+      // (Re-read for the drive band, 2026-08-31 — the drill-in retired; a drive now expands in
+      // place like a sponsor. Same verdict: no tour step or dock line names the fundraiser
+      // screen, its leaderboard or its back link, so nothing here went stale. The seeded world
+      // simply renders the new in-place shape.)
+      /* ⚠⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30), and the "over plan" claim was MEASURED
+         rather than assumed — which is the whole point of the rule, because this release changed
+         what that line is made of. The 12U's club bill is now FILED against Facilities · Diamond
+         Permits, so the very row this sentence names absorbed $600 of paid club instalments less
+         the $180 the club paid back. Measured on the reseeded world: planned $3,200, actual $3,870
+         — it was $3,450 before, so the line went from $250 over to $670 over. **Still over. The
+         sentence stands, and it is now truer**: what a coach is looking at genuinely includes what
+         their club billed them.
+         ⚠ NOTHING WAS ADDED FOR THE GRANT, and that is the standing ruling rather than an
+         oversight. The new revenue row ("Grant", a dash under Budget) appears on THIS screen and is
+         the most legible thing in the release — but `ea8ddd14` capped every step at a hook plus ONE
+         proof point (owner, 2026-08-28) and the note above says outright not to re-grow this step.
+         The seeded WORLD shows the fork in full (MIDSEASON_CLUB_MONEY: one grant, one repayment,
+         both approved, both filed, pinned by `check-demo-coach`), so a prospect who opens the report
+         finds the real thing with no sentence over it to go stale. If the owner wants it narrated,
+         the honest move is to SWAP a clause, not append a fourth. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
@@ -551,82 +571,50 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
        */
       n: 5,
       label: 'Read the season one row at a time',
-      /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
-           · *Are the existing sentences still true?* Yes, all three — the tab is named Ledger now
-             and opens on the same Timeline this step describes (`view` stated explicitly so a
-             prospect's remembered view can never re-aim the stop); the cash identity is untouched;
-             rows still open the bill's page. Payables had no stop of its own to go stale.
-           · *Should a demo moment show this?* The View switch is the fold's one new control, and
-             the "Tap any row" clause already walks a prospect into the By-bill world through a
-             bill's page — a ninth stop for an arrangement control would be ceremony. Nothing
-             added, nothing stale. */
       href: moneySectionHref(team(DEMO_COACH_TEAM_IDS.midSeason), 'ledger', { view: 'timeline' }),
       exactPath: true,
       anchor: '[data-sandbox-tour="register-balance"]',
-      /* ⚠⚠ THE CLAIM IN THE FIRST SENTENCE IS LOAD-BEARING, AND ITS CHECK IS NOT AUTOMATIC.
-         "The number at the top is the team's cash, to the cent" is exactly the identity
-         `npm run check:register` proves — but that script needs a running dev server and a
-         Playwright session, so it is NOT in `verify:changed` and nothing in the build re-runs it.
-         (An earlier draft of this comment said the sentence "cannot quietly stop being true without
-         that check going red", which was itself the drift CLAUDE.md's demo rule describes: a
-         narration promising a guarantee nobody had wired up.) It is run by hand, and it is listed in
-         the plan's done-means and in Owner QA §46. **If this identity is ever relaxed, this sentence
-         is the first thing to change.** Do not soften it to "roughly" instead — the whole design is
-         that it is exact; soften the DESIGN or leave the sentence alone. */
-      /* ⚠ THE CLUB CLAUSE IS NEW WITH P4 (2026-08-17), and it is one sentence on an existing step
-         rather than a ninth step — the tour is already eight, and CLAUDE.md's demo rule asks
-         *should a demo moment show this?*, not *does it deserve its own stop*. A Club-plan prospect
-         is shopping for precisely this relationship and the demo had no sentence for it.
-         ⚠ EVERY FIGURE IN IT IS PINNED BY `MIDSEASON_CLUB_MONEY`: a $900 share in three
-         installments (two settled, one ahead), $180 the club agreed to pay back, and a $95 request
-         still undecided. If that seed changes, this sentence changes with it — and the pending $95
-         is also what makes the "may still say no" clause visible in the scheduled rows above. */
-      /* ⚠ THE "Record" CLAUSE IS NEW WITH MONEY CENTRALIZATION P2 (2026-08-23), and it is a
-         sentence on this step rather than a ninth stop — the same call the P4 club clause above
-         records, for the same reason. It closes the rider Owner QA §80 left open: the green
-         button is the most visible thing on this screen and the tour walked straight past it,
-         which is precisely the drift CLAUDE.md's demo rule describes. It is also newly TRUE that
-         it is the only way in here — Transactions' own Add retired with P2 — so a prospect who
-         reads the narration and then looks for an Add button finds the answer already given.
-         ⚠ IT CLAIMS NO FIGURES, deliberately: nothing in it is pinned to a seed, so a reseed
-         cannot make it wrong. */
-      /* ⚠ THE CLOSING "labels" CLAUSE IS NEW WITH MONEY CENTRALIZATION P3 (2026-08-25), and it is
-         here because this world could not show the feature at all until the same day: no money tag
-         had ever been seeded, so both money faces hid the control outright and a prospect never
-         met the one question a budget category cannot answer. `MIDSEASON_MONEY_TAGS` is the world
-         it describes — "Spring Classic" deliberately spanning two categories.
-         ⚠ IT CLAIMS NO FIGURES EITHER, for the same reason as the Record clause: the totals move
-         with the nightly anchor, so the sentence must not name one. */
-      /* ⚠ THE "open the bill" CLAUSE IS NEW WITH THE PAYABLES REBUILD, PART B (2026-08-26).
-         CLAUDE.md's demo rule asks two questions of a user-facing change, and both were answered
-         rather than assumed:
-           · *Are the existing sentences still true?* "One tap from the screen that owns it" was
-             written about the DERIVED rows — dues, the drive, the sponsor, the club. Part B points
-             a COMMITMENT's rows at that bill's own page, which makes the claim broader rather than
-             falser. Nothing above went stale.
-           · *Should a demo moment show this?* Yes. A bill with no Edit button — where the payee,
-             the note and the filing are changed where they are read — is the clearest thing Part B
-             produced, and Payables has no stop of its own on this tour. So it is a clause on the
-             screen a prospect can actually reach it FROM, not a ninth stop: the same call the P4
-             club clause and the P2 Record clause each record above.
-         ⚠ IT CLAIMS NO FIGURES, for the third time on this step and the same reason — the schedule
-         rows it points at move with the nightly anchor. */
-      /* ⚠ THE "not the team's money" CLAUSE IS NEW WITH MONEY CENTRALIZATION P4 (2026-08-27).
-         CLAUDE.md's two questions, both answered rather than assumed:
-           · *Are the existing sentences still true?* Yes, and one got BROADER rather than falser:
-             "the figure at the top is not a summary, it is the team's cash, to the cent" is more
-             load-bearing now, because a fronted payment is the case that would break it if the
-             book counted it as cash. It does not. The neighbouring "$180 the club agreed to pay
-             back for a permit this coach fronted" is a DIFFERENT mechanism — a club request — and
-             stays exactly as it was; the two are deliberately not merged, for the same reason the
-             data dictionary keeps money-back and out-of-pocket apart.
-           · *Should a demo moment show this?* Yes, and it is the most recognisable thing in the
-             release: every coach has had a parent put a deposit on their own card. It is a clause
-             on the screen a prospect can actually see it on, not a ninth stop — the same call the
-             three clauses above record.
-         ⚠ IT CLAIMS NO FIGURES, for the fourth time on this step and the same reason. The seeded
-         world (`EX-SPRING`, roster index 0) re-anchors nightly, so naming the amount or the family
-         would let a steady day make this sentence wrong. */
+      /* ⚠⚠ FOUR CLAUSE NOTES USED TO STAND HERE AND THEY DESCRIBED COPY THAT NO LONGER EXISTS —
+         removed 2026-08-30. Each one was written when its clause was added to `said` (the P4 club
+         sentence with its $900/$180/$95 figures, the P2 "Record" sentence, the P3 "labels"
+         sentence, the P4 "not the team's money" sentence), and every one of them was left in place
+         when `ea8ddd14` trimmed this step to a hook plus one proof point (owner, 2026-08-28). The
+         result was the drift CLAUDE.md's demo rule describes, pointed the other way: comments
+         asserting the demo narrates a relationship it had stopped narrating, which is how the
+         planning session came to record "the tour lost its club sentence — its comments still
+         describe one". Notes about deleted sentences are worse than no notes, because the next
+         reader trusts them.
+
+         WHAT THIS STEP ACTUALLY SAYS is the three sentences below, and only they need guarding:
+
+         ⚠⚠ THE CASH CLAIM IS LOAD-BEARING AND ITS CHECK IS NOT AUTOMATIC. "The figure at the top is
+         not a summary — it is the team's cash, to the cent" is exactly the identity
+         `npm run check:register` proves, and that script needs a running dev server and a Playwright
+         session, so it is NOT in `verify:changed` and nothing in the build re-runs it. It is run by
+         hand, and it is listed in the plan's done-means and in Owner QA §46. **If this identity is
+         ever relaxed, this sentence is the first thing to change** — do not soften it to "roughly";
+         the whole design is that it is exact, so soften the DESIGN or leave the sentence alone.
+
+         ⚠ "Tap any row to open the bill behind it" is the Payables-Rebuild Part B claim, and it is
+         the widest of the three: a club row opens the Club screen and a dues row opens Player Dues,
+         so "the bill" is the common case rather than the universal one. Pre-existing, noted rather
+         than quietly rewritten — approved narration is the owner's to change.
+
+         ⚠ NO FIGURES ANYWHERE IN THIS STEP, deliberately and now permanently: the world re-anchors
+         nightly, so any amount named here would be made wrong by a steady day.
+
+         ⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30): the club's rows on this book are unchanged
+         by it. A grant and a repayment are the same cash on the same day either way — the answer
+         moves a row on Budget vs. Actual, never a dollar in this ledger — so all three sentences
+         stand untouched. */
+      /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
+           · *Are the existing sentences still true?* Yes — the tab is named Ledger now and opens on
+             the same Timeline this step describes (`view` stated explicitly so a prospect's
+             remembered view can never re-aim the stop); the cash identity is untouched; rows still
+             open the bill's page. Payables had no stop of its own to go stale.
+           · *Should a demo moment show this?* The View switch is the fold's one new control, and
+             the "Tap any row" clause already walks a prospect into the By-bill world through a
+             bill's page — a ninth stop for an arrangement control would be ceremony. */
       said: 'Every dollar this season moved, in date order, with the balance running down the side. The figure at the top is not a summary — it is the team’s cash, to the cent. Tap any row to open the bill behind it.',
       nextLabel: 'Next: playing time',
     },

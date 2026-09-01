@@ -12,6 +12,7 @@ import {
   type InstallmentBasis,
 } from '@/lib/coach-budget-totals';
 import { tournamentToday, formatDayMonth } from '@/lib/timezone';
+import { payoutFloorMessage } from '@/lib/dues-credit-guards';
 import { formatPlayerLastFirst } from '@/lib/player-name';
 import type { RepBudgetPlan, RepInstallmentPreviewRow } from '@/lib/types';
 import DateField from './DateField';
@@ -44,6 +45,11 @@ interface GenerateResult {
   /** Players whose dues could NOT be written. Named, because the coach has to go fix them by
    *  hand and a bare count would leave them checking the whole roster. */
   playersFailed: string[];
+  /** The payout-floor refusals (QA §123 Phase A2) — a subset of playersFailed, carried with
+   *  their dollars so the screen speaks the floor's own sentence for these names instead of
+   *  the generic could-not-save one. Their old schedules stand untouched. The id is the
+   *  identity; the name is display only (names collide — see the route's note). */
+  payoutFloorRefusals: { playerId: string; name: string; paidOut: number }[];
   /** Hand-set schedules the coach chose to keep — left completely untouched by the run. */
   playersSkipped: number;
 }
@@ -136,6 +142,22 @@ export default function GenerateInstallmentsModal({
 
   const dirty = !result && installments.some(i => i.date || i.amount);
   const close = useDiscardGuard({ dirty, close: onClose, noun: 'installment schedule' });
+
+  /* The failures that get the GENERIC could-not-save sentence — payout-floor refusals are
+     excluded because they carry their own sentence (and their old schedule still stands).
+     ⚠ COUNT-AWARE, never a name Set (/review 2026-08-30): `playersFailed` is display names, and
+     names collide — twins, or two "Unnamed player" rows. Each refusal removes exactly ONE
+     occurrence of its name, so a same-named player's UNRELATED failure still gets reported
+     instead of vanishing behind the refusal. */
+  const refusalCounts = new Map<string, number>();
+  for (const r of result?.payoutFloorRefusals ?? []) {
+    refusalCounts.set(r.name, (refusalCounts.get(r.name) ?? 0) + 1);
+  }
+  const genericFailed = (result?.playersFailed ?? []).filter(n => {
+    const left = refusalCounts.get(n) ?? 0;
+    if (left > 0) { refusalCounts.set(n, left - 1); return false; }
+    return true;
+  });
 
   useEffect(() => {
     let live = true;
@@ -406,6 +428,7 @@ export default function GenerateInstallmentsModal({
         playersWithPaymentsKept:   data.playersWithPaymentsKept ?? 0,
         overpaymentCreditsCreated: data.overpaymentCreditsCreated ?? 0,
         playersFailed:             Array.isArray(data.playersFailed) ? data.playersFailed : [],
+        payoutFloorRefusals:       Array.isArray(data.payoutFloorRefusals) ? data.payoutFloorRefusals : [],
         playersSkipped:            data.playersSkipped ?? 0,
       });
       await onGenerated();
@@ -429,8 +452,11 @@ export default function GenerateInstallmentsModal({
       <div className={`${shared.modal} ${shared.modalFlushFooter}`} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
         <CoachModalHeader
           /* Stable title. Whether this run replaces anything is the SERVER's answer, not a guess
-             from the plan flag — and when it is a replace, that step carries its own heading. */
-          title="Generate Player Installments"
+             from the plan flag — and when it is a replace, that step carries its own heading.
+             ⚠ ONE NAME FOR THE BULK ACT (owner Q20, QA §123): "Set dues for all players" — the
+             same words on every door that opens this window, in the help articles, and here.
+             This was "Generate Player Installments", the last Title-Cased window in money. */
+          title="Set dues for all players"
           onClose={close}
         />
 
@@ -458,21 +484,46 @@ export default function GenerateInstallmentsModal({
               <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
                 {result.playersWithPaymentsKept} {result.playersWithPaymentsKept === 1 ? 'player' : 'players'} had
                 payments recorded — every payment was kept and now counts toward the new schedule.
+                {/* The figure is the credit CREATED BY THIS RUN — since the reconcile learned to
+                    see its own standalone credits (Phase A1), a re-run tops up rather than
+                    re-credits, so "payments beyond the total" and "credit created now" can
+                    differ. The sentence names the one this number actually is. */}
                 {result.overpaymentCreditsCreated > 0.005 && (
-                  <> Payments beyond a player&apos;s new total ({fmt(result.overpaymentCreditsCreated)} across the
-                  roster) were saved as overpayment credits.</>
+                  <> Payments beyond a player&apos;s new total stay on the books as overpayment
+                  credit — {fmt(result.overpaymentCreditsCreated)} of new credit across the roster.</>
                 )}
               </p>
             )}
+            {/* ⚠ THE FLOOR'S REFUSALS SPEAK THE FLOOR'S SENTENCE (Phase A2), never the generic
+                could-not-save one: these families were PROTECTED, not dropped — cash already
+                handed back was standing on the credit this run would have deleted, and their old
+                schedule stands untouched. Named per family, dollars quoted, with the way out. */}
+            {result.payoutFloorRefusals.length > 0 && (
+              <div className={styles.errorText} style={{ marginTop: '0.6rem' }}>
+                {/* The ONE floor sentence (lib/dues-credit-guards.ts), never a hand copy — the
+                    guard file exists because two doors had already drifted into paraphrases. */}
+                {result.payoutFloorRefusals.map(r => (
+                  <p key={r.playerId} style={{ margin: '0 0 0.35rem' }}>
+                    <strong>{r.name}</strong> — {payoutFloorMessage(r.paidOut, 'raising this player’s dues total')}
+                  </p>
+                ))}
+                <p className={styles.muted} style={{ margin: 0 }}>
+                  {duesHref
+                    ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
+                    : <>Open the player&apos;s record on this list — their payouts are listed there.</>}
+                </p>
+              </div>
+            )}
             {/* ⚠ NAMED, and drawn as an error rather than a footnote. These players have no
                 working schedule right now; a count alone would leave the coach auditing a whole
-                roster to find out who. */}
-            {result.playersFailed.length > 0 && (
+                roster to find out who. (`genericFailed` above excludes the payout-floor
+                refusals — they carry their own sentence, and their old schedule still stands.) */}
+            {genericFailed.length > 0 && (
               <p className={styles.errorText} style={{ marginTop: '0.6rem' }}>
-                {result.playersFailed.length === 1
+                {genericFailed.length === 1
                   ? 'One player could not be saved and has no dues schedule right now: '
-                  : `${result.playersFailed.length} players could not be saved and have no dues schedule right now: `}
-                <strong>{result.playersFailed.join(', ')}</strong>. Set {result.playersFailed.length === 1 ? 'theirs' : 'theirs'} from
+                  : `${genericFailed.length} players could not be saved and have no dues schedule right now: `}
+                <strong>{genericFailed.join(', ')}</strong>. Set theirs from
                 the player’s own row, or run this again.
               </p>
             )}
@@ -818,8 +869,8 @@ export default function GenerateInstallmentsModal({
                       pass React's event object as the `replace` argument, which is truthy. */}
                   <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(false)} disabled={generating}>
                     {generating
-                      ? 'Generating…'
-                      : `Confirm & Generate for ${preview.length} Players`}
+                      ? 'Setting dues…'
+                      : `Set dues for ${preview.length} player${preview.length !== 1 ? 's' : ''}`}
                   </button>
                 </div>
               </>

@@ -11,7 +11,7 @@
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   color: var(--danger);
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -85,7 +85,7 @@
   place-items: center;
   padding: 0 0.4rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.08);
@@ -103,7 +103,7 @@
 
 .name {
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -111,7 +111,7 @@
 }
 
 .meta {
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
 }
 
@@ -160,7 +160,7 @@
   gap: 0.4rem;
   align-self: flex-start;
   padding: 0.55rem 0.9rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.06);
@@ -267,7 +267,7 @@
 .panelTitle {
   margin: 0;
   font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
+  font-size: var(--type-token);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-tertiary);
@@ -275,7 +275,7 @@
 
 .panelNote {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-secondary);
 }
@@ -284,7 +284,7 @@
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
-  font-size: 0.78rem;
+  font-size: var(--type-support);
   line-height: 1.4;
   color: var(--text-secondary);
   cursor: pointer;
@@ -313,7 +313,7 @@
   gap: 0.3rem;
   align-self: flex-start;
   padding: 0.2rem 0;
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--logic-lime);
   background: transparent;
@@ -340,7 +340,7 @@
   gap: 0.35rem;
   flex: 1;
   height: 42px;
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   font-weight: 700;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -377,7 +377,7 @@
 
 @media (max-width: 700px) {
   .meta {
-    font-size: 0.72rem;
+    font-size: var(--type-support);
   }
 }
 

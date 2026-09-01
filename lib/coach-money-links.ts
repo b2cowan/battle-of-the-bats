@@ -1,6 +1,6 @@
-// ⚠ Extension is load-bearing: the demo seeders run this module under plain node, which does not
-// resolve extensionless ESM imports (the demo-coach.ts convention).
-import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-routes.ts';
+// ⚠ If an import is ever added back here, its extension is load-bearing: the demo seeders run
+// this module under plain node, which does not resolve extensionless ESM imports (the
+// demo-coach.ts convention).
 
 // The ONE way to address a Money-hub tab from outside the hub.
 //
@@ -11,10 +11,13 @@ import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-
 // `moneySectionHref` instead of hand-assembling a query string: a hand-built string one line away
 // from a correct one is exactly how the 2026-08-13 tab-less-page defect shipped.
 //
-// The seven legacy standalone routes (accounting/budget, /dues, …) are permanent redirects into
-// these hrefs — the shared page shell they export lives in ./coach-money-legacy-redirect.tsx,
-// NOT here: this module stays framework-free on purpose, because node scripts (the demo seeders)
-// and node-test-run lib code (sandbox-chrome) import it.
+// ⚰ The legacy standalone ROUTES (accounting/budget, /dues, /fundraisers/[id], …) are DELETED
+// (owner, 2026-08-31 — pre-customer, so the only bookmarks at risk were our own). They spent
+// their redirect life 2026-08-13 → 2026-08-31; ./coach-money-legacy-redirect.tsx went with them.
+// ⚠ `legacyMoneyAddress` below is NOT part of that layer and stays: it normalises retired
+// `?section=` / `?tab=` QUERY names inside the live hub, which years of saved hub links carry.
+// This module stays framework-free on purpose — node scripts (the demo seeders) and
+// node-test-run lib code (sandbox-chrome) import it.
 
 /** The hub's tabs. The hub's own `SectionId` is derived from this (this ∪ 'overview') — keep ONE
  *  list, or a renamed tab compiles clean in one file and 404s from the other. */
@@ -60,8 +63,9 @@ export type LegacyMoneySection =
  * halves of the relationship are on one screen, so both addresses resolve to it with no sub-view
  * and no loss.
  *
- * Pure and framework-free (node scripts import this module), and the ONE home for the rule — the
- * legacy standalone routes and the hub's own address normaliser all call it.
+ * Pure and framework-free (node scripts import this module), and the ONE home for the rule —
+ * the hub's own address normaliser calls it (its other caller, the legacy standalone routes,
+ * were deleted 2026-08-31).
  */
 export function legacyMoneyAddress(
   section: string | null | undefined,
@@ -107,20 +111,3 @@ export function moneySectionHref(
   return `${base}/accounting?${qp.toString()}`;
 }
 
-/**
- * Where a legacy standalone Money route forwards to: the same tab in the hub, with every incoming
- * query param carried along — a bookmarked deep link (`?line=…`, `?tab=schedule`, a season-read
- * `?year=`) must survive the hop or the redirect quietly drops the coach somewhere less specific
- * than where their link pointed.
- */
-export function moneyLegacyRedirectHref(
-  orgSlug: string,
-  teamId: string,
-  section: CoachMoneySection,
-  incoming: SearchParamsRecord,
-): string {
-  return pathWithSearchParams(
-    `/${orgSlug}/coaches/teams/${teamId}/accounting`,
-    { ...incoming, section },
-  );
-}

@@ -15,7 +15,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
   min-height: var(--tap-min, 44px);
   font-family: inherit;
-  font-size: 0.72rem; font-weight: 700;
+  font-size: var(--type-support); font-weight: 700;
   padding: 0.26rem 0.75rem 0.26rem 0.6rem;
   border-radius: 999px;
   background: rgba(99,102,241,0.15);
@@ -63,7 +63,7 @@
    not an absence. */
 .static {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  font-size: 0.72rem; font-weight: 700;
+  font-size: var(--type-support); font-weight: 700;
   padding: 0.25rem 0.6rem; border-radius: 999px;
   background: rgba(99,102,241,0.15);
   border: 1px solid rgba(99,102,241,0.35);

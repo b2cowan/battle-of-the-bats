@@ -1157,9 +1157,24 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
 
   // The money WITH THE CLUB — the two tabs a Club-plan buyer is shopping for, and the two this
   // world was showing empty until 2026-08-16. See MIDSEASON_CLUB_MONEY for why there is no overdue
-  // instalment and no declined request here, and why none of it can disturb the tour's pinned dues.
+  // instalment and no declined request here, why one row is deliberately left unfiled, and why
+  // none of it can disturb the tour's pinned dues.
   {
     const alloc = MIDSEASON_CLUB_MONEY.allocation;
+    /* ⚠⚠ THE FILING WORDS ARE RESOLVED HERE, BEFORE THE BUDGET LINES BELOW ASK FOR THEIRS, and both
+       calls go through the same helper — so the club's bill and the team's plan land on the SAME
+       item row of Budget vs. Actual rather than two rows with one name. A second, separate lookup
+       is how the demo would come to show "Facilities · Diamond Permits" twice.
+       ⚠ The grant's word is money-IN ("Grant", the income side of Fundraising in the shared
+       library). `budgetItemIds` defaults a word it has to create to the cost side, so an income
+       pair must say so — a word on the wrong side is one the demo's own picker cannot offer. */
+    const clubFilings = [alloc.files, ...MIDSEASON_CLUB_MONEY.requests.map(r => r.files)].filter(Boolean);
+    const clubItems = await budgetItemIds(team.id, clubFilings.map(f => ({
+      category: f.category, item: f.item,
+      direction: f.category === 'Fundraising' && f.item === 'Grant' ? 'in' : 'out',
+    })));
+    const filedAs = f => (f ? itemRef(clubItems, f.category, f.item) : {});
+
     const allocationId = randomUUID();
     die('insert 12U cost allocation', (await db.from('rep_cost_allocations').insert({
       id: allocationId, org_id: org.id,
@@ -1175,6 +1190,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       // invite a reader to check it against an org total that is not on screen.
       split_method: 'fixed', split_value: alloc.teamShare,
       payment_schedule: 'standard', notes: alloc.notes,
+      // ⚠ FILED ON THE SPLIT, NOT THE ALLOCATION (mig 250): the allocation is the CLUB's object,
+      // spanning every team it was divided across; the split is this team's share, in this team's
+      // own words. One filing covers all three instalments.
+      ...filedAs(alloc.files),
     })).error);
 
     die('insert 12U allocation instalments', (await db.from('rep_allocation_installments').insert(
@@ -1193,7 +1212,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
         // on hand summed them team-lifetime while every other input to it was season-scoped.
         id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
         request_type: r.requestType, amount: r.amount, description: r.description,
+        // ⚠ NEW MONEY OR MONEY BACK (mig 271) — only ever on a request coming FROM the club, which
+        // the column's own CHECK enforces. A grant reports as revenue; a repayment nets into the
+        // cost it repaid, and the demo carries one of each so the fork is visible rather than
+        // implied.
+        money_in_meaning: r.moneyInMeaning ?? null,
         payment_method: r.paymentMethod, notes: r.notes, status: r.status,
+        ...filedAs(r.files),
         created_by: coach.id,
         reviewed_by: r.reviewedOffset === null ? null : coach.id,
         reviewed_at: r.reviewedOffset === null ? null : `${orgDateWithOffset(now, r.reviewedOffset)}T14:00:00Z`,

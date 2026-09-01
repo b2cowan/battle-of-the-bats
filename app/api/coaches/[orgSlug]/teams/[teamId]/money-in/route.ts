@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getCoachingAssignmentsForUser,
@@ -98,6 +99,16 @@ export const POST = withObservability(async (req: Request,
   }
   if (typeof receivedDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) {
     return NextResponse.json({ error: 'receivedDate must be a date (YYYY-MM-DD)' }, { status: 400 });
+  }
+  /* ⚠⚠ AND IT CANNOT BE AHEAD OF TODAY (owner-raised 2026-08-30, money-date consistency). This
+     route checked the date's SHAPE and never its position, so income and money-back could be
+     dated next March while every other money-in door refused it — and the form's own picker
+     stopped nobody, because the cap lived only in the form. Money that has not arrived is not
+     income: it is a pledge, a bill, or a schedule, all of which have their own home. Same sentence
+     the client shows, from the same map, so the two can never drift. */
+  const futureRefusal = futureReceivedDateRefusal(receivedDate, kind === 'money_back' ? 'money back' : 'income');
+  if (futureRefusal) {
+    return NextResponse.json({ error: futureRefusal }, { status: 400 });
   }
   if (receivedFrom !== null && !MONEY_IN_SOURCES.includes(receivedFrom as MoneyInSource)) {
     return NextResponse.json({ error: 'receivedFrom must be one of: club, vendor, sponsor, family, other' }, { status: 400 });

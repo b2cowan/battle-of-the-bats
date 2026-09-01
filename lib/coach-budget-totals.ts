@@ -223,7 +223,7 @@ export function computeBudgetTotals({
 /* ────────────────────────────────────────────────────────────────────────────────────────────
    WHERE AN INSTALLMENT AMOUNT COMES FROM (owner ruling 2026-08-13)
 
-   The Generate Player Installments sheet offers three answers, and the first two are the same
+   The Set-dues-for-all-players sheet offers three answers, and the first two are the same
    subtraction against two different tops: what the coach ITEMIZED, and what they ESTIMATED.
 
    ⚠ EXPECTED FUNDING COMES OFF BOTH. Budgeting a fundraiser exists precisely so dues come down by

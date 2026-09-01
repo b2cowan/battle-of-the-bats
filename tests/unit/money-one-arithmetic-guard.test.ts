@@ -27,6 +27,29 @@
  *     knows it was considered, not so somebody folds it in.
  *   · **the report** — `lib/coach-budget-rollup.ts`, and now only there. This file guards that.
  *
+ * ⚠⚠ AND A FOURTH, DECLARED HERE FOR THE FIRST TIME BECAUSE IT WAS INVISIBLE TO THIS GUARD
+ * (`/simplify` altitude lens, 2026-08-30). The **Money hub's Budget card** answers "how did we do
+ * against plan?" too — headroom — and it has always answered it with its own subtraction in
+ * `money-summary/route.ts`, never through the rollup. Until 2026-08-30 that subtraction was
+ * `effectiveTotal - expensesPaid`: the team's own costs and nothing else, while the report one
+ * click away counted the club's bill and netted every refund. On the QA fixture the two screens
+ * read **$1,980 and $1,555**. That is the same species of defect as the three-walk one above —
+ * two answers to one question, drifting because nothing held them together — and this guard could
+ * not see it, because it scans exactly one file.
+ *
+ * It is not folded into `rollupMoneyReport`, and the reason is cost rather than principle: the hub
+ * loads on **every** Money screen and the rollup needs the whole plan with its categories, items
+ * and periods joined, which is the heaviest read in the portal. So the honest shape is a **named,
+ * declared, cheap companion** — `spendAgainstPlan` in `lib/coach-money-summary.ts` — whose header
+ * states the one case it can legitimately differ from the rollup on (a refund filed against an item
+ * that is revenue and nothing else) and whose every term is unit-tested.
+ *
+ * ⚠ **WHAT THE RULE BELOW ACTUALLY BUYS:** the hub may not grow a SECOND private subtraction beside
+ * it. A third variant of this figure is the exact thing that has to fail loudly, because the first
+ * two disagreed for weeks in production and no test noticed. **If you are about to hand-roll
+ * headroom again: don't — put the term in `spendAgainstPlan`, where the report's rule is written
+ * down and tested.**
+ *
  * TWO RULES, catching different failures — neither subsumes the other:
  *   1. **what a commitment has paid has ONE reader.** It may only be turned into money by
  *      `paidMovements` (`lib/coach-expense-movements.ts`). A second walk of it is literally the
@@ -122,6 +145,40 @@ const ALLOWED_STAMP_USES: Array<{ pattern: RegExp; reason: string }> = [
  * it replaced could not tell the difference. There is nothing left in the route to exempt, and an
  * empty list is the strongest form this rule has ever taken.
  */
+
+/**
+ * The hub's headroom, and the one function allowed to compute it.
+ *
+ * ⚠ THE SUBTRACTION IS THE OFFENCE, not the mention. `effectiveTotal` and `expensesPaid` are both
+ * legitimate values on this route — they are reported in the payload — so the rule is narrow on
+ * purpose: nothing may SUBTRACT one plan-level total from a spend total except the shared helper.
+ */
+const HUB_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/money-summary/route.ts';
+const HUB_HELPER = 'spendAgainstPlan';
+
+describe('one arithmetic — the Money hub does not re-derive spend against plan', () => {
+  const src = codeOnly(readFileSync(join(ROOT, HUB_ROUTE), 'utf8'));
+
+  it('computes headroom through the shared helper, never from a private subtraction', () => {
+    assert.ok(
+      src.includes(HUB_HELPER),
+      `${HUB_ROUTE} no longer calls ${HUB_HELPER}. The Budget card's headroom must come from the `
+      + 'shared helper — see this file\'s header for the $1,980-vs-$1,555 defect that rule exists for.',
+    );
+
+    /* A hand-rolled `<plan total> - <spend total>` on any single line. Deliberately shaped, not a
+       blanket ban on minus signs: this catches the form the defect actually wore, and the helper's
+       own call site cannot match it because it subtracts nothing. */
+    const offenders = src.split('\n')
+      .map((line, i) => ({ line: line.trim(), n: i + 1 }))
+      .filter(({ line }) => /(effectiveTotal|itemizedTotal|seasonTotal)\s*-\s*\w*(expensesPaid|expensesCashPaid|paidTotal)/.test(line));
+
+    assert.deepStrictEqual(offenders, [],
+      'The Money hub is deriving headroom for itself again:\n'
+      + offenders.map(o => `  ${HUB_ROUTE}:${o.n}  ${o.line}`).join('\n')
+      + `\n\nUse ${HUB_HELPER}() — it is where the report's own rule is written down and tested.`);
+  });
+});
 
 describe('one arithmetic — the paid stamps have exactly one reader', () => {
   const src = codeOnly(readFileSync(join(ROOT, ROUTE), 'utf8'));

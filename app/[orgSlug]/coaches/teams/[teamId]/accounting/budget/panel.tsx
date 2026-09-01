@@ -606,7 +606,7 @@ export function BudgetPlanPanel({
   // form↔record mapping, this is just where its result is remembered).
   const [formBaseline,       setFormBaseline]       = useState<LineForm>(BLANK_FORM);
 
-  // Generate installments — the modal itself is shared with Player Dues (one bulk-dues door,
+  // Set dues for all players — the modal itself is shared with Player Dues (one bulk-dues door,
   // owner ruling 2026-08-13), so this panel holds nothing but whether it's open. Its form state,
   // its budget read and its discard guard all live inside the component.
   const [genOpen, setGenOpen] = useState(false);
@@ -1527,8 +1527,10 @@ export function BudgetPlanPanel({
                       {moneyCanWrite && allLines.length > 0 && (
                         <>
                           {totals.perPlayer != null && ' · '}
+                          {/* One name for the bulk act (owner Q20, QA §123) — the same words as
+                              the window this opens and the Player Dues door. */}
                           <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                            Generate installments
+                            Set dues for all players
                           </button>
                         </>
                       )}
@@ -1908,21 +1910,21 @@ export function BudgetPlanPanel({
             </div>
           )}
 
-          {/* Generate Installments CTA. ⚠ duesAssessed too, not just hasInstallments (review
-              finding): hand-set schedules never set the budget_generated flag, and this band
-              claiming no dues exist under a card saying "Scheduled" was a page disagreeing
-              with itself. */}
+          {/* Set-dues CTA (renamed with the one-name ruling, owner Q20 QA §123). ⚠ duesAssessed
+              too, not just hasInstallments (review finding): hand-set schedules never set the
+              budget_generated flag, and this band claiming no dues exist under a card saying
+              "Scheduled" was a page disagreeing with itself. */}
           {moneyCanWrite && plan && plan.lines.length > 0 && !plan.hasInstallments && duesAssessed === 0 && (
             <div className={styles.generateSection}>
               <div>
                 <p className={styles.generateTitle}>Ready to assign dues to players?</p>
                 <p className={styles.generateSub}>
-                  Generate a player installment schedule based on this budget.
+                  Build a player installment schedule based on this budget.
                   Each active roster player gets the same due dates and amounts.
                 </p>
               </div>
               <button type="button" className={shared.btnPrimary} onClick={() => setGenOpen(true)}>
-                Generate Installments
+                Set dues for all players
               </button>
             </div>
           )}
@@ -2406,15 +2408,15 @@ export function BudgetPlanPanel({
         </div>
       )}
 
-      {/* ── Generate Installments — the bulk-dues door, shared with Player Dues ── */}
+      {/* ── Set dues for all players — the bulk-dues door, shared with Player Dues ── */}
       {genOpen && (
         <GenerateInstallmentsModal
           orgSlug={orgSlug}
           teamId={teamId}
           budgetHref={moneySectionHref(base, 'budget', undefined)}
-          // ⚠ The HUB tab, not the standalone page one directory down. Those legacy routes still
-          // resolve and render without the hub's tab bar, so following this link dropped a coach
-          // out of the Money hub onto a page with no way back into it but the browser button.
+          // ⚠ The HUB tab — the legacy standalone page one directory down used to resolve too
+          // (without the hub's tab bar, stranding the coach), which is why this link goes through
+          // the shared builder. Those routes were deleted outright on 2026-08-31.
           duesHref={moneySectionHref(base, 'dues', undefined)}
           // Must travel with the modal: the hub keeps this panel mounted behind another tab, and
           // a dirty form that can't be seen must not intercept clicks. See the prop's own note.

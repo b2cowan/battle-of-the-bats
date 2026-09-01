@@ -14589,6 +14589,15 @@
     "ordinal_position": 20
   },
   {
+    "table_name": "rep_team_payment_requests",
+    "column_name": "money_in_meaning",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "rep_team_plan_template_tags",
     "column_name": "template_id",
     "data_type": "uuid",

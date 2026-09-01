@@ -891,6 +891,58 @@
   .planEditor .periodGroupRemove { min-height: var(--tap-min, 44px); }
 }
 
+/* ── The single-player schedule editor (the dues drawer's ScheduleForm) — QA §123 Phase F ──────
+   A SCOPED VARIANT on the shared `periodInputRow` skeleton, exactly the `.planEditor` precedent:
+   its own prefix class, its own card treatment at ≤640, its own 44px floor at ≤768 — NEVER an
+   edit to the shared classes, which the budget sheet and the bill editor also wear.
+
+   F1's defect was the desktop composition: the hand-rolled row pinned the amount box to 7rem and
+   told the date to fill — 112px beside 809px in a 1040px drawer, the treasurer's eye landing on
+   the least important column. Here the two fields share the row EQUALLY, labelled once at the
+   head (owner-approved mockup, §123 walk). */
+.duesScheduleEditor { display: flex; flex-direction: column; gap: 0.5rem; }
+/* Equal columns — overrides the base flex:2 and .periodFieldDate's 1.5 by specificity. */
+.duesScheduleEditor .periodFieldLabel { flex: 1; }
+
+/* The column headings, labelled once at the head (desktop only — at ≤640 every field carries its
+   own stacked label). These widths MUST track the row's own: .installmentNum 24px / equal
+   flexes / the trailing remove's 26px slot — the same warning .planColHead and .periodColHead
+   both carry. */
+.duesSchedColHead {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.1rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+.duesSchedColNum { width: 24px; flex: 0 0 auto; }
+.duesSchedCol    { flex: 1; min-width: 0; }
+.duesSchedColX   { flex: 0 0 26px; }
+
+@media (max-width: 640px) {
+  .duesSchedColHead { display: none; }
+  /* The drawer's own card treatment on the labelled group — the shared ≤640 reflow supplies the
+     group itself; only the ground differs on this surface. */
+  .duesScheduleEditor .periodInputRow { background: var(--home-card, rgba(255,255,255,0.04)); }
+}
+
+@media (max-width: 768px) {
+  /* F2 — the 44px floor holds to 768 (the touch band). Measured before this pass: the remove "×"
+     at 21×21px with no accessible name, "+ Add installment" at 119×25px. They survived because
+     check:layout cannot open a drawer — proved instead by a Playwright measurement (see the
+     build's verification). Desktop keeps the quiet chrome, like .planEditor. */
+  .duesScheduleEditor .removePeriodBtn,
+  .duesScheduleEditor .periodGroupRemove,
+  .duesSchedAdd { min-height: var(--tap-min, 44px); }
+  /* The trailing "×" gets WIDTH too — measured 23×44 with min-height alone, and unlike the bill
+     editor's dense rows this form has the room. Scoped, so the shared button stays quiet. */
+  .duesScheduleEditor .removePeriodBtn { min-width: var(--tap-min, 44px); justify-content: center; }
+}
+
 /* ── Preview table ───────────────────────────────────────────────────────── */
 /* ── How installment amounts are set (owner ruling 2026-08-13) ──────────────────────────────
    Three radio cards, each printing its own arithmetic and its per-player result BEFORE it is

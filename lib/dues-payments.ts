@@ -149,6 +149,71 @@ export function strandedExcess(
   return toDollars(Math.max(0, toCents(paymentsTotal) - toCents(newScheduleTotal) - toCents(alreadyCreditedTotal)));
 }
 
+/**
+ * The overpayment reconcile's WHOLE decision, pure (QA §123 Phase A1).
+ *
+ * Given every credit a player holds this season — newest first, exactly as the store returns
+ * them — decide what the automatic overpayment credit should do: create a top-up, remove rows a
+ * rise in dues has made stale, or trim the one row the reduction only partly reaches.
+ *
+ * ⚠ SELECTION LIVES HERE, NOT IN THE QUERY, and that placement is the fix. The executor used to
+ * select `payment_id IS NOT NULL` — only credits riding a payment — while the credits it writes
+ * on a schedule change are deliberately standalone (`payment_id: null`). It therefore could not
+ * see its own work: lowering dues twice doubled the credit ($400 then $1,000 where $600 was
+ * true), and restoring the total left the stale $400 standing. Handing the FULL set to a pure
+ * function makes "which credits count" a tested decision instead of a query's accident.
+ *
+ * ⚠ COUNTING EVERY OVERPAYMENT CREDIT IS NOT TREATING THEM ALL THE SAME. Only rows whose
+ * `creditType` is `overpayment` are counted or touched, however born — manual, fundraiser,
+ * contribution, forgiveness and reimbursement credits are the owner's "credits stay credits"
+ * ruling and never appear in a plan. A payment-linked row keeps its link (its payment's CASCADE
+ * still removes it); a standalone row stays standalone and manually deletable.
+ */
+export interface OverpaymentReconcilePlan {
+  /** Dollars of NEW credit to create (0 = none). */
+  create: number;
+  /** Credit ids the reduction swallows whole, in the order to delete them (newest first). */
+  remove: string[];
+  /** The one credit the reduction only partly reaches, with its corrected amount. */
+  trim: { id: string; amount: number } | null;
+  /** Dollars the plan removes in total — the executor's `reduced` report. */
+  reduced: number;
+}
+
+export function planOverpaymentReconcile(
+  /** EVERY credit the player holds this season, newest first. */
+  credits: readonly { id: string; amount: number; creditType: string }[],
+  paymentsTotal: number,
+  scheduleTotal: number,
+): OverpaymentReconcilePlan {
+  const overpayment = credits.filter(c => c.creditType === 'overpayment');
+  const carriedC = overpayment.reduce((s, c) => s + toCents(c.amount), 0);
+  const trueExcessC = Math.max(0, toCents(paymentsTotal) - toCents(scheduleTotal));
+
+  if (trueExcessC > carriedC) {
+    return { create: toDollars(trueExcessC - carriedC), remove: [], trim: null, reduced: 0 };
+  }
+
+  // Shrink newest-first until the stale amount is gone — delete a credit the reduction
+  // swallows whole, trim the one it only partly reaches.
+  let leftC = carriedC - trueExcessC;
+  const reduced = toDollars(leftC);
+  const remove: string[] = [];
+  let trim: { id: string; amount: number } | null = null;
+  for (const row of overpayment) {
+    if (leftC <= 0) break;
+    const amtC = toCents(row.amount);
+    if (amtC <= leftC) {
+      remove.push(row.id);
+      leftC -= amtC;
+    } else {
+      trim = { id: row.id, amount: toDollars(amtC - leftC) };
+      leftC = 0;
+    }
+  }
+  return { create: 0, remove, trim, reduced };
+}
+
 /** Per-player payment-dollar totals — the grouping every season-wide dues reader starts from.
  *  Five hand-copied reduce loops preceded this helper; the pre-232 hand-copy of the same idea in
  *  money-summary had already drifted once, which is the whole argument for owning it here. */

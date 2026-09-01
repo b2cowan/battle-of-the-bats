@@ -52,7 +52,7 @@
 }
 
 .title {
-  font-size: 1.2rem;
+  font-size: var(--type-title);
   font-weight: 800;
   color: var(--text-primary);
   margin: 0 0 0.2rem;
@@ -60,7 +60,7 @@
 }
 
 .sub {
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
@@ -78,7 +78,7 @@
     padding: 1.25rem 1.1rem 1.2rem;
   }
   .title {
-    font-size: 1.1rem;
+    font-size: var(--type-heading);
   }
 }
 
@@ -100,7 +100,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   font-weight: 700;
   color: var(--home-lime-ink, var(--black));
   background: var(--home-lime, var(--logic-lime));

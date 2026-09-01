@@ -7,7 +7,10 @@ import {
 } from '@/lib/db';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel, paymentLabel, effectivePayerId } from '@/lib/payable-standing';
-import { clubRequestIsReimbursement, type ClubRequestType } from '@/lib/coach-club-money';
+import {
+  clubRequestOnSide, clubRequestReportSide,
+  type ClubMoneyInMeaning, type ClubRequestType,
+} from '@/lib/coach-club-money';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
@@ -206,7 +209,7 @@ export const GET = withObservability(async (req: Request,
        Scheduled lens only — never the statement, never the cash bands, never Cash on hand. */
     supabaseAdmin
       .from('rep_team_payment_requests')
-      .select('id, request_type, amount, description, status, reviewed_at, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
+      .select('id, request_type, money_in_meaning, amount, description, status, reviewed_at, created_at, budget_item_id, budget_category_id, budget_items(name), budget_categories(name)')
       .eq('team_id', teamId)
       .eq('program_year_id', programYear.id),
   ]);
@@ -215,6 +218,10 @@ export const GET = withObservability(async (req: Request,
     id: r.id as string,
     status: r.status as string,
     requestType: r.request_type as ClubRequestType,
+    /* ⚠ NULL IS LEGACY, NOT UNANSWERED — `clubRequestReportSide` reads it as a reimbursement,
+       which is the reading these rows have reported under since they were approved (mig 271, no
+       backfill by rule). */
+    moneyInMeaning: (r.money_in_meaning as ClubMoneyInMeaning | null) ?? null,
     amount: Number(r.amount ?? 0),
     description: (r.description as string) ?? '',
     categoryId: (r.budget_category_id as string | null) ?? null,
@@ -534,13 +541,24 @@ export const GET = withObservability(async (req: Request,
      gotcha 3), and an allocation instalment has never had an expense row either. Club money is not
      reachable from any other feed on this page.
 
-     ⚠⚠ THE THREE KINDS DO NOT ALL LAND ON THE SAME SIDE, and the odd one is the whole rule:
+     ⚠⚠ THE KINDS DO NOT ALL LAND ON THE SAME SIDE, and the ARRIVAL is the whole rule:
        · a PAID allocation instalment  → a cost
        · an approved `payment_to_org`  → a cost (the team sent the club money)
-       · an approved `charge_to_org`   → a REFUND, netting into the item it repaid — NEVER income.
-     The club covering a $325 entry fee means the team spent $325 less, not that it earned $325.
-     Booking it as revenue would make the season look $650 better than it is, which is the exact
-     arithmetic `rep_team_money_in`'s own table comment spells out for the same shape.
+       · an approved `charge_to_org`   → **the coach's answer** (mig 271, owner D1): a REFUND that
+         nets into the item it repaid, or NEW MONEY that is its own revenue row.
+
+     ⚠⚠ THIS WAS ONE UNCONDITIONAL BRANCH UNTIL 2026-08-30, AND THAT WAS THE DEFECT. Every arrival
+     from the club was read as a repayment. For a repayment that is right — the club covering a $325
+     entry fee means the team spent $325 less, not that it earned $325, and booking it as revenue
+     would make the season look $650 better than it is (the arithmetic `rep_team_money_in`'s own
+     table comment spells out). For a GRANT it is wrong in the mirror image: the money vanishes into
+     a cost line it was never about, the line claims spending the club actually carried, and the
+     fact the club contributed appears nowhere a treasurer would look. Both net out at the season
+     level; the harm is entirely in the lines, which is why no total-based guard could catch it.
+
+     ⚠ ONLY THE COACH KNOWS WHICH IT IS — nothing on the record distinguishes them. So the answer is
+     ASKED (required, on the Club tab) and read here; `clubRequestReportSide` owns the rule,
+     including that a NULL meaning is LEGACY and keeps the reimbursement reading.
 
      ⚠ UNFILED CLUB MONEY STILL COUNTS. A row with no item lands in the report's existing
      "Not itemized" bucket rather than being dropped — the money moved, and hiding it would trade
@@ -548,6 +566,13 @@ export const GET = withObservability(async (req: Request,
      category. */
   const clubSpend: RollupSpend[] = [];
   const clubRefunds: RollupRefund[] = [];
+  /* New money the club gave the season — money IN, in the same two levels as any other arrival.
+     ⚠ IT JOINS `spend` WITH `direction: 'in'`, exactly as typed income and the derived pools do,
+     because direction is part of the rollup's grouping key: a cost and an income row on the same
+     category+item can never collide (rollup rule 5). ⚠ AND NO BUDGET LINE IS EVER CREATED — the
+     row's dash under Budget is DERIVED from there being no line, which is the same flagged-row
+     parity unplanned spending already has. */
+  const clubIncome: RollupSpend[] = [];
   for (const split of clubSplits) {
     const placed = {
       categoryId: split.budgetCategoryId, categoryName: split.budgetCategoryName,
@@ -571,28 +596,25 @@ export const GET = withObservability(async (req: Request,
     const placed = { categoryId: r.categoryId, categoryName: r.categoryName, itemId: r.itemId, itemName: r.itemName };
     // Approval posts the transfer, so a request is settled on the day it was DECIDED.
     const settledOn = orgDayKey(r.reviewedAt ?? r.createdAt);
-    /* ⚠ THE COST-vs-REIMBURSEMENT RULE IS IMPORTED, NOT RE-DERIVED HERE (`/simplify`, 2026-08-17).
-       `clubRequestIsReimbursement` carries the whole justification for it and was, embarrassingly,
-       dead code: the one route that needed it had re-written the same branch by hand. An
-       abstraction whose own caller does not call it is worse than no abstraction. */
-    if (clubRequestIsReimbursement(r.requestType)) {
+    /* ⚠ THE RULE IS IMPORTED, NOT RE-DERIVED HERE. Its module carries the whole justification, and
+       the predicate it replaced was once — embarrassingly — dead code, because the one route that
+       needed it had re-written the same branch by hand.
+       ⚠ A RECORD OF HANDLERS RATHER THAN A SWITCH: every side must be answered or this does not
+       compile, which is what a fourth answer should meet instead of a `default` nobody wrote. */
+    const body = { id: `club-request-${r.id}`, description: r.description, ...placed, amount: r.amount };
+    clubRequestOnSide(r, {
       // The club paying the team back — NETS into the cost it repaid, never revenue.
-      clubRefunds.push({
-        id: `club-request-${r.id}`, description: r.description, ...placed,
-        amount: r.amount, receivedDate: settledOn,
-      });
-    } else {
+      reimbursement: () => clubRefunds.push({ ...body, receivedDate: settledOn }),
+      // New money for the season — its own revenue row, under the words the coach filed it with.
+      funding: () => clubIncome.push({ ...body, paidDate: settledOn, direction: 'in' as const }),
       // The team paying the club — an ordinary cost.
-      clubSpend.push({
-        id: `club-request-${r.id}`, description: r.description, ...placed,
-        amount: r.amount, paidDate: settledOn, direction: 'out' as const,
-      });
-    }
+      cost: () => clubSpend.push({ ...body, paidDate: settledOn, direction: 'out' as const }),
+    });
   }
 
   const report = rollupMoneyReport({
     lines: rollupLines,
-    spend: [...rollupSpend, ...incomeSpend, ...derivedSpend, ...clubSpend],
+    spend: [...rollupSpend, ...incomeSpend, ...derivedSpend, ...clubSpend, ...clubIncome],
     refunds: [...refunds, ...clubRefunds],
   });
   /* ⚠ THE MONTH GRID AND EVERY COST FIGURE BELOW READ THE EXPENSES HALF, and only that half. The
@@ -894,10 +916,15 @@ export const GET = withObservability(async (req: Request,
      ⚠ IT STILL SHARES THE CATEGORY IDENTITY. A commitment and the payment that settles it must land
      in the same row, so the events go through `gridCategory` exactly as the actuals do.
 
-     ⚠ CLUB INSTALMENTS ARE DELIBERATELY ABSENT. An unpaid one has a due date and would fit — but
-     this feed is `rep_team_expenses` commitments, and the Payment schedule already shows club
-     instalments beside them. Adding them to one surface and not the other is how two surfaces start
-     disagreeing; adding them to both is its own question, not this one's. */
+     ⚠⚠ CLUB INSTALMENTS ARE HERE NOW (owner ruling 2026-08-30), AND THIS COMMENT USED TO SAY THE
+     OPPOSITE. It read: "deliberately absent… adding them to both is its own question, not this
+     one's." That was an honest deferral and this is that question, answered yes. An unpaid club
+     instalment is an obligation with a due date; leaving it out made Scheduled quote LESS than the
+     team is committed to pay, while the Payment schedule and Next 30 days — sitting beside it,
+     reading the same rows — quoted the whole of it. Three surfaces, one question, two answers.
+     The loop that adds them is below the expenses loop rather than inside it: they are a different
+     table with a different shape, and pretending otherwise would mean teaching `standings` about
+     a record it does not own. */
   /* ⚠⚠ EVERY PIECE OF THE PLAN, NOT TWO OF THEM (Payables Rebuild P1). This loop used to read the
      deposit and balance columns, which meant a commitment could contribute at most two dated
      figures and — because it required BOTH an amount and a due date on each half — a commitment
@@ -950,6 +977,46 @@ export const GET = withObservability(async (req: Request,
     }
   }
 
+  /* ══ CLUB BILLS, ON THE SAME COLUMN ═══════════════════════════════════════════════════════════
+     What the club has billed this team and the team has not yet paid — in the month it falls due,
+     under the bill's OWN filing, so a club instalment and the team's own spending on that word land
+     on one row rather than two.
+
+     ⚠⚠ REMAINDER, NOT FACE VALUE — the standing rule for this column (owner, 2026-08-20:
+     *"scheduled is what we are currently obligated to pay"*). For a club instalment the two figures
+     are THE SAME NUMBER, and that is worth saying rather than leaving a reader to wonder whether
+     the rule was applied: a club instalment is settled or it is not (`paid_at`), because nothing in
+     the product records a part payment against one. If that ever changes, the remainder derivation
+     belongs here and this comment is the place it was expected.
+
+     ⚠ A SETTLED INSTALMENT LEAVES THIS VIEW ENTIRELY — its money is already on the Actual lens as
+     the payment that covered it, and counting the instalment too would double the same dollar.
+     ⚠ A PAST-DUE ONE STAYS IN ITS DUE MONTH and still counts: "currently obligated to pay" includes
+     what should already have been paid, and dropping it would hide the most urgent money on the
+     report.
+     ⚠ AN UNFILED BILL STILL COUNTS, in "Not itemized" — the same rule its PAID instalments already
+     follow on the Actual side. Money the team owes does not become invisible for want of a label. */
+  for (const split of clubSplits) {
+    const cat = gridCategory(split.budgetCategoryId, split.budgetCategoryName);
+    const count = split.installments.length;
+    const description = split.allocationDescription || 'Club allocation';
+    for (const inst of split.installments) {
+      if (inst.paidAt) continue;
+      gridScheduled.push({ ...cat, itemId: split.budgetItemId, date: inst.dueDate, amount: inst.amount });
+      pushDetail('scheduled', cat, inst.dueDate, {
+        id: inst.id,
+        itemId: split.budgetItemId,
+        // The same namer the payment schedule, the register and this report's other lenses use, so
+        // one piece of one bill is called one thing wherever a coach meets it.
+        description: installmentLabel(description, inst.installmentNumber, count),
+        amount: inst.amount,
+        // What it IS, for the panel's own words — this row is not one of the team's commitments.
+        kind: 'Club bill',
+        paid: false,
+      });
+    }
+  }
+
   /* ══ AND THE ACTUALS ARE THE SAME LIST THE CHART SUMMED ════════════════════════════════════════
      ⚠⚠ THE GRID USED TO WALK THE RAW ROWS ITSELF, in three loops: paid expense stamps, then club
      costs added by hand, then refunds off the rollup. Each new kind of money meant remembering to
@@ -993,7 +1060,7 @@ export const GET = withObservability(async (req: Request,
       amount: r.amount,
       place: { categoryId: r.categoryId, categoryName: r.categoryName, itemId: r.itemId },
       itemName: r.itemName ?? null,
-      isReimbursement: clubRequestIsReimbursement(r.requestType),
+      side: clubRequestReportSide(r),
       reviewedAt: r.reviewedAt,
       createdAt: r.createdAt,
     })),
@@ -1281,12 +1348,17 @@ export const GET = withObservability(async (req: Request,
     revenueScheduled.push(revenueEvent('sponsorship', null, e.remaining, subject));
   }
   for (const r of allClubRequests) {
-    /* ⚠ INCOMING ONLY, and this MATCHES the expense band rather than diverging from it: club money
-       the team still owes is deliberately absent from the Scheduled expense column (see the note on
-       that loop — the payment schedule already carries club instalments, and feeding one surface
-       and not the other is how two surfaces start disagreeing). A pending `payment_to_org` is the
-       same shape, so it stays out of both. The register carries it; this grid does not. */
-    if (r.status !== 'pending' || !clubRequestIsReimbursement(r.requestType)) continue;
+    /* ⚠ INCOMING ONLY, AND THIS IS NOW AN ASYMMETRY WORTH STATING (2026-08-30). The expense band's
+       Scheduled column gained club INSTALMENTS in this release — money the club has already billed
+       and the team is committed to pay. A pending `payment_to_org` is not that: nobody has agreed
+       to anything, and the club may decline. So it stays out of both bands, where it has always
+       been, and the register carries it.
+
+       ⚠ THE MEANING IS NOT READ HERE, DELIBERATELY (D4). "Asked of the club" is the PENDING bucket:
+       until the club answers, a request is a question, and whether the coach expects a grant or a
+       repayment does not change what the season may not count on. The meaning starts speaking the
+       day the request is approved and reaches the statement. */
+    if (r.status !== 'pending' || r.requestType !== 'charge_to_org') continue;
     const subject = { id: r.id, name: r.description || 'Asked of the club' };
     revenueRow('moneyback', subject);
     pushRevenueDetail('scheduled', 'moneyback', null, {

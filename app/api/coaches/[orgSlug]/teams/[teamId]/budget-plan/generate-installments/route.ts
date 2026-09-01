@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepDuesPaymentsByProgramYear, syncDuesPaidProjection, reconcileOverpaymentCredits } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear, syncDuesPaidProjection, reconcileOverpaymentCredits } from '@/lib/db';
 import { paymentsTotalByPlayer } from '@/lib/dues-payments';
+import { groupByPlayer } from '@/lib/dues-credits';
+import { payoutFloorViolation, projectScheduleTotalChange } from '@/lib/dues-credit-guards';
 import type { RepDuesPayment } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -275,6 +277,32 @@ export const POST = withObservability(async (req: Request,
 
   const overrideMap = new Map(overrides.map(o => [o.playerId, o.installments]));
 
+  /* ⚠⚠ THE PAYOUT FLOOR, PER FAMILY, PRE-FLIGHT (QA §123 Phase A2 — door 6 in
+     lib/dues-credit-guards.ts's list). A family who overpaid and was handed cash back is standing
+     on their overpayment credit; a re-run that raises their total makes the reconcile delete it,
+     and the books then say they were owed nothing. Asked BEFORE that family's upsert — never after
+     an irreversible write — and only for the families it actually threatens: the run completes
+     for everyone else, and the refused families come back BY NAME. Payouts and credits arrive in
+     two season-wide reads, not a per-player N+1. Sits below the ask-first 409 so the
+     replace question costs no extra reads. */
+  const payoutsByPlayer = groupByPlayer(await getRepDuesPayoutsByProgramYear(programYear.id));
+  let creditsByPlayer = new Map<string, { playerId: string; amount: number; creditType: string }[]>();
+  if (payoutsByPlayer.size > 0) {
+    const { data: creditRows, error: credErr } = await supabaseAdmin
+      .from('rep_dues_credits')
+      .select('player_id, amount, credit_type')
+      .eq('program_year_id', programYear.id)
+      .in('player_id', [...payoutsByPlayer.keys()]);
+    if (credErr) {
+      return NextResponse.json({ error: 'Could not check family payouts — nothing was written. Try again.' }, { status: 500 });
+    }
+    // The SHARED grouping (lib/dues-credits.ts), like the payouts line above — not a hand loop.
+    creditsByPlayer = groupByPlayer(
+      ((creditRows ?? []) as Array<{ player_id: string; amount: number; credit_type: string }>)
+        .map(c => ({ playerId: c.player_id, amount: Number(c.amount), creditType: c.credit_type })),
+    );
+  }
+
   // Create all schedules and installments in sequence
   let totalCreated = 0;
   let playersProcessed = 0;
@@ -284,6 +312,13 @@ export const POST = withObservability(async (req: Request,
   let overpaymentCreditsCreated = 0;
   /** Players whose dues could not be written. NAMED, not counted — see the response note. */
   const playersFailed: string[] = [];
+  /** The payout-floor refusals (Phase A2), a subset of `playersFailed` so the counting invariant
+   *  below holds unchanged. Carried separately with their dollars so the client can speak the
+   *  floor's own sentence for these names instead of the generic could-not-save one. The id rides
+   *  along (/review 2026-08-30): names collide — twins, or two rows both reading "Unnamed
+   *  player" — and an id-less refusal made the client's name-keyed exclusion able to hide a
+   *  same-named player's UNRELATED failure. */
+  const payoutFloorRefusals: { playerId: string; name: string; paidOut: number }[] = [];
   /** Players deliberately left alone (their hand-set schedule was kept). */
   let playersSkipped = 0;
   const nameOf = (p: { player_first_name: string | null; player_last_name: string | null }) =>
@@ -296,6 +331,23 @@ export const POST = withObservability(async (req: Request,
 
     const playerInstallments = overrideMap.get(player.id) ?? defaultInstallments;
     const playerTotal = playerInstallments.reduce((s, i) => s + i.amount, 0);
+
+    // The floor, before a single row of this player's moves — see the block above the loop.
+    // Refused ⇒ their old schedule stands untouched, exactly like an upsert failure.
+    const playerPayouts = payoutsByPlayer.get(player.id);
+    if (playerPayouts && playerPayouts.length > 0) {
+      const projected = projectScheduleTotalChange({
+        familyCredits: creditsByPlayer.get(player.id) ?? [],
+        paymentsTotal: paymentTotals.get(player.id) ?? 0,
+        newScheduleTotal: playerTotal,
+      });
+      const violation = payoutFloorViolation(projected, playerPayouts);
+      if (violation) {
+        playersFailed.push(nameOf(player));
+        payoutFloorRefusals.push({ playerId: player.id, name: nameOf(player), paidOut: violation.paidOut });
+        continue;
+      }
+    }
 
     // ⚠ ORDER IS LOAD-BEARING: secure the schedule row FIRST, delete only once it succeeded.
     //
@@ -414,6 +466,9 @@ export const POST = withObservability(async (req: Request,
     playersWithPaymentsKept,
     overpaymentCreditsCreated,
     playersFailed,
+    /** Phase A2 — the subset of playersFailed the payout floor refused, with the dollars, so the
+     *  screen can say why those families were protected rather than "could not be saved". */
+    payoutFloorRefusals,
     installmentsCreated: totalCreated,
     totalPerPlayer,
   }, { status: 201 });

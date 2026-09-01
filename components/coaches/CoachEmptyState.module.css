@@ -71,7 +71,7 @@
 .eyebrow {
   color: var(--text-tertiary);
   font-family: var(--font-data);
-  font-size: 0.7rem;
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -80,7 +80,7 @@
 .headline {
   margin: 0;
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: var(--type-heading);
   font-weight: 800;
   line-height: 1.2;
 }
@@ -93,7 +93,7 @@
 .payoff {
   max-width: 42ch;
   color: var(--text-secondary);
-  font-size: 0.88rem;
+  font-size: var(--type-body);
   line-height: 1.55;
 }
 
@@ -112,7 +112,7 @@
   margin: -0.25rem 0 0;
   max-width: 42ch;
   color: var(--text-tertiary);
-  font-size: 0.83rem;
+  font-size: var(--type-body);
   line-height: 1.5;
 }
 
@@ -173,6 +173,6 @@
 }
 
 .quiet .headline {
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
 }
