@@ -16309,7 +16309,7 @@ work per that session's checks; this walk's clean 15/15 narrows it to the fold p
 
 ---
 
-## §127 · The account button opens in place — ✅ PASSED 2026-09-01 (19/19, all six parts clean, zero defects)
+## §127 · The account button opens in place — ✅ PASSED 2026-09-01 (19/19, all six parts clean, zero defects) · committed `2de03bee` 2026-09-01
 
 **Walk verdict (owner, 2026-09-01, via the checkable walkthrough artifact):** 19/19 — the menu,
 the theme flip, the round trip, sign-out, the admin side, the wall and the demo all behaved as
