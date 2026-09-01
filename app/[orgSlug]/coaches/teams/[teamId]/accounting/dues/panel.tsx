@@ -3,9 +3,8 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 /* (ChevronDown went with the settlement accordion's twist — it had no other caller here.) */
-import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, Bell, ArrowLeft, DollarSign, Banknote, Pencil } from 'lucide-react';
+import { X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, Bell, ArrowLeft, DollarSign, Banknote, Pencil } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { DUES_EXPORT_COLUMNS, duesExportRows, duesPdfRows } from '@/lib/coach-money-exports';
 import { buildFamilyDuesStatements, type StatementPlayerInput } from '@/lib/coach-dues-statement';
@@ -34,7 +33,16 @@ import budgetStyles from '../budget/budget.module.css';
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
-import { CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+/* The schedule editor's sentences — the team comparison and the paid-money consequence — are
+   derived here, never summed in the screen (owner, "installments only", 2026-09-01). */
+import { commonScheduleTotal, teamComparison, scheduleEditConsequence, installmentSumC } from '@/lib/dues-schedule-edit';
+import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+
+/** The engine's ONE consolidated schedule-change credit (owner, 2026-09-01) — recognized by the
+ *  description the executor writes, never by shape alone: a coach-typed overpayment credit is
+ *  standalone too, and keeps its own date, pencil and story. */
+const isScheduleCredit = (c: { paymentId?: unknown; fundraiserEntryId?: unknown; expenseId?: unknown; description?: unknown }) =>
+  !c.paymentId && !c.fundraiserEntryId && !c.expenseId && c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION;
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { fmt } from '@/lib/coach-money-summary';
@@ -51,7 +59,7 @@ import { playerName } from '@/lib/coach-roster-name';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
 import {
-  creditsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
+  creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
   type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
@@ -313,24 +321,18 @@ interface InstallmentRow {
   installmentNumber: number;
   amount: string;
   dueDate: string;
+  /** Cash the drawer projects onto this installment (coverage) — what "already paid" means for
+   *  the consequence sentence. Absent on a row the coach just added. */
+  paid?: number;
 }
 
-const BLANK_SCHEDULE_FORM = { totalAmount: '', notes: '' };
-
-/** Cents-safe sum-vs-total for a typed schedule — ONE computation feeding both the live
- *  reconcile strip and the save-time refusal (/simplify, QA §123: the two were independently
- *  hand-rolled, one in cents and one in float dollars with a 0.01 tolerance, so the sentence a
- *  coach read while typing and the one that bound at Save could disagree by a cent). Rows
- *  without a parseable amount count as zero — they are refused separately before any sum
- *  matters. */
-function scheduleGapC(rows: readonly InstallmentRow[], totalAmount: number) {
-  const sumC = rows.reduce((s, r) => {
-    const a = parseFloat(r.amount);
-    return s + (Number.isFinite(a) ? Math.round(a * 100) : 0);
-  }, 0);
-  const totalC = Math.round(totalAmount * 100);
-  return { sumC, totalC, gapC: totalC - sumC };
-}
+/* ⚖ THE TYPED TOTAL IS GONE (owner direction 2026-09-01, "installments only"). It was a second
+   copy of the installments' sum, and every defect in this form — the sum-must-equal-total
+   scolding, the live strip, a proposed "spread the difference" control — existed to keep the two
+   copies in step. The schedule IS its installments; the total is their sum at save time; the
+   server's own "must add up" check stays as a belt that can no longer fire. What the form says
+   instead comes from lib/dues-schedule-edit.ts. */
+const BLANK_SCHEDULE_FORM = { notes: '' };
 
 /** A function, not a constant (QA §123 Phase D): `tournamentToday()` evaluated at module load
  *  meant a tab left open overnight pre-filled YESTERDAY into every new credit. Computed when the
@@ -360,12 +362,9 @@ const BLANK_PAYMENT_FORM = {
 
 export function PlayerDuesPanel({
   params: paramsPromise,
-  embedded = false,
   tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
-  embedded?: boolean;
   /** Is this panel the tab currently on screen? The hub passes it to every panel; this one
    *  needs it because the bulk-dues generator it opens guards against unsaved work, and a
    *  guard left armed on a background tab hijacks clicks app-wide. */
@@ -400,12 +399,12 @@ export function PlayerDuesPanel({
   ]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  /** The payout floor said no (QA §123 Phase A2). Its refusal has nowhere else to send anyone,
-   *  so it carries a door — back to this player's record, where the payouts are listed. */
-  const [floorRefusal, setFloorRefusal] = useState(false);
   /** What the schedule editor opened WITH (Q21) — dirtiness is "moved off this", the structured
    *  twin of the money forms' BLANK-compare (see useDiscardGuard's snapshotEqual). */
   const [scheduleBaseline, setScheduleBaseline] = useState<{ form: typeof BLANK_SCHEDULE_FORM; rows: InstallmentRow[] } | null>(null);
+  /** Cash that sat on installments the coach REMOVED this edit — it re-applies to the remaining
+   *  rows on save, and the consequence sentence has to count it. Reset when the editor opens. */
+  const [removedPaid, setRemovedPaid] = useState(0);
   /** Same idea for the credit form — its blank carries today's date, so the baseline is the
    *  instance the opener actually seeded, never a fresh blank compared later. */
   const [creditBaseline, setCreditBaseline] = useState<ReturnType<typeof blankCreditForm> | null>(null);
@@ -942,48 +941,43 @@ export function PlayerDuesPanel({
   }
 
   function openEdit(p: PlayerWithDues) {
-    const nextForm = {
-      totalAmount: p.schedule ? String(p.schedule.totalAmount) : '',
-      notes: p.schedule?.notes ?? '',
-    };
-    const nextRows = p.installments.length
+    const nextForm = { notes: p.schedule?.notes ?? '' };
+    const nextRows: InstallmentRow[] = p.installments.length
       ? p.installments.map(i => ({
           installmentNumber: i.installmentNumber,
           amount: String(i.amount),
           dueDate: i.dueDate,
+          // The drawer's own coverage projection — the "already paid" each row carries into the
+          // editor, so lowering or removing it can be SAID before it is saved.
+          paid: p.coverage.find(c => c.installmentId === i.id)?.allocated ?? 0,
         }))
       : [{ installmentNumber: 1, amount: '', dueDate: '' }];
     setSelected(p);
     setForm(nextForm);
     setInstallmentRows(nextRows);
+    setRemovedPaid(0);
     // The discard guard's baseline (Q21): the exact objects the form opened with.
     setScheduleBaseline({ form: nextForm, rows: nextRows });
     setEditingSchedule(true);
     setSaveError('');
-    setFloorRefusal(false);
   }
 
   async function saveSchedule(playerId: string) {
     setSaveError('');
-    setFloorRefusal(false);
     setSaving(true);
     try {
-      const totalAmount = parseFloat(form.totalAmount);
-      if (isNaN(totalAmount) || totalAmount <= 0) throw new Error('Enter a valid total amount');
       const installments = installmentRows.map((r, idx) => ({
         installmentNumber: r.installmentNumber ?? idx + 1,
         amount: parseFloat(r.amount),
         dueDate: r.dueDate,
       }));
-      if (installments.some(i => isNaN(i.amount) || !i.dueDate)) {
-        throw new Error('All installments need a valid amount and due date');
+      if (installments.length === 0) throw new Error('A schedule needs at least one installment');
+      if (installments.some(i => isNaN(i.amount) || i.amount <= 0 || !i.dueDate)) {
+        throw new Error('Every installment needs an amount above zero and a due date');
       }
-      // The SAME cents computation the live strip renders from (scheduleGapC) — refusing on any
-      // cent of mismatch, exactly where the strip stops saying "matches the total".
-      const { sumC, totalC, gapC } = scheduleGapC(installmentRows, totalAmount);
-      if (gapC !== 0) {
-        throw new Error(`Installments sum (${fmt(sumC / 100)}) must equal total (${fmt(totalC / 100)})`);
-      }
+      // The total IS the sum (owner, "installments only") — the server still checks the two agree,
+      // which from here is a belt that cannot fire.
+      const totalAmount = installmentSumC(installmentRows) / 100;
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -991,10 +985,9 @@ export function PlayerDuesPanel({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        // The payout floor's 409 (Phase A2) gets its door — the error text is the server's
-        // one floor sentence, and the flag renders "Open <name>'s payouts" beside it. The code
-        // is the guard file's exported constant, never a re-typed literal.
-        if (data.code === CREDIT_HAS_PAYOUT) setFloorRefusal(true);
+        // The payout floor's 409 (Phase A2) renders as the error text — the server's one floor
+        // sentence, which names the way out itself. No door button (owner, 2026-09-01): this
+        // editor lives INSIDE the record, so Cancel already lands on the payouts it points at.
         throw new Error(data.error ?? 'Save failed');
       }
       setEditingSchedule(false);
@@ -1187,7 +1180,7 @@ export function PlayerDuesPanel({
   /** The schedule editor's own Cancel — back to the drawer, not out of it. */
   const cancelScheduleEdit = useDiscardGuard({
     dirty: scheduleDirty,
-    close: () => { setEditingSchedule(false); setSaveError(''); setFloorRefusal(false); setScheduleBaseline(null); },
+    close: () => { setEditingSchedule(false); setSaveError(''); setScheduleBaseline(null); },
     noun: 'dues schedule',
   });
   /** The credit form's Cancel. */
@@ -1610,21 +1603,15 @@ export function PlayerDuesPanel({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* Header (page-header ruling 2026-08-11: one shape, actions right, phone secondaries
-          icon-only, "?" in its fixed corner). The reminder status lines stay stacked under the
-          buttons — they're feedback about the action group, so they travel with it. */}
       {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
           It rendered only on the legacy standalone route, and every legacy money route is a
           permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
           dead code rather than migrated to the header arrow, which is for live drill-ins. */}
-      <CoachPageHeader
-        variant={embedded ? 'embedded' : 'standard'}
-        icon={Users}
-        title="Player Dues"
-        helpLabel="Player Dues"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-dues', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
-      />
-
+      {/* ⚰ And so is this panel's own CoachPageHeader (cleanup tranche 6, 2026-09-01). Its title,
+          icon and help topic only ever rendered on the standalone route; inside the hub the header
+          collapsed to an actions row this panel had none of, so it rendered nothing at all. The
+          live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's mount
+          in accounting/page.tsx. */}
       {loading ? (
         <CoachLoading label="Loading the dues book…" />
       ) : error ? (
@@ -1661,7 +1648,7 @@ export function PlayerDuesPanel({
                 <p style={{ margin: 0, fontWeight: 650, fontSize: '0.95rem', color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
                   No dues set yet
                 </p>
-                <p className={styles.muted} style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', maxWidth: '62ch' }}>
+                <p className={styles.mutedInline} style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', maxWidth: '62ch', display: 'block' }}>
                   Set what each family pays and when. Two choices shape every schedule you create —
                   set them now, and you&apos;ll find them later under Team settings → Money.
                 </p>
@@ -3294,9 +3281,17 @@ export function PlayerDuesPanel({
                                   corrected instead. */}
                               <span
                                 style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}
-                                title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there' : c.expenseId ? 'Set by the out-of-pocket expense that created it — change it there' : undefined}
+                                title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there'
+                                  : c.expenseId ? 'Set by the out-of-pocket expense that created it — change it there'
+                                  : isScheduleCredit(c) ? 'Follows the schedule — change the dues total to change it'
+                                  : undefined}
                               >
-                                {CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}
+                                {/* ⚠ THE ENGINE'S ROW HAS NO DATE (owner, 2026-09-01): it is a
+                                    RUNNING total across however many schedule changes produced
+                                    it, and a calendar day on it would claim a single arrival
+                                    that never happened. Every other credit is one event on one
+                                    day and keeps its date. */}
+                                {isScheduleCredit(c) ? 'Follows the schedule' : <>{CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}</>}
                               </span>
                               {/* ⚠ EDIT ONLY WHAT THE COACH AUTHORED. A credit carrying a
                                   fundraiser entry, a payment or an expense was CREATED BY that
@@ -3306,7 +3301,12 @@ export function PlayerDuesPanel({
                                   two disagreeing numbers with no way to tell which is true, and
                                   the next reconcile would quietly overwrite the coach's fix. Those
                                   are corrected where they are born; the meta text says so instead. */}
-                              {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && (
+                              {/* The engine's consolidated row gets no pencil either (same
+                                  reasoning as the sourced credits): since the reconcile counts
+                                  every overpayment credit, a hand edit here would be quietly
+                                  overwritten by the next schedule or payment change. The trash
+                                  stays — a standalone credit is manually deletable by design. */}
+                              {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && !isScheduleCredit(c) && (
                                 <button
                                   className={styles.rowIconBtn}
                                   style={{ flexShrink: 0 }}
@@ -3330,7 +3330,7 @@ export function PlayerDuesPanel({
                                 <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
                                   auto
                                 </span>
-                              ) : (c.fundraiserEntryId || c.expenseId) || !moneyCanWrite ? null : (
+                              ) : (c.fundraiserEntryId || c.expenseId) || !moneyCanWrite || isScheduleCredit(c) ? null : (
                                 <button
                                   className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
                                   disabled={deletingCreditId === c.id}
@@ -3378,15 +3378,19 @@ export function PlayerDuesPanel({
                 onSave={() => saveSchedule(selected.player.id)}
                 onCancel={() => { void cancelScheduleEdit(); }}
                 addRow={() => addInstallmentRow(installmentRows, setInstallmentRows)}
-                removeRow={(idx) => removeInstallmentRow(idx, installmentRows, setInstallmentRows)}
-                payoutDoor={floorRefusal ? {
-                  label: `Open ${selected.player.playerFirstName || 'this player'}’s payouts`,
-                  /* Through the GUARDED closer (/review 2026-08-30): this door is an exit from
-                     the form like any other, and the first cut closed it directly — the one
-                     unguarded exit in the build that added the guards. A coach who also fixed a
-                     date alongside the refused total keeps that typing behind the same prompt. */
-                  open: () => { void cancelScheduleEdit(); },
-                } : null}
+                removeRow={(idx) => {
+                  // A removed row's paid money slides onto the remaining rows — counted so the
+                  // sentence below the rows can say so before Save.
+                  setRemovedPaid(r => r + (installmentRows[idx]?.paid ?? 0));
+                  removeInstallmentRow(idx, installmentRows, setInstallmentRows);
+                }}
+                /* "The team" = the total the most OTHER players share (Q2 A) — the roster-wide
+                   door's own hand-set yardstick, from the list this screen already holds. */
+                teamTotal={commonScheduleTotal(
+                  players.filter(p => p.player.id !== selected.player.id && p.schedule).map(p => p.schedule!.totalAmount),
+                )}
+                paidMoney={{ paymentsTotal: amountsTotal(selected.payments), paidOut: selected.paidOut, removedPaid }}
+                rowsDirty={scheduleBaseline !== null && !snapshotEqual(installmentRows, scheduleBaseline.rows)}
               />
             )}
           </div>
@@ -3469,7 +3473,7 @@ export function PlayerDuesPanel({
                   </button>
                 ))}
                 {choiceKind === 'fixed' && (
-                  <div>
+                  <div className={styles.field}>
                     <label className={styles.label}>Their share</label>
                     <input
                       className={styles.input}
@@ -3478,7 +3482,7 @@ export function PlayerDuesPanel({
                       onChange={e => setChoiceAmount(e.target.value)}
                       style={{ maxWidth: 160 }}
                     />
-                    <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.3rem 0 0' }}>
+                    <p className={styles.formHint}>
                       Whatever this frees up goes straight to the other families — the sheet is never
                       left holding a remainder.
                     </p>
@@ -3505,7 +3509,7 @@ export function PlayerDuesPanel({
                   >
                     Forgive the {fmt(row.leftToSend)} balance
                   </button>
-                  <p className={styles.muted} style={{ fontSize: '0.74rem', margin: '0.35rem 0 0' }}>
+                  <p className={styles.formHint} style={{ margin: '0.35rem 0 0' }}>
                     The team has genuinely given them that money, so it counts as their share, already
                     received — and their installments stop being chased.
                   </p>
@@ -3593,28 +3597,56 @@ export function PlayerDuesPanel({
 // ── Shared schedule form ──────────────────────────────────────────────────────
 
 interface ScheduleFormProps {
-  form: { totalAmount: string; notes: string };
-  setForm: (f: { totalAmount: string; notes: string }) => void;
-  installmentRows: { installmentNumber: number; amount: string; dueDate: string }[];
-  setInstallmentRows: (r: { installmentNumber: number; amount: string; dueDate: string }[]) => void;
+  form: { notes: string };
+  setForm: (f: { notes: string }) => void;
+  installmentRows: InstallmentRow[];
+  setInstallmentRows: (r: InstallmentRow[]) => void;
+  /** The total the most other players share, or null when nobody else has dues yet. */
+  teamTotal: number | null;
+  /** This family's paid facts — the consequence sentence is derived from them, never summed here. */
+  paidMoney: { paymentsTotal: number; paidOut: number; removedPaid: number };
+  /** Whether the ROWS moved off what the form opened with — the discard guard's own baseline
+   *  compare, not a totals compare. A "when you save" sentence is only owed when saving would
+   *  change something; an equal-total REDISTRIBUTION still changes things (review 2026-09-01:
+   *  a totals gate went silent exactly when a coach moved paid money between installments). */
+  rowsDirty: boolean;
   saveError: string;
   saving: boolean;
   onSave: () => void;
   onCancel: () => void;
   addRow: () => void;
   removeRow: (idx: number) => void;
-  /** Rendered when the payout floor refused the save (Phase A2): the refusal's one door,
-   *  landing back on this player's record where the payouts are listed. */
-  payoutDoor?: { label: string; open: () => void } | null;
 }
 
 /** ONE player's dues schedule. The roster-wide version is not this form any more — it is the
  *  shared Set-dues-for-all-players modal (see the toolbar button), which is why the configurable
  *  save label that used to live here is gone with its only caller. */
 function ScheduleForm({
-  form, setForm, installmentRows, setInstallmentRows,
-  saveError, saving, onSave, onCancel, addRow, removeRow, payoutDoor = null,
+  form, setForm, installmentRows, setInstallmentRows, teamTotal, paidMoney, rowsDirty,
+  saveError, saving, onSave, onCancel, addRow, removeRow,
 }: ScheduleFormProps) {
+  /** "$250.00 paid" / "$100.00 of $250.00 paid" — the fact a coach needs before touching a row.
+   *  ⚠ PROJECTED ONTO THE ROWS AS TYPED (owner catch, 2026-09-01): payments fill installments in
+   *  order, so a family with $1,200 in and one row typed to $900 reads "$900.00 paid" — the
+   *  stored coverage said "$300.00 of $900.00 paid", comparing yesterday's allocation against
+   *  today's typing, which understates money already in hand. */
+  const projectedPaidC = (() => {
+    let leftC = Math.round(paidMoney.paymentsTotal * 100);
+    return installmentRows.map(r => {
+      const a = parseFloat(r.amount);
+      const amtC = Number.isFinite(a) ? Math.round(a * 100) : 0;
+      const take = Math.max(0, Math.min(amtC, leftC));
+      leftC -= take;
+      return take;
+    });
+  })();
+  const paidLabel = (idx: number) => {
+    const paidC = projectedPaidC[idx] ?? 0;
+    if (paidC <= 0) return null;
+    const a = parseFloat(installmentRows[idx]?.amount ?? '');
+    const amtC = Number.isFinite(a) ? Math.round(a * 100) : 0;
+    return paidC >= amtC ? `${fmt(paidC / 100)} paid` : `${fmt(paidC / 100)} of ${fmt(amtC / 100)} paid`;
+  };
   return (
     <div>
       {/* ⚠ THE HEADING SAYS WHAT THE TITLE BAR CANNOT (owner, QA §123 F3) — which form this is,
@@ -3627,24 +3659,6 @@ function ScheduleForm({
         <p className={styles.mutedInline} style={{ margin: '0.15rem 0 0', fontSize: '0.78rem' }}>
           Just this family. Everyone else keeps theirs.
         </p>
-      </div>
-      <div className={styles.formGrid} style={{ marginBottom: '1rem' }}>
-        <div className={`${styles.field} ${styles.formGridFull}`}>
-          <label className={styles.label}>Total amount *</label>
-          <input
-            className={styles.input}
-            type="number"
-            min={0}
-            step="0.01"
-            value={form.totalAmount}
-            onChange={e => setForm({ ...form, totalAmount: e.target.value })}
-            placeholder="e.g. 1200"
-          />
-        </div>
-        <div className={`${styles.field} ${styles.formGridFull}`}>
-          <label className={styles.label}>Notes</label>
-          <input className={styles.input} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
-        </div>
       </div>
 
       <p className={styles.label} style={{ marginBottom: '0.5rem' }}>
@@ -3665,14 +3679,16 @@ function ScheduleForm({
       <div className={budgetStyles.duesScheduleEditor}>
         <div className={budgetStyles.duesSchedColHead} aria-hidden>
           <span className={budgetStyles.duesSchedColNum} />
-          <span className={budgetStyles.duesSchedCol}>Amount ($)</span>
-          <span className={budgetStyles.duesSchedCol}>Due date</span>
-          {installmentRows.length > 1 && <span className={budgetStyles.duesSchedColX} />}
+          <span className={budgetStyles.duesSchedColAmt}>Amount ($)</span>
+          <span className={budgetStyles.duesSchedColDate}>Due date</span>
         </div>
         {installmentRows.map((row, idx) => (
           <div key={idx} className={budgetStyles.periodInputRow}>
             <div className={budgetStyles.periodGroupHead}>
-              <span className={budgetStyles.periodGroupNum}>Installment {row.installmentNumber}</span>
+              {/* The phone card's head carries what is paid on this installment (Q1 A). */}
+              <span className={budgetStyles.periodGroupNum}>
+                Installment {row.installmentNumber}{paidLabel(idx) ? ` · ${paidLabel(idx)}` : ''}
+              </span>
               {installmentRows.length > 1 && (
                 <button
                   type="button"
@@ -3700,7 +3716,7 @@ function ScheduleForm({
                 }}
               />
             </label>
-            <label className={budgetStyles.periodFieldLabel}>
+            <label className={`${budgetStyles.periodFieldLabel} ${budgetStyles.periodFieldDate}`}>
               <span className={budgetStyles.periodFieldLabelText}>Due date</span>
               <input
                 className={styles.input}
@@ -3713,6 +3729,10 @@ function ScheduleForm({
                 }}
               />
             </label>
+            {/* The paid fact rides IN the row (owner + /design, 2026-09-01) — the third column
+                this row always owed, not a second line. Hidden ≤640 where the card head
+                carries it. */}
+            <span className={budgetStyles.duesSchedPaid}>{paidLabel(idx) ?? ''}</span>
             {installmentRows.length > 1 && (
               /* A real target with a real name (F2) — the 21×21px unnamed "×" this replaced
                  survived because check:layout cannot open a drawer. */
@@ -3737,42 +3757,53 @@ function ScheduleForm({
         + Add installment
       </button>
 
-      {/* ── The live reconcile, in the bulk sibling's words (owner Q4, Phase E) ─────────────────
-          "3 installments, $1,200 — matches the total." — running while the coach types, instead
-          of arriving after Save as "Installments sum ($800.00) must equal total ($1,200.00)".
-          Cents arithmetic; the save-time check below is unchanged and still binds. */}
+      {/* ── The line under the rows (owner, "installments only", Q3 A) ─────────────────────────
+          "3 installments, $700.00 — $100.00 more than the team's $600.00." Compares to what the
+          rest of the roster pays, never to a typed field: differing is a fact (a hardship plan
+          is supposed to differ), so it takes the quiet tone; matching takes the green one. */}
       {(() => {
-        const total = parseFloat(form.totalAmount);
-        if (!(total > 0)) return null;
-        const { sumC, totalC, gapC } = scheduleGapC(installmentRows, total);
-        if (sumC <= 0) return null;
+        const cmp = teamComparison(installmentRows, teamTotal);
+        if (cmp.sum <= 0) return null;
         const n = installmentRows.length;
-        const state = gapC === 0 ? 'match' : gapC > 0 ? 'short' : 'over';
-        const tone = state === 'match' ? budgetStyles.reconMatch
-          : state === 'short' ? budgetStyles.reconShort
-          : budgetStyles.reconOver;
+        const head = <strong>{n} installment{n !== 1 ? 's' : ''}, {fmt(cmp.sum)}</strong>;
+        const tone = cmp.state === 'match' ? budgetStyles.reconMatch : budgetStyles.duesReconNote;
         return (
           <p className={`${budgetStyles.reconStrip} ${tone}`} style={{ marginTop: '0.6rem' }}>
-            <span aria-hidden className={budgetStyles.reconMark}>{state === 'match' ? '✓' : '!'}</span>
+            <span aria-hidden className={budgetStyles.reconMark}>{cmp.state === 'match' ? '✓' : '='}</span>
             <span>
-              <strong>{n} installment{n !== 1 ? 's' : ''}, {fmt(sumC / 100)}</strong>
-              {state === 'match'
-                ? <> — matches the total.</>
-                : <> — {fmt(Math.abs(gapC) / 100)} {state === 'short' ? 'short of' : 'more than'} the {fmt(totalC / 100)} total.</>}
+              {head}
+              {cmp.state === 'match' && <> — matches the team’s {fmt(cmp.team)}.</>}
+              {cmp.state === 'differs' && <> — {fmt(Math.abs(cmp.diff))} {cmp.diff > 0 ? 'more' : 'less'} than the team’s {fmt(cmp.team)}.</>}
+              {cmp.state === 'none' && <> — nobody else on the roster has dues yet.</>}
             </span>
           </p>
         );
       })()}
 
+      {/* ── What saving does to money already paid (Q1 A) — said BEFORE Save, from the shared
+          arithmetic. Lowering or removing a paid installment slides its money forward; a total
+          below what has been paid becomes the family's overpayment credit (the Phase A engine). */}
+      {(() => {
+        // Only when the rows have MOVED — an untouched form owes no consequence.
+        if (!rowsDirty) return null;
+        const c = scheduleEditConsequence({ rows: installmentRows, removedPaid: paidMoney.removedPaid, paymentsTotal: paidMoney.paymentsTotal, paidOut: paidMoney.paidOut });
+        if (!c) return null;
+        return (
+          <p style={{ margin: '0.6rem 0 0', fontSize: '0.8rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+            <strong>When you save:</strong>{' '}
+            {c.kind === 'credit'
+              ? <>the family has paid {fmt(c.paid)} against a {fmt(c.total)} schedule — <strong>{fmt(c.credit)} is their overpayment credit</strong>{c.handedBack > 0.005 ? <> ({fmt(c.handedBack)} of it already handed back in cash)</> : null}, which the team can apply to a later bill or hand back.</>
+              : <>the {fmt(c.amount)} already paid re-applies to the remaining installments — nothing is refunded.</>}
+          </p>
+        );
+      })()}
+
+      <div className={`${styles.field}`} style={{ marginTop: '1rem' }}>
+        <label className={styles.label}>Notes</label>
+        <input className={styles.input} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes" />
+      </div>
+
       {saveError && <p className={styles.errorText} role="alert" style={{ marginTop: '0.75rem' }}>{saveError}</p>}
-      {/* The payout floor's refusal carries its door (Phase A2, the Q8 pattern arriving early):
-          this refusal has nowhere else to send anyone, so it lands the coach back on the record
-          where the payout it names is listed — one click from Remove. */}
-      {payoutDoor && (
-        <button className={styles.btnSecondary} onClick={payoutDoor.open} style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
-          {payoutDoor.label}
-        </button>
-      )}
 
       <div className={styles.modalFooter}>
         <button className={styles.btnGhost} onClick={onCancel}>Cancel</button>

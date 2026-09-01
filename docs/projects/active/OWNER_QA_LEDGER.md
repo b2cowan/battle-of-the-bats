@@ -16158,3 +16158,152 @@ settles the date-consistency item that rode this walk; its D1 ruling on the dues
 stays open), W (one word) and F (cleanup) — **45/45 ticked, every part PASS, zero issues, zero
 needing a call.** §122 and §125 close together. Still owed, as ops rather than QA: the
 `check:layout` reseed+sweep and the marketing slide #04 retake.
+
+**Addendum — INSTALLMENTS ONLY (owner direction during the §124 walk, 2026-09-01; QA folded
+into this section by the owner's instruction, to avoid a duplicate walk).** Walking the rebuilt
+schedule editor, the owner asked why a coach should type a total AND installments that must sum
+to it. A "spread the difference" control was mocked first; the owner re-framed it — *don't let
+them type a total at all* — and that won on the mockup (`Installments Only`, artifact
+`fd32fc06-611b-44ad-afb7-cad148fe8e73`; rulings Q1 A · Q2 A · Q3 A). **Built same day, no
+migration, no API change.** The Total field is gone from the one-family editor: the schedule IS
+its installments (add, change, remove), the total is their sum at save time (the server's own
+"must add up" check stays as a belt that can no longer fire), and one line under the rows
+compares to **the total the most other players share** — the roster-wide door's own hand-set
+yardstick — *"3 installments, $700.00 — $100.00 more than the team's $600.00."* in quiet ink
+(differing is a fact, not a fault), green when it matches, and *"nobody else on the roster has
+dues yet"* when there is no team figure. **Paid installments stay editable and removable, with
+the consequence said before Save** (Q1 A): each row carries *"$250.00 paid"* / *"$100.00 of
+$250.00 paid"* (desktop advisory line, phone card head); lowering or removing paid money reads
+*"the $X already paid re-applies to the remaining installments — nothing is refunded"*; a total
+below what has been paid reads *"$Y is their overpayment credit (…of it already handed back in
+cash)"*. The payout floor stays as the one refusal on Save, naming the derived total. The
+sentences come from a new pure module (`lib/dues-schedule-edit.ts`, unit-tested: mode-of-roster
+with a deterministic tie, the three comparison states, slide-vs-credit precedence). Notes moved
+below the rows. Walkthrough steps 18 and 20 rewritten and a step added for the paid-money
+sentences.
+· Owner's first look at the rebuilt editor caught two finish defects, both fixed and measured
+same day: (1) **the Notes field clipped behind the sticky Save footer** — the NINTH instance of
+the documented dead-band (the 2026-08-21 automatic cure names `.modal`, and the drawers are
+`.slideOver`, the one class the `:has()` selector never covered; it only became visible when the
+editor's last field moved to the form's foot, which is the trap's recorded shape). Cured at the
+same altitude — every slide-over with a footer, not just this one; measured after: Notes bottom
+clears the footer top by 20px at max scroll. (2) The rows' paid notes hung at the container edge;
+now indented exactly under the amount column (x-aligned to the pixel), and hidden at ≤640 where
+the card head already carries the fact.
+· And a third owner catch, recomposed with /design same day: the equal-halves row had over-cured
+the 112px-vs-809px defect — half of a 1040px drawer is still 460px holding "400", with the paid
+fact paying for the waste as a second line per row. The row now reads in one sweep — 9rem amount,
+10.5rem date (the budget sheet's own fixed-date precedent), the paid fact INLINE in the row's
+leftover space, remove at the edge. Measured after: amount 144px · date 168px · paid note on the
+row's own line at the same baseline · Notes still clears the footer. Logged to the design
+decisions (2026-09-01, "fields size to their content class, and a row's fact rides in the row");
+walkthrough step 20 trued up.
+· Fourth catch, same walk: making the paid note the row's spacer stranded the remove × at the
+drawer's edge, ~700px from the row it deletes. The row now clusters left as one unit — measured:
+× sits 8px after the paid note (16px after the date on a fresh row). Nothing else moved.
+· Fifth catch, walking step 2: every LOWER appended a fresh "Overpayment (dues changed) · Sep 1"
+row while every RAISE edited one — four identical rows carrying one $710 fact. The arithmetic was
+right (the rows always summed to the truth); the SHAPE was an implementation artifact, ruled
+away same day: **the engine's schedule-change credit is ONE row per player-season**, topped up
+in place on a later lower, drained newest-first on a raise, reading **"Follows the schedule"**
+with NO date (a running total across several days has no single arrival day — the owner's own
+question), no pencil (the reconcile would overwrite a hand edit — the sourced-credit precedent),
+still deletable (standalone credits stay manually deletable). Two boundaries kept crisp: a
+credit born of an overpaid RECEIPT still gets its own dated row and rides its payment's CASCADE;
+a coach-typed overpayment credit is counted by the engine but never written into (recognized by
+the engine's own description, one exported home). Planner gained the topUp branch + five unit
+tests (2,739 green); the lifecycle spec's sequence-1 assertion tightened to exactly ONE row and
+the reconcile block re-ran live 7/7 first-try; walkthrough step 2 trued up.
+
+---
+
+· Sixth catch, and the sharpest: the consolidated row still wore a TRASH, and deleting it made
+$700 of a family's money vanish from the drawer mid-walk ($1,200 paid, $490 dues, $10 shown).
+"Standalone and manually deletable" predated the reconcile counting these rows; since it does,
+the delete is a lie twice over — the books understate what the family is owed until the next
+reconcile, and that reconcile quietly RECREATES the row at truth. Ruled away: the engine's row
+now refuses edit AND delete at the SERVER (409 `CREDIT_FOLLOWS_SCHEDULE`, naming the real doors:
+raise the dues total, or hand it back from the record) with the screen showing neither pencil nor
+trash — the §118 rule both ways: no button the server refuses, no server hole behind a hidden
+button. Pinned live: DELETE → 409 with the row asserted surviving (reconcile block 7/7 first-try;
+2,739 unit green). The owner's walked state self-heals to the $710 truth on that player's next
+schedule or payment change. Walkthrough step 2 trued up again.
+· Seventh and eighth catches, one screenshot: (7) the row's paid label compared YESTERDAY'S
+allocation against TODAY'S typing — "$300.00 of $900.00 paid" on a family with $1,200 in hand.
+The label now PROJECTS the payments onto the rows as typed (fill in installment order), measured
+live: type 900 → "$900.00 paid" · type 1,500 → "$1,200.00 of $1,500.00 paid" · type 50 →
+"$50.00 paid". (8) The floor refusal's "Open ⟨name⟩'s payouts" button retired — mockup residue:
+in the live product this editor sits INSIDE the record, so Cancel already lands on the payouts
+the sentence points at; a second button doing what Cancel does was clutter. The server's refusal
+sentence still names the way out. Door plumbing deleted end to end (state, prop, render, the
+constant import); typecheck 0 · lint 0 · walkthrough step 4 trued up.
+· Ninth catch: the generator's over/short strip rendered TWICE once the preview loaded — the
+"travels with the coach" mechanism (full copy on the form, compact copy beside Confirm) reads as
+travel only when the form is tall enough that one copy has scrolled away; on a short form both
+sat on one screen stating the same figures twice, the settlement window's own deleted defect.
+The form copy now stands down while the preview is open — one sentence, beside the button that
+commits it.
+· Tenth catch: the generator's over-collect strip wore DANGER ink and scolded ("families will be
+billed the higher amount") for the commonest legitimate act in the room — coaches deliberately
+schedule a buffer above the plan. Owner ruling extends the 2026-08-13 budget-card ruling ("a
+planned buffer must read as confirmation, not a warning") to this door: the over state now takes
+quiet ink and the CARD'S OWN sentence — "Includes a $2,900.00 buffer above the plan." — one
+vocabulary across both surfaces, the aside deleted. SHORT keeps its amber: under-collecting
+genuinely leaves the plan unfunded. Applied live and in the Exceptions First preview mockup
+(artifact 4f742ce0) in the same breath.
+· The preview redesign is RULED (mockup artifact 4f742ce0, "Exceptions First"): Q1 A — the
+replace question folds into the preview as the keep-checkbox on the named row; Q2 A — a
+payout-floor refusal is a blocked row excluded from the button's count, never a run-stopper;
+Q3 A — the identical-rows grid renders only when per-player amounts vary. Deliberately NOT built
+mid-walk (it recomposes the roster door's whole commit step): plan + PM brief written —
+docs/projects/active/COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PLAN.md — queued for its own build and
+its own QA section after this walk closes. Catches 9 and 10 already bind its copy.
+· Eleventh catch (owner screenshot, the Set-refund modal): "Their share" jammed against its
+field and both helper notes floating in oversized, indented gaps. Cause: the notes wore the
+EMPTY-STATE pane class (2rem padding on every side) instead of the microcopy hint class, and the
+label/input pair never used the stacked field wrapper every other form uses. Fix is a wardrobe
+swap, no new CSS: the house field wrapper stacks the pair, both notes take the form-hint idiom,
+and the same pane-class misuse found riding in the "No dues set yet" empty state's sub-line was
+corrected in the same pass. Spacing now comes from the shared classes' own rhythm.
+· Catch 11 widened (owner, next screenshot): the SAME pane-class misuse lived in the Set-dues
+generator — its module's muted class also carries the 2rem empty-state padding, and all EIGHT
+quiet sentences in that modal wore it (the replaces-the-schedule note, both result notes, the
+due-dates-change warning, the apply-to-everyone line, the blocker body). All eight swapped to
+the shared form-hint idiom; the class itself keeps its padding because its three remaining uses
+are genuine panes (Loading…, Team not found). NOT deferred to the Exceptions First rebuild —
+that project recomposes only the preview step, and these notes span the whole modal. Open smell,
+flagged not swept: two modules define a padded "muted" that keeps catching sentences; candidates
+for the cleanup audit, not for a mid-walk sweep.
+**§124 VERDICT (2026-09-01): PASSED — 25/25, every part walked.** The floor (6), truth and
+safety (2), one grammar (3), one name (5), consequences (4), shape (5). The walk produced
+ELEVEN owner catches, every one fixed and re-proved live before the walk moved on — the
+installments-only editor, the consolidated follows-the-schedule credit and its server guards,
+the content-sized rows with the paid fact inline, the slide-over footer dead-band, the projected
+paid labels, the retired payout door button, the single reconcile strip, the buffer-toned
+over-collect sentence, and the pane-class spacing misuse across two modals. The Exceptions
+First preview redesign was ruled mid-walk (Q1–Q3 all A) and queued as its own project with its
+own future QA section. All §124 addenda are one unit of work awaiting the owner's commit word
+(as of 2026-09-01).
+**§124 post-verdict adversarial review (2026-09-01, owner-directed):** high-risk tier, four
+lenses, five findings confirmed at deep verify and ALL FIVE FIXED same session: (1) the
+one-family editor's "when you save" sentence went silent when a coach redistributed paid money
+between installments at an unchanged total — the gate now asks the discard guard's own
+row-baseline instead of comparing totals; (2) the engine's ownership mark (its credit
+description) could be claimed by hand at the manual credit doors, locking the coach out of their
+own row and letting the next reconcile silently rewrite it — both manual doors (create and
+rename) now refuse the reserved sentence; (3) the consolidation top-up could race a concurrent
+delete into writing nothing while reporting success — it now asks what it touched and creates
+the row itself when the target is gone (the window heals in-call); (4) two racing reconciles
+could each create an engine row and the one-row promise never healed on the growth path — the
+planner now MERGES every engine row into the newest whenever it grows, healing races and legacy
+duplicates alike (a coach-typed credit is counted, never merged); (5) the family statement PDF
+still dated the follows-the-schedule credit with the day of its LAST adjustment — it now prints
+no date, matching the drawer's ruling. Proof: typecheck 0 errors · 2,740 unit tests green (merge
+pins rewritten + a never-touch-manual pin added) · lifecycle UAT 15/15 with --retries=0 through
+the live doors, including a new reserved-description refusal pin. Two advisories accepted, not
+fixed: the live paid label's divergence on legacy hand-stamped installments (deliberate,
+documented) and the shared-tree stylesheet carrying a peer session's verified-safe cleanup.
+⚠ Flag from a PEER session, not this stream: check:budget-item-fold sits RED on the UAT fixture
+(the actual half of a cross-category fold moves the wrong way) — unattributed, predates today's
+work per that session's checks; this walk's clean 15/15 narrows it to the fold path itself.
+

@@ -265,12 +265,19 @@ export default function GenerateInstallmentsModal({
    */
   function reconcileLine(compact: boolean) {
     if (!reconcile || (compact && reconcile === 'match')) return null;
+    /* ⚠ OVER-COLLECTING IS A BUFFER, NOT AN ALARM (owner, 2026-09-01, §124 walk — extending the
+       2026-08-13 budget-card ruling to this door: "a PLANNED buffer stated here must read as
+       confirmation, not a warning"). Most coaches deliberately schedule more than the plan needs;
+       the danger tone and "families will be billed the higher amount" scolded the commonest
+       legitimate act in the room. The buffer takes quiet ink and the CARD'S OWN SENTENCE
+       ("Includes a $X buffer above the plan") so both surfaces speak one vocabulary. SHORT keeps
+       its amber — under-collecting genuinely leaves the plan unfunded. */
     const tone = reconcile === 'short' ? styles.reconShort
-      : reconcile === 'over' ? styles.reconOver
+      : reconcile === 'over' ? styles.duesReconNote
       : styles.reconMatch;
     return (
       <p className={`${styles.reconStrip} ${tone}`}>
-        <span aria-hidden className={styles.reconMark}>{reconcile === 'match' ? '✓' : '!'}</span>
+        <span aria-hidden className={styles.reconMark}>{reconcile === 'match' ? '✓' : reconcile === 'over' ? '=' : '!'}</span>
         <span>
           Collecting <strong>{fmt(perPlayerScheduled)}</strong> per player —{' '}
           <strong>{fmt(teamScheduled)}</strong> across the roster.
@@ -278,14 +285,11 @@ export default function GenerateInstallmentsModal({
             ? <> <strong>Matches what players need to fund.</strong></>
             : reconcile === 'short'
               ? <> That&apos;s <strong>{fmt(gap)} short</strong> of what players need to fund.</>
-              : <> That&apos;s <strong>{fmt(gap)} more</strong> than players need to fund.</>}
+              : <> Includes a <strong>{fmt(Math.abs(gap))} buffer</strong> above the plan.</>}
           {!compact && reconcile === 'short' && (
             <span className={styles.reconAside}>
               You can still generate this. Add more installments later if you need to.
             </span>
-          )}
-          {!compact && reconcile === 'over' && (
-            <span className={styles.reconAside}>Families will be billed the higher amount.</span>
           )}
         </span>
       </p>
@@ -471,7 +475,7 @@ export default function GenerateInstallmentsModal({
                 needs to be told it happened — "dues set for 12 players" on a 15-player roster
                 otherwise reads as three failures. */}
             {result.playersSkipped > 0 && (
-              <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
+              <p className={shared.formHint} style={{ marginTop: '0.5rem' }}>
                 {result.playersSkipped === 1
                   ? 'One player kept the schedule you set by hand — nothing of theirs changed.'
                   : `${result.playersSkipped} players kept the schedules you set by hand — nothing of theirs changed.`}
@@ -481,7 +485,7 @@ export default function GenerateInstallmentsModal({
                 rewrote the season's dues needs to hear that the dollars already collected came
                 along, and where any excess went. */}
             {result.playersWithPaymentsKept > 0 && (
-              <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
+              <p className={shared.formHint} style={{ marginTop: '0.5rem' }}>
                 {result.playersWithPaymentsKept} {result.playersWithPaymentsKept === 1 ? 'player' : 'players'} had
                 payments recorded — every payment was kept and now counts toward the new schedule.
                 {/* The figure is the credit CREATED BY THIS RUN — since the reconcile learned to
@@ -507,7 +511,7 @@ export default function GenerateInstallmentsModal({
                     <strong>{r.name}</strong> — {payoutFloorMessage(r.paidOut, 'raising this player’s dues total')}
                   </p>
                 ))}
-                <p className={styles.muted} style={{ margin: 0 }}>
+                <p className={shared.formHint} style={{ margin: 0 }}>
                   {duesHref
                     ? <>Their payouts are on <Link href={duesHref} style={{ textDecoration: 'underline' }}>Player Dues</Link> — open the player&apos;s record.</>
                     : <>Open the player&apos;s record on this list — their payouts are listed there.</>}
@@ -543,7 +547,7 @@ export default function GenerateInstallmentsModal({
              Now the screen names what is, by name, and offers to keep it. */
           <div className={styles.successState}>
             <p style={{ fontWeight: 700 }}>This roster already has dues</p>
-            <p className={styles.muted} style={{ marginTop: '0.4rem' }}>
+            <p className={shared.formHint} style={{ marginTop: '0.4rem' }}>
               Generating now <strong>replaces</strong> the existing schedule with the one you just previewed.
               Recorded payments are kept — money already collected counts toward the new schedule, and anything
               beyond a player&apos;s new total becomes an overpayment credit.
@@ -551,7 +555,7 @@ export default function GenerateInstallmentsModal({
             {/* Due dates families may already have been told. Stated whenever they move, because
                 the reminder emails will start quoting the new ones without further ceremony. */}
             {replaceFacts.playersWithDateChange > 0 && (
-              <p className={styles.muted} style={{ marginTop: '0.5rem' }}>
+              <p className={shared.formHint} style={{ marginTop: '0.5rem' }}>
                 <strong>Due dates change</strong> for {replaceFacts.playersWithDateChange === 1
                   ? 'one player'
                   : `${replaceFacts.playersWithDateChange} players`}. Reminder emails will quote the new dates.
@@ -567,7 +571,7 @@ export default function GenerateInstallmentsModal({
                 <p style={{ margin: '0.3rem 0 0' }}>
                   {replaceFacts.handSetPlayers.map(p => p.name).join(', ')}
                 </p>
-                <p className={styles.muted} style={{ margin: '0.35rem 0 0' }}>
+                <p className={shared.formHint} style={{ margin: '0.35rem 0 0' }}>
                   Applying to everyone gives them the same schedule as the rest of the roster.
                 </p>
               </div>
@@ -612,7 +616,7 @@ export default function GenerateInstallmentsModal({
         ) : blocker ? (
           <div className={styles.successState}>
             <p style={{ fontWeight: 700 }}>{blocker.title}</p>
-            <p className={styles.muted} style={{ marginTop: '0.4rem' }}>{blocker.body}</p>
+            <p className={shared.formHint} style={{ marginTop: '0.4rem' }}>{blocker.body}</p>
           </div>
         ) : (
           <>
@@ -637,7 +641,7 @@ export default function GenerateInstallmentsModal({
                 were set by hand. Those coaches still get the question, just at the confirm step,
                 from the server — which is why nothing about the write path reads this. */}
             {replacing && (
-              <p className={styles.muted} style={{ fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
+              <p className={shared.formHint} style={{ fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
                 This roster already has dues. Generating replaces the schedule; payments already
                 recorded are kept and count toward the new one.
               </p>
@@ -786,7 +790,13 @@ export default function GenerateInstallmentsModal({
                 sharper colour: it is the one that charges families money they do not owe. An
                 exact match is stated rather than left silent, so a coach who did the arithmetic
                 themselves sees it confirmed. */}
-            {reconcileLine(false)}
+            {/* ⚠ ONLY WHILE TYPING (owner catch, 2026-09-01 — §124 walk). This full copy and the
+                compact one below the preview both rendered once the preview loaded, and on a
+                short form the two sat on one screen saying the same figures twice — the exact
+                stated-twice defect the settlement window's strip was deleted for (2026-08-14).
+                The sentence still "travels with the coach": while typing, this copy; once the
+                preview is up, the compact copy beside Confirm is the one that matters. */}
+            {!preview && reconcileLine(false)}
 
             {previewError && <p className={styles.errorText}>{previewError}</p>}
 

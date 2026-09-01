@@ -169,9 +169,33 @@ export function strandedExcess(
  * ruling and never appear in a plan. A payment-linked row keeps its link (its payment's CASCADE
  * still removes it); a standalone row stays standalone and manually deletable.
  */
+/** The engine's own standalone credit description — ONE home (QA §124 addendum), shared by the
+ *  executor that writes it, the drawer that recognizes it to say "Follows the schedule", and the
+ *  credit route that refuses to edit or delete it. */
+export const SCHEDULE_CHANGE_CREDIT_DESCRIPTION = 'Overpayment (dues changed)';
+
+/** The 409 code when a coach tries to edit or delete the engine's schedule-change credit
+ *  (owner, 2026-09-01). Deleting it is a lie twice over: the books understate what the family
+ *  is owed until the next reconcile, and THAT quietly recreates the row — dangerous meanwhile,
+ *  futile afterwards. The doors that genuinely move it: the dues total, and the payout. */
+export const CREDIT_FOLLOWS_SCHEDULE = 'CREDIT_FOLLOWS_SCHEDULE';
+
+/** The description is the engine's ownership mark, so a coach must not be able to claim it by
+ *  hand (review 2026-09-01): a manual credit wearing it would be locked behind the 409 above and
+ *  silently written into by the next reconcile. Both manual doors (create and edit) refuse it. */
+export const RESERVED_CREDIT_DESCRIPTION_REFUSAL =
+  'That description belongs to the schedule’s own credit — give this one a different name.';
+
 export interface OverpaymentReconcilePlan {
-  /** Dollars of NEW credit to create (0 = none). */
+  /** Dollars of NEW credit to create (0 = none). When `topUp` is set, the same dollars land as
+   *  a raise of that existing row instead of an insert. */
   create: number;
+  /** CONSOLIDATION (owner, 2026-09-01): the engine's schedule-change credit is ONE row per
+   *  player-season — a later lower tops THIS row up rather than appending a sibling (four
+   *  identical "Overpayment (dues changed) · Sep 1" rows read as a bug, and were one fact).
+   *  Set only on the schedule-change path, and only onto a row the ENGINE created — a
+   *  coach-typed overpayment credit is counted but never written into. */
+  topUp: { id: string; newAmount: number } | null;
   /** Credit ids the reduction swallows whole, in the order to delete them (newest first). */
   remove: string[];
   /** The one credit the reduction only partly reaches, with its corrected amount. */
@@ -181,17 +205,35 @@ export interface OverpaymentReconcilePlan {
 }
 
 export function planOverpaymentReconcile(
-  /** EVERY credit the player holds this season, newest first. */
-  credits: readonly { id: string; amount: number; creditType: string }[],
+  /** EVERY credit the player holds this season, newest first. `consolidatable` marks the
+   *  engine's own standalone schedule-change rows (see SCHEDULE_CHANGE_CREDIT_DESCRIPTION). */
+  credits: readonly { id: string; amount: number; creditType: string; consolidatable?: boolean }[],
   paymentsTotal: number,
   scheduleTotal: number,
+  /** `consolidate` on the schedule-change path only — a record-time credit RIDES its payment
+   *  (CASCADE removes it with the receipt) and must stay its own row. */
+  opts?: { consolidate?: boolean },
 ): OverpaymentReconcilePlan {
   const overpayment = credits.filter(c => c.creditType === 'overpayment');
   const carriedC = overpayment.reduce((s, c) => s + toCents(c.amount), 0);
   const trueExcessC = Math.max(0, toCents(paymentsTotal) - toCents(scheduleTotal));
 
   if (trueExcessC > carriedC) {
-    return { create: toDollars(trueExcessC - carriedC), remove: [], trim: null, reduced: 0 };
+    const createC = trueExcessC - carriedC;
+    // ONE row per season means MERGING, not assuming: several engine rows can exist (a race
+    // that double-inserted, or pre-consolidation history), and the grow path is the only one
+    // guaranteed to revisit them — so it folds every engine row into the newest and removes
+    // the rest (review 2026-09-01). `reduced` stays 0: the extras' dollars move, never leave.
+    const hosts = opts?.consolidate ? overpayment.filter(c => c.consolidatable) : [];
+    const host = hosts[0];
+    return {
+      create: toDollars(createC),
+      topUp: host
+        ? { id: host.id, newAmount: toDollars(hosts.reduce((s, c) => s + toCents(c.amount), 0) + createC) }
+        : null,
+      remove: hosts.slice(1).map(c => c.id),
+      trim: null, reduced: 0,
+    };
   }
 
   // Shrink newest-first until the stale amount is gone — delete a credit the reduction
@@ -211,7 +253,7 @@ export function planOverpaymentReconcile(
       leftC = 0;
     }
   }
-  return { create: 0, remove, trim, reduced };
+  return { create: 0, topUp: null, remove, trim, reduced };
 }
 
 /** Per-player payment-dollar totals — the grouping every season-wide dues reader starts from.

@@ -9958,32 +9958,69 @@ export async function reconcileOverpaymentCredits(opts: {
 }): Promise<{ created: number; reduced: number }> {
   const { data: creditRows, error } = await supabaseAdmin
     .from('rep_dues_credits')
-    .select('id, amount, credit_type')
+    .select('id, amount, credit_type, payment_id, description')
     .eq('program_year_id', opts.programYearId)
     .eq('player_id', opts.playerId)
     .order('created_at', { ascending: false });
   if (error) throw error;
 
   const plan = planOverpaymentReconcile(
-    (creditRows ?? []).map((c: any) => ({ id: c.id as string, amount: Number(c.amount), creditType: c.credit_type as string })),
+    (creditRows ?? []).map((c: any) => ({
+      id: c.id as string,
+      amount: Number(c.amount),
+      creditType: c.credit_type as string,
+      // The engine's own standalone row — the only kind a top-up may land on. A coach-typed
+      // overpayment credit shares the shape but not the description, and is never written into.
+      consolidatable: c.payment_id == null && c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION,
+    })),
     opts.paymentsTotal,
     opts.scheduleTotal,
+    // Consolidate on the schedule-change path only: a record-time credit rides its payment.
+    { consolidate: !opts.paymentId },
   );
 
   if (plan.create > 0.005) {
-    const { error: cErr } = await supabaseAdmin
-      .from('rep_dues_credits')
-      .insert({
-        program_year_id: opts.programYearId,
-        player_id: opts.playerId,
-        amount: plan.create,
-        description: opts.paymentId ? 'Overpayment' : 'Overpayment (dues changed)',
-        credit_type: 'overpayment',
-        credit_date: opts.creditDate,
-        payment_id: opts.paymentId ?? null,
-        created_by: opts.createdBy,
-      });
-    if (cErr) throw cErr;
+    const insertCredit = async (amount: number) => {
+      const { error: cErr } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .insert({
+          program_year_id: opts.programYearId,
+          player_id: opts.playerId,
+          amount,
+          description: opts.paymentId ? 'Overpayment' : SCHEDULE_CHANGE_CREDIT_DESCRIPTION,
+          credit_type: 'overpayment',
+          credit_date: opts.creditDate,
+          payment_id: opts.paymentId ?? null,
+          created_by: opts.createdBy,
+        });
+      if (cErr) throw cErr;
+    };
+    // The grow path is also the MERGE path: duplicate engine rows (a race, or history) fold
+    // into the host, so the one-row rule is enforced here rather than assumed (review 2026-09-01).
+    for (const id of plan.remove) {
+      const { error: dErr } = await supabaseAdmin.from('rep_dues_credits').delete().eq('id', id);
+      if (dErr) throw dErr;
+    }
+    if (plan.topUp) {
+      // ONE row per season (owner, 2026-09-01): the later lower raises the existing engine row.
+      // credit_date moves to the day it last changed — internal ordering only; the drawer shows
+      // this row as "Follows the schedule" with no date, because a running total has no single day.
+      // ⚠ Zero rows matched is SUCCESS to PostgREST (review 2026-09-01): if a concurrent
+      // reconcile deleted the host between our read and this write, the select() comes back
+      // empty and we fall through to inserting the intended consolidated amount — the raced
+      // window heals in this call instead of waiting for the next one.
+      const { data: updated, error: uErr } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ amount: plan.topUp.newAmount, credit_date: opts.creditDate })
+        .eq('id', plan.topUp.id)
+        .eq('player_id', opts.playerId)
+        .eq('program_year_id', opts.programYearId)
+        .select('id');
+      if (uErr) throw uErr;
+      if (!updated || updated.length === 0) await insertCredit(plan.topUp.newAmount);
+    } else {
+      await insertCredit(plan.create);
+    }
     return { created: plan.create, reduced: 0 };
   }
 

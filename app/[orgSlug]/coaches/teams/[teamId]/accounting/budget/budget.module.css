@@ -901,13 +901,32 @@
    the least important column. Here the two fields share the row EQUALLY, labelled once at the
    head (owner-approved mockup, §123 walk). */
 .duesScheduleEditor { display: flex; flex-direction: column; gap: 0.5rem; }
-/* Equal columns — overrides the base flex:2 and .periodFieldDate's 1.5 by specificity. */
-.duesScheduleEditor .periodFieldLabel { flex: 1; }
+/* Fields sized to their CONTENT CLASS, not to the drawer (owner + /design, 2026-09-01 — the
+   equal-halves cut over-cured the 112px-vs-809px defect: half of a 1040px drawer is still 460px
+   holding "400"). A money amount takes 9rem; a date takes the budget sheet's own proven
+   10.5rem (.periodFieldWhen's reasoning: a whole date plus its calendar button); and the PAID
+   FACT is promoted into the row's leftover space instead of costing a second line. */
+.duesScheduleEditor .periodFieldLabel { flex: 0 0 9rem; }
+.duesScheduleEditor .periodFieldLabel.periodFieldDate { flex: 0 0 10.5rem; }
+/* The row's inline paid fact — "$400.00 paid" / "$100.00 of $250.00 paid" — the third column
+   the row always owed, quiet ink beside the figures (the 08-29 meta-line ruling: facts beside
+   the columns, never narration on its own row). ⚠ NOT a spacer (owner, 2026-09-01, second
+   look): stretching it pushed the remove × to the drawer's edge, hundreds of pixels from the
+   row it deletes — the whole row clusters left and × sits WITH its row. */
+.duesSchedPaid {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* The column headings, labelled once at the head (desktop only — at ≤640 every field carries its
-   own stacked label). These widths MUST track the row's own: .installmentNum 24px / equal
-   flexes / the trailing remove's 26px slot — the same warning .planColHead and .periodColHead
-   both carry. */
+   own stacked label). These widths MUST track the row's own: .installmentNum 24px / amount 9rem /
+   date 10.5rem / flexible paid slot / the trailing remove's 26px — the same warning .planColHead
+   and .periodColHead both carry. */
 .duesSchedColHead {
   display: flex;
   gap: 0.5rem;
@@ -919,15 +938,22 @@
   letter-spacing: 0.07em;
   color: var(--text-tertiary);
 }
-.duesSchedColNum { width: 24px; flex: 0 0 auto; }
-.duesSchedCol    { flex: 1; min-width: 0; }
-.duesSchedColX   { flex: 0 0 26px; }
+.duesSchedColNum  { width: 24px; flex: 0 0 auto; }
+.duesSchedColAmt  { flex: 0 0 9rem; }
+.duesSchedColDate { flex: 0 0 10.5rem; }
 
 @media (max-width: 640px) {
   .duesSchedColHead { display: none; }
   /* The drawer's own card treatment on the labelled group — the shared ≤640 reflow supplies the
      group itself; only the ground differs on this surface. */
   .duesScheduleEditor .periodInputRow { background: var(--home-card, rgba(255,255,255,0.04)); }
+  /* The desktop's fixed bases must stand down here or they beat the shared reflow's one-class
+     `flex: none` on specificity — the fields go back to full-width stacked rows. */
+  .duesScheduleEditor .periodFieldLabel,
+  .duesScheduleEditor .periodFieldLabel.periodFieldDate { flex: none; }
+  /* On the phone the card HEAD already carries the paid fact ("Installment 1 · $400.00 paid") —
+     the inline note would say it twice an inch apart. */
+  .duesSchedPaid { display: none; }
 }
 
 @media (max-width: 768px) {
@@ -942,6 +968,12 @@
      editor's dense rows this form has the room. Scoped, so the shared button stays quiet. */
   .duesScheduleEditor .removePeriodBtn { min-width: var(--tap-min, 44px); justify-content: center; }
 }
+
+/* The schedule editor's QUIET reconcile tone (owner, "installments only", 2026-09-01): "$100.00
+   more than the team's $600.00" is a fact, not a fault — a hardship plan is supposed to differ —
+   so it takes ordinary ink on the card ground, never the warning or danger tones its siblings
+   use for a real shortfall. A new class beside the shared .recon* set, not an edit to them. */
+.duesReconNote { background: var(--home-card, rgba(255,255,255,0.04)); color: var(--text-secondary); }
 
 /* ── Preview table ───────────────────────────────────────────────────────── */
 /* ── How installment amounts are set (owner ruling 2026-08-13) ──────────────────────────────

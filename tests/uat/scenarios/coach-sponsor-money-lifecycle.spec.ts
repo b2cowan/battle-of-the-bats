@@ -856,10 +856,29 @@ test.describe('a family’s overpayment credit follows the schedule, both doors 
     expect(await overpaymentCredits()).toEqual([400]);
 
     // ⚠ SEQUENCE 1 — lower again to $600. The defect stacked a second $600 credit here ($1,000
-    // carried for a $600 truth); the fix tops up by the $200 difference.
+    // carried for a $600 truth); the fix tops up by the $200 difference — and since the
+    // consolidation (owner, 2026-09-01) it tops up the SAME ROW: one credit, not a pile of
+    // identical "dues changed" rows that read as a bug.
     expect((await setTotal(page, 600)).status).toBe(201);
-    const afterSecondLower = await overpaymentCredits();
-    expect(afterSecondLower.reduce((s, a) => s + a, 0), 'the truth is $600, never $1,000').toBe(600);
+    expect(await overpaymentCredits(), 'ONE row at the $600 truth — topped up in place').toEqual([600]);
+
+    // ⚠ The engine's row cannot be deleted (owner, 2026-09-01 — deleting it made $700 of a
+    // family's money vanish mid-walk, and the next reconcile would have quietly recreated it).
+    const { data: engineRows } = await admin.from('rep_dues_credits')
+      .select('id').eq('program_year_id', programYearId).eq('player_id', p2Id).eq('credit_type', 'overpayment');
+    const delTry = await call(page, `${api()}/players/${p2Id}/dues-credits/${(engineRows ?? [])[0].id}`, { method: 'DELETE', body: undefined });
+    expect(delTry.status, 'the schedule-change credit refuses deletion').toBe(409);
+    expect((delTry.body as { code?: string }).code).toBe('CREDIT_FOLLOWS_SCHEDULE');
+    expect(await overpaymentCredits(), 'and the row survived the refusal').toEqual([600]);
+
+    // The ownership mark cannot be claimed by hand (review 2026-09-01): a manual credit wearing
+    // the engine's exact description would be locked by the 409 above and silently rewritten by
+    // the next reconcile — both manual doors refuse the reserved sentence.
+    const forge = await call(page, `${api()}/players/${p2Id}/dues-credits`, {
+      method: 'POST',
+      body: { amount: 50, description: 'Overpayment (dues changed)', creditType: 'overpayment', creditDate: '2026-08-01' },
+    });
+    expect(forge.status, 'the reserved description is refused at the manual door').toBe(400);
 
     // ⚠ SEQUENCE 2 — restore to $1,200. The defect left the whole credit standing; the fix
     // removes every overpayment row, because nothing is stranded any more.

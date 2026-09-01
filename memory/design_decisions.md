@@ -2,6 +2,34 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+
+### 2026-09-01 — A BUFFER IS CONFIRMATION EVERYWHERE, NOT JUST ON THE CARD
+
+**Decision (owner, §124 walk catch 10):** the 2026-08-13 ruling — a planned buffer states itself
+as confirmation, never a warning — extends beyond the budget card to EVERY surface that compares
+scheduled dues against the plan: the Set-dues-for-all-players reconcile strip (was danger ink +
+"families will be billed the higher amount") and the redesigned preview. Over-collecting is the
+commonest deliberate act in team money; it reads in quiet ink, in the card's own sentence —
+"Includes a $X buffer above the plan." — so all surfaces share one vocabulary. UNDER-collecting
+keeps its amber: that one genuinely leaves the plan unfunded.
+**Applies to:** the bulk-dues generator's reconcile line (both copies), the Exceptions First
+preview design; the principle to any future scheduled-vs-plan comparison.
+---
+
+### 2026-09-01 — FIELDS SIZE TO THEIR CONTENT CLASS, AND A ROW'S FACT RIDES IN THE ROW
+
+**Decision (owner + /design, on the installments-only schedule editor):** an input takes the
+width its content class needs — a money amount 9rem, a date the budget sheet's proven 10.5rem
+— never an equal share of whatever container it sits in; and a per-row FACT ("$400.00 paid")
+renders inline in the row's leftover space, not on an advisory line below it. The equal-halves
+cut had over-cured the 112px-vs-809px imbalance: half of a 1040px drawer is still 460px holding
+"400", and the paid fact paid for that waste with a second line per row.
+**Rationale:** operational density — the eye reads figure, date, fact left-to-right in one
+sweep; a fixed-width date is the budget sheet's own precedent (.periodFieldWhen), and the
+08-29 meta-line ruling already says facts sit beside columns, never as narration rows.
+**Applies to:** the dues schedule editor (.duesScheduleEditor variant); the sizing principle to
+any future form row tempted to stretch inputs to fill a wide drawer.
+---
 ---
 ### 2026-08-31 — THE "WHERE IT LANDS" PREVIEW RETIRES — a form states the consequence in ONE sentence, not an arithmetic
 

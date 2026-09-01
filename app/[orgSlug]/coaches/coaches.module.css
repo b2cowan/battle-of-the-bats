@@ -4332,6 +4332,16 @@ a.oneChip:hover { border-color: currentColor; }
    asserts what would happen anyway. Do not re-introduce the padding on a modal with a footer. */
 .modal:has(.modalFooter) { padding-bottom: 0; }
 .modal:has(.modalFooter) .modalFooter { margin-bottom: 0; }
+/* ⚠ AND THE SLIDE-OVERS (2026-09-01, owner screenshot: the dues drawer's Notes field clipped
+   behind Save). The automatic rule above named `.modal` and the drawers are `.slideOver` — same
+   1.5rem padding, same sticky `.modalFooter`, same dead band the 2026-08-21 sweep fixed
+   everywhere else; the ninth instance was hiding on the class the selector didn't cover. It
+   only became VISIBLE when the schedule editor's Notes moved to the form's foot, which is the
+   trap's documented shape: the clipped band is invisible until the last field is tall enough
+   to live in it. Same cure, same :has() reasoning — a slide-over with no footer keeps its
+   padding. */
+.slideOver:has(.modalFooter) { padding-bottom: 0; }
+.slideOver:has(.modalFooter) .modalFooter { margin-bottom: 0; }
 
 /* Event form modal — a touch wider so the date/time pickers have room. Its flush-footer
    handling now comes from `.modalFlushFooter` above (it was the first surface to need it).

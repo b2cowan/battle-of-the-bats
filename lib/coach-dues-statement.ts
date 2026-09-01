@@ -24,6 +24,7 @@ import { computeFamilyDues, type FamilyDuesPlayer } from './coach-family-dues';
 import { formatMoneyCell as money } from './coach-money-exports';
 import { formatStoredDate } from './timezone';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
+import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
 
 // ── Input: the dues payload, structurally ────────────────────────────────────
 // These are the fields the coach dues GET already serves — the panel passes what it has.
@@ -224,7 +225,10 @@ export function buildFamilyDuesStatements(input: {
     const creditRows = members
       .flatMap(p => p.credits.map(c => ({ child: displayName(p), ...c })))
       .sort((a, b) => a.creditDate.localeCompare(b.creditDate))
-      .map(c => [formatStoredDate(c.creditDate), c.child, money(c.amount), c.description || '']);
+      // The engine's follows-the-schedule credit has no single day — its stored date moves to
+      // the last schedule change, and printing THAT reads as when the money arose (review
+      // 2026-09-01; same ruling that keeps the drawer's row dateless).
+      .map(c => [c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION ? '—' : formatStoredDate(c.creditDate), c.child, money(c.amount), c.description || '']);
     const payoutRows = members
       .flatMap(p => p.payouts.map(po => ({ child: displayName(p), ...po })))
       .sort((a, b) => a.paidDate.localeCompare(b.paidDate))

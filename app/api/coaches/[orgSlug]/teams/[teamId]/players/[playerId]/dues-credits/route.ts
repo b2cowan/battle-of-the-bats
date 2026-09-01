@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { MANUAL_CREDIT_TYPES } from '@/lib/dues-credits';
+import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION, RESERVED_CREDIT_DESCRIPTION_REFUSAL } from '@/lib/dues-payments';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -80,6 +81,11 @@ export const POST = withObservability(async (req: Request,
   }
   if (!description?.trim()) {
     return NextResponse.json({ error: 'description is required' }, { status: 400 });
+  }
+  // The engine recognizes its own row by this exact sentence — a hand-made credit wearing it
+  // would be locked and then silently rewritten by the next reconcile (see the constant's home).
+  if (description.trim() === SCHEDULE_CHANGE_CREDIT_DESCRIPTION) {
+    return NextResponse.json({ error: RESERVED_CREDIT_DESCRIPTION_REFUSAL }, { status: 400 });
   }
   if (!creditDate) {
     return NextResponse.json({ error: 'creditDate is required' }, { status: 400 });

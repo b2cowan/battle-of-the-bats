@@ -26,7 +26,7 @@ describe('planOverpaymentReconcile — the reconcile counts the credits it write
   it('sequence 1 (the doubled credit): paid $1,200 · lower to $800 → $400 · lower to $600 tops up $200, never a second $600', () => {
     // First lower: no credits yet → create the full excess.
     const first = planOverpaymentReconcile([], 1200, 800);
-    assert.deepEqual(first, { create: 400, remove: [], trim: null, reduced: 0 });
+    assert.deepEqual(first, { create: 400, topUp: null, remove: [], trim: null, reduced: 0 });
 
     // Second lower: the $400 it just wrote is STANDALONE (payment_id null). The defect was that
     // the old query could not see it and created $600 more — $1,000 of credit for a $600 truth.
@@ -38,7 +38,7 @@ describe('planOverpaymentReconcile — the reconcile counts the credits it write
 
   it('sequence 2 (the stale credit): paid $1,200 · lower to $800 → $400 · restore to $1,200 removes it', () => {
     const plan = planOverpaymentReconcile([credit('c1', 400)], 1200, 1200);
-    assert.deepEqual(plan, { create: 0, remove: ['c1'], trim: null, reduced: 400 },
+    assert.deepEqual(plan, { create: 0, topUp: null, remove: ['c1'], trim: null, reduced: 400 },
       'the old query saw no linked credits, found nothing to reduce, and the stale $400 stood');
   });
 
@@ -66,7 +66,7 @@ describe('planOverpaymentReconcile — the reconcile counts the credits it write
     assert.equal(restore.trim, null);
     // At the truth already: nothing moves, whatever the other credits total.
     const settled = planOverpaymentReconcile(mixed, 1200, 800);
-    assert.deepEqual(settled, { create: 0, remove: [], trim: null, reduced: 0 });
+    assert.deepEqual(settled, { create: 0, topUp: null, remove: [], trim: null, reduced: 0 });
   });
 
   it('a no-schedule-change reconcile with mixed credits still tops up against ALL overpayment rows', () => {
@@ -78,8 +78,58 @@ describe('planOverpaymentReconcile — the reconcile counts the credits it write
 
   it('cents: 0.1 + 0.2-style inputs neither leak fractional cents nor churn', () => {
     assert.deepEqual(planOverpaymentReconcile([credit('c1', 0.1)], 0.3, 0.2),
-      { create: 0, remove: [], trim: null, reduced: 0 });
+      { create: 0, topUp: null, remove: [], trim: null, reduced: 0 });
     assert.equal(planOverpaymentReconcile([], 0.3, 0.1).create, 0.2);
+  });
+});
+
+describe('consolidation — the schedule-change credit is ONE row per season (owner, 2026-09-01)', () => {
+  const engineRow = (id: string, amount: number) => ({ ...credit(id, amount), consolidatable: true });
+
+  it('a later lower TOPS UP the engine row instead of appending a sibling', () => {
+    const plan = planOverpaymentReconcile([engineRow('c1', 400)], 1200, 600, { consolidate: true });
+    assert.deepEqual(plan, { create: 200, topUp: { id: 'c1', newAmount: 600 }, remove: [], trim: null, reduced: 0 });
+  });
+
+  it('the first lower still creates the row — there is nothing to top up yet', () => {
+    const plan = planOverpaymentReconcile([], 1200, 800, { consolidate: true });
+    assert.deepEqual(plan, { create: 400, topUp: null, remove: [], trim: null, reduced: 0 });
+  });
+
+  it('record-time NEVER consolidates — a receipt’s credit rides its payment (CASCADE removes it together)', () => {
+    const plan = planOverpaymentReconcile([engineRow('c1', 400)], 1700, 1200);
+    assert.equal(plan.create, 100);
+    assert.equal(plan.topUp, null);
+  });
+
+  it('a coach-typed overpayment credit is COUNTED but never written into', () => {
+    // Same shape as the engine's row, but not consolidatable (different description) — the
+    // "credits stay credits" boundary for hand-typed rows.
+    const plan = planOverpaymentReconcile([credit('m1', 400)], 1200, 600, { consolidate: true });
+    assert.equal(plan.create, 200);
+    assert.equal(plan.topUp, null);
+  });
+
+  it('several engine rows (a race, or history) MERGE into the newest on the grow path — one row per season is enforced, not assumed', () => {
+    const rows = [engineRow('c2', 200), engineRow('c1', 400)];
+    // trueExcess 700 − carried 600 → create 100; the host absorbs BOTH engine rows plus it.
+    const up = planOverpaymentReconcile(rows, 1200, 500, { consolidate: true });
+    assert.equal(up.create, 100);
+    assert.deepEqual(up.topUp, { id: 'c2', newAmount: 700 });
+    assert.deepEqual(up.remove, ['c1']);
+    // The extras' dollars MOVE, never leave — reduced reports no shrink.
+    assert.equal(up.reduced, 0);
+    const drain = planOverpaymentReconcile(rows, 1200, 1200, { consolidate: true });
+    assert.deepEqual(drain.remove, ['c2', 'c1']);
+    assert.equal(drain.reduced, 600);
+  });
+
+  it('the merge never touches a coach-typed overpayment credit riding among the engine rows', () => {
+    const rows = [engineRow('c3', 200), { id: 'manual', amount: 150, creditType: 'overpayment' }, engineRow('c1', 400)];
+    const up = planOverpaymentReconcile(rows, 1400, 500, { consolidate: true });
+    // carried 750, trueExcess 900 → create 150; hosts are c3+c1 only — manual is counted, never merged.
+    assert.deepEqual(up.topUp, { id: 'c3', newAmount: 750 });
+    assert.deepEqual(up.remove, ['c1']);
   });
 });
 

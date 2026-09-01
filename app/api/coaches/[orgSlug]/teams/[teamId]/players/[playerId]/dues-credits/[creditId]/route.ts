@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION, CREDIT_FOLLOWS_SCHEDULE, RESERVED_CREDIT_DESCRIPTION_REFUSAL } from '@/lib/dues-payments';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -95,6 +96,18 @@ export const PATCH = withObservability(async (req: Request,
       { status: 409 },
     );
   }
+  // The engine's consolidated schedule-change credit is DERIVED (owner, 2026-09-01) — a hand
+  // edit would be overwritten by the next reconcile. The screen shows no pencil; this is the
+  // refusal that binds.
+  if (credit.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION) {
+    return NextResponse.json(
+      {
+        error: 'This credit follows the schedule — change the dues total to change it.',
+        code: CREDIT_FOLLOWS_SCHEDULE,
+      },
+      { status: 409 },
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const { amount, description, creditDate, notes = null } = body;
@@ -107,6 +120,11 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (typeof description !== 'string' || !description.trim()) {
     return NextResponse.json({ error: 'Say what this credit is for.' }, { status: 400 });
+  }
+  // A manual credit must not RENAME ITSELF INTO the engine's ownership mark either — same trap
+  // as creating one (see RESERVED_CREDIT_DESCRIPTION_REFUSAL's home).
+  if (description.trim() === SCHEDULE_CHANGE_CREDIT_DESCRIPTION) {
+    return NextResponse.json({ error: RESERVED_CREDIT_DESCRIPTION_REFUSAL }, { status: 400 });
   }
   if (typeof creditDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(creditDate)) {
     return NextResponse.json({ error: 'Enter a date for this credit.' }, { status: 400 });
@@ -196,6 +214,22 @@ export const DELETE = withObservability(async (_req: Request,
       {
         error: 'This credit comes from another record — remove it there so the two can never disagree.',
         code: 'CREDIT_HAS_SOURCE',
+      },
+      { status: 409 },
+    );
+  }
+  /* ⚠ THE ENGINE'S ROW CANNOT BE DELETED (owner, 2026-09-01 — found mid-walk when deleting it
+     made $700 of a family's money vanish from the drawer). The delete is a lie twice over: the
+     books understate what the family is owed until the next reconcile, and that reconcile then
+     quietly RECREATES the row at truth — dangerous meanwhile, futile afterwards. "Standalone and
+     manually deletable" predated the reconcile counting these rows; the consolidation ruling
+     supersedes it. The doors that genuinely move this money: raise the dues total, or hand it
+     back from the player's record. */
+  if (credit.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION) {
+    return NextResponse.json(
+      {
+        error: 'This credit follows the schedule and can’t be deleted — it would only reappear at the next change. Hand it back from the player’s record, or raise the dues total.',
+        code: CREDIT_FOLLOWS_SCHEDULE,
       },
       { status: 409 },
     );
