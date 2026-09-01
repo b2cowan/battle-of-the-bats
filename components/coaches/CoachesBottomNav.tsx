@@ -397,7 +397,9 @@ export default function CoachesBottomNav() {
               id="coaches-mob-logout"
             >
               <LogOut size={17} />
-              <span>Logout</span>
+              {/* "Sign out" (was "Logout"), unified 2026-09-01 with the strip menu and the
+                  account page — one name for one action everywhere a customer reads it. */}
+              <span>Sign out</span>
             </button>
           </div>
         )}

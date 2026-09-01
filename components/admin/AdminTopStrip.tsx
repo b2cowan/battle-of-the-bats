@@ -26,10 +26,9 @@
  * role-summary fetch feeding the Workspaces popover.
  */
 
-import Link from 'next/link';
 import { type Dispatch, type SetStateAction } from 'react';
-import { User } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import AccountMenu from '@/components/shared/AccountMenu';
 import BrandLockup from '@/components/shared/BrandLockup';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { useRoleSummary } from '@/lib/use-role-summary';
@@ -70,10 +69,18 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
             panelPlacement="topStrip"
           />
         )}
+        {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan
+            `docs/projects/active/COACH_ACCOUNT_MENU_PLAN.md`): identity, notification
+            settings, feedback, the account pages, sign out. NO theme control here —
+            tournament pages always show the organizer's colors, and a toggle that visibly
+            does nothing where you stand reads as broken. */}
         {!inSandbox && (
-          <Link href="/account" className={styles.iconDoor} aria-label="Account">
-            <User size={17} strokeWidth={1.8} />
-          </Link>
+          <AccountMenu
+            className={styles.iconDoor}
+            settingsHref={
+              currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'
+            }
+          />
         )}
         <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} />
       </div>

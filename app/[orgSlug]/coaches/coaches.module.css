@@ -927,21 +927,8 @@
   font-weight: 600;
 }
 
-/* Sign out — a button styled as a sidebar item, in the danger tone used by the
-   mobile "More" menu and the free-coach shell footer. */
-.sidebarLogout {
-  width: 100%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  color: var(--danger-light);
-}
-.sidebarLogout:hover {
-  background: rgba(var(--danger-rgb), 0.1);
-  color: var(--danger-light);
-}
+/* (.sidebarLogout retired 2026-09-01 — sign out moved into the top strip's account menu;
+   COACH_ACCOUNT_MENU_PLAN.md.) */
 
 /* ⚠ flex-shrink: 0 IS LOAD-BEARING, not tidiness. The rail is a flex column with
    `overflow-y: auto`, and an empty 1px div is a flex item whose automatic minimum size is ZERO —
@@ -8463,7 +8450,6 @@ a.oneChip:hover { border-color: currentColor; }
    rather than preventing. Same reasoning as the --blueprint-light remap: fix the token once, not the
    forty-odd sites. An override here now means a genuine per-theme DIFFERENCE, not a repair. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarItem:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarLogout:hover { background: var(--home-live-soft); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarDivider { background: var(--home-line); }
 
 /* Segmented control (List ⇄ Depth chart, and every other .segChoice toggle): the ratified warm

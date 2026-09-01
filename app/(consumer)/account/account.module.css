@@ -313,3 +313,26 @@
   transition: border-color 0.15s ease;
 }
 .inlineSignOut:disabled { opacity: 0.6; cursor: default; }
+
+/* "← Back to your Coaches Portal / Admin Area" — arrival-from-a-portal return bar
+   (AccountReturnBar, 2026-09-01). Chat's .coachReturn recipe on this surface's tokens;
+   renders only when the strips' account menu supplied a sanitized ?back= path. */
+.returnBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.5rem 1.1rem;
+  border-bottom: 1px solid var(--home-line);
+  color: var(--home-ink-soft);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.returnBar:hover {
+  color: var(--home-ink);
+}

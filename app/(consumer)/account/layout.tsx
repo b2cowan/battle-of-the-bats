@@ -1,6 +1,7 @@
 import { getAuthUserCached } from '@/lib/supabase-server';
 import warm from '@/components/consumer/warmTheme.module.css';
 import AccountRail from './AccountRail';
+import AccountReturnBar from './AccountReturnBar';
 import styles from './account.module.css';
 
 /**
@@ -19,6 +20,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   return (
     <div className={`${warm.warmTab} ${styles.accountFill}`}>
+      {/* Way home for a coach/admin who arrived through the strip's account menu — renders
+          nothing for everyone else (COACH_ACCOUNT_MENU_PLAN.md). */}
+      <AccountReturnBar />
       <div className={styles.settingsCol}>
         <h1 className={styles.desktopTitle}>Account</h1>
         <div className={styles.settingsGrid}>

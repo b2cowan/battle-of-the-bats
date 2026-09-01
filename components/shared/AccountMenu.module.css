@@ -1,0 +1,198 @@
+/**
+ * AccountMenu — popover skin mirrors WorkspacesPill exactly (HUD tokens by default for the
+ * dark admin strip; `.warm` remaps onto the --home-* paper/ink set the warm portal defines
+ * in scope), so the strip's three in-place controls read as one family. Trigger inherits the
+ * host bar's icon-door class; only the button reset lives here.
+ */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 300;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
+  background: var(--hud-surface);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Identity header ── */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem 0.55rem;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 0.15rem;
+}
+
+.avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--logic-lime) 22%, transparent);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.identityMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.identityCap {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.identityValue {
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Theme block (coach strip only) ── */
+.themeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem 0.5rem;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 0.15rem;
+}
+
+.themeSeg {
+  display: flex;
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.themeOpt {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--data-gray);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.themeOptActive {
+  background: color-mix(in srgb, var(--logic-lime) 18%, transparent);
+  color: var(--fl-text);
+}
+
+/* ── Rows ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--fl-text);
+  text-decoration: none;
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.25;
+  transition: background 0.12s ease;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--fl-text) 7%, transparent);
+}
+
+.row svg {
+  flex-shrink: 0;
+  color: var(--data-gray);
+}
+
+.sep {
+  height: 1px;
+  background: var(--border-2);
+  margin: 0.15rem 0;
+}
+
+.signOut,
+.signOut svg {
+  color: var(--danger);
+}
+
+.signOut:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Warm skin — same remap set as WorkspacesPill (plain --home-* reads, no fallbacks:
+   Stage G guarantees the full set under both preferences wherever this renders). ── */
+.warm .popover {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--home-shadow);
+}
+.warm .identity,
+.warm .themeBlock,
+.warm .themeSeg { border-color: var(--home-line-strong); }
+.warm .sep { background: var(--home-line-strong); }
+.warm .identityCap,
+.warm .themeOpt,
+.warm .row svg { color: var(--home-dim); }
+.warm .identityValue,
+.warm .row { color: var(--home-ink); }
+.warm .row:hover { background: var(--home-olive-soft); }
+.warm .avatar {
+  background: var(--home-olive-soft);
+  color: var(--home-ink);
+}
+.warm .themeOptActive {
+  background: var(--home-olive-soft);
+  color: var(--home-ink);
+}
+/* --danger remaps to --home-live under the warm marker, so .signOut needs no warm override. */

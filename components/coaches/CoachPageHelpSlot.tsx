@@ -27,11 +27,13 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * TRUE ON DESKTOP AND FALSE ON A PHONE — stated here because that sentence was this option's
  * original justification and it was only half right.
  *
- * ⚠⚠ **NOT `CoachTopStrip`, AND THAT IS A SETTLED BOUNDARY.** The strip keeps *"only genuine
- * leave-this-place doors (wordmark · account · workspaces)"*, and the CHAT door was removed from it
- * by owner ruling 2026-07-31 for the two faults a "?" would repeat: it is not an exit, and it
- * duplicated a door already reachable at the same width — `CoachesSidebar` carries a `Help` item.
- * Do not re-propose the strip for contextual help.
+ * ⚠⚠ **NOT `CoachTopStrip`, AND THAT IS A SETTLED BOUNDARY.** The strip's controls open in place
+ * (bell panel · account menu · Workspaces popover — the 2026-09-01 account-menu ruling), with real
+ * exits living INSIDE them; the CHAT door was removed from it by owner ruling 2026-07-31 for the
+ * two faults a "?" would repeat: it is not an exit, and it duplicated a door already reachable at
+ * the same width — `CoachesSidebar` carries a `Help` item (reaffirmed 2026-09-01: help stays OUT
+ * of the account menu for the same no-duplicate-doors reason). Do not re-propose the strip for
+ * contextual help.
  *
  * ⚠ **A PAGE WITHOUT A HOST KEEPS DRAWING ITS OWN "?" — the fallback is the default context value,
  * not a branch anyone has to remember.** `hosted` is false everywhere the provider is not mounted

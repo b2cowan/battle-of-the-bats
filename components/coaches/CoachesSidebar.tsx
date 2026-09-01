@@ -2,8 +2,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
-import { signOut } from '@/lib/auth';
+import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
@@ -161,11 +160,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
   const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
   const chatUnread = useChatUnread();
-
-  async function handleSignOut() {
-    await signOut();
-    router.push('/auth/login');
-  }
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
@@ -410,14 +404,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             Admin
           </Link>
         )}
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className={`${styles.sidebarItem} ${styles.sidebarLogout}`}
-        >
-          <LogOut size={14} />
-          Sign out
-        </button>
+        {/* Sign out retired into the top strip's account menu 2026-09-01 (one door per
+            destination — `COACH_ACCOUNT_MENU_PLAN.md`). The phone More sheet keeps its own:
+            the strip doesn't exist below 900px. */}
       </div>
     </nav>
   );

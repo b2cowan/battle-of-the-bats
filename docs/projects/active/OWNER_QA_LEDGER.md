@@ -16307,3 +16307,56 @@ documented) and the shared-tree stylesheet carrying a peer session's verified-sa
 (the actual half of a cross-category fold moves the wrong way) — unattributed, predates today's
 work per that session's checks; this walk's clean 15/15 narrows it to the fold path itself.
 
+---
+
+## §127 · The account button opens in place — ✅ PASSED 2026-09-01 (19/19, all six parts clean, zero defects)
+
+**Walk verdict (owner, 2026-09-01, via the checkable walkthrough artifact):** 19/19 — the menu,
+the theme flip, the round trip, sign-out, the admin side, the wall and the demo all behaved as
+specified. One design question raised in Part 3, answered and settled the same day:
+
+> *"Do we need the return bar if the top right of the screen shows the coaches portal link?"*
+> **Yes — they answer different questions.** The corner door on the account pages is the operator
+> pill, and for a multi-place account (admin + coach — this product's typical buyer) it reads
+> **"Workspaces ▾"**, a chooser, not a Coaches Portal link at all; either form lands at the
+> portal's **front door**. The return bar lands on the **exact page you left** (the errand's whole
+> point), renders only when you actually came from a portal, and the Chat precedent is recorded QA
+> evidence that the corner pill alone did not get first-time coaches home. Both stay.
+
+**What changed.** The avatar in both operator strips (coaches portal + tournament admin) no longer
+ejects you into consumer chrome — it opens a menu in place: who you're signed in as, a Warm/Dark
+appearance flip (coach strip only — tournament pages always show the organizer's colors), Notification
+settings, Send feedback (the shared dialog, opens over the page you're on), Account settings, Sign out.
+The sidebar's bottom "Sign out" is gone (the menu owns it on desktop); the phone More sheet keeps its
+own, relabeled "Logout" → "Sign out". Outbound menu rows carry the way back: the account pages now show
+"← Back to your Coaches Portal / Admin Area" when you arrived from a portal (Chat's A3-QA bar, second
+surface). Sign out lands on the sign-in page. Walls keep the menu minus Send feedback. The coach demo
+sandbox hides the avatar entirely (the admin one already did) — a "Sign out" on the shared demo account
+must never render. Plan: `COACH_ACCOUNT_MENU_PLAN.md`; approved mockup: Claude Artifact "The Account
+Popover".
+
+**The walk** (desktop >900px unless said) — **checkable walkthrough artifact:** Claude Artifact
+"The Account Menu — QA Walk" (fc781936, ticks + notes persist in the browser, Copy results pastes
+back). The steps below are the same walk in prose:
+1. Coach portal, any page → click the avatar. Menu opens over the page; click anywhere outside or Esc
+   closes it; the page under it never moved.
+2. Identity header shows your email. Flip Warm ↔ Dark — instant, no navigation; reload and it held;
+   check another device later (it saves to the account).
+3. Send feedback → the dialog opens over the current page; close it — still on the same page.
+4. Notification settings → lands on the account Notifications pane, your coach org card focused, and
+   a "← Back to your Coaches Portal" bar sits on top. Click it — back on the EXACT page you left.
+5. Account settings → same trip + return bar. (Rail navigation inside /account drops the bar —
+   accepted v1, it matches Chat.)
+6. Sign out → straight to the sign-in page, no confirm. Sign back in.
+7. Sidebar: no "Sign out" at the bottom any more (Help + Admin remain). Phone (<640): More sheet still
+   signs out, now labeled "Sign out".
+8. Admin area: same avatar menu, NO appearance flip, feedback + notification settings + account +
+   sign out present; return bar reads "← Back to your Admin Area".
+9. Walls (billing-suspended / not-assigned): avatar menu present with identity, account, sign out —
+   NO Send feedback row, and no bell (unchanged).
+10. Coach demo sandbox: no avatar in the strip at all (bell and Workspaces per their own rules).
+
+**Verified at build time:** typecheck clean, focused lint clean (one deliberate full-page-navigation
+warning on sign-out, same pattern as the account page's own button), spelling gate green,
+`coach-wall-doors` UAT spec re-targeted to the menu. ⚠ `check:layout` will re-key the avatar
+(link → button on every coach page) on its next baseline run — expected, not a regression.

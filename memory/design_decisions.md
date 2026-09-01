@@ -3,6 +3,28 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 
+### 2026-09-01 — THE ACCOUNT DOOR OPENS IN PLACE — the strips' last eject becomes a menu
+
+**Decision (owner; mockup Artifact "The Account Popover"; plan `COACH_ACCOUNT_MENU_PLAN.md`; QA
+§127):** the avatar in BOTH operator strips opens a popover (identity · Warm/Dark flip · Notification
+settings · Send feedback · Account settings · Sign out) instead of navigating to `/account`. Completes
+the 2026-07-31 chat-door ruling — the account link was the last strip control ejecting into consumer
+chrome, and it had no rescue link.
+
+- **⚖ HELP STAYS OUT OF THE MENU.** The sidebar's Help (with the ReleaseDot) is the one help door;
+  the masthead "?" stays contextual. No-duplicate-doors holds — do not re-add a help row here.
+- **⚖ ONE SIGN-OUT PER SURFACE, LANDING ON THE SIGN-IN PAGE.** The coach sidebar's bottom "Sign out"
+  is DELETED (the menu owns it on desktop); the phone More sheet keeps its own, relabeled
+  "Logout" → **"Sign out"** (one name everywhere). No confirm step. The consumer account page's
+  Discover landing stays — fan-side convention, deliberately not unified.
+- **⚖ THEME FLIP IS COACH-STRIP-ONLY.** Tournament pages always show the organizer's colors; a
+  toggle that visibly does nothing where you stand reads as broken.
+- **⚖ THE WAY BACK RIDES THE ROWS.** Outbound menu rows carry `?back=<here>`; the /account space
+  renders "← Back to your Coaches Portal / Admin Area" (Chat's A3-QA bar, second surface; labels
+  from the one workspace-kind vocabulary).
+- **Walls** keep the menu minus Send feedback (portal function off a wall, as the bell). **The coach
+  demo sandbox hides the avatar entirely** — a Sign out on the SHARED demo account must never render.
+
 ### 2026-09-01 — A BUFFER IS CONFIRMATION EVERYWHERE, NOT JUST ON THE CARD
 
 **Decision (owner, §124 walk catch 10):** the 2026-08-13 ruling — a planned buffer states itself

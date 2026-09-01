@@ -37,9 +37,17 @@ test.describe('R2 — the coach wall renders inside the portal frame', () => {
     await page.waitForTimeout(800);
     // Zone 1: the wordmark is a real door out, as on every other operator surface.
     await expect(page.locator('header a[href="/discover"]').first()).toBeVisible();
-    // Zone 3: the personal door. (The Workspaces pill self-gates at 2+ places, so it is
-    // deliberately NOT asserted here — its absence for a one-place account is correct.)
-    await expect(page.locator('header a[href="/account"]').first()).toBeVisible();
+    // Zone 3: the personal door — a MENU since 2026-09-01 (COACH_ACCOUNT_MENU_PLAN.md):
+    // the account door opens in place; the wall keeps identity + exits inside it (the
+    // /account row and Sign out), minus Send feedback (portal function stays off a wall).
+    // (The Workspaces pill self-gates at 2+ places, so it is deliberately NOT asserted
+    // here — its absence for a one-place account is correct.)
+    const accountDoor = page.locator('header button[aria-label="Account"]').first();
+    await expect(accountDoor).toBeVisible();
+    await accountDoor.click();
+    await expect(page.getByRole('menuitem', { name: /account settings/i })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /sign out/i })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /send feedback/i })).toHaveCount(0);
   });
 
   test('the card offers Home and a working sign-out at every width', async ({ page }) => {
