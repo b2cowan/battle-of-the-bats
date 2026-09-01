@@ -15509,7 +15509,7 @@ sponsorship. Walk step E1's field list republished ("sponsor, notes, …"). ⚠ 
 the walk's other ZZ rows per step F3.
 
 
-## §122 · Guarded deletes for Fundraising — an empty shell goes, money on the books refuses — ✅ PASSED 2026-09-01 (45/45, walked with §125 as one amended walk; every part PASS, zero issues, zero calls)
+## §122 · Guarded deletes for Fundraising — an empty shell goes, money on the books refuses — ✅ PASSED 2026-09-01 (45/45, walked with §125 as one amended walk; every part PASS, zero issues, zero calls) · build committed `c5ef8be6`, walk-driven fixes committed `2d430bad`
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/cf860db9-e202-4274-b572-d5f29284aca0`
 >
@@ -15742,7 +15742,7 @@ and nothing was staged.
 
 ---
 
-## §124 · New money, or money back — the club stops having its mind read — BUILT, awaiting QA
+## §124 · New money, or money back — the club stops having its mind read — BUILT, awaiting QA · committed `2d430bad` 2026-09-01 (carried by the fundraiser-band commit; mig 271 on dev, prod-owed)
 
 **BUILT ON DEV 2026-08-30 · MIGRATION 271 (dev only, prod-owed behind 264 held / 268 / 269 / 270).**
 Plan: `COACH_ORG_MONEY_IN_THE_BUDGET_PLAN.md` (status line stamped) · PM brief beside it · binding
@@ -15874,7 +15874,7 @@ only when you give the word.
 
 ---
 
-## §124 · The dues forms, built — the floor, the grammar, the name and the shape — BUILT, awaiting QA
+## §124 · The dues forms, built — the floor, the grammar, the name and the shape — BUILT, awaiting QA · committed `2d430bad` 2026-09-01 (carried by the fundraiser-band commit)
 
 > ### ✅ WALK IT HERE — `claude.ai/code/artifact/0b7619dc-a4ea-41dc-a9b6-e124bbf0ecc1`
 >
@@ -16030,7 +16030,7 @@ otherwise.
 
 ---
 
-## §125 · A fundraiser opens in place — the drill-in retires — ✅ PASSED 2026-09-01 (inside §122's amended walk: 45/45, parts N and W clean, zero issues)
+## §125 · A fundraiser opens in place — the drill-in retires — ✅ PASSED 2026-09-01 (inside §122's amended walk: 45/45, parts N and W clean, zero issues) · committed `2d430bad` 2026-09-01
 
 > ### ✅ WALKED INSIDE §122's AMENDED WALKTHROUGH — `claude.ai/code/artifact/cf860db9-e202-4274-b572-d5f29284aca0`
 >

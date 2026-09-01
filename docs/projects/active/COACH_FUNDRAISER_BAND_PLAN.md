@@ -1,6 +1,6 @@
 # Coach Money — The Drive Opens In Place (the fundraiser drill-in retires)
 
-**Status:** BUILT ON DEV 2026-08-31 (all phases A–E, same day as planning) · Owner QA **§125** owed —
+**Status:** COMMITTED `2d430bad` 2026-09-01 (dev; not pushed) · BUILT ON DEV 2026-08-31 (all phases A–E, same day as planning) · Owner QA **§125 ✅ PASSED 2026-09-01** —
 walked inside **§122's amended walkthrough** (Artifact `cf860db9-e202-4274-b572-d5f29284aca0`;
 owner direction 2026-08-31: no separate walk — new parts N + W, parts C + D rewritten for the
 band; the standalone `bac0cb60…` walk is superseded) · still owed: `check:layout` reseed+sweep,
