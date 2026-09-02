@@ -16575,7 +16575,7 @@ warning on sign-out, same pattern as the account page's own button), spelling ga
 `coach-wall-doors` UAT spec re-targeted to the menu. ⚠ `check:layout` will re-key the avatar
 (link → button on every coach page) on its next baseline run — expected, not a regression.
 
-## §131 · Money returned to families leaves the Expenses band, + the Headroom tie-out — ✅ PASSED 2026-09-02, 20/20 clean (uncommitted at time of writing)
+## §131 · Money returned to families leaves the Expenses band, + the Headroom tie-out — ✅ PASSED 2026-09-02, 20/20 clean · committed `270b6433` 2026-09-02
 
 **Walkthrough: `claude.ai/code/artifact/7e49e10f-d429-4220-b96b-e5f1fa1a025b`** (19 checks, paste-back)
 · mockup `claude.ai/code/artifact/cc79b9c1-3871-402b-9aea-fcc3ea50a443`
