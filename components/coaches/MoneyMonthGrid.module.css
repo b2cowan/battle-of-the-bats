@@ -162,6 +162,15 @@
    where a basis is explained. */
 
 .lineRow .cellValue { color: var(--text-secondary); }
+
+/* The Season-spending lens's quiet "paid by a family" tag on an item row (D1, G1-approved,
+   2026-09-02) — a caption, never a chip: the row's figures are the point, the word is context. */
+.familyPaidTag {
+  display: block;
+  font-size: var(--type-label);
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
 /* ⚠⚠ THE HIERARCHY WAS INVERTED, AND THIS IS THE FIX (design pass 2026-08-24, owner-approved).
    The two BAND SUBTOTALS were the loudest rows in the table — 0.92rem/800, full-strength ink, a 2px
    cap each — while the RUNNING BALANCE, the figure this whole rebuild exists to deliver and the one

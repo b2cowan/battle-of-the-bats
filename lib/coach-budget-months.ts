@@ -182,6 +182,11 @@ export function revenueGroupLabel(group: RevenueGroupKey, lens: MoneyLens): stri
  * download is the kind of drift nobody notices until a treasurer asks which one is the season.
  */
 export function bandTotalLabel(band: MoneyRowDirection, lens: MoneyLens): string {
+  /* ⚠ THE SEASON-SPENDING BAND CLOSES ON "Total spent" (2026-09-02) — its own note's word, and
+     deliberately NOT "Total expenses": Cash and Season spending sit one menu apart with two
+     different figures, and one label over both is exactly the two-truths confusion the fifth
+     reading exists to end. (Revenue never renders on the spending lens, so only `out` can ask.) */
+  if (lens === 'spending' && band === 'out') return 'Total spent';
   const noun = band === 'in' ? 'revenue' : 'expenses';
   const adjective = lens === 'budget' ? 'Budgeted' : lens === 'scheduled' ? 'Scheduled' : 'Total';
   return `${adjective} ${noun}`;
@@ -1017,7 +1022,10 @@ export function buildCashFlow(
 export function buildBandCashFlow(
   revenue: MonthGrid,
   expenses: MonthGrid,
-  lens: Exclude<MoneyLens, 'difference'>,
+  /* ⚠ NOT `spending` EITHER (2026-09-02): the Season-spending lens is expenses-only by ruling —
+     no revenue band, no balance rows — so a cash flow over it is a question with no answer. The
+     type refuses it rather than a runtime returning plausible nonsense. */
+  lens: Exclude<MoneyLens, 'difference' | 'spending'>,
   cashOnHand: number,
   openingBalance = 0,
   /**
@@ -1061,8 +1069,46 @@ export function buildBandCashFlow(
 
 // ── lenses ───────────────────────────────────────────────────────────────────
 
-/** What a cell shows. One payload serves all four, so flipping a lens never refetches. */
-export type MoneyLens = 'budget' | 'scheduled' | 'actual' | 'difference';
+/**
+ * What a cell shows. One payload serves all five, so flipping a lens never refetches.
+ *
+ * ⚠⚠ `spending` IS THE FIFTH READING (owner D1, Option A, 2026-09-02): the Statement's expense
+ * half by month — a cost counted the day it was incurred, WHOEVER paid it, money back netted into
+ * the row it repaid. It reads the `spendingGrid`, a `buildMonthGrid` pass over the route's
+ * already-flattened statement movements (`actualMovements`, the list the chart sums), so the
+ * monthly table and the Headroom banner finally agree on one screen. Expenses only — no revenue
+ * band, no balance rows, no returned band: a cheque back to a family is settlement, not spending.
+ *
+ * ⚠ `actual` KEPT ITS ID AND CHANGED ITS LABEL — it reads **"Cash"** now (Q1, gate-approved G1).
+ * With two actual-flavoured readings on one menu, "Actual" stopped naming anything. The stored
+ * per-device value `actual` therefore still resolves with no migration, which is the whole reason
+ * the id did not move. The Statement's "Actual" column keeps its name — one basis, unambiguous.
+ */
+export type MoneyLens = 'budget' | 'scheduled' | 'actual' | 'spending' | 'difference';
+
+/**
+ * The Showing menu, in reading order (G1, gate-approved 2026-09-02).
+ *
+ * ⚠ MOVED HERE FROM `MoneyMonthGrid.tsx` with the fifth lens, so the vocabulary is testable under
+ * plain `node --test` and importable by the check scripts. The component re-exports it — every
+ * existing import path still works.
+ */
+export const MONEY_LENSES: Array<{ id: MoneyLens; label: string; short: string }> = [
+  { id: 'budget',     label: 'Budget',          short: 'Budget' },
+  { id: 'scheduled',  label: 'Scheduled',       short: 'Sched.' },
+  { id: 'actual',     label: 'Cash',            short: 'Cash' },
+  { id: 'spending',   label: 'Season spending', short: 'Spending' },
+  { id: 'difference', label: 'Difference',      short: 'Diff.' },
+];
+
+/**
+ * The `MonthCell` field a lens reads. The spending grid stores its figures in `actual` — a second
+ * cell field on every band of the portal's heaviest payload would have been the wrong trade — so
+ * the helpers below translate ONCE, here, rather than each reader remembering the mapping.
+ */
+function lensCellField(lens: Exclude<MoneyLens, 'difference'>): keyof MonthCell {
+  return lens === 'spending' ? 'actual' : lens;
+}
 
 /**
  * Which way a row's money moves — the REVENUE band or the EXPENSES band (Option D, 2026-08-23).
@@ -1092,7 +1138,7 @@ export function lensCell(
   cell: MonthCell, lens: MoneyLens, month: MonthKey, todayMonth: MonthKey,
   direction: MoneyRowDirection = 'out',
 ): number | null {
-  if (lens !== 'difference') return cell[lens];
+  if (lens !== 'difference') return cell[lensCellField(lens)];
   if (!isElapsed(month, todayMonth)) return null;
   return lensDifference(cell, direction);
 }
@@ -1101,7 +1147,7 @@ export function lensCell(
 export function lensTotal(
   total: MonthCell, lens: MoneyLens, direction: MoneyRowDirection = 'out',
 ): number {
-  return lens === 'difference' ? lensDifference(total, direction) : total[lens];
+  return lens === 'difference' ? lensDifference(total, direction) : total[lensCellField(lens)];
 }
 
 /** Plan against reality, signed so that positive is good news on either band — see `MoneyRowDirection`. */
@@ -1121,7 +1167,7 @@ function lensDifference(cell: MonthCell, direction: MoneyRowDirection): number {
  * comparing an undated plan against an undated arrival is not a comparison anyone asked for.
  */
 export function lensUndated(undated: MonthCell, lens: MoneyLens): number {
-  return lens === 'difference' ? undated.budget : undated[lens];
+  return lens === 'difference' ? undated.budget : undated[lensCellField(lens)];
 }
 
 /** Does this lens read the PLAN? */
@@ -1178,7 +1224,7 @@ export function categoryHasFigure(total: MonthCell, lens: MoneyLens): boolean {
   if (lens === 'difference') {
     return Math.abs(total.budget) > 0.005 || Math.abs(total.actual) > 0.005;
   }
-  return Math.abs(total[lens]) > 0.005;
+  return Math.abs(total[lensCellField(lens)]) > 0.005;
 }
 
 /**

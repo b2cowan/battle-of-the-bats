@@ -7,12 +7,12 @@ import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  formatMonthLabel, formatMonthLong,
+  formatMonthLabel, formatMonthLong, MONEY_LENSES,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
 } from '@/lib/coach-budget-months';
-import { fmtCompact } from '@/lib/coach-money-summary';
+import { fmtCompact, fmt as fmtSignedAmount } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import { toggleKey } from '@/lib/toggle-key';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -21,22 +21,15 @@ import styles from './MoneyMonthGrid.module.css';
 export type { MoneyLens };
 
 /**
- * ⚠⚠ THE THREE WORDS MEAN THREE DIFFERENT THINGS, AND SINCE 2026-08-20 THEY FINALLY SAY SO
- * (owner ruling, Payables Rebuild P3): **Budget is the overall plan, Actual is what has already
- * been paid, Scheduled is what the team is currently obligated to pay** — past due included.
+ * The Showing vocabulary LIVES IN THE LIB NOW (`lib/coach-budget-months.ts`, moved 2026-09-02 with
+ * the fifth reading) so it is testable under plain `node --test` and readable by the check
+ * scripts. Re-exported here because every existing consumer imports it from this component.
  *
- * Before the ruling, a Scheduled cell was the plan at FACE VALUE: every installment in its due
- * month whether or not it had been paid, so a month never fell as it was paid down. Two surfaces
- * one tab away meant the remainder by the same word, and the owner read the difference as a defect
- * in the middle of a QA walk. The arithmetic moved (the route drops settled pieces and quotes
- * remainders); these labels did not need to, because they are now true.
+ * The five words and what each means — Budget is the plan, Scheduled is what the team is
+ * currently obligated to pay (past due included), **Cash** (id `actual`) is money that moved,
+ * **Season spending** is what the season spent whoever paid, Difference is plan against spending.
  */
-export const MONEY_LENSES: Array<{ id: MoneyLens; label: string; short: string }> = [
-  { id: 'budget',     label: 'Budget',     short: 'Budget' },
-  { id: 'scheduled',  label: 'Scheduled',  short: 'Sched.' },
-  { id: 'actual',     label: 'Actual',     short: 'Actual' },
-  { id: 'difference', label: 'Difference', short: 'Diff.' },
-];
+export { MONEY_LENSES };
 
 export interface CellDetailItem {
   id: string;
@@ -114,6 +107,25 @@ export interface MonthGridPayload {
    * ⚠ IT IS STILL SUBTRACTED BY THE CLOSING BALANCE — it left `Total expenses`, not the season.
    */
   returnedGrid: MonthGrid;
+  /**
+   * The SEASON-SPENDING band (owner D1, 2026-09-02) — the Statement's expense half by month:
+   * `buildMonthGrid` over the route's already-flattened statement movements, on the same month
+   * domain and the same plan rows as the expenses band. Its `actual` cells hold spending (a cost
+   * the day it was incurred, whoever paid; money back netted in as negatives), so its grand total
+   * IS `totalActual` — the Headroom banner's "spent" — to the cent, guarded by
+   * `check:money-report`.
+   *
+   * ⚠ IT ALSO FEEDS **DIFFERENCE** (Q3, ruled 2026-09-02): plan against SPENDING, which is what
+   * makes that lens finally tie to Headroom and the Statement's variance column exactly.
+   */
+  spendingGrid: MonthGrid;
+  /**
+   * The rows of the spending band holding at least one family-paid movement (`<catKey>|<itemId>`),
+   * so the row can carry its quiet "paid by a family" tag (G1-approved). Sent as ids rather than
+   * a flag on every cell: the fact is per-row, and the heaviest payload in the portal does not
+   * need it twelve more times per row.
+   */
+  spendingFamilyPaidRows: string[];
   cellDetails: Record<string, CellDetailItem[]>;
   /**
    * Today's real money.
@@ -231,7 +243,18 @@ export default function MoneyMonthGrid({
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
-  const { monthGrid: grid, revenueGrid, returnedGrid, cellDetails, cashOnHand, todayMonth } = data;
+  const { monthGrid: grid, revenueGrid, returnedGrid, spendingGrid, cellDetails, cashOnHand, todayMonth } = data;
+  /* ⚠⚠ WHICH GRID THE EXPENSES BAND READS IS THE LENS'S CALL (D1 + Q3, 2026-09-02). Cash reads the
+     cash grid; **Season spending and Difference read the spending grid** — same plan rows, same
+     month domain, but the `actual` cells hold the Statement's movements, which is what makes
+     Difference tie to Headroom. Budget and Scheduled keep the cash grid (their fields are
+     identical across the two by construction — same lines, same scheduled feed). */
+  const expensesBand = lens === 'spending' || lens === 'difference' ? spendingGrid : grid;
+  /** The Season-spending lens is EXPENSES ONLY (owner D1): a cheque back to a family is
+   *  settlement, not spending, and revenue is the other half of a question this lens is not
+   *  answering. No revenue band, no returned band, no balance rows. */
+  const spendingOnly = lens === 'spending';
+  const familyPaidRows = useMemo(() => new Set(data.spendingFamilyPaidRows), [data.spendingFamilyPaidRows]);
   /* ⚠ THE BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
      a family money back gets no heading, no row and no subtotal — three rows of nothing on the
      narrowest table in the portal. `categoryHasFigure` is the same predicate the revenue band and
@@ -292,8 +315,12 @@ export default function MoneyMonthGrid({
      and nowhere a coach can see it. */
   /* ⚠ THE RETURNED BAND IS IN THE LIST even though a cheque always has a day. The column's rule is
      "it appears only where it can hold something", enforced on the FIGURE — asking every band is
-     what keeps that true if a future kind of return ever arrives undated. */
-  const showUndated = hasUndated([revenueGrid, grid, returnedGrid], lens);
+     what keeps that true if a future kind of return ever arrives undated.
+     ⚠ ON SEASON SPENDING only its own band answers: the others do not render there, and a column
+     held open by a band the coach cannot see would be a header over nothing. */
+  const showUndated = spendingOnly
+    ? hasUndated([spendingGrid], lens)
+    : hasUndated([revenueGrid, expensesBand, returnedGrid], lens);
 
   /* ══ The season's net and its running balance ═════════════════════════════════════════════════
      ⚠⚠ BOTH SIDES COME FROM THE BANDS ON SCREEN, which is the Option D ruling made arithmetic
@@ -310,8 +337,10 @@ export default function MoneyMonthGrid({
   /* ⚠⚠ THE RETURNED BAND IS PASSED IN, NOT ADDED HERE. It left `Total expenses` and did not leave
      the season — every cheque written to a family is still money out of the account. The helper
      owns that subtraction so this screen and the export cannot answer differently. */
+  /* ⚠ NO BALANCE ROWS ON DIFFERENCE — and none on SEASON SPENDING either (owner D1): that lens is
+     the Statement's expense half, and a balance over half a statement would be an invented figure. */
   const cash = useMemo(
-    () => (lens === 'difference'
+    () => (lens === 'difference' || lens === 'spending'
       ? null
       : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0, returnedGrid)),
     [grid, revenueGrid, returnedGrid, lens, cashOnHand, opening]);
@@ -332,7 +361,7 @@ export default function MoneyMonthGrid({
   /* ⚠ NO PAYOUT EXCEPTION HERE ANY MORE (2026-09-02). This filter used to carry "…unless it is the
      payouts group", which was the band's Actual-only rule living inside another band's row list.
      The payouts are their own band now and answer that question for themselves. */
-  const visibleExpenses = grid.categories;
+  const visibleExpenses = expensesBand.categories;
   /** The returned band's own rows — the one group inside it, when it has money under this lens. */
   const visibleReturned = useMemo(
     () => returnedGrid.categories.filter(c => categoryHasFigure(c.total, lens)),
@@ -347,7 +376,7 @@ export default function MoneyMonthGrid({
    * the same records read at two grains — so an item panel narrows the category's list by `row`
    * rather than reading a second map. There is no second map to disagree with.
    */
-  function cellItems(kind: 'actual' | 'scheduled', categoryKey: string, when: string, row?: string) {
+  function cellItems(kind: 'actual' | 'scheduled' | 'spending', categoryKey: string, when: string, row?: string) {
     const all = cellDetails[`${kind}|${categoryKey}|${when}`] ?? [];
     return row ? all.filter(i => i.row === row) : all;
   }
@@ -365,10 +394,12 @@ export default function MoneyMonthGrid({
   /** A cell belongs either to a whole group's month or to ONE row within it. */
   type PanelRow = { key: string; subject: PanelSubject } | null;
 
-  function openDetail(kind: 'actual' | 'scheduled', cat: PanelCategory, when: string, row: PanelRow) {
+  function openDetail(kind: 'actual' | 'scheduled' | 'spending', cat: PanelCategory, when: string, row: PanelRow) {
     const items = cellItems(kind, cat.categoryKey, when, row?.key);
     if (items.length === 0) return;
-    const spec = cellPanelSpec({ group: cat.group, payout: cat.payout }, kind, row?.subject ?? null);
+    /* ⚠ A SPENDING cell's panel takes the ACTUAL spec — same words, same one Ledger door: the
+       records behind it are the statement's own costs and refunds, and Transactions is their book. */
+    const spec = cellPanelSpec({ group: cat.group, payout: cat.payout }, kind === 'spending' ? 'actual' : kind, row?.subject ?? null);
     /* A GROUP's panel names each record's own row; a row's panel does not, because its title
        already did. Built from the band this category belongs to, so a family removed from the
        roster mid-season still resolves through the row her money left behind. */
@@ -382,7 +413,7 @@ export default function MoneyMonthGrid({
          name is expected to come from here, so an empty map reads as "these records have nothing
          to say for themselves" rather than as a broken lookup. The panel still opened, still
          totalled correctly, and simply stopped saying who the money went to. */
-      const band = cat.group ? revenueGrid : cat.payout ? returnedGrid : grid;
+      const band = cat.group ? revenueGrid : cat.payout ? returnedGrid : expensesBand;
       const owner = band.categories.find(c => c.categoryKey === cat.categoryKey);
       for (const line of owner?.lines ?? []) subjects[line.id] = line.description;
     }
@@ -406,7 +437,8 @@ export default function MoneyMonthGrid({
    * control that looked live and silently did nothing.
    */
   function drill(cat: PanelCategory, when: string, row: PanelRow) {
-    if (lens !== 'actual' && lens !== 'scheduled') return {};
+    // Spending cells open too (D1) — their records live under the `spending|…` keyspace.
+    if (lens !== 'actual' && lens !== 'scheduled' && lens !== 'spending') return {};
     if (cellItems(lens, cat.categoryKey, when, row?.key).length === 0) return {};
     const who = row?.subject.name ?? cat.label;
     return {
@@ -632,6 +664,12 @@ export default function MoneyMonthGrid({
             <tr key={line.id} className={styles.lineRow}>
               <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
                 <span className={shared.wrap640}>{line.description}</span>
+                {/* The quiet family-paid tag (D1, G1-approved): on Season spending a fronted cost
+                    sits in its category and month like any other — this word is how the row says
+                    so without a chip or a second figure. */}
+                {lens === 'spending' && familyPaidRows.has(line.id) && (
+                  <span className={styles.familyPaidTag}>paid by a family</span>
+                )}
               </th>
               {showUndated && (
                 <td className={`${styles.num} ${styles.undated}`}>
@@ -702,14 +740,24 @@ export default function MoneyMonthGrid({
           <tbody>
             {/* ⚠⚠ TWO BANDS, ONE TABLE — the season's cash statement (owner ruling 2026-08-23).
                 Revenue first because that is the order a statement is read and the order the
-                arithmetic runs: what came in, what went out, what is left. */}
-            {bandHeading('in', 'Revenue')}
-            {visibleRevenue.map(cat => renderCategory(cat, 'in'))}
-            {bandTotal('in', revenueGrid)}
+                arithmetic runs: what came in, what went out, what is left.
+                ⚠ EXCEPT ON SEASON SPENDING (owner D1, 2026-09-02), which is ONE band — the
+                Statement's expense half by month. No revenue, no returned band, no balances:
+                the lens answers "what did the season spend?", and nothing else may ride along. */}
+            {!spendingOnly && (
+              <>
+                {bandHeading('in', 'Revenue')}
+                {visibleRevenue.map(cat => renderCategory(cat, 'in'))}
+                {bandTotal('in', revenueGrid)}
+              </>
+            )}
 
-            {bandHeading('out', 'Expenses')}
+            {/* On the spending lens the lone band takes the lens's own name — a heading reading
+                "Expenses" over a total reading "Total spent" would be two vocabularies one inch
+                apart. */}
+            {bandHeading('out', spendingOnly ? 'Season spending' : 'Expenses')}
             {visibleExpenses.map(cat => renderCategory(cat, 'out'))}
-            {bandTotal('out', grid)}
+            {bandTotal('out', expensesBand)}
 
             {/* ⚠⚠ THE THIRD BAND — money returned to families (owner ruling 2026-09-02). It reads
                 as a band rather than a row at the foot of Expenses because it is not spending: a
@@ -876,14 +924,24 @@ export default function MoneyMonthGrid({
             sentences described the arrangement this change ended. Leaving either would have been the
             demo-drift failure happening on the product itself: every figure right, the sentence
             underneath quietly false. */}
+        {/* ⚠⚠ THE THREE REWRITTEN BASIS NOTES ARE THE G1 GATE MOCKUP'S, VERBATIM (approved
+            2026-09-02) — each shows only under its own reading. */}
         {lens === 'actual' && (
           <p className={styles.note}>
-            <strong>Actual is cash.</strong> Revenue is every dollar that arrived — dues, fundraising and
-            sponsor money received, income and money back you recorded, and anything the club sent.{' '}
-            <strong>Expenses are what you paid vendors</strong> — bills paid and payments to the club. A
-            cost a <strong>family paid a vendor directly</strong> is season spending on the Statement but
-            isn’t here, because no team cash moved. Money you hand back to a family is your cash, but
-            it isn’t spending, so it has its own band below.
+            <strong>Cash is money that moved.</strong> Revenue is every dollar that arrived — dues,
+            fundraising and sponsor money received, income and money back you recorded, and anything
+            the club sent. <strong>Expenses are what you paid vendors.</strong> A cost a{' '}
+            <strong>family paid a vendor directly</strong> is season spending, not cash — flip to{' '}
+            <strong>Season spending</strong> to see it. Money you hand back to a family is your cash,
+            but it isn’t spending, so it has its own band below.
+          </p>
+        )}
+        {lens === 'spending' && (
+          <p className={styles.note}>
+            <strong>Season spending is what the season spent</strong> — the Statement, month by month.
+            A cost counts the day it happened, <strong>whoever paid it</strong>; a family-paid cost is
+            here, tagged. Money back subtracts from the cost it repaid. Cheques you write back to
+            families aren’t spending — flip to <strong>Cash</strong> for what your money did.
           </p>
         )}
         {/* ⚠ THE CARRY EXPLAINS ITSELF WHERE THERE IS ROOM FOR A SENTENCE — see the note on the
@@ -924,12 +982,14 @@ export default function MoneyMonthGrid({
             {showUndated && ` ${fmt(lensUndated(grid.totals.undated, lens) + lensUndated(revenueGrid.totals.undated, lens))} with no date yet is in the Total and in no month.`}
           </p>
         )}
+        {/* ⚠ REWRITTEN FOR Q3 (ruled 2026-09-02): Difference compares plan against SPENDING now,
+            which is why it can finally claim Headroom by name. The G1 mockup's copy, verbatim. */}
         {lens === 'difference' && (
           <p className={styles.note}>
-            <strong>Difference is plan against reality</strong>, for months that have already happened.
-            A positive figure is good news on both bands: revenue that <strong>came in ahead</strong>, or
-            spending that came in <strong>under</strong>. A month still ahead shows “—” — money nobody has
-            spent yet isn’t a saving, and dues nobody owes yet aren’t late.
+            <strong>Difference is your plan against what the season spent</strong>, for months that
+            have already happened — it matches Headroom exactly. A positive figure is good news on
+            both bands: revenue that <strong>came in ahead</strong>, or spending that came in{' '}
+            <strong>under</strong>. A month still ahead shows “—”.
           </p>
         )}
         {/* ⚠⚠ THIS NOTE USED TO SAY THE OPPOSITE, and it was the THIRD copy of one stale claim
@@ -937,9 +997,9 @@ export default function MoneyMonthGrid({
             logic, and here in front of the coach. Spending now lands on the item row it names — so
             the line telling a coach to expect a dash was the last thing still asserting the old
             behaviour, and the most expensive, because a reader believes it. */}
-        {(lens === 'actual' || lens === 'scheduled') && (
+        {(lens === 'actual' || lens === 'scheduled' || lens === 'spending') && (
           <p className={styles.note}>
-            {lens === 'actual' ? 'Spending' : 'A bill'} sits on the <strong>item</strong> it names, so a
+            {lens === 'scheduled' ? 'A bill' : 'Spending'} sits on the <strong>item</strong> it names, so a
             category is what its rows add up to. Money recorded without an item sits on that
             category’s <strong>Not itemized</strong> row. Tap a <strong>category’s</strong> figure to see
             what makes it up.
@@ -957,10 +1017,11 @@ export default function MoneyMonthGrid({
             band is named as the third thing the reader can see rather than as an adjustment. */}
         {lens === 'actual' && (
           <p className={styles.note}>
-            Total expenses here can differ from the <strong>Statement</strong>’s: this view leaves out
-            costs a family paid a vendor directly, and shows money back as revenue instead of
-            subtracting it from the cost it repaid. Money you return to families is in its own band —
-            counted in your balance, never in Total expenses.
+            Total expenses here can differ from the <strong>Statement</strong>’s and{' '}
+            <strong>Season spending</strong>’s: this view leaves out costs a family paid a vendor
+            directly, and shows money back as revenue instead of subtracting it from the cost it
+            repaid. Money you return to families is in its own band — counted in your balance, never
+            in Total expenses.
           </p>
         )}
         {grid.truncated && (
@@ -1025,7 +1086,11 @@ export default function MoneyMonthGrid({
                         answers the question is how a meta line stops being read. */}
                     <span className={styles.detailMeta}>{lines.meta}</span>
                   </span>
-                  <span className={styles.detailAmt}>{fmt(item.amount)}</span>
+                  {/* ⚠ THE ACCOUNTING BRACKETS, not `fmt` — a spending cell's panel lists the
+                      refund that netted into it as a NEGATIVE line, and the local formatter's
+                      stripped sign would have printed money coming back as money spent
+                      (2026-09-02, with the spending lens). Positive amounts render unchanged. */}
+                  <span className={styles.detailAmt}>{fmtSignedAmount(item.amount)}</span>
                 </li>
                 );
               })}
@@ -1033,7 +1098,7 @@ export default function MoneyMonthGrid({
                 {/* ⚠ "Possible", NEVER "Total", on a pledge or a pending ask — the one word that
                     stops a coach banking money nobody has agreed to send. `cellPanelSpec` owns it. */}
                 <span>{detail.totalLabel}</span>
-                <span className={styles.detailAmt}>{fmt(detail.items.reduce((s, i) => s + i.amount, 0))}</span>
+                <span className={styles.detailAmt}>{fmtSignedAmount(Math.round(detail.items.reduce((s, i) => s + i.amount, 0) * 100) / 100)}</span>
               </li>
             </ul>
             <div className={shared.modalFooter}>

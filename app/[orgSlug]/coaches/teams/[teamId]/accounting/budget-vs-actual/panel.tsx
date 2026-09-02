@@ -763,8 +763,12 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
  * row disagrees with the row above it is worse than no bridge — it looks like a proof.
  */
 function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
-  /* Budget and Scheduled have no actual in them, so there is nothing to reconcile. */
-  if (lens !== 'actual' && lens !== 'difference') return null;
+  /* ⚠⚠ CASH ONLY, SINCE Q3 (ruled 2026-09-02). The Difference half of this tie-out RETIRED with
+     the lens's move to the spending basis: Difference now reads plan − spending, so it lands on
+     Headroom exactly and there is nothing left to reconcile — its basis note says so instead.
+     Season spending never needed one (it IS the headroom figure), and Budget and Scheduled have
+     no actual in them. What remains is the one genuine gap: Cash against what the season spent. */
+  if (lens !== 'actual') return null;
 
   const r2 = (n: number) => Math.round(n * 100) / 100;
   const { familyPaid, moneyBack } = cashAdjustments(data);
@@ -775,43 +779,30 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
      announcing "no difference" is furniture on the narrowest screen in the portal. */
   if (Math.abs(delta) < 0.005) return null;
 
-  const difference = lens === 'difference';
-  /* Signed for the direction of travel: Difference walks cash → spend upward (Headroom is the
-     larger, kinder figure), Actual walks it downward. One list, one sign flip. */
-  const sign = difference ? 1 : -1;
+  /* Cash walks DOWN to the spending figure: Headroom's total is the smaller of the two here. */
   const lines = [
-    { key: 'back', label: 'money back, counted here as arriving', amount: r2(sign * moneyBack), subs: [] as Array<{ id: string; label: string; amount: number }> },
+    { key: 'back', label: 'money back, counted here as arriving', amount: r2(-moneyBack), subs: [] as Array<{ id: string; label: string; amount: number }> },
     {
       key: 'family',
       label: 'costs a family paid the vendor',
-      amount: r2(-sign * familyPaid),
+      amount: familyPaid,
       // The same dated line the Statement's bridge prints — one spelling (see `familyPaidSub`).
       subs: data.familyPaidCosts.map(familyPaidSub),
     },
   ].filter(l => Math.abs(l.amount) > 0.005);
-
-  const openingLabel = difference ? 'Total expenses, plan against reality' : 'Expenses — what you paid vendors';
-  const opening = difference
-    ? lensTotal(data.monthGrid.totals.total, 'difference', 'out')
-    : data.monthGrid.totals.total.actual;
 
   return (
     <details className={styles.bridge}>
       <summary className={styles.bridgeSummary}>
         <ChevronRight size={13} className={styles.bridgeChev} aria-hidden />
         <span>
-          {difference ? (
-            <>Headroom says <strong>{fmtVariance(data.headroom)}</strong>{' '}
-              {data.headroom >= 0 ? 'under budget' : 'over budget'} — why the difference?</>
-          ) : (
-            <>Headroom counts <strong>{fmt(data.totalActual)}</strong> spent — why the difference?</>
-          )}
+          Headroom counts <strong>{fmt(data.totalActual)}</strong> spent — why the difference?
         </span>
       </summary>
       <div className={styles.bridgeBody}>
         <dl className={styles.bridgeList}>
           <div className={styles.bridgeRow}>
-            <dt>{openingLabel}</dt><dd>{difference ? fmtVariance(opening) : fmt(opening)}</dd>
+            <dt>Expenses — what you paid vendors</dt><dd>{fmt(data.monthGrid.totals.total.actual)}</dd>
           </div>
           {lines.map(l => (
             <Fragment key={l.key}>
@@ -827,9 +818,7 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
             </Fragment>
           ))}
           <div className={`${styles.bridgeRow} ${styles.bridgeOut}`}>
-            {difference
-              ? <><dt>Headroom — plan against what the season spent</dt><dd>{fmtVariance(data.headroom)}</dd></>
-              : <><dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd></>}
+            <dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd>
           </div>
         </dl>
       </div>
@@ -983,14 +972,23 @@ export function BudgetVsActualPanel({
   // The export always matches what is on screen. In the Months view that means the month grid
   // in the SELECTED lens, with the months as columns — the same shape the import template will
   // take, so today's export is tomorrow's import.
+  /** Which grid the EXPENSES band reads under this lens — the screen's own rule (D1 + Q3):
+   *  Season spending and Difference read the spending grid; everything else the cash grid. */
+  function exportExpensesBand(): MonthGrid {
+    return lens === 'spending' || lens === 'difference' ? data!.spendingGrid : data!.monthGrid;
+  }
+
   function monthExportColumns(): ExportColumnDef[] {
     const g = data!.monthGrid;
     const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
     /* ⚠ THE SCREEN'S OWN PREDICATE, not a second spelling of it (`/simplify`, 2026-08-23 — the two
        had already drifted apart near the rounding threshold). A column of blanks in a spreadsheet is
        worse than on a screen, because the file outlives the session and nothing explains it — but so
-       is silently dropping a pledge the coach could see. */
-    if (hasUndated([data!.revenueGrid, g, data!.returnedGrid], lens)) {
+       is silently dropping a pledge the coach could see. Per band, per lens, as the screen asks. */
+    const undatedBands = lens === 'spending'
+      ? [data!.spendingGrid]
+      : [data!.revenueGrid, exportExpensesBand(), data!.returnedGrid];
+    if (hasUndated(undatedBands, lens)) {
       cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
     }
     /* ⚠⚠ EVERY MONTH, NEVER THE WINDOW. The grid shows twelve at a time (owner ruling
@@ -1020,7 +1018,9 @@ export function BudgetVsActualPanel({
     rows: Array<Record<string, string | number>>;
     kinds: Array<MoneyRowKind | undefined>;
   } {
-    const g = data!.monthGrid;
+    /* ⚠ THE SCREEN'S OWN BAND SELECTION (D1 + Q3, 2026-09-02): under Season spending and
+       Difference the expenses rows come from the spending grid, exactly as rendered. */
+    const g = exportExpensesBand();
     const rev = data!.revenueGrid;
     const returned = data!.returnedGrid;
     const { todayMonth, cashOnHand } = data!;
@@ -1050,10 +1050,11 @@ export function BudgetVsActualPanel({
 
     function band(
       grid: MonthGrid, dir: MoneyRowDirection, categories: MonthGrid['categories'],
-      /** The heading, when it is not simply the direction's — the returned band (2026-09-02). */
-      heading?: string,
+      /** The heading and closing label, when they are not simply the direction's — the returned
+       *  band, and the spending lens's lone band (2026-09-02). */
+      opts: { heading?: string; totalLabel?: string } = {},
     ) {
-      push({ item: heading ?? (dir === 'in' ? 'REVENUE' : 'EXPENSES') }, 'section');
+      push({ item: opts.heading ?? (dir === 'in' ? 'REVENUE' : 'EXPENSES') }, 'section');
       for (const cat of categories) {
         const group = dir === 'in' ? revenueGroupOf(cat.categoryKey) : null;
         push(moneyRow(
@@ -1081,29 +1082,38 @@ export function BudgetVsActualPanel({
         }
       }
       push(moneyRow(
-        heading ? RETURNED_TOTAL_LABEL : bandTotalLabel(dir, lens),
+        opts.totalLabel ?? bandTotalLabel(dir, lens),
         grid.totals.cells, grid.totals.total, grid.totals.undated, dir),
         'total');
     }
 
     /* ⚠ THE SAME PER-LENS FILTER THE SCREEN APPLIES to revenue groups — literally the same
        function. A file listing "Sponsor pledges — blank" under Actual would be a row the screen
-       never showed, and a reader has no way to tell an empty row from a missing one. */
-    band(rev, 'in', rev.categories.filter(c => categoryHasFigure(c.total, lens)));
+       never showed, and a reader has no way to tell an empty row from a missing one.
+       ⚠ NO REVENUE BAND AT ALL ON SEASON SPENDING (D1): that lens is the Statement's expense
+       half, one band, and the file reads as the screen does. */
+    if (lens !== 'spending') {
+      band(rev, 'in', rev.categories.filter(c => categoryHasFigure(c.total, lens)));
+    }
     /* ⚠ NO PAYOUT EXCEPTION HERE ANY MORE (2026-09-02). Every category in this band is a real
        budget category now, and a category the coach planned for stays in the file whether or not
        this lens has anything in it — its emptiness is itself the answer. */
-    band(g, 'out', g.categories);
+    band(g, 'out', g.categories,
+      lens === 'spending' ? { heading: 'SEASON SPENDING' } : {});
     /* ⚠⚠ THE RETURNED BAND — ACTUAL ONLY, AND ONLY WHERE IT HAS SOMETHING TO SAY, which is exactly
        the rule the screen applies. A file carrying a band the screen never showed leaves a reader
        unable to tell an empty band from a missing one, and this file outlives the session. */
     const returnedCats = lens === 'actual'
       ? returned.categories.filter(c => categoryHasFigure(c.total, lens))
       : [];
-    if (returnedCats.length > 0) band(returned, 'out', returnedCats, RETURNED_BAND_LABEL.toUpperCase());
+    if (returnedCats.length > 0) {
+      band(returned, 'out', returnedCats,
+        { heading: RETURNED_BAND_LABEL.toUpperCase(), totalLabel: RETURNED_TOTAL_LABEL });
+    }
 
     // The three summary rows, off the same assembly the screen runs — see `buildBandCashFlow`.
-    if (lens !== 'difference') {
+    // ⚠ Not on Difference, and not on Season spending either (D1: no balance rows there).
+    if (lens !== 'difference' && lens !== 'spending') {
       /* ⚠ THE RETURNED BAND IS PASSED, NOT ADDED. It left `Total expenses` and did not leave the
          season; the helper owns that subtraction so the file and the screen cannot differ. */
       const flow = buildBandCashFlow(rev, g, lens, cashOnHand, opening ?? 0, returned);

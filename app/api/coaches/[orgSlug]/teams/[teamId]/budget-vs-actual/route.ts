@@ -882,7 +882,7 @@ export const GET = withObservability(async (req: Request,
      `'uncategorized'`, so the cell's drill-in resolved to an empty list and the cell rendered as
      un-clickable. Silent, and only ever wrong for the one bucket nobody seeds. */
   function pushDetail(
-    kind: 'actual' | 'scheduled',
+    kind: 'actual' | 'scheduled' | 'spending',
     category: { categoryId: string | null; categoryName: string },
     date: string | null,
     item: {
@@ -1396,6 +1396,11 @@ export const GET = withObservability(async (req: Request,
       ...revenueBudgets.map(e => e.date),
       ...revenueScheduled.map(e => e.date),
       ...cashStrip.dates,
+      /* ⚠ THE SPENDING BAND'S OWN DAYS (D1, 2026-09-02). Almost every statement movement's day is
+         already above through cash or the plan — except a FAMILY-PAID payment, which the strip
+         deliberately excludes from its dates. Without this line a cost fronted in a month with no
+         other activity would fall silently into the spending band's undated bucket. */
+      ...actualMovements.map(mv => mv.date),
     ],
     todayMonth,
   );
@@ -1427,6 +1432,56 @@ export const GET = withObservability(async (req: Request,
     actuals: returnedActuals,
     scheduled: [],
     todayMonth,
+    months: gridMonths,
+    truncated: gridTruncated,
+  });
+
+  /* ══ THE SEASON-SPENDING BAND (owner D1, Option A, 2026-09-02) ═══════════════════════════════
+     ⚠⚠ A FOURTH `buildMonthGrid` PASS OVER THE STATEMENT'S OWN MOVEMENTS — `actualMovements`,
+     step 7, the list the chart sums — and NEVER a second walk of the raw rows. That is the whole
+     point of the one-arithmetic consolidation: the fifth reading is a new reader of the existing
+     list, so its grand total IS `totalActual` (the Headroom banner's "spent") by construction,
+     and `check:money-report` holds the identity anyway. Money back rides in as the statement's
+     own negative movements, so a repaid cost nets inside its row — bracketed cells, one row.
+
+     ⚠ SAME PLAN ROWS, SAME MONTH DOMAIN as the cash band. The plan cells being identical across
+     the two grids is what lets the DIFFERENCE lens read THIS grid (Q3, ruled: plan against
+     SPENDING) while Budget keeps reading the cash grid — one plan, one spelling, two readers.
+
+     ⚠ `scheduled: []` — the forward view belongs to the Scheduled lens on the cash grid; a
+     spending grid holding a copy would be the same figure twice, free to drift. */
+  const familyPaidIds = new Set(cashStrip.excluded.map(e => e.id));
+  const spendingFamilyPaidRows = new Set<string>();
+  const spendingActuals: CategoryEvent[] = actualMovements.map(mv => ({
+    ...mv.category, itemId: mv.itemId, date: mv.date, amount: mv.amount,
+  }));
+  for (const mv of actualMovements) {
+    /* ⚠ THE FAMILY-PAID FACT FINALLY TRAVELS (D1). It has always existed per payment
+       (`effectivePayerId`, carried by the cash strip's exclusion list); the statement's movement
+       list dropped it, so no reader could tag the row. Matched by id — `paidMovements` and the
+       strip stamp the same `<expenseId>-payment-<paymentId>` shape on the same records. */
+    const familyPaid = familyPaidIds.has(mv.id);
+    if (familyPaid) {
+      spendingFamilyPaidRows.add(
+        `${categoryKey(mv.category.categoryId, mv.category.categoryName)}|${mv.itemId ?? 'no-item'}`);
+    }
+    pushDetail('spending', mv.category, mv.date, {
+      id: mv.id,
+      itemId: mv.itemId,
+      description: mv.description,
+      amount: mv.amount,
+      /* The one thing a spending record needs said beyond its words and its day. A refund's own
+         description already ends "— money back", and "paid"/"unpaid" would be noise on a list
+         that is by definition settled. */
+      ...(familyPaid ? { note: 'paid by a family' } : {}),
+    });
+  }
+  const spendingGrid = buildMonthGrid({
+    lines: gridLines,
+    actuals: spendingActuals,
+    scheduled: [],
+    todayMonth,
+    bufferAmount: buffer,
     months: gridMonths,
     truncated: gridTruncated,
   });
@@ -1583,6 +1638,13 @@ export const GET = withObservability(async (req: Request,
     monthGrid,
     revenueGrid,
     returnedGrid,
+    /* ⚠⚠ AND SINCE 2026-09-02 A FOURTH: the SEASON-SPENDING band (owner D1) — the statement's
+       expense half by month, summed off `actualMovements`. Its grand total equals `totalActual`
+       by construction; `check:money-report` refuses a payload where it does not. The DIFFERENCE
+       lens reads this grid too (Q3: plan against spending), which is what ties it to `headroom`. */
+    spendingGrid,
+    /** The spending rows holding a family-paid movement, so the screen can tag them (D1). */
+    spendingFamilyPaidRows: [...spendingFamilyPaidRows],
     cellDetails,
     /* ⚠⚠ THE MONTH-BY-MONTH CASH MAPS, SHIPPED FOR THE GUARD (`check:money-report` claim 5) rather
        than for the screen, which reads the bands. They are the strip's own bucketing before the

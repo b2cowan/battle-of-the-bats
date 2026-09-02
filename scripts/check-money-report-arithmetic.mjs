@@ -206,6 +206,18 @@ async function main() {
     process.exit(1);
   }
   const returned = data.returnedGrid;
+  /* ⚠⚠ THE SPENDING BAND (owner D1, 2026-09-02) — the fifth reading, and REPORT-basis: a fourth
+     `buildMonthGrid` pass over the statement's own flattened movements. Absent is a FAILURE for
+     the same reason as the returned band above: every claim on it would otherwise resolve to a
+     silent zero while the screen renders a lens this payload no longer feeds. */
+  if (data.spendingGrid === undefined || data.spendingGrid?.totals?.total === undefined) {
+    console.error('\n✗ THE REPORT NO LONGER CARRIES THE SEASON-SPENDING BAND.');
+    console.error('  spendingGrid is absent from the payload (owner D1, 2026-09-02). The Season');
+    console.error('  spending and Difference lenses read it; a payload without it renders a lens');
+    console.error('  over nothing, and the claims below would silently assume zero.\n');
+    process.exit(1);
+  }
+  const spending = data.spendingGrid;
   /** Cash out is the two bands together — the identity every claim below depends on. */
   const cashOutCell = i => cents(grid.totals?.cells?.[i]?.actual) + cents(returned.totals?.cells?.[i]?.actual);
   const cashOutTotal = () => cents(grid.totals?.total?.actual) + cents(returned.totals?.total?.actual);
@@ -240,7 +252,7 @@ async function main() {
   /* ⚠ THE RETURNED BAND IS NAMED ON EVERY RUN, not only when it has something in it. This file's own
      principle is that a claim nobody can see reads like one that did not happen — and this band is
      the newest place a cash claim can silently lose money, so "0 row(s)" is information. */
-  console.log(`  bands             : ${revenue.categories?.length ?? 0} revenue group(s), ${grid.categories?.length ?? 0} expense category(ies), ${returned.categories?.length ?? 0} returned-to-families group(s)`);
+  console.log(`  bands             : ${revenue.categories?.length ?? 0} revenue group(s), ${grid.categories?.length ?? 0} expense category(ies), ${returned.categories?.length ?? 0} returned-to-families group(s), ${spending.categories?.length ?? 0} spending category(ies)`);
   console.log(`  money back        : ${refundCount} refund row(s) netting into a cost`);
   console.log(`  split commitments : ${splitCommitments} paid across more than one month`);
   console.log(`  club money        : ${clubRows} row(s) reaching this report`);
@@ -267,6 +279,46 @@ async function main() {
   const chartMonthSum = chart.reduce((s, p) => s + cents(p.actualForMonth), 0);
   if (chart.length > 0 && chartMonthSum !== chartFinal) {
     problems.push(`the chart's months add to ${money(chartMonthSum)} and its last cumulative point is ${money(chartFinal)}`);
+  }
+
+  /* ── 2b. THE SPENDING BAND IS THE STATEMENT, GRAND TOTAL AND MONTH BY MONTH (D1, 2026-09-02) ──
+     The fifth reading's whole promise is "the monthly table and the Headroom banner finally agree":
+     its grand total must BE `totalActual`, and each month must be the chart's month — the two are
+     readings of one flattened list, so this is a plumbing claim like claim 2, with the same caveat
+     (a movement mis-dated at the root makes them agree on the wrong answer; the roots are guarded
+     by their own unit tests). */
+  if (cents(spending.totals?.total?.actual) !== statement) {
+    problems.push(
+      `THE SPENDING BAND AND THE STATEMENT DISAGREE — band ${money(cents(spending.totals?.total?.actual))}`
+      + ` vs statement ${money(statement)}: the fifth reading's one promise, broken`);
+  }
+  {
+    const chartByMonth = new Map(chart.map(p => [p.month, cents(p.actualForMonth)]));
+    const spendingMonthIndex = new Map((spending.months ?? []).map((m, i) => [m, i]));
+    for (const m of [...new Set([...spendingMonthIndex.keys(), ...chartByMonth.keys()])].sort()) {
+      const i = spendingMonthIndex.get(m);
+      const c = chartByMonth.get(m) ?? 0;
+      if (i === undefined) {
+        // The chart has no column cap; the grid does. Off-window money sits in the band's
+        // undated bucket, which the grand-total claim above still covers.
+        if (c !== 0 && !spending.truncated) {
+          problems.push(`${m}: the chart carries spending (${money(c)}) and the spending band grew no column for it`);
+        }
+        continue;
+      }
+      const b = cents(spending.totals?.cells?.[i]?.actual);
+      if (b !== c) {
+        problems.push(`${m} Season spending: THE BAND AND THE CHART DISAGREE — ${money(b)} vs ${money(c)} (out by ${money(b - c)})`);
+      }
+    }
+  }
+  /* And the claim the DIFFERENCE lens makes since Q3 (ruled 2026-09-02): plan − spending IS
+     Headroom. Implied by the grand-total claim plus the route's own subtraction — stated anyway,
+     because it is the sentence the screen now prints ("it matches Headroom exactly"). */
+  if (cents(data.effectiveBudget) - cents(spending.totals?.total?.actual) !== cents(data.headroom)) {
+    problems.push(
+      `Difference does not tie to Headroom: plan ${money(cents(data.effectiveBudget))} − spending`
+      + ` ${money(cents(spending.totals?.total?.actual))} ≠ headroom ${money(cents(data.headroom))}`);
   }
 
   // ══ THE CASH SIDE — both bands against the register ════════════════════════════════════════════
@@ -447,7 +499,7 @@ async function main() {
      unattributable arrivals, a family removed from the roster mid-season — is added at the CATEGORY
      level by the builder rather than dropped, so rows may legitimately sum to LESS than their group.
      They may never sum to more: that is money counted twice. */
-  for (const [bandName, g] of [['revenue', revenue], ['expenses', grid], ['returned', returned]]) {
+  for (const [bandName, g] of [['revenue', revenue], ['expenses', grid], ['returned', returned], ['spending', spending]]) {
     for (const cat of g.categories ?? []) {
       const rows = cat.lines ?? [];
       if (rows.length === 0) continue;
@@ -530,6 +582,7 @@ async function main() {
   }
 
   console.log(`\n  statement = chart = ${money(statement)}  ✓`);
+  console.log(`  and the spending band says the same, month by month (Difference ties to Headroom)  ✓`);
   console.log(`  both bands = the register in every one of the ${gridMonthIndex.size} months they share  ✓`);
   console.log(`  and in every one of the ${expenseByName.size} expense categories and ${revByGroup.size} revenue group(s)  ✓`);
   console.log(`  opening ${money(opening)} + net ${money(seasonNet)} = Cash on hand ${money(cents(register.cashOnHand))}  ✓`);

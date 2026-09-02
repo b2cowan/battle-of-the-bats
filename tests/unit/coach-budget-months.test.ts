@@ -3,10 +3,48 @@ import { describe, it } from 'node:test';
 import {
   monthKeyOf, addMonths, monthSpan, deriveMonthRange, buildMonthGrid, buildCashFlow,
   isElapsed, formatMonthLabel, formatMonthLong,
-  lensCell, lensTotal, lensUndated, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
-  buildBandCashFlow, balanceShowsMonth, cellPanelSpec, panelRowWords,
-  type GridLine, type CategoryEvent,
+  lensCell, lensTotal, lensUndated, lensReadsPlan, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
+  buildBandCashFlow, balanceShowsMonth, cellPanelSpec, panelRowWords, categoryHasFigure,
+  MONEY_LENSES,
+  type GridLine, type CategoryEvent, type MonthCell,
 } from '../../lib/coach-budget-months.ts';
+
+describe('the Showing vocabulary — five readings, and the stored value that must keep resolving', () => {
+  it('carries the five lenses in reading order, with the G1-approved labels', () => {
+    assert.deepEqual(
+      MONEY_LENSES.map(l => l.id),
+      ['budget', 'scheduled', 'actual', 'spending', 'difference'],
+    );
+    assert.equal(MONEY_LENSES.find(l => l.id === 'spending')?.label, 'Season spending');
+    assert.equal(MONEY_LENSES.find(l => l.id === 'difference')?.label, 'Difference');
+  });
+
+  it('the Cash rename kept the stored id — `actual` still resolves, labelled Cash (Q1)', () => {
+    /* The per-device lens preference stores the ID. Renaming the id would silently reset every
+       treasurer who had chosen the cash reading; renaming only the LABEL is the whole design. */
+    const cash = MONEY_LENSES.find(l => l.id === 'actual');
+    assert.ok(cash, 'the stored value `actual` no longer names a lens — saved preferences broke');
+    assert.equal(cash.label, 'Cash');
+  });
+
+  it('the spending lens reads the `actual` field of its own grid, on every helper', () => {
+    const cell: MonthCell = { budget: 100, scheduled: 40, actual: 75.5 };
+    assert.equal(lensCell(cell, 'spending', '2026-05', '2026-06'), 75.5);
+    // A future month still answers — spending is a record, not a comparison, so no blanking.
+    assert.equal(lensCell(cell, 'spending', '2026-09', '2026-06'), 75.5);
+    assert.equal(lensTotal(cell, 'spending'), 75.5);
+    assert.equal(lensUndated(cell, 'spending'), 75.5);
+    assert.equal(categoryHasFigure({ budget: 100, scheduled: 0, actual: 0 }, 'spending'), false);
+    assert.equal(categoryHasFigure({ budget: 0, scheduled: 0, actual: -0.5 }, 'spending'), true);
+    assert.equal(lensReadsPlan('spending'), false);
+  });
+
+  it('the spending band closes on "Total spent", never on Cash’s "Total expenses"', () => {
+    assert.equal(bandTotalLabel('out', 'spending'), 'Total spent');
+    assert.equal(bandTotalLabel('out', 'actual'), 'Total expenses');
+    assert.equal(bandTotalLabel('out', 'scheduled'), 'Scheduled expenses');
+  });
+});
 
 describe('month key helpers', () => {
   it('reads a month off a date or a timestamp, and rejects nonsense', () => {
