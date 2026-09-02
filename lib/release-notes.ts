@@ -44,6 +44,68 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-02',
+    title: 'Simpler tags, clearer dues, and one place for bills',
+    highlights: [
+      {
+        category: 'new',
+        text: 'One tag picker works the same way everywhere — drills, equipment, and practice plans all use it, so a tag you create once shows up wherever it applies.',
+      },
+      {
+        category: 'new',
+        text: "Fundraisers open right where you're working, with totals updating automatically as money comes in — no separate page.",
+      },
+      {
+        category: 'new',
+        text: "An empty fundraiser can be deleted; one with real money on it is protected and can't be removed by accident.",
+      },
+      {
+        category: 'new',
+        text: "Dues schedules now come straight from your season's installment plan, with a single credit that grows automatically as it's needed.",
+      },
+      {
+        category: 'new',
+        text: "Setting up dues shows you what's actually changing before you commit, so a rounding cent is never mistaken for a real shortfall.",
+      },
+      {
+        category: 'new',
+        text: 'Bills your team owes now live in one ledger, with a form built around how coaches actually track them.',
+      },
+      {
+        category: 'new',
+        text: 'Sponsorship payouts are tracked end-to-end, from pledge to cheque.',
+      },
+      {
+        category: 'new',
+        text: 'The account menu (profile, sign out) opens right where you are instead of sending you to a separate page.',
+      },
+      {
+        category: 'new',
+        text: 'Text throughout the coach portal is now more consistent — fewer sizes, easier to scan.',
+      },
+      {
+        category: 'fixed',
+        text: 'Money paid back to a family now shows correctly in your monthly totals.',
+      },
+      {
+        category: 'fixed',
+        text: 'The budget item picker no longer disappears when you scroll.',
+      },
+      {
+        category: 'fixed',
+        text: 'Page titles and help links are back on the Budget, Budget vs Actual, Dues, Expenses, Fundraisers, and Club screens.',
+      },
+      {
+        category: 'fixed',
+        text: 'The Sponsorships summary now shows accurate totals.',
+      },
+      {
+        category: 'fixed',
+        text: 'The bill schedule now uses one consistent format throughout.',
+      },
+    ],
+  },
+  {
     date: '2026-08-27',
     title: 'One tap to decide a tryout — and money you can follow',
     highlights: [
