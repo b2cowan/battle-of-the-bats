@@ -98,6 +98,25 @@
    result rather than pushing the strip to a second row. */
 .stripWarn { font-size: var(--type-support); color: var(--danger-light); }
 
+/* The forward stat's deep link (D4, G2 Variant 1, 2026-09-02) — the FIGURE is the door to
+   Months · Scheduled, styled as the strip's own bold support text with just enough affordance. */
+.stripForwardLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 2px;
+}
+.stripForwardLink:hover { text-decoration-color: var(--text-primary); }
+.stripForwardLink b { font-weight: 700; }
+
+/* "· plus $Y possible" — quieter than the sentence it rides, exactly as the G2 frame drew it. */
+.stripPossible { color: var(--text-tertiary); }
+
 /* ── The Spending trend shelf (owner D2, 2026-09-02, G3-approved) ─────────────
    ⚰ `.chartCard` / `.chartTitle` retired with the chart's old head-of-page position: it is a
    collapsed shelf below the table now, half its old height, its open state remembered per device. */

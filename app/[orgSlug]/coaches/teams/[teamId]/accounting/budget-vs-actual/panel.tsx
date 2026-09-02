@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -10,7 +10,7 @@ import {
   formatMonthLabel, lensCell, lensTotal, lensUndated,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  type MonthGrid, type MonthCell, type MoneyRowDirection,
+  type MonthGrid, type MonthCell, type MoneyRowDirection, type RevenueGroupKey,
 } from '@/lib/coach-budget-months';
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
@@ -944,6 +944,29 @@ export function BudgetVsActualPanel({
   const quietReload = useCallback(() => { void load(true); }, [load]);
   useOnMoneyRevisionBump(quietReload);
 
+  /* ══ THE FORWARD STAT (owner D4 + Q2, wording G2 Variant 1, 2026-09-02) ═══════════════════════
+     ⚠⚠ IT READS THE SCHEDULED READING'S OWN ENDING-BALANCE MACHINERY — `buildBandCashFlow` over
+     the same bands the Months · Scheduled screen renders — NEVER a second derivation, so the
+     banner and that screen cannot disagree. Committed dues are in the headline (an unpaid
+     installment is a real obligation with a due date); sponsor pledges and pending club asks are
+     the separate "possible" clause, never banked — they are exactly the Scheduled lens's undated
+     revenue in the sponsorship and money-back groups, the same figures its "No date yet" column
+     shows, subtracted from the flow's ending rather than re-derived. */
+  const forward = useMemo(() => {
+    if (!data) return null;
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    const flow = buildBandCashFlow(
+      data.revenueGrid, data.monthGrid, 'scheduled',
+      data.cashOnHand, data.openingBalance ?? 0, data.returnedGrid);
+    const possible = r2(data.revenueGrid.categories
+      .filter(c => {
+        const g: RevenueGroupKey | null = revenueGroupOf(c.categoryKey);
+        return g === 'sponsorship' || g === 'moneyback';
+      })
+      .reduce((s, c) => s + c.undated.scheduled, 0));
+    return { ending: r2(flow.ending - possible), possible };
+  }, [data]);
+
   const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
   useEffect(() => {
     if (!prefsKey) return;
@@ -1427,6 +1450,29 @@ export function BudgetVsActualPanel({
                 <span className={styles.stripRule} aria-hidden />
                 <span className={styles.stripWarn}>
                   your lines are {fmt(Math.abs(data.estimateDifference))} over this estimate
+                </span>
+              </>
+            )}
+            {/* The forward stat (D4, G2 Variant 1): a sentence, because this page exists to give
+                ONE big number and Headroom is it. The figure deep-links to Months · Scheduled,
+                where the arithmetic it reads from is already on screen. Pledges and pending asks
+                stay a labelled "possible" clause — a pledge is never banked. */}
+            {forward && (
+              <>
+                <span className={styles.stripRule} aria-hidden />
+                <span className={styles.stripSupport}>
+                  on what&rsquo;s scheduled you end the season with{' '}
+                  <button
+                    type="button"
+                    className={styles.stripForwardLink}
+                    onClick={() => { setView('months'); setLens('scheduled'); }}
+                    title="Open Months · Scheduled — the reading this figure comes from"
+                  >
+                    <b>{fmtSigned(forward.ending)}</b>
+                  </button>
+                  {forward.possible > 0.005 && (
+                    <span className={styles.stripPossible}> · plus {fmt(forward.possible)} possible</span>
+                  )}
                 </span>
               </>
             )}
