@@ -283,11 +283,28 @@ function fmtVariance(v: number): string {
   return `${signPrefix(v)}${fmt(Math.abs(v))}`;
 }
 
-function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
+/** "2026-03" → "Mar" — the bare name the chart's middle labels carry (G3: only the edges keep
+ *  their year, which is also what stopped the last label half-escaping the viewBox). */
+function fmtMonthBare(yyyyMm: string): string {
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return names[parseInt(yyyyMm.split('-')[1], 10) - 1] ?? yyyyMm;
+}
+
+/**
+ * The cumulative spending-vs-plan chart, as approved at the G3 gate (2026-09-02):
+ *  · about half its old height — it lives in a shelf now, not at the head of the page;
+ *  · the FIRST month label anchors `start` and the LAST anchors `end`, both keeping their year —
+ *    the fix for the owner-spotted clipped "Sep '2" (the old code centred the last label on a
+ *    point ~22px from the viewBox edge, so half of it escaped and clipped at the container);
+ *  · the flatline marker (D5.8): where the budgeted line goes flat because the rest of the plan
+ *    has no date, the chart says so at the kink instead of letting the plateau read as a plan;
+ *  · the legend moved OUT of the SVG (see the shelf) so it never scales away on a phone.
+ */
+function CumulativeChart({ data, undatedBudget }: { data: MonthlyPoint[]; undatedBudget: number }) {
   if (data.length === 0) return null;
 
-  const VW = 760, VH = 160;
-  const ML = 64, MR = 12, MT = 12, MB = 32;
+  const VW = 760, VH = 120;
+  const ML = 64, MR = 16, MT = 14, MB = 26;
   const CW = VW - ML - MR;
   const CH = VH - MT - MB;
 
@@ -308,10 +325,18 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
   const actualPath = `M ${actualPoints.join(' L ')}`;
   const areaPath   = `M ${xPos(0).toFixed(1)},${(MT + CH).toFixed(1)} L ${actualPoints.join(' L ')} L ${xPos(n - 1).toFixed(1)},${(MT + CH).toFixed(1)} Z`;
 
-  const gridLines = [0.25, 0.5, 0.75, 1].map(ratio => ({
+  const gridLines = [0.5, 1].map(ratio => ({
     y: MT + (1 - ratio) * CH,
     label: fmt(maxVal * ratio),
   }));
+
+  /* The last month the PLAN placed money in — after it the budgeted line runs flat, and when the
+     plan still holds undated dollars that plateau is a statement about DATES, not about the plan
+     being finished. The marker only appears when both are true. */
+  let kink = -1;
+  data.forEach((d, i) => { if (Math.abs(d.budgetedForMonth) > 0.005) kink = i; });
+  const showFlatline = undatedBudget > 0.005 && kink >= 0 && kink < n - 1;
+  const flatlineAtEnd = kink >= 0 && xPos(kink) > VW - 190;
 
   return (
     <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -321,7 +346,7 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
         <g key={i}>
           <line x1={ML} y1={g.y} x2={ML + CW} y2={g.y}
             style={{ stroke: 'var(--home-line, rgba(255,255,255,0.06))' }} strokeWidth="1" />
-          <text x={ML - 4} y={g.y + 4} textAnchor="end" fontSize="9"
+          <text x={ML - 4} y={g.y + 4} textAnchor="end" fontSize="10"
             style={{ fill: 'var(--home-dim, rgba(255,255,255,0.3))' }}>{g.label}</text>
         </g>
       ))}
@@ -337,23 +362,37 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
         <circle key={i} cx={xPos(i)} cy={yPos(d.cumActual)} r="3" style={{ fill: 'var(--success-light)' }} />
       ))}
 
+      {showFlatline && (
+        <text
+          x={flatlineAtEnd ? xPos(kink) - 6 : xPos(kink) + 6}
+          y={Math.max(MT + 9, yPos(data[kink].cumBudget) - 7)}
+          textAnchor={flatlineAtEnd ? 'end' : 'start'}
+          fontSize="10"
+          style={{ fill: 'var(--warning-light)' }}
+        >
+          ⌇ rest of plan has no date
+        </text>
+      )}
+
       {data.map((d, i) => {
-        if (n > 8 && i % 2 !== 0) return null;
+        const last = n - 1;
+        const isEdge = i === 0 || i === last;
+        /* Middles thin out when crowded, and the one beside the end-anchored last label always
+           yields to it; the EDGES always render — the whole point of the anchor fix. */
+        if (!isEdge && n > 8 && (i % 2 !== 0 || i === last - 1)) return null;
         return (
-          <text key={i} x={xPos(i)} y={VH - 6} textAnchor="middle" fontSize="9"
-            style={{ fill: 'var(--home-dim, rgba(255,255,255,0.35))' }}>
-            {fmtMonth(d.month)}
+          <text
+            key={i}
+            x={xPos(i)}
+            y={VH - 6}
+            textAnchor={i === 0 ? 'start' : i === last ? 'end' : 'middle'}
+            fontSize="10"
+            style={{ fill: 'var(--home-dim, rgba(255,255,255,0.35))' }}
+          >
+            {isEdge ? fmtMonth(d.month) : fmtMonthBare(d.month)}
           </text>
         );
       })}
-
-      <g transform={`translate(${ML + 8},${MT + 8})`}>
-        <line x1="0" y1="6" x2="18" y2="6" style={{ stroke: 'var(--info-light)' }} strokeWidth="2"
-          strokeDasharray="5,3" opacity="0.7" />
-        <text x="22" y="10" fontSize="9" style={{ fill: 'var(--home-dim, rgba(255,255,255,0.45))' }}>Budgeted (cumulative)</text>
-        <line x1="132" y1="6" x2="150" y2="6" style={{ stroke: 'var(--success-light)' }} strokeWidth="2" />
-        <text x="154" y="10" fontSize="9" style={{ fill: 'var(--home-dim, rgba(255,255,255,0.45))' }}>Actual (cumulative)</text>
-      </g>
     </svg>
   );
 }
@@ -849,6 +888,9 @@ export function BudgetVsActualPanel({
   // who lives in the month view should land there, and it is nobody else's business.
   const [view, setView] = useState<BvaView>('statement');
   const [lens, setLens] = useState<MoneyLens>('budget');
+  /** The Spending trend shelf's open state — device memory beside view/lens (D2, 2026-09-02):
+   *  a coach who reads the chart gets it back open; everyone else keeps the quiet page. */
+  const [trendOpen, setTrendOpen] = useState(false);
   /* ⚠ NULL MEANS "wherever today is" — see `monthStart` below. Holding the DEFAULT as null rather
      than a number is what lets the window follow a data reload without an effect, and without a
      frame of the wrong months while one settles. */
@@ -919,12 +961,13 @@ export function BudgetVsActualPanel({
     try {
       const raw = localStorage.getItem(prefsKey);
       // Shape-check, not just parse-check: a corrupt value must fall back, never crash.
-      const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown } : {};
+      const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown; trendOpen?: unknown } : {};
       // ⚠ The retired `categories` value still resolves — see `readStoredView`. It is stored per
       // device, so refusing it would silently reset every treasurer who had chosen a view.
       const stored = readStoredView(parsed.view);
       if (stored) setView(stored);
       if (MONEY_LENSES.some(l => l.id === parsed.lens)) setLens(parsed.lens as MoneyLens);
+      if (typeof parsed.trendOpen === 'boolean') setTrendOpen(parsed.trendOpen);
     } catch { /* device memory only */ }
     setPrefsLoaded(true);
   }, [prefsKey]);
@@ -933,8 +976,8 @@ export function BudgetVsActualPanel({
     // Don't write back the defaults before the read has happened, or the first render would
     // stomp a remembered preference.
     if (!prefsKey || !prefsLoaded) return;
-    try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens })); } catch { /* device memory only */ }
-  }, [prefsKey, prefsLoaded, view, lens]);
+    try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens, trendOpen })); } catch { /* device memory only */ }
+  }, [prefsKey, prefsLoaded, view, lens, trendOpen]);
 
   // ── Export helpers ─────────────────────────────────────────────────────────
   // The export always matches what is on screen. In the Months view that means the month grid
@@ -1427,24 +1470,10 @@ export function BudgetVsActualPanel({
             </>
           ) : (
           <>
-          {/* Monthly cumulative chart */}
-          {data.monthlyChart.length > 1 && (
-            <div className={styles.chartCard}>
-              <p className={styles.chartTitle}>Cumulative Spending vs. Budget</p>
-              <CumulativeChart data={data.monthlyChart} />
-              {data.undatedBudget > 0.005 && (
-                /* Budget with no date used to be spread evenly across every month here, which
-                   put money in months the coach never chose. It is now named instead (D-H4) —
-                   and the Months view gives it a column of its own. */
-                <p className={styles.chartNote}>
-                  {fmt(data.undatedBudget)} of your plan has no date yet and isn&apos;t on this chart.{' '}
-                  <button type="button" className={styles.chartNoteLink} onClick={() => setView('months')}>
-                    See it by month
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
+          {/* ⚰ THE CHART NO LONGER OPENS THE PAGE (owner D2, 2026-09-02, G3-approved). It spent
+              ~200px saying "roughly on track" before the table said anything exact; it is now the
+              "Spending trend" shelf BELOW the table, collapsed, its open state remembered with the
+              view preference. The undated-budget footnote moved inside the shelf with it. */}
 
           {/* ── The report, in whichever shape the coach chose (plan §3.5) ──────────────────
               Both come off ONE grouping pass on the server and end on the same season net,
@@ -1628,6 +1657,43 @@ export function BudgetVsActualPanel({
                  players is one continuous chain and reads as one. A basis is explained where the
                  other bases are explained: underneath, quietly, for the reader who went looking. */}
              <CashBridge data={data} onSeeMonths={() => setView('months')} />
+             {/* The Spending trend shelf (D2, G3-approved): the chart, below the table it used to
+                 sit above, closed by default and remembered per device. */}
+             {data.monthlyChart.length > 1 && (
+               <details
+                 className={styles.trendShelf}
+                 open={trendOpen}
+                 onToggle={e => setTrendOpen((e.target as HTMLDetailsElement).open)}
+               >
+                 <summary className={styles.trendSummary}>
+                   <ChevronRight size={13} className={styles.trendChev} aria-hidden />
+                   <span><strong>Spending trend</strong> — cumulative actual vs plan, month by month</span>
+                 </summary>
+                 <div className={styles.trendBody}>
+                   {/* ⚠ THE CHART NEVER SHRINKS ITS TEXT AWAY. Inside the shelf it keeps its
+                       natural width and SCROLLS on anything narrower — the G3 frame's own
+                       behaviour — instead of scaling 10px labels down to 4px at 375px. */}
+                   <div className={styles.chartScroll}>
+                     <CumulativeChart data={data.monthlyChart} undatedBudget={data.undatedBudget} />
+                   </div>
+                   <div className={styles.trendLegend}>
+                     <span><span className={`${styles.legendSwatch} ${styles.legendBudget}`} aria-hidden /> Budgeted (cumulative)</span>
+                     <span><span className={`${styles.legendSwatch} ${styles.legendActual}`} aria-hidden /> Actual (cumulative)</span>
+                   </div>
+                   {data.undatedBudget > 0.005 && (
+                     /* Budget with no date used to be spread evenly across every month here, which
+                        put money in months the coach never chose. It is named instead (D-H4) —
+                        and the Months view gives it a column of its own. */
+                     <p className={styles.chartNote}>
+                       {fmt(data.undatedBudget)} of your plan has no date yet and isn&apos;t on this chart.{' '}
+                       <button type="button" className={styles.chartNoteLink} onClick={() => setView('months')}>
+                         See it by month
+                       </button>
+                     </p>
+                   )}
+                 </div>
+               </details>
+             )}
              {data.funding && (
                <p className={styles.fundingNote}>
                  A fundraiser&apos;s actual is your team&apos;s share — everything raised, less anything

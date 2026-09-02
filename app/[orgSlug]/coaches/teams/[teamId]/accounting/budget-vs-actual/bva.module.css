@@ -98,23 +98,51 @@
    result rather than pushing the strip to a second row. */
 .stripWarn { font-size: var(--type-support); color: var(--danger-light); }
 
-/* ── Monthly chart card ──────────────────────────────────────────────────── */
-.chartCard {
-  padding: 1rem 1.25rem 0.5rem;
+/* ── The Spending trend shelf (owner D2, 2026-09-02, G3-approved) ─────────────
+   ⚰ `.chartCard` / `.chartTitle` retired with the chart's old head-of-page position: it is a
+   collapsed shelf below the table now, half its old height, its open state remembered per device. */
+.trendShelf {
+  margin: 0.55rem 0 0;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
   border-radius: 10px;
   background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  margin-bottom: 1.25rem;
 }
-
-.chartTitle {
+.trendSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
   font-size: var(--type-support);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--text-tertiary);
-  margin: 0 0 0.75rem;
 }
+.trendSummary::-webkit-details-marker { display: none; }
+.trendSummary:hover { color: var(--text-secondary); }
+.trendSummary strong { color: var(--text-secondary); font-weight: 650; }
+.trendSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 8px; }
+.trendChev { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease; }
+.trendShelf[open] .trendChev { transform: rotate(90deg); }
+.trendBody { padding: 0 0.9rem 0.6rem; }
+
+/* ⚠ The chart SCROLLS rather than scaling its labels away — its SVG keeps a floor width, so
+   10px text stays 10px on a phone instead of becoming 4px (the G3 frame's own behaviour). */
+.chartScroll { overflow-x: auto; }
+.chartScroll svg { min-width: 680px; }
+
+/* The legend, in HTML below the chart rather than inside the SVG, so it never scales. */
+.trendLegend {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  margin: 0.35rem 0 0.5rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.trendLegend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legendSwatch { display: inline-block; width: 18px; height: 0; }
+.legendBudget { border-top: 2px dashed var(--info-light); opacity: 0.75; }
+.legendActual { border-top: 2px solid var(--success-light); }
 
 /* The chart's honesty line (chunk H, D-H4): undated plan money is no longer spread across
    months it was never assigned to, so the chart names what it is not plotting. */
