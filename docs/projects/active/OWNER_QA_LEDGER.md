@@ -16761,7 +16761,32 @@ documented) and the shared-tree stylesheet carrying a peer session's verified-sa
 (the actual half of a cross-category fold moves the wrong way) — unattributed, predates today's
 work per that session's checks; this walk's clean 15/15 narrows it to the fold path itself.
 
-## §130 · Do the money screens tell the truth? — the consequence lines, audited and derived — BUILT ON DEV 2026-09-02, awaiting QA (uncommitted at time of writing)
+## §130 · Do the money screens tell the truth? — the consequence lines, audited and derived — ✅ PASSED 2026-09-02 (30/30, all eight parts clean, zero defects) · committed `f318858a`
+
+**All three questions answered on the walk:**
+1. **Strip placement — keep it.** Below *More*, above the sentence, last thing read before Save.
+2. **The family chip WAITS.** ⚖ When the roster has not resolved, the chip used to read *"That
+   family"*. The owner ruled it should wait instead — and the implementation waits on the **whole
+   strip**, not just that chip, because dropping one chip would violate the rule the strip rests on:
+   a missing figure must be VISIBLE. Hiding a household from an otherwise complete-looking strip is
+   exactly the failure this project exists to stop. The sentence still renders, so the form is never
+   mute, and the figures arrive a moment later saying something true.
+3. **The help sweep is ON** — *"screens done, go ahead with docs sweep"*. Done, below.
+
+**⚠ THE HELP SWEEP FOUND SIX, AND ONE WAS THE SAME DEFECT WEARING A GUIDE'S CLOTHES.** Five guide
+sentences told a coach the figures live in *"the line above the buttons"* — they are chips now, so
+each pointed at the wrong half of the form; one of those actively said one line says it *"in
+dollars"*. **And the sixth is the finding that justifies the sweep:** the guide's definition of
+*"Paying us back for a cost"* explained the netting and **never said cash on hand still goes up** —
+the identical omission the form's own refund sentence carried, restated in the coach's other source
+of truth. Screens-first was the right order; it would also have left the guide alone telling half the
+story. The search index was updated with it, so a coach searching what they can now SEE finds it.
+
+⚠ **What is verified and what is not.** The out-of-pocket strip was driven live and reads
+*Cash on hand · no change · Entry Fees · spent ▲ $200.00 · Theo Marsh's family · owed ▲ $200.00*.
+**The waiting path was NOT reproduced in a browser** — it needs an unresolved roster, which the
+fixture will not hold still for. It rests on a single conditional, and it is the one line of this
+change resting on reading rather than looking.
 
 **VERDICT 2026-09-02: PASSED 20/20, no findings.** Every check clean including the four NEGATIVE
 ones (Headroom, the Statement, By activity, cash on hand and the closing balance all unmoved), the

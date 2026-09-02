@@ -158,6 +158,24 @@ holds the rendering.
 payout hand off to their own writers. The club settlement is **fieldless by ruling R-D** (one tap,
 server-derived) and has no consequence line at all; that is correct, not a gap.
 
+## 7 · CLOSED — QA §130 PASSED 30/30, 2026-09-02
+
+All five success criteria met. Every line verified, corrected or (none) unreachable; the
+refund/cash omission resolved; the mechanism ruled (A + B + C) and built; the convention written into
+the design log; **and the help question answered — the articles DID join the sweep.**
+
+**The help sweep found six.** Five sentences pointed a coach at *"the line above the buttons"* for
+figures that are now chips. The sixth is the one that justified doing it at all: the guide's
+definition of *"Paying us back for a cost"* explained the netting and **never mentioned cash on hand
+going up** — the same omission the screen carried, independently restated in the guide. ⚖ **A screen
+and its guide drift apart in the same direction, because the same person wrote both from the same
+wrong mental model.** Fixing one is not fixing the other, and doing screens first only works if the
+guide follows.
+
+⚠ **Remaining, and it is small but real:** the "wait" path for an unresolved family name could not be
+reproduced in a browser (the fixture will not hold an unresolved roster). It is a single conditional
+and it is the one part of this change that rests on reading rather than looking.
+
 ## 5 · Explicitly NOT in this project
 
 - Rewriting money copy for style.

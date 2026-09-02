@@ -4707,6 +4707,25 @@ function MoneyRecordsPanel({
      * ⚠ AN EMPTY LIST DRAWS NO STRIP. Three chips reading "no change" would be the loudest thing on
      * a form about the quietest event on it — a commitment says "nothing moves" in words instead.
      */
+    /**
+     * ⚖ THE STRIP WAITS RATHER THAN GUESSING A NAME (owner ruling, §130 walk 2026-09-02, answering
+     * the walk's own Q2).
+     *
+     * When a family has fronted a cost, one chip names them and what they are owed. If the roster
+     * has not resolved yet, the name is not known — and the two ways of coping are both worse than
+     * pausing:
+     *   · a placeholder ("That family") puts an unnamed household on a money figure, which is the
+     *     one chip a coach would act on by going and finding the person;
+     *   · dropping just that chip is worse still — it violates the rule the whole strip rests on,
+     *     that a missing figure must be VISIBLE. It would silently show a complete-looking strip
+     *     with a household quietly missing from it.
+     * So the whole strip waits. The sentence still renders, so the form is never mute, and the chips
+     * appear a moment later saying something true.
+     * ⚠ It waits only when a payer IS chosen and unresolved — never on the ordinary path.
+     */
+    const withMovesUnlessWaiting = (waiting: boolean, moves: ConsequenceMove[], body: ReactNode) =>
+      (waiting ? <>{body}</> : withMoves(moves, body));
+
     const withMoves = (moves: ConsequenceMove[], body: ReactNode) => (
       <>
         {moves.length > 0 && (
@@ -4765,10 +4784,11 @@ function MoneyRecordsPanel({
         /* ⚠ THE WHOLE PHRASE FALLS BACK, NOT THE NAME — the possessive is what goes, never the
            grammar. Same fix, same reason, as the cost branch below (`/review`, 2026-08-16). */
         const named = formatPlayerFirstLast(player);
-        return withMoves(
+        return withMovesUnlessWaiting(
+          !named,
           consequenceMoves({
             kind: 'billPayment', amount, paid: true,
-            paidByFamily: named ? `${named}’s family` : 'That family',
+            paidByFamily: `${named}’s family`,
             itemName: chosenItemName(form),
             billName: payingBill.name, billRemainingAfter: left,
           }),
@@ -4854,10 +4874,11 @@ function MoneyRecordsPanel({
          the string "that family" into "<name>'s family", which read "that family's family" the
          moment the roster had not loaded — the exact state the stale roster gate above used to
          produce. A missing name now costs the possessive, not the grammar. */
-      return withMoves(
+      return withMovesUnlessWaiting(
+        !named,
         consequenceMoves({
           kind: 'cost', amount, paid: true,
-          paidByFamily: named ? `${named}’s family` : 'That family',
+          paidByFamily: `${named}’s family`,
           itemName: chosenItemName(form),
         }),
         line(<>Saved as a credit you can put against their dues or pay out any time.</>),
