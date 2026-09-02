@@ -674,8 +674,9 @@ export const MIDSEASON_CLUB_MONEY = {
       status: 'pending',
       createdOffset: -4,
       reviewedOffset: null,
-      /** ⚠ THE ONE UNFILED ROW, ON PURPOSE — it is what makes the row's "File it" affordance
-       *  visible in the demo, and it is the harmless one to leave: nothing is settled on it, so it
+      /** ⚠ THE ONE UNFILED ROW, ON PURPOSE — it is what makes the filing control worth opening
+       *  in the demo (the fold shows an empty picker and the Not-itemized sentence), and it
+       *  is the harmless one to leave: nothing is settled on it, so it
        *  sits in the forward view and moves no reported figure. */
       files: null,
     },

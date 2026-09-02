@@ -1,0 +1,571 @@
+<title>The Consequence Lines</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#FBF8F1; --surface:#FFFFFF; --raise:#F4EFE4; --sunk:#F2EDE1;
+  --ink:#1E1A12; --muted:#5A5245; --faint:#8A8172;
+  --rule:#DDD5C4; --rule-soft:#E9E2D3;
+  --rust:#B5451B; --rust-soft:rgba(181,69,27,.10);
+  --true:#2E6B45; --true-soft:rgba(46,107,69,.10);
+  --amber:#8A6100; --amber-soft:rgba(138,97,0,.10);
+  --blue:#2F5FE0;
+  --on-accent:#FFFFFF;
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14120E; --surface:#1C1913; --raise:#221E17; --sunk:#191510;
+    --ink:#F2ECDF; --muted:#B3AB9B; --faint:#8B8474;
+    --rule:#332D23; --rule-soft:#282219;
+    --rust:#E9805A; --rust-soft:rgba(233,128,90,.13);
+    --true:#6FBF8E; --true-soft:rgba(111,191,142,.13);
+    --amber:#D9A93A; --amber-soft:rgba(217,169,58,.13);
+    --blue:#7EA0FF;
+    --on-accent:#14120E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14120E; --surface:#1C1913; --raise:#221E17; --sunk:#191510;
+  --ink:#F2ECDF; --muted:#B3AB9B; --faint:#8B8474;
+  --rule:#332D23; --rule-soft:#282219;
+  --rust:#E9805A; --rust-soft:rgba(233,128,90,.13);
+  --true:#6FBF8E; --true-soft:rgba(111,191,142,.13);
+  --amber:#D9A93A; --amber-soft:rgba(217,169,58,.13);
+  --blue:#7EA0FF;
+  --on-accent:#14120E;
+}
+*{box-sizing:border-box}
+body{background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px; margin:0 auto; padding:46px 22px 110px; display:flex; flex-direction:column; gap:42px}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance}
+h1{font-size:34px; font-weight:700; letter-spacing:-.02em}
+h2{font-size:22px; font-weight:700; letter-spacing:-.01em}
+h3{font-size:15.5px; font-weight:700}
+p{margin:0}
+b,strong{font-weight:700}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+.head{display:flex; flex-direction:column; gap:15px; padding-bottom:28px; border-bottom:2px solid var(--rule)}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--rust)}
+.dek{font-size:17px; color:var(--muted); max-width:70ch}
+
+section{display:flex; flex-direction:column; gap:18px}
+.sec-head{display:flex; flex-direction:column; gap:7px; border-left:3px solid var(--blue); padding-left:15px}
+.sec-no{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint)}
+
+/* a rendered screen specimen */
+.spec{background:var(--surface); border:1px solid var(--rule); border-radius:9px; overflow:hidden}
+.spec-top{background:var(--raise); border-bottom:1px solid var(--rule-soft); padding:7px 13px;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--faint); display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.spec-bd{padding:15px 16px; display:flex; flex-direction:column; gap:11px}
+.cline{font-size:13.5px; line-height:1.6; color:var(--ink);
+  border-left:3px solid var(--rule); padding-left:11px}
+.cline.bad{border-left-color:var(--rust)}
+.cline.good{border-left-color:var(--true)}
+.cline.warn{border-left-color:var(--amber)}
+
+/* claim marks inside a sentence */
+.num{background:var(--true-soft); border-bottom:1.5px solid var(--true); padding:0 2px; border-radius:2px}
+.str{background:var(--amber-soft); border-bottom:1.5px solid var(--amber); padding:0 2px; border-radius:2px}
+.wrongbit{background:var(--rust-soft); border-bottom:1.5px solid var(--rust); padding:0 2px; border-radius:2px;
+  text-decoration:line-through; text-decoration-color:var(--rust)}
+
+.verdict{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; display:inline-flex; align-items:center; gap:5px;
+  border:1px solid var(--rule); border-radius:99px; padding:2px 9px; color:var(--muted)}
+.v-false{color:var(--rust); border-color:var(--rust); background:var(--rust-soft)}
+.v-silent{color:var(--amber); border-color:var(--amber); background:var(--amber-soft)}
+.v-true{color:var(--true); border-color:var(--true); background:var(--true-soft)}
+
+.note{font-size:13px; color:var(--muted); line-height:1.55}
+.ann{font-size:14.5px; color:var(--muted); display:flex; flex-direction:column; gap:9px}
+.pin{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink)}
+.pin.bad{color:var(--rust)} .pin.good{color:var(--true)}
+
+.call{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--blue);
+  border-radius:7px; padding:16px 18px; display:flex; flex-direction:column; gap:9px}
+.call.good{border-left-color:var(--true)}
+.call.bad{border-left-color:var(--rust)}
+
+.opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px}
+.opt{background:var(--surface); border:1px solid var(--rule); border-radius:7px; overflow:hidden;
+  display:flex; flex-direction:column}
+.opt-h{padding:11px 15px; background:var(--raise); border-bottom:1px solid var(--rule-soft);
+  font-weight:700; font-size:14px; display:flex; justify-content:space-between; align-items:center; gap:9px; flex-wrap:wrap}
+.opt-b{padding:14px 15px; display:flex; flex-direction:column; gap:10px; flex:1}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:9px; font-weight:700; letter-spacing:.09em;
+  text-transform:uppercase; border:1px solid var(--rule); border-radius:99px; padding:2px 8px; color:var(--muted)}
+.t-rec{color:var(--on-accent); background:var(--true); border-color:var(--true)}
+.t-no{color:var(--rust); border-color:var(--rust); background:var(--rust-soft)}
+.t-floor{color:var(--blue); border-color:var(--blue)}
+
+/* the "what moves" strip used by option C/D */
+.moves{display:flex; flex-wrap:wrap; gap:6px}
+.mv{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  border:1px solid var(--rule); border-radius:5px; padding:3px 8px; background:var(--sunk); color:var(--ink)}
+.mv .up{color:var(--true)} .mv .dn{color:var(--rust)}
+
+.tblwrap{overflow-x:auto}
+table.matrix{width:100%; border-collapse:collapse; font-size:13.5px; background:var(--surface);
+  border:1px solid var(--rule); border-radius:7px; overflow:hidden}
+.matrix th,.matrix td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--rule-soft); vertical-align:top}
+.matrix thead th{background:var(--raise); font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--faint)}
+.matrix tbody tr:last-child td{border-bottom:none}
+.matrix td:first-child{color:var(--muted)}
+.y{color:var(--true); font-weight:700} .n{color:var(--rust); font-weight:700} .m{color:var(--faint); font-weight:700}
+
+.inv{width:100%; border-collapse:collapse; font-size:13.5px}
+.inv th,.inv td{padding:7px 11px; border-bottom:1px solid var(--rule-soft); text-align:left}
+.inv thead th{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--faint)}
+.inv td.n{font-family:"IBM Plex Mono",monospace; text-align:right; color:var(--ink); font-weight:700}
+
+.stateblock{border-top:1px solid var(--rule-soft); padding-top:12px; display:flex; flex-direction:column; gap:8px}
+.stateblock:first-child{border-top:none; padding-top:0}
+.statename{font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.stateblock.nomove{background:var(--sunk); margin:0 -16px; padding:12px 16px}
+.foot{border-top:2px solid var(--rule); padding-top:18px; font-size:13.5px; color:var(--faint);
+  display:flex; flex-direction:column; gap:6px}
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <span class="kicker">Coach money · a review project · nothing built</span>
+    <h1>The most trusted sentence on the screen is the one nobody checks</h1>
+    <p class="dek">Every money form promises the coach what will happen when they save. Those promises
+      are factual claims written in prose, and <b>no gate in this repo can check one</b> — spelling,
+      contrast, layout, tokens and the schema ratchets all pass happily on a sentence that is
+      confidently false. Three have been found wrong. All three read perfectly.</p>
+  </header>
+
+  <!-- 01 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">01 — the evidence</div>
+      <h2>Three that were wrong, and how each was found</h2>
+    </div>
+
+    <div class="spec">
+      <div class="spec-top"><span>Club tab · filing a bill</span><span>fixed 2026-09-01</span></div>
+      <div class="spec-bd">
+        <p class="cline bad">Until it's filed, this bill <span class="wrongbit">doesn't appear on
+          Budget&nbsp;vs.&nbsp;Actual at all</span>.</p>
+        <p class="note"><span class="verdict v-false">False</span> &nbsp;The report deliberately counts
+          unfiled club money under <b>Not itemized</b>. It always appeared — it just had no name. The
+          sentence taught the coach <b>the opposite of the design</b>, on the screen where they would
+          act on it, and would send them hunting for a problem that did not exist.</p>
+        <p class="note"><b>How it was found:</b> someone traced what the report actually does. It had
+          survived a build, a <span class="mono">/simplify</span> and a
+          <span class="mono">/review</span>.</p>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-top"><span>Record money · an arrival</span><span>live today</span></div>
+      <div class="spec-bd">
+        <p class="cline good"><b>When you save:</b> $200.00 comes in on Sep 2. <span class="num">Cash on
+          hand goes <b>up</b> by $200.00.</span></p>
+        <p class="cline warn"><b>When you save:</b> $200.00 comes back in on Sep 2, and
+          <span class="num"><b>Umpires</b> drops by $200.00</span> on Budget vs. Actual — it
+          <span class="str">isn't counted as income</span>, and <span class="str">nobody is owed
+          anything</span>.</p>
+        <p class="note"><span class="verdict v-silent">Silent</span> &nbsp;Same form, same coach, money
+          arriving both times. The income branch names <b>cash on hand</b>; the refund branch never
+          mentions it — and a refund <b>does</b> raise cash on hand. Not false. Incomplete, and
+          inconsistent with its own sibling three lines away.</p>
+        <p class="note"><b>How it was found:</b> ten minutes of sizing this project.</p>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-top"><span>Payables · the totals band</span><span>fixed 2026-08-25</span></div>
+      <div class="spec-bd">
+        <p class="cline bad"><span class="wrongbit">still owing</span> &nbsp;$1,240.00 across 3
+          commitments</p>
+        <p class="note"><span class="verdict v-false">False</span> &nbsp;The figure summed a field
+          meaning <i>remaining</i> on an unpaid piece and <i>the full amount</i> on a paid one. Ticking
+          <b>Paid</b> counted settled instalments at face value under the words "still owing". The
+          words went out with the bug — but they had shipped.</p>
+      </div>
+    </div>
+
+    <div class="call bad">
+      <h3>The point is not that three were wrong</h3>
+      <p>It is that <b>all three read perfectly</b>, and several of these lines already carry review
+        annotations in the code — they have <i>had</i> scrutiny. Reading a claim is not checking it.
+        Nothing short of executing the path can tell the difference between a true sentence and a
+        fluent one.</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">02 — anatomy</div>
+      <h2>A consequence line is three different things at once</h2>
+    </div>
+    <div class="spec">
+      <div class="spec-bd">
+        <p class="cline"><b>When you save: no team cash moves.</b>
+          <span class="num">$200.00 counts in the budget as usual</span>, and the team owes
+          <span class="num"><b>Jenny Doyle</b>'s family $200.00</span> —
+          <span class="str">saved as a credit you can put against their dues or pay out any time</span>.</p>
+        <div class="moves" style="margin-top:2px">
+          <span class="mv"><span class="up">■</span> numeric claim — a figure a module can return</span>
+          <span class="mv"><span class="dn">■</span> structural claim — a rule, no module returns it</span>
+        </div>
+      </div>
+    </div>
+    <div class="ann">
+      <span class="pin">Why the split decides everything below</span>
+      <p>A <b>numeric</b> claim can be made unbreakable: have the sentence <i>report</i> the figure the
+        save is about to compute, instead of asserting one an author typed. A <b>structural</b> claim —
+        <i>"nobody is owed anything"</i>, <i>"it isn't counted as income"</i> — has no figure to
+        report. No mechanism can hold it. It stays prose, and prose has to be audited.</p>
+      <span class="pin bad">So no option below removes the audit</span>
+      <p>The audit is the floor. The options differ only in whether the <i>next</i> sentence can go
+        wrong the same way.</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">03 — scope</div>
+      <h2>About twenty-five sentences, and where they live</h2>
+    </div>
+    <div class="spec"><div class="spec-bd">
+      <table class="inv">
+        <thead><tr><th>Where</th><th>Shape</th><th class="n">Lines</th></tr></thead>
+        <tbody>
+          <tr><td>Record money — costs, arrivals, refunds, out-of-pocket, paying a bill</td><td class="mono">When you save: …</td><td class="n">10</td></tr>
+          <tr><td>Unplanned-item warnings</td><td class="mono">…will show as spending you didn't plan for</td><td class="n">~8</td></tr>
+          <tr><td>Club fold — filing a bill or a request</td><td class="mono">…reports under X on Budget vs. Actual</td><td class="n">4</td></tr>
+          <tr><td>Player dues</td><td class="mono">When you save: …</td><td class="n">2</td></tr>
+          <tr><td>Sponsor promise</td><td class="mono">When you save: nothing moves.</td><td class="n">1</td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:11px"><b>In scope:</b> does the sentence match what the save
+        actually does. <b>Out of scope:</b> tone, voice, length. A sentence that is accurate is
+        finished — this is a truth audit, not a copy pass.</p>
+    </div></div>
+    <div class="call">
+      <h3>How each one gets checked</h3>
+      <p><b>Execute the path; do not read the sentence.</b> Reading is what let all three through. Put
+        the form in that state, save, and look at the figures it named — cash on hand, the budget
+        line, the month, the family credit, the register row.</p>
+      <p>⚠ Where a pure module owns the arithmetic, <b>run the module</b> rather than reading a screen:
+        a screen can agree with a wrong sentence when both derive from the same mistake.</p>
+      <p>⚠ <b>A fixture that cannot reach the state proves nothing.</b> Several branches need a fixture
+        in that exact shape. Anything unreachable gets recorded as unreachable, never as verified.</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">04 — four ways to stop the next one</div>
+      <h2>The same sentence, drawn four ways</h2>
+    </div>
+
+    <div class="opts">
+      <div class="opt">
+        <div class="opt-h">A · Audit only <span class="tag t-floor">the floor</span></div>
+        <div class="opt-b">
+          <div class="spec"><div class="spec-bd">
+            <p class="cline good"><b>When you save:</b> $200.00 comes back in on Sep 2.
+              <b>Cash on hand goes up by $200.00</b>, and <b>Umpires</b> drops by $200.00 on Budget vs.
+              Actual — it isn't counted as income, and nobody is owed anything.</p>
+          </div></div>
+          <p class="note">Fix what is wrong, add the missing cash clause, change nothing structural.</p>
+          <p class="note"><b>What it costs:</b> half a session. <b>What it does not do:</b> anything at
+            all about the next sentence someone writes. The three found here were written by careful
+            authors and reviewed.</p>
+          <p class="note"><b>It is under every other option</b>, not an alternative to them — the
+            structural claims can only ever be held this way.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-h">B · The figures are reported, not asserted <span class="tag t-rec">recommended, with A</span></div>
+        <div class="opt-b">
+          <div class="spec"><div class="spec-bd">
+            <p class="cline good"><b>When you save:</b> $200.00 comes back in on Sep 2.
+              <b>Cash on hand goes up by $200.00</b>, and <b>Umpires</b> drops by $200.00 on Budget vs.
+              Actual — it isn't counted as income, and nobody is owed anything.</p>
+            <div class="moves"><span class="mv">figures come from the same code the save runs</span></div>
+          </div></div>
+          <p class="note"><b>It looks identical, and that is the entire point.</b> The coach sees no
+            change. What changes is that the numbers in the sentence are computed by the module that
+            is about to move the money — so the sentence <i>cannot</i> disagree with the outcome. A
+            wrong figure becomes a failing test, not a fluent lie.</p>
+          <p class="note"><b>Precedent exists in this product:</b> the dues credit preview was moved
+            into the shared module precisely so the recording conversation draws the <i>same</i>
+            preview the writer uses.</p>
+          <p class="note"><b>Honest limit:</b> covers the numeric half only. "Nobody is owed anything"
+            still rests on A.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-h">C · Prose, plus a "what moves" strip <span class="tag">your call</span></div>
+        <div class="opt-b">
+          <div class="spec"><div class="spec-bd">
+            <p class="cline good"><b>When you save:</b> $200.00 comes back in on Sep 2 — it isn't
+              counted as income, and nobody is owed anything.</p>
+            <div class="moves">
+              <span class="mv">Cash on hand <span class="up">▲ $200.00</span></span>
+              <span class="mv">Umpires <span class="dn">▼ $200.00</span></span>
+              <span class="mv">Nobody owed</span>
+            </div>
+          </div></div>
+          <p class="note">The figures leave the prose and become a rendered strip; the sentence keeps
+            only what a strip cannot say. Scannable, and every number is visibly derived.</p>
+          <p class="note"><b>The trade:</b> it is a second thing to read on a form that already asks a
+            lot, and it makes every money form louder — including the eight quiet warning lines where
+            a strip would be heavier than the warning.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-h">D · Retire the prose <span class="tag t-no">not recommended</span></div>
+        <div class="opt-b">
+          <div class="spec"><div class="spec-bd">
+            <div class="moves">
+              <span class="mv">Cash on hand <span class="up">▲ $200.00</span></span>
+              <span class="mv">Umpires <span class="dn">▼ $200.00</span></span>
+              <span class="mv">Income <span class="dn">no change</span></span>
+              <span class="mv">Owed <span class="dn">none</span></span>
+            </div>
+          </div></div>
+          <p class="note">Every claim becomes a rendered figure. Nothing can be false.</p>
+          <p class="note"><b>Why not:</b> these lines earn their keep by explaining an invisible
+            consequence <i>in a coach's language</i> — "it isn't counted as income, and nobody is owed
+            anything" is the sentence that stops a treasurer double-counting a refund. A chip reading
+            <span class="mono">Income — no change</span> states the same fact and teaches nothing. It
+            also quietly deletes the structural claims rather than verifying them, which looks like
+            safety and is the opposite.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <table class="matrix">
+        <thead><tr><th>&nbsp;</th><th>A · audit</th><th>B · derived figures</th><th>C · prose + strip</th><th>D · strip only</th></tr></thead>
+        <tbody>
+          <tr><td>Fixes the three found</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+          <tr><td>Stops the next wrong <b>figure</b></td><td class="n">no</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+          <tr><td>Stops the next wrong <b>rule</b> ("nobody is owed")</td><td class="m">audit only</td><td class="m">audit only</td><td class="m">audit only</td><td class="n">deletes it instead</td></tr>
+          <tr><td>Coach sees any change</td><td class="y">none</td><td class="y">none</td><td class="m">a new strip</td><td class="n">loses the sentence</td></tr>
+          <tr><td>Keeps the teaching voice</td><td class="y">yes</td><td class="y">yes</td><td class="m">partly</td><td class="n">no</td></tr>
+          <tr><td>Works on the 8 quiet warnings</td><td class="y">yes</td><td class="y">yes</td><td class="n">too heavy</td><td class="n">too heavy</td></tr>
+          <tr><td>Cost</td><td class="y">½ session</td><td class="m">+1 session</td><td class="m">+design pass</td><td class="n">rewrites every line</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">05 — what I need from you</div>
+      <h2>Where this lands</h2>
+    </div>
+    <div class="call good">
+      <h3>1 · Do A, and do B on top of it</h3>
+      <p><b>A is not optional</b> — it is the only thing that can hold a structural claim, and it is
+        what fixes the three already found. <b>B</b> is the cheap durable half: the coach sees nothing
+        change, and a wrong figure stops being a sentence nobody can check and becomes a failing test.
+        Together they are roughly a session and a half.</p>
+    </div>
+    <div class="call">
+      <h3>2 · C is a real option and I am not pushing it</h3>
+      <p>It is the most <i>visible</i> answer and it would look good on the record-money form. I have
+        it below the line for one reason: it does not fit the eight quiet unplanned-item warnings,
+        where a strip of chips would be heavier than the warning it decorates — so it splits the
+        family into two shapes. If you want it on the big form only, say so and I will draw that.</p>
+    </div>
+    <div class="call bad">
+      <h3>3 · One scoping question</h3>
+      <p>The in-app help articles restate many of these same claims in their own words. Sweeping them
+        too roughly doubles the job. <b>My recommendation is screens first</b> — the screen is where
+        the coach acts, and help has its own sweep — but it is your call, and a screen that is right
+        beside a guide that is wrong is its own kind of defect.</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">06 — option C, drawn properly</div>
+      <h2>You liked C. Drawing it across every state made a better case for it than I did</h2>
+    </div>
+
+    <div class="call good">
+      <h3>The argument I missed: a strip makes an OMISSION visible</h3>
+      <p>My case for C was that it looks good and every figure is visibly derived. The stronger case is
+        this: <b>the refund defect could not have been written in C.</b></p>
+      <p>Today's refund sentence forgets to mention cash on hand, and nothing about a paragraph makes
+        that absence noticeable — a sentence that omits something still reads as a complete sentence.
+        A strip has a <b>slot per figure</b>. A missing chip is a hole you can see. C turns this whole
+        class of defect from <i>"a wrong sentence"</i>, which is invisible, into <i>"a missing
+        chip"</i>, which is not.</p>
+      <p class="note">That is a durability argument, not a looks argument — and it is the one that
+        moves C from "your call" to a real contender against B.</p>
+    </div>
+
+    <div class="call bad">
+      <h3>But C only works if the prose gives up the numbers</h3>
+      <p>If the strip shows <span class="mono">Umpires ▼ $200.00</span> and the sentence <i>also</i>
+        says "Umpires drops by $200", the form says everything twice and gets longer, not clearer.
+        <b>C is a redistribution, not an addition</b>: figures move to the strip, and the sentence
+        keeps only what a chip cannot say — the rule, the reassurance, the thing a treasurer needs in
+        words.</p>
+      <p>So the real cost of C is not the strip. It is <b>rewriting thirteen sentences</b> to stop
+        naming numbers. That is the part to weigh.</p>
+    </div>
+
+    <div class="sec-head" style="border-left-color:var(--true)">
+      <div class="sec-no">the rule that falls out</div>
+      <h3>A strip appears only where something moves</h3>
+    </div>
+    <p class="note" style="max-width:72ch">Three states move nothing at all. A strip of
+      <span class="mono">no change · no change · none</span> is worse than a sentence saying "nothing
+      moves" — it is chrome pretending to be information. Those keep prose and get no strip. This is
+      also the answer to my own objection: the eight quiet unplanned-item warnings never get one.</p>
+
+    <div class="spec">
+      <div class="spec-top"><span>Record money · every state, C applied</span><span>strip = what moves · sentence = what a chip cannot say</span></div>
+      <div class="spec-bd">
+
+        <div class="stateblock">
+          <div class="statename mono">A cost, paid</div>
+          <div class="moves">
+            <span class="mv">Cash on hand <span class="dn">▼ $200.00</span></span>
+            <span class="mv">Umpires <span class="dn">▲ $200.00 spent</span></span>
+          </div>
+          <p class="cline good">Recorded as paid <b>Sep 2</b>.</p>
+        </div>
+
+        <div class="stateblock">
+          <div class="statename mono">A refund <span class="verdict v-silent">the one that is wrong today</span></div>
+          <div class="moves">
+            <span class="mv">Cash on hand <span class="up">▲ $200.00</span></span>
+            <span class="mv">Umpires <span class="up">▼ $200.00</span></span>
+            <span class="mv">Income <span class="dn">no change</span></span>
+            <span class="mv">Owed <span class="dn">nobody</span></span>
+          </div>
+          <p class="cline good">A refund reduces what you spent — it is not income, and nobody is owed
+            anything.</p>
+          <p class="note">⚠ The cash chip is the figure today's sentence forgets. In C you would have
+            had to leave the slot deliberately blank to ship the bug.</p>
+        </div>
+
+        <div class="stateblock">
+          <div class="statename mono">A cost a family paid out of pocket</div>
+          <div class="moves">
+            <span class="mv">Cash on hand <span class="dn">no change</span></span>
+            <span class="mv">Umpires <span class="dn">▲ $200.00 spent</span></span>
+            <span class="mv">Jenny Doyle's family <span class="up">owed $200.00</span></span>
+          </div>
+          <p class="cline good">Saved as a credit you can put against their dues or pay out any time.</p>
+        </div>
+
+        <div class="stateblock">
+          <div class="statename mono">Paying a bill</div>
+          <div class="moves">
+            <span class="mv">Cash on hand <span class="dn">▼ $200.00</span></span>
+            <span class="mv">Diamond permits <span class="up">$300.00 still to pay</span></span>
+          </div>
+          <p class="cline good">You can undo it from the bill's payment details.</p>
+        </div>
+
+        <div class="stateblock">
+          <div class="statename mono">Income arriving <span class="verdict">the awkward one</span></div>
+          <div class="moves">
+            <span class="mv">Cash on hand <span class="up">▲ $200.00</span></span>
+          </div>
+          <p class="note" style="margin-top:5px">⚠ <b>Its whole sentence was one figure</b>, so once the
+            strip takes it the prose has nothing left to say and goes. That is not option D creeping
+            in: D deletes structural claims, and this state never had one. A state with nothing to
+            teach should not manufacture a sentence.</p>
+          <p class="note">⚠ It also raises a question the mockup deliberately does NOT answer: should
+            the strip show the budget item going up too? Today's sentence never mentions it. If the
+            answer is yes, that is <b>new information C would surface</b> — and it is exactly the kind
+            of claim the audit has to verify before it is drawn, not assert here.</p>
+        </div>
+
+        <div class="stateblock nomove">
+          <div class="statename mono">Nothing moves — a commitment, a sponsor promise, a dues credit</div>
+          <p class="cline good"><b>When you save: nothing moves.</b> Cash on hand is unchanged and no
+            family is affected. All 6 payments join your payment schedule, the first due Jun 1 — record
+            payments against them as the money actually leaves.</p>
+          <p class="note">No strip. There is nothing to put in it, and three chips reading "no change"
+            would be the loudest thing on a form about the quietest event on it.</p>
+        </div>
+
+        <div class="stateblock nomove">
+          <div class="statename mono">The eight unplanned-item warnings</div>
+          <p class="cline warn">Dome rental isn't in your budget — it will show on Budget vs. Actual as
+            spending you didn't plan for.</p>
+          <p class="note">Untouched. One clause, no figures, and it sits under a field rather than at
+            the foot of the form. A strip here would outweigh the warning it decorates — this is the
+            objection that kept C below the line, and scoping fixes it rather than arguing with it.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ann">
+      <span class="pin">On a phone</span>
+      <p>The chips wrap to their own lines and stack — they are already a wrapping row, which is why
+        this shape survives a 361px screen where a four-column figure table would not. ⚠ It is also the
+        surface where "said twice" hurts most: on a phone a duplicated figure costs a whole line.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table class="matrix">
+        <thead><tr><th>&nbsp;</th><th>B · derived figures</th><th>C · prose + strip</th><th>B + C</th></tr></thead>
+        <tbody>
+          <tr><td>A wrong figure becomes a failing test</td><td class="y">yes</td><td class="m">only if built on B</td><td class="y">yes</td></tr>
+          <tr><td>A <b>missing</b> figure is visible</td><td class="n">no</td><td class="y">yes — an empty slot</td><td class="y">yes</td></tr>
+          <tr><td>Coach sees any change</td><td class="y">none</td><td class="m">a new strip on 7 states</td><td class="m">a new strip on 7 states</td></tr>
+          <tr><td>Copy rewritten</td><td class="y">3 corrections</td><td class="n">13 sentences</td><td class="n">13 sentences</td></tr>
+          <tr><td>Holds a structural claim</td><td class="m">audit only</td><td class="y">prose keeps it, alone and visible</td><td class="y">yes</td></tr>
+          <tr><td>Fits the 8 quiet warnings</td><td class="y">yes</td><td class="y">by exclusion</td><td class="y">yes</td></tr>
+          <tr><td>Cost on top of the audit</td><td class="m">~1 session</td><td class="n">~1.5 sessions</td><td class="n">~2 sessions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="call good">
+      <h3>Where I land now</h3>
+      <p><b>C is a better idea than I gave it credit for, and it wants B underneath it.</b> A strip of
+        figures that an author still types by hand is a prettier way to be wrong — the chips only earn
+        their promise if the numbers come from the code that does the saving. Built together, the
+        strip shows what moves, B guarantees the figures are true, and the sentence is left holding
+        exactly the claims that need a human: <i>"a refund is not income, and nobody is owed
+        anything."</i></p>
+      <p><b>That is the recommendation: A + B + C</b>, C scoped to the seven states that actually move
+        something. About two sessions, and the audit is still the first thing done — because it is what
+        tells us which figures each strip should carry.</p>
+      <p class="note">⚠ If two sessions is more than this is worth right now, <b>A + B alone remains
+        honest and invisible</b>, and C can be added later without redoing it — B is the layer C would
+        sit on either way. Nothing about doing A + B first forecloses C.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span><b>Nothing is built.</b> This is a proposal — every sentence on the money screens is
+      unchanged pending your call, except the club one already corrected.</span>
+    <span><b>Evidence:</b> three defects, two already fixed, one live today and drawn above.</span>
+    <span><b>§06 added</b> after the owner favoured option C — drawn across every state, with the scoping rule and the copy cost it implies.</span>
+    <span><b>Plan + brief:</b> COACH_MONEY_CONSEQUENCE_LINES_AUDIT_PLAN.md · _PM_BRIEF.md</span>
+  </footer>
+</div>

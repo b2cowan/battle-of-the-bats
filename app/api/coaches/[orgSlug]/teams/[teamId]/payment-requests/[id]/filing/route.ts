@@ -15,9 +15,11 @@ import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
  * opens read-only for a reason that has not changed — it records what the club acted on, and
  * rewriting the amount or the wording would make that record a lie. But *what the team files it
  * under*, and *what the team reads the arrival as*, are a layer the team owns on top of the club's
- * decision. A bill has had exactly this affordance since mig 250 ("What was this bill for?", open
- * on a bill the team has already paid); this gives a request the same one, which is why the row
- * says **File it** / **Change** in both places.
+ * decision. A bill has had exactly this affordance since mig 250; this gives a request the same
+ * one, which is why both kinds now carry the SAME live filing control inside their own row.
+ * ⚠ The affordance was a **File it** / **Change** button in the row cell until 2026-09-02, when it
+ * became a live picker in the fold. The route is unchanged by that — noted so this comment does not
+ * keep describing a control the product no longer has.
  *
  * ⚠⚠ THIS IS A SEPARATE ROUTE RATHER THAN A MODE ON THE SIBLING PATCH, AND THE REASON IS THE LOCK.
  * That handler refuses anything not `pending`, deliberately and at the database — the WHERE clause

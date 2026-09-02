@@ -3,6 +3,161 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 
+### 2026-09-02 — THE LEDGER TOOLBAR SPLITS BY VOLATILITY — two decks, on purpose (Option B)
+
+**Decision (owner, "Ledger Toolbar Rows" mockup Artifact, option B):** the band above the Ledger's
+table is two DESIGNED rows, split by what changes: the **top deck** holds the static cast — the
+View arrangement, Cash on hand, Export, Add a bill — one row at any desktop width; the **filter
+strip** below holds the narrowing pills, which differ per view, under a hairline so the
+subordination is drawn. **The owner's own reasoning, recorded verbatim in spirit: "those items in
+the first row stay static but many of the filters change depending on the view" — the split is by
+VOLATILITY, not by control type.** Option A (quiet-default pills that earn their words only when
+narrowing) and option C (one Filters door) were drawn and passed over — A remains available as a
+follow-up trim on the strip; C was drawn to be declined (it hides the one-grammar narrowing the
+08-25 pill ruling exists for).
+- ⚠ Deliberate deviation from the mockup, flagged per the build-to-mockups rule: the strip keeps
+  TODAY'S pill sizing rather than the mockup's smaller 28px pills — avoids a fresh tap-floor /
+  baseline re-key wave for a purely decorative shrink; revisit with Option A if the strip ever
+  needs more room.
+- **Amended same day, owner reviewing the build:** (1) **Cash on hand moved to the FILTER
+  STRIP's right edge** — the figure answers the same question the filters shape ("what am I
+  looking at"), so the top deck is now pure verbs (View · Export · Add) and the 08-19
+  "next-to-Add" call's own second-look flag is answered. (2) **Option A folded in after all:
+  filters are QUIET AT REST** — a pill at its resting selection shows its name alone ("Item ▾",
+  never "Item Every budget item ▾"); departing rest it regains its value AND an olive working
+  tint. ⚠ REST ≠ EMPTY for the two Status pills: both open on a deliberate subset ("2 selected"
+  is their factory state), so rest is that subset — otherwise the default would shout forever,
+  the exact noise this kills. Applies to every consumer of the shared pill family that opts in
+  (the seven Ledger pills today). (3) **The kind pill is "Type", not "Show"** — every
+  sibling names its dimension (Status, Item, Date, Tags) and quiet-at-rest left the bare verb
+  carrying all the meaning ("Show ▾" could be any visibility menu). "Type" is also the system's
+  own internal word for this filter. Help swept in the same change. ⚠ Budget vs. Actual's
+  "Showing" pill deliberately left for its own active stream + the one-word sweep.
+- Standing rulings untouched: five filters of one shape; cash next to Add (its 08-19 "second
+  look" flag is now answered — it anchors the top deck); Export exports what's shown; the create
+  stays the tab's one create.
+**Applies to:** the Ledger toolbar (both faces). The sibling money tabs' pill rows may adopt the
+same two-deck shape when next touched; not swept preemptively.
+
+---
+### 2026-09-02 — THE FIGURES ARE CHIPS, THE RULES ARE THE SENTENCE — and only cash carries colour
+
+**Decision (owner, from the consequence-lines mockup `claude.ai/code/artifact/fc2cd405-e83d-46c9-9e96-524c04dc4ea4`).**
+A money form's "when you save" promise splits in two, and the halves get opposite treatment.
+
+- **A NUMERIC claim is reported, never asserted.** It comes from `lib/coach-money-consequences.ts`,
+  a pure module derived from the facts the save acts on — so a wrong figure is a failing unit test
+  rather than a fluent lie. It renders as a **chip**, one per figure.
+- **A STRUCTURAL claim stays prose** — *"it isn't counted as income"*, *"nobody is owed anything"*.
+  No module returns it; it is held by audit, and it is the reason these sentences exist at all.
+- **⚠⚠ NEITHER REPEATS THE OTHER.** Chips carry figures, the sentence carries the date and the rules.
+  A form that says both has said everything twice and got longer instead of clearer. ⚖ This division
+  is also what stopped the income state being left with no sentence: it keeps "Recorded as arriving
+  on Sep 2."
+- **⚠⚠ CASH ON HAND TAKES SLOT ONE, EVEN WHEN IT DOES NOT MOVE.** The load-bearing part. A paragraph
+  that forgets cash still reads like a complete paragraph — exactly how the refund line shipped
+  without it and survived review. A strip has a slot per figure, so a missing chip is a hole you can
+  see. An out-of-pocket cost therefore states **"no change"** rather than staying silent.
+- **⚠ A BUDGET LINE NEVER SHOWS AN ARROW WITHOUT SAYING OF WHAT.** "Umpires ▲ $200" is *spent* on a
+  cost and *received* on income — same arrow, same label, opposite facts. The register's
+  "any column someone might sum" rule, applied to a chip.
+- **⚠⚠ COLOUR IS RESERVED FOR CASH.** The first build coloured by arrow, so a $200 cost drew
+  **"spent ▲" in success green** — congratulating a coach for spending — and a refund drew its line
+  in danger red for the best thing that had happened all week. Cash is the one figure with a stable
+  good/bad reading; **a budget line moving is neither, it is just where the money landed.**
+- **⚠ NO STRIP WHERE NOTHING MOVES.** Three chips reading "no change" would be the loudest thing on a
+  form about the quietest event on it. A commitment says "nothing moves" in words. This is also why
+  the eight one-clause unplanned-item warnings are untouched — a strip would outweigh the warning.
+
+⚠ **Neither of the two defects found during this build was findable by reading** — an unlabelled chip
+from an empty-string item name, and the colour error above. Both were obvious the moment the strip
+rendered, which is the argument for the shape.
+
+### 2026-09-02 — A ROW THAT OPENS IS A BUTTON, AND A FOLD IS NOT A TABLE CELL
+
+**Two rules, from the `/review` of the Club tab's fold.** Both generalise past that screen.
+
+**1 · A CHEVRON ON A CLICKABLE ROW IS NOT A CONTROL.** A bare `<tr onClick>` with an `aria-hidden`
+glyph cannot be reached by a keyboard or announced by a screen reader. That is always wrong, and it
+is *disqualifying* once the row's fold holds the only copy of something — the Club tab had moved its
+filing control, its decline reason and its withdraw door in there, so the whole feature became
+mouse-only. **Every expanding row carries a real `<button>` with `aria-expanded` and an
+`aria-label` naming its record**, exactly as `DriveBand` does. ⚠ And it is then a real tap target:
+the first version measured 19px against the 44px floor, caught by `check:layout` on the same run.
+
+**2 · A SPANNING FOLD CELL MUST LEAVE CARD MODE.** `.tableAsCards` makes every `<td>` a
+`display: flex` label/value line, so at ≤640 a fold's contents lay out **sideways** — the Club fold's
+instalment table was crushed to 52px of a 329px card with its headings clipped. The stylesheet
+already documents this trap on `.cardStackCell` and names two earlier victims; a fold is the third
+and needs the stronger form (`display: block`, out of the flex row entirely).
+
+**⚠⚠ AND THE COVERAGE LESSON, WHICH IS THE BIGGER ONE: `check:layout` CANNOT SEE INSIDE A FOLD.**
+Nothing on these screens opens itself (deliberately — the 2026-09-01 ruling), so the sweep measures
+**closed rows only** and will report a screen green while everything an open fold contains is broken.
+The phone defect above was found by hand. **Anything that lives only inside a fold is outside the
+rendered gate and needs a human to open it.** See [[reference_green_check_over_empty_fixture]] — this
+is that trap wearing a new face: the state exists, the fixture just never enters it.
+
+### 2026-09-01 — A CLUB RECORD OPENS IN ITS OWN FOLD — the filing dialog and the per-cell buttons go, and ONE CHEVRON serves the whole table
+
+**Decision (owner, from the Club tab design sheet
+`claude.ai/code/artifact/8948648d-958d-44b4-8502-7abe9d82dd9f` §09, option B).** Every row of the
+Club tab — a bill the club sent, or a request the team made — unfolds where it sits into its own
+facts and its own **live controls**. The "File it" / "Change" button in the Files-under cell, the
+filing dialog it opened, and the pencil/eye on a request all go.
+
+- **⚠⚠ WHAT CONDEMNED THE OLD SHAPE WAS THE DOOR COUNT, NOT THE NOISE.** The owner asked about the
+  buttons; counting found an approved request had **three doors** (the row, the cell button, the
+  row-end pencil/eye) opening **two different windows** — and the one the row opened showed the
+  filing **read-only**, while the one that could change it was the cell button. A coach who opened
+  the record in order to file it had to close it and hunt. That is the 2026-08-26 ruling's own
+  failure mode ("a record has ONE editor"), and the noise was its symptom.
+- **A MODAL WAS ASKED FOR AND REFUSED AGAIN** — the owner proposed moving bills INTO windows like
+  requests. Refused on his own 2026-08-26 ruling (a modal is for a QUESTION, not for a field), the
+  same call the fundraiser drive reached on 2026-08-31. **This is now three consecutive times that
+  ruling has decided a money surface; treat "should this open a window?" as answered by default.**
+- **⚠ THE PLAYER-DUES DRAWER IS NOT A PRECEDENT FOR A CLUB BILL, and the owner reasonably thought it
+  was.** Both are one obligation in instalments; inside they are opposites. A dues instalment
+  carries Change / Remove / Record, and Change asks *this one, this and later, or all unpaid?* — real
+  questions, which is why it earned a drawer. **A club instalment is FIELDLESS by ruling R-D**: one
+  tap, server-derived amount/date/description, and the coach cannot change, split or delete one. A
+  club bill has exactly **two** editable things in the whole product. There was no editing surface
+  for a window to hold. ⚖ **The test is what the record can be ASKED, not what it looks like.**
+- **ONE CHEVRON ON EVERY ROW, and the glyph was the one part of the ask that was refused.** The
+  owner asked for a pencil everywhere. A pencil on a **declined** request, or on any row for a coach
+  with read-only money access, offers an edit to a record with nothing editable — the old eye was
+  honest, a universal pencil is not. A chevron is honest for both and needs no branch.
+- **The ask locks; the team's own filing never does (D3, unchanged).** A reviewed request's fold
+  shows what was asked, when, the club's decision and its date, how it moves, and the decline reason
+  — as values. What stays live is the filing and the money-in answer. ⚖ This is
+  *"read-only is a capability, not a door"* applied: **gate the editor, not the route.**
+- **⚠ THE DIALOG'S DISABLED SAVE BECAME A DISABLED PICKER, and it is a better guard.** A legacy
+  request (pre-mig 271) carries no money-in answer, and filing it while that answer is empty would
+  write the same NULL back — which the report reads as "a repayment" — while the coach believed they
+  had classified it. The item picker is now **disabled until the question is answered**, with the
+  sentence saying so. It refuses **before** the tap rather than after it.
+- **Changing the money-in answer clears the filing AND SAVES THAT.** The two answers read from
+  opposite sides of the item library, so a word chosen under one would file real money on the wrong
+  side of the report if it survived the other. The row then visibly reads **Not filed**.
+- **⚠ A live control in a fold is capped to a field's width (30rem).** Left to the fold it stretched
+  the full ~1150px of the table for a two-word value and read as a section heading, not a control.
+- **No discard guard, deliberately.** The dialog needed one (a coach could create a budget word
+  inside it and lose it to a backdrop tap). A live control writes on the answer, so there is nothing
+  unsaved to lose — the guard went **with** the dialog, not by omission.
+
+### 2026-09-01 — A BUFFER IS CONFIRMATION EVERYWHERE, NOT JUST ON THE CARD
+
+**Decision (owner, §124 walk catch 10):** the 2026-08-13 ruling — a planned buffer states itself
+as confirmation, never a warning — extends beyond the budget card to EVERY surface that compares
+scheduled dues against the plan: the Set-dues-for-all-players reconcile strip (was danger ink +
+"families will be billed the higher amount") and the redesigned preview. Over-collecting is the
+commonest deliberate act in team money; it reads in quiet ink, in the card's own sentence —
+"Includes a $X buffer above the plan." — so all surfaces share one vocabulary. UNDER-collecting
+keeps its amber: that one genuinely leaves the plan unfunded.
+**Applies to:** the bulk-dues generator's reconcile line (both copies), the Exceptions First
+preview design; the principle to any future scheduled-vs-plan comparison.
+---
+
 ### 2026-09-01 — THE ACCOUNT DOOR OPENS IN PLACE — the strips' last eject becomes a menu
 
 **Decision (owner; mockup Artifact "The Account Popover"; plan `COACH_ACCOUNT_MENU_PLAN.md`; QA
@@ -25,19 +180,55 @@ chrome, and it had no rescue link.
 - **Walls** keep the menu minus Send feedback (portal function off a wall, as the bell). **The coach
   demo sandbox hides the avatar entirely** — a Sign out on the SHARED demo account must never render.
 
-### 2026-09-01 — A BUFFER IS CONFIRMATION EVERYWHERE, NOT JUST ON THE CARD
 
-**Decision (owner, §124 walk catch 10):** the 2026-08-13 ruling — a planned buffer states itself
-as confirmation, never a warning — extends beyond the budget card to EVERY surface that compares
-scheduled dues against the plan: the Set-dues-for-all-players reconcile strip (was danger ink +
-"families will be billed the higher amount") and the redesigned preview. Over-collecting is the
-commonest deliberate act in team money; it reads in quiet ink, in the card's own sentence —
-"Includes a $X buffer above the plan." — so all surfaces share one vocabulary. UNDER-collecting
-keeps its amber: that one genuinely leaves the plan unfunded.
-**Applies to:** the bulk-dues generator's reconcile line (both copies), the Exceptions First
-preview design; the principle to any future scheduled-vs-plan comparison.
+### 2026-09-01 — ONE TAG IDIOM — one picker, one DRAWER manager, one door name
+
+**Decision (owner, tagging review — mockup Artifact "One Tag Idiom" round 1 + the clickable
+"Tag Drawer Prototype", both sources in `docs/projects/active/`; plan `COACH_TAGGING_PLAN.md`):**
+every tag vocabulary gets one picker (search → "+ Create" on a second press → the door as the
+dropdown's LAST row), one manager, and one door label — **"Manage tags…"**, with the manager
+titled by its library ("Money tags", "Game tags", "Focus tags", "Staff", "Equipment"). "Your
+tags", "Manage money tags" and "Manage game tags" retire.
+**Amended 2026-09-02 (owner, seeing the Staff field live): THE DOOR COMPLETES ITS FIELD'S
+SENTENCE.** "Manage tags…" stays wherever the field is labelled Tags (money, game, focus); a
+field labelled Staff or Equipment names its door after itself — "Manage staff…", "Manage
+equipment…" — because "tags" there is borrowed vocabulary beside a label that never says it.
+⚠ NOT six-names drift returning: one grammar, "Manage {what the field holds}…", defined once in
+the shared word-consts, never free-handed per screen. The drawer titles already matched.
+
+- **⚖⚖ THE MANAGER IS A DRAWER — ratified HANDS-ON, not from a still.** A 420px right-hand
+  sheet (the help drawer's width) over the surface the coach is on; the form behind dims and
+  goes inert; closing returns focus to the picker with typing kept; Esc backs out one layer at
+  a time; on ≤640 it is the standard full-screen sheet. The owner tested a working prototype
+  before adopting it — asked for exactly that ("a real world example … before wide spread
+  adoption") — and explicitly preferred staying on-screen over navigating to settings from an
+  open form. ⚠ This is the coach portal's FIRST working-surface side sheet and stays its ONLY
+  one without a further ruling; the 2026-08-26 modal-is-for-a-question ruling still bars the
+  modal manager it replaces, and the delete/merge CONFIRMS stay dialogs (they are questions).
+- **⚖ DOORS LIVE WHERE MINTING LIVES.** Every tag *picker* carries the door; a *filter* never
+  does — the Ledger's Tags pill stays door-less and the toolbar's "Manage tags" button (the one
+  the owner flagged as oversized) is deleted. One sentence to keep consistent portal-wide.
+- **⚖ DELETE-IN-USE ORPHANS WITH THE COUNT, AND THE CONFIRM OFFERS THE WAY OUT LIVE:** "It's on
+  12 records — they keep everything but the label", with **Merge instead** as a button in the
+  same dialog (the §122 grammar: the consequence names the softer tool). Budget items keep
+  their refusal — a filing key with history is not a label. Usage counts render in the MANAGER
+  only; the picker stays clean. (Counts are new backend work — nothing returns them today.)
+- **⚖ THE SHELF: a "Tags" section under Team settings** — every library as a row with counts
+  (own split from shared), expand-in-place into the same manager, the org-shared sentence said
+  once ("Shared by your club — ask your club admin…", now that shared tags are LISTED read-only
+  instead of hidden), and the 50-per-kind cap said once at the foot.
+- **⚖ ONE COLOUR LAW: olive = your team's, blue = the club's — everywhere.** The practice
+  picker's blue *selected* chips were the collision made visible (`.tagChip` ×2).
+- **Swept with it:** staff/equipment get their first manage screens; drill kit joins the
+  Equipment library via the one-press ADOPT row (never a silent import — an import mints every
+  old spelling); the scouting filter becomes a segmented control (a shape that cannot be added
+  to needs no caption); budget items and test types adopt the row SHELL but keep their rules
+  and homes.
+
+**Applies to:** every tag surface in the coaches portal; the drawer idiom to the tag manager
+only; the colour law and the doors-where-minting-lives rule portal-wide.
+
 ---
-
 ### 2026-09-01 — FIELDS SIZE TO THEIR CONTENT CLASS, AND A ROW'S FACT RIDES IN THE ROW
 
 **Decision (owner + /design, on the installments-only schedule editor):** an input takes the

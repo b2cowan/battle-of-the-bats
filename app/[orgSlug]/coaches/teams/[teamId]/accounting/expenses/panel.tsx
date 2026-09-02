@@ -3,18 +3,17 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type 
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Receipt, Plus, AlertTriangle, Settings2, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel';
-import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor from '@/components/coaches/SponsorCreditPlanEditor';
-import TagManagerModal from '@/components/coaches/TagManagerModal';
+
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
@@ -87,6 +86,7 @@ import { futureReceivedDateRefusal, moneyMovedMaxDate } from '@/lib/money-date-g
    select they rendered is gone (P2 §2.4). The constants stay in the module: the route still
    validates against them, so a saved label survives an edit and an export. */
 import { moneyInReversalPreview } from '@/lib/coach-money-in';
+import { consequenceMoves, type ConsequenceMove } from '@/lib/coach-money-consequences';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -250,6 +250,13 @@ function MoneyInCompare() {
  * date, and a `timestamptz` like a paid stamp — resolving the second through the ORG's calendar.
  * Keeping the name local so the call sites read the same; the behaviour is now the shared one.
  */
+
+/* Quiet-at-rest reference sets (owner 2026-09-02): what each Status pill's RESTING selection is —
+   both open on a deliberate subset, so "at rest" is that subset, not empty. One frozen copy each,
+   module-level, so the pills' equality check never chases a re-minted Set. */
+const PAY_STATUS_REST: ReadonlySet<string> = new Set(PAYABLE_STATUS_DEFAULT);
+const REGISTER_STATUS_REST: ReadonlySet<string> = new Set(['actual', 'overdue']);
+
 const fmtDate = (s: string | null) => formatStoredDate(s);
 
 /* ⚠ The Date pill's memory is keyed by TEAM ONLY, no `programYearId` — deliberate, unlike the
@@ -794,8 +801,6 @@ function formFromMoneyIn(m: RepTeamMoneyIn): typeof BLANK_RECORD {
 
 interface MoneyPanelProps {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
-  embedded?: boolean;
   /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
   tabActive?: boolean;
 }
@@ -809,7 +814,6 @@ export function LedgerPanel(props: MoneyPanelProps) {
 
 function MoneyRecordsPanel({
   params: paramsPromise,
-  embedded = false,
   tabActive = true,
 }: MoneyPanelProps) {
   const params = use(paramsPromise);
@@ -901,7 +905,6 @@ function MoneyRecordsPanel({
    * container had none. A page has it for free, browser Back included. The workaround outlived its
    * cause by four days.
    */
-
 
   /* Money coming IN (mig 243): income and money back, in one list beside the two money-out ones.
      `derivedKeys` are the category+item rows whose actual already comes from a fundraiser or a
@@ -1159,7 +1162,6 @@ function MoneyRecordsPanel({
    * date pill created from spreading — memory: persisted filters create deep-link debt.)
    */
   const [filterTagIds, setFilterTagIds] = useState<Set<string>>(() => new Set());
-  const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
   /* ── The conversation's own state (P1 — see the block comment above CONV_BRANCH) ──────────────
      `convBranch` is the answer to "What happened?" in ADD mode; null = not answered yet, which is
@@ -2362,7 +2364,6 @@ function MoneyRecordsPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const canWriteMoney = (page.capabilities?.money === 'write');
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
-  const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
 
   /* ── The hub's Record button reaches this form here (P1) ────────────────────────────────────
      ⚠ THE TRANSACTIONS FACE ALONE listens — both faces are instances of this one component, and
@@ -2553,6 +2554,10 @@ function MoneyRecordsPanel({
     // runs unconditionally now that one instance serves all three views.)
   }, [orgSlug, teamId, sharedRead]);
 
+  /** The tag drawer changed the library — quiet re-read so the open form's chips rename in
+      place. Hook-wrapped so the refs lint can see it is an event handler, never render-invoked. */
+  const refreshTagLibrary = useCallback(() => { void load(true); }, [load]);
+
   // Re-read (never remount) when the hub's Import menu commits payables while this panel is
   // mounted but off-screen — an in-progress expense form on another tab must survive it.
   const moneyRevision = useMoneyRevision();
@@ -2577,7 +2582,6 @@ function MoneyRecordsPanel({
      re-reads quietly. */
   const quietReload = useCallback(() => { void load(true); }, [load]);
   useOnMoneyRevisionBump(quietReload);
-
 
   // The roster behind "Paid by" — fetched the first time the Add Expense form opens, not on
   // every mount (the same lazy rule this panel already applies to the schedule tab, and the
@@ -2794,7 +2798,6 @@ function MoneyRecordsPanel({
       )].sort((a, b) => a.localeCompare(b)),
     };
   }, [book, selectedKinds, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
-
 
   /* ⚠ HOISTED ABOVE THE MEMO THAT READS THEM. These used to sit below the access guard with the
      rest of the render-time derivations — fine for JSX, illegal for a hook's dependency list. */
@@ -4450,7 +4453,7 @@ function MoneyRecordsPanel({
               08-15; the conversation door lacking it was the forms review's SP-9. */}
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Tags</label>
-            <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+            <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
           </div>
           {convNoteField('Optional details…')}
           <p className={`${styles.formHint} ${styles.formGridFull}`}>
@@ -4688,6 +4691,52 @@ function MoneyRecordsPanel({
       <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>{body}</p>
     );
 
+    /**
+     * ⚖ THE FIGURES ARE CHIPS, THE RULES ARE THE SENTENCE (owner ruling 2026-09-02).
+     *
+     * A consequence line makes two kinds of claim. A NUMERIC one — "Umpires drops by $200" — is a
+     * figure, and `consequenceMoves` derives it from the same facts the save acts on, so a wrong
+     * number is a failing unit test instead of a fluent lie. A STRUCTURAL one — "it isn't counted as
+     * income", "nobody is owed anything" — has no figure to return and stays here, in words.
+     *
+     * ⚠⚠ NEITHER REPEATS THE OTHER. If a chip says "Umpires ▼ $200" and the sentence says it too,
+     * the form has said everything twice and got longer instead of clearer. **The sentence keeps the
+     * DATE and the RULES; the strip keeps the figures.** That division is what stopped the income
+     * state from being left with no sentence at all.
+     *
+     * ⚠ AN EMPTY LIST DRAWS NO STRIP. Three chips reading "no change" would be the loudest thing on
+     * a form about the quietest event on it — a commitment says "nothing moves" in words instead.
+     */
+    const withMoves = (moves: ConsequenceMove[], body: ReactNode) => (
+      <>
+        {moves.length > 0 && (
+          <div className={`${styles.moveStrip} ${styles.formGridFull}`} aria-label="What this changes">
+            {moves.map(m => (
+              <span key={`${m.label}-${m.quantity ?? ''}`} className={styles.moveChip}>
+                <span className={styles.moveChipLabel}>
+                  {m.label}{m.quantity ? <span className={styles.moveChipQty}> · {m.quantity}</span> : null}
+                </span>
+                {/* ⚠ COLOUR IS RESERVED FOR CASH — see `tone` in coach-money-consequences.ts.
+                    Colouring by arrow painted "spent ▲" green, which congratulates a coach for
+                    spending money. */}
+                <span className={`${styles.moveChipFig} ${
+                  m.tone !== 'cash' ? styles.moveNeutral
+                    : m.direction === 'up' ? styles.moveUp
+                      : m.direction === 'down' ? styles.moveDown : styles.moveFlat}`}>
+                  {/* ⚠ THE ARROW IS DECORATION AND THE WORD IS THE ANSWER. A chip that leant on an
+                      arrow alone would say the same thing to a screen reader for "spent more" and
+                      "received more" — the two facts the quantity exists to separate. */}
+                  {m.direction === 'up' ? <span aria-hidden>▲ </span> : m.direction === 'down' ? <span aria-hidden>▼ </span> : null}
+                  {m.amount !== null ? fmt(m.amount) : m.words}
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
+        {body}
+      </>
+    );
+
     /* ── Paying down a bill the team already owes (P2, owner ruling C2) ──────────────────────
        ⚠ THE THIRD OF THE THREE SIGNALS that the coach picked the other kind of answer in the one
        picker — the description field left, the installment row arrived, and this sentence changed
@@ -4716,17 +4765,27 @@ function MoneyRecordsPanel({
         /* ⚠ THE WHOLE PHRASE FALLS BACK, NOT THE NAME — the possessive is what goes, never the
            grammar. Same fix, same reason, as the cost branch below (`/review`, 2026-08-16). */
         const named = formatPlayerFirstLast(player);
-        return line(<>
-          <strong>When you save: no team cash moves.</strong> {payingBill.name} {balance}, and the
-          team owes{' '}{named ? <><strong>{named}</strong>’s family</> : <>that family</>} {money}{' '}
-          — saved as a credit you can put against their dues or pay out any time.
-        </>);
+        return withMoves(
+          consequenceMoves({
+            kind: 'billPayment', amount, paid: true,
+            paidByFamily: named ? `${named}’s family` : 'That family',
+            itemName: chosenItemName(form),
+            billName: payingBill.name, billRemainingAfter: left,
+          }),
+          line(<>Saved as a credit you can put against their dues or pay out any time.</>),
+        );
       }
-      return line(<>
-        <strong>When you save: {money} leaves the team’s books</strong>
-        {form.paidDate ? <> on {fmtDate(form.paidDate)}</> : null}. {payingBill.name} {balance}.
-        {' '}You can undo it from the bill’s payment details.
-      </>);
+      return withMoves(
+        consequenceMoves({
+          kind: 'billPayment', amount, paid: true, paidByFamily: null,
+          itemName: chosenItemName(form),
+          billName: payingBill.name, billRemainingAfter: left,
+        }),
+        line(<>
+          Recorded as paid{form.paidDate ? <> on {fmtDate(form.paidDate)}</> : null}. You can undo it
+          from the bill’s payment details.
+        </>),
+      );
     }
 
     // ── A commitment: the one form in the portal that moves no money ──
@@ -4764,17 +4823,27 @@ function MoneyRecordsPanel({
          design rests on — and it leaves nobody owed anything, which is the half a coach confuses
          with "a family paid the vendor directly". */
       if (entryKind === 'refund') {
-        const item = chosenItemName(form);
-        return line(<>
-          <strong>When you save:</strong> {money} comes back in{when}, and{' '}
-          {item ? <><strong>{item}</strong> drops by {money}</> : <>the item you chose drops by {money}</>}
-          {' '}on Budget vs. Actual — it isn’t counted as income, and <strong>nobody is owed anything</strong>.
-        </>);
+        return withMoves(
+          consequenceMoves({
+            kind: 'refund', amount, paid: true, paidByFamily: null, itemName: chosenItemName(form),
+          }),
+          /* ⚠⚠ WHAT SURVIVES HERE IS THE PART NO CHIP CAN CARRY, and it is the reason a refund has a
+             sentence at all: it is the line that stops a treasurer counting a repayment as a second
+             source of income. The figures — including the CASH one this sentence used to forget
+             entirely — are now the strip's job. */
+          line(<>Recorded as arriving{when}. A refund reduces what you spent — it isn’t counted as
+            income, and <strong>nobody is owed anything</strong>.</>),
+        );
       }
-      return line(<>
-        <strong>When you save:</strong> {money} comes in{when}. Cash on hand goes <strong>up</strong>{' '}
-        by {money}.
-      </>);
+      return withMoves(
+        /* ⚖ THE BUDGET LINE IS SHOWN HERE TOO (owner ruling 2026-09-02), and it was VERIFIED before
+           it was drawn: an income record is placed on its budget line as an arrival, so the report
+           genuinely carries it. The old sentence named only cash and never mentioned the line. */
+        consequenceMoves({
+          kind: 'income', amount, paid: true, paidByFamily: null, itemName: chosenItemName(form),
+        }),
+        line(<>Recorded as arriving{when}.</>),
+      );
     }
 
     // ── A cost. Four states, and the out-of-pocket one is why this exists ──
@@ -4785,22 +4854,33 @@ function MoneyRecordsPanel({
          the string "that family" into "<name>'s family", which read "that family's family" the
          moment the roster had not loaded — the exact state the stale roster gate above used to
          produce. A missing name now costs the possessive, not the grammar. */
-      return line(<>
-        <strong>When you save: no team cash moves.</strong> {money} counts in the budget as usual,
-        and the team owes{' '}
-        {named ? <><strong>{named}</strong>’s family</> : <>that family</>} {money} — saved as a
-        credit you can put against their dues or pay out any time.
-      </>);
+      return withMoves(
+        consequenceMoves({
+          kind: 'cost', amount, paid: true,
+          paidByFamily: named ? `${named}’s family` : 'That family',
+          itemName: chosenItemName(form),
+        }),
+        line(<>Saved as a credit you can put against their dues or pay out any time.</>),
+      );
     }
     if (form.paidDate) {
       /* An edit of something that HAS posted is the case the lock used to cover — say that the
          books follow, because that is the change the coach cannot see from this screen. */
-      return line((editingStanding?.paid ?? 0) > 0
-        ? <><strong>When you save:</strong> this stays paid, dated {fmtDate(form.paidDate)}. Changing
-          the figure or the date updates the team’s books too — cash on hand and the month it lands
-          in both follow what you enter here.</>
-        : <><strong>When you save:</strong> {money} leaves the team’s books on{' '}
-          {fmtDate(form.paidDate)}. Cash on hand goes <strong>down</strong> by {money}.</>);
+      /* ⚠ AN EDIT OF SOMETHING ALREADY POSTED KEEPS ITS WARNING AND GETS NO STRIP. The chips answer
+         "what will this move?"; this state's real answer is "it already moved, and your edit
+         follows" — a delta the form cannot state without knowing what changed. Drawing a strip here
+         would assert a movement that is not this save's. */
+      if ((editingStanding?.paid ?? 0) > 0) {
+        return line(<><strong>When you save:</strong> this stays paid, dated {fmtDate(form.paidDate)}.
+          Changing the figure or the date updates the team’s books too — cash on hand and the month
+          it lands in both follow what you enter here.</>);
+      }
+      return withMoves(
+        consequenceMoves({
+          kind: 'cost', amount, paid: true, paidByFamily: null, itemName: chosenItemName(form),
+        }),
+        line(<>Recorded as paid on {fmtDate(form.paidDate)}.</>),
+      );
     }
     return line(<>
       <strong>When you save: nothing moves yet.</strong> This waits as an unpaid cost until you
@@ -5546,11 +5626,6 @@ function MoneyRecordsPanel({
       <button className={styles.btnPrimary} onClick={() => openAdd({ kind: 'expense', timing: 'payable' })}>
         <Plus size={14} aria-hidden /> Add a bill
       </button>
-      {ownMoneyTags.length > 0 && (
-        <button className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
-          <Settings2 size={14} aria-hidden /> Manage tags
-        </button>
-      )}
     </>
   ) : null;
 
@@ -5585,18 +5660,13 @@ function MoneyRecordsPanel({
   const showTagFilter = tagFacts.used.length > 0;
   const tagFilterPill = showTagFilter ? (
     <MultiSelectDropdown
+      restQuiet
       label="Tags"
       options={tagFacts.options}
       selected={filterTagIds}
       onChange={setFilterTagIds}
       allLabel="Every tag"
     />
-  ) : null;
-
-  const expenseHeaderActions = !embedded && canWriteMoney ? (
-    <button className={styles.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
-      <Upload size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Import</span>
-    </button>
   ) : null;
 
   /* ⚖⚖ THE VIEW PILL — the fold's one new control (owner-approved mockups, 2026-08-28). It is
@@ -5621,31 +5691,14 @@ function MoneyRecordsPanel({
           It rendered only on the legacy standalone route, and every legacy money route is a
           permanent redirect into the hub — so no coach has seen it since that sweep. Deleted as
           dead code rather than migrated to the header arrow, which is for live drill-ins. */}
-      {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
-          ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
-          door the server would refuse. "Tournament" stays retired from the title (D-H9). */}
-      {/* ⚠ ONE HELP SUBTOPIC FOR THE ONE BOOK (fold, 2026-08-28) — the split-era pair merged with
-          the tabs they described. ⚠⚠ INSIDE THE HUB THIS PROP IS INERT: the `embedded` header
-          shape renders no "?" (only actions), so the live door is the HUB page's "?", which is
-          TAB-AWARE since the §119 walk found it pinned to the Money intro on every tab
-          (`HELP_SUBTOPIC_BY_SECTION` in accounting/page.tsx). This prop matters only if this
-          panel ever mounts standalone again. */}
-      {/* ⚠ THE LIST'S OWN HEADER — not drawn on a bill's page, which carries its own
-          (title = the bill, back arrow = Ledger). Two page headers would be two page names. */}
-      {!focusBillId && <CoachPageHeader
-        variant={embedded ? 'embedded' : 'standard'}
-        icon={Receipt}
-        title={<>Ledger</>}
-        actions={expenseHeaderActions}
-        helpLabel="Ledger"
-        help={{
-          module: 'coaches',
-          sectionIds: ['premium-money'],
-          subtopicId: 'premium-money-ledger',
-          fullGuideHref: `/${orgSlug}/coaches/help#premium-money`,
-        }}
-      />}
-
+      {/* ⚰ This panel's own CoachPageHeader is GONE (cleanup tranche 6, 2026-09-01), and the
+          comment that stood here had already worked out why: inside the hub the prop was INERT.
+          The header's `embedded` shape renders actions and nothing else — no title, no icon, no
+          "?" — and its one action was an Import button that duplicated the hub's `Import ▾` menu
+          one line apart, so it was gated `!embedded` and never drew. With no actions left the
+          whole header rendered null. The live "?" for this tab is the HUB page's, which is
+          tab-aware (`HELP_SUBTOPIC_BY_SECTION` in accounting/page.tsx); the importer's live doors
+          are that menu and this list's empty state. Reasoning at the hub's mount. */}
       {importMessage && (
         <p className={styles.moneyTagSummary} role="status" style={{ marginBottom: '1rem' }}>{importMessage}</p>
       )}
@@ -5701,169 +5754,15 @@ function MoneyRecordsPanel({
             calling it "Income" one phase early would have put two of every four rows under a heading
             the product contradicts. The register's separate **Income** and **Refunds** filters make
             the word true of the rows beneath it, so the compromise has nothing left to protect. */}
-        {onPayables ? (
-          /* ⚠⚠ THE `Schedule | Commitments` TOGGLE IS GONE (Payables Rebuild P3, plan §3.1). It
-             presented a parent and its children as two reports — the framing defect underneath all
-             four of the rebuild's findings — and what replaces it is not a third tab but an
-             ARRANGEMENT of one list.
-
-             ⚠ `Group by` SITS FIRST AND IS LABELLED AS AN ARRANGEMENT (plan §7), so it can never
-             read as another narrowing. Status and Item are the narrowings, and they wear the same
-             pill as their Transactions siblings — one control shape across the reports. */
-          <div className={styles.moneyFilterBar} style={{ marginBottom: 0 }}>
-            {/* ⚠ `Group by` became two of the View pill's three options (fold, 2026-08-28) — same
-                first slot, same arrangement framing, one option wider. */}
-            {viewPill}
-            {/* ⚠⚠ COUNTS ARE OF WHAT IS THERE, taken BEFORE this selection narrows further — the
-                rule the old Overdue chip followed. Otherwise the numbers report themselves back
-                once picked and every unticked option reads zero.
-                ⚠ THEY OVERLAP, and that is correct: a late part-paid piece is counted under both
-                Overdue and Partly paid (`installmentStatuses`, owner ruling 2026-08-20), so the
-                four numbers sum to more than the rows on screen. */}
-            <MultiSelectDropdown
-              label="Status"
-              options={PAYABLE_STATUS_ORDER.map(id => ({
-                id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
-              }))}
-              selected={payStatus}
-              onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
-            />
-            {payItemNames.length > 0 && (
-              <MultiSelectDropdown
-                label="Item"
-                options={payItemNames.map(n => ({ id: n, label: n }))}
-                selected={payItems}
-                onChange={setPayItems}
-                allLabel="Every budget item"
-              />
-            )}
-            {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
-                the arrangement (plan §7) and keeps the first slot on both faces. */}
-            {tagFilterPill}
-            {/* ⚠ ONE TOGGLE, TWO LABELS — it reads "Open all" only because bills arrive folded, and
-                the identical button reads "Fold all" the moment anything is open (and always, on
-                the due-date arrangement, whose periods arrive open). Removing the one you happen to
-                be looking at removes the other.
-                ⚠⚠ IT MAY NOT HIDE ITSELF ON THE *FILTERED* GROUP COUNT (owner ruling 2026-08-26).
-                A `foldKeys.length > 1` gate was built here and taken back out: a control that
-                vanishes because a coach ticked a tag is the screen changing shape in response to a
-                filter, which is the same objection that settled the fold default above. If this
-                button is ever to hide on a one-bill team, the test has to be the TEAM's list, not
-                the narrowed view — an open question, not a thing to re-derive here. */}
-            {payBills.length > 0 && (
-              <button
-                type="button"
-                className={styles.moneyFilterChip}
-                /* Wants-shut is the opposite of what we have; flip exactly the keys that need it,
-                   which is "none" or "all" depending on the arrangement's own default. */
-                onClick={() => setFlippedFolds(
-                  (allFolded ? !foldDefaultShut : foldDefaultShut)
-                    ? new Set()
-                    : new Set(foldKeys))}
-              >
-                {allFolded ? 'Open all' : 'Fold all'}
-              </button>
-            )}
-          </div>
-        ) : (
-          /* ⚠⚠ FILTERS, NOT SUB-TABS (plan §4.3, ruled 2026-08-16). Transactions carried Expenses
-             and Money in as a second tab row; the register is ONE book, so the strip narrows what
-             is on it instead of choosing between two lists. That is what lets a running balance
-             exist at all — neither of the old lists could carry one, because half the money was
-             always on the other. */
-          <div className={styles.moneyFilterBar} style={{ marginBottom: 0, flexWrap: 'nowrap' }}>
-            {viewPill}
-            {/* ⚠ A DROPDOWN, NOT SEVEN PILLS (owner call — "fit like QuickBooks/Excel"; seven type
-                chips plus Overdue plus the item picker plus a date range no longer fit one line as
-                pills). Multi-select: pick more than one kind at once (Expenses + Refunds, say). */}
-            <MultiSelectDropdown
-              label="Show"
-              options={registerFilters.filter(f => f.id !== 'all').map(f => ({ id: f.id, label: f.label }))}
-              selected={selectedKinds}
-              onChange={next => setSelectedKinds(next as Set<RegisterKind>)}
-            />
-            {/* ⚠⚠ A STATUS DROPDOWN, NOT TWO SEPARATE PILLS (owner call, 2026-08-19 — folds the old
-                "Overdue" chip and "Include scheduled" toggle into one control, matching the same
-                multi-select shape as Show and Item: three dropdowns, one date range). Counts are
-                of what's THERE, computed before this selection narrows further — same rule the
-                old Overdue chip's count followed, so the numbers never chase their own tail.
-                ⚠⚠ DEFAULTS TO Actual + Overdue, NOT EMPTY (owner call, reversing plan §4.4's
-                "on by default" for Scheduled a second time). `MultiSelectDropdown`'s own rule is
-                "empty means all," but that would flip Scheduled back on by default — a call this
-                project already made deliberately once. Seeding two of three keeps that default
-                intact; the dropdown reads "2 selected" rather than "All" until a coach changes it,
-                which is an honest description of a real, considered starting narrowing. */}
-            <MultiSelectDropdown
-              label="Status"
-              options={REGISTER_STATUS_ORDER.map(id => ({
-                id, label: `${REGISTER_STATUS_LABEL[id]} (${statusCounts[id]})`,
-              }))}
-              selected={selectedStatus}
-              onChange={next => setSelectedStatus(next as Set<RegisterStatus>)}
-            />
-          </div>
-        )}
-        {/* ⚠ THE PAYABLES TAG CONTROL NO LONGER OWNS A ROW OF ITS OWN — it is `tagFilterPill`,
-            standing with Group by / Status / Item in the row above. It was a second `.moneyFilterBar`
-            here purely because a chip row could not fit beside them. */}
-        {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — this used to be a
-            second sticky row of its own, stacked below this toolbar. Two rows of filters never
-            needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
-            second line on a narrow screen exactly like `.moneyFilterBar` above already does,
-            instead of needing its own measured sticky boundary. */}
-        {!onPayables && (
-          <div className={styles.registerControls}>
-            {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
-                one or several budget words at once rather than one at a time. */}
-            {registerItemNames.length > 0 && (
-              <MultiSelectDropdown
-                label="Item"
-                options={registerItemNames.map(n => ({ id: n, label: n }))}
-                selected={selectedItems}
-                onChange={setSelectedItems}
-                allLabel="Every budget item"
-              />
-            )}
-            {/* ⚠⚠ THE FOURTH PILL (owner-approved mockup, 2026-08-19) — the date range wearing the
-                same pill shape as Show/Status/Item, replacing the two bare date pickers that sat
-                here. Presets and the custom from/to fields share ONE panel; the pill names the
-                window in words. An OVERDUE row ignores the window whatever it is (the memo's own
-                rule — the window trims routine history, never an open obligation); Actual and
-                Scheduled rows are windowed normally. Preset choice is remembered per team, custom
-                dates never are — the state block's comment carries the full argument. */}
-            <DateRangeDropdown
-              selection={datePreset}
-              from={dateRange.from}
-              to={dateRange.to}
-              todayKey={dateRange.today}
-              seasonBounds={dateRange.seasonBounds}
-              onChange={onDateRangeChange}
-            />
-            {/* ⚠ THE FIFTH PILL, and the last of the chip rows this strip used to carry. Show,
-                Status, Item, Date and now Tags: five controls of one shape, which is the whole
-                reason the chips went — a tag row beside four dropdowns read as a different KIND
-                of control for what is the same act of narrowing. */}
-            {tagFilterPill}
-          </div>
-        )}
+        {/* ⚖ OPTION B — TWO DECKS, ON PURPOSE (owner-ruled 2026-09-02, "Ledger Toolbar
+            Rows" mockup): the TOP deck is what stays put whichever face you are on — the View
+            arrangement, the figure, Export, the create; the STRIP below is the narrowing, which
+            CHANGES with the view. The owner's own reasoning, recorded: the first row's items are
+            static while the filters differ per view, so the split is by volatility, not by
+            control type. Nothing here may wrap between decks — each row has a fixed cast. */}
+        <div className={styles.panelDeck}>
+          {viewPill}
         <div className={styles.panelToolbarActions}>
-          {/* ⚖ CASH ON HAND, NOW INLINE (reading-order ruling — flagged for a second look once
-              real: a plain figure beside the controls may read as too easy to miss compared to
-              the dedicated banner it replaced). Same disappearing rule as the Balance column —
-              a narrowed TYPE filter takes it away; the date range never does. Placed beside Add,
-              per the original ruling's own words — "next to Add" — rather than earning its own
-              auto-margin lane, now that it's sharing a row with the actions instead of a
-              standalone controls strip.
-              ⚠ THE PROJECTED-BALANCE SENTENCE IS GONE (owner call, 2026-08-19) — it pushed this
-              one-row toolbar onto two lines the moment "Include scheduled" was on, and staying
-              one row mattered more than surfacing that number here. `book.projectedBalance`
-              stays computed and used elsewhere (the Ending balance row still reflects it); only
-              this inline callout was cut. */}
-          {!onPayables && showBalance && book && (
-            <span className={styles.registerInlineCash} data-sandbox-tour="register-balance">
-              Cash on hand <b>{fmt(book.cashOnHand)}</b>
-            </span>
-          )}
           {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
@@ -5924,6 +5823,171 @@ function MoneyRecordsPanel({
               : bookEmpty}
           />
           {expenseToolbarActions}
+        </div>
+        </div>
+        <div className={styles.panelFilterStrip}>
+        {onPayables ? (
+          /* ⚠⚠ THE `Schedule | Commitments` TOGGLE IS GONE (Payables Rebuild P3, plan §3.1). It
+             presented a parent and its children as two reports — the framing defect underneath all
+             four of the rebuild's findings — and what replaces it is not a third tab but an
+             ARRANGEMENT of one list.
+
+             ⚠ `Group by` SITS FIRST AND IS LABELLED AS AN ARRANGEMENT (plan §7), so it can never
+             read as another narrowing. Status and Item are the narrowings, and they wear the same
+             pill as their Transactions siblings — one control shape across the reports. */
+          <>
+            {/* ⚠ `Group by` became two of the View pill's three options (fold, 2026-08-28) — same
+                first slot, same arrangement framing, one option wider. */}
+            {/* ⚠⚠ COUNTS ARE OF WHAT IS THERE, taken BEFORE this selection narrows further — the
+                rule the old Overdue chip followed. Otherwise the numbers report themselves back
+                once picked and every unticked option reads zero.
+                ⚠ THEY OVERLAP, and that is correct: a late part-paid piece is counted under both
+                Overdue and Partly paid (`installmentStatuses`, owner ruling 2026-08-20), so the
+                four numbers sum to more than the rows on screen. */}
+            <MultiSelectDropdown
+              restQuiet restSelection={PAY_STATUS_REST}
+              label="Status"
+              options={PAYABLE_STATUS_ORDER.map(id => ({
+                id, label: `${PAYABLE_STATUS_LABEL[id]} (${payStatusCounts[id]})`,
+              }))}
+              selected={payStatus}
+              onChange={next => setPayStatus(next as Set<PayableRowStatus>)}
+            />
+            {payItemNames.length > 0 && (
+              <MultiSelectDropdown
+                restQuiet
+                label="Item"
+                options={payItemNames.map(n => ({ id: n, label: n }))}
+                selected={payItems}
+                onChange={setPayItems}
+                allLabel="Every budget item"
+              />
+            )}
+            {/* ⚠ A NARROWING, so it sits with Status and Item — never before `Group by`, which is
+                the arrangement (plan §7) and keeps the first slot on both faces. */}
+            {tagFilterPill}
+            {/* ⚠ ONE TOGGLE, TWO LABELS — it reads "Open all" only because bills arrive folded, and
+                the identical button reads "Fold all" the moment anything is open (and always, on
+                the due-date arrangement, whose periods arrive open). Removing the one you happen to
+                be looking at removes the other.
+                ⚠⚠ IT MAY NOT HIDE ITSELF ON THE *FILTERED* GROUP COUNT (owner ruling 2026-08-26).
+                A `foldKeys.length > 1` gate was built here and taken back out: a control that
+                vanishes because a coach ticked a tag is the screen changing shape in response to a
+                filter, which is the same objection that settled the fold default above. If this
+                button is ever to hide on a one-bill team, the test has to be the TEAM's list, not
+                the narrowed view — an open question, not a thing to re-derive here. */}
+            {payBills.length > 0 && (
+              <button
+                type="button"
+                className={styles.moneyFilterChip}
+                /* Wants-shut is the opposite of what we have; flip exactly the keys that need it,
+                   which is "none" or "all" depending on the arrangement's own default. */
+                onClick={() => setFlippedFolds(
+                  (allFolded ? !foldDefaultShut : foldDefaultShut)
+                    ? new Set()
+                    : new Set(foldKeys))}
+              >
+                {allFolded ? 'Open all' : 'Fold all'}
+              </button>
+            )}
+          </>
+        ) : (
+          /* ⚠⚠ FILTERS, NOT SUB-TABS (plan §4.3, ruled 2026-08-16). Transactions carried Expenses
+             and Money in as a second tab row; the register is ONE book, so the strip narrows what
+             is on it instead of choosing between two lists. That is what lets a running balance
+             exist at all — neither of the old lists could carry one, because half the money was
+             always on the other. */
+          <>
+            {/* ⚠ A DROPDOWN, NOT SEVEN PILLS (owner call — "fit like QuickBooks/Excel"; seven type
+                chips plus Overdue plus the item picker plus a date range no longer fit one line as
+                pills). Multi-select: pick more than one kind at once (Expenses + Refunds, say). */}
+            <MultiSelectDropdown
+              restQuiet
+              label="Type"
+              options={registerFilters.filter(f => f.id !== 'all').map(f => ({ id: f.id, label: f.label }))}
+              selected={selectedKinds}
+              onChange={next => setSelectedKinds(next as Set<RegisterKind>)}
+            />
+            {/* ⚠⚠ A STATUS DROPDOWN, NOT TWO SEPARATE PILLS (owner call, 2026-08-19 — folds the old
+                "Overdue" chip and "Include scheduled" toggle into one control, matching the same
+                multi-select shape as Show and Item: three dropdowns, one date range). Counts are
+                of what's THERE, computed before this selection narrows further — same rule the
+                old Overdue chip's count followed, so the numbers never chase their own tail.
+                ⚠⚠ DEFAULTS TO Actual + Overdue, NOT EMPTY (owner call, reversing plan §4.4's
+                "on by default" for Scheduled a second time). `MultiSelectDropdown`'s own rule is
+                "empty means all," but that would flip Scheduled back on by default — a call this
+                project already made deliberately once. Seeding two of three keeps that default
+                intact; the dropdown reads "2 selected" rather than "All" until a coach changes it,
+                which is an honest description of a real, considered starting narrowing. */}
+            <MultiSelectDropdown
+              restQuiet restSelection={REGISTER_STATUS_REST}
+              label="Status"
+              options={REGISTER_STATUS_ORDER.map(id => ({
+                id, label: `${REGISTER_STATUS_LABEL[id]} (${statusCounts[id]})`,
+              }))}
+              selected={selectedStatus}
+              onChange={next => setSelectedStatus(next as Set<RegisterStatus>)}
+            />
+          </>
+        )}
+        {/* ⚠ THE PAYABLES TAG CONTROL NO LONGER OWNS A ROW OF ITS OWN — it is `tagFilterPill`,
+            standing with Group by / Status / Item in the row above. It was a second `.moneyFilterBar`
+            here purely because a chip row could not fit beside them. */}
+        {/* ⚠ MERGED IN (reversed 2026-08-19, reading-order ruling follow-up) — this used to be a
+            second sticky row of its own, stacked below this toolbar. Two rows of filters never
+            needed to be two ROWS OF STICKY CHROME; they share this one now, wrapping onto a
+            second line on a narrow screen exactly like `.moneyFilterBar` above already does,
+            instead of needing its own measured sticky boundary. */}
+        {!onPayables && (
+          <div style={{ display: 'contents' }}>
+            {/* ⚠ MULTI-SELECT, DEFAULT "ALL" (owner call, matching the type filter). Narrow to
+                one or several budget words at once rather than one at a time. */}
+            {registerItemNames.length > 0 && (
+              <MultiSelectDropdown
+                restQuiet
+                label="Item"
+                options={registerItemNames.map(n => ({ id: n, label: n }))}
+                selected={selectedItems}
+                onChange={setSelectedItems}
+                allLabel="Every budget item"
+              />
+            )}
+            {/* ⚠⚠ THE FOURTH PILL (owner-approved mockup, 2026-08-19) — the date range wearing the
+                same pill shape as Show/Status/Item, replacing the two bare date pickers that sat
+                here. Presets and the custom from/to fields share ONE panel; the pill names the
+                window in words. An OVERDUE row ignores the window whatever it is (the memo's own
+                rule — the window trims routine history, never an open obligation); Actual and
+                Scheduled rows are windowed normally. Preset choice is remembered per team, custom
+                dates never are — the state block's comment carries the full argument. */}
+            <DateRangeDropdown
+              restQuiet restSelectionId="around"
+              selection={datePreset}
+              from={dateRange.from}
+              to={dateRange.to}
+              todayKey={dateRange.today}
+              seasonBounds={dateRange.seasonBounds}
+              onChange={onDateRangeChange}
+            />
+            {/* ⚠ THE FIFTH PILL, and the last of the chip rows this strip used to carry. Show,
+                Status, Item, Date and now Tags: five controls of one shape, which is the whole
+                reason the chips went — a tag row beside four dropdowns read as a different KIND
+                of control for what is the same act of narrowing. */}
+            {tagFilterPill}
+          </div>
+        )}
+
+          {/* ⚖ CASH ON HAND rides the FILTER STRIP's right edge (owner amendment 2026-09-02,
+              second look on the 08-19 "next to Add" call now taken): the figure answers the same
+              question the filters shape — what am I looking at — so it sits with them, right-
+              aligned by its own auto-margin, and the top deck stays pure verbs. Same
+              disappearing rule as the Balance column — a narrowed TYPE filter takes it away; the
+              date range never does. ⚠ THE PROJECTED-BALANCE SENTENCE remains GONE (owner,
+              2026-08-19); `book.projectedBalance` stays computed and used elsewhere. */}
+          {!onPayables && showBalance && book && (
+            <span className={styles.registerInlineCash} data-sandbox-tour="register-balance">
+              Cash on hand <b>{fmt(book.cashOnHand)}</b>
+            </span>
+          )}
         </div>
       </div>
       {/* ⚠ THE ORG/TEAM COLOUR LEGEND IS GONE, and nothing was lost with it: the swatch now sits in
@@ -7050,7 +7114,7 @@ function MoneyRecordsPanel({
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Tags</label>
-                    <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+                    <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
                   </div>
                 </CoachFormDisclosure>
               </div>
@@ -7241,21 +7305,6 @@ function MoneyRecordsPanel({
           }}
         />
       )}
-
-      {/* Money-tag manager (rename / merge / delete the team's OWN money tags) */}
-      {tagManagerOpen && (
-        <TagManagerModal
-          orgSlug={orgSlug}
-          teamId={teamId}
-          tags={ownMoneyTags}
-          basePath={`/api/coaches/${orgSlug}/teams/${teamId}/expense-tags`}
-          title="Manage money tags"
-          itemNoun="expense"
-          onClose={() => setTagManagerOpen(false)}
-          onChanged={load}
-        />
-      )}
-
       {/* The discard guard covers dismissing the sheet; this covers walking away from it —
           a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
       <UnsavedChangesGuard

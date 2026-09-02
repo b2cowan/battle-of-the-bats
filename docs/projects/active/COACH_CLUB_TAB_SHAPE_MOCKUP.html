@@ -1,0 +1,1337 @@
+<title>The Club Tab's Shape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ══ A blueprint bench: the subject is where things SIT on a screen, so the sheet reads like a
+      drawing — cool ground, measured rules, one blue for structure and one rust for "lost". ══ */
+:root{
+  --ground:#E8EBEF; --surface:#FFFFFF; --sunk:#DDE2E8; --raise:#F4F6F9;
+  --ink:#161A20; --muted:#555F6C; --faint:#8A94A0;
+  --rule:#CBD2DA; --rule-soft:#E1E6EC;
+  --blue:#2F5FE0; --blue-soft:rgba(47,95,224,.10);
+  --rust:#B5451B; --rust-soft:rgba(181,69,27,.10);
+  --good:#186B53; --good-soft:rgba(24,107,83,.11);
+  --on-accent:#FFFFFF;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0F1318; --surface:#171C23; --sunk:#12171C; --raise:#1C222A;
+  --ink:#E7EBF0; --muted:#96A1AE; --faint:#6B7583;
+  --rule:#252D37; --rule-soft:#1D242C;
+  --blue:#7FA4FF; --blue-soft:rgba(127,164,255,.13);
+  --rust:#F58A5F; --rust-soft:rgba(245,138,95,.13);
+  --good:#4FC5A6; --good-soft:rgba(79,197,166,.13);
+  --on-accent:#0F1318;
+}}
+:root[data-theme="dark"]{
+  --ground:#0F1318; --surface:#171C23; --sunk:#12171C; --raise:#1C222A;
+  --ink:#E7EBF0; --muted:#96A1AE; --faint:#6B7583;
+  --rule:#252D37; --rule-soft:#1D242C;
+  --blue:#7FA4FF; --blue-soft:rgba(127,164,255,.13);
+  --rust:#F58A5F; --rust-soft:rgba(245,138,95,.13);
+  --good:#4FC5A6; --good-soft:rgba(79,197,166,.13);
+  --on-accent:#0F1318;
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Source Sans 3",system-ui,sans-serif; font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px; margin:0 auto; padding:48px 24px 110px; display:flex; flex-direction:column; gap:44px}
+h1,h2,h3,h4{font-family:Archivo,system-ui,sans-serif; margin:0; text-wrap:balance; line-height:1.14}
+h1{font-size:42px; font-weight:700; letter-spacing:-.02em}
+h2{font-size:25px; font-weight:600}
+h3{font-size:17px; font-weight:600}
+p{margin:0; max-width:70ch}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+a{color:var(--blue)}
+:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+
+.head{display:flex; flex-direction:column; gap:16px; padding-bottom:30px; border-bottom:2px solid var(--rule)}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.16em;
+        text-transform:uppercase; color:var(--blue)}
+.dek{font-size:17.5px; color:var(--muted); max-width:66ch}
+
+section{display:flex; flex-direction:column; gap:18px}
+.sec-head{display:flex; flex-direction:column; gap:8px; border-left:3px solid var(--blue); padding-left:16px}
+.sec-no{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em;
+        text-transform:uppercase; color:var(--faint)}
+.sec-head p{color:var(--muted); font-size:15px}
+
+/* ── the drawing bench ── */
+.bench{background:var(--sunk); border:1px solid var(--rule); border-radius:6px; padding:20px;
+       display:flex; flex-direction:column; gap:13px}
+.bench-cap{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.bench-cap h3{margin-right:auto}
+.hint{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--faint)}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start}
+@media (max-width:840px){.two{grid-template-columns:1fr}}
+
+/* ── the product frame: a faithful miniature, warm portal ink, never theme-reactive ── */
+.fr{background:#F8F5EF; border:1px solid rgba(70,55,30,.22); border-radius:5px; overflow:hidden;
+    font-family:"Source Sans 3",system-ui,sans-serif; color:#241E15; position:relative}
+.fr-top{background:#FFF; border-bottom:1px solid rgba(70,55,30,.13); padding:8px 12px;
+        font-size:12px; font-weight:700; display:flex; gap:8px; align-items:center}
+.fr-top small{font-weight:400; color:#6A635C; font-size:10.5px}
+.fr-bd{padding:11px; display:flex; flex-direction:column; gap:9px}
+
+.band{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(70,55,30,.16);
+      border:1px solid rgba(70,55,30,.16); border-radius:6px; overflow:hidden}
+.bcell{background:#FFF; padding:8px 9px; display:flex; flex-direction:column; gap:2px}
+.blab{font-size:8.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#6A635C}
+.bfig{font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:700; letter-spacing:-.01em}
+.bsub{font-size:8.5px; color:#6A635C}
+.bfig.out{color:#7A3020} .bfig.wait{color:#8A6100}
+.bcell.door{background:rgba(47,95,224,.07); box-shadow:inset 0 0 0 1.5px rgba(47,95,224,.5)}
+.bcell.door .blab{color:#2F5FE0}
+.door-cue{font-size:8.5px; font-weight:700; color:#2F5FE0}
+
+.note{font-size:9.5px; color:#6A635C; line-height:1.45}
+.sec-title{font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:7px}
+.sec-title .cnt{font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:600; color:#6A635C}
+.sec-title .btn{margin-left:auto; font-size:9px; font-weight:700; border:1px solid rgba(70,55,30,.28);
+                border-radius:5px; padding:3px 8px; background:#FFF}
+
+.bill{background:#FFF; border:1px solid rgba(70,55,30,.15); border-radius:6px; padding:8px 10px;
+      display:flex; align-items:center; gap:8px; font-size:10.5px}
+.bill .nm{font-weight:700; min-width:0}
+.bill .meta{font-size:9px; color:#6A635C}
+.bill .amt{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; white-space:nowrap}
+.bill .chev{color:#6A635C; font-size:9px}
+.bill.open{flex-direction:column; align-items:stretch; gap:7px}
+.billrow{display:flex; align-items:center; gap:8px; width:100%}
+.filing{background:rgba(70,55,30,.05); border:1px solid rgba(70,55,30,.12); border-radius:5px;
+        padding:6px 8px; font-size:9px; color:#6A635C; display:flex; align-items:center; gap:6px}
+.filing b{color:#241E15}
+.tbl{width:100%; border-collapse:collapse; font-size:9px}
+.tbl th{text-align:left; font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:#6A635C;
+        border-bottom:1px solid rgba(70,55,30,.14); padding:4px 5px; font-weight:700}
+.tbl td{border-bottom:1px solid rgba(70,55,30,.08); padding:5px; color:#241E15}
+.tbl td.num{font-family:"IBM Plex Mono",monospace; text-align:right}
+.pill{font-size:7.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+      border:1px solid; border-radius:99px; padding:1px 6px; white-space:nowrap}
+.p-over{color:#8C2F1A; border-color:rgba(140,47,26,.45); background:rgba(140,47,26,.09)}
+.p-unpaid{color:#6A635C; border-color:rgba(70,55,30,.3)}
+.p-paid{color:#2E6B45; border-color:rgba(46,107,69,.4); background:rgba(46,107,69,.08)}
+.mini-btn{font-size:8px; font-weight:700; border:1px solid rgba(70,55,30,.28); border-radius:4px;
+          padding:2px 6px; background:#FFF; white-space:nowrap}
+
+/* the fold */
+.fold{position:relative; border-top:2px dashed var(--rust); margin:4px -11px 0; padding:7px 11px 0}
+.fold-lab{position:absolute; top:-8px; left:11px; background:var(--rust); color:#fff;
+          font-family:"IBM Plex Mono",monospace; font-size:8px; font-weight:700; letter-spacing:.08em;
+          text-transform:uppercase; padding:1px 7px; border-radius:3px}
+.ghost{opacity:.34; filter:grayscale(.55)}
+
+.ann{font-size:14px; color:var(--muted); display:flex; flex-direction:column; gap:10px}
+.ann b{color:var(--ink)}
+.pin{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.09em;
+     text-transform:uppercase; color:var(--blue)}
+.pin.bad{color:var(--rust)} .pin.good{color:var(--good)}
+
+.call{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--blue);
+      border-radius:5px; padding:17px 19px; display:flex; flex-direction:column; gap:10px}
+.call.bad{border-left-color:var(--rust)} .call.good{border-left-color:var(--good)}
+.call p{font-size:14.5px; color:var(--muted)} .call b{color:var(--ink)}
+.opts{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:16px}
+.opt{background:var(--surface); border:1px solid var(--rule); border-radius:5px; overflow:hidden;
+     display:flex; flex-direction:column}
+.opt.rec{border-color:var(--good); box-shadow:0 0 0 1px var(--good)}
+.opt-h{padding:12px 16px; background:var(--raise); border-bottom:1px solid var(--rule-soft);
+       display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.opt-h h3{flex:1; min-width:130px; font-size:15px}
+.opt-b{padding:14px 16px; display:flex; flex-direction:column; gap:9px; flex:1}
+.opt-b p{font-size:13.5px; color:var(--muted)} .opt-b b{color:var(--ink)}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:700; letter-spacing:.09em;
+     text-transform:uppercase; padding:2px 7px; border-radius:3px; border:1px solid; white-space:nowrap}
+.t-rec{color:var(--on-accent); background:var(--good); border-color:var(--good)}
+.t-no{color:var(--rust); border-color:var(--rust); background:var(--rust-soft)}
+.t-maybe{color:var(--muted); border-color:var(--rule)}
+.foot{border-top:2px solid var(--rule); padding-top:20px; font-size:13.5px; color:var(--faint);
+      display:flex; flex-direction:column; gap:7px}
+.foot b{color:var(--muted)}
+/* the two-column frame + the modal specimens */
+.cols2{display:grid; grid-template-columns:1fr 1fr; gap:9px; align-items:start}
+.squeeze{outline:1.5px dashed rgba(181,69,27,.75); outline-offset:2px; border-radius:5px}
+.sqlab{font-family:"IBM Plex Mono",monospace; font-size:8px; font-weight:700; letter-spacing:.07em;
+       text-transform:uppercase; color:#B5451B}
+.modal{background:#FFF; border:1px solid rgba(70,55,30,.22); border-radius:8px; overflow:hidden;
+       box-shadow:0 8px 22px rgba(40,30,10,.13)}
+.mhd{padding:9px 12px; border-bottom:1px solid rgba(70,55,30,.12); font-size:12px; font-weight:700}
+.mhd small{display:block; font-weight:400; font-size:9.5px; color:#6A635C}
+.mbd{padding:11px 12px; display:flex; flex-direction:column; gap:8px}
+.fld{display:flex; flex-direction:column; gap:3px}
+.flab{font-size:8.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#4A4235}
+.fbox{border:1px solid rgba(70,55,30,.26); border-radius:5px; padding:6px 8px; font-size:10px;
+      background:#FDFCFA; color:#6A635C; display:flex; align-items:center; gap:6px}
+.fbox.filled{background:#FFF; color:#241E15; font-weight:600}
+.fbox.on{border-color:#57651E; background:rgba(87,101,30,.09); color:#3A430F; font-weight:700}
+.fbox .cv{margin-left:auto; color:#6A635C; font-size:9px}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.mark{border-left:3px solid #B5451B; padding-left:7px}
+.mark.ok{border-left-color:#186B53}
+.seq{font-family:"IBM Plex Mono",monospace; font-size:8px; font-weight:700; color:#B5451B;
+     letter-spacing:.06em}
+.seq.ok{color:#186B53}
+.cmp{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start}
+@media (max-width:840px){.cols2,.cmp{grid-template-columns:1fr}}
+.diffs{width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--rule);
+       border-radius:5px; overflow:hidden; font-size:13.5px}
+.diffs th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.09em;
+          text-transform:uppercase; color:var(--muted); background:var(--raise); padding:9px 12px;
+          border-bottom:1px solid var(--rule)}
+.diffs td{padding:9px 12px; border-bottom:1px solid var(--rule-soft); color:var(--muted); vertical-align:top}
+.diffs tr:last-child td{border-bottom:0}
+.diffs td b{color:var(--ink)}
+.tblwrap{overflow-x:auto}
+.grp{background:rgba(70,55,30,.075); font-size:8.5px; font-weight:700; letter-spacing:.09em;
+     text-transform:uppercase; color:#4A4235}
+.grp td{padding:5px 6px !important; border-bottom:1px solid rgba(70,55,30,.16) !important}
+.grp .gcnt{font-family:"IBM Plex Mono",monospace; font-weight:600; color:#6A635C; letter-spacing:0;
+           text-transform:none; font-size:8.5px}
+.chips{display:flex; gap:5px; flex-wrap:wrap}
+.chip{font-size:8.5px; font-weight:700; border:1px solid rgba(70,55,30,.26); border-radius:99px;
+      padding:2px 9px; background:#FFF; color:#4A4235; white-space:nowrap}
+.chip.on{background:#57651E; border-color:#57651E; color:#FFF}
+.tabs{display:flex; gap:0; border-bottom:1.5px solid rgba(70,55,30,.2)}
+.tab{font-size:10px; font-weight:700; padding:6px 11px; color:#6A635C; border-bottom:2px solid transparent;
+     margin-bottom:-1.5px; white-space:nowrap; display:flex; gap:6px; align-items:baseline}
+.tab .tc{font-family:"IBM Plex Mono",monospace; font-size:8.5px; font-weight:600; color:#8A837C}
+.tab.on{color:#241E15; border-bottom-color:#57651E}
+.tab.on .tc{color:#57651E}
+.matrix{width:100%; border-collapse:collapse; font-size:13px; background:var(--surface);
+        border:1px solid var(--rule); border-radius:5px; overflow:hidden; min-width:660px}
+.matrix th{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.08em;
+           text-transform:uppercase; color:var(--muted); background:var(--raise); padding:9px 10px;
+           border-bottom:1px solid var(--rule); vertical-align:bottom}
+.matrix td{padding:9px 10px; border-bottom:1px solid var(--rule-soft); color:var(--muted); vertical-align:top}
+.matrix tr:last-child td{border-bottom:0}
+.matrix td b{color:var(--ink)}
+.matrix td.opt-name{color:var(--ink); font-weight:600}
+.y{color:var(--good); font-weight:700} .n{color:var(--rust); font-weight:700} .m{color:var(--faint); font-weight:700}
+.hidnote{font-size:9px; color:#8A6100; background:rgba(138,97,0,.09);
+         border:1px solid rgba(138,97,0,.25); border-radius:5px; padding:5px 8px;
+         display:flex; align-items:center; gap:6px}
+.hidnote b{color:#241E15}
+.srch{border:1px solid rgba(70,55,30,.26); border-radius:5px; padding:5px 8px; font-size:9.5px;
+      color:#8A837C; background:#FFF; flex:1; min-width:110px}
+.filterbar{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.bcell.tapped{background:rgba(87,101,30,.10); box-shadow:inset 0 0 0 1.5px #57651E}
+.xmark{color:#B5451B; font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="kicker">Coaches portal · money · the Club tab · shape review</div>
+    <h1>You can't see half the relationship</h1>
+    <p class="dek">One expanded bill pushes <b>What we've asked the club</b> clean off the screen —
+      and collapsing the bills only fixes today's team. <b>Fundraising is the same screen with the
+      same two-groups-and-a-dashboard shape, and it already solved this</b>, on the record, for the
+      reason the Club tab is now hitting. This sheet proposes the Club tab adopt that shape, draws
+      the two-column option you asked to see, and shows where the request form's field order went
+      wrong against a ruling that already exists.</p>
+    <div class="hint">Drawn on QA Mid Season U14 — 3 bills, $1,570 outstanding, 4 requests, $180.50 awaiting a decision · Fundraising figures from the same team</div>
+  </header>
+
+  <!-- 01 · NOW -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">01 — what you screenshotted</div>
+      <h2>Today</h2>
+      <p>The band, a paragraph about requests, then every bill — with the first one opened for you,
+        carrying its filing row and a four-row installment table.</p>
+    </div>
+    <div class="bench">
+      <div class="bench-cap"><h3>Club tab, as it ships</h3>
+        <span class="hint">first bill auto-opens · laptop viewport</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-top">QA Mid Season U14 <small>· Money · Club</small></div>
+          <div class="fr-bd">
+            <div class="band">
+              <div class="bcell"><span class="blab">Still to pay the club</span><span class="bfig out">$1,570.00</span><span class="bsub">6 installments · 1 overdue</span></div>
+              <div class="bcell"><span class="blab">Waiting on the club</span><span class="bfig wait">$180.50</span><span class="bsub">1 request, not yet decided</span></div>
+              <div class="bcell"><span class="blab">Settled this season</span><span class="bfig">$425.00</span><span class="bsub">$750 out · $325 in</span></div>
+            </div>
+            <p class="note"><b>Waiting on the club isn't your money yet</b> — it's out of your cash on
+              hand and out of your plan. It shows in Transactions under <i>include what's scheduled</i>.</p>
+            <div class="sec-title">What the club has billed us <span class="btn">Export</span></div>
+            <div class="bill open">
+              <div class="billrow">
+                <span class="nm">Diamond &amp; field permits — spring block<br><span class="meta">$1,200.00 · Not filed · ⚠ 1 overdue</span></span>
+                <span class="amt">$900.00 due</span><span class="chev">⌃</span>
+              </div>
+              <div class="filing">FILES UNDER <b>Not filed</b> <span class="mini-btn">File it</span></div>
+              <table class="tbl">
+                <thead><tr><th>#</th><th>Amount</th><th>Due</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td class="num">$300.00</td><td>Apr 15</td><td><span class="pill p-paid">Paid</span></td><td></td></tr>
+                  <tr><td>2</td><td class="num">$300.00</td><td>Aug 20</td><td><span class="pill p-over">Overdue</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                  <tr><td>3</td><td class="num">$300.00</td><td>Sep 15</td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                  <tr><td>4</td><td class="num">$300.00</td><td>Oct 15</td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fold">
+              <span class="fold-lab">the fold — everything under here needs a scroll</span>
+              <div class="ghost" style="display:flex;flex-direction:column;gap:9px">
+                <div class="bill"><span class="nm">League insurance &amp; association fees</span><span class="amt">$250.00 due</span><span class="chev">⌄</span></div>
+                <div class="bill"><span class="nm">Umpire pool assessment</span><span class="amt">$420.00 due</span><span class="chev">⌄</span></div>
+                <div class="sec-title">What we've asked the club <span class="btn">Make a request</span></div>
+                <div class="bill"><span class="nm">Tournament entry — Riverside Classic</span><span class="amt">$180.50</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin bad">The section that vanished</span>
+          <p><b>What we've asked the club</b> — the entire second half of the relationship this tab
+            was merged to show — starts roughly <b>a screen and a half down</b>. Nothing above it
+            hints that it's there.</p>
+          <span class="pin bad">And it gets worse, not better</span>
+          <p>This is the <b>good</b> case: three bills. A club that bills monthly gives this coach
+            nine, and the requests move further away with each one. Any fix that only shortens
+            today's page is a fix with an expiry date.</p>
+          <span class="pin">The part that's already right</span>
+          <p>The band <b>already says</b> "Waiting on the club · $180.50 · 1 request, not yet
+            decided". The screen names the missing section, in the right words, at the top — and then
+            leaves the figure inert. That's the gap to close.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · PROPOSED -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">02 — the step everything else needs</div>
+      <h2>First, the bills stop being cards</h2>
+      <p>My first answer was "collapse the cards and make the band clickable". The Fundraising tab
+        changed it: <b>that screen had this exact problem and already solved it</b> — it threw its
+        card list away on 2026-08-13, for the reason this screen is now hitting. This is the
+        foundation rather than the finish: <b>columns need it too</b>, because a card that sizes
+        itself to its own name cannot sit in half a screen. Everything after this assumes it.</p>
+    </div>
+    <div class="bench">
+      <div class="bench-cap"><h3>Club tab, proposed</h3>
+        <span class="hint">same viewport · the whole relationship above the fold</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-top">QA Mid Season U14 <small>· Money · Club</small></div>
+          <div class="fr-bd">
+            <div class="band">
+              <div class="bcell door"><span class="blab">Still to pay the club</span><span class="bfig out">$1,570.00</span><span class="bsub">6 installments · 1 overdue</span><span class="door-cue">3 bills ↓</span></div>
+              <div class="bcell door"><span class="blab">Waiting on the club</span><span class="bfig wait">$180.50</span><span class="bsub">1 request, not yet decided</span><span class="door-cue">4 requests ↓</span></div>
+              <div class="bcell"><span class="blab">Settled this season</span><span class="bfig">$425.00</span><span class="bsub">$750 out · $325 in</span></div>
+            </div>
+            <div class="sec-title">What the club has billed us <span class="cnt">3 bills · $1,570.00 due</span> <span class="btn">Export</span></div>
+            <div class="bill"><span class="nm">Diamond &amp; field permits — spring block<br><span class="meta">$1,200.00 · Not filed · ⚠ 1 overdue</span></span><span class="amt">$900.00 due</span><span class="chev">⌄</span></div>
+            <div class="bill"><span class="nm">League insurance &amp; association fees<br><span class="meta">$500.00 · Not filed</span></span><span class="amt">$250.00 due</span><span class="chev">⌄</span></div>
+            <div class="bill"><span class="nm">Umpire pool assessment<br><span class="meta">$420.00 · Not filed</span></span><span class="amt">$420.00 due</span><span class="chev">⌄</span></div>
+            <div class="sec-title" style="margin-top:3px">What we've asked the club <span class="cnt">4 · 1 awaiting</span> <span class="btn">Make a request</span></div>
+            <p class="note"><b>Waiting on the club isn't your money yet</b> — it's out of your cash on
+              hand and out of your plan.</p>
+            <div class="bill"><span class="nm">Tournament entry — Riverside Classic<br><span class="meta">Awaiting the club · not filed yet</span></span><span class="amt">$180.50</span></div>
+            <div class="bill"><span class="nm">Diamond permit reimbursement — July 14<br><span class="meta">Approved · Money back · Not filed</span></span><span class="amt">$325.00</span></div>
+            <div class="fold">
+              <span class="fold-lab">the fold</span>
+              <div class="ghost"><div class="bill"><span class="nm">Team share of the June umpire invoice</span><span class="amt">$200.00</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin good">Both halves, one screen</span>
+          <p>The relationship now reads in about a dozen lines: what they bill you, what you've asked
+            them, and where each stands. You open the one you came for.</p>
+          <span class="pin good">The band stops being decoration</span>
+          <p>Each figure gains the count of what's under it and becomes the door to it. A coach who
+            reads <b>"Waiting on the club — 1 request"</b> can now act on that sentence instead of
+            hunting for what it refers to.</p>
+          <span class="pin good">The paragraph moved to what it's about</span>
+          <p>"Waiting on the club isn't your money yet" explains the <i>requests</i> — it sat above
+            the bills, spending three lines at the top of a screen whose problem is height. It now
+            sits with the section it describes.</p>
+          <span class="pin">What this costs</span>
+          <p>Marking an installment paid becomes <b>one extra tap</b>. That's the trade: the common
+            action gets slightly longer, and the invisible half of the screen becomes visible. The
+            overdue count still shows on the closed row, so nothing urgent hides.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · TWO COLUMNS, BOTH SCREENS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">03 — you asked to see it</div>
+      <h2>Two columns, on both screens</h2>
+      <p>My first drawing squeezed the requests <b>table</b> into half a screen and it wrapped badly.
+        That was the drawing's fault, not the layout's: at half width both sides should use the
+        <b>compact row</b> form the product already falls back to on a phone. Redrawn that way, and
+        with Fundraising beside it.</p>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>Club — two columns, compact rows both sides</h3>
+        <span class="hint">laptop · nothing below anything</span></div>
+      <div class="fr">
+        <div class="fr-top">QA Mid Season U14 <small>· Money · Club</small></div>
+        <div class="fr-bd">
+          <div class="band">
+            <div class="bcell"><span class="blab">Still to pay the club</span><span class="bfig out">$1,570.00</span><span class="bsub">6 installments · 1 overdue</span></div>
+            <div class="bcell"><span class="blab">Waiting on the club</span><span class="bfig wait">$180.50</span><span class="bsub">1 request, not yet decided</span></div>
+            <div class="bcell"><span class="blab">Settled this season</span><span class="bfig">$425.00</span><span class="bsub">$750 out · $325 in</span></div>
+          </div>
+          <div class="cols2">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="sec-title">What the club has billed us <span class="cnt">3</span> <span class="btn">Export</span></div>
+              <div class="bill"><span class="nm">Diamond &amp; field permits<br><span class="meta">$1,200 · Not filed · ⚠ 1 overdue</span></span><span class="amt">$900.00</span><span class="chev">⌄</span></div>
+              <div class="bill"><span class="nm">League insurance &amp; fees<br><span class="meta">$500 · Not filed</span></span><span class="amt">$250.00</span><span class="chev">⌄</span></div>
+              <div class="bill"><span class="nm">Umpire pool assessment<br><span class="meta">$420 · Not filed</span></span><span class="amt">$420.00</span><span class="chev">⌄</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="sec-title">What we've asked the club <span class="cnt">4</span> <span class="btn">Make a request</span></div>
+              <div class="bill"><span class="nm">Tournament entry — Riverside Classic<br><span class="meta">Not filed · File it</span></span><span class="amt">$180.50</span><span class="pill p-over">Awaiting</span></div>
+              <div class="bill"><span class="nm">Diamond permit reimbursement<br><span class="meta">Money back · Not filed · Change</span></span><span class="amt">$325.00</span><span class="pill p-paid">Approved</span></div>
+              <div class="bill"><span class="nm">Team share of the umpire invoice<br><span class="meta">Not filed · File it</span></span><span class="amt">$200.00</span><span class="pill p-paid">Approved</span></div>
+              <div class="bill"><span class="nm">New catcher's gear<br><span class="meta">Not filed</span></span><span class="amt">$240.00</span><span class="pill p-unpaid">Declined</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin">Good — but §06 found better, for THIS tab</span>
+        <p>Every bill and every request on one screen, nothing opened, nothing scrolled. The "files
+          under" text that broke the table is a <b>sub-line</b> here — the product's own narrow-width
+          form used one breakpoint earlier, not a new pattern. ⚠ <b>Superseded for Club</b> by the
+          grouped single table in §06, which does the same job and also survives a phone. Keep
+          reading this frame as the argument that <i>columns work</i> — it is still the
+          recommendation for <b>Fundraising</b>, below.</p>
+        <span class="pin">What it gives up</span>
+        <p>You lose the <b>column</b> — you can't read every amount down a single edge, or sort by
+          status. For a list this short that costs nothing; for thirty rows a table wins.</p>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>Fundraising — two columns</h3>
+        <span class="hint">the same team's real drives and sponsors</span></div>
+      <div class="fr">
+        <div class="fr-top">QA Mid Season U14 <small>· Money · Fundraising</small></div>
+        <div class="fr-bd">
+          <div class="band" style="grid-template-columns:repeat(4,1fr)">
+            <div class="bcell"><span class="blab">Raised — fundraisers</span><span class="bfig" style="color:#2E6B45">$1,200.00</span><span class="bsub">1 drive</span></div>
+            <div class="bcell"><span class="blab">Raised — sponsors</span><span class="bfig" style="color:#2F5FE0">$0.00</span><span class="bsub">0 sponsors</span></div>
+            <div class="bcell"><span class="blab">Team keeps</span><span class="bfig">$600.00</span></div>
+            <div class="bcell"><span class="blab">Credited to families</span><span class="bfig" style="color:#8B5CC7">$600.00</span></div>
+          </div>
+          <div class="cols2">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="sec-title">Fundraisers <span class="cnt">1</span> <span class="btn">+ Fundraiser</span></div>
+              <table class="tbl">
+                <thead><tr><th>Name</th><th style="text-align:right">Amount</th><th style="text-align:right">Keeps</th><th style="text-align:right">Credits</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Bottle Drive</td><td class="num">$1,200.00</td><td class="num">$600.00</td><td class="num">$600.00</td><td><span class="pill p-paid">Active</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="sec-title">Sponsors <span class="cnt">0</span> <span class="btn">+ Sponsor</span></div>
+              <p class="note" style="padding:9px;background:#FFF;border:1px dashed rgba(70,55,30,.22);border-radius:6px">
+                No sponsors yet. Press <b>+ Sponsor</b> to log one — a promise or a cheque.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin good">Fundraising takes columns BETTER than Club does</span>
+        <p>Its tables survive half a screen where Club's didn't, and the reason is what's in the
+          cells: <b>one name and then short money figures</b> — <i>Amount, Keeps, Credits</i> — none
+          of which wrap. Club's requests table has <b>two prose columns</b> (the description and what
+          it's filed under), and prose is what breaks at half width.</p>
+        <span class="pin good">And the empty half stops being invisible</span>
+        <p>Today a team with no sponsors gets "No sponsors yet" <b>underneath</b> the drives — the
+          exact thing you're describing. In columns it sits beside them, so the coach can see the
+          product has a second half they haven't used. <b>That may be the strongest argument for
+          columns anywhere in the hub:</b> an empty section stacked below a full one is invisible
+          twice over.</p>
+      </div>
+    </div>
+    <div class="call">
+      <h3>Your rule, stated — and the one place it can't hold</h3>
+      <p><b>"A whole section should never be invisible below another whole section."</b> I think
+        that's right, and it's a better rule than the one I was working to (<i>"make the page
+        shorter"</i>), because it doesn't quietly expire as a list grows. Two columns satisfies it
+        on a laptop completely.</p>
+      <p>⚠ <b>It cannot hold on a phone, and no layout makes it hold.</b> There is one column; two
+        sections mean one is under the other. So the rule needs an answer at narrow widths, and
+        there are only three honest ones:</p>
+      <ul style="margin:0; padding-left:20px; font-size:14.5px; color:var(--muted); display:flex; flex-direction:column; gap:7px">
+        <li><b>Accept it on phones.</b> Columns on desktop, stacked below — with both sections
+          collapsed to a headline row so the second is one screen away rather than three. This is
+          what I'd do.</li>
+        <li><b>A segmented switch</b> (<i>Billed us · We've asked</i>) at narrow widths only. Both
+          names permanently visible, one list at a time.</li>
+        <li><b>One open at a time</b> — opening a section closes the other, so both headings always
+          sit on screen. Guarantees the rule; costs you ever seeing both lists together.</li>
+      </ul>
+      <p>⚠⚠ <b>I owe you a correction here.</b> I ruled the switch out earlier on the grounds that it
+        "lets you see only half the relationship at once". That objection is weaker than I made it:
+        the standing band at the top already reports <b>both</b> halves in figures and never moves,
+        so a switch would only change which <i>detail list</i> is open — not which half of the
+        relationship you can see. If you want your rule to hold at every width, the switch is the
+        cheapest thing that does it, and my earlier reason for dismissing it doesn't survive
+        contact with your rule.</p>
+    </div>
+  </section>
+
+  <!-- 04 · THE TWO SCREENS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">04 — Club vs Fundraising</div>
+      <h2>Same shape, four different answers</h2>
+      <p>You were right that these are the same structure: a small dashboard, then two groups stacked.
+        They agree on the structure and disagree on every part of it.</p>
+    </div>
+    <div class="bench">
+      <div class="bench-cap"><h3>The two, side by side</h3>
+        <span class="hint">real content · same team</span></div>
+      <div class="cmp">
+        <div class="fr">
+          <div class="fr-top">Money · Club <small>· today</small></div>
+          <div class="fr-bd">
+            <div class="band">
+              <div class="bcell"><span class="blab">Still to pay</span><span class="bfig out">$1,570</span></div>
+              <div class="bcell"><span class="blab">Waiting</span><span class="bfig wait">$180.50</span></div>
+              <div class="bcell"><span class="blab">Settled</span><span class="bfig">$425</span></div>
+            </div>
+            <div class="sec-title">What the club has billed us</div>
+            <div class="bill"><span class="nm">Diamond &amp; field permits</span><span class="amt">$900.00</span><span class="chev">⌄</span></div>
+            <div class="bill"><span class="nm">League insurance &amp; fees</span><span class="amt">$250.00</span><span class="chev">⌄</span></div>
+            <div class="sec-title">What we've asked the club</div>
+            <table class="tbl">
+              <thead><tr><th>Request</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody><tr><td>Tournament entry</td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td></tr></tbody>
+            </table>
+            <p class="note"><b>3</b> figures · bespoke band · group one is <b>cards</b>, group two is a <b>table</b></p>
+          </div>
+        </div>
+        <div class="fr">
+          <div class="fr-top">Money · Fundraising <small>· today</small></div>
+          <div class="fr-bd">
+            <div class="band" style="grid-template-columns:repeat(4,1fr)">
+              <div class="bcell"><span class="blab">Raised — fundraisers</span><span class="bfig" style="color:#2E6B45">$1,200</span><span class="bsub">1 drive</span></div>
+              <div class="bcell"><span class="blab">Raised — sponsors</span><span class="bfig" style="color:#2F5FE0">$0</span><span class="bsub">0 sponsors</span></div>
+              <div class="bcell"><span class="blab">Team keeps</span><span class="bfig">$600</span></div>
+              <div class="bcell"><span class="blab">Credited</span><span class="bfig" style="color:#8B5CC7">$600</span></div>
+            </div>
+            <div class="sec-title">Fundraisers <span class="btn">+ Fundraiser</span></div>
+            <table class="tbl">
+              <thead><tr><th>Name</th><th>Amount</th><th>Team keeps</th><th>Credits</th><th>Status</th></tr></thead>
+              <tbody><tr><td>Bottle Drive</td><td class="num">$1,200.00</td><td class="num">$600.00</td><td class="num">$600.00</td><td><span class="pill p-paid">Active</span></td></tr></tbody>
+            </table>
+            <div class="sec-title">Sponsorships <span class="btn">+ Sponsor</span></div>
+            <p class="note">No sponsors yet.</p>
+            <p class="note"><b>4</b> figures · the <b>shared</b> summary cards · both groups are <b>tables</b>, rows open in place</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tblwrap">
+      <table class="diffs">
+        <thead><tr><th style="width:20%">What</th><th style="width:26%">Club</th><th style="width:26%">Fundraising</th><th>Which is right, and why</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>The dashboard</b></td>
+            <td>3 cells, its own hand-built band and its own CSS</td>
+            <td>4 <b>shared</b> summary cards, the same component the rest of the hub uses</td>
+            <td><b>Fundraising.</b> One of these is a component the product already owns; the other is
+              a private copy of it on one screen. ⚠ The Club band's cells carry a <i>sub-line</i>
+              ("6 installments · 1 overdue") the shared card also has — so nothing is lost by moving.</td>
+          </tr>
+          <tr>
+            <td><b>Group one</b></td>
+            <td><b>Cards</b> that expand, first one auto-opened</td>
+            <td><b>Table</b>, rows expand in place, all closed</td>
+            <td><b>Fundraising, and it is not a matter of taste.</b> That screen kept its own note on
+              why it left cards: each card printed its own headings, so three fundraisers meant nine
+              labels; and each sized itself to its own name, so the figures "landed in three
+              different places and which one raised most could not be read down a column." Every word
+              of that is now true of the bills.</td>
+          </tr>
+          <tr>
+            <td><b>Group headings</b></td>
+            <td>Its own title class</td>
+            <td>The shared sub-head</td>
+            <td><b>Fundraising.</b> Same visual job, two definitions — they can drift apart in a
+              restyle and nobody would notice.</td>
+          </tr>
+          <tr>
+            <td><b>Opens by default</b></td>
+            <td>The first bill</td>
+            <td>Nothing</td>
+            <td><b>Fundraising</b> — and this is the change you asked for, arriving for free as part
+              of the shape rather than as a patch on top of it.</td>
+          </tr>
+          <tr>
+            <td><b>Create / export</b></td>
+            <td>In each group's own heading row</td>
+            <td>In each group's own heading row</td>
+            <td><b>Already agree.</b> Both follow the standing page-action ruling. Nothing to do.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="call good">
+      <h3>What this converges to</h3>
+      <p>One shape for a money tab that holds two groups: <b>shared summary cards on top, then a
+        banded table per group, rows closed, each group's action in its own heading row.</b>
+        Fundraising is already there. The Club tab is one screen away from it, and the move is what
+        you asked for anyway.</p>
+      <p>⚠ <b>The band's figures as doors — my earlier idea — mostly stops being necessary.</b> Three
+        bills as table rows is about 120px; even nine leaves the requests on screen. I would still
+        add the counts to the cells, because "1 request, not yet decided" is worth reading. I would
+        no longer build the jump.</p>
+    </div>
+  </section>
+
+  <!-- 05 · THE MODAL -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">05 — the request form</div>
+      <h2>It asks in the wrong order, and there is already a ruling</h2>
+      <p>You spotted it as an inconsistency. It is that — and it also breaks a rule the Record form
+        was deliberately built to follow.</p>
+    </div>
+    <div class="bench">
+      <div class="bench-cap"><h3>Record money vs. New club request</h3>
+        <span class="hint">field order, as they ship</span></div>
+      <div class="cmp">
+        <div class="modal">
+          <div class="mhd">Record money <small>We paid for something</small></div>
+          <div class="mbd">
+            <div class="fld mark ok"><span class="seq ok">1 · the branch</span><span class="flab">What happened? *</span><div class="fbox on">We paid for something <span class="cv">⌄</span></div></div>
+            <div class="fld mark ok"><span class="seq ok">2 · what it is</span><span class="flab">What is this? *</span><div class="fbox">Search what this is</div></div>
+            <div class="fld mark ok"><span class="seq ok">3 · the words</span><span class="flab">Description *</span><div class="fbox">e.g. Diamond rental</div></div>
+            <div class="fld mark ok"><span class="seq ok">4 · the figures</span>
+              <div class="frow">
+                <div><span class="flab">Amount *</span><div class="fbox">0.00</div></div>
+                <div><span class="flab">Date paid *</span><div class="fbox">2026-09-01</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal">
+          <div class="mhd">New club request <small>2026 Season</small></div>
+          <div class="mbd">
+            <div class="fld mark"><span class="seq">1 · the branch</span><span class="flab">Which way is the money going? *</span><div class="fbox on">From the club</div></div>
+            <div class="fld mark"><span class="seq">2 · the branch again</span><span class="flab">New money, or money back? *</span><div class="fbox on">New money for the season <span class="cv">⌄</span></div></div>
+            <div class="fld mark"><span class="seq">3 · the figures — too early</span>
+              <div class="frow">
+                <div><span class="flab">Amount ($) *</span><div class="fbox">0.00</div></div>
+                <div><span class="flab">Payment method</span><div class="fbox">— optional —</div></div>
+              </div>
+            </div>
+            <div class="fld mark"><span class="seq">4 · the words — before what it is</span><span class="flab">Description *</span><div class="fbox">e.g. Diamond permit reimbursement</div></div>
+            <div class="fld mark"><span class="seq">5 · what it is — last</span><span class="flab">What is it for?</span><div class="fbox">Search what this is</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="bench-cap" style="margin-top:6px"><h3>Proposed — the club request, reordered</h3>
+        <span class="hint">same fields, the Record form's grammar</span></div>
+      <div class="cmp">
+        <div class="modal">
+          <div class="mhd">New club request <small>2026 Season</small></div>
+          <div class="mbd">
+            <div class="fld mark ok"><span class="seq ok">1 · the branch</span><span class="flab">Which way is the money going? *</span><div class="fbox on">From the club</div></div>
+            <div class="fld mark ok"><span class="seq ok">2 · the branch's follow-up</span><span class="flab">New money, or money back? *</span><div class="fbox on">New money for the season <span class="cv">⌄</span></div></div>
+            <div class="fld mark ok"><span class="seq ok">3 · what it is</span><span class="flab">What is it for? *</span><div class="fbox filled">Fundraising · Grant <span class="cv">⌄</span></div></div>
+            <div class="fld mark ok"><span class="seq ok">4 · the words — arrives PRE-FILLED</span><span class="flab">Description *</span><div class="fbox filled">Grant</div>
+              <span class="note" style="margin-top:2px">↑ filled in from the word above, ready to type over — the behaviour the order exists for</span></div>
+            <div class="fld mark ok"><span class="seq ok">5 · the figures</span>
+              <div class="frow">
+                <div><span class="flab">Amount ($) *</span><div class="fbox">0.00</div></div>
+                <div><span class="flab">Payment method</span><div class="fbox">— optional —</div></div>
+              </div>
+            </div>
+            <div class="fld mark ok"><span class="seq ok">6 · the extras</span><span class="flab">Notes</span><div class="fbox">Optional — any context for the club office</div></div>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin good">What actually moved</span>
+          <p><b>Two fields changed places.</b> <i>What is it for?</i> comes up from fifth to third;
+            <i>Amount</i> and <i>Payment method</i> drop from third to fifth. Nothing is added,
+            removed or renamed — the form is the same length.</p>
+          <span class="pin good">And one behaviour arrives</span>
+          <p>With the word chosen before the description, the description can <b>pre-fill from it</b>,
+            exactly as the Record form's does. That is what the 2026-08-15 ruling was protecting, and
+            what the current order makes impossible.</p>
+          <span class="pin">The one judgement in it</span>
+          <p>The <b>two branch questions stay at the top together.</b> They read as one decision
+            ("money from the club, and it's a grant"), and the second one decides which list the
+            third field offers — so it has to be answered before it, not after.</p>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin bad">The ruling it breaks</span>
+        <p>2026-08-15: <b>the budget word is asked BEFORE the description, and the order is the
+          feature</b> — choosing it <b>names the record</b>, so the description arrives pre-filled
+          with that word, ready to type over. Asked the other way round, "the pre-fill would land on
+          a field they had just finished filling in." The club form asks it <b>last</b>.</p>
+        <span class="pin bad">So it is missing the behaviour too</span>
+        <p>Because the club form asks in the wrong order, it also never pre-fills the description
+          from the chosen word. The inconsistency you saw is the visible half; the lost convenience
+          is the other half.</p>
+        <span class="pin good">Proposed order</span>
+        <p><b>Which way → New money or money back → What is it for? → Description → Amount + Payment
+          method → Notes.</b> Same grammar as Record money: <i>branch, what it is, the words, the
+          figures, the extras</i> — and the pre-fill becomes possible.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · THE ALTERNATIVES -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">06 — the option space, drawn</div>
+      <h2>Everything I can think of, including the one I asserted and never showed you</h2>
+      <p>You called out that I claimed "for thirty rows a table wins" without ever drawing a table.
+        Fair. Here is that version, plus every other arrangement worth taking seriously — and one of
+        them turned out to be better than anything I had proposed.</p>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>A · Two tables, stacked</h3>
+        <span class="hint">the version I asserted and didn't draw · Fundraising's exact shape</span></div>
+      <div class="fr">
+        <div class="fr-bd">
+          <div class="sec-title">What the club has billed us <span class="cnt">3 · $1,570.00 due</span> <span class="btn">Export</span></div>
+          <table class="tbl">
+            <thead><tr><th>Bill</th><th style="text-align:right">Total</th><th style="text-align:right">Paid</th><th style="text-align:right">Due</th><th>Files under</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Diamond &amp; field permits</td><td class="num">$1,200.00</td><td class="num">$300.00</td><td class="num">$900.00</td><td>Not filed</td><td><span class="pill p-over">1 overdue</span></td></tr>
+              <tr><td>League insurance &amp; fees</td><td class="num">$500.00</td><td class="num">$250.00</td><td class="num">$250.00</td><td>Not filed</td><td><span class="pill p-unpaid">On track</span></td></tr>
+              <tr><td>Umpire pool assessment</td><td class="num">$420.00</td><td class="num">$0.00</td><td class="num">$420.00</td><td>Not filed</td><td><span class="pill p-unpaid">On track</span></td></tr>
+            </tbody>
+          </table>
+          <div class="sec-title" style="margin-top:5px">What we've asked the club <span class="cnt">4 · $180.50 waiting</span> <span class="btn">Make a request</span></div>
+          <table class="tbl">
+            <thead><tr><th>Request</th><th>Files under</th><th>Direction</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Tournament entry — Riverside Classic</td><td>Not filed · File it</td><td>From club</td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td></tr>
+              <tr><td>Diamond permit reimbursement</td><td>Money back · Not filed · Change</td><td>From club</td><td class="num">$325.00</td><td><span class="pill p-paid">Approved</span></td></tr>
+              <tr><td>Team share of the umpire invoice</td><td>Not filed · File it</td><td>To club</td><td class="num">$200.00</td><td><span class="pill p-paid">Approved</span></td></tr>
+              <tr><td>New catcher's gear</td><td>Not filed</td><td>From club</td><td class="num">$240.00</td><td><span class="pill p-unpaid">Declined</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin">Now you can judge the claim I made</span>
+        <p>This is what "the column wins" means: every <b>Due</b> figure down one edge, every status in
+          one place, and the whole thing sortable. It is genuinely better for scanning than rows of
+          cards — <b>and it does not solve your problem at all.</b> Two sections, one under the other,
+          the second still below the fold on a longer list. I was arguing a real advantage of tables
+          as though it answered a question about navigation. It doesn't.</p>
+        <span class="pin bad">And look at the two headers</span>
+        <p>The columns <b>disagree</b> — <i>Total / Paid / Due</i> against <i>Direction / Amount</i> —
+          so the alignment advantage stops at the group boundary. Which is the crack the next option
+          opens.</p>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>B · One table, two group bands</h3>
+        <span class="hint">the option I had not considered — and I think it's the best one</span></div>
+      <div class="fr">
+        <div class="fr-bd">
+          <div class="sec-title">Club money <span class="cnt">7 records</span> <span class="btn">Export</span> <span class="btn">Make a request</span></div>
+          <table class="tbl">
+            <thead><tr><th>What</th><th>Files under</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">What the club has billed us <span class="gcnt">· 3 bills · $1,570.00 still to pay</span></td></tr>
+              <tr><td>Diamond &amp; field permits — spring block</td><td>Not filed · <b>File it</b></td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td><td>⌄</td></tr>
+              <tr><td>League insurance &amp; association fees</td><td>Not filed · <b>File it</b></td><td class="num">$250.00</td><td><span class="pill p-unpaid">On track</span></td><td>⌄</td></tr>
+              <tr><td>Umpire pool assessment</td><td>Not filed · <b>File it</b></td><td class="num">$420.00</td><td><span class="pill p-unpaid">On track</span></td><td>⌄</td></tr>
+              <tr class="grp"><td colspan="5">What we've asked the club <span class="gcnt">· 4 requests · $180.50 waiting on a decision</span></td></tr>
+              <tr><td>Tournament entry — Riverside Classic</td><td>Not filed · <b>File it</b></td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td><td>⌄</td></tr>
+              <tr><td>Diamond permit reimbursement — July 14</td><td>Money back · <b>Change</b></td><td class="num">$325.00</td><td><span class="pill p-paid">Approved</span></td><td>⌄</td></tr>
+              <tr><td>Team share of the June umpire invoice</td><td>Not filed · <b>File it</b></td><td class="num">$200.00</td><td><span class="pill p-paid">Approved</span></td><td>⌄</td></tr>
+              <tr><td>New catcher's gear</td><td>Not filed</td><td class="num">$240.00</td><td><span class="pill p-unpaid">Declined</span></td><td>⌄</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin good">It is not two sections any more</span>
+        <p>A group <b>band inside one table</b> is not "a whole section below another whole section" —
+          it is a heading in a list, three rows apart. Your rule holds, and it holds <b>at every
+          width including a phone</b>, which is the thing two columns cannot do.</p>
+        <span class="pin good">The columns finally agree</span>
+        <p>The reason this works is that the two kinds share a shape once you stop describing them in
+          their own jargon: <b>a thing with a name, what it's filed under, an amount, and a state.</b>
+          A bill's amount is what's still to pay; a request's is what was asked. Both expand in place
+          — a bill into its installments, a request into its record.</p>
+        <span class="pin">What it costs</span>
+        <p>The bill loses its <i>Total / Paid / Due</i> triplet on the row — that moves into the
+          expansion, where the installment table already says it. And "Direction" goes: it is already
+          in the words (<i>asked</i> vs <i>billed</i>) and in the group it sits under.</p>
+        <span class="pin bad">The honest risk</span>
+        <p>One table implies one kind of thing. A coach could read a bill and a request as the same
+          species of record when they are not — one is an obligation with due dates, the other is a
+          conversation that might be declined. <b>The group bands are what carry that distinction</b>,
+          so they have to stay loud, and they cannot be collapsed away.</p>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>C · Toggle tabs at the top</h3>
+        <span class="hint">you asked about this · both names always on screen</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-bd">
+            <div class="tabs">
+              <span class="tab on">Billed us <span class="tc">3 · $1,570</span></span>
+              <span class="tab">We've asked <span class="tc">4 · $180.50</span></span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>Bill</th><th style="text-align:right">Due</th><th>Files under</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Diamond &amp; field permits</td><td class="num">$900.00</td><td>Not filed</td><td><span class="pill p-over">1 overdue</span></td></tr>
+                <tr><td>League insurance &amp; fees</td><td class="num">$250.00</td><td>Not filed</td><td><span class="pill p-unpaid">On track</span></td></tr>
+                <tr><td>Umpire pool assessment</td><td class="num">$420.00</td><td>Not filed</td><td><span class="pill p-unpaid">On track</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin good">Strongest on your rule, at every width</span>
+          <p>Neither name can ever be off screen, phone included, and <b>each tab carries its own
+            count and figure</b> — so the tab you're not on still tells you what's in it. That last
+            part is what makes this different from ordinary tabs, which hide their contents entirely.</p>
+          <span class="pin bad">Two nav layers in one tab</span>
+          <p>You are already inside the Money hub's tab bar. Tabs inside a tab is a pattern this
+            product has avoided, and a coach who lands here from a link now has two "where am I"
+            questions instead of one.</p>
+          <span class="pin bad">And it hides the smaller half</span>
+          <p>Requests is usually the shorter list. Tabs give both halves equal weight and equal cost
+            to reach — so the cheap thing to show becomes as expensive as the expensive one.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>D · One table + filter chips</h3>
+        <span class="hint">B, with narrowing on top — the chips do not hide anything by default</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-bd">
+            <div class="sec-title">Club money <span class="cnt">7 records</span></div>
+            <div class="chips">
+              <span class="chip on">All 7</span><span class="chip">Bills 3</span>
+              <span class="chip">Requests 4</span><span class="chip">Needs attention 2</span>
+              <span class="chip">Not filed 6</span>
+            </div>
+            <table class="tbl" style="margin-top:6px">
+              <thead><tr><th>What</th><th>Files under</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr class="grp"><td colspan="4">Billed us <span class="gcnt">· 3 · $1,570.00</span></td></tr>
+                <tr><td>Diamond &amp; field permits</td><td>Not filed</td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td></tr>
+                <tr class="grp"><td colspan="4">We've asked <span class="gcnt">· 4 · $180.50 waiting</span></td></tr>
+                <tr><td>Tournament entry</td><td>Not filed</td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin good">The chips answer a question the groups can't</span>
+          <p><b>"Needs attention"</b> and <b>"Not filed"</b> cut <i>across</i> both kinds — an overdue
+            installment and an undecided request are the same problem to a coach, and no arrangement
+            by kind puts them together. That is a real gain, not decoration.</p>
+          <span class="pin">But it is additive, not an answer</span>
+          <p>Chips narrow a list that is already all visible. On their own they solve nothing about
+            your rule — they are worth having <b>on top of</b> B, and worth nothing without it.</p>
+          <span class="pin bad">One caution</span>
+          <p>A filter that persists is a filter a coach forgets they set, and then money is
+            "missing". If chips ship, they reset on every visit.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <table class="matrix">
+        <thead><tr>
+          <th style="width:22%">Option</th>
+          <th>Your rule holds<br>on desktop</th>
+          <th>…and on<br>a phone</th>
+          <th>Reads down<br>a column</th>
+          <th>New<br>navigation</th>
+          <th>Keeps the two<br>kinds distinct</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="opt-name">Today — cards, stacked</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="y">None</td><td class="y">Yes</td></tr>
+          <tr><td class="opt-name">A · Two tables, stacked</td><td class="n">No</td><td class="n">No</td><td class="y">Yes</td><td class="y">None</td><td class="y">Yes</td></tr>
+          <tr><td class="opt-name">B · One table, group bands</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">None</td><td class="m">Bands must carry it</td></tr>
+          <tr><td class="opt-name">C · Toggle tabs</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">A second layer</td><td class="y">Yes</td></tr>
+          <tr><td class="opt-name">D · B + filter chips</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="m">Chips only</td><td class="m">Bands must carry it</td></tr>
+          <tr><td class="opt-name">Two columns</td><td class="y">Yes</td><td class="n">No — stacks</td><td class="m">Rows, not columns</td><td class="y">None</td><td class="y">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="call good">
+      <h3>Where I land, and it is not where I started</h3>
+      <p><b>One table with group bands (B), chips optional (D)</b> — for the <b>Club</b> tab. It is the
+        only arrangement that satisfies your rule at every width, keeps the column alignment a
+        treasurer wants, and adds no navigation at all. Two columns is the runner-up and loses on the
+        phone; toggle tabs match it on the rule and pay for it with a second nav layer.</p>
+      <p>⚠⚠ <b>And it does NOT transfer to Fundraising — which changes the "make them consistent"
+        answer.</b> Club's two kinds merge because they share a shape: a name, a filing, an amount, a
+        state. Fundraising's do not — a drive has <i>Amount / Team keeps / Credits</i>, a sponsor has
+        <i>Pledged / In / To come / Credits</i>. Forced into one table, half the columns would be
+        blank on every row. <b>Fundraising should stay two tables and take two columns instead</b>,
+        where its empty-sponsors half stops being invisible.</p>
+      <p>So consistency between the two tabs is <b>the vocabulary and the components</b> — the same
+        summary cards, the same group headings, the same expand-in-place rows, the same place for a
+        create button — <b>not the same arrangement.</b> Making them identical would mean forcing one
+        of them into a shape its own data doesn't have.</p>
+    </div>
+  </section>
+
+  <!-- 07 · THE FILTER ROW -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">07 — the filter row</div>
+      <h2>What belongs above the table</h2>
+      <p>Four states are worth filtering by, one obvious idea doesn't survive contact with the data,
+        and the whole row should not exist on a small team.</p>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>Proposed — state chips, with row counts</h3>
+        <span class="hint">real counts from QA Mid Season U14</span></div>
+      <div class="fr">
+        <div class="fr-bd">
+          <div class="sec-title">Club money <span class="cnt">7 records</span> <span class="btn">Export</span> <span class="btn">Make a request</span></div>
+          <div class="filterbar">
+            <span class="chip on">All 7</span>
+            <span class="chip">Needs attention 2</span>
+            <span class="chip">Not filed 7</span>
+            <span class="chip">Settled 2</span>
+          </div>
+          <table class="tbl" style="margin-top:5px">
+            <thead><tr><th>What</th><th>Files under</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">What the club has billed us <span class="gcnt">· 3 bills · $1,570.00 still to pay</span></td></tr>
+              <tr><td>Diamond &amp; field permits — spring block</td><td>Not filed · <b>File it</b></td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td><td>⌄</td></tr>
+              <tr><td>League insurance &amp; association fees</td><td>Not filed · <b>File it</b></td><td class="num">$250.00</td><td><span class="pill p-unpaid">On track</span></td><td>⌄</td></tr>
+              <tr><td>Umpire pool assessment</td><td>Not filed · <b>File it</b></td><td class="num">$420.00</td><td><span class="pill p-unpaid">On track</span></td><td>⌄</td></tr>
+              <tr class="grp"><td colspan="5">What we've asked the club <span class="gcnt">· 4 requests · $180.50 waiting</span></td></tr>
+              <tr><td>Tournament entry — Riverside Classic</td><td>Not filed · <b>File it</b></td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td><td>⌄</td></tr>
+              <tr><td>Diamond permit reimbursement — July 14</td><td>Money back · <b>Change</b></td><td class="num">$325.00</td><td><span class="pill p-paid">Approved</span></td><td>⌄</td></tr>
+              <tr><td>Team share of the June umpire invoice</td><td>Not filed · <b>File it</b></td><td class="num">$200.00</td><td><span class="pill p-paid">Approved</span></td><td>⌄</td></tr>
+              <tr><td>New catcher's gear</td><td>Not filed</td><td class="num">$240.00</td><td><span class="pill p-unpaid">Declined</span></td><td>⌄</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin good">One row, one question: <i>which of these do I want to see?</i></span>
+        <p>Every chip is a <b>state</b>, never a kind. I dropped <i>Bills</i> and <i>Requests</i> chips
+          on purpose — the group bands already do that, and mixing a noun ("Bills") with adjectives
+          ("Not filed") in one row makes a coach guess whether they combine.</p>
+        <span class="pin good">Why these four</span>
+        <p><b>Needs attention</b> is the only one that cuts <i>across</i> the groups — an overdue
+          installment and an undecided request are the same problem to a coach, and no arrangement by
+          kind can put them together. <b>Not filed</b> is the work that makes club money report under
+          real words instead of "Not itemized". <b>Settled</b> is what a coach wants <i>out</i> of the
+          way by October. <b>All</b> is the default and is never not offered.</p>
+        <span class="pin">The counts are ROWS, not dollars — and that matters</span>
+        <p>"Needs attention <b>2</b>" means two rows, and filtering leaves two rows. The band above
+          counts <b>installments and dollars</b>. Two units, deliberately kept apart — see below for
+          what happens when they're confused.</p>
+        <span class="pin bad">This fixture makes one chip look broken, and it isn't</span>
+        <p><b>Not filed 7</b> equals <b>All 7</b> because nothing on this team has been filed yet.
+          That is the QA fixture being deliberately in the legacy state, not a bug — file one record
+          and they diverge.</p>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>Filtered — and saying so</h3>
+        <span class="hint">the rule: a filter must never make money look missing</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-bd">
+            <div class="sec-title">Club money <span class="cnt">7 records</span></div>
+            <div class="filterbar">
+              <span class="chip">All 7</span>
+              <span class="chip on">Needs attention 2 <span style="opacity:.8">✕</span></span>
+              <span class="chip">Not filed 7</span>
+              <span class="chip">Settled 2</span>
+            </div>
+            <div class="hidnote" style="margin-top:5px">Showing <b>2 of 7</b> — <b>$1,290.50</b> of club money is hidden by this filter. <b>Show all</b></div>
+            <table class="tbl" style="margin-top:5px">
+              <thead><tr><th>What</th><th>Files under</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr class="grp"><td colspan="5">What the club has billed us <span class="gcnt">· 1 of 3 shown</span></td></tr>
+                <tr><td>Diamond &amp; field permits — spring block</td><td>Not filed · <b>File it</b></td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td><td>⌄</td></tr>
+                <tr class="grp"><td colspan="5">What we've asked the club <span class="gcnt">· 1 of 4 shown</span></td></tr>
+                <tr><td>Tournament entry — Riverside Classic</td><td>Not filed · <b>File it</b></td><td class="num">$180.50</td><td><span class="pill p-over">Awaiting</span></td><td>⌄</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin bad">Three rules, and they're not negotiable on a money screen</span>
+          <p><b>1 · It says what it's hiding, in dollars.</b> Not just "2 of 7" — the amount too. A
+            coach reconciling against a bank statement needs to know the screen is not the whole
+            story.</p>
+          <p><b>2 · It resets every visit.</b> A remembered filter is money that has gone missing,
+            found weeks later. No exceptions, and no "sticky last used".</p>
+          <p><b>3 · The group bands keep their real totals</b> and say "1 of 3 shown". A group heading
+            that silently reported the filtered sum would be a wrong number on a money screen.</p>
+          <span class="pin">One row it can never reach</span>
+          <p>The declined <b>$240 catcher's gear</b> is in none of the three states — it isn't
+            attention, isn't settled, isn't money. It lives in <b>All</b> and nowhere else, which is
+            right: it is a closed conversation, not work.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>The idea that doesn't survive the data</h3>
+        <span class="hint">tapping the summary figures to filter</span></div>
+      <div class="two">
+        <div class="fr">
+          <div class="fr-bd">
+            <div class="band">
+              <div class="bcell tapped"><span class="blab">Still to pay the club</span><span class="bfig out">$1,570.00</span><span class="bsub">6 installments · 1 overdue</span></div>
+              <div class="bcell"><span class="blab">Waiting on the club</span><span class="bfig wait">$180.50</span><span class="bsub">1 request</span></div>
+              <div class="bcell"><span class="blab">Settled this season</span><span class="bfig">$425.00</span><span class="bsub">$750 out · $325 in</span></div>
+            </div>
+            <div class="hidnote" style="margin-top:6px"><span class="xmark">✕</span> The cell says <b>6</b>. The table can only show <b>3</b>.</div>
+            <table class="tbl" style="margin-top:5px">
+              <thead><tr><th>What</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Diamond &amp; field permits</td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td></tr>
+                <tr><td>League insurance &amp; fees</td><td class="num">$250.00</td><td><span class="pill p-unpaid">On track</span></td></tr>
+                <tr><td>Umpire pool assessment</td><td class="num">$420.00</td><td><span class="pill p-unpaid">On track</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ann">
+          <span class="pin">Why I wanted this to work</span>
+          <p>The band already names three states in the right words, already computes them, and never
+            moves. Tapping a figure to see what's behind it is the most natural gesture on the page,
+            and it would have made the dashboard earn its space instead of just reporting.</p>
+          <span class="pin bad">It counts the wrong things</span>
+          <p><b>The band counts installments; the table lists bills.</b> "Still to pay — 6
+            installments" filters to <b>3</b> rows, because those six pieces belong to three bills. A
+            control whose label says 6 and whose result says 3 teaches a coach to distrust the
+            figure — on the screen where the figures are the point.</p>
+          <p>It splits worse than that: a bill with two installments paid and two not is
+            <i>simultaneously</i> in "Still to pay" and in "Settled". As a dollar figure that is
+            correct and useful. As a row filter it is incoherent — the same row belongs in two
+            mutually exclusive buckets.</p>
+          <span class="pin good">So: the band reports, the chips filter</span>
+          <p>Different units, different jobs, kept apart. The band answers <i>where do we stand</i> in
+            dollars; the chips answer <i>what am I looking at</i> in rows. ⚠ I'd still <b>add the row
+            counts to the band's sub-lines</b> — "3 bills", "1 request" — so the two agree about the
+            world even though only one of them filters.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="call">
+      <h3>And it shouldn't be there at all on a small team</h3>
+      <p>Seven records need no filter — the chip row would be chrome taller than the thing it
+        organises. <b>Render it once the list passes about a dozen records</b>, which a club-run team
+        billing monthly reaches by mid-season, and add a <b>search box</b> in the same row at the same
+        point. Below that, the table is its own index.</p>
+      <p>⚠ The one thing I would <i>not</i> do: hide settled records by default once the list is long.
+        It is the obvious next step and it is the same mistake as a sticky filter — the screen would
+        open lying about how much has happened this season.</p>
+    </div>
+  </section>
+
+  <!-- 04 · DECIDE -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">08 — what I need from you</div>
+      <h2>Where this landed</h2>
+    </div>
+    <div class="call good">
+      <h3>1 · Club becomes ONE table with two group bands</h3>
+      <p>§06 B. The only arrangement that holds your rule <b>at every width including a phone</b>,
+        keeps figures readable down a column, and adds no navigation. It works because a bill and a
+        request turn out to share a shape — a name, a filing, an amount, a state — once you stop
+        describing each in its own jargon.</p>
+      <p><b>Watch:</b> the group bands are the only thing keeping the two kinds distinct. They stay
+        loud and they never collapse.</p>
+    </div>
+    <div class="call good">
+      <h3>2 · Fundraising becomes TWO COLUMNS, not one table</h3>
+      <p>Its two kinds genuinely don't merge — a drive has <i>Amount / Team keeps / Credits</i>, a
+        sponsor has <i>Pledged / In / To come / Credits</i>, and one table would leave half the
+        columns blank on every row. Columns fix its worst case instead: <b>"No sponsors yet" stops
+        being a line nobody scrolls to.</b></p>
+    </div>
+    <div class="call">
+      <h3>3 · So "consistent" means the parts, not the layout — agree?</h3>
+      <p>This is the call I'd most like you to push back on. My read: the two tabs share the
+        <b>summary cards, the group headings, expand-in-place rows and where the create button
+        sits</b> — and differ in arrangement, because their data differs. Forcing one shape on both
+        would mean bending Fundraising into a table its own columns don't fit.</p>
+    </div>
+    <div class="call">
+      <h3>4 · The filter row — four state chips, and only once the list is long</h3>
+      <p>Drawn in §07: <b>All · Needs attention · Not filed · Settled</b>, counted in rows, appearing
+        at about a dozen records with a search box beside them. Says what it hides in dollars, resets
+        every visit, never filters by default. <b>The band stays a dashboard and does not become the
+        filter</b> — it counts installments where the table lists bills, so its labels and its results
+        would disagree.</p>
+    </div>
+    <div class="call good">
+      <h3>5 · The request form takes the Record form's order</h3>
+      <p>Drawn in §05, and independent of every layout question above. <b>What is it for? →
+        Description → Amount.</b> Two fields swap; the description starts pre-filling from the chosen
+        word, which is the behaviour the 2026-08-15 ruling exists to protect.</p>
+    </div>
+    <div class="call bad">
+      <h3>What I got wrong on the way here, so you can weigh the rest</h3>
+      <p>I asserted "for thirty rows a table wins" while <b>never having drawn a table</b> — you
+        caught that, and drawing it showed the claim was true and <i>irrelevant</i>: it's an argument
+        about scanning, not about navigation. I also rejected toggle tabs for a reason that didn't
+        survive your rule. Both are in the sheet rather than quietly fixed.</p>
+    </div>
+  </section>
+
+  <!-- 09 · HOW A ROW OPENS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-no">09 — how a row opens</div>
+      <h2>Three doors onto one record, and a precedent that doesn't carry</h2>
+    </div>
+
+    <div class="ann" style="max-width:none">
+      <p>You asked why every cell needs a <b>File it / Change</b> button, and whether bills should
+        open in a window like requests do. The button is worse than it looks — <b>count the doors on
+        a single request row.</b></p>
+    </div>
+
+    <div class="bench">
+      <div class="bench-cap"><h3>Today · one record, three ways in</h3>
+        <span class="hint">and the two windows they open are different windows</span></div>
+      <div class="fr">
+        <div class="fr-bd">
+          <table class="tbl">
+            <thead><tr><th>What</th><th>Files under</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">What the club has billed us</td></tr>
+              <tr class="mark"><td>Diamond &amp; field permits — spring block</td>
+                <td>Not filed · <span class="mini-btn">File it</span> <span class="seq">door 2</span></td>
+                <td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td>
+                <td>⌄ <span class="seq">door 1</span></td></tr>
+              <tr class="grp"><td colspan="5">What we've asked the club</td></tr>
+              <tr class="mark"><td>Diamond permit reimbursement — July 14</td>
+                <td>Money back · <span class="mini-btn">Change</span> <span class="seq">door 2</span></td>
+                <td class="num">$325.00</td><td><span class="pill p-paid">Approved</span></td>
+                <td>👁 <span class="seq">door 3</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ann" style="max-width:none">
+        <span class="pin"><span class="xmark">✕</span> The doors don't even agree with each other</span>
+        <p>On an <b>approved</b> request, doors 1 and 3 open the record window — which is
+          <b>read-only</b>, because the club has answered. Door 2 opens a different, smaller window
+          holding the filing. So a coach who opens the record in order to file it finds a screen that
+          shows the filing and won't let them touch it, has to close it, and then hunt for a button in
+          a cell. <b>That is the real defect on this screen</b>, and it is bigger than the visual
+          noise you spotted.</p>
+        <span class="pin"><span class="xmark">✕</span> And the column shouts the least important thing</span>
+        <p>Seven records, and <b>File it</b> appears six times down one column in the same weight as
+          everything else. The loudest repeated element on the tab is a verb about bookkeeping.</p>
+      </div>
+    </div>
+
+    <div class="call bad">
+      <h3>Before the options — the precedent you named, checked</h3>
+      <p>You said a multi-instalment club bill is like a multi-instalment <b>player dues plan</b>, and
+        from the outside that is exactly right: both are one obligation shown in pieces. <b>Inside,
+        they are opposites.</b></p>
+      <p>A dues instalment carries <b>Change</b>, <b>Remove</b> and <b>Record</b>, and Change asks a
+        real question — <i>this payment, this and the later ones, or all unpaid?</i> Several questions
+        per instalment across a plan is why that record earned a drawer of its own.</p>
+      <p>A <b>club</b> instalment is <b>fieldless by design</b> — your own ruling R-D. Its one control
+        is <b>Record as paid</b>, a single tap; the server derives the amount, the date and the
+        description, deliberately, so a form would add a step and ask nothing. The club sets the
+        pieces; the coach cannot change one, delete one, or split one.</p>
+      <p><b>So there is no editing surface for a drawer to hold.</b> A club bill has exactly two
+        editable things in the entire product — the category and the item it files under — and they
+        are two fields.</p>
+    </div>
+
+    <div class="call bad">
+      <h3>And a window for those two fields is the shape you deleted, twice</h3>
+      <p><b>2026-08-26 —</b> <i>a modal is for a QUESTION, not for a field; and a record has ONE
+        editor.</i> "A screen that displays a value and then opens a window to change it is telling on
+        itself." The filing dialog on this tab is a window around two fields, and the cell button is a
+        second editor for a record the row already opens.</p>
+      <p><b>2026-08-31, yesterday —</b> on the fundraiser drive, <i>a modal was asked for and
+        refused</i>, on the ruling above, and you approved the refusal. A drive's list row now expands
+        in place. <b>Moving club bills the other way, one tab over, would split the two money tabs on
+        the same question seven days apart.</b></p>
+      <p>I'm not raising this to refuse the request — your complaint about the cell buttons is right,
+        and the three-door mess above proves it. I'm raising it because the rulings point at a
+        <i>different</i> fix that gets you more of what you actually asked for.</p>
+    </div>
+
+    <div class="opts">
+      <div class="opt">
+        <div class="opt-h">A · Bills open in a slide-over <span class="tag t-no">not recommended</span></div>
+        <div class="opt-b">
+          <div class="fr">
+            <div class="fr-bd">
+              <table class="tbl">
+                <tbody>
+                  <tr><td>Diamond &amp; field permits</td><td class="num">$900.00</td><td>✎</td></tr>
+                  <tr class="ghost"><td>League insurance</td><td class="num">$250.00</td><td>✎</td></tr>
+                </tbody>
+              </table>
+              <div class="modal" style="margin-top:6px">
+                <div class="mhd">Diamond &amp; field permits — spring block</div>
+                <div class="mbd">
+                  <div class="fld"><span class="flab">Files under</span><div class="fbox">Facilities → Field permits ⌄</div></div>
+                  <table class="tbl"><tbody>
+                    <tr><td>1</td><td class="num">$300.00</td><td><span class="pill p-paid">Paid</span></td><td></td></tr>
+                    <tr><td>2</td><td class="num">$300.00</td><td><span class="pill p-over">Overdue</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                    <tr><td>3</td><td class="num">$300.00</td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="note"><b>What it costs:</b> an overlay, a scrim, an unsaved-changes guard, a close
+            path, and a phone that loses the table behind it — to show three read-only lines and one
+            picker. <b>What it buys over the fold: nothing.</b> Every control inside it is a control
+            that fits in a fold.</p>
+          <p class="note">It also contradicts all three rulings above at once.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-h">B · One chevron everywhere, everything in the fold <span class="tag t-rec">recommended</span></div>
+        <div class="opt-b">
+          <div class="fr">
+            <div class="fr-bd">
+              <table class="tbl">
+                <tbody>
+                  <tr class="grp"><td colspan="5">What the club has billed us</td></tr>
+                  <tr><td>Diamond &amp; field permits</td><td>Facilities → Field permits</td><td class="num">$900.00</td><td><span class="pill p-over">1 overdue</span></td><td>⌃</td></tr>
+                </tbody>
+              </table>
+              <div class="fold"><span class="fold-lab">the fold</span>
+                <div class="fld" style="margin-bottom:7px"><span class="flab">Files under</span><div class="fbox">Facilities → Field permits ⌄</div></div>
+                <table class="tbl"><tbody>
+                  <tr><td>1</td><td class="num">$300.00</td><td>May 1</td><td><span class="pill p-paid">Paid</span></td><td></td></tr>
+                  <tr><td>2</td><td class="num">$300.00</td><td>Jun 1</td><td><span class="pill p-over">Overdue</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                  <tr><td>3</td><td class="num">$300.00</td><td>Jul 1</td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="mini-btn">Record as paid</span></td></tr>
+                </tbody></table>
+              </div>
+              <table class="tbl" style="margin-top:9px">
+                <tbody>
+                  <tr class="grp"><td colspan="5">What we've asked the club</td></tr>
+                  <tr><td>Diamond permit reimbursement</td><td>Money back · Facilities</td><td class="num">$325.00</td><td><span class="pill p-paid">Approved</span></td><td>⌃</td></tr>
+                </tbody>
+              </table>
+              <div class="fold"><span class="fold-lab">the fold</span>
+                <div class="cols2" style="margin-bottom:7px">
+                  <div class="fld"><span class="flab">Asked for</span><div class="fbox" style="background:rgba(70,55,30,.05)">$325.00 — from the club</div></div>
+                  <div class="fld"><span class="flab">Club's decision</span><div class="fbox" style="background:rgba(70,55,30,.05)">Approved · Aug 14</div></div>
+                </div>
+                <div class="fld"><span class="flab">New money, or money back?</span><div class="fbox">Paying us back for a cost ⌄</div></div>
+                <div class="fld" style="margin-top:6px"><span class="flab">Files under</span><div class="fbox">Facilities → Field permits ⌄</div></div>
+                <p class="note" style="margin-top:5px">The club has answered, so what was asked can no
+                  longer change — but how <b>your</b> team files it always can.</p>
+              </div>
+            </div>
+          </div>
+          <p class="note"><b>Every row gets the same control</b> — one chevron, no pencil, no eye, no
+            button in any cell. One door per record, which is your 08-26 rule.</p>
+          <p class="note"><b>The read-only answer you asked for, exactly:</b> an answered request shows
+            its amount, its direction and the club's decision as <i>values</i>, and the two filing
+            controls stay <i>live</i>. That is your <i>"read-only is a capability, not a door"</i>
+            ruling — gate the editor, not the route.</p>
+          <p class="note"><b>What gets deleted:</b> the cell button in both bands, the whole filing
+            dialog, the separate record window, and the pencil/eye split.</p>
+        </div>
+      </div>
+
+      <div class="opt">
+        <div class="opt-h">C · A pencil on every row, opening a modal <span class="tag t-maybe">your literal ask</span></div>
+        <div class="opt-b">
+          <div class="fr">
+            <div class="fr-bd">
+              <table class="tbl">
+                <tbody>
+                  <tr><td>Diamond &amp; field permits</td><td class="num">$900.00</td><td>✎</td></tr>
+                  <tr><td>Diamond permit reimbursement</td><td class="num">$325.00</td><td>✎</td></tr>
+                  <tr><td>New catcher's gear <span class="pill p-unpaid">Declined</span></td><td class="num">$240.00</td><td>✎ <span class="seq">?</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p class="note">This does solve the noise, and it does make the rows consistent. Two things
+            stop me recommending it:</p>
+          <p class="note"><b>A pencil on a row you can't edit is a lie.</b> A coach with read-only
+            money access — and every coach looking at a <i>declined</i> request — sees an edit
+            affordance on a record with nothing editable. Today's eye is honest; a pencil everywhere
+            isn't. A chevron is honest for both, which is why B uses one.</p>
+          <p class="note"><b>It keeps the window around two fields</b> — the shape 08-26 deleted.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <table class="matrix">
+        <thead><tr><th>&nbsp;</th><th>Today</th><th>A · slide-over</th><th>B · the fold</th><th>C · pencil + modal</th></tr></thead>
+        <tbody>
+          <tr><td>Doors per record</td><td class="n">2–3</td><td class="y">1</td><td class="y">1</td><td class="y">1</td></tr>
+          <tr><td>Buttons inside cells</td><td class="n">every row</td><td class="y">none</td><td class="y">none</td><td class="y">none</td></tr>
+          <tr><td>Same control on every row</td><td class="n">no — ⌄ / ✎ / 👁</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+          <tr><td>File an approved request without closing anything</td><td class="n">no</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+          <tr><td>Affordance honest when read-only</td><td class="m">yes (eye)</td><td class="n">no</td><td class="y">yes</td><td class="n">no</td></tr>
+          <tr><td>Table stays visible while you work</td><td class="m">bills only</td><td class="n">no</td><td class="y">yes</td><td class="n">no</td></tr>
+          <tr><td>Holds on a phone</td><td class="m">mixed</td><td class="n">overlay covers it</td><td class="y">yes</td><td class="n">overlay covers it</td></tr>
+          <tr><td>Agrees with 08-26 + 08-31</td><td class="n">no</td><td class="n">no</td><td class="y">yes</td><td class="n">no</td></tr>
+          <tr><td>Matches the Fundraising tab</td><td class="m">half</td><td class="n">no</td><td class="y">yes</td><td class="n">no</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="call good">
+      <h3>What I'd build, if you agree</h3>
+      <p><b>Option B.</b> You get everything you asked for at the row — <b>no button in any cell, one
+        identical control on every row, no more view-versus-edit</b> — and the record's own controls
+        become live where they are read instead of moving into a window. The only part of your ask I'd
+        change is the <i>destination</i>: the fold rather than a modal, because a club bill has no
+        per-instalment questions for a drawer to hold, and because a window around two fields is the
+        thing your two most recent design rulings both threw out.</p>
+      <p><b>Say the word and I'll build B.</b> If you'd rather have the pencil than the chevron, that
+        is a one-line change to it and I'll do it — the destination matters far more than the glyph.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span><b>§01–§08 shipped</b> (the one-table reshape, the filter row, the form order). <b>§09 is a proposal</b> — the row controls are unchanged pending your call, and so is Fundraising's two-column layout.</span>
+    <span><b>Drawn from</b> QA Money Lab / QA Mid Season U14, real figures, 2026-09-01.</span>
+    <span><b>Related:</b> the club-money build awaiting your walk is Owner QA §126 — a different
+      question on the same screen.</span>
+  </footer>
+</div>

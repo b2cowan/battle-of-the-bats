@@ -133,6 +133,23 @@
      positional selector silently styles the wrong cell the day a column is inserted or reordered
      rather than failing where someone would notice. */
   .tableAsCards .tableFoot td.footLeadCell .footLabel { display: block; }
+  /* ⚠⚠ A FOLD'S CELL IS NOT A LABEL/VALUE LINE — it is a whole panel, and card mode was laying its
+     contents out SIDEWAYS (found by opening a fold on a phone, 2026-09-02; `check:layout` cannot
+     see it because nothing on the Club tab opens itself, so the gate only ever measures closed
+     rows). `.tableAsCards td` is `display: flex; justify-content: space-between`, so the club
+     fold's filing control and its instalment table became two flex items in a row: the picker
+     squeezed to 162px and the instalment table crushed to **52px** of a 329px card, its column
+     headings clipped to "INSTA…" / "AMOU…".
+     ⚖ This is the same failure `.cardStackCell` two rules up exists for, in its own words — "a cell
+     whose content is too big for one label/value line... without this the flex row squeezes an
+     embedded form into whatever the value column has left" — and it names the two historical
+     victims. A spanning fold cell is the third, and it needs the stronger form: not merely
+     left-aligned, but out of the flex row altogether. */
+  .tableAsCards td.clubExpandCell {
+    display: block;
+    text-align: left;
+    padding: 0.65rem 0 0 !important;
+  }
 }
 
 /* cardActionLabel — words for an icon-only row control, revealed only once its row has become a
@@ -2377,10 +2394,12 @@ a.oneChip:hover { border-color: currentColor; }
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm), var(--highlight-top);
 }
+/* ⚰ THREE OF THE FOUR PHASE ACCENTS ARE GONE (cleanup tranche 6, 2026-09-01): `.nowInSeason`,
+   `.nowGameDay` and `.nowResult` had zero usages. The card's phase used to tint its left border
+   four ways; the Overview's "One Thing" rework left only the preseason case rendering, and the
+   other three sat here reading as a live four-state design. ⚠ `.nowInSeason` was also a duplicate
+   of the rule below it in everything but name. */
 .nowPreseason { border-left-color: var(--blueprint-blue); }
-.nowInSeason  { border-left-color: var(--blueprint-blue); }
-.nowGameDay   { border-left-color: var(--success); }
-.nowResult    { border-left-color: var(--gold); }
 
 .nowEyebrow {
   display: flex;
@@ -2394,8 +2413,8 @@ a.oneChip:hover { border-color: currentColor; }
   text-transform: uppercase;
 }
 .nowEyebrow svg { color: var(--text-tertiary); }
-.nowEyebrowCount { margin-left: auto; color: var(--text-tertiary); font-weight: 700; }
-.nowLiveDot { color: var(--success); font-size: var(--type-label); }
+/* ⚰ `.nowEyebrowCount` (a count pushed to the eyebrow's right) and `.nowLiveDot` (the green
+   "live now" dot) deleted 2026-09-01, cleanup tranche 6 — zero usages. */
 
 .nowHeadline {
   margin: 0.1rem 0 0;
@@ -2411,48 +2430,20 @@ a.oneChip:hover { border-color: currentColor; }
    case for adding a display step above 24px; it turned out to render nowhere, a leftover from a
    card that was replaced. The lesson is cheap and worth keeping: a size inventory counts
    DECLARATIONS, and a declaration nobody renders still argues for a step. Check usage before
-   letting a value shape a scale. `.nowScoreline` below is dead by the same test and is left for
-   a deliberate dead-CSS pass rather than widened into this one. */
+   letting a value shape a scale.
+   ⚰ THAT DELIBERATE DEAD-CSS PASS HAPPENED (cleanup tranche 6, 2026-09-01) and took `.nowScoreline`
+   with it, along with every other content variant this card once had: the scoreline and its result
+   suffix, the divider, the stats row and its four value tints, the money alert, the two phase
+   accents beside `.nowPreseason`, the eyebrow count and the live dot, and the bridge footer.
+   Fifteen selectors, zero usages between them. The SHELL below is live and stays — `.nowCard`,
+   `.nowEyebrow`, `.nowHeadline`, `.nowMeta`, `.nowActions`, `.nowSecondary`. ⚠ What made this
+   family so expensive to read is that the shell and the dead content sat interleaved in one
+   block, so every selector here looked as live as its neighbour. */
 .nowMeta { margin: 0; color: var(--text-tertiary); font-size: var(--type-body); }
 /* A supporting paragraph that must not push the card's action below a phone's fold.
    The card keeps its headline + first meta line everywhere; only the elaboration goes. */
 @media (max-width: 640px) {
   .nowMetaWide { display: none; }
-}
-
-.nowScoreline {
-  margin: 0.15rem 0 0;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--type-title);
-  color: var(--text-primary);
-}
-.nowScoreResult { color: var(--text-tertiary); font-size: var(--type-body); font-weight: 700; }
-
-.nowDivider { height: 1px; background: rgba(var(--blueprint-blue-rgb), 0.18); margin: 0.5rem 0 0.1rem; }
-
-.nowStatsRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.1rem;
-  font-size: var(--type-body);
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-.nowStatIn { color: var(--success); font-family: var(--font-display); }
-.nowStatMuted { color: var(--text-tertiary); font-weight: 600; }
-.nowStatOk { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); }
-.nowStatWarn { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--warning); }
-
-.nowMoneyAlert {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0.15rem 0 0;
-  color: var(--danger);
-  font-size: var(--type-body);
-  font-weight: 700;
 }
 
 .nowActions {
@@ -2472,17 +2463,6 @@ a.oneChip:hover { border-color: currentColor; }
   gap: 0.25rem;
 }
 .nowSecondary:hover { text-decoration: underline; }
-
-.nowBridge {
-  margin: 0.6rem 0 0;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--text-tertiary);
-  font-size: var(--type-support);
-  line-height: 1.5;
-}
-.nowBridge a { color: var(--blueprint-light); text-decoration: none; }
-.nowBridge a:hover { text-decoration: underline; }
 
 /* A dashboard read that failed says so on the page, above the tiles it affects — never only
    inside the setup popover, which a coach may never open (and which sometimes isn't there). */
@@ -5143,8 +5123,16 @@ a.oneChip:hover { border-color: currentColor; }
   .sectionHeadRow .linkBtn { min-height: var(--tap-min, 44px); }
 }
 
-/* Read-only stat strip (attendance / dues roll-ups) */
-.statStrip {
+/* Read-only row of stat BOXES (attendance / dues roll-ups on a player's profile).
+   ⚠⚠ RENAMED FROM `.statStrip` ON 2026-09-01 (cleanup tranche 6), and the rename is the bug fix.
+   Two unrelated families both declared `.statStrip` at the top level, ~3,500 lines apart: the
+   inline text strip up at the snapshot tiles (`.statStripItem` / `.statStripDot`, one caller —
+   Tryouts history) and this box row (`.statBox`, two callers on the player profile). Whichever
+   came LAST won for every caller of both, so the text strip silently lost its baseline alignment,
+   its 0.35rem/0.85rem gap and its 1.25rem bottom margin to this rule's flat 0.75rem gap. Neither
+   file was wrong; the collision was invisible in both. The name now says which family it is, and
+   `.statBox` is the child that proves it. */
+.statBoxRow {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -7883,25 +7871,14 @@ a.oneChip:hover { border-color: currentColor; }
    added to answer inside the tables, so it gets the same answer: a fixed slot per figure,
    right-aligned, tabular.
 
-   ⚠ THE "DUE" SLOT IS ALWAYS RENDERED, empty when a share is fully paid. Dropping the element
-   on a settled allocation let its "paid" figure slide into the vacated column, so the one row
-   in the list that most wants to look finished was the one that broke the alignment. */
-.allocFigures { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.allocFigure {
-  min-width: 7.25rem;
-  text-align: right;
-  font-size: var(--type-body);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
-}
-.allocFigurePaid { color: var(--success-light); }
-.allocFigureDue  { color: var(--text-tertiary); }
-@media (max-width: 640px) {
-  /* A card-width row has no columns left to align, and two 7.25rem slots plus the chevron is
-     wider than a 360px phone. */
-  .allocFigure { min-width: 0; }
-}
-
+   ⚰ `.allocFigures` / `.allocFigure` / `.allocFigurePaid` / `.allocFigureDue` STOOD HERE
+   and are deleted (2026-09-01, the club table). They aligned the paid/due chips on a bill CARD, and
+   the card list is gone — a bill is a ROW in the club table now, so those two figures are an
+   ordinary table column and the alignment is the table's job.
+   ⚠ Their old note is worth carrying: the "due" slot was always rendered, empty on a settled share,
+   because dropping the element let the "paid" figure slide across — so the one row in the list that
+   most wanted to look finished was the one that broke the column. A table cannot make that
+   mistake, which is part of why the cards went. */
 /* ── MultiSelectDropdown — a checkbox list in a native <details>, compact enough to sit beside
    other report controls on one line (register reading-order ruling, follow-up to P3). ────────── */
 .multiSelect { position: relative; }
@@ -8262,16 +8239,6 @@ a.oneChip:hover { border-color: currentColor; }
   justify-content: center;
 }
 
-/* ⚠ MERGED INTO THE ONE TOOLBAR ROW (reversed 2026-08-19, reading-order ruling follow-up) — this
-   used to be its OWN sticky row, stacked below the toolbar. It's a plain wrapping group now (the
-   budget word, the overlay switch, and the date range), rendered as one more flex item inside
-   `.panelToolbar`, the same way `.moneyFilterBar` already groups Show/Overdue there — not a
-   sticky boundary of its own any more. */
-.registerControls {
-  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-}
-/* (The bare two-picker `.registerRange*` group retired 2026-08-19 — the range is the Date pill
-   now, styled with the multiSelect family above.) */
 /* ⚖ CASH ON HAND, NOW INLINE — replaces the old dedicated banner (reading-order ruling). Flagged
    for a second look once real: a plain figure here may read as easier to miss than a banner was. */
 .registerInlineCash {
@@ -9219,7 +9186,8 @@ a.oneChip:hover { border-color: currentColor; }
   font-size: var(--type-label); font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.05em; color: var(--text-tertiary);
 }
-.ppFieldHint { font-size: var(--type-support); color: var(--text-tertiary); align-self: flex-end; padding-bottom: 0.55rem; }
+/* ⚰ `.ppFieldHint` deleted 2026-09-01 (cleanup tranche 6) — zero usages, and it carried a phone
+   override at 640 that had never applied to anything either. */
 .ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
 /* .ppCount retired 2026-08-01 with the station's "how many of it" field (owner ruling). */
 
@@ -9287,11 +9255,6 @@ a.oneChip:hover { border-color: currentColor; }
   font-size: var(--type-support); font-weight: 600; color: var(--text-primary);
   padding: 0.15rem 0.45rem; border-radius: 6px; border: 1px solid var(--border-2);
 }
-.ppChipX {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 0.1rem;
-}
-.ppChipX:hover { color: var(--text-primary); }
 .ppFocusChip {
   font-size: var(--type-label); color: var(--text-secondary);
   padding: 0.1rem 0.4rem; border-radius: 5px;
@@ -9340,8 +9303,8 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .ppRotationTimes { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
 .ppGroupsHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
-.ppGroupTools { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.ppGroupTools select { width: auto; min-width: 9.5rem; }
+/* ⚰ `.ppGroupTools` (+ its `select` child rule and both 640 overrides) deleted 2026-09-01, cleanup
+   tranche 6 — zero usages. The rotation's group controls render through `.ppGroupWays` below. */
 .ppSplitNote { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
 .ppGroupList { display: flex; flex-direction: column; gap: 0.5rem; }
 .ppGroup { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.5rem 0.6rem; border: 1px solid var(--white-8); border-radius: 8px; }
@@ -9438,11 +9401,10 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 /* 640 = CONTENT reflow: the dense control rows go to one axis so nothing is squeezed. */
-@media (max-width: 640px) {
-  .ppGroupTools { width: 100%; }
-  .ppGroupTools select { flex: 1 1 auto; min-width: 0; }
-  .ppFieldHint { align-self: flex-start; padding-bottom: 0; }
-}
+/* ⚰ This block held only `.ppGroupTools`, its `select` child and `.ppFieldHint` — all three
+   deleted 2026-09-01 (cleanup tranche 6) as zero-usage, so the whole 640 block went with them.
+   ⚠ The 900 SHELL block above is live; the two are a pair by design (shell reflow, then content
+   reflow), so a future content override at 640 goes back here. */
 
 /* ══ THE FIELD RUN SCREEN (Practice Plans 1b) ══════════════════════════════════
    Sized for sun, gloves, one hand and twelve kids — NOT for the density the rest of the portal
@@ -9689,8 +9651,11 @@ a.oneChip:hover { border-color: currentColor; }
    ordinary body text for its entire life while looking, in source, like it was amber. That is
    exactly the failure the ghost-token ban exists to stop, and it survived because a var() fallback
    makes an undefined token render silently instead of breaking. --home-amber is the theme-aware
-   amber (dark: --warning, 8.26:1; cream: #835006 on paper). */
-.ppWarn { margin: 0; font-size: var(--type-support); color: var(--home-amber); }
+   amber (dark: --warning, 8.26:1; cream: #835006 on paper).
+   ⚰ THE RULE ITSELF (`.ppWarn`) WAS DELETED 2026-09-01 (cleanup tranche 6) — zero usages, so the
+   ghost token had in fact been rendering onto nothing at all. The lesson is kept because it is the
+   whole reason the ghost-token ban exists, and because "it looked amber in source" is exactly how
+   this rule survived long enough to also become dead. */
 
 /* The optional range: its box and the control that clears it sit as one unit. */
 .ppRangeWrap { display: inline-flex; align-items: center; gap: 0.15rem; }
@@ -9840,85 +9805,6 @@ a.oneChip:hover { border-color: currentColor; }
   .ppDrillFilters .input { flex-basis: 100%; }
 }
 
-/* ── Tag picker (Practice Plans Phase 3) ─────────────────────────────────────
-   ⚠ Tap floor is stated LOCALLY here, as the drill CSS does. The portal's shared button
-   primitives render 31–41px product-wide and the team nav 38.5px — a pre-existing baseline that
-   must NOT be widened to satisfy a probe. */
-.tagPick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  background: var(--bg-2, var(--surface));
-  padding: 0.4rem 0.5rem;
-  min-height: var(--tap-min, 44px);
-}
-.tagPick[data-disabled='on'] { background: none; border-style: dashed; }
-
-.tagChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--blueprint-light);
-  background: rgba(var(--blueprint-blue-rgb), 0.10);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 999px;
-  padding: 0.15rem 0.3rem 0.15rem 0.55rem;
-}
-.tagChip button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: inherit;
-  opacity: 0.65;
-  line-height: 1;
-  padding: 0.25rem;
-  border-radius: 999px;
-  display: inline-flex;
-}
-.tagChip button:hover { opacity: 1; }
-
-.tagPickInput {
-  border: none;
-  background: none;
-  outline: none;
-  font: inherit;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  flex: 1 1 7rem;
-  min-width: 5rem;
-  padding: 0.2rem 0;
-}
-.tagPickInput::placeholder { color: var(--text-tertiary); }
-/* 28px, in the plan editor's header card. ⚠ SCOPED, not raised on `.tagPickInput` itself: the tag
-   combobox is a shared component that appears on six surfaces, and every one of them wants this
-   floor — but that is the portal-wide touch-debt decision, not this pass's. The practice-plan
-   editor shares this card and moves with it, deliberately: it is the SAME editor, and one of the
-   two reading as tappable while the other does not is worse than both waiting. */
-@media (max-width: 768px) {
-  .ppHeaderCard .tagPickInput { min-height: var(--tap-min, 44px); }
-}
-
-/* Minting a tag is a DIFFERENT act from picking one, so it reads differently — solid, tinted,
-   and never mixed in among the suggestions as if it were an existing tag. */
-.tagCreateChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-size: var(--type-support);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--blueprint-light);
-}
-.tagCreateChip:disabled { opacity: 0.5; cursor: default; }
 
 /* A tag as it reads on a saved row — never interactive. */
 .tagRead {
@@ -10196,34 +10082,6 @@ a.oneChip:hover { border-color: currentColor; }
   font-family: inherit;
 }
 .scoutLogInput::placeholder { color: var(--text-tertiary); }
-.scoutTagRow { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-.scoutTagChip {
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.32rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--white-20);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.scoutTagChip:hover { border-color: var(--white-30); color: var(--text-primary); }
-/* 25px × five chips — how an observation gets filed. A coach types the note and then taps one of
-   these, so they are part of the same act as the box above them and want the same floor.
-   `inline-flex` centres the uppercase label in the taller pill; the type scale does not move. */
-@media (max-width: 768px) {
-  .scoutTagChip {
-    display: inline-flex; align-items: center;
-    min-height: var(--tap-min, 44px);
-  }
-}
-/* Active = the rsvpOptionActive recipe (soft tokenized fill + colored border/text), so the
-   warm gate re-skins it with no rules of its own — never a solid lime fill with hand-picked ink. */
-.scoutTagChip[data-on="yes"] { background: rgba(var(--success-rgb), 0.16); border-color: var(--success); color: var(--success); }
 .scoutLogSave { margin-left: auto; }
 /* 39px — four short of the floor, and the button that commits the observation. */
 @media (max-width: 768px) {
@@ -11394,16 +11252,264 @@ button.gdChip[aria-pressed='true'] {
    the work, and no second header component is introduced. */
 .clubBlock { margin-bottom: 2.25rem; }
 .clubBlock:last-of-type { margin-bottom: 0; }
-.clubBlockTitle {
-  margin: 0;
-  font-size: var(--type-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-}
+/* ⚰ `.clubBlockTitle` STOOD HERE and is deleted (owner, 2026-09-01). It headed the tab's two
+   sections — "What the club has billed us" and "What we've asked the club" — and both of those are
+   GROUP BAND rows inside one table now, which carry their own weight. The one remaining use, a
+   "Club money" heading above the table, was deleted in the same pass for restating the tab it sits
+   in. Nothing is left to head. */
 
 /* ── The filing (category · item) ───────────────────────────────────────────
    The whole reason this phase touched the schema: until a club record names one of the team's own
    budget words, none of its money reaches Budget vs. Actual. */
+/* ══ THE CLUB TABLE — one list, two group bands (owner-approved 2026-09-01) ═══════════════════
+   The tab was two stacked sections and the second was invisible below the first. A group band
+   INSIDE one table is a heading three rows down, not a second section — which is what makes the
+   owner's rule ("a section is never invisible below a section") hold at every width, phones
+   included. ⚠ The bands are the only thing keeping a BILL and a REQUEST distinct now, so they are
+   deliberately heavier than a table row and they never collapse. */
+.clubGroupRow { background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 7%, transparent); }
+/* ⚠⚠ THE CELL STAYS A CELL. This carried `display: flex` for one render and the band collapsed to
+   the width of column one: a <td> that is flex is no longer a table-cell, so `colSpan` is ignored
+   and the whole row stops spanning. The flexing happens in a DIV inside it. Same trap as
+   `display: block` on a <td>, and it looks fine until a column has to span. */
+.clubGroupCell {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+.clubGroupInner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+}
+/* ⚠ THE TABLE IS SIZED, or "What" eats the slack and the money columns huddle at the right edge —
+   which is what the first render did. `table-layout: fixed` would be simpler and is wrong here: a
+   bill's name and a request's are wildly different lengths and must be allowed to breathe. These
+   are hints on the header cells, so the browser still balances within them. */
+.clubTableWhat   { width: 38%; }
+.clubTableFiling { width: 26%; }
+.clubTableAmount { width: 12%; }
+.clubTableStatus { width: 16%; }
+.clubTableAction { width: 6%; }
+
+.clubGroupName {
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.clubGroupMeta {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+/* Each band owns its own actions — the Fundraising bands' rule, and here it is forced: the export
+   trigger always reads "Export", so two in one toolbar would be two identical buttons producing
+   different files (the defect CoachExportButton's own header records a ruling against). */
+/* ⚰ `.clubGroupActions` STOOD HERE and is deleted (owner, 2026-09-01) — the bands no longer carry
+   their own Export and create. Both moved to the one toolbar above the table once the export
+   became the whole table's, which is what removed the reason they were split in the first place
+   (two triggers both reading "Export"). */
+
+/* ⚠ THE ONE CREATE ON THIS SCREEN MEETS THE TAP FLOOR (check:layout tap-floor). `.btnPrimary` is
+   31px — shared debt across the portal, not this screen's to fix globally — so the floor is applied
+   HERE, where a coach taps it on a phone, rather than by changing every button in the product. */
+@media (max-width: 768px) {
+  .clubToolbarAction { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
+}
+
+/* A request's name and its direction badge on one line, wrapping together if the name is long. */
+.clubRowName { display: inline-flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+
+/* The second line inside a row's first cell — a bill's totals. */
+.clubRowSub {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+.clubRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
+/* ⚠⚠ THE ROW'S EXPAND TOGGLE — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
+   The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open a
+   fold at all; `check:layout` immediately measured it at 19px against the 44px floor, which is the
+   whole reason that gate renders pages instead of reading them. It is the ONE control on the row,
+   and on a phone it is a finger landing on a table row at a field — the least forgiving tap in the
+   product.
+   ⚠ `inline-flex` is what makes `min-height` bite: on a plain inline element it does nothing at all
+   (the trap `.compactAction`'s own note records, where the cure had to be stated twice). Width is
+   floored too — a 44px-tall sliver 16px wide is not a 44px target. */
+.clubRowToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+@media (max-width: 768px) {
+  .clubRowToggle { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+}
+/* ⚠ A STATUS BADGE NEVER WRAPS. "Awaiting the club" broke across two lines and "1 overdue" sat under
+   its own triangle — a badge that wraps reads as two badges. */
+.clubStatusCell .badge { white-space: nowrap; }
+.clubStatusCell { white-space: nowrap; }
+
+/* A bill unfolds its instalments in place, inside the same table. */
+.clubExpandRow { background: color-mix(in srgb, var(--text-tertiary) 5%, transparent); }
+.clubExpandCell { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
+.clubExpandNotes { font-size: var(--type-support); color: var(--text-tertiary); margin: 0 0 0.65rem; }
+
+/* ── THE FOLD IS WHERE A CLUB RECORD IS WORKED ON (owner, 2026-09-01) ─────────────────────────────
+   Both bands' rows now unfold into the same shape: the facts of the record, then its LIVE controls.
+   It replaced a dialog opened by a "File it" / "Change" button sitting in the Files-under cell of
+   every row — see the panel's filing-state comment for why counting the doors is what condemned it.
+   ⚠ These blocks stack; they never sit in a row. A fold is narrow on a phone and the picker's menu
+   needs the full width to be usable. */
+/* ⚠ A FIELD, NOT A BANNER. Left to the fold's width the picker stretched the full
+   1150px of the table for a two-word value — it read as a section heading rather than a control,
+   and the eye had to travel the whole row to get from the label to the thing it names. */
+.clubFoldBlock { margin: 0.7rem 0 0; max-width: 30rem; }
+
+/* ── WHAT THIS CHANGES — the consequence strip (owner ruling 2026-09-02) ──────────────────────────
+   The figures a money form used to promise in prose, as one chip per figure. The prose beside it
+   keeps only what a chip cannot carry: the date, and the rules ("it isn't counted as income",
+   "nobody is owed anything").
+
+   ⚠⚠ THE STRIP EXISTS TO MAKE AN OMISSION VISIBLE, which is the defect it was built for. A
+   paragraph that forgets to mention cash on hand still reads like a complete paragraph — that is
+   exactly how the refund line shipped without it and survived review. A strip has a slot per
+   figure, so a missing chip is a hole. Cash is pinned to the first slot for the same reason.
+
+   ⚠ IT WRAPS, IT NEVER SCROLLS. Three chips at 361px is three lines, and that is correct — a
+   sideways scroll on a form's own summary is a figure a coach cannot see. */
+.moveStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+.moveChip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 6px;
+  background: var(--home-card, var(--bg-card, transparent));
+  padding: 0.22rem 0.5rem;
+  font-size: var(--type-support);
+  /* A row of figures is a column of digits the moment it wraps — line them up. */
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.moveChipLabel { color: var(--text-tertiary); }
+/* ⚠ THE QUANTITY IS NOT DECORATION. "Umpires ▲ $200" is SPENT on a cost and RECEIVED on income —
+   same arrow, same label, opposite facts. This is where the two are told apart, so it must stay
+   legible rather than fading into the border. */
+.moveChipQty { color: var(--text-tertiary); }
+.moveChipFig { font-weight: 700; color: var(--text-primary); }
+.moveUp { color: var(--success-light); }
+.moveDown { color: var(--danger-light); }
+/* "No change" is an ANSWER, not an absence — it is how an out-of-pocket cost states that team cash
+   stayed still instead of staying silent about it. Quiet, but present. */
+.moveFlat { color: var(--text-tertiary); font-weight: 600; }
+/* ⚠⚠ EVERY FIGURE THAT IS NOT CASH. Green and red are good news and bad news, and only cash on hand
+   has a stable reading: a budget line moving is neither, it is just where the money landed. Painting
+   by arrow drew "spent ▲ $200.00" in success green — congratulating a coach for spending — and a
+   refund's line in danger red for the best thing that had happened all week. */
+.moveNeutral { color: var(--text-primary); }
+.clubFoldBlock:first-child { margin-top: 0; }
+/* ⚠ The hint under a live control is a SENTENCE, so it takes formHint's measure rather than the
+   2rem `.muted` pane — the same trap the dues forms hit twice. */
+.clubFoldBlock .formHint { margin: 0; }
+
+/* What was ASKED, as values. Wraps to one per line on a phone rather than squeezing four columns. */
+.clubFoldFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.4rem;
+  margin: 0 0 0.55rem;
+}
+.clubFoldFact { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.clubFoldFactLabel {
+  font-size: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.clubFoldFactValue { font-size: var(--type-support); color: var(--text-secondary); font-weight: 600; }
+
+/* The one door left in a fold — correcting a request the club has not answered yet. */
+.clubFoldDoors { margin-top: 0.8rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── The filter row. Renders only past CLUB_FILTER_FLOOR records — on a short list the chips would
+      be chrome taller than the thing they organise. ── */
+.clubFilterRow { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+.clubChip {
+  border: 1px solid var(--home-line, var(--border-2));
+  background: var(--home-card, var(--bg-card, transparent));
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: var(--type-support);
+  font-weight: 650;
+  cursor: pointer;
+  min-height: 32px;
+  font-variant-numeric: tabular-nums;
+}
+.clubChip:hover { border-color: var(--text-tertiary); }
+/* ⚠ THE 44px TAP FLOOR AT PHONE WIDTHS — the same mechanism `.compactAction` uses, and for the
+   same reason its own note gives: `min-height` alone does nothing to an inline element and
+   `padding-block` alone loses to a flex button's padding shorthand, so both are stated. A chip is
+   a filter a coach taps standing at a field. */
+@media (max-width: 768px) {
+  .clubChip { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
+}
+.clubChip:focus-visible { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 2px; }
+/* ⚠⚠ A TINTED FILL, NEVER A SOLID ONE — and this shipped SOLID (`/simplify`, 2026-09-02). The
+   house rule for a chip is written on `.lineupFilterBar` above (design log 2026-07-08): *"chips are
+   the lighter species vs the segmented tab control — tinted fills, never a solid fill"*, and
+   `.lineupFilterChipActive` obeys it with a 16% accent wash. A solid olive fill with
+   `--pitch-black` ink made this row read as a SEGMENTED TAB CONTROL — a heavier species than the
+   act of narrowing a list deserves, and louder than the group bands it sits above. It was written
+   from `.btnPrimary`, which is a primary ACTION and the wrong thing to copy for a filter.
+   ⚠ The tint is stated on `:hover` too, or the hover rule above washes a selected chip back
+   towards an unselected one. */
+.clubChipOn, .clubChipOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--home-olive, var(--logic-lime));
+  color: var(--home-olive, var(--logic-lime));
+}
+/* ⚠⚠ A FILTER ON A MONEY SCREEN SAYS WHAT IT HIDES, IN DOLLARS. Warning-coloured on purpose: this
+   is the screen admitting it is not showing everything. */
+.clubHiddenNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: var(--type-support);
+  color: var(--badge-warning-ink);
+  background: var(--badge-warning-bg);
+  border: 1px solid var(--badge-warning-border);
+  border-radius: 7px;
+  padding: 0.5rem 0.7rem;
+  margin: 0 0 0.7rem;
+}
+.clubShowAll {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+/* ⚰ `.clubRecordCount` STOOD HERE and is deleted with the heading it sat beside. The total it
+   printed was the sum of the two figures the group bands already state, and it survives where it is
+   actually needed — "All 7" on the filter row, and "Showing 2 of 7" the moment a filter hides
+   anything. */
+
 .clubFiling { font-size: var(--type-support); color: var(--text-secondary); }
 .clubFilingCat { color: var(--text-tertiary); }
 
@@ -11433,24 +11539,11 @@ button.gdChip[aria-pressed='true'] {
    row's "File it" / "Change" as an underlined text link while the BILL row two tables up renders
    the identical two words as `.btnSecondary.compactAction` — one screen, one verb, two looks. The
    request row uses the shared button now, so a restyle of a row action lands in one place. */
-.clubFilingRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.6rem 0.75rem;
-  margin-bottom: 0.9rem;
-  border: 1px solid var(--home-line, var(--border-2));
-  border-radius: 8px;
-  background: var(--home-fill, var(--white-4));
-}
-.clubFilingLabel {
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
+/* ⚰ `.clubFilingRow` / `.clubFilingLabel` STOOD HERE and are deleted (2026-09-01). They framed a
+   "Files under · [Change]" strip inside an expanded bill card — put there because the card's header
+   was itself a <button>, and a button inside a button is invalid markup whose click behaviour is
+   undefined. In the table a bill's filing is an ordinary CELL beside every other row's, so the
+   strip has nothing left to solve. */
 /* ⚠ THE CONSEQUENCE OF LEAVING IT UNFILED IS STATED WHERE THE GAP IS, not only in the modal a coach
    may never open. An unfiled bill looks complete otherwise — it has a name, an amount and a
    schedule — so nothing on the row would say why it is missing from the report. */
@@ -11460,26 +11553,14 @@ button.gdChip[aria-pressed='true'] {
   color: var(--text-tertiary);
 }
 
-/* ── A request awaiting the club ────────────────────────────────────────────
-   ⚠⚠ MARKED THREE WAYS THAT DO NOT DEPEND ON COLOUR: the left edge, the chip in the Status column
-   ("Awaiting the club" — who is holding it, not merely that it is pending), and the sentence above
-   the table. The same triple the register's scheduled rows use, deliberately, because this is the
-   same money seen from the other screen. */
-.clubPendingNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  padding: 0.6rem 0.8rem;
-  margin: 0 0 0.75rem;
-  border-radius: 8px;
-  background: rgba(var(--warning-rgb), 0.1);
-  border: 1px solid rgba(var(--warning-rgb), 0.22);
-  font-size: var(--type-support);
-  line-height: 1.55;
-  color: var(--text-secondary);
-}
-.clubPendingNote svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--badge-warning-ink); }
-.clubPendingNote strong { color: var(--badge-warning-ink); }
+/* ⚰ `.clubPendingNote` STOOD HERE and is deleted (2026-09-01). It was a sentence above the requests
+   table — "2 requests are still with the club. They sit at the top until someone answers." The
+   requests GROUP BAND now states that fact in the same place as its count and its money
+   ("4 requests · $180.50 waiting on a decision"), and pending rows still sort to the top of the
+   band, so the sentence had become a third telling of one thing.
+   ⚠ WHAT IT PROTECTED SURVIVES: a waiting request is still marked three ways that do not depend on
+   colour — the row's left edge, the "Awaiting the club" chip in Status (which says WHO is holding
+   it, not merely that it is pending), and the band's own figure. */
 /* ⚠ `box-shadow: inset`, NOT `border-left`. A border on a <td> changes the cell's box and knocks
    the row's first column out of line with every other row in the table; an inset shadow paints
    inside the existing box and costs no layout. Applied to the first cell only, so at 640 — where
@@ -11554,15 +11635,18 @@ button.gdChip[aria-pressed='true'] {
 /* ⚠ THE ARROW AND THE WORDS CARRY THE MEANING; the tint only confirms it. Same rule as the row
    badges — red-against-green is the one pairing a deutan reader cannot separate, and the two
    buttons say "From the club" and "To the club" in as many words. */
-.clubDirectionPick[data-side="in"].clubDirectionOn {
-  border-color: var(--badge-success-ink);
-  background: rgba(var(--success-rgb), 0.1);
-  color: var(--badge-success-ink);
-}
-.clubDirectionPick[data-side="out"].clubDirectionOn {
-  border-color: var(--badge-danger-ink);
-  background: rgba(var(--danger-rgb), 0.1);
-  color: var(--badge-danger-ink);
+/* ⚠⚠ ONE SELECTED COLOUR, NOT TWO (owner-found 2026-09-01). These were success-GREEN for money in
+   and danger-RED for money out — semantic colouring borrowed from the register, where it belongs on
+   a FIGURE. On a CHOICE it misreads badly: red is this product's danger ink (Declined, Overdue,
+   Delete), so picking "To the club — we send them money" lit up as though the coach had done
+   something wrong. Sending your club money is not an error.
+   ⚠ The direction is still carried three ways that do not depend on colour: the arrow icon, the
+   heading, and the sub-line under it. What the fill says now is only "this is the one you picked",
+   which is the same thing every other selected control in the portal says with the same accent. */
+.clubDirectionPick.clubDirectionOn {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 10%, transparent);
+  color: var(--text-primary);
 }
 .clubDirectionOn .clubDirectionSub { color: inherit; }
 @media (max-width: 520px) {
@@ -12334,3 +12418,192 @@ button.gdChip[aria-pressed='true'] {
      ever the desktop table's way of saying it. */
   .bandSubCell { background: transparent; }
 }
+
+/* ═══ TagManagerDrawer — One Tag Idiom P1 (owner-ratified 2026-09-01) ════════════════════════
+   The coach portal's FIRST and ONLY working-surface side sheet (see the component's header for
+   why, and why nothing else may adopt it without a ruling). z-index sits ABOVE the @640 forced
+   overlay tier (400) because the drawer opens OVER an open modal form (Add a bill) and must
+   paint over it at every width; its confirm dialog sits one step higher still. */
+.tagDrawerScrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 500; }
+.tagDrawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(420px, 100vw);
+  background: var(--card-bg);
+  border-left: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.2));
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+  z-index: 510;
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.1rem 1.25rem;
+  transform: translateX(105%);
+  transition: transform 0.2s ease;
+}
+.tagDrawerIn { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) { .tagDrawer { transition: none; } }
+.tagDrawerHead { display: flex; align-items: center; gap: 0.6rem; }
+.tagDrawerTitle { font-size: var(--type-title); font-weight: 800; color: var(--text-primary); margin: 0; }
+.tagDrawerClose {
+  margin-left: auto;
+  width: 40px; height: 40px;
+  border: none; background: none; cursor: pointer;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+}
+.tagDrawerClose:hover { color: var(--text-primary); background: var(--home-olive-soft, rgba(255, 255, 255, 0.08)); }
+.tagDrawerWho { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.15rem 0 0.6rem; }
+.tagDrawerRows { flex: 1; overflow-y: auto; margin: 0 -0.35rem; padding: 0 0.35rem; }
+.tagDrawerRow {
+  display: flex; align-items: center; gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+}
+.tagDrawerRow:last-child { border-bottom: none; }
+.tagDrawerName { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary); }
+.tagDrawerName b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagDrawerUse { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+/* An unused word stands out — it is the one Delete removes with nothing to lose. */
+.tagDrawerUseZero { color: var(--home-amber, var(--warning)); }
+.tagDrawerRename { flex: 1; min-width: 0; }
+.tagDrawerActions { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
+.tagDrawerActions > button {
+  min-width: 36px; min-height: 36px;
+  border: none; background: none; cursor: pointer;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+}
+.tagDrawerActions > button:hover { color: var(--text-primary); background: var(--home-olive-soft, rgba(255, 255, 255, 0.08)); }
+.tagDrawerActions > button:disabled { opacity: 0.5; cursor: not-allowed; }
+.tagDrawerShared { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.2)); }
+.tagDrawerSharedLabel {
+  font-size: var(--type-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  padding: 0.2rem 0;
+}
+.tagDrawerNote { font-size: var(--type-support); color: var(--text-tertiary); padding-top: 0.35rem; margin: 0; }
+.tagDrawerFoot {
+  margin-top: auto;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+  display: flex;
+  justify-content: flex-end;
+}
+/* The delete/merge CONFIRM — a question, so it stays a dialog (2026-08-26), above the drawer. */
+.tagDrawerConfirm {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 520;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.tagDrawerDialog {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.2));
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  width: min(440px, 94vw);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.tagDrawerDialog h4 { margin: 0 0 0.4rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.tagDrawerDialog p { margin: 0 0 0.4rem; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.5; }
+.tagDrawerDialogActions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.9rem; flex-wrap: wrap; }
+@media (max-width: 768px) {
+  /* Tap floor: the row trio and the close each reach 44px on touch widths. */
+  .tagDrawerActions > button { min-width: 44px; min-height: 44px; }
+  .tagDrawerClose { width: 44px; height: 44px; }
+}
+@media (max-width: 640px) {
+  .tagDrawer { padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* The picker's manage door (One Tag Idiom P2) — the dropdown's last row, dressed as a door out
+   rather than a tag: paper ground, support ink, the gear. */
+.tagComboManage {
+  color: var(--text-secondary);
+  background: var(--home-paper, var(--surface-2));
+  font-size: var(--type-support);
+  font-weight: 500;
+  border-top: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.tagComboManage:hover { color: var(--text-primary); }
+
+/* ═══ The Tags SHELF — Team settings (One Tag Idiom P4, Q1) ═══════════════════════════════════
+   One row per library, expanding IN PLACE into the same TagManagerList the drawer wraps. */
+.tagShelf { display: flex; flex-direction: column; }
+.tagShelfLib { border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08)); }
+.tagShelfLib:last-child { border-bottom: none; }
+.tagShelfRow {
+  display: flex; align-items: center; gap: 0.75rem;
+  width: 100%; min-height: 44px;
+  padding: 0.45rem 0.25rem;
+  background: none; border: none; cursor: pointer; text-align: left;
+  color: var(--text-primary); font-family: inherit; font-size: var(--type-body);
+}
+.tagShelfRow:hover { background: var(--home-olive-soft, rgba(255, 255, 255, 0.04)); }
+.tagShelfName { font-weight: 700; min-width: 7.5rem; }
+.tagShelfWhere { flex: 1; min-width: 0; font-size: var(--type-support); color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagShelfCount { font-size: var(--type-support); color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tagShelfCount b { color: var(--text-primary); }
+.tagShelfBody { padding: 0.25rem 0.25rem 0.75rem; }
+.tagShelfFoot { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.75rem 0 0.25rem; }
+@media (max-width: 640px) {
+  /* The where-used line yields at phone width — the library name and the count carry the row
+     (the 1B mockup's own trim). */
+  .tagShelfWhere { display: none; }
+}
+/* The drawer's foot link back to this shelf. */
+.tagDrawerFootLink { font-size: var(--type-support); font-weight: 600; color: var(--home-olive, var(--logic-lime)); text-decoration: none; margin-right: auto; align-self: center; }
+.tagDrawerFootLink:hover { text-decoration: underline; }
+
+/* The scouting filter's scroll lane (Q7) — the segmented control slides sideways at phone widths
+   inside its own container; the page body never scrolls horizontally. */
+.scoutSegWrap { overflow-x: auto; max-width: 100%; }
+.scoutSegWrap .viewToggle { width: max-content; }
+
+/* ═══ The Ledger toolbar's two decks — Option B (owner-ruled 2026-09-02) ═══════════════════════
+   Top deck = the STATIC cast (View, the figure, Export, the create), one row at every desktop
+   width. Strip = the narrowing, which changes per view, under a hairline so the subordination is
+   drawn, not implied. Split by VOLATILITY, the owner's own reasoning. */
+.panelDeck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  width: 100%;
+}
+.panelDeck .panelToolbarActions { margin-left: auto; }
+.panelFilterStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  align-items: center;
+  width: 100%;
+  padding-top: 0.55rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+}
+
+/* Quiet-at-rest filters (owner 2026-09-02): a narrowing pill wears the olive working tint the
+   moment it departs its resting state — twice as visible as before, while resting pills shrink
+   to their name alone. */
+.multiSelectSummary.multiSelectActive {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.08));
+  color: var(--home-olive, var(--logic-lime));
+}
+.multiSelectSummary.multiSelectActive .multiSelectValue { color: inherit; font-weight: 650; }
+
+/* The observation log's entry row (owner, §129 F2): the tag DROPDOWN beside Save — a form
+   select, never a pill row; the FILTER above it stays the segmented viewToggle. */
+.scoutLogRow { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.scoutLogRow .select { max-width: 220px; }

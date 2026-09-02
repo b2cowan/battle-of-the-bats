@@ -1,0 +1,384 @@
+<title>Consequence Lines Walk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#FBF8F1; --surface:#FFFFFF; --raise:#F4EFE4; --sunk:#F2EDE1;
+  --ink:#1E1A12; --muted:#5A5245; --faint:#8A8172;
+  --rule:#DDD5C4; --rule-soft:#E9E2D3;
+  --good:#2E6B45; --good-soft:rgba(46,107,69,.10);
+  --rust:#B5451B; --rust-soft:rgba(181,69,27,.10);
+  --amber:#8A6100; --amber-soft:rgba(138,97,0,.10);
+  --blue:#2F5FE0;
+  --on-accent:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14120E; --surface:#1C1913; --raise:#221E17; --sunk:#191510;
+    --ink:#F2ECDF; --muted:#B3AB9B; --faint:#8B8474;
+    --rule:#332D23; --rule-soft:#282219;
+    --good:#6FBF8E; --good-soft:rgba(111,191,142,.13);
+    --rust:#E9805A; --rust-soft:rgba(233,128,90,.13);
+    --amber:#D9A93A; --amber-soft:rgba(217,169,58,.13);
+    --blue:#7EA0FF;
+    --on-accent:#14120E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14120E; --surface:#1C1913; --raise:#221E17; --sunk:#191510;
+  --ink:#F2ECDF; --muted:#B3AB9B; --faint:#8B8474;
+  --rule:#332D23; --rule-soft:#282219;
+  --good:#6FBF8E; --good-soft:rgba(111,191,142,.13);
+  --rust:#E9805A; --rust-soft:rgba(233,128,90,.13);
+  --amber:#D9A93A; --amber-soft:rgba(217,169,58,.13);
+  --blue:#7EA0FF;
+  --on-accent:#14120E;
+}
+*{box-sizing:border-box}
+body{background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px; line-height:1.6}
+.wrap{max-width:820px; margin:0 auto; padding:34px 20px 120px; display:flex; flex-direction:column; gap:26px}
+h1,h2,h3{margin:0; line-height:1.22; text-wrap:balance}
+h1{font-size:29px; font-weight:700; letter-spacing:-.02em}
+h2{font-size:18px; font-weight:700}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+.head{display:flex; flex-direction:column; gap:12px; padding-bottom:20px; border-bottom:2px solid var(--rule)}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--rust)}
+.dek{font-size:16px; color:var(--muted)}
+
+/* sticky progress */
+.bar{position:sticky; top:0; z-index:5; background:var(--paper); border-bottom:1px solid var(--rule);
+  padding:9px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:700}
+#count{color:var(--good)}
+#pct{color:var(--faint); font-weight:600}
+.bar button{font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; border:1px solid var(--rule); background:var(--surface); color:var(--ink);
+  border-radius:6px; padding:5px 10px; cursor:pointer}
+.bar button:hover{border-color:var(--ink)}
+.bar .spacer{flex:1}
+
+.part{background:var(--surface); border:1px solid var(--rule); border-radius:9px; overflow:hidden}
+.part-h{padding:13px 16px; background:var(--raise); border-bottom:1px solid var(--rule-soft);
+  display:flex; flex-direction:column; gap:4px}
+.part-h .why{font-size:13px; color:var(--muted)}
+.part-b{padding:6px 16px 14px}
+
+.do{margin:12px 0 8px; font-size:13.5px; color:var(--muted); border-left:3px solid var(--blue);
+  padding-left:11px}
+.do b{color:var(--ink)}
+
+label.step{display:flex; gap:11px; align-items:flex-start; padding:8px 0;
+  border-top:1px solid var(--rule-soft); cursor:pointer}
+label.step:first-of-type{border-top:none}
+label.step input{margin-top:3px; width:17px; height:17px; flex-shrink:0; accent-color:var(--good); cursor:pointer}
+label.step .txt{font-size:14.5px}
+label.step.done .txt{color:var(--faint); text-decoration:line-through; text-decoration-thickness:1px}
+
+.chip{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;
+  border:1px solid var(--rule); border-radius:5px; padding:1px 6px; background:var(--sunk);
+  white-space:nowrap; display:inline-block}
+.up{color:var(--good); font-weight:700}
+.dn{color:var(--rust); font-weight:700}
+.flat{color:var(--faint); font-weight:700}
+.plain{color:var(--ink); font-weight:700}
+
+.flag{border-left:3px solid var(--rust); background:var(--rust-soft); padding:10px 13px;
+  border-radius:0 6px 6px 0; font-size:13.5px; margin:12px 0 4px}
+.flag b{color:var(--rust)}
+.ask{border-left:3px solid var(--amber); background:var(--amber-soft); padding:10px 13px;
+  border-radius:0 6px 6px 0; font-size:13.5px; margin:12px 0 4px}
+
+.note{font-size:13px; color:var(--muted)}
+.outwrap{display:flex; flex-direction:column; gap:10px; border-top:2px solid var(--rule); padding-top:18px}
+textarea{width:100%; min-height:190px; font-family:"IBM Plex Mono",monospace; font-size:12.5px;
+  border:1px solid var(--rule); border-radius:7px; padding:11px; background:var(--surface); color:var(--ink)}
+.row{display:flex; gap:9px; flex-wrap:wrap}
+.row button{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; border:1px solid var(--rule); border-radius:7px; padding:8px 13px; cursor:pointer;
+  background:var(--surface); color:var(--ink)}
+.row button.primary{background:var(--good); border-color:var(--good); color:var(--on-accent)}
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <span class="kicker">Owner QA §130 · built on dev, uncommitted</span>
+    <h1>Do the money screens tell the truth?</h1>
+    <p class="dek">The record-money form used to <i>promise</i> what a save would do, in prose nothing
+      could check. Three of those promises were wrong. The figures are now derived from the same code
+      that moves the money and shown as chips; the sentence keeps only what a chip cannot say.</p>
+    <p class="note"><b>Where:</b> any team → <b>Money</b> → <b>Record</b> (the button in the page
+      header, beside Import). Every step below opens that one form.</p>
+    <p class="note">⚠ <b>This walk is the only ongoing coverage this surface has.</b> The strip lives
+      in a modal, and the automated layout check does not open modals — it will report this screen
+      green forever. The unit tests hold the figures; nothing automated holds the rendering.</p>
+  </header>
+
+  <div class="bar">
+    <span>TICKED <span id="count">0/0</span></span>
+    <span id="pct"></span>
+    <span class="spacer"></span>
+    <button id="clear" type="button">Reset</button>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>The refund — the reason all of this exists</h2>
+      <span class="why">This is the sentence that was wrong. It told you the budget line dropped and
+        nobody was owed, and never mentioned that your cash went up.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>Money back on something we paid</b> → pick any item →
+        amount <b>200</b>.</p>
+      <label class="step"><input type="checkbox" data-k="R1"><span class="txt">Two figures appear:
+        <span class="chip">Cash on hand <span class="up">▲ $200.00</span></span> and
+        <span class="chip">&lt;item&gt; · spent <span class="dn">▼ $200.00</span></span></span></label>
+      <label class="step"><input type="checkbox" data-k="R2"><span class="txt"><b>The cash figure is
+        there at all.</b> This is the defect — it was simply absent before, and a coach had no way to
+        know a refund raised their cash.</span></label>
+      <label class="step"><input type="checkbox" data-k="R3"><span class="txt">The sentence beneath
+        <b>does not repeat either number</b>. It reads the date, then <i>"A refund reduces what you
+        spent — it isn't counted as income, and nobody is owed anything."</i></span></label>
+      <label class="step"><input type="checkbox" data-k="R4"><span class="txt">Cash is
+        <span class="up">green</span>; the budget line is <b>not</b> coloured.</span></label>
+      <div class="flag"><b>Why that last one matters:</b> the first build coloured by arrow, so a
+        refund's line went <span class="dn">red</span> — danger styling for the best thing that had
+        happened all week. Colour is now reserved for cash, the one figure with a stable good/bad
+        reading.</div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>A cost — and the trap that nearly shipped</h2>
+      <span class="why">Recording spending used to render the budget line in success green.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>We paid for something</b> → pick an item → amount
+        <b>200</b> → leave the date as today.</p>
+      <label class="step"><input type="checkbox" data-k="C1"><span class="txt">
+        <span class="chip">Cash on hand <span class="dn">▼ $200.00</span></span> — red, because money
+        left.</span></label>
+      <label class="step"><input type="checkbox" data-k="C2"><span class="txt">
+        <span class="chip">&lt;item&gt; · spent <span class="plain">▲ $200.00</span></span> — in
+        <b>ordinary ink, not green</b>. Green here would congratulate you for spending.</span></label>
+      <label class="step"><input type="checkbox" data-k="C3"><span class="txt">The sentence is now
+        just <i>"Recorded as paid on &lt;date&gt;."</i> — the figures left it.</span></label>
+      <label class="step"><input type="checkbox" data-k="C4"><span class="txt">The word
+        <b>spent</b> appears on the chip. Judge whether that reads right to you.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>Money arriving — the budget line you ruled in</h2>
+      <span class="why">You asked for the budget item to show here too. It was verified against the
+        report before it was drawn.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>Other money in</b> → pick an item → amount <b>200</b>.</p>
+      <label class="step"><input type="checkbox" data-k="I1"><span class="txt">
+        <span class="chip">Cash on hand <span class="up">▲ $200.00</span></span> and
+        <span class="chip">&lt;item&gt; · received <span class="plain">▲ $200.00</span></span></span></label>
+      <label class="step"><input type="checkbox" data-k="I2"><span class="txt">The word is
+        <b>received</b>, not <i>spent</i> — <b>this is the important one.</b> A cost and an income
+        record both show <b>▲</b> on the same line name; only that word separates them.</span></label>
+      <label class="step"><input type="checkbox" data-k="I3"><span class="txt">Compare it against the
+        cost you just did. Satisfy yourself the two cannot be confused at a glance.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>Nothing chosen yet — the defect the strip caught on itself</h2>
+      <span class="why">Found minutes after it first rendered, and not findable by reading.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>We paid for something</b> → <b>skip the item</b> → amount
+        <b>200</b>.</p>
+      <label class="step"><input type="checkbox" data-k="N1"><span class="txt">The line chip reads
+        <span class="chip">Not itemized · spent <span class="plain">▲ $200.00</span></span> — never a
+        chip with nothing named.</span></label>
+      <label class="step"><input type="checkbox" data-k="N2"><span class="txt">It tells you the money
+        still counts. <b>This is the same correction the club bill needed</b> — the old sentence
+        there said unfiled money didn't appear on the report at all, which was false.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>A family fronting the money</h2>
+      <span class="why">The state where "cash didn't move" is itself the headline.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>We paid for something</b> → item → amount <b>200</b> →
+        open <b>More</b> → set <b>paid by</b> to a player.</p>
+      <label class="step"><input type="checkbox" data-k="F1"><span class="txt">
+        <span class="chip">Cash on hand <span class="flat">no change</span></span> — it
+        <b>says so</b> rather than going quiet. That slot is never empty.</span></label>
+      <label class="step"><input type="checkbox" data-k="F2"><span class="txt">The budget line still
+        shows <b>spent ▲</b> — the cost counts in the budget as usual.</span></label>
+      <label class="step"><input type="checkbox" data-k="F3"><span class="txt">A third chip names
+        <b>the family and what they are owed</b>.</span></label>
+      <label class="step"><input type="checkbox" data-k="F4"><span class="txt">The sentence keeps only
+        <i>"Saved as a credit you can put against their dues or pay out any time."</i></span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>Paying down a bill</h2>
+      <span class="why">The one place a chip shows a balance rather than a movement.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>We paid for something</b> → in the item box pick something
+        from the <b>Bills you owe</b> group at the top → amount <b>200</b>.</p>
+      <label class="step"><input type="checkbox" data-k="B1"><span class="txt">
+        <span class="chip">Cash on hand <span class="dn">▼ $200.00</span></span> and the bill's
+        <b>remaining balance after this payment</b>.</span></label>
+      <label class="step"><input type="checkbox" data-k="B2"><span class="txt">That figure is
+        <b>what is left</b>, not the payment repeated. Check the arithmetic against the bill.</span></label>
+      <label class="step"><input type="checkbox" data-k="B3"><span class="txt">Pay the <b>full</b>
+        remaining amount: the chip switches to <span class="chip">&lt;bill&gt; <span class="flat">fully
+        paid</span></span> with no figure.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>The quiet states — where there is deliberately no strip</h2>
+      <span class="why">An absence you are being asked to confirm on purpose.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> Record → <b>We agreed to pay something later</b> → fill it in.</p>
+      <label class="step"><input type="checkbox" data-k="Q1"><span class="txt"><b>No chips at
+        all.</b></span></label>
+      <label class="step"><input type="checkbox" data-k="Q2"><span class="txt">The original sentence
+        is intact: <i>"nothing moves. Cash on hand is unchanged and no family is affected…"</i></span></label>
+      <label class="step"><input type="checkbox" data-k="Q3"><span class="txt">You agree that is
+        right — three chips reading "no change" would be the loudest thing on the form about its
+        quietest event.</span></label>
+      <p class="do"><b>Then:</b> under the item box on any cost, pick something not in your budget.</p>
+      <label class="step"><input type="checkbox" data-k="Q4"><span class="txt">The
+        <b>"isn't in your budget"</b> warning is <b>unchanged</b> — one sentence, no chips. These eight
+        warnings were deliberately left alone.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>On a phone</h2>
+      <span class="why">Where a duplicated figure would have cost a whole line.</span>
+    </div>
+    <div class="part-b">
+      <p class="do"><b>Do:</b> the cost case again, on a phone or a narrow window.</p>
+      <label class="step"><input type="checkbox" data-k="P1"><span class="txt">The chips <b>stack</b>
+        one per line and stay readable.</span></label>
+      <label class="step"><input type="checkbox" data-k="P2"><span class="txt"><b>No sideways
+        scroll</b> anywhere on the form.</span></label>
+      <label class="step"><input type="checkbox" data-k="P3"><span class="txt">The form does not feel
+        longer than it is worth. <b>This is the trade to judge</b> — the strip is a second thing to
+        read.</span></label>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <section class="part">
+    <div class="part-h">
+      <h2>Two questions, and one still open from before</h2>
+    </div>
+    <div class="part-b">
+      <div class="ask"><b>Q1 · Placement.</b> The strip sits below <b>More</b> and above the sentence,
+        just over the Save button — the last thing you read before saving. Right place, or should it
+        sit higher, nearer the amount?</div>
+      <label class="step"><input type="checkbox" data-k="A1"><span class="txt">Answered Q1.</span></label>
+      <div class="ask"><b>Q2 · The family chip.</b> When the roster hasn't loaded it reads
+        <i>"That family"</i> rather than a name. Acceptable, or should the chip wait?</div>
+      <label class="step"><input type="checkbox" data-k="A2"><span class="txt">Answered Q2.</span></label>
+      <div class="ask"><b>Q3 · Still open from the proposal.</b> The in-app help articles restate
+        several of these same claims in their own words. Do they join the sweep? My recommendation
+        was screens first.</div>
+      <label class="step"><input type="checkbox" data-k="A3"><span class="txt">Answered Q3.</span></label>
+    </div>
+  </section>
+
+  <div class="outwrap">
+    <div class="row">
+      <button id="gen" type="button">Show summary</button>
+      <button id="copy" class="primary" type="button">Copy for the session</button>
+    </div>
+    <textarea id="out" placeholder="Press Show summary — then paste it back to the session." hidden></textarea>
+    <p class="note">Ticks live only in this browser. <b>The paste-back is the record.</b></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY='otw130.';
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
+  function safeGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function safeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function refresh(){
+    var done=0;
+    boxes.forEach(function(b){b.closest('label').classList.toggle('done',b.checked); if(b.checked)done++;});
+    /* ⚠ The total is COUNTED from the steps, never typed. Two earlier walks shipped with a wrong
+       total in their own heading because it was written by hand. */
+    document.getElementById('count').textContent=done+'/'+boxes.length;
+    document.getElementById('pct').textContent=done===boxes.length?'— complete':'';
+  }
+  boxes.forEach(function(b){
+    if(safeGet(KEY+b.dataset.k)==='1') b.checked=true;
+    b.addEventListener('change',function(){safeSet(KEY+b.dataset.k,b.checked?'1':'0');refresh();});
+  });
+  document.getElementById('clear').addEventListener('click',function(){
+    boxes.forEach(function(b){b.checked=false;safeSet(KEY+b.dataset.k,'0');});refresh();
+  });
+  function summary(){
+    var lines=['Owner QA §130 — Do the money screens tell the truth? — '+new Date().toISOString().slice(0,10)];
+    lines.push('Consequence lines: audited, figures derived, shown as chips · Record money form');
+    lines.push('');
+    var done=0;
+    document.querySelectorAll('.part').forEach(function(p){
+      var h=p.querySelector('h2').textContent.trim();
+      var ps=[].slice.call(p.querySelectorAll('input[type=checkbox]'));
+      if(!ps.length) return;
+      var d=ps.filter(function(b){return b.checked;});
+      done+=d.length;
+      lines.push(h+' — '+d.length+'/'+ps.length+
+        (d.length<ps.length?'   MISSING: '+ps.filter(function(b){return !b.checked;}).map(function(b){return b.dataset.k;}).join(', '):''));
+    });
+    lines.push('');
+    lines.push('Ticked '+done+' of '+boxes.length+'.');
+    lines.push('');
+    lines.push('What went wrong / what I would change:');
+    lines.push('  - ');
+    lines.push('');
+    lines.push('Answers:');
+    lines.push('  Q1 strip placement: ');
+    lines.push('  Q2 family chip fallback: ');
+    lines.push('  Q3 do help articles join the sweep: ');
+    return lines.join('\n');
+  }
+  document.getElementById('gen').addEventListener('click',function(){
+    var o=document.getElementById('out');o.hidden=false;o.value=summary();o.focus();
+  });
+  document.getElementById('copy').addEventListener('click',function(){
+    var o=document.getElementById('out');o.hidden=false;o.value=summary();
+    o.select();try{document.execCommand('copy');}catch(e){}
+    if(navigator.clipboard){navigator.clipboard.writeText(o.value).catch(function(){});}
+  });
+  refresh();
+})();
+</script>
