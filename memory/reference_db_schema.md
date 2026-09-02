@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-01 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-02 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-01
+# DB Schema Reference — 2026-09-02
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -240,7 +240,7 @@ drill_id (uuid) → rep_team_drills.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_drill_tags_tag_idx
 
 ### rep_team_drills
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, usual_minutes (integer), description, goal, coaching_points (jsonb), setup, equipment (jsonb), is_active (boolean), sort_order (integer), created_by (uuid), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, usual_minutes (integer), description, goal, coaching_points (jsonb), setup, equipment (jsonb), is_active (boolean), sort_order (integer), created_by (uuid), created_at, updated_at, equipment_tag_ids (jsonb)
 - Indexes: rep_team_drills_org_idx, rep_team_drills_org_shared_name_uniq, rep_team_drills_team_idx, rep_team_drills_team_name_uniq
 
 ### rep_team_evaluation_sessions

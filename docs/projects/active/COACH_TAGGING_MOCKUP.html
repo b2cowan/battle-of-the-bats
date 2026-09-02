@@ -1,0 +1,778 @@
+<title>One Tag Idiom</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* ── Document chrome (NOT the product): cool slate + teal so the warm frames read as specimens ── */
+:root{
+  --d-bg:#EDF0F4; --d-card:#FFFFFF; --d-ink:#1A2230; --d-ink2:#4A5563; --d-dim:#7A8494;
+  --d-line:rgba(26,34,48,.12); --d-accent:#1E6E74; --d-accent-soft:rgba(30,110,116,.10);
+  --d-new:#1E6E74; --d-restyled:#9A5B00; --d-unch:#6B7280; --d-warn:#9A2B1E; --d-warn-soft:rgba(154,43,30,.08);
+  --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --d-bg:#12171E; --d-card:#1A2029; --d-ink:#E8EDF3; --d-ink2:#B3BCC8; --d-dim:#7F8A98;
+  --d-line:rgba(232,237,243,.12); --d-accent:#5FC3C9; --d-accent-soft:rgba(95,195,201,.12);
+  --d-new:#5FC3C9; --d-restyled:#E0A64A; --d-unch:#9AA3AF; --d-warn:#F08A7A; --d-warn-soft:rgba(240,138,122,.10);
+}}
+:root[data-theme="dark"]{
+  --d-bg:#12171E; --d-card:#1A2029; --d-ink:#E8EDF3; --d-ink2:#B3BCC8; --d-dim:#7F8A98;
+  --d-line:rgba(232,237,243,.12); --d-accent:#5FC3C9; --d-accent-soft:rgba(95,195,201,.12);
+  --d-new:#5FC3C9; --d-restyled:#E0A64A; --d-unch:#9AA3AF; --d-warn:#F08A7A; --d-warn-soft:rgba(240,138,122,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-bg);color:var(--d-ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 24px 96px}
+h1{font-size:34px;line-height:1.1;margin:0 0 8px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.005em;text-wrap:balance}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:0 0 10px;max-width:72ch}
+.lede{font-size:17px;color:var(--d-ink2);max-width:80ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--d-accent);margin:0 0 6px}
+.mono{font-family:var(--mono);font-size:12.5px}
+a{color:var(--d-accent)}
+section.spec{margin-top:56px;padding-top:28px;border-top:1px solid var(--d-line)}
+.num{font-family:var(--mono);font-size:12px;color:var(--d-dim);margin-bottom:4px}
+.card{background:var(--d-card);border:1px solid var(--d-line);border-radius:10px;padding:18px 20px;margin:14px 0}
+.card.warn{border-color:color-mix(in srgb,var(--d-warn) 40%,transparent);background:var(--d-warn-soft)}
+.card ul{margin:6px 0 0 18px;padding:0}
+.card li{margin:4px 0;max-width:90ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:var(--d-ink2)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:2px 6px;border-radius:4px;border:1px solid currentColor;line-height:1.4;vertical-align:middle;white-space:nowrap}
+.tag.new{color:var(--d-new)} .tag.re{color:var(--d-restyled)} .tag.un{color:var(--d-unch)}
+.tag.gap{color:var(--d-warn)}
+.caps{margin:14px 0 0;padding:0;list-style:none;font-size:14px;color:var(--d-ink2)}
+.caps li{padding:5px 0;border-top:1px dashed var(--d-line);max-width:none}
+.caps li:first-child{border-top:none}
+.caps b{color:var(--d-ink);font-weight:600}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;align-items:start}
+.framelabel{font-family:var(--mono);font-size:12px;color:var(--d-dim);margin:18px 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.framelabel .ba{color:var(--d-ink);font-weight:600}
+.ref44{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px dashed var(--d-accent);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--d-accent);flex-shrink:0}
+.measure{font-family:var(--mono);font-size:11px;color:var(--d-accent);background:var(--d-accent-soft);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.fit{position:relative;overflow:hidden;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.10)}
+.fit>.frame{transform-origin:0 0}
+.true{overflow-x:auto;padding-bottom:6px}
+.true>.frame{box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.10);border-radius:8px;overflow:hidden}
+.qa{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.qa th,.qa td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--d-line)}
+.qa th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--d-dim);font-weight:500}
+.qa td:first-child{font-family:var(--mono);font-size:12px;color:var(--d-dim);white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.pin{position:absolute;z-index:5;font-family:var(--mono);font-size:11px;background:var(--d-ink);color:var(--d-bg);padding:3px 7px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap}
+.pin.new{background:var(--d-new);color:#fff} .pin.re{background:var(--d-restyled);color:#fff} .pin.gap{background:var(--d-warn);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ── PRODUCT FRAMES — the warm coaches portal, real tokens from app/globals.css (single-theme by design:
+      the frames are pictures of the product as it renders, warm is the default) ── */
+.frame{
+  --paper:#F8F4ED; --cardbg:#FFFFFF; --ink:#241E15; --ink2:#4A4235; --dim:#6A635C;
+  --line:rgba(70,55,30,.12); --line2:rgba(70,55,30,.20); --fill:rgba(70,55,30,.08);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10); --blue:#134FD3; --blue-soft:rgba(19,79,211,.10);
+  --live:#B03A22; --live-soft:rgba(176,58,34,.10); --amber:#835006;
+  --lime:#D9F99D; --lime-ink:#241E15; --r:14px; --rs:9px;
+  --t-title:20px; --t-head:16px; --t-body:14px; --t-sup:12px; --t-lab:11px;
+  background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:var(--t-body);line-height:1.45;text-align:left;
+}
+.frame *{box-sizing:border-box}
+.frame p{max-width:none;margin:0}
+/* shell */
+.shell{display:flex;min-height:100%}
+.side{width:220px;flex-shrink:0;background:var(--cardbg);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;font-size:var(--t-body)}
+.side .brand{font-weight:800;font-size:var(--t-head);padding:6px 10px 10px;letter-spacing:-.01em}
+.side .brand small{display:block;font-weight:500;font-size:var(--t-sup);color:var(--dim)}
+.side .grp{font-size:var(--t-lab);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:12px 10px 4px}
+.side .it{padding:7px 10px;border-radius:var(--rs);color:var(--ink2);display:flex;gap:9px;align-items:center}
+.side .it i{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;opacity:.55;flex-shrink:0}
+.side .it.on{background:var(--olive-soft);color:var(--olive);font-weight:600}
+.main{flex:1;min-width:0;padding:22px 28px 40px}
+.ph{display:flex;align-items:center;gap:14px;margin-bottom:14px;min-height:44px}
+.ph h1{font-size:var(--t-title);font-weight:800;margin:0;letter-spacing:-.01em;color:var(--ink)}
+.ph .ic{width:22px;height:22px;border:2px solid var(--ink2);border-radius:5px;opacity:.7}
+.ph .sp{flex:1}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);margin-bottom:14px;font-size:var(--t-body);flex-wrap:wrap}
+.tabs span{padding:8px 12px;color:var(--ink2)}
+.tabs span.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--olive);margin-bottom:-1px}
+/* buttons */
+.b{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:var(--rs);font-size:var(--t-body);font-weight:600;border:1px solid transparent;white-space:nowrap;background:transparent;color:var(--ink);font-family:inherit}
+.b.pri{background:var(--lime);color:var(--lime-ink);border-color:rgba(70,55,30,.15)}
+.b.sec{background:var(--cardbg);border-color:var(--line2);color:var(--ink)}
+.b.gho{color:var(--ink2)}
+.b.lnk{height:auto;padding:0;color:var(--olive);font-weight:600;text-decoration:none;font-size:var(--t-sup)}
+.b.dng{color:var(--live);border-color:rgba(176,58,34,.35);background:var(--cardbg)}
+.b .g{width:14px;height:14px;border:1.6px solid currentColor;border-radius:50%;opacity:.7}
+.b .pl{font-weight:700;font-size:16px;line-height:1}
+.b.t44{height:44px;padding:0 14px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:var(--cardbg);font-size:var(--t-sup);color:var(--ink2);font-weight:500;white-space:nowrap}
+.pill.on{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.pill b{color:var(--ink);font-weight:600}
+.pill .cv{font-size:10px;opacity:.7}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--rs);overflow:hidden;background:var(--cardbg)}
+.seg span{padding:0 12px;height:32px;display:inline-flex;align-items:center;font-size:var(--t-sup);color:var(--ink2);border-right:1px solid var(--line)}
+.seg span:last-child{border-right:none}
+.seg span.on{background:var(--olive-soft);color:var(--olive);font-weight:700}
+/* toolbar */
+.tb{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.tb .acts{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cash{font-size:var(--t-sup);color:var(--ink2);white-space:nowrap}
+.cash b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:var(--t-body);background:var(--cardbg);border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.tbl th{font-size:var(--t-sup);text-align:left;color:var(--dim);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line2);background:var(--paper)}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:middle}
+.tbl td.n{color:var(--ink);font-weight:600}
+.tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:999px;font-size:var(--t-sup);font-weight:600;border:1px solid;white-space:nowrap}
+.chip.own{background:var(--olive-soft);border-color:rgba(87,101,30,.45);color:var(--olive)}
+.chip.org{background:var(--blue-soft);border-color:rgba(19,79,211,.40);color:var(--blue)}
+.chip .x{font-weight:700;opacity:.7;margin-left:2px}
+.chip.ghost{background:var(--cardbg);border-color:var(--line2);color:var(--ink2);font-weight:500}
+.chip.ghost.on{background:var(--blue-soft);border-color:rgba(19,79,211,.40);color:var(--blue);font-weight:600}
+.chip.plus{width:26px;padding:0;justify-content:center;background:var(--cardbg);border-color:var(--line2);color:var(--dim);border-style:dashed}
+.chip.big{height:36px;padding:0 12px;font-size:var(--t-body)}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.dot.own{background:rgba(87,101,30,.6);border:1px solid rgba(87,101,30,.75)}
+.dot.org{background:rgba(19,79,211,.6);border:1px solid rgba(19,79,211,.75)}
+/* form */
+.fld{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.fld label{font-size:var(--t-sup);font-weight:600;color:var(--ink2)}
+.fld label .req{color:var(--live)}
+.inp{height:40px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:0 11px;display:flex;align-items:center;color:var(--dim);font-size:var(--t-body);position:relative}
+.inp.on{border-color:var(--olive);box-shadow:0 0 0 3px var(--olive-soft);color:var(--ink)}
+.inp .caret{width:1px;height:18px;background:var(--ink);margin-left:1px}
+.hint{font-size:var(--t-sup);color:var(--dim)}
+.leg{display:flex;gap:14px;font-size:var(--t-sup);color:var(--dim);align-items:center;margin-top:6px}
+.leg span{display:inline-flex;gap:5px;align-items:center}
+.legdot{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* dropdown */
+.dd{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--cardbg);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 8px 24px rgba(36,30,21,.14);z-index:3;overflow:hidden}
+.dd .o{display:flex;align-items:center;gap:9px;padding:0 11px;height:36px;font-size:var(--t-body);color:var(--ink);border-bottom:1px solid var(--line)}
+.dd .o.t44{height:44px}
+.dd .o .cnt{margin-left:auto;font-size:var(--t-sup);color:var(--dim);font-variant-numeric:tabular-nums}
+.dd .o.act{background:var(--olive-soft)}
+.dd .o.create{color:var(--olive);font-weight:600}
+.dd .o.manage{color:var(--ink2);font-weight:500;border-bottom:none;background:var(--paper);font-size:var(--t-sup)}
+.dd .o.manage .g{width:13px;height:13px;border:1.6px solid currentColor;border-radius:50%;opacity:.7}
+.dd .o.empty{color:var(--dim);font-size:var(--t-sup)}
+.sugg{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sugg .s{height:28px;padding:0 10px;border:1px dashed var(--line2);border-radius:999px;font-size:var(--t-sup);color:var(--ink2);display:inline-flex;align-items:center;background:var(--cardbg)}
+.sugg .s.cr{color:var(--olive);border-style:solid;border-color:rgba(87,101,30,.45);font-weight:600}
+.tagpick{min-height:44px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:6px 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tagpick .in{color:var(--dim);font-size:var(--t-body);padding-left:4px}
+/* settings sections */
+.stack{display:flex;flex-direction:column;gap:10px}
+.sec{background:var(--cardbg);border:1px solid var(--line);border-radius:var(--r);padding:0 16px}
+.sec .sh{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 0}
+.sec .sh .tt{font-size:var(--t-head);font-weight:700;color:var(--ink)}
+.sec .sh .mt{font-size:var(--t-sup);color:var(--dim);margin-left:auto;text-align:right}
+.sec .sh .cv{width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);opacity:.6;margin-left:10px;flex-shrink:0}
+.sec.open .sh .cv{transform:rotate(45deg)}
+.sec .body{border-top:1px solid var(--line);padding:12px 0 16px}
+.who{font-size:var(--t-sup);color:var(--dim);margin-bottom:10px}
+.lib{display:flex;align-items:center;gap:12px;min-height:44px;padding:6px 8px;border-radius:var(--rs);border-bottom:1px solid var(--line)}
+.lib:last-child{border-bottom:none}
+.lib .nm{font-weight:600;color:var(--ink);min-width:110px}
+.lib .wh{font-size:var(--t-sup);color:var(--dim);flex:1}
+.lib .ct{font-size:var(--t-sup);color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lib .ct b{color:var(--ink)}
+.lib.open{background:var(--paper);border-bottom:none;border-radius:var(--rs) var(--rs) 0 0}
+.mgr{background:var(--paper);border-radius:0 0 var(--rs) var(--rs);padding:4px 8px 12px;margin-bottom:6px}
+.mrow{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:none}
+.mrow .nm{font-weight:600;color:var(--ink);flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.mrow .use{font-size:var(--t-sup);color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mrow .use.zero{color:var(--amber)}
+.mrow .ia{display:flex;gap:2px}
+.mrow .ib{width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-size:var(--t-sup);font-weight:600}
+.mrow .ib.t44{width:44px;height:44px}
+.mrow .ib i{width:14px;height:14px;border:1.6px solid currentColor;border-radius:3px;opacity:.75;display:block}
+.mrow .ib i.rn{border-radius:2px;transform:rotate(-45deg) scale(.8)}
+.mrow .ib i.mg{border-radius:50%}
+.mrow .ib i.dl{border-top-width:3px}
+.mrow.editing .nm{gap:8px}
+.mrow .inp{height:36px;flex:1;max-width:280px}
+.mrow .sel{height:36px;flex:1;max-width:280px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:0 11px;display:flex;align-items:center;justify-content:space-between;color:var(--ink);font-size:var(--t-body)}
+.shared{margin-top:10px;padding-top:8px;border-top:1px solid var(--line2)}
+.shared .sl{font-size:var(--t-lab);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600;padding:4px 6px}
+.shared .mrow .nm{color:var(--ink2);font-weight:500}
+.note{font-size:var(--t-sup);color:var(--dim);padding:6px 6px 0}
+/* dialogs / overlays */
+.dlg{background:var(--cardbg);border:1px solid var(--line2);border-radius:var(--r);padding:18px;max-width:480px;box-shadow:0 12px 40px rgba(36,30,21,.18)}
+.dlg h4{margin:0 0 6px;font-size:var(--t-head);font-weight:700;color:var(--ink)}
+.dlg p{font-size:var(--t-body);color:var(--ink2);margin:0 0 6px}
+.dlg .fa{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.scrim{position:absolute;inset:0;background:rgba(36,30,21,.35);z-index:4}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:420px;background:var(--cardbg);border-left:1px solid var(--line2);box-shadow:-12px 0 40px rgba(36,30,21,.18);z-index:5;padding:18px 18px 22px;display:flex;flex-direction:column}
+.drawer .dh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.drawer .dh h4{margin:0;font-size:var(--t-title);font-weight:800;color:var(--ink)}
+.drawer .dh .x{margin-left:auto;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-size:18px}
+.modalc{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5}
+.modalc .mo{background:var(--cardbg);border:1px solid rgba(19,79,211,.3);border-radius:var(--r);width:520px;max-height:80%;padding:20px;box-shadow:0 12px 40px rgba(36,30,21,.22)}
+/* phone */
+.phone{width:360px;display:flex;flex-direction:column;min-height:640px;position:relative}
+.phone .top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--cardbg);border-bottom:1px solid var(--line);font-weight:700;font-size:var(--t-head)}
+.phone .top small{font-weight:500;color:var(--dim);font-size:var(--t-sup);margin-left:auto}
+.phone .pmain{padding:12px 12px 18px;flex:1}
+.phone .bar{display:flex;justify-content:space-around;border-top:1px solid var(--line);background:var(--cardbg);padding:8px 4px 12px;font-size:10px;color:var(--dim);margin-top:auto}
+.phone .bar span{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:44px;min-height:44px;justify-content:center}
+.phone .bar span i{width:18px;height:18px;border:1.6px solid currentColor;border-radius:4px;opacity:.6}
+.phone .bar span.on{color:var(--olive)}
+/* practice editor */
+.station{background:var(--cardbg);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.station .st{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.station .st b{font-size:var(--t-head)}
+.station .st .mt{font-size:var(--t-sup);color:var(--dim)}
+.station .tx{min-height:56px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:8px 11px;color:var(--dim);font-size:var(--t-body)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+/* scouting */
+.scout{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.scout .sc{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line2);background:var(--cardbg);font-size:var(--t-sup);color:var(--ink2);display:inline-flex;align-items:center;font-weight:500}
+.scout .sc.on{background:var(--olive-soft);border-color:var(--olive);color:var(--olive);font-weight:700}
+.obs{background:var(--cardbg);border:1px solid var(--line);border-radius:var(--rs);padding:10px 12px;margin-top:8px;font-size:var(--t-body);color:var(--ink2);display:flex;gap:10px;align-items:flex-start}
+.obs .k{font-size:var(--t-lab);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:600;white-space:nowrap;padding-top:3px}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Coaches portal · design review · 2026-09-01 · planning only, nothing built</p>
+  <h1>One Tag Idiom</h1>
+  <p class="lede">Eight things a coach meets as "a tag", two pickers doing one job, and six names on one door. These frames draw the <em>decisions</em> the tagging review needs rulings on — a central home, a quiet contextual door, one picker, one manager, one delete sentence — not every control. Every frame is the warm coaches portal with its real tokens.</p>
+
+  <div class="card">
+    <div class="legend">
+      <span><span class="tag new">NEW</span> did not exist</span>
+      <span><span class="tag re">RESTYLED</span> exists, drawn changed</span>
+      <span><span class="tag un">UNCHANGED</span> exists, drawn as-is</span>
+      <span><span class="tag gap">GAP</span> a defect the plan schedules, not a design choice</span>
+      <span>· <span class="ref44">44</span> = the ≤768 tap floor, drawn true-size where it is the question</span>
+    </div>
+  </div>
+
+  <div class="card warn">
+    <h3>What the code says that the planning prompt did not — read before judging the frames</h3>
+    <ul>
+      <li><b>No picker shows a usage count today.</b> The combobox has a slot for one, but no caller fills it and the library route returns names only. Every "used on 12 records" below is <span class="tag new">NEW</span> route work, and it is what makes the delete sentence and the merge choice honest — it is not a copy change.</li>
+      <li><b>The coach portal has no side-drawer for working surfaces.</b> The thing the stylesheet calls a "slide-over" is a centered 720px modal; the only true right-hand sheet in the whole coach experience is the help drawer. A drawer for the manager (specimen 3B) would be a <em>new</em> idiom — drawn because Q9 asks, captioned as what it is.</li>
+      <li><b>The club admin already has a Shared library screen</b> (game tags, money tags, award types) — so "Shared by your club — ask an admin" points at a real place, and the frames say so once.</li>
+      <li><b>The two `.tagChip` definitions collide by cascade order.</b> The later one (blue remove-chip, bold) wins over the earlier toggle pill <em>and</em> over its own <code class="mono">.tagChipActive</code> state — so on the game form an applied tag is likely styled the same as an un-applied one. Not verified in a browser (this is a planning chat); the plan should verify and schedule it. <span class="tag gap">GAP</span></li>
+      <li><b>On a phone every overlay is already a full-screen sheet</b> (the 2026-07-28 polarity flip). Page vs modal vs drawer is a desktop question; on 360 the three collapse to one shape.</li>
+    </ul>
+  </div>
+
+  <!-- ══════════════ SPECIMEN 1 — THE TAGS PAGE ══════════════ -->
+  <section class="spec" id="s1">
+    <div class="num">Specimen 1 of 7 · the central home</div>
+    <h2>Tags live under Team settings, as one section that lists every library</h2>
+    <p>Management is a rare act — a typo, a merge after drift, an end-of-season tidy. So it goes where the team's other once-a-season decisions already live, as a collapsed section beside Team · Season · Game day · Money · Sharing · Organization. Opening it lists the five libraries with counts; opening a library reveals the manager in place (the sponsor-band grammar: expand, never a nested page).</p>
+
+    <div class="framelabel"><span class="ba">1A · Desktop 1440 — whole screen, Tags section open, Money tags opened for editing</span><span class="tag new">NEW section</span><span class="tag un">everything else on the page</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="pin new" style="left:262px;top:238px">NEW · Tags section</div>
+      <div class="shell">
+        <div class="side">
+          <div class="brand">12U Ravens<small>Riverdale Ridge</small></div>
+          <div class="it"><i></i>Overview</div>
+          <div class="grp">Season</div>
+          <div class="it"><i></i>Schedule</div><div class="it"><i></i>Practice plans</div><div class="it"><i></i>Lineups</div><div class="it"><i></i>Tournaments</div>
+          <div class="grp">Progress</div>
+          <div class="it"><i></i>Skills &amp; Goals</div><div class="it"><i></i>Insights</div>
+          <div class="grp">Money</div>
+          <div class="it"><i></i>Money</div>
+          <div class="grp">Communication</div>
+          <div class="it"><i></i>Chat</div><div class="it"><i></i>Email families</div>
+          <div class="grp">Team</div>
+          <div class="it"><i></i>Roster</div><div class="it"><i></i>Tryouts</div><div class="it"><i></i>Staff</div><div class="it"><i></i>Documents</div><div class="it on"><i></i>Settings</div>
+        </div>
+        <div class="main" style="max-width:960px">
+          <div class="ph"><span class="ic"></span><h1>Team settings</h1><span class="sp"></span><span class="b lnk">? Team settings</span></div>
+          <div class="stack">
+            <div class="sec"><div class="sh"><span class="tt">Team</span><span class="mt">U13 Tier 1</span><span class="cv"></span></div></div>
+            <div class="sec"><div class="sh"><span class="tt">Season</span><span class="mt">2026 Season · Apr 6 – Aug 30</span><span class="cv"></span></div></div>
+            <div class="sec"><div class="sh"><span class="tt">Game day</span><span class="mt">Lineup rules set</span><span class="cv"></span></div></div>
+            <div class="sec"><div class="sh"><span class="tt">Money</span><span class="mt">Reminders on · credits lower next installment</span><span class="cv"></span></div></div>
+            <div class="sec open">
+              <div class="sh"><span class="tt">Tags</span><span class="mt">29 tags in 5 libraries · 3 shared by your club</span><span class="cv"></span></div>
+              <div class="body">
+                <p class="who">The words your team files things under. Renaming one changes it on everything already recorded. Merging folds two into one and keeps the history.</p>
+                <div class="lib open"><span class="nm">Money tags</span><span class="wh">Bills, expenses, drives and sponsors — and the Ledger's Tags filter</span><span class="ct"><b>7</b> yours · 1 shared</span><span class="cv" style="width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(45deg);opacity:.6"></span></div>
+                <div class="mgr">
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Banquet</span><span class="use zero">not used yet</span><span class="ia"><span class="ib" title="Rename"><i class="rn"></i></span><span class="ib" title="Merge"><i class="mg"></i></span><span class="ib" title="Delete"><i class="dl"></i></span></span></div>
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Bus</span><span class="use">on 2 records</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Hotel</span><span class="use">on 4 records</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+                  <div class="mrow editing"><span class="nm"><span class="dot own"></span><span class="inp on">Spring Classic<span class="caret"></span></span></span><span class="use">on 12 records</span><span class="ia"><span class="b sec" style="height:36px">Save</span><span class="b gho" style="height:36px">Cancel</span></span></div>
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Tournament weekend</span><span class="use">on 9 records</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Umpires</span><span class="use">on 3 records</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+                  <div class="mrow"><span class="nm"><span class="dot own"></span>Winter dome</span><span class="use">on 5 records</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+                  <div class="shared">
+                    <div class="sl">Shared by your club</div>
+                    <div class="mrow"><span class="nm"><span class="dot org"></span>Club permits</span><span class="use">on 6 records</span><span class="ia"></span></div>
+                    <div class="note">Shared tags belong to every team — ask your club admin to rename or retire one.</div>
+                  </div>
+                </div>
+                <div class="lib"><span class="nm">Game tags</span><span class="wh">Games on the schedule; the Insights results filter</span><span class="ct"><b>4</b> yours · 2 shared</span><span class="cv" style="width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);opacity:.6"></span></div>
+                <div class="lib"><span class="nm">Focus tags</span><span class="wh">Drills, plan templates, practice plans and each player's focus area</span><span class="ct"><b>9</b> yours</span><span class="cv" style="width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);opacity:.6"></span></div>
+                <div class="lib"><span class="nm">Staff</span><span class="wh">Who runs a practice, a block or a station</span><span class="ct"><b>3</b> yours</span><span class="cv" style="width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);opacity:.6"></span></div>
+                <div class="lib"><span class="nm">Equipment</span><span class="wh">Practice plans, stations and drills</span><span class="ct"><b>6</b> yours</span><span class="cv" style="width:9px;height:9px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);opacity:.6"></span></div>
+                <p class="note" style="margin-top:8px">Each library holds up to 50 of your own tags. Merge two to make room.</p>
+              </div>
+            </div>
+            <div class="sec"><div class="sh"><span class="tt">Sharing</span><span class="mt">Scouting book shared with the club</span><span class="cv"></span></div></div>
+            <div class="sec"><div class="sh"><span class="tt">Organization</span><span class="mt">Riverdale Ridge</span><span class="cv"></span></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag new">NEW</span> <b>The Tags section</b> — one row per library: the library's house name, where a coach meets it, and a count that splits <em>yours</em> from <em>shared</em>. Meta line on the closed header carries the totals so the section explains itself shut.</li>
+      <li><span class="tag new">NEW</span> <b>Usage counts</b> on every row ("on 12 records", and "not used yet" in the amber ink so a dead word stands out). This is what turns Delete from a guess into a decision.</li>
+      <li><span class="tag re">RESTYLED</span> <b>The manager rows</b> — the same rename-in-place / merge-select / delete trio the modal has today, at 44px row height, with the count added and the actions in the rightmost column (house rule).</li>
+      <li><span class="tag new">NEW</span> <b>Shared tags listed, read-only, with one sentence</b> — today the modal hides them entirely, so a coach hunting "Club permits" cannot find it and wonders where it went. Shown, not hidden; no pencil; the sentence says why, once.</li>
+      <li><span class="tag new">NEW</span> <b>The cap, said once</b> ("up to 50 … merge two to make room") — Q8. Today it is a refusal a coach meets only at tag 51.</li>
+      <li><span class="tag un">UNCHANGED</span> The settings page, its six other sections, the sidebar, the page header.</li>
+    </ul>
+
+    <div class="framelabel"><span class="ba">1B · Phone 360 — true size, same section, Money tags open</span><span class="ref44">44</span><span class="measure">rows 44px · icon buttons 44×44</span></div>
+    <div class="true"><div class="frame phone">
+      <div class="top">Team settings<small>12U Ravens</small></div>
+      <div class="pmain">
+        <div class="stack">
+          <div class="sec"><div class="sh"><span class="tt">Money</span><span class="mt">Reminders on</span><span class="cv"></span></div></div>
+          <div class="sec open">
+            <div class="sh"><span class="tt">Tags</span><span class="mt">29 · 3 shared</span><span class="cv"></span></div>
+            <div class="body">
+              <div class="lib open" style="flex-wrap:wrap"><span class="nm">Money tags</span><span class="ct" style="margin-left:auto"><b>7</b> · 1 shared</span></div>
+              <div class="mgr" style="padding:2px 4px 10px">
+                <div class="mrow"><span class="nm"><span class="dot own"></span>Banquet</span><span class="use zero">not used</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+                <div class="mrow"><span class="nm"><span class="dot own"></span>Hotel</span><span class="use">on 4</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+                <div class="mrow"><span class="nm"><span class="dot own"></span>Spring Classic</span><span class="use">on 12</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+                <div class="mrow"><span class="nm"><span class="dot own"></span>Winter dome</span><span class="use">on 5</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+                <div class="shared"><div class="sl">Shared by your club</div>
+                  <div class="mrow"><span class="nm"><span class="dot org"></span>Club permits</span><span class="use">on 6</span></div>
+                  <div class="note">Ask your club admin to rename or retire a shared tag.</div></div>
+              </div>
+              <div class="lib"><span class="nm">Game tags</span><span class="ct" style="margin-left:auto"><b>4</b> · 2 shared</span></div>
+              <div class="lib"><span class="nm">Focus tags</span><span class="ct" style="margin-left:auto"><b>9</b></span></div>
+              <div class="lib"><span class="nm">Staff</span><span class="ct" style="margin-left:auto"><b>3</b></span></div>
+              <div class="lib"><span class="nm">Equipment</span><span class="ct" style="margin-left:auto"><b>6</b></span></div>
+            </div>
+          </div>
+          <div class="sec"><div class="sh"><span class="tt">Sharing</span><span class="cv"></span></div></div>
+        </div>
+      </div>
+      <div class="bar"><span><i></i>Overview</span><span><i></i>Schedule</span><span><i></i>Chat</span><span><i></i>Roster</span><span class="on"><i></i>More</span></div>
+    </div></div>
+    <ul class="caps">
+      <li><b>Open this frame on the phone.</b> The question here is whether three 44px icon buttons plus a name plus a count fit a 360 row without the name truncating — "Tournament weekend" is the longest real word in the demo library and it wraps to a second line at this width, which is acceptable; a 40-character tag (the cap) would not be, and the row should truncate with an ellipsis rather than grow.</li>
+      <li>The "where it's used" description column is dropped at 360; the library name and the count carry the row.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 2 — THE UNIFIED PICKER ══════════════ -->
+  <section class="spec" id="s2">
+    <div class="num">Specimen 2 of 7 · one picker, drawn twice</div>
+    <h2>One field: type to find, "+ Create" to mint, "Manage tags…" as the last row</h2>
+    <p>Today there are two clothes for one job — a search box with a dropdown (money) and a chip-row with a suggestion strip (focus, staff, equipment, drills), plus a third hand-rolled one on the game form. The recommendation keeps the <em>dropdown</em> shape: it already opens on focus to show the library (so nothing is lost from the strip), it scales to a 50-tag library where a strip floods the form, it already carries the own/shared dot, and it has the one slot a count can live in. The manage door becomes its last row — findable exactly where a coach is thinking about tags, costing the toolbar nothing.</p>
+
+    <div class="grid2">
+      <div>
+        <div class="framelabel"><span class="ba">2A · A money tag on the Add-a-bill form</span><span class="tag re">RESTYLED</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px 18px 150px">
+          <div class="fld"><label>Who you owe <span class="req">*</span></label><div class="inp" style="color:var(--ink)">Spring Classic Tournament Inc.</div></div>
+          <div class="fld"><label>Item <span class="req">*</span></label><div class="inp" style="color:var(--ink)">Entry Fees <span style="margin-left:auto;font-size:10px;color:var(--dim)">▾</span></div></div>
+          <div class="fld" style="margin-bottom:0"><label>Tags</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Tournament weekend <span class="x">×</span></span><span class="chip org">Club permits <span class="x">×</span></span></div>
+            <div class="inp on">Spr<span class="caret"></span>
+              <div class="dd">
+                <div class="o act"><span class="dot own"></span>Spring Classic<span class="cnt">on 12</span></div>
+                <div class="o create">+ Create “Spr”</div>
+                <div class="o manage"><span class="g"></span>Manage tags…</div>
+              </div>
+            </div>
+            <div class="leg" style="margin-top:96px"><span><span class="legdot" style="background:rgba(19,79,211,.6)"></span>Shared by your club</span><span><span class="legdot" style="background:rgba(87,101,30,.6)"></span>Your team's own</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="framelabel"><span class="ba">2B · A staff tag on a practice station</span><span class="tag re">RESTYLED</span> <span class="tag new">door</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px 18px 150px">
+          <div class="station" style="padding:0;border:none;background:transparent">
+            <div class="st"><b>Station 2 · Bunt defence</b><span class="mt">12 min</span></div>
+            <div class="fld"><label>Who runs it</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Coach Dana <span class="x">×</span></span></div>
+              <div class="inp on">Search or add a name…
+                <div class="dd">
+                  <div class="o"><span class="dot own"></span>Alex (parent)<span class="cnt">on 3 plans</span></div>
+                  <div class="o"><span class="dot own"></span>Coach Priya<span class="cnt">on 8 plans</span></div>
+                  <div class="o manage"><span class="g"></span>Manage tags…</div>
+                </div>
+              </div>
+            </div>
+            <div class="fld" style="margin-top:96px;margin-bottom:0"><label>Equipment</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Buckets <span class="x">×</span></span><span class="chip own">L-screen <span class="x">×</span></span><span class="chip plus">+</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>One component, one shape, every library.</b> Chips above, the field below, dropdown on focus. The "＋ chip hides the box" form variant the commitment page earned in §114 stays as an opt-in (2B's Equipment field shows it) — it changes where the box appears, not what it does.</li>
+      <li><span class="tag new">NEW</span> <b>"Manage tags…" as the dropdown's last row</b>, set on the paper ground and in support ink so it reads as a door out, not a tag. It is the <em>only</em> contextual door — the Ledger's toolbar button, the game form's text link and the templates page's "Your tags" button all go (specimens 4 and 5).</li>
+      <li><span class="tag new">NEW</span> <b>The count column</b> ("on 12", "on 8 plans") — plain in 2A, worded per library in 2B. Whether the picker shows it at all is a fair question: it is the manager that needs it; the picker may be better without (Q-note in the table below).</li>
+      <li><span class="tag un">UNCHANGED</span> The own/shared dot and legend; the "+ Create" second-press rule (2026-08-01 — a tag is minted only by a deliberate act; typing never mints).</li>
+      <li><b>Touch:</b> at ≤768 every dropdown row is 44px. Drawn at desktop 36px here; specimen 3 shows the 44 version true-size.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 3 — THE MANAGER: PAGE SECTION vs DRAWER ══════════════ -->
+  <section class="spec" id="s3">
+    <div class="num">Specimen 3 of 7 · the manager surface, two ways (Q9)</div>
+    <h2>Rename · merge · delete with a count on every row, and a delete that names the way out</h2>
+    <p>The 2026-08-26 ruling — <em>a modal is for a question, not a working surface</em> — is the strongest argument in this review. A list you rename, merge and delete in is a working surface. So the manager's home is the <b>page section</b> in specimen 1, and the contextual door from a picker either <b>navigates</b> there with the right library open (3A), or opens the same list in a <b>drawer</b> beside the form (3B). Both are drawn; the recommendation is 3A because 3B mints a new overlay idiom the coach portal does not have.</p>
+
+    <div class="framelabel"><span class="ba">3A · Tablet 768 — true size, one library's manager as it appears in the page section</span><span class="ref44">44</span><span class="measure">rows 44px · icons 44×44 · rename input 44px</span></div>
+    <div class="true"><div class="frame" style="width:768px;padding:16px">
+      <div class="lib open"><span class="nm">Game tags</span><span class="wh">Games on the schedule; the Insights results filter</span><span class="ct"><b>4</b> yours · 2 shared</span></div>
+      <div class="mgr">
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Doubleheader</span><span class="use">on 1 game</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Exhibition</span><span class="use">on 5 games</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+        <div class="mrow editing"><span class="nm"><span class="dot own"></span><span class="sel" style="height:44px">Merge “Top in the province” into…<span style="font-size:10px;color:var(--dim)">▾</span></span></span><span class="ia"><span class="b sec t44">Merge</span><span class="b gho t44">Cancel</span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Rivalry</span><span class="use">on 3 games</span><span class="ia"><span class="ib t44"><i class="rn"></i></span><span class="ib t44"><i class="mg"></i></span><span class="ib t44"><i class="dl"></i></span></span></div>
+        <div class="shared"><div class="sl">Shared by your club</div>
+          <div class="mrow"><span class="nm"><span class="dot org"></span>League</span><span class="use">on 14 games</span></div>
+          <div class="mrow"><span class="nm"><span class="dot org"></span>Provincials</span><span class="use">on 2 games</span></div>
+          <div class="note">Shared tags belong to every team — ask your club admin to rename or retire one.</div></div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:18px">
+        <div class="dlg">
+          <h4>Delete “Exhibition”?</h4>
+          <p>It's on <b>5 games</b>. They keep everything but the label.</p>
+          <p>If you'd rather keep those games grouped, <b>merge it into another tag</b> instead — nothing is lost that way.</p>
+          <div class="fa"><span class="b gho">Cancel</span><span class="b sec">Merge instead</span><span class="b dng">Delete</span></div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>The row trio at the touch floor.</b> Today's modal draws these as 14px icons in a button with no set size — the rendered check will refuse it at ≤768. Here each is 44×44 with the name column truncating first.</li>
+      <li><span class="tag new">NEW</span> <b>The delete sentence</b> (R4, borrowing the §122 grammar: the consequence names the way out): the count, what happens to the records, and the softer tool — with <b>Merge instead</b> as a live button in the same dialog, not a hint the coach has to go back for. This dialog <em>is</em> a question, so it stays a modal.</li>
+      <li><span class="tag un">UNCHANGED</span> The merge control is a dropdown (house rule: a form select is a dropdown, never a pill row).</li>
+      <li><b>Per-library nouns:</b> "on 5 games" / "on 12 records" / "on 8 plans" / "on 3 drills and 2 templates" — each library already knows its noun; the count row should use it.</li>
+    </ul>
+
+    <div class="framelabel"><span class="ba">3B · Desktop 1440 — the alternative: the door opens a drawer beside the Add-a-bill form</span><span class="tag new">NEW idiom</span></div>
+    <div class="fit"><div class="frame" style="width:1440px;height:760px;position:relative;overflow:hidden">
+      <div class="pin new" style="right:440px;top:14px">NEW · drawer — the coach portal has none today (only Help)</div>
+      <div class="shell" style="height:100%">
+        <div class="side">
+          <div class="brand">12U Ravens<small>Riverdale Ridge</small></div>
+          <div class="it"><i></i>Overview</div><div class="grp">Season</div><div class="it"><i></i>Schedule</div><div class="it"><i></i>Practice plans</div><div class="it"><i></i>Lineups</div><div class="it"><i></i>Tournaments</div>
+          <div class="grp">Progress</div><div class="it"><i></i>Skills &amp; Goals</div><div class="it"><i></i>Insights</div>
+          <div class="grp">Money</div><div class="it on"><i></i>Money</div>
+          <div class="grp">Communication</div><div class="it"><i></i>Chat</div><div class="it"><i></i>Email families</div>
+          <div class="grp">Team</div><div class="it"><i></i>Roster</div><div class="it"><i></i>Tryouts</div><div class="it"><i></i>Staff</div><div class="it"><i></i>Documents</div><div class="it"><i></i>Settings</div>
+        </div>
+        <div class="main">
+          <div class="ph"><span class="ic"></span><h1>Money</h1><span class="sp"></span><span class="b sec">Import ▾</span><span class="b pri">Record</span></div>
+          <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+          <div class="tb"><span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Payment schedule</span></span><span class="pill">Show <b>All</b> <span class="cv">▾</span></span><span class="pill">Status <b>Any</b> <span class="cv">▾</span></span><span class="pill">Item <b>Any</b> <span class="cv">▾</span></span><span class="pill">Date <b>Season</b> <span class="cv">▾</span></span><span class="pill">Tags <b>Any</b> <span class="cv">▾</span></span><span class="acts"><span class="cash">Cash on hand <b>$4,212.50</b></span><span class="b sec">Export ▾</span><span class="b pri"><span class="pl">+</span> Add a bill</span></span></div>
+          <table class="tbl"><tr><th>Date</th><th>What</th><th>Item</th><th>Tags</th><th class="r">Out</th><th class="r">In</th><th class="r">Balance</th></tr>
+            <tr><td>Aug 22</td><td class="n">Umpire — Aug 22 vs Loons</td><td>Umpire Fees</td><td><span class="chip own" style="height:22px">Umpires</span></td><td class="r">$90.00</td><td class="r"></td><td class="r">$4,212.50</td></tr>
+            <tr><td>Aug 18</td><td class="n">Spring Classic entry (bal.)</td><td>Entry Fees</td><td><span class="chip own" style="height:22px">Spring Classic</span></td><td class="r">$350.00</td><td class="r"></td><td class="r">$4,302.50</td></tr>
+            <tr><td>Aug 12</td><td class="n">Diamond permit — Aug</td><td>Diamond Rental</td><td><span class="chip org" style="height:22px">Club permits</span></td><td class="r">$220.00</td><td class="r"></td><td class="r">$4,652.50</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="modalc" style="justify-content:flex-start;padding-left:420px;pointer-events:none"><div class="mo" style="opacity:.55">
+        <div style="font-size:var(--t-title);font-weight:800;margin-bottom:12px">Add a bill</div>
+        <div class="fld"><label>Who you owe <span class="req">*</span></label><div class="inp" style="color:var(--ink)">Spring Classic Tournament Inc.</div></div>
+        <div class="fld"><label>Tags</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Tournament weekend ×</span></div><div class="inp">Type to find or create a tag…</div></div>
+      </div></div>
+      <div class="scrim" style="background:rgba(36,30,21,.18)"></div>
+      <div class="drawer">
+        <div class="dh"><h4>Money tags</h4><span class="x">×</span></div>
+        <p class="who">7 yours · 1 shared by your club</p>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Banquet</span><span class="use zero">not used yet</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Bus</span><span class="use">on 2</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Hotel</span><span class="use">on 4</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Spring Classic</span><span class="use">on 12</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Tournament weekend</span><span class="use">on 9</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Umpires</span><span class="use">on 3</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="mrow"><span class="nm"><span class="dot own"></span>Winter dome</span><span class="use">on 5</span><span class="ia"><span class="ib"><i class="rn"></i></span><span class="ib"><i class="mg"></i></span><span class="ib"><i class="dl"></i></span></span></div>
+        <div class="shared"><div class="sl">Shared by your club</div><div class="mrow"><span class="nm"><span class="dot org"></span>Club permits</span><span class="use">on 6</span></div><div class="note">Ask your club admin to rename or retire a shared tag.</div></div>
+        <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center"><span class="b lnk">All tag libraries → Team settings</span><span class="b gho" style="margin-left:auto">Done</span></div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag new">NEW</span> <b>A 420px right-hand sheet</b> (the help drawer's width) over the form the coach was on — the argument for it is that a typo found mid-bill costs no trip and no lost typing. The argument against: the manager then sits <em>over a modal</em> (the bill form is a modal), which is a window on a window — the exact stacking the 2026-08-31 drive ruling refused — and it is the coach portal's first working-surface drawer.</li>
+      <li><b>3A's answer to the same worry:</b> navigating to settings with the library open must <em>keep the form's typing</em> on return — the 2026-08-29 hand-off rule (a hand-off must be revisable). That is a build requirement, not a design nicety; the plan carries it.</li>
+      <li><span class="tag un">UNCHANGED</span> The Ledger behind it (the after-state of specimen 4).</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 4 — THE LEDGER TOOLBAR, BEFORE / AFTER ══════════════ -->
+  <section class="spec" id="s4">
+    <div class="num">Specimen 4 of 7 · the button the owner flagged</div>
+    <h2>The Ledger toolbar: "Manage tags" leaves, Export stands alone beside "Add a bill"</h2>
+    <p>The button is a full secondary button, icon and all, in the actions slot beside Export — a rarely-used configuration door dressed as a peer of the screen's one create. Under the page-actions ruling a tab toolbar carries that tab's create; management of a vocabulary is neither create nor chrome. After: the row is the view switch, five pills of one shape, cash on hand, Export, Add a bill — and the Tags <em>filter</em> pill (a picker in all but name) is where the door now lives on this screen.</p>
+
+    <div class="framelabel"><span class="ba">4A · BEFORE — desktop 1440, whole screen</span><span class="tag un">as shipped today</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="pin gap" style="right:30px;top:170px">the button the owner flagged</div>
+      <div class="shell">
+        <div class="side">
+          <div class="brand">12U Ravens<small>Riverdale Ridge</small></div>
+          <div class="it"><i></i>Overview</div><div class="grp">Season</div><div class="it"><i></i>Schedule</div><div class="it"><i></i>Practice plans</div><div class="it"><i></i>Lineups</div><div class="it"><i></i>Tournaments</div>
+          <div class="grp">Progress</div><div class="it"><i></i>Skills &amp; Goals</div><div class="it"><i></i>Insights</div>
+          <div class="grp">Money</div><div class="it on"><i></i>Money</div>
+          <div class="grp">Communication</div><div class="it"><i></i>Chat</div><div class="it"><i></i>Email families</div>
+          <div class="grp">Team</div><div class="it"><i></i>Roster</div><div class="it"><i></i>Tryouts</div><div class="it"><i></i>Staff</div><div class="it"><i></i>Documents</div><div class="it"><i></i>Settings</div>
+        </div>
+        <div class="main">
+          <div class="ph"><span class="ic"></span><h1>Money</h1><span class="sp"></span><span class="b sec">Import ▾</span><span class="b pri">Record</span></div>
+          <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+          <div class="tb"><span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Payment schedule</span></span><span class="pill">Show <b>All</b> <span class="cv">▾</span></span><span class="pill">Status <b>Any</b> <span class="cv">▾</span></span><span class="pill">Item <b>Any</b> <span class="cv">▾</span></span><span class="pill">Date <b>Season</b> <span class="cv">▾</span></span><span class="pill">Tags <b>Any</b> <span class="cv">▾</span></span><span class="acts"><span class="cash">Cash on hand <b>$4,212.50</b></span><span class="b sec">Export ▾</span><span class="b pri"><span class="pl">+</span> Add a bill</span><span class="b sec"><span class="g"></span> Manage tags</span></span></div>
+          <table class="tbl"><tr><th>Date</th><th>What</th><th>Item</th><th>Tags</th><th class="r">Out</th><th class="r">In</th><th class="r">Balance</th></tr>
+            <tr><td>Aug 22</td><td class="n">Umpire — Aug 22 vs Loons</td><td>Umpire Fees</td><td><span class="chip own" style="height:22px">Umpires</span></td><td class="r">$90.00</td><td class="r"></td><td class="r">$4,212.50</td></tr>
+            <tr><td>Aug 18</td><td class="n">Spring Classic entry (bal.)</td><td>Entry Fees</td><td><span class="chip own" style="height:22px">Spring Classic</span></td><td class="r">$350.00</td><td class="r"></td><td class="r">$4,302.50</td></tr>
+            <tr><td>Aug 12</td><td class="n">Diamond permit — Aug</td><td>Diamond Rental</td><td><span class="chip org" style="height:22px">Club permits</span></td><td class="r">$220.00</td><td class="r"></td><td class="r">$4,652.50</td></tr>
+            <tr><td>Aug 3</td><td class="n">Dues — Nguyen (installment 2)</td><td>Player Dues</td><td></td><td class="r"></td><td class="r">$275.00</td><td class="r">$4,872.50</td></tr>
+            <tr><td>Jul 29</td><td class="n">Hotel deposit — Spring Classic</td><td>Travel</td><td><span class="chip own" style="height:22px">Hotel</span> <span class="chip own" style="height:22px">Spring Classic</span></td><td class="r">$600.00</td><td class="r"></td><td class="r">$4,597.50</td></tr>
+          </table>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="framelabel"><span class="ba">4B · AFTER — desktop 1440, whole screen</span><span class="tag re">RESTYLED toolbar</span> <span class="tag new">door inside the Tags pill</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="pin new" style="left:846px;top:262px">NEW · the door, inside the filter</div>
+      <div class="shell">
+        <div class="side">
+          <div class="brand">12U Ravens<small>Riverdale Ridge</small></div>
+          <div class="it"><i></i>Overview</div><div class="grp">Season</div><div class="it"><i></i>Schedule</div><div class="it"><i></i>Practice plans</div><div class="it"><i></i>Lineups</div><div class="it"><i></i>Tournaments</div>
+          <div class="grp">Progress</div><div class="it"><i></i>Skills &amp; Goals</div><div class="it"><i></i>Insights</div>
+          <div class="grp">Money</div><div class="it on"><i></i>Money</div>
+          <div class="grp">Communication</div><div class="it"><i></i>Chat</div><div class="it"><i></i>Email families</div>
+          <div class="grp">Team</div><div class="it"><i></i>Roster</div><div class="it"><i></i>Tryouts</div><div class="it"><i></i>Staff</div><div class="it"><i></i>Documents</div><div class="it"><i></i>Settings</div>
+        </div>
+        <div class="main">
+          <div class="ph"><span class="ic"></span><h1>Money</h1><span class="sp"></span><span class="b sec">Import ▾</span><span class="b pri">Record</span></div>
+          <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+          <div class="tb" style="position:relative"><span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Payment schedule</span></span><span class="pill">Show <b>All</b> <span class="cv">▾</span></span><span class="pill">Status <b>Any</b> <span class="cv">▾</span></span><span class="pill">Item <b>Any</b> <span class="cv">▾</span></span><span class="pill">Date <b>Season</b> <span class="cv">▾</span></span>
+            <span style="position:relative"><span class="pill on">Tags <b>Any</b> <span class="cv">▾</span></span>
+              <div class="dd" style="width:250px;left:0;right:auto;top:calc(100% + 6px)">
+                <div class="o"><span class="dot org"></span>Club permits</div>
+                <div class="o"><span class="dot own"></span>Hotel</div>
+                <div class="o"><span class="dot own"></span>Spring Classic</div>
+                <div class="o"><span class="dot own"></span>Tournament weekend</div>
+                <div class="o"><span class="dot own"></span>Umpires</div>
+                <div class="o"><span class="dot own"></span>Winter dome</div>
+                <div class="o manage"><span class="g"></span>Manage tags…</div>
+              </div>
+            </span>
+            <span class="acts"><span class="cash">Cash on hand <b>$4,212.50</b></span><span class="b sec">Export ▾</span><span class="b pri"><span class="pl">+</span> Add a bill</span></span></div>
+          <table class="tbl"><tr><th>Date</th><th>What</th><th>Item</th><th>Tags</th><th class="r">Out</th><th class="r">In</th><th class="r">Balance</th></tr>
+            <tr><td>Aug 22</td><td class="n">Umpire — Aug 22 vs Loons</td><td>Umpire Fees</td><td><span class="chip own" style="height:22px">Umpires</span></td><td class="r">$90.00</td><td class="r"></td><td class="r">$4,212.50</td></tr>
+            <tr><td>Aug 18</td><td class="n">Spring Classic entry (bal.)</td><td>Entry Fees</td><td><span class="chip own" style="height:22px">Spring Classic</span></td><td class="r">$350.00</td><td class="r"></td><td class="r">$4,302.50</td></tr>
+            <tr><td>Aug 12</td><td class="n">Diamond permit — Aug</td><td>Diamond Rental</td><td><span class="chip org" style="height:22px">Club permits</span></td><td class="r">$220.00</td><td class="r"></td><td class="r">$4,652.50</td></tr>
+            <tr><td>Aug 3</td><td class="n">Dues — Nguyen (installment 2)</td><td>Player Dues</td><td></td><td class="r"></td><td class="r">$275.00</td><td class="r">$4,872.50</td></tr>
+            <tr><td>Jul 29</td><td class="n">Hotel deposit — Spring Classic</td><td>Travel</td><td><span class="chip own" style="height:22px">Hotel</span> <span class="chip own" style="height:22px">Spring Classic</span></td><td class="r">$600.00</td><td class="r"></td><td class="r">$4,597.50</td></tr>
+          </table>
+        </div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>The actions slot holds three things, all about this screen:</b> the figure, the export of what's shown, the create. Nothing about configuring vocabulary.</li>
+      <li><span class="tag new">NEW</span> <b>"Manage tags…" as the last row of the Tags filter pill.</b> The Ledger's toolbar has no tag picker — its picker lives inside the bill form — but the pill is where a coach on this screen looks for tags, and it reuses the same last-row grammar as specimen 2. If the owner rules "central page only" (Q2), this row also goes and the toolbar is simply 4B without it.</li>
+      <li><b>Gating goes with the button:</b> today the button appears only once the team owns a tag; the in-pill row appears whenever the pill does. The empty-library case is handled by the manager's own empty state ("No tags yet — add one while adding a bill").</li>
+      <li><span class="tag un">UNCHANGED</span> Everything else on the screen: header doors, tabs, view switch, pills, table.</li>
+    </ul>
+
+    <div class="framelabel"><span class="ba">4C · Phone 360 — true size, the same toolbar before and after</span><span class="ref44">44</span></div>
+    <div class="grid2">
+      <div><div class="true"><div class="frame" style="width:360px;padding:12px">
+        <div class="tabs" style="font-size:12px"><span>Fundraising</span><span class="on">Ledger</span><span>Club</span></div>
+        <div class="tb" style="border:none;padding:0"><span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Schedule</span></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="pill">Show <b>All</b> ▾</span><span class="pill">Status ▾</span><span class="pill">Item ▾</span><span class="pill">Date ▾</span><span class="pill">Tags ▾</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px"><span class="cash">Cash on hand <b>$4,212.50</b></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px"><span class="b sec t44">Export ▾</span><span class="b pri t44"><span class="pl">+</span> Add a bill</span><span class="b sec t44"><span class="g"></span> Manage tags</span></div>
+        <p class="hint" style="margin-top:8px">BEFORE — three buttons wrap to two rows</p>
+      </div></div></div>
+      <div><div class="true"><div class="frame" style="width:360px;padding:12px">
+        <div class="tabs" style="font-size:12px"><span>Fundraising</span><span class="on">Ledger</span><span>Club</span></div>
+        <div class="tb" style="border:none;padding:0"><span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Schedule</span></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="pill">Show <b>All</b> ▾</span><span class="pill">Status ▾</span><span class="pill">Item ▾</span><span class="pill">Date ▾</span><span class="pill">Tags ▾</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px"><span class="cash">Cash on hand <b>$4,212.50</b></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px"><span class="b sec t44">Export ▾</span><span class="b pri t44"><span class="pl">+</span> Add a bill</span></div>
+        <p class="hint" style="margin-top:8px">AFTER — one row</p>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 5 — PRACTICE STATION ROW ══════════════ -->
+  <section class="spec" id="s5">
+    <div class="num">Specimen 5 of 7 · the gap the review exists to close</div>
+    <h2>A practice station: staff and equipment get their door, and the strip becomes the dropdown</h2>
+    <p>Staff and Equipment became real libraries on 2026-08-27, with rename/merge/delete routes and <em>no screen that reaches them</em>. Today's picker is the chip-row-with-suggestion-strip; every word in the library is drawn under the field whether or not it is wanted, so a station with three fields shows three strips. After: the unified field, the strip folded into the dropdown, and the door on its last row — 768 true-size because this editor is used on a tablet at the field.</p>
+
+    <div class="framelabel"><span class="ba">5A · BEFORE — tablet 768, true size</span><span class="tag un">as shipped</span> <span class="tag gap">no manage door exists</span></div>
+    <div class="true"><div class="frame" style="width:768px;padding:16px">
+      <div class="station">
+        <div class="st"><b>Station 2 · Bunt defence</b><span class="mt">12 min · 4 players</span></div>
+        <div class="fld"><label>Setup</label><div class="tx">Runners at first, bunter at the plate; pitcher, first and third crash on contact.</div></div>
+        <div class="fld"><label>Equipment</label>
+          <div class="tagpick"><span class="chip org" style="background:var(--blue-soft);border-color:rgba(19,79,211,.4);color:var(--blue)">Buckets ×</span><span class="chip org" style="background:var(--blue-soft);border-color:rgba(19,79,211,.4);color:var(--blue)">Bases ×</span><span class="in">Add a tag…</span></div>
+          <div class="sugg"><span class="s">Cones</span><span class="s">Tees</span><span class="s">L-screen</span><span class="s">Pitching machine</span><span class="s">Catcher's gear</span><span class="s">Helmets</span></div>
+        </div>
+        <div class="fld" style="margin-bottom:0"><label>Who runs it</label>
+          <div class="tagpick"><span class="chip org" style="background:var(--blue-soft);border-color:rgba(19,79,211,.4);color:var(--blue)">Coach Dana ×</span><span class="in">Add a tag…</span></div>
+          <div class="sugg"><span class="s">Alex (parent)</span><span class="s">Coach Priya</span><span class="s cr">+ Create “Adam” in your who runs it list</span></div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag un">UNCHANGED, drawn as-is</span> Selected chips are <b>blue</b> here — the same blue the money picker reserves for <em>shared</em> tags. On this screen blue means "picked"; one screen over it means "belongs to the club". That is the `.tagChip` collision made visible. <span class="tag gap">GAP</span></li>
+      <li>The one-time "adopt this old name" chip (bottom right) is right and stays — it is how a plan written before the library existed moves over, one deliberate press at a time.</li>
+    </ul>
+
+    <div class="framelabel"><span class="ba">5B · AFTER — tablet 768, true size</span><span class="tag re">RESTYLED pickers</span> <span class="tag new">door</span><span class="ref44">44</span><span class="measure">field 44px · dropdown rows 44px</span></div>
+    <div class="true"><div class="frame" style="width:768px;padding:16px 16px 120px">
+      <div class="station">
+        <div class="st"><b>Station 2 · Bunt defence</b><span class="mt">12 min · 4 players</span></div>
+        <div class="fld"><label>Setup</label><div class="tx">Runners at first, bunter at the plate; pitcher, first and third crash on contact.</div></div>
+        <div class="fld"><label>Equipment</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own big">Buckets <span class="x">×</span></span><span class="chip own big">Bases <span class="x">×</span></span></div>
+          <div class="inp" style="height:44px">Search or add equipment…</div>
+        </div>
+        <div class="fld" style="margin-bottom:0"><label>Who runs it</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own big">Coach Dana <span class="x">×</span></span></div>
+          <div class="inp on" style="height:44px">Ad<span class="caret"></span>
+            <div class="dd">
+              <div class="o t44"><span class="dot own"></span>Adam (old plan name)<span class="cnt">adopt — 1 press</span></div>
+              <div class="o t44 create">+ Create “Ad”</div>
+              <div class="o t44 manage"><span class="g"></span>Manage tags…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>Selected chips in the team's own olive</b>, the same chip the money form draws. One meaning per colour across the portal: olive = yours, blue = the club's.</li>
+      <li><span class="tag re">RESTYLED</span> <b>The suggestion strip is gone from under the field;</b> the same words appear in the dropdown on focus. Three strips on one station were the cost; a tablet keyboard covering half the screen was the other.</li>
+      <li><span class="tag new">NEW</span> <b>The legacy-name adopt chip moves into the dropdown</b> as a row that says what it is. Same one-press rule, one less row under the field.</li>
+      <li><span class="tag new">NEW</span> <b>The door</b> — the first screen from which staff and equipment can be renamed or merged at all.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 6 — DRILL KIT ══════════════ -->
+  <section class="spec" id="s6">
+    <div class="num">Specimen 6 of 7 · the sibling the 08-27 fix never reached</div>
+    <h2>A drill's Equipment: free text today, the Equipment library tomorrow</h2>
+    <div class="grid2">
+      <div>
+        <div class="framelabel"><span class="ba">6A · BEFORE</span><span class="tag un">as shipped</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px">
+          <div class="fld"><label>Name</label><div class="inp" style="color:var(--ink)">Bunt defence — crash play</div></div>
+          <div class="fld"><label>Tags</label><div class="tagpick"><span class="chip org">Bunt defence ×</span><span class="in">Add a tag…</span></div><div class="sugg"><span class="s">First step</span><span class="s">Cut-offs</span><span class="s">Two-strike approach</span></div></div>
+          <div class="fld" style="margin-bottom:0"><label>Equipment</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="chip ghost">buckets ×</span><span class="chip ghost">Bases ×</span><span class="chip ghost">l screen ×</span><span class="inp" style="height:36px;width:120px">Add kit…</span></div>
+            <p class="hint">Three spellings of two words already in the Equipment library, one drill over.</p>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="framelabel"><span class="ba">6B · AFTER</span><span class="tag re">RESTYLED</span> <span class="tag new">library-backed</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px 18px 70px">
+          <div class="fld"><label>Name</label><div class="inp" style="color:var(--ink)">Bunt defence — crash play</div></div>
+          <div class="fld"><label>Tags</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Bunt defence <span class="x">×</span></span></div><div class="inp">Search or add a tag…</div></div>
+          <div class="fld" style="margin-bottom:0"><label>Equipment</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="chip own">Buckets <span class="x">×</span></span><span class="chip own">Bases <span class="x">×</span></span></div>
+            <div class="inp on">l sc<span class="caret"></span>
+              <div class="dd">
+                <div class="o act"><span class="dot own"></span>L-screen<span class="cnt">on 4 plans</span></div>
+                <div class="o"><span class="dot own"></span>l screen (old drill name)<span class="cnt">adopt — 1 press</span></div>
+                <div class="o manage"><span class="g"></span>Manage tags…</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>Same field as the practice plan's Equipment</b>, same library, so "L-screen" is one word whether it is on a drill or a station — and a station built from this drill can carry the drill's kit across as ids, which free text could never do.</li>
+      <li><span class="tag new">NEW</span> <b>Old free-text kit names get the adopt row</b> (Q5) — the practice plan's rule, not a silent import: an import would mint "buckets" and "Buckets" as two tags, the exact failure the library exists to prevent. The adopt row offers the old spelling <em>beneath</em> the library match so the coach's eye lands on the real word first.</li>
+      <li><b>Schema note for the plan:</b> the drill needs an id array beside its text array, read-resolve / write-whole, exactly as the plan did (mig 266).</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ SPECIMEN 7 — SCOUTING FILTER ══════════════ -->
+  <section class="spec" id="s7">
+    <div class="num">Specimen 7 of 7 · the one that is not a tag</div>
+    <h2>The scouting filter stops dressing like a picker</h2>
+    <p>Scouting tags are a fixed, owner-ratified list from the sport pack — Pitching, Hitting, Baserunning, Defence, Coaching. The filter draws them as the same pill chips a tag picker uses, so a coach who has just minted a money tag reads them as mintable. They are not; the fix is to draw them as what they are — a filter over a fixed list.</p>
+    <div class="grid2">
+      <div>
+        <div class="framelabel"><span class="ba">7A · BEFORE</span><span class="tag un">as shipped</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px">
+          <div style="font-weight:700;font-size:var(--t-head);margin-bottom:10px">Observations · Loons</div>
+          <div class="scout"><span class="sc on">All</span><span class="sc">Pitching</span><span class="sc">Hitting</span><span class="sc">Baserunning</span><span class="sc">Defence</span><span class="sc">Coaching</span></div>
+          <div class="obs"><span class="k">Pitching</span>Their starter is all fastballs the first time through, then nothing but change-ups.</div>
+          <div class="obs"><span class="k">Baserunning</span>They steal on the first pitch almost every time they get a runner on.</div>
+        </div></div>
+      </div>
+      <div>
+        <div class="framelabel"><span class="ba">7B · AFTER</span><span class="tag re">RESTYLED</span></div>
+        <div class="true"><div class="frame" style="width:520px;padding:18px">
+          <div style="font-weight:700;font-size:var(--t-head);margin-bottom:10px">Observations · Loons</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="seg"><span class="on">All</span><span>Pitching</span><span>Hitting</span><span>Baserunning</span><span>Defence</span><span>Coaching</span></span></div>
+          <div class="obs"><span class="k">Pitching</span>Their starter is all fastballs the first time through, then nothing but change-ups.</div>
+          <div class="obs"><span class="k">Baserunning</span>They steal on the first pitch almost every time they get a runner on.</div>
+        </div></div>
+      </div>
+    </div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>A segmented control</b> — the same shape the Ledger's Timeline · Bills · Payment schedule switch uses for "which view", which is what this is. A segmented control cannot be added to; that is the whole message, and it needs no sentence.</li>
+      <li><b>Not drawn, deliberately:</b> a "fixed list" label. A control whose shape says it is fixed does not need a caption saying so (the 2026-08-29 facts-not-narration ruling).</li>
+      <li><span class="tag un">UNCHANGED</span> The vocabulary itself (ratified, per sport pack) and the observation rows. On 360 the segmented control scrolls sideways inside its own container, as the view switch already does.</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════ QUESTIONS × RECOMMENDATIONS ══════════════ -->
+  <section class="spec" id="q">
+    <div class="num">The gate · rulings needed before a plan is written</div>
+    <h2>Nine questions, a position on each, and which frame to argue with</h2>
+    <div class="tblwrap"><table class="qa">
+      <tr><th>#</th><th>Question</th><th>Position to argue with</th><th>Frame</th></tr>
+      <tr><td>Q1</td><td>Where does the central home live?</td><td><b>Team settings, as a "Tags" section.</b> It is configuration, and the six sections beside it are the team's other once-a-season decisions. A first-class nav entry would give a rare act a hot slot; the team hub's settings group is the same answer one click further away.</td><td>1A · 1B</td></tr>
+      <tr><td>Q2</td><td>Does every apply-screen keep a door?</td><td><b>Yes, one quiet door, inside the picker</b> — the dropdown's last row. Otherwise a typo found mid-practice-plan costs a trip to settings. On the Ledger, which has no picker in its toolbar, the Tags <em>filter</em> pill carries the same row.</td><td>2A · 2B · 4B</td></tr>
+      <tr><td>Q3</td><td>Delete-in-use: orphan with a count, merge-only, or refuse?</td><td><b>Orphan with the count, and the dialog offers Merge as a live button.</b> A label is not money; a refusal would send the coach hunting for the 12 records to untag by hand. Budget items keep their refusal — an item is a filing key with history.</td><td>3A</td></tr>
+      <tr><td>Q4</td><td>Do budget items and test types adopt the same manager shell?</td><td><b>Same shell, own rules, not drawn here.</b> Row = name · count · actions; the item manager keeps refuse-in-use and "use a shared word instead"; test types keep retire/restore and gain nothing. Whether they also <em>move</em> into the Tags section is a separate call — the recommendation is no: budget items are budget content (the 08-16 ruling refused settings for them), and test types belong to the Skills &amp; Goals room.</td><td>—</td></tr>
+      <tr><td>Q5</td><td>Drill kit → Equipment library? Adopt chip or silent import?</td><td><b>Yes; the adopt row, never a silent import.</b> An import mints every old spelling as a tag.</td><td>6B</td></tr>
+      <tr><td>Q6</td><td>House word: "tag" or "label"? Is "Manage tags" the one door name?</td><td><b>"Tag"</b> — it already carries the product, nine help answers and the demo. <b>"Manage tags…"</b> is the one door; the manager's title is the library's name ("Money tags", "Staff"). "Your tags", "Manage money tags", "Manage game tags" all retire.</td><td>1A · 2A</td></tr>
+      <tr><td>Q7</td><td>Scouting tags: keep fixed — but stop looking like a picker?</td><td><b>Keep fixed; draw as a segmented filter.</b></td><td>7B</td></tr>
+      <tr><td>Q8</td><td>The 50-per-kind cap: surface it, or refusal only?</td><td><b>One sentence at the foot of the Tags section</b>, and the refusal stays as the backstop. Not on every picker.</td><td>1A</td></tr>
+      <tr><td>Q9</td><td>Modal, page or drawer for the manager?</td><td><b>Page section (3A), navigated to from the door with the library open and the form's typing kept.</b> The modal is refused by the owner's own ruling. The drawer (3B) is drawn honestly: it would be the coach portal's first working-surface drawer, and from the bill form it is a sheet over a modal.</td><td>1A · 3A · 3B</td></tr>
+      <tr><td>+</td><td>Does the <em>picker</em> show counts, or only the manager?</td><td>Drawn both ways in 2A/2B. Leaning <b>manager only</b> — a coach applying a tag does not need to know it is on 12 things, and the row is cleaner without.</td><td>2A · 2B</td></tr>
+    </table></div>
+  </section>
+
+  <p class="mono" style="margin-top:40px;color:var(--d-dim)">Source: docs/projects/active/COACH_TAGGING_MOCKUP.html · round 1 · frames use the warm portal tokens from app/globals.css (paper #F8F4ED · ink #241E15 · olive #57651E · blue #134FD3 · live #B03A22 · lime #D9F99D) and the eight-step type ladder.</p>
+</div>
+
+<script>
+(function(){
+  function fit(){
+    document.querySelectorAll('.fit').forEach(function(w){
+      var f=w.firstElementChild; if(!f) return;
+      var fw=parseFloat(f.style.width)||1440;
+      var s=Math.min(1,(w.clientWidth||fw)/fw);
+      f.style.transform='scale('+s+')';
+      w.style.height=(f.offsetHeight*s)+'px';
+    });
+  }
+  fit();
+  if(window.ResizeObserver){ new ResizeObserver(fit).observe(document.body); }
+  window.addEventListener('resize',fit);
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(fit); }
+  window.addEventListener('load',fit);
+})();
+</script>

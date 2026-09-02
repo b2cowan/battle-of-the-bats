@@ -1133,3 +1133,15 @@ export function repointPracticePlanTags(
 
   return { plan: next, changed };
 }
+
+/**
+ * Every distinct staff/equipment tag id ONE plan references, at every level the kind appears
+ * (usage counts — One Tag Idiom P0, COACH_TAGGING_PLAN.md 2026-09-01). Reuses the repoint walk
+ * with an identity transform: the walk above already knows every home an id can live in, and a
+ * second hand-written walk would drift from it the next time a surface is added.
+ */
+export function collectPracticePlanTagIds(plan: PracticePlan, kind: 'staff' | 'equipment'): Set<string> {
+  const seen = new Set<string>();
+  repointPracticePlanTags(plan, kind, id => { seen.add(id); return id; });
+  return seen;
+}

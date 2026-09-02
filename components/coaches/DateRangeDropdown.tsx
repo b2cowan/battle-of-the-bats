@@ -35,6 +35,8 @@ export default function DateRangeDropdown({
   todayKey,
   seasonBounds,
   onChange,
+  restQuiet = false,
+  restSelectionId,
 }: {
   selection: DateRangeSelection;
   /** The EFFECTIVE window (the panel resolves presets itself) — shown in the custom fields and,
@@ -48,6 +50,9 @@ export default function DateRangeDropdown({
   /** A preset pick carries only its id (the panel re-derives the window); only a custom edit
    *  carries dates — so a receiver can't accidentally pin a preset's resolved dates. */
   onChange: (next: { selection: DateRangePresetId } | { selection: 'custom'; from: string; to: string }) => void;
+  /** Quiet-at-rest (owner 2026-09-02): hide the value + no tint while `selection === restSelectionId`. */
+  restQuiet?: boolean;
+  restSelectionId?: string;
 }) {
   const ref = useDetailsOutsideClick();
 
@@ -73,9 +78,9 @@ export default function DateRangeDropdown({
 
   return (
     <details ref={ref} className={styles.multiSelect}>
-      <summary className={styles.multiSelectSummary}>
+      <summary className={`${styles.multiSelectSummary} ${restQuiet && selection !== restSelectionId ? styles.multiSelectActive : ''}`}>
         <span className={styles.multiSelectLabel}>Date</span>
-        <span className={styles.multiSelectValue}>{summary}</span>
+        {!(restQuiet && selection === restSelectionId) && <span className={styles.multiSelectValue}>{summary}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
       <div className={`${styles.multiSelectPanel} ${styles.dateRangePanel}`} role="group" aria-label="Date range">

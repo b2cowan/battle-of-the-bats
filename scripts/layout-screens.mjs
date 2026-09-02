@@ -350,6 +350,9 @@ export const SCREENS = [
      inputs and the save row — between them every widget shape on the page is measured. */
   { id: 'coach-settings-money',   session: 'coach', path: (c) => `${team(c)}/settings?section=money`,        ready: 'h1' },
   { id: 'coach-settings-lineups', session: 'coach', path: (c) => `${team(c)}/settings?section=lineup-rules`, ready: 'h1' },
+  /* One Tag Idiom P4 (2026-09-01): the Tags shelf is a third widget shape on this page — library
+     rows expanding into the manager list — and collapsed it is invisible per the rule above. */
+  { id: 'coach-settings-tags',    session: 'coach', path: (c) => `${team(c)}/settings?section=tags`,         ready: 'h1' },
   { id: 'coach-tryouts',       session: 'coach', path: (c) => `${team(c)}/tryouts`,       ready: 'h1' },
 
   /**

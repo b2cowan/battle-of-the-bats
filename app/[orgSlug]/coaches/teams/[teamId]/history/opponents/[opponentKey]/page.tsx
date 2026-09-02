@@ -481,18 +481,18 @@ export default function CoachOpponentCardPage({
           onChange={e => setObsBody(e.target.value)}
           rows={2}
         />
-        <div className={styles.scoutTagRow}>
-          {tags.map(t => (
-            <button
-              key={t}
-              type="button"
-              className={styles.scoutTagChip}
-              data-on={obsTag === t ? 'yes' : 'no'}
-              onClick={() => setObsTag(obsTag === t ? null : t)}
-            >
-              {t}
-            </button>
-          ))}
+        {/* ⚖ A DROPDOWN, NOT A PILL ROW (owner, §129 walk F2, 2026-09-02) — see the
+            schedule drawer's twin; the two entry forms must never drift. */}
+        <div className={styles.scoutLogRow}>
+          <select
+            className={styles.select}
+            value={obsTag ?? ''}
+            aria-label="Tag this observation"
+            onChange={e => setObsTag(e.target.value || null)}
+          >
+            <option value="">No tag</option>
+            {tags.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
           <button
             type="button"
             className={`btn btn-lime ${styles.scoutLogSave}`}

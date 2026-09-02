@@ -326,8 +326,12 @@ export default function InstallmentPlanEditor({
             edge (owner, mockup round 3). */}
         <div className={styles.planColHead} aria-hidden="true">
           {rows.length > 1 && <span className={styles.planColNum} />}
-          <span className={styles.planColDate}>Due date</span>
-          <span className={styles.planColAmt}>Amount ($)</span>
+          {/* Required markers on the COLUMN heads (owner, 2026-09-02): every row needs both, and
+              the form already refuses a dateless bill — the asterisk says so BEFORE the red
+              sentence has to (the 08-25 plain-asterisk ruling, which the labels above follow;
+              a grid's columns are its labels). */}
+          <span className={styles.planColDate}>Due date *</span>
+          <span className={styles.planColAmt}>Amount ($) *</span>
           {rows.length > 1 && <span className={styles.planColX} />}
         </div>
 

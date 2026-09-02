@@ -5,7 +5,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
-import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import type { BudgetCategoryWithItems, RepTeamExpense, RepTeamTag } from '@/lib/types';
 import type { CommitmentStanding } from '@/lib/payable-standing';
@@ -403,6 +403,8 @@ export default function CommitmentView({
               onChange={touch(setTagIds)}
               onCreate={onCreateTag}
               placeholder="Add a money tag…"
+              manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }}
+              onManageChanged={() => { void onSaved(); }}
               /* ⚖ THE `＋` SHAPE (owner, §114 walk 2026-08-27). Every other field here is one row;
                  the tag picker was two — chips, then a permanent empty search box under them —
                  which is right in a form and wrong in a block a coach is mostly READING. The box

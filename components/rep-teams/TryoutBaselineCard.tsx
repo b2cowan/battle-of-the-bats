@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sprout, Check, ArrowRight } from 'lucide-react';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
+import { FOCUS_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
 import type { RepTryoutBaselineSnapshot, RepTryoutBaselineCategory } from '@/lib/types';
@@ -175,6 +176,8 @@ export default function TryoutBaselineCard({ apiBase, orgSlug, teamId, active, o
           onChange={next => setPicked(p => ({ ...p, [key]: next }))}
           onCreate={createTag}
           single
+          manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+          onManageChanged={load}
           label={label}
           emptyHint="No focus words yet — type one to make your team’s first."
         />

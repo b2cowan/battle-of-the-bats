@@ -1,0 +1,412 @@
+<title>Tag Drawer Prototype</title>
+<style>
+/* ── Doc chrome: one slim instruction bar; everything else IS the product frame ── */
+:root{
+  --d-bg:#12171E; --d-ink:#E8EDF3; --d-dim:#9AA3AF; --d-accent:#5FC3C9;
+  /* Warm coaches portal — real tokens (single-theme by design: frames are the product as it renders) */
+  --paper:#F8F4ED; --cardbg:#FFFFFF; --ink:#241E15; --ink2:#4A4235; --dim:#6A635C;
+  --line:rgba(70,55,30,.12); --line2:rgba(70,55,30,.20); --fill:rgba(70,55,30,.08);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10); --blue:#134FD3; --blue-soft:rgba(19,79,211,.10);
+  --live:#B03A22; --amber:#835006; --lime:#D9F99D; --lime-ink:#241E15; --r:14px; --rs:9px;
+  --t-title:20px; --t-head:16px; --t-body:14px; --t-sup:12px; --t-lab:11px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:var(--t-body);line-height:1.45;min-height:100vh;display:flex;flex-direction:column}
+button{font-family:inherit;font-size:inherit;cursor:pointer;background:none;border:none;color:inherit;text-align:left}
+input,select{font-family:inherit;font-size:var(--t-body);color:var(--ink)}
+.bar{background:var(--d-bg);color:var(--d-ink);padding:10px 18px;display:flex;gap:8px 22px;align-items:baseline;flex-wrap:wrap;font-size:13px}
+.bar b{color:var(--d-accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.bar span{color:var(--d-dim)}
+.bar span em{color:var(--d-ink);font-style:normal;font-weight:600}
+/* shell */
+.shell{display:flex;flex:1;min-height:0}
+.side{width:220px;flex-shrink:0;background:var(--cardbg);border-right:1px solid var(--line);padding:14px 10px;font-size:var(--t-body)}
+.side .brand{font-weight:800;font-size:var(--t-head);padding:6px 10px 10px}
+.side .brand small{display:block;font-weight:500;font-size:var(--t-sup);color:var(--dim)}
+.side .grp{font-size:var(--t-lab);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:12px 10px 4px}
+.side .it{padding:7px 10px;border-radius:var(--rs);color:var(--ink2);display:flex;gap:9px;align-items:center}
+.side .it i{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;opacity:.55;flex-shrink:0}
+.side .it.on{background:var(--olive-soft);color:var(--olive);font-weight:600}
+.main{flex:1;min-width:0;padding:22px 28px 40px;overflow:auto}
+.ph{display:flex;align-items:center;gap:14px;margin-bottom:14px;min-height:44px}
+.ph h1{font-size:var(--t-title);font-weight:800;margin:0;color:var(--ink)}
+.ph .ic{width:22px;height:22px;border:2px solid var(--ink2);border-radius:5px;opacity:.7}
+.ph .sp{flex:1}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);margin-bottom:14px;flex-wrap:wrap}
+.tabs span{padding:8px 12px;color:var(--ink2)}
+.tabs span.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--olive);margin-bottom:-1px}
+/* buttons */
+.b{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:var(--rs);font-weight:600;border:1px solid transparent;white-space:nowrap}
+.b.pri{background:var(--lime);color:var(--lime-ink);border-color:rgba(70,55,30,.15)}
+.b.sec{background:var(--cardbg);border-color:var(--line2)}
+.b.gho{color:var(--ink2)}
+.b.dng{color:var(--live);border-color:rgba(176,58,34,.35);background:var(--cardbg)}
+.b:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:var(--cardbg);font-size:var(--t-sup);color:var(--ink2);font-weight:500;white-space:nowrap}
+.pill.on{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.pill b{color:inherit;font-weight:700}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--rs);overflow:hidden;background:var(--cardbg)}
+.seg span{padding:0 12px;height:32px;display:inline-flex;align-items:center;font-size:var(--t-sup);color:var(--ink2);border-right:1px solid var(--line)}
+.seg span:last-child{border-right:none}
+.seg span.on{background:var(--olive-soft);color:var(--olive);font-weight:700}
+.tb{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.tb .acts{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cash{font-size:var(--t-sup);color:var(--ink2);white-space:nowrap}
+.cash b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* table */
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;background:var(--cardbg);border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.tbl th{font-size:var(--t-sup);text-align:left;color:var(--dim);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line2);background:var(--paper)}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:middle}
+.tbl td.n{color:var(--ink);font-weight:600}
+.tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.hid{display:none}
+/* chips + dots */
+.chip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:999px;font-size:var(--t-sup);font-weight:600;border:1px solid;white-space:nowrap}
+.chip.own{background:var(--olive-soft);border-color:rgba(87,101,30,.45);color:var(--olive)}
+.chip.org{background:var(--blue-soft);border-color:rgba(19,79,211,.40);color:var(--blue)}
+.chip .x{font-weight:700;opacity:.7;padding:2px 2px 2px 4px;border-radius:999px;line-height:1}
+.chip .x:hover{opacity:1}
+.chip.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 6px rgba(87,101,30,.35)}100%{box-shadow:0 0 0 0 rgba(87,101,30,0)}}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.dot.own{background:rgba(87,101,30,.6);border:1px solid rgba(87,101,30,.75)}
+.dot.org{background:rgba(19,79,211,.6);border:1px solid rgba(19,79,211,.75)}
+/* form */
+.fld{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.fld label{font-size:var(--t-sup);font-weight:600;color:var(--ink2)}
+.fld .req{color:var(--live)}
+.inp{height:40px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:0 11px;width:100%}
+.inp::placeholder{color:var(--dim)}
+.inp:focus{border-color:var(--olive);box-shadow:0 0 0 3px var(--olive-soft);outline:none}
+.hint{font-size:var(--t-sup);color:var(--dim)}
+.leg{display:flex;gap:14px;font-size:var(--t-sup);color:var(--dim);align-items:center;margin-top:8px;flex-wrap:wrap}
+.leg span{display:inline-flex;gap:5px;align-items:center}
+/* dropdowns */
+.ddwrap{position:relative}
+.dd{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--cardbg);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 8px 24px rgba(36,30,21,.14);z-index:30;overflow:hidden}
+.dd .o{display:flex;align-items:center;gap:9px;padding:0 11px;height:38px;width:100%;color:var(--ink);border-bottom:1px solid var(--line)}
+.dd .o:hover{background:var(--olive-soft)}
+.dd .o .cnt{margin-left:auto;font-size:var(--t-sup);color:var(--dim);font-variant-numeric:tabular-nums}
+.dd .o.create{color:var(--olive);font-weight:600}
+.dd .o.manage{color:var(--ink2);font-weight:500;border-bottom:none;background:var(--paper);font-size:var(--t-sup)}
+.dd .o.manage .g{width:13px;height:13px;border:1.6px solid currentColor;border-radius:50%;opacity:.7}
+.dd .o.empty{color:var(--dim);font-size:var(--t-sup);pointer-events:none}
+/* overlays */
+.ov{position:fixed;inset:0;background:rgba(36,30,21,.35);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--cardbg);border:1px solid rgba(19,79,211,.3);border-radius:var(--r);width:min(560px,94vw);max-height:90vh;overflow:auto;padding:22px;box-shadow:0 12px 40px rgba(36,30,21,.22)}
+.modal h2{margin:0 0 4px;font-size:var(--t-title);font-weight:800}
+.modal .sub{font-size:var(--t-sup);color:var(--dim);margin:0 0 16px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+/* the drawer */
+.dscrim{position:fixed;inset:0;background:rgba(36,30,21,.18);z-index:60}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--cardbg);border-left:1px solid var(--line2);box-shadow:-12px 0 40px rgba(36,30,21,.20);z-index:70;padding:18px;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease}
+.drawer.in{transform:translateX(0)}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.drawer .dh{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+.drawer .dh h3{margin:0;font-size:var(--t-title);font-weight:800}
+.drawer .dh .x{margin-left:auto;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-size:18px}
+.drawer .dh .x:hover{background:var(--fill)}
+.drawer .who{font-size:var(--t-sup);color:var(--dim);margin:0 0 10px}
+.drawer .rows{overflow-y:auto;flex:1;margin:0 -6px;padding:0 6px}
+.mrow{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 2px;border-bottom:1px solid var(--line)}
+.mrow .nm{font-weight:600;color:var(--ink);flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.mrow .nm span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .use{font-size:var(--t-sup);color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mrow .use.zero{color:var(--amber)}
+.mrow .ia{display:flex;gap:2px;flex-shrink:0}
+.ib{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-size:14px}
+.ib:hover{background:var(--olive-soft);color:var(--ink)}
+.mrow input.re{height:36px;border:1px solid var(--olive);border-radius:var(--rs);padding:0 9px;flex:1;min-width:0;box-shadow:0 0 0 3px var(--olive-soft);outline:none}
+.mrow select{height:36px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--cardbg);padding:0 8px;flex:1;min-width:0}
+.mrow .sb{height:36px;padding:0 10px;border-radius:var(--rs);font-weight:600}
+.mrow .sb.sv{background:var(--cardbg);border:1px solid var(--line2)}
+.shared{margin-top:10px;padding-top:8px;border-top:1px solid var(--line2)}
+.shared .sl{font-size:var(--t-lab);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600;padding:4px 0}
+.shared .mrow .nm{color:var(--ink2);font-weight:500}
+.note{font-size:var(--t-sup);color:var(--dim);padding-top:6px}
+.dfoot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.dfoot .lnk{color:var(--olive);font-weight:600;font-size:var(--t-sup)}
+/* confirm */
+.cov{position:fixed;inset:0;background:rgba(36,30,21,.30);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px}
+.dlg{background:var(--cardbg);border:1px solid var(--line2);border-radius:var(--r);padding:18px;width:min(460px,92vw);box-shadow:0 12px 40px rgba(36,30,21,.25)}
+.dlg h4{margin:0 0 6px;font-size:var(--t-head);font-weight:700}
+.dlg p{font-size:var(--t-body);color:var(--ink2);margin:0 0 6px;line-height:1.5}
+.dlg .fa{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:var(--t-sup);z-index:95;box-shadow:0 6px 20px rgba(36,30,21,.3);opacity:0;transition:opacity .2s}
+.toast.in{opacity:1}
+@media (max-width:900px){.side{display:none}}
+</style>
+
+<div class="bar">
+  <b>Prototype · Q9</b>
+  <span>Try it: <em>＋ Add a bill</em> → type in the payee → click the <em>Tags</em> box → <em>Manage tags…</em> (last row) → rename “Spring Classic”, merge or delete something → <em>Done</em>.</span>
+  <span>Watch the form behind the drawer: the chip renames itself and <em>your typing is never lost</em>. Esc backs out one layer at a time. Nothing here saves — it resets on reload.</span>
+</div>
+
+<div class="shell">
+  <div class="side">
+    <div class="brand">12U Ravens<small>Riverdale Ridge</small></div>
+    <div class="it"><i></i>Overview</div>
+    <div class="grp">Season</div>
+    <div class="it"><i></i>Schedule</div><div class="it"><i></i>Practice plans</div><div class="it"><i></i>Lineups</div><div class="it"><i></i>Tournaments</div>
+    <div class="grp">Progress</div>
+    <div class="it"><i></i>Skills &amp; Goals</div><div class="it"><i></i>Insights</div>
+    <div class="grp">Money</div>
+    <div class="it on"><i></i>Money</div>
+    <div class="grp">Communication</div>
+    <div class="it"><i></i>Chat</div><div class="it"><i></i>Email families</div>
+    <div class="grp">Team</div>
+    <div class="it"><i></i>Roster</div><div class="it"><i></i>Tryouts</div><div class="it"><i></i>Staff</div><div class="it"><i></i>Documents</div><div class="it"><i></i>Settings</div>
+  </div>
+  <div class="main">
+    <div class="ph"><span class="ic"></span><h1>Money</h1><span class="sp"></span><span class="b sec">Import ▾</span><span class="b pri">Record</span></div>
+    <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+    <div class="tb">
+      <span class="seg"><span class="on">Timeline</span><span>Bills</span><span>Payment schedule</span></span>
+      <span class="pill">Show <b>All</b> ▾</span><span class="pill">Status <b>Any</b> ▾</span><span class="pill">Item <b>Any</b> ▾</span><span class="pill">Date <b>Season</b> ▾</span>
+      <span class="ddwrap"><button class="pill" id="tagFilterBtn" aria-haspopup="listbox">Tags <b id="tagFilterVal">Any</b> ▾</button><div class="dd" id="tagFilterDd" hidden style="width:240px;right:auto"></div></span>
+      <span class="acts"><span class="cash">Cash on hand <b>$4,212.50</b></span><span class="b sec">Export ▾</span><button class="b pri" id="addBill">＋ Add a bill</button></span>
+    </div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Date</th><th>What</th><th>Item</th><th>Tags</th><th class="r">Out</th><th class="r">In</th><th class="r">Balance</th></tr></thead>
+      <tbody id="ledger">
+        <tr data-tags="6"><td>Aug 22</td><td class="n">Umpire — Aug 22 vs Loons</td><td>Umpire Fees</td><td class="tags"></td><td class="r">$90.00</td><td class="r"></td><td class="r">$4,212.50</td></tr>
+        <tr data-tags="4"><td>Aug 18</td><td class="n">Spring Classic entry (bal.)</td><td>Entry Fees</td><td class="tags"></td><td class="r">$350.00</td><td class="r"></td><td class="r">$4,302.50</td></tr>
+        <tr data-tags="8"><td>Aug 12</td><td class="n">Diamond permit — Aug</td><td>Diamond Rental</td><td class="tags"></td><td class="r">$220.00</td><td class="r"></td><td class="r">$4,652.50</td></tr>
+        <tr data-tags=""><td>Aug 3</td><td class="n">Dues — Nguyen (installment 2)</td><td>Player Dues</td><td class="tags"></td><td class="r"></td><td class="r">$275.00</td><td class="r">$4,872.50</td></tr>
+        <tr data-tags="3,4"><td>Jul 29</td><td class="n">Hotel deposit — Spring Classic</td><td>Travel</td><td class="tags"></td><td class="r">$600.00</td><td class="r"></td><td class="r">$4,597.50</td></tr>
+        <tr data-tags="7"><td>Jul 14</td><td class="n">Dome block — winter training</td><td>Training</td><td class="tags"></td><td class="r">$480.00</td><td class="r"></td><td class="r">$5,197.50</td></tr>
+      </tbody>
+    </table></div>
+    <p class="hint" style="margin-top:10px">The Tags filter narrows the book — it deliberately has <b>no</b> “Manage tags…” row in this prototype. The door lives where tagging happens: inside the form’s picker.</p>
+  </div>
+</div>
+
+<!-- Add a bill -->
+<div class="ov" id="billOv" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="billTitle">
+    <h2 id="billTitle">Add a bill</h2>
+    <p class="sub">Money you’ve agreed to pay later. Nothing moves today.</p>
+    <div class="fld"><label for="payee">Who you owe <span class="req">*</span></label><input class="inp" id="payee" placeholder="e.g. Spring Classic Tournament Inc." autocomplete="off"></div>
+    <div class="fld"><label>Item <span class="req">*</span></label><input class="inp" value="Entry Fees" readonly style="color:var(--ink2)"></div>
+    <div class="fld"><label for="amount">First payment</label><input class="inp" id="amount" placeholder="$ 0.00" autocomplete="off" style="max-width:160px"></div>
+    <div class="fld" style="margin-bottom:4px"><label for="tagIn">Tags</label>
+      <div id="chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+      <div class="ddwrap">
+        <input class="inp" id="tagIn" placeholder="Type to find or create a tag…" autocomplete="off">
+        <div class="dd" id="tagDd" hidden></div>
+      </div>
+      <div class="leg"><span><span class="dot org"></span>Shared by your club</span><span><span class="dot own"></span>Your team’s own</span></div>
+    </div>
+    <div class="mfoot"><button class="b gho" id="billCancel">Cancel</button><button class="b pri">Save bill</button></div>
+  </div>
+</div>
+
+<!-- The drawer -->
+<div class="dscrim" id="dscrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Money tags" hidden>
+  <div class="dh"><h3>Money tags</h3><button class="x" id="drawerX" aria-label="Close">×</button></div>
+  <p class="who" id="drawerWho"></p>
+  <div class="rows" id="drawerRows"></div>
+  <div class="dfoot"><span class="lnk">All tag libraries → Team settings</span><button class="b gho" id="drawerDone" style="margin-left:auto">Done</button></div>
+</aside>
+
+<!-- Confirm -->
+<div class="cov" id="cov" hidden><div class="dlg" role="alertdialog" aria-modal="true">
+  <h4 id="cTitle"></h4><div id="cBody"></div><div class="fa" id="cActs"></div>
+</div></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+/* ── state ── */
+let tags=[
+  {id:1,name:'Banquet',org:false,count:0},
+  {id:2,name:'Bus',org:false,count:2},
+  {id:3,name:'Hotel',org:false,count:4},
+  {id:4,name:'Spring Classic',org:false,count:12},
+  {id:5,name:'Tournament weekend',org:false,count:9},
+  {id:6,name:'Umpires',org:false,count:3},
+  {id:7,name:'Winter dome',org:false,count:5},
+  {id:8,name:'Club permits',org:true,count:6},
+];
+let nextId=9;
+let selected=[4,8];          // on the open bill: Spring Classic + Club permits
+let editing=null;            // {id, mode:'rename'|'merge'}
+let filterTag=null;          // ledger filter
+const $=id=>document.getElementById(id);
+const byId=id=>tags.find(t=>t.id===id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ── ledger chips + filter ── */
+function renderLedger(){
+  document.querySelectorAll('#ledger tr').forEach(tr=>{
+    const ids=(tr.dataset.tags||'').split(',').filter(Boolean).map(Number).filter(id=>byId(id));
+    tr.dataset.tags=ids.join(',');
+    tr.querySelector('.tags').innerHTML=ids.map(id=>{const t=byId(id);
+      return '<span class="chip '+(t.org?'org':'own')+'" style="height:22px" data-tid="'+t.id+'">'+esc(t.name)+'</span>';}).join(' ');
+    tr.classList.toggle('hid',filterTag!=null&&!ids.includes(filterTag));
+  });
+  $('tagFilterVal').textContent=filterTag==null?'Any':byId(filterTag).name;
+  $('tagFilterBtn').classList.toggle('on',filterTag!=null);
+}
+function renderFilterDd(){
+  const dd=$('tagFilterDd');
+  dd.innerHTML='<button class="o" data-f="">All tags</button>'+
+    tags.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>
+      '<button class="o" data-f="'+t.id+'"><span class="dot '+(t.org?'org':'own')+'"></span><span>'+esc(t.name)+'</span></button>').join('');
+  dd.querySelectorAll('.o').forEach(o=>o.onclick=()=>{filterTag=o.dataset.f===''?null:Number(o.dataset.f);dd.hidden=true;renderLedger();});
+}
+$('tagFilterBtn').onclick=()=>{renderFilterDd();$('tagFilterDd').hidden=!$('tagFilterDd').hidden;};
+
+/* ── the picker ── */
+const tagIn=$('tagIn'), tagDd=$('tagDd');
+function renderChips(flashId){
+  $('chips').innerHTML=selected.map(id=>{const t=byId(id);if(!t)return '';
+    return '<span class="chip '+(t.org?'org':'own')+(t.id===flashId?' flash':'')+'" data-tid="'+t.id+'">'+esc(t.name)+
+      '<button class="x" aria-label="Remove '+esc(t.name)+'" data-rm="'+t.id+'">×</button></span>';}).join('');
+  $('chips').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{selected=selected.filter(x=>x!==Number(b.dataset.rm));renderChips();renderDropdown();});
+}
+function renderDropdown(){
+  const q=tagIn.value.trim().toLowerCase();
+  const matches=tags.filter(t=>!selected.includes(t.id)&&t.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,8);
+  const exact=tags.some(t=>t.name.toLowerCase()===q);
+  let h=matches.map(t=>'<button class="o" data-pick="'+t.id+'"><span class="dot '+(t.org?'org':'own')+'"></span><span>'+esc(t.name)+'</span><span class="cnt">on '+t.count+'</span></button>').join('');
+  if(q&&!exact) h+='<button class="o create" data-create>+ Create “'+esc(tagIn.value.trim())+'”</button>';
+  if(!h) h='<div class="o empty">No matching tags</div>';
+  h+='<button class="o manage" data-manage><span class="g"></span>Manage tags…</button>';
+  tagDd.innerHTML=h;
+  tagDd.querySelectorAll('[data-pick]').forEach(o=>o.onmousedown=e=>{e.preventDefault();selected.push(Number(o.dataset.pick));tagIn.value='';renderChips();renderDropdown();tagIn.focus();});
+  const cr=tagDd.querySelector('[data-create]');
+  if(cr) cr.onmousedown=e=>{e.preventDefault();const t={id:nextId++,name:tagIn.value.trim(),org:false,count:0};tags.push(t);selected.push(t.id);tagIn.value='';renderChips();renderDropdown();tagIn.focus();};
+  tagDd.querySelector('[data-manage]').onmousedown=e=>{e.preventDefault();openDrawer();};
+}
+tagIn.addEventListener('input',()=>{tagDd.hidden=false;renderDropdown();});
+tagIn.addEventListener('focus',()=>{tagDd.hidden=false;renderDropdown();});
+tagIn.addEventListener('blur',()=>setTimeout(()=>{tagDd.hidden=true;},150));
+
+/* ── bill modal ── */
+$('addBill').onclick=()=>{$('billOv').hidden=false;setTimeout(()=>$('payee').focus(),0);renderChips();};
+$('billCancel').onclick=closeBill;
+$('billOv').addEventListener('pointerdown',e=>{if(e.target===$('billOv'))closeBill();});
+function closeBill(){$('billOv').hidden=true;$('payee').value='';$('amount').value='';tagIn.value='';selected=[4,8];}
+
+/* ── drawer ── */
+function openDrawer(){
+  editing=null;
+  $('dscrim').hidden=false;$('drawer').hidden=false;
+  requestAnimationFrame(()=>$('drawer').classList.add('in'));
+  renderDrawer();
+}
+function closeDrawer(){
+  $('drawer').classList.remove('in');$('dscrim').hidden=true;
+  setTimeout(()=>{$('drawer').hidden=true;},240);
+  if(!$('billOv').hidden){tagIn.focus();renderDropdown();}
+}
+$('drawerX').onclick=closeDrawer;$('drawerDone').onclick=closeDrawer;$('dscrim').onclick=closeDrawer;
+
+function renderDrawer(){
+  const own=tags.filter(t=>!t.org).sort((a,b)=>a.name.localeCompare(b.name));
+  const org=tags.filter(t=>t.org).sort((a,b)=>a.name.localeCompare(b.name));
+  $('drawerWho').textContent=own.length+' yours · '+org.length+' shared by your club';
+  let h=own.map(t=>{
+    if(editing&&editing.id===t.id&&editing.mode==='rename')
+      return '<div class="mrow"><span class="nm"><span class="dot own"></span><input class="re" id="reIn" value="'+esc(t.name)+'" maxlength="40"></span>'+
+        '<button class="sb sv" data-resave="'+t.id+'">Save</button><button class="sb" data-cancel>Cancel</button></div>';
+    if(editing&&editing.id===t.id&&editing.mode==='merge')
+      return '<div class="mrow"><select id="mgSel"><option value="">Merge “'+esc(t.name)+'” into…</option>'+
+        own.filter(o=>o.id!==t.id).map(o=>'<option value="'+o.id+'">'+esc(o.name)+'</option>').join('')+'</select>'+
+        '<button class="sb sv" data-mgsave="'+t.id+'">Merge</button><button class="sb" data-cancel>Cancel</button></div>';
+    return '<div class="mrow"><span class="nm"><span class="dot own"></span><span class="t">'+esc(t.name)+'</span></span>'+
+      '<span class="use'+(t.count===0?' zero':'')+'">'+(t.count===0?'not used yet':'on '+t.count+' record'+(t.count===1?'':'s'))+'</span>'+
+      '<span class="ia"><button class="ib" title="Rename" data-rn="'+t.id+'">✎</button>'+
+      (own.length>1?'<button class="ib" title="Merge into another tag" data-mg="'+t.id+'">⇄</button>':'')+
+      '<button class="ib" title="Delete" data-dl="'+t.id+'">🗑</button></span></div>';
+  }).join('');
+  h+='<div class="shared"><div class="sl">Shared by your club</div>'+
+    org.map(t=>'<div class="mrow"><span class="nm"><span class="dot org"></span><span class="t">'+esc(t.name)+'</span></span><span class="use">on '+t.count+' records</span></div>').join('')+
+    '<div class="note">Shared tags belong to every team — ask your club admin to rename or retire one.</div></div>';
+  $('drawerRows').innerHTML=h;
+  $('drawerRows').querySelectorAll('[data-rn]').forEach(b=>b.onclick=()=>{editing={id:Number(b.dataset.rn),mode:'rename'};renderDrawer();const i=$('reIn');i.focus();i.select();});
+  $('drawerRows').querySelectorAll('[data-mg]').forEach(b=>b.onclick=()=>{editing={id:Number(b.dataset.mg),mode:'merge'};renderDrawer();});
+  $('drawerRows').querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{editing=null;renderDrawer();});
+  $('drawerRows').querySelectorAll('[data-resave]').forEach(b=>b.onclick=()=>saveRename(Number(b.dataset.resave)));
+  const re=$('reIn'); if(re) re.onkeydown=e=>{if(e.key==='Enter')saveRename(editing.id);if(e.key==='Escape'){editing=null;renderDrawer();e.stopPropagation();}};
+  $('drawerRows').querySelectorAll('[data-mgsave]').forEach(b=>b.onclick=()=>{
+    const winner=Number($('mgSel').value); if(!winner) return;
+    askMerge(Number(b.dataset.mgsave),winner);
+  });
+  $('drawerRows').querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>askDelete(Number(b.dataset.dl)));
+}
+function saveRename(id){
+  const v=$('reIn').value.trim(); if(!v) return;
+  if(tags.some(t=>t.id!==id&&t.name.toLowerCase()===v.toLowerCase())){toast('A tag named “'+v+'” already exists');return;}
+  const t=byId(id); const was=t.name; t.name=v; editing=null;
+  renderDrawer();renderChips(selected.includes(id)?id:undefined);renderDropdown();renderLedger();
+  if(selected.includes(id)&&was!==v) toast('Renamed on this bill too — your typing is untouched');
+}
+function askMerge(loserId,winnerId){
+  const loser=byId(loserId),winner=byId(winnerId);
+  confirmDlg('Merge tags?',
+    '<p>Every record tagged <b>“'+esc(loser.name)+'”</b> will be tagged <b>“'+esc(winner.name)+'”</b> instead, and “'+esc(loser.name)+'” will be removed. This can’t be undone.</p>',
+    [{label:'Cancel',cls:'b gho'},{label:'Merge',cls:'b sec',run:()=>doMerge(loserId,winnerId)}]);
+}
+function doMerge(loserId,winnerId){
+  const loser=byId(loserId),winner=byId(winnerId);
+  winner.count+=loser.count;
+  tags=tags.filter(t=>t.id!==loserId);
+  if(selected.includes(loserId)){selected=selected.filter(x=>x!==loserId);if(!selected.includes(winnerId))selected.push(winnerId);}
+  document.querySelectorAll('#ledger tr').forEach(tr=>{
+    let ids=(tr.dataset.tags||'').split(',').filter(Boolean).map(Number);
+    if(ids.includes(loserId)){ids=ids.filter(x=>x!==loserId);if(!ids.includes(winnerId))ids.push(winnerId);tr.dataset.tags=ids.join(',');}
+  });
+  editing=null;renderDrawer();renderChips(winnerId);renderDropdown();renderLedger();
+}
+function askDelete(id){
+  const t=byId(id);
+  const used=t.count>0
+    ? '<p>It’s on <b>'+t.count+' record'+(t.count===1?'':'s')+'</b>. They keep everything but the label.</p><p>If you’d rather keep those records grouped, <b>merge it into another tag</b> instead — nothing is lost that way.</p>'
+    : '<p>It isn’t on any records yet.</p>';
+  const acts=[{label:'Cancel',cls:'b gho'}];
+  if(t.count>0&&tags.filter(x=>!x.org).length>1) acts.push({label:'Merge instead',cls:'b sec',run:()=>{editing={id:id,mode:'merge'};renderDrawer();}});
+  acts.push({label:'Delete',cls:'b dng',run:()=>doDelete(id)});
+  confirmDlg('Delete “'+esc(t.name)+'”?',used,acts);
+}
+function doDelete(id){
+  tags=tags.filter(t=>t.id!==id);
+  selected=selected.filter(x=>x!==id);
+  editing=null;renderDrawer();renderChips();renderDropdown();renderLedger();
+  if(filterTag===id){filterTag=null;renderLedger();}
+}
+/* ── confirm dialog ── */
+function confirmDlg(title,bodyHtml,actions){
+  $('cTitle').textContent=title;$('cBody').innerHTML=bodyHtml;
+  $('cActs').innerHTML='';
+  actions.forEach(a=>{const b=document.createElement('button');b.className=a.cls;b.textContent=a.label;
+    b.onclick=()=>{$('cov').hidden=true;if(a.run)a.run();};$('cActs').appendChild(b);});
+  $('cov').hidden=false;$('cActs').lastChild.focus();
+}
+/* ── toast ── */
+let toastTimer=null;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;
+  requestAnimationFrame(()=>t.classList.add('in'));
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.classList.remove('in');setTimeout(()=>{t.hidden=true;},250);},2600);}
+/* ── esc backs out one layer at a time ── */
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(!$('cov').hidden){$('cov').hidden=true;return;}
+  if(!$('drawer').hidden){if(editing){editing=null;renderDrawer();return;}closeDrawer();return;}
+  if(!tagDd.hidden){tagDd.hidden=true;return;}
+  if(!$('billOv').hidden){closeBill();return;}
+  if(!$('tagFilterDd').hidden){$('tagFilterDd').hidden=true;}
+});
+document.addEventListener('pointerdown',e=>{
+  if(!$('tagFilterDd').hidden&&!e.target.closest('#tagFilterDd')&&!e.target.closest('#tagFilterBtn'))$('tagFilterDd').hidden=true;
+});
+renderLedger();
+})();
+</script>

@@ -8,6 +8,7 @@ import {
   renameRepTeamTag,
   deleteRepTeamTag,
   mergeRepTeamTags,
+  getRepTeamTagUsageCounts,
 } from './db';
 import { withObservability } from './observability';
 import {
@@ -15,7 +16,7 @@ import {
   type CoachCapabilities,
 } from './coach-capabilities';
 import { resolveCoachTeamRead } from './coach-team-read';
-import { repointTeamPlansOnMerge, repointTeamPlansOnDelete } from './rep-practice-plan-tag-repoint';
+import { countTeamPlanTagUsage, repointTeamPlansOnMerge, repointTeamPlansOnDelete } from './rep-practice-plan-tag-repoint';
 import type { RepTagKind } from './types';
 
 /**
@@ -214,7 +215,14 @@ export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
     // The team's own tags PLUS the club's shared set — ONE list, because the picker shows one
     // list and fetching the halves separately is how they start disagreeing.
     const tags = await getRepTeamTagLibrary(teamId, config.kind, orgId);
-    return NextResponse.json({ tags });
+    // P0 of One Tag Idiom (2026-09-01): every library answer carries TEAM-scoped usage counts —
+    // the manager's delete sentence and merge choice read them; pickers ignore them by ruling.
+    // staff/equipment ids sit in plan jsonb, so their counts come from the plan walk (that module
+    // is server-only, which is why the dispatch sits here and not in db.ts).
+    const counts = config.kind === 'staff' || config.kind === 'equipment'
+      ? await countTeamPlanTagUsage(teamId, config.kind)
+      : await getRepTeamTagUsageCounts(teamId, config.kind, tags.map(t => t.id));
+    return NextResponse.json({ tags: tags.map(t => ({ ...t, count: counts[t.id] ?? 0 })) });
   }, { route: config.route });
 
   const POST = withObservability(async (req: Request, { params }: TeamParams) => {

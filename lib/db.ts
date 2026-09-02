@@ -6718,6 +6718,98 @@ export async function getRepTeamTagLibrary(teamId: string, kind: RepTagKind, org
   return (data ?? []).map(mapRepTeamTag);
 }
 
+/**
+ * Team-scoped usage counts for a tag library (One Tag Idiom P0, COACH_TAGGING_PLAN.md
+ * 2026-09-01): how many of THIS TEAM's records wear each tag — the number that makes the
+ * manager's delete sentence honest ("It's on 12 records") and merge a real choice. The unit is
+ * the tagged RECORD, never the link row.
+ *
+ * ⚠⚠ Every parent join re-asserts team_id (the check-then-act rule). An org-shared tag's links
+ * span every team in the club, so `.in('tag_id', …)` alone would quietly count the neighbours'
+ * records into this team's manager.
+ *
+ * ⚠ `rep_team_event_tags` holds TWO kinds' links (mig 221: game tags on games, a practice plan's
+ * focus tags on practices) — `tag_id` decides which, so the `.in(tagIds)` filter keeps each
+ * kind's count to its own library.
+ */
+export async function getRepTeamTagUsageCounts(
+  teamId: string,
+  kind: RepTagKind,
+  tagIds: string[],
+): Promise<Record<string, number>> {
+  if (tagIds.length === 0) return {};
+
+  // ⚠ staff/equipment ids live inside plan jsonb (no FK) and are counted by the walk the merge
+  // itself uses — countTeamPlanTagUsage in lib/rep-practice-plan-tag-repoint.ts. That module is
+  // `server-only` and THIS one is imported by client components (e.g. RulesAdmin), so the
+  // dispatch lives at the call site (lib/coach-tag-routes.ts), never here.
+  if (kind === 'staff' || kind === 'equipment') {
+    throw new Error('staff/equipment usage counts come from countTeamPlanTagUsage — see lib/rep-practice-plan-tag-repoint.ts');
+  }
+
+  const counts: Record<string, number> = {};
+  const tally = (rows: Array<{ tag_id: string }> | null) => {
+    for (const r of rows ?? []) counts[r.tag_id] = (counts[r.tag_id] ?? 0) + 1;
+  };
+
+  if (kind === 'game' || kind === 'focus') {
+    const { data, error } = await supabaseAdmin
+      .from('rep_team_event_tags')
+      .select('tag_id, rep_team_events!inner(team_id)')
+      .eq('rep_team_events.team_id', teamId)
+      .in('tag_id', tagIds);
+    if (error) throw error;
+    tally(data);
+  }
+
+  if (kind === 'expense') {
+    const [expenses, fundraisers] = await Promise.all([
+      supabaseAdmin
+        .from('rep_team_expense_tags')
+        .select('tag_id, rep_team_expenses!inner(team_id)')
+        .eq('rep_team_expenses.team_id', teamId)
+        .in('tag_id', tagIds),
+      supabaseAdmin
+        .from('rep_team_fundraiser_tags')
+        .select('tag_id, rep_fundraisers!inner(team_id)')
+        .eq('rep_fundraisers.team_id', teamId)
+        .in('tag_id', tagIds),
+    ]);
+    if (expenses.error) throw expenses.error;
+    if (fundraisers.error) throw fundraisers.error;
+    tally(expenses.data);
+    tally(fundraisers.data);
+  }
+
+  if (kind === 'focus') {
+    const [drills, templates, goals] = await Promise.all([
+      supabaseAdmin
+        .from('rep_team_drill_tags')
+        .select('tag_id, rep_team_drills!inner(team_id)')
+        .eq('rep_team_drills.team_id', teamId)
+        .in('tag_id', tagIds),
+      supabaseAdmin
+        .from('rep_team_plan_template_tags')
+        .select('tag_id, rep_team_plan_templates!inner(team_id)')
+        .eq('rep_team_plan_templates.team_id', teamId)
+        .in('tag_id', tagIds),
+      supabaseAdmin
+        .from('rep_player_development_goals')
+        .select('tag_id')
+        .eq('team_id', teamId)
+        .in('tag_id', tagIds),
+    ]);
+    if (drills.error) throw drills.error;
+    if (templates.error) throw templates.error;
+    if (goals.error) throw goals.error;
+    tally(drills.data);
+    tally(templates.data);
+    tally(goals.data as Array<{ tag_id: string }> | null);
+  }
+
+  return counts;
+}
+
 /** Org-authored shared tags of a kind (team_id NULL) — the admin Shared Library screen. */
 export async function getOrgSharedTags(orgId: string, kind: RepTagKind): Promise<RepTeamTag[]> {
   const { data, error } = await supabaseAdmin
@@ -7532,6 +7624,7 @@ function mapRepTeamDrill(r: any): RepTeamDrill {
     coachingPoints: Array.isArray(r.coaching_points) ? r.coaching_points.filter((p: unknown) => typeof p === 'string') : [],
     setup: r.setup ?? null,
     equipment: Array.isArray(r.equipment) ? r.equipment.filter((e: unknown) => typeof e === 'string') : [],
+    equipmentTagIds: Array.isArray(r.equipment_tag_ids) ? r.equipment_tag_ids.filter((e: unknown) => typeof e === 'string') : [],
     isActive: r.is_active,
     sortOrder: r.sort_order,
     createdBy: r.created_by ?? null,
@@ -7593,6 +7686,7 @@ type DrillWriteFields = {
   coachingPoints?: string[] | null;
   setup?: string | null;
   equipment?: string[] | null;
+  equipmentTagIds?: string[] | null;
 };
 
 function drillWritePatch(fields: Partial<DrillWriteFields>): Record<string, unknown> {
@@ -7604,7 +7698,35 @@ function drillWritePatch(fields: Partial<DrillWriteFields>): Record<string, unkn
   if (fields.coachingPoints !== undefined) patch.coaching_points = fields.coachingPoints ?? [];
   if (fields.setup !== undefined) patch.setup = fields.setup?.trim() || null;
   if (fields.equipment !== undefined) patch.equipment = fields.equipment ?? [];
+  if (fields.equipmentTagIds !== undefined) patch.equipment_tag_ids = fields.equipmentTagIds ?? [];
   return patch;
+}
+
+
+/**
+ * Kit ids proved against the team's 'equipment' library — own AND org-shared rows — before a
+ * drill write trusts them (mig 272; the same reason `syncDrillTags` proves focus ids: RLS polices
+ * the DRILL, so an arbitrary uuid would link across clubs unseen). ⚠ Team-scoped, deliberately
+ * TIGHTER than `syncDrillTags`' org-wide check: another team's private equipment tag is not this
+ * team's to reference. A SHARED drill (teamId null) carries no team kit ids at all — forced empty.
+ * Invalid ids are dropped, never written.
+ */
+async function proveDrillEquipmentTagIds(
+  orgId: string,
+  teamId: string | null,
+  ids: string[],
+): Promise<string[]> {
+  if (teamId === null || ids.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('kind', 'equipment')
+    .or(`team_id.eq.${teamId},team_id.is.null`)
+    .in('id', ids);
+  if (error) throw error;
+  const valid = new Set((data ?? []).map(t => t.id));
+  return ids.filter(id => valid.has(id));
 }
 
 /**
@@ -7638,12 +7760,15 @@ async function syncDrillTags(drillId: string, orgId: string, tagIds: string[]): 
 export async function createRepTeamDrill(fields: DrillWriteFields & {
   orgId: string; teamId: string | null; createdBy?: string | null;
 }): Promise<RepTeamDrill> {
+  const provenKit = fields.equipmentTagIds !== undefined
+    ? await proveDrillEquipmentTagIds(fields.orgId, fields.teamId, fields.equipmentTagIds ?? [])
+    : undefined;
   const { data, error } = await supabaseAdmin
     .from('rep_team_drills')
     .insert({
       org_id: fields.orgId,
       team_id: fields.teamId,
-      ...drillWritePatch(fields),
+      ...drillWritePatch({ ...fields, equipmentTagIds: provenKit }),
       created_by: fields.createdBy ?? null,
     })
     .select('id')
@@ -7669,8 +7794,11 @@ export async function updateRepTeamDrill(
   scope: { orgId: string; teamId: string | null },
   fields: Partial<DrillWriteFields> & { isActive?: boolean },
 ): Promise<RepTeamDrill | null> {
+  const provenKit = fields.equipmentTagIds !== undefined
+    ? await proveDrillEquipmentTagIds(scope.orgId, scope.teamId, fields.equipmentTagIds ?? [])
+    : undefined;
   const patch: Record<string, unknown> = {
-    ...drillWritePatch(fields),
+    ...drillWritePatch({ ...fields, equipmentTagIds: provenKit }),
     updated_at: new Date().toISOString(),
   };
   if (fields.isActive !== undefined) patch.is_active = fields.isActive;

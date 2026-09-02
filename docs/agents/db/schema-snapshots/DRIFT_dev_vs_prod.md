@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-09-01 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-09-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 43 divergence(s)** across dev/prod.
+**⚠️ 45 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 13 | 9 | 0 |
+| Columns | 14 | 9 | 0 |
 | Indexes | 5 | 2 | 0 |
 | Constraints | 6 | 2 | — |
-| RLS / CHECK | 5 | 0 | 0 (RLS state) |
+| RLS / CHECK | 6 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (1)
@@ -20,7 +20,7 @@
 _none_
 
 ## Columns
-### Only in DEV (13)
+### Only in DEV (14)
 - `rep_fundraiser_credit_plan.created_at`
 - `rep_fundraiser_credit_plan.fundraiser_id`
 - `rep_fundraiser_credit_plan.id`
@@ -33,6 +33,7 @@ _none_
 - `rep_fundraiser_entries.method`
 - `rep_fundraisers.expected_by`
 - `rep_fundraisers.pledged_amount`
+- `rep_team_drills.equipment_tag_ids`
 - `rep_team_payment_requests.money_in_meaning`
 
 ### Only in PROD (9)
@@ -81,10 +82,11 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (5)
+### CHECK only in DEV (6)
 - `rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_share_unit_check`
 - `rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_share_value_check`
 - `rep_fundraiser_entries.rep_fundraiser_entries_method_check`
+- `rep_team_drills.rep_team_drills_equipment_tag_ids_check`
 - `rep_team_payment_requests.rep_team_payment_requests_meaning_is_incoming_check`
 - `rep_team_payment_requests.rep_team_payment_requests_money_in_meaning_check`
 

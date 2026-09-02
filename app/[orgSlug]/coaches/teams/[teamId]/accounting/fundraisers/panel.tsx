@@ -12,7 +12,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
-import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { createMoneyTag } from '@/lib/coach-money-tags';
 import type { RepTeamTag } from '@/lib/types';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
@@ -562,6 +562,8 @@ export function FundraisersPanel({
                     onChange={setFormTags}
                     onCreate={addMoneyTag}
                     placeholder="Type to find or create a money tag…"
+                    manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }}
+                    onManageChanged={() => { void load(true); }}
                   />
                 </div>
               </div>

@@ -2,14 +2,14 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Archive, BookMarked, History, Plus, RotateCcw, Tags, X } from 'lucide-react';
+import { Archive, BookMarked, History, Plus, RotateCcw, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import TagManagerModal from '@/components/coaches/TagManagerModal';
+import { FOCUS_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -18,7 +18,6 @@ import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
   type RepTeamPlanTemplateWithUsage,
 } from '@/lib/rep-plan-templates';
-import type { RepTeamTag } from '@/lib/types';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -118,11 +117,13 @@ function TemplateRow({
 }
 
 function RenameDialog({
-  template, tags, onCreateTag, busy, error, onSave, onClose,
+  template, tags, onCreateTag, busy, error, onSave, onClose, manage, onManageChanged,
 }: {
   template: RepTeamPlanTemplateWithUsage;
   tags: PickableTag[];
   onCreateTag: (name: string) => Promise<PickableTag | null>;
+  manage?: TagManageConfig;
+  onManageChanged?: () => void;
   busy: boolean;
   error: string;
   onSave: (name: string, tagIds: string[]) => void;
@@ -147,6 +148,7 @@ function RenameDialog({
               onChange={e => setName(e.target.value)} />
           </label>
           <TagPicker label="Tags" all={tags} selected={tagIds} onChange={setTagIds} onCreate={onCreateTag}
+            manage={manage} onManageChanged={onManageChanged}
             emptyHint="No tags yet — type a word to make your first one." />
           {error && <p className={styles.errorText} role="alert">{error}</p>}
           <div className={styles.modalFooter}>
@@ -191,9 +193,8 @@ export default function CoachPlanTemplatesPage({
   const [importError, setImportError] = useState('');
   const [importingKey, setImportingKey] = useState<string | null>(null);
 
-  const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
-  useOverlayOpen(!!renaming || importOpen || tagManagerOpen);
+  useOverlayOpen(!!renaming || importOpen); // the tag drawer registers its own overlay unit
 
   const load = useCallback(async () => {
     setLoading(true); setLoadError('');
@@ -348,7 +349,7 @@ export default function CoachPlanTemplatesPage({
    * in the page header. On a phone it collapses to the bare "+" in the title-line corner, like
    * every other coach screen.
    *
-   * "Your tags" stays down in the list row on purpose (rule 2, nearest label wins): it manages a
+   * "Manage tags" (né "Your tags", renamed under the one-door-name ruling 2026-09-01) stays down in the list row on purpose (rule 2, nearest label wins): it manages a
    * vocabulary that outlives this page, and it belongs beside the list it filters — the same call
    * Expenses' "Manage tags" got.
    */
@@ -381,14 +382,6 @@ export default function CoachPlanTemplatesPage({
         onSelect={openImport}
       />
     </CoachToolbarMenu>
-  );
-
-  const listRowActions = canWrite && (
-    <div className={styles.ppDrillRowActions}>
-      <button type="button" className={styles.btnSecondary} onClick={() => setTagManagerOpen(true)}>
-        <Tags size={14} aria-hidden /> Your tags
-      </button>
-    </div>
   );
 
   return (
@@ -434,7 +427,6 @@ export default function CoachPlanTemplatesPage({
           <div className={styles.ppDrillFilters}>
             <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
               placeholder="Search templates…" aria-label="Search templates" />
-            {listRowActions}
           </div>
 
           {/* ⚠ ONE flat list narrowed by chips, never category headings — several tags per template
@@ -491,6 +483,8 @@ export default function CoachPlanTemplatesPage({
 
       {renaming && (
         <RenameDialog template={renaming} tags={tags} onCreateTag={createTag}
+          manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+          onManageChanged={loadTags}
           busy={formBusy} error={formError}
           onSave={saveRename} onClose={() => setRenaming(null)} />
       )}
@@ -551,26 +545,6 @@ export default function CoachPlanTemplatesPage({
             </div>
           </div>
         </div>
-      )}
-
-      {/* ── The shared vocabulary: rename, and the merge that keeps history intact (frame 11) ──
-          The SAME manager the schedule and the expenses screens already use, pointed at the focus
-          routes. A merge here re-points every drill, template, tagged practice AND focus area at
-          once, which is the whole reason this vocabulary became tags. */}
-      {tagManagerOpen && (
-        <TagManagerModal
-          orgSlug={orgSlug}
-          teamId={teamId}
-          // ⚠ The team's OWN tags only. The club's shared words (teamId null) are an org admin's to
-          // manage, and the team-scoped routes answer 404 on them — so listing them here would put
-          // Rename and Merge buttons on screen that exist only to refuse.
-          tags={(tags as RepTeamTag[]).filter(t => t.teamId === teamId)}
-          basePath={`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`}
-          title="Your tags"
-          itemNoun="drill, template or focus area"
-          onClose={() => setTagManagerOpen(false)}
-          onChanged={() => { void loadTags(); void load(); }}
-        />
       )}
     </div>
   );

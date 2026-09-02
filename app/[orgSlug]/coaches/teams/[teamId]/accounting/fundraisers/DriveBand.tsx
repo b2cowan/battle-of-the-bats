@@ -33,7 +33,7 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import RecordEditorFooter from '@/components/coaches/RecordEditorFooter';
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import { formatStoredDate } from '@/lib/timezone';
@@ -484,6 +484,8 @@ export default function DriveBand({
                     onChange={setEdTags}
                     onCreate={onCreateTag}
                     placeholder="Type to find or create a money tag…"
+                    manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }}
+                    onManageChanged={onChanged}
                   />
                 </div>
               </div>

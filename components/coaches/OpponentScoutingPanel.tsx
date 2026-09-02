@@ -277,13 +277,18 @@ export default function OpponentScoutingPanel({
         onChange={e => setObsBody(e.target.value)}
         rows={2}
       />
-      <div className={styles.scoutTagRow}>
-        {tags.map(t => (
-          <button key={t} type="button" className={styles.scoutTagChip} data-on={obsTag === t ? 'yes' : 'no'} onClick={() => setObsTag(obsTag === t ? null : t)}>
-            {t}
-          </button>
-        ))}
-      </div>
+      {/* ⚖ A DROPDOWN, NOT A PILL ROW (owner, §129 walk F2, 2026-09-02 — the standing
+          form-selects-are-dropdowns ruling reaches the last pill-row select). The vocabulary is
+          the FIXED sport-pack list; a tag is optional, and "No tag" is a complete answer. */}
+      <select
+        className={styles.select}
+        value={obsTag ?? ''}
+        aria-label="Tag this observation"
+        onChange={e => setObsTag(e.target.value || null)}
+      >
+        <option value="">No tag</option>
+        {tags.map(t => <option key={t} value={t}>{t}</option>)}
+      </select>
       {error && data && <p className={styles.errorText}>{error}</p>}
       <div className={styles.scoutPanelLinks}>
         <button type="button" className={styles.scoutPanelLink} disabled={logging || obsBody.trim().length === 0} onClick={logObservation}>

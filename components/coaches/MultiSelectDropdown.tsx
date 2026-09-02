@@ -23,6 +23,8 @@ export default function MultiSelectDropdown({
   selected,
   onChange,
   allLabel = 'All',
+  restQuiet = false,
+  restSelection,
 }: {
   /** Sits to the left of the summary value — "Show", "Item". */
   label: string;
@@ -46,8 +48,22 @@ export default function MultiSelectDropdown({
   selected: ReadonlySet<string>;
   onChange: (next: Set<string>) => void;
   allLabel?: string;
+  /**
+   * QUIET AT REST (owner-ruled 2026-09-02, the Ledger toolbar's Option A fold-in): when the
+   * selection IS the control's resting state, the value text hides — "Item ▾", never
+   * "Item Every budget item ▾" — because a filter at rest is saying nothing. The moment it
+   * narrows it gains its value back AND the olive active tint, so a working filter is MORE
+   * visible than before, not less. `restSelection` names what rest means for a control seeded
+   * non-empty (the Status pills open on a deliberate subset); omitted, rest = empty ( = all).
+   */
+  restQuiet?: boolean;
+  restSelection?: ReadonlySet<string>;
 }) {
   const ref = useDetailsOutsideClick();
+
+  const atRest = restQuiet && (restSelection
+    ? selected.size === restSelection.size && [...selected].every(id => restSelection.has(id))
+    : selected.size === 0);
 
   const summary = selected.size === 0 ? allLabel
     : selected.size === 1 ? (options.find(o => selected.has(o.id))?.label ?? allLabel)
@@ -61,9 +77,9 @@ export default function MultiSelectDropdown({
 
   return (
     <details ref={ref} className={styles.multiSelect}>
-      <summary className={styles.multiSelectSummary}>
+      <summary className={`${styles.multiSelectSummary} ${restQuiet && !atRest ? styles.multiSelectActive : ''}`}>
         <span className={styles.multiSelectLabel}>{label}</span>
-        <span className={styles.multiSelectValue}>{summary}</span>
+        {!(restQuiet && atRest) && <span className={styles.multiSelectValue}>{summary}</span>}
         <ChevronDown size={14} aria-hidden />
       </summary>
       <div className={styles.multiSelectPanel} role="group" aria-label={label}>

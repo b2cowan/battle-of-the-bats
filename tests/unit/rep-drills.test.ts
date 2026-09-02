@@ -24,7 +24,7 @@ function drill(over: Partial<RepTeamDrill> = {}): RepTeamDrill {
   return {
     id: 'd1', orgId: 'o1', teamId: 't1', name: 'Front toss', tags: [tag('tg1', 'Hitting')],
     usualMinutes: 12, description: 'Feeder kneels behind the screen.', goal: 'Hands inside the ball.',
-    coachingPoints: ['Choke up', 'Widen the stance'], setup: 'Screen at 45°', equipment: ['Screen', 'Balls'],
+    coachingPoints: ['Choke up', 'Widen the stance'], setup: 'Screen at 45°', equipment: ['Screen', 'Balls'], equipmentTagIds: [],
     isActive: true, sortOrder: 0, createdBy: null, createdAt: '', updatedAt: '', ...over,
   };
 }

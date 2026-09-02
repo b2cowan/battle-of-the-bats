@@ -1,0 +1,256 @@
+<title>Ledger Toolbar Rows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --d-bg:#EDF0F4; --d-card:#FFFFFF; --d-ink:#1A2230; --d-ink2:#4A5563; --d-dim:#7A8494;
+  --d-line:rgba(26,34,48,.12); --d-accent:#1E6E74; --d-accent-soft:rgba(30,110,116,.10);
+  --d-new:#1E6E74; --d-restyled:#9A5B00; --d-unch:#6B7280;
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --d-bg:#12171E; --d-card:#1A2029; --d-ink:#E8EDF3; --d-ink2:#B3BCC8; --d-dim:#7F8A98;
+  --d-line:rgba(232,237,243,.12); --d-accent:#5FC3C9; --d-accent-soft:rgba(95,195,201,.12);
+  --d-new:#5FC3C9; --d-restyled:#E0A64A; --d-unch:#9AA3AF;
+}}
+:root[data-theme="dark"]{
+  --d-bg:#12171E; --d-card:#1A2029; --d-ink:#E8EDF3; --d-ink2:#B3BCC8; --d-dim:#7F8A98;
+  --d-line:rgba(232,237,243,.12); --d-accent:#5FC3C9; --d-accent-soft:rgba(95,195,201,.12);
+  --d-new:#5FC3C9; --d-restyled:#E0A64A; --d-unch:#9AA3AF;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--d-bg);color:var(--d-ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 24px 96px}
+h1{font-size:32px;margin:0 0 8px;letter-spacing:-.01em}
+h2{font-size:21px;margin:0 0 4px}
+p{margin:0 0 10px;max-width:78ch}
+.lede{font-size:16.5px;color:var(--d-ink2)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--d-accent);margin:0 0 6px}
+section{margin-top:52px;padding-top:26px;border-top:1px solid var(--d-line)}
+.num{font-family:var(--mono);font-size:12px;color:var(--d-dim);margin-bottom:4px}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:2px 6px;border-radius:4px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
+.tag.new{color:var(--d-new)} .tag.re{color:var(--d-restyled)} .tag.un{color:var(--d-unch)}
+.caps{margin:14px 0 0;padding:0;list-style:none;font-size:14px;color:var(--d-ink2)}
+.caps li{padding:5px 0;border-top:1px dashed var(--d-line);max-width:none}
+.caps li:first-child{border-top:none}
+.caps b{color:var(--d-ink);font-weight:600}
+.framelabel{font-family:var(--mono);font-size:12px;color:var(--d-dim);margin:18px 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.framelabel .ba{color:var(--d-ink);font-weight:600}
+.fit{position:relative;overflow:hidden;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.10)}
+.fit>.frame{transform-origin:0 0}
+.card{background:var(--d-card);border:1px solid var(--d-line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.card ul{margin:6px 0 0 18px;padding:0}
+.card li{margin:4px 0;max-width:90ch}
+.rec{border-left:3px solid var(--d-accent);padding-left:14px}
+
+/* ── product frames: warm portal tokens ── */
+.frame{
+  --paper:#F8F4ED; --cardbg:#FFFFFF; --ink:#241E15; --ink2:#4A4235; --dim:#6A635C;
+  --line:rgba(70,55,30,.12); --line2:rgba(70,55,30,.20);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10); --blue:#134FD3; --blue-soft:rgba(19,79,211,.10);
+  --lime:#D9F99D; --lime-ink:#241E15; --rs:9px;
+  --t-body:14px; --t-sup:12px; --t-lab:11px;
+  background:var(--paper);color:var(--ink);font-family:system-ui,"Segoe UI",Roboto,sans-serif;font-size:var(--t-body);line-height:1.45;padding:18px 24px 22px;
+}
+.frame *{box-sizing:border-box}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line2);margin-bottom:12px}
+.tabs span{padding:8px 12px;color:var(--ink2)}
+.tabs span.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--olive);margin-bottom:-1px}
+.b{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:var(--rs);font-weight:600;white-space:nowrap;border:1px solid transparent}
+.b.pri{background:var(--lime);color:var(--lime-ink);border-color:rgba(70,55,30,.15)}
+.b.sec{background:var(--cardbg);border-color:var(--line2)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:999px;border:1px solid var(--line2);background:var(--cardbg);font-size:var(--t-sup);color:var(--ink2);font-weight:500;white-space:nowrap}
+.pill b{color:var(--ink);font-weight:600}
+.pill.on{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.pill.on b{color:var(--olive)}
+.pill .cv{font-size:10px;opacity:.7}
+.cash{font-size:var(--t-sup);color:var(--ink2);white-space:nowrap}
+.cash b{color:var(--ink);font-size:var(--t-body);font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.row .sp{flex:1}
+.hairline{border-bottom:1px solid var(--line);margin:10px -24px 0;padding:0}
+.strip{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:9px}
+.strip .pill{height:28px;padding:0 9px;font-size:var(--t-lab)}
+.tblhead{display:grid;grid-template-columns:110px 1fr 120px 110px 110px 110px 110px;gap:0;background:var(--paper);border:1px solid var(--line);border-bottom:1px solid var(--line2);border-radius:var(--rs) var(--rs) 0 0;margin-top:12px;font-size:var(--t-lab);letter-spacing:.06em;color:var(--dim);font-weight:600;text-transform:uppercase}
+.tblhead span{padding:8px 10px}
+.tblhead span.r{text-align:right}
+.tr{display:grid;grid-template-columns:110px 1fr 120px 110px 110px 110px 110px;background:var(--cardbg);border:1px solid var(--line);border-top:none;font-size:var(--t-body);color:var(--ink2)}
+.tr span{padding:9px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .n{color:var(--ink);font-weight:600}
+.tr .r{text-align:right;font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--olive-soft);border:1px solid rgba(87,101,30,.45);color:var(--olive)}
+.pop{position:absolute;background:var(--cardbg);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 10px 30px rgba(36,30,21,.16);padding:12px 14px;z-index:5;width:250px}
+.pop .f{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;font-size:var(--t-sup);color:var(--ink2)}
+.pop .f b{color:var(--ink)}
+.pop .f .sel{border:1px solid var(--line2);border-radius:7px;padding:4px 9px;background:var(--cardbg);color:var(--ink);font-size:var(--t-sup)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Ledger toolbar · design options · 2026-09-02 · mockups only</p>
+  <h1>Ledger Toolbar Rows</h1>
+  <p class="lede">The goal you named: everything above the table on <b>one row</b>, or failing that, organized on purpose. The reason it wraps today isn't the number of controls — it's that three pills spend ~330px announcing their <i>resting</i> state ("Every budget item", "Every tag", "All"). A filter at rest is saying nothing; the row can stop paying for it. Three options below, whole-toolbar at 1440, worst-case widths (longest labels) drawn deliberately.</p>
+  <div class="card"><b>Standing decisions honoured in every option:</b> five filters of one shape (the 08-25 pill ruling); Export lives on the tab and exports what's shown; "Add a bill" is the tab's one create; the toolbar carries nothing about configuring vocabulary (your tagging ruling). "Cash on hand next to Add" was ruled 08-19 <i>with a written flag to re-look once real</i> — Option C takes that second look.</div>
+
+  <!-- TODAY -->
+  <section>
+    <div class="num">Baseline · what your screenshot shows</div>
+    <h2>Today — the row breaks where the words are longest</h2>
+    <div class="framelabel"><span class="ba">1440 · as built</span><span class="tag un">UNCHANGED</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="row">
+        <span class="pill">View <b>Timeline</b> <span class="cv">▾</span></span>
+        <span class="pill">Show <b>All</b> <span class="cv">▾</span></span>
+        <span class="pill">Status <b>2 selected</b> <span class="cv">▾</span></span>
+        <span class="pill">Item <b>Every budget item</b> <span class="cv">▾</span></span>
+        <span class="pill">Date <b>Around today</b> <span class="cv">▾</span></span>
+        <span class="pill">Tags <b>Every tag</b> <span class="cv">▾</span></span>
+      </div>
+      <div class="row" style="margin-top:9px;justify-content:flex-end">
+        <span class="cash">Cash on hand <b>$3,286.00</b></span>
+        <span class="b sec">⬇ Export</span>
+        <span class="b pri">＋ Add a bill</span>
+      </div>
+    </div></div>
+    <ul class="caps"><li>Two rows, but the second exists only because "Every budget item" + "Every tag" + "All" cost ~330px to state defaults. The actions row also floats right with no anchor, so the whole band reads as a wrap accident rather than a layout.</li></ul>
+  </section>
+
+  <!-- OPTION A -->
+  <section>
+    <div class="num">Option A · recommended</div>
+    <h2>Quiet defaults — a pill earns its words only when it's narrowing</h2>
+    <p>At rest a filter shows just its name: <b>Item ▾</b>, not <b>Item Every budget item ▾</b>. The moment it narrows, it gains its value <i>and</i> the olive tint — so an active filter is twice as visible as today, while resting ones shrink to a word. The row fits at 1440 with ~180px to spare even with Status narrowed, and it degrades honestly: with three or four filters active it may wrap again — which is then a row full of information, not defaults.</p>
+    <div class="framelabel"><span class="ba">1440 · nothing narrowed — one row</span><span class="tag re">RESTYLED pills</span><span class="tag un">actions, tabs, table</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="row">
+        <span class="pill">View <b>Timeline</b> <span class="cv">▾</span></span>
+        <span class="pill">Show <span class="cv">▾</span></span>
+        <span class="pill">Status <span class="cv">▾</span></span>
+        <span class="pill">Item <span class="cv">▾</span></span>
+        <span class="pill">Date <span class="cv">▾</span></span>
+        <span class="pill">Tags <span class="cv">▾</span></span>
+        <span class="sp"></span>
+        <span class="cash">Cash on hand <b>$3,286.00</b></span>
+        <span class="b sec">⬇ Export</span>
+        <span class="b pri">＋ Add a bill</span>
+      </div>
+      <div class="tblhead"><span>Date</span><span>What</span><span>Category</span><span>Item</span><span class="r">Money out</span><span class="r">Money in</span><span class="r">Balance</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Dues payment · Avery Test</span><span>—</span><span>—</span><span class="r"></span><span class="r">$625.00</span><span class="r">$-175.00</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Practice balls and tees <span class="chip">Spring classic</span></span><span>Tournaments</span><span>—</span><span class="r">$240.00</span><span class="r"></span><span class="r">$835.00</span></div>
+    </div></div>
+    <div class="framelabel"><span class="ba">1440 · two filters narrowed — the values return, tinted, and the row still holds</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="row">
+        <span class="pill">View <b>Timeline</b> <span class="cv">▾</span></span>
+        <span class="pill">Show <span class="cv">▾</span></span>
+        <span class="pill on">Status <b>2 selected</b> <span class="cv">▾</span></span>
+        <span class="pill">Item <span class="cv">▾</span></span>
+        <span class="pill">Date <span class="cv">▾</span></span>
+        <span class="pill on">Tags <b>Spring classic</b> <span class="cv">▾</span></span>
+        <span class="sp"></span>
+        <span class="cash">Cash on hand <b>$3,286.00</b></span>
+        <span class="b sec">⬇ Export</span>
+        <span class="b pri">＋ Add a bill</span>
+      </div>
+      <div class="tblhead"><span>Date</span><span>What</span><span>Category</span><span>Item</span><span class="r">Money out</span><span class="r">Money in</span><span class="r">Balance</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Practice balls and tees <span class="chip">Spring classic</span></span><span>Tournaments</span><span>—</span><span class="r">$240.00</span><span class="r"></span><span class="r">$835.00</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Spring classic entry — installment 1 of 2</span><span>Facilities</span><span>Diamond Permits</span><span class="r">$600.00</span><span class="r"></span><span class="r">$235.00</span></div>
+    </div></div>
+    <ul class="caps">
+      <li><span class="tag re">RESTYLED</span> <b>Resting pills lose their value text; narrowed pills gain value + olive tint.</b> "Around today" is the Date pill's default, so it rests quiet too; open the pill and the default is stated inside, where it's chosen.</li>
+      <li><b>Every standing ruling survives untouched:</b> five filters, one shape; cash next to Add; nothing moves homes.</li>
+      <li><b>Free phone win:</b> shorter pills also shrink the strip at 361 — the width where this screen currently scrolls sideways (a separate, known defect of the seven-tab row, but every saved pixel helps).</li>
+      <li><b>The trade:</b> a coach can no longer read every filter's current value without opening it — only the <i>changed</i> ones. That's the point, but it is a trade.</li>
+    </ul>
+  </section>
+
+  <!-- OPTION B -->
+  <section>
+    <div class="num">Option B</div>
+    <h2>Two decks, on purpose — operate above, narrow below</h2>
+    <p>If two rows are inevitable on smaller desktops anyway, make them <i>designed</i> rows: the top deck is what you do (view, the figure, Export, Add), the lower deck is a quieter narrowing strip — smaller pills, hairline above, clearly subordinate. Nothing ever wraps unpredictably because the split is fixed.</p>
+    <div class="framelabel"><span class="ba">1440</span><span class="tag re">RESTYLED structure</span></div>
+    <div class="fit"><div class="frame" style="width:1440px">
+      <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="row">
+        <span class="pill">View <b>Timeline</b> <span class="cv">▾</span></span>
+        <span class="sp"></span>
+        <span class="cash">Cash on hand <b>$3,286.00</b></span>
+        <span class="b sec">⬇ Export</span>
+        <span class="b pri">＋ Add a bill</span>
+      </div>
+      <div class="strip">
+        <span class="pill">Show <b>All</b> <span class="cv">▾</span></span>
+        <span class="pill on">Status <b>2 selected</b> <span class="cv">▾</span></span>
+        <span class="pill">Item <b>Every budget item</b> <span class="cv">▾</span></span>
+        <span class="pill">Date <b>Around today</b> <span class="cv">▾</span></span>
+        <span class="pill">Tags <b>Every tag</b> <span class="cv">▾</span></span>
+      </div>
+      <div class="tblhead"><span>Date</span><span>What</span><span>Category</span><span>Item</span><span class="r">Money out</span><span class="r">Money in</span><span class="r">Balance</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Dues payment · Avery Test</span><span>—</span><span>—</span><span class="r"></span><span class="r">$625.00</span><span class="r">$-175.00</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Practice balls and tees <span class="chip">Spring classic</span></span><span>Tournaments</span><span>—</span><span class="r">$240.00</span><span class="r"></span><span class="r">$835.00</span></div>
+    </div></div>
+    <ul class="caps">
+      <li><b>Costs a little height</b> versus Option A's single row, but every element has a fixed home at every width — the calmest option, never a wrap accident.</li>
+      <li>Keeps full value labels on every pill, if you value always-visible filter state over the row.</li>
+      <li>Pairs well with Option A's quiet defaults if you want both (short pills on the lower deck).</li>
+    </ul>
+  </section>
+
+  <!-- OPTION C -->
+  <section>
+    <div class="num">Option C</div>
+    <h2>One Filters door — five dropdowns behind one button</h2>
+    <p>The maximal squeeze: a single <b>Filters</b> button carrying a count of active narrows, opening a small panel with the five dropdowns stacked. Guaranteed one row at any width — but it puts a click between the coach and every filter, and it walks back some of the spirit of your five-pills decision (which existed to make narrowing one visible grammar). Drawn so you can reject it with confidence rather than wonder.</p>
+    <div class="framelabel"><span class="ba">1440 · panel open</span><span class="tag new">NEW Filters button + panel</span></div>
+    <div class="fit"><div class="frame" style="width:1440px;height:360px;position:relative">
+      <div class="tabs"><span>Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraising</span><span class="on">Ledger</span><span>Club</span><span>Budget vs. Actual</span></div>
+      <div class="row">
+        <span class="pill">View <b>Timeline</b> <span class="cv">▾</span></span>
+        <span class="pill on">Filters <b>2</b> <span class="cv">▾</span></span>
+        <span class="sp"></span>
+        <span class="cash">Cash on hand <b>$3,286.00</b></span>
+        <span class="b sec">⬇ Export</span>
+        <span class="b pri">＋ Add a bill</span>
+      </div>
+      <div class="pop" style="left:120px;top:118px">
+        <div class="f"><b>Show</b><span class="sel">All ▾</span></div>
+        <div class="f"><b>Status</b><span class="sel">2 selected ▾</span></div>
+        <div class="f"><b>Item</b><span class="sel">Every budget item ▾</span></div>
+        <div class="f"><b>Date</b><span class="sel">Around today ▾</span></div>
+        <div class="f"><b>Tags</b><span class="sel">Every tag ▾</span></div>
+      </div>
+      <div class="tblhead"><span>Date</span><span>What</span><span>Category</span><span>Item</span><span class="r">Money out</span><span class="r">Money in</span><span class="r">Balance</span></div>
+      <div class="tr"><span>Aug 13, 2026</span><span class="n">Dues payment · Avery Test</span><span>—</span><span>—</span><span class="r"></span><span class="r">$625.00</span><span class="r">$-175.00</span></div>
+    </div></div>
+    <ul class="caps">
+      <li><b>The honest costs:</b> one extra click for the most-used act on this screen; filter state hidden behind a count; and the panel is a second surface to keep consistent. The 08-25 ruling turned chip rows into five same-shaped pills precisely so narrowing reads as one visible grammar — this hides the grammar.</li>
+      <li>Worth choosing only if one-row-always outweighs one-click-away; otherwise A or B does it without the tax.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="card rec">
+      <b>Recommendation: Option A</b>, with B's hairline strip as the fallback if you also want long value labels kept. A wins the row by deleting words that carry no information — the same facts-not-narration rule your money surfaces already follow — and makes <i>active</i> filters more visible than they are today, not less. C is drawn to be declined. Whichever you pick lands as a small change to this one toolbar (the pills are one shared control), and the same treatment then applies to the sibling money tabs that use the pill row.
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  function fit(){
+    document.querySelectorAll('.fit').forEach(function(w){
+      var f=w.firstElementChild; if(!f) return;
+      var fw=parseFloat(f.style.width)||1440;
+      var s=Math.min(1,(w.clientWidth||fw)/fw);
+      f.style.transform='scale('+s+')';
+      w.style.height=(f.offsetHeight*s)+'px';
+    });
+  }
+  fit();
+  if(window.ResizeObserver){ new ResizeObserver(fit).observe(document.body); }
+  window.addEventListener('resize',fit);
+  window.addEventListener('load',fit);
+})();
+</script>

@@ -29,7 +29,7 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
 import RecordEditorFooter from '@/components/coaches/RecordEditorFooter';
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
@@ -536,7 +536,7 @@ export default function SponsorBand({
                 </div>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <label className={styles.label}>Tags</label>
-                  <TagSearchCombobox library={moneyTags} selectedIds={plTags} onChange={setPlTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" />
+                  <TagSearchCombobox library={moneyTags} selectedIds={plTags} onChange={setPlTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={onChanged} />
                 </div>
                 <p className={`${styles.formGridFull}`} style={{ margin: 0, fontSize: '0.8rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.75))' }}>
                   <strong>When you save: nothing moves.</strong> The promise joins the plan and the forward view — record each cheque as it arrives.
@@ -614,7 +614,7 @@ export default function SponsorBand({
                 </div>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <label className={styles.label}>Tags</label>
-                  <TagSearchCombobox library={moneyTags} selectedIds={agTags} onChange={setAgTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" />
+                  <TagSearchCombobox library={moneyTags} selectedIds={agTags} onChange={setAgTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={onChanged} />
                 </div>
               </div>
               {agError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{agError}</p>}

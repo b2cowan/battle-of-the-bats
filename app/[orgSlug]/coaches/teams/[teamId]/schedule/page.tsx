@@ -29,7 +29,7 @@ import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import ShareGameLinkRow from '@/components/coaches/ShareGameLinkRow';
-import TagManagerModal from '@/components/coaches/TagManagerModal';
+import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
@@ -657,10 +657,7 @@ export default function CoachesSchedulePage({
   // carries, both returned alongside the events fetch (no per-event round trip).
   const [teamTags, setTeamTags] = useState<RepTeamTag[]>([]);
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
-  const [tagInput, setTagInput] = useState('');
-  const [tagCreating, setTagCreating] = useState(false);
   const [tagError, setTagError] = useState('');
-  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   // Player Awards (Phase 2): the team's award-type library, every award given this season
   // (filtered client-side per event for the slide-over), a minimal PII-free player list for the
   // give-award picker, and per-event counts for the schedule list's trophy badge.
@@ -1052,16 +1049,9 @@ export default function CoachesSchedulePage({
 
   // ── Game tags (autocomplete-or-create) ───────────────────────────────────────
 
-  function toggleFormTag(tagId: string) {
-    setForm(f => ({
-      ...f,
-      tagIds: f.tagIds.includes(tagId) ? f.tagIds.filter(id => id !== tagId) : [...f.tagIds, tagId],
-    }));
-  }
-
-  async function createAndApplyTag(name: string) {
+  /** POST a new game tag into the library — the combobox applies it to the form itself. */
+  async function createGameTag(name: string): Promise<RepTeamTag | null> {
     setTagError('');
-    setTagCreating(true);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tags`, {
         method: 'POST',
@@ -1074,12 +1064,10 @@ export default function CoachesSchedulePage({
       }
       const { tag } = await res.json();
       setTeamTags(t => [...t, tag]);
-      setForm(f => ({ ...f, tagIds: [...f.tagIds, tag.id] }));
-      setTagInput('');
+      return tag as RepTeamTag;
     } catch (e: unknown) {
       setTagError(errorMessage(e, 'Could not create tag'));
-    } finally {
-      setTagCreating(false);
+      return null;
     }
   }
 
@@ -3302,61 +3290,31 @@ export default function CoachesSchedulePage({
                     />
                   </div>
                 )}
-
                 {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
-                    Autocomplete-or-create: type to filter existing tags, tap to toggle, or create a
-                    brand-new one on the spot. Pays off later in Season Review's "vs tag" report. */}
+                    One Tag Idiom P2 (2026-09-01): the hand-rolled toggle-chip picker became the
+                    shared combobox every money form uses — one picker, one grammar — and the text
+                    link retired for the door INSIDE the picker (owner ruling: doors live where
+                    minting lives). That also ends the door-gating defect (a link shown for
+                    org-only teams, opening an empty manager) and this screen's use of the
+                    colliding `.tagChip` toggle pill. Pays off later in Season Review's "vs tag"
+                    report. */}
                 {needsOpponent(form.eventType) && (
                   <section className={styles.formSubGroup}>
                     <h4 className={styles.formSectionTitle}>Tags</h4>
-                    <div className={styles.tagPickerRow}>
-                      <input
-                        className={styles.input}
-                        value={tagInput}
-                        onChange={e => setTagInput(e.target.value)}
-                        placeholder="e.g. Rivalry, Top in the province"
-                        maxLength={40}
-                        onKeyDown={e => {
-                          if (e.key !== 'Enter') return;
-                          e.preventDefault();
-                          const q = tagInput.trim();
-                          if (!q) return;
-                          const match = teamTags.find(t => t.name.toLowerCase() === q.toLowerCase());
-                          if (match) toggleFormTag(match.id);
-                          else void createAndApplyTag(q);
-                        }}
-                      />
-                    </div>
-                    <div className={styles.tagChips}>
-                      {teamTags
-                        .filter(t => !tagInput.trim() || t.name.toLowerCase().includes(tagInput.trim().toLowerCase()))
-                        .map(t => (
-                          <button
-                            key={t.id}
-                            type="button"
-                            className={`${styles.tagChip} ${form.tagIds.includes(t.id) ? styles.tagChipActive : ''}`}
-                            onClick={() => toggleFormTag(t.id)}
-                          >
-                            {t.name}
-                          </button>
-                        ))}
-                      {tagInput.trim() && !teamTags.some(t => t.name.toLowerCase() === tagInput.trim().toLowerCase()) && (
-                        <button
-                          type="button"
-                          className={styles.tagChipCreate}
-                          disabled={tagCreating}
-                          onClick={() => void createAndApplyTag(tagInput.trim())}
-                        >
-                          + Create &ldquo;{tagInput.trim()}&rdquo;
-                        </button>
-                      )}
-                    </div>
+                    <TagSearchCombobox
+                      library={teamTags}
+                      selectedIds={validFormTagIds}
+                      onChange={ids => setForm(f => ({ ...f, tagIds: ids }))}
+                      onCreate={createGameTag}
+                      manage={{
+                        teamId,
+                        basePath: `/api/coaches/${orgSlug}/teams/${teamId}/tags`,
+                        ...GAME_TAG_MANAGE,
+                        countNoun: n => `on ${n} game${n === 1 ? '' : 's'}`,
+                      }}
+                      onManageChanged={() => { void fetchEvents(); }}
+                    />
                     {tagError && <p className={styles.errorText}>{tagError}</p>}
-                    {teamTags.length > 0 && (
-                      <button type="button" className={styles.tagManageLink} onClick={() => setTagManagerOpen(true)}>
-                        Manage tags
-                      </button>
-                    )}
                   </section>
                 )}
 
@@ -3468,17 +3426,6 @@ export default function CoachesSchedulePage({
         </div>
       )}
 
-      {tagManagerOpen && (
-        <TagManagerModal
-          orgSlug={orgSlug}
-          teamId={teamId}
-          /* Only the team's OWN tags are manageable here — org-shared tags (teamId null, added to
-             the library in Phase 3) are curated by the org admin, not editable from a team. */
-          tags={teamTags.filter(t => t.teamId !== null)}
-          onClose={() => setTagManagerOpen(false)}
-          onChanged={() => { void fetchEvents(); }}
-        />
-      )}
 
       {giveAwardOpen && selectedEvent && (
         <GiveAwardModal

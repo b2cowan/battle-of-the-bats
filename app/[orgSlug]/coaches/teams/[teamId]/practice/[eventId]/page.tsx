@@ -27,6 +27,7 @@ import {
 import { filterTagged } from '@/lib/rep-drills';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags, useStaffTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
+import { FOCUS_TAG_MANAGE, STAFF_TAG_MANAGE, EQUIPMENT_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
@@ -179,11 +180,11 @@ export default function CoachPracticePlanPage({
   // ⚠ `skipFetch`: the library arrives on this page's own plan GET, so re-fetching it would be a
   // second round trip for data already in hand. The hook still owns creation and local merging,
   // which is the part that must not differ between the four surfaces that offer a tag picker.
-  const { tags: focusTags, setTags: setFocusTags, createTag: createFocusTag } =
+  const { tags: focusTags, setTags: setFocusTags, createTag: createFocusTag, reload: reloadFocusTags } =
     useFocusTags(orgSlug, teamId, { skipFetch: true });
-  const { tags: staffTags, setTags: setStaffTags, createTag: createStaffTag } =
+  const { tags: staffTags, setTags: setStaffTags, createTag: createStaffTag, reload: reloadStaffTags } =
     useStaffTags(orgSlug, teamId, { skipFetch: true });
-  const { tags: equipmentTags, setTags: setEquipmentTags, createTag: createEquipmentTag } =
+  const { tags: equipmentTags, setTags: setEquipmentTags, createTag: createEquipmentTag, reload: reloadEquipmentTags } =
     useEquipmentTags(orgSlug, teamId, { skipFetch: true });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -955,6 +956,12 @@ export default function CoachPracticePlanPage({
                 canViewFocus={data.canViewFocus}
                 attendance={data.attendance}
                 canViewAttendance={data.canViewAttendance}
+                focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+                onFocusTagsChanged={reloadFocusTags}
+                staffManage={{ ...STAFF_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/staff-tags` }}
+                onStaffTagsChanged={reloadStaffTags}
+                equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+                onEquipmentTagsChanged={reloadEquipmentTags}
                 drills={data.drills}
                 // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                 // entirely rather than offering a control that only exists to refuse.
@@ -1117,6 +1124,8 @@ export default function CoachPracticePlanPage({
           tags={focusTags}
           initialTagIds={planTagIds}
           onCreateTag={canWrite ? createFocusTag : undefined}
+          manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+          onManageChanged={reloadFocusTags}
           onSave={createTemplate}
           onClose={() => setSaveTemplateOpen(false)}
         />
@@ -1139,7 +1148,7 @@ export default function CoachPracticePlanPage({
  * every keystroke.
  */
 function SaveAsTemplateDialog({
-  defaultName, tags, initialTagIds, onCreateTag, onSave, onClose,
+  defaultName, tags, initialTagIds, onCreateTag, onSave, onClose, manage, onManageChanged,
 }: {
   defaultName: string;
   tags: PickableTag[];
@@ -1147,6 +1156,8 @@ function SaveAsTemplateDialog({
   onCreateTag?: (name: string) => Promise<PickableTag | null>;
   onSave: (name: string, tagIds: string[]) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
+  manage?: TagManageConfig;
+  onManageChanged?: () => void;
 }) {
   const [name, setName] = useState(defaultName);
   // Pre-filled from what the practice is already about — the coach has answered this once tonight
@@ -1188,6 +1199,7 @@ function SaveAsTemplateDialog({
             selected={tagIds}
             onChange={setTagIds}
             onCreate={onCreateTag}
+            manage={manage} onManageChanged={onManageChanged}
             emptyHint="No tags yet — type a word to make your first one."
           />
           <p className={styles.formHint}>

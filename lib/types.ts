@@ -1825,6 +1825,13 @@ export interface RepTeamTag {
   teamId: string | null;
   kind: RepTagKind;
   name: string;
+  /**
+   * How many of the TEAM's records wear this tag — present on library GET responses only (One
+   * Tag Idiom P0, 2026-09-01), team-scoped even for an org-shared tag. The manager reads it; the
+   * picker deliberately does not (owner ruling: counts belong to the manager, the picker stays
+   * clean).
+   */
+  count?: number;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -1978,7 +1985,15 @@ export interface RepTeamDrill {
   goal: string | null;
   coachingPoints: string[];
   setup: string | null;
+  /**
+   * Legacy free-text kit labels — kept for drills saved before the real 'equipment' library
+   * reached drills (mig 272). A drill carries EITHER this OR `equipmentTagIds` as its live kit;
+   * on-screen the picker resolves these by NAME (best-effort, no auto-minting) and the next save
+   * writes `equipmentTagIds` only. Never partially rewritten.
+   */
   equipment: string[];
+  /** Real 'equipment' tag ids (mig 272) — the current picker's storage. See `equipment` above. */
+  equipmentTagIds: string[];
   /** Retire, never delete — every plan the drill already sits in keeps working untouched. */
   isActive: boolean;
   sortOrder: number;

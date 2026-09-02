@@ -18,6 +18,7 @@ import {
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
+import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
@@ -144,8 +145,14 @@ function PlayerPickerButton({
  * the words plainly makes a drill-backed station visibly a different shape from one a coach typed —
  * shorter, more readable, and honestly distinguishable at a glance.
  */
-function DrillFacts({ station }: { station: PracticeStation }) {
-  const { description, goal, coachingPoints, setup, equipment } = station;
+function DrillFacts({ station, equipmentTags }: { station: PracticeStation; equipmentTags?: PickableTag[] }) {
+  const { description, goal, coachingPoints, setup } = station;
+  // Kit can be legacy NAMES, library IDS (mig 272 drills store ids only), or mid-migration both —
+  // resolve for display, de-duplicated, never written back.
+  const idNames = (station.equipmentTagIds ?? [])
+    .map(id => equipmentTags?.find(t => t.id === id)?.name)
+    .filter((n): n is string => !!n);
+  const equipment = [...new Set([...(station.equipment ?? []), ...idNames])];
   return (
     <>
       {description && (
@@ -189,6 +196,7 @@ function DrillFacts({ station }: { station: PracticeStation }) {
 function StationCard({
   station, index, isRotation, startingGroups, readOnly, withoutPeople,
   staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag,
+  staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onRemove, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
   station: PracticeStation;
@@ -203,6 +211,10 @@ function StationCard({
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   equipmentTags: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
+  staffManage?: TagManageConfig;
+  onStaffTagsChanged?: () => void;
+  equipmentManage?: TagManageConfig;
+  onEquipmentTagsChanged?: () => void;
   nameOf: (playerId: string) => string;
   onPatch: (patch: Partial<PracticeStation>) => void;
   onRemove: () => void;
@@ -247,7 +259,7 @@ function StationCard({
               <Library size={12} aria-hidden /> From your drills
               {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
             </p>
-            <DrillFacts station={station} />
+            <DrillFacts station={station} equipmentTags={equipmentTags} />
             {!readOnly && (
               <div className={styles.ppDrillActions}>
                 {/* ⚠ Detaching is the HONEST act, not a workaround. It keeps every word and hands
@@ -286,6 +298,7 @@ function StationCard({
             </label>
             <PracticeTagPicker label="Equipment" all={equipmentTags} ids={station.equipmentTagIds ?? []}
               legacyNames={station.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
+              manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
               onChange={next => onPatch({ equipmentTagIds: next })}
               emptyHint="No equipment yet — type an item to add your first one." />
           </>
@@ -297,6 +310,7 @@ function StationCard({
         {!withoutPeople && (
           <PracticeTagPicker label="Who runs it" all={staffTags} ids={station.staffTagIds ?? []}
             legacyNames={station.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+            manage={staffManage} onManageChanged={onStaffTagsChanged}
             onChange={next => onPatch({ staffTagIds: next })}
             emptyHint="No staff yet — type a name to add your first one." />
         )}
@@ -706,7 +720,7 @@ function DrillPickerSheet({
  * because that is the one thing that could surprise someone at this moment.
  */
 function PromoteDrillDialog({
-  stationName, tags, onCreateTag, busy, error, onSave, onClose,
+  stationName, tags, onCreateTag, busy, error, onSave, onClose, manage, onManageChanged,
 }: {
   stationName: string;
   tags: PickableTag[];
@@ -715,6 +729,8 @@ function PromoteDrillDialog({
   error: string;
   onSave: (tagIds: string[]) => void;
   onClose: () => void;
+  manage?: TagManageConfig;
+  onManageChanged?: () => void;
 }) {
   const [tagIds, setTagIds] = useState<string[]>([]);
   return (
@@ -734,6 +750,7 @@ function PromoteDrillDialog({
             selected={tagIds}
             onChange={setTagIds}
             onCreate={onCreateTag}
+            manage={manage} onManageChanged={onManageChanged}
           />
           <p className={styles.formHint}>
             The setup, coaching points and equipment come with it. Who ran it and who was at it stay
@@ -756,6 +773,7 @@ function BlockCard({
   block, index, blockCount, clock, blockStartMs, collapsed, readOnly, withoutPeople,
   restTakenElsewhere, drawPool, notReplied,
   showNotReplied, staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
+  staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
   onPromoteStation,
 }: {
@@ -777,6 +795,10 @@ function BlockCard({
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   equipmentTags: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
+  staffManage?: TagManageConfig;
+  onStaffTagsChanged?: () => void;
+  equipmentManage?: TagManageConfig;
+  onEquipmentTagsChanged?: () => void;
   nameOf: (playerId: string) => string;
   onToggleCollapse: () => void;
   onMove: (delta: number) => void;
@@ -888,6 +910,7 @@ function BlockCard({
           {!withoutPeople && (
             <PracticeTagPicker label="Staff" all={staffTags} ids={block.staffTagIds ?? []}
               legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+              manage={staffManage} onManageChanged={onStaffTagsChanged}
               onChange={next => onPatch({ staffTagIds: next })}
               emptyHint="No staff yet — type a name to add your first one." />
           )}
@@ -960,6 +983,8 @@ function BlockCard({
                 withoutPeople={withoutPeople}
                 staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
                 equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+                staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
+                equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
                 nameOf={nameOf}
                 onPatch={patch => patchStation(station.id, patch)}
                 onRemove={() => onPatch({ stations: stations.filter(s => s.id !== station.id) })}
@@ -997,6 +1022,16 @@ interface Props {
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   equipmentTags?: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
+  /**
+   * The manage door for each vocabulary (One Tag Idiom P3) + the page's library refreshes.
+   * Direct-callback props, never object members — the react-hooks refs lint's event-handler rule.
+   */
+  staffManage?: TagManageConfig;
+  onStaffTagsChanged?: () => void;
+  equipmentManage?: TagManageConfig;
+  onEquipmentTagsChanged?: () => void;
+  focusManage?: TagManageConfig;
+  onFocusTagsChanged?: () => void;
   /** This team's own drills PLUS the club's shared set, already merged by the API. */
   drills: RepTeamDrill[];
   /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
@@ -1034,6 +1069,8 @@ export default function PracticePlanEditor({
   drills, onCreateDrill,
   focusTags = [], onCreateFocusTag, planTagIds, onChangePlanTags,
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
+  staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
+  focusManage, onFocusTagsChanged,
   eventStartsAt, eventEndsAt, readOnly, withoutPeople = false,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -1395,6 +1432,7 @@ export default function PracticePlanEditor({
           )}
           <PracticeTagPicker label="Equipment" all={equipmentTags} ids={plan.equipmentTagIds ?? []}
             legacyNames={plan.equipment} disabled={readOnly} onCreate={onCreateEquipmentTag}
+            manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
             onChange={next => onChange({ ...plan, equipmentTagIds: next })}
             emptyHint="No equipment yet — type an item to add your first one." />
         </div>
@@ -1417,6 +1455,8 @@ export default function PracticePlanEditor({
             showNotReplied={attendanceKnown}
             staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+            staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
+            equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
             nameOf={nameOf}
             onToggleCollapse={() => setCollapsed(c => ({ ...c, [block.id]: !c[block.id] }))}
             onMove={delta => moveBlock(i, delta)}
@@ -1579,6 +1619,7 @@ export default function PracticePlanEditor({
             stationName={station.name}
             tags={focusTags}
             onCreateTag={onCreateFocusTag ?? (async () => null)}
+            manage={focusManage} onManageChanged={onFocusTagsChanged}
             busy={promoteBusy}
             error={promoteError}
             onSave={promoteStation}

@@ -70,6 +70,8 @@ export interface DrillInput {
   coachingPoints?: string[] | null;
   setup?: string | null;
   equipment?: string[] | null;
+  /** Ids from the team's 'equipment' library (mig 272). Ids, not names — same rule as `tagIds`. */
+  equipmentTagIds?: string[] | null;
 }
 
 function text(v: unknown, max: number): string {
@@ -169,6 +171,7 @@ export function validateDrillInput(input: unknown): { drill: DrillInput } | { er
       coachingPoints: labels(raw.coachingPoints, MAX_DRILL_POINTS, MAX_DRILL_POINT_LEN),
       setup: optionalText(raw.setup, MAX_DRILL_TEXT_LEN),
       equipment: labels(raw.equipment, MAX_DRILL_EQUIPMENT, MAX_DRILL_NAME_LEN),
+      equipmentTagIds: uniqueIds(raw.equipmentTagIds, MAX_DRILL_EQUIPMENT),
     },
   };
 }
@@ -193,7 +196,10 @@ export function drillToStation(drill: RepTeamDrill, newId: () => string = newPra
   if (drill.goal) station.goal = drill.goal;
   if (drill.coachingPoints.length) station.coachingPoints = [...drill.coachingPoints];
   if (drill.setup) station.setup = drill.setup;
+  // BOTH kit forms travel (mig 272): ids are the live storage, legacy names cover an
+  // un-migrated drill — and a mid-migration drill can honestly hold some of each.
   if (drill.equipment.length) station.equipment = [...drill.equipment];
+  if (drill.equipmentTagIds.length) station.equipmentTagIds = [...drill.equipmentTagIds];
   return station;
 }
 

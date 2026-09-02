@@ -15,6 +15,9 @@ import {
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
+import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
+import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
+import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE, type TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -51,7 +54,7 @@ const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.m
 
 const emptyDraft = (): DrillInput => ({
   name: '', tagIds: [], usualMinutes: null, description: '', goal: '',
-  coachingPoints: [], setup: '', equipment: [],
+  coachingPoints: [], setup: '', equipment: [], equipmentTagIds: [],
 });
 
 // ── Sub-components at MODULE level (never in a render body — a component declared inside one is a
@@ -62,11 +65,19 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 function DrillForm({
-  draft, tags, onCreateTag, busy, error, submitLabel, onChange, onSubmit, onCancel,
+  draft, tags, onCreateTag, equipmentTags, onCreateEquipmentTag,
+  focusManage, onFocusTagsChanged, equipmentManage, onEquipmentTagsChanged,
+  busy, error, submitLabel, onChange, onSubmit, onCancel,
 }: {
   draft: DrillInput;
   tags: PickableTag[];
   onCreateTag: (name: string) => Promise<PickableTag | null>;
+  equipmentTags: PickableTag[];
+  onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
+  focusManage?: TagManageConfig;
+  onFocusTagsChanged?: () => void;
+  equipmentManage?: TagManageConfig;
+  onEquipmentTagsChanged?: () => void;
   busy: boolean;
   error: string;
   submitLabel: string;
@@ -75,16 +86,6 @@ function DrillForm({
   onCancel: () => void;
 }) {
   const points = draft.coachingPoints ?? [];
-  const equipment = draft.equipment ?? [];
-  const [equipDraft, setEquipDraft] = useState('');
-
-  const addEquip = () => {
-    const v = equipDraft.trim();
-    if (v && !equipment.some(e => e.toLowerCase() === v.toLowerCase())) {
-      onChange({ ...draft, equipment: [...equipment, v] });
-    }
-    setEquipDraft('');
-  };
 
   return (
     <div className={styles.ppDrillWrite}>
@@ -103,6 +104,7 @@ function DrillForm({
         selected={draft.tagIds ?? []}
         onChange={next => onChange({ ...draft, tagIds: next })}
         onCreate={onCreateTag}
+        manage={focusManage} onManageChanged={onFocusTagsChanged}
         emptyHint="No tags yet — type a word to make your first one."
       />
 
@@ -159,24 +161,19 @@ function DrillForm({
           onChange={e => onChange({ ...draft, setup: e.target.value })} />
       </label>
 
-      <div className={styles.ppFieldRow}>
-        <FieldLabel>Equipment</FieldLabel>
-        <div className={styles.ppChipWrap}>
-          {equipment.map(e => (
-            <span key={e} className={styles.ppChip}>
-              {e}
-              <button type="button" className={styles.ppChipX} aria-label={`Remove ${e}`}
-                onClick={() => onChange({ ...draft, equipment: equipment.filter(x => x !== e) })}>
-                <X size={11} />
-              </button>
-            </span>
-          ))}
-          <input className={`${styles.input} ${styles.inlineField}`} value={equipDraft}
-            placeholder="Add kit…" aria-label="Equipment" maxLength={MAX_DRILL_NAME_LEN}
-            onChange={e => setEquipDraft(e.target.value)} onBlur={addEquip}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addEquip(); } }} />
-        </div>
-      </div>
+      {/* One Tag Idiom P3 (mig 272): the kit joins the real 'equipment' library — the SAME field a
+          station uses, so "L-screen" is one word wherever it appears. Old free-text names render
+          as one-press adopt rows in the dropdown; never a silent import. */}
+      <PracticeTagPicker
+        label="Equipment"
+        all={equipmentTags}
+        ids={draft.equipmentTagIds ?? []}
+        legacyNames={draft.equipment ?? []}
+        onChange={next => onChange({ ...draft, equipmentTagIds: next })}
+        onCreate={onCreateEquipmentTag}
+        manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
+        emptyHint="No equipment yet — type an item to add your first one."
+      />
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
 
@@ -305,31 +302,10 @@ export default function CoachDrillsPage({
    * would quietly hide vocabulary the coach has already created and invite them to mint a duplicate.
    * The filter CHIPS below are derived from what is on screen, which is a different question.
    */
-  const [tags, setTags] = useState<PickableTag[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelled) setTags(json.tags ?? []);
-      } catch { /* the picker degrades to "no tags yet"; the drill still saves */ }
-    })();
-    return () => { cancelled = true; };
-  }, [orgSlug, teamId]);
-
-  const createTag = useCallback(async (name: string): Promise<PickableTag | null> => {
-    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const tag: PickableTag = json.tag;
-    setTags(prev => (prev.some(t => t.id === tag.id) ? prev : [...prev, tag]));
-    return tag;
-  }, [orgSlug, teamId]);
+  // One hook per vocabulary — the shared fetch/create/merge routine this page used to hand-roll
+  // (the hook's own header names this exact copy as the reason it exists).
+  const { tags, createTag, reload: reloadFocusTags } = useFocusTags(orgSlug, teamId);
+  const { tags: equipmentTags, createTag: createEquipmentTag, reload: reloadEquipmentTags } = useEquipmentTags(orgSlug, teamId);
 
   const chipTags = useMemo(() => collectTags(drills), [drills]);
 
@@ -528,6 +504,7 @@ export default function CoachDrillsPage({
                     name: drill.name, tagIds: drill.tags.map(t => t.id), usualMinutes: drill.usualMinutes,
                     description: drill.description ?? '', goal: drill.goal ?? '',
                     coachingPoints: drill.coachingPoints, setup: drill.setup ?? '', equipment: drill.equipment,
+                    equipmentTagIds: drill.equipmentTagIds,
                   },
                 });
               }}
@@ -566,6 +543,12 @@ export default function CoachDrillsPage({
               draft={editing.draft}
               tags={tags}
               onCreateTag={createTag}
+              equipmentTags={equipmentTags}
+              onCreateEquipmentTag={createEquipmentTag}
+              focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+              onFocusTagsChanged={reloadFocusTags}
+              equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+              onEquipmentTagsChanged={reloadEquipmentTags}
               busy={formBusy}
               error={formError}
               submitLabel={editing.id ? 'Save' : 'Add drill'}

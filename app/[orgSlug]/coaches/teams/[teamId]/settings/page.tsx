@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Archive, Settings } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import TeamTagShelf from '@/components/coaches/TeamTagShelf';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import TeamDocumentsLookCard from '@/components/coaches/TeamDocumentsLookCard';
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
@@ -760,6 +761,9 @@ export default function TeamSettingsPage({
           </CoachCollapseSection>
         )}
 
+
+        {/* ── Tags — the central shelf for every tag library (One Tag Idiom Q1) ── */}
+        <TeamTagShelf orgSlug={orgSlug} teamId={teamId} />
         {/* ── Sharing (Club Shared Book) ───────────────────────────────────── */}
         {showTeamGroups && data.clubBook.showSwitch && (
           <CoachCollapseSection

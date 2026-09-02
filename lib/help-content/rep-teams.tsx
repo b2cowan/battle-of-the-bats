@@ -228,6 +228,7 @@ const repTeamsHelp: HelpPageContent = {
             <>
               <p>Open <strong>Rep Teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
               <p>Managing the shared library is limited to <strong>owners and admins</strong>. It replaces the idea of a coach &ldquo;promoting&rdquo; their own tag — instead of collecting tags from many teams, you author the shared set from one place.</p>
+              <p>Coaches can <strong>see</strong> the shared set from their side — shared tags are listed <strong>read-only</strong> in every team&apos;s tag manager and under the team&apos;s <strong>Settings → Tags</strong>, each marked &ldquo;Shared by your club&rdquo; — so a rename here reaches them with no surprises.</p>
             </>
           ),
         },

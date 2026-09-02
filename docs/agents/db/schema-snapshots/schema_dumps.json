@@ -12629,6 +12629,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_drills",
+        "pos": 17,
+        "column_name": "equipment_tag_ids",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
         "table_name": "rep_team_evaluation_sessions",
         "pos": 1,
         "column_name": "id",
@@ -27065,6 +27074,12 @@
         "table_name": "rep_team_drills",
         "detail": "rep_team_drills_equipment_check",
         "check_clause": "((jsonb_typeof(equipment) = 'array'::text) AND (jsonb_array_length(equipment) <= 12))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_drills",
+        "detail": "rep_team_drills_equipment_tag_ids_check",
+        "check_clause": "((jsonb_typeof(equipment_tag_ids) = 'array'::text) AND (jsonb_array_length(equipment_tag_ids) <= 12))"
       },
       {
         "kind": "CHECK",

@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-01",
-  "total": 43,
+  "generated": "2026-09-02",
+  "total": 45,
   "counts": {
     "tables": 1,
-    "columns": 22,
+    "columns": 23,
     "indexes": 7,
     "constraints": 8,
-    "rls": 5
+    "rls": 6
   },
   "items": [
     {
@@ -19,6 +19,10 @@
     },
     {
       "key": "check:only-dev:rep_fundraiser_entries.rep_fundraiser_entries_method_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_drills.rep_team_drills_equipment_tag_ids_check",
       "sig": ""
     },
     {
@@ -75,6 +79,10 @@
     },
     {
       "key": "column:only-dev:rep_fundraisers.pledged_amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_drills.equipment_tag_ids",
       "sig": ""
     },
     {

@@ -1,0 +1,197 @@
+<title>One Tag Idiom Walk</title>
+<style>
+:root{
+  --bg:#F4F5F7; --card:#FFFFFF; --ink:#1B222C; --ink2:#4C5560; --dim:#7C8590;
+  --line:rgba(27,34,44,.13); --acc:#1E6E74; --acc-soft:rgba(30,110,116,.10);
+  --ok:#2E7D32; --warn:#9A5B00; --danger:#9A2B1E; --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141920; --card:#1C232C; --ink:#E9EEF4; --ink2:#B6BFC9; --dim:#828C98;
+  --line:rgba(233,238,244,.13); --acc:#5FC3C9; --acc-soft:rgba(95,195,201,.12);
+  --ok:#7CC47F; --warn:#E0A64A; --danger:#F08A7A;
+}}
+:root[data-theme="dark"]{
+  --bg:#141920; --card:#1C232C; --ink:#E9EEF4; --ink2:#B6BFC9; --dim:#828C98;
+  --line:rgba(233,238,244,.13); --acc:#5FC3C9; --acc-soft:rgba(95,195,201,.12);
+  --ok:#7CC47F; --warn:#E0A64A; --danger:#F08A7A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:36px 20px 120px}
+h1{font-size:30px;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:19px;margin:34px 0 4px}
+p{margin:0 0 10px;max-width:75ch}
+.lede{color:var(--ink2);font-size:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.part{margin-top:30px}
+.part .where{font-size:13px;color:var(--dim);font-family:var(--mono);margin:0 0 8px}
+label.step{display:flex;gap:11px;align-items:flex-start;padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+label.step:hover{background:var(--acc-soft)}
+label.step input{width:19px;height:19px;margin:2px 0 0;flex-shrink:0;accent-color:var(--acc)}
+label.step.done{opacity:.62}
+label.step .t{min-width:0}
+label.step b{font-weight:650}
+label.step .why{display:block;font-size:13px;color:var(--dim)}
+.flag{border-left:3px solid var(--warn);padding-left:12px;margin:10px 0;color:var(--ink2);font-size:14px}
+.flag b{color:var(--ink)}
+.bar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);margin:0 -20px;padding:10px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bar .n{font-family:var(--mono);font-weight:700;color:var(--acc)}
+.bar button,.actions button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 13px;cursor:pointer}
+.bar button:hover,.actions button:hover{background:var(--acc-soft)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+textarea{width:100%;min-height:150px;font:13px/1.5 var(--mono);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px}
+.note{font-size:13px;color:var(--dim)}
+kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--card)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Owner QA §129 · One Tag Idiom · P0–P4 · 2026-09-01</p>
+  <h1>One Tag Idiom Walk</h1>
+  <p class="lede">One picker, one drawer manager, one door name, one shelf — walked end to end. Ticks save in this browser; when you're done (or stop), press <b>Copy summary</b> and paste it back to the session. Walk on <b>desktop first</b>, then the three phone spot-checks at the end on the actual phone.</p>
+  <div class="card" id="signin"><b>Sign in as</b> — the UAT fixture (dev only, reseeded 2026-09-01):<br>
+    <span style="font-family:var(--mono);font-size:13px">http://localhost:3000 · <b>uat-coach@uat-test-org.local</b> · password <b>UATPassword2026!</b></span><br>
+    <span class="note">Team: <b>UAT Test Team</b> (org <b>uat-test-org</b>) — it has money history, games, practice plans AND club-shared tags, so every shared-section step is walkable. For the role-gating check in Part E, the assistant accounts (<span style="font-family:var(--mono)">uat-asst-money@…</span>, <span style="font-family:var(--mono)">uat-asst-nomoney@…</span>, same password) show fewer library rows by design. Dev credentials only — this page carries them, so keep it private.</span></div>
+  <div class="card note">Before starting: make sure the dev server is up (restart it if screens look stale).</div>
+
+  <div class="bar"><span class="n" id="count">0/0</span><span id="pct" class="note"></span><button id="clear" type="button">Reset ticks</button></div>
+
+  <!-- A -->
+  <div class="part"><h2>Part A — The drawer, from a money form</h2>
+    <p class="where">Money → Ledger → Add a bill (type something real into "Who you owe" first)</p>
+    <div class="card" id="pa">
+      <label class="step"><input type="checkbox" data-k="a1"><span class="t"><b>The toolbar has no "Manage tags" button</b> — just cash on hand, Export, Add a bill.<span class="why">The oversized button you flagged is gone; the Tags pill stays a plain filter with no door.</span></span></label>
+      <label class="step"><input type="checkbox" data-k="a2"><span class="t"><b>In the bill form, click the Tags box: "Manage tags…" is the dropdown's last row</b>, gear icon, quieter than the tag rows.</span></label>
+      <label class="step"><input type="checkbox" data-k="a3"><span class="t"><b>It opens the drawer over the form</b> — slides from the right, titled "Money tags", your typing still visible behind it.</span></label>
+      <label class="step"><input type="checkbox" data-k="a4"><span class="t"><b>Every tag shows a usage count</b> — "on 12 records", or "not used yet" in amber.<span class="why">This is the review's High fix: counts must appear here even though the Ledger's own data doesn't carry them.</span></span></label>
+      <label class="step"><input type="checkbox" data-k="a5"><span class="t"><b>Rename a tag that's on your open bill</b> — Save, and the chip on the form behind renames itself; your typed payee is untouched.</span></label>
+      <label class="step"><input type="checkbox" data-k="a6"><span class="t"><b>Start another rename, then click the dim background</b> — it cancels the rename only; a second click closes the drawer.<span class="why">One act at a time: a stray click must never eat a half-typed name.</span></span></label>
+      <label class="step"><input type="checkbox" data-k="a7"><span class="t"><b><kbd>Esc</kbd> peels the same way</b> — confirmation → edit → drawer, one layer per press, and never closes the bill form underneath.</span></label>
+      <label class="step"><input type="checkbox" data-k="a8"><span class="t"><b>Delete a tag that's in use</b> — the dialog says "It's on N records — they keep everything but the label" and offers <b>Merge instead</b> as a live button. Try Merge instead; the row flips to merge mode.</span></label>
+      <label class="step"><input type="checkbox" data-k="a9"><span class="t"><b>Shared tags are listed</b>, read-only under "Shared by your club", with the one ask-your-club-admin sentence. (Skip if your club shares none.)</span></label>
+      <label class="step"><input type="checkbox" data-k="a10"><span class="t"><b>The drawer's foot link "All tag libraries → Team settings"</b> lands on the settings page with the Tags group open and scrolled into view.</span></label>
+      <label class="step"><input type="checkbox" data-k="a11"><span class="t"><b>The same door appears on every money form</b> — spot-check one: a fundraiser's edit, a sponsor form, or a bill's own page.</span></label>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="part"><h2>Part B — The game form joins the family</h2>
+    <p class="where">Schedule → edit any game → Tags</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="b1"><span class="t"><b>The Tags field is the same picker as money</b> — chips above, search box, dropdown with dots, "+ Create" on a deliberate second tap.</span></label>
+      <label class="step"><input type="checkbox" data-k="b2"><span class="t"><b>Applied game tags are olive chips with a remove ×</b> — no more blue toggle pills, and no more guessing which are applied.</span></label>
+      <label class="step"><input type="checkbox" data-k="b3"><span class="t"><b>"Manage tags…" opens the drawer titled "Game tags"</b>, counts reading "on N games".</span></label>
+      <label class="step"><input type="checkbox" data-k="b4"><span class="t"><b>Bonus repair — the award picker:</b> open Give an award on a game; the chosen award type now visibly reads as chosen.<span class="why">The same style clash that hid the game tags' applied state was silently hiding this one; code-fixed, needs an eyeball.</span></span></label>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="part"><h2>Part C — Practice: strips fold, staff &amp; equipment get their first door</h2>
+    <p class="where">Practice plans → open a plan → a block and a station</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="c1"><span class="t"><b>The suggestion strips under staff/equipment fields are gone</b> — the same words appear in the dropdown on focus; a station is visibly calmer.</span></label>
+      <label class="step"><input type="checkbox" data-k="c2"><span class="t"><b>"Who runs it" carries "Manage staff…" → drawer titled "Staff"</b>, counts "on N plans" — the first time staff have ever been manageable. Merge two spellings of one name if you have them.</span></label>
+      <label class="step"><input type="checkbox" data-k="c3"><span class="t"><b>Equipment's drawer is titled "Equipment"</b> — its merge sentence says "plan or drill".</span></label>
+      <label class="step"><input type="checkbox" data-k="c4"><span class="t"><b>A legacy free-text name shows as an adopt row</b> — "+ Create "…" (from an old record)" inside the dropdown; one press mints it. (Skip if no old plans carry free-typed names.)</span></label>
+      <label class="step"><input type="checkbox" data-k="c5"><span class="t"><b>The doors also reached the small dialogs</b> — Save to my drills, Save as template, and a player's focus-area picker on the tryout card.</span></label>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="part"><h2>Part D — The drill's kit joins the library</h2>
+    <p class="where">Skills &amp; Goals → Drills → edit or create a drill</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="d1"><span class="t"><b>Equipment is a library field now</b> — no more "Add kit…" free text; it offers the same words a station offers.</span></label>
+      <label class="step"><input type="checkbox" data-k="d2"><span class="t"><b>A drill's old free-text kit shows as adopt rows</b> — never silently imported; "buckets" only becomes a tag when you press it.</span></label>
+      <label class="step"><input type="checkbox" data-k="d3"><span class="t"><b>Drop that drill into a practice plan</b> — its kit arrives on the station as real library words.</span></label>
+      <label class="step"><input type="checkbox" data-k="d4"><span class="t"><b>Equipment counts include drills</b> — tag a drill with a fresh equipment word, open the Equipment drawer: the count reflects it.</span></label>
+    </div>
+  </div>
+
+  <!-- E -->
+  <div class="part"><h2>Part E — The shelf</h2>
+    <p class="where">Team settings → Tags</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="e1"><span class="t"><b>A "Tags" group sits between Money and Sharing</b>, closed, its header counting your tags and libraries.</span></label>
+      <label class="step"><input type="checkbox" data-k="e2"><span class="t"><b>One row per library</b> — name, where it's used, "N yours · M shared" — and only the libraries your role can see.</span></label>
+      <label class="step"><input type="checkbox" data-k="e3"><span class="t"><b>A row opens in place into the same manager</b> the drawer shows — same rows, counts, delete sentence; no navigation, no modal.</span></label>
+      <label class="step"><input type="checkbox" data-k="e4"><span class="t"><b>The cap is said once at the foot</b> — "up to 50 of your own tags… merge two to make room."</span></label>
+    </div>
+  </div>
+
+  <!-- F -->
+  <div class="part"><h2>Part F — Scouting stops promising minting</h2>
+    <p class="where">An opponent's page, or the schedule drawer's Scouting tab</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="f1"><span class="t"><b>The observation filter is a segmented switch now</b> — All · Pitching · Hitting… — the Ledger's view-switch shape; visibly not addable.</span></label>
+      <label class="step"><input type="checkbox" data-k="f2"><span class="t"><b>Judgment call:</b> the tag chooser <i>inside the observation entry form</i> still uses pill chips (an input, not a filter). Fine as-is, or should it become a dropdown per your form-controls rule? Note your answer in the summary.</span></label>
+    </div>
+  </div>
+
+  <!-- G -->
+  <div class="part"><h2>Part G — Words and the phone</h2>
+    <p class="where">Anywhere, then the actual phone</p>
+    <div class="card">
+      <label class="step"><input type="checkbox" data-k="g1"><span class="t"><b>The door completes its field's sentence</b> — "Manage tags…" on every Tags field; "Manage staff…" and "Manage equipment…" on those fields (your 09-02 amendment). No retired name survives anywhere. ("Manage our items" on the Budget tab remains, by your ruling — a different object.)</span></label>
+      <label class="step"><input type="checkbox" data-k="g2"><span class="t"><b>The picker legend says "Shared by your club"</b> — not "organization".</span></label>
+      <label class="step"><input type="checkbox" data-k="g3"><span class="t"><b>Help answers match the product</b> — search help for "merge tags": the answers name the in-dropdown door and the Team settings shelf, not retired buttons.</span></label>
+      <label class="step"><input type="checkbox" data-k="g4"><span class="t"><b>📱 Phone: the drawer is a full-screen sheet</b>; rename/merge/delete buttons are comfortably tappable (44px floor).</span></label>
+      <label class="step"><input type="checkbox" data-k="g5"><span class="t"><b>📱 Phone: the shelf rows</b> — library name + count carry the row (the where-used line yields); the manager works inline.</span></label>
+      <label class="step"><input type="checkbox" data-k="g6"><span class="t"><b>📱 Phone: the scouting switch slides sideways</b> in its own lane; the page never scrolls horizontally.</span></label>
+    </div>
+  </div>
+
+  <div class="flag"><b>Known edge, deliberately on the table:</b> if a practice plan is open in one window while you merge one of its tags in another, the open window's unsaved copy still holds the old id and a save can re-write it (the saved record was already corrected; nothing is lost but the merge on that one plan). If this trips you in real use, say so — the fix is scoped and waiting.</div>
+
+  <div class="actions">
+    <button id="copy" type="button">Copy summary</button>
+    <button id="gen" type="button">Show summary</button>
+  </div>
+  <textarea id="out" placeholder="Press Show summary — then paste this back to the session." hidden></textarea>
+  <p class="note">Ticks live only in this browser (localStorage). The paste-back is the record.</p>
+</div>
+
+<script>
+(function(){
+  var KEY='otw129.';
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
+  function safeGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function safeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function refresh(){
+    var done=0;
+    boxes.forEach(function(b){b.closest('label').classList.toggle('done',b.checked); if(b.checked)done++;});
+    document.getElementById('count').textContent=done+'/'+boxes.length;
+    document.getElementById('pct').textContent=done===boxes.length?'— complete':'';
+  }
+  boxes.forEach(function(b){
+    if(safeGet(KEY+b.dataset.k)==='1') b.checked=true;
+    b.addEventListener('change',function(){safeSet(KEY+b.dataset.k,b.checked?'1':'0');refresh();});
+  });
+  document.getElementById('clear').addEventListener('click',function(){
+    boxes.forEach(function(b){b.checked=false;safeSet(KEY+b.dataset.k,'0');});refresh();
+  });
+  function summary(){
+    var lines=['Owner QA §129 — One Tag Idiom walk — '+new Date().toISOString().slice(0,10)];
+    var done=0;
+    document.querySelectorAll('.part').forEach(function(p){
+      var h=p.querySelector('h2').textContent;
+      var ps=[].slice.call(p.querySelectorAll('input[type=checkbox]'));
+      var d=ps.filter(function(b){return b.checked;});
+      done+=d.length;
+      lines.push(h+' — '+d.length+'/'+ps.length+(d.length<ps.length?'  MISSING: '+ps.filter(function(b){return !b.checked;}).map(function(b){return b.dataset.k;}).join(', '):''));
+    });
+    lines.push('TOTAL '+done+'/'+boxes.length);
+    lines.push('Notes / defects / F2 answer:');
+    return lines.join('\n');
+  }
+  document.getElementById('gen').addEventListener('click',function(){
+    var o=document.getElementById('out');o.hidden=false;o.value=summary();o.focus();
+  });
+  document.getElementById('copy').addEventListener('click',function(){
+    var o=document.getElementById('out');o.hidden=false;o.value=summary();
+    o.select();try{document.execCommand('copy');}catch(e){}
+    if(navigator.clipboard){navigator.clipboard.writeText(o.value).catch(function(){});}
+  });
+  refresh();
+})();
+</script>

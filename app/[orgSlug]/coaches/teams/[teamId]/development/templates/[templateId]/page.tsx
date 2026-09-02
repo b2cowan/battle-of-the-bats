@@ -7,6 +7,7 @@ import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags, useEquipmentTags } from '@/components/coaches/use-focus-tags';
+import { FOCUS_TAG_MANAGE, EQUIPMENT_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
 } from '@/lib/rep-plan-templates';
@@ -100,10 +101,10 @@ export default function CoachPlanTemplateEditorPage({
 
   // The team's whole shared vocabulary — one hook, so the four surfaces that offer a tag picker
   // cannot drift on how a tag is fetched, created or merged into local state.
-  const { tags: focusTags, createTag: createFocusTag } = useFocusTags(orgSlug, teamId);
+  const { tags: focusTags, createTag: createFocusTag, reload: reloadFocusTags } = useFocusTags(orgSlug, teamId);
   // Equipment (mig 266) — NOT staff: `withoutPeople` below excludes staff entirely, but a
   // template still carries its own kit list ("the shape and the teaching" includes what to bring).
-  const { tags: equipmentTags, createTag: createEquipmentTag } = useEquipmentTags(orgSlug, teamId);
+  const { tags: equipmentTags, createTag: createEquipmentTag, reload: reloadEquipmentTags } = useEquipmentTags(orgSlug, teamId);
 
   // ⚠ The signature covers the WHOLE editable state, not just the plan: renaming a template and
   // then closing the tab must be as safe as adding a block and closing the tab.
@@ -212,6 +213,8 @@ export default function CoachPlanTemplateEditorPage({
               selected={tagIds}
               onChange={next => { setTagIds(next); touch(); }}
               onCreate={canWrite ? createFocusTag : undefined}
+              manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+              onManageChanged={reloadFocusTags}
               disabled={!canWrite}
               emptyHint="No tags yet — type a word to make your first one."
             />
@@ -238,6 +241,10 @@ export default function CoachPlanTemplateEditorPage({
             canViewAttendance={false}
             equipmentTags={equipmentTags}
             onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
+            equipmentManage={{ ...EQUIPMENT_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/equipment-tags` }}
+            onEquipmentTagsChanged={reloadEquipmentTags}
+            focusManage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}
+            onFocusTagsChanged={reloadFocusTags}
             drills={drills}
             focusTags={focusTags}
             // A template has no date, so there is no running clock and no block start times —

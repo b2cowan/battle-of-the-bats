@@ -2807,6 +2807,9 @@ moment it lands.
 <!-- dict:col:rep_team_drills.equipment -->
 **`equipment`** (jsonb array, NOT NULL, default `[]`; CHECK array + `≤ 12` items) — reusable equipment labels.
 
+<!-- dict:col:rep_team_drills.equipment_tag_ids -->
+**`equipment_tag_ids`** (jsonb array, NOT NULL, default `[]`; CHECK array + `≤ 12` items — mig 272) — ids from the team's **'equipment' tag library** (mig 266 vocabulary), beside the legacy free-text `equipment` labels above. Read-resolve (old drills pre-select by case-insensitive name match, display only), write-whole (the first real edit saves the full resolved id set), never a silent import (unmatched legacy names get a one-press adopt row). ⚠ No FK, by mig 266's own decision — the 'equipment' kind's merge/delete hooks walk `rep_team_drills` alongside plans and templates (`lib/rep-practice-plan-tag-repoint.ts`), and usage counts read all three homes. ⚠ Team vocabulary only: an org-shared drill (`team_id IS NULL`) never carries these; write routes refuse them there and prove each id against the team's library (`isTeamTagOfKind`) before trusting it.
+
 <!-- dict:col:rep_team_drills.is_active -->
 **`is_active`** (bool, NOT NULL, default true) — retire/restore flag (gotcha 3).
 
