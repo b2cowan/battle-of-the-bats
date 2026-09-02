@@ -1,6 +1,7 @@
 # Exceptions First — the Set-dues-for-all-players preview (owner-ruled 2026-09-01)
 
-**Paste into a fresh chat:** `execute docs/projects/active/COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PLAN.md`
+**Paste into a fresh chat:** `execute docs/projects/archive/COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PLAN.md`
+(archived 2026-09-02 — built, reviewed, QA §128 PASSED 28/28, committed `e5bc9fd0`)
 
 **Rulings (all option A, on mockup artifact `4f742ce0-2b8c-4050-a229-911894aaec62` — the spec,
 but THE CODE OUTRANKS THE PICTURE):**

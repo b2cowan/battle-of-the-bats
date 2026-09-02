@@ -16256,7 +16256,7 @@ replace question folds into the preview as the keep-checkbox on the named row; Q
 payout-floor refusal is a blocked row excluded from the button's count, never a run-stopper;
 Q3 A — the identical-rows grid renders only when per-player amounts vary. Deliberately NOT built
 mid-walk (it recomposes the roster door's whole commit step): plan + PM brief written —
-docs/projects/active/COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PLAN.md — queued for its own build and
+docs/projects/archive/COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PLAN.md — queued for its own build and
 its own QA section after this walk closes. Catches 9 and 10 already bind its copy.
 · Eleventh catch (owner screenshot, the Set-refund modal): "Their share" jammed against its
 field and both helper notes floating in oversized, indented gaps. Cause: the notes wore the
