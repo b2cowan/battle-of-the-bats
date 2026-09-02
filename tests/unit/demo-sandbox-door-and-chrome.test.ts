@@ -6,13 +6,12 @@ import {
 } from '../../lib/demo-org.ts';
 import { isReservedOrgSlug } from '../../lib/reserved-slugs.ts';
 import {
-  formatResetCountdown, msUntilSandboxReset, sandboxBannerCopy, sandboxTourSteps, sandboxMoments,
+  sandboxBannerCopy, sandboxTourSteps, sandboxMoments,
 } from '../../lib/sandbox-chrome.ts';
 import {
   SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS, isNavKeyHiddenInSandbox,
 } from '../../lib/sandbox-curation.ts';
 import { SEE_IT_LIVE_PATH } from '../../lib/sandbox-door.ts';
-import { DEMO_CYCLE_MINUTES } from '../../lib/demo-tournament.ts';
 
 /**
  * Slices S3 (the door), S4 (the chrome) and S6 (curation).
@@ -23,8 +22,7 @@ import { DEMO_CYCLE_MINUTES } from '../../lib/demo-tournament.ts';
  *
  *   • nothing derived from the request may choose who gets signed in, and there is deliberately no
  *     redirect parameter at all;
- *   • the door path can never be shadowed by an org slug;
- *   • the countdown reads the same cycle the reconcile job writes against.
+ *   • the door path can never be shadowed by an org slug.
  */
 
 const demo = getDemoOrgByKind('tournament')!;
@@ -125,23 +123,6 @@ describe('the door (S3)', () => {
 });
 
 describe('the chrome (S4)', () => {
-  test('the countdown reads the reconcile job’s own cycle', () => {
-    const cycleMs = DEMO_CYCLE_MINUTES * 60_000;
-    // Cycles are anchored to absolute epoch time, so a browser and a scheduled job agree without
-    // talking to each other. At a boundary the answer is a full cycle, never zero.
-    assert.equal(msUntilSandboxReset(DEMO_CYCLE_MINUTES, 0), cycleMs);
-    assert.equal(msUntilSandboxReset(DEMO_CYCLE_MINUTES, cycleMs), cycleMs);
-    assert.equal(msUntilSandboxReset(DEMO_CYCLE_MINUTES, cycleMs + 60_000), cycleMs - 60_000);
-  });
-
-  test('the countdown never renders a negative or malformed clock', () => {
-    assert.equal(formatResetCountdown(0), '00:00');
-    assert.equal(formatResetCountdown(-5000), '00:00');
-    assert.equal(formatResetCountdown(61_000), '01:01');
-    // A two-hour cycle means minutes are NOT capped at 59.
-    assert.equal(formatResetCountdown(90 * 60_000), '90:00');
-  });
-
   test('the banner never blames the visitor and never says a change failed', () => {
     for (const kind of ['tournament', 'coach'] as const) {
       for (const side of ['public', 'operator'] as const) {
@@ -180,9 +161,6 @@ describe('the chrome (S4)', () => {
         `step ${step.n} leaves the demo org: ${step.href}`);
       const teamId = step.href.split('/teams/')[1]?.split('/')[0];
       assert.ok(teamIds.has(teamId), `step ${step.n} names a team the seed does not build: ${teamId}`);
-      // ⚠ Nothing in this demo moves while you watch — the re-anchor is nightly. A step that
-      // claimed a live payoff would be the tournament sandbox's hardest-won lesson, re-learned.
-      assert.equal(step.watchesLiveScore, undefined, `step ${step.n} promises motion this demo has none of`);
       assert.equal(step.tournamentSlug, undefined, `step ${step.n} pins an event; the coach portal has none`);
     }
 

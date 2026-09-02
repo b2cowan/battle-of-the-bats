@@ -140,17 +140,19 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     // 'public' on purpose: this picture is "what a parent sees", and the operator session
     // would be a lie in it. The page is public — no door needed.
     door: 'public',
-    path: '/riverdale-minor-ball/summer-classic',
-    // A real DOM id, and the same anchor the demo's own guided tour points at. Only renders
-    // while a game is live — the demo's 120-min cycle has a ~4-min seeding seam with nothing
-    // live, so a capture can land in it (~3%): re-run with --only=fan-live-score.
-    ready: '#live-now',
-    clip: '#live-now',
+    path: '/riverdale-minor-ball/summer-classic/standings',
+    // Retargeted 2026-09-02: the demo no longer simulates a live game, so `#live-now` on the
+    // landing page never renders any more (see
+    // docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md). This anchor is the same
+    // one the guided tour's step 2 points at, and it reliably shows the bracket with both
+    // semifinals played and the championship slot already filled in.
+    ready: '[data-sandbox-tour="playoff-bracket"]',
+    clip: '[data-sandbox-tour="playoff-bracket"]',
     width: 390,
     size: { w: 390, h: 240 },
-    takenAt: '2026-08-20',
-    alt: 'A phone-width view of the tournament’s public home page: the Live now section with a game in progress, its score, and where it is being played.',
-    caption: 'The public tournament site on a family’s phone — the live game and its score, updating on its own. No account, no app store, nothing for the organizer to send.',
+    takenAt: '2026-09-02',
+    alt: 'A phone-width view of the tournament’s public standings page: the playoff bracket, both semifinals complete and the championship matchup already filled in.',
+    caption: 'The public tournament site on a family’s phone — the bracket fills itself in from real results. No account, no app store, nothing for the organizer to send.',
   },
   {
     id: 'scorekeeper-view',

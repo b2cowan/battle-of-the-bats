@@ -131,13 +131,17 @@ describe('the dock', () => {
     }
   });
 
-  test('Game day is the only live moment, and the only one that keeps the replay countdown', () => {
+  /**
+   * Until the 2026-09-02 daily-snapshot rewrite this test asserted the opposite: Game day was the
+   * ONE moment that claimed live motion (a dot, a null bannerNote falling back to a replay
+   * countdown). There is no more live-scoring cycle to claim, so Game day now carries a real
+   * banner note like every other moment — the tournament dock's contract converges with the
+   * coach dock's, which never claimed motion in the first place.
+   */
+  test('no moment claims live motion — every moment carries its own banner note', () => {
     const moments = sandboxMoments('tournament', org);
-    assert.deepEqual(moments.filter(m => m.isLive).map(m => m.key), ['game-day']);
     for (const moment of moments) {
-      if (moment.key === 'game-day') assert.equal(moment.bannerNote, null);
-      else assert.ok(moment.bannerNote && moment.bannerNote.length > 0,
-        `${moment.key} would show the Summer Classic's replay countdown — a lie in its banner`);
+      assert.ok(moment.bannerNote.length > 0, `${moment.key} carries no banner note`);
     }
   });
 
@@ -183,12 +187,10 @@ describe('the dock', () => {
     assert.equal(moments.find(m => m.key === 'mid-season')!.fanPath, coachDemo.landingPath);
   });
 
-  test('the coach dock claims no motion: no live dot, and every moment carries its own banner note', () => {
+  test('the coach dock claims no motion: every moment carries its own banner note', () => {
     const moments = sandboxMoments('coach', coachOrg);
-    assert.deepEqual(moments.filter(m => m.isLive), [],
-      'a live dot promises movement while you watch; the coach demo re-anchors nightly');
     for (const moment of moments) {
-      assert.ok(moment.bannerNote && moment.bannerNote.length > 0,
+      assert.ok(moment.bannerNote.length > 0,
         `${moment.key} would fall back to a replay countdown that belongs to the tournament demo`);
     }
   });
@@ -216,16 +218,22 @@ describe('the tour, trimmed to its doors', () => {
    * Steps 5 and 6 used to land exactly where the Registration-week and Morning-after chips land
    * and say roughly what they say — two of six steps spent restating the switcher. They were cut
    * on 2026-08-28. Step 1 also shares a destination (Game day's public home) and was NOT cut,
-   * because it does something the chip cannot: it arms the live-score watch that then follows the
-   * visitor through the rest of the demo. That is the distinction this guard encodes — not
-   * "never overlap", but "overlap only where the step adds something the dock has no way to do".
+   * because it does something the chip cannot: its `anchor` scrolls the visitor straight to the
+   * Tournament Day panel, where a plain dock press only lands at the top of the page. That is the
+   * distinction this guard encodes — not "never overlap", but "overlap only where the step adds
+   * something the dock has no way to do".
+   *
+   * (Until the 2026-09-02 daily-snapshot rewrite, step 1's justification was different: it "armed
+   * the live-score watch" that used to follow the visitor through the rest of the demo — a
+   * mechanism that no longer exists. The overlap itself is unchanged; only the reason it still
+   * earns its place changed.)
    *
    * Adding a step that lands on a dock destination and brings nothing extra fails here. If a new
    * one genuinely earns its place, add it to JUSTIFIED_OVERLAPS with the reason, in the same
    * change — the way HISTORY_ENDPOINTS makes a year parameter a deliberate decision.
    */
   const JUSTIFIED_OVERLAPS: Record<number, string> = {
-    1: 'arms the live-score watch that rides the chrome for the rest of the demo — a dock chip cannot',
+    1: 'anchors to the Tournament Day panel — a dock chip lands on the page but cannot scroll to a section',
     3: "the tour's one crossing from the family side to the operator side; the chip can only land you "
        + 'on the side you are already standing on, so it cannot make that handoff',
   };

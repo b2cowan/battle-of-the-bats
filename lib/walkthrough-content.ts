@@ -47,8 +47,8 @@
  * aside were deleted for that reason; `tests/unit/pitch-slide-library.test.ts` now reads the page
  * panels' own copy, not just the slides, so they cannot creep back.
  *
- * ⚠ CYCLE-PROOF OR IT IS WRONG. The demo worlds re-anchor on a schedule (the tournament every
- * two minutes, the coach club nightly), so any score, count or name in a capture is perishable.
+ * ⚠ CYCLE-PROOF OR IT IS WRONG. The demo worlds re-anchor nightly (both the tournament and the
+ * coach club), so any score, count or name in a capture is perishable.
  * Slide claims and page answers describe what the SCREEN DOES; they never quote a number the
  * next capture might change, and a callout ring marks a COLUMN or a structural region, never
  * "the third row". (The pain headline MAY stage a scene with invented specifics — "eleven
@@ -653,8 +653,8 @@ export const PITCH_SLIDES = {
   '#15': {
     id: '#15',
     // The panel is already a short wide strip. ⚠ NOT ringed: the artifact asks for "the two
-    // tiles that are wrong", but this world re-anchors every two minutes and WHICH tiles are
-    // unhealthy moves with it — a ring on a position would start pointing at a healthy tile.
+    // tiles that are wrong", but this world re-anchors nightly and WHICH tiles are unhealthy
+    // moves with it — a ring on a position would start pointing at a healthy tile.
     imageClass: 'proof',
     shotId: 'registration-health',
     pain: 'A team’s payment fell through — and you find out at the gate.',

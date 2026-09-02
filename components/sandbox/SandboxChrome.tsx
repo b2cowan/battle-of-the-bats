@@ -4,11 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
-import type { DemoLiveBeat } from '@/lib/demo-tournament';
 import { useScrollCollapsed } from '@/lib/use-scroll-collapsed';
 import {
-  formatResetCountdown,
-  msUntilSandboxReset,
   sandboxBackLabel,
   sandboxBannerCopy,
   sandboxMoments,
@@ -25,7 +22,7 @@ import {
 import styles from './SandboxChrome.module.css';
 
 /**
- * SandboxChrome — the banner, the guided tour, the reset countdown and the blocked-save toast.
+ * SandboxChrome — the banner, the guided tour and the blocked-save toast.
  * Mounted by the org shell for demo orgs only, and org-agnostic by construction: the coach
  * sandbox mounts this same component and gets its own steps from `lib/sandbox-chrome.ts`.
  *
@@ -45,12 +42,15 @@ import styles from './SandboxChrome.module.css';
  *     happened — where the finger just was, not on a section the visitor isn't looking at. The
  *     strip appearing is itself a visible change, so no step can read as dead again.
  *  2. **One tour across both halves.** Four steps, not two disconnected sets of three, so the
- *     flip into the organizer's seat arrives having watched a score come in as a parent. The
- *     continuity is the sale.
- *  3. **A live pill that proves the demo is running between score changes.** Measured, the score
- *     moves about nine times in the semifinal's eighty-eight minutes; a prospect watching for
- *     ninety seconds usually sees nothing at all. "Changed 1:12 ago" is a claim that re-proves
- *     itself every second without anyone having to wait.
+ *     flip into the organizer's seat arrives having seen the fan side first. The continuity is
+ *     the sale.
+ *
+ * (A third pillar lived here: a live pill proving the demo was running between score changes.
+ * Removed 2026-09-02 along with the rest of the live-scoring cycle — see
+ * `docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md`. The tournament sandbox no
+ * longer simulates anything moving in real time, so there is nothing left for a freshness pill to
+ * prove; removing its 10-second poll was also a real cut to the request volume every visitor's
+ * tab was generating.)
  *
  * ── The geometry contract ───────────────────────────────────────────────────────────────────
  *
@@ -87,17 +87,6 @@ const SPOTLIGHT_CLASS = 'sandboxSpotlight';
 /** Long enough that a visitor who looked away still sees the ring when they look back. */
 const SPOTLIGHT_MS = 2400;
 const TOAST_MS = 6000;
-/**
- * How often the live pill re-asks what is on the field.
- *
- * Ten seconds, not thirty. The whole promise of step one is "keep this open and you'll see it move",
- * so up to half a minute of lag between the run landing and the pill noticing is exactly the wrong
- * place to economise. The endpoint touches no database — it computes the answer from the clock — so
- * the extra polling costs essentially nothing.
- */
-const BEAT_POLL_MS = 10_000;
-/** How long the pill celebrates a run after it lands. Long enough to catch a glance back. */
-const JUST_SCORED_MS = 12_000;
 /**
  * v4: the tour grew from four steps to six (the moments dock, Phase 2), and progress gained the
  * dock's own pending/narration records. v3's four-step shape cannot be mapped onto it.
@@ -272,22 +261,15 @@ function isOnStepPage(
   return true;
 }
 
-/** `m:ss` since the score last moved. Unpadded — this is prose ("1:31 ago"), not a scoreboard. */
-const formatSince = (ms: number) => formatResetCountdown(ms, false);
-
 export default function SandboxChrome({
   kind,
   slug,
   landingPath,
-  cycleMinutes,
   isDemoOrganizer,
 }: {
   kind: DemoOrgKind;
   slug: string;
   landingPath: string;
-  /** DEMO_CYCLE_MINUTES, passed from the server so the countdown and the reconcile job cannot
-   *  drift apart — and so the client bundle doesn't pull in the whole seed definition. */
-  cycleMinutes: number;
   /** Is this visitor holding the demo organizer's session? Decides where the operator steps POINT
    *  — straight at the real screens for them, at the door for everybody else. */
   isDemoOrganizer: boolean;
@@ -369,129 +351,6 @@ export default function SandboxChrome({
   const dockRef = useRef<HTMLDivElement | null>(null);
   const activeMomentRef = useRef<HTMLButtonElement | null>(null);
   // The effect itself lives further down, where the narration state it now depends on exists.
-
-  // ── The countdown ───────────────────────────────────────────────────────────────────────────
-  // Starts empty and fills in after mount: the cycle boundary is a function of the wall clock, so
-  // rendering it on the server would guarantee a hydration mismatch every single time.
-  const [countdown, setCountdown] = useState<string | null>(null);
-  useEffect(() => {
-    // The replay cycle is the TOURNAMENT sandbox's clock. The coach sandbox re-anchors nightly —
-    // a "Replays in 38:12" there would be a countdown to nothing, the exact false claim the
-    // banner-note slot exists to avoid (its moments all carry their own note instead). No state
-    // write needed on this branch: countdown starts null and this effect is its only writer.
-    if (kind !== 'tournament') return;
-    const paint = () => setCountdown(formatResetCountdown(msUntilSandboxReset(cycleMinutes, Date.now())));
-    paint();
-    const id = window.setInterval(paint, 1000);
-    return () => window.clearInterval(id);
-  }, [cycleMinutes, kind]);
-
-  // ── The live pill ───────────────────────────────────────────────────────────────────────────
-  // What is on the field, and how long since the score moved. Polled rather than passed as a prop
-  // because a visitor sits on one page for minutes: a value baked in at render would freeze while
-  // its "N ago" kept climbing, which would make the pill lie about the one thing it exists to
-  // prove. `now` ticks every second so the reading counts up between polls.
-  const [beat, setBeat] = useState<DemoLiveBeat | null>(null);
-  const [now, setNow] = useState<number | null>(null);
-  /**
-   * When a run landed while the visitor was watching. This is the payoff the whole first step is
-   * built around and it used to pass in complete silence — the pill simply held a different number
-   * the next time anyone looked. Announcing it is the difference between "this is live" as a claim
-   * and as something the visitor saw happen.
-   */
-  const [scoredAt, setScoredAt] = useState<number | null>(null);
-  /** The previous reading, so a run can be told apart from the story simply moving on. */
-  const lastBeatRef = useRef<DemoLiveBeat | null>(null);
-  /** Set while the tab is hidden: the first reading after returning re-baselines, silently. */
-  const skipCelebrationRef = useRef(false);
-  /** Monotonic request id — a slow response that lands after a newer one must not overwrite it. */
-  const beatRequestRef = useRef(0);
-
-  useEffect(() => {
-    // The live pill is the tournament sandbox's proof-of-motion; the coach sandbox has no ticking
-    // score to poll, so it never spends the fetch.
-    if (kind !== 'tournament') return;
-    let cancelled = false;
-    const load = async () => {
-      const request = ++beatRequestRef.current;
-      try {
-        const res = await fetch(`/api/sandbox/live-beat?org=${encodeURIComponent(slug)}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = (await res.json()) as DemoLiveBeat;
-        // Ignore a response overtaken by a newer one — otherwise a slow reply can put an older
-        // score back on screen, on the one element whose whole job is being current.
-        if (cancelled || request !== beatRequestRef.current) return;
-
-        /**
-         * Announce a RUN — not merely a different reading.
-         *
-         * Keying on "the score string changed" was wrong in three ways, all of which fire every
-         * single cycle: at the semifinal→final handover the reading goes 14–6 → 0–0, at the replay
-         * rollover it goes 9–7 → 0–0, and returning to a backgrounded tab shows a score that moved
-         * while nobody was watching. Each announced "There it is — now 0–0", which is the exact
-         * class of false claim this whole redesign exists to remove.
-         *
-         * A run is: the same two teams, still playing, with more runs on the board than last time.
-         */
-        const previous = lastBeatRef.current;
-        lastBeatRef.current = data;
-        const sameGameStillLive =
-          previous !== null &&
-          previous.kind === 'live' && data.kind === 'live' &&
-          previous.homeName === data.homeName && previous.awayName === data.awayName;
-        const scored = sameGameStillLive &&
-          data.homeScore + data.awayScore > previous.homeScore + previous.awayScore;
-
-        if (scored && !skipCelebrationRef.current) setScoredAt(Date.now());
-        skipCelebrationRef.current = false;
-
-        // Stamped together so the pill's score and its freshness reading can never come from two
-        // different instants — and so the clock is seeded from a callback rather than
-        // synchronously in the effect body.
-        setBeat(data); setNow(Date.now());
-      } catch {
-        // A demo whose pill is missing is still a working demo; never surface a fetch failure in
-        // the chrome that carries the honesty claim.
-      }
-    };
-    // A backgrounded tab has nobody watching the pill, and this runs for as long as a visitor
-    // leaves the demo open — a fetch every ten seconds and a re-render of the whole chrome every
-    // second, forever. Stop both while hidden and resync on return, so coming back shows the
-    // current score rather than a stale one catching up. Starting is guarded on visibility too,
-    // so an effect that re-runs while the tab is already hidden stays paused.
-    let poll = 0;
-    let tick = 0;
-    const start = () => {
-      window.clearInterval(poll);
-      window.clearInterval(tick);
-      if (document.hidden) return;
-      poll = window.setInterval(load, BEAT_POLL_MS);
-      tick = window.setInterval(() => setNow(Date.now()), 1000);
-    };
-
-    if (!document.hidden) load();
-    start();
-
-    const onVisibility = () => {
-      if (document.hidden) {
-        // Whatever happens next happened off-screen; the reading on return re-baselines quietly.
-        skipCelebrationRef.current = true;
-        window.clearInterval(poll);
-        window.clearInterval(tick);
-        return;
-      }
-      load();
-      start();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.clearInterval(poll);
-      window.clearInterval(tick);
-    };
-  }, [slug, kind]);
 
   // ── The geometry ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -874,14 +733,6 @@ export default function SandboxChrome({
         : tourUntouched ? 'untouched'
           : 'active';
 
-  const sinceMs = beat && now != null ? now - beat.lastChangedAtMs : null;
-  const untilMs = beat?.nextStartsAtMs != null && now != null ? beat.nextStartsAtMs - now : null;
-  const justScored = scoredAt != null && now != null && now - scoredAt < JUST_SCORED_MS;
-  // The demo's state is a pure function of the clock, so this is exact rather than a guess — which
-  // is what makes it worth saying out loud. Waiting for something you've been told is coming is a
-  // completely different experience from staring at a number that may never move.
-  const nextRunMs = beat?.nextChangeAtMs != null && now != null ? beat.nextChangeAtMs - now : null;
-
   return (
     <>
       {/* data-kind picks the coat: the tournament chrome is dark over the dark admin world; the
@@ -923,12 +774,9 @@ export default function SandboxChrome({
             ) : null}
           </span>
           <span className={styles.reset}>
-            {/* "Replays", not "resets": a stranger reading "resets in 38:45" has no idea what
-                resets, or whether it costs them something. Reserve the row even before the first
-                tick so the banner doesn't jump on mount. In the two still moments this slot tells
-                THAT moment's truth instead — a visitor at a finished event must never read a
-                countdown that belongs to the Summer Classic's replay loop. */}
-            {activeMoment?.bannerNote ?? (countdown ? `Replays in ${countdown}` : ' ')}
+            {/* Every moment supplies its own note (see `SandboxMoment.bannerNote`) — reserve the
+                row even when none is active yet, so the banner doesn't jump on mount. */}
+            {activeMoment?.bannerNote ?? ' '}
           </span>
           {/* One right-hand slot, so the phone's two-column banner has a single thing to pin.
               On a desktop this is simply the CTA where it has always been. */}
@@ -968,8 +816,8 @@ export default function SandboxChrome({
         {moments.length > 0 && (
           // The moments dock (Phase 2): the year as tabs. Plain navigation — same demo, same
           // session, a different event or team of the same association — with the active moment
-          // underlined and Game day carrying the only live dot, because it is the only moment
-          // that moves.
+          // underlined. No moment carries a live dot: nothing in either demo moves while you
+          // watch (2026-09-02 daily-snapshot rewrite retired the tournament's last one).
           <div ref={dockRef} className={styles.dock} role="group" aria-label={copy.dockAriaLabel}>
             <span className={styles.dockLabel}>{copy.dockLabel}</span>
             {moments.map(moment => (
@@ -982,7 +830,6 @@ export default function SandboxChrome({
                 onClick={() => onMoment(moment)}
               >
                 <span className={styles.momentLabel}>
-                  {moment.isLive && <span className={styles.momentLive} aria-hidden="true" />}
                   {moment.label}
                 </span>
                 <span className={styles.momentSub}>{moment.sub}</span>
@@ -1003,45 +850,6 @@ export default function SandboxChrome({
                 : tourPhase === 'untouched' ? 'The season, guided'
                 : `Step ${tour.current} of ${steps.length}`}
             </span>
-
-            {/* The standing proof that the demo is running, between the score changes. */}
-            {beat && sinceMs != null && (
-              <span
-                className={[
-                  styles.pill,
-                  beat.kind === 'between' ? styles.pillSeam : '',
-                  justScored ? styles.pillScored : '',
-                ].filter(Boolean).join(' ')}
-                /* Which claim this pill is making, so the stylesheet can stand the REPEATED one
-                   down where the product's own ticker already makes it, and keep the one the
-                   ticker cannot make ("between games, final in 4:12"). */
-                data-beat={beat.kind}
-                title={beat.kind === 'between'
-                  ? 'The semifinal has ended and the final has not started yet.'
-                  : `${beat.label} in progress`}
-              >
-                <span className={styles.pillBulb} aria-hidden="true" />
-                {beat.kind === 'between' ? (
-                  <>
-                    <span className={styles.pillScore}>Between games</span>
-                    <span className={styles.pillFresh}>
-                      {untilMs != null && untilMs > 0 ? `final in ${formatSince(untilMs)}` : 'final about to start'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className={styles.pillScore}>
-                      <span className={styles.pillTeam}>{beat.homeName}</span>
-                      {' '}{beat.homeScore}–{beat.awayScore}{' '}
-                      <span className={styles.pillTeam}>{beat.awayName}</span>
-                    </span>
-                    <span className={styles.pillFresh}>
-                      {justScored ? 'just scored' : `changed ${formatSince(sinceMs)} ago`}
-                    </span>
-                  </>
-                )}
-              </span>
-            )}
 
             <span className={styles.dots}>
               {steps.map(step => (
@@ -1111,23 +919,6 @@ export default function SandboxChrome({
             <span className={styles.saidText}>
               {narratedStep ? narratedStep.said
                 : side === 'operator' ? (jumpMoment!.saidOperator ?? jumpMoment!.said) : jumpMoment!.said}
-              {/* The payoff for a step whose reward arrives on the tournament's clock rather than
-                  on the click. Without this the visitor is told to "keep this page open" and given
-                  nothing to watch — which is how a working demo got reported as broken. */}
-              {narratedStep?.watchesLiveScore && beat?.kind === 'live' && (
-                justScored ? (
-                  <strong className={styles.saidNow}>
-                    {' '}There it is — now {beat.homeScore}–{beat.awayScore}.
-                  </strong>
-                ) : nextRunMs != null && nextRunMs > 0 ? (
-                  <span className={styles.saidWait}>
-                    {' '}Next run in about <strong>{formatSince(nextRunMs)}</strong>
-                    {/* Under two minutes it is worth waiting for; beyond that, telling somebody to
-                        wait is telling them to leave. Measured gaps run four to seven minutes. */}
-                    {nextRunMs <= 120_000 ? ' — watch it land.' : ' — carry on, and it will flag itself.'}
-                  </span>
-                ) : null
-              )}
             </span>
             {showBack && (
               <button

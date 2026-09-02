@@ -10,7 +10,6 @@ import { OrgNavSync } from '@/components/OrgNavSync';
 import OrgSectionTabs from '@/components/public/OrgSectionTabs';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
-import { DEMO_CYCLE_MINUTES } from '@/lib/demo-tournament';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
 import SandboxChrome from '@/components/sandbox/SandboxChrome';
 
@@ -155,7 +154,6 @@ export default async function OrgLayout({
             kind={demoOrg.kind}
             slug={demoOrg.slug}
             landingPath={demoOrg.landingPath}
-            cycleMinutes={DEMO_CYCLE_MINUTES}
             isDemoOrganizer={isDemoOrganizer}
           />
         </Suspense>

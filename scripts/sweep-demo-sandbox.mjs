@@ -1,31 +1,42 @@
 /**
- * Sweep the "See it live" demo across a WHOLE DAY of replay cycles.
+ * Sweep the "See it live" demo across a long run of CALENDAR DAYS.
  *
- * `check-demo-sandbox.mjs` asks "is the sandbox presentable right now?". This asks the harder
- * question: "is it presentable at every hour of the day?" — and the difference is not academic.
- * The demo's games float with the clock, so a placement that looks fine at 2pm can fall off the
- * end of the calendar day at 10pm. That is exactly what happened: the "Up Next" filler sat four
- * hours past the cycle start, which for the late-evening replays landed after midnight, on the day
- * AFTER the event date, and the game-day dashboard quietly lost a card for about an hour a day.
- * Nobody found it for a week because every spot check happened in the afternoon.
+ * Until the 2026-09-02 daily-snapshot rewrite (see
+ * docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md), `resolveDemoState(now)`
+ * depended on the HOUR of `now` — a rolling 2-hour replay cycle — and this sweep existed to catch
+ * placement bugs that only showed up at certain hours of the day (the "Up Next" filler landing
+ * after midnight for a late-evening replay is the bug that justified building it). That whole
+ * class of bug is gone: the daily-snapshot design ignores the hour and minute of `now` entirely,
+ * so every hour of a given calendar day produces byte-identical output. `check-demo-sandbox.mjs`
+ * already proves that once, for the one instant it runs at.
  *
- * At each of 84 sampled moments (12 cycle starts × 7 points inside the cycle) it asserts:
- *   • a game is LIVE — except in the documented 4-minute bracket seam, where nothing is by design;
- *   • "Up Next" is not empty;
- *   • "Needs a Score" is not empty — a game-day dashboard with nothing to do sells nothing;
- *   • the schedule reads HEALTHY with zero conflicts, and stays in its 89–92 band.
+ * What is left worth sweeping is CALENDAR DAYS, not hours — specifically the two DST transitions
+ * each year, where date-shift arithmetic across a changed UTC offset is the one place a
+ * day-only design can still get a date wrong, plus a broad daily sample to catch anything else
+ * (a leap day, a year boundary, a month-length edge case). Each sampled day is evaluated at
+ * 12:00 UTC — early morning to midday in the org's zone in either DST state, comfortably before
+ * every one of the day's fixed game hours (see lib/demo-tournament.ts's own "fixed daily story"
+ * table — noon through 5pm local, as of this writing) and never at risk of straddling a
+ * calendar-day boundary on its own account. Deliberately not hardcoding the actual hours here a
+ * second time: this comment listed them once already and drifted out of sync with a same-session
+ * change to one of them, which is exactly the kind of doc/code split this sweep exists to avoid
+ * elsewhere — better to point at the one definition than restate it.
  *
- * ⚠ **Run this after ANY change to the demo's times, durations, facilities or cycle structure.**
- * That baseline was hard-won (four diamonds, midday pool play, 75-minute games are each
- * load-bearing) and a single moved game can cost it.
+ * At each sampled day it asserts:
+ *   • the bracket is complete, correctly seeded, and nothing reads as live (nothing ever does, in
+ *     the daily-snapshot design, at a sampling instant safely before every game's hour);
+ *   • "Up Next" and "Needs a Score" are both populated;
+ *   • the schedule reads HEALTHY with zero conflicts;
+ *   • the two still moments (the Season Opener, the Invitational) hold their year-order and their
+ *     exact payment-attention counts — every one of their dates is a fixed OFFSET from `now`
+ *     (see lib/demo-moments.ts), so a correct implementation holds these identically on every
+ *     sampled day; a day where they don't is exactly the DST/date-arithmetic bug this sweep is
+ *     for.
  *
- * Identity comes from the REAL rows (teams, diamonds, divisions); dates, times, statuses and
- * scores are overlaid from `resolveDemoState(now)` — i.e. precisely what the reconcile job would
- * write at that instant. So this measures the demo as a visitor would meet it, without waiting a
- * day to find out.
+ * ⚠ Run this after ANY change to the demo's fixed hours, durations, facilities or date offsets.
  *
  * Run: node --env-file=.env.local scripts/sweep-demo-sandbox.mjs
- * Exit 0 = presentable all day. Non-zero = it has an hour it should not be shown in.
+ * Exit 0 = presentable on every sampled day. Non-zero = it has a day it should not be shown on.
  */
 import { createClient } from '@supabase/supabase-js';
 import { buildScheduleMetrics } from '../lib/schedule-metrics.ts';
@@ -33,7 +44,7 @@ import { zonedWallClockToUtc } from '../lib/timezone.ts';
 import { isGameLive } from '../lib/game-status.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
 import { poolKeyFor } from '../lib/demo-reconcile-core.ts';
-import { resolveDemoState, DEMO_GAME_DURATION_MINUTES, DEMO_CYCLE_MINUTES } from '../lib/demo-tournament.ts';
+import { resolveDemoState, DEMO_GAME_DURATION_MINUTES } from '../lib/demo-tournament.ts';
 import { resolveOpenerState, resolveInvitationalState, invitationalAttentionBuckets } from '../lib/demo-moments.ts';
 import { utcToZonedInputs, ORG_TIME_ZONE } from '../lib/timezone.ts';
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -53,88 +64,88 @@ const keyOf = (g) => g.bracket_code ?? poolKeyFor(divName.get(g.division_id) ?? 
 const failures = []; const scores = [];
 let samples = 0;
 
-// 12 replay cycles per day × 7 moments inside each. The minutes are chosen, not spread evenly:
-// 1 and 30 catch the opening, 60 and 87 the semifinal's end, 90 the four-minute bracket seam, and
-// 100/115 the final-live tail — which is precisely where the "Up Next" gap lived.
-const dayStart = Date.UTC(2026, 7, 3, 0, 0, 0);
-for (let c = 0; c < 12; c++) {
-  for (const minute of [1, 30, 60, 87, 90, 100, 115]) {
-    const now = new Date(dayStart + c * DEMO_CYCLE_MINUTES * 60000 + minute * 60000);
-    const state = resolveDemoState(now);
-    const want = new Map(state.games.map(g => [g.key, g]));
+// A bit over two years, daily — comfortably spans four DST transitions (spring-forward and
+// fall-back, twice each) plus a leap day (2028-02-29) and every month/year boundary in between.
+const DAYS_TO_SWEEP = 800;
+const dayStart = Date.UTC(2026, 0, 1, 12, 0, 0); // 2026-01-01 12:00 UTC
+for (let d = 0; d < DAYS_TO_SWEEP; d++) {
+  const now = new Date(dayStart + d * 86_400_000);
+  const state = resolveDemoState(now);
+  const want = new Map(state.games.map(g => [g.key, g]));
 
-    // Overlay the clock-implied state onto the real rows.
-    const games = rows.map(r => {
-      const d = want.get(keyOf(r));
-      return {
-        id: r.id, tournamentId: r.tournament_id, divisionId: r.division_id,
-        homeTeamId: r.home_team_id, awayTeamId: r.away_team_id,
-        homePlaceholder: r.home_placeholder, awayPlaceholder: r.away_placeholder,
-        date: d ? d.date : r.game_date, time: d ? d.time : r.game_time,
-        venueId: r.diamond_id, venueFacilityId: r.venue_facility_id,
-        status: d ? d.status : r.status, isPlayoff: r.is_playoff,
-        durationMinutes: r.duration_minutes, bracketCode: r.bracket_code,
-        homeScore: d ? d.homeScore : r.home_score, awayScore: d ? d.awayScore : r.away_score,
-      };
-    });
+  // Overlay the clock-implied state onto the real rows.
+  const games = rows.map(r => {
+    const g = want.get(keyOf(r));
+    return {
+      id: r.id, tournamentId: r.tournament_id, divisionId: r.division_id,
+      homeTeamId: r.home_team_id, awayTeamId: r.away_team_id,
+      homePlaceholder: r.home_placeholder, awayPlaceholder: r.away_placeholder,
+      date: g ? g.date : r.game_date, time: g ? g.time : r.game_time,
+      venueId: r.diamond_id, venueFacilityId: r.venue_facility_id,
+      status: g ? g.status : r.status, isPlayoff: r.is_playoff,
+      durationMinutes: r.duration_minutes, bracketCode: r.bracket_code,
+      homeScore: g ? g.homeScore : r.home_score, awayScore: g ? g.awayScore : r.away_score,
+    };
+  });
 
-    const startMs = (g) => Date.parse(zonedWallClockToUtc(g.date, g.time) ?? 0);
-    // The app's OWN liveness rule, imported rather than mirrored — the whole point of this sweep is
-    // to measure what a visitor meets, and a hand-copied time window would drift from what the
-    // pages actually render.
-    const isLive = (g) => isGameLive(g, g.durationMinutes ?? DEMO_GAME_DURATION_MINUTES, now);
+  const startMs = (g) => Date.parse(zonedWallClockToUtc(g.date, g.time) ?? 0);
+  // The app's OWN liveness rule, imported rather than mirrored — the whole point of this sweep is
+  // to measure what a visitor meets, and a hand-copied time window would drift from what the
+  // pages actually render.
+  const isLive = (g) => isGameLive(g, g.durationMinutes ?? DEMO_GAME_DURATION_MINUTES, now);
 
-    const live = games.filter(isLive);
-    const upNext = games.filter(g => g.date === state.eventDate && g.status !== 'completed' && !isLive(g) && startMs(g) > now.getTime());
-    const needsScore = games.filter(g => g.status !== 'completed' && g.status !== 'cancelled' && g.homeScore == null && !isLive(g) && startMs(g) < now.getTime());
+  const live = games.filter(isLive);
+  const upNext = games.filter(g => g.date === state.eventDate && g.status !== 'completed' && !isLive(g) && startMs(g) > now.getTime());
+  const needsScore = games.filter(g => g.status !== 'completed' && g.status !== 'cancelled' && g.homeScore == null && !isLive(g) && startMs(g) < now.getTime());
 
-    const metrics = buildScheduleMetrics({
-      teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.division_id, status: t.status, seed: t.seed })),
-      divisions: divisions.map(d => ({ id: d.id, name: d.name, playoffConfig: d.playoff_config })),
-      tournament: { id: tournament.id, name: tournament.name, settings: tournament.settings },
-      games, standingsGames: games, includePlayoffs: true,
-      gameDurationMinutes: DEMO_GAME_DURATION_MINUTES,
-    });
+  const metrics = buildScheduleMetrics({
+    teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.division_id, status: t.status, seed: t.seed })),
+    divisions: divisions.map(dv => ({ id: dv.id, name: dv.name, playoffConfig: dv.playoff_config })),
+    tournament: { id: tournament.id, name: tournament.name, settings: tournament.settings },
+    games, standingsGames: games, includePlayoffs: true,
+    gameDurationMinutes: DEMO_GAME_DURATION_MINUTES,
+  });
 
-    const where = `${new Date(dayStart + c * 120 * 60000).toISOString().slice(11, 16)}Z +${String(minute).padStart(3)}m (${state.phase.padEnd(15)} local ${state.eventDate} )`;
-    samples++;
-    if (state.phase !== 'bracket-seeded' && live.length < 1) failures.push(`${where} NO LIVE GAME`);
-    if (upNext.length < 1) failures.push(`${where} UP NEXT EMPTY`);
-    if (needsScore.length < 1) failures.push(`${where} NEEDS-A-SCORE EMPTY`);
-    if (metrics.healthTone !== 'good') failures.push(`${where} health ${metrics.healthScore} tone=${metrics.healthTone}`);
-    if (metrics.venueConflictCount + metrics.bufferConflictCount > 0) failures.push(`${where} CONFLICTS ${metrics.venueConflictCount}+${metrics.bufferConflictCount}`);
-    if (metrics.healthScore < 85) failures.push(`${where} health dropped to ${metrics.healthScore}`);
-    scores.push(metrics.healthScore);
+  const where = `${state.eventDate} (day ${d})`;
+  samples++;
+  // Nothing is ever live at 12:00 UTC — every fixed game hour (noon/2pm/3pm/4pm local) sits later
+  // in the org's day than this sampling instant, in both DST states.
+  if (live.length > 0) failures.push(`${where} UNEXPECTED LIVE GAME (${live.length})`);
+  if (upNext.length < 1) failures.push(`${where} UP NEXT EMPTY`);
+  if (needsScore.length < 1) failures.push(`${where} NEEDS-A-SCORE EMPTY`);
+  if (metrics.healthTone !== 'good') failures.push(`${where} health ${metrics.healthScore} tone=${metrics.healthTone}`);
+  if (metrics.venueConflictCount + metrics.bufferConflictCount > 0) failures.push(`${where} CONFLICTS ${metrics.venueConflictCount}+${metrics.bufferConflictCount}`);
+  if (metrics.healthScore < 85) failures.push(`${where} health dropped to ${metrics.healthScore}`);
+  scores.push(metrics.healthScore);
 
-    // ── The two still moments, at this same instant (Phase 2) ──────────────────────────────────
-    // Their dates are pure functions of the clock, so the seams to guard are midnight and DST:
-    // the year must stay in order at every sampled moment (morning-after strictly before game
-    // day's date, registration week strictly after), the Opener must always read "over", and the
-    // Invitational's payment buckets must hold their exact counts — the U13 deposit deadline
-    // sits in the past and U11's in the future BY CONSTRUCTION, and a date-arithmetic slip at a
-    // boundary would silently change who reads Past Due.
-    const opener = resolveOpenerState(now);
-    const invitational = resolveInvitationalState(now);
-    const localToday = utcToZonedInputs(now.toISOString(), ORG_TIME_ZONE).date;
-    if (!(opener.endDate < localToday)) failures.push(`${where} OPENER NOT OVER (${opener.endDate} vs today ${localToday})`);
-    if (!(opener.startDate < opener.endDate)) failures.push(`${where} OPENER WINDOW INVERTED`);
-    if (!(invitational.startDate > localToday)) failures.push(`${where} INVITATIONAL NOT AHEAD (${invitational.startDate})`);
-    if (opener.games.some(g => g.status !== 'completed')) failures.push(`${where} OPENER GAME DANGLING`);
+  // ── The two still moments, at this same instant (Phase 2) ──────────────────────────────────
+  // Their dates are pure functions of the clock, so the seams to guard are midnight and DST:
+  // the year must stay in order at every sampled day (morning-after strictly before game day's
+  // date, registration week strictly after), the Opener must always read "over", and the
+  // Invitational's payment buckets must hold their exact counts — the U13 deposit deadline
+  // sits in the past and U11's in the future BY CONSTRUCTION, and a date-arithmetic slip at a
+  // boundary would silently change who reads Past Due.
+  const opener = resolveOpenerState(now);
+  const invitational = resolveInvitationalState(now);
+  const localToday = utcToZonedInputs(now.toISOString(), ORG_TIME_ZONE).date;
+  if (!(opener.endDate < localToday)) failures.push(`${where} OPENER NOT OVER (${opener.endDate} vs today ${localToday})`);
+  if (!(opener.startDate < opener.endDate)) failures.push(`${where} OPENER WINDOW INVERTED`);
+  if (!(invitational.startDate > localToday)) failures.push(`${where} INVITATIONAL NOT AHEAD (${invitational.startDate})`);
+  if (opener.games.some(g => g.status !== 'completed')) failures.push(`${where} OPENER GAME DANGLING`);
 
-    // The shared mapping in lib/demo-moments.ts — the same buckets the unit tests pin, computed
-    // through the app's real attention engine (an inline copy here had already drifted onto
-    // hardcoded fee literals).
-    const buckets = invitationalAttentionBuckets(invitational, localToday);
-    const wantBuckets = { pending_review: 2, waitlist: 2, unpaid: 3, past_due: 1, missing_email: 0 };
-    for (const [key, want] of Object.entries(wantBuckets)) {
-      if ((buckets[key] ?? -1) !== want) failures.push(`${where} INVITATIONAL ${key.toUpperCase()} = ${buckets[key]}, want ${want}`);
-    }
+  // The shared mapping in lib/demo-moments.ts — the same buckets the unit tests pin, computed
+  // through the app's real attention engine (an inline copy here had already drifted onto
+  // hardcoded fee literals).
+  const buckets = invitationalAttentionBuckets(invitational, localToday);
+  const wantBuckets = { pending_review: 2, waitlist: 2, unpaid: 3, past_due: 1, missing_email: 0 };
+  for (const [key, want] of Object.entries(wantBuckets)) {
+    if ((buckets[key] ?? -1) !== want) failures.push(`${where} INVITATIONAL ${key.toUpperCase()} = ${buckets[key]}, want ${want}`);
   }
 }
 
 // Report the health range so a regression in the 89-92 baseline is visible, not just pass/fail.
-console.log(`\nSampled ${samples} cycle × phase moments across a full day.`);
+console.log(`\nSampled ${samples} calendar day(s), spanning multiple DST transitions.`);
 console.log(`health range across the sweep: ${Math.min(...scores)}–${Math.max(...scores)} / 100`);
-if (failures.length === 0) console.log('✅ every sample: live game, Up Next populated, Needs-a-Score populated, HEALTHY, zero conflicts');
+if (failures.length === 0) console.log('✅ every sampled day: no unexpected live game, Up Next populated, Needs-a-Score populated, HEALTHY, zero conflicts');
 else { console.log(`❌ ${failures.length} failure(s):`); failures.forEach(f => console.log(`   ${f}`)); }
 process.exit(failures.length ? 1 : 0);

@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from './demo-org.ts';
 import {
   resolveDemoState, demoBracketSeeds, DEMO_BRACKET_CODES, DEMO_DIVISIONS, ROUND_ROBIN_PAIRS,
-  type DemoState,
 } from './demo-tournament.ts';
 import {
   DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, OPENER_DIVISIONS,
@@ -14,15 +13,12 @@ import { recordSandboxArrival } from './demo-sandbox-heartbeat.ts';
 /**
  * lib/demo-reconcile.ts — drag the demo tournament back to the state the clock implies.
  *
- * This is the whole "keep it live" mechanism, and it is ONE operation rather than the three the
- * plan originally imagined (a tick, a reset loop, a nightly date re-anchor). Because
- * `resolveDemoState(now)` is a pure function of the clock — dates included — those three are the
- * same job looked at over different timescales:
- *
- *   • run it two minutes apart and it looks like a TICK (the live score has moved on);
- *   • run it either side of a cycle boundary and it looks like a RESET (everything is back at
- *     the top of the story);
- *   • run it tomorrow and it looks like a DATE RE-ANCHOR (the event is "today" again).
+ * As of the 2026-09-02 daily-snapshot rewrite (see
+ * `docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md`), this does exactly one thing:
+ * a nightly DATE RE-ANCHOR. There is no more tick and no more reset — `resolveDemoState(now)`
+ * describes a fixed daily snapshot rather than a live-scoring cycle, so running this job twice in
+ * one day writes the same rows twice, and running it the next day simply moves every date forward
+ * by one.
  *
  * The properties that matter operationally:
  *
@@ -53,8 +49,6 @@ export type DemoReconcileDb = SupabaseClient;
 export interface DemoReconcileResult {
   ok: boolean;
   /** Null when the sandbox is not seeded in this environment — not an error. */
-  phase: DemoState['phase'] | null;
-  minuteInCycle: number | null;
   eventDate: string | null;
   gamesExamined: number;
   gamesUpdated: number;
@@ -108,8 +102,8 @@ export function poolKeyFor(
 
 /**
  * The field-by-field diff between a stored game row and the state the clock implies. Shared by
- * the Classic's live loop and the Opener's re-anchor loop, which layer their own extras
- * (provenance, Final seeding) on top — one comparison, not two drifting copies.
+ * the Classic's re-anchor and the Opener's re-anchor, which layer their own extras (provenance,
+ * Final seeding) on top — one comparison, not two drifting copies.
  */
 function gameFieldPatch(
   game: Pick<GameRow, 'game_date' | 'game_time' | 'status' | 'home_score' | 'away_score'>,
@@ -162,7 +156,8 @@ function orgDateOf(iso: string | null | undefined): string | null {
  * but the first of a day this reads three small tables and writes nothing.
  *
  * Statuses and scores are asserted for the Opener too (they are constants), so a half-finished
- * seed or a hand-edit heals on the next run — the same self-repair stance as the live loop.
+ * seed or a hand-edit heals on the next run — the same self-repair stance as the Classic's own
+ * re-anchor.
  */
 async function reconcileMoments(
   db: DemoReconcileDb,
@@ -278,7 +273,7 @@ export async function reconcileDemoTournament(
   now: Date = new Date(),
 ): Promise<DemoReconcileResult> {
   const empty: DemoReconcileResult = {
-    ok: true, phase: null, minuteInCycle: null, eventDate: null,
+    ok: true, eventDate: null,
     gamesExamined: 0, gamesUpdated: 0, changes: [], errors: [],
   };
 
@@ -318,9 +313,9 @@ export async function reconcileDemoTournament(
   const state = resolveDemoState(now);
   const desiredByKey = new Map(state.games.map(g => [g.key, g]));
 
-  // The Final's home slot: unresolved until the semifinal ends, then the top seed. That slot
-  // filling in IS the "the bracket fills itself in" beat, so it is reconciled explicitly rather
-  // than left to whatever the row happens to hold.
+  // The Final's home slot is always the top seed under the daily-snapshot design (see the
+  // unconditional patch below) — resolved here, from the real DB team id, because
+  // `resolveDemoState` is deliberately I/O-free and cannot look up a name-to-id mapping itself.
   const topSeedName = demoBracketSeeds()[0]?.name;
   const topSeedId = topSeedName ? teamIdByName.get(topSeedName) ?? null : null;
 
@@ -352,12 +347,11 @@ export async function reconcileDemoTournament(
     }
 
     if (key === DEMO_BRACKET_CODES.FIN) {
-      const desiredHome = state.finalIsSeeded ? topSeedId : null;
-      if (game.home_team_id !== desiredHome) {
-        patch.home_team_id = desiredHome;
-        changes.push(desiredHome
-          ? `Final seeded — "Winner SF1" resolved to ${topSeedName}`
-          : 'Final reset to "Winner SF1"');
+      // The Final's home slot is always seeded now — under the daily-snapshot design SF1 is
+      // always already completed, so "Winner SF1" never resolves to anything else.
+      if (game.home_team_id !== topSeedId) {
+        patch.home_team_id = topSeedId;
+        changes.push(`Final seeded — "Winner SF1" resolved to ${topSeedName}`);
       }
     }
 
@@ -399,8 +393,6 @@ export async function reconcileDemoTournament(
 
   return {
     ok: errors.length === 0,
-    phase: state.phase,
-    minuteInCycle: state.minuteInCycle,
     eventDate: state.eventDate,
     gamesExamined: games.length,
     gamesUpdated: updated,

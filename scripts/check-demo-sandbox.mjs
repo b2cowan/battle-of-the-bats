@@ -2,19 +2,21 @@
  * Verify the Tournament Admin Sandbox is in the state a prospect should find it in.
  *
  * This is the demo's smoke test AND its staleness detector. A sandbox that has quietly stopped
- * ticking still renders — it just shows a tournament whose "live" semifinal finished six hours
- * ago, which is worse than showing nothing, because it is the one surface we point strangers at
- * as proof the product works.
+ * re-anchoring still renders — it just shows a tournament dated days in the past, which is worse
+ * than showing nothing, because it is the one surface we point strangers at as proof the product
+ * works.
  *
  * It asserts, against the live database and the app's OWN engines:
  *   1. the demo org and event exist, are comped, and are excluded from the public directory;
  *   2. the bracket seeding matches what the real standings engine produces;
- *   3. exactly one game is LIVE by the app's own time-window rule (`lib/game-status.ts`);
+ *   3. nothing reads as LIVE by the app's own time-window rule (`lib/game-status.ts`) — the
+ *      daily-snapshot design (2026-09-02) never simulates a game in progress, though the Final
+ *      can harmlessly read as live if this check happens to run during its own real-world hour;
  *   4. "Needs a Score" and "Up Next" are both non-empty — the dashboard has a job in it;
  *   5. the schedule is HEALTHY with zero conflicts, using the real schedule-health engine —
  *      the "try to break it" beat needs something intact to break;
  *   6. the rows agree with what `resolveDemoState(now)` says they should be, i.e. the reconcile
- *      job has run recently enough that the demo is not stale.
+ *      job has run TODAY, so the demo is not stale.
  *
  * Exit code 0 = the sandbox is presentable. Non-zero = do not point anyone at it.
  *
@@ -24,6 +26,7 @@ import { createClient } from '@supabase/supabase-js';
 import { buildScheduleMetrics } from '../lib/schedule-metrics.ts';
 import { computeTournamentStandings } from '../lib/tie-breakers.ts';
 import { zonedWallClockToUtc, utcToZonedInputs, ORG_TIME_ZONE } from '../lib/timezone.ts';
+import { isGameLive } from '../lib/game-status.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
 import {
   resolveDemoState, demoBracketSeeds, DEMO_GAME_DURATION_MINUTES,
@@ -35,7 +38,6 @@ import {
 } from '../lib/demo-moments.ts';
 import { buildRegistrationAttentionSummary } from '../lib/registration-attention.ts';
 
-const LIVE_GRACE_MINUTES = 30;   // mirrors lib/game-status.ts
 const failures = [];
 const notes = [];
 const ok = (label) => console.log(`  ✓ ${label}`);
@@ -140,61 +142,46 @@ check(
   'SF2 is #2 vs #3',
 );
 
-// ── 4. the clock ─────────────────────────────────────────────────────────────────────────────
-console.log('\nLive state');
+// ── 4. the daily snapshot ────────────────────────────────────────────────────────────────────
+console.log('\nDaily snapshot state');
 const now = new Date();
 const state = resolveDemoState(now);
-console.log(`  (phase ${state.phase}, minute ${state.minuteInCycle} of the cycle)`);
+console.log(`  (event date ${state.eventDate})`);
 
-const isLive = (g) => {
-  if (['completed', 'forfeit', 'cancelled'].includes(g.status)) return false;
-  const startIso = zonedWallClockToUtc(g.game_date, g.game_time);
-  if (!startIso) return false;
-  const start = Date.parse(startIso);
-  const end = start + ((g.duration_minutes ?? DEMO_GAME_DURATION_MINUTES) + LIVE_GRACE_MINUTES) * 60_000;
-  return now.getTime() >= start && now.getTime() < end;
-};
+// The app's OWN liveness rule, delegated to rather than hand-copied — this used to re-derive the
+// time window itself (with its own `LIVE_GRACE_MINUTES` "mirrors lib/game-status.ts" constant),
+// which is exactly the kind of copy `lib/game-status.ts`'s own header warns against. Only the
+// row-shape adapter (snake_case DB columns → the camelCase `LiveGameInput` shape) stays local.
+const isLive = (g) => isGameLive(
+  { status: g.status, date: g.game_date, time: g.game_time },
+  g.duration_minutes ?? DEMO_GAME_DURATION_MINUTES,
+  now,
+);
 
+// Nothing in the demo simulates being live any more (2026-09-02 daily-snapshot rewrite) — both
+// semifinals are always COMPLETED, and the Final and the "Up Next" filler are each SCHEDULED at a
+// fixed hour. Either — and, in the hour their windows overlap, both — can read as live by the
+// app's own generic time-window rule if this check happens to run near their real-world hour;
+// that is ordinary platform behaviour (a real game scheduled for that hour would do the same),
+// not a staleness signal, so it is allowed rather than asserted against.
 const liveGames = games.filter(isLive);
-// The 'bracket-seeded' phase is the four-minute seam between the semifinal ending and the Final
-// starting, where nothing is live by design (the Final needs a legal rest gap). Everywhere else,
-// a demo with no live game is a demo that looks like a screenshot, and that IS a failure.
-if (state.phase === 'bracket-seeded') {
-  ok(`no live game — expected during the ${state.phase} seam (4 min of every 120)`);
-  notes.push('sampled during the bracket-seeded seam; re-run in a minute to see a live game');
-} else {
-  check(liveGames.length >= 1, 'at least one game is LIVE right now',
-    `${liveGames.length} live — the demo would look like a recording`);
-}
-check(liveGames.length <= 2, 'not implausibly many games live at once', `${liveGames.length} live`);
+check(liveGames.length <= 2, 'at most the Final and the Up Next filler can ever read as live',
+  `${liveGames.length} live`);
 
-// Staleness: the rows must agree with what the clock says they should be. If they don't, the
-// reconcile job has not run recently and the demo is drifting toward looking abandoned.
-//
-// ⚠ Both checks here USED to pass on a demo that was a full cycle behind, which is how a frozen
-// sandbox reached an owner QA pass on 2026-08-03 with a clean bill of health:
-//   • the date check compared only `game_date`, and the drift is in the TIME — a demo exactly one
-//     120-minute cycle stale still falls on the same calendar day for most of the day;
-//   • the score check tolerated ±2, and a stale row SATURATES at the game's final score, which is
-//     always within 2 of the late-cycle partial it is being compared against.
-// They now compare the semifinal's full timestamp and its STATUS, which is what actually moves.
+// Staleness: the rows must agree with what the clock says they should be. Nothing inside a day
+// ever moves any more, so the whole staleness signal is simply whether the bracket is anchored to
+// TODAY — if the reconcile job hasn't run today, these dates still show yesterday (or older).
 const expectedSf1 = state.games.find(g => g.key === DEMO_BRACKET_CODES.SF1);
-const sf1Time = (sf1.game_time ?? '').slice(0, 8);
 check(
-  sf1.game_date === expectedSf1.date && sf1Time === expectedSf1.time,
-  'the semifinal is anchored to the current cycle',
-  `row says ${sf1.game_date} ${sf1Time}, the clock says ${expectedSf1.date} ${expectedSf1.time}`,
+  sf1.game_date === expectedSf1.date,
+  'the bracket is anchored to today (the reconcile job is actually running)',
+  `row says ${sf1.game_date}, the clock says ${expectedSf1.date}`,
 );
-// Status is the honest staleness signal: it flips exactly once per cycle, at minute 88, and a
-// stale row therefore disagrees for most of the cycle rather than coincidentally matching.
-check(
-  sf1.status === expectedSf1.status,
-  'the reconcile job is actually running (semifinal status matches the clock)',
-  `row is ${sf1.status}, the clock says ${expectedSf1.status} at minute ${state.minuteInCycle}`,
-);
+check(sf1.status === expectedSf1.status, 'SF1 reads completed, as the daily snapshot always shows it',
+  `row is ${sf1.status}`);
 const scoreDrift = Math.abs((sf1.home_score ?? 0) - (expectedSf1.homeScore ?? 0));
-check(scoreDrift <= 2, 'the live score is current',
-  `row ${sf1.home_score}-${sf1.away_score}, clock expects ${expectedSf1.homeScore}-${expectedSf1.awayScore}`);
+check(scoreDrift === 0, 'SF1’s score matches its fixed final — nothing here is ever partial',
+  `row ${sf1.home_score}-${sf1.away_score}, expected ${expectedSf1.homeScore}-${expectedSf1.awayScore}`);
 
 // Who is at fault when the demo IS stale? The scheduler heartbeats on dispatch and the reconcile
 // heartbeats on arrival, so comparing the two separates "nothing is scheduled" from "the schedule
@@ -217,10 +204,7 @@ if (dispatched !== null && (arrived === null || arrived > dispatched + 10)) {
     'arriving. Check the Vault base URL for this environment (migration 183).',
   );
 }
-check(
-  state.finalIsSeeded ? !!fin.home_team_id : !fin.home_team_id,
-  state.finalIsSeeded ? 'the Final has seeded itself' : 'the Final still reads "Winner SF1"',
-);
+check(!!fin.home_team_id, 'the Final is already seeded — no visitor ever sees "Winner SF1"');
 
 // ── 5. the dashboard has a job in it ─────────────────────────────────────────────────────────
 console.log('\nGame-day dashboard');
@@ -233,7 +217,25 @@ check(needsScore.length >= 1, '"Needs a Score" is not empty', 'a dashboard with 
 const upNext = games.filter(g =>
   g.game_date === todayKey && g.status !== 'completed' && !isLive(g) &&
   Date.parse(zonedWallClockToUtc(g.game_date, g.game_time) ?? 0) > now.getTime());
-check(upNext.length >= 1, '"Up Next" is not empty');
+// After the "Up Next" filler's own hour has come and gone, nothing later is scheduled today — a
+// real tournament's day runs out too. That specific, expected gap is a note; anything else
+// showing the bucket empty (something scheduled later today not being counted) is a real defect.
+const todaysUnfinished = games.filter(g =>
+  g.game_date === todayKey && g.status !== 'completed' && g.status !== 'cancelled');
+// `.every()` on an empty array is vacuously true — guarded explicitly, or a reconcile so stale
+// that NO row carries today's date at all (todaysUnfinished empty) would read as "the day
+// gracefully ran out" instead of the real staleness it is. The SF1 date-anchor check above would
+// still catch that case, but this assertion's own signal must not be silenced by it.
+const dayHasRunOut = todaysUnfinished.length > 0 && todaysUnfinished.every(g =>
+  Date.parse(zonedWallClockToUtc(g.game_date, g.game_time) ?? 0) <= now.getTime());
+if (upNext.length >= 1) {
+  ok('"Up Next" is not empty');
+} else if (dayHasRunOut) {
+  notes.push('"Up Next" is empty — every game scheduled today has already started; expected once '
+    + "the day's last fixed hour has passed, not a defect");
+} else {
+  check(false, '"Up Next" is not empty');
+}
 
 // ── 6. the schedule is healthy (the beat needs something intact to break) ────────────────────
 console.log('\nSchedule health (the real engine)');

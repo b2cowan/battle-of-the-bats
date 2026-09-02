@@ -21,7 +21,7 @@
  *   • tournament    "Riverdale Summer Classic"  slug=summer-classic
  *   • 1 venue + 2 diamonds · 2 divisions (U11 with a bracket, U13 round-robin only) · 8 teams
  *   • pool play scored deterministically, the U11 bracket seeded from the REAL standings engine,
- *     and every game anchored to the current cycle so the event is always live "today"
+ *     and every game anchored to today's date so the event is always dated "today"
  *
  * Re-running wipes and recreates the tournament; the org and the demo user are reused, so their
  * ids stay stable across reseeds.
@@ -268,9 +268,9 @@ const bracketRows = [
   },
   {
     code: DEMO_BRACKET_CODES.FIN, desired: fin, facility: 1,
-    // "Winner SF1" stays UNRESOLVED until the reconcile job fills it — that unresolved slot
-    // becoming a real team is the "the bracket fills itself in" beat the whole demo is built on.
-    homeTeamId: state.finalIsSeeded ? seedTeamId(1) : null,
+    // SF1 is always already completed under the daily-snapshot design, so the Final's home slot
+    // is seeded from the start — no visitor ever sees the "Winner SF1" placeholder.
+    homeTeamId: seedTeamId(1),
     awayTeamId: seedTeamId(2),
     homePlaceholder: `Winner ${DEMO_BRACKET_CODES.SF1}`,
     awayPlaceholder: `Winner ${DEMO_BRACKET_CODES.SF2}`,
@@ -531,7 +531,6 @@ console.log(`\n✅ Seeded the sandbox — "${DEMO_TOURNAMENT_NAME}" for ${DEMO_O
 console.log(`   Plan: tournament_plus (comped) · not discoverable · not in the directory`);
 console.log(`   ${DEMO_DIVISIONS.length} divisions · ${domainTeams.length} teams · ${poolInserted + bracketRows.length} games`);
 console.log(`   Window: ${startDate} → ${state.eventDate} (playoff day = today)`);
-console.log(`   Cycle phase: ${state.phase} (minute ${state.minuteInCycle} of ${120})`);
 console.log(`   ${unscoredCount} pool game(s) intentionally unscored → "Needs a Score" is never empty`);
 console.log(`\n   ${bracketDivision.name} seeding from the real standings engine:`);
 standings.forEach((s, i) => console.log(`     #${i + 1} ${s.teamName}  (${s.w}-${s.l}${s.t ? '-' + s.t : ''}, ${s.pts} pts, RD ${s.rd >= 0 ? '+' : ''}${s.rd})`));

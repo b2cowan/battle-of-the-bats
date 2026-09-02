@@ -61,8 +61,6 @@ export interface SandboxMoment {
   fanPath: string;
   /** Where an operator-side press lands: the moment's flagship admin screen (or the door). */
   operatorPath: string;
-  /** Only Game day carries the live dot — it is the only moment that moves. */
-  isLive?: boolean;
   /** What the narration strip says on arrival. Time named first, always. */
   said: string;
   /**
@@ -77,12 +75,9 @@ export interface SandboxMoment {
    * inside the one layer whose entire risk is going out of date. Omitted means `said` serves both.
    */
   saidOperator?: string;
-  /**
-   * What the banner's countdown slot shows while standing in this moment. Null = Game day's
-   * own replay countdown. A stranger at a finished event must never read "Replays in 38:12" —
-   * that countdown belongs to the Summer Classic's loop and would be a lie anywhere else.
-   */
-  bannerNote: string | null;
+  /** What the banner's note slot shows while standing in this moment. Every moment supplies its
+   *  own — there is no more live countdown for any of them to fall back to. */
+  bannerNote: string;
 }
 
 /** The moments of the demo's year, in the order the year happens. */
@@ -110,14 +105,13 @@ export function sandboxMoments(
     {
       key: 'game-day',
       label: 'Game day',
-      sub: 'happening now',
+      sub: 'semis done, final to come',
       tournamentSlug: DEMO_TOURNAMENT_SLUG,
       fanPath: org.landingPath,
       operatorPath: operatorPath(`${adminBase}/dashboard`),
-      isLive: true,
-      said: 'Back to game day — the Summer Classic is live right now.',
-      saidOperator: 'Back to game day — the Summer Classic is live right now, and this dashboard is running it.',
-      bannerNote: null,
+      said: 'Back to game day — both semifinals are in the books and the final is set, waiting to be played.',
+      saidOperator: 'Back to game day — both semifinals are in the books, the final is seeded, and this dashboard is running it.',
+      bannerNote: 'Final still to play',
     },
     {
       key: 'morning-after',
@@ -262,17 +256,6 @@ export interface SandboxTourStep {
    * same rule, opted into per step so the tournament tour's behaviour is untouched.
    */
   exactPath?: boolean;
-  /**
-   * This step's payoff is the live score moving, which happens on the tournament's clock rather
-   * than on the visitor's click. The chrome adds a live countdown to the next run underneath the
-   * sentence, and announces the run when it lands.
-   *
-   * ⚠ Steps like this must never be LABELLED as though pressing them causes the change. The first
-   * version was called "Watch the score change by itself" and the owner pressed it, watched a static
-   * 3–8 for several minutes, and reported it as broken. The score had in fact moved — five minutes
-   * later. The button was writing a cheque the tournament's clock cashes on its own schedule.
-   */
-  watchesLiveScore?: boolean;
   /** Label for the control that advances to the next step. */
   nextLabel?: string;
 }
@@ -387,22 +370,18 @@ export function sandboxTourSteps(
     {
       n: 1,
       // Names what pressing it DOES, in the present tense, because that is what it can guarantee.
-      // The score moving is the payoff, and the payoff is promised in the sentence below — with a
-      // countdown to it — not in the button.
-      label: 'Show me the game that is live',
+      // As of the 2026-09-02 daily-snapshot rewrite this points at a static picture — the day's
+      // games, already played or seeded — not a game in progress. See
+      // docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md.
+      label: 'See what game day looks like',
       href: org.landingPath,
-      anchor: '#live-now',
-      // Deliberately does NOT ask them to sit and watch. Measured gaps between runs are four to
-      // seven minutes, and "keep this page open" spends a prospect's attention on staring at a
-      // static number. The score strip rides the chrome, so it follows them through the rest of
-      // the tour and flags the run wherever they are — which is the better invitation.
-      said: 'This game is being played right now. Nobody types these scores in — the strip above updates on its own, and it follows you through the rest of the demo.',
-      watchesLiveScore: true,
+      anchor: '#today',
+      said: 'Both semifinals are already final, real scores and all. The championship is on the schedule for later today, waiting to be played.',
       nextLabel: 'Next: the bracket',
     },
     {
       n: 2,
-      label: 'See the bracket fill itself in',
+      label: 'See the bracket, already filled in',
       /**
        * The bracket DIAGRAM lives on Standings, not on the Playoffs page.
        *
@@ -414,7 +393,7 @@ export function sandboxTourSteps(
        */
       href: `${org.landingPath}/standings`,
       anchor: '[data-sandbox-tour="playoff-bracket"]',
-      said: 'The championship slot read "Winner of SF1" until the semifinal ended. Nobody moved that team across — finishing the game did it.',
+      said: 'The championship slot already shows a real team name, not "Winner of SF1." Nobody dragged it in there — finishing the semifinal did that on its own, the same way it would for a real tournament.',
       nextLabel: "Next: the organizer's seat",
     },
     {
@@ -552,6 +531,20 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          both approved, both filed, pinned by `check-demo-coach`), so a prospect who opens the report
          finds the real thing with no sentence over it to go stale. If the owner wants it narrated,
          the honest move is to SWAP a clause, not append a fourth. */
+      /* ⚠⚠ RE-READ FOR BvA "TWO TRUTHS" (2026-09-02) — the WHOLE coach-money narration, walked as
+         P1 of that build (dock lines and tour steps; CLAUDE.md had flagged this surface stale
+         three releases running, and this read clears the flag):
+           · THIS SENTENCE STANDS. It names the report's variance verdict and the dues rate — not
+             the chart's position (now the "Spending trend" shelf below the table), not the
+             Showing menu (FIVE readings now: "Actual" renamed "Cash", "Season spending" new), and
+             not the Difference basis (plan vs spending since Q3) — so nothing here went stale.
+           · Step 5 (the Ledger), the off-season books line and Season's End's "how the money
+             added up": all untouched — none names a lens, the chart, or the report's totals.
+           · SHOULD a moment show Season spending? The seeded world already CAN: the Spring
+             Invitational's $400 parent-paid deposit (EX-SPRING, mig 267) now appears on the new
+             reading in its category and month, tagged "paid by a family" — no seed change
+             needed, and per the `ea8ddd14` cap no clause was added. If the owner wants the
+             two-truths story narrated, swap a clause; flagged at Owner QA §132. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
@@ -690,31 +683,3 @@ export function sandboxBackLabel(kind: DemoOrgKind): string {
   return kind === 'tournament' ? '← Back to game day' : '← Back to the demo';
 }
 
-/**
- * Milliseconds until the sandbox replays.
- *
- * Reads the SAME cycle the reconcile job writes against: cycles are anchored to absolute epoch
- * time (`lib/demo-tournament.ts`), never to a first-run timestamp, so a browser and a scheduled
- * job compute the same boundary without talking to each other. That is what makes the countdown
- * proof the demo is running rather than a decoration — it is the real clock, not an animation.
- */
-export function msUntilSandboxReset(cycleMinutes: number, now: number): number {
-  const cycleMs = cycleMinutes * 60_000;
-  return cycleMs - (now % cycleMs);
-}
-
-/**
- * `mm:ss` from milliseconds. Minutes are not capped at 59 — the replay cycle is two hours.
- *
- * `padMinutes` is the only thing that varies between the two places this is needed: the banner's
- * replay countdown is a clock and wants a fixed `05:28`, while the score pill's "changed 1:31 ago"
- * is prose and a leading zero there reads as a stopwatch. One rounding rule, two presentations —
- * the alternative was a near-identical second formatter living in the component.
- */
-export function formatResetCountdown(ms: number, padMinutes = true): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  const mm = padMinutes ? String(minutes).padStart(2, '0') : String(minutes);
-  return `${mm}:${String(seconds).padStart(2, '0')}`;
-}
