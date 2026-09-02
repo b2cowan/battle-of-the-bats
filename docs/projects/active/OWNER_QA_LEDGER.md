@@ -15742,7 +15742,35 @@ and nothing was staged.
 
 ---
 
-## §126 · New money, or money back — the club stops having its mind read — BUILT, awaiting QA · committed `2d430bad` 2026-09-01 (carried by the fundraiser-band commit; mig 271 on dev, prod-owed)
+## §126 · New money, or money back — the club stops having its mind read — ✅ PASSED (43/43, zero issues) · closed 2026-09-02 · committed `2d430bad` 2026-09-01 + `f318858a` 2026-09-02 (mig 271 on dev, prod-owed)
+
+**⚠ WHAT THE 43/43 COVERS, AND WHAT IT DOES NOT — stated because this walk was passed in two
+sittings and the section grew between them.** The counted walk — *"Ticked 43 of 43. Every step ticked
+— nothing outstanding."* — was the club-money build: the money-in ask, the report fork, Scheduled,
+the hub headroom. **The Club tab was then reshaped and reworked on top of it** (one table with two
+group bands; then the rows learning to open in place, with the nine `/simplify` and `/review` fixes),
+and the owner closed the whole section on 2026-09-02. **Those later parts rest on that confirmation,
+not on a counted paste-back** — recorded this way rather than implying a 43-step walk covered work
+that did not exist when it was written.
+
+**The four rulings from the counted walk, all settled:**
+1. **Budget card — KEEP it netting recorded money back**, not scoped to club money only. (This was
+   the term shipped one step wider than the mockup's annotation; the owner ruled the wider term in.)
+2. **Demo tour — leave the step alone**, no clause swap for the grant.
+3. **The corrected "doesn't appear on Budget vs. Actual" sentence** → became its own project, and
+   that project is now **§130, PASSED 30/30**. ⚖ The owner's call to isolate it rather than fold it
+   into the forms-review walk was right: it grew into an audit of ~25 claims, a derived-figures
+   module, a chip strip and a help sweep — every one of which would have been dropped inside a
+   larger walk.
+4. **Seed more club records for the filter chips — NO**, left as is.
+
+⏳ **THE ONE ITEM OWED AT COMMIT IS NOW CLOSED.** The Club tab's layout baseline was owed a re-key
+with reasons (cards became rows, two sections became one, a table appeared). **In the event nothing
+re-keyed** — the sweep reports no new findings at 361/390/768/1440 — and the only movement was in the
+other direction: one entry stopped reproducing (the *Make a request* tap-floor, fixed by this work),
+pruned 2026-09-02 and verified to have touched **nothing outside `coach-club`**.
+
+⚠ **Still prod-owed from this section: migration 271.**
 
 > ⚠ **RENUMBERED FROM §124 → §126 on 2026-09-01, and THIS ONE MOVED RATHER THAN THE OTHER.** Two
 > sessions claimed §124 on 2026-08-30 within hours of each other — this one and *The dues forms,

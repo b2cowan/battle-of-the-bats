@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T14:28:57.587Z",
+  "generated": "2026-09-02T19:12:07.799Z",
   "entries": {
     "coach-fundraisers|361|tap-floor|button·Chocolate sale": {
       "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
@@ -644,10 +644,6 @@
     "coach-club|768|tap-floor|button·Export": {
       "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
       "detail": "33px tall (floor 44)"
-    },
-    "coach-club|768|tap-floor|button·Make a request": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-payables|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
