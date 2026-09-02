@@ -1180,6 +1180,54 @@ export function BudgetVsActualPanel({
    * header: none of it is visible from up there, and pretending otherwise is what gave this
    * screen two Export buttons producing different files (owner ruling 2026-08-13).
    */
+  /**
+   * The reconciliation the STATEMENT file carries whenever the on-screen sentence renders
+   * (D6.1, 2026-09-02) — the same walk, from the same `cashAdjustments`, never re-derived, with
+   * the family-paid lines dated (`familyPaidSub`). A board reads the file where nobody can ask a
+   * follow-up, which is exactly where the question "why doesn't this match the bank?" gets asked.
+   */
+  function reconciliationRows(): { rows: Array<Record<string, string | number>>; kinds: Array<MoneyRowKind | undefined> } {
+    const rows: Array<Record<string, string | number>> = [];
+    const kinds: Array<MoneyRowKind | undefined> = [];
+    if (!data) return { rows, kinds };
+    const { familyPaid, moneyBack, payouts, cashOut } = cashAdjustments(data);
+    // The screen's own condition: no gap, no walk — a reconciliation announcing "no difference"
+    // is furniture in a file exactly as it is on screen.
+    if (familyPaid < 0.005 && moneyBack < 0.005 && payouts < 0.005) return { rows, kinds };
+    const push = (row: Record<string, string | number>, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
+    push({ item: 'RECONCILIATION — SPENDING TO CASH', budgeted: '', actual: '', variance: '' }, 'section');
+    push({ item: 'What this season spent', budgeted: '', actual: data.totalActual, variance: '' });
+    if (moneyBack > 0.005) {
+      push({ item: 'Plus money back, counted in cash as money arriving', budgeted: '', actual: moneyBack, variance: '' });
+    }
+    if (familyPaid > 0.005) {
+      push({ item: 'Less costs a family paid the vendor', budgeted: '', actual: -familyPaid, variance: '' });
+      for (const c of data.familyPaidCosts.map(familyPaidSub)) {
+        push({ item: `  — ${c.label}`, budgeted: '', actual: c.amount, variance: '' }, 'item');
+      }
+    }
+    if (payouts > 0.005) {
+      push({ item: 'Plus money returned to families', budgeted: '', actual: payouts, variance: '' });
+    }
+    push({ item: 'Cash that left the team’s account', budgeted: '', actual: cashOut, variance: '' }, 'total');
+    return { rows, kinds };
+  }
+
+  /** The board-ready PDF opening block (D6.3) — the screen's own figures, no new arithmetic. */
+  function pdfIntro(): { label: string; rows: Array<[string, string]> } | undefined {
+    if (!data) return undefined;
+    const rows: Array<[string, string]> = [
+      ['Team', assignment?.teamName ?? ''],
+      ['Season', assignment?.programYearName ?? ''],
+      ['Headroom', `${data.headroom < 0 ? '-' : '+'}${fmt(data.headroom)} ${data.headroom >= 0 ? 'under' : 'over'} budget — ${fmt(data.totalActual)} spent of ${fmt(data.effectiveBudget)} planned`],
+    ];
+    if (data.unbudgeted > 0.005) rows.push(['Spent off-plan', fmt(data.unbudgeted)]);
+    if (data.funding) {
+      rows.push(['Funded by players', `${fmt(data.funding.fundedByPlayers)} planned · ${fmtSigned(data.totalActual - data.funding.actual)} so far`]);
+    }
+    return { label: 'This season', rows };
+  }
+
   function buildExport(format: MoneyExportFormat) {
     const asMonthGrid = monthGridInFormat(format);
     const exportCols = asMonthGrid ? monthExportColumns() : BVA_EXPORT_COLUMNS;
@@ -1187,6 +1235,13 @@ export function BudgetVsActualPanel({
     // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
     // without which the spreadsheet's totals would disagree with the screen.
     const built = asMonthGrid ? buildMonthExportRows() : bvaCategoryRows(data);
+    if (!asMonthGrid) {
+      // D6.1: the statement file ends on the same walk the screen shows — all three formats,
+      // the months-view PDF included, because that PDF IS the whole-season statement.
+      const recon = reconciliationRows();
+      built.rows.push(...recon.rows);
+      built.kinds.push(...recon.kinds);
+    }
     return {
       dataset: asMonthGrid ? `budget-by-month-${lens}` : 'budget-vs-actual',
       title: asMonthGrid
@@ -1214,6 +1269,9 @@ export function BudgetVsActualPanel({
       })),
       scopeLabel: assignment?.programYearName ?? '',
       teamName: assignment?.teamName ?? '',
+      // D6.3: the PDF opens on the board block. The PDF is always the whole-season statement
+      // (the month grid stays in Excel/CSV), so the intro applies to every PDF from this tab.
+      pdfIntro: format === 'pdf' ? pdfIntro() : undefined,
       emptyMessage: asMonthGrid
         ? 'There is nothing in this month view to export yet.'
         : 'Budget vs. Actual has nothing to report yet — it needs a budget plan.',

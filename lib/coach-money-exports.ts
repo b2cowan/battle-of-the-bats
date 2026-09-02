@@ -825,6 +825,15 @@ export interface MoneyDownload {
   currencyNotation?: 'minus' | 'brackets';
   /** Currency pre-formatted for jsPDF. Required only when the caller offers PDF. */
   pdfRows?: (rows: ExportRow[]) => (string | number)[][];
+  /**
+   * A board-ready OPENING BLOCK for the PDF alone (BvA Two Truths D6.3, 2026-09-02): a titled
+   * key/value section printed above the table — the headroom sentence, funded-by-players — built
+   * from values the screen already computes, never new arithmetic. Rendered through the PDF
+   * engine's own grouped mode (blank headers = a key/value block, the practice sheet's idiom).
+   * Excel and CSV deliberately do not carry it: a spreadsheet's opening rows would sum into
+   * whatever a treasurer pivots.
+   */
+  pdfIntro?: { label: string; rows: Array<[string, string]> };
   orgLabel: string;
   /** Season name — in the filename, and under a PDF's title. */
   scopeLabel: string;
@@ -850,15 +859,29 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
   );
 
   if (format === 'pdf') {
+    const body = spec.pdfRows ? spec.pdfRows(spec.rows) : serializeRows(spec.rows, spec.columns);
     await downloadPDF(
       filename,
       spec.title,
       // D1: the header carries the team's name (the identity); the subtitle keeps the season.
       spec.scopeLabel || undefined,
       spec.columns.map(c => c.label),
-      spec.pdfRows ? spec.pdfRows(spec.rows) : serializeRows(spec.rows, spec.columns),
+      body,
       { ...DEFAULT_PDF_SETTINGS, ...(spec.pdfSettings ?? {}) },
-      { identity: spec.teamName },
+      {
+        identity: spec.teamName,
+        /* The opening block rides the engine's grouped mode: its own blank-header group first
+           (a key/value block), then the table under the report's own title. Absent, the flat
+           path is byte-identical to what every export always produced. */
+        ...(spec.pdfIntro
+          ? {
+            groups: [
+              { label: spec.pdfIntro.label, headers: ['', ''], rows: spec.pdfIntro.rows },
+              { label: spec.title, rows: body },
+            ],
+          }
+          : {}),
+      },
     );
     return;
   }
