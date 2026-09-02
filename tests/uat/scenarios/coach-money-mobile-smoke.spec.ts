@@ -919,8 +919,10 @@ async function chooseInStrip(main: Locator, label: string, option: string) {
   await choice.click();
 }
 
-/** Switch Budget vs. Actual into the month grid and (optionally) a lens. */
-async function openMonths(page: Page, lens?: 'Budget' | 'Scheduled' | 'Actual' | 'Difference') {
+/** Switch Budget vs. Actual into the month grid and (optionally) a lens.
+ *  ⚠ The lens names are the SHOWING MENU's own words — "Cash" since the Two Truths rename
+ *  (2026-09-02; the stored id stayed `actual`, only the label moved). */
+async function openMonths(page: Page, lens?: 'Budget' | 'Scheduled' | 'Cash' | 'Season spending' | 'Difference') {
   await open(page, `${base()}/accounting?section=budget-vs-actual`);
   const main = page.locator('main[class*="coachesMain"]');
   await chooseInStrip(main, 'View', 'Months');
@@ -970,7 +972,9 @@ test.describe('Money by month @360x740', () => {
 
   test('Difference says nothing about a month that has not happened yet', async ({ page }) => {
     const main = await openMonths(page, 'Difference');
-    await expect(main.getByText(/isn.t a saving/i)).toBeVisible();
+    /* ⚠ The basis note was rewritten for Q3 (Difference compares plan vs SPENDING, 2026-09-02) —
+       the old "isn't a saving" clause is gone; the note's load-bearing claim is the tie-out. */
+    await expect(main.getByText(/matches Headroom exactly/i)).toBeVisible();
 
     // The last seeded period is ~3 months out, so the grid always has a month strictly after
     // today's. Its Difference cell must be an em dash — never a flattering "fully under".
@@ -1040,7 +1044,8 @@ test.describe('Money by month @360x740', () => {
   });
 
   test('an actual cell opens a read-only list of what made it up', async ({ page }) => {
-    const main = await openMonths(page, 'Actual');
+    // "Cash" is the Actual reading's menu name since the Two Truths rename (id unchanged).
+    const main = await openMonths(page, 'Cash');
     /* ⚠ THE NOTE SAYS THE OPPOSITE NOW, and has since 2026-08-21. It used to warn that spending
        matched a CATEGORY and not an individual line; once every cost started naming an item that
        stopped being true, the sentence was rewritten, and this assertion was left chasing the

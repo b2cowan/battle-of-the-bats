@@ -321,6 +321,25 @@ async function main() {
       + ` ${money(cents(spending.totals?.total?.actual))} ≠ headroom ${money(cents(data.headroom))}`);
   }
 
+  /* ── 2c. THE FORWARD STAT'S CARVE-OUT COVERS EVERY UNDATED FORWARD DOLLAR (D4/Q2, and a review
+     finding, 2026-09-02). The banner's "you end the season with $X" subtracts a "possible" clause
+     of exactly the sponsorship and money-back groups' undated Scheduled money — the pledge and the
+     pending club ask, the two things the product deliberately refuses to bank. That is correct
+     TODAY because nothing else can put undated money on the forward view (a dues instalment always
+     carries a due date; drives and typed income have no forward records at all) — but the banner
+     is the first reader to LEAN on that invariant, so this claim is what makes a future undated
+     revenue source fail loudly instead of being silently banked into the headline as certain. */
+  for (const cat of revenue.categories ?? []) {
+    const group = revenueGroupOf(cat.categoryKey);
+    const undatedForward = cents(cat.undated?.scheduled);
+    if (undatedForward !== 0 && group !== 'sponsorship' && group !== 'moneyback') {
+      problems.push(
+        `revenue · ${group ?? cat.categoryName}: ${money(undatedForward)} of UNDATED scheduled money`
+        + ' — the banner\'s forward stat would bank it as CERTAIN; teach its "possible" clause about'
+        + ' this source before shipping it');
+    }
+  }
+
   // ══ THE CASH SIDE — both bands against the register ════════════════════════════════════════════
   /* ⚠ The register's settled cash rows are the reference: `!scheduled && movesCash` is the set whose
      sum `check:register` already proves IS Cash on hand, so band = register transitively pins the

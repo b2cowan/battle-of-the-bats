@@ -965,7 +965,12 @@ export function BudgetVsActualPanel({
      installment is a real obligation with a due date); sponsor pledges and pending club asks are
      the separate "possible" clause, never banked — they are exactly the Scheduled lens's undated
      revenue in the sponsorship and money-back groups, the same figures its "No date yet" column
-     shows, subtracted from the flow's ending rather than re-derived. */
+     shows, subtracted from the flow's ending rather than re-derived.
+     ⚠ THE TWO-GROUP CARVE-OUT IS AN INVARIANT WITH A GUARD, not an assumption: nothing else can
+     put undated money on the forward view today (a dues instalment always carries a due date;
+     drives and typed income have no forward records), and `check:money-report` claim 2c fails the
+     build if a future revenue source ever does — so it cannot be silently banked into the
+     headline as certain. */
   const forward = useMemo(() => {
     if (!data) return null;
     const flow = buildBandCashFlow(
@@ -1009,9 +1014,10 @@ export function BudgetVsActualPanel({
   // in the SELECTED lens, with the months as columns — the same shape the import template will
   // take, so today's export is tomorrow's import.
   /** Which grid the EXPENSES band reads under this lens — the lib's own predicate, shared with
-   *  the screen (`lensReadsSpendingGrid`), so the file cannot pick a different band. */
+   *  the screen (`lensReadsSpendingGrid`), so the file cannot pick a different band. The `??` is
+   *  the deploy-skew belt (see MoneyMonthGrid): a stale payload degrades to the cash grid. */
   function exportExpensesBand(): MonthGrid {
-    return lensReadsSpendingGrid(lens) ? data!.spendingGrid : data!.monthGrid;
+    return (lensReadsSpendingGrid(lens) ? data!.spendingGrid : undefined) ?? data!.monthGrid;
   }
 
   function monthExportColumns(): ExportColumnDef[] {
@@ -1022,7 +1028,7 @@ export function BudgetVsActualPanel({
        worse than on a screen, because the file outlives the session and nothing explains it — but so
        is silently dropping a pledge the coach could see. Per band, per lens, as the screen asks. */
     const undatedBands = lens === 'spending'
-      ? [data!.spendingGrid]
+      ? [exportExpensesBand()]
       : [data!.revenueGrid, exportExpensesBand(), data!.returnedGrid];
     if (hasUndated(undatedBands, lens)) {
       cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
@@ -1525,7 +1531,12 @@ export function BudgetVsActualPanel({
               <SingleSelectDropdown
                 label="Showing"
                 value={lens}
-                options={MONEY_LENSES.map(l => ({ id: l.id, label: l.label }))}
+                /* ⚠ Season spending is offered only when the payload can feed it — the deploy-skew
+                   belt's menu half (see MoneyMonthGrid): an ordinary click must never reach a lens
+                   whose grid a stale response did not send. */
+                options={MONEY_LENSES
+                  .filter(l => l.id !== 'spending' || !!data.spendingGrid)
+                  .map(l => ({ id: l.id, label: l.label }))}
                 onChange={next => setLens(next as MoneyLens)}
               />
             )}

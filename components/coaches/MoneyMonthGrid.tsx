@@ -228,7 +228,7 @@ function signClass(n: number, emphasis: Emphasis): string {
 
 export default function MoneyMonthGrid({
   data,
-  lens,
+  lens: lensChoice,
   base,
   canWrite,
   monthStart,
@@ -244,6 +244,14 @@ export default function MoneyMonthGrid({
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
   const { monthGrid: grid, revenueGrid, returnedGrid, spendingGrid, cellDetails, cashOnHand, todayMonth } = data;
+  /* ⚠⚠ THE DEPLOY-SKEW BELT (review finding, 2026-09-02). The type says `spendingGrid` is always
+     sent — and the live route always sends it — but a payload fetched across a deploy boundary
+     (fresh client, stale response) can genuinely lack it, and `difference` is a PRE-EXISTING saved
+     preference: without this guard the crash would land on coaches who chose nothing new, as a
+     full-page error on the portal's most-read money screen. Degrade instead, for the seconds the
+     skew lasts: a `spending` choice renders as Cash (never cash figures under a Season-spending
+     heading), and Difference falls back to the cash grid — the exact pre-Q3 basis it always had. */
+  const lens: MoneyLens = spendingGrid || lensChoice !== 'spending' ? lensChoice : 'actual';
   /* ⚠⚠ WHICH GRID THE EXPENSES BAND READS IS THE LENS'S CALL (D1 + Q3, 2026-09-02). Cash reads the
      cash grid; **Season spending and Difference read the spending grid** — same plan rows, same
      month domain, but the `actual` cells hold the Statement's movements, which is what makes
@@ -251,12 +259,14 @@ export default function MoneyMonthGrid({
      identical across the two by construction — same lines, same scheduled feed).
      ⚠ THE PREDICATE IS THE LIB'S (`lensReadsSpendingGrid`) — the export asks the same question,
      and two spellings of one band-selection rule is the `hasUndated` drift replayed. */
-  const expensesBand = lensReadsSpendingGrid(lens) ? spendingGrid : grid;
+  const expensesBand = lensReadsSpendingGrid(lens) && spendingGrid ? spendingGrid : grid;
   /** The Season-spending lens is EXPENSES ONLY (owner D1): a cheque back to a family is
    *  settlement, not spending, and revenue is the other half of a question this lens is not
    *  answering. No revenue band, no returned band, no balance rows. */
   const spendingOnly = lens === 'spending';
-  const familyPaidRows = useMemo(() => new Set(data.spendingFamilyPaidRows), [data.spendingFamilyPaidRows]);
+  // `?? []` rides the same skew belt: a stale payload lacks the field, and a tag list is the
+  // wrong thing to crash a table over.
+  const familyPaidRows = useMemo(() => new Set(data.spendingFamilyPaidRows ?? []), [data.spendingFamilyPaidRows]);
   /* ⚠ THE BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
      a family money back gets no heading, no row and no subtotal — three rows of nothing on the
      narrowest table in the portal. `categoryHasFigure` is the same predicate the revenue band and
@@ -980,7 +990,7 @@ export default function MoneyMonthGrid({
         {lens === 'budget' && (
           <p className={styles.note}>
             <strong>Budget is your plan</strong>, not your bills — the dues installments you set,
-            your expected fundraising and sponsorship, and the months you gave your costs.
+            your expected funding, and the months you gave your costs.
             {showUndated && ` ${fmt(lensUndated(grid.totals.undated, lens) + lensUndated(revenueGrid.totals.undated, lens))} with no date yet is in the Total and in no month.`}
           </p>
         )}
