@@ -3,6 +3,19 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 
+### 2026-09-02 — Unplanned money rows get their visible word back: "not planned" (owner D5.5, a NAMED reversal of the 2026-08-15 trim)
+
+**Decision (owner, BvA Two Truths D5 — plan `docs/projects/active/COACH_BVA_TWO_TRUTHS_PLAN.md`
+§5.5).** On Budget vs. Actual, an unplanned category or item row carries a quiet visible
+"not planned" caption beside its name again. The 2026-08-15 trim removed the visible words on the
+reasoning that the Budget cell's em-dash already said it; the owner reversed that half
+deliberately: the dash alone asked a reader to *infer* the one fact the row exists to state.
+What survives from the trim: the sr-only sentence stays, the amber tint stays a scanning cue and
+never the carrier, and no chip/badge — a muted caption in the ledger-note voice, same as the
+"2 lines" caption. Do not re-trim this on the grounds the dash covers it; that argument was heard
+and reversed.
+
+
 ### 2026-09-02 — THE LEDGER TOOLBAR SPLITS BY VOLATILITY — two decks, on purpose (Option B)
 
 **Decision (owner, "Ledger Toolbar Rows" mockup Artifact, option B):** the band above the Ledger's

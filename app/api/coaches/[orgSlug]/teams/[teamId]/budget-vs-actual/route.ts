@@ -1613,6 +1613,10 @@ export const GET = withObservability(async (req: Request,
       categoryName: e.place.categoryName,
       itemId: e.place.itemId,
       amount: e.amount,
+      /* The day the family paid it — already on the excluded payment (owner D5.2, 2026-09-02).
+         Both bridges itemize these costs, and a line without its date left a treasurer matching
+         "which $240?" against a bank statement by amount alone. */
+      date: e.date,
     })),
     todayMonth,
   });

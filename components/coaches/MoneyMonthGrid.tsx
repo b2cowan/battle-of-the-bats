@@ -729,6 +729,30 @@ export default function MoneyMonthGrid({
                 {bandHeading('returned', RETURNED_BAND_LABEL)}
                 {visibleReturned.map(cat => renderCategory(cat, 'out'))}
                 {bandTotal('out', returnedGrid, RETURNED_TOTAL_LABEL)}
+                {/* ⚠ ONE ROW SAYING VENDORS + FAMILIES = CASH OUT (owner D5.9, 2026-09-02). The
+                    returned band's split means `Total expenses` no longer states everything that
+                    left the account; this row does, from the SAME assembly the balance rows read
+                    (`buildBandCashFlow`), so it cannot disagree with them. It renders only where
+                    the two figures genuinely differ — with no returned band it would restate
+                    `Total expenses` immediately below itself. */}
+                {cash && (
+                  <tr className={shared.moneyGridFlow}>
+                    <th scope="row" className={styles.lead}>Total cash out</th>
+                    {showUndated && (
+                      <td className={`${styles.num} ${styles.undated}`}>
+                        {cellNode(cash.undated.moneyOut || null)}
+                      </td>
+                    )}
+                    {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
+                      <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                        {cellNode(r.moneyOut || null)}
+                      </td>
+                    ))}
+                    <td className={`${styles.num} ${styles.totalCol}`}>
+                      {cellNode(Math.round((cash.rows.reduce((s, r) => s + r.moneyOut, 0) + cash.undated.moneyOut) * 100) / 100)}
+                    </td>
+                  </tr>
+                )}
               </>
             )}
 
@@ -872,6 +896,16 @@ export default function MoneyMonthGrid({
               ? ` — carried from ${data.openingBalanceFrom} when this season was started.`
               : ' that the team was already holding.'}
             {' '}Change it in <strong>Team settings → Money</strong>.
+          </p>
+        )}
+        {/* The other half of the provenance (owner D5.10, 2026-09-02): a season with NO opening
+            balance says so, pointing a wrong bank tie-out at its likeliest cause instead of
+            leaving a coach to discover the assumed zero by arithmetic. */}
+        {opening === null && lens !== 'scheduled' && (
+          <p className={styles.note}>
+            <strong>No opening balance is set</strong> — the balance rows assume the season started
+            from $0. If the team was already holding money on day one, set it in{' '}
+            <strong>Team settings → Money</strong>.
           </p>
         )}
         {lens === 'scheduled' && (

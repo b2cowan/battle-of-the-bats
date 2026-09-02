@@ -774,7 +774,9 @@ export function bvaCategoryRows(
   if (data.buffer > 0) {
     // 'category' for the bolding: the screen renders this row with the category-header
     // treatment (panel `bufferRow`), and the file should read like the screen (/review find).
-    push({ item: 'Not itemized yet (from your estimate)', budgeted: data.buffer, actual: '', variance: '' }, 'category');
+    // "Estimate not yet broken out" (owner D5.11, 2026-09-02) — renamed with the screen; the old
+    // "Not itemized yet" collided with "Not itemized", a different concept on the same table.
+    push({ item: 'Estimate not yet broken out', budgeted: data.buffer, actual: '', variance: '' }, 'category');
   }
   push({
     item: data.report.revenue.categories.length > 0 ? 'Total expenses' : 'Total',

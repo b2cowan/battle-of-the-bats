@@ -162,6 +162,8 @@ interface BvaData extends MonthGridPayload {
     categoryName: string | null;
     itemId: string | null;
     amount: number;
+    /** The day the family paid it — both bridges date their itemized lines (owner D5.2). */
+    date: string | null;
   }>;
 }
 
@@ -222,9 +224,23 @@ function varianceText(v: number, direction: 'in' | 'out', actual?: number): stri
      indistinguishable from an ordinary underspend. It is not an underspend — nothing was spent.
      The bracketed actual beside it is the fact worth reading, and it is almost always the signal
      the refund is filed against the wrong item, so the variance says nothing rather than something
-     congratulatory (/review, correctness lens). */
-  if (actual != null && actual < -0.005) return '—';
+     congratulatory (/review, correctness lens).
+     ⚠ SINCE 2026-09-02 (owner D5.4) THE GUARD PRINTS "refund only" RATHER THAN A BARE EM-DASH —
+     the odd refund is named, not hidden, and the muted ink (see `varianceInk`) keeps it from
+     reading as a verdict. */
+  if (actual != null && actual < -0.005) return 'refund only';
   return `${fmt(v)} ${v > 0 ? 'under' : 'over'}`;
+}
+
+/**
+ * The colour that goes WITH `varianceText` — the pair travels together, or the "refund only"
+ * guard word would arrive painted in the success green its variance happens to compute to.
+ */
+function varianceInk(v: number, direction: 'in' | 'out', actual?: number): string {
+  if (direction === 'out' && actual != null && actual < -0.005 && Math.abs(v) > 0.005) {
+    return 'var(--home-ink-soft, rgba(255,255,255,0.6))';
+  }
+  return varianceColor(v);
 }
 
 // The category table's columns and rows are NOT declared here — they live in
@@ -397,12 +413,19 @@ function ItemRows({
                 {item.lineCount > 1 && (
                   <span className={shared.ledgerNote}>{item.lineCount} lines</span>
                 )}
+                {/* ⚠ A DELIBERATE REVERSAL of the 2026-08-15 label trim (owner D5.5, 2026-09-02,
+                    logged in memory/design_decisions.md): the dash and the tint stay, and one quiet
+                    visible word joins them, because the dash alone asked a reader to infer the fact
+                    this row exists to state. The sr-only sentence on the category header stays. */}
+                {!item.inPlan && (
+                  <span className={shared.ledgerNote}>not planned</span>
+                )}
               </span>
               <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
                 {item.inPlan ? fmt(item.budgeted) : '—'}
               </span>
               <span className={shared.ledgerNum}>{fmtCell(item.actual)}</span>
-              <span className={shared.ledgerNum} style={{ color: varianceColor(item.variance) }}>
+              <span className={shared.ledgerNum} style={{ color: varianceInk(item.variance, item.direction, item.actual) }}>
                 {varianceText(item.variance, item.direction, item.actual)}
               </span>
             </div>
@@ -448,7 +471,7 @@ function ItemRows({
                       </span>
                       <span
                         className={`${shared.ledgerNum} ${moved ? '' : shared.ledgerNumMuted}`}
-                        style={moved ? { color: varianceColor(variance) } : undefined}
+                        style={moved ? { color: varianceInk(variance, item.direction, p.actual) } : undefined}
                       >
                         {/* The same negative guard as the row above: the September period of a
                             refunded item has a negative actual, and "under" would be wrong there
@@ -497,12 +520,14 @@ function CategoryGroup({
             {expandedCats.has(catKey) ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
           </span>
           <span className={shared.ledgerName}>{cat.categoryName}</span>
+          {/* The same quiet word the item rows carry — see the reversal note there (owner D5.5). */}
+          {!cat.inPlan && <span className={shared.ledgerNote}>not planned</span>}
         </span>
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
           {cat.inPlan ? fmt(cat.budgeted) : '—'}
         </span>
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmtCell(cat.actual)}</span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceColor(cat.variance) }}>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceInk(cat.variance, cat.direction, cat.actual) }}>
           {varianceText(cat.variance, cat.direction, cat.actual)}
         </span>
       </button>
@@ -580,8 +605,29 @@ function cashAdjustments(data: BvaData) {
   return { familyPaid, moneyBack, payouts, cashOut };
 }
 
+/**
+ * A family-paid cost as either bridge itemizes it — one spelling of the line, dated (owner D5.2).
+ * "less $660" is not an answer a coach can take to a board: WHICH costs, and WHEN, is the question.
+ */
+function familyPaidSub(c: BvaData['familyPaidCosts'][number]): { id: string; label: string; amount: number } {
+  return {
+    id: c.id,
+    label: [
+      c.categoryName, c.description,
+      c.date ? formatStoredDate(c.date, { withYear: false }) : null,
+    ].filter(Boolean).join(' · '),
+    amount: c.amount,
+  };
+}
+
+/**
+ * ⚠ PROMOTED FROM A COLLAPSED QUESTION TO A VISIBLE SENTENCE (owner D5.3, 2026-09-02). The old
+ * `<details>` summary asked "why the difference?" — which only helps a reader who had already
+ * noticed one. The cash figure and its causes are now stated out loud; the walk-through stays
+ * behind one press for the reader who wants the arithmetic line by line.
+ */
 function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => void }) {
-  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const [walkOpen, setWalkOpen] = useState(false);
   const { familyPaid, moneyBack, payouts, cashOut } = cashAdjustments(data);
 
   if (familyPaid < 0.005 && moneyBack < 0.005 && payouts < 0.005) return null;
@@ -595,13 +641,7 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
     lines.push({
       label: 'Less costs a family paid the vendor',
       amount: -familyPaid,
-      /* "less $660" is not an answer a coach can take to a board — WHICH costs is the question, and
-         on a real season it lands on one or two rows. */
-      subs: data.familyPaidCosts.map(c => ({
-        id: c.id,
-        label: [c.categoryName, c.description].filter(Boolean).join(' · '),
-        amount: c.amount,
-      })),
+      subs: data.familyPaidCosts.map(familyPaidSub),
     });
   }
   /* ⚠ ONE NAME FOR ONE THING (2026-09-02). This said 'money paid back to families' while the band
@@ -609,38 +649,61 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
      precisely when they are already confused about it. */
   if (payouts > 0.005) lines.push({ label: 'Plus money returned to families', amount: payouts });
 
+  /* The sentence's causes, in the walk's own order — approved wording at the G3 gate mockup
+     ("a family paid one cost directly, and some money came back"). */
+  const causes: string[] = [];
+  if (familyPaid > 0.005) {
+    causes.push(data.familyPaidCosts.length === 1
+      ? 'a family paid one cost directly'
+      : `families paid ${data.familyPaidCosts.length} costs directly`);
+  }
+  if (moneyBack > 0.005) causes.push('some money came back');
+  if (payouts > 0.005) causes.push('money went back to families');
+  const causeSentence = causes.length === 1 ? causes[0]
+    : causes.length === 2 ? `${causes[0]}, and ${causes[1]}`
+      : `${causes[0]}, ${causes[1]}, and ${causes[2]}`;
+
   return (
-    <details className={styles.bridge}>
-      <summary className={styles.bridgeSummary}>
-        <ChevronRight size={13} className={styles.bridgeChev} aria-hidden />
-        <span>In cash, this season spent <strong>{fmt(cashOut)}</strong> — why the difference?</span>
-      </summary>
-      <div className={styles.bridgeBody}>
-        <dl className={styles.bridgeList}>
-          <div className={styles.bridgeRow}>
-            <dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd>
-          </div>
-          {lines.map(l => (
-            <Fragment key={l.label}>
-              <div className={styles.bridgeRow}>
-                <dt>{l.label}</dt>
-                <dd>{l.amount < 0 ? `−${fmt(Math.abs(l.amount))}` : `+${fmt(l.amount)}`}</dd>
-              </div>
-              {l.subs?.map(s => (
-                <div className={`${styles.bridgeRow} ${styles.bridgeSub}`} key={s.id}>
-                  <dt>{s.label}</dt>
-                  <dd>{fmt(s.amount)}</dd>
+    <div className={styles.bridge}>
+      <p className={styles.bridgeSentence}>
+        In cash, this season spent <strong>{fmt(cashOut)}</strong> — {causeSentence}.{' '}
+        <button
+          type="button"
+          className={styles.bridgeLink}
+          onClick={() => setWalkOpen(o => !o)}
+          aria-expanded={walkOpen}
+        >
+          {walkOpen ? 'Hide the walk-through' : 'See the walk-through'}
+        </button>
+      </p>
+      {walkOpen && (
+        <div className={styles.bridgeBody}>
+          <dl className={styles.bridgeList}>
+            <div className={styles.bridgeRow}>
+              <dt>What this season spent</dt><dd>{fmt(data.totalActual)}</dd>
+            </div>
+            {lines.map(l => (
+              <Fragment key={l.label}>
+                <div className={styles.bridgeRow}>
+                  <dt>{l.label}</dt>
+                  <dd>{l.amount < 0 ? `−${fmt(Math.abs(l.amount))}` : `+${fmt(l.amount)}`}</dd>
                 </div>
-              ))}
-            </Fragment>
-          ))}
-          <div className={`${styles.bridgeRow} ${styles.bridgeOut}`}>
-            <dt>Cash that left the team&apos;s account</dt><dd>{fmt(cashOut)}</dd>
-          </div>
-        </dl>
-        <button type="button" className={styles.bridgeLink} onClick={onSeeMonths}>See it by month</button>
-      </div>
-    </details>
+                {l.subs?.map(s => (
+                  <div className={`${styles.bridgeRow} ${styles.bridgeSub}`} key={s.id}>
+                    <dt>{s.label}</dt>
+                    <dd>{fmt(s.amount)}</dd>
+                  </div>
+                ))}
+              </Fragment>
+            ))}
+            <div className={`${styles.bridgeRow} ${styles.bridgeOut}`}>
+              <dt>Cash that left the team&apos;s account</dt><dd>{fmt(cashOut)}</dd>
+            </div>
+          </dl>
+          <button type="button" className={styles.bridgeLink} onClick={onSeeMonths}>See it by month</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -683,12 +746,8 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
       key: 'family',
       label: 'costs a family paid the vendor',
       amount: r2(-sign * familyPaid),
-      /* "less $120" is not an answer a coach can take to a board — WHICH costs is the question. */
-      subs: data.familyPaidCosts.map(c => ({
-        id: c.id,
-        label: [c.categoryName, c.description].filter(Boolean).join(' · '),
-        amount: c.amount,
-      })),
+      // The same dated line the Statement's bridge prints — one spelling (see `familyPaidSub`).
+      subs: data.familyPaidCosts.map(familyPaidSub),
     },
   ].filter(l => Math.abs(l.amount) > 0.005);
 
@@ -758,7 +817,7 @@ function SubtotalRow({
       <span className={shared.scrollXStickyCell}>{label}</span>
       <span className={shared.ledgerNum}>{fmtCell(budgeted)}</span>
       <span className={shared.ledgerNum}>{fmtCell(actual)}</span>
-      <span className={shared.ledgerNum} style={{ color: varianceColor(variance) }}>
+      <span className={shared.ledgerNum} style={{ color: varianceInk(variance, direction, actual) }}>
         {varianceText(variance, direction, actual)}
       </span>
     </div>
@@ -1005,6 +1064,17 @@ export function BudgetVsActualPanel({
       /* ⚠ THE RETURNED BAND IS PASSED, NOT ADDED. It left `Total expenses` and did not leave the
          season; the helper owns that subtraction so the file and the screen cannot differ. */
       const flow = buildBandCashFlow(rev, g, lens, cashOnHand, opening ?? 0, returned);
+      /* The screen's "Total cash out" row (owner D5.9) — same condition, same assembly, so the
+         file cannot disagree with the table it came from. */
+      if (returnedCats.length > 0) {
+        const out: Record<string, string | number> = {
+          item: 'Total cash out',
+          undated: flow.undated.moneyOut || '',
+        };
+        flow.rows.forEach(r => { out[`m_${r.month}`] = r.moneyOut || ''; });
+        out.total = Math.round((flow.rows.reduce((s, r) => s + r.moneyOut, 0) + flow.undated.moneyOut) * 100) / 100;
+        push(out, 'total');
+      }
       /* ⚠⚠ THREE ROWS, AND THE FILE READS AS THE STATEMENT THE SCREEN DOES (owner ruling
          2026-08-26): every month says what it OPENED with, what it NETTED, and what it CLOSED on,
          so `opening + net = closing` is checkable in a spreadsheet column exactly as it is on
@@ -1225,6 +1295,18 @@ export function BudgetVsActualPanel({
             <span className={styles.stripSupport}>
               <b>{fmt(data.totalActual)}</b> spent of <b>{fmt(data.effectiveBudget)}</b> planned
             </span>
+            {/* ⚠ THE OFF-PLAN FIGURE FINALLY RENDERS (owner D5.6, 2026-09-02). `unbudgeted` had
+                been computed and exported since mig 240 and shown nowhere on screen — the one
+                fact a coach most wants from this banner after headroom. Named, never added:
+                every one of these dollars is already inside `totalActual`. */}
+            {data.unbudgeted > 0.005 && (
+              <>
+                <span className={styles.stripRule} aria-hidden />
+                <span className={styles.stripSupport}>
+                  <b>{fmt(data.unbudgeted)}</b> spent off-plan
+                </span>
+              </>
+            )}
             {/* When the plan is over its own estimate this report measures against the ESTIMATE
                 (the shared rule), which is a lower number than the lines add up to. The budget
                 page says so in red; without this the report just showed the smaller figure and
@@ -1321,6 +1403,14 @@ export function BudgetVsActualPanel({
             <span className={shared.panelToolbarActions}>{bvaExport}</span>
           </div>
 
+          {/* One line that changes with the View choice (owner D5.7, 2026-09-02) — prose, not
+              chips: the pill names the shape, this says what question the shape answers. */}
+          <p className={styles.viewSublabel}>
+            {view === 'statement' ? 'Season vs plan, by category'
+              : view === 'activity' ? 'Did each activity pay for itself?'
+                : 'Month by month'}
+          </p>
+
           {view === 'months' ? (
             <>
               <MoneyMonthGrid
@@ -1375,7 +1465,9 @@ export function BudgetVsActualPanel({
                 <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
                   <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
                     <span className={styles.expandIcon} />
-                    <span className={shared.ledgerName}>Not itemized yet</span>
+                    {/* "Estimate not yet broken out" (owner D5.11) — the old "Not itemized yet"
+                        collided with "Not itemized", a different concept on this same table. */}
+                    <span className={shared.ledgerName}>Estimate not yet broken out</span>
                   </span>
                   <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.buffer)}</span>
                   <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
@@ -1487,7 +1579,7 @@ export function BudgetVsActualPanel({
                   ))}
                   {bufferRow && (
                     <>
-                      <SectionBand label="Not itemized yet" />
+                      <SectionBand label="Estimate not yet broken out" />
                       <div className={`${shared.ledgerList} ${styles.linesContainer}`}>{bufferRow}</div>
                     </>
                   )}
@@ -1524,6 +1616,12 @@ export function BudgetVsActualPanel({
               })()}
               </div>
              </CoachScrollX>
+             {/* The variance key (owner D5.1, 2026-09-02): one column speaking two dialects finally
+                 says so. Approved wording from the gate mockup, verbatim. */}
+             <p className={styles.varianceKey}>
+               Variance reads: revenue <b>+/−</b> against plan · costs <b>under / over</b> plan.
+               Good news is always green.
+             </p>
              {/* ⚠ THE BRIDGE BELONGS AT THE FOOT, WITH THE NOTES (owner, 2026-08-24). It was first put
                  under Total expenses, which dropped a bordered panel into the middle of the
                  statement's own closing arithmetic — Total expenses → Season net → Funded by

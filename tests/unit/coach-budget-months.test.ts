@@ -194,11 +194,12 @@ describe('buildMonthGrid', () => {
     assert.equal(g.categories[0].cells.reduce((s, c) => s + c.actual, 0), 0);
   });
 
-  it('carries the not-itemized-yet estimate so both views report the same budget total', () => {
+  it('carries the not-yet-broken-out estimate so both views report the same budget total', () => {
     const g = buildMonthGrid({
       lines, actuals: [], scheduled: [], todayMonth: TODAY, bufferAmount: 700,
     });
-    const bufferRow = g.categories.find(c => c.categoryName === 'Not itemized yet')!;
+    // Renamed from "Not itemized yet" (owner D5.11, 2026-09-02) — it collided with "Not itemized".
+    const bufferRow = g.categories.find(c => c.categoryName === 'Estimate not yet broken out')!;
     assert.equal(bufferRow.total.budget, 700);
     // It has no date by definition, so it belongs in the "no date yet" column, never a month.
     assert.equal(bufferRow.undated.budget, 700);

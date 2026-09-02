@@ -142,6 +142,14 @@
   margin-bottom: 1.1rem;
 }
 
+/* The one-line answer to "what am I looking at?" under the toolbar (owner D5.7, 2026-09-02).
+   It borrows the bar's bottom margin — the pair reads as one control block. */
+.viewSublabel {
+  margin: -0.7rem 0 1rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
 /* ── the month window control ─────────────────────────────────────────────
    It sits IN `.viewBar`, beside View and Showing, because it changes what the grid shows and
    belongs with the other two controls that do (owner call 2026-08-21). It wraps to its own line
@@ -317,6 +325,26 @@
   color: var(--text-tertiary);
 }
 
+/* The variance key (owner D5.1, 2026-09-02) — the quiet line saying the column speaks two
+   dialects. Same voice as the funding note; it sits directly under the table it explains. */
+.varianceKey {
+  margin: 0.6rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.varianceKey b { color: var(--text-secondary); font-weight: 650; }
+
+/* The promoted cash sentence (owner D5.3, 2026-09-02) — visible prose where a collapsed
+   question used to sit; the walk-through body below it keeps the bridge styles. */
+.bridgeSentence {
+  margin: 0.55rem 0 0;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.bridgeSentence strong { color: var(--text-secondary); font-weight: 650; }
+
 /* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
    retired. `.grandTotal` survives only as the hook that hands it the column tracks and its pin
    gutter — see the `--ledger-cols` block above and the phone block below.) */
@@ -325,12 +353,15 @@
    ⚠ THESE ROWS USED TO BE A SEPARATE SECTION at the foot of the report; since mig 240 they sit in
    place, inside their own category and item, where a coach reads them beside everything else.
 
-   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT (the rule survives the label that used
-   to state it). Until 2026-08-15 these rows also printed the words "not budgeted"; the owner
-   removed them because **the row's Budget cell is already a dash** — the label was the same fact
-   twice, in a report whose whole job is to put facts in columns. What carries the meaning now:
+   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT. The 2026-08-15 trim removed the visible
+   "not budgeted" words on the reasoning that the Budget cell's em-dash already said it; on
+   2026-09-02 the owner DELIBERATELY REVERSED that half (D5.5, logged in
+   memory/design_decisions.md): a quiet "not planned" word now rides the row again, because the
+   dash alone asked a reader to infer the one fact the row exists to state. What carries the
+   meaning now:
      1. the em-dash where a Budgeted figure would be — visible, textual, colour-independent;
-     2. the `aria-describedby` sentence on the category header, for a screen reader.
+     2. the visible "not planned" word beside the name (D5.5);
+     3. the `aria-describedby` sentence on the category header, for a screen reader — it STAYS.
    The amber ground is a SCANNING CUE ON TOP OF THOSE, never the thing that says it. Do not remove
    the dash or the described-by sentence on the grounds that "the row is already amber". */
 .unplannedRow {

@@ -868,7 +868,11 @@ export function buildMonthGrid(input: {
 
   if (bufferAmount > 0.005) {
     categories.push({
-      categoryName: 'Not itemized yet',
+      /* ⚠ "Estimate not yet broken out", NOT "Not itemized yet" (owner D5.11, 2026-09-02). The old
+         name was a near-collision with "Not itemized" — a DIFFERENT concept (money filed under a
+         category with no item) that legitimately appears two rows away on the same table. One
+         spelling, screen + export + help, all renamed in the same pass. */
+      categoryName: 'Estimate not yet broken out',
       categoryKey: '__buffer__',
       cells: blankCells(months.length),
       undated: { budget: bufferAmount, scheduled: 0, actual: 0 },
