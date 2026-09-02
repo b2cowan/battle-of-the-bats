@@ -117,6 +117,19 @@
 /* "· plus $Y possible" — quieter than the sentence it rides, exactly as the G2 frame drew it. */
 .stripPossible { color: var(--text-tertiary); }
 
+/* ⚠ THE TOUCH FLOOR FOR THE TWO PROSE-EMBEDDED BUTTONS THIS BUILD ADDED (rendered sweep,
+   2026-09-02 — 22px and 23px at every touch width). The forward figure and the walk-through
+   toggle are real tap targets sitting in sentence flow, so they take the same ≤768 floor the
+   bridge summary carries; desktop keeps the quiet inline look, per the standing surface rule. */
+@media (max-width: 768px) {
+  .stripForwardLink,
+  .bridgeLink {
+    min-height: var(--tap-min, 44px);
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 /* ── The Spending trend shelf (owner D2, 2026-09-02, G3-approved) ─────────────
    ⚰ `.chartCard` / `.chartTitle` retired with the chart's old head-of-page position: it is a
    collapsed shelf below the table now, half its old height, its open state remembered per device. */

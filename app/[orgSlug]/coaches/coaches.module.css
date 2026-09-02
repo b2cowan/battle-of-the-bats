@@ -1254,6 +1254,8 @@
      every coach page header showed a 34×44 oval at phone width (owner-spotted 2026-08-23, §80
      walk). Matching min-width lets the tap target grow into a LARGER CIRCLE — min-width beats
      the module's fixed width, radius 999 does the rest. */
+  /* (The 641–768 tablet band gets the same FLOOR via its own block below — the grid reshaping
+     and icon-only labels in THIS block are phone decisions the band must not inherit.) */
   .pageHeaderStd .pageHeaderHelp button {
     min-width: var(--tap-min, 44px);
   }
@@ -1261,6 +1263,19 @@
      menus — rule 11, 2026-08-13) drops the WHOLE row. Hiding just the buttons would leave the
      grid row and its 0.75rem row-gap behind as a dead band under the title. */
   .pageHeaderStd .pageHeaderActionsWideOnly { display: none; }
+}
+
+/* ⚠ THE TABLET BAND (641–768) GETS THE HEADER FLOOR TOO (rendered sweep, 2026-09-02 — the Money
+   hub's Record measured 31px at 768 while every phone got 44). §115's rule is that the floor
+   belongs to the SURFACE and the band is a touch surface; the header rules simply stopped at the
+   phone breakpoint because they predate the band. Floor ONLY — the phone block's grid reshaping
+   and icon-only labels are phone decisions the band deliberately keeps out of. */
+@media (min-width: 641px) and (max-width: 768px) {
+  .pageHeaderStd .pageHeaderActions button,
+  .pageHeaderStd .pageHeaderActions a,
+  .pageHeaderStd .pageHeaderHelp button {
+    min-height: var(--tap-min, 44px);
+  }
 }
 
 .headerIcon {

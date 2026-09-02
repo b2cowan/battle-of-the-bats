@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-02T19:12:07.799Z",
+  "generated": "2026-09-02T23:06:10.075Z",
   "entries": {
     "coach-fundraisers|361|tap-floor|button·Chocolate sale": {
       "reason": "The record’s NAME, a real button since 2026-09-01 (keyboard/screen-reader reach — it was a text link on drives and a bare span on sponsors). Deliberate: the same row carries a full-width Open/Close control that clears 44px on a phone, so the touch target exists — this is the inline affordance beside it, and padding a name to 44px would put a button-sized gap between every record and its own figures. Carried from the drill-in-era anchor entries; re-keyed by element type.",
@@ -2145,26 +2145,6 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-budget-vs-actual|1440|content-overflow|text·$1,300.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 2px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$2,600.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$3,900.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 5px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$5,200.00": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·Budgeted (cumulative)": {
-      "reason": "An SVG <text> node inside the cumulative-spend chart (axis labels and legend) — measured against the chart's own viewBox, which scales to its container and clips nothing onto the page. Pre-existing chart code, untouched by the 2026-08-13 table pass; visible now only because the layout fixture gained budget data for the chart to plot.",
-      "detail": "content spills 23px with overflow-x:visible — no scroller owns it"
-    },
     "coach-budget-vs-actual|361|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
@@ -2180,10 +2160,6 @@
     "coach-budget-vs-actual|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Import": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "33px tall (floor 44)"
     },
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -4264,6 +4240,14 @@
     "coach-lineup-template|768|tap-floor|button·Save template": {
       "reason": "DEFERRED, not accepted — SHARED PAGE-HEADER ACTION, same family and same reason as the \"Help:\" entries beside it. \"Save template\" is the shared .btnPrimary in the shared .pageHeaderActions slot, which every coaches page with a primary action uses, so raising it here would either move every page header in the portal or fork this one screen away from the rest. The 641-768 pass raised the controls this screen owns — the lineup grid, the three view tabs, the format and innings selects, the toolbar buttons and the template-name field — and stopped at the header, which is the boundary the commitment page set. Belongs to the portal-wide header/toolbar decision in docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md.",
       "detail": "31px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$3,450.00": {
+      "reason": "An SVG <text> y-axis label inside the Spending-trend shelf's chart — the same accepted phantom class as the retired $1,300/$2,600/$3,900/$5,200 entries (2026-08-13), re-keyed because the 2026-09-02 fixture reseed changed the chart's max value. Verified by direct geometry probe on the live screen: the label sits fully inside the SVG viewBox (left edge at +16px of a 64-unit margin), the scroll container reports zero overflow, and nothing clips onto the page; the 12px figure is Chromium reporting a phantom scrollWidth on an SVG text node inside a closed <details>.",
+      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-budget-vs-actual|1440|content-overflow|text·$6,900.00": {
+      "reason": "An SVG <text> y-axis label inside the Spending-trend shelf's chart — the same accepted phantom class as the retired $1,300/$2,600/$3,900/$5,200 entries (2026-08-13), re-keyed because the 2026-09-02 fixture reseed changed the chart's max value. Verified by direct geometry probe on the live screen: the label sits fully inside the SVG viewBox (left edge at +16px of a 64-unit margin), the scroll container reports zero overflow, and nothing clips onto the page; the 12px figure is Chromium reporting a phantom scrollWidth on an SVG text node inside a closed <details>.",
+      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
     }
   }
 }
