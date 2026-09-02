@@ -4,6 +4,48 @@ import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 import styles from './BudgetItemPicker.module.css';
 
+/**
+ * The menu's height budget. `MENU_MAX` matches `.dropdown`'s own `max-height` — stated here too
+ * because the measurement has to know the cap it is capping.
+ * ⚠ `MENU_MIN` is the point below which a menu stops being usable: a coach can scroll two rows,
+ * they cannot use a 20px letterbox. Below this the menu takes the floor and the container scrolls.
+ */
+const MENU_MAX = 260;
+const MENU_MIN = 132;
+const MENU_GAP = 8;
+
+/**
+ * Where the menu should sit, measured from the field, in VIEWPORT coordinates.
+ *
+ * ⚠⚠ THE MENU HANGS OVER THE FORM — it is viewport-FIXED, so nothing an ancestor does can clip it,
+ * and opening it never changes the size of the dialog it is in. **That is a standing owner ruling
+ * (§80 walk, 2026-08-23)**, already carried by the recording conversation's "What happened?" menu,
+ * whose stylesheet records all three attempts: absolutely-positioned was clipped by the modal's
+ * scroll box; making the modal grow instead was *"rejected by the owner on sight — opening a field
+ * must not change the modal's size"*; viewport-fixed is the answer that stuck.
+ *
+ * This control never got that fix, and a short dialog showed exactly why: on the club tab's filing
+ * box the list had barely two rows of room and was cut off mid-word.
+ *
+ * ⚠ NO ANCESTOR OF THE FIELD MAY GAIN A `transform` OR `filter` — either one re-anchors `fixed` to
+ * that element and the clipping comes straight back.
+ */
+function menuPlacement(el: HTMLElement) {
+  const r = el.getBoundingClientRect();
+  const below = window.innerHeight - r.bottom - MENU_GAP;
+  const above = r.top - MENU_GAP;
+  // Open downwards unless there is genuinely more room the other way.
+  const up = below < Math.min(MENU_MAX, above);
+  return {
+    up,
+    maxH: Math.max(MENU_MIN, Math.min(MENU_MAX, up ? above : below)),
+    left: r.left,
+    width: r.width,
+    top: r.bottom + MENU_GAP,
+    bottom: window.innerHeight - r.top + MENU_GAP,
+  };
+}
+
 export interface BudgetItemSelection {
   categoryId: string;
   categoryName: string;
@@ -156,9 +198,12 @@ export default function BudgetItemPicker({
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
+  /** Where the menu opens, how tall it may be, and the rect it is pinned to. See `openDropdown`. */
+  const [drop, setDrop] = useState<ReturnType<typeof menuPlacement> | null>(null);
   const [activeIdx, setActiveIdx] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  /** The menu's own box — needed so its INTERNAL scrolling is not mistaken for the page moving. */
+  const menuRef = useRef<HTMLDivElement>(null);
   /* `aria-controls` has to name the menu, and this control renders three times on one screen in the
      Budget Plan's own sheets — a hardcoded id would point every box at the first one's list. */
   const listboxId = useId();
@@ -260,13 +305,51 @@ export default function BudgetItemPicker({
       : base;
   })();
 
+  /* ⚠ A MENU PINNED TO A MEASURED RECT MUST CLOSE WHEN THE PAGE MOVES, or it hangs in space beside
+     the field it belongs to. Cheaper and steadier than re-measuring on every scroll frame, and the
+     coach's next tap reopens it in the right place. Capture phase, so a scroll inside the modal
+     counts as well as the window's own.
+
+     ⚠⚠ EXCEPT THE MENU'S OWN SCROLL, AND THAT OMISSION SHIPPED (owner-found 2026-09-02:
+     *"when I try to scroll down on this drop down it closes the dropdown and I lose it"*). The list
+     is `max-height` + `overflow-y: auto`, so reading it scrolls it — and in CAPTURE phase that
+     reaches this listener as a scroll on the way down, identical to the page moving. The control
+     closed itself the instant a coach tried to look past the sixth item, on a menu whose whole
+     purpose is a long searchable list.
+     ⚖ The distinction is the EVENT'S TARGET, not the event: a scroll that starts inside the menu is
+     the coach reading it; a scroll anywhere else is the ground shifting under it. `contains`
+     includes the node itself, so the menu scrolling as one box is covered.
+     ⚠ Resize still always closes — a resize genuinely invalidates the measured rect. */
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onScroll = (e: Event) => {
+      const t = e.target;
+      if (t instanceof Node && menuRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open]);
+
   function openDropdown() {
     const el = inputRef.current;
     if (el) {
-      // Flip above the box when there is no room below — this control sits inside scrollable
-      // modals, where a downward menu is clipped by the scroll area or hidden behind the footer.
-      const rect = el.getBoundingClientRect();
-      setDropUp(window.innerHeight - rect.bottom < 260 && rect.top > 280);
+      /* ⚠⚠ THE MENU FITS THE BOX IT IS ACTUALLY IN, NOT THE VIEWPORT (owner-found 2026-09-01).
+         This measured `window.innerHeight` and opened a fixed 260px list. Inside a SHORT modal that
+         is wrong twice over: there is plenty of viewport below, so it never flipped — and the list
+         was taller than the dialog, so the modal's own `overflow-y: auto` clipped it to two rows.
+         The club tab's filing dialog is two fields tall and showed exactly that.
+
+         Its own comment already knew the control "sits inside scrollable modals"; it just measured
+         the wrong rectangle. Now: find the box that will clip us, take the room on each side, open
+         towards the roomier one, and cap the height to what is really there. A tall page is
+         unchanged — the viewport is the fallback bound and 260px still wins whenever it fits. */
+      setDrop(menuPlacement(el));
     }
     setOpen(true);
   }
@@ -524,7 +607,18 @@ export default function BudgetItemPicker({
             onKeyDown={onKeyDown}
           />
           {open && (
-            <div id={listboxId} className={`${styles.dropdown} ${dropUp ? styles.dropdownUp : ''}`} role="listbox">
+            <div
+              ref={menuRef}
+              id={listboxId}
+              className={styles.dropdown}
+              /* Pinned to the field's measured rect. The stylesheet owns the look and the 260px cap;
+                 these five values are the only thing that has to be measured at open time. */
+              style={drop ? (drop.up
+                ? { left: drop.left, width: drop.width, bottom: drop.bottom, maxHeight: drop.maxH }
+                : { left: drop.left, width: drop.width, top: drop.top, maxHeight: drop.maxH })
+                : undefined}
+              role="listbox"
+            >
               {renderLeadOptions()}
               {matches.length > 0 && renderOptions()}
               {/* ⚠ "Nothing matches" must not appear while the lead group HAS a match — typing a
