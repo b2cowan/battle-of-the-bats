@@ -1,6 +1,6 @@
 # One Tag Idiom — Tagging Across the Coaches Portal — Implementation Plan
 
-> **Status:** ✅ COMPLETE — owner QA §129 PASSED 2026-09-02 (36/36, zero defects); F2 dropdown built same day; awaiting the commit word (mig 272 prod-owed at release)
+> **Status:** ✅ COMPLETE — QA §129 PASSED 36/36; **committed `4485bcce` 2026-09-02** (shared-file halves rode `f318858a`); mig 272 prod-owed at the next release
 > **Created:** 2026-09-01
 > **Branch:** dev
 > **PM brief:** `COACH_TAGGING_PM_BRIEF.md` (same folder)
