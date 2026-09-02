@@ -136,11 +136,11 @@
   font-size: var(--type-support);
   color: var(--text-tertiary);
 }
-.trendSummary::-webkit-details-marker { display: none; }
-.trendSummary:hover { color: var(--text-secondary); }
-.trendSummary strong { color: var(--text-secondary); font-weight: 650; }
-.trendSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 8px; }
-.trendChev { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease; }
+/* ⚠ THE SUMMARY'S ACCESSORY RULES (marker-hide, hover, bold, focus, chevron, reduced-motion, the
+   touch floor) ARE SHARED WITH `.bridgeSummary`/`.bridgeChev` below — the two disclosure lines are
+   one idiom, and the trend copy had already drifted (it shipped without the bridge's
+   reduced-motion override and without the 44px touch floor) before `/simplify` merged them
+   (2026-09-02). Only the box itself differs: the shelf is a card, the bridge is a footnote. */
 .trendShelf[open] .trendChev { transform: rotate(90deg); }
 .trendBody { padding: 0 0.9rem 0.6rem; }
 
@@ -362,34 +362,20 @@
 /* (The expanded category's lines need no wrapper rule at all — the shared `.ledgerRow` draws each
    line's separating rule and `.ledgerSubRows` its expanded periods.) */
 
-/* The one sentence the funding row can't say in a column heading: what its "actual" counts.
-   It sits under the table rather than inside it — a paragraph in a grid row would fight the
-   four fixed money columns. */
-.fundingNote {
-  margin: 0.6rem 0 0;
-  font-size: var(--type-support);
-  line-height: 1.45;
-  color: var(--text-tertiary);
-}
-
-/* The variance key (owner D5.1, 2026-09-02) — the quiet line saying the column speaks two
-   dialects. Same voice as the funding note; it sits directly under the table it explains. */
-.varianceKey {
-  margin: 0.6rem 0 0;
-  font-size: var(--type-support);
-  line-height: 1.45;
-  color: var(--text-tertiary);
-}
-.varianceKey b { color: var(--text-secondary); font-weight: 650; }
-
-/* The promoted cash sentence (owner D5.3, 2026-09-02) — visible prose where a collapsed
-   question used to sit; the walk-through body below it keeps the bridge styles. */
+/* ── The quiet footnote voice, once ──────────────────────────────────────────
+   One rule for the three sentences under the table — the funding note, the variance key (owner
+   D5.1) and the promoted cash sentence (owner D5.3). They are one voice by design ("same voice as
+   the funding note"), so they are one declaration (`/simplify`, 2026-09-02 — three byte-identical
+   blocks had accumulated). */
+.fundingNote,
+.varianceKey,
 .bridgeSentence {
-  margin: 0.55rem 0 0;
+  margin: 0.6rem 0 0;
   font-size: var(--type-support);
   line-height: 1.45;
   color: var(--text-tertiary);
 }
+.varianceKey b,
 .bridgeSentence strong { color: var(--text-secondary); font-weight: 650; }
 
 /* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
@@ -564,16 +550,19 @@
 
    ⚠ TOUCH WIDTHS ONLY. On a desktop this is a quiet footnote line and 44px of height around 12px
    of type would read as a button it is not. The floor belongs to the surface, not the element. */
+/* ⚠ `.trendSummary`/`.trendChev` RIDE EVERY RULE BELOW — the Spending-trend shelf's summary is
+   the same disclosure idiom (see its block above), and sharing these is what got it the touch
+   floor and the reduced-motion override its first copy missed. */
 @media (max-width: 768px) {
-  .bridgeSummary { min-height: 44px; }
+  .bridgeSummary, .trendSummary { min-height: 44px; }
 }
-.bridgeSummary::-webkit-details-marker { display: none; }
-.bridgeSummary:hover { color: var(--text-secondary); }
-.bridgeSummary strong { color: var(--text-secondary); font-weight: 650; }
-.bridgeSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 4px; }
-.bridgeChev { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease; }
+.bridgeSummary::-webkit-details-marker, .trendSummary::-webkit-details-marker { display: none; }
+.bridgeSummary:hover, .trendSummary:hover { color: var(--text-secondary); }
+.bridgeSummary strong, .trendSummary strong { color: var(--text-secondary); font-weight: 650; }
+.bridgeSummary:focus-visible, .trendSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 4px; }
+.bridgeChev, .trendChev { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease; }
 .bridge[open] .bridgeChev { transform: rotate(90deg); }
-@media (prefers-reduced-motion: reduce) { .bridgeChev { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .bridgeChev, .trendChev { transition: none; } }
 
 /* Opened, it is a small ledger — indented under its own line so it reads as that line's working. */
 .bridgeBody {

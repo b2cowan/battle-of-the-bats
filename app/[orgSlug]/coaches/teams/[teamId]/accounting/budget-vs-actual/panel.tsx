@@ -7,7 +7,7 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import {
-  formatMonthLabel, lensCell, lensTotal, lensUndated,
+  formatMonthLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   type MonthGrid, type MonthCell, type MoneyRowDirection, type RevenueGroupKey,
@@ -248,6 +248,12 @@ function varianceInk(v: number, direction: 'in' | 'out', actual?: number): strin
 // cannot become two different spreadsheets. Only the MONTH-GRID export is local to this file,
 // because its shape depends on the view and lens the coach chose (rule 12).
 
+/** Money to the cent, once for the whole module — three local copies of this lambda had
+ *  accumulated by the time `/simplify` looked (2026-09-02). */
+function r2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 /** ⚠ STRIPS THE SIGN — every screen caller prints its own (`fmtVariance`, the headroom's ±). */
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -284,10 +290,9 @@ function fmtVariance(v: number): string {
 }
 
 /** "2026-03" → "Mar" — the bare name the chart's middle labels carry (G3: only the edges keep
- *  their year, which is also what stopped the last label half-escaping the viewBox). */
+ *  their year). Derived from `fmtMonth` rather than a fourth copy of the month-name array. */
 function fmtMonthBare(yyyyMm: string): string {
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return names[parseInt(yyyyMm.split('-')[1], 10) - 1] ?? yyyyMm;
+  return fmtMonth(yyyyMm).split(' ')[0];
 }
 
 /**
@@ -618,7 +623,6 @@ function CategoryGroup({
  * total — so a bridge can never contradict the table above it.
  */
 function cashAdjustments(data: BvaData) {
-  const r2 = (n: number) => Math.round(n * 100) / 100;
   /** Season spending that was never team cash — a parent paid the vendor. */
   const familyPaid = r2(data.familyPaidCosts.reduce((s, c) => s + c.amount, 0));
   /* Money back NETS INTO the cost it repaid on the statement; in cash it is an arrival on the
@@ -660,6 +664,33 @@ function familyPaidSub(c: BvaData['familyPaidCosts'][number]): { id: string; lab
 }
 
 /**
+ * The walk's three conditional lines — which fire, what they are called, in what order — decided
+ * ONCE for the on-screen bridge and the exported reconciliation (`/simplify`, 2026-09-02: the two
+ * had been typed out twice, which is the exact label-drift this file's "ONE NAME FOR ONE THING"
+ * note already records happening before).
+ *
+ * ⚠ THE ITEMISATION TRAVELS WITH THE LINE IT EXPLAINS. Rendered as a separate pass it landed at
+ * the foot of the list, under whichever adjustment happened to be last — so "Officials · $599"
+ * read as a breakdown of *money paid back to families*.
+ * ⚠ ONE NAME FOR ONE THING: 'money returned to families' is the band's own phrase — an earlier
+ * draft said 'money paid back to families' here while the band it describes had been renamed.
+ */
+function cashBridgeLines(data: BvaData): Array<{ label: string; amount: number; subs?: Array<{ id: string; label: string; amount: number }> }> {
+  const { familyPaid, moneyBack, payouts } = cashAdjustments(data);
+  const lines: Array<{ label: string; amount: number; subs?: Array<{ id: string; label: string; amount: number }> }> = [];
+  if (moneyBack > 0.005) lines.push({ label: 'Plus money back, counted in cash as money arriving', amount: moneyBack });
+  if (familyPaid > 0.005) {
+    lines.push({
+      label: 'Less costs a family paid the vendor',
+      amount: -familyPaid,
+      subs: data.familyPaidCosts.map(familyPaidSub),
+    });
+  }
+  if (payouts > 0.005) lines.push({ label: 'Plus money returned to families', amount: payouts });
+  return lines;
+}
+
+/**
  * ⚠ PROMOTED FROM A COLLAPSED QUESTION TO A VISIBLE SENTENCE (owner D5.3, 2026-09-02). The old
  * `<details>` summary asked "why the difference?" — which only helps a reader who had already
  * noticed one. The cash figure and its causes are now stated out loud; the walk-through stays
@@ -670,23 +701,7 @@ function CashBridge({ data, onSeeMonths }: { data: BvaData; onSeeMonths: () => v
   const { familyPaid, moneyBack, payouts, cashOut } = cashAdjustments(data);
 
   if (familyPaid < 0.005 && moneyBack < 0.005 && payouts < 0.005) return null;
-  /* ⚠ THE ITEMISATION TRAVELS WITH THE LINE IT EXPLAINS. Rendered as a separate pass it landed at
-     the foot of the list, under whichever adjustment happened to be last — so "Officials · $599"
-     read as a breakdown of *money paid back to families*. A sub-list that can drift away from its
-     parent is worse than no sub-list; it attributes real money to the wrong sentence. */
-  const lines: Array<{ label: string; amount: number; subs?: Array<{ id: string; label: string; amount: number }> }> = [];
-  if (moneyBack > 0.005) lines.push({ label: 'Plus money back, counted in cash as money arriving', amount: moneyBack });
-  if (familyPaid > 0.005) {
-    lines.push({
-      label: 'Less costs a family paid the vendor',
-      amount: -familyPaid,
-      subs: data.familyPaidCosts.map(familyPaidSub),
-    });
-  }
-  /* ⚠ ONE NAME FOR ONE THING (2026-09-02). This said 'money paid back to families' while the band
-     it describes had been renamed — a third phrase for one event, on the drill-down a coach opens
-     precisely when they are already confused about it. */
-  if (payouts > 0.005) lines.push({ label: 'Plus money returned to families', amount: payouts });
+  const lines = cashBridgeLines(data);
 
   /* The sentence's causes, in the walk's own order — approved wording at the G3 gate mockup
      ("a family paid one cost directly, and some money came back"). */
@@ -770,7 +785,6 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
      no actual in them. What remains is the one genuine gap: Cash against what the season spent. */
   if (lens !== 'actual') return null;
 
-  const r2 = (n: number) => Math.round(n * 100) / 100;
   const { familyPaid, moneyBack } = cashAdjustments(data);
   /** Cash the team paid vendors, less what the season spent. The whole gap on this view. */
   const delta = r2(moneyBack - familyPaid);
@@ -954,7 +968,6 @@ export function BudgetVsActualPanel({
      shows, subtracted from the flow's ending rather than re-derived. */
   const forward = useMemo(() => {
     if (!data) return null;
-    const r2 = (n: number) => Math.round(n * 100) / 100;
     const flow = buildBandCashFlow(
       data.revenueGrid, data.monthGrid, 'scheduled',
       data.cashOnHand, data.openingBalance ?? 0, data.returnedGrid);
@@ -995,10 +1008,10 @@ export function BudgetVsActualPanel({
   // The export always matches what is on screen. In the Months view that means the month grid
   // in the SELECTED lens, with the months as columns — the same shape the import template will
   // take, so today's export is tomorrow's import.
-  /** Which grid the EXPENSES band reads under this lens — the screen's own rule (D1 + Q3):
-   *  Season spending and Difference read the spending grid; everything else the cash grid. */
+  /** Which grid the EXPENSES band reads under this lens — the lib's own predicate, shared with
+   *  the screen (`lensReadsSpendingGrid`), so the file cannot pick a different band. */
   function exportExpensesBand(): MonthGrid {
-    return lens === 'spending' || lens === 'difference' ? data!.spendingGrid : data!.monthGrid;
+    return lensReadsSpendingGrid(lens) ? data!.spendingGrid : data!.monthGrid;
   }
 
   function monthExportColumns(): ExportColumnDef[] {
@@ -1148,7 +1161,7 @@ export function BudgetVsActualPanel({
           undated: flow.undated.moneyOut || '',
         };
         flow.rows.forEach(r => { out[`m_${r.month}`] = r.moneyOut || ''; });
-        out.total = Math.round((flow.rows.reduce((s, r) => s + r.moneyOut, 0) + flow.undated.moneyOut) * 100) / 100;
+        out.total = flow.totalMoneyOut;
         push(out, 'total');
       }
       /* ⚠⚠ THREE ROWS, AND THE FILE READS AS THE STATEMENT THE SCREEN DOES (owner ruling
@@ -1220,17 +1233,12 @@ export function BudgetVsActualPanel({
     const push = (row: Record<string, string | number>, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
     push({ item: 'RECONCILIATION — SPENDING TO CASH', budgeted: '', actual: '', variance: '' }, 'section');
     push({ item: 'What this season spent', budgeted: '', actual: data.totalActual, variance: '' });
-    if (moneyBack > 0.005) {
-      push({ item: 'Plus money back, counted in cash as money arriving', budgeted: '', actual: moneyBack, variance: '' });
-    }
-    if (familyPaid > 0.005) {
-      push({ item: 'Less costs a family paid the vendor', budgeted: '', actual: -familyPaid, variance: '' });
-      for (const c of data.familyPaidCosts.map(familyPaidSub)) {
-        push({ item: `  — ${c.label}`, budgeted: '', actual: c.amount, variance: '' }, 'item');
+    // The same lines the on-screen walk shows, from the one builder — see `cashBridgeLines`.
+    for (const l of cashBridgeLines(data)) {
+      push({ item: l.label, budgeted: '', actual: l.amount, variance: '' });
+      for (const s of l.subs ?? []) {
+        push({ item: `  — ${s.label}`, budgeted: '', actual: s.amount, variance: '' }, 'item');
       }
-    }
-    if (payouts > 0.005) {
-      push({ item: 'Plus money returned to families', budgeted: '', actual: payouts, variance: '' });
     }
     push({ item: 'Cash that left the team’s account', budgeted: '', actual: cashOut, variance: '' }, 'total');
     return { rows, kinds };

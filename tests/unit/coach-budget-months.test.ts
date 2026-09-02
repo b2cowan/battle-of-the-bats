@@ -328,6 +328,12 @@ describe('buildCashFlow', () => {
     assert.deepEqual(flow.undated, { moneyIn: 250, moneyOut: 90, net: 160 });
     assert.equal(flow.ending, 160);
   });
+
+  it('totals every dollar out, months plus undated — the "Total cash out" row (D5.9)', () => {
+    const flow = buildCashFlow(
+      ['2026-03', '2026-04'], {}, { '2026-03': 120.5, '2026-04': 30 }, 0, { moneyOut: 49.5 });
+    assert.equal(flow.totalMoneyOut, 200);
+  });
 });
 
 describe('isElapsed', () => {

@@ -1452,10 +1452,9 @@ export const GET = withObservability(async (req: Request,
      spending grid holding a copy would be the same figure twice, free to drift. */
   const familyPaidIds = new Set(cashStrip.excluded.map(e => e.id));
   const spendingFamilyPaidRows = new Set<string>();
-  const spendingActuals: CategoryEvent[] = actualMovements.map(mv => ({
-    ...mv.category, itemId: mv.itemId, date: mv.date, amount: mv.amount,
-  }));
+  const spendingActuals: CategoryEvent[] = [];
   for (const mv of actualMovements) {
+    spendingActuals.push({ ...mv.category, itemId: mv.itemId, date: mv.date, amount: mv.amount });
     /* ⚠ THE FAMILY-PAID FACT FINALLY TRAVELS (D1). It has always existed per payment
        (`effectivePayerId`, carried by the cash strip's exclusion list); the statement's movement
        list dropped it, so no reader could tag the row. Matched by id — `paidMovements` and the

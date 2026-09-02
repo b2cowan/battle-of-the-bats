@@ -943,6 +943,13 @@ export interface CashFlowResult {
   /** The season's own net — every month plus the undated bucket. The `Net for the month` Total. */
   net: number;
   /**
+   * Every dollar OUT, months plus the undated bucket — the "Total cash out" row's Total cell
+   * (owner D5.9). Computed here because the screen and the export both print it; two hand-copies
+   * of the same reduce-and-round had already been written by the time `/simplify` looked
+   * (2026-09-02).
+   */
+  totalMoneyOut: number;
+  /**
    * Where the balance ENDS: opening + net.
    *
    * ⚠⚠ THIS IS WHAT THE RUNNING BALANCE'S TOTAL CELL CARRIES (owner ruling 2026-08-23), where it
@@ -993,8 +1000,9 @@ export function buildCashFlow(
      balance and never triggers the shortfall sentence. A pledge cannot rescue a February the team
      has to get through without it. */
   const net = round2(rows.reduce((s, r) => s + r.net, 0) + undated.net);
+  const totalMoneyOut = round2(rows.reduce((s, r) => s + r.moneyOut, 0) + undated.moneyOut);
 
-  return { rows, opening, undated, net, ending: round2(opening + net), shortfall };
+  return { rows, opening, undated, net, totalMoneyOut, ending: round2(opening + net), shortfall };
 }
 
 /**
@@ -1093,13 +1101,31 @@ export type MoneyLens = 'budget' | 'scheduled' | 'actual' | 'spending' | 'differ
  * plain `node --test` and importable by the check scripts. The component re-exports it — every
  * existing import path still works.
  */
-export const MONEY_LENSES: Array<{ id: MoneyLens; label: string; short: string }> = [
-  { id: 'budget',     label: 'Budget',          short: 'Budget' },
-  { id: 'scheduled',  label: 'Scheduled',       short: 'Sched.' },
-  { id: 'actual',     label: 'Cash',            short: 'Cash' },
-  { id: 'spending',   label: 'Season spending', short: 'Spending' },
-  { id: 'difference', label: 'Difference',      short: 'Diff.' },
+/* ⚠ NO `short` FIELD — it rode along from the segmented-button era (the pills that abbreviated
+   "Diff." to survive a phone) and nothing has read it since the 2026-08-20 dropdown swap; it was
+   dropped rather than extended to a fifth entry nobody renders (`/simplify`, 2026-09-02). */
+export const MONEY_LENSES: Array<{ id: MoneyLens; label: string }> = [
+  { id: 'budget',     label: 'Budget' },
+  { id: 'scheduled',  label: 'Scheduled' },
+  { id: 'actual',     label: 'Cash' },
+  { id: 'spending',   label: 'Season spending' },
+  { id: 'difference', label: 'Difference' },
 ];
+
+/**
+ * Does the EXPENSES band read the spending grid under this lens? Season spending shows it
+ * outright; Difference compares the plan against it (Q3, ruled 2026-09-02).
+ *
+ * ⚠ ONE PREDICATE, TWO READERS — the screen picks its band with it and the export picks the same
+ * band with it, which is exactly the `hasUndated` lesson (two spellings of one rule had already
+ * drifted by the time anyone looked). ⚠ It is NOT the "no balance rows" rule, which shares this
+ * truth table today by coincidence: Difference lacks balances because it has no cash concept at
+ * all, Spending because it deliberately shows half a statement. Keep those spelled where they
+ * live — merging them here would assert an equivalence that breaks silently the day they diverge.
+ */
+export function lensReadsSpendingGrid(lens: MoneyLens): boolean {
+  return lens === 'spending' || lens === 'difference';
+}
 
 /**
  * The `MonthCell` field a lens reads. The spending grid stores its figures in `actual` — a second

@@ -7,7 +7,7 @@ import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  formatMonthLabel, formatMonthLong, MONEY_LENSES,
+  formatMonthLabel, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
@@ -248,8 +248,10 @@ export default function MoneyMonthGrid({
      cash grid; **Season spending and Difference read the spending grid** — same plan rows, same
      month domain, but the `actual` cells hold the Statement's movements, which is what makes
      Difference tie to Headroom. Budget and Scheduled keep the cash grid (their fields are
-     identical across the two by construction — same lines, same scheduled feed). */
-  const expensesBand = lens === 'spending' || lens === 'difference' ? spendingGrid : grid;
+     identical across the two by construction — same lines, same scheduled feed).
+     ⚠ THE PREDICATE IS THE LIB'S (`lensReadsSpendingGrid`) — the export asks the same question,
+     and two spellings of one band-selection rule is the `hasUndated` drift replayed. */
+  const expensesBand = lensReadsSpendingGrid(lens) ? spendingGrid : grid;
   /** The Season-spending lens is EXPENSES ONLY (owner D1): a cheque back to a family is
    *  settlement, not spending, and revenue is the other half of a question this lens is not
    *  answering. No revenue band, no returned band, no balance rows. */
@@ -797,7 +799,7 @@ export default function MoneyMonthGrid({
                       </td>
                     ))}
                     <td className={`${styles.num} ${styles.totalCol}`}>
-                      {cellNode(Math.round((cash.rows.reduce((s, r) => s + r.moneyOut, 0) + cash.undated.moneyOut) * 100) / 100)}
+                      {cellNode(cash.totalMoneyOut)}
                     </td>
                   </tr>
                 )}
