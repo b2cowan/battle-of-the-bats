@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { paymentsTotalByPlayer, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+import { groupByPlayer } from '@/lib/dues-credits';
+import { formatPlayerFirstLast } from '@/lib/player-name';
+import { planRosterDuesRun, toExistingInstallmentRows, type DuesRunPlan, type StoredInstallmentRow } from '@/lib/dues-bulk-run';
 import type { RepInstallmentPreviewRow } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
@@ -36,6 +40,93 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   }
 
   return { ctx, team, assignment, programYear };
+}
+
+/**
+ * ⚠⚠ THE FOUR READS THAT MAKE THIS A PREVIEW RATHER THAN A TABLE (owner ruling 2026-09-01,
+ * "Exceptions First").
+ *
+ * Every fact below was already known to the product at this moment and was simply told to the
+ * coach LATER — the hand-set question as a 409 after the button, the payout-floor refusal as a
+ * line in the result screen. Reading them here is what lets the preview stop being contradicted
+ * by its own confirm step.
+ *
+ * The joining is `planRosterDuesRun` (lib/dues-bulk-run.ts) — SHARED with the write route's own
+ * hand-set detection, so the names this screen offers to keep are exactly the names that route
+ * keeps. No arithmetic lives here: the credit delta is the reconcile planner's, the refusal is
+ * the payout floor's.
+ *
+ * Cost: four season-wide reads on a deliberate button press, ALL FOUR IN PARALLEL and none of them
+ * per-player. The write route already pays for three of them on every run.
+ *
+ * ⚠ THE INSTALLMENTS READ FILTERS THROUGH ITS PARENT rather than fetching schedule ids first and
+ * asking again with them. `rep_player_dues_installments` carries no season column — only a
+ * `schedule_id` — and its denormalized `team_id` spans every season the team has ever had, so a
+ * season's rows genuinely have to be reached through the schedule. An embedded `!inner` filter
+ * (the pattern lib/db.ts and lib/family-engagement.ts already use) does that in ONE query, which
+ * is what keeps this at four parallel reads instead of three-then-one-more.
+ */
+async function readRunExceptions(args: {
+  programYearId: string;
+  players: readonly { id: string; name: string }[];
+  newScheduleTotal: number;
+  newDueDates: readonly string[];
+}): Promise<DuesRunPlan | { error: string }> {
+  const { programYearId, players, newScheduleTotal, newDueDates } = args;
+
+  const [installments, payments, payouts, credits] = await Promise.all([
+    supabaseAdmin
+      .from('rep_player_dues_installments')
+      .select('player_id, installment_number, amount, due_date, rep_player_dues_schedules!inner(program_year_id)')
+      .eq('rep_player_dues_schedules.program_year_id', programYearId),
+    getRepDuesPaymentsByProgramYear(programYearId),
+    getRepDuesPayoutsByProgramYear(programYearId),
+    supabaseAdmin
+      .from('rep_dues_credits')
+      .select('id, player_id, amount, credit_type, payment_id, description')
+      .eq('program_year_id', programYearId)
+      // Newest first — the order `planOverpaymentReconcile` shrinks in, and the order the
+      // executor hands it. A different order here would make the preview's credit figure a
+      // different figure from the one the run writes.
+      .order('created_at', { ascending: false }),
+  ]);
+
+  /* ⚠⚠ A FAILED READ IS NOT AN EMPTY ONE (/review 2026-09-01, High).
+   *
+   * Both of these used to fall through as `?? []`, and the two silences were the worst kind: an
+   * installments failure makes the screen announce "this roster has no dues yet" and hide the
+   * keep-my-hand-set-schedules checkbox on a roster that has both, and a credits failure empties
+   * every family's projected credit set, which makes the payout floor refuse every family that
+   * has ever been handed cash. Neither destroys anything — the write route reads all of this
+   * again and refuses on its own terms — but a preview whose whole promise is "nothing after the
+   * button contradicts this" cannot be allowed to guess. It fails loudly instead, exactly as the
+   * write route already does on the same credits read. */
+  if (installments.error || credits.error) {
+    return { error: 'Could not read this season’s dues — nothing was previewed. Try again.' };
+  }
+
+  const existingRows = toExistingInstallmentRows(installments.data as StoredInstallmentRow[] | null);
+
+  const creditRows = ((credits.data ?? []) as Array<{ id: string; player_id: string; amount: number; credit_type: string; payment_id: string | null; description: string | null }>)
+    .map(c => ({
+      playerId: c.player_id,
+      id: c.id,
+      amount: Number(c.amount),
+      creditType: c.credit_type,
+      // The engine's own standalone row — the only kind a top-up may land on, exactly as
+      // `reconcileOverpaymentCredits` decides it. Same test, so the same plan comes out.
+      consolidatable: c.payment_id == null && c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION,
+    }));
+
+  return planRosterDuesRun({
+    players,
+    newScheduleTotal,
+    newDueDates,
+    existingRows,
+    paymentTotals:   paymentsTotalByPlayer(payments),
+    creditsByPlayer: groupByPlayer(creditRows),
+    payoutsByPlayer: groupByPlayer(payouts),
+  });
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-plan/installment-preview
@@ -206,15 +297,38 @@ export const GET = withObservability(async (req: Request,
     })),
   }));
 
-  // ⚠ The rows and nothing else. `perPlayer` and `fundedByPlayers` were briefly returned here too
-  // and NOTHING read them — the sheet computes both locally for its live comparison, which it has
-  // to, since that line updates as the coach types and cannot wait on a round trip. Shipping a
-  // second copy of a money figure nobody consumes is how the two quietly stop agreeing, which is
-  // the entire defect this endpoint was rewritten to end.
+  /* Who this run treats differently — see `readRunExceptions`. The name is assembled with the
+     SHARED first-last helper and the write route's own 'Unnamed player' fallback, so a family
+     named in the preview is named identically in the result screen. */
+  const run = await readRunExceptions({
+    programYearId:    programYear.id,
+    players:          players.map(p => ({
+      id:   p.id,
+      // ⚠ `.trim()` — the shared helper joins but does not trim, and a whitespace-only name is
+      // TRUTHY, so without it a roster row holding " " renders as a blank instead of falling
+      // back. The write route names the same families the same way, on purpose.
+      name: formatPlayerFirstLast({ playerFirstName: p.player_first_name, playerLastName: p.player_last_name }).trim()
+            || 'Unnamed player',
+    })),
+    newScheduleTotal: installmentAmounts.reduce((sum, a) => sum + a, 0),
+    newDueDates:      dates,
+  });
+  if ('error' in run) return NextResponse.json({ error: run.error }, { status: 500 });
+
+  // ⚠ THE ROWS, AND THE EXCEPTIONS — AND STILL NOT `perPlayer` / `fundedByPlayers`. Those two
+  // were briefly returned here and NOTHING read them: the sheet computes both locally for its
+  // live comparison, which it has to, since that line updates as the coach types and cannot wait
+  // on a round trip. Shipping a second copy of a money figure nobody consumes is how the two
+  // quietly stop agreeing, which is the entire defect this endpoint was rewritten to end.
+  //
+  // `run` earns its place by the opposite test: it is the ONLY source of those facts (nothing on
+  // the client can know who is hand-set or who the payout floor refuses), it is read by the
+  // screen on every render, and it comes from the same shared derivation the write route obeys.
   return NextResponse.json({
     preview,
     basis,
     rosterCount:      players.length,
     installmentCount: count,
+    run,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/installment-preview' });

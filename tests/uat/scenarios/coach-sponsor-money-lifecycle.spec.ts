@@ -922,6 +922,139 @@ test.describe('a family’s overpayment credit follows the schedule, both doors 
     expect(await overpaymentCredits(), 'with the cash back, the reconcile claws the credit cleanly').toEqual([]);
   });
 
+
+  /**
+   * ⚠⚠ THE ONE ASSERTION THIS WHOLE EXTRACTION EXISTS FOR (Exceptions First, owner 2026-09-01).
+   *
+   * The preview now NAMES the hand-set schedules and offers to keep them, and the write route is
+   * what actually keeps them. If those two ever disagree the screen does not look broken — it
+   * looks like the coach protected three families and three different ones got flattened. So the
+   * preview's answer is compared to the WRITE ROUTE'S OWN ANSWER, through both real endpoints,
+   * rather than to a fixture the two could drift away from together.
+   *
+   * The same test pins the second fact that used to arrive after the button: a payout-floor
+   * refusal, named in the preview and named again in the run's result, with the same dollars.
+   */
+  test('the preview names the same hand-set players and refusals the run itself acts on', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    // A roster with a genuine MAJORITY shape: two players on the team plan, one on their own.
+    // (Two players with two shapes is a tie, and the comparison would name one of them
+    // arbitrarily — see the unit suite, which pins that on purpose.)
+    const p3Id = await insert('rep_roster_players', {
+      program_year_id: programYearId, team_id: repTeamId, org_id: orgId,
+      player_first_name: `${MARK}Plain`, player_last_name: 'Family',
+      status: 'active', source: 'admin_manual',
+    });
+
+    const setPlain = (id: string) => call(page, `${api()}/dues`, {
+      method: 'POST',
+      body: { playerId: id, totalAmount: 800, installments: [{ installmentNumber: 1, amount: 800, dueDate: `${YEAR}-09-01` }] },
+    });
+    expect((await setPlain(playerId)).status).toBe(201);
+    expect((await setPlain(p3Id)).status).toBe(201);
+
+    // The odd one out: two dated pieces where everyone else has one — a hardship arrangement, in
+    // the only shape the product can actually recognise as one.
+    expect((await call(page, `${api()}/dues`, {
+      method: 'POST',
+      body: {
+        playerId: p2Id, totalAmount: 650,
+        installments: [
+          { installmentNumber: 1, amount: 325, dueDate: `${YEAR}-09-01` },
+          { installmentNumber: 2, amount: 325, dueDate: `${YEAR}-11-01` },
+        ],
+      },
+    })).status).toBe(201);
+
+    // ── The preview's answer ──────────────────────────────────────────────────────────────────
+    const qs = new URLSearchParams({ installmentCount: '1', basis: 'manual' });
+    qs.append('dates[]', `${YEAR}-10-01`);
+    qs.append('amounts[]', '1200');
+    const preview = await call(page, `${api()}/budget-plan/installment-preview?${qs}`);
+    expect(preview.status, 'the preview reads').toBe(200);
+    const run = (preview.body as {
+      run: {
+        handSetPlayerIds: string[]; blockedPlayerIds: string[]; dateChangePlayerIds: string[];
+        hasExistingDues: boolean;
+        exceptions: { playerId: string; tone: string; handSet: { total: number; dateCount: number } | null; paidOut: number | null }[];
+      };
+    }).run;
+
+    expect(run.hasExistingDues, 'this run replaces rather than creates').toBe(true);
+    expect(run.handSetPlayerIds, 'the preview names the per-player arrangement').toEqual([p2Id]);
+    expect(run.blockedPlayerIds, 'nothing is refused yet — no cash has gone back').toEqual([]);
+    expect(run.dateChangePlayerIds.slice().sort(), 'every family is being told a new date')
+      .toEqual([playerId, p2Id, p3Id].sort());
+    const handSetRow = run.exceptions.find(e => e.playerId === p2Id);
+    expect(handSetRow!.tone).toBe('warn');
+    expect(handSetRow!.handSet, 'the row quotes their current plan, so the coach can weigh it')
+      .toEqual({ total: 650, dateCount: 2 });
+
+    // ── The WRITE route's own answer, asked the way it is asked without a replace ─────────────
+    const asked = await call(page, `${api()}/budget-plan/generate-installments`, {
+      method: 'POST',
+      body: { basis: 'manual', installments: [{ installmentNumber: 1, dueDate: `${YEAR}-10-01`, amount: 1200 }] },
+    });
+    expect(asked.status).toBe(409);
+    const belt = asked.body as { code: string; handSetPlayers: { id: string }[]; playersWithDateChange: number };
+    expect(belt.code, 'the 409 is the BELT for a stale or non-previewed call — never removed').toBe('ALREADY_HAS_DUES');
+    expect(belt.handSetPlayers.map(p => p.id), '⚠ THE TWO SCREENS NAME THE SAME PEOPLE')
+      .toEqual(run.handSetPlayerIds);
+    expect(belt.playersWithDateChange, 'and count the same moved dates').toBe(run.dateChangePlayerIds.length);
+
+    /* ── A refusal shows in the preview BEFORE the button, and again in the result after it ────
+       The odd family is standing on a payout: their $1,200 (recorded by the first test in this
+       block and still on the books) against a $650 plan left a $550 overpayment credit, and $350
+       of it has been handed back in cash. Raising them to $1,200 wipes that credit out, so the
+       books would say they were owed nothing while holding the team's $350.
+
+       ⚠ THE PAYOUT IS SIZED AGAINST THE PROJECTED CEILING, NOT AGAINST A ROUND NUMBER. This test
+       first recorded a SECOND payment and the refusal never fired — correctly: with $2,200 in and
+       $1,200 owed the family was still owed $1,000, which covers any payout below it. Asserting
+       the standing first is what makes the refusal a real one rather than an accident. */
+    expect(await overpaymentCredits(), 'the family is owed $550 before any cash goes back').toEqual([550]);
+    const payoutId = await insert('rep_dues_payouts', {
+      program_year_id: programYearId, player_id: p2Id, org_id: orgId, team_id: repTeamId,
+      amount: 350, paid_date: ARRIVAL_2_DATE, method: 'etransfer',
+    });
+
+    const second = await call(page, `${api()}/budget-plan/installment-preview?${qs}`);
+    const run2 = (second.body as { run: { blockedPlayerIds: string[]; exceptions: { playerId: string; tone: string; paidOut: number | null }[] } }).run;
+    expect(run2.blockedPlayerIds, 'the refusal is knowable before the button, and now shown there').toEqual([p2Id]);
+    expect(run2.exceptions.find(e => e.playerId === p2Id)!.paidOut, 'with the floor’s own dollars').toBe(350);
+
+    const done = await call(page, `${api()}/budget-plan/generate-installments`, {
+      method: 'POST',
+      body: {
+        replace: true, basis: 'manual',
+        installments: [{ installmentNumber: 1, dueDate: `${YEAR}-10-01`, amount: 1200 }],
+      },
+    });
+    expect(done.status, 'and the run still completes for everyone else').toBe(201);
+    const result = done.body as { playersProcessed: number; payoutFloorRefusals: { playerId: string; paidOut: number }[] };
+    expect(result.payoutFloorRefusals.map(r => r.playerId), 'the same family, refused by name')
+      .toEqual(run2.blockedPlayerIds);
+    expect(result.payoutFloorRefusals[0].paidOut, 'and the same dollars the preview quoted').toBe(350);
+    expect(result.playersProcessed, 'the other two families are written').toBe(2);
+
+    /* Unwind to the standing the next test expects: no payout, no extra player, the odd family
+       back on the plain $1,200 plan.
+
+       ⚠ THE $1,200 RECEIPT STAYS. The next test asserts a $400 overpayment credit after lowering
+       this family to $800, and that credit only exists because the money is still on the books —
+       deleting the payments here would have left it asserting against a family who had paid
+       nothing. (A one-fixture spec is a cross-session mutex; it is also a within-file one.) */
+    await admin.from('rep_dues_payouts').delete().eq('id', payoutId);
+    const { data: p3Sched } = await admin.from('rep_player_dues_schedules').select('id').eq('player_id', p3Id);
+    for (const s of p3Sched ?? []) {
+      await admin.from('rep_player_dues_installments').delete().eq('schedule_id', s.id);
+      await admin.from('rep_player_dues_schedules').delete().eq('id', s.id);
+    }
+    await admin.from('rep_roster_players').delete().eq('id', p3Id);
+    expect((await setTotal(page, 1200)).status, 'the odd family is put back on the plain plan').toBe(201);
+  });
+
   test('the roster-wide re-run refuses the paid-out family BY NAME and completes for everyone else', async ({ page }) => {
     await signIn(page, HEAD_EMAIL);
 

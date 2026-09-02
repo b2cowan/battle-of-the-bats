@@ -323,6 +323,46 @@ export function describeInstallmentBases(totals: BudgetTotals): InstallmentBases
  * table from it, and a coach who saw one number in the form and another in the preview is the exact
  * defect this whole change exists to close.
  */
+/**
+ * ⚖ IS THIS GAP ANYTHING BUT ROUNDING? (owner, 2026-09-02.)
+ *
+ * Dividing a budget by a roster almost never lands on a whole cent: $5,100 across 7 players is
+ * $728.5714…, which stores as $728.57 and collects $5,099.99. The sheet used to call that
+ * "$0.01 short of what players need to fund" — a true sentence about an untrue problem, and the
+ * commonest thing a coach sees on this screen.
+ *
+ * ⚠ THE TEST IS REACHABILITY, NOT SIZE, and that is what makes it safe to be quiet. A coach can
+ * only move a per-player amount in whole cents, and one cent per player moves the roster total by
+ * `rosterCount` cents. So a gap smaller than that is not a shortfall they are ignoring — it is a
+ * shortfall no schedule they could type could close. Anything they CAN act on still speaks.
+ *
+ * ⚠ SYMMETRIC, DELIBERATELY. The residue falls both ways — $8,000 across 12 players collects
+ * $8,000.04 — so a one-sided rule would silence the short case and leave a four-cent "buffer"
+ * announcing itself on the next roster.
+ *
+ * ⚠⚠ AND IT IS THE **MESSAGE** THAT MOVES, NEVER THE MONEY. Two fixes look tempting here and both
+ * are worse than the sentence they remove:
+ *   • Adding a penny to each installment overshoots — $728.58 × 7 collects six cents OVER to cure
+ *     one cent short, and it compounds per installment (three dates puts the roster 21c over).
+ *   • Handing the odd penny to ONE player makes the totals exact and breaks two other promises:
+ *     this sheet gives every player the SAME schedule, and the roster-wide run reads a player whose
+ *     amounts differ from everyone else's as a schedule the coach set BY HAND — so that family
+ *     would be named as a per-player arrangement, and offered for keeping, on every future run,
+ *     forever, over a rounding cent. (Executed, not assumed: see the unit suite.)
+ *
+ * Bounded by construction — the residue can never exceed half a cent per player, so this tolerance
+ * is at most a few tens of cents on any real roster and cannot hide a shortfall that matters.
+ *
+ * @param gap          what players must fund MINUS what this schedule collects (either sign).
+ * @param rosterCount  how many players the money is divided between.
+ */
+export function gapIsRoundingOnly(gap: number, rosterCount: number): boolean {
+  // Integer cents on both sides: comparing 0.01 < 7/100 in floating point is exactly the kind of
+  // arithmetic this whole module exists to keep out of a family's dues.
+  const gapCents = Math.abs(Math.round(gap * 100));
+  return gapCents < Math.max(1, Math.round(rosterCount));
+}
+
 export function splitPerPlayer(perPlayer: number, count: number): number[] {
   if (count < 1) return [];
   const totalCents = Math.round(perPlayer * 100);

@@ -7,8 +7,10 @@
 }
 
 /* The local .pageHeader/.pageTitle/.headerIcon/.pageSub fork that used to live here is GONE
-   (page-header ruling 2026-08-11): this page now renders the shared CoachPageHeader, so the
-   copy that had already drifted once (and broke Import/Add Line alignment) can't drift again. */
+   (page-header ruling 2026-08-11): the panel moved to the shared CoachPageHeader, so the copy
+   that had already drifted once (and broke Import/Add Line alignment) couldn't drift again.
+   ⚰ AND THE SHARED HEADER WENT TOO (cleanup tranche 6, 2026-09-01) — this is a Money hub TAB, not
+   a page; the hub's header above the tabs names the screen. Nothing here draws a page title. */
 
 .muted { color: var(--text-tertiary); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: var(--type-body); margin: 0.5rem 0; }
@@ -1167,6 +1169,110 @@
   text-align: center;
   background: var(--home-card, rgba(255,255,255,0.02));
   border-top: 1px solid var(--home-line, rgba(255,255,255,0.05));
+}
+
+/* ── EXCEPTIONS FIRST — the preview step (owner rulings 2026-09-01, mockup 4f742ce0) ─────────
+   The preview used to print one row per player and, on a roster that all pays the same, twelve
+   of them carried the information of one — while the two facts a coach actually needed (whose
+   hand-set plan dies, who the payout floor refuses) arrived only AFTER the button. The common
+   case is now a SENTENCE; the differences are NAMED ROWS; the grid returns only when per-player
+   amounts genuinely vary.
+
+   Tokens only, and no new colour vocabulary: warn reuses --warning exactly as .replaceHandSet
+   above it does, blocked reuses --danger like .errorText. A third palette on the same sheet
+   would be a third thing to keep in step. */
+
+/* "Every player: $1,000.00 due 10 Oct — $12,000.00 across 12 players." */
+.runCommon {
+  padding: 0.7rem 0.85rem;
+  border-radius: 9px;
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.07));
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  margin: 0 0 0.7rem;
+}
+.runCommon strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+.runExceptions {
+  border: 1px solid var(--home-line, rgba(255,255,255,0.07));
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 0.7rem;
+}
+
+/* ⚠ A LIST, NOT A GRID, and that is the phone fix as much as the desktop one: the old table had
+   fixed money columns, so four installments scrolled sideways on a 360px sheet. A row here is a
+   name and a sentence, and the sentence wraps. */
+.runRow {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.55rem 0.8rem;
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.05));
+  font-size: var(--type-body);
+  line-height: 1.45;
+}
+.runRow:first-child { border-top: none; }
+.runWho  { font-weight: 700; color: var(--text-primary); flex: 0 0 8.5rem; }
+.runWhat { flex: 1; color: var(--text-secondary); }
+.runWhat strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+/* A per-player arrangement this run would flatten — the keep-checkbox's subject. Same warning
+   ink as .replaceHandSet, because it is the same fact one step earlier. */
+.runRowWarn { background: color-mix(in srgb, var(--warning) 9%, transparent); }
+.runRowWarn .runWho, .runRowWarn .runWhat { color: var(--warning); }
+.runRowWarn .runWhat strong { color: var(--warning); }
+
+/* The payout floor's refusal. Red because this family genuinely does not get written — but it
+   never stops the roster, which is what the row's own sentence says. */
+.runRowBlocked { background: color-mix(in srgb, var(--danger-light) 10%, transparent); }
+.runRowBlocked .runWho, .runRowBlocked .runWhat { color: var(--danger-light); }
+.runRowBlocked .runWhat strong { color: var(--danger-light); }
+
+.runMore {
+  padding: 0.45rem 0.8rem;
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.05));
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* The replace question, moved into the preview (owner Q1). A real checkbox on a real label —
+   the button's count follows it live. */
+.runKeep {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
+  border-radius: 9px;
+  margin-bottom: 0.7rem;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.runKeep input { margin-top: 0.2rem; flex: 0 0 auto; accent-color: var(--home-olive, var(--text-primary)); }
+.runKeep strong { color: var(--text-primary); }
+
+/* "When you confirm: 10 schedules written · Frankie kept by hand · …" — the same
+   consequence-line voice every drawer form in Money already speaks. */
+.runConsequence {
+  margin: 0 0 0.9rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.runConsequence strong { color: var(--text-primary); }
+
+/* ⚠ THE EXCEPTION ROW STACKS ON A PHONE. 8.5rem of name column plus a wrapping sentence leaves
+   the sentence about six characters wide at 360px. The name goes above its fact instead. */
+@media (max-width: 480px) {
+  .runRow { flex-direction: column; gap: 0.15rem; }
+  .runWho { flex: 0 0 auto; }
 }
 
 .successState {

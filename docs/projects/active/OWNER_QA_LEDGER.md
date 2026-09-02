@@ -16309,6 +16309,220 @@ work per that session's checks; this walk's clean 15/15 narrows it to the fold p
 
 ---
 
+## §128 · Exceptions First — the Set-dues preview answers the commit-step questions — ✅ PASSED 2026-09-02 (28/28, every part walked, zero issues raised) · built 2026-09-01, uncommitted at time of writing
+
+**§128 VERDICT (2026-09-02): PASSED — 28/28, no notes on any part.** Walked on the UAT fixture
+(uat-test-org / UAT Test Team, 12 players). The database corroborates the walk rather than merely
+recording it: ten players now share a freshly written three-installment schedule
+(`$252.78 / $252.78 / $252.77`), while **Avery's and Casey's hand-set plans are byte-for-byte
+untouched** — `$250/$250/$200` and a single `$900`, exactly as they stood before the run. That is
+part C5's promise ("their season isn't touched at all") confirmed in the data and not just on the
+success screen, and it is the single most important thing this walk had to establish.
+
+⚠ **ONE STEP WHOSE FIXTURE SUPPORT COULD NOT BE CONFIRMED — H1 (a read-only money coach).** The
+team carries exactly one coaching assignment, the head coach, and no assistant with money set to
+view-only; the roster was checked after the walk and no assistant had been added. So H1 was either
+walked on a different team or ticked through. **Not being treated as a gap in the feature** — the
+capability gate it exercises is the same one every sibling money endpoint uses and was
+independently traced by the security review — but it is recorded here rather than absorbed,
+because a ticked step over a fixture that cannot express it is precisely the green-check-over-an-
+empty-fixture trap this ledger exists to catch. Re-confirm on a team with an assistant when one
+is next to hand.
+
+**Incidental finding while corroborating, NOT a defect:** the fixture holds TWO engine overpayment
+credit rows on one family ($491.67 + $58.33) where the one-row-per-season rule wants one. The
+money is exactly right — they sum to $550.00, the true excess against a $700 schedule and $1,250
+paid — and the pair is legacy data from before the §124 review's merge fix landed on 09-01. It
+self-heals: the planner was executed against this exact credit set and folds both into a single
+row on the next grow (and collapses them on a shrink too), which is what that fix was built to do.
+No action.
+
+**What changed.** "Set dues for all players" used to end with a table whose every row was identical
+— the information of one row at twelve rows' cost, scrolling sideways on a phone — while the two
+most consequential facts arrived AFTER the button: "this roster already has dues, keep the ones you
+set by hand?" (a second dialog answering a rejection) and "this family was refused" (a line in the
+result). Both were knowable before the button; neither was shown.
+
+The preview now reads as: **one sentence** for what everyone gets ("Every player: $758.33 due 10 Nov
+— $9,099.96 across 12 players") · the buffer/shortfall strip **once**, beside Confirm · **a named row
+per player the run treats differently** — money already recorded and where it lands, the overpayment
+credit being created and its dollars, a hand-set plan quoted in full, a payout-floor refusal in the
+floor's own sentence · **the keep-checkbox on the spot**, which re-counts everything live · **one
+"When you confirm:" line** itemising written / kept / refused / payments re-applying / new credit /
+due dates moving · and **a button that counts what it will actually write** ("Set dues for 10
+players", not 12). The per-player table renders only when amounts genuinely vary.
+
+Owner rulings (2026-09-01, mockup artifact `4f742ce0`), all option A: **Q1** the replace question moves
+into the preview as a checkbox on the named row; **Q2** a refusal is a blocked row excluded from the
+button's count, never a block on the roster; **Q3** the identical-rows grid renders only on genuine
+variance. The §124 walk's **catch 9** (one strip) and **catch 10** (a buffer is confirmation, not a
+warning) carried forward unchanged.
+
+**Nothing about the data changed.** No migration, no new write path, every server guard where it was.
+The hand-set detection is now ONE shared function read by both the preview and the write route — that
+extraction is the change's load-bearing part, because a drift between them would not look like a bug,
+it would look like the coach protecting three families and three different ones being flattened.
+
+**Three calls made in the build that the owner should confirm or overturn:**
+1. ⚠ **Q3 removes the grid rather than demoting it, today.** The mockup's variance scenario shows
+   per-player overrides; this door cannot produce one — it gives every active player the identical
+   schedule and says so in its own opening line. The variance branch is built and derived from the
+   amounts, so the table returns on its own the day a screen sends an override; until then the honest
+   description of Q3's effect is "the table is gone".
+2. **The plain "has paid" rows cap at six**, with "+N more players have payments…" beneath. Hand-set
+   and refused rows are NEVER truncated — those are decisions. Without the cap, a mid-season roster
+   where every family has sent something rebuilds the exact wall this screen was rewritten to pull down.
+3. **The hand-set row follows the checkbox** ("kept exactly as it is" / "this run replaces it"). The
+   mockup left that sentence fixed at "would replace it" while the box above it was ticked to keep —
+   one row saying two things.
+
+**§128 post-build `/simplify` + `/review` (2026-09-01, owner-directed):**
+
+*`/simplify`* — four lenses, findings applied: the exception/hand-set/blocked lists are unwrapped
+ONCE (they had already drifted into six inline spellings inside one change, one of them missing its
+fallback); the consequence line is built once instead of twice per render; the snake→camel
+installment row mapping now has one home shared by both routes; the write route's two hand-rolled
+name joins became the shared first-last helper at module scope (one of them existed only because
+the other was declared below it); `pluralize` replaced four hand-written singular/plural ternaries;
+four duplicated total-reduces became one `rowTotal`/`teamTotal` pair; the two genuine roster scans
+are memoised; and an unread per-row `dateChange` flag was deleted. **One `/simplify` suggestion was
+declined**: merging the write route's payout-floor loop into the shared module. It asks the floor
+with a PER-PLAYER total (override support); the shared function carries one roster-wide figure, so
+folding them would either drop override protection silently or widen a shared contract for a caller
+that does not exist. The reason is now written at both sites so the next reader does not "simplify"
+it into a defect.
+
+*`/review`* — high-risk tier, five lenses, **two real defects found and fixed, plus three smaller
+ones**:
+1. **(High) The confirm line counted a REFUSED family as "kept by hand"** — in BOTH checkbox states,
+   including when the coach had explicitly turned keeping off. A player who is both hand-set and
+   payout-floor-refused sat in the `untouched` set via the refusals, which the kept-count was read
+   from; the line named them twice, once as kept and once as refused, and promised a keep the
+   request was correctly not asking for. "Kept" is now counted from the skip list itself — what is
+   actually kept is exactly what is sent.
+2. **(High) The preview swallowed two of its four read errors.** An installments failure made the
+   screen announce "this roster has no dues yet" and hide the keep-my-hand-set-schedules checkbox on
+   a roster that had both; a credits failure emptied every family's projected credit set, which
+   makes the payout floor refuse every family ever handed cash. Neither destroys anything — the
+   write route reads it all again — but a preview whose whole promise is "nothing after the button
+   contradicts this" may not guess. Both now fail loudly, matching the write route's own posture on
+   the same credits read.
+3. **(Medium) Unticking "keep the schedules I set by hand" survived every later preview.** The
+   hand-set set can change between previews, so a coach who unticked to replace one named family and
+   then went Back to fix a date could return to a preview naming a family they had never seen, with
+   the box already answered on their behalf. Each preview now restores the safe answer.
+4. **(Medium) Back stayed live while the write was in flight.** Back only drops the preview — it
+   cannot recall a POST — so a coach who pressed Confirm then Back got the form again, kept typing,
+   and was thrown onto the success screen when the write they thought they had abandoned landed.
+   Back (and the checkbox) are now disabled while a run is in flight; there is no cancel to offer.
+5. **(Low) The shared name helper does not trim, and the inline code it replaced did** — a roster row
+   holding a whitespace-only name would render blank instead of "Unnamed player". Every current
+   write path trims before storing, so it was unreachable today; both call sites trim now anyway.
+
+**Accepted, not fixed, with reasons:** the pre-flight-not-transaction posture (a roster, payment or
+payout that moves between preview and confirm is still only reported afterwards — the plan's stated
+position, and it fails safe); and the write route's 409 date-change count not being roster-filtered
+while the preview's is (pre-existing, and that dialog now only renders when the preview is already
+stale, in which case the two legitimately differ). **Security lens found nothing** — it traced the
+four new reads and confirmed the season id is server-derived from an already-verified team, that the
+embedded join is as tight as the two-step it replaced, and that every field newly returned is
+already returned to the same audience by the sibling dues endpoint.
+
+**Verification after the fixes:** typecheck clean · focused lint clean (one pre-existing `any`
+warning) · **2,758 unit tests green** · **coach money lifecycle UAT 16/16 at `--retries=0`** · all ten
+source gates green · a live re-measurement at 360 and 768 confirming the button re-counts on the
+checkbox (10 → 12, picking up two more paying families and $141.67 of credit).
+
+⚠ **The rendered gate (`check:layout`) is RED on the money screens, and NONE of it is this work.**
+`--changed` widened to all 67 screens (three sessions' shared-file edits sit in the tree together)
+and aborted on the memory floor; run as two `--only` batches on a freshly restarted server it
+reports **69 NEW findings across 12 money screens, zero attributable here** — proven, not assumed:
+this change's only money-screen surface is ten `run*`-prefixed classes in `budget.module.css` whose
+selectors appear nowhere in the repo outside the Set-dues modal, which the sweep cannot open. The 69
+break down as pre-existing 31px tap-floor debt re-keying under new labels, `ZZ QA …` fixture rows,
+two Club-tab findings (fixed at source by that session — a 44px floor applied to that screen's own
+create button, deliberately NOT to the shared primitive, so the portal-wide 31px debt is untouched),
+and one real `page-overflow` on `coach-transactions @361`.
+
+⚠ **THAT OVERFLOW IS A REAL, UNOWNED PHONE DEFECT IN THE CLUB-MONEY FEATURE — recorded here because
+its own stream is unstaffed and this ledger is where it will actually be read.** Attribution was
+closed collaboratively across the three live sessions: it belongs to none of their diffs. The Money
+hub's tab row genuinely overflows at 361px once the team has club money and the **seventh** tab
+appears — the page scrolls sideways by 22px, with the nav links themselves named as the widest
+elements. It had never been captured before because no fixture had club money until the 2026-09-01
+reseed; the layout baseline's own clock-drift keys date its capture to ~2026-08-26, before the Club
+tab shipped. So the gate did not miss it — the gate had never been able to see it. **Nothing here
+touches it, and nobody currently owns it.**
+
+⚠⚠ **A GATE DEFECT WORTH MORE THAN THOSE FINDINGS, FOUND WHILE ATTRIBUTING THEM: the layout baseline
+keys on label TEXT, so it rots with the calendar and with every reseed.** The baseline holds
+`coach-transactions|390|control-offscreen|button·Around todayJul 27 – Sep 25`; the same button
+renders `Around todayAug 2 – Oct 1` today and reports as NEW — six of that screen's findings are
+pure clock drift and will re-key again next month. Likewise the baseline's `Remind all 1` against
+the reseeded fixture's `Remind all 8`. Any label carrying a date range, a count or a dollar figure
+does this. Until the key strips them, a large and growing share of every sweep is phantom, and a
+gate that is mostly phantom is a gate people stop reading. **Not fixed here — it is not this
+change's to fix — but it should not wait long.**
+
+**Addendum — A ROUNDING CENT IS NOT A SHORTFALL (owner, 2026-09-02, during the §128 walk).** The
+owner's own screen read *"Collecting $728.57 per player — $5,099.99 across the roster. That's $0.01
+short of what players need to fund"* — $5,100 across 7 players, a residue of the per-player division
+and nothing else. **The comparison line now calls that a match.** It asks whether the coach could
+close the gap AT ALL: they can only move a per-player amount in whole cents, and one cent per player
+moves the roster total by `rosterCount` cents, so anything smaller is not a shortfall being ignored
+— it is one no schedule they could type could reach. Symmetric, because the residue falls both ways
+(the UAT team's $9,100 across 12 collects $9,099.96 and was reading "short" too; it now reads
+"✓ Matches what players need to fund"). Bounded by construction at half a cent per player, so it can
+never mask a gap that matters, and anything reachable keeps its amber exactly as before.
+
+⚠ **THE MESSAGE MOVED; THE MONEY DID NOT — and the owner's first instinct was to move the money,
+which is the more interesting half.** Both repairs that look right are worse than the sentence they
+remove: adding a penny to each installment collects SIX cents over to cure one cent short and
+compounds per installment (three dates puts a 7-player roster 21c over); and handing the odd penny
+to ONE player balances exactly while breaking two standing promises — this sheet gives every player
+the SAME schedule, and the roster-wide run reads a player whose amounts differ from everyone else's
+as a schedule set BY HAND, so that family would be named as a per-player arrangement and offered
+for keeping on every future run, forever, over a rounding cent. **That was executed, not argued**
+(the shape comparison flags the odd player; pinned in the unit suite alongside the tolerance).
+Walk impact: §128 part A2 gains the rounding case.
+
+**The walk — checkable walkthrough artifact:** `claude.ai/code/artifact/bcdda5ea-7b8d-477d-9f14-82582fa8a7ef`
+("Exceptions First QA Walk" — 28 steps including the 09-02 rounding addendum, ticks and notes
+persist in the browser, Copy results pastes back). Eight parts: **A** the common case is one sentence (5) · **B** money already collected, named
+(4) · **C** the replace question before the button, and the live re-count (5) · **D** the refusal
+before the button, and the run completing without that family (5) · **E** the per-player table (1) ·
+**F** phone 360 and tablet 768 (3) · **G** the old post-confirm question still catching a stale
+preview (1) · **H** read-only, sandbox, and the result agreeing with the preview every time (3).
+
+Part D needs a payout on the books. If that is not worth setting up by hand, it is pinned end-to-end
+by the UAT test below — say so in the notes rather than walking it.
+
+**Verified at build time:** typecheck clean (the two pre-existing duplicate-identifier errors in a
+PEER session's practice page are theirs, unrelated and untouched) · focused lint clean (one
+pre-existing `any` warning in the write route) · **2,758 unit tests green**, including a new suite
+pinning the extracted derivations — the rollover case where every row reads `source = 'manual'` and
+the right answer is that nobody is hand-set, the blocked-outranks-hand-set precedence, the departed
+player who is never named, and the credit figure coming from the reconcile planner rather than fresh
+arithmetic · **coach money lifecycle UAT 16/16 with `--retries=0`**, carrying a NEW test that asserts
+the preview's hand-set names and refusals are IDENTICAL to the write route's own, read through both
+live endpoints rather than compared to a fixture the two could drift away from together · spelling,
+CSS-purity, contrast, date-correctness and token gates all green · **throwaway Playwright measurement
+at 360 and 768** on a live 12-player roster: no horizontal page scroll at either width, the sheet
+inside the viewport, the common sentence rendering and the grid correctly absent, three exception
+rows stacking at 360 and inline at 768, every row inside the sheet, and the button reading "Set dues
+for 10 players" against a 12-player roster with 2 kept by hand.
+
+⚠ **One pre-existing finding surfaced by that measurement, NOT introduced here:** the shared money
+modal's footer buttons measure **31.4px tall** at both widths — under the portal's 44px touch floor.
+It is portal-wide (every Money sheet's footer), so it belongs to the header-house-rules work rather
+than to this change.
+
+**Not done, deliberately:** `check:layout` cannot open a modal mid-flow, so the phone/tablet evidence
+above is a measurement rather than a standing gate; `verify:changed` was not run end to end because
+it dies at schema parity while migrations 268–272 are dev-only, so the gates it wraps were run
+individually instead.
+
+
 ## §127 · The account button opens in place — ✅ PASSED 2026-09-01 (19/19, all six parts clean, zero defects) · committed `2de03bee` 2026-09-01
 
 **Walk verdict (owner, 2026-09-01, via the checkable walkthrough artifact):** 19/19 — the menu,

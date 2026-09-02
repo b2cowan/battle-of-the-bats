@@ -80,3 +80,66 @@ while any migration is dev-only — attribute before believing.
   + paste-back; never the artifact capability) — §124 is the dues-forms walk and stays its own.
 
 **PM brief:** `COACH_DUES_PREVIEW_EXCEPTIONS_FIRST_PM_BRIEF.md`.
+
+---
+
+## BUILT ON DEV 2026-09-01 — what actually landed, and where it departed from the picture
+
+**QA section: §128** (the Owner QA Ledger) · **walkthrough artifact:**
+`claude.ai/code/artifact/bcdda5ea-7b8d-477d-9f14-82582fa8a7ef` (28 checkable steps, eight parts).
+
+**A · the preview learned the exceptions.** One new pure module, `lib/dues-bulk-run.ts`, holds the
+whole derivation: the shape comparison (MOVED out of the write route, with its reasoning, so both
+screens read one function), the due-date diff, and `planRosterDuesRun`, which joins them per player
+with the reconcile planner's credit figure and the payout floor's own refusal. No arithmetic is
+re-implemented anywhere in it. The preview endpoint grew four season-wide reads, all in parallel,
+and returns a `run` block beside its rows. The write route now calls the shared comparison instead
+of its own copy; its behaviour is unchanged.
+
+**B · the modal recomposed** to: the common-case sentence · the strip (once) · the named exception
+rows in three tones · the keep-checkbox · the "When you confirm:" line · the grid, on variance only ·
+a button counting the writes. The 409 belt is untouched and still renders `replaceFacts`.
+
+### Three departures from the mockup, all deliberate
+
+1. **Q3 removes the grid rather than demoting it, today.** The mockup's variance scenario is
+   per-player overrides; this door cannot produce one — every active player gets the identical
+   schedule and the sheet says so in its opening line. The variance branch is built and derived from
+   the amounts (`amountsVary`), so the table returns unaided the day a screen sends an override.
+   Until then, the honest description of Q3's visible effect is "the table is gone".
+2. **The plain "has paid" rows cap at six** (`PLAIN_ROW_CAP`), with "+N more players have payments…"
+   beneath. Hand-set and blocked rows are never truncated — they are decisions, not information.
+   Without a cap, a mid-season roster where every family has sent something rebuilds the exact wall
+   this screen exists to pull down.
+3. **The hand-set row follows the checkbox** — "kept exactly as it is" / "this run replaces it". The
+   mockup left it fixed at "would replace it" beside a checkbox ticked to keep, which is one row
+   saying two things.
+
+### Two rulings from the plan text that the mockup overruled
+
+- **Date changes are a COUNT, not rows.** The plan's prose lists them among the row kinds; the
+  mockup carries them only in the "When you confirm:" line, and the mockup is right — a team-wide
+  date fix moves everybody's dates, so rows would print twelve names to say one thing. The count
+  follows the keep-checkbox exactly (the ids ride in the payload for that reason).
+- **A refused player is never sent as a skip.** The outcome for the family is identical either way,
+  but a skip is silent and a refusal comes back BY NAME with the floor's sentence. The server stays
+  the thing that says "this family was protected", which is what the preview's row promised.
+
+### Verification actually run
+
+Typecheck clean · focused lint clean · **2,758 unit tests green** (new suite:
+`tests/unit/dues-bulk-run.test.ts`) · **coach money lifecycle UAT 16/16 at `--retries=0`**, carrying a
+new test that asserts the preview's hand-set names and refusals are IDENTICAL to the write route's
+own answer, read through both live endpoints · spelling, CSS purity, CSS selectors, contrast,
+text-contrast, date-correctness and token gates green · a throwaway Playwright measurement at 360 and
+768 on a live 12-player roster (no horizontal page scroll, rows stacking at 360 and inline at 768,
+"Set dues for 10 players" against 12 with 2 kept).
+
+⚠ `verify:changed` was NOT run end to end: it dies at schema parity while migrations 268–272 are
+dev-only, so the gates it wraps were run individually. ⚠ Two typecheck errors in a PEER session's
+practice page are theirs, pre-existing and untouched.
+
+⚠ **Pre-existing finding, surfaced not introduced:** the shared money modal's footer buttons measure
+**31.4px tall** at both widths — under the portal's 44px touch floor, portal-wide across every Money
+sheet. It belongs to the header house-rules work, not here.
+

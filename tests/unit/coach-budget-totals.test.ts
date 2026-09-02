@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  computeBudgetTotals, describeInstallmentBases, splitPerPlayer, type AmountLine,
+  computeBudgetTotals, describeInstallmentBases, splitPerPlayer, gapIsRoundingOnly, type AmountLine,
 } from '../../lib/coach-budget-totals.ts';
 
 function cost(totalAmount: number): AmountLine {
@@ -295,5 +295,87 @@ describe('cutting one player total into dated chunks', () => {
         `count=${count} did not re-add to the player's total`,
       );
     }
+  });
+});
+
+describe('gapIsRoundingOnly — when the comparison line should call it a match', () => {
+  /** The screen's own arithmetic: what a per-player split actually collects across the roster. */
+  const collected = (total: number, roster: number) => {
+    const perPlayer = Math.round((total / roster) * 100) / 100;   // computeBudgetTotals' r2
+    return Math.round(perPlayer * roster * 100) / 100;
+  };
+  const gapFor = (total: number, roster: number) =>
+    Math.round((total - collected(total, roster)) * 100) / 100;
+
+  it(`the owner's own screen: $5,100 across 7 players is a MATCH, not "$0.01 short"`, () => {
+    const gap = gapFor(5100, 7);
+    assert.equal(gap, 0.01, 'the residue this whole rule exists for');
+    assert.equal(gapIsRoundingOnly(gap, 7), true);
+  });
+
+  it('is SYMMETRIC — a four-cent overshoot is rounding too, not a "buffer above the plan"', () => {
+    // $8,000 ÷ 12 = $666.666… → $666.67 × 12 = $8,000.04. A one-sided rule would silence the
+    // short case and leave this announcing itself on the next roster.
+    const gap = gapFor(8000, 12);
+    assert.equal(gap, -0.04);
+    assert.equal(gapIsRoundingOnly(gap, 12), true);
+  });
+
+  it('⚠ STILL SPEAKS for a gap the coach can actually close — one cent per player', () => {
+    // Exactly one cent each is reachable: adding a penny per player closes it. That is a real
+    // shortfall and must keep its amber.
+    assert.equal(gapIsRoundingOnly(0.07, 7), false, '7 players × 1c is reachable');
+    assert.equal(gapIsRoundingOnly(-0.07, 7), false, 'and so is the same overshoot');
+    assert.equal(gapIsRoundingOnly(0.06, 7), true, 'a cent less is not');
+  });
+
+  it('never hides money a coach would care about', () => {
+    assert.equal(gapIsRoundingOnly(3800, 12), false, 'the $3,800-short case from the help copy');
+    assert.equal(gapIsRoundingOnly(1, 12), false, 'a whole dollar, on any real roster');
+    assert.equal(gapIsRoundingOnly(0.5, 12), false);
+  });
+
+  it('an exact division reports a match, as it always did', () => {
+    assert.equal(gapFor(4500, 3), 0);
+    assert.equal(gapIsRoundingOnly(0, 3), true);
+  });
+
+  it('a one-player roster tolerates a single cent and no more', () => {
+    assert.equal(gapIsRoundingOnly(0, 1), true);
+    assert.equal(gapIsRoundingOnly(0.01, 1), false, 'one player CAN type that cent');
+  });
+
+  it('the tolerance is bounded by the residue it exists for — half a cent per player', () => {
+    /* ⚠ THE SAFETY ARGUMENT, EXECUTED RATHER THAN ASSERTED. If a real division could ever produce
+       a residue this rule does NOT cover, the line would go quiet on something reachable. Sweep
+       every roster size against a spread of budgets and prove the residue always lands inside. */
+    for (let roster = 1; roster <= 40; roster++) {
+      for (const total of [5100, 8000, 9999.99, 12345.67, 777.77, 1, 250.05]) {
+        const gap = gapFor(total, roster);
+        assert.equal(
+          gapIsRoundingOnly(gap, roster), true,
+          `$${total} ÷ ${roster} left ${gap}, which the rule did not recognise as rounding`,
+        );
+        assert.ok(
+          Math.abs(gap) * 100 <= roster / 2 + 0.5,
+          `$${total} ÷ ${roster} left ${gap} — beyond the half-cent-per-player bound`,
+        );
+      }
+    }
+  });
+
+  it('⚠ WHY THE MONEY IS NOT "FIXED" INSTEAD — both tempting repairs are worse', () => {
+    // (1) Add a penny to each installment: overshoots, and compounds per installment.
+    const perPlayer = Math.round((5100 / 7) * 100) / 100;          // 728.57
+    assert.equal(Math.round((perPlayer + 0.01) * 7 * 100) / 100, 5100.06,
+      'a penny each collects SIX cents over to cure one cent short');
+    assert.equal(Math.round((perPlayer + 0.03) * 7 * 100) / 100, 5100.20,
+      'and a three-installment schedule compounds it');
+
+    // (2) Hand the odd penny to ONE player: exact, and it breaks the same-schedule promise.
+    // The roster-wide run reads that player as a schedule set BY HAND — see the sibling suite
+    // tests/unit/dues-bulk-run.test.ts, which pins the shape comparison this would trip.
+    assert.equal(Math.round((perPlayer * 6 + (perPlayer + 0.01)) * 100) / 100, 5100,
+      'it does add up exactly — which is precisely why it is tempting');
   });
 });

@@ -4,6 +4,8 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, get
 import { paymentsTotalByPlayer } from '@/lib/dues-payments';
 import { groupByPlayer } from '@/lib/dues-credits';
 import { payoutFloorViolation, projectScheduleTotalChange } from '@/lib/dues-credit-guards';
+import { describeExistingSchedules, playersWithDateChange, toExistingInstallmentRows, type StoredInstallmentRow } from '@/lib/dues-bulk-run';
+import { formatPlayerFirstLast } from '@/lib/player-name';
 import type { RepDuesPayment } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -45,6 +47,24 @@ interface PlayerOverride {
 
 /** Matches the preview endpoint's cap — the two must refuse the same schedules. */
 const MAX_INSTALLMENTS = 12;
+
+/**
+ * How this route names a family, everywhere it names one — the 409's `handSetPlayers`, the failed
+ * bucket, and the payout-floor refusals.
+ *
+ * ⚠ THE SHARED HELPER, NOT A HAND-ROLLED JOIN, and at module scope rather than inside the handler.
+ * This file carried TWO copies of `[first, last].filter(Boolean).join(' ')` — one in the 409, one
+ * further down — precisely because the second was declared below the first and could not be called
+ * from it. `lib/player-name.ts`'s own docstring is the story of that regrowth happening before.
+ * The preview endpoint names the same families through the same helper, which is what lets the two
+ * screens agree on who they are talking about.
+ */
+const nameOf = (p: { player_first_name: string | null; player_last_name: string | null }) =>
+  // ⚠ `.trim()` — the shared helper joins but does not trim, and a whitespace-only name is
+  // TRUTHY, so without it a roster row holding " " renders as a blank rather than falling back
+  // (the inline code this replaced trimmed). The preview names the same families the same way.
+  formatPlayerFirstLast({ playerFirstName: p.player_first_name, playerLastName: p.player_last_name }).trim()
+  || 'Unnamed player';
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/budget-plan/generate-installments
 // Body: {
@@ -119,7 +139,6 @@ export const POST = withObservability(async (req: Request,
 
   const scheduleRows  = (existingSchedules.data ?? []) as { id: string; player_id: string }[];
   const scheduleIds   = scheduleRows.map(s => s.id);
-  const scheduleByPlayer = new Map(scheduleRows.map(s => [s.player_id, s.id]));
   let existingInstallmentCount = 0;
   /** Players whose schedule is NOT the one the rest of the roster shares — a per-player arrangement. */
   const handSetPlayerIds = new Set<string>();
@@ -131,56 +150,18 @@ export const POST = withObservability(async (req: Request,
       .from('rep_player_dues_installments')
       .select('player_id, installment_number, amount, due_date')
       .in('schedule_id', scheduleIds);
-    const rows = (instRows ?? []) as { player_id: string; installment_number: number; amount: number; due_date: string }[];
+    const rows = toExistingInstallmentRows(instRows as StoredInstallmentRow[] | null);
     existingInstallmentCount = rows.length;
 
-    /* ⚠ "HAND-SET" IS DECIDED BY COMPARING PLAYERS TO EACH OTHER, **NEVER** BY `source`.
+    /* ⚠ THE SHAPE COMPARISON IS SHARED WITH THE PREVIEW (lib/dues-bulk-run.ts) — it used to live
+     * here, and its whole reasoning (why `source` is NOT the answer) travelled with it; read it
+     * there before touching either screen.
      *
-     * `source` looks like the answer and is not (/review 2026-08-14, Critical). The column
-     * DEFAULTS to `manual`, and `replaceRepDuesInstallments` — which never sets it — is called by
-     * two automated paths as well as the per-player editor:
-     *   • SEASON ROLLOVER's carry-fees step, which is **on by default**, and
-     *   • the free→Premium upgrade migration.
-     * So the morning after a routine rollover, every player on the roster reads `manual` though
-     * nobody edited anything. This screen would have named the WHOLE ROSTER as "schedules you set
-     * by hand" and offered to skip them all — one click and the coach's team-wide date fix would
-     * have applied to nobody. Worse, a coach who learns the list is usually noise stops reading
-     * it, which is precisely when it finally names a real hardship arrangement.
-     *
-     * The shape comparison needs no column, no migration and no backfill, and it models the thing
-     * actually at risk: a player whose amounts/dates differ from what everyone else has is the one
-     * a team-wide run would flatten. A uniform roster — carried forward, migrated, or generated —
-     * flags nobody, which is the correct answer for all three.
-     */
-    const shapeOf = new Map<string, string[]>();
-    for (const r of rows) {
-      if (!shapeOf.has(r.player_id)) shapeOf.set(r.player_id, []);
-      shapeOf.get(r.player_id)!.push(`${r.installment_number}:${Number(r.amount).toFixed(2)}:${r.due_date}`);
-    }
-    const shapeByPlayer = new Map<string, string>();
-    const shapeCounts = new Map<string, number>();
-    for (const [playerId, parts] of shapeOf) {
-      const shape = parts.sort().join('|');
-      shapeByPlayer.set(playerId, shape);
-      shapeCounts.set(shape, (shapeCounts.get(shape) ?? 0) + 1);
-    }
-    // The roster's common schedule = the shape the most players share. Ties break on the shape
-    // string so the answer is stable across runs rather than depending on row order.
-    let commonShape: string | null = null;
-    let commonCount = 0;
-    for (const [shape, count] of [...shapeCounts].sort((a, b) => a[0].localeCompare(b[0]))) {
-      if (count > commonCount) { commonShape = shape; commonCount = count; }
-    }
-    for (const [playerId, shape] of shapeByPlayer) {
-      if (shape !== commonShape) handSetPlayerIds.add(playerId);
-    }
-
-    const newDates = new Set(defaultInstallments.map(i => i.dueDate));
-    for (const r of rows) {
-      // Guarded on a non-empty proposal: an empty one (rejected below) would otherwise match
-      // nothing and report every family's dates as moving.
-      if (defaultInstallments.length > 0 && !newDates.has(r.due_date)) dateChangePlayerIds.add(r.player_id);
-    }
+     * It has to be ONE function. The preview now NAMES the hand-set players and offers to keep
+     * them, and this route is what actually keeps them — two copies would let the screen promise
+     * one set of families and the write flatten a different one. */
+    for (const id of describeExistingSchedules(rows).handSetPlayerIds) handSetPlayerIds.add(id);
+    for (const id of playersWithDateChange(rows, defaultInstallments.map(i => i.dueDate))) dateChangePlayerIds.add(id);
   }
 
   // Recorded payments per player (mig 232) — kept across a replace, re-applied to the new plan.
@@ -218,7 +199,7 @@ export const POST = withObservability(async (req: Request,
           .in('id', [...handSetPlayerIds])).data ?? [])
           .map(p => ({
             id: p.id as string,
-            name: [p.player_first_name, p.player_last_name].filter(Boolean).join(' ').trim() || 'Unnamed player',
+            name: nameOf(p),
           }))
           .sort((a, b) => a.name.localeCompare(b.name))
       : [];
@@ -321,8 +302,6 @@ export const POST = withObservability(async (req: Request,
   const payoutFloorRefusals: { playerId: string; name: string; paidOut: number }[] = [];
   /** Players deliberately left alone (their hand-set schedule was kept). */
   let playersSkipped = 0;
-  const nameOf = (p: { player_first_name: string | null; player_last_name: string | null }) =>
-    [p.player_first_name, p.player_last_name].filter(Boolean).join(' ').trim() || 'Unnamed player';
 
   for (const player of players) {
     // Kept exactly as they are — no upsert, no delete, no re-projection. A skipped player's

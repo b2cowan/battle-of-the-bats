@@ -23,8 +23,15 @@ the truth earlier.
 is a blocked row that never stops the other families; the per-player grid appears only when
 amounts genuinely vary. Buffer tone and single-strip rules from the §124 walk apply.
 
-**Priority.** Queued behind the §124 walk's completion; medium effort (a richer preview read + a
-recomposed modal; no migration, no new write paths).
+**Priority.** BUILT ON DEV 2026-09-01, awaiting QA §128. Medium effort as estimated — a richer
+preview read plus a recomposed modal; no migration, no new write paths, every server guard where
+it was.
+
+**Three calls made in the build that need the owner's word** (all recorded in QA §128): the
+per-player table is *removed* rather than demoted, because this door cannot yet produce the
+per-player variance the rule keeps it for; the plain "has paid" rows cap at six with a "+N more"
+line, while hand-set and refused rows are never truncated; and the hand-set row's sentence follows
+the keep-checkbox instead of standing fixed at "would replace it".
 
 **Success.** A coach can say, before pressing the button, exactly what will happen to every
 player named on screen — and nothing after the button ever contradicts the preview.

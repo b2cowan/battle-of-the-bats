@@ -8,12 +8,14 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import {
-  computeBudgetTotals, describeInstallmentBases, splitPerPlayer,
+  computeBudgetTotals, describeInstallmentBases, splitPerPlayer, gapIsRoundingOnly,
   type InstallmentBasis,
 } from '@/lib/coach-budget-totals';
 import { tournamentToday, formatDayMonth } from '@/lib/timezone';
 import { payoutFloorMessage } from '@/lib/dues-credit-guards';
 import { formatPlayerLastFirst } from '@/lib/player-name';
+import { pluralize } from '@/lib/utils';
+import type { DuesRunException, DuesRunPlan } from '@/lib/dues-bulk-run';
 import type { RepBudgetPlan, RepInstallmentPreviewRow } from '@/lib/types';
 import DateField from './DateField';
 import styles from './budget/budget.module.css';
@@ -26,6 +28,14 @@ import shared from '../../../coaches.module.css';
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+/* What a player owes across their whole schedule, and what the roster owes together — ONE
+   definition each. Four hand-written reduces over `installments` had accumulated in this file,
+   two of them added by the exceptions-first change, and only one of the four is ever on screen at
+   a time to be compared against another. */
+const rowTotal  = (row: RepInstallmentPreviewRow) => row.installments.reduce((s, i) => s + i.amount, 0);
+const teamTotal = (rows: readonly RepInstallmentPreviewRow[]) =>
+  Math.round(rows.reduce((s, row) => s + rowTotal(row), 0) * 100) / 100;
 
 const BASIS_LABEL: Record<Exclude<InstallmentBasis, 'manual'>, string> = {
   budget:   'Split the budget evenly',
@@ -116,6 +126,15 @@ export default function GenerateInstallmentsModal({
 
   const [installments,   setInstallments]   = useState<InstallmentRow[]>([{ ...DEFAULT_INSTALLMENT }]);
   const [preview,        setPreview]        = useState<RepInstallmentPreviewRow[] | null>(null);
+  /** WHO this run treats differently — read WITH the preview, from the same shared derivation the
+   *  write route obeys. Null until a preview has loaded, and cleared with it. */
+  const [runPlan,        setRunPlan]        = useState<DuesRunPlan | null>(null);
+  /** ⚠ THE REPLACE QUESTION, MOVED INTO THE PREVIEW (owner Q1, 2026-09-01). It used to be a
+   *  second dialog AFTER the button, answering a 409 — so the coach committed first and was asked
+   *  second. It is now a checkbox beside the names it protects, and the button's count follows it
+   *  live. It defaults to KEEPING, matching the dialog it replaces, where keeping was the primary
+   *  and flattening the quieter button. */
+  const [keepHandSet,    setKeepHandSet]    = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError,   setPreviewError]   = useState('');
   const [generating,     setGenerating]     = useState(false);
@@ -248,10 +267,17 @@ export default function GenerateInstallmentsModal({
   const teamScheduled      = Math.round(perPlayerScheduled * rosterCount * 100) / 100;
   const yardstick          = totals.fundedByPlayers;
   const gap                = Math.round((yardstick - teamScheduled) * 100) / 100;
-  /** Silent when there is no budget to measure against — see the manual-with-no-budget case. */
+  /** Silent when there is no budget to measure against — see the manual-with-no-budget case.
+   *
+   *  ⚠ "MATCHES" MEANS "AS CLOSE AS A COACH CAN GET", NOT "TO THE HALF-CENT" (owner, 2026-09-02).
+   *  A budget rarely divides evenly across a roster, and the residue was being reported as a
+   *  shortfall — "$0.01 short of what players need to fund" on the commonest screen in money.
+   *  `gapIsRoundingOnly` asks whether the coach could close the gap AT ALL; when they could not,
+   *  the honest reading is that this schedule matches, and the line says so rather than falling
+   *  silent — a coach who did the arithmetic themselves still sees it confirmed. */
   const reconcile: 'short' | 'over' | 'match' | null =
     yardstick <= 0 || perPlayerScheduled <= 0 ? null
-    : Math.abs(gap) < 0.005 ? 'match'
+    : gapIsRoundingOnly(gap, rosterCount) ? 'match'
     : gap > 0 ? 'short' : 'over';
 
   /**
@@ -301,6 +327,10 @@ export default function GenerateInstallmentsModal({
   function invalidatePreview() {
     previewToken.current += 1;
     setPreview(null);
+    // The exceptions belong to THAT preview's amounts — who the payout floor refuses and how much
+    // credit a family gains both move with the total. Leaving them behind would name the right
+    // people about the wrong schedule.
+    setRunPlan(null);
     /**
      * ⚠ AND CLEAR THE SPINNER, or the Preview button never comes back.
      *
@@ -322,6 +352,7 @@ export default function GenerateInstallmentsModal({
     setPreviewLoading(true);
     setPreviewError('');
     setPreview(null);
+    setRunPlan(null);
 
     const qs = new URLSearchParams({ installmentCount: String(installments.length), basis });
     installments.forEach(i => qs.append('dates[]', i.date));
@@ -338,6 +369,15 @@ export default function GenerateInstallmentsModal({
       if (token !== previewToken.current) return;
       if (!res.ok || !data) throw new Error(data?.error ?? 'Preview failed');
       setPreview(data.preview);
+      setRunPlan(data.run ?? null);
+      /* ⚠ EACH PREVIEW IS ITS OWN DECISION (/review 2026-09-01). Unticking "keep the ones I set
+         by hand" used to survive every later preview, and the hand-set SET can change between
+         them — so a coach who unticked to replace one named family, then went Back to fix a
+         typo'd date, could return to a preview naming a family they had never seen and a box
+         already answered "replace" on their behalf. Re-previewing restores the safe answer; the
+         destructive one is always a fresh, deliberate click. (The screen stays honest either
+         way — the rows and the counts follow the box — but honest is not the same as asked.) */
+      setKeepHandSet(true);
     } catch (e: unknown) {
       if (token !== previewToken.current) return;
       setPreviewError(e instanceof Error ? e.message : 'Preview failed');
@@ -443,6 +483,176 @@ export default function GenerateInstallmentsModal({
       setGenerating(false);
     }
   }
+
+
+  /* ══ EXCEPTIONS FIRST — what the button will actually do (owner rulings 2026-09-01) ══════════
+     Every figure below is a COUNT OVER THE SAME SET, never a sum of separate tallies, because
+     one player can be two things at once (a hand-set schedule on a family the payout floor also
+     refuses). Adding "kept" to "refused" would charge that player twice against the button and
+     promise a number the server cannot produce.
+
+     ⚠ THE THREE LISTS ARE UNWRAPPED ONCE, HERE. Read inline as `runPlan?.handSetPlayerIds ?? []`
+     they had already drifted into six spellings across this file within one change — one of them
+     missing its fallback. */
+  const exceptions = runPlan?.exceptions ?? [];
+  const handSetIds = runPlan?.handSetPlayerIds ?? [];
+  const blockedIds = runPlan?.blockedPlayerIds ?? [];
+  const blockedSet = new Set(blockedIds);
+
+  /** Players this run will not touch: the floor's refusals, plus the hand-set plans being kept. */
+  const untouched = new Set<string>(blockedSet);
+  if (keepHandSet) for (const id of handSetIds) untouched.add(id);
+
+  /**
+   * ⚠ A REFUSED PLAYER IS NEVER SENT AS A SKIP, even when the coach is keeping hand-set plans.
+   * The outcome for that family is identical either way — nothing of theirs moves — but a skip is
+   * silent and a refusal comes back BY NAME with the floor's own sentence. The server stays the
+   * one that says "this family was protected", which is also what the preview's row promised.
+   */
+  const skipPlayerIds = keepHandSet ? handSetIds.filter(id => !blockedSet.has(id)) : [];
+
+  /** The button's number: everyone the run will genuinely write a schedule for. */
+  const willWrite = Math.max(0, (preview?.length ?? 0) - untouched.size);
+
+  /**
+   * The figures the common-case sentence states, and whether the per-player grid is needed at all.
+   *
+   * ⚠ MEMOISED because these two walk the WHOLE ROSTER — `amountsVary` compares every player's
+   * amounts against the first player's, and the team total sums every installment of every row.
+   * They change only when the preview does, and this step re-renders for unrelated reasons (the
+   * Confirm button's own `generating` flag, for one). The rest of the derived values below are
+   * counts over the exception list, which is small by construction, and are left plain.
+   */
+  const { amountsVary, previewDates, previewPerPlayer, previewTeamTotal } = useMemo(() => {
+    const rows  = preview ?? [];
+    const first = rows[0]?.installments ?? [];
+    const shape = (row: RepInstallmentPreviewRow) => row.installments.map(i => i.amount).join('|');
+    return {
+      /** Do all players get the same amounts? The per-player grid renders ONLY when they do not
+       *  (owner Q3) — twelve identical rows carry the information of one.
+       *
+       *  ⚠ DERIVED FROM THE ROWS, not from a flag, and today it is always false through this door:
+       *  the sheet gives every active player the identical schedule and says so in its own opening
+       *  line. Per-player overrides exist in the write route's contract but no screen sends one, so
+       *  in practice this removes the grid rather than demoting it. Written as a comparison anyway
+       *  so the grid comes back on its own the day a screen does send one. */
+      amountsVary: rows.length > 1 && rows.some(row => shape(row) !== shape(rows[0])),
+      /** The due dates this run writes, in the reader's format — the common sentence names them. */
+      previewDates: first.map((inst, i) => (inst.dueDate ? formatDayMonth(inst.dueDate) : `#${i + 1}`)),
+      previewPerPlayer: first.reduce((sum, i) => sum + i.amount, 0),
+      previewTeamTotal: teamTotal(rows),
+    };
+  }, [preview]);
+
+  /* The itemized consequences, each counted over the players the run will actually reach.
+
+     ⚠ "KEPT" IS COUNTED FROM `skipPlayerIds`, NOT FROM `untouched` (/review 2026-09-01, High).
+     `untouched` folds in the floor's refusals unconditionally, so a player who is BOTH hand-set
+     and refused was counted as kept — in BOTH checkbox states, including when the coach had
+     explicitly turned keeping off. The line then named them twice, once as kept and once as
+     refused, and promised a keep that `skipPlayerIds` was correctly not asking for. What is
+     actually kept is exactly what is sent as a skip; counting anything else is counting a
+     different thing from the one the server will do. */
+  const keptCount    = skipPlayerIds.length;
+  const blockedRows  = exceptions.filter(e => e.tone === 'blocked');
+  const reachedRows  = exceptions.filter(e => !untouched.has(e.playerId));
+  const payingCount  = reachedRows.filter(e => e.paymentsTotal > 0.005).length;
+  const creditTotal  = Math.round(reachedRows.reduce((sum, e) => sum + e.creditCreated, 0) * 100) / 100;
+  const dateChanges  = (runPlan?.dateChangePlayerIds ?? []).filter(id => !untouched.has(id)).length;
+  /** The kept player's name, when exactly one is kept — a name reads better than "1". Looked up
+   *  by the id actually being skipped, so it can never disagree with the count above. */
+  const soleKeptName = keptCount === 1
+    ? exceptions.find(e => e.playerId === skipPlayerIds[0])?.name
+    : undefined;
+
+  /**
+   * ⚠ THE DECISIONS ARE NEVER TRUNCATED; THE INFORMATION IS.
+   *
+   * A hand-set plan and a refusal are things the coach has to decide about or be told; they all
+   * render, however many. A "has paid" row is information — and on a mid-season roster where
+   * every family has sent something, printing all of them rebuilds the exact wall of near-identical
+   * rows this screen exists to pull down. Those cap, with the remainder counted underneath.
+   */
+  const PLAIN_ROW_CAP = 6;
+  /* A plain loop, not a counter mutated inside `.filter()` — that reads as a bug even when it is
+     not — and not a re-scan of the prefix per row either, which is the same answer at O(n²). */
+  const shownExceptions: DuesRunException[] = [];
+  let plainShown = 0;
+  for (const ex of exceptions) {
+    if (ex.tone === 'plain') {
+      if (plainShown >= PLAIN_ROW_CAP) continue;
+      plainShown += 1;
+    }
+    shownExceptions.push(ex);
+  }
+  const hiddenExceptions = exceptions.length - shownExceptions.length;
+
+  /**
+   * One row's sentence, in the coach's own vocabulary rather than the schema's.
+   *
+   * ⚠ THE FLOOR'S REFUSAL USES THE FLOOR'S OWN SENTENCE (lib/dues-credit-guards.ts), never a
+   * paraphrase — that file exists because two doors had already drifted into hand copies, and
+   * this screen now speaks it twice (here, before the button, and in the result afterwards).
+   */
+  function exceptionSentence(ex: DuesRunException) {
+    if (ex.tone === 'blocked') {
+      return (
+        <>
+          <strong>Refused</strong> — {payoutFloorMessage(ex.paidOut ?? 0, 'raising this player’s dues total')}{' '}
+          The run completes for everyone else.
+        </>
+      );
+    }
+    const paid = ex.paymentsTotal > 0.005 ? (
+      <>
+        {' '}They have paid <strong>{fmt(ex.paymentsTotal)}</strong> — it counts toward the new schedule
+        {ex.creditCreated > 0.005 && <>, and <strong>{fmt(ex.creditCreated)}</strong> becomes their overpayment credit</>}.
+      </>
+    ) : null;
+    if (ex.tone === 'warn' && ex.handSet) {
+      return (
+        <>
+          Has a schedule you set by hand (<strong>{fmt(ex.handSet.total)}</strong> across{' '}
+          {pluralize(ex.handSet.dateCount, 'installment')}) —{' '}
+          {/* ⚠ THE ROW FOLLOWS THE CHECKBOX. The mockup left this sentence fixed at "would replace
+              it" while the checkbox above it was ticked to keep — one row saying two things. The
+              row states what WILL happen, and changes when the coach changes it. */}
+          {keepHandSet ? <strong>kept exactly as it is</strong> : <>this run <strong>replaces it</strong></>}.
+          {!keepHandSet && paid}
+        </>
+      );
+    }
+    return (
+      <>
+        Has paid <strong>{fmt(ex.paymentsTotal)}</strong> — it re-applies to the new schedule
+        {ex.creditCreated > 0.005 && <>, and <strong>{fmt(ex.creditCreated)}</strong> becomes their overpayment credit</>}.
+      </>
+    );
+  }
+
+  /**
+   * "When you confirm: 10 schedules written · Frankie kept by hand · …"
+   *
+   * ONE line, in the same consequence-line voice every drawer form in Money already speaks. It
+   * exists because the two most consequential facts in this flow used to arrive AFTER the button.
+   */
+  const consequenceParts: string[] = (() => {
+    const parts = [`${pluralize(willWrite, 'schedule')} written`];
+    if (keptCount > 0) {
+      parts.push(soleKeptName ? `${soleKeptName} kept by hand` : `${keptCount} kept by hand`);
+    }
+    if (blockedRows.length > 0) {
+      parts.push(blockedRows.length === 1 ? `${blockedRows[0].name} refused` : `${blockedRows.length} refused`);
+    }
+    if (payingCount > 0) {
+      parts.push(payingCount === 1 ? 'one player’s payments re-apply' : `${payingCount} players’ payments re-apply`);
+    }
+    if (creditTotal > 0.005) parts.push(`${fmt(creditTotal)} of new credit`);
+    if (dateChanges > 0) {
+      parts.push(dateChanges === 1 ? 'one family’s due date changes' : `${dateChanges} families’ due dates change`);
+    }
+    return parts;
+  })();
 
   return (
     <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
@@ -809,13 +1019,108 @@ export default function GenerateInstallmentsModal({
               </div>
             ) : (
               <>
+                {/* ⚠ ONE SENTENCE FOR THE COMMON CASE (owner Q3, 2026-09-01). This screen used to
+                    open with a table whose every row was identical — the information of one row
+                    at twelve rows' cost, scrolling sideways on a phone. What every player gets is
+                    a sentence; only the differences earn rows. */}
+                <p className={styles.runCommon}>
+                  {amountsVary ? (
+                    <>Amounts vary by player — <strong>{fmt(previewTeamTotal)}</strong> across{' '}
+                    {pluralize(preview.length, 'player')}. Every player&apos;s own figures are below.</>
+                  ) : previewDates.length === 1 ? (
+                    <>Every player: <strong>{fmt(previewPerPlayer)}</strong> due {previewDates[0]} —{' '}
+                    <strong>{fmt(previewTeamTotal)}</strong> across {pluralize(preview.length, 'player')}.</>
+                  ) : (
+                    <>Every player: <strong>{fmt(previewPerPlayer)}</strong> in{' '}
+                    {pluralize(previewDates.length, 'installment')} ({previewDates.join(', ')}) —{' '}
+                    <strong>{fmt(previewTeamTotal)}</strong> across {pluralize(preview.length, 'player')}.</>
+                  )}
+                </p>
+
                 {/* The comparison travels WITH the coach to the step where they commit. It used
                     to be left behind on the form, so the last thing read before charging ten
                     families said nothing about a shortfall. */}
                 {reconcileLine(true)}
 
+                {/* ── The players this run treats differently ────────────────────────────────
+                    Paid money re-applying, credits being created, hand-set plans at risk, and the
+                    payout floor's refusals — each named, each with its dollars, all of it BEFORE
+                    the button. Nothing here is new arithmetic; every figure was already computed
+                    by the run itself and simply told to the coach afterwards. */}
+                {exceptions.length > 0 && (
+                  <>
+                    <div className={styles.label} style={{ marginBottom: '0.4rem' }}>
+                      {exceptions.length === 1
+                        ? 'The one player this run treats differently'
+                        : `The ${exceptions.length} players this run treats differently`}
+                    </div>
+                    <div className={styles.runExceptions}>
+                      {/* ⚠ THE DECISIONS ARE NEVER TRUNCATED. Hand-set and refused rows all render,
+                          however many — they are choices the coach has to make and consequences
+                          they have to know. The plain "has paid" rows are information, so they cap:
+                          a mid-season roster where everyone has paid something would otherwise
+                          rebuild the exact wall of identical rows this screen was rewritten to
+                          pull down. */}
+                      {shownExceptions.map(ex => (
+                        <div
+                          key={ex.playerId}
+                          className={`${styles.runRow} ${ex.tone === 'warn' ? styles.runRowWarn : ex.tone === 'blocked' ? styles.runRowBlocked : ''}`}
+                        >
+                          <span className={styles.runWho}>{ex.name}</span>
+                          <span className={styles.runWhat}>{exceptionSentence(ex)}</span>
+                        </div>
+                      ))}
+                      {hiddenExceptions > 0 && (
+                        <div className={styles.runMore}>
+                          +{hiddenExceptions} more {hiddenExceptions === 1 ? 'player has' : 'players have'} payments
+                          that re-apply to the new schedule.
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* ⚠ THE REPLACE QUESTION, ASKED HERE (owner Q1). It was a second dialog AFTER the
+                    button — the coach committed, was rejected, and only then met the names. The
+                    button's count and the consequence line both follow this box live. */}
+                {handSetIds.length > 0 && (
+                  <label className={styles.runKeep}>
+                    {/* Frozen once Confirm is pressed: the request already carries the answer
+                        that was true at click time, and a box that still moves under a
+                        "Setting dues…" button is showing a decision it can no longer affect. */}
+                    <input
+                      type="checkbox"
+                      checked={keepHandSet}
+                      disabled={generating}
+                      onChange={e => setKeepHandSet(e.target.checked)}
+                    />
+                    <span>
+                      <strong>Keep the {handSetIds.length === 1 ? 'schedule' : 'schedules'} I set by hand</strong>
+                      {' — '}
+                      {handSetIds.length === 1
+                        ? 'that player keeps their own plan; everyone else gets the new one.'
+                        : `those ${handSetIds.length} players keep their own plans; everyone else gets the new one.`}
+                    </span>
+                  </label>
+                )}
+
+                {runPlan && (
+                  <p className={styles.runConsequence}>
+                    <strong>When you confirm:</strong> {consequenceParts.join(' · ')}.
+                    {consequenceParts.length === 1 && (
+                      runPlan.hasExistingDues
+                        ? ' Nothing else moves — nobody has paid yet, and no schedule is set by hand.'
+                        : ' Nothing else moves — this roster has no dues yet.'
+                    )}
+                  </p>
+                )}
+
+                {/* ⚠ THE GRID IS THE RIGHT SHAPE FOR VARIANCE AND THE WRONG ONE FOR UNIFORMITY
+                    (owner Q3). It renders only when per-player amounts genuinely differ — see
+                    `amountsVary`, which no screen can currently make true through this door. */}
+                {amountsVary && (
                 <div className={styles.previewSection}>
-                  <div className={styles.label} style={{ marginBottom: '0.6rem' }}>Preview — {preview.length} players</div>
+                  <div className={styles.label} style={{ marginBottom: '0.6rem' }}>Every player, since amounts vary</div>
                   {/* Player × installment is a genuine 2-D grid with fixed money columns, so four
                       installments overflow a phone sheet. It scrolls with the player name pinned
                       rather than crushing the amounts.
@@ -845,7 +1150,7 @@ export default function GenerateInstallmentsModal({
                             <span key={i} className={shared.tdNum}>{fmt(inst.amount)}</span>
                           ))}
                           <span className={`${shared.tdNum} ${styles.previewTotalCell}`}>
-                            {fmt(row.installments.reduce((s, inst) => s + inst.amount, 0))}
+                            {fmt(rowTotal(row))}
                           </span>
                         </div>
                       ))}
@@ -862,25 +1167,54 @@ export default function GenerateInstallmentsModal({
                           </span>
                         ))}
                         <span className={`${shared.tdNum} ${styles.previewTotalCell}`}>
-                          {fmt(preview.reduce((s, row) => s + row.installments.reduce((t, inst) => t + inst.amount, 0), 0))}
+                          {fmt(previewTeamTotal)}
                         </span>
                       </div>
                     </div>
                   </CoachScrollX>
                 </div>
+                )}
 
                 {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
                 {generateError && <p className={styles.errorText}>{generateError}</p>}
 
                 <div className={shared.modalFooter}>
-                  <button type="button" className={shared.btnGhost} onClick={() => invalidatePreview()}>Back</button>
-                  {/* Never sends replace. If dues already exist the server says so and the coach
-                      is asked — see `replaceFacts`. An onClick of `handleGenerate` alone would
-                      pass React's event object as the `replace` argument, which is truthy. */}
-                  <button type="button" className={shared.btnPrimary} onClick={() => handleGenerate(false)} disabled={generating}>
+                  {/* ⚠ DISABLED WHILE THE WRITE IS IN FLIGHT (/review 2026-09-01). Back only drops
+                      the preview — it cannot recall a POST — so a coach who pressed Confirm and
+                      then Back got the form again, kept typing, and was thrown onto the success
+                      screen when the write they thought they had abandoned landed. There is no
+                      cancel here to offer; the honest thing is not to offer one. */}
+                  <button
+                    type="button"
+                    className={shared.btnGhost}
+                    onClick={() => invalidatePreview()}
+                    disabled={generating}
+                  >
+                    Back
+                  </button>
+                  {/* ⚠ A PREVIEWED RUN CARRIES ITS OWN ANSWERS (owner Q1). `replace` is resolved
+                      here from what the preview READ — the coach has already been shown what a
+                      replace destroys and has answered the keep question above — so the
+                      ALREADY_HAS_DUES 409 stops being a step and becomes the BELT: it still fires
+                      for a stale preview (someone generated dues in another tab) or any
+                      non-previewed caller, and `replaceFacts` still renders that question. It is
+                      never removed.
+
+                      An onClick of `handleGenerate` alone would pass React's event object as the
+                      `replace` argument, which is truthy. */}
+                  <button
+                    type="button"
+                    className={shared.btnPrimary}
+                    onClick={() => handleGenerate(runPlan?.hasExistingDues ?? false, skipPlayerIds)}
+                    disabled={generating || willWrite === 0}
+                  >
                     {generating
                       ? 'Setting dues…'
-                      : `Set dues for ${preview.length} player${preview.length !== 1 ? 's' : ''}`}
+                      : willWrite === 0
+                        // Every player is kept or refused — there is nothing left to write, and a
+                        // button promising "0 players" is a button that should not be pressable.
+                        ? 'Nothing left to set'
+                        : `Set dues for ${pluralize(willWrite, 'player')}`}
                   </button>
                 </div>
               </>
