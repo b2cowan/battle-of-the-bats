@@ -16944,3 +16944,52 @@ amendments folded in before the pass: the two-deck Ledger toolbar (+cash on the 
 quiet-at-rest pills, the "Type" pill rename), the door-completes-its-field grammar
 ("Manage staff…"/"Manage equipment…"), schedule-grid required asterisks, and the cross-panel
 tag-staleness defect the owner found and this stream fixed (pickers self-refresh on open).
+
+## §132 · Budget vs Actual, Two Truths — the Season-spending reading, Cash, and the report polish — BUILT 2026-09-02, awaiting QA
+
+**Walkthrough artifact (the instrument):** `claude.ai/code/artifact/d88950ba-9f51-4b6a-b4b5-59789325a5f8`
+— checkboxes with device-remembered state, a verdict + notes per part, and a Build-summary
+paste-back. Sign in as `uat-coach@uat-test-org.local` on `localhost:3000` (org `uat-test-org`,
+team UAT Test Team); Part 0 has the owner record a fresh $240 family-paid cost to trace end to end.
+
+**What was built (plan `docs/projects/active/COACH_BVA_TWO_TRUTHS_PLAN.md`, all owner-ruled
+2026-09-02; gate answers G1 approved / G2 Variant 1 / G3 approved; commits `afc702f1` P4 →
+`a73279d7` P2 → `17d549ce` P1 → `34b10f03` P3 → `ec03487e` P5, all on dev):**
+
+- **P1 — the heart.** The Months "Showing" menu is five readings: Budget · Scheduled · **Cash**
+  (renamed from Actual; the stored per-device value still resolves because only the label moved) ·
+  **Season spending** (new — the Statement's expense half by month, a cost counted the day it
+  happened whoever paid it, family-paid rows tagged, money back netted in brackets, one band, no
+  balances) · Difference. **Difference now compares plan against SPENDING (Q3)** so it ties to
+  Headroom exactly, and its half of the tie-out fold retired (the Cash walk stays). The spending
+  band is a fourth `buildMonthGrid` pass over the route's flattened statement movements — never a
+  second walk — and its Total spent equals the banner's "spent" to the cent.
+- **P2** — the chart is the collapsed **Spending trend** shelf below the table, half height, open
+  state remembered per device; the clipped last x-label fixed at the anchor; flatline marker at the
+  kink; the chart scrolls on a phone instead of shrinking its text.
+- **P4** — the eleven quick fixes: variance key · dated family-paid lines · the cash sentence
+  promoted to visible prose · "refund only" · the visible "not planned" word (named reversal of the
+  2026-08-15 trim, logged in memory/design_decisions.md) · off-plan on the banner · view sublabels ·
+  flatline marker · **Total cash out** row on Months·Cash (screen + file) · opening-balance
+  provenance both ways · "Not itemized yet" → **"Estimate not yet broken out"**.
+- **P3** — the exports: the reconciliation walk appended to the Statement file in all three formats
+  whenever the screen's sentence renders; the off-plan line agreeing by construction; a board-ready
+  PDF opening block (team, season, headroom sentence, funded-by-players).
+- **P5** — the forward stat, G2 Variant 1: *"on what's scheduled you end the season with $X"*
+  (+ "plus $Y possible" for pledges/pending asks, never banked), read off the Scheduled reading's
+  own ending-balance machinery, deep-linking to Months · Scheduled.
+
+**Verification run:** typecheck clean · 2,796 unit tests pass (new lens-vocabulary + helper tests
+included) · `check:money-report` extended (spendingGrid absent = failure; band = statement = chart
+month by month; Difference ties to Headroom) and **passing against the live UAT fixture with every
+breaking shape present** · `check:demos` 2 presentable · spelling/CSS/contrast/date gates clean.
+Help teaches the five readings; the complete coach-demo money narration was re-read line by line
+(nothing stale; verdict recorded in `lib/sandbox-chrome.ts`, landed via `14e7a5e4`), clearing the
+three-releases-stale flag.
+
+**Deviations to rule on at the walk (mockup silent on both):** the spending lens's lone band is
+headed "Season spending" with closing row "Total spent" (the G1 grid was drawn dimmed, on the Cash
+lens); the phone chart scrolls at a floor width rather than restyling at 375px (the G3 frame's own
+behaviour). **And one open call:** should the coach demo's money tour NARRATE Season spending? The
+seeded world already shows it (the $400 parent-paid deposit, tagged); narrating means swapping a
+clause in step 4 under the one-proof-point cap — the walk's Part H asks for a yes/no.
