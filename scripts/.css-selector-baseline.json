@@ -1,0 +1,470 @@
+{
+  "dead": {
+    "app/[orgSlug]/Home.module.css": [
+      "championsHero",
+      "draftPublicNotice"
+    ],
+    "app/[orgSlug]/admin/admin-common.module.css": [
+      "chip_accepted",
+      "chip_all",
+      "chip_pay_deposit",
+      "chip_pay_paid",
+      "chip_pay_pastdue",
+      "chip_pay_unpaid",
+      "chip_pending",
+      "chip_rejected",
+      "chip_waitlist",
+      "controlGroup",
+      "controlLabel",
+      "controlSelect",
+      "controlsBar",
+      "controlsRight",
+      "desktopActions",
+      "dropdownMenu",
+      "expandedActions",
+      "expandedContent",
+      "expandedInfo",
+      "filtersRow",
+      "groupSection",
+      "mobileMenu",
+      "searchWrapper"
+    ],
+    "app/[orgSlug]/admin/org/billing/billing.module.css": [
+      "billingNudgeActions",
+      "planIcon",
+      "priceUnit"
+    ],
+    "app/[orgSlug]/admin/org/members/members.module.css": [
+      "statusAccepted"
+    ],
+    "app/[orgSlug]/admin/org/settings/settings.module.css": [
+      "themeFooter"
+    ],
+    "app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css": [
+      "activeToggle",
+      "contactList",
+      "contactPicker",
+      "infoCard",
+      "lifecycleCount",
+      "lifecycleCountLabel",
+      "lifecycleCountValue",
+      "lifecycleItem",
+      "lifecycleItems",
+      "lifecycleStrip",
+      "migrationHeader",
+      "migrationOptions",
+      "migrationSection",
+      "nextStepsGrid",
+      "scheduleParamsPanel",
+      "seedGrid"
+    ],
+    "app/[orgSlug]/admin/org/venues/venues-admin.module.css": [
+      "importBar",
+      "venueColActions"
+    ],
+    "app/[orgSlug]/admin/public-site/public-site.module.css": [
+      "previewLink"
+    ],
+    "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": [
+      "manageBtnCount"
+    ],
+    "app/[orgSlug]/admin/tournaments/communication/communication.module.css": [
+      "badgeEmail",
+      "badgeEmailWarn",
+      "badgeSite",
+      "cardDate",
+      "cardPreview",
+      "channelBadges",
+      "commCard",
+      "commCardPinned",
+      "composeActions",
+      "composePanel",
+      "composePanelHeader",
+      "composePanelTitle",
+      "deleteAction",
+      "divisionFilter",
+      "emailDetailLabelRow",
+      "overflowBackdrop",
+      "overflowMenu",
+      "overflowWrap",
+      "recipientCopyRow",
+      "recipientsToggle",
+      "recipientsToggleRight",
+      "smallCheckLabel"
+    ],
+    "app/[orgSlug]/admin/tournaments/data-tools/data-tools.module.css": [
+      "actionButton",
+      "actionGhost",
+      "actionPrimary",
+      "buttonGrid",
+      "referenceGrid",
+      "referenceItem",
+      "toolCard",
+      "toolGrid"
+    ],
+    "app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css": [
+      "colActions",
+      "colAge",
+      "colPools",
+      "colStatus",
+      "colTeams",
+      "divisionMeta",
+      "tableHead"
+    ],
+    "app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css": [
+      "activeFilterBadge",
+      "attentionBucket",
+      "attentionBucketActive",
+      "attentionBucketBody",
+      "attentionBucketCount",
+      "attentionDesktop",
+      "attentionDivisionActive",
+      "attentionDivisionBreakdown",
+      "attentionDivisionButtons",
+      "attentionEmpty",
+      "attentionGrid",
+      "attentionLockLabel",
+      "attentionMobileClear",
+      "attentionMobileOpen",
+      "attentionMobileSummary",
+      "attentionSheet",
+      "attentionSheetBucket",
+      "attentionSheetBucketActive",
+      "attentionSheetBuckets",
+      "attentionSheetCopy",
+      "attentionSheetDivisions",
+      "attentionStripChip",
+      "attentionStripChips",
+      "attentionUpgradeCopy",
+      "bulkBar",
+      "bulkButtons",
+      "bulkInfo",
+      "infoLine",
+      "paymentFilter",
+      "paymentFilterActive",
+      "registrationStatusFilters",
+      "segmentedMobile",
+      "selectCurrent",
+      "toolsFilterButton",
+      "toolsFilterButtonActive",
+      "toolsFilterGrid",
+      "toolsMetrics",
+      "toolsSection",
+      "toolsSectionTitle",
+      "transferGroup"
+    ],
+    "app/[orgSlug]/admin/tournaments/results/results-admin.module.css": [
+      "resultsActionGroup",
+      "resultsVenueDesktop",
+      "resultsVenueMobile",
+      "sheetVenueActive",
+      "sheetVenueCount",
+      "sheetVenueList",
+      "sheetVenueOption",
+      "tallyPending"
+    ],
+    "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": [
+      "poolGroupHeader",
+      "roundTitleText"
+    ],
+    "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": [
+      "scheduleVenueMobile"
+    ],
+    "app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css": [
+      "channelCard",
+      "channelCardLabel",
+      "channelItem",
+      "channelItemLabel",
+      "channelTop"
+    ],
+    "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": [
+      "actionCard",
+      "comingSoonCard"
+    ],
+    "app/[orgSlug]/coaches/coaches.module.css": [
+      "attendanceNoteToggle",
+      "attendanceStatusBtnActive",
+      "attendanceStatusGroup",
+      "attendanceUnsaved",
+      "badgeSponsor",
+      "closedTeamRow",
+      "formSectionFull",
+      "identityHelp",
+      "insightsCalm",
+      "insightsSeasonBody",
+      "insightsSeasonCaret",
+      "insightsSeasonChip",
+      "insightsSeasonMeta",
+      "insightsSeasonName",
+      "insightsSeasonRow",
+      "insightsSeasonStatLbl",
+      "insightsSeasonWrapLink",
+      "kindOptionHint",
+      "kindOptionName",
+      "kindOptionOn",
+      "kindPick",
+      "lineupAnalyticsBar",
+      "lineupAnalyticsBasis",
+      "lineupAnalyticsBody",
+      "lineupAnalyticsCard",
+      "lineupAnalyticsCaret",
+      "lineupAnalyticsEmpty",
+      "lineupAnalyticsFlag",
+      "lineupAnalyticsName",
+      "lineupAnalyticsRec",
+      "lineupAnalyticsRow",
+      "lineupAnalyticsSummary",
+      "lineupAnalyticsVal",
+      "lineupHint",
+      "lineupMoveControls",
+      "lineupNotPlayingTag",
+      "lineupOrderInput",
+      "lineupSummaryToggle",
+      "listToolbarFact",
+      "listToolbarFactPhoneDrop",
+      "payDrawerFacts",
+      "rosterMeta",
+      "rosterNudge",
+      "scheduleToolbarActions",
+      "seasonChipButton",
+      "seasonChipMenu",
+      "seasonChipMenuClose",
+      "seasonChipMenuHead",
+      "seasonChipMenuItem",
+      "seasonChipMenuItemActive",
+      "seasonChipMenuMeta",
+      "seasonChipWrap",
+      "seasonReadAccessNote",
+      "seasonSwitcherArchive",
+      "setupActionIcon",
+      "setupHeader",
+      "setupItemDetail",
+      "setupTitle",
+      "sidebarBackLink",
+      "sidebarTeamInfo",
+      "sidebarTeamYear",
+      "teamRole",
+      "thWithHelp",
+      "tournamentHistoryEmpty",
+      "tournamentHistoryIcon",
+      "tournamentHistoryPanel",
+      "wltBreakdown",
+      "wltBreakdownDot",
+      "wltBreakdownLabel",
+      "wltBreakdownRow",
+      "wltBreakdownToggle",
+      "wltBreakdownVal",
+      "wltControls",
+      "wltCountLabel",
+      "wltDiff",
+      "wltForm",
+      "wltInsightsLink",
+      "wltLast",
+      "wltMain",
+      "wltScope",
+      "wltScoring",
+      "wltStats",
+      "wltStreak",
+      "wltToggle",
+      "wltToggleActive",
+      "wltToggles"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/bva.module.css": [
+      "emptyHint"
+    ],
+    "app/[orgSlug]/news/news.module.css": [
+      "annImage",
+      "featuredBadge"
+    ],
+    "app/[orgSlug]/register/register.module.css": [
+      "closedCard",
+      "selectIcon",
+      "selectWrap",
+      "successInfo"
+    ],
+    "app/[orgSlug]/results/results.module.css": [
+      "poolLabel",
+      "resultCard",
+      "resultDate",
+      "resultTime",
+      "resultsList",
+      "rulesInfo",
+      "scoreName",
+      "tieLabel",
+      "winIcon"
+    ],
+    "app/[orgSlug]/schedule/schedule.module.css": [
+      "sheetSegmented"
+    ],
+    "app/[orgSlug]/standings/standings.module.css": [
+      "bracketBranch",
+      "bracketBranchConnected",
+      "bracketChampion",
+      "bracketChampionBadge",
+      "bracketChampionBody",
+      "bracketChampionIcon",
+      "bracketChampionLabel",
+      "bracketChampionName",
+      "bracketDesktop",
+      "bracketDivider",
+      "bracketList",
+      "bracketListRound",
+      "bracketListRoundLabel",
+      "bracketMatchup",
+      "bracketMatchupCompact",
+      "bracketMatchupDate",
+      "bracketMatchupStatus",
+      "bracketMobile",
+      "bracketRound",
+      "bracketRoundGames",
+      "bracketRoundLabel",
+      "bracketScore",
+      "bracketScoreLost",
+      "bracketScoreWon",
+      "bracketTeam",
+      "bracketTeamBadge",
+      "bracketTeamName",
+      "bracketTeamTbd",
+      "bracketTeamWon",
+      "bracketThirdLabel",
+      "bracketThirdPlace",
+      "bracketTree",
+      "bracketTreeOuter",
+      "emptyActions",
+      "followActions",
+      "followBar",
+      "followBarLeft",
+      "followBarRight",
+      "followFinalLabel",
+      "followFinalPos",
+      "followFinalRank",
+      "followLabel",
+      "followMain",
+      "followRankBadge",
+      "followRecord",
+      "followResult",
+      "followStats",
+      "followTeamName",
+      "poolLabel",
+      "recordCol",
+      "recordPill",
+      "resultsSummaryCard",
+      "resultsSummaryGrid"
+    ],
+    "app/[orgSlug]/teams/teams.module.css": [
+      "playerNum"
+    ],
+    "app/coaches/team/[basicTeamId]/team.module.css": [
+      "contentGrid"
+    ],
+    "app/platform-admin/email-templates/email-templates.module.css": [
+      "categoryGroup",
+      "categoryHeading"
+    ],
+    "app/platform-admin/observability/observability.module.css": [
+      "eventRoute"
+    ],
+    "app/platform-admin/orgs/orgs.module.css": [
+      "addonChip",
+      "addonChipOff",
+      "addonChipOn",
+      "addonChips",
+      "addonSaveBtn",
+      "addonsInner",
+      "addonsLabel",
+      "addonsRow",
+      "addonsSavedStatic"
+    ],
+    "app/platform-admin/pitch-deck-studio/pitch-deck-studio.module.css": [
+      "factQuiet"
+    ],
+    "app/platform-admin/users/users.module.css": [
+      "linkRow",
+      "pageLabel"
+    ],
+    "app/pricing/page.module.css": [
+      "coachesCallout",
+      "coachesCalloutBody",
+      "coachesCalloutCta",
+      "coachesCalloutInner",
+      "coachesCalloutLabel",
+      "coachesCalloutPrice",
+      "coachesCalloutPriceSub"
+    ],
+    "components/Navbar.module.css": [
+      "logoSub",
+      "logoText"
+    ],
+    "components/PricingSection.module.css": [
+      "planAnnualTotal",
+      "rowCross"
+    ],
+    "components/accounting/BudgetItemPicker.module.css": [
+      "selectBad"
+    ],
+    "components/admin/AdminBottomNav.module.css": [
+      "densityBtn",
+      "densityBtnActive",
+      "densityRow"
+    ],
+    "components/admin/AdminSidebar.module.css": [
+      "densityBtn",
+      "densityBtnActive",
+      "densityToggle",
+      "orgSection",
+      "setActiveBtn"
+    ],
+    "components/admin/CheckInBoard.module.css": [
+      "dobInput"
+    ],
+    "components/admin/TournamentSetupWizard.module.css": [
+      "existingVenueButton",
+      "existingVenueGrid",
+      "existingVenueSelected",
+      "venueCardGrid",
+      "venueCardHeader"
+    ],
+    "components/coaches/CoachesBottomNav.module.css": [
+      "dropMeta"
+    ],
+    "components/coaches/FeeEditor.module.css": [
+      "noFees"
+    ],
+    "components/coaches/MoneyImportMenu.module.css": [
+      "formatChoice",
+      "formatDialog",
+      "formatExt",
+      "formatHint",
+      "formatIntro",
+      "formatList",
+      "formatName"
+    ],
+    "components/help/help.module.css": [
+      "helpGroupBlock",
+      "helpPageHeader",
+      "helpTocLinkSub",
+      "helpTopicBlock"
+    ],
+    "components/notifications/PreferencesTable.module.css": [
+      "cellNa"
+    ],
+    "components/notifications/notifications.module.css": [
+      "panelCoaches"
+    ],
+    "components/rep-teams/TryoutCheckIn.module.css": [
+      "bibOnly"
+    ],
+    "components/whats-new/whats-new.module.css": [
+      "hasNew",
+      "seeAll"
+    ]
+  },
+  "clashes": {
+    "app/[orgSlug]/coaches/coaches.module.css": [
+      "tagChip|background",
+      "tagChip|border",
+      "tagChip|color",
+      "tagChip|padding"
+    ]
+  }
+}

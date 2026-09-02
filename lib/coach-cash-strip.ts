@@ -239,7 +239,7 @@ export interface CashStrip {
  * 2026-08-24). Club money has a Club screen to open; a refund a coach typed in has no "thing
  * itself" behind it — the record IS the thing, and it lives on Transactions.
  */
-export const MONEY_BACK_RECORDED = { id: 'moneyback:recorded', name: 'Money back you recorded' };
+const MONEY_BACK_RECORDED = { id: 'moneyback:recorded', name: 'Money back you recorded' };
 export const MONEY_BACK_CLUB = { id: 'moneyback:club', name: 'Repaid by the club' };
 
 /** Whole dollars where they are whole — a note line reads "$120 credited", never "$120.00". */

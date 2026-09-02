@@ -1,0 +1,81 @@
+// Dead-code REPORT — owner decision 2026-09-01 (codebase cleanup tranche 6).
+//
+// Run it:  npm run check:dead:report
+//
+// ⚠ THIS IS A REPORT, NOT A GATE. knip is deliberately NOT a dependency of this project and is NOT
+// wired into `verify:changed`. It is fetched on demand by npx, so trying it costs nothing, changes
+// no lockfile, and adds nothing to the Amplify install. Promoting it to a baselined ratchet — the
+// way `scripts/check-public-tokens.mjs` and `scripts/check-css-selectors.mjs` work — is a SEPARATE
+// decision, to be taken only once this report has been shown to be more signal than noise.
+//
+// ⚠⚠ ENTRY POINTS ARE THE WHOLE GAME. Anything the FRAMEWORK calls rather than our own code is an
+// entry point, and a missed entry makes a live file look dead — which is the failure mode that
+// makes a tool like this untrustworthy and therefore ignored. Two things here that no plugin knows:
+//   · this repo uses the Next 16 `proxy.ts` convention, NOT `middleware.ts` (see AGENTS.md);
+//   · `scripts/*.mjs` are standalone node programs run by npm scripts and git hooks, never imported.
+//
+// ⚠ What this tool CANNOT see, so that its silence is not mistaken for proof:
+//   · CSS — that is `scripts/check-css-selectors.mjs`.
+//   · A prop, branch or condition that can no longer be true. The headline defect of tranche 6 was
+//     six page headers rendering nothing, behind a flag with one possible value. The code was
+//     called on every visit; nothing here would ever have flagged it.
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/page.tsx",
+    "app/**/layout.tsx",
+    "app/**/route.ts",
+    "app/**/template.tsx",
+    "app/**/default.tsx",
+    "app/**/error.tsx",
+    "app/**/global-error.tsx",
+    "app/**/loading.tsx",
+    "app/**/not-found.tsx",
+    "app/**/opengraph-image.tsx",
+    "app/**/twitter-image.tsx",
+    "app/**/apple-icon.tsx",
+    "app/**/icon.tsx",
+    "app/**/sitemap.ts",
+    "app/**/robots.ts",
+    "app/**/manifest.ts",
+    "proxy.ts",
+    "instrumentation.ts",
+    "next.config.ts",
+    "postcss.config.js",
+    "tailwind.config.ts",
+    "playwright.config.ts",
+    "eslint.config.mjs",
+    // ⚠ `.js` belongs here as well as `.mjs`: `scripts/outline-svg-text.js` is a CommonJS program,
+    // and leaving it unscanned reported its `opentype.js` dependency as unused — a false positive
+    // that would have argued for uninstalling a package the brand-asset workflow depends on.
+    "scripts/**/*.{mjs,js,ts}",
+    "tests/**/*.{ts,tsx}",
+    "public/sw.js"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "scripts/**/*.{mjs,js}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "next-env.d.ts",
+    "**/*.d.ts",
+    ".next/**",
+    "supabase/**"
+  ],
+  "ignoreDependencies": [
+    // Loaded by ABSOLUTE PATH out of node_modules (`scripts/check-pdf-documents.mjs` imports
+    // `node_modules/pdfjs-dist/legacy/build/pdf.mjs` directly, because the package's own entry
+    // point does not work under plain node). No static analysis can follow that.
+    "pdfjs-dist",
+    // A Next-provided marker module imported for its side effect only; it is not, and should not
+    // be, a line in package.json. Reported once per server module — 68 findings of pure noise.
+    "server-only"
+  ],
+  // An export used only inside its own file is a de-export candidate, not dead code. Tranche 6
+  // handled eleven of those by hand; they are tidiness, not risk, and mixing them into this
+  // report would bury the findings that matter.
+  "ignoreExportsUsedInFile": true
+}

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import styles from './overview-dashboard.module.css';
@@ -174,27 +175,35 @@ const ROWS: Record<RowKey, { dot: string; name: string; stat: (s: MoneySummary) 
       ? danger(`${s.expenses.upcomingDueCount} coming due`)
       : 'Nothing due'),
   },
-  /* ⚠ ONE ROW WHERE TWO WERE (P4). The stat has to carry both halves of the relationship now, so it
-     leads with the money OWED — the only figure with a due date attached — and appends what is still
-     with the club when there is any. A pending request is deliberately a COUNT, never a dollar sum
-     in this position: the rail's other money figures are all cash the team actually holds or owes,
-     and a dollar amount here would read as a fourth one. */
+  /* ⚠ ONE FIGURE, ONE FLAG (owner, 2026-09-02). The row carried three facts — outstanding dollars,
+     an overdue count and a pending-request count — and only the dollars are read at a glance; the
+     other two turned the season's busiest row into a sentence. The overdue fact survives as a SIGN
+     rather than words: the same warning triangle the Club tab's own overdue chip uses, so the flag is
+     the chip you'll see when you arrive. The count it stands for is the icon's accessible name, so
+     it is spoken by a screen reader and shown on hover, and the shape (not the colour) carries it.
+     What is still awaiting the club keeps its home on the Club tab, one tap away. */
   club: {
     dot: styles.railDotBlue,
     name: 'Club',
     stat: s => {
-      const pending = s.paymentRequests.pendingCount;
-      const awaiting = pending > 0
-        ? <> · <b>{pending}</b> awaiting</>
-        : null;
-      if (s.allocations.count === 0) {
-        return pending > 0 ? <><b>{pending}</b> awaiting the club</> : 'Nothing owed or asked';
-      }
+      if (s.allocations.count === 0) return 'Nothing owed';
+      const overdue = s.allocations.overdueCount;
       return (
         <>
           <b>{fmt(s.allocations.outstanding)}</b> outstanding
-          {s.allocations.overdueCount > 0 && <> · {danger(`${s.allocations.overdueCount} overdue`)}</>}
-          {awaiting}
+          {overdue > 0 && (
+            <>
+              {' '}
+              <span
+                className={styles.railStatWarn}
+                role="img"
+                aria-label={`${overdue} overdue`}
+                title={`${overdue} overdue`}
+              >
+                <AlertTriangle size={12} aria-hidden />
+              </span>
+            </>
+          )}
         </>
       );
     },

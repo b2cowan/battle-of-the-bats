@@ -450,6 +450,105 @@ export function fundraiserRows(
    own budget words, none of its money reached that report. An unfiled row exports an empty pair
    rather than a placeholder — a spreadsheet is filtered and sorted, and "Not filed" as text would
    sort in among the real category names. */
+/**
+ * ═══ THE CLUB TAB'S ONE EXPORT — the table as it stands on screen ═══════════════════════════════
+ *
+ * ⚠⚠ ONE BUTTON, ONE FILE (owner, 2026-09-01). The tab briefly carried an Export per group, which
+ * was two triggers both reading the word "Export" producing different files — the exact shape
+ * `CoachExportButton`'s own header records an owner ruling against. The tab is one table now, so it
+ * gets one export OF that table: the portal rule is that an export gives you what you are looking
+ * at.
+ *
+ * ⚠⚠ AND THE PER-INSTALMENT GRAIN IS NOT LOST WITH IT, WHICH IS WHY THIS IS SAFE. The old bills
+ * export was one row per INSTALMENT, deliberately — "a payment is what gets matched". That reading
+ * still exists, and in a better place: the **Ledger** carries every club instalment as its own
+ * DATED row (`coach-register-book.ts`, `kind: 'club'`) with its category, item, money out, running
+ * balance and status, and the register export ships all of it. A treasurer reconciling a bank
+ * statement wants the dated book; a coach exporting this screen wants this screen.
+ *
+ * ⚠ EVERY MONEY COLUMN IS UNAMBIGUOUS, and that is the register's rule applied here: "whatever
+ * lands in one column gets summed by someone". A bill's outstanding and a request's asked amount
+ * are NOT the same quantity, so they never share a column — `Billed` / `Paid` / `Still to pay`
+ * belong to bills, `Requested` to requests, and each one sums to something true on its own.
+ */
+export const CLUB_MONEY_COLUMNS: ExportColumnDef[] = [
+  { label: 'Group',        key: 'group',     format: 'text' },
+  { label: 'What',         key: 'what',      format: 'text' },
+  { label: 'Direction',    key: 'direction', format: 'text' },
+  { label: 'New money or money back', key: 'meaning', format: 'text' },
+  { label: 'Category',     key: 'category',  format: 'text' },
+  { label: 'Item',         key: 'item',      format: 'text' },
+  { label: 'Billed',       key: 'billed',    format: 'currency' },
+  { label: 'Paid',         key: 'paid',      format: 'currency' },
+  { label: 'Still to pay', key: 'toPay',     format: 'currency' },
+  { label: 'Requested',    key: 'requested', format: 'currency' },
+  { label: 'Status',       key: 'status',    format: 'text' },
+  { label: 'Decided',      key: 'decided',   format: 'date' },
+];
+
+/**
+ * The whole Club tab, in the order it is read on screen: the bills band, then the requests band.
+ *
+ * ⚠ THE ROW ORDER IS THE SCREEN'S, not the database's — a coach who exports what they are looking
+ * at should be able to find the row they were looking at.
+ */
+export function clubMoneyRows(
+  splits: Array<{
+    allocationDescription: string;
+    amount: number;
+    budgetCategoryName?: string | null;
+    budgetItemName?: string | null;
+    installments: Array<{ amount: number; dueDate: string; paidAt: string | null }>;
+  }>,
+  requests: Array<{
+    requestType: ClubRequestType; moneyInMeaning?: ClubMoneyInMeaning | null;
+    amount: number; description: string;
+    budgetCategoryName?: string | null; budgetItemName?: string | null;
+    status: string; reviewedAt: string | null;
+  }>,
+  today: string,
+): ExportRow[] {
+  const bills = splits.map(s => {
+    let paid = 0, toPay = 0, overdue = 0;
+    for (const i of s.installments) {
+      if (i.paidAt) { paid += i.amount; continue; }
+      toPay += i.amount;
+      if (i.dueDate < today) overdue += 1;
+    }
+    return {
+      group: 'Billed us',
+      what: s.allocationDescription,
+      direction: '',
+      meaning: '',
+      category: s.budgetCategoryName ?? '',
+      item: s.budgetItemName ?? '',
+      billed: s.amount,
+      paid,
+      toPay,
+      requested: '',
+      /* The same three words the row shows, so a spreadsheet and the screen agree about a bill. */
+      status: overdue > 0
+        ? String(overdue) + ' overdue'
+        : toPay > 0.005 ? 'On track' : 'Paid',
+      decided: '',
+    };
+  });
+  const asked = requests.map(r => ({
+    group: "We've asked",
+    what: r.description,
+    // ⚠ "Club", not "Org" — the file a coach hands their treasurer uses the screen's own word.
+    direction: r.requestType === 'payment_to_org' ? 'To the club' : 'From the club',
+    meaning: clubMoneyInWord(r) ?? '',
+    category: r.budgetCategoryName ?? '',
+    item: r.budgetItemName ?? '',
+    billed: '', paid: '', toPay: '',
+    requested: r.amount,
+    status: REQUEST_STATUS_LABEL[r.status] ?? (r.status.charAt(0).toUpperCase() + r.status.slice(1)),
+    decided: r.reviewedAt ? r.reviewedAt.slice(0, 10) : '',
+  }));
+  return [...bills, ...asked];
+}
+
 export const ALLOCATION_COLUMNS: ExportColumnDef[] = [
   { label: 'Allocation', key: 'allocation', format: 'text' },
   { label: 'Category',   key: 'category',   format: 'text' },

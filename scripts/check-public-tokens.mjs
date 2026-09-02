@@ -169,7 +169,10 @@ const SCOPES = {
       // The product-wide confirm/feedback dialog: global .modal classes carry the admin look,
       // the module carries the coaches-portal skin — one dialog, every shell.
       'components/FeedbackModal.module.css',
-      'components/notifications/PushPermissionPrompt.module.css',
+      /* ⚰ `components/notifications/PushPermissionPrompt.module.css` was listed here and went with
+         its component on 2026-09-01 (cleanup tranche 6) — both were unimported. A dead entry here
+         is inert (the walker skips a missing file) but it makes this list describe a product that
+         no longer exists, which is how a scope list stops being readable. */
       'app/system-screens.module.css',
       // The site footer renders on TWO grounds since Chunk C — the marketing site's dark ground
       // and the consumer app's warm paper (which itself follows the account's Dark/Warm

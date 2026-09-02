@@ -9260,7 +9260,7 @@ export async function markRepPlayerDuesInstallmentPaid(
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
-import { allocateDuesPayments, duesPaidAmount, planOverpaymentReconcile } from './dues-payments';
+import { allocateDuesPayments, duesPaidAmount, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
 import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {

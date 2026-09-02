@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, Upload, AlertTriangle, Settings2 } from 'lucide-react';
+import { BarChart3, Plus, X, ChevronDown, ChevronRight, AlertTriangle, Settings2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
@@ -491,12 +490,9 @@ function groupLines(lines: RepBudgetLineWithPeriods[]) {
 
 export function BudgetPlanPanel({
   params: paramsPromise,
-  embedded = false,
   tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
-  embedded?: boolean;
   /** Is this panel the tab currently on screen? A dirty form left on a tab the coach has
    *  since switched away from must stop intercepting clicks on whatever tab they're
    *  actually looking at — see UnsavedChangesGuard's `interceptClicks`. */
@@ -1333,19 +1329,7 @@ export function BudgetPlanPanel({
 
   // Page-level action ruling 2026-08-13: "Add Line" acts on the BUDGET, and the nearest chrome
   // that names the budget is the plan's own control row — not the Money hub header above it,
-  // which names the container. So the create lives in the toolbar below and this header keeps
-  // only what is genuinely page-level.
-  //
-  // ⚠ IMPORT IS HEADER-LEVEL ONLY WHEN THIS PANEL IS ITS OWN PAGE. Inside the hub the constant
-  // `Import ▾` menu above the tabs owns it (and lists this dataset by name); rendering a second
-  // Import here would be the same door twice, one line apart. On the standalone route there is
-  // no such menu, so the button stays — that is rule 8's "single-dataset screens keep plain
-  // buttons", and it is what stops the importer becoming unreachable outside the hub.
-  const headerActions = !embedded && moneyCanWrite ? (
-    <button type="button" className={shared.btnSecondary} onClick={() => setImportOpen(true)} aria-label="Import">
-      <Upload size={15} aria-hidden /> <span className={shared.headerBtnLabel}>Import</span>
-    </button>
-  ) : null;
+  // which names the container. So the create lives in the toolbar below.
 
   // Rule 5, one name one weight: every page's main create is the FILLED LIME button. Add Line
   // was outlined while New Fundraiser one tab away was filled — the same job, two weights.
@@ -1397,21 +1381,16 @@ export function BudgetPlanPanel({
 
   return (
     <div className={styles.page}>
-      {/* Header */}
       {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
           It was one of the TWO surviving hand-written copies of the retired back-link style — the
           shared-component pass missed both because they never imported the component. It rendered
           only on the legacy standalone route, and every legacy money route is a permanent redirect
           into the hub, so no coach has seen it since. Deleted as dead code. */}
-      <CoachPageHeader
-        variant={embedded ? 'embedded' : 'standard'}
-        icon={BarChart3}
-        title="Season Budget Plan"
-        actions={headerActions}
-        helpLabel="Budget Plan"
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-budget', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
-      />
-
+      {/* ⚰ And so is this panel's own CoachPageHeader (cleanup tranche 6, 2026-09-01). Its title,
+          icon and help topic only ever rendered on the standalone route; its Import button was the
+          hub's `Import ▾` menu a second time. Inside the hub the header collapsed to an actions row
+          this panel had none of, so it rendered nothing at all. The empty state below still offers
+          the importer — see `setImportOpen`. Reasoning at the hub's mount in accounting/page.tsx. */}
       {importMessage && (
         <p className={styles.importedNote} role="status">{importMessage}</p>
       )}

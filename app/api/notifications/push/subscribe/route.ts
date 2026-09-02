@@ -2,7 +2,10 @@
  * POST /api/notifications/push/subscribe
  *
  * Upserts a Web Push subscription for the authenticated user.
- * Called by PushPermissionPrompt after a successful pushManager.subscribe().
+ * Called after a successful `pushManager.subscribe()` — see `lib/push-client.ts`, which holds the
+ * browser-side subscribe core for both the staff and anonymous-fan flows.
+ * ⚰ The original caller named here, `PushPermissionPrompt`, was deleted 2026-09-01 (cleanup tranche
+ * 6) with no importers left; its subscribe logic had already been extracted to that module.
  *
  * Body:
  *   {

@@ -1,7 +1,7 @@
 # PM brief — Club money belongs in the team's plan
 
 **Plan:** `COACH_ORG_MONEY_IN_THE_BUDGET_PLAN.md` · **Status:** ⚙ **BUILT ON DEV 2026-08-30
-(migration 271) — owner walk owed (ledger §124)**; approved 2026-08-15, re-validated 2026-08-28,
+(migration 271) — owner walk owed (ledger §126)**; approved 2026-08-15, re-validated 2026-08-28,
 all five decisions ratified 2026-08-30 · **Priority:** high — it was a report quietly misreading
 club contributions
 

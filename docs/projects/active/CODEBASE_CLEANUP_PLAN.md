@@ -1,6 +1,6 @@
 # Codebase Cleanup — Tranche Plan
 
-> Status: **IN EXECUTION — Tranches 0–3 executed (see the trackers + cleanup commits); Tranches 4–5 open. Owner ratifies each tranche before any execution chat touches code.**
+> Status: **IN EXECUTION — Tranches 0–3 and 6 executed (see the trackers + cleanup commits); Tranches 4–5 open. Owner ratifies each tranche before any execution chat touches code.**
 > Companion docs: `CODEBASE_CLEANUP_ANALYSIS.md` (full verified findings inventory + evidence — finding IDs like A02/C03/D01 below refer to it) and `CODEBASE_CLEANUP_PM_BRIEF.md` (plain-language owner brief).
 > Produced by the 2026-07-24 multi-agent audit (160 agents: 14 finders + adversarial verifier per removal candidate + completeness critic + 7 recovery verifiers; final tally 208 findings — 173 confirmed / 30 downgraded / 5 refuted).
 
@@ -251,6 +251,260 @@ correctly does not flag; real brand-rgba debt was 148.)
 - `.env.example` creation covering all 56 process.env keys (E14) + document `mirror-tournament.mjs` in ops docs (E13); retire `mirror-battle-of-the-bats.mjs` only (superseded by mirror-tournament; rest of BOTB cluster stays — E17/R5).
 
 **Owner-decision (non-DB) leftovers:** `app/platform/*` pre-rename SEO pages — add `/platform/*→/for-*` redirects in next.config, then delete the 4 pages + the vestigial Navbar `/platform` prefix check (A35). `PushPermissionPrompt` (A26) — dead on dev; stale-master caveat resolved (gutting commit shipped 2026-07-22) → re-verify against origin/master, then likely reclassify safe-mechanical. `LegacyInstallBanner` (A30) — live and NOT a duplicate; owner decides when the legacy-PWA nudge window closes. Keep as-is: fan-push 410 shims (A27), manifest 308 shims (A28), `/dev/email-preview` (A29), `isPlanCheckoutPriceConfigured` (A31 — earmarked for H8 Phase 3), `TOURNAMENT_SPORT_OPTIONS` (A32 — paused Phase 2).
+
+---
+
+## Tranche 6 — The money panels stop pretending they might be pages, + the post-August sweep ✅ **EXECUTED 2026-09-01** (parts 1–3; part 3's four options owner-ruled — two built, one on trial, one refused)
+
+Written from a 2026-09-01 code inventory (`CODEBASE_CLEANUP_T6_BUILD_PROMPT.md`). Out of order on
+purpose: T4/T5 stay open and untouched. Five weeks after T1 swept ~4,400 lines, a scoped sample
+found a fresh dead file, five dead exports, eighteen dead selectors and five stale docs — which is
+the finding that matters more than any individual deletion.
+
+### 6a. The `embedded` prop, and the six headers behind it
+All six Money panels (`budget`, `budget-vs-actual`, `dues`, `expenses`/Ledger, `fundraisers`,
+`club`) took `embedded?: boolean`, defaulted it `false`, and branched on it. The eight legacy
+standalone money routes were deleted on 2026-08-31 (`2d430bad`), making the hub their only mount, so
+the flag had exactly one possible value.
+
+⚠ **The find:** the header's `embedded` shape draws **actions and nothing else**. Four panels passed
+no actions; the other two passed an Import button gated `!embedded`. **All six `<CoachPageHeader>`
+calls had therefore been rendering `null` on every screen a coach could reach** — while the
+page-actions guard inventory recorded them as live header sites with titles, icons and help topics.
+Deleted: the prop, the six headers, two dead Import buttons, six inert `help` props. The hub's own
+header is the money screen's only one, now by construction. Six rows left
+`tests/unit/coach-page-actions-guard.test.ts` with the lesson in their place.
+
+⚠ **`CoachPageHeader`'s `embedded` variant now has ZERO call sites and was deliberately KEPT** — it
+is the shared answer to "a hub tab needs a control row", and deleting it invites the hand-rolled
+seventh copy the component exists to prevent. Marked as such in its docblock. **Retiring the shape
+is a design decision, not a sweep.**
+
+### 6b. Dead files and exports
+Deleted: `components/coaches/SeasonRecordWidget.tsx` (zero importers; three prose mentions
+reworded) · `getActiveMembershipsForUser`, `getActiveMembershipTeamIds`, `resolveCredit`,
+`isAcceptedPhase`, the `LegacyMoneySection` type. De-exported (file-local, kept): eleven privates
+across `coach-membership`, `coach-register`, `coach-roster-bulk`, `sponsor-arrivals-server`,
+`rep-tournament-game-mirror`, `AwardIconPicker`, `coach-cash-strip`, `coach-club-money`,
+`coach-budget-rollup`. `resolveCredit`'s **rule** survives as a tombstone — dollars authoritative,
+percent provenance-only — because the arrivals model superseded the helper, not the law.
+
+### 6c. Dead and colliding CSS in `coaches.module.css`
+Eighteen zero-usage selectors deleted: the old "Now" card's entire content layer (scoreline +
+result, divider, stats row + four tints, money alert, three of four phase accents, eyebrow count,
+live dot, bridge) plus `.ppFieldHint`, `.ppGroupTools`, `.ppWarn` and a 640 media block that held
+only those. The card SHELL is live and stays.
+
+⚠ **One real cascade bug, fixed:** `.statStrip` was declared by two unrelated families ~3,500 lines
+apart — an inline text strip (`.statStripItem`/`.statStripDot`, one caller) and a box row
+(`.statBox`, two callers). The later won for both, so the text strip silently lost its baseline
+alignment, its gaps and its bottom margin. The box row is renamed `.statBoxRow`; the text strip now
+renders as designed. **This is a visible change on Tryouts → history.**
+
+⚠⚠ **SIX OF THE EIGHT "duplicate selector" findings were REFUTED, and the next sweep should skip
+them:** `.duesCardStatic`, `.ptMatrixNever`, `.oneAnswerMuted`, `.setupItemSkipUndo`, `.orderGrip`
+and the second `.coachesShell` are all **deliberate base-plus-variant blocks** (a shared multi-
+selector base, then a per-variant override, each with its reasoning beside it). Merging them would
+have duplicated the base properties. The detection method — scanning top-level `.name {` repeats —
+cannot tell a collision from a variant, which is precisely why a duplicate-selector gate must
+compare declared PROPERTIES, not names.
+
+### 6d. Baselines, docs and junk
+Three stale keys pruned from `scripts/.tsx-token-baseline.json`. Archived: `COACH_FUNDRAISER_DRILL_IN`
+(plan + brief, with a supersede header — it documents a mechanism that no longer exists). Deleted
+from the repo root: `0`, `=`, `scratch_diff.txt` and two files whose names were mangled Windows temp
+paths.
+
+⚠⚠ **THREE OF THE PROMPT'S FOUR ARCHIVE CANDIDATES WERE REFUTED AS STILL-OPEN.** A status line
+reading "on prod" is not the same as "nothing owed", and the open item is usually at the FOOT of the
+file, not in the header:
+- `COACH_PAYABLES_REBUILD_PLAN` — mig 270 prod-owed, ledger §64 H outstanding.
+- `COACH_FUNDRAISER_BAND_PLAN` — its own status line owes a `check:layout` sweep and a marketing
+  slide retake.
+- `COACH_MONEY_HUB_TABS_PLAN` — archived, then **restored**: its last line is an unchecked
+  "⬜ … confirm in a pass, don't assume" on the coach sandbox's moment-dock copy. Filing that away
+  would bury an explicit instruction on the exact surface the demo-drift rule says goes stale.
+
+A full status-line pass of all 234 files in `active/` (not 267) found only **three** genuinely
+archivable: `COACH_TRYOUTS_ONE_ROOM_PLAN`, `COACH_TRYOUT_NAMES_AND_BREAKDOWN_PM_BRIEF`,
+`PITCH_DECK_STUDIO_CD_BUILD_PROMPT` — **left for the owner**, since each has a companion file that
+must stay and none was named in this tranche's scope. Four more claim done but carry an open-items
+section: `GAME_LOCATION_PHASE_4_HOUSE_LEAGUE_PROMPT`, `DEMO_ORGS_PRODUCTION_READINESS`,
+`DEMO_TOUR_TRIM_PLAN`, plus the hub-tabs plan above. **This is the evidence for the docs ratchet in
+6e — and also its warning: a naive "status says done" rule would have archived all four.**
+
+### 6e. Part 3 — stopping the regrowth. ✅ **OWNER-RULED AND BUILT 2026-09-01**
+
+Nothing in the repo detected a dead export or a dead selector (no knip / ts-prune / depcheck —
+verified). Four options were put to the owner; the ruling was **build two, trial one, refuse one.**
+
+**✅ BUILT — `scripts/check-css-selectors.mjs`, in `verify:changed`.** Two assertions, baselined and
+ratcheted like the colour-token guardrail (`--init` / `--report` / `--json`). Baseline:
+`scripts/.css-selector-baseline.json` — **363 dead classes across 49 modules, 4 clashing selectors.**
+- **CLASH** — the same single-class selector declared twice at top level with a shared property at
+  different values. This is the `.statStrip` defect (§6c) and it is the reason this gate exists: a
+  live rendering bug that is invisible in review because each block is correct on its own.
+  ⚠⚠ **It fires on the intersection of three conditions, each excluding one refuted false positive:
+  both rules are the bare single class (excludes base-plus-variant), both are top level (excludes
+  `@media` overrides — 160 of 168 raw repeats), and they share a property at different values
+  (excludes the additive second `.coachesShell`).** Verified against a planted probe: it fires on a
+  real clash and stays silent on a legitimate base-plus-variant pair.
+  ⚠ Known gap, stated not papered over: shorthand/longhand are not reconciled (`margin` vs
+  `margin-bottom` read as different properties). `.statStrip` still fires, on `gap`.
+- **DEAD** — a class no component renders. Deliberately GENEROUS about what counts as used (any
+  member access, any word inside any quoted string, `composes:`, plus a dynamic-prefix guard for
+  `styles[\`now${x}\`]`), because the only expensive error here is calling a LIVE class dead.
+  ⚠ Tokenising quoted-string CONTENTS rather than matching whole strings is load-bearing — without
+  it, `className="card cardWide"` turns two live classes into findings.
+
+**✅ BUILT — `scripts/check-root-files.mjs`, in `verify:changed`.** An allowlist of every
+non-gitignored entry at the repo root; gitignored artefacts are `.gitignore`'s business, not this
+gate's. **It caught a real one on its first run**: `help.txt`, a 0-byte tracked file committed in
+May 2026 with zero references anywhere — now removed.
+
+**🔍 TRIAL — knip, REPORT ONLY (`npm run check:dead:report`), NOT a gate, NOT a dependency.**
+Fetched on demand by npx, so trying it changed no lockfile and added nothing to the Amplify install.
+Config + reasoning in `knip.jsonc`; first run written up in `DEAD_CODE_REPORT.md`. Headline: after
+config fixes, **68 real findings and 1 false one** (down from 71 false). ⚠ **Two of those false
+positives would have caused harm if acted on** — `opentype.js` and `pdfjs-dist` reported unused
+because a `.js` script was unscanned and a package is loaded by absolute path. That is the argument
+for the trial period. ⚠⚠ **It also settles the prompt's open question**: the "~70 suspected unused
+type exports" are really **8**.
+
+**❌ REFUSED — the docs-archive ratchet.** Today's own evidence killed it: the proposed rule
+("status says done + older than 14 days") would have been **wrong on all four** documents it would
+have touched (§6d). "Done" is not detectable from a status line — the open item is nearly always at
+the FOOT of the file. If something is wanted here it is a list someone reads, not a gate that fails
+a build over a markdown file.
+
+⚠ **What none of these would have caught: §6a.** Six page headers rendering nothing, behind a flag
+with one possible value. That code was called on every visit; no dead-code tool flags it. What
+caught it was the page-header inventory in the unit tests — an enumeration of what each screen
+actually holds, which turns silent drift into a failing assertion. **Extending that habit is worth
+more than a fifth tool.**
+
+### 6f. `/review` on the tranche — the cleanup was clean, the NEW TOOLING was not
+
+Four lenses (deletion blast-radius · panel-refactor correctness · CSS-gate correctness · build
+wiring). **The cleanup itself returned no findings** — the panel refactor's premise was independently
+confirmed (all six headers provably rendered `null`; the removed help-slot publish was always a
+no-op), and every deletion, de-export and the `.statStrip` rename verified clean. Every defect found
+was in the gates built in §6e:
+
+- ⚠⚠ **HIGH, and it is the one that mattered: the CSS gate could have told someone to DELETE WORKING
+  CSS.** A class used only via cross-file `composes: X from './other.module.css'` was reported dead —
+  no `.tsx` mentions such a class, so the usage scan never saw it. Nine real cross-file composes
+  exist here (all pulling `warmVars`/`warmTab` from the warm theme) and escaped only because those
+  two names happen to be accessed directly elsewhere too. **Fixed: parse every module first, union
+  every composes target, THEN judge.** Proven with a probe plus a per-file control.
+  ⚠ Process note worth more than the bug: the FIRST control run over-reverted (it dropped same-file
+  composes as well) and appeared to implicate a live class. **When simulating "the old behaviour" to
+  prove a fix, revert only the thing you changed** — otherwise you manufacture a scarier finding
+  than the real one.
+- **MEDIUM — `git check-ignore` C-quotes non-ASCII paths** when `core.quotepath` is on (the default),
+  so `café.txt` came back as `"caf\303\251.txt"` and never matched what the directory read returns:
+  a properly-ignored file would fail the root gate for an invisible reason. Fixed.
+- **MEDIUM — the CSS parser was quote-unaware.** `content: "}"` or `url("data:…;base64,…")` would
+  desync brace counting for the rest of the file. No module triggers it today; fixed while the
+  parser was new and equivalence was still provable (output identical before and after).
+- **MEDIUM — a deleted component does NOT take its stylesheet.** Deleting two components left two
+  orphaned `.module.css` files; the dead-code report cannot see CSS, so the deletion looked complete.
+  **The new CSS gate went red on the next run and caught it** — with two stale follow-ons (an entry
+  in the colour-token scope list, a key in the CSS baseline). Best evidence that the two tools are
+  complementary rather than overlapping.
+- Plus: editor folders allowlisted (`.vscode`/`.idea` would have failed a colleague's first run),
+  and one piece of dead code removed from inside the dead-code checker.
+
+**REFUTED — "both gates read the live tree rather than the git index, unlike every other check."**
+False. `verify:changed` is whole-tree THROUGHOUT — the colour ratchet, module purity, spelling,
+date-correctness and the unit suite all read the tree. Staged-scoping is `.githooks/pre-commit`'s
+discipline, and these gates are correctly absent from it. The shared-tree caveat is real and is now
+documented in the root gate's own header rather than argued away.
+
+**Known and disclosed, not fixed:** a class name assembled from a variable at runtime cannot be
+traced (today's instances are covered by the quoted-string scan); an interpolation-first template
+prefix is not recognised (zero instances); `--init` can still bless something unread, exactly as the
+colour guardrail can.
+
+#### ⚠⚠ The gates moved to the END of `verify:changed`, and concurrent use is what proved they had to
+
+They were first placed beside the other CSS checks, mid-chain — matching where the colour ratchet
+and module-purity sit. Within hours a concurrent session's in-flight refactor orphaned four classes,
+and because the chain is `&&`, **those four cosmetic findings stopped schema-parity, index coverage,
+dictionary coverage, the org-context guard, observability, marketing shots and the demo check from
+running at all** — for every session sharing this working copy.
+
+Moving both to the end unmasked a real failure on the very first run: **schema parity was red**
+(`rep_team_drills.equipment_tag_ids` + its CHECK, from migration 272, dev-only) and had been
+invisible behind four dead CSS classes. Everything after it passes.
+
+**The rule this establishes: tidiness debt must never stand in front of a correctness check.** What
+these two gates find is worth fixing and none of it can hurt a customer today; parity, dictionary
+and demo drift all can. When adding to this chain, ask which kind of check it is — correctness
+early, housekeeping last.
+
+#### The gates' first exercise by someone other than their author
+
+The club-money session edited the same shared stylesheet during this window — adding two classes and
+deleting a third together with its only usage — and reported the CSS gate produced **no false
+positives** on any of it, while correctly flagging the one genuinely orphaned set. Combined with the
+orphaned-stylesheet catch above, the first independent run found exactly one real thing and nothing
+spurious. Both flags raised to other sessions (a refs-during-render lint error, the four orphaned
+classes) were closed by their owners within the hour, and the gate went green on its own.
+
+### 6g. Commit groups — written down because the commit is DEFERRED in a shared working copy
+
+⚠⚠ **This tranche was finished and verified on 2026-09-01 but deliberately left uncommitted while a
+concurrent session finishes its own work in the same tree.** That is a real risk, not a neutral
+wait: the index already holds a MIX (this tranche's staged deletions sit beside another session's
+staged plan-rename), the tree has since gained a migration, an account-menu feature and dues-preview
+work that are NOT part of this, and the longer it sits the harder "which hunk was whose" becomes.
+**Stage explicit pathspecs, never `git add -A`/`-a`, and run `git show --stat HEAD` after each.**
+
+⚠ **Files that contain BOTH this tranche's edits and another session's — inspect the hunks before
+staging:** `dues/panel.tsx`, `expenses/panel.tsx`, `fundraisers/panel.tsx`, `lib/types.ts`,
+`TODO.md`, `memory/MEMORY.md`, `package.json`, `budget/budget.module.css`.
+
+1. `chore(repo): junk files, stale baseline keys, archived plan docs`
+   — `help.txt` (deleted) · `scripts/.tsx-token-baseline.json` · the archived
+   `COACH_FUNDRAISER_DRILL_IN_*` pair · the link fixes in `COACH_SPONSORSHIPS_PLAN.md` and
+   `COACH_MONEY_OVERVIEW_DASHBOARD_PLAN.md`.
+2. `refactor(coach-money): the panels stop pretending they might be pages`
+   — the six `accounting/*/panel.tsx` · `accounting/page.tsx` · `budget.module.css` ·
+   `bva.module.css` · `components/coaches/CoachPageHeader.tsx` ·
+   `tests/unit/coach-page-actions-guard.test.ts`.
+3. `chore(coach): dead file + dead exports + de-exported privates`
+   — `SeasonRecordWidget.tsx` (deleted) · `lib/coach-{membership,fundraising,tournament-phase,
+   money-links,season-record,register,roster-bulk,cash-strip,club-money,budget-rollup}.ts` ·
+   `lib/sponsor-arrivals-server.ts` · `lib/rep-tournament-game-mirror.ts` · `lib/season-wrapped.ts` ·
+   `components/coaches/AwardIconPicker.tsx` · `history/page.tsx`.
+4. `style(coach): dead selectors + the .statStrip cascade fix`
+   — `app/[orgSlug]/coaches/coaches.module.css` · `roster/[playerId]/page.tsx`.
+5. `chore(cleanup): unused files and types from the dead-code report`
+   — `ScopePicker.tsx` + `.module.css` · `PushPermissionPrompt.tsx` + `.module.css` ·
+   `lib/teamBadge.ts` (all deleted) · `lib/types.ts` (bracket family, Player/RosterPlayer,
+   TournamentNotificationPreference — **mixed file**) · `lib/platform-metrics.ts` ·
+   `lib/help-content/index.ts` · `lib/schedule-conflict.ts` · `lib/tournament-plus-analytics.ts` ·
+   `lib/push-client.ts` · `app/api/notifications/push/subscribe/route.ts` ·
+   `scripts/check-public-tokens.mjs`.
+6. `build(gates): CSS dead/clash gate + repo-root allowlist + dead-code report`
+   — `scripts/check-css-selectors.mjs` · `scripts/.css-selector-baseline.json` ·
+   `scripts/check-root-files.mjs` · `knip.jsonc` · `package.json` (**mixed**) ·
+   `docs/projects/active/DEAD_CODE_REPORT.md` · `memory/agent-verification-workflow.md`.
+7. `docs(cleanup): tranche 6 record` — this file · `TODO.md` (**mixed**) · `memory/MEMORY.md`
+   (**mixed**).
+
+⚠ **Re-run `npm run verify:changed` immediately before committing**, not just at the end of the
+build: these checks read the live tree, so their verdict on the day of the commit is the one that
+counts, and in a five-session working copy that verdict moves by the hour.
+
+⚠ **Do not read a stale state note as a current one.** This paragraph has already been wrong once:
+it originally recorded a refs-during-render lint error in the tag work as the one blocker. That was
+true for about an hour — the owning session closed it, and the four orphaned `tagPick*` classes with
+it. **State as of the last run:** everything in this tranche green; the whole chain green EXCEPT
+`check:schema-parity`, which is red on `rep_team_drills.equipment_tag_ids` + its CHECK from
+**migration 272, applied to dev only** — another session's in-flight work, normal for an unreleased
+migration, and nothing to do with anything above. Re-read the tree, do not trust this sentence.
 
 ---
 

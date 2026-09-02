@@ -139,7 +139,7 @@ export interface MirrorSyncResult {
  * fire-and-forget: `after()` has no waitUntil bridge on Amplify, so post-response work can silently
  * never run.
  */
-export async function syncTournamentGameMirror(params: {
+async function syncTournamentGameMirror(params: {
   repTeamId: string;
   programYearId: string;
   /** The season row's `created_at` — every caller already holds the resolved program year. */

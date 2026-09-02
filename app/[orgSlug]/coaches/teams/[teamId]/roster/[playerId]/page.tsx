@@ -783,7 +783,7 @@ export default function PlayerDetailPage({
           <p className={styles.detailPlaceholder}>No attendance recorded yet this season.</p>
         ) : (
           <>
-            <div className={styles.statStrip}>
+            <div className={styles.statBoxRow}>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{attnRate}%</span><span className={styles.statBoxLabel}>Attendance</span></div>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
@@ -843,7 +843,7 @@ export default function PlayerDetailPage({
           <p className={styles.detailPlaceholder}>No dues set for this player this season.</p>
         ) : (
           <>
-            <div className={styles.statStrip}>
+            <div className={styles.statBoxRow}>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Assessed</span></div>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalPaid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
               {dues.totalCredits > 0 && (

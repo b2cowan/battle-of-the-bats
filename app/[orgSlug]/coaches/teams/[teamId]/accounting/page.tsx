@@ -40,9 +40,23 @@ const LedgerPanel = dynamic(() => import('./expenses/panel').then(m => m.LedgerP
 const ClubPanel = dynamic(() => import('./club/panel').then(m => m.ClubPanel), { ssr: false });
 const BudgetVsActualPanel = dynamic(() => import('./budget-vs-actual/panel').then(m => m.BudgetVsActualPanel), { ssr: false });
 
+/* ⚰⚰ THE `embedded` PROP IS GONE, AND THIS IS THE LESSON IT LEAVES (cleanup tranche 6,
+   2026-09-01). Every panel took `embedded?: boolean`, defaulted it to `false`, and branched on it
+   to choose between a standalone page's chrome and a hub tab's. On 2026-08-31 the last eight
+   standalone money routes were deleted (`2d430bad`); from that moment this page was the only mount
+   of all six panels and it passed a bare `embedded`. A prop with exactly one possible value is not
+   a configuration point — it is a fork the next reader has to disprove by hand, and every
+   `!embedded` branch behind it reads as live code while being unreachable. That shape has now cost
+   this codebase three times: the "Where it lands" preview's dead branch, the `.inlineField` rule
+   that never once matched, and the six page headers deleted with this prop, which had been
+   rendering literally nothing inside the hub.
+
+   ⚠ THE RULE THAT REPLACES IT: a panel here is a TAB, not a page that happens to be hosted. It
+   draws no page header, no title, no icon and no "?" — the hub's masthead and this page's own
+   tab-aware "?" own all four. A panel that wants its own title is a panel asking to be a route
+   again, and that is a routing decision, not a prop. */
 type PanelProps = {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  embedded?: boolean;
   /** Is THIS panel the currently-visible tab? A panel stays mounted once visited, so a
    *  dirty form left on a tab a coach has since switched away from must stop treating
    *  itself as "on screen" — otherwise its unsaved-changes guard keeps intercepting
@@ -91,8 +105,8 @@ const RECORD_BRANCH_BY_SECTION: Partial<Record<SectionId, ConversationBranch>> =
 };
 
 /**
- * ⚖ THE HUB'S "?" FOLLOWS THE TAB (found in the §119 walk, 2026-08-28). Inside the hub the
- * panels' own headers are the `embedded` shape, which renders no "?" — so this page's help door
+ * ⚖ THE HUB'S "?" FOLLOWS THE TAB (found in the §119 walk, 2026-08-28). The panels draw no header
+ * of their own (cleanup tranche 6, 2026-09-01 — see `PanelProps`), so this page's help door
  * is the ONLY one a coach can press, and it was hard-wired to the Money intro on every tab. That
  * predates the fold (Payables' and Transactions' help subtopics were exactly as unreachable);
  * the walk's step G3 is simply what made it visible. One subtopic per tab, all of them real ids
@@ -571,7 +585,7 @@ export default function CoachesAccountingPage({
             if (!visited.has(id)) return null;
             return (
               <div key={id} style={{ display: effectiveSection === id ? 'block' : 'none' }}>
-                <Component params={paramsPromise} embedded tabActive={effectiveSection === id} />
+                <Component params={paramsPromise} tabActive={effectiveSection === id} />
               </div>
             );
           })}

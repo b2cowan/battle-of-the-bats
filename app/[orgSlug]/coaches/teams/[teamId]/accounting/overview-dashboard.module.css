@@ -645,6 +645,15 @@
 }
 .railStat b { color: var(--white-80); font-weight: 650; }
 .railStatDanger { color: var(--home-live, var(--danger)); font-weight: 700; }
+/* The overdue FLAG on a rail row — the fact without the sentence. Colour matches
+   `.railStatDanger` so the two read as one alarm, but the triangle's SHAPE is what
+   carries it (deutan ruling): a coach who cannot see the red still sees a warning.
+   The count lives in the icon's accessible name and its hover title. */
+.railStatWarn {
+  display: inline-flex;
+  vertical-align: -2px;
+  color: var(--home-live, var(--danger));
+}
 /* ⚠ The chevron is a TEXT glyph, not an icon — `--white-30` (a hairline value) measured
    1.44:1 on the white card and failed the rendered contrast sweep at all four widths. The
    old journey cards got away with the same token because theirs was an SVG, which the

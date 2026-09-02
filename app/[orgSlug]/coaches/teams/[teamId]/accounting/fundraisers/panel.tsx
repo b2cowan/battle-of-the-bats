@@ -1,9 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Gift } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
@@ -56,12 +54,9 @@ interface Fundraiser {
 
 export function FundraisersPanel({
   params: paramsPromise,
-  embedded = false,
   tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
-  embedded?: boolean;
   /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
   tabActive?: boolean;
 }) {
@@ -363,16 +358,11 @@ export function FundraisersPanel({
           the create drops into this tab's own toolbar below. This tab had no control row, so it
           gains a thin one; five of the seven tabs already had one, which is why the pass removes
           a band on net rather than adding seven. */}
-      <CoachPageHeader
-        variant={embedded ? 'embedded' : 'standard'}
-        icon={Gift}
-        title="Fundraising"
-        helpLabel="Fundraising"
-        // `premium-money-fundraisers` — this was pointing at the BUDGET sub-topic, the nearest
-        // thing that existed when the screen was written, and wrong the whole time.
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-fundraisers', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
-      />
-
+      {/* ⚰ And this panel's own CoachPageHeader is GONE (cleanup tranche 6, 2026-09-01). Its
+          title, icon and help topic only ever rendered on the standalone route; inside the hub the
+          header collapsed to an actions row this panel had none of, so it rendered nothing at all.
+          The live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's
+          mount in accounting/page.tsx. */}
       {fundraisers.length > 0 && (
         <div className={styles.panelToolbar}>
           {/* ⚠ THE KIND FILTER RETIRED WITH DIRECTION A (owner-ruled 2026-08-29): the tab is two

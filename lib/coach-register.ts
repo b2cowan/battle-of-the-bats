@@ -225,7 +225,7 @@ function movementCents(r: CashMovement): number {
 const LAST = '9999-12-31';
 
 /** Oldest first — the order a balance accumulates in. */
-export function byDateAscending(a: RegisterRow, b: RegisterRow): number {
+function byDateAscending(a: RegisterRow, b: RegisterRow): number {
   return (a.date ?? LAST).localeCompare(b.date ?? LAST) || a.id.localeCompare(b.id);
 }
 

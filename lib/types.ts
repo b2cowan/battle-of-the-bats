@@ -493,31 +493,22 @@ export interface PlayoffTierConfig {
   grandFinalReset?: boolean;
 }
 
-export interface BracketSlot {
-  id: string;
-  seedLabel: string;       // "Seed #1", "1st Pool A", or team name
-  teamId?: string;         // Resolved team ID (null until seeded)
-  isBye: boolean;
-}
+/* ⚰⚰ THE WHOLE `BracketSlot` → `BracketMatchup` → `BracketConfig` FAMILY STOOD HERE and was deleted
+   2026-09-01 (cleanup tranche 6). It described a bracket as one config object — slots seeded into
+   matchups, matchups grouped into rounds plus a consolation list. Nothing outside this file ever
+   referenced any of the three. The live bracket surfaces (including inline tiered editing) build
+   and read their rounds through their own shapes; this family was an earlier design that the
+   product went around rather than through.
 
-export interface BracketMatchup {
-  id: string;
-  roundIndex: number;
-  position: number;        // Vertical position within the round
-  bracketCode: string;     // "QF1", "SF2", "FIN", etc.
-  homeSlot: BracketSlot;
-  awaySlot: BracketSlot;
-  winnersTo?: string;      // bracketCode of next matchup for winner
-  losersTo?: string;       // bracketCode for consolation/3rd place
-}
-
-export interface BracketConfig {
-  rounds: {
-    name: string;          // "Quarterfinals", "Semifinals", etc.
-    matchups: BracketMatchup[];
-  }[];
-  consolation: BracketMatchup[];  // 3rd place / consolation bracket
-}
+   ⚠⚠ THE LESSON, AND IT IS THE REASON THIS PARAGRAPH IS LONGER THAN THE TYPES WERE. A dead CLUSTER
+   hides itself, one layer at a time. `BracketConfig` was the only reference to `BracketMatchup`,
+   which was the only reference to `BracketSlot` — so a tool asking "is this export used anywhere?"
+   truthfully answered YES for two of the three, and the family read as live. Deleting the outermost
+   one is what exposed the next, and deleting THAT is what exposed the third. The first pass of the
+   2026-09-01 dead-code report found exactly one of these three.
+   **After deleting a dead type, re-run the report before believing it is finished** — and be
+   suspicious of any claim that a neighbour is "still live" when its only caller just died. (An
+   earlier version of this very tombstone asserted `BracketMatchup` was live. It was not.) */
 
 export interface Division {
   id: string;
@@ -565,36 +556,19 @@ export interface PoolSlot {
   teamName?: string;    // joined from teams for display convenience
 }
 
-export interface Player {
-  id: string;
-  name: string;
-  number: string;
-  position: string;
-}
+/* ⚰ `Player` AND `RosterPlayer` BOTH STOOD HERE and were deleted 2026-09-01 (cleanup tranche 6,
+   dead-code report §3.2) with zero references between them. The pair is worth one paragraph because
+   the SECOND one's own docblock explained why the FIRST was dead: `RosterPlayer` (migration 110,
+   `tournament_roster_players`) "replaces the vestigial `teams.players` jsonb / `Player[]` for
+   tournaments". `Player` was the shape of that retired jsonb column, kept as a type after the data
+   it described stopped existing. `RosterPlayer` then went the same way — the surfaces that read a
+   tournament roster type it locally (see `components/admin/CheckInBoard.tsx`, which declares its
+   own), so the shared export sat here being nobody's contract.
+   ⚠ The lesson is the ordering: a type that documents its own predecessor as vestigial is telling
+   you the predecessor is deletable, and nobody read it for three migrations. */
 
 /** Game-day arrival state for a tournament team (migration 110). */
 export type CheckInStatus = 'not_arrived' | 'checked_in' | 'no_show';
-
-/**
- * A tournament team's roster player (migration 110, `tournament_roster_players`).
- * Coach-submitted ahead of game day or captured at the gate. Replaces the vestigial
- * `teams.players` jsonb / `Player[]` for tournaments.
- */
-export interface RosterPlayer {
-  id: string;
-  teamId: string;
-  tournamentId: string;
-  orgId: string;
-  name: string;
-  jerseyNumber?: string | null;
-  dateOfBirth?: string | null; // YYYY-MM-DD
-  position?: string | null;
-  notes?: string | null;
-  source: 'coach' | 'gate' | 'admin';
-  createdByUserId?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export interface Team {
   id: string;
@@ -2731,10 +2705,9 @@ export interface NotificationPreference {
   channelEmail: boolean;
 }
 
-export interface TournamentNotificationPreference {
-  eventType: NotificationEventType;
-  optedOut: boolean;
-}
+/* ⚰ `TournamentNotificationPreference` ({ eventType, optedOut }) stood here and was deleted
+   2026-09-01 (cleanup tranche 6) with zero references. The preference row above it is the live
+   shape; this per-event opt-out pair never had a reader. */
 
 export type CloneCopiedCounts = {
   venues?: number;

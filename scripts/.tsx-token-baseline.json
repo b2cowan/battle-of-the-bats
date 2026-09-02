@@ -187,20 +187,12 @@
     "hex": 4,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/detail.tsx": {
-    "hex": 4,
-    "rgba": 0
-  },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx": {
     "hex": 2,
     "rgba": 0
   },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx": {
     "hex": 2,
-    "rgba": 0
-  },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/panel.tsx": {
-    "hex": 3,
     "rgba": 0
   },
   "app/[orgSlug]/league/[seasonSlug]/page.tsx": {
@@ -294,10 +286,6 @@
   "app/platform-admin/observability/CallsVsErrorsChart.tsx": {
     "hex": 3,
     "rgba": 0
-  },
-  "app/tryout-response/[token]/page.tsx": {
-    "hex": 6,
-    "rgba": 1
   },
   "app/unsubscribe/confirmed/page.tsx": {
     "hex": 4,

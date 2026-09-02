@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef, use, Fragment } from 'react';
 import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
@@ -768,11 +767,8 @@ function SubtotalRow({
 
 export function BudgetVsActualPanel({
   params: paramsPromise,
-  embedded = false,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
-  embedded?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -1158,17 +1154,11 @@ export function BudgetVsActualPanel({
           shared-component pass missed both because they never imported the component. It rendered
           only on the legacy standalone route, and every legacy money route is a permanent redirect
           into the hub, so no coach has seen it since. Deleted as dead code. */}
-      {/* Page-header ruling 2026-08-11: one shape, actions right, "?" in its fixed corner. */}
-      <CoachPageHeader
-        variant={embedded ? 'embedded' : 'standard'}
-        icon={TrendingUp}
-        title="Budget vs. Actual"
-        helpLabel="Budget vs. Actual"
-        /* Points at the SHAPES topic, not the month grid: Statement is what this page opens on
-           now, and the "?" should explain the thing in front of the reader. */
-        help={{ module: 'coaches', sectionIds: ['premium-money'], subtopicId: 'premium-money-report-shapes', fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
-      />
-
+      {/* ⚰ And so is this panel's own CoachPageHeader (cleanup tranche 6, 2026-09-01). Its title,
+          icon and help topic only ever rendered on the standalone route; inside the hub the header
+          collapsed to an actions row this panel had none of, so it rendered nothing at all. The
+          live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's mount
+          in accounting/page.tsx. */}
       {loading ? (
         <CoachLoading label="Loading the report…" />
       ) : error ? (

@@ -59,9 +59,11 @@
  *     only the CONDITION in front of the JSX. A gate written with a variable this file's pattern
  *     does not recognise (`depthChart`, `showingCards`) passes. That is a known false-negative and
  *     the reason rule 7 is described above as the weakest assertion here, not a solved problem.
- *   · **Panels outside the hub.** Six money panels render `variant={embedded ? 'embedded' :
- *     'standard'}` — two shapes from one call site. The enumeration records both; nothing here can
- *     tell which one a given route renders.
+ *   · ⚰ **Panels outside the hub — the caveat that used to stand here is GONE** (cleanup tranche 6,
+ *     2026-09-01). Six money panels rendered `variant={embedded ? 'embedded' : 'standard'}`, two
+ *     shapes from one call site, and this file could not tell which a given route drew. It no
+ *     longer has to: the standalone money routes were deleted on 2026-08-31, the `embedded` prop
+ *     with them, and the six panels draw no header at all. They left this enumeration below.
  *
  * ⚠ **`npm test` IS NOT WIRED INTO THE AMPLIFY BUILD.** It is run by `npm run verify:changed`
  * (added with this file, 2026-08-25) and by hand. Before that it ran nowhere automatically, which
@@ -175,38 +177,19 @@ const SITES: Site[] = [
       phoneHidden: '!canWrite', phoneInTitleRow: 'true',
     },
   },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx', occurrence: 0,
-    screen: 'Money → Budget Plan',
-    variant: 'embedded|standard', helpHost: 'masthead',
-    actions: {
-      // Only on the STANDALONE route (`!embedded`): inside the hub the header's own Import menu is
-      // already on screen one line up. Plan §10, build decision 1 (2026-08-13).
-      from: 'headerActions', slot: 'action', holds: 'Import — standalone route only',
-      phoneHidden: null, phoneInTitleRow: null,
-    },
-  },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx', occurrence: 0,
-    screen: 'Money → Budget vs. Actual', variant: 'embedded|standard', helpHost: 'masthead', actions: null,
-  },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', occurrence: 0,
-    screen: 'Money → Club', variant: 'embedded|standard', helpHost: 'masthead', actions: null,
-  },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', occurrence: 0,
-    screen: 'Money → Player Dues', variant: 'embedded|standard', helpHost: 'masthead', actions: null,
-  },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx', occurrence: 0,
-    screen: 'Money → Transactions / Payables (two faces, one module)',
-    variant: 'embedded|standard', helpHost: 'masthead',
-    actions: {
-      from: 'expenseHeaderActions', slot: 'action', holds: 'Import — standalone route only',
-      phoneHidden: null, phoneInTitleRow: null,
-    },
-  },
+  /* ⚰⚰ SIX ROWS LEFT THIS INVENTORY ON 2026-09-01 (cleanup tranche 6), and the lesson is worth the
+     space they took. Budget Plan, Budget vs. Actual, Club, Player Dues, the Ledger and Fundraising
+     each rendered a `<CoachPageHeader variant={embedded ? 'embedded' : 'standard'}>`. Once the
+     standalone money routes were deleted (2026-08-31, `2d430bad`) the hub was their only mount, so
+     `embedded` was always true — and the embedded shape draws ACTIONS AND NOTHING ELSE. Four of the
+     six passed no actions, and the other two passed an Import button gated `!embedded`. All six
+     headers had therefore been rendering `null` on every screen a coach could reach, while this
+     file recorded them as live header sites with titles, icons and help topics.
+
+     ⚠ THE HUB'S OWN ROW ABOVE IS THE MONEY SCREEN'S ONLY HEADER, and that is now true by
+     construction rather than by convention. A money panel that wants a title is asking to be a
+     route again. The `embedded` variant itself survives on `CoachPageHeader` with zero call sites —
+     see the note in its docblock; retiring the shape is a design decision, not a sweep. */
   {
     /* ⚖ ONE COMMITMENT — a SUB-VIEW of the Payables tab (`?bill=`), not a page beside the hub,
        matching what `?fundraiser=` already does one tab away. Nested, so the hub's header keeps
@@ -233,10 +216,6 @@ const SITES: Site[] = [
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/CommitmentView.tsx', occurrence: 0,
     screen: 'Money → Payables → one commitment',
     variant: 'nested', helpHost: 'masthead', actions: null,
-  },
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx', occurrence: 0,
-    screen: 'Money → Fundraising', variant: 'embedded|standard', helpHost: 'masthead', actions: null,
   },
   /* ⚰ `fundraisers/detail.tsx` ("Money → Fundraising → one drive") LEFT THIS INVENTORY on
      2026-08-31: the drive drill-in retired when drives joined sponsors in expanding their band
@@ -466,8 +445,9 @@ const SECONDARY_MARKERS = ['btnSecondary', 'btn-ghost', 'btn-secondary', 'MoneyI
  * NOT catch a gate written with a name the pattern does not recognise. Treat a pass as "no obvious
  * view gate", never as "nothing hides".
  *
- * `embedded` is deliberately not matched: it is a SHAPE gate (hub vs standalone route), not a view
- * mode, and it is how the money panels avoid drawing an Import a coach can already see one line up.
+ * ⚰ `embedded` used to be listed here as deliberately not matched — a SHAPE gate rather than a view
+ * mode. Both the prop and the six panel headers it gated are gone (cleanup tranche 6, 2026-09-01);
+ * the name is kept out of the pattern anyway, since the shape still exists on the component.
  */
 const VIEW_GATE = /\b(\w*(?:view|tab|mode|lens|face)\w*)\s*[!=]==?\s*['"]/i;
 

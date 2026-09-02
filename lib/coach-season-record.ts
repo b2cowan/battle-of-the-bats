@@ -1,9 +1,11 @@
 // The team's season W/L/T record — ONE definition of what counts and how it is tallied.
 //
-// This existed as a comment-enforced convention rather than shared code: `SeasonRecordWidget` and
-// the Insights page each declared their own `WLT_DEFAULT` / `tally()` / storage key, with a comment
-// in one of them saying "Same categories + defaults + storage key as SeasonRecordWidget, so the
-// band's record can never disagree with the Overview's record glance". Chunk I turned that comment
+// This existed as a comment-enforced convention rather than shared code: the Overview's old
+// season-record widget and the Insights page each declared their own `WLT_DEFAULT` / `tally()` /
+// storage key, with a comment in one of them saying "same categories, defaults and storage key as
+// the other, so the band's record can never disagree with the Overview's record glance". ⚰ That
+// widget (`components/coaches/SeasonRecordWidget.tsx`) was itself deleted on 2026-09-01 with no
+// importers left — the Overview draws the record from this module now. Chunk I turned that comment
 // into a real defect: the Overview's record tile computed its own scrimmage-excluded tally, so a
 // coach who had switched scrimmages ON saw one record on Insights and a different one on the
 // Overview — the same failure the comment was written to prevent.

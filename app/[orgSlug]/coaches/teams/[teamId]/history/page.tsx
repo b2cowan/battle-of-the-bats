@@ -130,8 +130,9 @@ const TABS: readonly TabDef[] = [
 ];
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
-// Same categories + defaults + storage key as SeasonRecordWidget, so the band's
-// record can never disagree with the Overview's record glance.
+// Same categories + defaults + storage key as `lib/coach-season-record.ts`, so the band's
+// record can never disagree with the Overview's record glance. ⚠ Still hand-copied rather than
+// imported — the module exists precisely to end that, and this is the last copy of it.
 const WLT_DEFAULT: Record<string, boolean> = { league_game: true, tournament_game: true, scrimmage: false };
 const WLT_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
 

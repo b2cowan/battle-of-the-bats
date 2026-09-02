@@ -56,7 +56,7 @@ export const CLUB_MONEY_IN_ASK = {
 };
 
 /** The answer in two words, for a row that prints its meaning rather than asking it. */
-export const CLUB_MONEY_IN_WORD: Record<ClubMoneyInMeaning, string> = {
+const CLUB_MONEY_IN_WORD: Record<ClubMoneyInMeaning, string> = {
   funding: 'New money',
   reimbursement: 'Money back',
 };

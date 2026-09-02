@@ -1,6 +1,6 @@
 # Club money belongs in the team's plan
 
-**Status:** ⚙ **BUILT ON DEV 2026-08-30 (migration 271) — owner walk owed, ledger §124.** All five
+**Status:** ⚙ **BUILT ON DEV 2026-08-30 (migration 271) — owner walk owed, ledger §126.** All five
 ratified decisions shipped: the ask, the generic rows kept, the classification outliving the lock,
 the Months vocabulary, and the headroom fix. Re-measured on the QA fixture: the hub card and the
 report now BOTH read **$1,555** (they read $1,980 and $1,555 before), the expense band's Scheduled
@@ -87,19 +87,35 @@ in three bills — **$550 paid, $1,570 outstanding** across 7 installments. Requ
 approved *From club*, **$200** approved *To club*, **$180.50** pending, **$240** denied. Every club
 record is **unfiled** (the fixture predates mig 250).
 
-| Surface | Club money today |
-|---|---|
-| Cash on hand (In / Out) | ✅ unchanged — always counted it |
-| Next 30 days / Payment schedule | ✅ installments coming due |
-| **Budget vs. Actual, Actual lens** | ✅ **since mig 250**: $550 + $200 as costs, $325 netted as a refund — under "Not itemized"/"No category" while unfiled |
-| **BvA screen's own headroom** | ✅ reads **$1,555** ($5,100 − $3,545, club money included) |
-| **Money hub Budget card** | ❌ reads **$1,980** ($5,100 − $3,120) — still blind to club money; disagrees with the report one click away |
-| **Months grid, Scheduled** | ❌ the $1,570 of unpaid installments appear nowhere in it (deliberate deferral, §0 row 3); the pending $180.50 does appear ("Asked of the club", no date) |
-| **The meaning of money in** | ❌ the $325 the club paid back was **forced** into the reimbursement reading — a genuine grant would be misread the same way, and no screen asks |
+⚠ **RE-MEASURED AFTER THE BUILD (2026-08-30), and the three ❌ rows below are now the BEFORE
+column.** The figures were read back through the product's own two endpoints on the same fixture,
+signed in as its head coach — not derived from the database a second time, which would only have
+proved this session could repeat its own arithmetic.
 
-So the original complaint is half fixed by other hands: the report sees club money; the hub card
-still lies, the forward view still under-quotes obligations, and the one real decision — what an
-arrival *means* — is answered by the code instead of the coach.
+| Surface | Before the build (2026-08-28) | After (2026-08-30) |
+|---|---|---|
+| Cash on hand (In / Out) | ✅ unchanged — always counted it | ✅ unchanged. **Both answers to the ask are the same cash**; only a row on the report moves |
+| Next 30 days / Payment schedule | ✅ installments coming due | ✅ unchanged |
+| **Budget vs. Actual, Actual lens** | ✅ **since mig 250**: $550 + $200 as costs, $325 netted as a refund — under "Not itemized"/"No category" while unfiled | ✅ unchanged for a repayment. A **grant** now leaves the cost side entirely |
+| **BvA screen's own headroom** | ✅ reads **$1,555** ($5,100 − $3,545) | ✅ **$1,555**, unmoved — it was the correct one all along |
+| **Money hub Budget card** | ❌ reads **$1,980** ($5,100 − $3,120) — blind to club money; disagrees with the report one click away | ✅ **$1,555** — the two screens agree. Its Spending row and bar moved with it, so the card no longer contradicts itself either |
+| **Months grid, Scheduled (expenses)** | ❌ the $1,570 of unpaid installments appear nowhere in it | ✅ **$1,570**, across **five due months**, each row named *"— installment 2 of 4"* and openable. The pending request is untouched ("Asked of the club", no date) |
+| **The meaning of money in** | ❌ the $325 was **forced** into the reimbursement reading; no screen asked | ✅ **asked, required, and changeable afterwards.** Answering the $325 *New money* moves it to its own revenue row — revenue $0 → $325, expenses $3,545 → $3,870, **season net identical at −$3,545** |
+
+⚠ **THE FIXTURE IS BACK AS IT WAS.** The $325 was flipped to *New money* only to measure the row
+above, then reverted and re-queried: **zero answered, zero filed, four requests** — so the walk
+starts from the legacy state, which is the state that matters (it is what every existing customer's
+season looks like the day this ships).
+
+⚠⚠ **WHAT THIS TABLE STILL CANNOT TELL YOU, and it is the reason the build carries unit tests
+instead.** This fixture holds **no recorded money-back records at all**. The hub card's new
+arithmetic nets those as well as the club's — the term the build deliberately took wider than the
+mockup (§5.4) — so on this fixture that term is multiplied by nought and a green reading here proves
+nothing about it. A measurement that cannot fail is not evidence; the per-term tests are.
+
+So the original complaint is closed: the report sees club money, the hub card agrees with it, the
+forward view quotes the whole obligation, and the one real decision — what an arrival *means* — is
+the coach's.
 
 ## 2. What already shipped, and where it lives
 

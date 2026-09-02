@@ -59,12 +59,10 @@ export interface HelpPageContent {
   faqs?: HelpFaq[];
 }
 
-export interface HelpCalloutContent {
-  variant: 'info' | 'tip' | 'warning';
-  title: string;
-  body: string;
-  cta?: { label: string; href: string };
-}
+/* ⚰ `HelpCalloutContent` ({ variant, title, body, cta }) stood here and was deleted 2026-09-01
+   (cleanup tranche 6) with zero references. ⚠ Not to be confused with the LIVE `HelpCallout` — the
+   page-embedded dismissible banner in `components/help/HelpBlocks.tsx`, which types its own props.
+   This was a second, unused description of the same idea. */
 
 function slugify(value: string): string {
   return value

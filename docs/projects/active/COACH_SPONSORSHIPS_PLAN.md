@@ -6,8 +6,10 @@ ledger §24 + §25, now run against the live site
 **Binding mockup:** Claude Artifact "Fundraisers & Sponsors" (revision 3c) —
 https://claude.ai/code/artifact/47fdb6e1-dab4-4f4e-876c-558e190a9711
 **PM brief:** [COACH_SPONSORSHIPS_PM_BRIEF.md](COACH_SPONSORSHIPS_PM_BRIEF.md)
-**Builds on:** [COACH_FUNDRAISER_DRILL_IN_PLAN.md](COACH_FUNDRAISER_DRILL_IN_PLAN.md) (the drill-in this
-sits inside).
+**Builds on:** [COACH_FUNDRAISER_DRILL_IN_PLAN.md](../archive/COACH_FUNDRAISER_DRILL_IN_PLAN.md) —
+⚰ **archived 2026-09-01, and the drill-in it describes no longer exists.** A drive opens in place on
+its band row now; the plan of record is
+[COACH_FUNDRAISER_BAND_PLAN.md](COACH_FUNDRAISER_BAND_PLAN.md).
 
 ---
 

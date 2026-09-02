@@ -204,34 +204,13 @@ export async function requireHeadCoachMembership(
   return { ctx, team, membership, capabilities };
 }
 
-export async function getActiveMembershipsForUser(
-  orgId: string,
-  userId: string,
-): Promise<TeamStaffMembership[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_staff_memberships')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('user_id', userId)
-    .eq('status', 'active');
-  if (error) throw error;
-  return (data ?? []).map(r => mapMembership(r as MembershipRow));
-}
-
-/** Team ids this user may open in this org — the one-call filter for nav/context lists. */
-export async function getActiveMembershipTeamIds(
-  orgId: string,
-  userId: string,
-): Promise<Set<string>> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_staff_memberships')
-    .select('team_id')
-    .eq('org_id', orgId)
-    .eq('user_id', userId)
-    .eq('status', 'active');
-  if (error) throw error;
-  return new Set((data ?? []).map(r => r.team_id as string));
-}
+/* ⚰ `getActiveMembershipsForUser` and `getActiveMembershipTeamIds` stood here and were deleted on
+   2026-09-01 (cleanup tranche 6) with zero callers, ever. The second described itself as "the
+   one-call filter for nav/context lists" — a job the coaches context does by reading the
+   assignments it already holds, which is why nothing reached for either. A helper written for a
+   caller that never arrived is indistinguishable, six months later, from one whose caller was
+   removed by mistake; both read as load-bearing. Re-add either only with the caller in the same
+   commit. */
 
 export async function getTeamStaffMembershipById(id: string): Promise<TeamStaffMembership | null> {
   const { data, error } = await supabaseAdmin
@@ -244,7 +223,7 @@ export async function getTeamStaffMembershipById(id: string): Promise<TeamStaffM
 }
 
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */
-export async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
+async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_staff_memberships')
     .select('*')
@@ -459,7 +438,7 @@ async function patchProjectionRow(
  * of leaving a stray key behind (adversarial review: the race that used to strand a revoked
  * coach's write access for a whole season).
  */
-export async function syncLiveSeasonProjection(membership: TeamStaffMembership): Promise<void> {
+async function syncLiveSeasonProjection(membership: TeamStaffMembership): Promise<void> {
   const liveYearId = await getLiveRepProgramYearIdStrict(membership.teamId);
   if (!liveYearId) return;
 

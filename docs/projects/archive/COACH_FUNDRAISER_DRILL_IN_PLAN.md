@@ -1,6 +1,21 @@
 # Coach Money — the fundraiser drill-in
 
-**Status:** built on dev 2026-08-14 · owner QA owed (ledger §23) · **no migration**
+> ## ⚰ SUPERSEDED — THE MECHANISM THIS DOCUMENT DESCRIBES NO LONGER EXISTS
+>
+> **Archived 2026-09-01 (codebase cleanup tranche 6).** The fundraiser drill-in retired on
+> 2026-08-31: a drive now **opens in place** on its own band row, exactly as a sponsor already did,
+> and the drill-in page and its routes were deleted (commit `2d430bad`). Read
+> [COACH_FUNDRAISER_BAND_PLAN.md](../active/COACH_FUNDRAISER_BAND_PLAN.md) instead — that is the
+> plan of record, and the design ruling behind it is the 2026-08-31 "A DRIVE OPENS IN PLACE" entry
+> in `memory/design_decisions.md`.
+>
+> ⚠ **This file is kept as history, not as instructions.** Its ledger §23 QA never happened and
+> never will; §125 walked the replacement instead. Nothing below should be implemented. It is worth
+> keeping because §5's defect log records five real bugs found in the drill-in build, and three of
+> them (the refetch-while-open race, the cross-drive typed-amount leak, the deep-link landing) are
+> failure modes the band inherited the *shape* of and had to solve again.
+
+**Status (historical):** built on dev 2026-08-14 · owner QA owed (ledger §23) · **no migration**
 **Binding mockup:** Claude Artifact "Fundraiser Drill-In" — https://claude.ai/code/artifact/8e699fa8-0e0e-46e0-84e9-2e564abe0490
 **PM brief:** [COACH_FUNDRAISER_DRILL_IN_PM_BRIEF.md](COACH_FUNDRAISER_DRILL_IN_PM_BRIEF.md)
 

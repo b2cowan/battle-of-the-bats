@@ -111,6 +111,12 @@ export default function CoachPageHeader({
    *   the right-pinned actions row, same classes and same phone tap-floor, no identity chrome.
    *   The component owns this shape so seven panels can't hand-copy it apart (the budget/bva CSS
    *   forks were exactly that failure one level up).
+   *   ⚠ **AS OF 2026-09-01 THIS SHAPE HAS ZERO CALL SITES** (cleanup tranche 6). Its only callers
+   *   were the six Money panels, which passed no actions — so it drew nothing — and were deleted
+   *   with the `embedded` prop that selected it. It is kept because it is the answer to "a hub tab
+   *   needs a control row": deleting it is what invites the seventh hand-rolled copy this component
+   *   exists to prevent. Retiring it is a design decision, not a sweep — and if it is ever retired,
+   *   the `backTo`-on-`embedded` assertion in the page-actions guard goes with it.
    * - `nested` — a hub tab that has drilled into ONE record (Money → Fundraisers → one drive).
    *   Same slots one level down: a smaller tile and an `<h2>`, so the hub's `<h1>` keeps naming
    *   the screen and a screen reader gets a real heading hierarchy rather than two competing page

@@ -52,7 +52,10 @@ export const MODULES = [
   { key: 'module_rep_teams', label: 'Rep Teams' },
 ];
 
-export type CommandCenterStats = Awaited<ReturnType<typeof getCommandCenterStats>>;
+/* ⚰ `CommandCenterStats = Awaited<ReturnType<typeof getCommandCenterStats>>` stood here and was
+   deleted 2026-09-01 (cleanup tranche 6) with zero references. It is the cheapest kind of dead
+   type: derived entirely from a live function, so it always compiled, always looked current, and
+   named nothing anybody needed to name. Callers infer the return type at the call site. */
 
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();

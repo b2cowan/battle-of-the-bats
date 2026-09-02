@@ -20,7 +20,9 @@ export const TOURNAMENT_PLUS_LOCKED_FEATURES = [
   'online_tournament_payments',
 ] as const;
 
-export type TournamentPlusLockedFeature = typeof TOURNAMENT_PLUS_LOCKED_FEATURES[number];
+/* ⚰ `TournamentPlusLockedFeature = typeof TOURNAMENT_PLUS_LOCKED_FEATURES[number]` stood here and
+   was deleted 2026-09-01 (cleanup tranche 6) with zero references. The const array above is live
+   and keeps its `as const`, so the union can be re-derived in one line the day something needs it. */
 
 export const TOURNAMENT_PLUS_ACQUISITION_SOURCES = [
   'public_powered_by_badge',

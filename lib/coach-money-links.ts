@@ -42,9 +42,12 @@ export type CoachMoneySection =
  * `?view=` arrangement (timeline / bills / due). Removing retired ids from the type rather than
  * aliasing them is what makes the compiler find every caller; the ones that should keep working do
  * so through `legacyMoneyAddress` below.
+ *
+ * ⚰ The `LegacyMoneySection` union that named those five retired ids stood here and was deleted on
+ * 2026-09-01 (cleanup tranche 6): it had no importers, because the only code that needs the ids is
+ * `legacyMoneyAddress` below, which compares the raw string a saved URL carries. A type over values
+ * that only ever arrive as untyped query strings buys nothing and reads as a contract.
  */
-export type LegacyMoneySection =
-  | 'expenses' | 'allocations' | 'payment-requests' | 'transactions' | 'payables';
 
 /**
  * Where a saved address that names a retired tab lands now.

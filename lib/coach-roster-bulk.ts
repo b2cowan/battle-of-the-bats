@@ -51,7 +51,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** A jersey is 1-4 chars, digits with an optional trailing letter (e.g. "7", "00", "12A"). */
 const JERSEY_RE = /^\d{1,3}[A-Za-z]?$/;
 
-export function blankDraftRow(rowNumber: number): DraftRosterPlayer {
+function blankDraftRow(rowNumber: number): DraftRosterPlayer {
   return {
     rowNumber,
     playerFirstName: '', playerLastName: '', playerNumber: '',
@@ -68,7 +68,7 @@ export function blankDraftRow(rowNumber: number): DraftRosterPlayer {
  * A jersey is only taken from the HEAD or TAIL of a single-column line, so a name that merely
  * contains a number is left intact for the coach to fix in the preview rather than mangled.
  */
-export function parseRosterLine(line: string, rowNumber: number): DraftRosterPlayer | null {
+function parseRosterLine(line: string, rowNumber: number): DraftRosterPlayer | null {
   // Strip separators hanging off either end first, so a stray `, Bianchi` reads as the name
   // "Bianchi" instead of a player whose first name is a comma.
   const trimmed = line.trim().replace(/^[\s,;|\t]+/, '').replace(/[\s,;|\t]+$/, '');

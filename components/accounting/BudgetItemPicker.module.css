@@ -72,12 +72,17 @@
   font-weight: 600;
 }
 
+/* ⚠⚠ VIEWPORT-FIXED, ANCHORED TO THE FIELD'S MEASURED RECT (owner ruling, §80 walk 2026-08-23 —
+   the same one `.convWhatList` carries). It was `position: absolute`, which a modal's own
+   `overflow-y: auto` clips: on the club tab's short filing dialog the list was cut to two rows
+   mid-word. Making the dialog GROW instead was tried and rejected on sight — opening a field must
+   not change the modal's size. So the menu hangs over the form.
+   ⚠ z-index clears the modal overlay at BOTH its tiers (200 desktop / 400 phone).
+   ⚠ No ancestor may gain a transform/filter, or `fixed` re-anchors to it and this clips again.
+   ⚠ `max-height` here is the CAP; the panel narrows it to the room actually available. */
 .dropdown {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  position: fixed;
+  z-index: 500;
   max-height: 260px;
   overflow-y: auto;
   /* Same ground as every other combobox menu in the portal (`.tagComboDropdown`) — the tokens are
@@ -91,11 +96,9 @@
 
 /* Flipped above the box inside a scrollable modal, where a downward menu would be clipped by the
    scroll area or hidden behind the sticky footer. */
-.dropdownUp {
-  top: auto;
-  bottom: calc(100% + 4px);
-  box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
-}
+/* ⚰ `.dropdownUp` STOOD HERE and is deleted (2026-09-01). It flipped an absolutely-positioned menu
+   by swapping `top` for `bottom: 100%`; a fixed menu is placed by measured viewport coordinates
+   instead, so the panel simply supplies `bottom` rather than `top` when it opens upward. */
 
 .optGroup {
   padding: 0.4rem 0.75rem 0.2rem;

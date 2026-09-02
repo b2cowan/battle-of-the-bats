@@ -1,6 +1,10 @@
 # Practice Plan Staff & Equipment — Real Tag Libraries
 
-**Status:** Planned, not started. **Owner decisions locked in (2026-08-26):** new entries always join
+**Status:** ✅ SHIPPED 2026-08-27 (commit "who runs it and what to bring become real team libraries"
++ a same-day merge/delete fix), ON PRODUCTION in `7f21df47` (2026-08-27 release). This doc said
+"planned, not started" for five days after that — archived 2026-09-01. The one thing it left out on
+purpose (a manage screen for the two libraries) is now owned by the tagging review:
+`docs/projects/active/COACH_TAGGING_REVIEW_PLANNING_PROMPT.md`. **Owner decisions locked in (2026-08-26):** new entries always join
 the team's library (no "one-off, don't save" mode); all four surfaces get it in one pass (header
 equipment, block staff, station "who runs it" staff, station equipment).
 

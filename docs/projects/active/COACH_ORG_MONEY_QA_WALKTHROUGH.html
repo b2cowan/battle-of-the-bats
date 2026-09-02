@@ -1,0 +1,511 @@
+<title>New Money or Money Back — QA Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ══ The two sides of a ledger. Money in is pine, money out is sienna, and the page never uses
+      either colour for anything that is not actually about that side. ══ */
+:root{
+  --ground:#EEF1F4; --surface:#FFFFFF; --sunk:#E4E9EE; --raise:#F7F9FB;
+  --ink:#131820; --muted:#59636F; --faint:#88919C;
+  --rule:#D3DAE1; --rule-soft:#E6EAEF;
+  --in:#1B6E5F;    --in-soft:rgba(27,110,95,.10);
+  --out:#8C3B2A;   --out-soft:rgba(140,59,42,.10);
+  --hold:#8A6A16;  --hold-soft:rgba(138,106,22,.12);
+  --link:#1F4FA8;
+  --on-accent:#FFFFFF;
+  --shadow:0 1px 2px rgba(19,24,32,.06), 0 8px 24px rgba(19,24,32,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E1216; --surface:#161C22; --sunk:#11161B; --raise:#1B222A;
+  --ink:#E6EAEF; --muted:#98A3AF; --faint:#6C7681;
+  --rule:#242C35; --rule-soft:#1C232B;
+  --in:#5FCBB4;    --in-soft:rgba(95,203,180,.13);
+  --out:#F0876B;   --out-soft:rgba(240,135,107,.13);
+  --hold:#DFAE45;  --hold-soft:rgba(223,174,69,.13);
+  --link:#8FB2FF;
+  --on-accent:#0E1216;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.34);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1216; --surface:#161C22; --sunk:#11161B; --raise:#1B222A;
+  --ink:#E6EAEF; --muted:#98A3AF; --faint:#6C7681;
+  --rule:#242C35; --rule-soft:#1C232B;
+  --in:#5FCBB4;    --in-soft:rgba(95,203,180,.13);
+  --out:#F0876B;   --out-soft:rgba(240,135,107,.13);
+  --hold:#DFAE45;  --hold-soft:rgba(223,174,69,.13);
+  --link:#8FB2FF;
+  --on-accent:#0E1216;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.34);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Public Sans",system-ui,-apple-system,sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+.wrap{max-width:920px; margin:0 auto; padding:44px 22px 120px; display:flex; flex-direction:column; gap:34px}
+h1,h2,h3{font-family:Spectral,Georgia,serif; margin:0; text-wrap:balance; line-height:1.15}
+h1{font-size:38px; font-weight:700; letter-spacing:-.012em}
+h2{font-size:23px; font-weight:600}
+h3{font-size:16.5px; font-weight:600}
+p{margin:0; max-width:68ch}
+a{color:var(--link)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+:focus-visible{outline:2px solid var(--link); outline-offset:2px; border-radius:3px}
+
+/* ── head ── */
+.head{display:flex; flex-direction:column; gap:14px; padding-bottom:26px; border-bottom:2px solid var(--rule)}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.15em;
+         text-transform:uppercase; color:var(--in)}
+.dek{font-size:16.5px; color:var(--muted); max-width:66ch}
+.facts{display:flex; flex-wrap:wrap; gap:8px 22px; font-family:"IBM Plex Mono",monospace;
+       font-size:11.5px; color:var(--faint); padding-top:2px}
+.facts b{color:var(--muted); font-weight:600}
+
+/* ── the standing bar ── */
+.bar{position:sticky; top:0; z-index:20; background:var(--surface); border:1px solid var(--rule);
+     border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:14px;
+     flex-wrap:wrap; box-shadow:var(--shadow)}
+.bar-count{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; white-space:nowrap}
+.track{flex:1; min-width:140px; height:7px; border-radius:99px; background:var(--sunk); overflow:hidden}
+.fill{height:100%; width:0%; background:var(--in); border-radius:99px; transition:width .18s ease}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+.bar-actions{display:flex; gap:8px; flex-wrap:wrap}
+button{font:inherit}
+.btn{border:1px solid var(--rule); background:var(--raise); color:var(--ink); border-radius:7px;
+     padding:6px 13px; font-size:13px; font-weight:600; cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+/* One token per theme — the ink that sits ON the accent. Three stacked colour rules resolved
+   correctly by accident here; a token cannot. */
+.btn.primary{background:var(--in); border-color:var(--in); color:var(--on-accent)}
+
+/* ── setup / callouts ── */
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:18px 20px;
+      display:flex; flex-direction:column; gap:11px}
+.card.hold{border-left:3px solid var(--hold)}
+.card.in{border-left:3px solid var(--in)}
+.card p{font-size:14.5px; color:var(--muted)}
+.card b{color:var(--ink); font-weight:600}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:5px 14px; font-size:13.5px}
+.kv dt{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em;
+       text-transform:uppercase; color:var(--faint); padding-top:3px}
+.kv dd{margin:0; font-family:"IBM Plex Mono",monospace; font-size:13px; word-break:break-all}
+
+/* ── parts ── */
+.part{display:flex; flex-direction:column; gap:14px}
+.part-head{display:flex; flex-direction:column; gap:7px; border-left:3px solid var(--in); padding-left:15px}
+.part-no{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.13em;
+         text-transform:uppercase; color:var(--faint)}
+.part-head p{color:var(--muted); font-size:14.5px}
+.part[data-side="out"] .part-head{border-left-color:var(--out)}
+.part[data-side="hold"] .part-head{border-left-color:var(--hold)}
+
+.steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+.step{background:var(--surface); border:1px solid var(--rule); border-radius:9px;
+      display:grid; grid-template-columns:auto 1fr; gap:13px; padding:13px 15px; align-items:start}
+.step.ticked{background:var(--raise); border-color:var(--rule-soft)}
+.step.ticked .do{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--faint)}
+.step input[type=checkbox]{
+  appearance:none; width:21px; height:21px; margin:1px 0 0; flex:0 0 auto; cursor:pointer;
+  border:1.5px solid var(--muted); border-radius:5px; background:var(--surface); position:relative;
+}
+.step input[type=checkbox]:checked{background:var(--in); border-color:var(--in)}
+.step input[type=checkbox]:checked::after{
+  content:""; position:absolute; left:6.5px; top:2.5px; width:5px; height:10px;
+  border:solid var(--surface); border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+}
+.body{display:flex; flex-direction:column; gap:6px; min-width:0}
+.do{font-size:15px}
+.n{font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; color:var(--faint); margin-right:7px}
+.expect{font-size:13.5px; color:var(--muted); border-left:2px solid var(--rule); padding-left:11px}
+.expect b{color:var(--ink); font-weight:600}
+.fig{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--ink)}
+.tag{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:9.5px; font-weight:600;
+     letter-spacing:.09em; text-transform:uppercase; padding:2px 7px; border-radius:3px;
+     border:1px solid; vertical-align:2px; margin-left:7px; white-space:nowrap}
+.t-writes{color:var(--out); border-color:var(--out); background:var(--out-soft)}
+.t-rule{color:var(--hold); border-color:var(--hold); background:var(--hold-soft)}
+
+/* ── paste-back ── */
+.result{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:18px 20px;
+        display:flex; flex-direction:column; gap:12px}
+textarea{width:100%; min-height:180px; resize:vertical; font-family:"IBM Plex Mono",monospace;
+         font-size:12.5px; line-height:1.55; color:var(--ink); background:var(--sunk);
+         border:1px solid var(--rule); border-radius:8px; padding:12px}
+.foot{border-top:2px solid var(--rule); padding-top:18px; font-size:13px; color:var(--faint);
+      display:flex; flex-direction:column; gap:7px}
+.foot b{color:var(--muted)}
+@media (max-width:560px){
+  h1{font-size:30px}
+  .wrap{padding:30px 15px 90px}
+  .step{padding:12px}
+}
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Owner QA · §126 · club money in the team's plan</div>
+    <h1>New money, or money back?</h1>
+    <p class="dek">Money arriving from a club used to be read as a repayment every single time — the
+      code answering a question you ruled belongs to the coach. This walk proves it now asks, that
+      both answers are told apart everywhere they should be, and that nothing which was already
+      right has moved.</p>
+    <div class="facts">
+      <span><b><span id="stepTotal">—</span> steps</b> in seven parts</span>
+      <span><b>Ticks save</b> on this device</span>
+      <span><b>Steps are named by PART</b>, never by number — a numbered cross-reference in this sheet went stale the first time it grew</span>
+      <span><b>Part 7 puts the fixture back</b> — please don't stop before it</span>
+    </div>
+  </header>
+
+  <div class="bar">
+    <span class="bar-count mono" id="count">0 / —</span>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="bar-actions">
+      <button class="btn" id="jump">Next unticked</button>
+      <button class="btn" id="reset">Clear ticks</button>
+    </div>
+  </div>
+
+  <section class="card in">
+    <h3>Where to walk it</h3>
+    <dl class="kv">
+      <dt>Team</dt><dd>QA Money Lab → <b>QA Mid Season U14</b></dd>
+      <dt>Sign in</dt><dd>qa-money-head@dev.local · devpass123</dd>
+      <dt>Money hub</dt><dd><a href="http://localhost:3000/qa-money-lab/coaches/teams/24566930-7a45-4595-b4ed-1ee770789450/accounting">…/accounting</a></dd>
+      <dt>Club tab</dt><dd><a href="http://localhost:3000/qa-money-lab/coaches/teams/24566930-7a45-4595-b4ed-1ee770789450/accounting?section=club">…/accounting?section=club</a></dd>
+      <dt>Report</dt><dd><a href="http://localhost:3000/qa-money-lab/coaches/teams/24566930-7a45-4595-b4ed-1ee770789450/accounting?section=budget-vs-actual">…?section=budget-vs-actual</a></dd>
+    </dl>
+    <p>The fixture starts in the <b>legacy</b> state on purpose — every club record is unfiled and no
+      arrival has been given a meaning. That is exactly what a real customer's season looks like the
+      day this ships, so it is the state worth walking from.</p>
+  </section>
+
+  <section class="card hold">
+    <h3>Three things only you can settle</h3>
+    <p><b>1 · The Budget card went one term wider than the mockup.</b> Frame 6 scoped the fix to club
+      money. I also made it net <i>money back you record yourself</i> against a vendor refund, because
+      the card was blind to that too and the wording of your decision said "netted money-back
+      returns", not "club money-back". The <b>hub</b> part is where you&apos;d see the difference. Say if you'd
+      rather it counted club money only — it's one term to remove.</p>
+    <p><b>2 · The demo tour says nothing about the grant.</b> It appears on the very screen the tour
+      stops at, but your standing ruling caps each stop at a hook plus one proof point and says not to
+      grow that step. The demo world shows it; no sentence points at it. Last step of the walk.</p>
+    <p><b>3 · A sentence I corrected outside my lane.</b> The Club tab told coaches an unfiled bill
+      "doesn't appear on Budget vs. Actual" — it always did appear, under <i>Not itemized</i>. That
+      sentence belongs to the forms review, but I had to rewrite the dialog it also lived in, and
+      leaving one copy true and one false was worse — you meet it in the <b>hub and rules</b> part. The forms review should strike
+      it from its list rather than do it twice.</p>
+  </section>
+
+  <!-- ═══ PART 1 ═══ -->
+  <section class="part" data-side="in">
+    <div class="part-head">
+      <div class="part-no">Part 1 — the shape</div>
+      <h2>One table, two bands, nothing opened for you</h2>
+      <p>The tab was two stacked sections and the second was invisible below the first. It is now a
+        single table with the two groups as heading rows inside it. Start here, because everything
+        after this is read off that table.</p>
+    </div>
+    <ol class="steps" id="p0"></ol>
+  </section>
+
+  <!-- ═══ PART 2 ═══ -->
+  <section class="part" data-side="in">
+    <div class="part-head">
+      <div class="part-no">Part 2 — the question</div>
+      <h2>It asks, and it won't be skipped</h2>
+      <p>The whole point. Open a new request and watch the fork appear before the filing list, because
+        the answer decides which list you're even shown.</p>
+    </div>
+    <ol class="steps" id="p1"></ol>
+  </section>
+
+  <!-- ═══ PART 2 ═══ -->
+  <section class="part" data-side="in">
+    <div class="part-head">
+      <div class="part-no">Part 3 — the rows</div>
+      <h2>Every row says what it is, and stays correctable</h2>
+      <p>An answered request locks — it records what the club decided. Your own label on top of it
+        never locks, which is the distinction to check here.</p>
+    </div>
+    <ol class="steps" id="p2"></ol>
+  </section>
+
+  <!-- ═══ PART 3 ═══ -->
+  <section class="part" data-side="out">
+    <div class="part-head">
+      <div class="part-no">Part 4 — the report</div>
+      <h2>The same $325, two stories</h2>
+      <p>This part <b>changes data</b> and Part 7 changes it back. Re-file the approved $325 as new
+        money, read the report, and check the one figure that must not move.</p>
+    </div>
+    <ol class="steps" id="p3"></ol>
+  </section>
+
+  <!-- ═══ PART 4 ═══ -->
+  <section class="part" data-side="out">
+    <div class="part-head">
+      <div class="part-no">Part 5 — the forward view</div>
+      <h2>Scheduled stops under-quoting</h2>
+      <p>What the club has billed and you haven't paid was missing from the one column that answers
+        "can we get through the season?"</p>
+    </div>
+    <ol class="steps" id="p4"></ol>
+  </section>
+
+  <!-- ═══ PART 5 ═══ -->
+  <section class="part" data-side="in">
+    <div class="part-head">
+      <div class="part-no">Part 6 — the hub, and the rules</div>
+      <h2>Two numbers become one, and nothing else moves</h2>
+      <p>The surviving half of your original complaint — plus the rules this build was most likely to
+        break by accident.</p>
+    </div>
+    <ol class="steps" id="p5"></ol>
+  </section>
+
+  <!-- ═══ PART 6 ═══ -->
+  <section class="part" data-side="hold">
+    <div class="part-head">
+      <div class="part-no">Part 7 — put it back</div>
+      <h2>Leave the fixture as you found it</h2>
+      <p>Part 4 wrote to the shared QA team. These steps return it to the legacy state so the next
+        walk starts where this one did.</p>
+    </div>
+    <ol class="steps" id="p6"></ol>
+  </section>
+
+  <section class="result">
+    <h3>Paste this back to me</h3>
+    <p style="font-size:14px;color:var(--muted)">It names every step you didn't tick, so I know what
+      failed or what you didn't get to — and there's room to say what went wrong.</p>
+    <textarea id="out" readonly></textarea>
+    <div class="bar-actions">
+      <button class="btn primary" id="copy">Copy summary</button>
+      <button class="btn" id="refresh">Refresh</button>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span><b>Built on dev</b> 2026-08-30 · committed <span class="mono">2d430bad</span> 2026-09-01 ·
+      migration 271 is on dev only and rides the release queue behind 264, 268, 269 and 270.</span>
+    <span><b>Figures</b> measured on QA Money Lab, 2026-08-30, through the product's own screens.</span>
+    <span><b>Renumbered</b> §124 → §126: the dues-forms walk had already claimed §124 and was in
+      flight, so this one moved rather than that one.</span>
+  </footer>
+</div>
+
+<script>
+const STEPS = {
+  p0: [
+    ["Open <b>Money → Club</b> and look at the whole screen before touching anything.",
+     "<b>One</b> table, titled <b>Club money</b> — not two sections. Inside it two heavy heading rows: <b>What the club has billed us</b> and <b>What we've asked the club</b>. Both are on screen without scrolling."],
+    ["Check that nothing has been opened for you.",
+     "No installment tables, no filing strips — every bill is a single closed row. Before this, the first bill unfolded itself on load, which is what pushed the requests out of sight."],
+    ["Read the bills heading row.",
+     "It states its own count and its own money: <b>3 bills · $1,570.00 still to pay</b>. The band is what tells the two kinds apart now, so it carries its own totals."],
+    ["Read the requests heading row, and find its buttons.",
+     "<b>4 requests · $180.50 waiting on a decision</b> — and <b>Export</b> and <b>Make a request</b> sit on the band itself, not in a toolbar. Each group owns its actions."],
+    ["Open one bill by tapping its row.",
+     "It unfolds <b>in place, inside the same table</b> — the filing line and the installments — and the requests band stays where it is, below it. Close it again."],
+    ["Look at a bill row that is closed and check nothing urgent is hidden by the collapse.",
+     "The overdue mark is <b>on the closed row</b> — <b>1 overdue</b> beside its amount. You never have to open a bill to find out it needs you."],
+    ["Compare a bill row and a request row's last column.",
+     "A bill shows a <b>chevron</b> (it unfolds); a request shows a <b>pencil or an eye</b> (it opens its record). The control says which kind of row it is before you press it."],
+    ["⚠ THE FILTER CHIPS — you cannot see these on this team, and that is correct.",
+     "They appear only once a team has <b>a dozen or more</b> club records; this one has seven, and on a short list the chips would be taller than the thing they organise. <b>If you want to walk them, say so and I'll seed more records.</b> What they will do: <i>All · Needs attention · Not filed · Settled</i>, counted in rows, resetting every visit, and stating in dollars what they hide.", "rule"]
+  ],
+  p1: [
+    ["Open the Club tab and press <b>Make a request</b>. Choose <b>From the club</b>.",
+     "A new required field appears: <b>New money, or money back?</b> — sitting <b>above</b> the filing question, not below it."],
+    ["Open that dropdown.",
+     "Two answers, each with a line of explanation under it: <b>New money for the season</b> (a grant, or a cost the club agreed to carry) and <b>Paying us back for a cost</b> (nets into the cost it repaid)."],
+    ["Answer <b>New money for the season</b>, then open <b>What is it for?</b> and type <span class='mono'>gra</span>.",
+     "The list is your <b>income</b> words — <b>Grant</b> is offered. Spending words like <i>Diamond Permits</i> are not."],
+    ["Now switch the answer to <b>Paying us back for a cost</b> and open the list again.",
+     "It has switched to your <b>spending</b> words — and the word you'd already picked has been <b>cleared</b>. That's deliberate: it belonged to the other side of the books."],
+    ["Clear the answer if you can, and try to send the request.",
+     "It refuses with <b>“Say whether this is new money or the club paying you back.”</b> Nothing is ever assumed for you."],
+    ["Switch the direction to <b>To the club</b>.",
+     "The question <b>disappears</b>. Money you send the club is a cost — there's no second reading of it to ask about."],
+    ["Read the sentence above the buttons with an amount and an answer filled in.",
+     "It says what the answer does: <b>report as new money</b>, or <b>net into the cost it repaid</b>."],
+    ["Now the reordered form. Check <b>What is it for?</b> sits <b>above</b> Description, which sits above Amount.",
+     "Same order as the Record money form: the branch, then what it is, then the words, then the figures. It used to ask for the amount second and the budget word last."],
+    ["With the description empty, pick a word — <b>Fundraising · Grant</b>.",
+     "The <b>description fills in by itself</b> with <b>Grant</b>, ready to type over. That is what the field order exists for, and this form could never do it while it asked for the word last."],
+    ["Type your own description over it, then change the budget word to something else.",
+     "<b>Your sentence survives.</b> The pre-fill only ever lands on an empty description, or one still holding the previous word untouched — it never overwrites what you wrote. Cancel without sending."]
+  ],
+  p2: [
+    ["Look at the <b>Files under</b> column on the request rows.",
+     "Approved arrivals from the club print their meaning — <b>Money back</b> — beside the filing, so a mis-read is visible where it's fixed."],
+    ["Find <b>“Diamond permit reimbursement — July 14”</b> ($325, approved).",
+     "It reads <b>Money back</b>, not a blank. It was approved before this question existed, and <b>money back is what the report has counted it as all along</b> — a dash would claim nobody knows."],
+    ["Compare the <b>File it</b> / <b>Change</b> control on a request row with the one on a bill row — they are now in the same table, a few rows apart.",
+     "They are the <b>same button</b>. They said the same two words in two different styles until the cleanup pass, and the reshape put them side by side where that would have been obvious."],
+    ["Tap <b>File it</b> on the $325 row.",
+     "A small box opens holding <b>only</b> the question and the filing picker. No amount, no direction, no wording — those are the club's record, not your label."],
+    ["Close it, and tap the row itself instead.",
+     "The record window opens <b>read-only</b> with an <b>eye</b> icon, not a pencil. The club has answered; that record can't be rewritten."],
+    ["Open the pending <b>“Tournament entry — Riverside Classic”</b> ($180.50) instead.",
+     "This one is still yours — a <b>pencil</b>, fully editable — and because it predates the question, it now <b>asks you to answer</b> before you can save."]
+  ],
+  p3: [
+    ["Note today's report figures first. Open <b>Budget vs. Actual</b> (Statement).",
+     "Total expenses <span class='fig'>$3,545.00</span> · total revenue <span class='fig'>$0.00</span> · headroom <span class='fig'>$1,555.00</span>."],
+    ["Back on the Club tab, tap <b>File it</b> on the $325, answer <b>New money for the season</b>, pick <b>Fundraising · Grant</b>, save.",
+     "Saves without complaint. <b>No money moved</b> — you changed a label.", "writes"],
+    ["Return to <b>Budget vs. Actual</b> and read the <b>Revenue</b> band.",
+     "A new row: <b>Fundraising · Grant</b>, actual <span class='fig'>$325.00</span>, with a <b>dash</b> under Budget because nothing was planned for it."],
+    ["Open your Budget Plan in another tab.",
+     "<b>No line was created.</b> The row on the report exists because the money does — the product never writes a plan line on your behalf."],
+    ["Back on the report, read total expenses now.",
+     "<span class='fig'>$3,870.00</span> — up by exactly $325. The cost line stopped hiding a grant."],
+    ["Now the figure that must <b>not</b> move: the season net.",
+     "Still <span class='fig'>−$3,545.00</span>. Revenue rose $325 and expenses rose $325. <b>Same money, both stories true</b> — only the lines changed."],
+    ["Switch to the <b>Months</b> view and find the grant.",
+     "It sits under <b>Other income</b>, marked <b>From the club</b> — not under <i>Repaid by the club</i>, which now means only money that was actually paid back."]
+  ],
+  p4: [
+    ["On <b>Months</b>, switch the lens to <b>Scheduled</b> and read the expenses band's total.",
+     "<span class='fig'>$1,570.00</span> of club bills you haven't paid. Before this build the column showed <b>none</b> of it, while the payment schedule beside it showed all of it."],
+    ["Tap into one of those months — try September.",
+     "The rows name their bill and their piece: <b>“Diamond &amp; field permits — spring block — installment 3 of 4”</b>. Every cell opens."],
+    ["Check that a <b>settled</b> installment is not in there.",
+     "It isn't — its money is on the <b>Actual</b> lens as the payment that covered it. Counting both would double the same dollar."],
+    ["Look at the revenue band on the same lens.",
+     "The pending $180.50 still reads <b>Asked of the club</b> with <b>no date</b> — undecided money can't rescue a month. Unchanged by this build, deliberately."]
+  ],
+  p5: [
+    ["Open the Money hub and read the <b>Budget</b> card's headroom.",
+     "It matches the report exactly. With the grant filed it reads <span class='fig'>$1,230.00</span>; once you undo it in Part 6, <span class='fig'>$1,555.00</span>. <b>Before this build it read $1,980 while the report read $1,555.</b>"],
+    ["Read the card's <b>Spending</b> row and its bar.",
+     "They moved with the headline, so the card no longer contradicts itself. A short line explains what the figure counts — and it only appears when there's a difference to explain.", "rule"],
+    ["Open <b>Player Dues</b> and check any family's schedule and balance.",
+     "<b>Unchanged.</b> Neither answer to the question ever touches anyone's dues — the rule this build was most likely to break by accident."],
+    ["Check <b>Cash on hand</b> against what you noted earlier.",
+     "<b>Unchanged</b> too. A grant and a repayment are the same cash on the same day; the answer moves a row on the report, never a dollar in the book."],
+    ["<b>Open</b> a club bill you haven't filed and read the line inside it.",
+     "It says the bill <b>reports under Not itemized</b> — it still counts. It used to say it <i>“doesn't appear on Budget vs. Actual”</i>, which was never true. ⚠ It lives <b>inside</b> the opened bill now, not on the closed row: the row carries figures, the expansion carries explanation.", "rule"]
+  ],
+  p6: [
+    ["Go back to the Club tab, tap <b>Change</b> on the $325, set the answer back to <b>Paying us back for a cost</b>, clear the filing, save.",
+     "The report returns to expenses <span class='fig'>$3,545.00</span>, revenue <span class='fig'>$0.00</span>, headroom <span class='fig'>$1,555.00</span>.", "writes"],
+    ["Confirm nothing else was left behind.",
+     "The requests band reads <b>4 requests</b>, none filed. If you created a request in Part 1, withdraw it — its window has <b>Withdraw request</b> at the foot."],
+    ["Last one, and it's a judgement rather than a check: <b>should the demo tour say anything about the grant?</b>",
+     "It appears on the screen the tour already stops at. Your standing ruling caps that stop at a hook plus one proof point, so I added nothing. Tell me if you'd rather swap a clause in."]
+  ]
+};
+
+const KEY = "qa-club-money-126-v1";
+let ticked = {};
+try { ticked = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { ticked = {}; }
+
+const ids = [];
+function render() {
+  for (const [part, list] of Object.entries(STEPS)) {
+    const host = document.getElementById(part);
+    if (!host) continue;
+    host.innerHTML = "";
+    list.forEach((s, i) => {
+      const id = part + "-" + i;
+      ids.push(id);
+      const n = ids.length;
+      const li = document.createElement("li");
+      li.className = "step" + (ticked[id] ? " ticked" : "");
+      li.id = "s-" + id;
+      const tagHtml = s[2] === "writes"
+        ? '<span class="tag t-writes">writes data</span>'
+        : s[2] === "rule" ? '<span class="tag t-rule">tell me</span>' : "";
+      li.innerHTML =
+        '<input type="checkbox" id="c-' + id + '" ' + (ticked[id] ? "checked" : "") +
+        ' aria-label="Step ' + n + '">' +
+        '<div class="body">' +
+          '<div class="do"><span class="n">' + String(n).padStart(2, "0") + '</span>' + s[0] + tagHtml + '</div>' +
+          '<div class="expect">' + s[1] + '</div>' +
+        '</div>';
+      li.querySelector("input").addEventListener("change", (e) => {
+        ticked[id] = e.target.checked;
+        li.classList.toggle("ticked", e.target.checked);
+        save(); tally(); summary();
+      });
+      host.appendChild(li);
+    });
+  }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(ticked)); } catch (e) { /* private window — ticks just won't persist */ }
+}
+function tally() {
+  const done = ids.filter((id) => ticked[id]).length;
+  /* ⚠ THE TOTAL IS COMPUTED, NEVER TYPED. It was hand-written and wrong twice — once at 26 for a
+     32-step sheet, once at 40 for a 43-step one — which is exactly the kind of small lie that makes
+     a walker distrust the rest of the document. */
+  const total = document.getElementById('stepTotal');
+  if (total) total.textContent = String(ids.length);
+  document.getElementById("count").textContent = done + " / " + ids.length;
+  document.getElementById("fill").style.width = (ids.length ? (done / ids.length) * 100 : 0) + "%";
+}
+function label(id) {
+  const [part, i] = id.split("-");
+  const n = ids.indexOf(id) + 1;
+  const raw = STEPS[part][Number(i)][0].replace(/<[^>]+>/g, "");
+  return String(n).padStart(2, "0") + ". " + raw;
+}
+function summary() {
+  const missed = ids.filter((id) => !ticked[id]);
+  const done = ids.length - missed.length;
+  let t = "Owner QA §126 — New money, or money back\n";
+  t += "Club money in the team's plan · QA Money Lab / QA Mid Season U14\n";
+  t += "-------------------------------------------------------------\n";
+  t += "Ticked " + done + " of " + ids.length + ".\n\n";
+  if (!missed.length) {
+    t += "Every step ticked — nothing outstanding.\n\n";
+  } else {
+    t += "NOT ticked (" + missed.length + "):\n";
+    missed.forEach((id) => { t += "  " + label(id) + "\n"; });
+    t += "\n";
+  }
+  t += "What went wrong / what I'd change:\n  - \n\n";
+  t += "Rulings still owed:\n";
+  t += "  1. Budget card — keep it netting money back you recorded, or scope it to club money only?\n";
+  t += "  2. Demo tour — narrate the grant by swapping a clause, or leave the step alone?\n";
+  t += "  4. Seed more club records so the filter chips can actually be walked?\n";
+  t += "  3. The corrected 'doesn't appear on Budget vs. Actual' sentence — forms review to strike it?\n";
+  document.getElementById("out").value = t;
+}
+
+render(); tally(); summary();
+
+document.getElementById("reset").addEventListener("click", () => {
+  ticked = {}; save();
+  document.querySelectorAll(".step input[type=checkbox]").forEach((c) => { c.checked = false; });
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("ticked"));
+  tally(); summary();
+});
+document.getElementById("jump").addEventListener("click", () => {
+  const next = ids.find((id) => !ticked[id]);
+  if (next) document.getElementById("s-" + next).scrollIntoView({ behavior: "smooth", block: "center" });
+});
+document.getElementById("refresh").addEventListener("click", summary);
+document.getElementById("copy").addEventListener("click", async () => {
+  const btn = document.getElementById("copy");
+  const ta = document.getElementById("out");
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    btn.textContent = "Copied";
+  } catch (e) {
+    ta.removeAttribute("readonly"); ta.select(); ta.setAttribute("readonly", "");
+    btn.textContent = "Select all, then copy";
+  }
+  setTimeout(() => { btn.textContent = "Copy summary"; }, 2200);
+});
+</script>

@@ -98,30 +98,19 @@ export function isRealisedRecord(record: { kind: FundraisingKind | string; spons
 /** The unit a coach typed a sponsor's family credit in. Dollars is what gets STORED either way. */
 export type CreditUnit = 'amount' | 'percent';
 
-/**
- * Resolve a family credit entered as either dollars or a percentage of the sponsor's total.
- *
- * ⚠ THE DOLLARS ARE AUTHORITATIVE AND THE PERCENT IS ONLY PROVENANCE. A percentage is how the
- * coach *entered* it; the credit that lands on a family's dues is a fixed amount. Storing the
- * percentage as the source of truth would mean correcting a sponsor's total months later silently
- * revalued a credit already sitting on a bill — the same trap `player_rebate_percent` avoids by
- * snapshotting onto each entry at the moment it is logged.
- *
- * Returns both because the row keeps `rebate_percent` beside `rebate_amount`, and a reader
- * comparing them is how "50% of $250" stays explicable after the fact.
- */
-export function resolveCredit(total: number, value: number, unit: CreditUnit): { credit: number; percent: number } {
-  const amount = Math.max(0, Number(total) || 0);
-  const typed = Math.max(0, Number(value) || 0);
-  if (unit === 'percent') {
-    const percent = Math.min(100, typed);
-    return { credit: Math.round(amount * percent) / 100, percent };
-  }
-  // Dollars: never let a credit exceed what actually came in — a family cannot keep more than the
-  // sponsor gave, and the derived percent would be meaningless past 100.
-  const credit = Math.round(Math.min(amount, typed) * 100) / 100;
-  return { credit, percent: amount > 0 ? Math.round((credit / amount) * 10000) / 100 : 0 };
-}
+/* ⚰⚰ `resolveCredit(total, value, unit)` stood here and was deleted on 2026-09-01 (cleanup tranche
+   6) with zero callers. ⚠ THE RULE IT CARRIED IS STILL LAW, WHICH IS THE ONLY REASON THIS COMMENT
+   IS LONGER THAN ONE LINE: the DOLLARS ARE AUTHORITATIVE AND THE PERCENT IS ONLY PROVENANCE. A
+   percentage is how the coach *entered* a family credit; what lands on a family's dues is a fixed
+   amount, snapshotted at the moment it is logged. Storing the percentage as the source of truth
+   would mean correcting a sponsor's total months later silently revalued a credit already sitting
+   on a bill — the same trap `player_rebate_percent` avoids the same way.
+
+   The arrivals model (migs 268/269) superseded the helper, not the rule: a sponsor's credits are
+   resolved against the money that has actually ARRIVED, on the server, at the point each arrival is
+   recorded — so a single pure function over one "total" no longer describes the arithmetic. Do not
+   restore this as a shortcut for a screen that wants to preview a credit; a preview computed one
+   way and a record written another is exactly the disagreement the rule above exists to prevent. */
 
 /**
  * The season figures the Fundraising tab prints above its list, split by kind.

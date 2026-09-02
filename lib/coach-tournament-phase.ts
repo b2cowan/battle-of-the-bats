@@ -62,7 +62,7 @@ export function deriveCoachTournamentPhase(input: DeriveCoachTournamentPhaseInpu
   return input.scheduleVisible ? 'schedule_live' : 'accepted_prep';
 }
 
-/** True for any accepted phase (accepted_prep | schedule_live | game_day | result). */
-export function isAcceptedPhase(phase: CoachTournamentPhase): boolean {
-  return phase !== 'pending' && phase !== 'rejected';
-}
+/* ⚰ `isAcceptedPhase(phase)` stood here and was deleted on 2026-09-01 (cleanup tranche 6) with
+   zero callers. It was a convenience over `phase !== 'pending' && phase !== 'rejected'` that no
+   screen ever needed — every caller of `deriveCoachTournamentPhase` switches on the phase by name,
+   which is what makes a new phase a compile error rather than a silently-wrong boolean. */

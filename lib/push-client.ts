@@ -2,8 +2,10 @@
 /**
  * lib/push-client.ts — Browser-side Web Push subscription helpers.
  *
- * The subscribe core was originally inline in PushPermissionPrompt (staff flow).
+ * The subscribe core was originally inline in a staff-flow prompt component.
  * Extracted here so the anonymous fan flow (FollowAlertsToggle) can reuse it.
+ * ⚰ That component (`PushPermissionPrompt`) was deleted 2026-09-01 (cleanup tranche 6) — once the
+ * core moved here it kept no importers, so this module is now the only home for the flow.
  * Server send lives in lib/web-push.ts; this is the browser counterpart.
  */
 

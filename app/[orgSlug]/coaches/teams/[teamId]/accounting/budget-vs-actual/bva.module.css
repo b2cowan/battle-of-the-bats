@@ -20,8 +20,10 @@
 }
 
 /* The local .pageHeader/.pageTitle/.headerIcon/.pageSub fork that used to live here is GONE
-   (page-header ruling 2026-08-11): this page now renders the shared CoachPageHeader, so the
-   copy that had already drifted once (Export collapsing left) can't drift again. */
+   (page-header ruling 2026-08-11): the panel moved to the shared CoachPageHeader, so the copy
+   that had already drifted once (Export collapsing left) couldn't drift again.
+   ⚰ AND THE SHARED HEADER WENT TOO (cleanup tranche 6, 2026-09-01) — this is a Money hub TAB, not
+   a page; the hub's header above the tabs names the screen. Nothing here draws a page title. */
 
 .muted { color: var(--text-tertiary); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: var(--type-body); margin: 0.5rem 0; }

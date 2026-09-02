@@ -333,12 +333,10 @@ function checkAgainstPlaced(
 // Bulk conflict scan (for conflict badges on the schedule list)
 // ---------------------------------------------------------------------------
 
-export interface GameConflictStatus {
-  gameId: string;
-  kind: ConflictKind;
-}
-
-/** Conflict status for one game, including the clashing partner (for list badges). */
+/* ⚰ `GameConflictStatus` ({ gameId, kind }) stood here and was deleted 2026-09-01 (cleanup tranche
+   6) with zero references. `ConflictInfo` below is the live shape the badges actually read — it
+   carries the clashing PARTNER, which is what a badge has to name. A status that said only "this
+   game conflicts" could never render the sentence the screen needs. */
 export interface ConflictInfo {
   kind: ConflictKind;
   partnerId: string;

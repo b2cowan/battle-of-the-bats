@@ -4,7 +4,7 @@
  * the server assembly lives in lib/rep-season-wrapped.ts.
  *
  * This is the CANONICAL season-record rule. Before this file the record was tallied three
- * different ways (Overview result card + SeasonRecordWidget/Insights count league_game |
+ * different ways (Overview result card + the season-record widget/Insights count league_game |
  * tournament_game | scrimmage with scrimmage excluded by default; getRepTeamHistory /
  * getRepCurrentSeasonSummary count league_game | scrimmage | external_tournament). A
  * celebration card that disagrees with the Insights page a tap away would be worse than no

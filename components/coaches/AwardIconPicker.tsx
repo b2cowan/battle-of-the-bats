@@ -7,7 +7,7 @@ import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 // Curated sport/achievement set (Coach Tags & Player Awards Phase 2 — owner caught in mockup
 // review that a bare text field for an emoji is a bad ask on desktop). "Type your own" stays
 // as a fallback for anything outside the set.
-export const AWARD_ICON_LIBRARY = [
+const AWARD_ICON_LIBRARY = [
   '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️',
   '💪', '🔥', '⚡', '🎯', '👑', '💯',
   '⚾', '🥎', '🧤', '🛡️', '🏃', '🦾',

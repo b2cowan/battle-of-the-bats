@@ -93,10 +93,6 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
      above them another, on one card, which is worse than the disagreement with the report that D5
      set out to fix. `expenses.paidTotal` stays what its name says and keeps its own reader. */
   const spent = budget.spentAgainstPlan;
-  /* The difference the card has to explain — club money and money back, in one figure. Zero on a
-     standalone team that has never been refunded, which is why the note below is conditional: a
-     sentence about club money on a team with none is noise where a coach reads most carefully. */
-  const spendAdjustment = Math.round((spent - summary.expenses.paidTotal) * 100) / 100;
   const overBudget = summary.headroom != null && summary.headroom < 0;
   const flowMax = Math.max(summary.moneyIn.total, summary.moneyOut.total, 1);
   // The Budget card's shared dollar scale — every planned AND actual figure it
@@ -184,9 +180,6 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               <span className={styles.flowAmt}>{fmt(summary.moneyOut.total)}</span>
             </div>
           </div>
-          {/* The cash-basis caveat qualifies THESE numbers, so it lives with them —
-              not as a page-level sentence bolted above a tile row. */}
-          <p className={styles.footNote}>Cash actually received and actually paid — not what&apos;s still owed.</p>
           {/* ⚠ THE REGISTER, NOT PLAYER DUES (2026-08-26). This foot read 'See what's outstanding'
               and opened the dues tab — the SAME door the Collections card beside it already owns, and
               only half of what its own words promised: money the team still owes OUT was nowhere on
@@ -244,19 +237,6 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
                     </span>
                   </div>
                   <PlanBar actual={spent} target={budget.effectiveTotal} scaleMax={scaleMax} />
-                  {/* ⚠ THE CARD SAYS WHAT ITS FIGURE COUNTS (D5) — and only when there is something
-                      to say. The words are the report's, so a coach comparing the two screens reads
-                      one vocabulary rather than working out that "club bills" and "allocations" are
-                      the same thing. New money is deliberately unmentioned: it is revenue, it never
-                      enters this figure, and naming it here would invite the reading that it should. */}
-                  {Math.abs(spendAdjustment) > 0.005 && (
-                    <p className={styles.planEmptyNote}>
-                      <span>
-                        Counts what your club bills you, less anything paid back — the same as
-                        Budget vs. Actual.
-                      </span>
-                    </p>
-                  )}
                 </div>
 
                 {/* Player dues: collected climbs TO what is actually SCHEDULED — the real

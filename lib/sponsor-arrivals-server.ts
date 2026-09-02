@@ -53,7 +53,7 @@ export async function getSponsorCreditPlan(fundraiserId: string): Promise<Credit
 }
 
 /** A sponsor's arrivals, oldest first — the replay order every re-derivation depends on. */
-export async function getSponsorArrivals(fundraiserId: string) {
+async function getSponsorArrivals(fundraiserId: string) {
   const { data } = await supabaseAdmin
     .from('rep_fundraiser_entries')
     .select('id, amount_raised, received_date, method, notes, accounting_entry_id, created_at')

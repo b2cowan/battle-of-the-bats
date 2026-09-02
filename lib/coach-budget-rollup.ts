@@ -85,7 +85,7 @@
  */
 
 /** The bucket a cost with no item falls into, inside its own category. Never a real item id. */
-export const NO_ITEM = '__no_item__';
+const NO_ITEM = '__no_item__';
 
 /** What a category with no name at all is called — one spelling, used by every surface. */
 export const NO_CATEGORY_LABEL = 'No category';
