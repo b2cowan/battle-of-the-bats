@@ -1113,10 +1113,21 @@ export const GET = withObservability(async (req: Request,
      items to be fed from, so its rows are the families themselves — registered here, in the order
      the money left, exactly as the revenue band learns its own rows. Left shut it would have been
      the one figure on the statement a coach could not trace back to a record. */
+  /* ⚠⚠ AND SINCE 2026-09-02 THE PAYOUTS BUILD THEIR OWN BAND (owner ruling). The split happens
+     HERE, on the one loop that walks the cash strip, so a movement is filed into exactly one band by
+     construction rather than by two readers agreeing about it later. The rule and the reasoning live
+     beside `PAYOUT_CATEGORY_ID`; the short version is that a payout is never spending, so it cannot
+     sit under a heading that says Expenses.
+
+     ⚠ `cellDetails` IS KEYED BY CATEGORY AND IS UNTOUCHED BY THE SPLIT — the drill-in finds a
+     payout's records under the same key whichever band renders the row. That is why this is a
+     filing change and not an arithmetic one. */
   const payoutRows = new Map<string, GridLine>();
+  const returnedActuals: CategoryEvent[] = [];
   for (const mv of cashStrip.expenses) {
     const cat = gridCategory(mv.place.categoryId, mv.place.categoryName);
-    if (isPayoutCategory(mv.place.categoryId) && mv.place.itemId) {
+    const isPayout = isPayoutCategory(mv.place.categoryId);
+    if (isPayout && mv.place.itemId) {
       const id = `${categoryKey(PAYOUT_CATEGORY_ID, PAYOUT_CATEGORY_NAME)}|${mv.place.itemId}`;
       if (!payoutRows.has(id)) {
         payoutRows.set(id, {
@@ -1131,7 +1142,8 @@ export const GET = withObservability(async (req: Request,
         });
       }
     }
-    gridActuals.push({ ...cat, itemId: mv.place.itemId, date: mv.date, amount: mv.amount });
+    (isPayout ? returnedActuals : gridActuals)
+      .push({ ...cat, itemId: mv.place.itemId, date: mv.date, amount: mv.amount });
     pushDetail('actual', cat, mv.date, {
       id: mv.id, itemId: mv.place.itemId, description: mv.description, kind: mv.kind, amount: mv.amount,
       /* ⚠ A PAYOUT'S META LINE IS ITS REASON, NOT THE WORD "paid" (owner ruling 2026-08-24). Every
@@ -1388,8 +1400,8 @@ export const GET = withObservability(async (req: Request,
     todayMonth,
   );
 
-  const monthGridRaw = buildMonthGrid({
-    lines: [...gridLines, ...payoutRows.values()],
+  const monthGrid = buildMonthGrid({
+    lines: gridLines,
     actuals: gridActuals,
     scheduled: gridScheduled,
     todayMonth,
@@ -1397,16 +1409,27 @@ export const GET = withObservability(async (req: Request,
     months: gridMonths,
     truncated: gridTruncated,
   });
-  /* ⚠⚠ "Paid back to families" IS PINNED TO THE FOOT OF THE BAND, and it now has to be said rather
-     than arranged. The mockup draws it last, and until D-2 it landed there by accident: the group
-     arrived only as EVENTS, and the builder appends event-only categories after the planned ones.
-     Giving it real rows (one per family) moved it into the planned list, where it would have jumped
-     to the TOP of a treasurer's spending table. Order that matters is order that is stated. */
-  const monthGrid = {
-    ...monthGridRaw,
-    categories: [...monthGridRaw.categories].sort(
-      (a, b) => Number(isPayoutCategory(a.categoryKey)) - Number(isPayoutCategory(b.categoryKey))),
-  };
+  /* ⚠⚠ THE THIRD BAND — money returned to families (owner ruling 2026-09-02).
+     The sort that used to pin this group to the FOOT of the expenses band is deleted with it: a
+     band is its own place in the table, so the ordering that had to be stated is now structural.
+
+     ⚠ THE SAME MONTH DOMAIN AS ITS SIBLINGS, and this is the way the split can break quietly.
+     `deriveMonthRange` already runs once over every band's dates — `cashStrip.dates` includes the
+     payouts — so handing `gridMonths` here is what keeps index `i` addressing the same month on all
+     three bands. A band built over its own range would put April's cheques in May's column and
+     every claim in `check:money-report` would still pass.
+
+     ⚠ NO `scheduled`, NO `bufferAmount`, AND NEVER ANY. A payout has no plan and no schedule — see
+     `PAYOUT_CATEGORY_ID`. Passing either would give the band figures on lenses it must not render
+     on at all. */
+  const returnedGrid = buildMonthGrid({
+    lines: [...payoutRows.values()],
+    actuals: returnedActuals,
+    scheduled: [],
+    todayMonth,
+    months: gridMonths,
+    truncated: gridTruncated,
+  });
 
   const revenueGridRaw = buildMonthGrid({
     lines: [...revenueRows.values()],
@@ -1551,9 +1574,15 @@ export const GET = withObservability(async (req: Request,
        ⚠ `monthGrid` IS THE EXPENSES BAND. The name predates the second band and is kept because
        every reader — the screen, the export, `check:money-report` — already speaks it; renaming it
        would be a wide, silent rename on the portal's most-guarded payload for no reader's benefit.
-       `revenueGrid` is its twin, built by the same function over the SAME months. */
+       `revenueGrid` is its twin, built by the same function over the SAME months.
+       ⚠⚠ AND SINCE 2026-09-02 THERE ARE THREE. `monthGrid` no longer carries money handed back to
+       families — that is `returnedGrid`, a band of its own. **Any reader summing "what left the
+       team's account" must add the two**: the expenses band is now cash the team paid VENDORS, and
+       a reader that keeps quoting `monthGrid` alone is understated by every cheque written to a
+       family, silently and plausibly. */
     monthGrid,
     revenueGrid,
+    returnedGrid,
     cellDetails,
     /* ⚠⚠ THE MONTH-BY-MONTH CASH MAPS, SHIPPED FOR THE GUARD (`check:money-report` claim 5) rather
        than for the screen, which reads the bands. They are the strip's own bucketing before the

@@ -79,25 +79,61 @@ export function revenueGroupOf(categoryKeyOrId: string | null | undefined): Reve
 }
 
 /**
- * Money handed BACK to a family (mig 234) — its own group at the foot of the EXPENSES band.
+ * Money handed BACK to a family (mig 234) — its own BAND, below Expenses.
  *
- * ⚠ NOT A BUDGET CATEGORY, and it never becomes one. A payout is not a cost the team planned; it is
- * the team returning money it holds. It has no plan and no schedule, so it only ever carries an
- * Actual figure — which is why it arrives as an event with this synthetic placement rather than
- * being filed against the taxonomy like a bill.
+ * ⚠⚠ IT LEFT THE EXPENSES BAND ON 2026-09-02 (owner ruling), and the reasoning is the load-bearing
+ * part rather than the move. A payout is never spending. It is one of two things and neither is a
+ * cost:
+ *   · REVENUE GOING BACK OUT — an overpaid instalment, a fundraising share, a season-end surplus;
+ *   · CASH SETTLING A COST ALREADY COUNTED — a parent buys a bucket of balls, the season's spending
+ *     rises that day whoever paid, and the cheque months later is not a second cost.
+ * Filed under a heading reading "Expenses", the first looked like spending it is not and the second
+ * looked like spending counted twice.
+ *
+ * ⚠⚠ AND IT IS NOT ROUTABLE BY REASON — SETTLED, DO NOT RE-PROPOSE (owner, 2026-09-02). The obvious
+ * "better" design nets dues refunds against revenue and files reimbursements against the original
+ * cost's own category. It cannot be built, and not for want of a field to record the reason in: a
+ * payout draws down a family's POOLED CREDIT BALANCE. A parent who buys equipment *and* sells at a
+ * drive is issued ONE credit for both, so a later cheque is part-reimbursement and part-fundraising
+ * share in proportions nobody recorded and nobody can recover. Asking the coach at payout time does
+ * not help either — the credit was issued long before the cheque and they have no basis to split it.
+ *
+ * ⚠ NOT A BUDGET CATEGORY, and it never becomes one. It has no plan and no schedule, so it only
+ * ever carries an Actual figure — which is why it arrives as an event with this synthetic placement
+ * rather than being filed against the taxonomy like a bill.
  */
 export const PAYOUT_CATEGORY_ID = 'cash:payouts';
-export const PAYOUT_CATEGORY_NAME = 'Paid back to families';
+/**
+ * ⚠ THE GROUP INSIDE THE BAND, NOT THE BAND ITSELF. It was "Paid back to families" while it was a
+ * row at the foot of Expenses; with a band heading above it saying exactly that, the old name made
+ * the table state one thing twice. This is the ledger entry's own wording ("Dues credit paid out —
+ * {family}"), so the report and the books now use one phrase.
+ */
+export const PAYOUT_CATEGORY_NAME = 'Dues credits paid out';
+/** The band's heading, beside "Revenue" and "Expenses". */
+export const RETURNED_BAND_LABEL = 'Money returned to families';
+/**
+ * The band's closing row.
+ *
+ * ⚠ NOT COMPOSED BY `bandTotalLabel`. That helper takes the lens's adjective (Budgeted / Scheduled /
+ * Total), and this band renders on ONE lens — giving it a third `MoneyRowDirection` to satisfy the
+ * pattern would leak an Actual-only band into every lens's type for a label that never varies.
+ */
+export const RETURNED_TOTAL_LABEL = 'Total returned';
 
 /**
- * Is this expense row the SYNTHETIC payouts group rather than a real budget category?
+ * Is this the SYNTHETIC payouts group rather than a real budget category?
  *
- * ⚠⚠ IT IS THE ONE EXPENSE ROW ALLOWED TO DISAPPEAR (design pass 2026-08-24, owner-approved), and
- * the distinction is worth stating because the standing rule runs the other way. A category the
- * coach BUDGETED for stays visible on every lens even when empty — "you planned it and haven't
- * spent it" is real information, and hiding it would hide the plan. This group has no plan and no
- * schedule and never can, so its dashes under Budget and Scheduled say nothing at all; they are two
- * lenses' worth of noise in the band a treasurer reads most closely.
+ * ⚠ IT IS NOW A BAND FILTER. The route uses it to decide which cash rows build the returned band
+ * and which build Expenses; the screen and the export use it for nothing else, because a band is a
+ * band and no longer needs a per-row exception inside another one.
+ *
+ * ⚠⚠ THE OLD "one expense row allowed to disappear" RULE IS NOW THE BAND'S OWN (design pass
+ * 2026-08-24, extended 2026-09-02). A category the coach BUDGETED for stays visible on every lens
+ * even when empty — "you planned it and haven't spent it" is real information. This group has no
+ * plan and never can, so it renders on **Actual only**. That now fixes a live defect as well as
+ * removing noise: under Difference it was printing `0 − 195 = −195` in the colour the grid uses for
+ * bad news — "over budget" against a budget that cannot exist.
  */
 export function isPayoutCategory(categoryKeyOrId: string | null | undefined): boolean {
   return (categoryKeyOrId ?? '').replace(/^id:/, '') === PAYOUT_CATEGORY_ID;
@@ -980,21 +1016,42 @@ export function buildBandCashFlow(
   lens: Exclude<MoneyLens, 'difference'>,
   cashOnHand: number,
   openingBalance = 0,
+  /**
+   * The RETURNED band — money handed back to families (2026-09-02).
+   *
+   * ⚠⚠ IT LEFT `Total expenses` AND IT DID NOT LEAVE THE SEASON. This is the one way the band's
+   * move can go wrong, and it goes wrong silently: the balance would still add up month to month,
+   * still reconcile to itself, and be overstated by every cheque the team ever wrote. It is taken
+   * here rather than subtracted at the call sites because the screen and the export both read this
+   * function — that sharing is the whole reason it exists, and a rule with two homes is how two
+   * views of one season start disagreeing.
+   *
+   * Optional only for the tests that predate the band; production always passes it.
+   */
+  returned?: MonthGrid,
 ): CashFlowResult {
   const moneyInByMonth: Record<string, number> = {};
   const moneyOutByMonth: Record<string, number> = {};
-  /* ⚠ NO `?? 0` ON THE REVENUE SIDE, DELIBERATELY. The two bands share a month domain by
-     construction, so a missing cell here is not a case to absorb — it means a caller built the
-     bands over different ranges, and every figure below it would be wrong money quietly. Let that
-     throw. A defensive zero would turn a broken caller into a silently understated balance. */
+  /* ⚠ NO `?? 0` ON THE REVENUE SIDE, DELIBERATELY. The bands share a month domain by construction,
+     so a missing cell here is not a case to absorb — it means a caller built them over different
+     ranges, and every figure below it would be wrong money quietly. Let that throw. A defensive zero
+     would turn a broken caller into a silently understated balance. The returned band is read the
+     same way and for the same reason. */
   expenses.months.forEach((m, i) => {
     moneyInByMonth[m] = revenue.totals.cells[i][lens];
-    moneyOutByMonth[m] = expenses.totals.cells[i][lens];
+    moneyOutByMonth[m] = expenses.totals.cells[i][lens]
+      + (returned ? returned.totals.cells[i][lens] : 0);
   });
   return buildCashFlow(
     expenses.months, moneyInByMonth, moneyOutByMonth,
     lens === 'scheduled' ? cashOnHand : openingBalance,
-    { moneyIn: revenue.totals.undated[lens], moneyOut: expenses.totals.undated[lens] },
+    {
+      moneyIn: revenue.totals.undated[lens],
+      /* A payout is always dated — it is a cheque, and a cheque has a day. Read anyway: a band
+         whose undated bucket is structurally empty costs nothing to include and would otherwise be
+         the one place a future kind of return could go missing. */
+      moneyOut: expenses.totals.undated[lens] + (returned ? returned.totals.undated[lens] : 0),
+    },
   );
 }
 
@@ -1066,6 +1123,38 @@ export function lensUndated(undated: MonthCell, lens: MoneyLens): number {
 /** Does this lens read the PLAN? */
 export function lensReadsPlan(lens: MoneyLens): boolean {
   return lens === 'budget' || lens === 'difference';
+}
+
+/**
+ * Has a BALANCE row anything to say in this month? (owner ruling 2026-09-02)
+ *
+ * ⚠⚠ ON **ACTUAL**, A MONTH STILL AHEAD HAS NO BALANCE, and this is a correctness rule rather than
+ * a tidy-up. Recorded money can never be dated in the future — the product refuses it on every door,
+ * because money that has not moved is a BILL and belongs to the Scheduled lens. So no month after
+ * this one can ever hold an Actual figure, and Opening/Closing were printing the same number in
+ * every remaining column: five repetitions of a figure nothing can change.
+ *
+ * The reason it is a defect and not clutter: a flat balance stretching to the end of the season
+ * **reads as a forecast**. "$3,286 in December" looks like where the team lands, when it only means
+ * "nothing more has been recorded" — it knows nothing about the bills between here and there, which
+ * is the question the Scheduled lens exists to answer. One lens quietly impersonating another.
+ *
+ * ⚠ THE BLOCK ALREADY CONTRADICTED ITSELF, which is what made it visible: `Net for the month` goes
+ * to an em dash in those months (a net of nothing is zero) while the two balance rows kept printing.
+ * Same three-row block, same months, two answers about whether a future month has anything to say.
+ *
+ * ⚠ THE CURRENT MONTH STILL SHOWS — money can move today. A PAST month with no activity still shows
+ * too: it genuinely happened, and the team genuinely held that money through it.
+ * ⚠ BUDGET AND SCHEDULED ARE UNTOUCHED. Their future months carry real plan and real debt, and a
+ * running balance across them is the entire point of those lenses.
+ * ⚠ THE TOTAL COLUMN IS NOT A MONTH and keeps the season's ending balance. It is pinned, so where
+ * the season finished never leaves the screen — which is why nothing is lost by going quiet here.
+ *
+ * ONE PREDICATE, TWO READERS: the screen and the export both ask this, so a downloaded file cannot
+ * disagree with the table it came from.
+ */
+export function balanceShowsMonth(lens: MoneyLens, month: MonthKey, todayMonth: MonthKey): boolean {
+  return lens !== 'actual' || isElapsed(month, todayMonth);
 }
 
 /**

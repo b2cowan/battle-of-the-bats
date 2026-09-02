@@ -16574,3 +16574,46 @@ back). The steps below are the same walk in prose:
 warning on sign-out, same pattern as the account page's own button), spelling gate green,
 `coach-wall-doors` UAT spec re-targeted to the menu. ⚠ `check:layout` will re-key the avatar
 (link → button on every coach page) on its next baseline run — expected, not a regression.
+
+## §131 · Money returned to families leaves the Expenses band, + the Headroom tie-out — ✅ PASSED 2026-09-02, 20/20 clean (uncommitted at time of writing)
+
+**Walkthrough: `claude.ai/code/artifact/7e49e10f-d429-4220-b96b-e5f1fa1a025b`** (19 checks, paste-back)
+· mockup `claude.ai/code/artifact/cc79b9c1-3871-402b-9aea-fcc3ea50a443`
+· plan + brief `docs/projects/active/COACH_MONEY_RETURNED_BAND_PLAN.md` (+ `_PM_BRIEF.md`)
+· no migration.
+
+**What to walk.** On Coaches → Money → Budget vs. actual → **Months**, "Paid back to families" has
+left the Expenses band for a band of its own ("Money returned to families" → "Dues credits paid out"
+→ "Total returned"), **outside `Total expenses` and still subtracted by the closing balance**. A
+collapsed tie-out under the table walks Total expenses to Headroom in two lines. Owner-ruled
+2026-09-02 off the mockup, all four open questions answered as recommended.
+
+⚠⚠ **HALF THIS WALK IS A NEGATIVE.** The change is a filing correction: Headroom, the Statement, By
+activity, cash on hand, the Ledger and the **closing balance** must all be byte-identical to before.
+Checks 07–10 are the load-bearing ones and the walkthrough says so. A figure that moved is the defect.
+
+**Two defects fixed on the way past, both worth the owner's eyes:**
+- the payout group used to render a red figure on the **Difference** lens — "over budget" against a
+  budget that cannot exist (check 06);
+- `/review` found the band's **drill-in had lost every family name** (check 15). It could not fail
+  loudly: a payout record deliberately carries an empty description *because* the name is meant to
+  come from a band lookup, so the empty result read as "these records have nothing to say for
+  themselves". Panel opened, total correct, identity gone.
+
+**Settled during the session and recorded so it is not re-litigated:** routing each payout to
+revenue-or-expense **cannot be built** — a payout draws on a family's POOLED credit balance (a parent
+who buys equipment *and* sells at a drive gets one credit for both), so the attribution does not
+exist and no form field can recover it.
+
+**Owner-raised mid-build and folded in (check 04):** on **Actual**, the Opening and Closing
+balance rows now go blank for every month after the current one. Recorded money can never be dated
+forward, so those columns were repeating one unchangeable figure — and a flat balance running to the
+end of the season **reads as a forecast** of where the team lands, which is the Scheduled lens’s job.
+The block already contradicted itself: `Net for the month` was already blank there. Budget and
+Scheduled keep theirs (real plan, real debt); the pinned Total column keeps the season’s ending
+balance either way.
+
+**Carried, NOT in this walk and still the owner's call** — the Difference lens's Total column counts
+months that have not happened (a row can disagree with its own months by an instalment nobody owes
+yet), and the "No date yet" column reads backwards on the revenue band. Both listed at the foot of
+the walkthrough so they are not reported as new findings.

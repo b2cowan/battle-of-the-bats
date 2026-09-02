@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import {
-  buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan,
+  buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
-  bandTotalLabel, revenueGroupLabel, revenueGroupOf,
+  bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   formatMonthLabel, formatMonthLong,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
@@ -101,6 +101,19 @@ export interface MonthGridPayload {
    * keyed so `revenueGroupOf` can re-label them per lens.
    */
   revenueGrid: MonthGrid;
+  /**
+   * The RETURNED band — money handed back to families (owner ruling 2026-09-02).
+   *
+   * ⚠⚠ IT IS NOT PART OF `monthGrid` ANY MORE, and that is the whole change. A payout is never
+   * spending: it is revenue going back out, or cash settling a cost the season already counted the
+   * day it was incurred. The reasoning — including why it can never be routed to the two — lives
+   * beside `PAYOUT_CATEGORY_ID` in `lib/coach-budget-months.ts`.
+   *
+   * ⚠ RENDERS ON **ACTUAL ONLY**. It has no plan and no schedule, so on Difference it was printing
+   * a red figure against a budget that cannot exist.
+   * ⚠ IT IS STILL SUBTRACTED BY THE CLOSING BALANCE — it left `Total expenses`, not the season.
+   */
+  returnedGrid: MonthGrid;
   cellDetails: Record<string, CellDetailItem[]>;
   /**
    * Today's real money.
@@ -218,7 +231,13 @@ export default function MoneyMonthGrid({
   /** The rendering page's season query (`''` or `'?year=<id>'`) — drill-ins from an archived
    *  season must stay in that season, not teleport the reader to the live one. */
 }) {
-  const { monthGrid: grid, revenueGrid, cellDetails, cashOnHand, todayMonth } = data;
+  const { monthGrid: grid, revenueGrid, returnedGrid, cellDetails, cashOnHand, todayMonth } = data;
+  /* ⚠ THE BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
+     a family money back gets no heading, no row and no subtotal — three rows of nothing on the
+     narrowest table in the portal. `categoryHasFigure` is the same predicate the revenue band and
+     the export use, so the screen and the file cannot disagree about whether the band exists. */
+  const showReturned = lens === 'actual'
+    && returnedGrid.categories.some(c => categoryHasFigure(c.total, lens));
   const opening = data.openingBalance ?? null;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{
@@ -271,7 +290,10 @@ export default function MoneyMonthGrid({
      request awaiting an answer (owner ruling 2026-08-23), which have no date because nothing
      records when they land. Hiding the column under Scheduled would leave that money in the Total
      and nowhere a coach can see it. */
-  const showUndated = hasUndated([revenueGrid, grid], lens);
+  /* ⚠ THE RETURNED BAND IS IN THE LIST even though a cheque always has a day. The column's rule is
+     "it appears only where it can hold something", enforced on the FIGURE — asking every band is
+     what keeps that true if a future kind of return ever arrives undated. */
+  const showUndated = hasUndated([revenueGrid, grid, returnedGrid], lens);
 
   /* ══ The season's net and its running balance ═════════════════════════════════════════════════
      ⚠⚠ BOTH SIDES COME FROM THE BANDS ON SCREEN, which is the Option D ruling made arithmetic
@@ -285,9 +307,14 @@ export default function MoneyMonthGrid({
      ⚠ THE OPENING IS THE LENS'S OWN. Actual and Budget start from the season's opening balance
      (nothing carried yet — the carry-forward is its own build item); Scheduled starts from TODAY'S
      REAL MONEY, because a forward view projected from zero would be fiction. */
+  /* ⚠⚠ THE RETURNED BAND IS PASSED IN, NOT ADDED HERE. It left `Total expenses` and did not leave
+     the season — every cheque written to a family is still money out of the account. The helper
+     owns that subtraction so this screen and the export cannot answer differently. */
   const cash = useMemo(
-    () => (lens === 'difference' ? null : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0)),
-    [grid, revenueGrid, lens, cashOnHand, opening]);
+    () => (lens === 'difference'
+      ? null
+      : buildBandCashFlow(revenueGrid, grid, lens, cashOnHand, opening ?? 0, returnedGrid)),
+    [grid, revenueGrid, returnedGrid, lens, cashOnHand, opening]);
 
   /* ⚠ A REVENUE GROUP RENDERS ONLY WHERE IT HAS SOMETHING TO SAY UNDER THIS LENS, and that is what
      makes Scheduled read as a FORWARD view rather than a restatement: a bottle drive has no
@@ -302,9 +329,14 @@ export default function MoneyMonthGrid({
   /* ⚠ THE EXPENSE BAND KEEPS EVERY REAL CATEGORY, EMPTY OR NOT — a category you budgeted for and
      have not spent on is answering the question, not failing to. The ONE exception is the synthetic
      payouts group, which has no plan and no schedule and never can; see `isPayoutCategory`. */
-  const visibleExpenses = useMemo(
-    () => grid.categories.filter(c => !isPayoutCategory(c.categoryKey) || categoryHasFigure(c.total, lens)),
-    [grid, lens]);
+  /* ⚠ NO PAYOUT EXCEPTION HERE ANY MORE (2026-09-02). This filter used to carry "…unless it is the
+     payouts group", which was the band's Actual-only rule living inside another band's row list.
+     The payouts are their own band now and answer that question for themselves. */
+  const visibleExpenses = grid.categories;
+  /** The returned band's own rows — the one group inside it, when it has money under this lens. */
+  const visibleReturned = useMemo(
+    () => returnedGrid.categories.filter(c => categoryHasFigure(c.total, lens)),
+    [returnedGrid, lens]);
 
   function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
@@ -342,7 +374,15 @@ export default function MoneyMonthGrid({
        roster mid-season still resolves through the row her money left behind. */
     const subjects: Record<string, string> = {};
     if (!row) {
-      const band = cat.group ? revenueGrid : grid;
+      /* ⚠⚠ THREE BANDS TO LOOK IN, NOT TWO — and getting this wrong is SILENT (found in review,
+         2026-09-02). When the payouts group moved to its own band, this still resolved every
+         non-revenue category against the expenses band, so the lookup found nothing and every
+         record in the group's panel lost its family name. It could not fail loudly: a payout event
+         deliberately carries `description: ''` (see `coach-cash-strip.ts`) precisely BECAUSE the
+         name is expected to come from here, so an empty map reads as "these records have nothing
+         to say for themselves" rather than as a broken lookup. The panel still opened, still
+         totalled correctly, and simply stopped saying who the money went to. */
+      const band = cat.group ? revenueGrid : cat.payout ? returnedGrid : grid;
       const owner = band.categories.find(c => c.categoryKey === cat.categoryKey);
       for (const line of owner?.lines ?? []) subjects[line.id] = line.description;
     }
@@ -462,19 +502,23 @@ export default function MoneyMonthGrid({
    * is pinned left; a row that spans them has nothing for either pin to hold, and the heading
    * scrolls out from under a table whose whole point is that its ends do not.
    */
-  const bandHeading = (band: MoneyRowDirection) => (
+  const bandHeading = (key: string, label: string) => (
     <tr className={styles.bandRow}>
-      <th scope="row" className={`${styles.lead} ${styles.bandLead}`}>
-        {band === 'in' ? 'Revenue' : 'Expenses'}
-      </th>
-      {spacerCells(band)}
+      <th scope="row" className={`${styles.lead} ${styles.bandLead}`}>{label}</th>
+      {spacerCells(key)}
     </tr>
   );
 
-  /** A band's closing total, in the lens's own words ("Budgeted revenue", "Scheduled expenses"). */
-  const bandTotal = (band: MoneyRowDirection, g: MonthGrid) => (
+  /**
+   * A band's closing total, in the lens's own words ("Budgeted revenue", "Scheduled expenses").
+   *
+   * ⚠ `label` OVERRIDES THE LENS-COMPOSED ONE, for the returned band alone. That band renders on
+   * Actual only, so "Total returned" never varies — see `RETURNED_TOTAL_LABEL` for why it is not a
+   * third case inside `bandTotalLabel`.
+   */
+  const bandTotal = (band: MoneyRowDirection, g: MonthGrid, label?: string) => (
     <tr className={`${shared.moneyGridTotal} ${styles.totalRow}`}>
-      <th scope="row" className={styles.lead}>{bandTotalLabel(band, lens)}</th>
+      <th scope="row" className={styles.lead}>{label ?? bandTotalLabel(band, lens)}</th>
       {showUndated && (
         <td className={`${styles.num} ${styles.undated}`}>
           {cellNode(lensUndated(g.totals.undated, lens) || null)}
@@ -659,13 +703,34 @@ export default function MoneyMonthGrid({
             {/* ⚠⚠ TWO BANDS, ONE TABLE — the season's cash statement (owner ruling 2026-08-23).
                 Revenue first because that is the order a statement is read and the order the
                 arithmetic runs: what came in, what went out, what is left. */}
-            {bandHeading('in')}
+            {bandHeading('in', 'Revenue')}
             {visibleRevenue.map(cat => renderCategory(cat, 'in'))}
             {bandTotal('in', revenueGrid)}
 
-            {bandHeading('out')}
+            {bandHeading('out', 'Expenses')}
             {visibleExpenses.map(cat => renderCategory(cat, 'out'))}
             {bandTotal('out', grid)}
+
+            {/* ⚠⚠ THE THIRD BAND — money returned to families (owner ruling 2026-09-02). It reads
+                as a band rather than a row at the foot of Expenses because it is not spending: a
+                payout is revenue going back out, or cash settling a cost the season already counted
+                the day it was incurred. See `PAYOUT_CATEGORY_ID` for the full reasoning, including
+                why it can never be split between those two readings.
+
+                ⚠ ACTUAL ONLY, and it is a defect fix as much as a preference: this group has no
+                plan, so under Difference it printed `0 − 195 = −195` in the colour the grid uses
+                for bad news — "over budget" against a budget that cannot exist.
+
+                ⚠ IT SITS ABOVE THE BALANCE ROWS BECAUSE IT IS PART OF THEM. Everything between the
+                first heading and Opening balance is what moved; the closing figure subtracts this
+                band exactly as it always did. */}
+            {showReturned && (
+              <>
+                {bandHeading('returned', RETURNED_BAND_LABEL)}
+                {visibleReturned.map(cat => renderCategory(cat, 'out'))}
+                {bandTotal('out', returnedGrid, RETURNED_TOTAL_LABEL)}
+              </>
+            )}
 
             {/* The two rows a coach cannot work out by looking: the month's net, and the balance
                 it rolls to. They share the grid's own columns, so the plan and its consequence
@@ -711,7 +776,8 @@ export default function MoneyMonthGrid({
                   {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
                   {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
                     <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
-                      {cellNode(r.opening, { emphasis: 'negative' })}
+                      {/* ⚠ A MONTH STILL AHEAD HAS NO ACTUAL BALANCE — see `balanceShowsMonth`. */}
+                      {cellNode(balanceShowsMonth(lens, r.month, todayMonth) ? r.opening : null, { emphasis: 'negative' })}
                     </td>
                   ))}
                   {/* ⚠ THE SEASON'S OWN OPENING, never the visible window's. The Total column is the
@@ -755,7 +821,8 @@ export default function MoneyMonthGrid({
                   {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
                   {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
                     <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
-                      {cellNode(r.running, { emphasis: 'negative' })}
+                      {/* Same rule as Opening — and `Net for the month` above already went quiet here. */}
+                      {cellNode(balanceShowsMonth(lens, r.month, todayMonth) ? r.running : null, { emphasis: 'negative' })}
                     </td>
                   ))}
                   {/* ⚠⚠ THE ENDING BALANCE, WHERE AN EM DASH USED TO SIT (owner ruling 2026-08-23).
@@ -779,13 +846,20 @@ export default function MoneyMonthGrid({
             three model changes it was no longer true under, restated on screen the whole time; the
             durable lesson is that a footnote explaining a rule is also that rule's expiry
             checklist. Each lens now states its own basis, because they genuinely differ. */}
+        {/* ⚠⚠ REWRITTEN WITH THE THIRD BAND (owner ruling 2026-09-02). The old copy said expenses
+            were "bills paid, payments to the club, and money paid back to families", and closed by
+            promising a family-fronted cost "lands here the day you pay that family back" — both
+            sentences described the arrangement this change ended. Leaving either would have been the
+            demo-drift failure happening on the product itself: every figure right, the sentence
+            underneath quietly false. */}
         {lens === 'actual' && (
           <p className={styles.note}>
             <strong>Actual is cash.</strong> Revenue is every dollar that arrived — dues, fundraising and
-            sponsor money received, income and money back you recorded, and anything the club sent.
-            Expenses are every dollar that left — bills paid, payments to the club, and money paid back
-            to families. A cost a <strong>family paid a vendor directly</strong> is season spending on the
-            Statement but isn’t here: no team cash moved. It lands here the day you pay that family back.
+            sponsor money received, income and money back you recorded, and anything the club sent.{' '}
+            <strong>Expenses are what you paid vendors</strong> — bills paid and payments to the club. A
+            cost a <strong>family paid a vendor directly</strong> is season spending on the Statement but
+            isn’t here, because no team cash moved. Money you hand back to a family is your cash, but
+            it isn’t spending, so it has its own band below.
           </p>
         )}
         {/* ⚠ THE CARRY EXPLAINS ITSELF WHERE THERE IS ROOM FOR A SENTENCE — see the note on the
@@ -841,11 +915,18 @@ export default function MoneyMonthGrid({
             the season's spending, so their Total expenses can differ — and the coach who spots that
             gap deserves to be told why by the screen rather than by support. The three causes are
             listed because "they use different bases" answers nothing a treasurer can check. */}
+        {/* ⚠⚠ THE FIRST CAUSE STOPPED BEING TRUE ON 2026-09-02 AND THE SENTENCE DID NOT NOTICE.
+            It read "this view adds money paid back to families" — which is exactly what the returned
+            band ended: those cheques are no part of Total expenses any more. A note explaining a gap
+            by naming a cause that no longer exists is worse than no note, because a treasurer
+            reconciling by hand will look for an adjustment that isn't there. Two causes now, and the
+            band is named as the third thing the reader can see rather than as an adjustment. */}
         {lens === 'actual' && (
           <p className={styles.note}>
-            Total expenses here can differ from the <strong>Statement</strong>’s: this view adds money
-            paid back to families, leaves out costs a family paid a vendor directly, and shows money
-            back as revenue instead of subtracting it from the cost it repaid.
+            Total expenses here can differ from the <strong>Statement</strong>’s: this view leaves out
+            costs a family paid a vendor directly, and shows money back as revenue instead of
+            subtracting it from the cost it repaid. Money you return to families is in its own band —
+            counted in your balance, never in Total expenses.
           </p>
         )}
         {grid.truncated && (

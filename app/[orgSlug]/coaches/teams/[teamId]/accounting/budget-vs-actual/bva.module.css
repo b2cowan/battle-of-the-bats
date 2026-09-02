@@ -473,6 +473,20 @@
   cursor: pointer;
   list-style: none;
 }
+/* ⚠⚠ THE 44px TOUCH FLOOR, AND IT IS NOT COSMETIC (check:layout, 2026-09-02). This control measured
+   28px tall — a real tap target under the floor, on a line whose whole job is to be opened by
+   someone questioning a figure. It had gone unflagged because the baseline keys on LABEL TEXT and
+   this summary quotes a dollar amount, so it re-keys whenever the season's money moves.
+
+   ⚠ CAUGHT BECAUSE A SECOND BRIDGE ARRIVED. The Months view's tie-out (`HeadroomBridge`, owner
+   ruling 2026-09-02) wears this same class — so the defect was about to exist twice, on the two
+   screens a treasurer actually reads. Fixed on the class, once.
+
+   ⚠ TOUCH WIDTHS ONLY. On a desktop this is a quiet footnote line and 44px of height around 12px
+   of type would read as a button it is not. The floor belongs to the surface, not the element. */
+@media (max-width: 768px) {
+  .bridgeSummary { min-height: 44px; }
+}
 .bridgeSummary::-webkit-details-marker { display: none; }
 .bridgeSummary:hover { color: var(--text-secondary); }
 .bridgeSummary strong { color: var(--text-secondary); font-weight: 650; }

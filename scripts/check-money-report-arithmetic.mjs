@@ -180,8 +180,35 @@ async function main() {
   await browser.close();
 
   const blank = { months: [], categories: [], totals: { cells: [], total: {}, undated: {} } };
-  const grid = data.monthGrid ?? blank;      // the EXPENSES band
+  const grid = data.monthGrid ?? blank;      // the EXPENSES band — cash paid to VENDORS
   const revenue = data.revenueGrid ?? blank; // the REVENUE band
+  /* ⚠⚠ THE RETURNED BAND — money handed back to families (owner ruling 2026-09-02). It left
+     `monthGrid` for a band of its own, so **every claim below that means "cash out" now reads BOTH**.
+     Miss one and the check does not fail: it passes, understated by exactly the cheques a team wrote
+     to its families, which is the shape of bug this file exists to catch.
+
+     ⚠⚠ AND AN ABSENT BAND IS A FAILURE, NOT AN EMPTY ONE. This is the `openingBalance` lesson
+     applied before it can be learned twice (see claim 6): `?? blank` here would turn "the route
+     stopped emitting the band" into "the team returned nothing", and every claim would go green
+     while the money it forgot sat in the register. A season that returned nothing still ships the
+     band with no categories in it. */
+  /* ⚠ THE TEST IS FOR A USABLE BAND, NOT MERELY A PRESENT KEY (review, 2026-09-02). `undefined`
+     alone was the obvious check and it is the narrower one: every read below is optional-chained,
+     so a route emitting `{}` — or any object that lost its `totals` — would clear an
+     absence-only guard and then resolve to a silent zero at each site. That is the same failure
+     this guard exists to stop, arriving through a different door. (`null` already throws on the
+     direct `returned.totals` reads and exits non-zero, so it needs no case of its own.) */
+  if (data.returnedGrid === undefined || data.returnedGrid?.totals?.total === undefined) {
+    console.error('\n✗ THE REPORT NO LONGER SAYS WHAT THE SEASON HANDED BACK TO FAMILIES.');
+    console.error('  returnedGrid is absent from the payload (owner ruling 2026-09-02). A season that');
+    console.error('  returned nothing still ships an empty band — absent means the route stopped');
+    console.error('  emitting it, and every cash claim below would silently assume zero.\n');
+    process.exit(1);
+  }
+  const returned = data.returnedGrid;
+  /** Cash out is the two bands together — the identity every claim below depends on. */
+  const cashOutCell = i => cents(grid.totals?.cells?.[i]?.actual) + cents(returned.totals?.cells?.[i]?.actual);
+  const cashOutTotal = () => cents(grid.totals?.total?.actual) + cents(returned.totals?.total?.actual);
   const chart = data.monthlyChart ?? [];
   const details = data.cellDetails ?? {};
 
@@ -210,7 +237,10 @@ async function main() {
 
   console.log(`\nMoney report arithmetic — ${orgSlug} / ${teamId}`);
   console.log(`  months            : ${grid.months?.length ?? 0} grid columns, ${chart.length} charted${grid.truncated ? ' (grid TRUNCATED)' : ''}`);
-  console.log(`  bands             : ${revenue.categories?.length ?? 0} revenue group(s), ${grid.categories?.length ?? 0} expense category(ies)`);
+  /* ⚠ THE RETURNED BAND IS NAMED ON EVERY RUN, not only when it has something in it. This file's own
+     principle is that a claim nobody can see reads like one that did not happen — and this band is
+     the newest place a cash claim can silently lose money, so "0 row(s)" is information. */
+  console.log(`  bands             : ${revenue.categories?.length ?? 0} revenue group(s), ${grid.categories?.length ?? 0} expense category(ies), ${returned.categories?.length ?? 0} returned-to-families group(s)`);
   console.log(`  money back        : ${refundCount} refund row(s) netting into a cost`);
   console.log(`  split commitments : ${splitCommitments} paid across more than one month`);
   console.log(`  club money        : ${clubRows} row(s) reaching this report`);
@@ -262,10 +292,14 @@ async function main() {
      put a coach's money in a month it did not move — which is exactly how the split-commitment
      defect looked. ⚠ Compared on the band's own `Total revenue` / `Total expenses` cells, because
      that is the row a coach reads and the row `Net for the month` is computed from. */
-  const bandByMonth = (g, i) => cents(g.totals?.cells?.[i]?.actual);
+  /* ⚠ THE OUT SIDE IS BOTH BANDS (2026-09-02). `Total expenses` is cash paid to vendors and
+     `Total returned` is cash paid to families; the register knows only that money left. Comparing
+     the expenses band alone would fail on any season with a payout — and worse, comparing it alone
+     with the payout still inside would have been the silent version of the same mistake. */
+  const bandByMonth = (g, i) => (g === 'out' ? cashOutCell(i) : cents(g.totals?.cells?.[i]?.actual));
   const gridMonthIndex = new Map((grid.months ?? []).map((m, i) => [m, i]));
   const outsideWindow = [];
-  for (const [label, band, reg] of [['Total revenue', revenue, regIn], ['Total expenses', grid, regOut]]) {
+  for (const [label, band, reg] of [['Total revenue', revenue, regIn], ['Total expenses + Total returned', 'out', regOut]]) {
     for (const m of [...new Set([...gridMonthIndex.keys(), ...reg.keys()])].sort()) {
       const i = gridMonthIndex.get(m);
       if (i === undefined) {
@@ -301,7 +335,12 @@ async function main() {
     if (!expenseByName.has(key)) expenseByName.set(key, { grid: 0, register: 0 });
     expenseByName.get(key)[side] += c;
   };
-  for (const cat of grid.categories ?? []) bumpExpense(cat.categoryName, 'grid', cents(cat.total?.actual));
+  /* ⚠ BOTH OUT-BANDS (2026-09-02). The register files a dues payout under the payouts group's own
+     name; that group now lives in the returned band, so reading only `grid.categories` would leave
+     it with a register figure and no grid figure — a real failure reported as a missing category. */
+  for (const cat of [...(grid.categories ?? []), ...(returned.categories ?? [])]) {
+    bumpExpense(cat.categoryName, 'grid', cents(cat.total?.actual));
+  }
   for (const r of regRows) {
     const out = cents(r.moneyOut);
     if (out === 0) continue;
@@ -380,7 +419,9 @@ async function main() {
     process.exit(1);
   }
   const opening = cents(data.openingBalance ?? 0);
-  const seasonNet = bandTotal(revenue) - bandTotal(grid);
+  /* ⚠ CASH OUT IS BOTH OUT-BANDS. The returned band left `Total expenses` and did not leave the
+     season: a cheque to a family is money out of the account exactly as a cheque to a vendor is. */
+  const seasonNet = bandTotal(revenue) - cashOutTotal();
   const ending = opening + seasonNet;
   if (ending !== cents(register.cashOnHand)) {
     problems.push(
@@ -406,7 +447,7 @@ async function main() {
      unattributable arrivals, a family removed from the roster mid-season — is added at the CATEGORY
      level by the builder rather than dropped, so rows may legitimately sum to LESS than their group.
      They may never sum to more: that is money counted twice. */
-  for (const [bandName, g] of [['revenue', revenue], ['expenses', grid]]) {
+  for (const [bandName, g] of [['revenue', revenue], ['expenses', grid], ['returned', returned]]) {
     for (const cat of g.categories ?? []) {
       const rows = cat.lines ?? [];
       if (rows.length === 0) continue;
@@ -439,16 +480,29 @@ async function main() {
   const familyPaid = (data.familyPaidCosts ?? []).reduce((s, c) => s + cents(c.amount), 0);
   const moneyBackNetted = (data.report?.expenses?.categories ?? [])
     .flatMap(c => c.items ?? []).reduce((s, i) => s + cents(i.refundTotal), 0);
-  const payoutsOut = (grid.categories ?? [])
-    .filter(c => String(c.categoryKey ?? '').replace(/^id:/, '') === 'cash:payouts')
-    .reduce((s, c) => s + cents(c.total?.actual), 0);
+  /* ⚠ THE RETURNED BAND'S OWN TOTAL (2026-09-02). This filtered the EXPENSES band for the payouts
+     group until that group became a band — a filter that now matches nothing, so the bridge would
+     have balanced only for teams that never handed a family money back, and been wrong by exactly
+     the amount it exists to explain for every team that did. */
+  /* ⚠⚠ AND STATE WHAT THIS CLAIM DOES *NOT* PROVE, because a reader will assume it does.
+     `payoutsOut` appears on BOTH sides of the comparison below — it is added to the statement here
+     and is one of the two summands of `cashOutTotal()` — so it cancels, and this identity says
+     nothing about whether the returned band's own figure is right. **That was equally true before
+     the band existed** (it read the payouts group out of the very grid it was checking), so the
+     split changed nothing here; it is written down now because payouts became a first-class band
+     and the omission would otherwise look like one this change introduced.
+     What DOES constrain that figure: claims 3 and 4, which hold the returned band against the
+     REGISTER — assembled by lib/coach-register-book.ts, which does not go through the cash strip.
+     Two derivations, one comparison. Do not "fix" this claim by removing the cancelling term:
+     the identity it states is the one the Statement prints, and that sentence is what it guards. */
+  const payoutsOut = cents(returned.totals?.total?.actual);
   const bridged = statement + moneyBackNetted - familyPaid + payoutsOut;
-  if (bridged !== cents(grid.totals?.total?.actual)) {
+  if (bridged !== cashOutTotal()) {
     problems.push(
       `THE STATEMENT'S BRIDGE TO MONTHS DOES NOT ADD UP — ${money(statement)} spent`
       + ` + ${money(moneyBackNetted)} money back − ${money(familyPaid)} family-paid`
       + ` + ${money(payoutsOut)} paid back = ${money(bridged)}, but Months says`
-      + ` ${money(cents(grid.totals?.total?.actual))} (out by ${money(bridged - cents(grid.totals?.total?.actual))})`);
+      + ` ${money(cashOutTotal())} (out by ${money(bridged - cashOutTotal())})`);
   }
 
   /* ── 7. AND THE STRIP'S OWN MONTH MAPS, WHICH ARE A SECOND CLAIM RATHER THAN A DUPLICATE ───────
@@ -484,7 +538,7 @@ async function main() {
      happen. Every claim that executes says so. */
   console.log(`  and the cash arithmetic dated every dollar the way the register did  ✓`);
   console.log('  every group equals the rows a coach can open behind it, month by month  ✓');
-  console.log(`  the Statement's bridge to Months adds up: ${money(statement)} spent → ${money(cents(grid.totals?.total?.actual))} in cash  ✓`);
+  console.log(`  the Statement's bridge to Months adds up: ${money(statement)} spent → ${money(cashOutTotal())} in cash  ✓`);
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
      ⚠ A SKIPPED CLAIM MUST NEVER READ AS A PASS. These used to be `console.log` notes above a green
@@ -515,7 +569,7 @@ async function main() {
      run over one is not evidence. Detected on the REGISTER's rows: caveat 4's lesson applies — if a
      detector reads empty, the code may have stopped emitting the row. */
   if (!regRows.some(r => String(r.id).startsWith('dues-payout-'))) {
-    missing.push('a dues payout (cash back to a family — its own group in the EXPENSES band)');
+    missing.push('a dues payout (cash back to a family — its own BAND, below Expenses)');
   }
   if (!regRows.some(r => r.kind === 'fundraising')) {
     missing.push('realised fundraising cash (drive/sponsor money — a REVENUE group)');

@@ -2065,7 +2065,14 @@ export function PlayerDuesPanel({
                         ['Dues received', settlement.pot.duesReceived, false],
                         ['Fundraising raised', settlement.pot.fundraisingRaised, false],
                         ['Spent', -settlement.pot.cashOut, false],
-                        ...(settlement.pot.payoutsTotal > 0.005 ? [['Paid back to families', -settlement.pot.payoutsTotal, false] as const] : []),
+                        /* ⚠ ONE NAME FOR ONE THING (2026-09-02). This read "Paid back to families"
+                           while the report's band for the very same money became "Money returned to
+                           families" — two spellings of one event on two screens a treasurer reads
+                           together when closing a season, which the house rule calls a product bug
+                           rather than a wording preference. Renamed here rather than reverting the
+                           report: "paid" is the word that read as spending, which is what moved the
+                           money out of the Expenses band in the first place. */
+                        ...(settlement.pot.payoutsTotal > 0.005 ? [['Money returned to families', -settlement.pot.payoutsTotal, false] as const] : []),
                         ['Cash the team holds', settlement.pot.cashHeld, true],
                         // "Credits owed to families", not "Owed to families (credits)" — since the
                         // brackets ruling the figure carries its own (…), and the old label put two

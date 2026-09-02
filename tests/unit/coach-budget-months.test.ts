@@ -4,7 +4,7 @@ import {
   monthKeyOf, addMonths, monthSpan, deriveMonthRange, buildMonthGrid, buildCashFlow,
   isElapsed, formatMonthLabel, formatMonthLong,
   lensCell, lensTotal, lensUndated, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
-  buildBandCashFlow, cellPanelSpec, panelRowWords,
+  buildBandCashFlow, balanceShowsMonth, cellPanelSpec, panelRowWords,
   type GridLine, type CategoryEvent,
 } from '../../lib/coach-budget-months.ts';
 
@@ -728,6 +728,89 @@ describe('buildBandCashFlow — a season that was handed money', () => {
 
   it('a season that carried nothing is unchanged', () => {
     assert.equal(buildBandCashFlow(band(1000), band(400), 'actual', 9999).opening, 0);
+  });
+});
+
+/**
+ * A MONTH STILL AHEAD HAS NO **ACTUAL** BALANCE (owner ruling 2026-09-02).
+ *
+ * ⚠ Recorded money can never be dated forward — the product refuses it on every door — so the two
+ * balance rows were repeating one unchangeable figure to the end of the season, which reads as a
+ * FORECAST rather than as "nothing more has been recorded". Budget and Scheduled keep theirs: their
+ * future months carry real plan and real debt.
+ */
+describe('balanceShowsMonth — the balance rows go quiet where Actual cannot speak', () => {
+  const TODAY = '2026-09';
+  it('blanks a future month on Actual only', () => {
+    assert.equal(balanceShowsMonth('actual', '2026-10', TODAY), false);
+    assert.equal(balanceShowsMonth('budget', '2026-10', TODAY), true, 'a plan runs forward');
+    assert.equal(balanceShowsMonth('scheduled', '2026-10', TODAY), true, 'so does what is still owed');
+  });
+
+  it('keeps the CURRENT month — money can still move today', () => {
+    assert.equal(balanceShowsMonth('actual', TODAY, TODAY), true);
+  });
+
+  /* A quiet month that has already happened is not the same as one that has not. The team really
+     did hold that money through it, and the balance is the only row that says so. */
+  it('keeps a PAST month, however empty', () => {
+    assert.equal(balanceShowsMonth('actual', '2026-04', TODAY), true);
+  });
+});
+
+/**
+ * MONEY RETURNED TO FAMILIES LEFT `Total expenses` AND DID NOT LEAVE THE SEASON (owner ruling
+ * 2026-09-02).
+ *
+ * ⚠⚠ THIS IS THE ONE WAY THAT MOVE CAN GO WRONG, AND IT GOES WRONG SILENTLY. A balance that forgot
+ * the returned band still adds up month to month, still ties to its own Net row, and is overstated
+ * by every cheque the team ever wrote to a family — a wrong number that survives every check a
+ * reader would think to make. Hence a test asserting the SUBTRACTION rather than the plumbing.
+ */
+describe('buildBandCashFlow — the returned band is still money out', () => {
+  const band = (actual: number) => buildMonthGrid({
+    lines: [],
+    actuals: [{ categoryId: 'c', categoryName: 'C', itemId: null, date: '2026-08-01', amount: actual }],
+    scheduled: [],
+    todayMonth: '2026-08',
+    months: ['2026-08'],
+  });
+
+  it('subtracts it from the month, the net and the ending balance', () => {
+    const flow = buildBandCashFlow(band(1000), band(400), 'actual', 9999, 0, band(195));
+    assert.equal(flow.rows[0].moneyOut, 595, 'the month owes vendors AND families');
+    assert.equal(flow.rows[0].net, 405);
+    assert.equal(flow.ending, 405);
+  });
+
+  /* ⚠ THE UNDATED TERM HAS ITS OWN CASE, because the test above cannot reach it (review,
+     2026-09-02). Its fixture dates every dollar inside the window, so deleting the undated half of
+     the subtraction would have passed both cases while the docstring above claimed "the month, the
+     net and the ending balance" were covered. A payout is always dated today — the line is
+     belt-and-braces — but an untested line that a comment says is tested is how the next
+     kind of return goes missing. */
+  it('subtracts an UNDATED return from the net and the ending balance', () => {
+    const undated = buildMonthGrid({
+      lines: [],
+      actuals: [{ categoryId: 'c', categoryName: 'C', itemId: null, date: null, amount: 50 }],
+      scheduled: [],
+      todayMonth: '2026-08',
+      months: ['2026-08'],
+    });
+    const flow = buildBandCashFlow(band(1000), band(400), 'actual', 9999, 0, undated);
+    assert.equal(flow.undated.moneyOut, 50, 'undated returns reach the undated bucket');
+    assert.equal(flow.ending, 550, 'and the season ends 50 lighter');
+    // A balance is a moment and undated money has none — no MONTH may move.
+    assert.equal(flow.rows[0].moneyOut, 400);
+  });
+
+  /* The band is optional only for callers that predate it; a caller passing nothing must land
+     exactly where it always did, or this change moved a figure it promised not to. */
+  it('is a no-op when the season returned nothing', () => {
+    const withEmpty = buildBandCashFlow(band(1000), band(400), 'actual', 9999, 0, band(0));
+    const without = buildBandCashFlow(band(1000), band(400), 'actual', 9999, 0);
+    assert.equal(withEmpty.ending, without.ending);
+    assert.equal(withEmpty.ending, 600);
   });
 });
 
