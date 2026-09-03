@@ -243,7 +243,11 @@ export default function CoachesAccountingPage({
      `duesView` is the Dues tab's — it means nothing off its tab, and the Ledger remembers it per
      device anyway, so an address never needs to carry it anywhere else. `from` stays listed so
      saved pre-fold URLs that carry it are still scrubbed, though nothing writes it any more. */
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from'];
+  /* ⚠ `clubBill` is the Club tab's ROOM (List · Room · Question, 2026-09-02) — which bill is open
+     rides the URL exactly as `bill` and `fundraiser` do, and for the same reason it is scrubbed off
+     every other tab's address. ⚠ Every room key is registered here in the SAME COMMIT that adds the
+     room; `tests/unit/room-address-keys-guard.test.ts` fails the build otherwise. */
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());

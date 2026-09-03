@@ -17043,3 +17043,61 @@ chevron's floor stays owed to the pass that settles the grandfathered Dome Time 
 **Open owner calls carried by this walk:** the Q6 rename policy (three options, recommendation:
 refuse while another team's lines use the category), and — optional — a scratch team to walk the
 "Bring last season's plan" door end to end.
+
+## §134 · List · Room · Question, Phase A — the Club tab as a list, the bill's room, the request's one window — BUILT 2026-09-02, awaiting QA
+
+**Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4bce9d5d-bb02-436c-bba8-61866d91ff20`
+— checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
+Sign in as `uat-coach@uat-test-org.local` on
+`localhost:3000` (org `uat-test-org`, UAT Test Team → Money → Club). **The fixture gained a club
+bill for this walk** (`League registration — shared across teams`: three installments — paid,
+overdue, ahead — so the room draws every state and the list row shows NO one-tap pill until one
+piece is left); reseed with `node scripts/seed-uat-coach-fixture.mjs` if the tab is empty.
+
+**What was built (plan `docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md`, owner-ruled
+D1–D7 2026-09-02; mockup gate artifact `11607f0a`; no migration):** Phase 0 — the shared room
+shell (`RoomShell`): tiles · the record's own table · History fold · pinned foot with the doors and
+**named Prev/Next with a position count** · full-height with its own scroll (G3) · the
+accessibility floor (dialog role, label, Escape, focus trap, focus restore — `useDialogFloor`,
+which the request window stands on too) · addressable by query param (`useRoomAddress`, with a
+guard test that fails the build when a room key is missing from the hub's one-shot list or shared
+by two rooms). Phase A — the Club tab: the 2026-09-01 fold, its multi-open map and its live
+controls in table rows are **gone**; the table is a flat list; a **bill opens its room**
+(`?clubBill=`: Billed/Paid/Left/Next-due tiles, the fieldless one-tap installments unchanged
+under ruling R-D, the live filing control at a control's width, the club's note); a bill with
+exactly one unpaid installment carries a **"Record as paid · $x" pill on its row** (D5); a
+**request is a Question** (D3): "Edit" reopens its form pre-filled while pending, "Details" opens
+it read-only once decided — decline reason first, and the team's own filing (and money-in answer)
+LIVE inside it for a writer, values for a read-only coach — with the reason **previewed on the
+row**. Help article rewritten for the room and the two buttons; demo narration re-read (nothing
+named the fold — no sentence changed); `coach-club-bill` added to the layout sweep with the
+fixture's resolver and seed. Five parts to walk: (A) the list, (B) the room, (C) the pill,
+(D) the request as a question, (E) the edges. Verification: typecheck ✓ · 2,828 unit tests ✓
+(8 new) · css purity / dead-selector / token / spelling gates ✓ · check:demos ✓ (both worlds
+presentable). **Owed:** the layout reseed + sweep of `coach-club` and `coach-club-bill` on a quiet
+dev server (rows→rooms re-keys the club baseline; re-baseline with reasons), and `/simplify` +
+`/review` before the walk closes.
+**Known unproven, walked as Part B step 12:** Escape with the filing picker's menu open — the
+room's floor acts on any Escape from inside the panel unless the picker stops it first.
+
+**`/simplify` + `/review` RAN BEFORE THE WALK (2026-09-02).** Simplify: the room's header is now the
+portal's `CoachModalHeader` and its History fold the portal's `CoachCollapseSection` (two idioms
+retired before they could drift); the row's one-tap pill falls out of the figures' one pass instead
+of a second filter per render; the room's derivation is a memo, not an IIFE in JSX; `.clubFoldBlock`
+→ `.clubLiveField`; the "writer reading a decided request" mode is one named boolean. Review
+(high-risk tier, four lenses, 19 raw → 9 confirmed, 5 refuted, all nine FIXED): **(High)** the
+room's filing control carried its last pick onto the next bill under Prev/Next — keyed by the bill
+now; **(High)** after Prev/Next the focused button unmounted, focus fell to the page and the Tab
+trap stopped trapping — the floor pulls a stray Tab back in and re-seats focus when the record
+changes; **(High)** "Record as paid" cleared its busy mark when the DISCARDED first reload resolved
+(the documented double load), re-enabling the button while the row still read Unpaid — marks are
+value-settled now (a mark holds until the list reads the installment paid; only failure releases
+it); **(Medium)** a refused "Record as paid" printed its sentence behind the overlay — the room shows
+it too; the filing control's own in-flight save joins the room's and the window's busy gates; the
+walk falls back to every bill when an action in the room moves the open bill out of the active
+filter; the History fold's section id is unique per room; a Details window left open on a hidden
+tab no longer answers a bare Escape elsewhere (both floors gate on `tabActive`); and the fixture
+gained a SECOND club bill ("Gym rental — winter block", one piece left) so the list's one-tap pill —
+the state the public coach demo renders — is finally drawn by the sweep, and the room's Prev/Next
+has a real neighbour to walk. Walk rewritten for the two-bill fixture (Parts B/C; four /review
+steps marked).

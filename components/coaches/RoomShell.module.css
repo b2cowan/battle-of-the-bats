@@ -1,0 +1,150 @@
+/* The ROOM — the one overlay every money record opens (List · Room · Question, owner-ruled
+   2026-09-02). The dues drawer's anatomy, generalized: header · tiles · the record's own table ·
+   History fold · pinned foot with the doors and the named Prev / Next.
+
+   ⚠ Guard rule G3: a room is full-height with its OWN scroll, never a height-capped box whose
+   content can fall off the bottom. The body below is the only thing that scrolls; header and foot
+   stay put. `max-height` rather than `height` so a four-row record does not sit in a tall empty
+   panel — it grows to its content and stops at the viewport, and only then scrolls inside.
+
+   The overlay itself is `.modalOverlay` from coaches.module.css: its ≤640 rule turns the direct
+   child into a full-screen sheet (100dvh, no radius, back arrow shown, X hidden) with no opt-in,
+   which is exactly the phone behaviour the ruling asks for. Everything here composes with that. */
+
+.room {
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: min(1040px, 96vw);
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  outline: none;
+}
+.roomWide { max-width: min(1180px, 96vw); }
+
+/* Header: `CoachModalHeader` carries the back/close swap; this only seats the chip beside the name. */
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for a focus ring on the last control before the pinned foot. */
+  padding-bottom: 0.25rem;
+}
+
+/* Story strip — the figures that answer "where does this record stand", always first. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--home-card, var(--white-5));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+}
+.tile { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.tileLabel {
+  font-size: var(--type-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+.tileValue {
+  font-size: var(--type-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.tileValue[data-tone="good"]   { color: var(--success); }
+.tileValue[data-tone="warn"]   { color: var(--badge-warning-ink); }
+.tileValue[data-tone="danger"] { color: var(--danger); }
+
+/* The action row: a quiet Edit door and the one Record door, right-aligned like the dues drawer. */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+/* History — the portal's own CoachCollapseSection, closed by default; this only spaces it. */
+.history { margin-top: 1rem; }
+
+/* The pinned foot: once-in-a-record doors on the left, the walk on the right. */
+.foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0.75rem -1.5rem -1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  background: var(--card-bg);
+}
+.footDoors { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+  min-width: 0;
+}
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 0;
+}
+.navBtn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.navBtn:disabled { opacity: 0.4; cursor: default; }
+.navBtn:focus-visible { outline: 2px solid var(--success); outline-offset: 2px; }
+.navLabel {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.navCount {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .navBtn { min-height: var(--tap-min, 44px); }
+}
+
+@media (max-width: 640px) {
+  .room { max-height: none; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .navLabel { max-width: 7rem; }
+  .foot { margin: 0.75rem -0.9rem 0; padding: 0.75rem 0.9rem calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+}
+

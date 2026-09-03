@@ -133,23 +133,11 @@
      positional selector silently styles the wrong cell the day a column is inserted or reordered
      rather than failing where someone would notice. */
   .tableAsCards .tableFoot td.footLeadCell .footLabel { display: block; }
-  /* ⚠⚠ A FOLD'S CELL IS NOT A LABEL/VALUE LINE — it is a whole panel, and card mode was laying its
-     contents out SIDEWAYS (found by opening a fold on a phone, 2026-09-02; `check:layout` cannot
-     see it because nothing on the Club tab opens itself, so the gate only ever measures closed
-     rows). `.tableAsCards td` is `display: flex; justify-content: space-between`, so the club
-     fold's filing control and its instalment table became two flex items in a row: the picker
-     squeezed to 162px and the instalment table crushed to **52px** of a 329px card, its column
-     headings clipped to "INSTA…" / "AMOU…".
-     ⚖ This is the same failure `.cardStackCell` two rules up exists for, in its own words — "a cell
-     whose content is too big for one label/value line... without this the flex row squeezes an
-     embedded form into whatever the value column has left" — and it names the two historical
-     victims. A spanning fold cell is the third, and it needs the stronger form: not merely
-     left-aligned, but out of the flex row altogether. */
-  .tableAsCards td.clubExpandCell {
-    display: block;
-    text-align: left;
-    padding: 0.65rem 0 0 !important;
-  }
+  /* ⚰ `.tableAsCards td.clubExpandCell` STOOD HERE and is deleted (List · Room · Question,
+     2026-09-02). It pulled the Club tab's spanning fold cell out of card mode's flex row — the
+     third victim of the trap `.cardStackCell` above records — because a fold panel laid its
+     contents out SIDEWAYS on a phone. There is no fold now: a club bill opens a ROOM, which is a
+     full-screen sheet on a phone and never a table cell, so the trap has nothing left to bite. */
 }
 
 /* cardActionLabel — words for an icon-only row control, revealed only once its row has become a
@@ -11351,12 +11339,12 @@ button.gdChip[aria-pressed='true'] {
   font-weight: 400;
 }
 .clubRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
-/* ⚠⚠ THE ROW'S EXPAND TOGGLE — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
-   The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open a
-   fold at all; `check:layout` immediately measured it at 19px against the 44px floor, which is the
-   whole reason that gate renders pages instead of reading them. It is the ONE control on the row,
-   and on a phone it is a finger landing on a table row at a field — the least forgiving tap in the
-   product.
+/* ⚠⚠ THE ROW'S DOOR TO ITS ROOM — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
+   The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open the
+   record at all; `check:layout` immediately measured it at 19px against the 44px floor, which is
+   the whole reason that gate renders pages instead of reading them. (It toggled a fold that day;
+   since List · Room · Question it opens the bill's room — one way, no `aria-expanded`.) On a phone
+   it is a finger landing on a table row at a field — the least forgiving tap in the product.
    ⚠ `inline-flex` is what makes `min-height` bite: on a plain inline element it does nothing at all
    (the trap `.compactAction`'s own note records, where the cure had to be stated twice). Width is
    floored too — a 44px-tall sliver 16px wide is not a 44px target. */
@@ -11374,21 +11362,23 @@ button.gdChip[aria-pressed='true'] {
 .clubStatusCell .badge { white-space: nowrap; }
 .clubStatusCell { white-space: nowrap; }
 
-/* A bill unfolds its instalments in place, inside the same table. */
-.clubExpandRow { background: color-mix(in srgb, var(--text-tertiary) 5%, transparent); }
-.clubExpandCell { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
-.clubExpandNotes { font-size: var(--type-support); color: var(--text-tertiary); margin: 0 0 0.65rem; }
+/* ⚰ `.clubExpandRow` / `.clubExpandCell` STOOD HERE and are deleted (List · Room · Question,
+   2026-09-02). A bill no longer unfolds inside the table — the table is a LIST, and a bill opens
+   its ROOM (`RoomShell`). The club's own note on a bill is read in the room: */
+.clubRecordNote { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.9rem 0 0; }
+/* A bill row's two controls — the one-tap pill (when exactly one installment is unpaid) beside the
+   door to its room — on one line, never stacked into a taller row than its neighbours. */
+.clubRowActions { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
 
-/* ── THE FOLD IS WHERE A CLUB RECORD IS WORKED ON (owner, 2026-09-01) ─────────────────────────────
-   Both bands' rows now unfold into the same shape: the facts of the record, then its LIVE controls.
-   It replaced a dialog opened by a "File it" / "Change" button sitting in the Files-under cell of
-   every row — see the panel's filing-state comment for why counting the doors is what condemned it.
-   ⚠ These blocks stack; they never sit in a row. A fold is narrow on a phone and the picker's menu
-   needs the full width to be usable. */
-/* ⚠ A FIELD, NOT A BANNER. Left to the fold's width the picker stretched the full
-   1150px of the table for a two-word value — it read as a section heading rather than a control,
-   and the eye had to travel the whole row to get from the label to the thing it names. */
-.clubFoldBlock { margin: 0.7rem 0 0; max-width: 30rem; }
+/* ── A CLUB RECORD'S LIVE CONTROL BLOCK — inside the bill's room, or the request's window ─────────
+   (List · Room · Question, 2026-09-02; it was the fold's block until then.) The money-in question
+   where the record carries one, then the item picker, each with its sentence beneath.
+   ⚠ These blocks stack; they never sit in a row. The picker's menu needs the full width to be
+   usable on a phone. */
+/* ⚠ A FIELD, NOT A BANNER. Left to its container's width the picker stretched the full 1150px of
+   the old fold for a two-word value — it read as a section heading rather than a control, and the
+   eye had to travel the whole row to get from the label to the thing it names. */
+.clubLiveField { margin: 0.7rem 0 0; max-width: 30rem; }
 
 /* ── WHAT THIS CHANGES — the consequence strip (owner ruling 2026-09-02) ──────────────────────────
    The figures a money form used to promise in prose, as one chip per figure. The prose beside it
@@ -11437,29 +11427,14 @@ button.gdChip[aria-pressed='true'] {
    by arrow drew "spent ▲ $200.00" in success green — congratulating a coach for spending — and a
    refund's line in danger red for the best thing that had happened all week. */
 .moveNeutral { color: var(--text-primary); }
-.clubFoldBlock:first-child { margin-top: 0; }
+.clubLiveField:first-child { margin-top: 0; }
 /* ⚠ The hint under a live control is a SENTENCE, so it takes formHint's measure rather than the
    2rem `.muted` pane — the same trap the dues forms hit twice. */
-.clubFoldBlock .formHint { margin: 0; }
+.clubLiveField .formHint { margin: 0; }
 
-/* What was ASKED, as values. Wraps to one per line on a phone rather than squeezing four columns. */
-.clubFoldFacts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.4rem;
-  margin: 0 0 0.55rem;
-}
-.clubFoldFact { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.clubFoldFactLabel {
-  font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-tertiary);
-}
-.clubFoldFactValue { font-size: var(--type-support); color: var(--text-secondary); font-weight: 600; }
-
-/* The one door left in a fold — correcting a request the club has not answered yet. */
-.clubFoldDoors { margin-top: 0.8rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+/* ⚰ `.clubFoldFacts` / `.clubFoldFact*` / `.clubFoldDoors` STOOD HERE and are deleted (List · Room ·
+   Question, 2026-09-02). A request's facts read in its own window (the form, read-only, decline
+   reason first) and its one door is the row's "Edit" / "Details" button; nothing unfolds. */
 
 /* ── The filter row. Renders only past CLUB_FILTER_FLOOR records — on a short list the chips would
       be chrome taller than the thing they organise. ── */

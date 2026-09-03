@@ -609,7 +609,13 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          ⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30): the club's rows on this book are unchanged
          by it. A grant and a repayment are the same cash on the same day either way — the answer
          moves a row on Budget vs. Actual, never a dollar in this ledger — so all three sentences
-         stand untouched. */
+         stand untouched.
+         ⚠ RE-READ FOR LIST · ROOM · QUESTION PHASE A (2026-09-02 — the Club tab rebuilt as a flat
+         list with a bill ROOM and a request window): "a club row opens the Club screen" is still
+         exactly what happens, and no dock line or tour step names the Club tab's rows, folds or
+         buttons, so nothing here went stale. Should a moment show it? The seeded world
+         (MIDSEASON_CLUB_MONEY) renders the new shape by itself, and the `ea8ddd14` cap says no
+         clause is added — if the owner wants the room narrated, swap a clause. */
       /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
            · *Are the existing sentences still true?* Yes — the tab is named Ledger now and opens on
              the same Timeline this step describes (`view` stated explicitly so a prospect's

@@ -96,6 +96,12 @@ A shared room component all four roomed surfaces consume:
 - Write-surface guard rails carried from the fold /review fixes (they are properties of
   *dismissible containers*, not folds): value-settled live controls (never latch on an event), a
   busy-gated close, errors raised to a surface that survives the room closing.
+- **Built (Phase 0, 2026-09-02):** `components/coaches/RoomShell.tsx` (+ `.module.css`),
+  `useDialogFloor.ts` (the floor, shared with Question modals), `useRoomAddress.ts`,
+  `lib/room-neighbours.ts`; `tests/unit/room-address-keys-guard.test.ts` enforces BOTH guardrails
+  (a room key on the one-shot list and unique; a room sentinel named by a sweep entry).
+  Follow-ups the /simplify pass recorded: `HelpDrawer` / `BottomSheet` adopt `useDialogFloor`;
+  the dues drawer's inline-styled tiles retire onto the shell's strip (Phase D).
 
 ## 2. Phase A — Club tab (first: the screen that prompted the session)
 
@@ -124,6 +130,10 @@ A shared room component all four roomed surfaces consume:
 - **Record conversation gains the promised-sponsorship hand-off** (carried ruling): "A sponsor
   promised money — nothing arrived yet" → hands into the existing "+ Pledge" sheet, typing carried,
   reversible — the mirror of the bill's "we agreed to pay something later" row.
+- **Verify the first genuinely stacked pair** (the drive's Record grid Question over an open room):
+  Escape with nothing focused must close only the top layer. `useDialogFloor` acts on keys from
+  inside its panel or from the bare document; if the bare-document case double-fires, narrow it to
+  the most recently opened dialog — never build a full overlay stack in `lib/coaches-overlay`.
 
 ## 4. Phase C — Ledger: the bill room
 
@@ -136,6 +146,10 @@ sub-view whose styles are named "drawer" — this is a re-home, not a rebuild):
 - Recorded payments fold into **History** (auto-open when a payment lands this session); Undo
   stays an inline named-dollar confirm.
 - Close replaces the hardcoded "back to Ledger" label (a fragility the code itself flags).
+- **Retire the `data-commitment="loaded"` sentinel** in favour of the shell's `data-room` pair, and
+  re-point the `coach-commitment` sweep entry — one sweep convention for every room, not two.
+- The Ledger's own `?bill=` writer and the dues panel's `setUrlParam` both become `useRoomAddress`
+  (Phase D for dues) — one address writer, as the hook's docblock intends.
 - **Field fixes found in the 2026-09-02 audit, done in the same pass:**
   - Tags drop the one-call-site `addAsChip` "+" reveal → the standard always-visible search under
     chips (reverses the 08-27 §114 tweak, owner-flagged 2026-09-02);

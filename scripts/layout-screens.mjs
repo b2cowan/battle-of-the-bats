@@ -26,7 +26,7 @@
 
 /**
  * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, gameEventId:string,
- *            fundraiserId:string, sponsorId:string, finishedTeamId:string,
+ *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
  *            evalSessionId:string, opponentKey:string,
  *            finishedYearId:string}} Ctx
@@ -255,6 +255,13 @@ export const SCREENS = [
      collapsible bill with an instalment table inside it, and a request table with a filing column.
      The old ids' saved addresses still resolve here, but the SCREEN under test is the merged one. */
   { id: 'coach-club',              session: 'coach', path: (c) => `${team(c)}/accounting?section=club`,             ready: 'h1' },
+  /* ⚠⚠ A BILL'S ROOM IS ITS OWN SHAPE (List · Room · Question Phase A, 2026-09-02). The Club tab is
+     a flat LIST now — `coach-club` above measures rows that never open — and a club bill opens a
+     ROOM by `?clubBill=`: four tiles, the installment table with its one-tap doors, the live filing
+     control and the named Prev/Next. Same lesson as the drive expansion and the settlement sheet:
+     the sweep measures what is drawn, and a green list proves nothing about the room. `ready` waits
+     on the room's own sentinel rather than the hub's h1, which is on screen before the room is. */
+  { id: 'coach-club-bill',         session: 'coach', path: (c) => `${team(c)}/accounting?section=club&clubBill=${c.clubBillId}`, ready: '[data-room="club-bill"][data-room-state="loaded"]' },
 
   // ── A team BETWEEN SEASONS — its working season has finished ────────────────
   /**

@@ -52,7 +52,7 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
 /**
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
  *                    practiceEventId:string, gameEventId:string, fundraiserId:string,
- *                    sponsorId:string, finishedTeamId:string, finishedYearId:string,
+ *                    sponsorId:string, clubBillId:string, finishedTeamId:string, finishedYearId:string,
  *                    finishedPracticeEventId:string, receiptPlayerId:string, commitmentId:string,
  *                    baseUrl:string}>}
  */
@@ -282,6 +282,23 @@ export async function resolveUatContext() {
   }
 
   /**
+   * ⚠ A CLUB BILL, for the room the Club tab opens by `?clubBill=` (List · Room · Question Phase A,
+   * 2026-09-02). The tab's fold was rebuilt over a fixture with ZERO club bills — the QA ledger
+   * records the bills fold as unmeasured by it — so the seeder now writes one. Oldest first, like
+   * the commitment, so the sweep's baseline compares like with like across reseeds.
+   */
+  const clubBill = await db.from('rep_allocation_splits')
+    .select('id').eq('team_id', team.data.id).eq('program_year_id', py.data.id)
+    .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  if (clubBill.error) throw new FixtureError(`club bill lookup failed: ${clubBill.error.message}`);
+  if (!clubBill.data) {
+    throw new FixtureError(
+      'No club bill on the probe team, so the Club tab\'s bill room cannot be swept — it would be measured closed.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
+  /**
    * ⚠ The opponent scouting book is keyed by the opponent's NAME, not a row id — the book is
    * derived from played games. Reading it from a real game rather than hard-coding "Ridgeview"
    * keeps this honest if the seeded opponents are ever renamed.
@@ -307,6 +324,8 @@ export async function resolveUatContext() {
     gameEventId: game.data.id,
     fundraiserId: fr.data.id,
     sponsorId: sp.data.id,
+    /** The club bill whose ROOM the sweep opens (`?clubBill=`). */
+    clubBillId: clubBill.data.id,
     /** A team whose WORKING season has finished — Season's End, the compare list, read-only records. */
     finishedTeamId: pastTeam.data.id,
     finishedYearId: pastYear.data.id,

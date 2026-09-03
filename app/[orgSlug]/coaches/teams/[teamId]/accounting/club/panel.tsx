@@ -1,13 +1,17 @@
 'use client';
-import { Fragment, useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
 import {
   Building2, ArrowUpRight, ArrowDownLeft, Plus, Trash2, Clock,
-  ChevronDown, ChevronUp, AlertTriangle, CheckCircle2,
+  ChevronRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
+import { useRoomAddress } from '@/components/coaches/useRoomAddress';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { roomNeighbours } from '@/lib/room-neighbours';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
@@ -55,6 +59,17 @@ import styles from '../../../../coaches.module.css';
  * those instalments were or how a request was decided. These are RECORDS — nothing here recomputes
  * — so they render in place with every write control withdrawn. `isReadOnly` comes from the server,
  * not from the client's own guess about the season.
+ *
+ * ⚖⚖ LIST · ROOM · QUESTION (owner-ruled 2026-09-02, superseding the 2026-09-01 fold). The table is
+ * a LIST again — fixed rows that never grow a form. A club BILL opens its ROOM (`RoomShell`: tiles,
+ * the fieldless one-tap installments, the live filing control at a control's width, a named
+ * Prev/Next across the bills as the list shows them), addressed by `?clubBill=`. A club REQUEST is a
+ * QUESTION: the form it was made in is its one editor — "Edit" while the club has not answered,
+ * "Details" once it has — with the team's own filing live inside it either way, because the ask
+ * locks and the filing never does (D3). What the in-row fold did for month-end (several bills open
+ * at once) is answered on the list itself: a one-tap "Record as paid · $x" pill on a bill with
+ * exactly one unpaid installment, a declined request's reason previewed on its row, and Prev/Next
+ * inside the room. The fold, its multi-open map and its live controls in table rows are gone.
  */
 
 interface AllocationSplit {
@@ -71,6 +86,16 @@ interface AllocationSplit {
 }
 
 const PAYMENT_METHODS = ['Cash', 'E-Transfer', 'Cheque', 'Card', 'Other'];
+
+/** A bill's figures before its installments have been walked — one pass fills all five. */
+const EMPTY_FIGURES = {
+  paid: 0,
+  outstanding: 0,
+  overdue: 0,
+  unpaidCount: 0,
+  /** The one unpaid installment when exactly one is left — the row's one-tap pill (D5). */
+  soleUnpaid: null as RepAllocationInstallment | null,
+};
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -140,9 +165,9 @@ function sandboxRefusal(res: Response, data: any): string | null {
 }
 
 /**
- * ONE ROW'S FILING, AS A LIVE CONTROL — the money-in question where the record carries one, the
- * item picker, the sentence that says what it means for the report, and the row's own saving/error
- * state. Rendered only inside an OPEN fold.
+ * ONE RECORD'S FILING, AS A LIVE CONTROL — the money-in question where the record carries one, the
+ * item picker, the sentence that says what it means for the report, and its own saving/error
+ * state. Rendered inside the bill's ROOM, or inside a decided request's window.
  *
  * ⚠⚠ MODULE SCOPE, NOT DECLARED INSIDE THE PANEL. A component declared inside `ClubPanel` is a new
  * type on every render of the panel, so React unmounts and remounts this one whenever anything else
@@ -152,14 +177,15 @@ function sandboxRefusal(res: Response, data: any): string | null {
  *
  * ⚠ IT OWNS THE WRITE, which is what deleted the panel's three per-row `Record<string, …>` maps.
  * They tracked busy, error and an in-flight draft for a concurrency the screen cannot produce: only
- * an open fold renders this, and a coach answers one control at a time.
+ * one record is ever open, so only one of these is ever mounted, and a coach answers one control
+ * at a time.
  *
  * ⚠ `pending` IS AN OBJECT OR NULL, NEVER A BARE SELECTION — and that is load-bearing. The chosen
  * word is legitimately `null` when a coach clears the filing, so "nothing in flight" and "null in
  * flight" have to be different states or a clear would flash the old word back while it saved.
  */
 function ClubFilingControl({
-  stored, ask, selectId, categories, direction, orgSlug, teamId, save, consequence, onFailure,
+  stored, ask, selectId, categories, direction, orgSlug, teamId, save, consequence, onFailure, onBusyChange,
 }: {
   /** What the row carries today — the picker falls back to this whenever nothing is in flight. */
   stored: BudgetItemSelection | null;
@@ -175,6 +201,9 @@ function ClubFilingControl({
   consequence: (value: BudgetItemSelection | null) => ReactNode;
   /** Raises a real failure to the panel's banner, so it outlives this control being collapsed. */
   onFailure?: (message: string) => void;
+  /** Tells the surface holding this control that a write is in flight, so its busy gate can refuse
+   *  a dismissal that would tear the control down under its own request (`/review`, 2026-09-02). */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [pending, setPending] = useState<{ sel: BudgetItemSelection | null; meaning: ClubMoneyInMeaning | null } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -221,6 +250,7 @@ function ClubFilingControl({
   async function commit(sel: BudgetItemSelection | null, nextMeaning: ClubMoneyInMeaning | null) {
     setPending({ sel, meaning: nextMeaning });
     setBusy(true);
+    onBusyChange?.(true);
     setError('');
     setNote('');
     try {
@@ -241,13 +271,14 @@ function ClubFilingControl({
       setPending(null);
     } finally {
       setBusy(false);
+      onBusyChange?.(false);
     }
   }
 
   return (
     <>
       {ask && (
-        <div className={`${styles.field} ${styles.clubFoldBlock}`}>
+        <div className={`${styles.field} ${styles.clubLiveField}`}>
           <label className={styles.label} htmlFor={ask.id}>{CLUB_MONEY_IN_ASK.label}</label>
           <SublinedChoice
             id={ask.id}
@@ -268,7 +299,7 @@ function ClubFilingControl({
           </p>
         </div>
       )}
-      <div className={`${styles.field} ${styles.clubFoldBlock}`}>
+      <div className={`${styles.field} ${styles.clubLiveField}`}>
         <label className={styles.label} htmlFor={selectId}>Files under</label>
         <BudgetItemPicker
           categories={categories}
@@ -303,6 +334,29 @@ function StatusBadge({ status }: { status: string }) {
       {status === 'pending' && <Clock size={11} aria-hidden />} {chip.label}
     </span>
   );
+}
+
+/** A bill's state chip — the same on its row and in its room's header, so the two can never disagree. */
+function BillStatusBadge({ overdue, outstanding }: { overdue: number; outstanding: number }) {
+  if (overdue > 0) {
+    return (
+      <span className={`${styles.badge} ${styles.badgeOverdue}`}>
+        <AlertTriangle size={11} aria-hidden /> {overdue} overdue
+      </span>
+    );
+  }
+  if (outstanding > 0.005) return <span className={`${styles.badge} ${styles.badgeDraft}`}>On track</span>;
+  return (
+    <span className={`${styles.badge} ${styles.badgeApproved}`}>
+      <CheckCircle2 size={11} aria-hidden /> Paid
+    </span>
+  );
+}
+
+/** The first line of a club's written reason, for the row — the whole text lives in Details. */
+function preview(text: string, max = 110) {
+  const t = text.trim();
+  return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
 }
 
 /**
@@ -461,8 +515,19 @@ export function ClubPanel({
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  /* Which bill's ROOM is open rides the URL (`?clubBill=`), so a link can open straight to one and
+     the layout sweep can reach the room. ⚠ The key is listed in the hub's ONE_SHOT_KEYS; the guard
+     test fails the build if a room key ever is not. */
+  const [openBillId, setOpenBillId] = useRoomAddress('clubBill');
+  /* ⚠ A MARK IS VALUE-SETTLED, NEVER EVENT-CLEARED (`/review`, 2026-09-02). Every write here starts
+     TWO reloads (the revision bump re-fires this panel's own subscription) and the write awaits the
+     FIRST, which the sequence guard DISCARDS — so clearing a mark when the write "finished" re-enabled
+     "Record as paid" while the row still read Unpaid, and a second tap earned a 409 beside a screen
+     that then agreed the payment had gone through. A mark now stays until the installment READS paid
+     (`isMarking` below) and is only cleared by hand on failure. Same cure as `ClubFilingControl`. */
   const [marking, setMarking] = useState<Record<string, boolean>>({});
+  /** The room's filing control is mid-write — part of the room's busy gate, not the control's alone. */
+  const [filingBusy, setFilingBusy] = useState(false);
   /* ⚠ COMPONENT STATE, NEVER PERSISTED — and that is the rule, not an omission. A filter a coach
      does not remember setting is money that has gone missing, found weeks later. It resets on every
      visit to this tab. */
@@ -497,45 +562,28 @@ export function ClubPanel({
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
 
-  /* ── Filing, IN THE ROW'S OWN FOLD ────────────────────────────────────────
+  /* ── Filing, IN THE RECORD'S OWN SURFACE ──────────────────────────────────
      ⚖ D3 STILL HOLDS: THE RECORD LOCKS, THE TEAM'S LABEL DOES NOT (owner, 2026-08-30). An answered
      request reads read-only — it records what the club acted on — but what the team FILES it under,
      and what the team reads the arrival as, are the team's own layer on top. Re-filing moves no
      money.
 
-     ⚠⚠ WHAT CHANGED ON 2026-09-01 IS WHERE IT LIVES, NOT WHO MAY DO IT. This was a DIALOG opened by
-     a "File it" / "Change" button sitting inside the Files-under CELL of every row. The owner asked
-     for the button to go; counting the doors showed something worse than noise — an approved
-     request had THREE of them (the row, the cell button, the row-end pencil/eye) opening TWO
-     different windows, and the one the row opened showed the filing READ-ONLY while the one that
-     could change it was the cell button. A coach who opened the record in order to file it had to
-     close it again and hunt.
+     ⚠ WHERE IT LIVES (List · Room · Question, 2026-09-02): a bill's filing is a live control inside
+     the bill's ROOM; a request's is inside the request's one window — a field of the form while the
+     club has not answered, and the ONE live control in that window once it has. The 2026-09-01
+     fold put both in the table row, and a pending request's ask ended up with TWO editors (the
+     fold's control and the window's field) — the exact "a record has ONE editor" defect the
+     2026-08-26 ruling names. One window per request closes it; nothing on this screen edits a
+     record in two places any more.
 
-     ⚖ So the dialog is gone and the picker is a LIVE CONTROL where the value is read — the owner's
-     own 2026-08-26 ruling ("a modal is for a QUESTION, not for a field", and "a record has ONE
-     editor"), and the same answer the fundraiser drive reached on 2026-08-31 when a modal was asked
-     for there and refused. ⚠ The player-dues drawer was raised as a precedent for putting a
-     multi-instalment bill in a window and it does NOT carry: a dues instalment asks real questions
-     (Change → this one, this and later, or all unpaid?), while a club instalment is FIELDLESS by
-     ruling R-D — one tap, server-derived. There is no editing surface for a window to hold.
+     ⚠ NO DISCARD GUARD ON THE LIVE CONTROL, deliberately — it writes on the answer, so there is
+     nothing unsaved to lose except the picker's own inline "add a word" text, which a deliberate
+     Close (never a stray backdrop tap: the room's shell refuses those while a write is in flight)
+     throws away, and one press reopens the room. ⚠ WHAT WOULD CHANGE THIS: if the inline create
+     ever grows past a single field, revisit it.
 
-     ⚠⚠ NO DISCARD GUARD, AND THE FIRST VERSION OF THIS NOTE OVERSTATED WHY (corrected `/review`,
-     2026-09-02). It claimed "there is never a pending edit to lose", which is true of PICKING an
-     existing word and FALSE of the picker's inline "add a new category / item" flow: that text is
-     the picker's own local state and reaches no server until the coach presses its save. Collapsing
-     the row throws it away, exactly as the dialog's backdrop tap used to.
-     ⚖ It is still not given a guard, and the reason is the GESTURE rather than the cost. The
-     dialog's hazard was an ACCIDENTAL dismissal — a stray click on a backdrop the coach was not
-     aiming at. Collapsing a row is a deliberate press on that row, and it is one press to reopen.
-     A confirm-before-collapse on an ordinary row toggle would be heavier than the thing it guards.
-     ⚠ WHAT WOULD CHANGE THIS: if the inline create ever grows past a single field, revisit it.
-
-     ⚠ THE PANEL HOLDS NO PER-ROW WRITE STATE (`/simplify`, 2026-09-02). The first build carried
-     three `Record<string, …>` maps — busy, error and an in-flight draft — keyed by row id. They
-     were bookkeeping for a concurrency the screen cannot produce: only an OPEN fold renders a
-     filing control, and the coach answers one control at a time. `ClubFilingControl` owns all
-     three as ordinary local state, which is the shape `DriveBand`'s own entry editor already
-     uses one tab over. */
+     ⚠ THE PANEL HOLDS NO PER-ROW WRITE STATE (`/simplify`, 2026-09-02): `ClubFilingControl` owns
+     busy, error and its in-flight draft as ordinary local state, and only one is ever mounted. */
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const closed = closedAssignments.find(a => a.teamId === teamId);
@@ -559,6 +607,9 @@ export function ClubPanel({
      Save button — the broken affordance the write gate on the toolbar exists to prevent. */
   const readOnly = !!editing && (editing.status !== 'pending' || !canWriteMoney);
   const canEditRecord = !editing || editing.status === 'pending';
+  /* The window's THIRD mode, named once: a WRITER reading a decided request. Every field is a fact,
+     and the one thing still live is the team's own filing (with the money-in answer) — D3. */
+  const filingIsLive = readOnly && canWriteMoney;
 
   /* ⚠⚠ WHILE A SAVE OR A WITHDRAW IS IN FLIGHT THE WINDOW CANNOT BE DISMISSED — not by the X, not by
      the overlay, not by Cancel (review 2026-08-16, carried in whole).
@@ -602,6 +653,14 @@ export function ClubPanel({
     close: () => { setShowForm(false); setConfirmWithdraw(false); },
     noun: 'club request',
   });
+  /* The request window stands on the same accessibility floor as a room (D7): Escape closes
+     (through the discard guard, never past it), Tab stays inside, focus returns to the row. */
+  const formPanelRef = useRef<HTMLDivElement>(null);
+  /* ⚠ Gated on `tabActive` (`/review`, 2026-09-02): the hub keeps this panel mounted, hidden, when a
+     coach leaves the tab with the window open, and a floor left armed on a hidden panel answered a
+     bare Escape on whatever tab they were on — closing an invisible window, or raising its discard
+     question over an unrelated screen. The window's filing write counts as busy too. */
+  useDialogFloor(showForm && tabActive, formPanelRef, { onClose: () => { void closeForm(); }, busy: busy || filingBusy });
 
 
   /* ⚠⚠ EVERY LOAD CARRIES A SEQUENCE AND DISCARDS STALE RESPONSES (the P3 review finding, inherited
@@ -722,19 +781,34 @@ export function ClubPanel({
    * moving code between components does.
    */
   const splitFigures = useMemo(() => {
-    const byId = new Map<string, { paid: number; outstanding: number; overdue: number }>();
+    const byId = new Map<string, typeof EMPTY_FIGURES>();
     for (const s of splits) {
-      let paid = 0, outstanding = 0, overdue = 0;
-      // One pass per bill, not three — the three figures partition the same list.
+      let paid = 0, outstanding = 0, overdue = 0, unpaidCount = 0;
+      let soleUnpaid: RepAllocationInstallment | null = null;
+      // One pass per bill, not five — the figures partition the same list, and the row's one-tap
+      // pill (`soleUnpaid`, D5) falls out of the same walk rather than a second filter per render.
       for (const i of s.installments) {
         if (i.paidAt) { paid += i.amount; continue; }
         outstanding += i.amount;
+        unpaidCount += 1;
+        soleUnpaid = unpaidCount === 1 ? i : null;
         if (i.dueDate < today) overdue += 1;
       }
-      byId.set(s.id, { paid, outstanding, overdue });
+      byId.set(s.id, { paid, outstanding, overdue, unpaidCount, soleUnpaid });
     }
     return byId;
   }, [splits, today]);
+
+  /** Every installment the loaded list says is paid — what settles a mark (see `marking`). */
+  const paidIds = useMemo(
+    () => new Set(splits.flatMap(s => s.installments.filter(i => i.paidAt).map(i => i.id))),
+    [splits],
+  );
+  /** A write on this installment is in flight AND the list has not yet read it back as paid. */
+  const isMarking = useCallback(
+    (inst: RepAllocationInstallment) => !!marking[inst.id] && !inst.paidAt,
+    [marking],
+  );
 
   /**
    * WHICH STATES EACH ROW IS IN — one pass, shared by the chip counts and the filtered lists.
@@ -836,10 +910,56 @@ export function ClubPanel({
 
   const hasAnything = splits.length > 0 || requests.length > 0;
 
+  /** The bill whose room is open, from the loaded list — the address alone opens nothing. */
+  const openSplit = useMemo(() => splits.find(s => s.id === openBillId) ?? null, [splits, openBillId]);
+  /* A stale address — a bill from another season, one the club withdrew — must not leave a room
+     "open" on nothing. Once the list has loaded without it, the key is dropped, quietly. */
+  useEffect(() => {
+    if (openBillId && !loading && !error && !openSplit) setOpenBillId(null);
+  }, [openBillId, loading, error, openSplit, setOpenBillId]);
+  /* The request the window shows, kept LIVE: the window's filing control writes and reloads the
+     list, and `editing` is the snapshot the window opened with — reading the row back from the list
+     is what lets the control settle on the value the server now holds. */
+  const liveEditing = useMemo(
+    () => (editing ? requests.find(r => r.id === editing.id) ?? editing : null),
+    [editing, requests],
+  );
+  /** The open bill's room — its figures, tiles and walk — derived when the bill or the list it
+   *  walks changes, never per keystroke of the request form this panel also holds. */
+  const billRoom = useMemo(() => {
+    if (!openSplit) return null;
+    const figures = splitFigures.get(openSplit.id) ?? EMPTY_FIGURES;
+    const nextDue = [...openSplit.installments]
+      .filter(i => !i.paidAt)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
+    const tiles: RoomTile[] = [
+      { label: 'Billed', value: fmt(openSplit.amount) },
+      { label: 'Paid', value: fmt(figures.paid), tone: figures.paid > 0.005 ? 'good' : undefined },
+      {
+        label: 'Left',
+        value: fmt(figures.outstanding),
+        tone: figures.overdue > 0 ? 'danger' : figures.outstanding > 0.005 ? 'warn' : undefined,
+      },
+      { label: 'Next due', value: nextDue ? `${fmtDate(nextDue.dueDate)} · ${fmt(nextDue.amount)}` : 'Paid off' },
+    ];
+    /* The walk is the list as the coach sees it — unless an action taken IN the room (paying the
+       last overdue piece under "Needs attention", filing under "Not filed") has just moved this
+       bill out of the active filter. Then the walk falls back to every bill, so Prev/Next keep
+       working instead of collapsing to "0 of N" on the very record on screen (`/review`). */
+    const walkList = shownSplits.some(s => s.id === openSplit.id) ? shownSplits : splits;
+    const walk = roomNeighbours(walkList, openSplit.id, s => s.id, s => s.allocationDescription);
+    return { figures, tiles, walk };
+  }, [openSplit, splitFigures, shownSplits, splits]);
+
   // ── Writes ───────────────────────────────────────────────────────────────
   async function markPaid(split: AllocationSplit, inst: RepAllocationInstallment) {
-    setMarking(prev => ({ ...prev, [inst.id]: true }));
+    // Marks that have since read back as paid are dropped on the way in, so the map never grows.
+    setMarking(prev => ({
+      ...Object.fromEntries(Object.entries(prev).filter(([id, on]) => on && !paidIds.has(id))),
+      [inst.id]: true,
+    }));
     setActionError('');
+    const release = () => setMarking(prev => ({ ...prev, [inst.id]: false }));
     try {
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${split.id}/installments/${inst.id}`,
@@ -851,20 +971,23 @@ export function ClubPanel({
          name too. ⚠ The request form's own submit is NOT covered here: it is the pre-existing
          window, outside the fold this pass rebuilt, and still shows the raw string. */
       const refused = sandboxRefusal(res, data);
-      if (refused) { setActionError(refused); return; }
+      if (refused) { setActionError(refused); release(); return; }
       if (!res.ok) throw new Error(data?.error ?? 'Failed to mark this installment paid.');
       /* ⚠⚠ QUIET FOR THE SAME REASON `writeFiling` IS (`/review`, 2026-09-02, two lenses). This
-         button lives INSIDE a bill's fold, beside the filing control — a loud reload sets
-         `loading`, the whole table goes behind that flag, and recording a payment tore down the
-         open fold and the picker next to it, half-typed new budget word and all. Fixing the flash
-         for one control in the fold and not the other beside it was the wrong half of a fix.
+         button lives INSIDE a bill's room, beside the filing control (or on the row as the one-tap
+         pill) — a loud reload sets `loading`, the whole table goes behind that flag, and recording
+         a payment tore down the open record and the picker next to it, half-typed new budget word
+         and all. Fixing the flash for one control and not the other beside it was the wrong half
+         of a fix.
          ⚠ NOT changed: the request form's own submit and withdraw. Those close a modal — a context
          switch the coach asked for — and a visible reload behind it is not the same defect. */
+      /* ⚠ The mark is NOT released on success — the reload this awaits is the one the sequence
+         guard discards, so "finished" here is not "read back". The mark settles by value when the
+         list reads the installment as paid (`isMarking`). */
       await refreshAfterWrite(true);
     } catch (e: any) {
       setActionError(e.message ?? 'Failed to mark this installment paid.');
-    } finally {
-      setMarking(prev => ({ ...prev, [inst.id]: false }));
+      release();
     }
   }
 
@@ -954,10 +1077,11 @@ export function ClubPanel({
   const answerMeaning = onMeaningAnswered(formMeaning, setFormMeaning, clearFormItem);
 
   /**
-   * Open a PENDING request to correct or withdraw it.
+   * Open a request's window — "Edit" on a pending one the coach can write, "Details" otherwise.
    *
-   * ⚠ Reached from the one door at the foot of that request's fold, which renders only while the
-   * club has not answered and the coach can write money. A reviewed record has no door here at all.
+   * ⚠ ONE WINDOW, TWO MODES (D3). `readOnly` below decides which: a request the club has answered,
+   * or any request for a coach without money-write, opens as facts with the decline reason first —
+   * and, for a writer, the team's own filing still live inside it.
    */
   function openRecord(r: ClubRequest) {
     setEditing(r);
@@ -1381,171 +1505,62 @@ export function ClubPanel({
                         </td>
                       </tr>
                     ) : shownSplits.map(split => {
-                      const isOpen = !!expanded[split.id];
-                      const { paid, outstanding, overdue: splitOverdue } =
-                        splitFigures.get(split.id) ?? { paid: 0, outstanding: 0, overdue: 0 };
+                      const { paid, outstanding, overdue: splitOverdue, soleUnpaid } =
+                        splitFigures.get(split.id) ?? EMPTY_FIGURES;
+                      /* ⚠ THE ONE-TAP PILL (D5): a bill with exactly ONE unpaid installment keeps
+                         month-end at zero navigation — the list's answer to losing several folds
+                         open at once. Two or more unpaid pieces is a choice, and a choice opens the
+                         room. `soleUnpaid` comes from the figures' one pass, not a second filter. */
+                      const oneTap = canWriteMoney ? soleUnpaid : null;
                       return (
-                        <Fragment key={split.id}>
-                          <tr
-                            className={`${styles.tr} ${styles.rowTappable}`}
-                            onClick={() => { if (window.getSelection()?.toString()) return; setExpanded(prev => ({ ...prev, [split.id]: !prev[split.id] })); }}
-                            aria-expanded={isOpen}
-                          >
-                            <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
-                              {split.allocationDescription}
-                              <span className={styles.clubRowSub}>{fmt(split.amount)} total · {fmt(paid)} paid</span>
-                            </td>
-                            {/* ⚠ THE CELL READS, IT DOES NOT ACT (owner, 2026-09-01). The picker
-                                that changes this lives in the row's fold, live, one tap away — see
-                                the filing-state comment at the top of this component. */}
-                            <td className={styles.td} data-label="Files under">
-                              <Filing category={split.budgetCategoryName} item={split.budgetItemName} />
-                            </td>
-                            <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
-                              {outstanding > 0.005 ? fmt(outstanding) : <span className={styles.mutedInline}>—</span>}
-                            </td>
-                            <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
-                              {splitOverdue > 0 ? (
-                                <span className={`${styles.badge} ${styles.badgeOverdue}`}>
-                                  <AlertTriangle size={11} aria-hidden /> {splitOverdue} overdue
-                                </span>
-                              ) : outstanding > 0.005 ? (
-                                <span className={`${styles.badge} ${styles.badgeDraft}`}>On track</span>
-                              ) : (
-                                <span className={`${styles.badge} ${styles.badgeApproved}`}>
-                                  <CheckCircle2 size={11} aria-hidden /> Paid
-                                </span>
+                        <tr
+                          key={split.id}
+                          className={`${styles.tr} ${styles.rowTappable}`}
+                          onClick={() => { if (window.getSelection()?.toString()) return; setOpenBillId(split.id); }}
+                        >
+                          <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+                            {split.allocationDescription}
+                            <span className={styles.clubRowSub}>{fmt(split.amount)} total · {fmt(paid)} paid</span>
+                          </td>
+                          {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
+                              the bill's room, one tap away — see the filing note at the top of this
+                              component. */}
+                          <td className={styles.td} data-label="Files under">
+                            <Filing category={split.budgetCategoryName} item={split.budgetItemName} />
+                          </td>
+                          <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
+                            {outstanding > 0.005 ? fmt(outstanding) : <span className={styles.mutedInline}>—</span>}
+                          </td>
+                          <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
+                            <BillStatusBadge overdue={splitOverdue} outstanding={outstanding} />
+                          </td>
+                          <td className={`${styles.td} ${styles.cardActionCell}`}>
+                            <span className={styles.clubRowActions}>
+                              {oneTap && (
+                                <button
+                                  type="button"
+                                  className={`${styles.btnSecondary} ${styles.compactAction}`}
+                                  disabled={isMarking(oneTap)}
+                                  onClick={e => { e.stopPropagation(); void markPaid(split, oneTap); }}
+                                >
+                                  {isMarking(oneTap) ? '…' : <>Record as paid · {fmt(oneTap.amount)}</>}
+                                </button>
                               )}
-                            </td>
-                            <td className={`${styles.td} ${styles.cardActionCell}`}>
-                              {/* ⚠⚠ ONE CHEVRON, ON EVERY ROW OF BOTH BANDS (owner, 2026-09-01).
-                                  It used to be a chevron here and a pencil-or-eye on a request,
-                                  on the reasoning that the control should say which kind of row
-                                  it was — but the two kinds now open the SAME thing (their own
-                                  fold), so the distinction had nothing left to describe.
-                                  ⚠ And a chevron is the only glyph that stays honest across the
-                                  whole table: a pencil on a declined request, or on any row for a
-                                  coach with read-only money access, would offer an edit to a
-                                  record with nothing editable.
-                                  ⚠⚠ IT IS A REAL BUTTON, AND THAT WAS A REGRESSION FOR HALF A DAY
-                                  (`/review`, 2026-09-02). A bare `<tr onClick>` with an
-                                  `aria-hidden` glyph is unreachable by keyboard and invisible to a
-                                  screen reader — and since EVERYTHING moved into the fold, that
-                                  made the filing control, the decline reason and the withdraw door
-                                  mouse-only. The request row used to carry a real labelled button
-                                  and lost it when the pencil/eye went. `DriveBand` solved exactly
-                                  this the day before and left the warning; this now honours it. */}
+                              {/* ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
+                                  clickable <tr> is mouse-only (the 2026-09-02 lesson), and now the
+                                  room holds the filing control, the door has to be reachable. One
+                                  glyph on every bill: they all open the same thing. */}
                               <button
                                 type="button"
                                 className={`${styles.linkBtn} ${styles.clubRowToggle}`}
-                                onClick={e => { e.stopPropagation(); setExpanded(prev => ({ ...prev, [split.id]: !prev[split.id] })); }}
-                                aria-expanded={isOpen}
-                                aria-label={`${isOpen ? 'Close' : 'Open'} ${split.allocationDescription}`}
+                                onClick={e => { e.stopPropagation(); setOpenBillId(split.id); }}
+                                aria-label={`Open ${split.allocationDescription}`}
                               >
-                                {isOpen
-                                  ? <ChevronUp size={16} className={styles.clubRowChevron} aria-hidden />
-                                  : <ChevronDown size={16} className={styles.clubRowChevron} aria-hidden />}
+                                <ChevronRight size={16} className={styles.clubRowChevron} aria-hidden />
                               </button>
-                            </td>
-                          </tr>
-                          {isOpen && (
-                            <tr className={styles.clubExpandRow}>
-                              <td className={styles.clubExpandCell} colSpan={5}>
-                                {split.notes && <p className={styles.clubExpandNotes}>{split.notes}</p>}
-                                {/* ⚠ A BILL IS ALWAYS THE MONEY-OUT SIDE — there is no direction
-                                    question on one. A club cannot grant a team money by billing it. */}
-                                {canWriteMoney ? (
-                                  <ClubFilingControl
-                                    stored={toSelection(split)}
-                                    selectId={`club-bill-item-${split.id}`}
-                                    categories={categories}
-                                    direction={() => CLUB_MONEY_ITEM_DIRECTION}
-                                    orgSlug={orgSlug}
-                                    teamId={teamId}
-                                    save={sel => writeFiling({
-                                      url: `/api/coaches/${orgSlug}/teams/${teamId}/allocations`,
-                                      body: { splitId: split.id, budgetItemId: sel?.itemId ?? null },
-                                      failure: 'Failed to file this bill.',
-                                    })}
-                                    onFailure={setActionError}
-                                    consequence={val => val?.itemId
-                                      ? <>Every installment of this bill reports under <strong>{val.categoryName} · {val.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
-                                      /* ⚠ THIS SENTENCE USED TO BE FALSE, and it was found by the
-                                         planning session that led here: it read "it won't appear on
-                                         Budget vs. Actual at all", while the report deliberately
-                                         counts unfiled club money under "Not itemized" and its own
-                                         route says so in a comment. It taught a coach the opposite
-                                         of the design, on the screen where they would act on it. */
-                                      : <>Until this bill is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>}
-                                  />
-                                ) : !split.budgetItemId && (
-                                  <p className={styles.clubFilingHint}>
-                                    Until it&apos;s filed, this bill reports under <strong>Not itemized</strong>.
-                                  </p>
-                                )}
-                                <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
-                                  <table className={styles.table}>
-                                    <thead>
-                                      <tr>
-                                        <th className={styles.th}>#</th>
-                                        <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
-                                        <th className={styles.th}>Due date</th>
-                                        <th className={styles.th}>Status</th>
-                                        <th className={styles.th} aria-label="Row actions" />
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {split.installments.map(inst => {
-                                        const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
-                                        return (
-                                          <tr key={inst.id} className={styles.tr}>
-                                            <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                                            <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
-                                            <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
-                                              {fmtDate(inst.dueDate)}
-                                              {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
-                                            </td>
-                                            <td className={styles.td} data-label="Status">
-                                              {inst.paidAt ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
-                                                  <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
-                                                </span>
-                                              ) : (
-                                                /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said
-                                                   "Overdue" in the AMBER of a completed season while
-                                                   every other overdue mark in the portal says it in red. */
-                                                <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
-                                                  {overdue ? 'Overdue' : 'Unpaid'}
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className={`${styles.td} ${styles.cardActionCell}`}>
-                                              {!inst.paidAt && canWriteMoney && (
-                                                <button
-                                                  type="button"
-                                                  className={`${styles.btnSecondary} ${styles.compactAction}`}
-                                                  disabled={!!marking[inst.id]}
-                                                  onClick={() => markPaid(split, inst)}
-                                                >
-                                                  {/* ⚖ "Record as paid", not "Mark paid" — it RECORDS a
-                                                      payment; the server derives amount, date and
-                                                      description. ⚠⚠ AND IT STAYS ONE TAP (ruling R-D):
-                                                      a club instalment is fieldless by design, so a form
-                                                      would add a step and ask nothing. */}
-                                                  {marking[inst.id] ? '…' : 'Record as paid'}
-                                                </button>
-                                              )}
-                                            </td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
+                            </span>
+                          </td>
+                        </tr>
                       );
                     })}
 
@@ -1581,13 +1596,12 @@ export function ClubPanel({
                       </tr>
                     ) : shownRequests.map(r => {
                       const pending = r.status === 'pending';
-                      const isOpen = !!expanded[r.id];
+                      const canEdit = pending && canWriteMoney;
                       return (
-                        <Fragment key={r.id}>
                         <tr
+                          key={r.id}
                           className={`${styles.tr} ${styles.rowTappable} ${pending ? styles.clubRowPending : ''}`}
-                          onClick={() => { if (window.getSelection()?.toString()) return; setExpanded(prev => ({ ...prev, [r.id]: !prev[r.id] })); }}
-                          aria-expanded={isOpen}
+                          onClick={() => { if (window.getSelection()?.toString()) return; openRecord(r); }}
                         >
                           {/* ⚠ THE DIRECTION SITS BESIDE THE NAME, NOT UNDER IT. On its own line it
                               cost every request row a second line for one badge, so requests stood
@@ -1599,9 +1613,14 @@ export function ClubPanel({
                               {r.description}
                               <DirectionBadge type={r.requestType} />
                             </span>
+                            {/* ⚠ A DECLINED REQUEST'S REASON IS READ ON THE ROW (D3): skimming five
+                                of them needs no opens. The whole text stands at the top of Details. */}
+                            {r.status === 'denied' && r.denialReason && (
+                              <span className={styles.clubRowSub}>&ldquo;{preview(r.denialReason)}&rdquo;</span>
+                            )}
                           </td>
-                          {/* ⚠ THE CELL READS, IT DOES NOT ACT (owner, 2026-09-01) — same rule as the
-                              bills band above. Both controls that change this are live in the fold. */}
+                          {/* ⚠ THE CELL READS, IT DOES NOT ACT — both controls that change this are
+                              live inside the request's window. */}
                           <td className={styles.td} data-label="Files under">
                             <span className={styles.clubFilingStack}>
                               {/* ⚠ WHAT A LEGACY ROW READS AS IS DECIDED IN `coach-club-money`, not
@@ -1619,121 +1638,21 @@ export function ClubPanel({
                             {r.reviewedAt && <span className={styles.clubReviewedOn}> {fmtDate(r.reviewedAt)}</span>}
                           </td>
                           <td className={`${styles.td} ${styles.cardActionCell}`}>
-                            {/* The bills band's chevron, unchanged — see its note above for why one
-                                glyph now serves the whole table, and why it is a real button. */}
+                            {/* ⚠ THE LABEL IS HONEST FOR THE ROW'S STATE. "Edit" only while the club
+                                has not answered and this coach can write money; "Details" otherwise
+                                — the same window, opened read-only, with the team's filing still
+                                live inside it. A universal pencil would offer an edit to a record
+                                with nothing editable (the 2026-09-01 finding), and a chevron would
+                                promise a room a request does not have. */}
                             <button
                               type="button"
-                              className={`${styles.linkBtn} ${styles.clubRowToggle}`}
-                              onClick={e => { e.stopPropagation(); setExpanded(prev => ({ ...prev, [r.id]: !prev[r.id] })); }}
-                              aria-expanded={isOpen}
-                              aria-label={`${isOpen ? 'Close' : 'Open'} ${r.description}`}
+                              className={`${styles.btnSecondary} ${styles.compactAction}`}
+                              onClick={e => { e.stopPropagation(); openRecord(r); }}
                             >
-                              {isOpen
-                                ? <ChevronUp size={16} className={styles.clubRowChevron} aria-hidden />
-                                : <ChevronDown size={16} className={styles.clubRowChevron} aria-hidden />}
+                              {canEdit ? 'Edit' : 'Details'}
                             </button>
                           </td>
                         </tr>
-                        {isOpen && (
-                          <tr className={styles.clubExpandRow}>
-                            <td className={styles.clubExpandCell} colSpan={5}>
-                              {/* ⚠ THE DECLINE REASON MOVED HERE FROM THE RECORD WINDOW, and it had
-                                  to: a declined request no longer opens one, so this fold is the
-                                  only place a coach can read why. */}
-                              {r.status === 'denied' && r.denialReason && (
-                                <div className={styles.clubDeclineReason}>
-                                  <p className={styles.clubDeclineTitle}>Why the club declined it</p>
-                                  <p className={styles.clubDeclineBody}>{r.denialReason}</p>
-                                </div>
-                              )}
-                              {/* ⚖ WHAT WAS ASKED IS A FACT, NOT A FIELD — the club has been told
-                                  it, so it reads as values whatever the record's state. On a
-                                  PENDING request it can still be corrected, through the one door
-                                  at the foot of this fold. */}
-                              <div className={styles.clubFoldFacts}>
-                                <span className={styles.clubFoldFact}>
-                                  <span className={styles.clubFoldFactLabel}>Asked for</span>
-                                  <span className={styles.clubFoldFactValue}>
-                                    {fmt(r.amount)} · {r.requestType === 'payment_to_org' ? 'to the club' : 'from the club'}
-                                  </span>
-                                </span>
-                                <span className={styles.clubFoldFact}>
-                                  <span className={styles.clubFoldFactLabel}>Raised</span>
-                                  <span className={styles.clubFoldFactValue}>{fmtDate(r.createdAt)}</span>
-                                </span>
-                                <span className={styles.clubFoldFact}>
-                                  <span className={styles.clubFoldFactLabel}>Club&apos;s decision</span>
-                                  <span className={styles.clubFoldFactValue}>
-                                    {pending
-                                      ? 'Not yet'
-                                      : `${STATUS_CHIP[r.status]?.label ?? r.status}${r.reviewedAt ? ` · ${fmtDate(r.reviewedAt)}` : ''}`}
-                                  </span>
-                                </span>
-                                {r.paymentMethod && (
-                                  <span className={styles.clubFoldFact}>
-                                    <span className={styles.clubFoldFactLabel}>How it moves</span>
-                                    <span className={styles.clubFoldFactValue}>{r.paymentMethod}</span>
-                                  </span>
-                                )}
-                              </div>
-                              {r.notes && <p className={styles.clubExpandNotes}>{r.notes}</p>}
-
-                              {/* ⚠ THE ASK AND THE FILING ARE ONE CONTROL, because on a request they
-                                  are one WRITE — the answer decides which side of the item library
-                                  the word may come from, so they cannot be saved independently. A
-                                  cost has no second reading and passes no `ask` at all. */}
-                              {canWriteMoney && (
-                                <ClubFilingControl
-                                  stored={toSelection(r)}
-                                  ask={r.requestType === 'charge_to_org'
-                                    ? { value: r.moneyInMeaning, id: `club-meaning-${r.id}` }
-                                    : undefined}
-                                  selectId={`club-request-item-${r.id}`}
-                                  categories={categories}
-                                  direction={meaning => clubRequestItemDirection({ requestType: r.requestType, moneyInMeaning: meaning })}
-                                  orgSlug={orgSlug}
-                                  teamId={teamId}
-                                  save={(sel, meaning) => writeFiling({
-                                    url: `/api/coaches/${orgSlug}/teams/${teamId}/payment-requests/${r.id}/filing`,
-                                    body: { budgetItemId: sel?.itemId ?? null, moneyInMeaning: meaning },
-                                    failure: 'Failed to file this request.',
-                                  })}
-                                  onFailure={setActionError}
-                                  consequence={val => val?.itemId
-                                    ? <>This reports under <strong>{val.categoryName} · {val.itemName}</strong> on Budget vs. Actual. Re-filing moves no money.</>
-                                    : <>Until this is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>}
-                                />
-                              )}
-                              {/* ⚠ THE SAME SENTENCE A READ-ONLY COACH GETS ON A BILL. The bills band
-                                  had this fallback and the requests band did not, so the identical
-                                  coach reading the identical gap was told why on one and not the
-                                  other (`/review`, 2026-09-02). */}
-                              {!canWriteMoney && !r.budgetItemId && (
-                                <p className={styles.clubFilingHint}>
-                                  Until it&apos;s filed, this reports under <strong>Not itemized</strong>.
-                                </p>
-                              )}
-
-                              {/* ⚖ ONE DOOR, AND ONLY WHILE THE CLUB HAS NOT ANSWERED. Correcting
-                                  what was ASKED is a form — several fields and a submit — so it
-                                  keeps its window, exactly as the fundraiser drive's Edit sheet did
-                                  under the same 2026-08-31 ruling. Once the club has acted the
-                                  record locks and there is nothing here to open. */}
-                              {pending && canWriteMoney && (
-                                <div className={styles.clubFoldDoors}>
-                                  <button
-                                    type="button"
-                                    className={styles.btnSecondary}
-                                    onClick={() => openRecord(r)}
-                                  >
-                                    Edit or withdraw this request
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        )}
-                        </Fragment>
                       );
                     })}
                   </tbody>
@@ -1744,21 +1663,132 @@ export function ClubPanel({
         </>
       )}
 
-      {/* ── Filing a club bill, or re-filing a request ─────────────────────────
-          ⚠⚠ ONE DIALOG, TWO OBJECTS, AND IT HOLDS ONLY THE CLASSIFICATION (D3). A bill has opened
-          it since mig 250; a request opens it now, because an answered request LOCKS its record
-          window and the team's own label must outlive that lock. Amount, direction, wording and the
-          club's decision all stay behind the read-only record — this moves which row of the report
-          tells the story, and no money at all. */}
-      {/* ── The record window: making a request, and correcting one the club has not answered ──
-          Opened blank by "Make a request", or on a PENDING request by the one door at the foot of
-          its fold. It is a form — several fields and a submit — which is why it is still a window
-          under the 2026-08-26 ruling, and why the fundraiser drive's Edit sheet stayed one too.
-          ⚠⚠ IT IS NO LONGER A DOOR ONTO A FINISHED RECORD (owner, 2026-09-01). A reviewed request
-          is read in its own fold now: what was asked, when, the club's answer, the decline reason,
-          and the two controls that stay live. `readOnly` below is kept as a BELT, not as a route —
-          money access is refreshed state, so it can fall away between the render that drew the
-          door and the tap that opens it. */}
+      {/* ══ THE BILL'S ROOM (List · Room · Question, 2026-09-02) ═══════════════════════════════
+          Tiles, then the fieldless one-tap installments (ruling R-D unchanged), then the live filing
+          control at a control's width, then the club's own note read-only — and a named walk across
+          the bills as the list shows them. Nothing to delete: a club bill is the club's record. */}
+      {openSplit && billRoom && tabActive && (
+          <RoomShell
+            open
+            onClose={() => setOpenBillId(null)}
+            ariaLabel={`${openSplit.allocationDescription} — club bill`}
+            title={openSplit.allocationDescription}
+            status={<BillStatusBadge overdue={billRoom.figures.overdue} outstanding={billRoom.figures.outstanding} />}
+            tiles={billRoom.tiles}
+            busy={filingBusy || openSplit.installments.some(isMarking)}
+            recordKey={openSplit.id}
+            sentinel="club-bill"
+            nav={{ ...billRoom.walk, noun: 'bills', onSelect: setOpenBillId }}
+          >
+            {/* ⚠ The panel's banner sits BEHIND this overlay (`/review`, 2026-09-02) — a refused
+                "Record as paid" (the sandbox's sentence included) has to be read in the room too. */}
+            {actionError && <p className={styles.errorText}>{actionError}</p>}
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+              <table className={styles.table} aria-label="Installments">
+                <thead>
+                  <tr>
+                    <th className={styles.th}>#</th>
+                    <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+                    <th className={styles.th}>Due date</th>
+                    <th className={styles.th}>Status</th>
+                    <th className={styles.th} aria-label="Row actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {openSplit.installments.map(inst => {
+                    const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
+                    return (
+                      <tr key={inst.id} className={styles.tr}>
+                        <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
+                        <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
+                          {fmtDate(inst.dueDate)}
+                          {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
+                        </td>
+                        <td className={styles.td} data-label="Status">
+                          {inst.paidAt ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
+                              <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
+                            </span>
+                          ) : (
+                            /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said "Overdue" in the
+                               AMBER of a completed season while every other overdue mark in the
+                               portal says it in red. */
+                            <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
+                              {overdue ? 'Overdue' : 'Unpaid'}
+                            </span>
+                          )}
+                        </td>
+                        <td className={`${styles.td} ${styles.cardActionCell}`}>
+                          {!inst.paidAt && canWriteMoney && (
+                            <button
+                              type="button"
+                              className={`${styles.btnSecondary} ${styles.compactAction}`}
+                              disabled={isMarking(inst)}
+                              onClick={() => markPaid(openSplit, inst)}
+                            >
+                              {/* ⚖ "Record as paid", not "Mark paid" — it RECORDS a payment; the
+                                  server derives amount, date and description. ⚠⚠ AND IT STAYS ONE
+                                  TAP (ruling R-D): a club instalment is fieldless by design, so a
+                                  form would add a step and ask nothing. */}
+                              {isMarking(inst) ? '…' : 'Record as paid'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {/* ⚠ A BILL IS ALWAYS THE MONEY-OUT SIDE — there is no direction question on one. A
+                club cannot grant a team money by billing it. */}
+            {canWriteMoney ? (
+              /* ⚠ KEYED BY THE BILL (`/review`, 2026-09-02): the room's Prev/Next swaps the record
+                 while this stays mounted, and an unkeyed control carried its last pick — its
+                 `pending` — onto the next bill and showed it as that bill's filing. */
+              <ClubFilingControl
+                key={openSplit.id}
+                stored={toSelection(openSplit)}
+                selectId={`club-bill-item-${openSplit.id}`}
+                onBusyChange={setFilingBusy}
+                categories={categories}
+                direction={() => CLUB_MONEY_ITEM_DIRECTION}
+                orgSlug={orgSlug}
+                teamId={teamId}
+                save={sel => writeFiling({
+                  url: `/api/coaches/${orgSlug}/teams/${teamId}/allocations`,
+                  body: { splitId: openSplit.id, budgetItemId: sel?.itemId ?? null },
+                  failure: 'Failed to file this bill.',
+                })}
+                onFailure={setActionError}
+                consequence={val => val?.itemId
+                  ? <>Every installment of this bill reports under <strong>{val.categoryName} · {val.itemName}</strong> on Budget vs. Actual. Filing it moves no money.</>
+                  /* ⚠ THIS SENTENCE USED TO BE FALSE, and it was found by the planning session that
+                     led here: it read "it won't appear on Budget vs. Actual at all", while the report
+                     deliberately counts unfiled club money under "Not itemized" and its own route
+                     says so in a comment. */
+                  : <>Until this bill is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>}
+              />
+            ) : !openSplit.budgetItemId && (
+              <p className={styles.clubFilingHint}>
+                Until it&apos;s filed, this bill reports under <strong>Not itemized</strong>.
+              </p>
+            )}
+            {openSplit.notes && <p className={styles.clubRecordNote}>{openSplit.notes}</p>}
+          </RoomShell>
+      )}
+
+      {/* ── The request window: ONE window, two modes (List · Room · Question D3, 2026-09-02) ──
+          Opened blank by "Make a request", by "Edit" on a pending request the coach can write, or by
+          "Details" on any other. It is a form — several fields and a submit — so it is a Question,
+          never a room. In read-only mode the fields are facts and the decline reason comes first;
+          what stays live for a writer is the part that was always the team's own: the money-in
+          answer and what it files under, through the same live control the bill's room uses. The
+          2026-09-01 fold had made this window unreachable for a decided request and given a pending
+          one two editors of the same field; both are closed here. `readOnly` is a BELT as well as a
+          mode — money access is refreshed state, so it can fall away between the render that drew
+          the door and the tap that opens it. */}
       {showForm && (
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (busy ? undefined : closeForm)?.(); }}>
           {/* ⚠ `modalFlushFooter` IS REQUIRED ON ANY MODAL TALL ENOUGH TO SCROLL, and this one is —
@@ -1766,7 +1796,15 @@ export function ClubPanel({
               laptop. Without it the footer's bottom bleed sits inside the panel's own bottom padding
               (a band of dead space under the buttons) AND shortens the scroll extent, so the last
               field can never quite be scrolled into view. */}
-          <div className={`${styles.modal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
+          <div
+            ref={formPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={editing ? (readOnly ? 'Club request details' : 'Edit club request') : 'New club request'}
+            className={`${styles.modal} ${styles.modalFlushFooter}`}
+            onClick={e => e.stopPropagation()}
+          >
             <CoachModalHeader
               title={editing ? 'Club request' : 'New club request'}
               subtitle={editing
@@ -1836,7 +1874,10 @@ export function ClubPanel({
                   no second reading of it, and asking would be a question with one answer.
                   ⚠ IT SITS ABOVE THE PICKER because the answer decides which SIDE of the item
                   library the picker offers — asking it after would show a list built on a guess. */}
-              {formType === 'charge_to_org' && (
+              {/* ⚠ For a WRITER reading a decided request the ask is not a fact here — it is the
+                  live half of the filing control below, where answering it can still re-file the
+                  money. A read-only coach sees the value. */}
+              {formType === 'charge_to_org' && !filingIsLive && (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <label className={styles.label} htmlFor="club-meaning">
                     {CLUB_MONEY_IN_ASK.label} {!readOnly && '*'}
@@ -1899,6 +1940,36 @@ export function ClubPanel({
                   spelling it out.
                   ⚠ One search box either way, and its create door stays the picker's own inline
                   add — one door by construction, never one per kind. */}
+              {/* ⚖ THE ASK LOCKS, THE FILING NEVER DOES (D3): once the club has answered, a writer's
+                  window keeps exactly one live thing — the team's own reading of the money and the
+                  word it files under, written on the answer through the same control the bill's
+                  room uses. The row behind the window updates as it saves. */}
+              {filingIsLive && liveEditing ? (
+                <div className={styles.formGridFull}>
+                  <ClubFilingControl
+                    key={liveEditing.id}
+                    onBusyChange={setFilingBusy}
+                    stored={toSelection(liveEditing)}
+                    ask={liveEditing.requestType === 'charge_to_org'
+                      ? { value: liveEditing.moneyInMeaning, id: 'club-meaning' }
+                      : undefined}
+                    selectId="club-item"
+                    categories={categories}
+                    direction={meaning => clubRequestItemDirection({ requestType: liveEditing.requestType, moneyInMeaning: meaning })}
+                    orgSlug={orgSlug}
+                    teamId={teamId}
+                    save={(sel, meaning) => writeFiling({
+                      url: `/api/coaches/${orgSlug}/teams/${teamId}/payment-requests/${liveEditing.id}/filing`,
+                      body: { budgetItemId: sel?.itemId ?? null, moneyInMeaning: meaning },
+                      failure: 'Failed to file this request.',
+                    })}
+                    onFailure={setFormError}
+                    consequence={val => val?.itemId
+                      ? <>This reports under <strong>{val.categoryName} · {val.itemName}</strong> on Budget vs. Actual. Re-filing moves no money.</>
+                      : <>Until this is filed, it reports under <strong>Not itemized</strong> on Budget vs. Actual — it still counts, it just has no name.</>}
+                  />
+                </div>
+              ) : (
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="club-item">What is it for?</label>
                 {readOnly ? (
@@ -1920,6 +1991,7 @@ export function ClubPanel({
                   />
                 )}
               </div>
+              )}
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="club-desc">Description {!readOnly && '*'}</label>

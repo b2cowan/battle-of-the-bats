@@ -1440,6 +1440,69 @@ if (!existingFr?.length) {
 }
 
 /**
+ * ⚠⚠ A CLUB BILL, FOR A ROOM THAT WOULD OTHERWISE HAVE NO FIXTURE AND NO SWEEP (List · Room ·
+ * Question Phase A, 2026-09-02). The Club tab's fold was rebuilt over a fixture holding ZERO club
+ * bills — the QA ledger records the bills fold as unmeasured by it, and the coach sandbox was the
+ * only world exercising the screen. The room is addressed by `?clubBill=`, so the sweep can open it
+ * — provided a bill exists to open.
+ *
+ * Three installments — the first PAID, the second OVERDUE, the third ahead — because that is the
+ * room's fullest render: a Paid tile that is not zero, a danger-toned Left tile, an overdue chip in
+ * the header, one paid row and two "Record as paid" doors. And with TWO pieces unpaid the list row
+ * shows no one-tap pill, so the sweep measures the room rather than the shortcut.
+ */
+const firstOfMonth = (offset) => {
+  const d = new Date();
+  d.setUTCMonth(d.getUTCMonth() + offset, 1);
+  return d.toISOString().slice(0, 10);
+};
+/** One club bill, keyed on its allocation's description so each is seeded once and healed alone. */
+async function seedClubBill({ description, notes, installments }) {
+  const { data: existing } = await db.from('rep_cost_allocations')
+    .select('id').eq('org_id', org.id).eq('description', description).limit(1);
+  if (existing?.length) { ok(`club bill present — ${description}`); return; }
+  const total = installments.reduce((s, i) => s + i.amount, 0);
+  const alloc = await db.from('rep_cost_allocations').insert({
+    org_id: org.id, description, total_amount: total * 3,
+  }).select('id').single();
+  if (alloc.error) { console.log(`  ! club bill skipped (${alloc.error.message})`); return; }
+  const split = await db.from('rep_allocation_splits').insert({
+    allocation_id: alloc.data.id, team_id: team.id, program_year_id: py.id, org_id: org.id,
+    amount: total, split_method: 'fixed', split_value: total, payment_schedule: 'custom', notes,
+  }).select('id').single();
+  if (split.error) { console.log(`  ! club bill split skipped (${split.error.message})`); return; }
+  const inst = await db.from('rep_allocation_installments').insert(installments.map((i, n) => ({
+    split_id: split.data.id, org_id: org.id, team_id: team.id, installment_number: n + 1,
+    amount: i.amount, due_date: firstOfMonth(i.monthOffset),
+    ...(i.paidDaysAgo ? { paid_at: new Date(Date.now() - i.paidDaysAgo * 86_400_000).toISOString() } : {}),
+  })));
+  if (inst.error) console.log(`  ! club bill installments skipped (${inst.error.message})`);
+  else ok(`club bill seeded — ${description}`);
+}
+// The room's fullest render: paid · overdue · ahead. Two pieces unpaid, so the LIST row shows no
+// one-tap pill and the sweep measures the room itself.
+await seedClubBill({
+  description: 'League registration — shared across teams',
+  notes: 'Covers league registration for the season.',
+  installments: [
+    { amount: 615, monthOffset: -2, paidDaysAgo: 50 },
+    { amount: 615, monthOffset: -1 },
+    { amount: 615, monthOffset: 2 },
+  ],
+});
+// ⚠ A SECOND BILL WITH EXACTLY ONE PIECE LEFT (`/review`, 2026-09-02): the coach demo's own club
+// bill sits in this state, so the public demo renders the row's one-tap "Record as paid · $x" pill
+// — and nothing swept it. This gives the LIST screen the pill, and the room a real Prev/Next.
+await seedClubBill({
+  description: 'Gym rental — winter block',
+  notes: null,
+  installments: [
+    { amount: 240, monthOffset: -3, paidDaysAgo: 80 },
+    { amount: 240, monthOffset: 1 },
+  ],
+});
+
+/**
  * A SPONSOR, checked for by KIND rather than by "are there any fundraisers".
  *
  * ⚠ Its own guard on purpose. The block above skips when ANY fundraising record exists, so on
