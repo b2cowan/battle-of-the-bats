@@ -17044,7 +17044,7 @@ chevron's floor stays owed to the pass that settles the grandfathered Dome Time 
 refuse while another team's lines use the category), and — optional — a scratch team to walk the
 "Bring last season's plan" door end to end.
 
-## §134 · List · Room · Question, Phase A — the Club tab as a list, the bill's room, the request's one window — BUILT 2026-09-02, awaiting QA
+## §134 · List · Room · Question, Phase A — the Club tab as a list, the bill's room, the request's one window — ✅ PASSED 2026-09-03 (33/33, all five parts, zero defects in the built thing; six rulings taken ON the walk and built the same day) · ⚠ Part C is now VACUOUS
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4bce9d5d-bb02-436c-bba8-61866d91ff20`
 — checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
@@ -17102,6 +17102,50 @@ the state the public coach demo renders — is finally drawn by the sweep, and t
 has a real neighbour to walk. Walk rewritten for the two-bill fixture (Parts B/C; four /review
 steps marked).
 
+
+**✅ WALKED AND PASSED 2026-09-03 — 33/33, all five parts, verdict `pass` on every one.** Owner's
+own tally: A 5/5 · B 13/13 · C 4/4 · D 8/8 · E 3/3. Nothing in the instrument failed. What the walk
+produced was not defects in the built thing but **six rulings on the screen around it**, taken live
+and built in the same session (plan §8–§10):
+
+1. **The list's last column holds ONE shape.** The requests band's "Edit"/"Details" button and the
+   bills band's one-tap pill are both gone; every row ends in the chevron, right-aligned.
+   ⚠ **This makes Part C VACUOUS — the owner said so on the walk** (*"this passes but the
+   functionality is n/a now that we removed these buttons from the tables"*). Its four steps
+   describe a control that no longer exists. **Do not read a future green Part C as coverage of
+   anything** — the pill's replacement (Record as paid on every installment inside the room) is
+   walked by Part B. This is the "green check over an empty fixture" family: a step that passes
+   because there is nothing left to fail.
+2. **D5 REVERSED** — the one-tap pill's real cost was that the widest cell sizes the column for
+   every row. Columns rebalanced; the Amount header deliberately NOT renamed to "Still to pay"
+   (the column is shared with the requests band, where a *From club* ask is money coming IN).
+3. **Mobile cards** — the lead cell's label ("WHAT") dropped across all four money lists, and an
+   icon-only action cell corner-pins instead of drawing its own full-width row.
+4. **⚠ THE ONE "KNOWN UNPROVEN" STEP FAILED, AND THEN THE FIRST FIX FAILED TOO.** Part B step 12
+   (Escape with the filing picker's menu open) closed the whole room. The picker's existing
+   `stopPropagation()` never could work — React delegates from `document` and the room's floor
+   listens there too, and a sibling listener cannot be stopped that way. The first fix, a
+   `data-escape-owner` attribute, **shipped and still failed**: `keydown` is discrete, so React
+   flushes the menu's own close synchronously and the attribute is gone before the floor reads it.
+   The claim now rides on the event itself. Four menus fixed, guard test added.
+   **⚖ THE PROCESS LESSON, WHICH IS THE MOST VALUABLE THING THIS WALK PRODUCED: this class of
+   defect was only ever settled by driving the real screen in a browser.** Two careful readings of
+   the code got it wrong. Prove keyboard/layering fixes at a real viewport, never by reasoning
+   about listener order.
+5. **A club payment can be TAKEN BACK** (owner: *"if I mark something as 'paid' and click the wrong
+   one by accident, should we allow an undo?"*). It was the only money a coach records with no way
+   home, and the fastest write in the portal. Migration 275, dev-applied. ⚠ 275 is INVISIBLE to
+   `check:migrations` (it changes a function) and fails SILENTLY without it.
+6. **A confirmation docks in a modal's sticky FOOTER, never its scrolling body.** Withdraw's
+   confirmation rendered below the fold while the footer's Cancel was disabled — a dead control and
+   an invisible explanation, which strands a coach. Fixed here and on the money form's two deletes.
+   Verified in Chromium at 1100×620.
+
+**Owner's closing word on the confirmation change:** *"that works, as long as cancel is hidden the
+workflow makes sense."*
+
+**Still owed on this section (unchanged by the pass):** the layout reseed + sweep of `coach-club`
+and `coach-club-bill` on a quiet dev server — rows→rooms re-keys the club baseline.
 ## §135 · List · Room · Question, Phase B — the Fundraising tab as two lists, the drive's room, the two-zone sponsor room — BUILT 2026-09-02, awaiting QA
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4147168c-f9a2-4450-885a-b7c6208a0a77`

@@ -3,6 +3,104 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 
+### 2026-09-03 — A confirmation docks in the sticky FOOTER of a modal, never in its scrolling body
+
+**Decision (owner §134 walk):** when a control inside a modal raises a confirmation, that
+confirmation **replaces the footer's buttons** rather than appearing above them. Stated in CSS as
+`.modalFooter > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }` — the identical contract
+`RoomShell` already gives its doors slot, now shared by every `.modalFooter`.
+
+**The defect it fixes, and why it was worse than it looked.** The Club request window's "Withdraw
+request" appended its confirmation to the bottom of the form's scrolling body. On a long request
+that is **below the fold**: pressing Withdraw looked like it did nothing. Compounding it, the
+footer's Cancel and Save were disabled while the confirmation was up — sound reasoning on its own
+(a live "Save changes" under an unanswered question let a coach save the very edit they were
+abandoning), but the combination left **the only control on screen dead and the question explaining
+why off screen.** That is a stranded user, not a rough edge. The same shape was found on the money
+form's two deletes by grepping siblings, and fixed with it.
+
+**The principle:** *a question and the controls it suspends must occupy the same place.* Placement
+is what makes the suspension legible; disabling a control elsewhere on the page is not a substitute
+for putting the question where the control was. Once the confirmation owns the band, nothing needs
+disabling — the competing controls simply are not rendered, and the `!confirmX` guards that were
+compensating for the bad placement were deleted with it. **Do not reinstate them.**
+
+**Riders:** three ways out, always reachable — the confirmation's own "Keep it", the header X, and
+Escape. Verified in Chromium at 1100×620 (short enough to reproduce the original), not reasoned
+about: the confirmation renders fully on screen with no scrolling.
+
+**Not adopted:** the owner's literal proposal that Cancel should both dismiss the confirmation and
+close the window. Teaching one button two meanings is worse than removing the trap at its source;
+with the confirmation owning the footer there is no Cancel beside it to press.
+
+**Applies to:** `.modalFooter` (global, coaches.module.css); coach Money → Club request window,
+Transactions money form (both deletes). `CommitmentView`'s page-foot delete already swapped in place
+and needed no change.
+
+
+### 2026-09-03 — The card's lead cell is its TITLE and takes no label; a card's door is a CORNER, not a row
+
+**Decision (owner §134 walk, ruled with `/design`).** Two rules for every money list table that
+reflows to cards at 640, applied together across the Club tab, Fundraising (both bands + the drive
+room) and Expenses (all three tables).
+
+1. **No `data-label` on the lead cell when its value is a name a human wrote.** "WHAT", "NAME",
+   "SPONSOR", "PLAYER" printed a caption above the record's own name — a whole line at the top of
+   every card saying nothing the line beneath it doesn't. A column header earns its place because
+   it tells you what a *column* is; on a single card it is chrome. **The test, and it is the
+   general rule: a label earns its place when the value beneath it cannot say what it is.**
+   `$450.00`, `Not filed` and a bare status badge cannot — they keep their labels. A name can.
+   ⚠ **A lead cell holding a FIGURE or a DATE keeps its label** — the sponsor room's arrivals table
+   leads with "Arrived", and a bare date at the top of a card is ambiguous, so that one stays.
+2. **An icon-only trailing action cell is corner-pinned, not a full-width row (`.cardActionCorner`).**
+   `.cardActionCell` turns a trailing control into a full-width 44px row at the foot of the card,
+   which is right for a worded button and wrong for a lone chevron: ~44px of extra height on every
+   card to carry a glyph that repeats what tapping the card already does.
+   ⚠⚠ **The fix is NOT `display: none`, and the 2026-08 ruling ("a trailing chevron on a card that
+   is already one tap target is decoration") does NOT license hiding this one.** That ruling
+   concerned an `aria-hidden` glyph on a card that was itself a link. These cards are
+   `<tr onClick>` — unreachable by keyboard or screen reader — so the chevron is the row's ONLY
+   real door, which is exactly why the 2026-09-02 ruling made it a `<button>`. Hiding it would
+   delete the door for the coaches who most need one. **The control stays; its ROW goes.** It is
+   lifted to the card's top-right corner beside the title, where a phone list card has carried this
+   affordance forever. Zero added height, door intact, and it pairs with rule 1 — a real title with
+   its affordance beside it.
+   ⚠ Applied via an **explicit modifier class**, never `:has(> .listRowActions)` or a positional
+   selector: every other trailing action cell in the portal must keep its full-width worded button.
+
+**Rationale:** both are the same principle — a table reflowed to cards inherits captions and
+full-width action rows that were correct as *table* furniture and become noise as *card* furniture.
+The reflow is a starting point, not a finished card.
+**Applies to:** `.tableAsCards` lead cells + `.cardActionCorner` (`coaches.module.css`); coach Money
+Club / Fundraisers / drive room / Expenses list tables.
+
+
+### 2026-09-03 — One shape in a list's last column: the chevron, and nothing conditional beside it
+
+**Decision (owner §134 walk).** The Club tab's action column ended in three different shapes — a
+chevron on some bills, a chevron plus a "Record as paid · $x" pill on others, and a worded
+"Edit"/"Details" button on every request. All three collapse to **one chevron on every row**.
+
+- **The requests band's worded button → the chevron.** Its defence was that a chevron "promises a
+  room a request does not have" (Room vs Question). That distinction is real in the grammar
+  document and invisible on the screen: the glyph reads "this opens", and it does — the same thing
+  the row's own tap opens. A pending request still declares itself three ways (amber left edge,
+  "Awaiting the club" badge, no decision date), and the button's **accessible name keeps the honest
+  verb** ("Edit …" / "Open …"), so nothing is traded away for the tidier column.
+- **The one-tap pill → deleted** (a named reversal of D5 in the 2026-09-02 List · Room · Question
+  ruling). It fired only on a bill with exactly one unpaid installment — a minority of rows — but
+  **the widest cell sizes the column for every row**, so an exception was permanently holding ~20%
+  of the table away from the columns that hold words. Recording a payment did not move: it is on
+  the installment inside the bill's room, where Player Dues has always put it, and every
+  installment offers it rather than only the last one.
+- **The trailing group is right-aligned.** It was content-width and therefore left-aligned inside
+  its cell, so two chevrons in one column sat at two different x positions.
+
+**Rationale:** the last column of a list has one job. A control that appears on some rows and not
+others makes the column read as a mistake *and* charges its width to every row that doesn't have it.
+**Applies to:** coach Money → Club tab list; `.listRowActions` (portal-wide alignment).
+
+
 ### 2026-09-02 — Unplanned money rows get their visible word back: "not planned" (owner D5.5, a NAMED reversal of the 2026-08-15 trim)
 
 **Decision (owner, BvA Two Truths D5 — plan `docs/projects/active/COACH_BVA_TWO_TRUTHS_PLAN.md`
