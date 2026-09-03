@@ -2,8 +2,10 @@
 
 **Status:** owner-ruled 2026-09-02 (D1–D7, all stamped). **Phase 0 (the room shell) + Phase A (the
 Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 owed**
-(walk artifact `4bce9d5d`). Phases B, C, D open. The layout reseed + sweep of `coach-club` /
-`coach-club-bill` is owed (needs a quiet dev server).
+(walk artifact `4bce9d5d`). **Phase B (Fundraising) BUILT 2026-09-02 on dev — see §3.1 for what
+shipped and the nine mockup deviations; Owner QA §135 owed** (its walk artifact and the mockup-gate
+comparison are linked from the ledger section). Phases C, D open. The layout reseed + sweep of
+`coach-club` / `coach-club-bill` is owed (needs a quiet dev server).
 **Ruling record:** `memory/design_decisions.md` 2026-09-02 entry "LIST · ROOM · QUESTION" (binding; names the reversals).
 **Mockups (the spec, rulings stamped in place):** `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` ("List, Room, Question", rounds 1–2c).
 **PM brief:** `COACH_MONEY_LIST_ROOM_QUESTION_PM_BRIEF.md`. **Build session opens with:**
@@ -137,6 +139,40 @@ A shared room component all four roomed surfaces consume:
   Escape with nothing focused must close only the top layer. `useDialogFloor` acts on keys from
   inside its panel or from the bare document; if the bare-document case double-fires, narrow it to
   the most recently opened dialog — never build a full overlay stack in `lib/coaches-overlay`.
+
+### 3.1 Phase B — BUILT 2026-09-02 (Owner QA §135 owed)
+
+**What shipped.** `fundraisers/panel.tsx` rebuilt as two flat lists over one `useRoomAddress('fundraiser')`
+(the record's kind decides the room); `fundraisers/DriveRoom.tsx` (the drive room's body, the entry
+Question, the Edit-drive sheet) and `fundraisers/SponsorRoom.tsx` (the two-zone body with the live
+credit split, the cheque Question, the Edit-sponsorship sheet, the pledge sheet); `DriveBand`,
+`SponsorBand`, `BandRows` and `RecordEditorFooter` deleted. New shared pieces: `QuestionShell`
+(the Question chrome on the floor), `GuardedDelete` (the room-foot door, the footer's mode machinery
+moved whole), the floor's **most-recently-opened-owns-the-bare-document rule** and its focus-only-if-
+outside seat. **A new server door:** `PATCH …/arrivals/[entryId]` (`editSponsorArrival` — a replay
+through the stored plan, floor-guarded per family pre-flight; `rewriteSponsorCredits` extracted so the
+agreement edit and the cheque edit share one writer). The conversation gained the promise row inside
+the Which-sponsor picker (`requestPledge` on the record signal; the hub switches tab and the panel
+opens the pledge sheet with the carry) and now stands on the floor itself. The sponsor chip is
+DERIVED (`sponsorStanding`: Pledged / Part received / Received). Fixture: the seeder heals by NAME
+(Northside Physio's guard matched any received sponsor and never seeded once QA specimens existed;
+Chocolate sale gains entries with linked credits); the resolver resolves both by name.
+
+**Deviations from the §2 mockup, each with the ruling that forced it:**
+
+| # | Mockup shows | Built | Forced by |
+|---|---|---|---|
+| 1 | A History fold on the drive room | No History fold on either room | The build prompt: "no History fold unless something real accumulates — do not render empty theatre"; nothing accumulates beyond the entries/cheques |
+| 2 | Drive entries carry a method ("Aug 30 · E-Transfer") | Received date only | Drive entries store no method (the drive's Record branch asks none); showing an always-empty column would be a lie |
+| 3 | Delete at the foot as a dead link + sentence | A pressable Delete that answers with the reason or the confirm | Owner §122 walk 2026-08-30: "the reason waits to be asked" — the permanent sentence was removed for this exact control |
+| 4 | Record "with the drive locked" (build prompt) | The drive PRE-ANSWERED, not locked | The conversation's one lock gate hides every identity question including "which player" — a locked drive leaves nobody to record for |
+| 5 | Sponsor chip "PLEDGED" on a part-arrived sponsor | Derived Pledged / **Part received** / Received | The prompt: status is DERIVED; "Pledged" on $250 of $500 arrived misreads to a treasurer — the third word is an owner wording call |
+| 6 | Credit split saves per change (implied by "live") | Live editor with its own **Save split** + Cancel | SP-1: every save replays all credits and asks the payout floor; per-keystroke saves would fire the floor on every digit |
+| 7 | — | The Edit-sponsorship sheet lost its credit-split section | One editor per field (the 2026-08-26 "a record has ONE editor" defect class); the room zone is the split's editor |
+| 8 | — | Drive rows read Raised · Team keeps; sponsor rows Pledged · In · To come (both lists drop the Credits column) | The build prompt's row anatomy; the figure lives in the room's tile |
+| 9 | — | A quiet facts line under the tiles (players logged of roster, dates, description, tags) | The 2026-08-29 meta-line ruling's facts survive; without it "who hasn't yet" had no home |
+
+**Carried, not built (out of scope by §4):** the bill room (C), dues fixes (D), a glance fold (D2).
 
 ## 4. Phase C — Ledger: the bill room
 

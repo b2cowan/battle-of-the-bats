@@ -48,6 +48,34 @@ screens (Overview, Insights, Game-Day) are a different kind of surface and are e
 - Fundraising is the biggest rebuild (its in-place machinery is days old). Sequenced last of the
   big pieces; club — the screen that hurt — goes first.
 
+## Phase B — Fundraising, built 2026-09-02 (Owner QA §135 owed)
+
+**What a coach sees now.** The Fundraising tab is two clean lists. A drive row reads its name, what
+it raised, what the team keeps, an Active/Closed chip and a chevron; a sponsor row reads its name,
+what was pledged, what is in, what is still to come, and a chip that says where it stands —
+Pledged, Part received, or Received — worked out from the money, never typed. Nothing unfolds in
+the tables any more. Tapping a drive opens its room: three figures up top, the entries table with
+Edit and Remove on every line, "Edit drive" and Record above it, a guarded Delete at the foot, and
+named previous/next across the drives. Tapping a sponsor opens the one two-panel room: Pledged /
+Arrived / To come (with the expected-by date, red once it has passed), a Cheques panel where every
+arrival can now be **edited** as well as undone, and a Credited-to-players panel where the split is
+changed right there and saved with its own button — with any refusal shown beside it before the
+button will save. Editing an entry or a cheque is a small window over the room; Escape closes only
+the top layer. In the Record conversation's "Which sponsor?" list there is a new row, "This is a
+promise — nothing arrived yet", which carries the typed name and amount into the pledge sheet; the
+sheet's "Record it instead" carries them back. On a phone every room is a full-screen sheet.
+
+**Why it matters.** Correcting a mis-typed cheque used to mean undo-and-retype; a coach now fixes
+the amount, date or method in place and every family's credit is re-figured for them. The credit
+split is no longer buried behind an Edit sheet. Read-only money coaches see the same rooms with no
+write controls.
+
+**Trade-offs, named.** No History fold yet (nothing accumulates beyond the entries and cheques —
+we did not draw empty theatre). Drive entries show no method column (they never carried one). The
+Delete door at the room's foot is pressable and answers with the reason, per the owner's 2026-08-30
+ruling, rather than a permanently dead button with a sentence. "Part received" is a new third word
+for a half-kept pledge — an owner wording call at the walk.
+
 ## Success criteria
 
 - A coach can describe how to open any money record in one sentence.

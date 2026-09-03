@@ -28,6 +28,7 @@ import { isInstallmentOverdue } from '@/lib/dues-status';
 import type { RepAllocationInstallment, BudgetCategoryWithItems } from '@/lib/types';
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
+import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
 
@@ -145,24 +146,8 @@ const STATUS_CHIP: Record<string, { cls: string; label: string }> = {
   denied:   { cls: 'badgeDenied',   label: 'Declined' },
 };
 
-/**
- * ⚠⚠ THE SANDBOX SAYING NO IS THE DEMO WORKING, NOT BREAKING — and this screen showed a prospect
- * the raw code name (`/simplify`, 2026-09-02, found by actually pressing the control rather than
- * reading the diff). Both demo orgs refuse every write at the request layer, and the coach sandbox
- * is FULLY PUBLIC, so a prospect who files a club bill in the demo always lands on a 403. Rendering
- * the server's `error` field put the literal string "SandboxReadOnly" on a marketing surface at the
- * exact moment they had decided they wanted the feature.
- *
- * The guard already ships the sentence that belongs there and marks its body `sandbox: true`; this
- * returns it so a caller can show it in its own voice rather than in red. The same fix
- * `GenerateInstallmentsModal` made — the header is the contract, the body flag is belt to braces.
- */
-function sandboxRefusal(res: Response, data: any): string | null {
-  if (res.headers.get('X-Sandbox-Blocked') === '1' || (res.status === 403 && data?.sandbox)) {
-    return data?.message ?? 'Nothing is saved here. To keep your changes, start your own team — it\'s free.';
-  }
-  return null;
-}
+/* `sandboxRefusal` lived here (it was born on this screen) and moved to `lib/coach-sandbox-refusal.ts`
+   when the fundraising rooms gained the same write paths — one sentence, every money door. */
 
 /**
  * ONE RECORD'S FILING, AS A LIVE CONTROL — the money-in question where the record carries one, the
@@ -1520,7 +1505,7 @@ export function ClubPanel({
                         >
                           <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
                             {split.allocationDescription}
-                            <span className={styles.clubRowSub}>{fmt(split.amount)} total · {fmt(paid)} paid</span>
+                            <span className={styles.listRowSub}>{fmt(split.amount)} total · {fmt(paid)} paid</span>
                           </td>
                           {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
                               the bill's room, one tap away — see the filing note at the top of this
@@ -1535,7 +1520,7 @@ export function ClubPanel({
                             <BillStatusBadge overdue={splitOverdue} outstanding={outstanding} />
                           </td>
                           <td className={`${styles.td} ${styles.cardActionCell}`}>
-                            <span className={styles.clubRowActions}>
+                            <span className={styles.listRowActions}>
                               {oneTap && (
                                 <button
                                   type="button"
@@ -1552,11 +1537,11 @@ export function ClubPanel({
                                   glyph on every bill: they all open the same thing. */}
                               <button
                                 type="button"
-                                className={`${styles.linkBtn} ${styles.clubRowToggle}`}
+                                className={`${styles.linkBtn} ${styles.listRowToggle}`}
                                 onClick={e => { e.stopPropagation(); setOpenBillId(split.id); }}
                                 aria-label={`Open ${split.allocationDescription}`}
                               >
-                                <ChevronRight size={16} className={styles.clubRowChevron} aria-hidden />
+                                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
                               </button>
                             </span>
                           </td>
@@ -1609,14 +1594,14 @@ export function ClubPanel({
                               real work (its total and what has been paid). Inline, the two kinds of
                               row are the same height and the column reads down cleanly. */}
                           <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
-                            <span className={styles.clubRowName}>
+                            <span className={styles.listRowName}>
                               {r.description}
                               <DirectionBadge type={r.requestType} />
                             </span>
                             {/* ⚠ A DECLINED REQUEST'S REASON IS READ ON THE ROW (D3): skimming five
                                 of them needs no opens. The whole text stands at the top of Details. */}
                             {r.status === 'denied' && r.denialReason && (
-                              <span className={styles.clubRowSub}>&ldquo;{preview(r.denialReason)}&rdquo;</span>
+                              <span className={styles.listRowSub}>&ldquo;{preview(r.denialReason)}&rdquo;</span>
                             )}
                           </td>
                           {/* ⚠ THE CELL READS, IT DOES NOT ACT — both controls that change this are

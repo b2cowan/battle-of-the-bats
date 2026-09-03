@@ -89,6 +89,19 @@ export interface RecordMoneyIntent {
   amount?: string;
 }
 
+/**
+ * What travels when the conversation hands a PROMISE off to the pledge sheet (the carried ruling
+ * built in List · Room · Question Phase B, 2026-09-02): the sponsor's name and the amount, as
+ * typed. ⚠ NOT a ninth "What happened?" sentence — the 2026-08-25 ruling capped the list at eight
+ * and folded hand-offs INTO a branch ("Bills you owe" inside "we paid for something"); this rides
+ * the sponsor branch's own Which-sponsor picker as one more row. Record still never creates unpaid
+ * money itself: the pledge sheet on Fundraising is the one door that does.
+ */
+export interface PledgeCarry {
+  name: string;
+  amount: string;
+}
+
 export interface RecordMoneySignal {
   summary: MoneySummary | null;
   /** 0 = never pressed. Bumped by each request. */
@@ -97,6 +110,16 @@ export interface RecordMoneySignal {
   intent: RecordMoneyIntent | null;
   /** Open the recording conversation. Called by every door outside the shared money panel. */
   request: (intent?: RecordMoneyIntent) => void;
+  /** 0 = never handed off. Bumped by each hand-off into the pledge sheet. */
+  pledgeNonce: number;
+  /** What the hand-off at `pledgeNonce` carried. */
+  pledgeCarry: PledgeCarry | null;
+  /**
+   * Hand the coach into the pledge sheet on Fundraising with their typing carried — the mirror of
+   * the pledge sheet's own "Record it instead". The hub switches the tab and the Fundraising panel
+   * opens the sheet; the conversation only says what was typed.
+   */
+  requestPledge: (carry: PledgeCarry) => void;
 }
 
 const RecordMoneyContext = createContext<RecordMoneySignal | null>(null);

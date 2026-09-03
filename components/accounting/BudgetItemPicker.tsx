@@ -429,7 +429,13 @@ export default function BudgetItemPicker({
         if (m) choose(m);
         else if (canCreate) startCreate();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' && open) {
+      /* ⚠ THE MENU OWNS ITS OWN ESCAPE (List · Room · Question Phase B, 2026-09-02). This picker
+         lives inside rooms and questions whose accessibility floor closes on an Escape from
+         anywhere inside their panel — so dismissing the suggestion list also closed the record
+         around it (the §134 walk's one "known unproven" step). Only while the list is open: a
+         closed picker lets Escape through to the dialog, which is what a coach means then. */
+      e.stopPropagation();
       setOpen(false);
     }
   }

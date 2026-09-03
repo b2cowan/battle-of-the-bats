@@ -228,20 +228,22 @@ export const SCREENS = [
      entry sweeps the real thing rather than a fixture-only mode. */
   { id: 'coach-dues-settlement',   session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&settlement=open`, ready: 'h1' },
   { id: 'coach-fundraisers',       session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers`,      ready: 'h1' },
-  /* ⚠ AN OPEN DRIVE IS ITS OWN SHAPE — since 2026-08-31 the drill-in is gone and `?fundraiser=`
-     expands the drive's ROW in place: a facts meta line, sibling entry rows sharing the parent
-     table's six columns, and a doors row, none of which the at-rest list draws. The 361px
-     sideways-overflow defect of 2026-08-14 lived on exactly this surface's ancestor, so the
-     open state stays swept — `coach-fundraisers` above would stay green through anything that
-     happened inside the expansion. */
-  { id: 'coach-fundraiser',        session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.fundraiserId}`, ready: 'h1' },
-  /* ⚠ A SPONSOR IS NOT THE SAME SCREEN, and until 2026-08-15 nothing automated had opened one. The
-     entry above draws a drive: a six-column leaderboard with an inline edit form. A sponsor
-     replaces it with a THREE-column single-row record, a kind chip beside a pledged/received chip
-     in the title row, and a status sentence under it — none of which the drive can render, so a
-     green `coach-fundraiser` proved nothing about any of them. Same lesson as the settlement sheet
-     and the collapsed team-settings groups: the sweep only measures what is actually drawn. */
-  { id: 'coach-sponsor',           session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.sponsorId}`, ready: 'h1' },
+  /* ⚠⚠ A DRIVE'S ROOM IS ITS OWN SHAPE (List · Room · Question Phase B, 2026-09-02). The
+     Fundraising tab is two flat LISTS now — `coach-fundraisers` above measures rows that never
+     open — and `?fundraiser=` opens the drive's ROOM: three tiles, the entries table with its
+     Edit/Remove doors, the action row and the named Prev/Next. Same lesson as the club bill's
+     room and the settlement sheet: the sweep measures what is drawn, and a green list proves
+     nothing about the room. `ready` waits on the room's own sentinel rather than the hub's h1,
+     which is on screen before the room is. The id is unchanged so its baseline still applies —
+     though rows→rooms re-keys nearly every entry, and the re-baseline carries the reason. */
+  { id: 'coach-fundraiser',        session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.fundraiserId}`, ready: '[data-room="drive"][data-room-state="loaded"]' },
+  /* ⚠ A SPONSOR'S ROOM IS NOT THE SAME SCREEN: the system's one TWO-ZONE room — Pledged/Arrived/
+     To come tiles, the Cheques zone with Edit and Undo on each arrival, and the Credited-to-players
+     zone with the credit split LIVE — none of which a drive's room draws. Until 2026-08-15 nothing
+     automated had opened a sponsor at all, and a green `coach-fundraiser` proved nothing about it.
+     The fixture resolves the SEEDED sponsor by name (two cheques + a credit split) so this never
+     sweeps a bare pledge's emptiest state. */
+  { id: 'coach-sponsor',           session: 'coach', path: (c) => `${team(c)}/accounting?section=fundraisers&fundraiser=${c.sponsorId}`, ready: '[data-room="sponsor"][data-room-state="loaded"]' },
   /* The kind-filtered list — the view the Money overview's two rows now land on (2026-08-15). It
      is the same table with a different row count, so it is cheap; what it proves is that the
      filter chips, the split summary cards and the "no sponsors this season" fallback all compose

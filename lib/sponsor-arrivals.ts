@@ -41,6 +41,45 @@ export interface AccruedShare {
 const toCents = (n: number) => Math.round(n * 100);
 const toDollars = (c: number) => c / 100;
 
+/**
+ * THE REPLAY ORDER, stated once: oldest cheque first, by the day it arrived, then by the day it
+ * was recorded. Every re-derivation (`deriveAllArrivalCredits`) walks arrivals in this order, and
+ * so must every reader that pairs a credit with its arrival — the entries GET, the server writer,
+ * and an EDIT that moves a cheque's date (List · Room · Question Phase B, 2026-09-02): re-dating
+ * the first cheque past the second changes which one "reaches the pledge" and takes the
+ * remainder, so the order is part of the arithmetic, not a display choice.
+ */
+export function arrivalOrder(
+  a: { receivedDate: string | null; createdAt: string },
+  b: { receivedDate: string | null; createdAt: string },
+): number {
+  return (a.receivedDate ?? '').localeCompare(b.receivedDate ?? '') || a.createdAt.localeCompare(b.createdAt);
+}
+
+/**
+ * The credit editor's rows (strings in boxes) → the shares that count: a family picked and a
+ * share above zero. ONE transform for every door that draws the editor (the pledge sheet, the
+ * room's split zone, the conversation's sponsor branch) — it shipped as three inline copies
+ * before `/simplify` on Phase B (2026-09-02).
+ */
+export function sharesFromRows(
+  rows: readonly { playerId: string; value: string; unit: CreditPlanShare['unit'] }[],
+): CreditPlanShare[] {
+  return rows
+    .filter(r => r.playerId && Number(r.value) > 0)
+    .map(r => ({ playerId: r.playerId, value: Number(r.value), unit: r.unit }));
+}
+
+/** Per-family dollars a replay leaves — what the floor is asked about, and what a screen shows
+ *  before the floor is asked. Integer cents, like everything else here. */
+export function accruedByFamilyFromRounds(rounds: readonly AccruedShare[][]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const round of rounds) for (const s of round) {
+    out.set(s.playerId, toDollars(toCents(out.get(s.playerId) ?? 0) + toCents(s.credit)));
+  }
+  return out;
+}
+
 /** `pledged − arrived`, floored at zero — the "still to come" figure, one definition. */
 export function stillToCome(pledged: number | null, arrivedTotal: number): number {
   if (!pledged || pledged <= 0) return 0;

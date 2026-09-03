@@ -27,10 +27,13 @@ import {
   getRepDuesPayoutsForPlayer,
 } from './db';
 import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from './dues-credit-guards';
-import { tournamentToday } from './timezone';
+import { orgDayKey } from './timezone';
 import {
   accrueArrival,
+  accruedByFamilyFromRounds,
+  arrivalOrder,
   deriveAllArrivalCredits,
+  type AccruedShare,
   type CreditPlanShare,
 } from './sponsor-arrivals';
 
@@ -288,10 +291,7 @@ export async function applySponsorAgreement(args: {
     pledged: newPledged,
     arrivalAmounts: arrivals.map(a => Number(a.amount_raised)),
   });
-  const projected = new Map<string, number>();
-  for (const round of rounds) for (const s of round) {
-    projected.set(s.playerId, round2((projected.get(s.playerId) ?? 0) + s.credit));
-  }
+  const projected = accruedByFamilyFromRounds(rounds);
 
   const refusal = await sponsorFloorRefusal({
     programYearId,
@@ -318,36 +318,205 @@ export async function applySponsorAgreement(args: {
   }
 
   // Re-derive every arrival's credits from scratch under the new agreement.
-  if (entryIds.length) {
-    await supabaseAdmin.from('rep_dues_credits').delete().in('fundraiser_entry_id', entryIds);
-    for (let i = 0; i < arrivals.length; i++) {
-      const arrival = arrivals[i];
-      const shares = rounds[i] ?? [];
-      for (const share of shares) {
-        const { error: creditErr } = await supabaseAdmin.from('rep_dues_credits').insert({
-          program_year_id: programYearId,
-          player_id: share.playerId,
-          amount: share.credit,
-          description: `Sponsorship — ${fundraiser.name}`,
-          credit_type: 'fundraiser',
-          credit_date: (arrival.received_date as string | null) ?? tournamentToday(),
-          created_by: userId,
-          fundraiser_entry_id: arrival.id,
-        });
-        if (creditErr) {
-          console.error('[sponsor-agreement] credit re-derive failed mid-way', { fundraiserId: fundraiser.id, error: creditErr });
-          return { error: NextResponse.json({ error: 'The credits could not be re-figured completely — open the sponsor and save the agreement again.' }, { status: 500 }) };
-        }
-      }
-      const rebate = round2(shares.reduce((s, r) => s + r.credit, 0));
-      const pctRows = newPlan.filter(p => p.unit === 'percent');
-      await supabaseAdmin.from('rep_fundraiser_entries').update({
-        rebate_amount: rebate,
-        rebate_percent: newPlan.length === 1 && pctRows.length === 1 ? pctRows[0].value : 0,
-        updated_at: new Date().toISOString(),
-      }).eq('id', arrival.id);
+  const rewrite = await rewriteSponsorCredits({ programYearId, fundraiser, plan: newPlan, arrivals, rounds, userId });
+  if (rewrite) return { error: rewrite };
+
+  return { ok: true };
+}
+
+/**
+ * Bring every credit row into line with a replay: the old rows go, one row per family per
+ * arrival comes back from `rounds`, and each arrival's own `rebate_amount` is restated. Shared by
+ * the agreement edit and the cheque edit (Phase B) — the two doors that re-figure history rather
+ * than add to it — so the rows they write can never be shaped two ways.
+ *
+ * `arrivals` must be in REPLAY ORDER (the same order `rounds` was derived in). Returns the refusal
+ * to send when a row could not be written, else null.
+ */
+async function rewriteSponsorCredits(args: {
+  programYearId: string;
+  fundraiser: { id: string; name: string };
+  plan: readonly CreditPlanShare[];
+  arrivals: readonly { id: string; received_date: string | null; created_at: string }[];
+  rounds: AccruedShare[][];
+  userId: string;
+}): Promise<NextResponse | null> {
+  const { programYearId, fundraiser, plan, arrivals, rounds, userId } = args;
+  const entryIds = arrivals.map(a => a.id);
+  if (!entryIds.length) return null;
+
+  /* ⚠ THE ROWS THAT ARE ABOUT TO GO ARE KEPT (`/review`, 2026-09-02). This is a delete-then-insert
+     with no transaction; if the insert fails the families read $0 credited from this sponsor until
+     someone retries. So the old rows are snapshotted first and put back on that failure — the
+     module's own rule, "each writer unwinds what it already wrote", honoured here too. */
+  const { data: previous } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('*')
+    .in('fundraiser_entry_id', entryIds);
+  await supabaseAdmin.from('rep_dues_credits').delete().in('fundraiser_entry_id', entryIds);
+  const pctRows = plan.filter(p => p.unit === 'percent');
+  const rebatePercent = plan.length === 1 && pctRows.length === 1 ? pctRows[0].value : 0;
+  // One insert for every credit row of every arrival — a cheque correction on a sponsor with many
+  // arrivals and families is otherwise dozens of sequential round trips (`/simplify`, 2026-09-02).
+  const creditRows = arrivals.flatMap((arrival, i) => (rounds[i] ?? []).map(share => ({
+    program_year_id: programYearId,
+    player_id: share.playerId,
+    amount: share.credit,
+    description: `Sponsorship — ${fundraiser.name}`,
+    credit_type: 'fundraiser',
+    /* ⚠ NEVER TODAY (`/review`, 2026-09-02 — the drive route's own Critical finding, one door over).
+       An undated cheque is dated the org-clock day it was recorded, exactly as every reader dates
+       it; stamping the replay's day on it would move a family's credit into this month because a
+       coach corrected a note. */
+    credit_date: arrival.received_date ?? orgDayKey(arrival.created_at),
+    created_by: userId,
+    fundraiser_entry_id: arrival.id,
+  })));
+  if (creditRows.length) {
+    const { error: creditErr } = await supabaseAdmin.from('rep_dues_credits').insert(creditRows);
+    if (creditErr) {
+      console.error('[sponsor-agreement] credit re-derive failed — restoring the previous rows', { fundraiserId: fundraiser.id, error: creditErr });
+      if (previous?.length) await supabaseAdmin.from('rep_dues_credits').insert(previous);
+      return NextResponse.json({ error: 'The credits could not be re-figured, so they were left as they were — open the sponsor and save its credit split again.' }, { status: 500 });
     }
   }
+  // Each arrival's own rebate snapshot — a different figure per row, so one update per arrival.
+  for (let i = 0; i < arrivals.length; i++) {
+    const rebate = round2((rounds[i] ?? []).reduce((s, r) => s + r.credit, 0));
+    await supabaseAdmin.from('rep_fundraiser_entries').update({
+      rebate_amount: rebate,
+      rebate_percent: rebatePercent,
+      updated_at: new Date().toISOString(),
+    }).eq('id', arrivals[i].id);
+  }
+  return null;
+}
+
+/**
+ * EDIT ONE CHEQUE — amount, the day it arrived, how it came, a note (List · Room · Question
+ * Phase B, 2026-09-02; the parity the drive's entries already had and arrivals did not — undo-only
+ * since mig 268, with no recorded reason).
+ *
+ * ⚠ AN EDIT IS A REPLAY, NOT A ROW PATCH. A cheque's credits were figured against everything that
+ * arrived BEFORE it (a dollar share fills proportionally; the cheque that reaches the pledge takes
+ * the remainder), so changing one amount — or moving one date past a sibling's — re-figures every
+ * family's credit on every arrival. The edited history is replayed through the stored plan, the
+ * payout floor is asked per family PRE-FLIGHT, and only then are the ledger row, the entry and the
+ * whole credit set rewritten. Same writer the agreement edit uses (`rewriteSponsorCredits`), so
+ * the two doors cannot drift.
+ *
+ * Fields left `undefined` are untouched; `method: null` / `notes: null` clear. Validation (an amount
+ * above zero, a date that has happened, a method from the one list) is the route's.
+ */
+export async function editSponsorArrival(args: {
+  programYearId: string;
+  fundraiser: { id: string; name: string; pledged_amount: number | null };
+  entryId: string;
+  amount?: number;
+  receivedDate?: string;
+  method?: string | null;
+  notes?: string | null;
+  userId: string;
+}): Promise<{ ok: true } | { error: NextResponse }> {
+  const { programYearId, fundraiser, entryId, amount, receivedDate, method, notes, userId } = args;
+
+  // The plan and the arrivals are independent reads — together, as `writeSponsorArrivalRow` fetches them.
+  const [plan, arrivals] = await Promise.all([
+    getSponsorCreditPlan(fundraiser.id),
+    getSponsorArrivals(fundraiser.id),
+  ]);
+  const target = arrivals.find(a => a.id === entryId);
+  if (!target) {
+    return { error: NextResponse.json({ error: 'That arrival is not part of this sponsor.' }, { status: 404 }) };
+  }
+
+  /* ⚠ A NOTE OR A METHOD IS NOT MONEY (`/review`, 2026-09-02). Only an amount or a date changes
+     what any family earned; replaying the credits for a note correction would rewrite every credit
+     row of every arrival (new ids, new created_by) for money that never moved. Those edits touch
+     the entry alone and return. */
+  const moneyMoved = (amount !== undefined && Math.abs(amount - Number(target.amount_raised)) > 0.005)
+    || (receivedDate !== undefined && receivedDate !== (target.received_date ?? null));
+  if (!moneyMoved) {
+    const { error: noteErr } = await supabaseAdmin
+      .from('rep_fundraiser_entries')
+      .update({
+        ...(method !== undefined ? { method } : {}),
+        ...(notes !== undefined ? { notes } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', entryId)
+      .eq('fundraiser_id', fundraiser.id);
+    if (noteErr) {
+      console.error('[sponsor-arrival] entry update failed', { entryId, error: noteErr });
+      return { error: NextResponse.json({ error: 'That cheque could not be saved. Try again.' }, { status: 500 }) };
+    }
+    return { ok: true };
+  }
+
+  // The history AS IT WOULD BE — the edited row substituted, then put back in replay order, because
+  // a moved date can change which cheque comes first.
+  const edited = arrivals
+    .map(a => (a.id === entryId
+      ? { ...a, amount_raised: amount ?? Number(a.amount_raised), received_date: receivedDate ?? (a.received_date as string | null) }
+      : a))
+    .map(a => ({ ...a, receivedDate: a.received_date as string | null, createdAt: String(a.created_at) }))
+    .sort(arrivalOrder);
+
+  const current = await accruedByFamily(arrivals.map(a => a.id as string));
+  const rounds = deriveAllArrivalCredits({
+    plan,
+    pledged: fundraiser.pledged_amount,
+    arrivalAmounts: edited.map(a => Number(a.amount_raised)),
+  });
+  const refusal = await sponsorFloorRefusal({
+    programYearId,
+    currentByFamily: current,
+    projectedByFamily: accruedByFamilyFromRounds(rounds),
+    action: 'changing this cheque',
+  });
+  if (refusal) return { error: refusal };
+
+  // The books first: the income row carries the amount and the month every report reads.
+  if (target.accounting_entry_id && (amount !== undefined || receivedDate !== undefined)) {
+    const { error: ledgerErr } = await supabaseAdmin
+      .from('accounting_entries')
+      .update({
+        ...(amount !== undefined ? { amount } : {}),
+        ...(receivedDate !== undefined ? { entry_date: receivedDate } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', target.accounting_entry_id);
+    if (ledgerErr) {
+      console.error('[sponsor-arrival] ledger update failed — nothing changed', { entryId, error: ledgerErr });
+      return { error: NextResponse.json({ error: 'The books entry could not be changed, so nothing was saved. Try again.' }, { status: 500 }) };
+    }
+  }
+
+  const { error: entryErr } = await supabaseAdmin
+    .from('rep_fundraiser_entries')
+    .update({
+      ...(amount !== undefined ? { amount_raised: amount } : {}),
+      ...(receivedDate !== undefined ? { received_date: receivedDate } : {}),
+      ...(method !== undefined ? { method } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('fundraiser_id', fundraiser.id);
+  if (entryErr) {
+    console.error('[sponsor-arrival] entry update failed after the ledger moved', { entryId, error: entryErr });
+    return { error: NextResponse.json({ error: 'The books entry changed but the cheque itself could not be saved — save it once more to bring the two back in line.' }, { status: 500 }) };
+  }
+
+  const rewrite = await rewriteSponsorCredits({
+    programYearId,
+    fundraiser,
+    plan,
+    arrivals: edited.map(a => ({ id: a.id as string, received_date: a.receivedDate, created_at: a.createdAt })),
+    rounds,
+    userId,
+  });
+  if (rewrite) return { error: rewrite };
 
   return { ok: true };
 }

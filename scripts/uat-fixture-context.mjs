@@ -122,25 +122,29 @@ export async function resolveUatContext() {
     console.log('  · probe game re-anchored to now (it had drifted out of its live window)');
   }
 
-  // One fundraiser on the live season — the Money hub's Fundraisers tab drills into it
-  // (`?section=fundraisers&fundraiser=`), and a drill-in with no id to open would sweep the LIST
-  // twice and report green on a screen nobody looked at.
+  // The drive whose ROOM the sweep opens (`?section=fundraisers&fundraiser=`) — a room with no id
+  // to open would sweep the LIST twice and report green on a screen nobody looked at.
+  //
+  // ⚠ RESOLVED BY NAME, like the probe practice (List · Room · Question Phase B, 2026-09-02). The
+  // seeder writes two drives in ONE insert, so they share a created_at and "the oldest" was a coin
+  // toss between the active drive that holds entries and the closed one that holds none — and a
+  // room swept in its emptiest state is the trap this repo keeps re-learning.
   const fr = await db.from('rep_fundraisers')
     .select('id').eq('program_year_id', py.data.id).eq('kind', 'fundraiser')
-    .order('created_at').limit(1).maybeSingle();
+    .eq('name', 'Chocolate sale').maybeSingle();
   if (fr.error) throw new FixtureError(`rep_fundraisers lookup failed: ${fr.error.message}`);
-  if (!fr.data) throw new FixtureError('No fundraiser on the active program year.');
+  if (!fr.data) throw new FixtureError('No "Chocolate sale" drive on the active program year — the drive room cannot be swept.');
 
-  // ⚠ A SPONSOR DRAWS A DIFFERENT SCREEN, and nothing automated had ever opened one. The drill-in
-  // for a drive is a six-column leaderboard; a sponsor replaces it with a one-row record, its own
-  // title chips and a status hint — none of which the `coach-fundraiser` screen can measure,
-  // because a drive never renders them. Resolved by KIND rather than by taking the second row:
-  // "whatever is second" is how a fixture reshuffle silently sweeps the same screen twice.
+  // ⚠ A SPONSOR'S ROOM IS A DIFFERENT SCREEN — the one two-zone room — and nothing automated had
+  // ever opened a sponsor until 2026-08-15. Resolved BY NAME (Phase B, 2026-09-02): "the oldest
+  // sponsor" resolved to a bare pledge with no cheques and no credit split whenever an earlier QA
+  // walk had left a specimen behind, so the sweep measured the room's emptiest state while the
+  // seeder's own two-cheque sponsor never even got seeded (its guard matched ANY received sponsor).
   const sp = await db.from('rep_fundraisers')
     .select('id').eq('program_year_id', py.data.id).eq('kind', 'sponsor')
-    .order('created_at').limit(1).maybeSingle();
+    .eq('name', 'Northside Physio').maybeSingle();
   if (sp.error) throw new FixtureError(`sponsor lookup failed: ${sp.error.message}`);
-  if (!sp.data) throw new FixtureError('No SPONSOR on the active program year — the sponsor screen cannot be swept.');
+  if (!sp.data) throw new FixtureError('No "Northside Physio" sponsor on the active program year — the sponsor room cannot be swept.');
 
   /**
    * ⚠⚠ THE BETWEEN-SEASONS TEAM — the fixture gap that hid three rounds of defects (closed

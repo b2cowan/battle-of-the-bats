@@ -1,16 +1,25 @@
 'use client';
 import { useEffect, useRef, type RefObject } from 'react';
+import { useLatestRef } from './useLatestRef';
 
 /**
  * THE ACCESSIBILITY FLOOR every overlay stands on (List · Room · Question, D7, 2026-09-02): Escape
  * closes, Tab is trapped inside the panel, focus lands on the panel when it opens and returns to
  * the opener when it closes. Rooms get it from `RoomShell`; a Question modal calls it directly with
- * a ref to its panel. Before this, exactly one money overlay had any of it.
+ * a ref to its panel (`QuestionShell`, the request window, the Record conversation). Before this,
+ * exactly one money overlay had any of it.
  *
  * ⚠ A STACKED OVERLAY OWNS ITS OWN KEYS. The Record conversation and the confirm dialogs portal to
  * <body> and open OVER a room, so a document-level listener would close the room under them on
  * Escape. The handler only acts when the event comes from inside this panel — or from the bare
  * document, when nothing else holds focus.
+ *
+ * ⚠⚠ AND THE BARE DOCUMENT BELONGS TO THE MOST RECENTLY OPENED FLOOR (Phase B, 2026-09-02 — the
+ * first genuinely stacked pair, the drive's Record window over the drive's room). With two floors
+ * armed, an Escape arriving with focus on <body> reached BOTH: the Question closed, and the room
+ * closed underneath it. Every open floor now registers in `openFloors`, oldest first, and a bare
+ * key is answered only by the last one in. Not an overlay stack in `lib/coaches-overlay` — that is
+ * a counter for scroll-lock and nav-hiding and stays one; this is a list of who may answer a key.
  *
  * ⚠ THE TRAP HOLDS EVEN WHEN FOCUS HAS FALLEN OUT (`/review`, 2026-09-02). A room's Prev/Next swaps
  * the record while the panel stays open, and the button that had focus unmounts with the old
@@ -33,19 +42,23 @@ export interface DialogWalk {
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 const EDITABLE = 'input, textarea, select, [contenteditable="true"]';
 
+/** Every floor currently open, oldest first. A key from the bare document is the last one's. */
+const openFloors: symbol[] = [];
+
 export function useDialogFloor(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
   opts: { onClose: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  // Latest-value refs so the one keydown effect (keyed on `open`) never re-binds on render churn
+  // The latest options, so the one keydown effect (keyed on `open`) never re-binds on render churn
   // and never calls a stale closer or walks a stale list.
-  const optsRef = useRef(opts);
-  useEffect(() => { optsRef.current = opts; }, [opts]);
+  const optsRef = useLatestRef(opts);
 
   useEffect(() => {
     if (!open) return;
+    const token = Symbol('dialog-floor');
+    openFloors.push(token);
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
 
     function onKey(event: KeyboardEvent) {
@@ -55,6 +68,9 @@ export function useDialogFloor(
       const inside = target !== null && panel.contains(target);
       const bare = target === document.body || target === document.documentElement;
       if (!inside && !bare) return;
+      // Nothing has focus: only the floor that opened LAST may answer, or a stacked Question's
+      // Escape would also close the room beneath it.
+      if (bare && openFloors[openFloors.length - 1] !== token) return;
 
       const { onClose, busy, walk } = optsRef.current;
       if (event.key === 'Escape') {
@@ -98,8 +114,14 @@ export function useDialogFloor(
     }
 
     document.addEventListener('keydown', onKey);
-    panelRef.current?.focus();
+    // Seat focus on the panel — unless a field inside it already took it (an `autoFocus` input
+    // mounts before this effect runs, and the coach's cursor belongs there, not on the frame).
+    const panel = panelRef.current;
+    const active = document.activeElement;
+    if (panel && !(active instanceof Node && panel.contains(active))) panel.focus();
     return () => {
+      const at = openFloors.indexOf(token);
+      if (at >= 0) openFloors.splice(at, 1);
       document.removeEventListener('keydown', onKey);
       restoreFocusRef.current?.focus?.();
     };

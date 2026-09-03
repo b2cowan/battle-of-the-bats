@@ -10,6 +10,7 @@ import { withObservability } from '@/lib/observability';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
 import { writeSponsorArrivalRow } from '@/lib/sponsor-arrivals-server';
 
 /**
@@ -77,8 +78,9 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: futureReceivedDateRefusal(receivedDate, 'sponsor cheque')! }, { status: 400 });
   }
   const method = typeof body.method === 'string' && body.method ? body.method : null;
-  if (method && !['etransfer', 'cash', 'cheque', 'card', 'other'].includes(method)) {
-    return NextResponse.json({ error: 'method must be one of etransfer, cash, cheque, card, other' }, { status: 400 });
+  // The one shared method list — the same keys the client offers and the PATCH validates against.
+  if (method && !Object.keys(DUES_PAYMENT_METHOD_LABEL).includes(method)) {
+    return NextResponse.json({ error: `method must be one of ${Object.keys(DUES_PAYMENT_METHOD_LABEL).join(', ')}` }, { status: 400 });
   }
   const notes = typeof body.notes === 'string' && body.notes.trim() ? body.notes.trim() : null;
 

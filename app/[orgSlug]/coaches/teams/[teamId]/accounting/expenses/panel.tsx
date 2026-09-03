@@ -13,6 +13,7 @@ import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor from '@/components/coaches/SponsorCreditPlanEditor';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
@@ -68,7 +69,7 @@ import { formatPlayerLastFirst, formatPlayerFirstLast } from '@/lib/player-name'
 import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
 import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
 import { type CreditUnit } from '@/lib/coach-fundraising';
-import { accrueArrival, deriveAllArrivalCredits, creditPlanProblem, stillToCome } from '@/lib/sponsor-arrivals';
+import { accrueArrival, deriveAllArrivalCredits, creditPlanProblem, sharesFromRows, stillToCome } from '@/lib/sponsor-arrivals';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { formatMonthLong, monthKeyOf } from '@/lib/coach-budget-months';
 import { toggleKey } from '@/lib/toggle-key';
@@ -1455,6 +1456,15 @@ function MoneyRecordsPanel({
     // payment would be the guard naming the wrong thing.
     noun: (convBranch && CONV_BRANCH[convBranch].noun) || copy.noun,
   });
+  /* The form stands on the same accessibility floor as a room (D7, List · Room · Question):
+     Escape closes through the discard guard, Tab stays inside, focus returns to the door that
+     opened it. ⚠ Keyed on `formOpen` ALONE, never `tabActive` — this modal is PORTALED and on
+     screen whenever it is open, including when the hub's Record button opened it while this panel
+     sits hidden under another tab; gating on the tab would disarm it exactly then. Stacked over an
+     open room (a drive's Record door), a bare Escape reaches only the floor that opened last, so
+     the room beneath stays — Phase B, 2026-09-02. */
+  const convPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(formOpen, convPanelRef, { onClose: () => { void closeForm(); }, busy: saving });
 
   /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
      the shape where a fifth form field gets added to two of them and quietly persists into the next
@@ -2103,6 +2113,33 @@ function MoneyRecordsPanel({
    * ⚠ The dirty-check baseline stays BLANK: everything here is work the coach typed, so walking
    * away SHOULD ask before discarding.
    */
+  /**
+   * The promise hand-off — the sponsor branch's mirror of `handOffToBillForm` (List · Room ·
+   * Question Phase B, 2026-09-02). "A sponsor came through" turned out to be a promise: the
+   * typed name and amount travel into the pledge sheet on Fundraising, which is the one door that
+   * writes unpaid money. ⚠ Straight past the discard guard, deliberately — the typing goes WITH
+   * the coach, so there is nothing to ask about discarding (the bill hand-off's own reasoning).
+   * The way back is the sheet's "Record it instead", which carries the same two fields here.
+   */
+  function handOffToPledge() {
+    const carry = { name: conv.sponsorName.trim(), amount: form.amount };
+    dismissForm();
+    recordSignal?.requestPledge(carry);
+  }
+
+  /**
+   * The cold sponsor branch's first answer — WHICH sponsor (Direction A, 2026-08-29): a pledge
+   * (its target is then loaded for the accrual consequence), a new sponsor, or — Phase B — the
+   * promise row, which hands off and leaves this form. ⚖ NOT a ninth "What happened?" sentence:
+   * the 2026-08-25 ruling capped the list at eight and folded hand-offs INTO a branch, so the
+   * promise is one more answer to "which sponsor?". Record never creates unpaid money itself.
+   */
+  function pickSponsor(v: string) {
+    if (v === 'pledge') { handOffToPledge(); return; }
+    setConv(c => ({ ...c, sponsorPicked: v, sponsorId: v && v !== 'new' ? v : '', sponsorName: '' }));
+    if (v && v !== 'new') void loadSponsorTarget(v);
+  }
+
   function handOffToBillForm() {
     const carried = { ...form, amount: '', paidDate: '' };
     const seedRow: PlanRow = (form.paidDate || form.amount)
@@ -2279,9 +2316,7 @@ function MoneyRecordsPanel({
       } else {
         if (conv.sponsorPicked !== 'new') throw new Error('Pick which sponsor came through.');
         if (!conv.sponsorName.trim()) throw new Error('The sponsor needs a name.');
-        const plan = convSponsorPlan
-          .filter(r => r.playerId && Number(r.value) > 0)
-          .map(r => ({ playerId: r.playerId, value: Number(r.value), unit: r.unit }));
+        const plan = sharesFromRows(convSponsorPlan);
         const problem = creditPlanProblem(plan, amount);
         if (problem) throw new Error(problem);
         /* The SAME creation POST the Fundraising door submits — status received (this branch is
@@ -4329,14 +4364,11 @@ function MoneyRecordsPanel({
             <select
               className={styles.select}
               value={conv.sponsorPicked}
-              onChange={e => {
-                const v = e.target.value;
-                setConv(c => ({ ...c, sponsorPicked: v, sponsorId: v && v !== 'new' ? v : '', sponsorName: '' }));
-                if (v && v !== 'new') void loadSponsorTarget(v);
-              }}
+              onChange={e => pickSponsor(e.target.value)}
             >
               <option value="">Choose…</option>
               <option value="new">A new sponsor…</option>
+              {recordSignal && <option value="pledge">This is a promise — nothing arrived yet</option>}
               {convSponsors.map(sp => (
                 <option key={sp.id} value={sp.id}>
                   {sp.name}{sp.stillToCome > 0.005 ? ` — ${fmt(sp.stillToCome)} still to come` : ''}
@@ -4405,9 +4437,7 @@ function MoneyRecordsPanel({
       }
 
       // ── COLD: a sponsor came through — create the record with its first arrival. ──
-      const coldPlan = convSponsorPlan
-        .filter(r => r.playerId && Number(r.value) > 0)
-        .map(r => ({ playerId: r.playerId, value: Number(r.value), unit: r.unit }));
+      const coldPlan = sharesFromRows(convSponsorPlan);
       const coldPlanProblem = amount > 0 ? creditPlanProblem(coldPlan, amount) : null;
       const coldShares = amount > 0 && !coldPlanProblem
         ? accrueArrival({ plan: coldPlan, pledged: amount, arrivalAmount: amount, priorArrivalsTotal: 0, priorAccrued: new Map() })
@@ -4457,8 +4487,8 @@ function MoneyRecordsPanel({
           </div>
           {convNoteField('Optional details…')}
           <p className={`${styles.formHint} ${styles.formGridFull}`}>
-            A promised sponsorship isn&apos;t money yet — record a <strong>pledge</strong> on
-            Fundraising, where its status lives.
+            A promised sponsorship isn&apos;t money yet — pick <strong>This is a promise</strong> under
+            &ldquo;Which sponsor?&rdquo; and the pledge sheet opens with your typing carried.
           </p>
           {amount > 0 && conv.sponsorName.trim() && consequence(<>
             <strong>{fmt(amount)} arrives</strong> — shows on the ledger as sponsorship income.
@@ -6701,7 +6731,16 @@ function MoneyRecordsPanel({
           a mount with no shell around it. */}
       {formOpen && createPortal(
         <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeForm)?.(); }}>
-          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
+          <div
+            ref={convPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={formMode === 'edit' ? copy.editTitle : isPayableForm ? 'Add a bill' : 'Record money'}
+            aria-busy={saving || undefined}
+            className={`${styles.modal} ${styles.modalScrollBody}`}
+            onClick={e => e.stopPropagation()}
+          >
             <CoachModalHeader
               /* Three doors, three names. "Record money" is the conversation; "Add a bill" is the
                  Ledger's setup form, which this modal also is (B2); an edit says what it is

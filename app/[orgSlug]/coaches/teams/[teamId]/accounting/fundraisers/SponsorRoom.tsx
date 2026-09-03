@@ -1,0 +1,865 @@
+'use client';
+/**
+ * THE SPONSOR'S ROOM — the system's one TWO-ZONE room (List · Room · Question Phase B, 2026-09-02;
+ * the ruled mockup is artifact `11607f0a` §2, "The sponsor's room"). A sponsor owns two lists at
+ * once — the cheques that arrived and the families the money is credited to — and burying either
+ * behind Edit hides the room's headline fact. So both are zones, side by side on a desktop and
+ * stacked on a phone. The shell is `RoomShell`, owned by the panel; this module is the body, the
+ * Questions the room asks (the cheque correction, the Edit-sponsorship sheet, the pledge sheet),
+ * and the chip the row and the header share.
+ *
+ * ⚠⚠ THE CREDIT SPLIT IS LIVE IN THE ROOM, AND SAVES WITH ITS OWN BUTTON. Its writes go through
+ * the payout-floor guards (SP-1) and re-figure every family's credit on every arrival, so a
+ * per-keystroke save would replay the whole history and fire the floor on every digit typed. The
+ * zone edits in place, says what it would refuse BEFORE the button (the §118 dead-Save), and
+ * saves once. Because it is the split's one editor now, the Edit-sponsorship sheet lost its
+ * copy — a record has ONE editor per field.
+ *
+ * ⚠ MONEY never has a form here. Record opens the one conversation locked to the sponsor; a
+ * cheque is corrected through its own Question and undone from its row. Status is nowhere a
+ * control — it is DERIVED from the two figures (`sponsorStanding`).
+ *
+ * ⚖ The promise-in-hand case HANDS OFF, both ways (owner, §121 walk 2026-08-29 + Phase B): the
+ * pledge sheet's "Record it instead" carries the typed name and amount into the conversation, and
+ * the conversation's "This is a promise — nothing arrived yet" carries them back here.
+ */
+import { useEffect, useMemo, useState } from 'react';
+import styles from '../../../../coaches.module.css';
+import QuestionShell from '@/components/coaches/QuestionShell';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useLatestRef } from '@/components/coaches/useLatestRef';
+import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
+import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
+import { tournamentToday, formatStoredDate } from '@/lib/timezone';
+import { moneyMovedMaxDate } from '@/lib/money-date-guards';
+import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod, type RepTeamTag } from '@/lib/types';
+import { SPONSOR_STANDING_LABEL, type CreditUnit, type SponsorStanding } from '@/lib/coach-fundraising';
+import {
+  accruedByFamilyFromRounds, deriveAllArrivalCredits, sharesFromRows, stillToCome, creditPlanProblem,
+  type CreditPlanShare,
+} from '@/lib/sponsor-arrivals';
+import { fmt } from '@/lib/coach-money-summary';
+import { TagChips } from './TagChips';
+import type { Fundraiser, RoomRecord, SponsorArrival } from './types';
+
+const METHODS = Object.keys(DUES_PAYMENT_METHOD_LABEL) as DuesPaymentMethod[];
+
+/** The expected-by fact, once money is still to come: the short date for a tile, and whether it
+ *  has passed (Q13's whole vocabulary). Null when nothing is owed or no date was promised. */
+export function expectedClause(expectedBy: string | null, remaining: number) {
+  if (!expectedBy || remaining <= 0.005) return null;
+  return { short: formatStoredDate(expectedBy, { withYear: false }), past: expectedBy < tournamentToday() };
+}
+
+/** The sponsor's chip — DERIVED from the money (`sponsorStanding`), the same on its row and in
+ *  its room's header. Never the stored status: that flips on the first cheque. */
+export function SponsorStatusChip({ standing }: { standing: SponsorStanding }) {
+  const cls = standing === 'received' ? styles.badgeApproved : standing === 'part' ? styles.badgeDraft : styles.badgePending;
+  return <span className={`${styles.badge} ${cls}`}>{SPONSOR_STANDING_LABEL[standing]}</span>;
+}
+
+/** The plan as the editor holds it — strings for the boxes, from the stored rows. */
+function planRows(record: RoomRecord): SponsorCreditPlanRow[] {
+  return record.plan.map(p => ({
+    playerId: p.playerId,
+    value: String(p.value),
+    unit: (p.unit === 'amount' ? 'amount' : 'percent') as CreditUnit,
+  }));
+}
+
+function sameShares(a: readonly CreditPlanShare[], b: readonly CreditPlanShare[]): boolean {
+  return a.length === b.length
+    && a.every(s => b.some(t => t.playerId === s.playerId && t.value === s.value && t.unit === s.unit));
+}
+
+/**
+ * Replay the arrivals through a plan and name every family whose credit would fall below what is
+ * already paid out in cash — the refusal the payout floor WOULD send, shown before the button.
+ * One derivation for the two doors that can shrink a credit: the live split and a pledge change.
+ */
+function foreseeableRefusals(
+  record: RoomRecord,
+  shares: readonly CreditPlanShare[],
+  pledged: number | null,
+  roster: { id: string; name: string }[],
+): { playerId: string; exposure: number; name: string }[] {
+  const projected = accruedByFamilyFromRounds(deriveAllArrivalCredits({
+    plan: shares,
+    pledged,
+    arrivalAmounts: record.arrivals.map(a => a.amount),
+  }));
+  return record.exposureByFamily
+    .filter(f => (projected.get(f.playerId) ?? 0) < f.exposure - 0.005)
+    .map(f => ({
+      ...f,
+      name: record.plan.find(p => p.playerId === f.playerId)?.playerName
+        ?? roster.find(p => p.id === f.playerId)?.name
+        ?? 'this family',
+    }));
+}
+
+/* Same voice as payoutFloorMessage (owner wording 2026-09-01) — the foreseeable note and the
+   server's 409 must read as one rule. */
+function RefusalLines({ refusals }: { refusals: { playerId: string; exposure: number; name: string }[] }) {
+  return (
+    <>
+      {refusals.map(f => (
+        <p key={f.playerId} className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>
+          The team has already paid {fmt(f.exposure)} back to {f.name}&rsquo;s family — this change would make that more than they were ever owed. Remove the payout first.
+        </p>
+      ))}
+    </>
+  );
+}
+
+/**
+ * The room's body: the two zones. Owns two writes — Undo on a cheque, and the split's Save — and
+ * hands the cheque Edit up as a Question the panel opens.
+ */
+export function SponsorRoomBody({
+  orgSlug,
+  teamId,
+  sponsor,
+  record,
+  error,
+  roster,
+  defaultCreditPercent,
+  moneyTags,
+  canWriteMoney,
+  onChanged,
+  onBusyChange,
+  onDirtyChange,
+  onFailure,
+  onEditArrival,
+}: {
+  orgSlug: string;
+  teamId: string;
+  sponsor: Fundraiser;
+  record: RoomRecord | null;
+  error: string;
+  roster: { id: string; name: string }[];
+  defaultCreditPercent: number;
+  moneyTags: RepTeamTag[];
+  canWriteMoney: boolean;
+  onChanged: () => void;
+  onBusyChange: (busy: boolean) => void;
+  /** The split has unsaved changes — the room's close and its walk ask before discarding. */
+  onDirtyChange: (dirty: boolean) => void;
+  onFailure: (message: string) => void;
+  onEditArrival: (arrival: SponsorArrival) => void;
+}) {
+  const confirmDialog = useConfirm();
+  const [undoingId, setUndoingId] = useState<string | null>(null);
+  /* The split zone's save reports here, not to the room: the room hears ONE busy value per body,
+     derived from both writers, so neither's "done" can clear the other's gate (`/review`,
+     2026-09-02). The cleanup releases it through the LATEST callback when the body unmounts. */
+  const [zoneBusy, setZoneBusy] = useState(false);
+  const busyRef = useLatestRef(onBusyChange);
+  const busy = undoingId !== null || zoneBusy;
+  useEffect(() => { busyRef.current(busy); }, [busy, busyRef]);
+  useEffect(() => () => busyRef.current(false), [busyRef]);
+
+  async function undoArrival(a: SponsorArrival) {
+    if (!record) return;
+    const lastOne = record.arrivals.length === 1;
+    const ok = await confirmDialog({
+      title: 'Undo this arrival?',
+      message: `Removes the ${fmt(a.amount)} that arrived ${a.receivedDate ? formatStoredDate(a.receivedDate) : 'undated'} from the team’s books`
+        + (a.credited > 0.005 ? `, and takes back the ${fmt(a.credited)} credited to families from it` : '')
+        + (lastOne ? '. This is the last arrival, so the sponsor returns to a pledge.' : '.'),
+      confirmText: `Undo ${fmt(a.amount)}`,
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setUndoingId(a.entryId);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsor.id}/arrivals/${a.entryId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        onFailure(writeFailure(res, await res.json().catch(() => ({})), 'That arrival could not be undone.'));
+        return;
+      }
+      onChanged();
+    } finally {
+      setUndoingId(null);
+    }
+  }
+
+  if (error) return <p className={styles.errorText} role="alert">{error}</p>;
+  if (!record) return <p className={styles.mutedInline}>Loading…</p>;
+
+  const remaining = stillToCome(sponsor.pledgedAmount, sponsor.totalRaised);
+
+  return (
+    <>
+      {(sponsor.description || sponsor.tagIds.length > 0) && (
+        <p className={styles.roomFacts}>
+          {sponsor.description}
+          <TagChips tagIds={sponsor.tagIds} moneyTags={moneyTags} />
+        </p>
+      )}
+      <div className={styles.roomZones}>
+        {/* ── Zone one: the cheques ──────────────────────────────────────────────────────── */}
+        <section className={styles.roomZone} aria-label="Cheques">
+          <h4 className={styles.roomZoneLabel}>Cheques</h4>
+          {record.arrivals.length === 0 ? (
+            <p className={styles.mutedInline} style={{ margin: 0 }}>
+              Nothing has arrived yet{remaining > 0.005 && <> — {fmt(remaining)} still to come</>}.
+            </p>
+          ) : (
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+              <table className={styles.table} aria-label="Cheques">
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Arrived</th>
+                    <th className={`${styles.th} ${styles.thNum}`}>Amount</th>
+                    <th className={`${styles.th} ${styles.thNum}`}>Credited</th>
+                    <th className={styles.th} aria-label="Row actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {record.arrivals.map(a => (
+                    <tr key={a.entryId} className={styles.tr}>
+                      <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Arrived">
+                        {a.receivedDate ? formatStoredDate(a.receivedDate) : <span className={styles.mutedInline}>—</span>}
+                        {a.method && (
+                          <span className={styles.mutedInline}> · by {(DUES_PAYMENT_METHOD_LABEL[a.method as DuesPaymentMethod] ?? a.method).toLowerCase()}</span>
+                        )}
+                        {a.notes && <span className={styles.listRowSub}>{a.notes}</span>}
+                      </td>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
+                        {fmt(a.amount)}
+                      </td>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Credited">
+                        {a.credited > 0.005
+                          ? <span style={{ color: 'var(--home-plum)', fontWeight: 600 }}>{fmt(a.credited)}</span>
+                          : <span className={styles.mutedInline}>—</span>}
+                      </td>
+                      <td className={`${styles.td} ${styles.cardActionCell}`}>
+                        {canWriteMoney && (
+                          <span className={styles.listRowActions}>
+                            <button
+                              type="button"
+                              className={`${styles.btnGhost} ${styles.compactAction}`}
+                              onClick={() => onEditArrival(a)}
+                              aria-label={`Edit the ${fmt(a.amount)} arrival`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className={`${styles.btnGhost} ${styles.compactAction}`}
+                              style={{ color: 'var(--danger)' }}
+                              disabled={undoingId === a.entryId}
+                              onClick={() => void undoArrival(a)}
+                              aria-label={`Undo the ${fmt(a.amount)} arrival`}
+                            >
+                              {undoingId === a.entryId ? '…' : 'Undo'}
+                            </button>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {remaining > 0.005 && (
+                <p className={styles.mutedInline} style={{ margin: '0.5rem 0 0', fontSize: 'var(--type-support)' }}>
+                  {fmt(remaining)} still to come.
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ── Zone two: the credit split, LIVE ──────────────────────────────────────────── */}
+        <section className={styles.roomZone} aria-label="Credited to players">
+          <h4 className={styles.roomZoneLabel}>Credited to players</h4>
+          {canWriteMoney ? (
+            <CreditPlanZone
+              orgSlug={orgSlug}
+              teamId={teamId}
+              sponsor={sponsor}
+              record={record}
+              roster={roster}
+              defaultCreditPercent={defaultCreditPercent}
+              onChanged={onChanged}
+              onBusyChange={setZoneBusy}
+              onDirtyChange={onDirtyChange}
+              onFailure={onFailure}
+            />
+          ) : record.plan.length === 0 ? (
+            <p className={styles.mutedInline} style={{ margin: 0 }}>Nobody in particular — the whole sponsorship stays with the team.</p>
+          ) : (
+            <ul className={styles.roomZoneList}>
+              {record.plan.map(p => (
+                <li key={p.playerId}>
+                  <span>{p.playerName ?? 'A family'}</span>
+                  <strong>{p.unit === 'percent' ? `${p.value}%` : fmt(p.value)}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+/**
+ * The split's live editor. Value-settled: the draft is compared to the STORED plan every render,
+ * so a save is "done" when the room reads the new plan back — never when the request returns
+ * (the discarded-reload lesson). Cancel drops the draft; Prev/Next remounts this keyed by record.
+ */
+function CreditPlanZone({
+  orgSlug,
+  teamId,
+  sponsor,
+  record,
+  roster,
+  defaultCreditPercent,
+  onChanged,
+  onBusyChange,
+  onDirtyChange,
+  onFailure,
+}: {
+  orgSlug: string;
+  teamId: string;
+  sponsor: Fundraiser;
+  record: RoomRecord;
+  roster: { id: string; name: string }[];
+  defaultCreditPercent: number;
+  onChanged: () => void;
+  onBusyChange: (busy: boolean) => void;
+  onDirtyChange: (dirty: boolean) => void;
+  /** A refused save, raised to where it survives this zone unmounting under it. */
+  onFailure: (message: string) => void;
+}) {
+  const [draft, setDraft] = useState<SponsorCreditPlanRow[] | null>(null);
+  /* The split as it was LAST SAVED, until the room reads it back: the settle target between the
+     request returning and the reload landing, so "Save split" is not offered twice for one change
+     and the way out asks about nothing that is already on the server (`/review`, 2026-09-02). */
+  const [savedShares, setSavedShares] = useState<CreditPlanShare[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  /* The derivations are memoised because the editor re-renders this zone per keystroke, and the
+     refusal check replays every arrival — the panels' own convention for a form-bearing surface. */
+  const stored = useMemo(() => planRows(record), [record]);
+  const storedShares = useMemo(() => sharesFromRows(stored), [stored]);
+  const rows = draft ?? stored;
+  const shares = useMemo(() => sharesFromRows(rows), [rows]);
+  const dirty = draft !== null
+    && !sameShares(shares, storedShares)
+    && !(savedShares !== null && sameShares(shares, savedShares));
+  const problem = creditPlanProblem(shares, sponsor.pledgedAmount);
+  const refusals = useMemo(
+    () => (dirty && !problem ? foreseeableRefusals(record, shares, sponsor.pledgedAmount, roster) : []),
+    [dirty, problem, record, shares, sponsor.pledgedAmount, roster],
+  );
+  const refused = refusals.length > 0;
+
+  /* The dirty report reaches the room (its close and walk ask before discarding), and clears when
+     this zone unmounts under it — the latest callback, never a stale one. It is reported TWICE on
+     purpose: synchronously in the change handler, so an Escape that follows a keystroke in the same
+     breath finds the gate already up, and from the derived value, so a save that settles (the room
+     reads the new split back) lowers it without a handler ever running. */
+  const dirtyRef = useLatestRef(onDirtyChange);
+  useEffect(() => { dirtyRef.current(dirty); }, [dirty, dirtyRef]);
+  useEffect(() => () => dirtyRef.current(false), [dirtyRef]);
+  const busyRef = useLatestRef(onBusyChange);
+  useEffect(() => { busyRef.current(saving); }, [saving, busyRef]);
+  useEffect(() => () => busyRef.current(false), [busyRef]);
+
+  async function save() {
+    if (problem || refused || !dirty) return;
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creditPlan: shares }),
+      });
+      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'The split could not be saved.'));
+      setSavedShares(shares);
+      onChanged();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'The split could not be saved.';
+      setError(message);
+      onFailure(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <SponsorCreditPlanEditor
+        rows={rows}
+        onChange={next => {
+          setDraft(next);
+          setError('');
+          const nextShares = sharesFromRows(next);
+          dirtyRef.current(!sameShares(nextShares, storedShares) && !(savedShares !== null && sameShares(nextShares, savedShares)));
+        }}
+        families={roster}
+        defaultShare={String(defaultCreditPercent)}
+        problem={problem}
+      />
+      {refused && <RefusalLines refusals={refusals} />}
+      {error && <p className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>{error}</p>}
+      {record.arrivals.length > 0 && !dirty && (
+        <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
+          Each cheque already earned its share; changing the split re-figures every credit.
+        </p>
+      )}
+      {dirty && (
+        <div className={styles.roomZoneFoot}>
+          <button type="button" className={styles.btnGhost} disabled={saving} onClick={() => { setDraft(null); setError(''); }}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            disabled={saving || !!problem || refused}
+            title={refused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+            onClick={() => void save()}
+          >
+            {saving ? 'Saving…' : 'Save split'}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * THE CHEQUE CORRECTION — a compact Question: amount, the day it arrived, how it came, a note.
+ * The parity drive entries already had (D4 of the mockup). The server REPLAYS every credit and
+ * asks the payout floor first; its refusal is read here, in the question that asked.
+ */
+export function ArrivalQuestion({
+  orgSlug,
+  teamId,
+  sponsorId,
+  arrival,
+  onSaved,
+  onClose,
+  tabActive,
+}: {
+  orgSlug: string;
+  teamId: string;
+  sponsorId: string;
+  arrival: SponsorArrival;
+  onSaved: () => void;
+  onClose: () => void;
+  tabActive: boolean;
+}) {
+  const storedMethod = (arrival.method as DuesPaymentMethod | null) ?? '';
+  const [amount, setAmount] = useState(String(arrival.amount));
+  const [date, setDate] = useState(arrival.receivedDate ?? '');
+  const [method, setMethod] = useState<DuesPaymentMethod | ''>(storedMethod);
+  const [notes, setNotes] = useState(arrival.notes ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const dirty = amount !== String(arrival.amount)
+    || date !== (arrival.receivedDate ?? '')
+    || method !== storedMethod
+    || notes !== (arrival.notes ?? '');
+  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to this cheque' });
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const n = Number(amount);
+    if (isNaN(n) || n <= 0) { setError('Enter an amount greater than zero.'); return; }
+    if (!date) { setError('Enter the date the money arrived.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsorId}/arrivals/${arrival.entryId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          // Only what changed travels — an untouched field is never re-stated to the server.
+          body: JSON.stringify({
+            ...(n !== arrival.amount ? { amount: n } : {}),
+            ...(date !== (arrival.receivedDate ?? '') ? { receivedDate: date } : {}),
+            ...(method !== storedMethod ? { method: method || null } : {}),
+            ...(notes !== (arrival.notes ?? '') ? { notes: notes.trim() || null } : {}),
+          }),
+        },
+      );
+      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <QuestionShell
+      open={tabActive}
+      onClose={() => { void close(); }}
+      ariaLabel={`Edit the ${fmt(arrival.amount)} arrival`}
+      title="Edit cheque"
+      busy={saving}
+      leaveGuard={{ dirty, tabActive, message: "You haven't saved this cheque correction. Leave without saving it?" }}
+    >
+      <form onSubmit={save}>
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="arrival-amount">Amount *</label>
+            <input
+              id="arrival-amount"
+              className={styles.input}
+              type="number" min={0} step="0.01"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="arrival-date">Date received *</label>
+            <input
+              id="arrival-date"
+              className={styles.input}
+              type="date" max={moneyMovedMaxDate()}
+              value={date}
+              onChange={e => setDate(e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="arrival-method">How did it arrive?</label>
+            <select id="arrival-method" className={styles.select} value={method} onChange={e => setMethod(e.target.value as DuesPaymentMethod | '')}>
+              <option value="">— not recorded —</option>
+              {METHODS.map(m => <option key={m} value={m}>{DUES_PAYMENT_METHOD_LABEL[m]}</option>)}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="arrival-notes">Notes</label>
+            <input id="arrival-notes" className={styles.input} type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional" />
+          </div>
+          <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
+            The books entry follows the new figure and date, and every family&apos;s credit from this sponsor is re-figured against the split.
+          </p>
+          {error && <p className={`${styles.errorText} ${styles.formGridFull}`}>{error}</p>}
+        </div>
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <button type="submit" className={styles.btnPrimary} disabled={saving || !dirty}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </form>
+    </QuestionShell>
+  );
+}
+
+/**
+ * EDIT SPONSORSHIP — the agreement editor: name, notes, the pledged amount, expected-by, tags.
+ * ⚠ THE CREDIT SPLIT IS NOT HERE (Phase B): it is live in the room, and a record has one editor
+ * per field. ⚠ NO DELETE HERE EITHER — the guarded delete is the room foot's. A pledge change
+ * still re-figures dollar shares against the new promise, so it asks the floor the same way the
+ * split does, with the STORED split, and dead-Saves on a foreseeable refusal (§118).
+ */
+export function EditSponsorshipSheet({
+  orgSlug,
+  teamId,
+  sponsor,
+  record,
+  roster,
+  moneyTags,
+  onCreateTag,
+  onManageChanged,
+  onSaved,
+  onClose,
+  tabActive,
+}: {
+  orgSlug: string;
+  teamId: string;
+  sponsor: Fundraiser;
+  record: RoomRecord | null;
+  roster: { id: string; name: string }[];
+  moneyTags: RepTeamTag[];
+  onCreateTag: (name: string) => Promise<RepTeamTag | null>;
+  onManageChanged: () => void;
+  onSaved: () => void;
+  onClose: () => void;
+  tabActive: boolean;
+}) {
+  const storedPledged = sponsor.pledgedAmount != null ? String(sponsor.pledgedAmount) : '';
+  const [name, setName] = useState(sponsor.name);
+  const [notes, setNotes] = useState(sponsor.description ?? '');
+  const [pledged, setPledged] = useState(storedPledged);
+  const [expected, setExpected] = useState(sponsor.expectedBy ?? '');
+  const [tags, setTags] = useState<string[]>(sponsor.tagIds);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const storedShares = useMemo(() => (record ? sharesFromRows(planRows(record)) : []), [record]);
+  const pledgedNumber = Number(pledged) || null;
+  const problem = creditPlanProblem(storedShares, pledgedNumber);
+  const pledgeMoved = pledged !== storedPledged;
+  const refusals = useMemo(
+    () => (record && pledgeMoved && !problem ? foreseeableRefusals(record, storedShares, pledgedNumber, roster) : []),
+    [record, pledgeMoved, problem, storedShares, pledgedNumber, roster],
+  );
+  const refused = refusals.length > 0;
+
+  const dirty = name !== sponsor.name
+    || notes !== (sponsor.description ?? '')
+    || pledgeMoved
+    || expected !== (sponsor.expectedBy ?? '')
+    || tags.length !== sponsor.tagIds.length
+    || tags.some(id => !sponsor.tagIds.includes(id));
+  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to the sponsor' });
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { setError('The sponsor needs a name.'); return; }
+    const amount = Number(pledged);
+    if (isNaN(amount) || amount <= 0) { setError('A sponsor needs an amount greater than zero.'); return; }
+    if (problem) { setError(problem); return; }
+    if (refused) return; // the dead button's belt — Enter still submits the form
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: notes.trim() || null,
+          pledgedAmount: amount,
+          expectedBy: expected || null,
+          tagIds: tags,
+        }),
+      });
+      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <QuestionShell
+      open={tabActive}
+      onClose={() => { void close(); }}
+      ariaLabel={`Edit ${sponsor.name}`}
+      title="Edit sponsorship"
+      busy={saving}
+      scroll
+      leaveGuard={{ dirty, tabActive, message: 'You have unsaved changes to this sponsor. Leave without saving them?' }}
+    >
+      <form onSubmit={save}>
+        <div className={styles.formGrid}>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            {/* "Sponsor", matching the pledge sheet — one field, one name on the sibling forms. */}
+            <label className={styles.label}>Sponsor *</label>
+            <input className={styles.input} value={name} onChange={e => setName(e.target.value)} required />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Notes</label>
+            <textarea className={styles.textarea} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Pledged amount *</label>
+            <input className={styles.input} type="number" min={0} step="0.01" value={pledged} onChange={e => setPledged(e.target.value)} />
+            <p className={styles.formHint}>
+              {sponsor.totalRaised > 0.005
+                ? `${fmt(sponsor.totalRaised)} has arrived — dollar shares re-figure against the new promise.`
+                : 'Nothing has arrived yet — changing the promise moves no money.'}
+            </p>
+            {problem && <p className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>{problem}</p>}
+            {refused && <RefusalLines refusals={refusals} />}
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Expected by</label>
+            <input className={styles.input} type="date" value={expected} onChange={e => setExpected(e.target.value)} />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Tags</label>
+            <TagSearchCombobox library={moneyTags} selectedIds={tags} onChange={setTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={onManageChanged} />
+          </div>
+          <p className={`${styles.formHint} ${styles.formGridFull}`}>
+            Who is credited, and how much, is set in the room — under <strong>Credited to players</strong>.
+          </p>
+        </div>
+        {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <button
+            type="submit"
+            className={styles.btnPrimary}
+            disabled={saving || refused}
+            title={refused ? 'Remove the payout first — the note above says why this can’t save.' : undefined}
+          >
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>
+        </div>
+      </form>
+    </QuestionShell>
+  );
+}
+
+/**
+ * LOG A PLEDGE — the expectation form (Direction A: the modal's sponsor half, unfused). A promise
+ * on the plan: sponsor, notes, the pledged amount, expected-by (Q13), the credit families, tags.
+ * Nothing moves, and the sheet says so. Opened by "+ Pledge" blank, or by the conversation's
+ * promise row with the typed name and amount carried (`prefill`).
+ */
+export function PledgeSheet({
+  orgSlug,
+  teamId,
+  prefill,
+  roster,
+  defaultCreditPercent,
+  moneyTags,
+  onCreateTag,
+  onManageChanged,
+  onSaved,
+  onClose,
+  onRecordInstead,
+  tabActive,
+}: {
+  orgSlug: string;
+  teamId: string;
+  prefill: { name: string; amount: string };
+  roster: { id: string; name: string }[];
+  defaultCreditPercent: number;
+  moneyTags: RepTeamTag[];
+  onCreateTag: (name: string) => Promise<RepTeamTag | null>;
+  onManageChanged: () => void;
+  onSaved: () => void;
+  onClose: () => void;
+  /** The cheque-in-hand hand-off into the conversation, typing carried. Null = no conversation to open. */
+  onRecordInstead: ((carry: { name: string; amount: string }) => void) | null;
+  tabActive: boolean;
+}) {
+  const [name, setName] = useState(prefill.name);
+  const [notes, setNotes] = useState('');
+  const [amount, setAmount] = useState(prefill.amount);
+  const [expected, setExpected] = useState('');
+  const [plan, setPlan] = useState<SponsorCreditPlanRow[]>([{ playerId: '', value: String(defaultCreditPercent), unit: 'percent' as CreditUnit }]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const shares = sharesFromRows(plan);
+  const problem = Number(amount) > 0 ? creditPlanProblem(shares, Number(amount)) : null;
+  /* Dirtiness is measured against what the sheet OPENED WITH: a carried name and amount are not
+     the coach's typing here, so a hand-off nobody touched closes without a question. */
+  const dirty = name !== prefill.name || notes !== '' || amount !== prefill.amount || expected !== '' || shares.length > 0 || tags.length > 0;
+  const close = useDiscardGuard({ dirty, close: onClose, noun: 'pledge' });
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { setError('The sponsor needs a name.'); return; }
+    const n = Number(amount);
+    if (isNaN(n) || n <= 0) { setError('A pledge needs an amount greater than zero.'); return; }
+    if (problem) { setError(problem); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'sponsor',
+          sponsorStatus: 'pledged',
+          name: name.trim(),
+          description: notes.trim() || null,
+          sponsorAmount: n,
+          expectedBy: expected || null,
+          creditPlan: shares,
+          tagIds: tags,
+        }),
+      });
+      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <QuestionShell
+      open={tabActive}
+      onClose={() => { void close(); }}
+      ariaLabel="Log a pledge"
+      title="Log a pledge"
+      subtitle="A promise on the plan — nothing moves until money arrives."
+      busy={saving}
+      scroll
+      leaveGuard={{ dirty, tabActive, message: "You haven't logged this pledge yet. Leave without saving it?" }}
+    >
+      <form onSubmit={save}>
+        <div className={styles.formGrid}>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Sponsor *</label>
+            <input className={styles.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Riverdale Dental" autoFocus required />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Notes</label>
+            <textarea className={styles.textarea} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Pledged amount *</label>
+            <input className={styles.input} type="number" min={0} step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Expected by</label>
+            <input className={styles.input} type="date" value={expected} onChange={e => setExpected(e.target.value)} />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Credit families</label>
+            <SponsorCreditPlanEditor
+              rows={plan}
+              onChange={setPlan}
+              families={roster}
+              defaultShare={String(defaultCreditPercent)}
+              problem={problem}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Tags</label>
+            <TagSearchCombobox library={moneyTags} selectedIds={tags} onChange={setTags} onCreate={onCreateTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={onManageChanged} />
+          </div>
+          <p className={`${styles.formGridFull} ${styles.formHint} ${styles.formHintConsequence}`}>
+            <strong>When you save: nothing moves.</strong> The promise joins the plan and the forward view — record each cheque as it arrives.
+          </p>
+          {/* The cheque-in-hand door (owner, §121 walk): this sheet makes promises, so money that
+              has already arrived is handed to Record with the typing carried. Deliberately NOT
+              through the discard guard — the typing travels, so there is nothing to discard. */}
+          {onRecordInstead && (
+            <p className={`${styles.formHint} ${styles.formGridFull}`}>
+              Cheque already in hand?{' '}
+              <button type="button" className={styles.linkBtn} onClick={() => onRecordInstead({ name: name.trim(), amount })}>
+                Record it instead
+              </button>
+              {' '}— the sponsor is created with its first cheque, and your name and amount come with you.
+            </p>
+          )}
+        </div>
+        {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <button type="submit" className={styles.btnPrimary} disabled={saving}>
+            {saving ? 'Saving…' : 'Create'}
+          </button>
+        </div>
+      </form>
+    </QuestionShell>
+  );
+}

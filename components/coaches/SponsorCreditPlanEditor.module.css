@@ -36,3 +36,20 @@
 .addBtn {
   align-self: flex-start;
 }
+
+/* ⚠ THE 44px FLOOR AT THE TOUCH WIDTHS (the rendered sweep, Phase B 2026-09-02 — the first time
+   this editor was swept at all: it had only ever lived inside modals the sweep cannot open, and
+   the sponsor's room put it on a screen the sweep does open). The family select, the share box,
+   the $/% pills and "+ Add another family" (15px — a link with no padding) all sat under the
+   floor at 361/390/768. The pills stretch with the input they are attached to, so the group keeps
+   its one edge. Lifts the pledge sheet and the conversation's sponsor branch on the same rule. */
+@media (max-width: 768px) {
+  .family,
+  .shareValue,
+  .share button { min-height: var(--tap-min, 44px); }
+  .addBtn {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
+}

@@ -78,6 +78,28 @@ export function isSponsorStatus(v: unknown): v is SponsorStatus {
 }
 
 /**
+ * WHERE A SPONSORSHIP STANDS, as the one chip on its row and in its room's header (List · Room ·
+ * Question Phase B, 2026-09-02). ⚠ DERIVED FROM THE MONEY, NEVER A FIELD: the stored
+ * `sponsor_status` flips to `received` on the FIRST cheque, which would chip a half-kept promise
+ * "Received" — true of the record, false to a treasurer chasing the other half. So the chip reads
+ * the two figures the row already carries: nothing arrived is a pledge; some of a pledge still to
+ * come is part received; the promise kept (or money with no promise behind it) is received.
+ */
+export type SponsorStanding = 'pledged' | 'part' | 'received';
+
+export const SPONSOR_STANDING_LABEL: Record<SponsorStanding, string> = {
+  pledged:  'Pledged',
+  part:     'Part received',
+  received: 'Received',
+};
+
+export function sponsorStanding(pledged: number | null, arrived: number): SponsorStanding {
+  if (arrived <= 0.005) return 'pledged';
+  if (pledged && pledged > arrived + 0.005) return 'part';
+  return 'received';
+}
+
+/**
  * Has this record's money ACTUALLY LANDED? The single question every "how much did we raise?"
  * figure must ask before it counts a row.
  *

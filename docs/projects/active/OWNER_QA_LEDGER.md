@@ -17101,3 +17101,106 @@ gained a SECOND club bill ("Gym rental — winter block", one piece left) so the
 the state the public coach demo renders — is finally drawn by the sweep, and the room's Prev/Next
 has a real neighbour to walk. Walk rewritten for the two-bill fixture (Parts B/C; four /review
 steps marked).
+
+## §135 · List · Room · Question, Phase B — the Fundraising tab as two lists, the drive's room, the two-zone sponsor room — BUILT 2026-09-02, awaiting QA
+
+**Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4147168c-f9a2-4450-885a-b7c6208a0a77`
+— checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
+**Mockup gate (item one of the build prompt):** `claude.ai/code/artifact/664e37ce-cf12-4792-b3e6-18dc69dabb85`
+— the built tab, drive room and sponsor room at 1280 and in a true-size 390 phone frame beside the
+ruled §2 frames of `11607f0a`, with the nine deviations and the ruling behind each. Sign in as
+`uat-coach@uat-test-org.local` on `localhost:3000` (org `uat-test-org`, UAT Test Team → Money →
+Fundraising); the read-only step uses `uat-asst-money-read@uat-test-org.local`. **The fixture was
+healed for this walk:** `Chocolate sale` gained two entries with linked credits ($486 · $240 · $180,
+15%), `Northside Physio` — the seeder's own two-cheque sponsor — is finally seeded (its guard matched
+ANY received sponsor and the August QA specimens satisfied it, so it never existed), and its two
+cheques carry their credit rows. Reseed with `node scripts/seed-uat-coach-fixture.mjs` if any is
+missing.
+
+**What was built (plan `COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md` §3.1; build prompt
+`COACH_MONEY_LRQ_PHASE_B_BUILD_PROMPT.md`; no migration):** the Fundraising tab is **two flat
+lists** — a drive row reads name · Raised · Team keeps · Active/Closed · ›; a sponsor row reads
+name · Pledged · In · To come · a DERIVED chip (Pledged / Part received / Received) · › — over one
+`?fundraiser=` address whose record's kind decides the room. **The drive's room:** tiles Raised /
+Team keeps / Credited to families (+ share %), a quiet facts line, the entries table with **Edit**
+(a compact Question: amount · date received · note) and **Remove** (the guarded confirm, the payout
+floor's refusal read in the room), "✎ Edit drive" and **Record** (the conversation, drive
+pre-answered; no Record on a closed drive), **Delete this fundraiser** at the foot (press → the
+reason or the confirm), named Prev/Next across the drives. **The sponsor's room — the one two-zone
+room:** tiles Pledged / Arrived / To come (with the expected-by date, red once past), **Cheques**
+(each arrival dated with its method, **Edit** — a NEW server door, `PATCH …/arrivals/[id]`, a
+replay of every credit through the split, floor-guarded per family pre-flight — and **Undo**),
+**Credited to players** (the split LIVE in the room with its own **Save split** + Cancel and the
+foreseeable refusal shown in place), "✎ Edit sponsorship" (which lost its split section — one
+editor per field) and **Record** locked to the sponsor, **Delete this sponsorship** at the foot.
+**The conversation** gained the promise row inside "Which sponsor?" — *This is a promise — nothing
+arrived yet* — which hands off into the pledge sheet on Fundraising with the typed name and amount
+(and the sheet's *Record it instead* hands them back), and it now stands on the accessibility floor
+itself. **The floor** learned that a bare-document Escape belongs to the most recently opened
+dialog — the first genuinely stacked pair (the drive's Record over its room) closes one layer at a
+time. New shared pieces: `QuestionShell` (the Question chrome) and `GuardedDelete` (the room-foot
+door; `RecordEditorFooter` retired with the bands). Help article rewritten for the rooms (keywords
+included); demo narration re-read — silent on fundraising by ruling, re-read note added.
+
+**Six parts to walk:** (A) the lists, (B) the drive's room, (C) questions over the room — the
+stacked pair, an entry edit, Remove, (D) the sponsor's two-zone room, (E) the promise hand-off
+both ways, (F) the edges — read-only, a wrong address, a hidden tab, the help.
+
+**Verification:** typecheck ✓ · 2,839 unit tests ✓ (8 new: the derived chip, the replay order) ·
+`verify:changed` ✓ whole (spelling, css purity, dead selectors — `.bandSubCell` deleted — token,
+dictionary, demos: both worlds presentable) · lint 0 errors on the changed files · the sponsor
+lifecycle spec 13/13 against the dev server, its NEW cheque-edit test proving amount → credit
+re-figured, date → the books row AND the credit re-dated, a future date refused, and the payout
+floor refusing pre-flight with the cheque untouched · the NEW `coach-fundraising-rooms` spec 5/5
+against the dev server (the room opens; the Record question stacks over it and a bare Escape
+closes only the top layer; an entry edits and reverts; a cheque edits and reverts; the split saves
+once and settles by value, and guards the way out when dirty; the promise row carries typing into
+the pledge sheet and back with nothing written; a read-only coach sees no write control) · the
+money mobile smoke's surface labels updated for the room.
+**⚠ FIXTURE DEFECT FOUND ON THE WAY: every QA persona (`uat-asst-*`) had a membership and NO season
+row, so the coaches shell listed no team for them — "Not assigned to any teams". §134's read-only
+step (and every walk since 2026-08-25 that named `uat-asst-money-read`) was unwalkable. The seeder
+now writes the season rows too; re-seed before §134's Part D step 6.**
+**Layout sweep:** the four fundraising screens (`coach-fundraisers`, `coach-fundraiser`,
+`coach-sponsor`, `coach-sponsors-list`) re-baselined 2026-09-02 with the room sentinels
+(`[data-room="drive"|"sponsor"][data-room-state="loaded"]`); 361 · 390 · 1440 clean; the only
+entries at 768 are the three `coach-sponsors-list` toolbar buttons under the standing tablet
+reason, and every in-scope entry carries one. Tap floors added on the way: the room's doors
+(`RoomShell` actions, foot and Prev/Next ≤768), the credit editor's family and share controls,
+the modal header's close (≤768) and back (≤640). Re-run after the review fixes on 2026-09-03: no
+new findings.
+**`/simplify` (four lenses, 2026-09-02):** applied — the shared pieces the rooms needed were
+extracted once rather than kept in two bodies (`useLatestRef`, `sharesFromRows`,
+`accruedByFamilyFromRounds`, `TagChips`, the sandbox refusal reader now shared with the Club tab
+in `lib/coach-sandbox-refusal.ts`); the rooms spec re-ran 5/5 on the cleaned tree.
+**`/review` (high-risk tier, five lenses, security lens clean; 2026-09-02/03) — confirmed and
+FIXED, then every gate re-run:** (1) a note- or method-only cheque edit replayed every credit row of
+every arrival — the server now replays only when money moved; (2) the replay dated an undated
+cheque's credit *today*, moving a family's credit into this month because a coach fixed a note —
+it now takes the cheque's own org-clock day, the day every reader shows; (3) the credit rewrite
+was delete-then-insert with nothing put back on a failed insert — the previous rows are
+snapshotted and restored, and the message says they were left as they were; (4) the money export's
+sponsor Status column printed the STORED status ("Received" for a half-kept pledge) — it prints the
+derived standing the row and room show; (5) the arrivals POST validated methods against a
+hand-rolled list — it reads the one shared label map, as PATCH does; (6) the entry question sent an
+empty date when the field was cleared — a date is required; (7) two writers in one room body each
+hand-set the busy gate true/false, so one's "done" released the other's — busy is derived by value
+from every writer, the split zone's refusal is raised to the room so it survives the zone
+re-rendering, and the split settles against the last SAVED shares until the reload lands;
+(8) the room's after-write reload read the record the writer was rendered with, so a write finished
+after Prev/Next painted the OLD record over the new one — it reads the live open id; a deleted id
+was never forgotten, so a stale address re-opening it rendered nothing rather than the not-found
+line; the promise hand-off's "seen" nonce was seeded from the nonce itself and swallowed the first
+hand-off on a coach's first visit — seeded at zero; Edit sponsorship waits for the room's read so
+its refusal check has the split; (9) the help article's search text still carried the band phrases.
+**Accepted residuals:** the pre-flight floor check to the write is not atomic under a concurrent
+arrival POST (a module-wide residual, documented at the writer); the modal header's 44px floor
+reaches every modal (deliberate; the sweep is clean). **Post-fix verification:** typecheck ✓ ·
+2,839 unit tests ✓ · lint 0 errors · `verify:changed` exit 0 · rooms spec 5/5 · lifecycle spec
+21/21 with the cheque-edit test — its first attempt failed with "Failed to fetch" on the pledge
+POST against an idle dev worker that had restarted hours earlier, then passed on retry and again
+alone in 38 s; the layout re-run clean.
+**Known wording call for the owner:** the third chip word — *Part received* — for a pledge with
+some money in; the mockup drew PLEDGED on that state, which reads wrong once $250 of $500 has
+arrived. **Known deviation to confirm:** Delete at the room's foot is pressable and answers (owner
+ruling 2026-08-30), not the dead-button-plus-sentence the build prompt restated.

@@ -795,6 +795,108 @@ test.describe('a sponsor’s money follows its arrivals, in every reader', () =>
     }
     await call(page, `${api()}/fundraisers/${dateSponsorId}`, { method: 'DELETE', body: undefined });
   });
+
+  /**
+   * ── A CHEQUE CAN BE CORRECTED, AND THE CORRECTION IS A REPLAY (List · Room · Question Phase B,
+   * 2026-09-02 — the Edit parity drive entries already had) ────────────────────────────────────
+   *
+   * An arrival's credits were figured against everything that arrived before it, so editing one
+   * re-figures every family's credit from the plan. This walks the three edits a coach makes —
+   * the amount, the date (which moves the books entry AND the credit into the right month), and
+   * the method — through the product's own readers, then asks the payout floor to refuse
+   * PRE-FLIGHT: a family already handed cash against the credit must leave the cheque untouched.
+   */
+  test('editing a cheque re-figures its credits, moves its month, and is refused pre-flight over a payout', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    const pledge = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: {
+        kind: 'sponsor', sponsorStatus: 'pledged', name: `${MARK} edit rules`,
+        sponsorAmount: SPONSOR_AMOUNT,
+        creditPlan: [{ playerId, value: CREDIT_PERCENT, unit: 'percent' }],
+      },
+    });
+    expect(pledge.status).toBe(201);
+    const editSponsorId = (pledge.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    const first = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: ARRIVAL_1, receivedDate: ARRIVAL_1_DATE, method: 'cheque' },
+    });
+    expect(first.status).toBe(201);
+    const entryId = (first.body as { entryId: string }).entryId;
+    expect((await moneyPicture(page)).familyCredits, 'the cheque earned its share').toBe(CREDIT_1);
+
+    // ── 1. The amount: half the cheque, half the credit — re-derived, not patched.
+    const halved = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, {
+      method: 'PATCH', body: { amount: ARRIVAL_1 / 2 },
+    });
+    expect(halved.status, 'a cheque can be corrected').toBe(200);
+    const afterHalf = await moneyPicture(page);
+    expect(afterHalf.hubMoneyIn, 'the books follow the new figure').toBe(ARRIVAL_1 / 2);
+    expect(afterHalf.familyCredits, 'and the family’s credit is re-figured against it').toBe(CREDIT_1 / 2);
+    expect(afterHalf.hubSponsorPledged, 'so more of the promise is still to come').toBe(SPONSOR_AMOUNT - ARRIVAL_1 / 2);
+
+    // ── 2. The date and the method: the entry, its books row AND its credit all move month.
+    const moved = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, {
+      method: 'PATCH', body: { receivedDate: ARRIVAL_2_DATE, method: 'etransfer' },
+    });
+    expect(moved.status).toBe(200);
+    const { data: row } = await admin.from('rep_fundraiser_entries')
+      .select('received_date, method, accounting_entry_id, amount_raised').eq('id', entryId).single();
+    expect(row!.received_date, 'the cheque knows its new day').toBe(ARRIVAL_2_DATE);
+    expect(row!.method, 'and how it came').toBe('etransfer');
+    expect(Number(row!.amount_raised), 'a date-only edit leaves the amount alone').toBe(ARRIVAL_1 / 2);
+    const { data: ledger } = await admin.from('accounting_entries')
+      .select('entry_date, amount').eq('id', row!.accounting_entry_id as string).single();
+    expect(ledger!.entry_date, '⚠ the books row moved with it — the month every report reads').toBe(ARRIVAL_2_DATE);
+    expect(Number(ledger!.amount)).toBe(ARRIVAL_1 / 2);
+    const { data: credit } = await admin.from('rep_dues_credits')
+      .select('credit_date, amount').eq('fundraiser_entry_id', entryId).single();
+    expect(credit!.credit_date, '⚠ and so did the family’s credit').toBe(ARRIVAL_2_DATE);
+    expect(Number(credit!.amount)).toBe(CREDIT_1 / 2);
+
+    // ── 3. A future date is refused, and the refusal names the way out.
+    const tomorrow = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const ahead = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, {
+      method: 'PATCH', body: { receivedDate: tomorrow },
+    });
+    expect(ahead.status, 'a corrected cheque cannot have arrived tomorrow either').toBe(400);
+    expect((ahead.body as { error: string }).error).toContain('expected-by');
+
+    // ── 4. THE FLOOR, PRE-FLIGHT. The family has been handed their whole credit back in cash;
+    //      lowering the cheque again would leave them owed less than they have received.
+    const payoutId = await insert('rep_dues_payouts', {
+      program_year_id: programYearId, player_id: playerId, org_id: orgId, team_id: repTeamId,
+      amount: CREDIT_1 / 2, paid_date: ARRIVAL_2_DATE, method: 'etransfer',
+    });
+    const refused = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, {
+      method: 'PATCH', body: { amount: ARRIVAL_1 / 4 },
+    });
+    expect(refused.status, 'the payout floor refuses the edit').toBe(409);
+    expect((refused.body as { code?: string }).code).toBe('CREDIT_HAS_PAYOUT');
+    const { data: untouched } = await admin.from('rep_fundraiser_entries').select('amount_raised').eq('id', entryId).single();
+    expect(Number(untouched!.amount_raised), '⚠ and the cheque is UNTOUCHED — a refused edit must not half-apply').toBe(ARRIVAL_1 / 2);
+    /* The credit ROW, not the dues reader: `totalCredits` on the dues list is what the family is
+       still owed — net of the payout just recorded — so it reads 0 here by design. */
+    const { data: standing } = await admin.from('rep_dues_credits').select('amount').eq('fundraiser_entry_id', entryId).single();
+    expect(Number(standing!.amount), 'the credit the payout stands on is intact').toBe(CREDIT_1 / 2);
+
+    // Remove the payout and the same edit goes through — the refusal was about the cash.
+    await admin.from('rep_dues_payouts').delete().eq('id', payoutId);
+    const allowed = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, {
+      method: 'PATCH', body: { amount: ARRIVAL_1 / 4 },
+    });
+    expect(allowed.status).toBe(200);
+    expect((await moneyPicture(page)).familyCredits).toBe(CREDIT_1 / 4);
+
+    // Cleanup: unwind the arrival, then the record.
+    const undone = await call(page, `${api()}/fundraisers/${editSponsorId}/arrivals/${entryId}`, { method: 'DELETE', body: undefined });
+    expect(undone.status).toBe(200);
+    const gone = await call(page, `${api()}/fundraisers/${editSponsorId}`, { method: 'DELETE', body: undefined });
+    expect(gone.status).toBe(200);
+  });
 });
 
 /**

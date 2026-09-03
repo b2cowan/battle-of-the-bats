@@ -515,6 +515,12 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // place like a sponsor. Same verdict: no tour step or dock line names the fundraiser
       // screen, its leaderboard or its back link, so nothing here went stale. The seeded world
       // simply renders the new in-place shape.)
+      // (Re-read for List · Room · Question Phase B, 2026-09-02 — the in-place expansions retired
+      // in their turn; a drive and a sponsor now open a ROOM over their list, and a cheque can be
+      // edited as well as undone. Same verdict, third time: no step or dock line names any of it,
+      // so nothing here went stale and nothing is added — `ea8ddd14` still caps every step at one
+      // proof point. The seeded world renders the rooms; `check-demo-coach` pins the drive and
+      // the sponsor it opens.)
       /* ⚠⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30), and the "over plan" claim was MEASURED
          rather than assumed — which is the whole point of the rule, because this release changed
          what that line is made of. The 12U's club bill is now FILED against Facilities · Diamond

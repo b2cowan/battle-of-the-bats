@@ -404,10 +404,10 @@ test.describe('Money on a phone @360x740', () => {
       ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
       ['Player Dues', `${base()}/accounting?section=dues`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
-      // Since 2026-08-31 this URL expands the drive's row IN PLACE (the drill-in retired) — the
-      // open state draws sibling entry rows + a doors row the at-rest list never renders, so it
-      // stays its own surface here.
-      ['Fundraiser open in place', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
+      // Since List · Room · Question Phase B (2026-09-02) this URL opens the drive's ROOM over the
+      // list — a full-screen sheet at this width, with tiles, the entries table and the pinned
+      // foot the at-rest list never renders — so it stays its own surface here.
+      ['Fundraiser room', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ];
@@ -577,7 +577,7 @@ test.describe('Money on a phone @360x740', () => {
       ['Ledger — By bill', `${base()}/accounting?section=ledger&view=bills`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
-      ['Fundraiser detail', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
+      ['Fundraiser room', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ] as Array<[string, string]>) {
       await open(page, url);
@@ -594,8 +594,12 @@ test.describe('Money on a phone @360x740', () => {
              sweep; both spellings guarded so a stale build cannot slip past) — and "Edit
              amount" survives because editing is not recording. This list is what a
              write-capable coach may see and a read-only one may not, so a converged name has
-             to be spelled here or the guard stops guarding. */
-          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|generate installments|set dues for all players|start — about a minute/i,
+             to be spelled here or the guard stops guarding.
+             ⚠ The rooms' verbs joined 2026-09-02 (List · Room · Question Phase B): "Edit drive" /
+             "Edit sponsorship" in the action row, "Edit the … logged for" / "Remove the …" /
+             "Undo the …" on the rows (their accessible names), and the guarded "Delete this …"
+             at the foot. A read-only coach opens the same room and must see none of them. */
+          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|edit drive|edit sponsorship|edit the |remove the |delete this |save split|generate installments|set dues for all players|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);

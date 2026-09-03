@@ -99,7 +99,11 @@
   border-top: 1px solid var(--home-line, var(--border-2));
   background: var(--card-bg);
 }
-.footDoors { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+.footDoors { display: flex; align-items: center; gap: 0.9rem; min-width: 0; flex: 1 1 auto; }
+/* A shell contract, not one consumer's control: any `alertdialog` a consumer docks in the foot (a
+   delete's reason or confirm today) takes the whole width while it is open and the walk wraps
+   beneath it, so a named-dollar question is never squeezed beside two arrows. */
+.footDoors > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
 .nav {
   display: flex;
   align-items: center;
@@ -137,8 +141,16 @@
   white-space: nowrap;
 }
 
+/* ⚠ THE 44px FLOOR ON EVERY DOOR THE ROOM DRAWS, at the touch widths (the rendered sweep, Phase B
+   2026-09-02 — the first time a room was swept at 361/390/768: "Edit drive" 27px, Record 31px,
+   "Delete this fundraiser" 32px). The action row and the foot sit OUTSIDE the card-mode rule that
+   floors a table row's trailing control, so without this the room's own doors were the smallest
+   targets on the phone. Consumers pass ordinary `.btnGhost` / `.btnPrimary` / `.deleteRecordBtn`
+   buttons; the floor is the shell's, so no consumer has to remember it. */
 @media (max-width: 768px) {
-  .navBtn { min-height: var(--tap-min, 44px); }
+  .navBtn,
+  .actions > button,
+  .footDoors > button { min-height: var(--tap-min, 44px); }
 }
 
 @media (max-width: 640px) {

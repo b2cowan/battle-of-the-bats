@@ -27,7 +27,7 @@ import {
 } from './coach-budget-totals';
 import { scheduleSummaryLabel, type PeriodView } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
-import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
+import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
@@ -606,7 +606,9 @@ export function fundraiserRows(
     // A drive is running or it isn't; a sponsor has arrived or it hasn't. The column carries
     // whichever question applies, because a spreadsheet cannot ask which kind it is looking at.
     status: f.kind === 'sponsor'
-      ? SPONSOR_STATUS_LABEL[f.sponsorStatus ?? 'received']
+      /* The same DERIVED word the row and the room show (Phase B, 2026-09-02): the stored status
+         flips to received on the first cheque, so it called a half-kept promise "Received". */
+      ? SPONSOR_STANDING_LABEL[sponsorStanding(f.totalRaised + (f.stillToCome ?? 0), f.totalRaised)]
       : (f.isActive === false ? 'Closed' : 'Active'),
     rebate: f.playerRebatePercent,
     starts: f.startDate ?? '',

@@ -1440,6 +1440,51 @@ if (!existingFr?.length) {
 }
 
 /**
+ * ⚠ THE DRIVE'S ROOM NEEDS ENTRIES TO DRAW (List · Room · Question Phase B, 2026-09-02). The
+ * sweep opens "Chocolate sale" by name and measures its ROOM — three tiles, the entries table
+ * with Edit and Remove on every line, the action row, the guarded delete — and a drive seeded
+ * with no entries sweeps that table in its emptiest state, which is coverage the sweep does not
+ * have. Three entries (one may already exist from an earlier walk) give the table rows at every
+ * width, an inactive-player mark somewhere to land if the roster changes, and the whole-drive
+ * delete a real refusal to name. Each carries the family credit its rate earns, linked both ways
+ * exactly as the product writes it. Guarded on its own so existing fixtures gain it on re-run.
+ */
+const { data: chocolate } = await db.from('rep_fundraisers')
+  .select('id, player_rebate_percent').eq('program_year_id', py.id).eq('kind', 'fundraiser')
+  .eq('name', 'Chocolate sale').maybeSingle();
+if (chocolate) {
+  const { data: logged } = await db.from('rep_fundraiser_entries').select('player_id').eq('fundraiser_id', chocolate.id);
+  const loggedIds = new Set((logged ?? []).map(e => e.player_id));
+  const want = [
+    { player: ids[2], amount: 240, date: '2026-08-20' },
+    { player: ids[3], amount: 180, date: '2026-08-24' },
+  ].filter(w => w.player && !loggedIds.has(w.player));
+  if ((logged ?? []).length < 3 && want.length) {
+    const pct = Number(chocolate.player_rebate_percent ?? 0);
+    for (const w of want) {
+      const rebate = Math.round(w.amount * pct) / 100;
+      const en = await db.from('rep_fundraiser_entries').insert({
+        fundraiser_id: chocolate.id, org_id: org.id, team_id: team.id, player_id: w.player,
+        amount_raised: w.amount, rebate_percent: pct, rebate_amount: rebate, received_date: w.date,
+      }).select('id').single();
+      if (en.error) { console.log(`  ! drive entry skipped (${en.error.message})`); continue; }
+      if (rebate > 0) {
+        const cr = await db.from('rep_dues_credits').insert({
+          program_year_id: py.id, player_id: w.player, amount: rebate,
+          description: 'Fundraiser credit — Chocolate sale', credit_type: 'fundraiser',
+          credit_date: w.date, fundraiser_entry_id: en.data.id,
+        }).select('id').single();
+        if (cr.error) console.log(`  ! drive entry credit skipped (${cr.error.message})`);
+        else await db.from('rep_fundraiser_entries').update({ credit_id: cr.data.id }).eq('id', en.data.id);
+      }
+    }
+    ok(`drive entries seeded on Chocolate sale (${want.length} added — the room has a table to draw)`);
+  } else {
+    ok('drive entries already present');
+  }
+}
+
+/**
  * ⚠⚠ A CLUB BILL, FOR A ROOM THAT WOULD OTHERWISE HAVE NO FIXTURE AND NO SWEEP (List · Room ·
  * Question Phase A, 2026-09-02). The Club tab's fold was rebuilt over a fixture holding ZERO club
  * bills — the QA ledger records the bills fold as unmeasured by it, and the coach sandbox was the
@@ -1514,10 +1559,14 @@ await seedClubBill({
  * has — a name in "Brought in by", a plum figure in "Credited to them", and the received chip —
  * and a screen swept in its emptiest state is the trap this repo keeps re-learning.
  */
-// ⚠ Keyed on STATUS, like the pledged guard below — "any sponsor" also matched the pledged one,
-// so a deleted received sponsor was never re-seeded while its sibling stood (found 2026-08-28).
+// ⚠ Keyed on the NAME (List · Room · Question Phase B, 2026-09-02). It was keyed on STATUS — "any
+// received sponsor" — and the QA walks of late August left received specimens behind ("ZZ QA …"),
+// so this sponsor, the one the sweep's resolver is built around (two cheques + a credit split),
+// silently never seeded while its stand-ins did; the resolver then opened whichever sponsor was
+// oldest, a bare pledge, and measured the room's emptiest state. The name is the contract the
+// resolver reads (`scripts/uat-fixture-context.mjs`), so it is the guard too.
 const { data: existingSponsor } = await db.from('rep_fundraisers')
-  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').eq('sponsor_status', 'received').limit(1);
+  .select('id').eq('program_year_id', py.id).eq('kind', 'sponsor').eq('name', 'Northside Physio').limit(1);
 
 if (!existingSponsor?.length) {
   const sp = await db.from('rep_fundraisers').insert({
@@ -1546,14 +1595,31 @@ if (!existingSponsor?.length) {
       fundraiser_id: sp.data.id, org_id: org.id, team_id: team.id,
       player_id: null, amount_raised: 300, rebate_percent: 20, rebate_amount: 60,
       received_date: '2026-05-10', method: 'cheque',
-    });
+    }).select('id').single();
     const en2 = await db.from('rep_fundraiser_entries').insert({
       fundraiser_id: sp.data.id, org_id: org.id, team_id: team.id,
       player_id: null, amount_raised: 200, rebate_percent: 20, rebate_amount: 40,
       received_date: '2026-06-14', method: 'etransfer',
-    });
+    }).select('id').single();
     if (en1.error || en2.error) console.log(`  ! sponsor arrivals skipped (${(en1.error ?? en2.error).message})`);
-    else ok('sponsor seeded (received in TWO arrivals, $500 total, 20% plan → $100 family share)');
+    else {
+      /* ⚠ THE CREDIT ROWS TOO (Phase B, 2026-09-02). An arrival's "Credited" figure, the family's
+         dues, and the payout-floor exposure all read `rep_dues_credits` by `fundraiser_entry_id` —
+         the entry's own `rebate_amount` is only a snapshot. Two arrivals with $60 + $40 of rebate
+         and NO credit rows drew a room whose Cheques zone said "—" under Credited on every line,
+         while the tiles said $100 was credited: a fixture contradicting itself on the screen the
+         sweep opens. Same family as the seed's own "a green sweep over an empty state" warning. */
+      if (ids[0]) {
+        const credits = await db.from('rep_dues_credits').insert([
+          { program_year_id: py.id, player_id: ids[0], amount: 60, description: 'Sponsorship — Northside Physio',
+            credit_type: 'fundraiser', credit_date: '2026-05-10', fundraiser_entry_id: en1.data.id },
+          { program_year_id: py.id, player_id: ids[0], amount: 40, description: 'Sponsorship — Northside Physio',
+            credit_type: 'fundraiser', credit_date: '2026-06-14', fundraiser_entry_id: en2.data.id },
+        ]);
+        if (credits.error) console.log(`  ! sponsor credits skipped (${credits.error.message})`);
+      }
+      ok('sponsor seeded (received in TWO arrivals, $500 total, 20% plan → $100 family share, credited per cheque)');
+    }
   }
 } else {
   ok('sponsor already present');
@@ -2146,8 +2212,39 @@ for (const person of QA_PEOPLE) {
     }, { onConflict: 'team_id,user_id' });
     if (up.error) { console.error(`✗ membership ${person.email}`, up.error.message); process.exit(1); }
   }
+
+  /**
+   * ⚠⚠ THE SEASON ROW TOO — or the persona cannot open the portal at all (found 2026-09-02,
+   * List · Room · Question Phase B, the first time a spec signed in as one). The membership above
+   * is the ACCESS truth (M1), but the coaches shell lists a coach's live seasons from
+   * `rep_team_coaches` (`getCoachingAssignmentsForUser` → `loadCoachAssignmentRows`), and a persona
+   * with a membership and no season row lands on "Not assigned to any teams". Every walk since
+   * 2026-08-25 that said "sign in as uat-asst-money-read" was pointing at an account that could not
+   * reach the screen — the same trap this block's own notes record for the treasurer: a check that
+   * is not walkable, with nothing saying so. One row per team-season, capabilities from the persona
+   * (and brought up to date if they changed), so the shell and the gate agree about what the
+   * persona may do.
+   *
+   * ⚠ This is a THIN COPY of `syncLiveSeasonProjection` (lib/coach-membership.ts), the product's
+   * one writer of that projection — the seeder cannot import a `server-only` module, and every
+   * other row this file writes is raw for the same reason. Deliberate; if the projection's rules
+   * change there (revocation, capability defaults), mirror them here.
+   */
+  for (const [tid, pyId] of [[team.id, py.id], [pastTeam.id, finishedYear.id]]) {
+    const { data: seasonRow } = await db.from('rep_team_coaches')
+      .select('id, capabilities').eq('program_year_id', pyId).eq('user_id', qaUser.id).maybeSingle();
+    if (!seasonRow) {
+      const ins = await db.from('rep_team_coaches').insert({
+        program_year_id: pyId, team_id: tid, org_id: org.id,
+        user_id: qaUser.id, coach_role: person.role, capabilities: person.caps,
+      });
+      if (ins.error) { console.error(`✗ season row ${person.email}`, ins.error.message); process.exit(1); }
+    } else if (JSON.stringify(seasonRow.capabilities) !== JSON.stringify(person.caps)) {
+      await db.from('rep_team_coaches').update({ capabilities: person.caps }).eq('id', seasonRow.id);
+    }
+  }
 }
-ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')})`);
+ok(`QA personas ready on both teams (${QA_PEOPLE.map(p => p.email.split('@')[0]).join(', ')}) — memberships AND season rows`);
 
 
 /* ⚖ THE END-OF-RUN BACKFILL IS GONE (Payables Rebuild P2). It derived installments and payments

@@ -4251,6 +4251,31 @@ a.oneChip:hover { border-color: currentColor; }
   margin-right: 0.1rem;
 }
 .modalBackBtn:hover { color: var(--text-primary); }
+/* ⚠ THE 44px FLOOR ON THE HEADER'S TWO CONTROLS AT THE TOUCH WIDTHS (the rendered sweep, List ·
+   Room · Question Phase B, 2026-09-02). A room is the first OVERLAY the layout sweep has ever
+   opened, and the first thing it measured was this header: the back arrow 23px at 361/390 and
+   the X 28px at 768 — on a full-screen sheet, the one control that gets a coach out. Floored
+   as boxes (`inline-flex` so the min-height bites on a plain button), which lifts every coach
+   modal that shares the header rather than just the rooms. Desktop keeps the compact glyph. */
+@media (max-width: 768px) {
+  .modalCloseBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+  }
+}
+/* The back arrow only exists ≤640 (the full-screen-sheet block below shows it and hides the X);
+   its floor lives at the same breakpoint so the tablet band never gains a second glyph. */
+@media (max-width: 640px) {
+  .modalOverlay:not(.centeredOnMobile) .modalBackBtn {
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+  }
+}
 
 /* Sticky footer — pins to the modal's bottom so Save stays visible while a long
    modal body scrolls. Inert (sits normally) when the modal doesn't scroll. */
@@ -11328,17 +11353,17 @@ button.gdChip[aria-pressed='true'] {
 }
 
 /* A request's name and its direction badge on one line, wrapping together if the name is long. */
-.clubRowName { display: inline-flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.listRowName { display: inline-flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
 
 /* The second line inside a row's first cell — a bill's totals. */
-.clubRowSub {
+.listRowSub {
   display: block;
   margin-top: 0.15rem;
   font-size: var(--type-support);
   color: var(--text-tertiary);
   font-weight: 400;
 }
-.clubRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
+.listRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
 /* ⚠⚠ THE ROW'S DOOR TO ITS ROOM — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
    The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open the
    record at all; `check:layout` immediately measured it at 19px against the 44px floor, which is
@@ -11348,14 +11373,14 @@ button.gdChip[aria-pressed='true'] {
    ⚠ `inline-flex` is what makes `min-height` bite: on a plain inline element it does nothing at all
    (the trap `.compactAction`'s own note records, where the cure had to be stated twice). Width is
    floored too — a 44px-tall sliver 16px wide is not a 44px target. */
-.clubRowToggle {
+.listRowToggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
 }
 @media (max-width: 768px) {
-  .clubRowToggle { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .listRowToggle { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 }
 /* ⚠ A STATUS BADGE NEVER WRAPS. "Awaiting the club" broke across two lines and "1 overdue" sat under
    its own triangle — a badge that wraps reads as two badges. */
@@ -11368,7 +11393,7 @@ button.gdChip[aria-pressed='true'] {
 .clubRecordNote { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.9rem 0 0; }
 /* A bill row's two controls — the one-tap pill (when exactly one installment is unpaid) beside the
    door to its room — on one line, never stacked into a taller row than its neighbours. */
-.clubRowActions { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.listRowActions { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
 
 /* ── A CLUB RECORD'S LIVE CONTROL BLOCK — inside the bill's room, or the request's window ─────────
    (List · Room · Question, 2026-09-02; it was the fold's block until then.) The money-in question
@@ -12385,32 +12410,57 @@ button.gdChip[aria-pressed='true'] {
 /* The confirm-takes-the-whole-row rule and the 44px tap floor live with the bill page’s copies
    further up — one definition each, since both surfaces wear the same treatment. */
 
-/* ── A band's expanded rows (the sponsor band since §122, the drive band since 2026-08-31) ───
-   ⚖ The expansion is SIBLING ROWS of the band's table, not a table inside it (owner, §122
-   walk 2026-08-30: "these columns do not seem to be lined up with each other or the headers").
-   A nested table sizes its own columns from its own content and cannot see its parent's, so it
-   could never line up — this class is what tells the shared rows apart instead, now that they
-   sit in the parent's own grid. Ground only: the alignment comes from the columns.
-   (Renamed from `.bandSubCell` on 2026-09-01 when the drive band adopted it — a name that
-   said "sponsor" on a drive's row was lying to the next reader.) */
-.bandSubCell {
-  background: var(--home-fill, rgba(255, 255, 255, 0.03));
+/* ⚰ `.bandSubCell` STOOD HERE and is deleted (List · Room · Question Phase B, 2026-09-02). It was
+   the ground of a band's expanded SIBLING ROWS — the sponsor band since §122, the drive band since
+   2026-08-31 — and no record expands in a table any more: a fundraiser and a sponsor open their
+   ROOM. The two lessons the block carried survive where they now apply: a room's own table shares
+   its parent's columns for free (there is no parent to line up with), and the ≤640 no-tint rule
+   is moot inside a room, whose cards paint their own ground. */
+
+/* ── A ROOM'S ZONES (List · Room · Question Phase B, 2026-09-02) ─────────────────────────────
+   The sponsor's room is the system's one TWO-ZONE room: the cheques that arrived beside the
+   families they are credited to, both visible, neither behind Edit. Side by side on a desktop —
+   the cheques take the wider column because they carry a table — and stacked on a phone, where
+   the room is already a full-screen sheet. Each zone wears the tiles' own ground so the room reads
+   as one instrument, not a table on a page. */
+.roomZones {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1rem;
+  align-items: start;
 }
-/* The first cell of an expanded row steps in, so a dated arrival reads as belonging to the
-   sponsor above it rather than as another sponsor. */
-.bandSubCell:first-child { padding-left: 1.5rem; }
-/* ⚠ An arrival has no Pledged and no To come — those are the SPONSOR's facts, not the cheque's,
-   so those two cells are deliberately empty to hold the columns open on a desktop. Once the table
-   reflows to cards they would print a heading with nothing under it, so they stand down. */
-@media (max-width: 640px) {
-  .bandSubCell:empty { display: none; }
-  /* ⚠ NO TINT IN CARD MODE (rendered sweep, 2026-09-01). Each card already paints
-     `--home-olive-soft` on its own row; this class stacked `--home-fill` on top, and the doubled
-     ground took the tertiary ink under the 4.5:1 floor at 13px on every expansion line — the meta
-     line, the dates, the ghost Edit/Remove, the sponsor band's "Nothing has arrived yet". The card
-     border and the stacked order already say "belongs to the record above"; the tint was only
-     ever the desktop table's way of saying it. */
-  .bandSubCell { background: transparent; }
+.roomZone {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  background: var(--home-card, var(--white-5));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+}
+.roomZoneLabel {
+  margin: 0 0 0.6rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+/* The split's own Save and Cancel — drawn only once the split is dirty, right-aligned like a
+   form's closing row, never a permanent button under a control that has not changed. */
+.roomZoneFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.6rem; }
+/* A read-only coach's split: one family per line, the share on the right. */
+.roomZoneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.roomZoneList li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: var(--type-body); }
+/* The quiet facts line under a room's tiles — what the tiles and columns can't say (a drive's
+   participation fraction and dates, a sponsor's note and tags). FACTS ONLY, never a sentence
+   restating a tile (the 2026-08-29 meta-line ruling). */
+.roomFacts {
+  margin: 0 0 0.85rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+@media (max-width: 768px) {
+  .roomZones { grid-template-columns: 1fr; }
 }
 
 /* ═══ TagManagerDrawer — One Tag Idiom P1 (owner-ratified 2026-09-01) ════════════════════════
