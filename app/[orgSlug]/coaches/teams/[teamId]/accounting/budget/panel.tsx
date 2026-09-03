@@ -2280,6 +2280,10 @@ export function BudgetPlanPanel({
                 createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
                 createItemMode="coach"
                 allowCreateCategory
+                /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here and
+                   the `onChange` above pre-fills the line's total with it — one of the two surfaces
+                   that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
+                suggestAmount
                 /* ⚠ THE LINE'S OWN KIND DECIDES WHICH WORDS IT MAY CHOOSE FROM (mig 246). The
                    question is already answered one field up — "This line is: Expense / Expected
                    fundraising / Expected sponsorship" — so the picker takes the answer rather than

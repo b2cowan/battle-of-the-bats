@@ -686,6 +686,10 @@ export default function OrgBudgetPage() {
                     onChange={handlePickerChange}
                     createItemEndpoint="/api/admin/accounting/budget-categories"
                     createItemMode="admin"
+                    /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here
+                       and `handlePickerChange` pre-fills the line's amount with it — one of the two
+                       surfaces that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
+                    suggestAmount
                     /* ⚠ THE ORG BUDGET IS A SPENDING PLAN, so it answers this without asking (mig
                        246). Total Budgeted → Allocated to Teams → Collected: every line here is
                        money going out. A revenue surface would pass 'in'; there isn't one. */

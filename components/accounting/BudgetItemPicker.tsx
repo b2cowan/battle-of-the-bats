@@ -113,6 +113,23 @@ interface Props {
   // Coach mode only: allow creating a new top-level category inline (posts
   // { newCategoryName } to createItemEndpoint). Owner decision 2026-07-09.
   allowCreateCategory?: boolean;
+  /**
+   * Show the create panel's **Suggested $** field — the item's default amount for BUDGETING
+   * (owner ruling 2026-09-02, §132 walk: *"what functionality does this suggested amount drive?
+   * why is that there?"*).
+   *
+   * ⚠⚠ OPT-IN, AND THE RULE IS "ONLY WHERE THE CALLER READS IT BACK". The value does exactly one
+   * thing: it pre-fills the planned amount when that item is later added to a **budget line**. Two
+   * callers do that — the Org Budget's add-line form and the coach Budget Plan's line form — and
+   * they are the two that pass this. Every other picker collected the number and dropped it on the
+   * floor: the recording conversation, both Club forms and the bill's filing field all pass
+   * `suggestedAmount: null` in and never read it out. On those four, a money box sitting beside a
+   * real transaction amount is worse than absent — a coach can reasonably type the cost into it.
+   *
+   * ⚠ A DEFAULT OF `false` IS THE LOAD-BEARING HALF. Making it opt-out would leave the next new
+   * caller collecting a number nothing reads, which is precisely how four of five got here.
+   */
+  suggestAmount?: boolean;
   /** Lets a caller point its "you must pick one" message at the search box. */
   selectId?: string;
   /** Draw the control as at fault — the picker is a required field since mig 240. */
@@ -188,6 +205,7 @@ export default function BudgetItemPicker({
   createItemMode,
   teamId,
   allowCreateCategory = false,
+  suggestAmount = false,
   selectId,
   invalid = false,
   disabled = false,
@@ -426,9 +444,14 @@ export default function BudgetItemPicker({
       let url: string;
       let body: Record<string, unknown>;
 
+      /* ⚠ THE FIGURE ONLY TRAVELS WHERE IT WAS ASKED FOR. With the field hidden the state is
+         always empty anyway — this is belt and braces so a hidden control can never post a
+         number a coach could not see themselves typing. */
+      const suggested = suggestAmount && newItemAmount ? Number(newItemAmount) : null;
+
       if (createItemMode === 'admin') {
         url  = `${createItemEndpoint}/${newItemCatId}/items`;
-        body = { name, suggestedAmount: newItemAmount ? Number(newItemAmount) : null, direction };
+        body = { name, suggestedAmount: suggested, direction };
       } else {
         url  = createItemEndpoint;
         // ⚠ `teamId` IS REQUIRED BY THE SERVER (mig 240) — a coach's item belongs to their team and
@@ -437,7 +460,7 @@ export default function BudgetItemPicker({
         // ⚠ `direction` IS REQUIRED TOO (mig 246) — a word with no side appears under neither pill.
         body = {
           categoryId: newItemCatId, teamId, name, direction,
-          suggestedAmount: newItemAmount ? Number(newItemAmount) : null,
+          suggestedAmount: suggested,
         };
       }
 
@@ -709,19 +732,24 @@ export default function BudgetItemPicker({
                 disabled={saving}
               />
             </div>
-            <div className={styles.field} style={{ flex: 1 }}>
-              <label className={styles.label}>Suggested $ <span className={styles.optional}>(optional)</span></label>
-              <input
-                className={styles.input}
-                type="number"
-                min="0"
-                step="0.01"
-                value={newItemAmount}
-                onChange={e => setNewItemAmount(e.target.value)}
-                placeholder="0.00"
-                disabled={saving}
-              />
-            </div>
+            {/* Only where a caller can USE it — see `suggestAmount`. On the recording
+                conversation, the Club forms and a bill's filing field this box did nothing but
+                sit beside a real amount inviting confusion. */}
+            {suggestAmount && (
+              <div className={styles.field} style={{ flex: 1 }}>
+                <label className={styles.label}>Suggested $ <span className={styles.optional}>(optional)</span></label>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newItemAmount}
+                  onChange={e => setNewItemAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={saving}
+                />
+              </div>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Category</label>
