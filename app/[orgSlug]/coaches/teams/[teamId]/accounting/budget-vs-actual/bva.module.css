@@ -199,13 +199,9 @@
   margin-bottom: 1.1rem;
 }
 
-/* The one-line answer to "what am I looking at?" under the toolbar (owner D5.7, 2026-09-02).
-   It borrows the bar's bottom margin — the pair reads as one control block. */
-.viewSublabel {
-  margin: -0.7rem 0 1rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
+/* ⚰ `.viewSublabel` REMOVED BY THE OWNER ON SIGHT (§132 walk, 2026-09-02) — the D5.7 caption
+   lasted one day: the View pill already names the shape, and a line under the toolbar restating
+   it was furniture. Recorded so the quick fix is not rebuilt from the plan text. */
 
 /* ── the month window control ─────────────────────────────────────────────
    It sits IN `.viewBar`, beside View and Showing, because it changes what the grid shows and

@@ -7,7 +7,7 @@ import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  formatMonthLabel, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
+  formatMonthLabel, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid, scheduledForward,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
@@ -987,6 +987,26 @@ export default function MoneyMonthGrid({
             today’s real money, {fmt(cashOnHand)}.
           </p>
         )}
+        {/* ⚠ THE BANNER'S FIGURE, DERIVED OUT LOUD (owner walk feedback, 2026-09-02: the forward
+            stat linked here and its number appeared nowhere on this screen). Same helper as the
+            banner (`scheduledForward`), so the sentence and the headline cannot disagree; it only
+            renders when the two figures genuinely differ — with nothing "possible", the Closing
+            balance IS the banner's number and a derivation would explain a gap that isn't there. */}
+        {lens === 'scheduled' && cash && (() => {
+          const fwd = scheduledForward(revenueGrid, grid, returnedGrid, cashOnHand, opening);
+          if (fwd.possible <= 0.005) return null;
+          return (
+            <p className={styles.note}>
+              {/* ⚠ `fmtSignedAmount`, not the sign-stripping local `fmt` — a season can END short,
+                  and a negative ending printed as a plain positive would be the exact confusion
+                  this sentence exists to remove. */}
+              The Closing balance ends the season at <strong>{fmtSignedAmount(fwd.ending)}</strong>;
+              take back out the {fmt(fwd.possible)} that’s only possible — the pledges and pending
+              asks under <strong>No date yet</strong> — and on what’s certain you end with{' '}
+              <strong>{fmtSignedAmount(fwd.headline)}</strong>, the banner’s forward figure.
+            </p>
+          );
+        })()}
         {lens === 'budget' && (
           <p className={styles.note}>
             <strong>Budget is your plan</strong>, not your bills — the dues installments you set,

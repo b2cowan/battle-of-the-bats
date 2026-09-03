@@ -9,8 +9,9 @@ import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthG
 import {
   formatMonthLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
-  bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  type MonthGrid, type MonthCell, type MoneyRowDirection, type RevenueGroupKey,
+  bandTotalLabel, revenueGroupLabel, revenueGroupOf, scheduledForward,
+  RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
+  type MonthGrid, type MonthCell, type MoneyRowDirection,
 } from '@/lib/coach-budget-months';
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
@@ -959,30 +960,17 @@ export function BudgetVsActualPanel({
   useOnMoneyRevisionBump(quietReload);
 
   /* ══ THE FORWARD STAT (owner D4 + Q2, wording G2 Variant 1, 2026-09-02) ═══════════════════════
-     ⚠⚠ IT READS THE SCHEDULED READING'S OWN ENDING-BALANCE MACHINERY — `buildBandCashFlow` over
-     the same bands the Months · Scheduled screen renders — NEVER a second derivation, so the
-     banner and that screen cannot disagree. Committed dues are in the headline (an unpaid
-     installment is a real obligation with a due date); sponsor pledges and pending club asks are
-     the separate "possible" clause, never banked — they are exactly the Scheduled lens's undated
-     revenue in the sponsorship and money-back groups, the same figures its "No date yet" column
-     shows, subtracted from the flow's ending rather than re-derived.
-     ⚠ THE TWO-GROUP CARVE-OUT IS AN INVARIANT WITH A GUARD, not an assumption: nothing else can
-     put undated money on the forward view today (a dues instalment always carries a due date;
-     drives and typed income have no forward records), and `check:money-report` claim 2c fails the
-     build if a future revenue source ever does — so it cannot be silently banked into the
-     headline as certain. */
+     ⚠⚠ ONE DERIVATION, TWO READERS (`scheduledForward` — walk feedback 2026-09-02). The banner
+     prints the headline; the Months · Scheduled basis note prints the SAME derivation out loud
+     (closing balance, less the possible, equals this figure), because the owner clicked a number
+     that never literally appeared on the screen it opened. Committed dues stay in the headline;
+     pledges and pending club asks are the "possible" clause, never banked — the lib helper's
+     header carries the invariant and its build guard. */
   const forward = useMemo(() => {
     if (!data) return null;
-    const flow = buildBandCashFlow(
-      data.revenueGrid, data.monthGrid, 'scheduled',
-      data.cashOnHand, data.openingBalance ?? 0, data.returnedGrid);
-    const possible = r2(data.revenueGrid.categories
-      .filter(c => {
-        const g: RevenueGroupKey | null = revenueGroupOf(c.categoryKey);
-        return g === 'sponsorship' || g === 'moneyback';
-      })
-      .reduce((s, c) => s + c.undated.scheduled, 0));
-    return { ending: r2(flow.ending - possible), possible };
+    return scheduledForward(
+      data.revenueGrid, data.monthGrid, data.returnedGrid,
+      data.cashOnHand, data.openingBalance ?? null);
   }, [data]);
 
   const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
@@ -1482,7 +1470,7 @@ export function BudgetVsActualPanel({
                     onClick={() => { setView('months'); setLens('scheduled'); }}
                     title="Open Months · Scheduled — the reading this figure comes from"
                   >
-                    <b>{fmtSigned(forward.ending)}</b>
+                    <b>{fmtSigned(forward.headline)}</b>
                   </button>
                   {forward.possible > 0.005 && (
                     <span className={styles.stripPossible}> · plus {fmt(forward.possible)} possible</span>
@@ -1579,13 +1567,9 @@ export function BudgetVsActualPanel({
             <span className={shared.panelToolbarActions}>{bvaExport}</span>
           </div>
 
-          {/* One line that changes with the View choice (owner D5.7, 2026-09-02) — prose, not
-              chips: the pill names the shape, this says what question the shape answers. */}
-          <p className={styles.viewSublabel}>
-            {view === 'statement' ? 'Season vs plan, by category'
-              : view === 'activity' ? 'Did each activity pay for itself?'
-                : 'Month by month'}
-          </p>
+          {/* ⚰ THE VIEW SUBLABEL LINE LIVED HERE FOR ONE DAY (D5.7, built 2026-09-02) and the owner
+              removed it ON SIGHT during the §132 walk, reversing that quick fix: the pill already
+              names the shape, and a caption under the toolbar was furniture. Do not reinstate. */}
 
           {view === 'months' ? (
             <>

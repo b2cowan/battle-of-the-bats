@@ -5,7 +5,7 @@ import {
   isElapsed, formatMonthLabel, formatMonthLong,
   lensCell, lensTotal, lensUndated, lensReadsPlan, revenueGroupLabel, revenueGroupOf, bandTotalLabel,
   buildBandCashFlow, balanceShowsMonth, cellPanelSpec, panelRowWords, categoryHasFigure,
-  MONEY_LENSES,
+  MONEY_LENSES, scheduledForward, revenueCategoryId,
   type GridLine, type CategoryEvent, type MonthCell,
 } from '../../lib/coach-budget-months.ts';
 
@@ -43,6 +43,37 @@ describe('the Showing vocabulary — five readings, and the stored value that mu
     assert.equal(bandTotalLabel('out', 'spending'), 'Total spent');
     assert.equal(bandTotalLabel('out', 'actual'), 'Total expenses');
     assert.equal(bandTotalLabel('out', 'scheduled'), 'Scheduled expenses');
+  });
+});
+
+describe('scheduledForward — the banner and the Scheduled note read ONE derivation', () => {
+  /* The walk feedback this exists for (owner, 2026-09-02): the banner's figure linked to a screen
+     that never showed it. Now both surfaces call this helper, and this test pins the arithmetic:
+     headline = the Scheduled reading's ending balance, less pledges + pending asks ONLY. */
+  it('nets the ending balance of the possible, and nothing else', () => {
+    const months = ['2026-05'];
+    const mk = (over: Partial<Parameters<typeof buildMonthGrid>[0]> = {}) => buildMonthGrid({
+      lines: [], actuals: [], scheduled: [], todayMonth: '2026-05', months, truncated: false, ...over,
+    });
+    const revenue = mk({
+      scheduled: [
+        // Committed dues, dated — belongs in the HEADLINE.
+        { categoryId: revenueCategoryId('dues'), categoryName: 'Player dues', date: '2026-05-15', amount: 300 },
+        // A pledge and a pending ask, undated — the "possible", never banked.
+        { categoryId: revenueCategoryId('sponsorship'), categoryName: 'Sponsorships', date: null, amount: 1170 },
+        { categoryId: revenueCategoryId('moneyback'), categoryName: 'Asked of the club', date: null, amount: 450 },
+      ],
+    });
+    const expenses = mk({
+      scheduled: [{ categoryName: 'Facilities', date: '2026-05-20', amount: 200 }],
+    });
+    const returned = mk();
+    const fwd = scheduledForward(revenue, expenses, returned, 1000, null);
+    // ending = cash 1000 + dated (300 − 200) + undated possible 1620 — the Closing balance Total.
+    assert.equal(fwd.ending, 2720);
+    assert.equal(fwd.possible, 1620);
+    // headline = ending − possible: committed dues stay in, the pledge and the ask come out.
+    assert.equal(fwd.headline, 1100);
   });
 });
 

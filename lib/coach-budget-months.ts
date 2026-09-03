@@ -1075,6 +1075,45 @@ export function buildBandCashFlow(
   );
 }
 
+/**
+ * The banner's forward stat, and the sentence its destination prints — ONE derivation
+ * (owner walk feedback, 2026-09-02: *"this number links to a screen that doesn't even show that
+ * number"*). The headline is the Scheduled reading's season-ending balance LESS the "possible"
+ * money (a sponsor's pledge, a pending club ask — the two things the product refuses to bank),
+ * so the figure a coach clicks never literally appeared on the screen it opened. It does now:
+ * the Scheduled basis note states the closing balance, the possible, and the headline they net
+ * to — read from THIS function, exactly as the banner is, so the two cannot disagree.
+ *
+ * ⚠ THE TWO-GROUP CARVE-OUT IS AN INVARIANT WITH A GUARD, not an assumption: nothing else can put
+ * undated money on the forward view today (a dues instalment always carries a due date; drives
+ * and typed income have no forward records), and `check:money-report` claim 2c fails the build if
+ * a future revenue source ever does — so it cannot be silently banked into the headline.
+ */
+export interface ScheduledForward {
+  /** The Scheduled reading's own season-ending balance — the Closing balance's Total cell. */
+  ending: number;
+  /** Pledges + pending club asks: counted in `ending`, never in the headline. */
+  possible: number;
+  /** What the banner prints: `ending − possible` — the season's end on what is CERTAIN. */
+  headline: number;
+}
+export function scheduledForward(
+  revenue: MonthGrid,
+  expenses: MonthGrid,
+  returned: MonthGrid,
+  cashOnHand: number,
+  openingBalance: number | null,
+): ScheduledForward {
+  const flow = buildBandCashFlow(revenue, expenses, 'scheduled', cashOnHand, openingBalance ?? 0, returned);
+  const possible = round2(revenue.categories
+    .filter(c => {
+      const g = revenueGroupOf(c.categoryKey);
+      return g === 'sponsorship' || g === 'moneyback';
+    })
+    .reduce((s, c) => s + c.undated.scheduled, 0));
+  return { ending: flow.ending, possible, headline: round2(flow.ending - possible) };
+}
+
 // ── lenses ───────────────────────────────────────────────────────────────────
 
 /**

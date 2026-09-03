@@ -16994,6 +16994,21 @@ behaviour). **And one open call:** should the coach demo's money tour NARRATE Se
 seeded world already shows it (the $400 parent-paid deposit, tagged); narrating means swapping a
 clause in step 4 under the one-proof-point cap — the walk's Part H asks for a yes/no.
 
+**Walk-era amendments (owner, 2026-09-02, mid-§132 — both built the same day; the artifact's
+Part A steps 5–6 were amended in place, same URL):**
+- **The forward figure's destination now shows the figure** (owner: *"this number links to a
+  screen that doesn't even show that number"* — correct: the Scheduled reading's Closing balance
+  still contains the "possible" money the headline strips out, so the clicked number appeared
+  nowhere). Fixed at the root: one shared derivation now feeds BOTH surfaces, and the Months ·
+  Scheduled notes derive the banner's figure out loud — Closing balance, less the possible,
+  equals the headline — rendered only when the two figures genuinely differ. Pinned by a unit
+  test; the Q2 ruling (pledges never banked) is untouched.
+- **D5.7 REVERSED — the view sublabels are gone.** The owner removed the one-line view
+  explanations on sight: the View pill already names the shape. The quick fix lasted one day;
+  tombstoned in the panel and stylesheet so it is not rebuilt from the plan text. The eleven
+  quick fixes are therefore ten shipped + one walked back by the owner.
+
+
 ## §133 · The Budget Tab Revamp — one grain, remembered splits, a denser plan — BUILT 2026-09-02, awaiting QA
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/b5d7ffd3-89ce-4a68-94a0-cb430b6b46fe`
