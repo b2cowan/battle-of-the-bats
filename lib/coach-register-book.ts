@@ -418,7 +418,7 @@ export async function loadSeasonRegisterRows(
       /* ⚠ THE DAY THE MONEY ARRIVED when the record knows it (mig 261/268 — sponsor arrivals
          always carry it; owner ruling 2026-08-23: logged late still lands in its period), and
          the day the coach RECORDED it for legacy drive rows, which carry only `created_at` —
-         the row's detail says which. */
+         the row's detail flags ONLY that second case (see below). */
       date: raw.received_date ?? orgDayKey(raw.created_at),
       kind: 'fundraising',
       description: parent.name,
@@ -432,7 +432,17 @@ export async function loadSeasonRegisterRows(
       open: { kind: 'workspace', section: 'fundraisers' },
       recordPayment: null,
       sourceLabel: REGISTER_SOURCE_LABEL.fundraising,
-      detail: raw.received_date ? 'The day the money arrived' : 'Recorded on this date',
+      /* ⚠⚠ THE EXCEPTION SPEAKS; THE NORMAL CASE DOES NOT (owner ruling 2026-09-02, §132 walk:
+         *"what's the point of these 'the day the money arrived' notes?"*). This printed on BOTH
+         branches, so an ordinary drive entry announced the very thing every other row on this book
+         does silently — dues payments, bills, club money and payouts are all dated the day money
+         moved and none of them says so, which made fundraising look like a special case it is not,
+         three rows running on a team with a normal season.
+         ⚠ THE LEGACY FLAG STAYS, and it is the half that was always carrying information: a row
+         dated when the coach typed it in, rather than when the money came, is quietly different
+         from its neighbours and nothing else on the row reveals that. Pre-mig-261 drive entries
+         only; the set shrinks to nothing on its own. */
+      detail: raw.received_date ? null : 'Recorded on this date',
     });
   }
   /* The PLEDGE line — what a sponsor has promised and not sent, read from the record itself
