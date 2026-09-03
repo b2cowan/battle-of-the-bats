@@ -95,31 +95,18 @@
    result rather than pushing the strip to a second row. */
 .stripWarn { font-size: var(--type-support); color: var(--danger-light); }
 
-/* The forward stat's deep link (D4, G2 Variant 1, 2026-09-02) — the FIGURE is the door to
-   Months · Scheduled, styled as the strip's own bold support text with just enough affordance. */
-.stripForwardLink {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: var(--text-primary);
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--text-tertiary);
-  text-underline-offset: 2px;
-}
-.stripForwardLink:hover { text-decoration-color: var(--text-primary); }
-.stripForwardLink b { font-weight: 700; }
+/* ⚰ `.stripForwardLink` REMOVED BY THE OWNER (mid-§132 walk, 2026-09-02) — the forward figure
+   is plain bold text like its banner siblings now; the Months · Scheduled notes carry the
+   derivation for anyone who goes looking. Do not re-link the figure. */
 
 /* "· plus $Y possible" — quieter than the sentence it rides, exactly as the G2 frame drew it. */
 .stripPossible { color: var(--text-tertiary); }
 
-/* ⚠ THE TOUCH FLOOR FOR THE TWO PROSE-EMBEDDED BUTTONS THIS BUILD ADDED (rendered sweep,
-   2026-09-02 — 22px and 23px at every touch width). The forward figure and the walk-through
-   toggle are real tap targets sitting in sentence flow, so they take the same ≤768 floor the
-   bridge summary carries; desktop keeps the quiet inline look, per the standing surface rule. */
+/* ⚠ THE TOUCH FLOOR FOR THE PROSE-EMBEDDED WALK-THROUGH BUTTON (rendered sweep, 2026-09-02 —
+   23px at every touch width; the forward figure shared this rule for a day before the owner
+   un-linked it). A real tap target in sentence flow takes the same ≤768 floor the bridge
+   summary carries; desktop keeps the quiet inline look, per the standing surface rule. */
 @media (max-width: 768px) {
-  .stripForwardLink,
   .bridgeLink {
     min-height: var(--tap-min, 44px);
     display: inline-flex;

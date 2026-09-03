@@ -1456,22 +1456,19 @@ export function BudgetVsActualPanel({
               </>
             )}
             {/* The forward stat (D4, G2 Variant 1): a sentence, because this page exists to give
-                ONE big number and Headroom is it. The figure deep-links to Months · Scheduled,
-                where the arithmetic it reads from is already on screen. Pledges and pending asks
-                stay a labelled "possible" clause — a pledge is never banked. */}
+                ONE big number and Headroom is it. Pledges and pending asks stay a labelled
+                "possible" clause — a pledge is never banked.
+                ⚰ THE FIGURE STOPPED BEING A LINK (owner, mid-§132 walk 2026-09-02: "not sure why
+                we decided that that 1 metric should be a link") — it reads as plain text like its
+                banner siblings now. The Months · Scheduled notes still derive this exact figure
+                (`scheduledForward`, one source), so a coach who goes looking finds the arithmetic;
+                the banner just stopped pretending the trip was the point. Do not re-link it. */}
             {forward && (
               <>
                 <span className={styles.stripRule} aria-hidden />
                 <span className={styles.stripSupport}>
                   on what&rsquo;s scheduled you end the season with{' '}
-                  <button
-                    type="button"
-                    className={styles.stripForwardLink}
-                    onClick={() => { setView('months'); setLens('scheduled'); }}
-                    title="Open Months · Scheduled — the reading this figure comes from"
-                  >
-                    <b>{fmtSigned(forward.headline)}</b>
-                  </button>
+                  <b>{fmtSigned(forward.headline)}</b>
                   {forward.possible > 0.005 && (
                     <span className={styles.stripPossible}> · plus {fmt(forward.possible)} possible</span>
                   )}
