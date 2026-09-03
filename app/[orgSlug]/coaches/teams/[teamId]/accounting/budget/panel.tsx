@@ -13,7 +13,10 @@ import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
-import { BUDGET_LINE_COLUMNS, budgetLineRows } from '@/lib/coach-money-exports';
+import {
+  BUDGET_PLAN_COLUMNS, budgetPlanStatementRows, budgetPeriodGridColumns, budgetPeriodGridRows,
+  formatMoneyCell, type MoneyExportFormat,
+} from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { fmtCompact } from '@/lib/coach-money-summary';
@@ -24,9 +27,10 @@ import {
   type BudgetLineKind,
 } from '@/lib/coach-budget-totals';
 import {
-  buildPeriodView, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
+  buildPeriodView, scheduleSummaryLabel, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
   type PeriodGranularity,
 } from '@/lib/coach-budget-periods-view';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import {
   PERIOD_SPLIT_MODES, SPLIT_MODE_LABEL, SPLIT_MODE_NOUN, SPLIT_MODE_STEP_TWO, SPLIT_MODE_COLUMN,
   blankPeriod, nextPeriodDate, fillSeasonPeriods, inferSplitMode, resolvedPeriodLabel,
@@ -72,6 +76,11 @@ const KIND_HINT_LONG: Record<BudgetLineKind, React.ReactNode> = {
     <>Expected sponsorship lowers what players are asked to pay — a business sponsor, a grant,
       anything given directly rather than raised by selling. It is budgeted apart from fundraising
       so <strong>Budget vs. Actual</strong> can tell you whether each hit its number.</>
+  ),
+  other_income: (
+    <>Expected other income lowers what players are asked to pay — interest, a facility rebate, a
+      plain donation: money coming in that nobody raised and no sponsor gave. You record each
+      arrival yourself as it lands, the way you record an expense.</>
   ),
 };
 
@@ -219,6 +228,12 @@ function BudgetLineRow({
           </span>
         </div>
 
+        {/* The Schedule column (P3) — the line's phasing at a glance, and the first time the
+            periods feature is visible without expanding anything. Words, never dollars. */}
+        <span className={`${styles.schedCell} ${styles.schedInk}`}>
+          {scheduleSummaryLabel(line.periods)}
+        </span>
+
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{fmt(line.totalAmount)}</span>
 
         {/* Always rendered so every row keeps the same three tracks. For a write coach the track
@@ -255,6 +270,7 @@ function BudgetLineRow({
                   </span>
                 )}
               </span>
+              <span className={styles.schedCell} />
               <span className={`${shared.ledgerNum} ${moneyClass}`}>{fmt(p.amount)}</span>
               <span />
             </div>
@@ -270,7 +286,8 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
+function PeriodGrid({ view, closed, onToggle }: {
+  view: ReturnType<typeof buildPeriodView>;
   /**
    * ⚠ COLLAPSED CATEGORIES, tracked as the set that is CLOSED rather than the set that is open
    * (owner ruling 2026-08-13: *"any hierarchy should be collapsable in a table"*).
@@ -284,10 +301,14 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
    * because that is what it opens for today and collapsing by default would hide figures a coach
    * can currently see. Budget vs. Actual's month grid opens collapsed because twelve month columns
    * times every line is a wall. Same affordance, different starting point, for the column count.
+   *
+   * ⚠ LIFTED to the panel since P3 (2026-09-02): held here, the component remounted on every
+   * List↔By-period toggle and the folds reset with it — and the panel is what remembers them per
+   * team+season now.
    */
-  const [closed, setClosed] = useState<Set<string>>(new Set());
-  const toggleGroup = (key: string) => setClosed(prev => toggleKey(prev, key));
-
+  closed: Set<string>;
+  onToggle: (key: string) => void;
+}) {
   return (
     <div className={styles.periodGridWrap}>
       {/* `sticky` pins the line name; the hint is structural (a grid that scrolls silently
@@ -335,7 +356,7 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
                     <button
                       type="button"
                       className={shared.moneyGridToggle}
-                      onClick={() => toggleGroup(group.key)}
+                      onClick={() => onToggle(group.key)}
                       aria-expanded={open}
                       disabled={group.rows.length === 0}
                     >
@@ -352,7 +373,14 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
                 </tr>
                 {open && group.rows.map(row => (
                   <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
-                    <th scope="row" className={shared.moneyGridLead}>{row.description}</th>
+                    <th scope="row" className={shared.moneyGridLead}>
+                      {row.description}
+                      {/* Two or more lines summed into this row (P1) — said in the List view's own
+                          words, so the two views describe one merge the same way. */}
+                      {row.lineCount > 1 && (
+                        <span className={styles.periodGridCount}>{row.lineCount} lines</span>
+                      )}
+                    </th>
                     {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
                     <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
                   </tr>
@@ -363,9 +391,11 @@ function PeriodGrid({ view }: { view: ReturnType<typeof buildPeriodView> }) {
             <tr className={shared.moneyGridTotal}>
               <th scope="row">
                 {/* NOT "Player installments" (review finding): this grid spreads the PLAN —
-                    itemized costs less fundraising, estimate-blind — and borrowing the card's
-                    label would put one name on two different numbers. */}
-                {view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less fundraising' : 'Total planned budget'}
+                    itemized costs less funding, estimate-blind — and borrowing the card's
+                    label would put one name on two different numbers. "Funding", not
+                    "fundraising" (P1 mockup): the row aggregates every money-in kind, and the
+                    aggregate word must cover sponsorship too. */}
+                {view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less funding' : 'Total planned budget'}
               </th>
               {view.columns.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
               <td>{fmtCell(view.totals.total)}</td>
@@ -403,10 +433,12 @@ function formFromLine(
   const periods: PeriodRow[] = line.periods.map(p => ({
     label: p.periodLabel, date: p.periodDate ?? '', amount: String(p.amount),
   }));
-  // A saved line carries no mode — it is READ BACK from the dates and names it holds, so a budget
-  // entered by month reopens by month. Inference can be wrong; correcting it costs one tap and
-  // rewrites nothing until the coach saves.
-  const splitMode = periods.length > 0 ? inferSplitMode(periods) : fallbackMode;
+  // The REMEMBERED mode (mig 274) — the split reopens exactly as it was built. A pre-274 line
+  // (null) falls back to reading the dates and names it holds; that guess can be wrong, and
+  // correcting it costs one tap and rewrites nothing until the coach saves — after which the
+  // choice is stored and the guessing is over for that line.
+  const splitMode = line.splitMode
+    ?? (periods.length > 0 ? inferSplitMode(periods) : fallbackMode);
   return {
     description:  line.description,
     categoryId:   line.categoryId ?? '',
@@ -504,6 +536,11 @@ export function BudgetPlanPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [plan,       setPlan]       = useState<RepBudgetPlan | null>(null);
+  /* The "Bring last season's plan" door's one fact (owner Q8b): an earlier season with lines,
+     sent only while the plan is empty. Null = no door. */
+  const [priorPlan,  setPriorPlan]  = useState<{ year: number; lineCount: number } | null>(null);
+  const [carryBusy,  setCarryBusy]  = useState(false);
+  const [carryError, setCarryError] = useState('');
   // Σ of this season's dues schedules — the Dues tab's "assessed" total, echoed here so the plan
   // can show players' side of the funding and read as a complete budget. Display-only: it is never
   // a budget line and never enters computeBudgetTotals (dues are DERIVED from the plan — feeding
@@ -554,6 +591,11 @@ export function BudgetPlanPanel({
   // never refetches, and quarters are months grouped, so the two can't disagree.
   const [viewMode,    setViewMode]    = useState<'list' | 'period'>('list');
   const [granularity, setGranularity] = useState<PeriodGranularity>('months');
+  /* The period grid's folds, LIFTED out of PeriodGrid (P3): held inside, the component remounted
+     on every List↔By-period toggle and the folds reset with it. Closed-set, same reasoning as
+     the List's own — see the prop's note on PeriodGrid. */
+  const [gridClosed, setGridClosed] = useState<Set<string>>(new Set());
+  const toggleGridGroup = (key: string) => setGridClosed(prev => toggleKey(prev, key));
 
   // Add/Edit modal
   const [modalOpen,   setModalOpen]   = useState(false);
@@ -575,6 +617,10 @@ export function BudgetPlanPanel({
   // per-coach state (checklist dismissals, winding-down dismiss). Worst case across devices: a new
   // line opens on months instead of their usual.
   const [lastSplitMode, setLastSplitMode] = useState<PeriodSplitMode>('months');
+  // "I'll adjust it myself" on the rescale banner (P2) — remembers WHICH total it was dismissed
+  // for, so editing the total again brings the banner back. Sum validation still blocks the save
+  // either way; the banner is the early, actionable version of that refusal.
+  const [rescaleDismissedFor, setRescaleDismissedFor] = useState<string | null>(null);
 
   // Delete confirm. `deleteError` replaces a native alert() (review f7-6) — the last raw
   // browser dialog anywhere in the portal. The confirm modal is STILL OPEN when a delete
@@ -684,6 +730,46 @@ export function BudgetPlanPanel({
     try { localStorage.setItem(splitModeKey, mode); } catch { /* device memory only */ }
   }
 
+  /* P3 — the page remembers how you read it: view, columns, the List's folds and the period
+     grid's, per team+season (device memory — the BvA prefs pattern, read-before-write so the
+     first render never stomps a remembered choice). */
+  const [viewPrefsLoaded, setViewPrefsLoaded] = useState(false);
+  const viewPrefsKey = assignment
+    ? `flhq-coach-budget-view:${teamId}:${assignment.programYearId}`
+    : null;
+  useEffect(() => {
+    if (!viewPrefsKey) return;
+    try {
+      const raw = localStorage.getItem(viewPrefsKey);
+      const parsed = raw
+        ? JSON.parse(raw) as { view?: unknown; granularity?: unknown; closedSections?: unknown; gridClosed?: unknown }
+        : {};
+      // Shape-check everything: a corrupt value must fall back, never crash or half-apply.
+      if (parsed.view === 'list' || parsed.view === 'period') setViewMode(parsed.view);
+      if (PERIOD_GRANULARITIES.includes(parsed.granularity as PeriodGranularity)) {
+        setGranularity(parsed.granularity as PeriodGranularity);
+      }
+      if (Array.isArray(parsed.closedSections)) {
+        setClosedSections(new Set(parsed.closedSections.filter((x): x is string => typeof x === 'string')));
+      }
+      if (Array.isArray(parsed.gridClosed)) {
+        setGridClosed(new Set(parsed.gridClosed.filter((x): x is string => typeof x === 'string')));
+      }
+    } catch { /* device memory only */ }
+    setViewPrefsLoaded(true);
+  }, [viewPrefsKey]);
+  useEffect(() => {
+    if (!viewPrefsKey || !viewPrefsLoaded) return;
+    try {
+      localStorage.setItem(viewPrefsKey, JSON.stringify({
+        view: viewMode,
+        granularity,
+        closedSections: [...closedSections],
+        gridClosed: [...gridClosed],
+      }));
+    } catch { /* device memory only */ }
+  }, [viewPrefsKey, viewPrefsLoaded, viewMode, granularity, closedSections, gridClosed]);
+
   // The permanent "what am I forgetting?" — DERIVED, never stored: standard team-scope
   // default items minus what the plan already covers (by item link, or by name for
   // free-text lines) minus what this coach dismissed. A budget line cannot exist
@@ -756,6 +842,7 @@ export function BudgetPlanPanel({
       if (seq !== loadSeq.current) return;
       setError(''); // a winning load that succeeded means there is no error any more — see the convention
       setPlan(planData.plan);
+      setPriorPlan(planData.priorPlan ?? null);
       setDuesAssessed(planData.duesAssessed ?? 0);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
@@ -870,6 +957,7 @@ export function BudgetPlanPanel({
     setSaveError('');
     setSaveTried(false);
     setPeriodUndo(null);
+    setRescaleDismissedFor(null);
   }
 
   /** Expand / collapse one line's period breakdown. One definition — the cost rows and the
@@ -1091,6 +1179,34 @@ export function BudgetPlanPanel({
     });
   }
 
+  /**
+   * "Rescale the split evenly" (P2, owner Q2) — refit the existing split to the edited total.
+   *
+   * PROPORTIONAL, in whole cents: each period keeps its share of the old sum ($2,000 of $5,200
+   * stays 5/13 of the new total), which on the common all-equal split IS an even rescale — the
+   * mockup's case. The last row absorbs the rounding remainder, so the result always passes the
+   * ±$0.02 gate it exists to satisfy.
+   */
+  function rescaleSplit() {
+    setPeriodUndo(null);
+    setRescaleDismissedFor(null);
+    setForm(f => {
+      const total = parseFloat(f.totalAmount) || 0;
+      const values = f.periods.map(p => parseFloat(p.amount) || 0);
+      const oldSum = values.reduce((s, v) => s + v, 0);
+      if (total <= 0 || oldSum <= 0 || f.periods.length === 0) return f;
+      const totalCents = Math.round(total * 100);
+      let allocated = 0;
+      const amounts = values.map((v, i) => {
+        if (i === values.length - 1) return (totalCents - allocated) / 100;
+        const cents = Math.round(totalCents * (v / oldSum));
+        allocated += cents;
+        return cents / 100;
+      });
+      return { ...f, periods: f.periods.map((p, i) => ({ ...p, amount: String(amounts[i]) })) };
+    });
+  }
+
   // Fill periods evenly (in the current mode); the last row absorbs the remainder.
   function splitEvenly() {
     setPeriodUndo(null);
@@ -1169,6 +1285,21 @@ export function BudgetPlanPanel({
   /** Nothing is drawn as at fault until Save has actually been pressed. */
   const flagged = (id: string) => saveTried && problemIds.has(id);
 
+  /* P2 — the coach edited the TOTAL of a line that already had a split, and the split no longer
+     adds up. Today's quiet version of this was the silent desync the server now 409s on; the
+     banner is the same refusal made early and actionable. Only for a split that EXISTED when the
+     modal opened (a fresh split being typed is ordinary work-in-progress, not a mismatch), and
+     only in dollar mode (percent shares rescale themselves against the total). */
+  const splitOutOfStep = modalOpen
+    && form.usePeriods
+    && form.periodMode === 'amount'
+    && formBaseline.usePeriods
+    && form.periods.length > 0
+    && form.totalAmount !== formBaseline.totalAmount
+    && rescaleDismissedFor !== form.totalAmount
+    && (parseFloat(form.totalAmount) || 0) > 0
+    && Math.abs(periodSum() - (parseFloat(form.totalAmount) || 0)) > 0.02;
+
   /**
    * The fix for "the button looks broken": a save that can't go through MOVES the form to the
    * thing at fault and puts the cursor in it. The old behaviour printed a reason into a strip at
@@ -1204,6 +1335,24 @@ export function BudgetPlanPanel({
         ? `/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${editingLine!.id}`
         : `/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines`;
 
+      /* ⚠ THE SPLIT RIDES THE SAME REQUEST NOW (P2). This used to be a second POST after the line
+         saved, and its response was never read — a PATCH that changed the total whose follow-up
+         periods write failed left a split that silently no longer added up. One request, validated
+         together on the server, lands whole or not at all. An empty array on an edit is the
+         explicit "clear the split" (the toggled-off case); a create simply sends none. */
+      const dollarAmounts = periodDollarAmounts();
+      // The label the coach typed, else the one the form has been showing them all along
+      // ("Apr 2027"). The stored column is NOT NULL and the API rejects a blank, so resolving
+      // here is what lets the field be optional on screen.
+      const periodsPayload = form.usePeriods && form.periods.length > 0
+        ? form.periods.map((p, i) => ({
+            periodLabel: resolvedPeriodLabel(form.splitMode, p, i),
+            periodDate:  p.date || null,
+            amount:      dollarAmounts[i],
+            sortOrder:   i,
+          }))
+        : [];
+
       const res  = await fetch(url, {
         method:  isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1216,38 +1365,13 @@ export function BudgetPlanPanel({
           totalAmount,
           lineKind:    form.lineKind,
           notes:       form.notes.trim() || null,
+          // HOW the split was built (mig 274) — remembered, so it reopens as it was made.
+          splitMode:   periodsPayload.length > 0 ? form.splitMode : null,
+          periods:     periodsPayload,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to save');
-
-      const lineId = isEdit ? editingLine!.id : data.line.id;
-
-      // Save period distribution (always stored as dollars; % mode converts here)
-      if (form.usePeriods && form.periods.length > 0) {
-        const dollarAmounts = periodDollarAmounts();
-        // The label the coach typed, else the one the form has been showing them all along
-        // ("Apr 2027"). The stored column is NOT NULL and the API rejects a blank, so resolving
-        // here is what lets the field be optional on screen.
-        const periodsPayload = form.periods.map((p, i) => ({
-          periodLabel: resolvedPeriodLabel(form.splitMode, p, i),
-          periodDate:  p.date || null,
-          amount:      dollarAmounts[i],
-          sortOrder:   i,
-        }));
-        await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${lineId}/periods`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ periods: periodsPayload }),
-        });
-      } else if (!form.usePeriods && isEdit && editingLine!.periods.length > 0) {
-        // Clear periods if user toggled off
-        await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${lineId}/periods`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ periods: [] }),
-        });
-      }
 
       setModalOpen(false);
       await load();
@@ -1255,6 +1379,29 @@ export function BudgetPlanPanel({
       setSaveError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** "Bring last season's plan" (owner Q8b) — the later door for a coach who declined the carry
+   *  at rollover. The server re-checks emptiness (409) and copies through the same shared helper
+   *  the rollover runs, split modes included. */
+  async function handleCarryPrior() {
+    setCarryBusy(true);
+    setCarryError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/carry`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'The carry failed — try again in a moment.');
+      const carried = data.carried as { linesCopied: number; periodsCopied: number; failed: number };
+      setImportMessage(
+        `Brought ${carried.linesCopied} line${carried.linesCopied === 1 ? '' : 's'} forward from the ${data.fromYear} season`
+        + `${carried.failed > 0 ? ` — ${carried.failed} could not be copied` : ''}.`,
+      );
+      await load();
+    } catch (e: unknown) {
+      setCarryError(e instanceof Error ? e.message : 'The carry failed — try again in a moment.');
+    } finally {
+      setCarryBusy(false);
     }
   }
 
@@ -1304,6 +1451,29 @@ export function BudgetPlanPanel({
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
   const moneyCanWrite = (page.capabilities?.money === 'write');
+
+  /* P3 — Collapse all / Expand all, at the SECTION level: every cost category plus the money-in
+     sections. Expand-all clears the whole closed set, item folds included — "show me everything"
+     means everything. */
+  const sectionKeys = [
+    ...groups.map(g => catKey(g.categoryName)),
+    ...FUNDING_LINE_KINDS
+      .filter(kind => fundingLines.some(l => normalizeBudgetLineKind(l.lineKind) === kind))
+      .map(kind => `kind:${kind}`),
+  ];
+  const allSectionsClosed = sectionKeys.length > 0 && sectionKeys.every(k => closedSections.has(k));
+  function toggleAllSections() {
+    setClosedSections(allSectionsClosed ? new Set() : new Set(sectionKeys));
+  }
+
+  /* P1 — is the form's chosen item already carrying another line on this plan? Then this line is
+     a SECOND line on that item, and the Notes field becomes the one question that keeps the fold
+     and the export from ever being nameless: "What makes this line different?". Encouraged, never
+     blocking — collectProblems never reads it. The editing line itself doesn't count: reopening
+     an existing line must not tell a coach their only line is a second one. */
+  const itemSiblingCount = modalOpen && form.itemId
+    ? allLines.filter(l => l.itemId === form.itemId && l.id !== editingLine?.id).length
+    : 0;
 
   // ONE arithmetic, computed in one place (lib/coach-budget-totals) so the planner, the Money hub
   // and Budget vs. Actual cannot drift apart on the same two numbers. ⚠ The effective total is the
@@ -1361,26 +1531,78 @@ export function BudgetPlanPanel({
     </>
   ) : null;
 
-  /** The plan as it stands, built at click time. Not write-gated: reading is not writing. */
+  /**
+   * The plan as it stands, built at click time — grouped exactly as the screen is grouped, in
+   * whichever view is on screen (owner export rider, 2026-09-02). Not write-gated: reading is
+   * not writing.
+   *
+   * ⚠ THE PDF IS ALWAYS THE STATEMENT, even from the period view — the BvA convention (owner
+   * ruling 2026-08-21: a season of month columns does not fit paper), announced in the file-type
+   * dialog via `pdfHint`, never a surprise in the downloads folder.
+   */
+  function buildPlanExport(format: MoneyExportFormat) {
+    const shared = {
+      scopeLabel: assignment?.programYearName ?? '',
+      teamName: assignment?.teamName ?? '',
+      emptyMessage: 'There are no budget lines to export yet — build the plan first.',
+    };
+    if (viewMode === 'period' && format !== 'pdf') {
+      const view = buildPeriodView(allLines, granularity);
+      const columns = budgetPeriodGridColumns(view);
+      const built = budgetPeriodGridRows(view);
+      return {
+        dataset: `budget-plan-by-${granularity}`,
+        title: `Budget plan by ${GRANULARITY_LABEL[granularity].toLowerCase()}`,
+        columns,
+        rows: built.rows,
+        rowKinds: built.kinds,
+        ...shared,
+      };
+    }
+    const built = budgetPlanStatementRows({
+      groups,
+      lines: allLines,
+      totals: {
+        totalPlanned: totals.totalPlanned,
+        fundedByPlayers: totals.fundedByPlayers,
+        fundingLineCount: totals.fundingLineCount,
+      },
+      duesAssessed,
+      leftToFund,
+    });
+    return {
+      dataset: 'budget-plan',
+      title: 'Season Budget Plan',
+      columns: BUDGET_PLAN_COLUMNS,
+      rows: built.rows,
+      rowKinds: built.kinds,
+      // Currency for jsPDF, which has no number formatter of its own — the shared Money cell
+      // spelling, sign kept (a planned buffer's label carries the direction; the figure is abs).
+      pdfRows: (rows: Array<Record<string, string | number>>) => rows.map(r => BUDGET_PLAN_COLUMNS.map(c => {
+        const v = r[c.key];
+        if (c.format !== 'currency') return String(v ?? '');
+        return v === '' || v === undefined || v === null ? '—' : formatMoneyCell(Number(v));
+      })),
+      ...shared,
+    };
+  }
+
   const planExport = (
     <MoneyExportButton
-      label="Budget lines"
-      formats={['xlsx', 'csv']}
-      build={() => ({
-        dataset: 'budget-lines',
-        title: 'Season Budget Plan',
-        columns: BUDGET_LINE_COLUMNS,
-        rows: budgetLineRows(allLines),
-        scopeLabel: assignment?.programYearName ?? '',
-        teamName: assignment?.teamName ?? '',
-        emptyMessage: 'There are no budget lines to export yet — build the plan first.',
-      })}
+      label="Budget plan"
+      formats={['xlsx', 'csv', 'pdf']}
+      build={buildPlanExport}
+      pdfHint={viewMode === 'period'
+        ? 'The whole-season plan statement — the period grid is in Excel and CSV'
+        : undefined}
       disabled={allLines.length === 0}
     />
   );
 
   return (
-    <div className={styles.page}>
+    // The shared width pair, not a local hardcode (P4) — the utility exists, by its own comment,
+    // to keep Budget and BvA in lockstep; both tabs now compose it.
+    <div className={`${shared.page} ${shared.pageWide}`}>
       {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
           It was one of the TWO surviving hand-written copies of the retired back-link style — the
           shared-component pass missed both because they never imported the component. It rendered
@@ -1456,11 +1678,15 @@ export function BudgetPlanPanel({
                 )}
               </div>
 
-              {/* A team with no fundraising lines simply has no middle category. */}
+              {/* A team with no money-in lines simply has no middle category. "Expected FUNDING",
+                  not the fundraising section's own name (mockup + owner Q5 copy check): this tile
+                  AGGREGATES every money-in kind — fundraising, sponsorship, other income — and a
+                  per-kind word over an aggregate figure was already wrong once sponsorship
+                  existed. The sections below keep their own names. */}
               {totals.fundingLineCount > 0 && (
                 <div className={styles.planTerm}>
                   <span className={styles.planKey}>
-                    {LINE_KIND_SECTION.funding}
+                    Expected funding
                     <span className={styles.planCount}>
                       {totals.fundingLineCount} line{totals.fundingLineCount === 1 ? '' : 's'}
                     </span>
@@ -1562,18 +1788,39 @@ export function BudgetPlanPanel({
               empty page is furniture. */}
           {allLines.length > 0 && (
             <div className={shared.panelToolbar}>
-              <div className={styles.segmented} role="group" aria-label="How to read the plan">
-                <button type="button" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>List</button>
-                <button type="button" aria-pressed={viewMode === 'period'} onClick={() => setViewMode('period')}>By period</button>
-              </div>
+              {/* ⚠ THE SAME PILLS BvA USES ONE TAB OVER (P4, owner Q4 — finishing the 2026-08-20
+                  "one control shape" ruling, whose adoption list simply never named Budget Plan).
+                  View is the arrangement control and takes the lead accent; Columns appears only
+                  when there are columns to size. No default moved. */}
+              <SingleSelectDropdown
+                label="View"
+                lead
+                value={viewMode}
+                options={[
+                  { id: 'list', label: 'List' },
+                  { id: 'period', label: 'By period' },
+                ]}
+                onChange={next => setViewMode(next as 'list' | 'period')}
+              />
               {viewMode === 'period' && (
-                <div className={styles.segmented} role="group" aria-label="Column size">
-                  {PERIOD_GRANULARITIES.map(g => (
-                    <button key={g} type="button" aria-pressed={granularity === g} onClick={() => setGranularity(g)}>
-                      {GRANULARITY_LABEL[g]}
-                    </button>
-                  ))}
-                </div>
+                <SingleSelectDropdown
+                  label="Columns"
+                  value={granularity}
+                  options={PERIOD_GRANULARITIES.map(g => ({ id: g, label: GRANULARITY_LABEL[g] }))}
+                  onChange={next => setGranularity(next as PeriodGranularity)}
+                />
+              )}
+              {/* Collapse all / Expand all (P3) — one ghost verb for the whole outline. It acts on
+                  the SECTION level (categories and the money-in sections); expanding also reopens
+                  any item folds, which is what "show me everything" means. */}
+              {viewMode === 'list' && (
+                <button
+                  type="button"
+                  className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
+                  onClick={toggleAllSections}
+                >
+                  {allSectionsClosed ? 'Expand all' : 'Collapse all'}
+                </button>
               )}
               {/* The create joins the row the tab already had (ruling 2026-08-13, decision 2) —
                   no band was added to the page. When the plan is EMPTY this row does not render
@@ -1615,6 +1862,25 @@ export function BudgetPlanPanel({
                   <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={() => setImportOpen(true)}>
                     Import a spreadsheet
                   </button>
+                  {/* The carry door (owner Q8b) — only when an earlier season actually holds a
+                      plan: a door to nothing teaches nothing. The rollover offers this carry by
+                      default; this is the second chance for the coach who declined it. */}
+                  {priorPlan && (
+                    <button
+                      type="button"
+                      className={styles.sampleLink}
+                      style={{ alignSelf: 'center' }}
+                      disabled={carryBusy}
+                      onClick={handleCarryPrior}
+                    >
+                      {carryBusy
+                        ? 'Bringing last season’s plan…'
+                        : `Bring last season’s plan (${priorPlan.lineCount} line${priorPlan.lineCount === 1 ? '' : 's'})`}
+                    </button>
+                  )}
+                  {carryError && (
+                    <p className={styles.errorText} style={{ alignSelf: 'center', margin: 0 }}>{carryError}</p>
+                  )}
                   {/* The cold-start door to an estimate-only budget. It flips `editingSeason`,
                       which un-sets `trueEmpty` and brings the summary back — the one place the
                       estimate can be set when there are no lines yet (review finding). */}
@@ -1633,7 +1899,11 @@ export function BudgetPlanPanel({
               />
             )
           ) : viewMode === 'period' ? (
-            <PeriodGrid view={buildPeriodView(allLines, granularity)} />
+            <PeriodGrid
+              view={buildPeriodView(allLines, granularity)}
+              closed={gridClosed}
+              onToggle={toggleGridGroup}
+            />
           ) : (
             <div className={`${shared.ledgerList} ${styles.linesContainer} ${moneyCanWrite ? styles.linesCanWrite : ''}`}>
               {/* The column headings the plan never had. They sit in the same track rhythm as the
@@ -1641,6 +1911,7 @@ export function BudgetPlanPanel({
                   hover over it — and is how Budget vs. Actual next door already reads. */}
               <div className={shared.ledgerHead}>
                 <span>Category / line</span>
+                <span className={styles.schedCell}>Schedule</span>
                 <span style={{ textAlign: 'right' }}>Planned</span>
                 <span />
               </div>
@@ -1666,6 +1937,7 @@ export function BudgetPlanPanel({
                       </span>
                       <span className={shared.ledgerName}>{catName}</span>
                     </span>
+                    <span className={styles.schedCell} />
                     <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>
                       {fmt(catTotal)}
                     </span>
@@ -1708,13 +1980,19 @@ export function BudgetPlanPanel({
                               </span>
                             </span>
                           </span>
+                          <span className={styles.schedCell} />
                           <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(item.total)}</span>
                           <span />
                         </button>
                         {!isClosed(item.key) && item.lines.map(line => (
                           <BudgetLineRow
                             key={line.id}
-                            line={line}
+                            /* The note NAMES the sub-line (P1 mockup, pin 3). The item already
+                               names the group head one row up, so repeating it here was an echo —
+                               the note ("Regional qualifier") is the only word that tells two
+                               lines on one item apart, which is exactly what the form asked it
+                               for. A note-less line keeps the description it always showed. */
+                            line={line.notes ? { ...line, description: line.notes, notes: null } : line}
                             funding={false}
                             expanded={expandedLines.has(line.id)}
                             canWrite={moneyCanWrite}
@@ -1816,6 +2094,7 @@ export function BudgetPlanPanel({
                         </span>
                         <span className={shared.ledgerName}>{LINE_KIND_SECTION[kind]}</span>
                       </span>
+                      <span className={styles.schedCell} />
                       <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
                         {fmt(Math.round(sectionTotal * 100) / 100)}
                       </span>
@@ -1853,6 +2132,7 @@ export function BudgetPlanPanel({
                         </span>
                       </span>
                     </div>
+                    <span className={styles.schedCell} />
                     <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
                       {fmt(duesAssessed)}
                     </span>
@@ -1869,6 +2149,7 @@ export function BudgetPlanPanel({
                 Math.abs(leftToFund) >= 0.005 && (
                   <div className={shared.ledgerTotal}>
                     <span>{leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan'}</span>
+                    <span className={styles.schedCell} />
                     <span className={`${shared.ledgerTotalNum} ${leftToFund > 0 ? styles.closeWarn : ''}`}>
                       {fmt(leftToFund)}
                     </span>
@@ -1880,6 +2161,7 @@ export function BudgetPlanPanel({
                   <span>
                     {totals.fundingLineCount > 0 ? 'Player installments (estimated)' : 'Total planned budget'}
                   </span>
+                  <span className={styles.schedCell} />
                   <span className={shared.ledgerTotalNum}>
                     {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
                   </span>
@@ -2062,6 +2344,35 @@ export function BudgetPlanPanel({
               </div>
             </div>
 
+            {/* P2 — the mismatch banner that replaces the silent desync (owner-approved mockup,
+                wording verbatim). "Rescale" is one tap; "I'll adjust it myself" steps aside for
+                THIS total and comes back if it changes again. Save stays blocked either way —
+                the sum check below is the same fact wearing its enforcement hat. */}
+            {splitOutOfStep && (
+              <div className={styles.splitWarn} role="alert">
+                <p className={styles.splitWarnLead}>
+                  This line&apos;s split still adds to {fmt(periodSum())}.
+                </p>
+                <p className={styles.splitWarnBody}>
+                  {form.periods.length === 1
+                    ? 'The period below no longer matches the new total.'
+                    : `The ${form.periods.length} periods below no longer match the new total.`}
+                </p>
+                <div className={styles.splitWarnActs}>
+                  <button type="button" className={shared.btnPrimary} onClick={rescaleSplit}>
+                    Rescale the split evenly
+                  </button>
+                  <button
+                    type="button"
+                    className={shared.btnGhost}
+                    onClick={() => setRescaleDismissedFor(form.totalAmount)}
+                  >
+                    I&apos;ll adjust it myself
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Period distribution */}
             {form.usePeriods && (
               <div className={styles.periodsSection}>
@@ -2113,15 +2424,34 @@ export function BudgetPlanPanel({
                   <span className={styles.splitStepNum}>2.</span> {SPLIT_MODE_STEP_TWO[form.splitMode]}
                 </p>
 
+                {/* The honest sentence names mode always owed (P2, mockup wording verbatim): a
+                    dateless chunk is a real choice with a real consequence, said once up here
+                    rather than nagged per row. */}
+                {form.splitMode === 'names' && (
+                  <p className={styles.kindHint} style={{ margin: '0 0 0.5rem' }}>
+                    Chunks are yours to name. A chunk without a date shows under{' '}
+                    <strong>Unscheduled</strong> in the By-period view and the month report.
+                  </p>
+                )}
+
                 {/* Column headings, desktop only — the phone layout labels every field inside the
                     group instead. "Optional" is stated in writing rather than implied by an empty
-                    box, because a blank required-looking field is what started all this. */}
+                    box, because a blank required-looking field is what started all this. In names
+                    mode the NAME leads and the optional date sits second (P2 mockup) — the name is
+                    the chunk's identity there, the date a bonus. */}
                 {form.periods.length > 0 && (
                   <div className={styles.periodColHead} aria-hidden>
-                    {form.splitMode !== 'names' && (
-                      <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN[form.splitMode]}</span>
+                    {form.splitMode === 'names' ? (
+                      <>
+                        <span className={styles.periodColLabel}>Name</span>
+                        <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN.names}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN[form.splitMode]}</span>
+                        <span className={styles.periodColLabel}>Label (optional)</span>
+                      </>
                     )}
-                    <span className={styles.periodColLabel}>Label (optional)</span>
                     <span className={styles.periodColAmount}>
                       {form.periodMode === 'percent' ? 'Share' : 'Amount'}
                     </span>
@@ -2134,7 +2464,76 @@ export function BudgetPlanPanel({
                     least wants to redo. The per-period heading and the field labels are
                     rendered always and revealed by CSS at ≤640 — the CoachModalHeader
                     precedent for a control that exists in one form on each side. */}
-                {form.periods.map((p, i) => (
+                {form.periods.map((p, i) => {
+                  /* The period's identity, and the reason the label could become optional. It is
+                     a control of its own that never goes away — carrying the month only in the
+                     label's placeholder meant typing a label hid which month the row was.
+                     ⚠ NAMES MODE HAS ONE TOO NOW (P2): an OPTIONAL DateField, per period — so one
+                     dateless chunk no longer hides the date controls for its dated siblings. */
+                  const whenField = (
+                    <label className={`${styles.periodFieldLabel} ${styles.periodFieldWhen}`}>
+                      <span className={styles.periodFieldLabelText}>
+                        {SPLIT_MODE_COLUMN[form.splitMode]}
+                      </span>
+                      {form.splitMode === 'dates' || form.splitMode === 'names' ? (
+                        <DateField
+                          value={p.date}
+                          ariaLabel={form.splitMode === 'names'
+                            ? `Date for ${resolvedPeriodLabel(form.splitMode, p, i)} (optional)`
+                            : `Date for period ${i + 1}`}
+                          onChange={v => setPeriodField(i, 'date', v)}
+                        />
+                      ) : (
+                        <select
+                          className={styles.select}
+                          value={periodSlotValue(p, form.splitMode)}
+                          onChange={e => setPeriodSlot(i, form.splitMode, e.target.value)}
+                        >
+                          {splitYears(seasonYear).map(year => (
+                            <optgroup key={year} label={String(year)}>
+                              {(form.splitMode === 'months'
+                                ? Array.from({ length: 12 }, (_, m) => m)
+                                : [0, 1, 2, 3]
+                              ).map(slot => (
+                                <option key={slot} value={`${year}|${slot}`}>
+                                  {derivedPeriodLabel(
+                                    form.splitMode,
+                                    {
+                                      label: '', amount: '',
+                                      date: form.splitMode === 'months'
+                                        ? monthDate(year, slot)
+                                        : quarterDate(year, slot),
+                                    },
+                                    slot,
+                                  )}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      )}
+                    </label>
+                  );
+
+                  const nameField = (
+                    <label className={styles.periodFieldLabel}>
+                      <span className={styles.periodFieldLabelText}>
+                        {form.splitMode === 'names' ? 'Name' : 'Label (optional)'}
+                      </span>
+                      <input
+                        className={styles.input}
+                        type="text"
+                        // The name this period WILL be saved under, shown before it is — so a
+                        // coach can see it, and overwrite it, without ever being asked to invent
+                        // one. Never a blank box demanding to be filled.
+                        placeholder={derivedPeriodLabel(form.splitMode, p, i)}
+                        value={p.label}
+                        onChange={e => setPeriodField(i, 'label', e.target.value)}
+                      />
+                    </label>
+                  );
+
+                  return (
                   <div key={i} className={styles.periodInputRow}>
                     <div className={styles.periodGroupHead}>
                       <span className={styles.periodGroupNum}>
@@ -2149,65 +2548,11 @@ export function BudgetPlanPanel({
                       </button>
                     </div>
 
-                    {/* The period's identity, and the reason the label could become optional. It is
-                        a control of its own that never goes away — carrying the month only in the
-                        label's placeholder meant typing a label hid which month the row was. */}
-                    {form.splitMode !== 'names' && (
-                      <label className={`${styles.periodFieldLabel} ${styles.periodFieldWhen}`}>
-                        <span className={styles.periodFieldLabelText}>
-                          {SPLIT_MODE_COLUMN[form.splitMode]}
-                        </span>
-                        {form.splitMode === 'dates' ? (
-                          <DateField
-                            value={p.date}
-                            ariaLabel={`Date for period ${i + 1}`}
-                            onChange={v => setPeriodField(i, 'date', v)}
-                          />
-                        ) : (
-                          <select
-                            className={styles.select}
-                            value={periodSlotValue(p, form.splitMode)}
-                            onChange={e => setPeriodSlot(i, form.splitMode, e.target.value)}
-                          >
-                            {splitYears(seasonYear).map(year => (
-                              <optgroup key={year} label={String(year)}>
-                                {(form.splitMode === 'months'
-                                  ? Array.from({ length: 12 }, (_, m) => m)
-                                  : [0, 1, 2, 3]
-                                ).map(slot => (
-                                  <option key={slot} value={`${year}|${slot}`}>
-                                    {derivedPeriodLabel(
-                                      form.splitMode,
-                                      {
-                                        label: '', amount: '',
-                                        date: form.splitMode === 'months'
-                                          ? monthDate(year, slot)
-                                          : quarterDate(year, slot),
-                                      },
-                                      slot,
-                                    )}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            ))}
-                          </select>
-                        )}
-                      </label>
-                    )}
-
-                    <label className={styles.periodFieldLabel}>
-                      <span className={styles.periodFieldLabelText}>Label (optional)</span>
-                      <input
-                        className={styles.input}
-                        type="text"
-                        // The name this period WILL be saved under, shown before it is — so a
-                        // coach can see it, and overwrite it, without ever being asked to invent
-                        // one. Never a blank box demanding to be filled.
-                        placeholder={derivedPeriodLabel(form.splitMode, p, i)}
-                        value={p.label}
-                        onChange={e => setPeriodField(i, 'label', e.target.value)}
-                      />
-                    </label>
+                    {/* Name first in names mode (the name IS the chunk's identity there, the
+                        mockup's own order); the date-side control first everywhere else. */}
+                    {form.splitMode === 'names'
+                      ? <>{nameField}{whenField}</>
+                      : <>{whenField}{nameField}</>}
 
                     <label className={`${styles.periodFieldLabel} ${styles.periodFieldAmount}`}>
                       <span className={styles.periodFieldLabelText}>
@@ -2246,15 +2591,18 @@ export function BudgetPlanPanel({
                       <p className={styles.periodRowMsgBad}>
                         Enter an amount for “{resolvedPeriodLabel(form.splitMode, p, i)}”.
                       </p>
-                    ) : !p.date ? (
+                    ) : !p.date && form.splitMode !== 'names' ? (
                       // Advisory, never a blocker: an undated period simply cannot be placed on a
                       // calendar. That is information the coach needs, not a reason to stop them.
+                      // Names mode says it ONCE, in the section hint above — every chunk there
+                      // starts dateless, and a per-row echo would nag the mode's normal state.
                       <p className={styles.periodRowMsg}>
                         No date — this won&apos;t show in Budget vs. Actual month columns.
                       </p>
                     ) : null}
                   </div>
-                ))}
+                  );
+                })}
 
                 {form.periods.length === 0 && (
                   <p className={styles.periodEmpty}>No periods yet.</p>
@@ -2308,17 +2656,30 @@ export function BudgetPlanPanel({
               </div>
             )}
 
-            {/* Notes */}
+            {/* Notes — and, on a SECOND line for an item already in the plan, the one question
+                that keeps the fold and the export from being nameless (P1, owner Q1). Same field,
+                same column: the answer IS the note, so nothing new is stored and an existing note
+                edits in place under the sharper label. */}
             <div className={styles.field}>
-              <label className={styles.label}>Notes</label>
+              <label className={styles.label} htmlFor="budget-line-notes">
+                {itemSiblingCount > 0 ? 'What makes this line different?' : 'Notes'}
+              </label>
               <input
+                id="budget-line-notes"
                 className={styles.input}
                 type="text"
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                placeholder="Any additional context"
+                placeholder={itemSiblingCount > 0 ? 'e.g. Regional qualifier' : 'Any additional context'}
                 maxLength={500}
               />
+              {itemSiblingCount > 0 && (
+                <p className={styles.kindHint}>
+                  {form.itemName || 'This item'} already has {itemSiblingCount === 1
+                    ? 'a line' : `${itemSiblingCount} lines`} on this plan — a few words here
+                  name this one on the plan and in the export.
+                </p>
+              )}
             </div>
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}

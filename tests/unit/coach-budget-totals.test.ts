@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  computeBudgetTotals, describeInstallmentBases, splitPerPlayer, gapIsRoundingOnly, type AmountLine,
+  computeBudgetTotals, describeInstallmentBases, splitPerPlayer, gapIsRoundingOnly,
+  BUDGET_LINE_KINDS, FUNDING_LINE_KINDS, DERIVED_INCOME_LINE_KINDS,
+  isFundingKind, normalizeBudgetLineKind, LINE_KIND_ACTUAL_SOURCE,
+  type AmountLine,
 } from '../../lib/coach-budget-totals.ts';
 
 function cost(totalAmount: number): AmountLine {
@@ -10,6 +13,45 @@ function cost(totalAmount: number): AmountLine {
 function funding(totalAmount: number): AmountLine {
   return { totalAmount, lineKind: 'funding' };
 }
+
+describe('the kind vocabulary stays in step (mig 274 — the by-hand-edit pin)', () => {
+  it('every listed kind is recognised by the narrowing reader', () => {
+    // ⚠ THE TRAP THIS PINS (adversarial-review finding, 2026-09-02): FUNDING_LINE_KINDS drives
+    // nothing by itself — isFundingKind and normalizeBudgetLineKind are hardcoded literal
+    // comparisons, and a kind the narrower has not been taught defaults to 'cost', silently
+    // counting the new INCOME as SPENDING. This failing is the loud version of that.
+    for (const kind of BUDGET_LINE_KINDS) {
+      assert.equal(normalizeBudgetLineKind(kind), kind,
+        `normalizeBudgetLineKind must recognise '${kind}' — an unrecognised kind reads as a COST`);
+    }
+    for (const kind of FUNDING_LINE_KINDS) {
+      assert.equal(isFundingKind(kind), true,
+        `isFundingKind must say '${kind}' is money in, or its amount inflates dues`);
+    }
+  });
+
+  it('other_income is money in, on the TYPED actuals path, and never a derived claim', () => {
+    assert.equal(isFundingKind('other_income'), true);
+    assert.equal(normalizeBudgetLineKind('other_income'), 'other_income');
+    assert.equal(LINE_KIND_ACTUAL_SOURCE.other_income, 'typed');
+    // A typed money-in kind must NOT close its rows to typed income records — that would refuse
+    // the coach the only way its money can be recorded at all.
+    assert.deepEqual(DERIVED_INCOME_LINE_KINDS, ['funding', 'sponsorship']);
+  });
+
+  it('an other_income line subtracts from what players fund, exactly like the other money-in kinds', () => {
+    const t = computeBudgetTotals({
+      lines: [cost(1000), { totalAmount: 200, lineKind: 'other_income' }],
+      estimatedTotal: null,
+      rosterCount: 2,
+    });
+    assert.equal(t.itemized, 1000);
+    assert.equal(t.expectedFunding, 200);
+    assert.equal(t.fundingLineCount, 1);
+    assert.equal(t.fundedByPlayers, 800);
+    assert.equal(t.perPlayer, 400);
+  });
+});
 
 describe('the plan with no estimate', () => {
   it('makes the line items the total', () => {
@@ -227,8 +269,9 @@ describe('the two even-split bases', () => {
     const covered = describeInstallmentBases(
       computeBudgetTotals({ lines: [cost(5000), funding(5000)], estimatedTotal: 5000, rosterCount: 10 }),
     );
-    assert.match(covered.budget.unavailable ?? '', /fundraising already covers every line item/);
-    assert.match(covered.estimate.unavailable ?? '', /fundraising already covers the estimate/);
+    // "expected funding", the aggregate word — the figure sums every money-in kind (mig 274).
+    assert.match(covered.budget.unavailable ?? '', /funding already covers every line item/);
+    assert.match(covered.estimate.unavailable ?? '', /funding already covers the estimate/);
 
     const zeroEstimate = describeInstallmentBases(
       computeBudgetTotals({ lines: [cost(8000)], estimatedTotal: 0, rosterCount: 10 }),

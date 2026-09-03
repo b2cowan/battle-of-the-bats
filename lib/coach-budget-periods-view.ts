@@ -25,7 +25,8 @@
 
 // Relative, with the extension, so `node --test` can load this module directly — the unit suite's
 // resolver handles these but not the bundler's `@/` alias (see tests/ts-resolver.mjs).
-import { monthKeyOf, addMonths, monthSpan, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
+import { monthKeyOf, addMonths, monthSpan, formatMonthLabel, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
+import { NO_ITEM_LABEL } from './coach-budget-rollup.ts';
 import {
   LINE_KIND_SECTION, BUDGET_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
   type BudgetLineKind,
@@ -56,6 +57,11 @@ export interface PeriodViewLine {
    *  line was written and is never re-synced, so it goes stale the moment a club admin renames a
    *  shared item — this is the live one, and the fallback is for money-in lines, which have none. */
   itemName?: string | null;
+  /** The MERGE key (P1, 2026-09-02): two lines on one item are ONE row here, exactly as they are
+   *  on the List — the item names the row, so two rows could only ever render as identical twins.
+   *  Absent/null = a legacy line with no item; those fold into the category's "Not itemized"
+   *  bucket for costs (the List's own rule via the rollup) and stay per-line for money in. */
+  itemId?: string | null;
   categoryName: string | null;
   totalAmount: number;
   lineKind?: BudgetLineKind | null;
@@ -75,6 +81,9 @@ export interface PeriodViewRow {
   id: string;
   description: string;
   lineKind: BudgetLineKind;
+  /** How many budget lines were summed into this row (rule 3 — the SUM ruling). Two or more is
+   *  worth captioning: "2 lines", the List view's existing vocabulary. */
+  lineCount: number;
   /** Column key → amount. Absent key = nothing in that column (rendered as a dash, never $0.00 —
    *  a zero and a nothing are different facts). */
   cells: Record<string, number>;
@@ -124,6 +133,33 @@ const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
 
 function r2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+/**
+ * A line's phasing at a glance — the List view's Schedule column and the plan export's Schedule
+ * cell (P3, owner-approved mockup): "Jan–Mar · 3 chunks", "Apr · 1 chunk", "3 chunks · no dates",
+ * or "—" for a lump sum. NO dollar figures, by ruling (2026-08-15 §9.6 / Chunk G rule 1) — this
+ * says WHEN, and the row's own amount says how much.
+ *
+ * Yearless inside one year (the mockup's spelling); a span crossing New Year borrows
+ * `formatMonthLabel`'s year tag ("Sep '26–Jan '27") rather than letting two Januaries read alike.
+ */
+export function scheduleSummaryLabel(periods: Array<{ periodDate: string | null }>): string {
+  if (periods.length === 0) return '—';
+  const chunks = `${periods.length} chunk${periods.length === 1 ? '' : 's'}`;
+  const months = periods
+    .map(p => monthKeyOf(p.periodDate))
+    .filter((m): m is MonthKey => m !== null)
+    .sort();
+  if (months.length === 0) return `${chunks} · no dates`;
+  const first = months[0];
+  const last = months[months.length - 1];
+  const span = first === last
+    ? MONTH_SHORT[Number(first.slice(5, 7)) - 1]
+    : first.slice(0, 4) === last.slice(0, 4)
+      ? `${MONTH_SHORT[Number(first.slice(5, 7)) - 1]}–${MONTH_SHORT[Number(last.slice(5, 7)) - 1]}`
+      : `${formatMonthLabel(first)}–${formatMonthLabel(last)}`;
+  return `${span} · ${chunks}`;
 }
 
 /** `2027-04` → `2027-Q2`. */
@@ -230,25 +266,17 @@ export function buildPeriodView(
   let grandTotal = 0;
   let hasUnscheduled = false;
 
+  // Rows keyed inside each group so two lines on one item are ONE row (P1, 2026-09-02 — the SUM
+  // ruling of 2026-08-15, finally applied to this view too; per-line rows rendered as
+  // indistinguishable twins because the item names the row and both lines carry the same item).
+  const rowsByKey = new Map<string, Map<string, PeriodViewRow>>();
+
   for (const line of lines) {
     const lineKind: BudgetLineKind = normalizeBudgetLineKind(line.lineKind);
     // ⚠ Both money-in kinds carry the MINUS. A sponsorship treated as a cost would be added to
     // the month it lands in rather than subtracted from it, and the running balance below would
     // then be wrong by twice its amount (2026-08-15).
     const sign = isFundingKind(lineKind) ? -1 : 1;
-
-    const cells: Record<string, number> = {};
-    if (line.periods.length === 0) {
-      add(cells, UNSCHEDULED, sign * line.totalAmount);
-    } else {
-      for (const p of line.periods) {
-        add(cells, columnFor(p.periodDate, granularity, columnKeys), sign * p.amount);
-      }
-    }
-    if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
-
-    const rowTotal = r2(sign * line.totalAmount);
-    const row: PeriodViewRow = { id: line.id, description: line.itemName ?? line.description, lineKind, cells, total: rowTotal };
 
     // Funding is one group regardless of the categories its lines carry: it is subtracted as a
     // whole, and splitting it by cost category would put money coming IN under a heading that
@@ -267,20 +295,82 @@ export function buildPeriodView(
         total: 0,
       };
       groupsByKey.set(groupKey, group);
+      rowsByKey.set(groupKey, new Map());
     }
-    group.rows.push(row);
+
+    /* The merge key. Same item = same row (by ITEM ID, never by name — two items legitimately
+       share a name across sources, and that twin is Q7's vocabulary territory, not this merge's).
+       A COST line with no item folds into the category's "Not itemized" bucket, exactly as the
+       List's rollup does; a money-in line with no item (pre-mig-243) stays a row of its own —
+       the List never merges those, and its typed description is all the name it has.
+       ⚠ "Is a cost" is asked through `isFundingKind`, never by comparing the kind to a literal
+       (the guard's banned shape, and the genuine bug it exists for): a literal here would fold a
+       FIFTH kind's item-less lines into the wrong bucket silently. */
+    const isCost = !isFundingKind(lineKind);
+    const rowKey = line.itemId
+      ? `item:${line.itemId}`
+      : isCost ? 'noitem' : `line:${line.id}`;
+    const groupRows = rowsByKey.get(groupKey)!;
+    let row = groupRows.get(rowKey);
+    if (!row) {
+      row = {
+        id: `${groupKey}|${rowKey}`,
+        description: line.itemId
+          ? (line.itemName ?? line.description)
+          : isCost ? NO_ITEM_LABEL : (line.itemName ?? line.description),
+        lineKind,
+        lineCount: 0,
+        cells: {},
+        total: 0,
+      };
+      groupRows.set(rowKey, row);
+      group.rows.push(row);
+    }
+    row.lineCount += 1;
+
+    const cells: Record<string, number> = {};
+    if (line.periods.length === 0) {
+      add(cells, UNSCHEDULED, sign * line.totalAmount);
+    } else {
+      for (const p of line.periods) {
+        add(cells, columnFor(p.periodDate, granularity, columnKeys), sign * p.amount);
+      }
+    }
+    if (cells[UNSCHEDULED] !== undefined) hasUnscheduled = true;
+
+    const rowTotal = r2(sign * line.totalAmount);
+    row.total = r2(row.total + rowTotal);
     group.total = r2(group.total + rowTotal);
     for (const [key, amount] of Object.entries(cells)) {
+      add(row.cells, key, amount);
       add(group.cells, key, amount);
       add(totals, key, amount);
     }
     grandTotal = r2(grandTotal + rowTotal);
   }
 
+  /* ⚠ ONE ORDERING RULE, THE LIST'S, IN BOTH VIEWS (P1 verify-pass correction, 2026-09-02: the two
+     views sorted differently — the List alphabetical via the rollup's compareCategories, this view
+     by insertion order — so toggling views reshuffled the plan). Cost categories alphabetical, the
+     money-in groups after them in kind order; cost rows alphabetical with "Not itemized" last (the
+     rollup's own item sort); money-in rows keep line order, which is what their List section does. */
+  for (const group of groupsByKey.values()) {
+    if (isFundingKind(group.lineKind)) continue;
+    group.rows.sort((a, b) => {
+      const aNone = a.description === NO_ITEM_LABEL;
+      const bNone = b.description === NO_ITEM_LABEL;
+      if (aNone !== bNone) return aNone ? 1 : -1;
+      return a.description.localeCompare(b.description);
+    });
+  }
   const groups = [...groupsByKey.values()]
     // Costs first, then the money-in groups — and among those, fundraising before sponsorship so
     // the order is the same everywhere the two appear.
-    .sort((a, b) => BUDGET_LINE_KINDS.indexOf(a.lineKind) - BUDGET_LINE_KINDS.indexOf(b.lineKind));
+    .sort((a, b) => {
+      const byKind = BUDGET_LINE_KINDS.indexOf(a.lineKind) - BUDGET_LINE_KINDS.indexOf(b.lineKind);
+      if (byKind !== 0) return byKind;
+      return a.name.localeCompare(b.name);
+    });
 
   const columns: PeriodColumn[] = [...dateColumns];
   if (hasUnscheduled) {

@@ -1,5 +1,6 @@
 import type { CoachCapabilities } from './coach-capabilities';
 import type { BudgetLineKind } from './coach-budget-totals';
+import type { PeriodSplitMode } from './coach-budget-period-modes';
 
 export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club' | 'club_large';
 
@@ -2542,6 +2543,9 @@ export interface RepBudgetLine {
   /** Is this money the team SPENDS or money it expects to bring IN (fundraising, sponsorship,
    *  a grant)? The amount is always positive — the kind carries the sign (migration 230). */
   lineKind: BudgetLineKind;
+  /** HOW the period split was entered (mig 274) — months / quarters / dates / names. Null =
+   *  written before the column (or no split): the editor falls back to `inferSplitMode`. */
+  splitMode: PeriodSplitMode | null;
   notes: string | null;
   sortOrder: number;
   createdAt: string;

@@ -563,6 +563,60 @@ export async function buildDocuments() {
     money$.BVA_EXPORT_COLUMNS,
     ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx'], 24);
 
+  /* ⚠ The plan's PDF is ALWAYS the statement — the By-period grid is a spreadsheet shape, and
+   * the panel swaps the statement in for `format === 'pdf'` with the same dialog announcement
+   * BvA makes (budget tab revamp, owner Q8a 2026-09-02). Rows come from the REAL builder so the
+   * exhibit holds the shapes that matter: a summed two-line item with its note-named sub-lines
+   * (the twins defect this build closes), a lump sum, the money-in sections, the closing row. */
+  {
+    const built = money$.budgetPlanStatementRows({
+      groups: [
+        {
+          categoryName: 'Facilities', total: 10700, items: [
+            { itemName: 'Dome Time', total: 5200, lines: [{ description: 'Dome Time', notes: '16 sessions, Jan–Mar', totalAmount: 5200, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-02-01' }, { periodDate: '2026-03-01' }] }] },
+            { itemName: 'Diamond Permits', total: 3200, lines: [{ description: 'Diamond Permits', notes: null, totalAmount: 3200, periods: [] }] },
+            { itemName: 'Batting Cages', total: 2300, lines: [{ description: 'Batting Cages', notes: null, totalAmount: 2300, periods: [{ periodDate: '2026-01-01' }, { periodDate: '2026-04-01' }] }] },
+          ],
+        },
+        {
+          categoryName: 'Tournaments', total: 2500, items: [
+            {
+              itemName: 'Entry Fees', total: 2500, lines: [
+                { description: 'Entry Fees', notes: 'Spring classic', totalAmount: 1600, periods: [{ periodDate: '2026-04-01' }] },
+                { description: 'Entry Fees', notes: 'Regional qualifier', totalAmount: 900, periods: [{ periodDate: '2026-05-01' }] },
+              ],
+            },
+          ],
+        },
+      ],
+      lines: [
+        { itemName: 'Chocolate Sale', description: 'Chocolate Sale', lineKind: 'funding', totalAmount: 1800, notes: null, periods: [] },
+        { itemName: 'Hometown Sports Shop', description: 'Hometown Sports Shop', lineKind: 'sponsorship', totalAmount: 1500, notes: null, periods: [] },
+      ],
+      totals: { totalPlanned: 13200, fundedByPlayers: 9900, fundingLineCount: 2 },
+      duesAssessed: 0,
+      leftToFund: 9900,
+    });
+    doc({
+      id: 'coach-budget-plan',
+      label: 'Season budget plan',
+      screens: ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx'],
+      headings: money$.BUDGET_PLAN_COLUMNS.map((c) => c.label),
+      render: (name, settings) => money$.downloadMoneyExport('pdf', {
+        dataset: 'budget-plan', title: 'Season Budget Plan',
+        columns: money$.BUDGET_PLAN_COLUMNS, rows: built.rows, rowKinds: built.kinds,
+        // The panel's own PDF currency treatment — shared formatter, em dash for an empty cell.
+        pdfRows: (rows) => rows.map((r) => money$.BUDGET_PLAN_COLUMNS.map((c) => {
+          const v = r[c.key];
+          if (c.format !== 'currency') return String(v ?? '');
+          return v === '' || v === undefined || v === null ? '—' : money$.formatMoneyCell(Number(v));
+        })),
+        orgLabel: 'riverdale-ridge', scopeLabel: SEASON, teamName: TEAM,
+        pdfSettings: settings, emptyMessage: 'Nothing to export on Season budget plan.',
+      }),
+    });
+  }
+
   const ADMIN_BVA_HEADERS = ['Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
   doc({
     id: 'admin-budget-vs-actual',
@@ -894,10 +948,8 @@ export async function buildDocuments() {
  * place to hide a document — a screen that starts printing has to be fixtured before it ships.
  */
 export const NO_PDF_SCREENS = [
-  {
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',
-    reason: 'Budget lines export as xlsx/csv only — six columns built for a spreadsheet, never printed.',
-  },
+  /* ⚰ The budget panel LEFT this list on 2026-09-02 (owner Q8a): the plan gained a PDF — always
+     the statement shape — and its exhibit is `coach-budget-plan` above. */
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx',
     reason: 'Payables (and its Transactions + Scheduled datasets) export as xlsx/csv only.',
@@ -926,7 +978,7 @@ export const PLUMBING_SCREENS = [
 
 /** Documents printed on team paper — everything a coach hands out. The rest is admin paper. */
 export const COACH_DOCUMENTS = new Set([
-  'coach-player-dues', 'coach-budget-vs-actual', 'coach-family-statements',
+  'coach-player-dues', 'coach-budget-vs-actual', 'coach-budget-plan', 'coach-family-statements',
   'coach-roster-wall', 'coach-roster-contacts', 'coach-practice-run-sheet',
   'coach-development-summary', 'coach-lineup-poster', 'coach-batting-card',
   'tryout-check-in', 'tryout-report-full-detail', 'tryout-board-summary',

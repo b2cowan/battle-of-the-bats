@@ -8,7 +8,7 @@ import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
 import {
-  FUNDING_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
+  DERIVED_INCOME_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
 } from './coach-budget-totals';
 import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
@@ -11704,10 +11704,12 @@ function mapRepTeamMoneyIn(r: any): RepTeamMoneyIn {
 /**
  * The money-in budget lines whose actual is ALREADY derived from fundraisers and sponsors.
  *
- * ⚠ THE `.in(…, FUNDING_LINE_KINDS)` IS THE POINT, and a literal here would be a real bug rather
- * than a style slip. Naming one kind leaves the other's rows open to a typed income record, which
- * double-counts money that player rebates are computed from — the same shorthand that filed
- * nineteen readers' sponsorship lines as costs on 2026-08-15.
+ * ⚠ THE `.in(…, DERIVED_INCOME_LINE_KINDS)` IS THE POINT, and a literal here would be a real bug
+ * rather than a style slip. Naming one kind leaves the other's rows open to a typed income
+ * record, which double-counts money that player rebates are computed from — the same shorthand
+ * that filed nineteen readers' sponsorship lines as costs on 2026-08-15. ⚠ The DERIVED list, not
+ * FUNDING_LINE_KINDS (mig 274): an `other_income` line's actuals are TYPED, so claiming it here
+ * would refuse the coach the only way its money can be recorded at all.
  *
  * Returns the CLAIMS, not an answer: `lib/coach-money-derived.ts` decides both what they close to
  * typing (`derivedIncomeKeys`) and where the derived pool lands (`placeDerivedActual`), and those
@@ -11718,7 +11720,7 @@ export async function getDerivedIncomeClaims(programYearId: string): Promise<Der
     .from('rep_budget_lines')
     .select('category_id, item_id, line_kind, budget_categories(name), budget_items(name)')
     .eq('program_year_id', programYearId)
-    .in('line_kind', FUNDING_LINE_KINDS);
+    .in('line_kind', DERIVED_INCOME_LINE_KINDS);
   if (error) throw error;
   return ((data ?? []) as Array<Record<string, unknown>>).map(l => ({
     /* ⚠ THROUGH THE EXHAUSTIVE RECORD, never a per-kind ternary. Drives and sponsors report two

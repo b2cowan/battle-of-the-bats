@@ -128,7 +128,7 @@ id (uuid), allocation_id (uuid) → rep_cost_allocations.id NOT NULL, team_id (u
 - Indexes: rep_allocation_splits_allocation_id_team_id_key, rep_allocation_splits_budget_category_idx, rep_allocation_splits_budget_item_idx, rep_allocation_splits_org_id_idx, rep_allocation_splits_program_year_id_idx, rep_allocation_splits_team_idx
 
 ### rep_budget_lines
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at, line_kind
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at, line_kind, split_mode
 - Indexes: rep_budget_lines_category_id_idx, rep_budget_lines_item_id_idx, rep_budget_lines_org_id_idx, rep_budget_lines_program_year_id_idx, rep_budget_lines_team_year_idx
 
 ### rep_budget_periods

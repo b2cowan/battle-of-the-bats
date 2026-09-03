@@ -1,6 +1,8 @@
 # Club money belongs in the team's plan
 
-**Status:** ⚙ **BUILT ON DEV 2026-08-30 (migration 271) — owner walk owed, ledger §126.** All five
+**Status:** ✅ **BUILT (migration 271, dev 2026-08-30) — owner walk §126 PASSED 43/43, closed
+2026-09-02** (truth-up 2026-09-02: this line said "owner walk owed" after the ledger had already
+recorded the pass). All five
 ratified decisions shipped: the ask, the generic rows kept, the classification outliving the lock,
 the Months vocabulary, and the headroom fix. Re-measured on the QA fixture: the hub card and the
 report now BOTH read **$1,555** (they read $1,980 and $1,555 before), the expense band's Scheduled

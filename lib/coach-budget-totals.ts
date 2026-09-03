@@ -30,22 +30,30 @@
  */
 
 /** The kind of thing a budget line is. Stored on the line; the amount is always positive and the
- *  kind carries the sign (migration 230). */
-export type BudgetLineKind = 'cost' | 'funding' | 'sponsorship';
+ *  kind carries the sign (migration 230). `other_income` (mig 274, owner Q5 2026-09-02) is money
+ *  in that is neither raised nor sponsored — interest, a facility rebate, a plain donation. */
+export type BudgetLineKind = 'cost' | 'funding' | 'sponsorship' | 'other_income';
 
-export const BUDGET_LINE_KINDS: BudgetLineKind[] = ['cost', 'funding', 'sponsorship'];
+export const BUDGET_LINE_KINDS: BudgetLineKind[] = ['cost', 'funding', 'sponsorship', 'other_income'];
 
 /**
- * The two money-IN kinds, for any reader that must treat them together.
+ * The money-IN kinds, for any reader that must treat them together.
  *
- * ⚠ THEY DIFFER ONLY IN REPORTING. Both subtract from what the season costs, identically, so
- * per-player dues and the installment generator must count BOTH or silently under-count what
+ * ⚠ THEY DIFFER ONLY IN REPORTING. All subtract from what the season costs, identically, so
+ * per-player dues and the installment generator must count EVERY one or silently under-count what
  * families are being asked for. Anywhere that used to test `kind === 'funding'` to mean "money in"
  * is a place this list belongs instead.
+ *
+ * ⚠⚠ THE ARRAY DRIVES NOTHING BY ITSELF (adversarial-review finding, 2026-09-02). `isFundingKind`
+ * and `normalizeBudgetLineKind` below are hardcoded literal comparisons — the ONE sanctioned home
+ * for that shape — and each must be edited BY NAME when a kind is added. `other_income` was added
+ * to all three together; a kind in this list that `normalizeBudgetLineKind` has not been taught
+ * defaults to 'cost', which silently counts the new income as SPENDING and inflates what families
+ * are asked to fund. The unit suite pins all three in step.
  */
-export const FUNDING_LINE_KINDS: BudgetLineKind[] = ['funding', 'sponsorship'];
+export const FUNDING_LINE_KINDS: BudgetLineKind[] = ['funding', 'sponsorship', 'other_income'];
 export function isFundingKind(kind: string | null | undefined): boolean {
-  return kind === 'funding' || kind === 'sponsorship';
+  return kind === 'funding' || kind === 'sponsorship' || kind === 'other_income';
 }
 
 /**
@@ -59,7 +67,7 @@ export function isFundingKind(kind: string | null | undefined): boolean {
  * reading the column goes through here.
  */
 export function normalizeBudgetLineKind(raw: string | null | undefined): BudgetLineKind {
-  return raw === 'funding' || raw === 'sponsorship' ? raw : 'cost';
+  return raw === 'funding' || raw === 'sponsorship' || raw === 'other_income' ? raw : 'cost';
 }
 
 /** Coach-facing names. `funding` is deliberately "expected FUNDRAISING", never "income" and no
@@ -75,15 +83,19 @@ export function normalizeBudgetLineKind(raw: string | null | undefined): BudgetL
    spending. The SECTION heading below stays "Costs" — that names a group of lines, not the choice,
    and it reads on four surfaces the rename was not asked to touch. */
 export const LINE_KIND_LABEL: Record<BudgetLineKind, string> = {
-  cost:        'Expense',
-  funding:     'Expected fundraising',
-  sponsorship: 'Expected sponsorship',
+  cost:         'Expense',
+  funding:      'Expected fundraising',
+  sponsorship:  'Expected sponsorship',
+  // "Other income", not just "income" — the same reasoning as the funding rename above: dues are
+  // also income, and a bare "income" would read as the place they belong (mig 274, owner Q5).
+  other_income: 'Expected other income',
 };
 
 export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
-  cost:        'Money the team spends',
-  funding:     'Money the team raises',
-  sponsorship: 'A sponsor or grant, given directly',
+  cost:         'Money the team spends',
+  funding:      'Money the team raises',
+  sponsorship:  'A sponsor or grant, given directly',
+  other_income: 'Interest, a rebate, a plain donation',
 };
 
 /**
@@ -99,18 +111,32 @@ export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
  * on the same row would count the same dollar twice. See lib/coach-money-derived.ts.
  */
 export const LINE_KIND_ACTUAL_SOURCE: Record<BudgetLineKind, 'typed' | 'fundraiser' | 'sponsor'> = {
-  cost:        'typed',
-  funding:     'fundraiser',
-  sponsorship: 'sponsor',
+  cost:         'typed',
+  funding:      'fundraiser',
+  sponsorship:  'sponsor',
+  // No machinery answers for other income — the coach records each arrival themselves, exactly
+  // like a cost's actuals (mig 274). The one money-in kind on the typed path.
+  other_income: 'typed',
 };
+
+/**
+ * The money-in kinds whose actuals are DERIVED — the lines that CLOSE a row to typed income
+ * records (lib/coach-money-derived.ts: one row, one source). ⚠ COMPUTED from the exhaustive
+ * record above, never listed by hand: an `other_income` line takes typed arrivals, so putting it
+ * in this set would refuse the coach the only way its money can be recorded at all — and a fifth
+ * kind lands here correctly by nothing more than its declared source.
+ */
+export const DERIVED_INCOME_LINE_KINDS: BudgetLineKind[] =
+  FUNDING_LINE_KINDS.filter(k => LINE_KIND_ACTUAL_SOURCE[k] !== 'typed');
 
 /** The heading its section carries — in the plan list, in the summary ladder, in the period grid
  *  and in Budget vs. Actual. ONE definition: four hardcoded copies of "Expected fundraising" is
  *  four places to miss on a rename. */
 export const LINE_KIND_SECTION: Record<BudgetLineKind, string> = {
-  cost:        'Costs',
-  funding:     'Expected fundraising',
-  sponsorship: 'Expected sponsorship',
+  cost:         'Costs',
+  funding:      'Expected fundraising',
+  sponsorship:  'Expected sponsorship',
+  other_income: 'Expected other income',
 };
 
 /** Anything with an amount and a kind — the plan's line shape, narrowed to what the maths needs,
@@ -276,11 +302,14 @@ export function describeInstallmentBases(totals: BudgetTotals): InstallmentBases
   const { itemized, costLineCount, expectedFunding, estimatedTotal, rosterCount } = totals;
 
   const budgetAmount = r2(Math.max(0, itemized - expectedFunding));
+  // "Expected funding", not "expected fundraising": `expectedFunding` aggregates EVERY money-in
+  // kind (sponsorship since 237, other income since 274), and the aggregate word must cover them
+  // all — the per-kind section headings keep their own names (owner Q5 copy check, 2026-09-02).
   const budgetWhyNot =
     costLineCount === 0
       ? 'No cost lines yet — add what the season costs and this splits it for you.'
       : budgetAmount <= 0
-        ? 'Your expected fundraising already covers every line item.'
+        ? 'Your expected funding already covers every line item.'
         : null;
 
   const estimateAmount = estimatedTotal == null ? null : r2(Math.max(0, estimatedTotal - expectedFunding));
@@ -290,7 +319,7 @@ export function describeInstallmentBases(totals: BudgetTotals): InstallmentBases
       : estimatedTotal <= 0
         ? 'Your season estimate is $0.'
         : (estimateAmount ?? 0) <= 0
-          ? 'Your expected fundraising already covers the estimate.'
+          ? 'Your expected funding already covers the estimate.'
           : null;
 
   return {

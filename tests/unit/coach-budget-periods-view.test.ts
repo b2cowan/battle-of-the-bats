@@ -10,11 +10,16 @@ function line(
   description: string,
   totalAmount: number,
   periods: Array<[string | null, number]>,
-  opts: { category?: string | null; funding?: boolean } = {},
+  opts: { category?: string | null; funding?: boolean; itemId?: string | null } = {},
 ): PeriodViewLine {
   return {
     id,
     description,
+    // Every line carries an item by default, derived from its name — the post-mig-240 shape,
+    // where an item is required on every kind. Pass `itemId` to make two lines share one (the
+    // merge case), or an explicit null for a legacy item-less line (the "Not itemized" case).
+    itemId: 'itemId' in opts ? opts.itemId ?? null : `item-${description}`,
+    itemName: description,
     // `'category' in opts`, not `??` — an explicit null is "uncategorized", which is a different
     // fact from "the helper's default".
     categoryName: 'category' in opts ? opts.category ?? null : 'Tournaments',
@@ -175,22 +180,33 @@ describe('funding', () => {
       line('b', 'Gear', 500, [], { category: 'Equipment' }),
     ], 'months');
     assert.deepEqual(view.groups.map(g => g.lineKind), ['cost', 'cost', 'funding']);
-    assert.deepEqual(view.groups.map(g => g.name), ['Tournaments', 'Equipment', 'Expected fundraising']);
+    // Cost categories alphabetical (the List's rule), the money-in group after them.
+    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments', 'Expected fundraising']);
   });
 });
 
 describe('grouping and totals', () => {
-  it('groups costs by category and keeps the plan\'s own order', () => {
+  it('groups costs by category, categories alphabetical — the List\'s own ordering', () => {
+    // ⚠ One ordering rule in both views (P1, 2026-09-02): this view used to keep insertion order
+    // while the List sorted alphabetically, so toggling views reshuffled the plan.
     const view = buildPeriodView([
       line('a', 'Entry fees', 3000, [['2027-01-01', 3000]], { category: 'Tournaments' }),
       line('b', 'Gear', 1000, [['2027-01-01', 1000]], { category: 'Equipment' }),
       line('c', 'Uniforms', 2000, [['2027-02-01', 2000]], { category: 'Tournaments' }),
     ], 'months');
-    assert.deepEqual(view.groups.map(g => g.name), ['Tournaments', 'Equipment']);
-    assert.equal(view.groups[0].rows.length, 2);
-    assert.equal(view.groups[0].total, 5000);
-    assert.equal(view.groups[0].cells['2027-01'], 3000);
-    assert.equal(view.groups[0].cells['2027-02'], 2000);
+    assert.deepEqual(view.groups.map(g => g.name), ['Equipment', 'Tournaments']);
+    assert.equal(view.groups[1].rows.length, 2);
+    assert.equal(view.groups[1].total, 5000);
+    assert.equal(view.groups[1].cells['2027-01'], 3000);
+    assert.equal(view.groups[1].cells['2027-02'], 2000);
+  });
+
+  it('sorts a category\'s rows alphabetically by item', () => {
+    const view = buildPeriodView([
+      line('a', 'Umpire Fees', 600, [['2027-04-01', 600]]),
+      line('b', 'Entry Fees', 1600, [['2027-04-01', 1600]]),
+    ], 'months');
+    assert.deepEqual(view.groups[0].rows.map(r => r.description), ['Entry Fees', 'Umpire Fees']);
   });
 
   it('files an uncategorized line under one heading rather than dropping it', () => {
@@ -218,5 +234,90 @@ describe('grouping and totals', () => {
     assert.deepEqual(view.groups, []);
     assert.equal(view.totals.total, 0);
     assert.equal(view.hasUnscheduled, false);
+  });
+});
+
+describe('the merge — two lines on one item are one row (P1, 2026-09-02)', () => {
+  it('sums same-item lines into one row and counts them', () => {
+    // The twins defect this whole build answers: two "Entry Fees" lines rendered as
+    // indistinguishable rows because the item names the row and both carry the same item.
+    const view = buildPeriodView([
+      line('a', 'Entry Fees', 1600, [['2027-04-01', 1600]], { itemId: 'item-entry' }),
+      line('b', 'Entry Fees', 900, [['2027-05-01', 900]], { itemId: 'item-entry' }),
+    ], 'months');
+    assert.equal(view.groups[0].rows.length, 1);
+    const row = view.groups[0].rows[0];
+    assert.equal(row.description, 'Entry Fees');
+    assert.equal(row.lineCount, 2);
+    assert.equal(row.total, 2500);
+    assert.equal(row.cells['2027-04'], 1600);
+    assert.equal(row.cells['2027-05'], 900);
+  });
+
+  it('merges by item ID, never by name — same-name items across sources stay two rows', () => {
+    // The club's "Entry Fees" and the team's own are legitimately two items (Q7 territory).
+    const view = buildPeriodView([
+      line('a', 'Entry Fees', 1600, [], { itemId: 'club-entry' }),
+      line('b', 'Entry Fees', 900, [], { itemId: 'team-entry' }),
+    ], 'months');
+    assert.equal(view.groups[0].rows.length, 2);
+    assert.ok(view.groups[0].rows.every(r => r.lineCount === 1));
+  });
+
+  it('merges an unscheduled line into its dated sibling\'s row', () => {
+    const view = buildPeriodView([
+      line('a', 'Dome Time', 3000, [['2027-01-01', 3000]], { itemId: 'item-dome' }),
+      line('b', 'Dome Time', 1200, [], { itemId: 'item-dome' }),
+    ], 'months');
+    const row = view.groups[0].rows[0];
+    assert.equal(row.total, 4200);
+    assert.equal(row.cells['2027-01'], 3000);
+    assert.equal(row.cells[UNSCHEDULED], 1200);
+    assert.equal(view.hasUnscheduled, true);
+  });
+
+  it('folds legacy item-less COST lines into "Not itemized", sorted last — the List\'s rule', () => {
+    const view = buildPeriodView([
+      line('a', 'Old line one', 500, [], { itemId: null }),
+      line('b', 'Old line two', 300, [], { itemId: null }),
+      line('c', 'Entry Fees', 1600, [['2027-04-01', 1600]]),
+    ], 'months');
+    const rows = view.groups[0].rows;
+    assert.deepEqual(rows.map(r => r.description), ['Entry Fees', 'Not itemized']);
+    assert.equal(rows[1].lineCount, 2);
+    assert.equal(rows[1].total, 800);
+  });
+
+  it('keeps item-less MONEY-IN lines one row per line — their description is all the name they have', () => {
+    const view = buildPeriodView([
+      line('f', 'Chocolate Sale', 1800, [], { funding: true, itemId: null }),
+      line('g', 'Bottle Drive', 900, [], { funding: true, itemId: null }),
+    ], 'months');
+    const fundingGroup = view.groups.find(g => g.lineKind === 'funding')!;
+    assert.equal(fundingGroup.rows.length, 2);
+    assert.deepEqual(fundingGroup.rows.map(r => r.description), ['Chocolate Sale', 'Bottle Drive']);
+  });
+
+  it('merges same-item money-in lines too, signed', () => {
+    const view = buildPeriodView([
+      line('f', 'Team Sponsorship', 1500, [['2027-02-01', 1500]], { funding: true, itemId: 'item-sponsor' }),
+      line('g', 'Team Sponsorship', 500, [], { funding: true, itemId: 'item-sponsor' }),
+    ], 'months');
+    const fundingGroup = view.groups.find(g => g.lineKind === 'funding')!;
+    assert.equal(fundingGroup.rows.length, 1);
+    assert.equal(fundingGroup.rows[0].lineCount, 2);
+    assert.equal(fundingGroup.rows[0].total, -2000);
+    assert.equal(fundingGroup.rows[0].cells['2027-02'], -1500);
+    assert.equal(fundingGroup.rows[0].cells[UNSCHEDULED], -500);
+  });
+
+  it('a merged row\'s cells still sum to its own total', () => {
+    const view = buildPeriodView([
+      line('a', 'Entry Fees', 1000.01, [['2027-04-01', 500.01], ['2027-05-01', 500.00]], { itemId: 'item-entry' }),
+      line('b', 'Entry Fees', 899.99, [], { itemId: 'item-entry' }),
+    ], 'months');
+    const row = view.groups[0].rows[0];
+    const summed = Object.values(row.cells).reduce((s, n) => s + n, 0);
+    assert.equal(Math.round(summed * 100) / 100, Math.round(row.total * 100) / 100);
   });
 });

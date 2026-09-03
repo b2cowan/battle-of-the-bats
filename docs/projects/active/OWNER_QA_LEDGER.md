@@ -16993,3 +16993,38 @@ lens); the phone chart scrolls at a floor width rather than restyling at 375px (
 behaviour). **And one open call:** should the coach demo's money tour NARRATE Season spending? The
 seeded world already shows it (the $400 parent-paid deposit, tagged); narrating means swapping a
 clause in step 4 under the one-proof-point cap — the walk's Part H asks for a yes/no.
+
+## §133 · The Budget Tab Revamp — one grain, remembered splits, a denser plan — BUILT 2026-09-02, awaiting QA
+
+**Walkthrough artifact (the instrument):** `claude.ai/code/artifact/b5d7ffd3-89ce-4a68-94a0-cb430b6b46fe`
+— checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
+Sign in as `uat-coach@uat-test-org.local` on `localhost:3000` (org `uat-test-org`, UAT Test Team →
+Money → Budget). The fixture was extended for this walk and now HOLDS the failing states the gates
+need: the two-line "Entry Fees" item, a quarters split (`Umpire fees by quarter`, split_mode
+stored), a names split with one dated and one dateless chunk (`Jersey order`), and an
+`other_income` line (`Season interest`).
+
+**What was built (plan `docs/projects/active/COACH_BUDGET_TAB_REVAMP_PLAN.md`, owner-ruled Q1–Q8
++ export rider 2026-09-02; mockup gate artifact `f1bd6e4d`; migration 274 applied to dev
+2026-09-02):** all six phases, with Q6 (category rename) deliberately HELD at its owner
+checkpoint — categories are org-shared with no team column (verified live), so the policy
+question is the owner's before any variant is built. Eight parts to walk: (A) one grain — the
+By-period grid sums same-item lines "2 lines", both views share one ordering; (B) the split
+editor reopens in its stored mode, names-mode chunks carry optional dates; (C) the rescale banner
+replaces the silent total/split desync, and the server 409s it as a belt (the split now rides the
+line's own save request); (D) the Schedule column, Collapse all, tighter desktop rows, remembered
+view/columns/folds, View/Columns pills (the 2026-08-20 adoption list's missed surface), shared
+page width on both budget tabs; (E) the second-line question writing to notes; (F) `other_income`
+— fourth kind, typed actuals, never a derived claim, aggregate copy "Expected funding" and
+"Costs less funding"; (G) exports grouped exactly as the screen in both views with BvA's
+month-header pieces, plus the plan PDF (always the statement, exhibit `coach-budget-plan` in the
+PDF gate); (H) the carry door's gating (renders only on an empty plan) and the one-headroom
+closure (`moneyBackAgainstSpending`). One disclosed mockup deviation: category bars keep the
+build-enforced 44px tap floor rather than the mockup's tighter band. Verification: typecheck ✓ ·
+2,819 unit tests ✓ · verify:changed all green (mig 274's dev-only divergence baselined) ·
+check:pdf 23 documents ✓ · sliced check:layout on coach-budget clean after the Collapse-all
+touch-floor fix (two new fixture-label chevron entries baselined with reasons; the shared
+chevron's floor stays owed to the pass that settles the grandfathered Dome Time entry).
+**Open owner calls carried by this walk:** the Q6 rename policy (three options, recommendation:
+refuse while another team's lines use the category), and — optional — a scratch team to walk the
+"Bring last season's plan" door end to end.

@@ -861,10 +861,13 @@ if (!existingLines?.length) {
      rendered layout sweep was reading. Repaired rather than skipped, for the same reason the
      periods below get their own guard: this fixture is what the rendered layout check self-heals
      with, and a half-old fixture reporting green is the silent half-truth this file exists to end. */
+  /* ⚠ COST lines only — the column is NOT NULL with default 'cost', so eq is exact. This was two
+     neq's naming the money-in kinds, which silently stopped being the complement the day a THIRD
+     money-in kind existed (mig 274): the other_income row got "repaired" onto a cost item. */
   const { data: itemless } = await db.from('rep_budget_lines')
     .select('id, description, category_id')
     .eq('team_id', team.id).eq('program_year_id', py.id)
-    .neq('line_kind', 'funding').neq('line_kind', 'sponsorship')
+    .eq('line_kind', 'cost')
     .is('item_id', null);
   for (const line of itemless ?? []) {
     const taxonomy = taxonomyFor(line.description);
@@ -1140,6 +1143,73 @@ if (!existingSecondLine?.length) {
   else ok('a SECOND budget line on the "Entry Fees" item — the SUM ruling, and the grid\'s line chooser');
 } else {
   ok('two-line item already present');
+}
+
+/**
+ * ⚠⚠ THE THREE SPLIT SHAPES THE BUDGET REVAMP'S GATES NEED (2026-09-02, plan §10): a fixture
+ * without them sweeps the revamped screen in states that cannot fail — the green-over-empty
+ * trap, again. The dome block covers dated periods (mid-month days, so it legitimately reopens
+ * as "Specific dates"); these add:
+ *   · a QUARTERS split with `split_mode` stored — the remembered-mode read path;
+ *   · a NAMES split with one dated and one dateless chunk — P2's per-chunk optional date, and a
+ *     row in the grid's Unscheduled column that shares a line with a dated chunk;
+ *   · an OTHER-INCOME line (mig 274) — the fourth section heading, and the money-in kind whose
+ *     actuals are typed.
+ * Guarded individually so fixtures seeded before this block gain them on a re-run.
+ */
+const REVAMP_SHAPES = [
+  {
+    line: {
+      description: 'Umpire fees by quarter', total_amount: 1200, notes: null, line_kind: 'cost',
+      split_mode: 'quarters', category_id: catByName('Officials'),
+      item_id: itemFor(catByName('Officials'), 'Umpire Fees'), sort_order: 6,
+    },
+    periods: [
+      { period_label: `Q1 ${py.year}`, period_date: `${py.year}-01-01`, amount: 300, sort_order: 0 },
+      { period_label: `Q2 ${py.year}`, period_date: `${py.year}-04-01`, amount: 300, sort_order: 1 },
+      { period_label: `Q3 ${py.year}`, period_date: `${py.year}-07-01`, amount: 300, sort_order: 2 },
+      { period_label: `Q4 ${py.year}`, period_date: `${py.year}-10-01`, amount: 300, sort_order: 3 },
+    ],
+    say: 'a QUARTERS split with its mode stored (mig 274)',
+  },
+  {
+    line: {
+      description: 'Jersey order', total_amount: 1500, notes: null, line_kind: 'cost',
+      split_mode: 'names', category_id: catByName('Team Gear'),
+      item_id: itemFor(catByName('Team Gear'), 'Jerseys'), sort_order: 7,
+    },
+    periods: [
+      { period_label: 'Deposit', period_date: `${py.year}-03-01`, amount: 500, sort_order: 0 },
+      { period_label: 'Balance', period_date: null, amount: 1000, sort_order: 1 },
+    ],
+    say: 'a NAMES split, one chunk dated and one not — the Unscheduled column earns its keep',
+  },
+  {
+    line: {
+      // No item on purpose — the pre-243 money-in shape the section renders by description; the
+      // KIND is what this row exists to exercise.
+      description: 'Season interest', total_amount: 150, notes: null, line_kind: 'other_income',
+      split_mode: null, category_id: null, item_id: null, sort_order: 8,
+    },
+    periods: [],
+    say: 'an OTHER-INCOME line (mig 274) — the fourth section heading',
+  },
+];
+for (const shape of REVAMP_SHAPES) {
+  const { data: existing } = await db.from('rep_budget_lines')
+    .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+    .eq('description', shape.line.description).limit(1);
+  if (existing?.length) { ok(`${shape.line.description} already present`); continue; }
+  const ins = await db.from('rep_budget_lines').insert({
+    ...shape.line, org_id: org.id, team_id: team.id, program_year_id: py.id,
+  }).select('id').single();
+  if (ins.error) { console.log(`  ! ${shape.line.description} skipped (${ins.error.message})`); continue; }
+  if (shape.periods.length > 0) {
+    const per = await db.from('rep_budget_periods').insert(
+      shape.periods.map(p => ({ ...p, budget_line_id: ins.data.id })));
+    if (per.error) { console.error(`✗ ${shape.line.description} periods insert`, per.error.message); process.exit(1); }
+  }
+  ok(shape.say);
 }
 
 /**

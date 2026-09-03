@@ -45,9 +45,10 @@ describe('a sponsorship line is money IN, exactly like fundraising', () => {
     assert.equal(isFundingKind('sponsorship'), true);
     assert.equal(isFundingKind('funding'), true);
     assert.equal(isFundingKind('cost'), false);
-    assert.deepEqual(FUNDING_LINE_KINDS, ['funding', 'sponsorship']);
+    // other_income joined both lists in mig 274 (owner Q5, 2026-09-02).
+    assert.deepEqual(FUNDING_LINE_KINDS, ['funding', 'sponsorship', 'other_income']);
     // Every kind the DB accepts must be known here, or a reader will meet one it cannot place.
-    assert.deepEqual(BUDGET_LINE_KINDS, ['cost', 'funding', 'sponsorship']);
+    assert.deepEqual(BUDGET_LINE_KINDS, ['cost', 'funding', 'sponsorship', 'other_income']);
   });
 
   it('SUBTRACTS from what players fund — the sign that would flip', () => {

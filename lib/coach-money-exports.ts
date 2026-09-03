@@ -22,7 +22,11 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
-import { LINE_KIND_LABEL, normalizeBudgetLineKind } from './coach-budget-totals';
+import {
+  LINE_KIND_SECTION, FUNDING_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
+} from './coach-budget-totals';
+import { scheduleSummaryLabel, type PeriodView } from './coach-budget-periods-view';
+import { formatMonthLabel } from './coach-budget-months';
 import { KIND_LABEL, SPONSOR_STATUS_LABEL } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
@@ -95,35 +99,215 @@ function money(n: number): string {
  *  of a dollar amount across every Money document, sign included. */
 export { money as formatMoneyCell };
 
-// ── Budget lines ────────────────────────────────────────────────────────────────────────────
+// ── The Budget Plan (owner export rider, 2026-09-02) ────────────────────────────────────────
+// ⚠ THE FILE IS GROUPED THE WAY THE SCREEN IS GROUPED, in both views — the contract Budget vs.
+// Actual has kept since mig 243, adopted here by owner rider: "the export manages the groupings
+// properly like the budget vs actual export does and formats date headers the same way." The flat
+// one-row-per-line dataset this replaces had the same twins the screen did (two same-item lines,
+// identical in every column), and could not be reconciled against the plan it came from.
 
-export const BUDGET_LINE_COLUMNS: ExportColumnDef[] = [
-  { label: 'Category',         key: 'category', format: 'text' },
-  { label: 'Line',             key: 'line',     format: 'text' },
-  // Costs and expected funding are both positive amounts — the KIND carries the sign
-  // (migration 230). A spreadsheet with no kind column would read a $4,000 fundraising target
-  // as $4,000 of spending.
-  { label: 'Kind',             key: 'kind',     format: 'text' },
-  { label: 'Amount',           key: 'amount',   format: 'currency' },
-  { label: 'Payment schedule', key: 'schedule', format: 'text' },
-  { label: 'Notes',            key: 'notes',    format: 'text' },
+export const BUDGET_PLAN_COLUMNS: ExportColumnDef[] = [
+  { label: 'Category / line', key: 'item',     format: 'text' },
+  // The List's own Schedule vocabulary ("Jan–Mar · 3 chunks") — WHEN, never a second amount.
+  { label: 'Schedule',        key: 'schedule', format: 'text' },
+  { label: 'Planned',         key: 'planned',  format: 'currency' },
+  { label: 'Notes',           key: 'notes',    format: 'text' },
 ];
 
-export function budgetLineRows(lines: RepBudgetLineWithPeriods[]): ExportRow[] {
-  return lines.map(l => ({
-    category: l.categoryName ?? '',
-    // ⚠ THE LIVE ITEM NAME, not the one captured when the line was written. `description` stores
-    // the item's name at creation and is never re-synced, so a club admin renaming a shared item
-    // left this file printing the old word while the report printed the new one — one record, two
-    // names. The description stays the fallback for a money-in line, which has no item.
-    line: l.itemName ?? l.description,
-    kind: LINE_KIND_LABEL[normalizeBudgetLineKind(l.lineKind)],
-    amount: l.totalAmount,
-    // The month split flattened into one readable cell. A column per month would make the
-    // sheet's width depend on the season — that is the Budget-vs-Actual month grid's job.
-    schedule: (l.periods ?? []).map(p => `${p.periodLabel}: ${money(p.amount)}`).join('; '),
-    notes: l.notes ?? '',
-  }));
+/** One cost category as the plan list renders it — the panel passes its OWN memoized grouping
+ *  (the shared rollup's), so the file cannot disagree with the screen it came from. */
+export interface BudgetPlanExportGroup {
+  categoryName: string;
+  total: number;
+  items: Array<{
+    itemName: string;
+    total: number;
+    lines: Array<{
+      description: string;
+      notes: string | null;
+      totalAmount: number;
+      periods: Array<{ periodDate: string | null }>;
+    }>;
+  }>;
+}
+
+export interface BudgetPlanExportSource {
+  /** The screen's own cost grouping (category → item → lines), from the shared rollup. */
+  groups: BudgetPlanExportGroup[];
+  /** EVERY line — the money-in sections are derived here by kind, exactly as the list derives
+   *  its own. Cost lines in it are ignored (they arrive via `groups`). */
+  lines: RepBudgetLineWithPeriods[];
+  /** The screen's closing figures, from `computeBudgetTotals` — never re-derived here. */
+  totals: {
+    totalPlanned: number;
+    fundedByPlayers: number;
+    fundingLineCount: number;
+  };
+  /** The Dues tab's assessed total, echoed on the plan as the players' side. */
+  duesAssessed: number;
+  /** plan − funding − dues, signed exactly as the screen computes it. */
+  leftToFund: number;
+}
+
+/**
+ * The plan's STATEMENT file — the List view, and every PDF (a period grid does not fit paper, the
+ * same ruling that shapes Budget vs. Actual's PDF).
+ *
+ * Category rows → item rows (same-item lines summed, "(N lines)") → per-line sub-rows named by
+ * their notes, mirroring the screen's fold; then the money-in sections, the players' side, and
+ * the screen's own closing row.
+ */
+export function budgetPlanStatementRows(
+  src: BudgetPlanExportSource,
+): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
+  const rows: ExportRow[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
+
+  for (const cat of src.groups) {
+    push({ item: cat.categoryName, schedule: '', planned: cat.total, notes: '' }, 'category');
+    for (const item of cat.items) {
+      if (item.lines.length === 1) {
+        const l = item.lines[0];
+        push({
+          item: item.itemName,
+          schedule: scheduleSummaryLabel(l.periods),
+          planned: l.totalAmount,
+          notes: l.notes ?? '',
+        }, 'item');
+        continue;
+      }
+      // The SUM ruling's shape: one summed row per item, the lines beneath it named by the note
+      // the form asked for ("What makes this line different?") — never two identical twins.
+      push({ item: `${item.itemName} (${item.lines.length} lines)`, schedule: '', planned: item.total, notes: '' }, 'item');
+      for (const l of item.lines) {
+        push({
+          item: `  — ${l.notes || l.description}`,
+          schedule: scheduleSummaryLabel(l.periods),
+          planned: l.totalAmount,
+          notes: l.notes ?? '',
+        }, 'item');
+      }
+    }
+  }
+
+  // The money-in sections, one per kind in the shared order — positive figures under a heading
+  // that says the direction, exactly as the list prints them.
+  for (const kind of FUNDING_LINE_KINDS) {
+    const kindLines = src.lines.filter(l => normalizeBudgetLineKind(l.lineKind) === kind);
+    if (kindLines.length === 0) continue;
+    const sectionTotal = Math.round(kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0) * 100) / 100;
+    push({ item: LINE_KIND_SECTION[kind], schedule: '', planned: sectionTotal, notes: '' }, 'category');
+    for (const l of kindLines) {
+      push({
+        item: `  — ${l.itemName ?? l.description}`,
+        schedule: scheduleSummaryLabel(l.periods ?? []),
+        planned: l.totalAmount,
+        notes: l.notes ?? '',
+      }, 'item');
+    }
+  }
+
+  if (src.duesAssessed > 0) {
+    push({ item: 'Player installments', schedule: '', planned: src.duesAssessed, notes: 'What players are scheduled to pay' }, 'total');
+    // The screen's own residual row, absent when the schedules match the plan ($0.00 says
+    // nothing). Absolute, as the screen prints it — the label carries the direction.
+    if (Math.abs(src.leftToFund) >= 0.005) {
+      push({
+        item: src.leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan',
+        schedule: '',
+        planned: Math.round(Math.abs(src.leftToFund) * 100) / 100,
+        notes: '',
+      }, 'total');
+    }
+  } else {
+    push({
+      item: src.totals.fundingLineCount > 0 ? 'Player installments (estimated)' : 'Total planned budget',
+      schedule: '',
+      planned: src.totals.fundingLineCount > 0 ? src.totals.fundedByPlayers : src.totals.totalPlanned,
+      notes: '',
+    }, 'total');
+  }
+
+  return { rows, kinds };
+}
+
+/**
+ * The By-period file's columns — from the view the screen is showing, so the file follows the
+ * coach's own Months/Quarters choice.
+ *
+ * ⚠ MONTH HEADERS ARE BvA'S, VIA THE SHARED PIECES (owner rider): `formatMonthLabel` spells the
+ * text ("Feb '26") and `headerMonth` writes the Excel header as the month's real date — the same
+ * mechanism `downloadMoneyExport` already runs for the BvA month file. Never a second formatter.
+ * Quarter columns carry the year in text ("Q2 '26") — the screen's year band has no cell to live
+ * in here — and no headerMonth: a quarter is not a date.
+ */
+export function budgetPeriodGridColumns(view: PeriodView): ExportColumnDef[] {
+  const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
+  for (const col of view.columns) {
+    if (col.unscheduled) {
+      cols.push({ label: 'Unscheduled', key: 'unscheduled', format: 'currency' });
+    } else if (/^\d{4}-\d{2}$/.test(col.key)) {
+      cols.push({ label: formatMonthLabel(col.key), key: `m_${col.key}`, format: 'currency', headerMonth: col.key });
+    } else {
+      // `2027-Q2` → `Q2 '27`.
+      cols.push({ label: `${col.key.slice(5)} '${col.key.slice(2, 4)}`, key: `q_${col.key}`, format: 'currency' });
+    }
+  }
+  cols.push({ label: 'Total', key: 'total', format: 'currency' });
+  return cols;
+}
+
+/** The column key a view column's money lands under — must mirror budgetPeriodGridColumns. */
+function periodColumnKey(col: PeriodView['columns'][number]): string {
+  if (col.unscheduled) return 'unscheduled';
+  return /^\d{4}-\d{2}$/.test(col.key) ? `m_${col.key}` : `q_${col.key}`;
+}
+
+/**
+ * The By-period file's rows — the grid exactly as rendered: category rows, merged item rows
+ * ("(N lines)"), money-in sections POSITIVE the way the screen paints them, and the screen's own
+ * closing subtraction.
+ */
+export function budgetPeriodGridRows(
+  view: PeriodView,
+): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
+  const rows: ExportRow[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
+
+  /** Money-in cells read POSITIVE (owner 2026-08-13) — the section heading says the direction,
+   *  on screen and therefore in the file. The closing row keeps the signed view totals: it is a
+   *  real subtraction. */
+  const cell = (funding: boolean, n: number | undefined): number | string =>
+    n == null ? '' : funding ? Math.abs(n) : n;
+
+  for (const group of view.groups) {
+    const funding = isFundingKind(group.lineKind);
+    const groupRow: ExportRow = { item: group.name };
+    for (const col of view.columns) groupRow[periodColumnKey(col)] = cell(funding, group.cells[col.key]);
+    groupRow.total = cell(funding, group.total);
+    push(groupRow, 'category');
+
+    for (const row of group.rows) {
+      const label = row.lineCount > 1 ? `${row.description} (${row.lineCount} lines)` : row.description;
+      const lineRow: ExportRow = { item: `  — ${label}` };
+      for (const col of view.columns) lineRow[periodColumnKey(col)] = cell(funding, row.cells[col.key]);
+      lineRow.total = cell(funding, row.total);
+      push(lineRow, 'item');
+    }
+  }
+
+  const footer: ExportRow = {
+    // The screen's own predicate and words: the closing row is a subtraction only when money-in
+    // groups exist to subtract.
+    item: view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less funding' : 'Total planned budget',
+  };
+  for (const col of view.columns) footer[periodColumnKey(col)] = view.totals.cells[col.key] ?? '';
+  footer.total = view.totals.total;
+  push(footer, 'total');
+
+  return { rows, kinds };
 }
 
 // ── Player dues ─────────────────────────────────────────────────────────────────────────────

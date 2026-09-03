@@ -1715,9 +1715,11 @@ owner said and mark everything else as the agent's inference.**
   rebuild came out of.
 
 **Adopted:** Transactions (08-19) · Payables and Budget vs. Actual's `View` / `Showing` (08-20 —
-seven segmented buttons became two pills). **Next:** Player Dues, Fundraising, Club, the Reports
-portal. The family is `MultiSelectDropdown`, `SingleSelectDropdown` and `DateRangeDropdown` — one
-look, three jobs; do not hand-roll a fourth.
+seven segmented buttons became two pills) · **Budget Plan's `View` / `Columns` (09-02, owner Q4 —
+the adoption list's missed surface; its locally-declared `.segmented` pair, the portal's only
+always-44px control, was deleted with the move)**. **Next:** Player Dues, Fundraising, Club, the
+Reports portal. The family is `MultiSelectDropdown`, `SingleSelectDropdown` and
+`DateRangeDropdown` — one look, three jobs; do not hand-roll a fourth.
 
 ---
 
@@ -2696,9 +2698,11 @@ been a **sixth** — and no coach surface has ever used one.
 menu would cost a click on every edit and introduce an idiom the portal has never used, to hold a
 single item. Consistency was available for free — Budget Plan was already right, one tab away.
 
-**Still to adopt:** Budget Plan keeps its own local copy of the pencil (`budget.module.css`
-`.actionBtn`/`.editBtn`); it is behaviourally identical and should move to `RowEditButton` on the
-next pass through that file.
+**~~Still to adopt~~ — DONE (truth-up 2026-09-02):** Budget Plan's local pencil copy moved to
+`RowEditButton` on 2026-08-15 (the same pass that created the component — `panel.tsx` imports it,
+and `budget.module.css` carries the burial note where `.actionBtn`/`.editBtn` used to live). This
+rider sat stale for over two weeks claiming the work was owed; corrected so the next pass through
+that file doesn't re-do finished work.
 
 ---
 

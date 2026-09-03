@@ -433,12 +433,17 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   // ⚠ ALL THREE ARE SPREADSHEET-ONLY BY DESIGN, and that is what removes them from a phone
   // (rule 11 keys off what an export PRODUCES, never off which screen it sits on).
   {
+    /* ⚠ THE CATALOG ID IS UNCHANGED (budget tab revamp, 2026-09-02) — same stable-key reasoning
+       as `coaches-expenses-payables` below. The FILE it names was rebuilt under the owner's
+       export rider: grouped exactly as the screen is grouped (statement shape from the List,
+       month/quarter columns from the By-period view, BvA's own date-header format), with a PDF
+       added — the flat one-row-per-line dataset it described is gone. */
     id: 'coaches-budget-lines',
-    label: 'Coaches Portal — Budget lines',
+    label: 'Coaches Portal — Budget plan',
     module: 'coaches',
     page: 'Money → Export ▾',
     file: 'lib/coach-money-exports.ts',
-    formats: ['xlsx', 'csv'],
+    formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
     moduleGate: 'club_exports',
@@ -452,7 +457,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export the season budget plan — category, line, whether it is a cost or expected fundraising, amount, its payment months, and notes.',
+      'Export the season budget plan, grouped exactly as the screen shows it — categories, summed items, each line’s schedule and notes, and the money-in sections; the By-period view exports its month or quarter columns. PDF prints the statement.',
   },
   {
     /* ⚠ THE CATALOG ID IS UNCHANGED (Money split P1, 2026-08-16). It is a stable key the help

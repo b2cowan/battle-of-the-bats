@@ -9524,6 +9524,15 @@
         "column_default": "'cost'::text"
       },
       {
+        "table_name": "rep_budget_lines",
+        "pos": 14,
+        "column_name": "split_mode",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_budget_periods",
         "pos": 1,
         "column_name": "id",
@@ -26533,7 +26542,13 @@
         "kind": "CHECK",
         "table_name": "rep_budget_lines",
         "detail": "rep_budget_lines_line_kind_check",
-        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
+        "check_clause": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text, 'other_income'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_budget_lines",
+        "detail": "rep_budget_lines_split_mode_check",
+        "check_clause": "(split_mode = ANY (ARRAY['months'::text, 'quarters'::text, 'dates'::text, 'names'::text]))"
       },
       {
         "kind": "CHECK",

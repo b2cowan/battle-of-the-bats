@@ -14,7 +14,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { spendAgainstPlan } from '../../lib/coach-money-summary.ts';
+import { spendAgainstPlan, moneyBackAgainstSpending } from '../../lib/coach-money-summary.ts';
 
 const base = {
   expensesPaid: 0,
@@ -91,5 +91,46 @@ describe('spendAgainstPlan — the hub card and the report, one arithmetic', () 
      screen along. */
   it('may go negative, and says so rather than flooring at zero', () => {
     assert.equal(spendAgainstPlan({ ...base, expensesPaid: 100, recordedMoneyBack: 250 }), -150);
+  });
+});
+
+describe('moneyBackAgainstSpending — the closed divergent case (P6 "one headroom", 2026-09-02)', () => {
+  const back = (amount: number, budgetItemId: string | null) => ({ amount, budgetItemId });
+
+  it('excludes a refund whose item is REVENUE-ONLY — the report nets it into income, not spending', () => {
+    // The exact case spendAgainstPlan's docstring carried as a stated divergence: a word moved to
+    // the money-in side after the fact, with no cost side left. `sideForRefund` sends it 'in'.
+    const total = moneyBackAgainstSpending(
+      [back(325, 'item-sponsorship'), back(150, 'item-entry-fees')],
+      new Set(['item-entry-fees']),
+      new Set(['item-sponsorship']),
+    );
+    assert.equal(total, 150);
+  });
+
+  it('an item with BOTH sides counts against spending — the expense side wins, as sideForRefund rules', () => {
+    const total = moneyBackAgainstSpending(
+      [back(80, 'item-both-sides')],
+      new Set(['item-both-sides']),
+      new Set(['item-both-sides']),
+    );
+    assert.equal(total, 80);
+  });
+
+  it('a refund with no item counts against spending — the rollup’s own default', () => {
+    assert.equal(moneyBackAgainstSpending([back(60, null)], new Set(), new Set(['x'])), 60);
+  });
+
+  it('an item on neither side counts against spending — sideForRefund’s final else', () => {
+    assert.equal(moneyBackAgainstSpending([back(45, 'item-unknown')], new Set(), new Set()), 45);
+  });
+
+  it('rounds to the cent over a mixed pile', () => {
+    const total = moneyBackAgainstSpending(
+      [back(0.1, null), back(0.2, 'spent'), back(99.99, 'revenue-only')],
+      new Set(['spent']),
+      new Set(['revenue-only']),
+    );
+    assert.equal(total, 0.3);
   });
 });

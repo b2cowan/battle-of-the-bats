@@ -4,13 +4,14 @@
  * A stored period is a name, an optional date and an amount — that is all, and this module does not
  * change it. What it adds is the coach-facing question the form asks first: *is this line split by
  * month, by quarter, by exact dates, or just by name?* The answer decides which control each row
- * gets and how a blank label is filled in; it is never stored, because **the selection IS the date**
- * (months → the 1st, quarters → the first day of the quarter). Nothing downstream — Budget vs.
- * Actual, the month grid, installment generation — learns a new word.
+ * gets and how a blank label is filled in. **The selection IS still the date** (months → the 1st,
+ * quarters → the first day of the quarter) — nothing downstream that does arithmetic (Budget vs.
+ * Actual, the month grid, installment generation) learns a new word.
  *
- * The mode is therefore re-DERIVED when a saved line is reopened (`inferSplitMode`), not remembered
- * on the record. That is a deliberate trade: inference can be wrong, the coach can correct it, and
- * nothing is rewritten until they save.
+ * ⚠ SINCE MIG 274 THE MODE IS REMEMBERED on the line (its `split_mode` column, owner ruling
+ * Q2 2026-09-02): the editor writes what the coach chose and reads it back, so a quarters split
+ * whose label was edited no longer reopens as months. `inferSplitMode` survives as the FALLBACK
+ * for lines written before the column existed (NULL) — the guess it used to be for everyone.
  *
  * ⚠ Changing the mode RESETS the periods (owner ruling 2026-08-12). Converting one shape into
  * another only works when the shapes correspond and they don't: twelve months mapped onto four
@@ -25,6 +26,13 @@
 export type PeriodSplitMode = 'months' | 'quarters' | 'dates' | 'names';
 
 export const PERIOD_SPLIT_MODES: PeriodSplitMode[] = ['months', 'quarters', 'dates', 'names'];
+
+/** A raw `split_mode` from the database (or a request body), narrowed — one place, so a value the
+ *  CHECK constraint would refuse can still never reach the pickers from a stale payload. Null =
+ *  not stored (pre-274, or no split): the caller falls back to `inferSplitMode`. */
+export function normalizeSplitMode(raw: string | null | undefined): PeriodSplitMode | null {
+  return PERIOD_SPLIT_MODES.includes(raw as PeriodSplitMode) ? (raw as PeriodSplitMode) : null;
+}
 
 /** Button copy for the mode chips, and the sentence that names step 2 underneath them. */
 export const SPLIT_MODE_LABEL: Record<PeriodSplitMode, string> = {
@@ -49,12 +57,14 @@ export const SPLIT_MODE_STEP_TWO: Record<PeriodSplitMode, string> = {
   names:    'Add a period for each part of the split',
 };
 
-/** The heading over the picker column. Empty in `names` mode — there is no picker. */
+/** The heading over the date-side column. In `names` mode the date is OPTIONAL and sits second —
+ *  the chunk's name leads (P2, 2026-09-02: a named chunk can carry a date without giving up its
+ *  name, and one dateless chunk no longer hides the date controls for its dated siblings). */
 export const SPLIT_MODE_COLUMN: Record<PeriodSplitMode, string> = {
   months:   'Month',
   quarters: 'Quarter',
   dates:    'Date',
-  names:    '',
+  names:    'Date (optional)',
 };
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

@@ -4,6 +4,7 @@ import type { RepBudgetLineWithPeriods, RepBudgetPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
+import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 
 function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
@@ -31,6 +32,9 @@ function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
     // Anything unrecognised reads as a cost — that is the column default, and a row written
     // before migration 230 IS a cost. Never guess a line is money coming in.
     lineKind:       normalizeBudgetLineKind(row.line_kind as string | null),
+    // Null (pre-274, or no split) sends the editor to inferSplitMode — the old guess, now the
+    // fallback only.
+    splitMode:      normalizeSplitMode(row.split_mode as string | null),
     notes:          row.notes as string | null,
     sortOrder:      row.sort_order as number,
     createdAt:      row.created_at as string,
@@ -106,6 +110,29 @@ export const GET = withObservability(async (_req: Request,
     rosterCount:     rosterCount ?? 0,
   };
 
+  /* The "Bring last season's plan" door's one fact (owner Q8b): does an earlier season hold
+     lines? Computed ONLY for an empty plan — the door only renders there, and a populated plan
+     shouldn't pay two extra queries for a fact nothing reads. Same short walk the carry route
+     re-checks at write time. */
+  let priorPlan: { year: number; lineCount: number } | null = null;
+  if (lines.length === 0) {
+    const { data: yearsData } = await supabaseAdmin
+      .from('rep_program_years')
+      .select('id, year')
+      .eq('team_id', teamId)
+      .neq('id', programYear.id)
+      .lt('year', programYear.year)
+      .order('year', { ascending: false })
+      .limit(5);
+    for (const py of (yearsData ?? []) as Array<{ id: string; year: number }>) {
+      const { count } = await supabaseAdmin
+        .from('rep_budget_lines')
+        .select('id', { count: 'exact', head: true })
+        .eq('program_year_id', py.id);
+      if ((count ?? 0) > 0) { priorPlan = { year: py.year, lineCount: count ?? 0 }; break; }
+    }
+  }
+
   // The optional ESTIMATED total (rep_program_years.budget_amount) rides along so the planner
   // can state the difference between it and the itemized sum.
   // The season YEAR rides along too (chunk H2): it anchors bare month names in an imported
@@ -116,5 +143,6 @@ export const GET = withObservability(async (_req: Request,
     duesAssessed,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,
+    priorPlan,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan' });

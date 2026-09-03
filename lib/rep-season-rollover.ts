@@ -11,6 +11,7 @@ import {
 import { addStaffMember, projectMembershipsOntoProgramYear } from './coach-membership';
 import { seasonClosingCashCents } from './coach-register-book';
 import { openingBalanceFor, carriesProvenance, type SeasonCarryChoice } from './season-carry';
+import { carryBudgetPlan, shiftDateYears } from './rep-budget-carry';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import type { RepProgramYear } from './types';
 
@@ -70,16 +71,8 @@ export class SeasonRolloverError extends Error {
   }
 }
 
-/** Shift a 'YYYY-MM-DD' date forward by `delta` years, clamping Feb 29 -> Feb 28 in non-leap years.
- *  Carried fee/budget dates are otherwise absolute and would land in the past on a season roll. */
-function shiftDateYears(dateStr: string, delta: number): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  if (!y || !m || !d) return dateStr;
-  const newYear = y + delta;
-  const daysInMonth = new Date(newYear, m, 0).getDate(); // m is 1-based; day 0 = last day of month m
-  const newDay = Math.min(d, daysInMonth);
-  return `${newYear}-${String(m).padStart(2, '0')}-${String(newDay).padStart(2, '0')}`;
-}
+/* `shiftDateYears` moved to lib/rep-budget-carry.ts with the budget copy (§6.3) — the dues carry
+   below still imports it from there; one clamping rule, one home. */
 
 /** Best-effort rollback of a half-created new season (delete coach rows, then the empty year). */
 async function cleanupNewSeason(newSeasonId: string, coachIds: string[]): Promise<void> {
@@ -332,81 +325,21 @@ export async function startNextRepSeason(params: {
   }
 
   // ── Planned budget carry (optional): lines + periods + the legacy budget envelope ──
+  // ⚠ The line/period copy EXTRACTED to lib/rep-budget-carry.ts (§6.3, 2026-09-02): the empty-plan
+  // "Bring last season's plan" door runs the same copy, and two spellings of it would be two
+  // places to re-learn the carried-never-defaulted line_kind lesson (the comment rode along).
   if (carryBudget) {
     try {
-      const { data: oldLines } = await supabaseAdmin
-        .from('rep_budget_lines')
-        .select('*')
-        .eq('program_year_id', currentSeason.id)
-        .eq('org_id', orgId)
-        .order('sort_order');
-      type BudgetLineRow = {
-        id: string;
-        category_id: string | null;
-        item_id: string | null;
-        description: string;
-        total_amount: number;
-        /** ⚠ Carried, never defaulted. Omitting it let the column default win, which silently
-         *  reclassified every EXPECTED-FUNDING line as a COST in the new season — money the team
-         *  planned to raise came back as money it planned to spend, doubling the season total and
-         *  the dues generated from it, with nothing on screen to reveal it. A write path, so the
-         *  damage was permanent and invisible without a DB audit. */
-        line_kind: string | null;
-        notes: string | null;
-        sort_order: number;
-      };
-      type BudgetPeriodRow = {
-        period_label: string;
-        period_date: string | null;
-        amount: number;
-        sort_order: number;
-      };
-      for (const line of (oldLines ?? []) as BudgetLineRow[]) {
-        try {
-          const { data: newLine, error: lineErr } = await supabaseAdmin
-            .from('rep_budget_lines')
-            .insert({
-              org_id: orgId,
-              team_id: teamId,
-              program_year_id: newSeason.id,
-              category_id: line.category_id ?? null,
-              item_id: line.item_id ?? null,
-              description: line.description,
-              total_amount: line.total_amount,
-              line_kind: line.line_kind ?? 'cost',
-              notes: line.notes ?? null,
-              sort_order: line.sort_order ?? 0,
-            })
-            .select('id')
-            .single();
-          if (lineErr || !newLine) { summary.budget.failed++; continue; }
-          summary.budget.linesCopied++;
-
-          const { data: oldPeriods } = await supabaseAdmin
-            .from('rep_budget_periods')
-            .select('*')
-            .eq('budget_line_id', line.id)
-            .order('sort_order');
-          const periodRows = ((oldPeriods ?? []) as BudgetPeriodRow[]).map(pd => ({
-            budget_line_id: newLine.id as string,
-            period_label: pd.period_label,
-            period_date: pd.period_date ? shiftDateYears(pd.period_date, delta) : null,
-            amount: pd.amount,
-            sort_order: pd.sort_order ?? 0,
-          }));
-          if (periodRows.length > 0) {
-            const { data: createdPeriods, error: pErr } = await supabaseAdmin
-              .from('rep_budget_periods')
-              .insert(periodRows)
-              .select('id');
-            if (pErr) summary.budget.failed++; // a line copied without its period breakdown — flag it, don't lose it silently
-            else summary.budget.periodsCopied += createdPeriods?.length ?? 0;
-          }
-        } catch (e) {
-          summary.budget.failed++;
-          console.error('[rep-season-rollover] budget line carry failed:', e);
-        }
-      }
+      const carried = await carryBudgetPlan({
+        orgId,
+        teamId,
+        fromProgramYearId: currentSeason.id,
+        toProgramYearId: newSeason.id,
+        yearDelta: delta,
+      });
+      summary.budget.linesCopied += carried.linesCopied;
+      summary.budget.periodsCopied += carried.periodsCopied;
+      summary.budget.failed += carried.failed;
 
       // Carry the legacy single-number budget envelope too (still read by the /budget summary).
       if (currentSeason.budgetAmount != null) {

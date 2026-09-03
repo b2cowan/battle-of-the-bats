@@ -22,7 +22,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
-import { spendAgainstPlan } from '@/lib/coach-money-summary';
+import { spendAgainstPlan, moneyBackAgainstSpending } from '@/lib/coach-money-summary';
 import {
   clubRequestReportSide, type ClubMoneyInMeaning, type ClubRequestType,
 } from '@/lib/coach-club-money';
@@ -88,7 +88,9 @@ export const GET = withObservability(async (_req: Request,
     getRepTeamExpenses(programYear.id),
     supabaseAdmin
       .from('rep_budget_lines')
-      .select('total_amount, line_kind')
+      // `item_id` rides along for the money-back side test below (P6 "one headroom") — which
+      // items the PLAN gives an expense or revenue side.
+      .select('total_amount, line_kind, item_id')
       .eq('program_year_id', programYear.id),
     supabaseAdmin
       .from('rep_roster_players')
@@ -324,7 +326,7 @@ export const GET = withObservability(async (_req: Request,
   // ── Budget reconciliation ────────────────────────────────────────────────
   // ONE arithmetic, shared with the planner and Budget vs. Actual (lib/coach-budget-totals).
   // Doing it inline in three routes is what let them disagree about the same two numbers.
-  const lines = (linesRes.data ?? []) as Array<{ total_amount: number; line_kind?: string | null }>;
+  const lines = (linesRes.data ?? []) as Array<{ total_amount: number; line_kind?: string | null; item_id?: string | null }>;
   const rosterCount = rosterRes.count ?? 0;
   const totals = computeBudgetTotals({
     lines: lines.map(l => ({
@@ -364,12 +366,35 @@ export const GET = withObservability(async (_req: Request,
      answers to "can we afford this?". Every term, and why, is in `spendAgainstPlan`.
      ⚠ NEW MONEY IS ABSENT FROM IT ON PURPOSE — a club grant is revenue, and headroom is a cost
      figure. */
+  /* ⚠ THE ONE DIVERGENT CASE, CLOSED (P6 "one headroom", 2026-09-02): a refund filed against a
+     revenue-only item nets into REVENUE on the report (`sideForRefund`), so it must not shrink
+     spending here — `moneyBackAgainstSpending` runs the same side test over what this route
+     already loaded. The CASH figures above keep the full `recordedMoneyBack`: a dollar arriving
+     is a dollar arriving whichever side it nets on. */
+  const expenseSideItemIds = new Set<string>();
+  const revenueSideItemIds = new Set<string>();
+  for (const l of lines) {
+    if (!l.item_id) continue;
+    (isFundingKind(l.line_kind) ? revenueSideItemIds : expenseSideItemIds).add(l.item_id);
+  }
+  for (const e of expenses) {
+    if (e.budgetItemId) expenseSideItemIds.add(e.budgetItemId);
+  }
+  for (const m of moneyInRecords) {
+    if (m.kind !== 'money_back' && m.budgetItemId) revenueSideItemIds.add(m.budgetItemId);
+  }
+  const recordedMoneyBackAgainstSpending = moneyBackAgainstSpending(
+    moneyInRecords.filter(m => m.kind === 'money_back'),
+    expenseSideItemIds,
+    revenueSideItemIds,
+  );
+
   const spentAgainstPlan = spendAgainstPlan({
     expensesPaid,
     clubBillsPaid: allocationsPaid,
     clubPaymentsOut: orgPayments,
     clubMoneyBack: orgMoneyBack,
-    recordedMoneyBack,
+    recordedMoneyBack: recordedMoneyBackAgainstSpending,
   });
   const headroom = effectiveTotal > 0 ? effectiveTotal - spentAgainstPlan : null;
 

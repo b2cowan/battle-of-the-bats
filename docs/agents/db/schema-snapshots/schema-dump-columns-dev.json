@@ -9522,6 +9522,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_budget_lines",
+    "column_name": "split_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "rep_budget_periods",
     "column_name": "id",
     "data_type": "uuid",

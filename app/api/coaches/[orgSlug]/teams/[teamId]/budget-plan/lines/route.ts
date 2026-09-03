@@ -5,6 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
+import { readPeriodsPayload, type PeriodPayloadRow } from '@/lib/coach-budget-periods-payload';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -72,7 +74,23 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
   }
   if (!BUDGET_LINE_KINDS.includes(lineKind as BudgetLineKind)) {
-    return NextResponse.json({ error: 'lineKind must be one of: cost, funding, sponsorship' }, { status: 400 });
+    return NextResponse.json({ error: `lineKind must be one of: ${BUDGET_LINE_KINDS.join(', ')}` }, { status: 400 });
+  }
+
+  // HOW a split was entered (mig 274) — remembered so the editor reopens in the coach's own mode.
+  // Anything unrecognised stores null (the inferSplitMode fallback), never a value the CHECK
+  // would refuse.
+  const splitMode = normalizeSplitMode(typeof body.splitMode === 'string' ? body.splitMode : null);
+
+  /* ⚠ THE SPLIT RIDES THE SAME REQUEST (P2). The panel used to POST the line and then POST its
+     periods — and never checked the second response, so a failed split write left a lump-sum line
+     the coach believed was split. Validated HERE, before anything is inserted, so the request
+     either lands whole or not at all. Absent = no split. */
+  let periodRows: PeriodPayloadRow[] | null = null;
+  if (Array.isArray(body.periods) && body.periods.length > 0) {
+    const parsed = readPeriodsPayload(body.periods, totalAmount);
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    periodRows = parsed.rows;
   }
 
   /* The item must be one THIS TEAM can see — platform, club-published, or its own (mig 240). The
@@ -106,12 +124,27 @@ export const POST = withObservability(async (req: Request,
       description:     description || itemName || '',
       total_amount:    totalAmount,
       line_kind:       lineKind,
+      split_mode:      periodRows && periodRows.length > 0 ? splitMode : null,
       notes,
     })
     .select('*, rep_budget_periods(*), budget_categories(name), budget_items(name)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (periodRows && periodRows.length > 0) {
+    const { error: pErr } = await supabaseAdmin
+      .from('rep_budget_periods')
+      .insert(periodRows.map(r => ({ ...r, budget_line_id: data.id as string })));
+    if (pErr) {
+      // The line without its split is a state the coach did not ask for — take it back out so a
+      // retry creates one line, not two (the periods were validated above, so this is a genuine
+      // database failure, not bad input).
+      await supabaseAdmin.from('rep_budget_lines').delete()
+        .eq('id', data.id as string).eq('org_id', ctx!.org.id).eq('team_id', team.id);
+      return NextResponse.json({ error: pErr.message }, { status: 500 });
+    }
+  }
 
   return NextResponse.json({ line: data }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines' });

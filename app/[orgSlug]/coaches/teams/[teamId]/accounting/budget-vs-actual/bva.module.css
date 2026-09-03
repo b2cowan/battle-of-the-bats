@@ -1,11 +1,8 @@
-/* Wider than the portal's 960px reading column, on the same reasoning the Schedule's
-   week/month views already use `.pageWide` for: this is a structured comparison grid,
-   not a text column, and capping it forced an internal horizontal scroll on a wide
-   monitor (review f9-2). The SHARED default is deliberately left alone — widening every
-   Money page would make Money the only wide area in the portal. Chunk A D2. */
+/* The WIDTH now comes from the shared `.page .pageWide` pair the panel composes (P4, 2026-09-02)
+   — the utility whose own comment names "the Budget↔BvA drift rule" as its reason to exist, and
+   which both budget tabs hand-copied instead of using. What stays here is only what is true of
+   THIS page alone: its unbudgeted accent token. */
 .page {
-  max-width: 1200px;
-  margin-inline: auto; /* Desktop shell D1 (2026-08-01): every page column centers. */
   --bva-unbudgeted: #f97316; /* token-exempt: distinct from schedule event accent */
 }
 

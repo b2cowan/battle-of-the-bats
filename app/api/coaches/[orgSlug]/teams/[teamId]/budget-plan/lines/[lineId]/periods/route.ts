@@ -37,6 +37,13 @@ interface PeriodInput {
 // Full replace of periods for a budget line.
 // Sending an empty array clears all periods (reverts to lump-sum).
 // Amounts are validated to sum to the line's total_amount (±$0.02 rounding tolerance).
+//
+// ⚠ THE PANEL NO LONGER CALLS THIS (P2, 2026-09-02): a split rides the line's own POST/PATCH now,
+// validated together, because this second request's failure was silently ignored and left splits
+// that no longer added up. The route survives for a session that loaded the OLD panel across the
+// deploy — its writes are still fully validated — and can be retired a release later.
+// ⚠ It does not write `split_mode`: an old panel has none to send, and the stored mode (possibly
+// stale) is still closer to the truth than clearing it.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },) => {
   const { orgSlug, teamId, lineId } = await params;

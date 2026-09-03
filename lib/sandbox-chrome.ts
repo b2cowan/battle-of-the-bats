@@ -545,6 +545,16 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              reading in its category and month, tagged "paid by a family" — no seed change
              needed, and per the `ea8ddd14` cap no clause was added. If the owner wants the
              two-truths story narrated, swap a clause; flagged at Owner QA §132. */
+      /* ⚠ RE-READ FOR THE BUDGET TAB REVAMP (2026-09-02), per CLAUDE.md's two questions:
+           · *Still true?* Yes — no tour step stops on the Budget PLAN tab and no sentence
+             anywhere (this step, step 5, the off-season dock line's "a budget built line by
+             line") names its views, controls, export or editor, so the revamp (View/Columns
+             pills, the merged By-period rows, the Schedule column, split_mode, the fourth line
+             kind, the plan PDF) stales nothing.
+           · *Should a moment show it?* The seeded worlds render the new shape by themselves —
+             the off-season books moment lands a prospect one tab from the revamped plan — and
+             the `ea8ddd14` cap (a hook plus ONE proof point per step) says no clause is added
+             for it. If the owner wants the plan's one-grain story narrated, swap a clause. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

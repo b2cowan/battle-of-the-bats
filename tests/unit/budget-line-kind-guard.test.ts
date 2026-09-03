@@ -103,6 +103,13 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
       + 'which is positive for both kinds.',
   },
   {
+    path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/carry/route.ts',
+    reason: 'COUNTS lines twice — "is the active plan empty?" and "does a prior season hold '
+      + 'anything?" — and copies nothing itself: the copy goes through lib/rep-budget-carry.ts, '
+      + 'which carries line_kind verbatim (never defaulted). A count is kind-agnostic by '
+      + 'construction: an expected-funding line makes a plan exactly as non-empty as a cost.',
+  },
+  {
     path: 'lib/db.ts',
     reason: 'TWO readers, neither of which can be wrong about a kind. `hasBudgetLines` COUNTS lines '
       + 'to answer "has this team started its money at all?" — a funding line is as good an answer '

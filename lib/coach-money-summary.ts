@@ -190,15 +190,15 @@ export interface DashboardHrefs {
  *     letting a grant shrink it would say the team may spend more because it was given more, which
  *     is a budgeting opinion the product has no business holding.
  *
- * ⚠⚠ IT IS AN APPROXIMATION OF `rollupMoneyReport`, AND THAT HAS TO BE SAID OUT LOUD. The report's
- * figure is the sum of its category rows; this route does not run the rollup (it is the heaviest
- * read in the portal and the hub loads on every Money screen), so it re-derives the same total from
- * the same records. The two can differ in exactly one case, by construction: a refund filed against
- * an item that is REVENUE and nothing else nets on the revenue side there (`sideForRefund`) and is
- * subtracted from spending here. That needs an item with no cost side at all, which the money-back
- * form cannot produce — its picker offers the spending words — so it takes a word being moved
- * between sides after the fact. Stated rather than silently accepted: if it ever bites, the fix is
- * this function learning the rule, not the card growing a caveat.
+ * ⚠⚠ IT IS AN APPROXIMATION OF `rollupMoneyReport`, AND THE ONE DIVERGENT CASE IS NOW CLOSED
+ * (P6 "one headroom", 2026-09-02). The report's figure is the sum of its category rows; this
+ * route does not run the rollup (it is the heaviest read in the portal and the hub loads on every
+ * Money screen), so it re-derives the same total from the same records. They used to differ in
+ * exactly one case: a refund filed against an item that is REVENUE and nothing else nets on the
+ * revenue side there (`sideForRefund`) but was subtracted from spending here. The route now
+ * passes its money back through `moneyBackAgainstSpending` below — the same side test, in
+ * miniature — so the term this function receives already excludes those. Cash figures keep the
+ * FULL sum: a dollar arriving is a dollar arriving whichever side it nets on.
  *
  * ⚠ PURE, so it can be tested without a database — which is the point. The QA fixture carries no
  * recorded money back at all, so a re-measure of it would show the hub and the report agreeing and
@@ -219,6 +219,37 @@ export function spendAgainstPlan(x: {
   return Math.round((
     x.expensesPaid + x.clubBillsPaid + x.clubPaymentsOut - x.clubMoneyBack - x.recordedMoneyBack
   ) * 100) / 100;
+}
+
+/**
+ * Which recorded money back counts AGAINST SPENDING for headroom — the report's `sideForRefund`
+ * rule, in miniature (P6 "one headroom", 2026-09-02).
+ *
+ * The rollup nets a refund into the side its item already holds: the EXPENSE side when the item
+ * has one, else the revenue side, else expense. So the one record that must NOT shrink spending
+ * is a refund whose item is revenue-only — on the report it nets against income, and subtracting
+ * it here too was the single case the hub's headroom and Budget vs. Actual could disagree on
+ * (`spendAgainstPlan`'s own docstring carried it as a stated divergence until this closed it).
+ *
+ * ⚠ A record with NO item counts against spending — the rollup's own default for a refund with
+ * nothing to place it by. Pure, like everything else in this module, so the tests are the
+ * evidence.
+ */
+export function moneyBackAgainstSpending(
+  records: Array<{ amount: number; budgetItemId: string | null }>,
+  /** Items with an expense side: cost budget lines' items ∪ recorded spending's items. */
+  expenseSideItemIds: ReadonlySet<string>,
+  /** Items with a revenue side: money-in budget lines' items ∪ recorded income's items. */
+  revenueSideItemIds: ReadonlySet<string>,
+): number {
+  let total = 0;
+  for (const r of records) {
+    const revenueOnly = r.budgetItemId !== null
+      && revenueSideItemIds.has(r.budgetItemId)
+      && !expenseSideItemIds.has(r.budgetItemId);
+    if (!revenueOnly) total += r.amount;
+  }
+  return Math.round(total * 100) / 100;
 }
 
 export function fmt(n: number) {
