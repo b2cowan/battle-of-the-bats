@@ -1,6 +1,9 @@
 # List · Room · Question — one grammar for every money surface
 
-**Status:** PLANNED — owner-ruled 2026-09-02 (D1–D7, all stamped), nothing built.
+**Status:** owner-ruled 2026-09-02 (D1–D7, all stamped). **Phase 0 (the room shell) + Phase A (the
+Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 owed**
+(walk artifact `4bce9d5d`). Phases B, C, D open. The layout reseed + sweep of `coach-club` /
+`coach-club-bill` is owed (needs a quiet dev server).
 **Ruling record:** `memory/design_decisions.md` 2026-09-02 entry "LIST · ROOM · QUESTION" (binding; names the reversals).
 **Mockups (the spec, rulings stamped in place):** `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` ("List, Room, Question", rounds 1–2c).
 **PM brief:** `COACH_MONEY_LIST_ROOM_QUESTION_PM_BRIEF.md`. **Build session opens with:**
