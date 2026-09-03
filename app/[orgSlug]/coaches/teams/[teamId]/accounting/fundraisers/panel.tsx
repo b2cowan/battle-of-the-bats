@@ -564,7 +564,10 @@ export function FundraisersPanel({
                   <tbody>
                     {driveRows.map(d => (
                       <tr key={d.id} className={`${styles.tr} ${styles.rowTappable}`} onClick={() => openRow(d.id)}>
-                        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Name">
+                        {/* No `data-label` — a card's lead cell is its TITLE and takes no caption
+                            (owner + /design, §134 walk). The labelled cells below caption figures,
+                            which is what a label is for. */}
+                        <td className={`${styles.td} ${styles.cardStackCell}`}>
                           <span className={styles.listRowName}>
                             <TrendingUp size={15} aria-hidden style={{ color: 'var(--success-light)', flexShrink: 0 }} />
                             {d.name}
@@ -579,7 +582,7 @@ export function FundraisersPanel({
                         <td className={`${styles.td} ${styles.tdShrink}`} data-label="Status">
                           <DriveStatusChip active={d.isActive} />
                         </td>
-                        <td className={`${styles.td} ${styles.cardActionCell}`}>
+                        <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                           <span className={styles.listRowActions}>
                             {/* ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
                                 clickable <tr> is mouse-only; one glyph on every row: they all open
@@ -641,7 +644,8 @@ export function FundraisersPanel({
                       const expect = expectedClause(s.expectedBy, s.stillToCome);
                       return (
                         <tr key={s.id} className={`${styles.tr} ${styles.rowTappable}`} onClick={() => openRow(s.id)}>
-                          <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Sponsor">
+                          {/* No `data-label` — the card's title takes no caption; see the drives table. */}
+                          <td className={`${styles.td} ${styles.cardStackCell}`}>
                             <span className={styles.listRowName}>{s.name}</span>
                             {/* The quiet past-due cue lives on the row (Q13) — it is the one fact the
                                 columns cannot say. */}
@@ -661,7 +665,7 @@ export function FundraisersPanel({
                           <td className={`${styles.td} ${styles.tdShrink}`} data-label="Status">
                             <SponsorStatusChip standing={sponsorStanding(s.pledgedAmount, s.totalRaised)} />
                           </td>
-                          <td className={`${styles.td} ${styles.cardActionCell}`}>
+                          <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                             <span className={styles.listRowActions}>
                               <button
                                 type="button"

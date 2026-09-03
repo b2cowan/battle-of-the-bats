@@ -33,6 +33,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { claimEscape } from './escapeOwnership';
 
 export interface SublinedOption<T extends string> {
   value: T;
@@ -90,7 +91,17 @@ export default function SublinedChoice<T extends string>({
   const chosen = options.find(o => o.value === value) ?? null;
 
   return (
-    <div ref={wrapRef} className={styles.convWhatWrap}>
+    <div
+      ref={wrapRef}
+      className={styles.convWhatWrap}
+      data-escape-owner={open ? '' : undefined}
+      onKeyDown={e => { if (e.key === 'Escape' && open) { claimEscape(e); setOpen(false); } }}
+    >
+      {/* ⚠ THIS SUBTREE OWNS ESCAPE WHILE ITS LIST IS OPEN — the `data-escape-owner` contract
+          `useDialogFloor` reads (§134 walk, 2026-09-03). Both callers sit inside a Question that
+          stacks over a room, and without this an Escape aimed at the open list tore down the whole
+          conversation instead. The handler is on the WRAPPER, not the button, so a key raised from
+          a highlighted option in the list is caught too. */}
       <button
         type="button"
         id={id}

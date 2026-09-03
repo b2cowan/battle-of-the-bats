@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, type RefObject } from 'react';
 import { useLatestRef } from './useLatestRef';
+import { escapeClaimed } from './escapeOwnership';
 
 /**
  * THE ACCESSIBILITY FLOOR every overlay stands on (List · Room · Question, D7, 2026-09-02): Escape
@@ -13,6 +14,26 @@ import { useLatestRef } from './useLatestRef';
  * <body> and open OVER a room, so a document-level listener would close the room under them on
  * Escape. The handler only acts when the event comes from inside this panel — or from the bare
  * document, when nothing else holds focus.
+ *
+ * ⚠⚠ AN OPEN MENU INSIDE THE PANEL OWNS ESCAPE, AND IT SAYS SO IN THE DOM (§134 walk,
+ * 2026-09-03 — the owner found the room closing when a Files-under suggestion list was dismissed).
+ * A combobox's list is not an overlay and has no floor of its own, but Escape while it is open
+ * means "close the list", never "close the record I am filling in". The picker already called
+ * React's `stopPropagation()` and it could not work: in the App Router React delegates from
+ * `document`, this floor listens on `document` too, and stopping propagation never stops a
+ * SIBLING listener on the same node — only `stopImmediatePropagation` does, and that would depend
+ * on which listener happened to register first.
+ * ⚠⚠ AND THE OBVIOUS SECOND FIX FAILED TOO — a `data-escape-owner` attribute checked with
+ * `closest()`. It is sound in principle and LOSES A RACE: `keydown` is a DISCRETE event, so React
+ * 18 flushes the menu's own `setOpen(false)` SYNCHRONOUSLY at the end of its dispatch, and the
+ * attribute is already gone by the time this listener runs. That version shipped and was
+ * reproduced still failing in Chromium against the running app. **Do not re-derive it: a DOM
+ * marker cannot describe a state the DOM has already left.**
+ * So the claim rides on the native EVENT (`escapeClaimed`), which describes a moment rather than a
+ * state of the tree — and the attribute survives beside it as the belt for the opposite listener
+ * ordering. Both checks below, both deliberate; the reasoning lives in `escapeOwnership.ts`.
+ * ⚠ Only Escape. Tab must still be trapped and the arrow keys still belong to the list's own
+ * handler, which takes them by `preventDefault` in the ordinary way.
  *
  * ⚠⚠ AND THE BARE DOCUMENT BELONGS TO THE MOST RECENTLY OPENED FLOOR (Phase B, 2026-09-02 — the
  * first genuinely stacked pair, the drive's Record window over the drive's room). With two floors
@@ -74,6 +95,11 @@ export function useDialogFloor(
 
       const { onClose, busy, walk } = optsRef.current;
       if (event.key === 'Escape') {
+        /* A menu inside this panel already answered this Escape: it closes, the record stays open.
+           TWO checks for two listener orderings, and the first is the one that actually fires here
+           — see `escapeOwnership.ts` for why the DOM marker alone lost the race. */
+        if (escapeClaimed(event)) return;
+        if (target instanceof Element && target.closest('[data-escape-owner]')) return;
         if (!busy) onClose();
         return;
       }

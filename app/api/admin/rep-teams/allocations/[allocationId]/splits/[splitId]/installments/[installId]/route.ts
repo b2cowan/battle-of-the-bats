@@ -59,7 +59,11 @@ export const PATCH = withObservability(async (_req: Request,
   }
 
   // Create paired transfer entries: team pays → org receives
-  const { error: transferError } = await supabaseAdmin.rpc('create_accounting_transfer', {
+  /* ⚠ THE TRANSFER'S OWN ENTRY ID IS KEPT (mig 275). The RPC returned void until then, so every
+     caller threw both halves away and `accounting_entry_id` sat unwritten — which is why a club
+     payment could not be taken back. The coach's undo reads this link, and an admin mark must
+     leave one too or it quietly creates a payment only the club office can reverse. */
+  const { data: transferEntryId, error: transferError } = await supabaseAdmin.rpc('create_accounting_transfer', {
     p_from_ledger_id: teamLedger.id,
     p_to_ledger_id: orgLedger.id,
     p_amount: installment.amount,
@@ -77,7 +81,7 @@ export const PATCH = withObservability(async (_req: Request,
      runs before the transfer; the transfer is a round trip; a second request can slip through that
      window and post a second pair of ledger entries for one instalment. The writer refuses the
      second stamp now, and a zero-row result has to be reported rather than dressed as success. */
-  const updated = await markRepAllocationInstallmentPaid(installId, ctx!.user.id, null);
+  const updated = await markRepAllocationInstallmentPaid(installId, ctx!.user.id, (transferEntryId as string | null) ?? null);
   if (!updated) {
     return NextResponse.json({ error: 'That installment has already been marked paid.' }, { status: 409 });
   }

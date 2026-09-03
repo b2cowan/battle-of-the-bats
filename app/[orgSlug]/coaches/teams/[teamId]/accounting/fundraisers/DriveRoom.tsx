@@ -170,7 +170,8 @@ export function DriveRoomBody({
             <tbody>
               {record.entries.map(en => (
                 <tr key={en.id} className={styles.tr}>
-                  <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Player">
+                  {/* No `data-label` — the player's name is this card's title (§134 walk). */}
+                  <td className={`${styles.td} ${styles.cardStackCell}`}>
                     <span className={styles.playerName}>{en.playerName}</span>
                     {!en.playerActive && <span className={styles.mutedInline}> · no longer on roster</span>}
                     {en.notes && <span className={styles.listRowSub}>{en.notes}</span>}

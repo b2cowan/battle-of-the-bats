@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Plus, Settings2, X } from 'lucide-react';
 import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { claimEscape } from './escapeOwnership';
 
 /**
  * The minimal tag shape the picker (and the drawer) actually read — structural, so both
@@ -256,7 +257,10 @@ export default function TagSearchCombobox({
         if (m && !selectedIds.includes(m.id)) selectTag(m.id);
         else if (canCreate) createTag();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' && open) {
+      /* Only while the list is open — a closed combobox lets Escape reach the dialog. See
+         `escapeOwnership.ts`; this claim is what keeps the drive/sponsor room open around it. */
+      claimEscape(e);
       setOpen(false);
     }
   }
@@ -273,7 +277,11 @@ export default function TagSearchCombobox({
   const showInput = !disabled && !full && (!addAsChip || revealed || selected.length === 0);
 
   return (
-    <div className={styles.tagCombo}>
+    /* ⚠ SAME CONTRACT AS THE FILES-UNDER PICKER (§134 walk): while the suggestion list is open this
+       subtree owns Escape, so `useDialogFloor` stands down and the drive/sponsor room around it
+       stays open. This combobox had the defect in a worse form — its Escape branch ran even with
+       the list CLOSED, so it swallowed nothing and closed the room every time. */
+    <div className={styles.tagCombo} data-escape-owner={open ? '' : undefined}>
       {selected.length > 0 && (
         <div className={styles.tagComboChips}>
           {selected.map(tag => {

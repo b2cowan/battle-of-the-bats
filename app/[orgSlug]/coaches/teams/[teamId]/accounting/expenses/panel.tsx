@@ -88,6 +88,7 @@ import { futureReceivedDateRefusal, moneyMovedMaxDate } from '@/lib/money-date-g
    validates against them, so a saved label survives an edit and an export. */
 import { moneyInReversalPreview } from '@/lib/coach-money-in';
 import { consequenceMoves, type ConsequenceMove } from '@/lib/coach-money-consequences';
+import { claimEscape } from '@/components/coaches/escapeOwnership';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -4038,7 +4039,14 @@ function MoneyRecordsPanel({
     }
     const orgLinked = s ? s.orgLinked : (book?.orgLinked ?? false);
     return (
-      <div ref={whatWrapRef} className={`${styles.field} ${styles.formGridFull} ${styles.convWhatWrap}`}>
+      <div
+        ref={whatWrapRef}
+        className={`${styles.field} ${styles.formGridFull} ${styles.convWhatWrap}`}
+        data-escape-owner={whatOpen ? '' : undefined}
+        onKeyDown={e => { if (e.key === 'Escape' && whatOpen) { claimEscape(e); setWhatOpen(false); } }}
+      >
+        {/* ⚠ Owns Escape while the list is open — same contract as `SublinedChoice`, and for the
+            same reason: this field lives inside the Record conversation, which stacks over a room. */}
         <label className={styles.label}>What happened? *</label>
         <button
           type="button"
@@ -5308,7 +5316,9 @@ function MoneyRecordsPanel({
             {bill.nextDue ? fmtDate(bill.nextDue) : <span className={styles.mutedInline}>—</span>}
           </span>
         </td>
-        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+        {/* No `data-label` — a card's lead cell is its TITLE and takes no caption (owner +
+            /design, §134 walk); the labelled cells below caption figures, which is the test. */}
+        <td className={`${styles.td} ${styles.cardStackCell}`}>
           <span className={styles.payBillName}>{bill.description}</span>
           <span className={styles.payBillMeta}>
             {isOrg ? 'From your club' : (bill.itemName ?? bill.category ?? 'Uncategorised')}
@@ -5390,7 +5400,9 @@ function MoneyRecordsPanel({
         }}
       >
         <td className={`${styles.td} ${styles.payDueCell}`} data-label="Due">{fmtDate(piece.dueDate)}</td>
-        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+        {/* No `data-label` — a card's lead cell is its TITLE and takes no caption (owner +
+            /design, §134 walk); the labelled cells below caption figures, which is the test. */}
+        <td className={`${styles.td} ${styles.cardStackCell}`}>
           <span className={styles.payPieceName}>{withBill ? bill.description : piece.label}</span>
           <span className={styles.payPieceMeta}>
             {withBill && `${piece.label} · `}
@@ -5507,7 +5519,9 @@ function MoneyRecordsPanel({
               held at org noon, and both hand-rolls have printed the wrong day already. */}
           {r.date ? fmtDate(r.date) : <span className={styles.mutedInline}>No date</span>}
         </td>
-        <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+        {/* No `data-label` — a card's lead cell is its TITLE and takes no caption (owner +
+            /design, §134 walk); the labelled cells below caption figures, which is the test. */}
+        <td className={`${styles.td} ${styles.cardStackCell}`}>
           {r.description}
           {/* ⚠⚠ OVERDUE IS A FACT, NOT A LOCATION (reading-order ruling, follow-up to P3). This row
               sits at its own true date rather than being bucketed next to Today, so the chip is what
@@ -7205,87 +7219,100 @@ function MoneyRecordsPanel({
                 expense one with a word flipped: deleting an arrival LOWERS cash on hand. And
                 nothing here can change what a family is owed, on either kind — see
                 `moneyInReversalPreview`, which deliberately has no `owesFamily`. */}
-            {confirmDelete && editingMoneyIn && moneyInDeletePreview && (
-              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
-                <p className={styles.dangerConfirmTitle}>
-                  Delete this {entryKind === 'income' ? 'income entry' : 'money-back entry'}?
-                </p>
-                <p className={styles.dangerConfirmBody}>
-                  {moneyInDeletePreview.posted ? (
-                    <>
-                      <strong>{fmt(moneyInDeletePreview.amount)}</strong> is on the team’s books as money
-                      that came in. Deleting it takes that back off, so cash on hand goes{' '}
-                      <strong>down</strong> by {fmt(moneyInDeletePreview.amount)}.
-                      {entryKind === 'refund' && ' The item it was reducing goes back up by the same amount.'}
-                    </>
-                  ) : (
-                    'Nothing was posted for this, so no money moves.'
-                  )}
-                </p>
-                <p className={styles.dangerConfirmBody}>Nobody’s dues change either way.</p>
-                <div className={styles.dangerConfirmActions}>
-                  <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
-                  <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
-                    {deleting ? 'Deleting…' : moneyInDeletePreview.posted ? 'Delete and reverse' : 'Delete'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {confirmDelete && editing && (
-              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
-                <p className={styles.dangerConfirmTitle}>
-                  Delete “{editing.description}”?
-                </p>
-                {deletePreview.amount > 0 && (
-                  <p className={styles.dangerConfirmBody}>
-                    This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
-                    books{deletePreview.legs > 1 ? ` across ${deletePreview.legs} payments` : ''}. Deleting it will
-                    reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
-                  </p>
-                )}
-                {/* ⚠⚠ IT NAMES THE HOUSEHOLD AND THE FIGURE (owner ruling 2026-08-27). "A family
-                    paid this out of pocket" was true and unactionable: a coach deleting a mistyped
-                    cost could not tell WHO was about to lose WHAT, and the credit goes by cascade
-                    the instant they confirm. The ruling settles an asymmetry — removing a PLAYER
-                    who carries credits is refused outright, while deleting the COST they are owed
-                    against went through in silence. The delete still goes through; it just stops
-                    being silent. */}
-                {deletePreview.owesFamily && (
-                  <p className={styles.dangerConfirmBody}>
-                    {deletePreview.owedByFamily.length > 0 ? (
-                      <>
-                        <strong>The credit the team owes will be removed too:</strong>{' '}
-                        {deletePreview.owedByFamily.map((o, at) => {
-                          const who = formatPlayerFirstLast(roster.find(r => r.id === o.playerId));
-                          return (
-                            <Fragment key={o.playerId}>
-                              {at > 0 ? ', ' : ''}
-                              {who ? <>{who}’s family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
-                            </Fragment>
-                          );
-                        })}
-                        . No team cash moves either way.
-                      </>
-                    ) : (
-                      <>A family paid this out of pocket. <strong>The credit the team owes them will
-                      be removed too</strong> — no team cash moves either way.</>
-                    )}
-                  </p>
-                )}
-                {deletePreview.amount === 0 && !deletePreview.owesFamily && (
-                  <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
-                )}
-                <div className={styles.dangerConfirmActions}>
-                  <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
-                  <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
-                    {deleting ? 'Deleting…' : deletePreview.amount > 0 ? 'Delete and reverse' : 'Delete'}
-                  </button>
-                </div>
-              </div>
-            )}
-
+            {/* ⚠⚠ THE CONFIRMATIONS ARE THE FOOTER’S OTHER STATE — they stood ABOVE this band, in
+                the scrolling body, which on a long form put them BELOW THE FOLD (owner, §134 walk,
+                found on the Club tab’s twin of this block). Pressing Delete looked like it did
+                nothing at all. Now the question REPLACES the row of buttons it suspends, in the one
+                band that is always visible — the contract stated on the .modalFooter alertdialog
+                rule, and the one RoomShell already gives its doors slot. Do not move a confirm back
+                into a modal’s scrolling body.
+                ⚠ Both dock in the SAME slot and are mutually exclusive by their own guards: a
+                money-in entry and a commitment are never the same record. */}
             <div className={styles.modalFooter} style={isPayableForm ? { flexWrap: 'wrap' } : undefined}>
+              {confirmDelete ? (
+                <>
+                {confirmDelete && editingMoneyIn && moneyInDeletePreview && (
+                  <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                    <p className={styles.dangerConfirmTitle}>
+                      Delete this {entryKind === 'income' ? 'income entry' : 'money-back entry'}?
+                    </p>
+                    <p className={styles.dangerConfirmBody}>
+                      {moneyInDeletePreview.posted ? (
+                        <>
+                          <strong>{fmt(moneyInDeletePreview.amount)}</strong> is on the team’s books as money
+                          that came in. Deleting it takes that back off, so cash on hand goes{' '}
+                          <strong>down</strong> by {fmt(moneyInDeletePreview.amount)}.
+                          {entryKind === 'refund' && ' The item it was reducing goes back up by the same amount.'}
+                        </>
+                      ) : (
+                        'Nothing was posted for this, so no money moves.'
+                      )}
+                    </p>
+                    <p className={styles.dangerConfirmBody}>Nobody’s dues change either way.</p>
+                    <div className={styles.dangerConfirmActions}>
+                      <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                      <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                        {deleting ? 'Deleting…' : moneyInDeletePreview.posted ? 'Delete and reverse' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {confirmDelete && editing && (
+                  <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
+                    <p className={styles.dangerConfirmTitle}>
+                      Delete “{editing.description}”?
+                    </p>
+                    {deletePreview.amount > 0 && (
+                      <p className={styles.dangerConfirmBody}>
+                        This has already posted <strong>{fmt(deletePreview.amount)}</strong> out of the team’s
+                        books{deletePreview.legs > 1 ? ` across ${deletePreview.legs} payments` : ''}. Deleting it will
+                        reverse that, so cash on hand goes back up by {fmt(deletePreview.amount)}.
+                      </p>
+                    )}
+                    {/* ⚠⚠ IT NAMES THE HOUSEHOLD AND THE FIGURE (owner ruling 2026-08-27). "A family
+                        paid this out of pocket" was true and unactionable: a coach deleting a mistyped
+                        cost could not tell WHO was about to lose WHAT, and the credit goes by cascade
+                        the instant they confirm. The ruling settles an asymmetry — removing a PLAYER
+                        who carries credits is refused outright, while deleting the COST they are owed
+                        against went through in silence. The delete still goes through; it just stops
+                        being silent. */}
+                    {deletePreview.owesFamily && (
+                      <p className={styles.dangerConfirmBody}>
+                        {deletePreview.owedByFamily.length > 0 ? (
+                          <>
+                            <strong>The credit the team owes will be removed too:</strong>{' '}
+                            {deletePreview.owedByFamily.map((o, at) => {
+                              const who = formatPlayerFirstLast(roster.find(r => r.id === o.playerId));
+                              return (
+                                <Fragment key={o.playerId}>
+                                  {at > 0 ? ', ' : ''}
+                                  {who ? <>{who}’s family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
+                                </Fragment>
+                              );
+                            })}
+                            . No team cash moves either way.
+                          </>
+                        ) : (
+                          <>A family paid this out of pocket. <strong>The credit the team owes them will
+                          be removed too</strong> — no team cash moves either way.</>
+                        )}
+                      </p>
+                    )}
+                    {deletePreview.amount === 0 && !deletePreview.owesFamily && (
+                      <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
+                    )}
+                    <div className={styles.dangerConfirmActions}>
+                      <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                      <button className={styles.btnDanger} disabled={deleting} onClick={deleteRecord}>
+                        {deleting ? 'Deleting…' : deletePreview.amount > 0 ? 'Delete and reverse' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </>
+              ) : (
+                <>
               {/* The bill form's consequence rides INSIDE the sticky footer (full-width first row)
                   so it is readable at the moment of saving however long the schedule grows — see
                   the in-grid site's note. `flexBasis: 100%` puts the buttons on their own row. */}
@@ -7302,7 +7329,9 @@ function MoneyRecordsPanel({
                   spare. ⚠ The test is the RECORD's type, not the form's door: `isPayableForm` is
                   also true while ADDING, where there is nothing to delete and this branch is
                   already shut by `formMode`. */}
-              {formMode === 'edit' && canWriteMoney && !confirmDelete
+              {/* ⚰ `!confirmDelete` STOOD HERE and is gone: the confirmation now replaces this
+                  whole row rather than appearing beneath it, so there is nothing left to hide. */}
+              {formMode === 'edit' && canWriteMoney
                 && editing?.expenseType !== 'tournament_payable' && (
                 <button
                   className={styles.deleteRecordBtn}
@@ -7327,6 +7356,8 @@ function MoneyRecordsPanel({
                     Record-a-payment modal below, whose button names its own outcome.) */}
                 {saving ? 'Saving…' : 'Save'}
               </button>
+                </>
+              )}
             </div>
           </div>
         </div>,

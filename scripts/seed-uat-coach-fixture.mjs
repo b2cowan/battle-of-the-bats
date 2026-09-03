@@ -1493,8 +1493,9 @@ if (chocolate) {
  *
  * Three installments — the first PAID, the second OVERDUE, the third ahead — because that is the
  * room's fullest render: a Paid tile that is not zero, a danger-toned Left tile, an overdue chip in
- * the header, one paid row and two "Record as paid" doors. And with TWO pieces unpaid the list row
- * shows no one-tap pill, so the sweep measures the room rather than the shortcut.
+ * the header, one paid row and two "Record as paid" doors — which is now the ONLY place that button
+ * exists (owner, §134 walk: the list row's one-tap pill is deleted, so every payment is recorded on
+ * the installment inside the room).
  */
 const firstOfMonth = (offset) => {
   const d = new Date();
@@ -1535,9 +1536,10 @@ await seedClubBill({
     { amount: 615, monthOffset: 2 },
   ],
 });
-// ⚠ A SECOND BILL WITH EXACTLY ONE PIECE LEFT (`/review`, 2026-09-02): the coach demo's own club
-// bill sits in this state, so the public demo renders the row's one-tap "Record as paid · $x" pill
-// — and nothing swept it. This gives the LIST screen the pill, and the room a real Prev/Next.
+// ⚠ A SECOND BILL, so the room has a real named Prev/Next to walk and the list has more than one
+// row to sort and filter. It carries exactly ONE unpaid piece deliberately: that state used to draw
+// a one-tap pill on the row (deleted, owner §134 walk), and keeping a bill in it is what proves the
+// action column now ends in the same chevron whatever a bill's installments are doing.
 await seedClubBill({
   description: 'Gym rental — winter block',
   notes: null,

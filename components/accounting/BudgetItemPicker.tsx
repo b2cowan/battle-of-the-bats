@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { budgetItemTier, ITEM_TIER_LABEL } from '@/lib/coach-budget-item-tiers';
 import styles from './BudgetItemPicker.module.css';
+import { claimEscape } from '@/components/coaches/escapeOwnership';
 
 /**
  * The menu's height budget. `MENU_MAX` matches `.dropdown`'s own `max-height` — stated here too
@@ -430,12 +431,14 @@ export default function BudgetItemPicker({
         else if (canCreate) startCreate();
       }
     } else if (e.key === 'Escape' && open) {
-      /* ⚠ THE MENU OWNS ITS OWN ESCAPE (List · Room · Question Phase B, 2026-09-02). This picker
-         lives inside rooms and questions whose accessibility floor closes on an Escape from
-         anywhere inside their panel — so dismissing the suggestion list also closed the record
-         around it (the §134 walk's one "known unproven" step). Only while the list is open: a
-         closed picker lets Escape through to the dialog, which is what a coach means then. */
-      e.stopPropagation();
+      /* ⚠ THE MENU OWNS ITS OWN ESCAPE (§134 walk). This picker lives inside rooms and Questions
+         whose accessibility floor closes on an Escape from anywhere inside their panel — so
+         dismissing the suggestion list also closed the record around it. `claimEscape` marks the
+         native event; the floor reads the mark. ⚠ It replaced `e.stopPropagation()`, which could
+         never work (two SIBLING listeners on `document`) — the whole story is in
+         `components/coaches/escapeOwnership.ts` and is worth reading before touching this line.
+         Only while the list is open: a closed picker lets Escape through to the dialog. */
+      claimEscape(e);
       setOpen(false);
     }
   }
@@ -603,7 +606,14 @@ export default function BudgetItemPicker({
   }
 
   return (
-    <div className={styles.picker}>
+    /* ⚠ `data-escape-owner` WHILE THE LIST IS OPEN — the contract `useDialogFloor` reads. This
+       picker lives inside rooms and Questions whose accessibility floor closes on an Escape from
+       anywhere in their panel, and dismissing the suggestion list was closing the record around it
+       (owner, §134 walk). The attribute is the whole fix; the `stopPropagation()` in `onKeyDown`
+       below is kept for React-tree ancestors and never reached the floor's sibling listener.
+       ⚠ Conditional on `open`: a CLOSED picker must let Escape through to the dialog, which is
+       what a coach means then. */
+    <div className={styles.picker} data-escape-owner={open ? '' : undefined}>
       {!addingItem && !addingCategory && (
         <div className={styles.comboWrap}>
           <input

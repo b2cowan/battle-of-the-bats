@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, type ReactNode } from 'react';
 import {
   Building2, ArrowUpRight, ArrowDownLeft, Plus, Trash2, Clock,
-  ChevronRight, AlertTriangle, CheckCircle2,
+  ChevronRight, AlertTriangle, CheckCircle2, Undo2,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
@@ -68,9 +68,16 @@ import styles from '../../../../coaches.module.css';
  * QUESTION: the form it was made in is its one editor — "Edit" while the club has not answered,
  * "Details" once it has — with the team's own filing live inside it either way, because the ask
  * locks and the filing never does (D3). What the in-row fold did for month-end (several bills open
- * at once) is answered on the list itself: a one-tap "Record as paid · $x" pill on a bill with
- * exactly one unpaid installment, a declined request's reason previewed on its row, and Prev/Next
- * inside the room. The fold, its multi-open map and its live controls in table rows are gone.
+ * at once) is answered by a declined request's reason previewed on its row, and by named Prev/Next
+ * inside the room — walk the bills without returning to the list. The fold, its multi-open map and
+ * its live controls in table rows are gone.
+ *
+ * ⚖ EVERY ROW OF THIS TABLE ENDS IN THE SAME GLYPH, AND ONLY THAT (owner, §134 walk, 2026-09-03).
+ * Two exceptions were removed on the same pass: the requests band's "Edit"/"Details" button, and
+ * the bills band's one-tap "Record as paid · $x" pill (D5, reversed). Each was defensible alone and
+ * together they made one five-row table end in three different shapes — while the pill, which
+ * applies to a minority of bills, sized the action column for ALL of them. Recording a payment
+ * lives on the installment inside the room, which is where Player Dues has always put it.
  */
 
 interface AllocationSplit {
@@ -88,14 +95,11 @@ interface AllocationSplit {
 
 const PAYMENT_METHODS = ['Cash', 'E-Transfer', 'Cheque', 'Card', 'Other'];
 
-/** A bill's figures before its installments have been walked — one pass fills all five. */
+/** A bill's figures before its installments have been walked — one pass fills all three. */
 const EMPTY_FIGURES = {
   paid: 0,
   outstanding: 0,
   overdue: 0,
-  unpaidCount: 0,
-  /** The one unpaid installment when exactly one is left — the row's one-tap pill (D5). */
-  soleUnpaid: null as RepAllocationInstallment | null,
 };
 
 function fmt(n: number) {
@@ -768,18 +772,14 @@ export function ClubPanel({
   const splitFigures = useMemo(() => {
     const byId = new Map<string, typeof EMPTY_FIGURES>();
     for (const s of splits) {
-      let paid = 0, outstanding = 0, overdue = 0, unpaidCount = 0;
-      let soleUnpaid: RepAllocationInstallment | null = null;
-      // One pass per bill, not five — the figures partition the same list, and the row's one-tap
-      // pill (`soleUnpaid`, D5) falls out of the same walk rather than a second filter per render.
+      let paid = 0, outstanding = 0, overdue = 0;
+      // One pass per bill, not three — the figures partition the same list.
       for (const i of s.installments) {
         if (i.paidAt) { paid += i.amount; continue; }
         outstanding += i.amount;
-        unpaidCount += 1;
-        soleUnpaid = unpaidCount === 1 ? i : null;
         if (i.dueDate < today) overdue += 1;
       }
-      byId.set(s.id, { paid, outstanding, overdue, unpaidCount, soleUnpaid });
+      byId.set(s.id, { paid, outstanding, overdue });
     }
     return byId;
   }, [splits, today]);
@@ -972,6 +972,47 @@ export function ClubPanel({
       await refreshAfterWrite(true);
     } catch (e: any) {
       setActionError(e.message ?? 'Failed to mark this installment paid.');
+      release();
+    }
+  }
+
+  /**
+   * TAKE A CLUB PAYMENT BACK — the mirror of `markPaid` (owner, §134 walk 2026-09-03).
+   *
+   * ⚖ ONE TAP, NO CONFIRM, and that is deliberate: the act it reverses costs one tap, so guarding
+   * the reversal harder than the act would be backwards — and this is the tap a coach reaches for
+   * precisely when they have just made a mistake. It is reversible in its own right (recording it
+   * paid again is one tap), so it is not the one-way door a delete is and does not wear one's
+   * clothes.
+   *
+   * ⚠ THE SERVER OWNS THE REFUSALS — a payment recorded before the books could be reversed
+   * together, a race with another coach, a read-only money coach, the sandbox. Everything here is
+   * the sentence the coach reads.
+   *
+   * ⚠ QUIET RELOAD, same as `markPaid` and `writeFiling`: this button lives INSIDE the bill's
+   * room beside the filing control, and a loud reload sets `loading`, taking the open room and a
+   * half-typed budget word down with it.
+   */
+  async function undoPaid(split: AllocationSplit, inst: RepAllocationInstallment) {
+    setMarking(prev => ({ ...prev, [inst.id]: true }));
+    setActionError('');
+    const release = () => setMarking(prev => ({ ...prev, [inst.id]: false }));
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/allocations/${split.id}/installments/${inst.id}`,
+        { method: 'DELETE' },
+      );
+      const data = await res.json().catch(() => ({}));
+      const refused = sandboxRefusal(res, data);
+      if (refused) { setActionError(refused); release(); return; }
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to take this payment back.');
+      await refreshAfterWrite(true);
+      /* ⚠ RELEASED HERE, unlike `markPaid`. That one settles BY VALUE — the mark clears itself when
+         the list reads the installment as paid. This write moves the row the other way, so there is
+         no incoming truth to settle against and holding the flag would leave the row busy forever. */
+      release();
+    } catch (e: any) {
+      setActionError(e.message ?? 'Failed to take this payment back.');
       release();
     }
   }
@@ -1490,22 +1531,24 @@ export function ClubPanel({
                         </td>
                       </tr>
                     ) : shownSplits.map(split => {
-                      const { paid, outstanding, overdue: splitOverdue, soleUnpaid } =
+                      const { paid, outstanding, overdue: splitOverdue } =
                         splitFigures.get(split.id) ?? EMPTY_FIGURES;
-                      /* ⚠ THE ONE-TAP PILL (D5): a bill with exactly ONE unpaid installment keeps
-                         month-end at zero navigation — the list's answer to losing several folds
-                         open at once. Two or more unpaid pieces is a choice, and a choice opens the
-                         room. `soleUnpaid` comes from the figures' one pass, not a second filter. */
-                      const oneTap = canWriteMoney ? soleUnpaid : null;
                       return (
                         <tr
                           key={split.id}
                           className={`${styles.tr} ${styles.rowTappable}`}
                           onClick={() => { if (window.getSelection()?.toString()) return; setOpenBillId(split.id); }}
                         >
-                          <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+                          {/* ⚠ NO `data-label` — DELIBERATE, AND THE RULE IS GENERAL (owner + /design,
+                              §134 walk): the lead cell of a card is the card's TITLE, and a title
+                              takes no caption. "What" earns its place as a column header, where it
+                              tells you what a column of names is; printed above a single name on a
+                              phone it is a whole line of chrome saying nothing the name doesn't.
+                              The other three labels stay, because "$450.00", "Not filed" and a bare
+                              badge genuinely cannot say what they are. The test is that sentence. */}
+                          <td className={`${styles.td} ${styles.cardStackCell}`}>
                             {split.allocationDescription}
-                            <span className={styles.listRowSub}>{fmt(split.amount)} total · {fmt(paid)} paid</span>
+                            <span className={styles.listRowSub}>{fmt(paid)} paid of {fmt(split.amount)}</span>
                           </td>
                           {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
                               the bill's room, one tap away — see the filing note at the top of this
@@ -1519,19 +1562,26 @@ export function ClubPanel({
                           <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
                             <BillStatusBadge overdue={splitOverdue} outstanding={outstanding} />
                           </td>
-                          <td className={`${styles.td} ${styles.cardActionCell}`}>
+                          <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                             <span className={styles.listRowActions}>
-                              {oneTap && (
-                                <button
-                                  type="button"
-                                  className={`${styles.btnSecondary} ${styles.compactAction}`}
-                                  disabled={isMarking(oneTap)}
-                                  onClick={e => { e.stopPropagation(); void markPaid(split, oneTap); }}
-                                >
-                                  {isMarking(oneTap) ? '…' : <>Record as paid · {fmt(oneTap.amount)}</>}
-                                </button>
-                              )}
-                              {/* ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
+                              {/* ⚰ THE ONE-TAP "RECORD AS PAID · $x" PILL STOOD HERE AND IS DELETED
+                                  (owner, §134 walk — reversing D5 of the 2026-09-02 ruling).
+                                  It fired on a bill with exactly one unpaid installment, which is a
+                                  MINORITY of rows, and the cost was paid by all of them: the widest
+                                  cell sizes the column, so one exceptional row was holding ~260px of
+                                  table width hostage from "What", "Files under" and "Status" — every
+                                  row, every render. Against that it saved one tap, on a journey a
+                                  coach already knows (open the bill, record the piece), and it made
+                                  the action column say two different things on adjacent rows.
+                                  ⚠ RECORDING A PAYMENT DID NOT MOVE — it is where it always was, on
+                                  the installment itself inside the bill's room, and every installment
+                                  offers it rather than only the last one. That also puts this screen
+                                  in step with Player Dues, where the one-tap has always lived on the
+                                  installment and never on the family's list row.
+                                  ⚠ Do not reintroduce a conditional control in this cell. If a bill
+                                  ever needs a second action, it belongs in the room beside the first.
+
+                                  ⚠⚠ A REAL BUTTON — the row's accessible door to its room. A bare
                                   clickable <tr> is mouse-only (the 2026-09-02 lesson), and now the
                                   room holds the filing control, the door has to be reachable. One
                                   glyph on every bill: they all open the same thing. */}
@@ -1593,7 +1643,8 @@ export function ClubPanel({
                               taller than bills for no information — and a bill's sub-line is doing
                               real work (its total and what has been paid). Inline, the two kinds of
                               row are the same height and the column reads down cleanly. */}
-                          <td className={`${styles.td} ${styles.cardStackCell}`} data-label="What">
+                          {/* No `data-label` — the card's title takes no caption; see the bills row. */}
+                          <td className={`${styles.td} ${styles.cardStackCell}`}>
                             <span className={styles.listRowName}>
                               {r.description}
                               <DirectionBadge type={r.requestType} />
@@ -1622,20 +1673,32 @@ export function ClubPanel({
                             <StatusBadge status={r.status} />
                             {r.reviewedAt && <span className={styles.clubReviewedOn}> {fmtDate(r.reviewedAt)}</span>}
                           </td>
-                          <td className={`${styles.td} ${styles.cardActionCell}`}>
-                            {/* ⚠ THE LABEL IS HONEST FOR THE ROW'S STATE. "Edit" only while the club
-                                has not answered and this coach can write money; "Details" otherwise
-                                — the same window, opened read-only, with the team's filing still
-                                live inside it. A universal pencil would offer an edit to a record
-                                with nothing editable (the 2026-09-01 finding), and a chevron would
-                                promise a room a request does not have. */}
-                            <button
-                              type="button"
-                              className={`${styles.btnSecondary} ${styles.compactAction}`}
-                              onClick={e => { e.stopPropagation(); openRecord(r); }}
-                            >
-                              {canEdit ? 'Edit' : 'Details'}
-                            </button>
+                          <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
+                            {/* ⚠⚠ ONE DOOR GLYPH ON EVERY ROW OF THIS SCREEN (owner, §134 walk). This
+                                cell held a `btnSecondary` reading "Edit" or "Details", and the band
+                                above it held a chevron — so one table ended in two different shapes
+                                and the Fundraising lists (chevron on every row) disagreed with both.
+                                The note that stood here argued a chevron "would promise a room a
+                                request does not have"; that distinction is REAL in the grammar
+                                (rooms vs Questions) and INVISIBLE to a coach, who reads the glyph as
+                                "this opens" and is right — it opens the same window the row's own tap
+                                opens. The plan's list anatomy says so outright: name · status chip ·
+                                one figure · chevron.
+                                ⚠ What the words were carrying is not lost: a pending request already
+                                declares itself three times over — the amber left edge
+                                (`clubRowPending`), the "Awaiting the club" badge, and the absence of
+                                a decision date. And the accessible name below KEEPS the honest verb,
+                                so a screen-reader coach is not traded down for a tidier column. */}
+                            <span className={styles.listRowActions}>
+                              <button
+                                type="button"
+                                className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                                onClick={e => { e.stopPropagation(); openRecord(r); }}
+                                aria-label={`${canEdit ? 'Edit' : 'Open'} ${r.description}`}
+                              >
+                                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+                              </button>
+                            </span>
                           </td>
                         </tr>
                       );
@@ -1705,6 +1768,26 @@ export function ClubPanel({
                           )}
                         </td>
                         <td className={`${styles.td} ${styles.cardActionCell}`}>
+                          {/* ⚖ A PAYMENT CAN BE TAKEN BACK (owner, §134 walk). This was the only
+                              money a coach records with no way home — a dues payment, a payout and
+                              a credit all have a remove — and it is also the fastest write in the
+                              portal, so the wrong row was one tap away and permanent.
+                              ⚠ IT IS A QUIET GHOST BUTTON, NOT A DANGER ONE. Undoing is a
+                              correction, not a destruction: it voids the transfer on BOTH ledgers
+                              and leaves it visible in the audit trail, and recording it paid again
+                              is one tap. Dressing it in red would tell a coach they were about to
+                              do something they cannot take back, which is the opposite of true. */}
+                          {inst.paidAt && canWriteMoney && (
+                            <button
+                              type="button"
+                              className={`${styles.linkBtn} ${styles.undoPaidBtn}`}
+                              disabled={isMarking(inst)}
+                              onClick={() => undoPaid(openSplit, inst)}
+                              aria-label={`Undo the ${fmt(inst.amount)} payment on installment ${inst.installmentNumber}`}
+                            >
+                              <Undo2 size={13} aria-hidden /> {isMarking(inst) ? 'Undoing…' : 'Undo'}
+                            </button>
+                          )}
                           {!inst.paidAt && canWriteMoney && (
                             <button
                               type="button"
@@ -2055,29 +2138,39 @@ export function ClubPanel({
               {formError && <p className={`${styles.errorText} ${styles.formGridFull}`}>{formError}</p>}
             </div>
 
-            {/* ⚠ THE CONFIRMATION NAMES THE REQUEST AND SAYS WHAT SURVIVES — never a bare "Are you
-                sure?". Withdrawing removes the request outright; the club never sees it and there is
-                nothing to restore, so that has to be said before a coach can agree to it. */}
-            {confirmWithdraw && editing && (
-              <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
-                <p className={styles.dangerConfirmTitle}>Withdraw “{editing.description}”?</p>
-                <p className={styles.dangerConfirmBody}>
-                  This takes the request off the club&apos;s list for good — there&apos;s no record kept
-                  and no way to bring it back. You can always make a new one.
-                </p>
-                <div className={styles.dangerConfirmActions}>
-                  <button type="button" className={styles.btnGhost} disabled={withdrawing} onClick={() => setConfirmWithdraw(false)}>Keep it</button>
-                  <button type="button" className={styles.btnDanger} disabled={withdrawing} onClick={handleWithdraw}>
-                    {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
-                  </button>
-                </div>
-              </div>
-            )}
-
+            {/* ⚠⚠ THE CONFIRMATION IS THE FOOTER'S OTHER STATE — it stood in the scrolling body
+                above this band and the owner could not find it (§134 walk): on a long request the
+                block appeared BELOW THE FOLD, so pressing Withdraw looked like it did nothing while
+                the only control still on screen (Cancel) had gone dead to stop a coach saving the
+                edit they were abandoning. A dead button and an invisible explanation is how someone
+                gets stranded in a modal.
+                Now the question REPLACES the buttons it suspends, in the one band that is always
+                visible — the same contract RoomShell gives its doors slot. Nothing is disabled any
+                more because nothing competing is rendered, and there are three ways out: Keep it,
+                the header X, and Escape.
+                ⚠ IT NAMES THE REQUEST AND SAYS WHAT SURVIVES, never a bare "Are you sure?".
+                Withdrawing removes the request outright — the club never sees it and there is
+                nothing to restore — so that has to be said before a coach can agree to it. */}
             <div className={styles.modalFooter}>
+              {confirmWithdraw && editing ? (
+                <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
+                  <p className={styles.dangerConfirmTitle}>Withdraw “{editing.description}”?</p>
+                  <p className={styles.dangerConfirmBody}>
+                    This takes the request off the club&apos;s list for good — there&apos;s no record
+                    kept and no way to bring it back. You can always make a new one.
+                  </p>
+                  <div className={styles.dangerConfirmActions}>
+                    <button type="button" className={styles.btnGhost} disabled={withdrawing} onClick={() => setConfirmWithdraw(false)}>Keep it</button>
+                    <button type="button" className={styles.btnDanger} disabled={withdrawing} onClick={handleWithdraw}>
+                      {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
               {/* Withdraw sits in the FORM's footer, never on the row — the rule Budget Plan set and
                   the money screens follow, and the reason a row needs only one control. */}
-              {editing && canWriteMoney && !readOnly && !confirmWithdraw && (
+              {editing && canWriteMoney && !readOnly && (
                 <button type="button" className={styles.deleteRecordBtn} onClick={() => setConfirmWithdraw(true)} disabled={busy}>
                   <Trash2 size={13} aria-hidden /> Withdraw request
                 </button>
@@ -2086,14 +2179,17 @@ export function ClubPanel({
                   quiet alternative to Save — it is the only thing in the footer, and a ghost control
                   with no edge reads as unfinished text floating in the band. It takes a shape when it
                   stands alone and steps back to the ghost beside Save.
-                  ⚠ BOTH FOOTER CONTROLS STAND DOWN WHILE THE WITHDRAW CONFIRMATION IS UP: that block
-                  asks one yes/no question, and a live "Save changes" beneath it let a coach save the
-                  very edit they were abandoning, closing the window having never answered. */}
+                  ⚰ `disabled={… || confirmWithdraw}` STOOD ON THIS BUTTON AND ON SAVE, and is gone
+                  (§134 walk). The reasoning was sound — a live "Save changes" under an unanswered
+                  question let a coach save the very edit they were abandoning — but disabling was the
+                  wrong instrument: the question that explained the dead buttons was in the scrolling
+                  body, often off screen, so the coach saw only a Cancel that no longer worked. The
+                  confirmation now REPLACES this whole row, so there is nothing to disable. */}
               <button
                 type="button"
                 className={readOnly ? styles.btnSecondary : styles.btnGhost}
                 onClick={closeForm}
-                disabled={busy || confirmWithdraw}
+                disabled={busy}
               >
                 {readOnly ? 'Close' : 'Cancel'}
               </button>
@@ -2109,11 +2205,13 @@ export function ClubPanel({
                      teaches a coach the product is broken. The house rule is the foreseeable-refusal
                      ruling (§118): a control that cannot work says so before it is pressed. The
                      server still enforces the answer; this is what a coach is offered. */
-                  disabled={busy || confirmWithdraw || !formAmount || !formDesc.trim()
+                  disabled={busy || !formAmount || !formDesc.trim()
                     || (formType === 'charge_to_org' && !formMeaning)}
                 >
                   {saving ? 'Saving…' : (editing ? 'Save changes' : 'Submit request')}
                 </button>
+              )}
+                </>
               )}
             </div>
           </div>

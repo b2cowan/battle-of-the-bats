@@ -9096,6 +9096,60 @@ export async function markRepAllocationInstallmentPaid(
   return data ? mapRepAllocationInstallment(data) : null;
 }
 
+/**
+ * TAKE A CLUB PAYMENT BACK — the mirror of `markRepAllocationInstallmentPaid` (owner, §134 walk
+ * 2026-09-03; mig 275).
+ *
+ * ⚠⚠ TWO HALVES, AND VOIDING ONLY ONE IS WORSE THAN VOIDING NEITHER. A club payment is a TRANSFER:
+ * a `transfer_out` on the team's ledger and a `transfer_in` on the club's, linked by
+ * `linked_entry_id`. Void the team side alone and the coach's books look right while the club's
+ * still show money arriving — a disagreement between two ledgers is the one failure this whole
+ * domain is built to prevent. So the partner is voided through the link, not looked up by shape.
+ *
+ * ⚠ THE STAMP IS CLEARED LAST, AND ONLY IF IT WAS OURS TO CLEAR. `.not('paid_at','is',null)`
+ * makes a second undo racing the first return null instead of reporting a success it did not
+ * perform — the same "zero rows means somebody got there first" rule the mark side learned in the
+ * 2026-08-16 review. The ledger void runs first because it is idempotent (voiding a void entry is
+ * a no-op) while clearing the stamp is not; if the process dies between them, a retry finishes the
+ * job rather than stranding a cleared installment over posted money.
+ *
+ * ⚠ VOID, NOT DELETE — the schema's own word for "cancelled, kept for audit, excluded from
+ * totals" (mig 016). The club can still see that the payment was made and taken back, which is the
+ * whole difference between an undo and a cover-up. Recording it paid again posts a NEW transfer;
+ * the books accumulate post → void → post, and that history is the point.
+ */
+export async function unmarkRepAllocationInstallmentPaid(
+  installment: RepAllocationInstallment,
+): Promise<RepAllocationInstallment | null> {
+  if (installment.accountingEntryId) {
+    const { data: entry, error: readErr } = await supabaseAdmin
+      .from('accounting_entries')
+      .select('id, linked_entry_id')
+      .eq('id', installment.accountingEntryId)
+      .maybeSingle();
+    if (readErr) throw readErr;
+    const ids = [entry?.id, entry?.linked_entry_id].filter((v): v is string => !!v);
+    if (ids.length > 0) {
+      const { error: voidErr } = await supabaseAdmin
+        .from('accounting_entries')
+        .update({ status: 'void', updated_at: new Date().toISOString() })
+        .in('id', ids);
+      // A silently-failed void would let the stamp clear over money that never came back — the
+      // exact failure `voidEntry`'s own note records from the dues path.
+      if (voidErr) throw voidErr;
+    }
+  }
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .update({ paid_at: null, paid_by: null, accounting_entry_id: null })
+    .eq('id', installment.id)
+    .not('paid_at', 'is', null)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepAllocationInstallment(data) : null;
+}
+
 export async function getRepAllocationInstallment(
   installmentId: string,
 ): Promise<RepAllocationInstallment | null> {

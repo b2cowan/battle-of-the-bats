@@ -140,6 +140,44 @@
      full-screen sheet on a phone and never a table cell, so the trap has nothing left to bite. */
 }
 
+/* ══ cardActionCorner — A CARD'S DOOR IS A CORNER, NOT A ROW (owner + /design, §134 walk) ════════
+   A trailing action cell becomes a FULL-WIDTH row at the foot of its card (`.cardActionCell`
+   above), which is right when it holds a worded button — "Record a payment" deserves a real
+   full-width target. It is wrong when the cell holds ONLY the row's chevron door: that draws a
+   whole extra ~44px row on every card to carry a glyph that repeats what tapping the card already
+   does, and on a list of six bills it is a screenful.
+
+   ⚠⚠ THE ANSWER IS NOT `display: none`, AND THIS IS THE WHOLE POINT. The design log's own
+   2026-08 ruling ("a trailing chevron on a card that is already one tap target is decoration")
+   was written about an `aria-hidden` glyph on a card that was ITSELF a link — hiding it cost
+   nothing. Here the chevron IS the row's only real control: the card is a `<tr onClick>`, which
+   no keyboard or screen reader can reach (the 2026-09-02 ruling that made this a `<button>`
+   exists precisely because of that). Hiding it on a phone would delete the door for the coaches
+   who most need one and leave the sighted-mouse case untouched.
+   So the control does not go — its ROW does. It is lifted out of the card's flow and pinned to
+   the card's top-right corner, beside the title, which is where a phone list card has carried
+   this affordance since the first iOS table view. Zero added height, door intact.
+
+   ⚠ AN EXPLICIT MODIFIER, NEVER `:has(> .listRowActions)` OR A POSITIONAL SELECTOR. Four money
+   lists want this and every other trailing action cell in the portal must keep the full-width
+   worded button it was given — a clever selector would quietly restyle those the day one of them
+   grows an icon. It also keeps the cell greppable for `check:css-selectors`. */
+@media (max-width: 640px) {
+  .tableAsCards tr:has(> td.cardActionCorner) { position: relative; }
+  .tableAsCards td.cardActionCorner {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.35rem;
+    width: auto;
+    padding: 0 !important;
+  }
+  /* The title must not run under the corner control — 44px of tap floor plus its inset. ⚠ The
+     first cell, addressed through the ROW's modifier rather than by its own class, because the
+     lead cell of these four tables is `.cardStackCell` in three of them and a plain `.td` in the
+     fourth; what earns the padding is having a corner control above it, not what the cell is. */
+  .tableAsCards tr:has(> td.cardActionCorner) > td:first-child { padding-right: 3rem !important; }
+}
+
 /* cardActionLabel — words for an icon-only row control, revealed only once its row has become a
    card. A trailing chevron reads fine at the right edge of a table row, but `.cardActionCell`
    turns that same control into a FULL-WIDTH button at 640 — and a full-width button containing
@@ -7673,6 +7711,19 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* The delete confirmation, inline in the form rather than a second stacked dialog — a sheet on top
    of a sheet is the phone's worst modal shape, and the record being deleted is already on screen. */
+/* ⚠⚠ A CONFIRMATION DOCKS IN THE STICKY FOOTER — IT NEVER SITS IN THE SCROLLING BODY (owner,
+   §134 walk 2026-09-03). Pressing "Withdraw request" appended this block to the bottom of a long
+   form, BELOW THE FOLD: the coach saw nothing happen, and the footer's Cancel had been disabled to
+   stop them saving the edit they were abandoning — so the one control still on screen was dead and
+   the question explaining why was off it. That is how a coach gets stranded in a modal.
+   The rule is the one RoomShell already states for its doors slot (its `[role="alertdialog"]` rule,
+   same two declarations): an alertdialog a consumer docks in a footer takes the footer's full width
+   and drops its own top margin, so it REPLACES the buttons in the one band that is always visible.
+   A question and the controls it suspends must occupy the same place — that is what makes the
+   suspension legible instead of mysterious.
+   ⚠ A CONFIRM PLACED ANYWHERE ELSE IN A MODAL IS THE SAME BUG WAITING. Dock it in the footer. */
+.modalFooter > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
+
 .dangerConfirm {
   margin-top: 0.9rem;
   border: 1px solid rgba(var(--danger-rgb), 0.35);
@@ -11318,12 +11369,17 @@ button.gdChip[aria-pressed='true'] {
 /* ⚠ THE TABLE IS SIZED, or "What" eats the slack and the money columns huddle at the right edge —
    which is what the first render did. `table-layout: fixed` would be simpler and is wrong here: a
    bill's name and a request's are wildly different lengths and must be allowed to breathe. These
-   are hints on the header cells, so the browser still balances within them. */
-.clubTableWhat   { width: 38%; }
-.clubTableFiling { width: 26%; }
+   are hints on the header cells, so the browser still balances within them.
+   ⚖ REBALANCED WHEN THE ONE-TAP PILL LEFT (owner, §134 walk). The action column used to be sized
+   by "Record as paid · $240.00" whether or not any bill was in that state; with one glyph in it,
+   it is a fixed ~3rem and the ~20% it was hoarding went back to the two columns that hold words a
+   human wrote. `What` takes the largest share of it: a club types the bill's name and the next one
+   is always longer than the last. */
+.clubTableWhat   { width: 44%; }
+.clubTableFiling { width: 21%; }
 .clubTableAmount { width: 12%; }
-.clubTableStatus { width: 16%; }
-.clubTableAction { width: 6%; }
+.clubTableStatus { width: 20%; }
+.clubTableAction { width: 3.25rem; }
 
 .clubGroupName {
   font-size: var(--type-support);
@@ -11364,6 +11420,28 @@ button.gdChip[aria-pressed='true'] {
   font-weight: 400;
 }
 .listRowChevron { color: var(--text-tertiary); flex-shrink: 0; }
+
+/* ⚖ THE UNDO ON A PAID INSTALMENT — quiet on purpose (owner, §134 walk 2026-09-03). Taking a club
+   payment back is a CORRECTION, not a destruction: it voids the transfer on both ledgers, leaves it
+   visible in the audit trail, and recording it paid again is one tap. So it wears neither
+   `btnDanger` (which would promise a one-way door) nor `btnSecondary` (which would give it the
+   same weight as "Record as paid" on the row above and turn a settled line into a busy one). It
+   sits at the tertiary ink every other read-only mark on this table uses, and comes forward on
+   hover — present when looked for, silent when not.
+   ⚠ THE TAP FLOOR STILL APPLIES: it is a real control on a table row at a field, the least
+   forgiving tap in the product, and `inline-flex` is what makes `min-height` bite on it (the trap
+   `.compactAction` and `.listRowToggle` both record). */
+.undoPaidBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.undoPaidBtn:hover:not(:disabled) { color: var(--text-primary); }
+@media (max-width: 768px) {
+  .undoPaidBtn { min-height: var(--tap-min, 44px); }
+}
 /* ⚠⚠ THE ROW'S DOOR TO ITS ROOM — A REAL BUTTON, AND THEREFORE A REAL TAP TARGET.
    The chevron became a `<button>` on 2026-09-02 so a keyboard or screen-reader coach could open the
    record at all; `check:layout` immediately measured it at 19px against the 44px floor, which is
@@ -11392,8 +11470,26 @@ button.gdChip[aria-pressed='true'] {
    its ROOM (`RoomShell`). The club's own note on a bill is read in the room: */
 .clubRecordNote { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.9rem 0 0; }
 /* A bill row's two controls — the one-tap pill (when exactly one installment is unpaid) beside the
-   door to its room — on one line, never stacked into a taller row than its neighbours. */
-.listRowActions { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+   door to its room — on one line, never stacked into a taller row than its neighbours.
+
+   ⚠⚠ THE DOOR HANGS ON THE RIGHT EDGE, NOT AT THE START OF THE COLUMN (owner, §134 walk). This was
+   `inline-flex`, which is content-width and therefore LEFT-aligned inside the cell — so a row whose
+   only control is the chevron drew it wherever the column happened to begin, while the row above it
+   (carrying the one-tap pill) ran on to the table's right edge. Two chevrons, two different x
+   positions, one column: it reads as a mistake because it is one. `flex` fills the cell and
+   `flex-end` pins every row's LAST control to the same edge whatever sits in front of it — the same
+   cure `.registerTable td.cardActionCell` already spells out one table over ("a fixed column, not a
+   ragged edge").
+   ⚠ In card mode the parent <td> is itself a flex row, so this span is an ITEM there and the
+   justification below is inert — the card's own `space-between` still places it. Do not "fix" that
+   by adding a width here; it would fight the card layout at 640. */
+.listRowActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
 
 /* ── A CLUB RECORD'S LIVE CONTROL BLOCK — inside the bill's room, or the request's window ─────────
    (List · Room · Question, 2026-09-02; it was the fold's block until then.) The money-in question
