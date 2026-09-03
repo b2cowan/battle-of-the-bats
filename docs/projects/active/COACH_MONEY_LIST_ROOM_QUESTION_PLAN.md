@@ -2,7 +2,7 @@
 
 **Status:** owner-ruled 2026-09-02 (D1–D7, all stamped). **Phase 0 (the room shell) + Phase A (the
 Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 owed**
-(walk artifact `4bce9d5d`). **Phase B (Fundraising) BUILT 2026-09-02 on dev — see §3.1 for what
+(walk artifact `4bce9d5d`). **Phase B (Fundraising) BUILT 2026-09-02 on dev, committed `e34af83a` 2026-09-03 — see §3.1 for what
 shipped and the nine mockup deviations; Owner QA §135 owed** (its walk artifact and the mockup-gate
 comparison are linked from the ledger section). Phases C, D open. The layout reseed + sweep of
 `coach-club` / `coach-club-bill` is owed (needs a quiet dev server).
@@ -140,7 +140,7 @@ A shared room component all four roomed surfaces consume:
   inside its panel or from the bare document; if the bare-document case double-fires, narrow it to
   the most recently opened dialog — never build a full overlay stack in `lib/coaches-overlay`.
 
-### 3.1 Phase B — BUILT 2026-09-02 (Owner QA §135 owed)
+### 3.1 Phase B — BUILT 2026-09-02, committed `e34af83a` 2026-09-03 (Owner QA §135 owed)
 
 **What shipped.** `fundraisers/panel.tsx` rebuilt as two flat lists over one `useRoomAddress('fundraiser')`
 (the record's kind decides the room); `fundraisers/DriveRoom.tsx` (the drive room's body, the entry
