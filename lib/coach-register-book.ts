@@ -258,8 +258,14 @@ export async function loadSeasonRegisterRows(
            same payments — the book agrees with that figure rather than arguing with it. */
         movesCash: !payer,
         recordPayment: null,
+        /* ⚠ THE ROW SAYS THE CASH FACT ONCE (owner, §132 walk 2026-09-02). This line used to end
+           "— no team cash moved" while the `No team cash` CHIP sat three words to its left on the
+           same row, saying it again; the chip is the scannable half and this is the half that
+           names WHO, which the chip cannot. They render together and always have (the chip and
+           `detail` are adjacent in the register's own row markup), so the tail was never carrying
+           the fact anywhere the chip was absent. */
         detail: payer
-          ? `${playerName.get(payer) ?? 'A family'} paid direct — no team cash moved`
+          ? `${playerName.get(payer) ?? 'A family'} paid direct`
           : null,
         paidByName: payer ? (playerName.get(payer) ?? null) : null,
       });

@@ -170,7 +170,7 @@ export interface RegisterRow {
    *
    * ⚠ SEPARATE FROM `detail`, which is a SENTENCE for the screen. This is the bare name, because
    * the export needs a column a treasurer can filter and sort on, and a spreadsheet cannot filter
-   * "Avery Test's family paid direct — no team cash moved".
+   * "Avery Test's family paid direct".
    *
    * ⚠ Optional because exactly ONE row kind can carry it — a recorded payment against a cost. Dues,
    * drives, club money and scheduled rows have no payer to name and are not asked to say so.
