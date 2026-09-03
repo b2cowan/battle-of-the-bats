@@ -16,6 +16,63 @@ never the carrier, and no chip/badge — a muted caption in the ledger-note voic
 and reversed.
 
 
+### 2026-09-02 — LIST · ROOM · QUESTION — one grammar for every money surface (owner-ruled D1–D7, with named reversals)
+
+**Decision (owner, blank-sheet session; mockups = the spec, rulings stamped:
+artifact `11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc`; plan
+`docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md`).** Every money screen is built from
+three surfaces only: **LISTS** (flat, fixed rows — name · status chip · one figure · chevron; a
+list NEVER grows a form; rows may carry a read-only preview line and a one-tap pill when exactly
+one clean action exists), **ROOMS** (tap a row → the same overlay anatomy everywhere: tiles · the
+record's own table · History fold · Edit/guarded-Delete foot · one Record door · **named Prev/Next
+with a position count**; addressable; full-screen sheet on phone), and **QUESTIONS** (modals only
+ask — create/edit forms, the Record conversation, named-dollar confirms, the scope sheet; stack at
+most ONCE; sizes compact and grid).
+
+- **Guard rules:** G1 *a fold may show, never ask* (read-only glances legal; any input belongs to
+  the room). G2 *a record that is also a document is a page* — genuinely printed, read alone
+  (certificates, tournament summaries); **no money record qualifies, verified 2026-09-02**. G3 *a
+  room is full-height with its own scroll, never a height-capped centered box* (the §64 Part E
+  overflow was a shell defect, not an argument for pages).
+- **Classifier:** document → PAGE · form-says-everything → QUESTION · otherwise → ROOM.
+- **Verdicts:** dues = room (the template; label/History/Prev-Next fixes only) · drive = room ·
+  sponsor = room, the one TWO-ZONE room (arrivals + player credit plan both visible) · club bill =
+  room · **club request = QUESTION** (facts on the row incl. decline-reason preview; the creation
+  form reopens pre-filled as the ONE editor) · **team bill = ROOM** (see below) · budget line =
+  question · bulk Set-dues = question (logged exception — classified by the operation's own
+  questions).
+- **⚠⚠ NAMED REVERSALS — do not rediscover these as conflicts.** This supersedes the *applications*
+  of the 2026-08-26 modal ruling on: the drive band (2026-08-31 "a drive opens in place"), the club
+  fold (2026-09-01), and the club request's fold-plus-window. The 08-26 **principle** (a modal is
+  for a question) survives as the Question surface. Owner direction, verbatim in spirit: judge by
+  best experience, not past rulings. The Q11 lesson survives in spirit: rooms are overlays over
+  their list, never navigated pages.
+- **⚠ D4 REVERSED ON REVIEW — the team bill joins the rooms.** The page exception's justification
+  did not survive code review: **no print capability exists** anywhere on the bill screen; the
+  "page" was already a `?bill=` sub-view of the Ledger tab whose styles are still literally named
+  "drawer"; it left overlay-hood (08-26) only because a capped centered box overflowed — answered
+  by G3, not by a page. Field fixes ride the re-shell: the one-call-site `addAsChip` "+" tag reveal
+  goes (reverses the 08-27 §114 tweak, owner-flagged 2026-09-02), Filing gains the creation form's
+  unified paper ground, the 34rem cap reconciles to 30rem.
+- **⚠ CORRECTION to the 2026-09-01 club-fold entry:** it justified the dues exception by crediting
+  dues with the *this one / this-and-later / all-unpaid* question. **That question belongs to the
+  team bill's scope sheet; dues schedule edits are full-replace.** The dues drawer's real
+  justification is cardinality — four interacting histories (schedule × payments × credits ×
+  payouts) where every other money record holds at most one.
+- **Accepted trade, named:** multi-open club folds die. Mitigations: preview lines, one-tap pills,
+  Prev/Next. Recorded fallback if month-end pinches: a G1 read-only glance on that list — never
+  live controls back in rows.
+- **ARIA floor ships with the room shell** (dialog role, label, Escape, focus trap) — a tier
+  requirement, not a per-surface design call.
+- **D1 scope, three tiers:** binding for Money now · the DEFAULT for any new record-listing surface
+  app-wide (a departure needs a named reason) · elsewhere conforms when next touched — no sweep.
+  The grammar governs record-keeping surfaces; dashboards/instruments (Overview, Insights,
+  Game-Day) sit outside it.
+
+**Applies to:** all Money surfaces (build order: migrations → room shell → Club → Fundraising →
+bill room → dues fixes; each phase its own QA section); the default for new surfaces everywhere.
+
+---
 ### 2026-09-02 — THE LEDGER TOOLBAR SPLITS BY VOLATILITY — two decks, on purpose (Option B)
 
 **Decision (owner, "Ledger Toolbar Rows" mockup Artifact, option B):** the band above the Ledger's
@@ -132,7 +189,10 @@ filing dialog it opened, and the pencil/eye on a request all go.
 - **⚠ THE PLAYER-DUES DRAWER IS NOT A PRECEDENT FOR A CLUB BILL, and the owner reasonably thought it
   was.** Both are one obligation in instalments; inside they are opposites. A dues instalment
   carries Change / Remove / Record, and Change asks *this one, this and later, or all unpaid?* — real
-  questions, which is why it earned a drawer. **A club instalment is FIELDLESS by ruling R-D**: one
+  questions, which is why it earned a drawer. **[CORRECTED 2026-09-02: that three-way scope question
+  belongs to the TEAM BILL's scope sheet, not dues — dues schedule edits are full-replace. The
+  drawer's real justification is its four interacting histories. See the LIST · ROOM · QUESTION
+  entry, which also supersedes this entry's fold-with-live-controls shape.]** **A club instalment is FIELDLESS by ruling R-D**: one
   tap, server-derived amount/date/description, and the coach cannot change, split or delete one. A
   club bill has exactly **two** editable things in the whole product. There was no editing surface
   for a window to hold. ⚖ **The test is what the record can be ASKED, not what it looks like.**
