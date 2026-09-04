@@ -70,7 +70,7 @@ names it) and the inline line-counts, which move into captions.
 Structurally unchanged. The trailing "out" leaves the figure (its caption already says it); label
 tracking aligns; the note line stays beneath.
 
-### Fundraising: 4 cards → one band — ✅ BUILT 2026-09-04 (QA §139 owed)
+### Fundraising: 4 cards → one band — ✅ SHIPPED + QA PASSED 2026-09-04 (§139, 15/15)
 Weight 900 → 700, tabular numerals on, `.04em` → `.07em` labels, the green/blue/plum totals to
 primary ink, and the two blank captions gain the sentence each figure needs ("after family credits",
 "lowers their dues").
@@ -146,9 +146,30 @@ the question it exists for. The toggle is a real button with the 44px touch floo
 `Due next` and `Balance` move from the FAR RIGHT to sit beside `Player` in the pinned zone. With ten
 instalments the two columns a coach acts on are currently the two pushed off the right edge.
 
-### D6 — the guard
-A build-blocking check: a money tab that draws a tab summary any other way fails. Lands LAST, after
-every tab has adopted, or it fails the build on the un-migrated ones.
+### D6 — the guard — ✅ BUILT 2026-09-04
+`tests/unit/money-summary-band-guard.test.ts`, and it is build-blocking because `npm test` runs
+inside `verify:changed`. Five rules, each adversarially verified to FAIL when it should (a rule
+that cannot be made to fail is a rule that proves nothing):
+
+1. **The roster is closed.** Every `accounting/<tab>/panel.tsx` is classified as a band tab or a
+   deliberate no-summary tab. A NEW money tab fails until someone classifies it — **this is the
+   load-bearing rule**, because it is the only one that can catch a tab inventing its own summary
+   family from scratch.
+2. **A band tab imports AND renders** `MoneySummaryBand`.
+3. **The tile roster is stated in the guard, in order**, with the argument that settled each one.
+   Which figures a tab leads with was the most-ruled-on question of this programme; changing one
+   should have to be written down. This also enforces the ≤4 cap — the stylesheet has rules for 2,
+   3 and 4, and a fifth renders silently into a four-column grid.
+4. **No coach money panel borrows `.summaryGrid` / `.summaryCard`** — the org- and platform-admin
+   family Fundraising was using until 2026-09-04.
+5. **It does not go blind.** A tiles expression it cannot parse FAILS rather than skipping.
+
+⚠ The Ledger is recorded as a deliberate no-summary tab, with its reason: it opens with ONE exact
+figure (the team's cash to the cent, proven by `check:register`), and a band of tiles beside that
+would invite the "why don't these two agree?" question the exactness exists to prevent.
+
+⚠ Room tile strips are OUT of scope on purpose — a room is a record, not a tab, and it is ruled by
+List · Room · Question. Folding them in would let a room's ruling be changed by editing a tab guard.
 
 ## §3 Build order (each phase its own commit)
 
@@ -162,7 +183,7 @@ sessions editing the same regions.
    so these land together.
 2. **P2 — Club + Budget Plan.** Both files are currently clean.
 3. **P3 — Fundraising.** ✅ BUILT 2026-09-04, once the §135 session released the panel. Band +
-   the `sponsorPledged` correction + its first unit coverage. QA **§139** owed.
+   the `sponsorPledged` correction + its first unit coverage. QA **§139 ✅ PASSED 2026-09-04, 15/15, zero defects.**
 4. **P4 — Player Dues.** ✅ BUILT + **QA PASSED 2026-09-03** (§137, 22/22, all six parts, zero
    defects; the Past-due path the UAT fixture cannot reach was walked on a late team and passed). Band both views + both footers retired + the timeline
    shelf (`dues/CollectionSchedule.tsx`, new) + two-tone bar + `Due next`/`Balance` moved into the
@@ -173,7 +194,16 @@ sessions editing the same regions.
      `lib/dues-installment-view.ts` (its only caller was the retired band's caption).
    - Past-due money and the family count now come from the ONE `pastDueInstallments` predicate, so
      the band's figure and its caption cannot disagree.
-5. **P5 — the guard** (D6), plus unit coverage for the band's own rules.
+5. **P5 — the guard** (D6). ✅ BUILT 2026-09-04. **No owner QA walk** — it changes nothing a coach
+   can see; the evidence is that all five rules were made to fail on demand.
+
+   ⚠ **The band's own render rules are deliberately NOT unit-tested, and that is a decision.** No
+   React test harness exists in this repo, and adding one for a twenty-line component would be a
+   new testing approach with a single caller. The stacking, the tap floor and the hide-at-zero
+   re-fit are proven by `check-layout-invariants` against the five REAL screens at four widths,
+   which is stronger evidence than a jsdom render — and is the repo's own stated preference
+   (`feedback_verify_with_playwright_not_screenshots`). The ≤4 cap, the one rule a rendered sweep
+   cannot see, is enforced by the guard's rule 3.
 
 ### P4's pin: the offsets are MEASURED, and the first attempt was wrong
 

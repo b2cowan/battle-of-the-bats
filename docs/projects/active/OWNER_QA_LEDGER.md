@@ -17551,7 +17551,7 @@ receive org-admin events with admin links — its own ticket), the demo's empty 
 
 ---
 
-## §139 · Fundraising opens with four figures — and one of them the tab could never show — BUILT 2026-09-04, awaiting QA
+## §139 · Fundraising opens with four figures — and one of them the tab could never show — ✅ PASSED 2026-09-04 (15/15, all four parts, zero defects) · committed `10ec5779`
 
 **The last tab of the money banner standard** (owner D1, plus the tile choice ruled 2026-09-04).
 Budget vs. Actual, Club, Budget Plan and Player Dues had adopted the shared band; Fundraising was
@@ -17583,7 +17583,8 @@ old band spent two of its four seats on `Raised — fundraisers` and `Raised —
 is worth stating — the code's own comment called it "THE POINT" — but it is stated twice over by
 the two lists directly beneath, each under its own heading. What was stated nowhere was the money a
 sponsor has promised and not sent, which is the only figure on this screen a coach can act on. It
-took the seat. Offered as a mockup with the alternative beside it; chosen 2026-09-04.
+took the seat. Offered as a mockup with the alternative beside it; chosen 2026-09-04, and **confirmed
+against real data at the walk (Part B, passed)** — the split reads as a caption.
 
 **⚠ ALL FOUR ARE PRIMARY INK.** Colour marks a verdict, and nothing here is one: money in is money
 in, and a promise outstanding is not late. (An expected-by date going past IS a verdict, and it

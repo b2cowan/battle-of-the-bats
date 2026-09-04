@@ -67,7 +67,7 @@ that tab; nothing new is derived, no gate moves, no migration.
 
 ## Success criteria
 
-1. All five tabs draw their summary through one shared component; the check fails a sixth way.
+1. ✅ All five tabs draw their summary through one shared component, and a build check now fails a sixth way — including a brand-new money tab that has not decided whether it has a summary at all.
 2. Budget vs. Actual's banner is ≤12 words with every figure preserved.
 3. Player Dues shows its figures once, at the top, on both views. **Four tiles when money is past
    due, three when none is** — the Past due tile hides itself rather than printing a red $0.00.
