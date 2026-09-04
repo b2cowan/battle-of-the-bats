@@ -22,7 +22,24 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 const env = readFileSync('.env.local', 'utf8');
 const get = k => (env.match(new RegExp('^' + k + '=(.*)$', 'm')) || [])[1]?.trim().replace(/^["']|["']$/g, '');
-const sb = createClient(get('NEXT_PUBLIC_SUPABASE_URL'), get('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
+const url = get('NEXT_PUBLIC_SUPABASE_URL');
+const key = get('SUPABASE_SERVICE_ROLE_KEY');
+if (!url || !key) {
+  console.error('✗ Missing env. Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.');
+  process.exit(1);
+}
+/* ⚠⚠ THE PRODUCTION REFUSAL, AND IT IS NOT CEREMONY (`/review`, 2026-09-04). This file's first cut
+   read `.env.local` and went straight into a service-role delete + insert against whatever project
+   those two lines happened to name — while `seed-uat-coach-fixture.mjs`, in this same folder, has
+   carried exactly this check for months. The header says DEV ONLY; nothing enforced it.
+   ⚠ There WAS an accidental backstop — the `uat-test-org` lookup below returns null on prod and the
+   next line throws before any write. That is a lookup that happens to fail, not a guard: it holds
+   only while that org does not exist on prod, which is not a property anyone maintains. */
+if (/\.supabase\.co/.test(url) && url.includes('qcttcboqysynwcdyghil')) {
+  console.error('✗ Refusing to run: that is the PRODUCTION project.');
+  process.exit(1);
+}
+const sb = createClient(url, key, { auth: { persistSession: false } });
 const { data: org } = await sb.from('organizations').select('id,slug').eq('slug','uat-test-org').single();
 const { data: users } = await sb.auth.admin.listUsers({ page:1, perPage:1000 });
 const coach = users.users.find(u => u.email === 'uat-coach@uat-test-org.local');

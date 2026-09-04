@@ -174,8 +174,24 @@
    `disabled` — it takes the arrows out of the tab order as well as off the screen, which is the
    same "the question replaces the controls it suspends" rule, not a second one.
    ⚠ The KEYBOARD half cannot live here: ← / → are bound by `useDialogFloor`, which no stylesheet
-   can reach. It carries the identical check. Change one, change both. */
-.foot:has(.footDoors > [role="alertdialog"]) > .nav { display: none; }
+   can reach. It carries the identical check. Change one, change both.
+
+   ⚠⚠ AND THE TWO HALVES HAD ALREADY DRIFTED ON THE DAY THEY WERE WRITTEN (`/review`, second pass,
+   2026-09-04). This rule was anchored on `.footDoors`, so it only ever saw a question docked in the
+   FOOT — while the keyboard half queries the whole panel and suspends on ANY `alertdialog` in the
+   room. A question in the room's BODY therefore satisfied one half and not the other: the ← / →
+   keys went silently dead while Prev/Next stayed on screen, visibly live, and still clickable —
+   so a mouse could do the exact thing the mechanism exists to prevent.
+   It is reachable, not theoretical: the bill room's Tags field opens the tag manager IN PLACE (no
+   portal, so a true descendant of this panel), and its delete/merge confirm is an `alertdialog`
+   nowhere near the foot. Clicking Next there swapped the room to another bill and stranded the
+   confirmation — the question answered by walking away from it.
+   ⚠ ANCHORED ON `.room` NOW, which is the SAME ELEMENT `useDialogFloor` holds as `panel`. That is
+   the point: the two halves ask one question of one node, so they cannot disagree again. The
+   `.footDoors` rule ABOVE stays foot-scoped on purpose — "the question replaces the controls it
+   suspends" is about the band a question is docked in; the WALK is suspended by any open question,
+   because stepping to another record abandons it wherever it was asked. */
+.room:has([role="alertdialog"]) .foot > .nav { display: none; }
 .nav {
   display: flex;
   align-items: center;

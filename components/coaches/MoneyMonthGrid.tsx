@@ -1193,11 +1193,22 @@ export default function MoneyMonthGrid({
                 ⚠⚠ THE WORD FOLLOWS THE LENS, and it used to say "planned" unconditionally
                 (adversarial review, 2026-09-04). Under DIFFERENCE a month cell is not plan money at
                 all — it is plan MINUS spending, and it goes negative — so an over-budget cell read
-                "($150) planned", describing a gap as if it were budget. */}
+                "($150) planned", describing a gap as if it were budget.
+
+                ⚠⚠ AND THAT CORRECTION OVER-SHOT, WHICH IS THIS LINE'S SECOND FIX (`/review`,
+                2026-09-04). It keyed on the LENS when the rule is per COLUMN. `lensUndated` returns
+                the raw BUDGET for the "no date yet" column under BOTH plan lenses — deliberately,
+                because a difference on undated money compares nothing to nothing — so under
+                Difference that cell opened a panel reading "$3,200.00 difference — plan against what
+                the season has spent" over a figure with nothing netted against it. A coach reads a
+                plain budget total as an overspend. The word follows the CELL: the undated column is
+                always plan money, whatever lens is on. */}
             {plan.figure != null && (
               <p className={styles.chooserSub}>
                 <strong>{fmt(plan.figure)}</strong>{' '}
-                {lens === 'difference' ? 'difference — plan against what the season has spent' : 'planned'}
+                {lens === 'difference' && plan.when !== UNDATED_CELL
+                  ? 'difference — plan against what the season has spent'
+                  : 'planned'}
               </p>
             )}
             <ul className={styles.chooserList}>
