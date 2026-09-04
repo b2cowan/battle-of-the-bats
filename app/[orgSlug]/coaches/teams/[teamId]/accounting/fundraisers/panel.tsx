@@ -50,6 +50,7 @@ import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-
 import { useRecordMoneySignal } from '@/lib/coach-record-money';
 import { FUNDRAISER_COLUMNS, fundraiserRows } from '@/lib/coach-money-exports';
 import { rollUpFundraising, normalizeKindFilter, sponsorStanding } from '@/lib/coach-fundraising';
+import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { stillToCome } from '@/lib/sponsor-arrivals';
 import { fmt } from '@/lib/coach-money-summary';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
@@ -107,6 +108,52 @@ export function FundraisersPanel({
   const sponsorRows = useMemo(() => fundraisers.filter(f => f.kind === 'sponsor'), [fundraisers]);
   // ⚠ The season figures come from EVERY record, never from what is on screen.
   const rollup = useMemo(() => rollUpFundraising(fundraisers), [fundraisers]);
+
+  /**
+   * THE TAB SUMMARY (owner ruling 2026-09-04) — the season's fundraising in four figures, in the
+   * one recipe every Money tab uses (components/coaches/MoneySummaryBand.tsx).
+   *
+   * ⚠⚠ THE DRIVES/SPONSORS SPLIT MOVED INTO A CAPTION, AND THAT BOUGHT THE FOURTH TILE. This tab
+   * used to open with `Raised — fundraisers` and `Raised — sponsors` as two of its four cards, and
+   * the split IS worth stating — but it is stated twice over by the two lists directly beneath,
+   * each with its own heading. What was NOT stated anywhere was the money a sponsor has promised
+   * and not yet sent, which is the only figure on this screen a coach can act on. It now has the
+   * seat, and it hides itself when every promise has been kept.
+   *
+   * ⚠ ALL FOUR ARE PRIMARY INK. The old cards drew Raised green, sponsors blueprint-blue and
+   * credited plum — three hues on four totals, none of them a verdict, which is exactly the
+   * "colour that reads as meaning something" the standard exists to end. Nothing here is a
+   * judgement: money in is money in, and a promise outstanding is not late (an EXPECTED-BY date
+   * going past is what makes it late, and that belongs to the sponsor's own row).
+   */
+  const fundTiles: MoneyTile[] = useMemo(() => {
+    const drives = rollup.fundraiserRaised;
+    const sponsors = rollup.sponsorReceived;
+    /* The caption carries what the total cannot: where it came from. With money on both sides that
+       is the split; with money on one, naming the side beats a "$0.00 sponsors" that reads as a
+       failure rather than an absence. */
+    const source = drives > 0.005 && sponsors > 0.005
+      ? `${fmt(drives)} drives · ${fmt(sponsors)} sponsors`
+      : drives > 0.005 ? 'all from drives'
+        : sponsors > 0.005 ? 'all from sponsors'
+          : undefined;
+    return [
+      { key: 'raised', label: 'Raised', figure: fmt(drives + sponsors), caption: source },
+      // Two captions that were simply absent before. Each names the thing its figure cannot say
+      // about itself — what has already been taken out of it, and what it does for a family.
+      { key: 'keeps', label: 'Team keeps', figure: fmt(rollup.teamKeeps), caption: 'after family credits' },
+      { key: 'credited', label: 'Credited to families', figure: fmt(rollup.creditedToFamilies), caption: 'lowers their dues' },
+      {
+        key: 'tocome',
+        label: 'Still to come',
+        figure: fmt(rollup.sponsorPledged),
+        caption: rollup.sponsorsAwaiting > 0
+          ? `${rollup.sponsorsAwaiting} sponsor${rollup.sponsorsAwaiting === 1 ? '' : 's'}`
+          : undefined,
+        hidden: rollup.sponsorPledged <= 0.005,
+      },
+    ];
+  }, [rollup]);
 
   const sponsorBandRef = useRef<HTMLDivElement | null>(null);
   const scrolledToBand = useRef(false);
@@ -487,35 +534,11 @@ export function FundraisersPanel({
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : (
         <>
-          {/* ⚠ THE SPLIT IS THE POINT: how much of this season is funded by families selling things
-              versus by sponsors. The pledged figure rides ALONGSIDE the received one — a promise is
-              not money in. */}
+          {/* ⚠ EVERY RECORD, NEVER WHAT IS ON SCREEN — the kind filter narrows the lists below,
+              not the season. A summary that moved with a filter would answer a different question
+              each time it was read. */}
           {fundraisers.length > 0 && (
-            <div className={styles.summaryGrid} style={{ marginBottom: '1.25rem' }}>
-              <div className={styles.summaryCard}>
-                <span className={styles.summaryCardLabel}>Raised — fundraisers</span>
-                <span className={styles.summaryCardValue} style={{ color: 'var(--success-light)' }}>{fmt(rollup.fundraiserRaised)}</span>
-                <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}>
-                  {rollup.fundraiserCount} {rollup.fundraiserCount === 1 ? 'drive' : 'drives'}
-                </span>
-              </div>
-              <div className={styles.summaryCard}>
-                <span className={styles.summaryCardLabel}>Raised — sponsors</span>
-                <span className={styles.summaryCardValue} style={{ color: 'var(--blueprint-blue)' }}>{fmt(rollup.sponsorReceived)}</span>
-                <span className={styles.mutedInline} style={{ fontSize: '0.72rem' }}>
-                  {rollup.sponsorCount} {rollup.sponsorCount === 1 ? 'sponsor' : 'sponsors'}
-                  {rollup.sponsorPledged > 0.005 && ` · ${fmt(rollup.sponsorPledged)} pledged`}
-                </span>
-              </div>
-              <div className={styles.summaryCard}>
-                <span className={styles.summaryCardLabel}>Team keeps</span>
-                <span className={styles.summaryCardValue}>{fmt(rollup.teamKeeps)}</span>
-              </div>
-              <div className={styles.summaryCard}>
-                <span className={styles.summaryCardLabel}>Credited to families</span>
-                <span className={styles.summaryCardValue} style={{ color: 'var(--home-plum, #a855f7)' }}>{fmt(rollup.creditedToFamilies)}</span>
-              </div>
-            </div>
+            <MoneySummaryBand tiles={fundTiles} ariaLabel="Fundraising summary" />
           )}
 
           {/* ── LIST ONE: FUNDRAISERS ──────────────────────────────────────────────────────────

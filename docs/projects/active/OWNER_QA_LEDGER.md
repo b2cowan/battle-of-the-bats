@@ -17548,3 +17548,67 @@ and a family-visible schedule; skip and note it if the fixture has neither.
 
 **Open after this build:** R8 (client navigation + URL filters), D4 recipient scoping (coaches still
 receive org-admin events with admin links — its own ticket), the demo's empty bell.
+
+---
+
+## §139 · Fundraising opens with four figures — and one of them the tab could never show — BUILT 2026-09-04, awaiting QA
+
+**The last tab of the money banner standard** (owner D1, plus the tile choice ruled 2026-09-04).
+Budget vs. Actual, Club, Budget Plan and Player Dues had adopted the shared band; Fundraising was
+the fifth and last, still drawing four bordered cards with green, blueprint-blue and plum figures —
+three hues on four totals, none of them a verdict.
+
+**⚠⚠ THE REASON THIS PHASE IS NOT COSMETIC: `sponsorPledged` WAS UNREACHABLE, AND THE CAPTION THAT
+PRINTED IT COULD NEVER RENDER.** `rollUpFundraising` summed `totalRaised` for sponsors whose stored
+`sponsor_status` was not yet `received`. That column flips on the **first cheque** (mig 268 — the
+whole reason `sponsorStanding` is derived rather than read), so a row reaching that branch had by
+definition received nothing and contributed **0**. The tab's `· $X pledged` caption was therefore
+dead copy: it claimed to report the outstanding promise on a screen that had never once shown it,
+**one nav level below a Money-hub rail printing the real figure under the same word**. The part-paid
+case was worse than absent — a sponsor who promised $500 and sent $250 had its status flipped, so
+the outstanding $250 was reported nowhere on this tab at all.
+
+The hub's derivation was the correct one and the rollup now runs the same arithmetic
+(`stillToCome` per sponsor), so the two surfaces cannot disagree. **The function had no unit test —
+that is how a dead branch survived — and now has ten**, two of them marked as the regression cases.
+
+**What a coach sees.** Four figures above both lists, unaffected by the kind filter: **Raised**
+(everything that actually arrived, with the drives-and-sponsors split named underneath), **Team
+keeps**, **Credited to families**, and **Still to come** with the number of sponsors behind it.
+Still to come **hides itself when every promise has been kept** — the standard's self-hiding rule,
+and the band re-fits to three.
+
+**⚠ THE DRIVES/SPONSORS SPLIT MOVED INTO A CAPTION, AND THAT IS THE DECISION TO ARGUE WITH.** The
+old band spent two of its four seats on `Raised — fundraisers` and `Raised — sponsors`. That split
+is worth stating — the code's own comment called it "THE POINT" — but it is stated twice over by
+the two lists directly beneath, each under its own heading. What was stated nowhere was the money a
+sponsor has promised and not sent, which is the only figure on this screen a coach can act on. It
+took the seat. Offered as a mockup with the alternative beside it; chosen 2026-09-04.
+
+**⚠ ALL FOUR ARE PRIMARY INK.** Colour marks a verdict, and nothing here is one: money in is money
+in, and a promise outstanding is not late. (An expected-by date going past IS a verdict, and it
+already sits on the sponsor's own row, in red.)
+
+**Measured on the UAT team, and the arithmetic ties:** Raised $3,517.00 = $916.00 drives +
+$2,601.00 sponsors; Team keeps $2,504.35 + Credited $1,012.65 = $3,517.00 exactly; **Still to come
+$1,170.00 across 3 sponsors — a figure this tab had never displayed.** Band 98px on a desktop,
+stacking on a phone, zero page overflow at 361/390/768/1440.
+
+**Walk it (~5 min), on a team with at least one drive and one sponsor:**
+
+1. **Open Fundraising.** Four figures above both lists. Does *Raised* match the two lists' own
+   Raised columns added together?
+2. **The split.** Its caption should name the drives/sponsors split. On a team with money from only
+   one kind it should read "all from drives" (or sponsors) rather than a "$0.00" half.
+3. **Team keeps + Credited to families = Raised.** Read across; they must tie to the cent.
+4. **Still to come.** ⚠ The point of the release. Check it against your sponsors: for each, what was
+   promised minus what has arrived, floored at zero. **A part-paid sponsor must be counted** — that
+   is the case that was invisible before.
+5. **The count beneath it** names sponsors with something outstanding, not all sponsors.
+6. **Settle every pledge** (or open a team where they are settled): the tile should vanish and the
+   band re-fit to three, not print $0.00.
+7. **Filter to Fundraisers, then to Sponsors.** The four figures must not move — they are the
+   season, not what is on screen.
+8. **A phone.** Four figures stack, nothing scrolls sideways.
+9. **Cross-check the Money hub rail.** Its "pledged" figure and this tab's *Still to come* now come
+   from one rule and must agree. **They did not before**, which is the defect this closes.

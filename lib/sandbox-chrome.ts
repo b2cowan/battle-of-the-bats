@@ -521,6 +521,15 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
       // so nothing here went stale and nothing is added — `ea8ddd14` still caps every step at one
       // proof point. The seeded world renders the rooms; `check-demo-coach` pins the drive and
       // the sponsor it opens.)
+      // (Re-read for the MONEY BANNER STANDARD, 2026-09-04 — the tab's four summary cards became
+      // the shared band, and one of the four figures is genuinely NEW: "Still to come", the money
+      // sponsors have promised and not sent. Same verdict, fourth time — no step or dock line names
+      // the tab's summary, so nothing went stale. But the *should a moment show it?* half is less
+      // obvious than usual and is worth writing down: the seeded world DOES carry an unmet promise
+      // (MIDSEASON_SPONSOR is a pledge with a partial arrival), so a prospect who opens Fundraising
+      // now meets a figure the product could not previously state anywhere on this screen. Per the
+      // `ea8ddd14` cap no clause was added; if the owner wants "what is still owed to us" narrated,
+      // the honest move is to SWAP a clause on step 4, not append a fifth.)
       /* ⚠⚠ RE-READ FOR THE CLUB-MONEY FORK (2026-08-30), and the "over plan" claim was MEASURED
          rather than assumed — which is the whole point of the rule, because this release changed
          what that line is made of. The 12U's club bill is now FILED against Facilities · Diamond

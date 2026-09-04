@@ -53,11 +53,17 @@ that tab; nothing new is derived, no gate moves, no migration.
   panel title and inline line-counts — everything ruled on individually survives. Player Dues' season
   totals leave the table foot they were deliberately moved into (also 2026-08-13); the owner's call is
   that five tabs opening alike beats per-table alignment.
-- **Fundraising loses some colour.** Its green and purple figures become ordinary ink, because under
-  the recipe colour marks a verdict, not a total.
+- **Fundraising loses some colour.** Its green, blue and plum figures become ordinary ink, because
+  under the recipe colour marks a verdict, not a total.
+- **Fundraising trades a split for an answer.** The tab stops leading with "raised by drives" and
+  "raised by sponsors" as separate figures — the two lists below already say that — and uses the
+  seat for **Still to come**, the money sponsors have promised and not sent. Building it uncovered
+  that the tab had never been able to show that figure at all: the caption meant to report it was
+  computing something that was always zero, while the Money hub one level up showed the real number
+  under the same word. Fixed, and covered by tests for the first time.
 - **Sequencing:** Budget vs. Actual, Club and Budget Plan went first; **Player Dues followed on
-  2026-09-03** once its file was released. **Fundraising is still held** — a concurrent §135 QA walk
-  owns that panel, and two sessions editing one region cannot be rescued by careful staging.
+  2026-09-03** and **Fundraising on 2026-09-04**, each once the session holding its file released
+  it. All five tabs have now adopted, which is what unblocks the build guard.
 
 ## Success criteria
 

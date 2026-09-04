@@ -70,10 +70,31 @@ names it) and the inline line-counts, which move into captions.
 Structurally unchanged. The trailing "out" leaves the figure (its caption already says it); label
 tracking aligns; the note line stays beneath.
 
-### Fundraising: 4 cards → one band
-Weight 900 → 700, tabular numerals on, `.04em` → `.07em` labels, the green/purple totals to primary
-ink, and the two blank captions gain the sentence each figure needs ("after family credits",
-"lowers their dues"). "Raised — fundraisers" → "Raised — drives" (the word the rest of the tab uses).
+### Fundraising: 4 cards → one band — ✅ BUILT 2026-09-04 (QA §139 owed)
+Weight 900 → 700, tabular numerals on, `.04em` → `.07em` labels, the green/blue/plum totals to
+primary ink, and the two blank captions gain the sentence each figure needs ("after family credits",
+"lowers their dues").
+
+⚠ **THE TILES ARE NOT THE FOUR THIS PLAN SKETCHED, and the change was ruled 2026-09-04** (offered as
+a mockup with the alternative beside it). The sketch kept `Raised — drives` and `Raised — sponsors`
+as two of the four seats. Shipped instead: **Raised · Team keeps · Credited to families · Still to
+come**, with the drives/sponsors split moved into Raised's caption.
+
+Two reasons, and the second is the load-bearing one:
+- the split is already stated twice by the two LISTS beneath, each under its own heading — the tab
+  became two lists at List · Room · Question Phase B, after this plan was written;
+- **what was stated nowhere was the money a sponsor has promised and not sent** — the only
+  actionable figure on the screen. It self-hides when every promise is kept, per the standard's
+  deviation-2 rule.
+
+⚠⚠ **AND IT COULD NOT HAVE BEEN STATED, because the figure did not exist.** `rollUpFundraising`
+summed `totalRaised` for sponsors whose stored `sponsor_status` was not yet `received`; that column
+flips on the FIRST cheque (mig 268), so any row in that branch had received nothing and contributed
+0. The tab's "· $X pledged" caption was **unreachable** — dead copy one nav level below a Money-hub
+rail printing the real figure under the same word, and a part-paid sponsor's outstanding half was
+reported nowhere on this tab at all. Fixed to the hub's arithmetic (`stillToCome` per sponsor) so
+the two cannot disagree. **The function had no unit test; that is how the dead branch survived, and
+it now has ten** (`tests/unit/coach-fundraising-rollup.test.ts`).
 
 ### D4 — Player Dues: the band arrives, **both table footers retire** — ✅ SHIPPED + QA PASSED 2026-09-03
 Band on BOTH views: `Assessed` (caption "N players") · `Collected` (caption "+ $X from credits") ·
@@ -140,7 +161,8 @@ sessions editing the same regions.
    `coaches.module.css`, and BvA adopts it (D2 Option A). A component with no consumer is untestable,
    so these land together.
 2. **P2 — Club + Budget Plan.** Both files are currently clean.
-3. **P3 — Fundraising.** BLOCKED on the peer session.
+3. **P3 — Fundraising.** ✅ BUILT 2026-09-04, once the §135 session released the panel. Band +
+   the `sponsorPledged` correction + its first unit coverage. QA **§139** owed.
 4. **P4 — Player Dues.** ✅ BUILT + **QA PASSED 2026-09-03** (§137, 22/22, all six parts, zero
    defects; the Past-due path the UAT fixture cannot reach was walked on a late team and passed). Band both views + both footers retired + the timeline
    shelf (`dues/CollectionSchedule.tsx`, new) + two-tone bar + `Due next`/`Balance` moved into the

@@ -11,6 +11,8 @@
  * rather than as a string compared in nine places.
  */
 
+import { stillToCome } from './sponsor-arrivals';
+
 export type FundraisingKind = 'fundraiser' | 'sponsor';
 
 /* ⚰ A local `fmt` lived here for one day (2026-08-31, re-homed from the retired detail.tsx) and
@@ -135,16 +137,33 @@ export type CreditUnit = 'amount' | 'percent';
    way and a record written another is exactly the disagreement the rule above exists to prevent. */
 
 /**
- * The season figures the Fundraising tab prints above its list, split by kind.
+ * The season figures the Fundraising tab prints above its list.
  *
  * ⚠ A PLEDGE IS NOT MONEY IN. It is carried separately so the summary can say so out loud; folding
  * it into the sponsor total would let a season flatter itself with a cheque nobody has received.
+ *
+ * ⚠⚠ `sponsorPledged` MEANS STILL TO COME — promise minus arrived, floored at zero, per sponsor —
+ * AND IT USED TO MEAN SOMETHING ELSE THAT WAS ALWAYS ZERO (fixed 2026-09-03). It summed
+ * `totalRaised` for sponsors whose stored `sponsor_status` was not yet `received`; but that column
+ * flips on the FIRST cheque (mig 268 — see `sponsorStanding` above, whose whole existence is that
+ * distinction), so a row reaching that branch had by definition received nothing and contributed 0.
+ * The tab's "· $X pledged" caption was therefore UNREACHABLE: dead copy claiming to report the
+ * outstanding promise on a screen that had never once shown it — one nav level below a Money-hub
+ * rail printing the real figure under the same word.
+ *
+ * The hub's derivation was the correct one, and this is now the same arithmetic (`stillToCome` per
+ * sponsor) so the two surfaces cannot disagree. It is also why the row shape gained
+ * `pledgedAmount`: the promise cannot be recovered from the arrivals, which is precisely why the
+ * old branch could not have computed this figure however it was written.
  */
 export interface FundraisingRollup {
   fundraiserRaised: number;
   fundraiserCount: number;
   sponsorReceived: number;
   sponsorPledged: number;
+  /** Sponsors with something still to come — the COUNT behind `sponsorPledged`, so the figure and
+   *  its caption are decided by one walk and cannot name different sponsors. */
+  sponsorsAwaiting: number;
   sponsorCount: number;
   teamKeeps: number;
   creditedToFamilies: number;
@@ -154,6 +173,9 @@ export function rollUpFundraising(
   rows: Array<{
     kind: FundraisingKind;
     sponsorStatus: SponsorStatus | null;
+    /** What a sponsor PROMISED. Null on a drive, and on a sponsor recorded without a figure. */
+    pledgedAmount?: number | null;
+    /** What has actually ARRIVED — arrivals for a sponsor, logged entries for a drive. */
     totalRaised: number;
     teamNet: number;
     totalCredits: number;
@@ -161,14 +183,22 @@ export function rollUpFundraising(
 ): FundraisingRollup {
   const r: FundraisingRollup = {
     fundraiserRaised: 0, fundraiserCount: 0,
-    sponsorReceived: 0, sponsorPledged: 0, sponsorCount: 0,
+    sponsorReceived: 0, sponsorPledged: 0, sponsorsAwaiting: 0, sponsorCount: 0,
     teamKeeps: 0, creditedToFamilies: 0,
   };
   for (const row of rows) {
     if (row.kind === 'sponsor') {
       r.sponsorCount += 1;
+      // Arrived money, whatever the promise was. `sponsor_status` reads 'received' from the first
+      // cheque onward, so a part-paid sponsor's arrivals count here — and a sponsor with nothing
+      // arrived contributes the 0 it should.
       if (row.sponsorStatus === 'received') r.sponsorReceived += row.totalRaised;
-      else r.sponsorPledged += row.totalRaised;
+      // ⚠ NOT AN else-BRANCH ANY MORE, AND THAT IS THE FIX: what is still to come is a property of
+      // every sponsor carrying an unmet promise, INCLUDING the part-paid ones the old branch could
+      // never reach.
+      const awaited = stillToCome(row.pledgedAmount ?? null, row.totalRaised);
+      if (awaited > 0.005) r.sponsorsAwaiting += 1;
+      r.sponsorPledged += awaited;
     } else {
       r.fundraiserCount += 1;
       r.fundraiserRaised += row.totalRaised;
