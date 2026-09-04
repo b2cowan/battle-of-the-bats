@@ -26,7 +26,7 @@
 // Relative, with the extension, so `node --test` can load this module directly — the unit suite's
 // resolver handles these but not the bundler's `@/` alias (see tests/ts-resolver.mjs).
 import { monthKeyOf, addMonths, monthSpan, formatMonthLabel, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
-import { NO_ITEM_LABEL } from './coach-budget-rollup.ts';
+import { NO_ITEM_LABEL, NO_CATEGORY_LABEL } from './coach-budget-rollup.ts';
 import {
   LINE_KIND_SECTION, BUDGET_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
   type BudgetLineKind,
@@ -352,8 +352,9 @@ export function buildPeriodView(
   }
 
   /* ⚠ ONE ORDERING RULE, THE LIST'S, IN BOTH VIEWS (P1 verify-pass correction, 2026-09-02: the two
-     views sorted differently — the List alphabetical via the rollup's compareCategories, this view
-     by insertion order — so toggling views reshuffled the plan). Cost categories alphabetical, the
+     views sorted differently — the List via the rollup's compareCategories, this view by insertion
+     order — so toggling views reshuffled the plan). Cost categories alphabetical with the nameless
+     bucket last (§133, and the rule moved here the same day it landed there), the
      money-in groups after them in kind order; cost rows alphabetical with "Not itemized" last (the
      rollup's own item sort); money-in rows keep line order, which is what their List section does. */
   for (const group of groupsByKey.values()) {
@@ -371,6 +372,12 @@ export function buildPeriodView(
     .sort((a, b) => {
       const byKind = BUDGET_LINE_KINDS.indexOf(a.lineKind) - BUDGET_LINE_KINDS.indexOf(b.lineKind);
       if (byKind !== 0) return byKind;
+      /* ⚠ The nameless bucket LAST, because the rollup's own comparator does that for the List as
+         of the §133 second look — and this view exists to hold one ordering rule for both. It is
+         the same rule the rows above already follow for "Not itemized". */
+      const aNone = a.name === NO_CATEGORY_LABEL;
+      const bNone = b.name === NO_CATEGORY_LABEL;
+      if (aNone !== bNone) return aNone ? 1 : -1;
       return a.name.localeCompare(b.name);
     });
 

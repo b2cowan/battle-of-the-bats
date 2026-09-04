@@ -3,7 +3,8 @@ import { describe, it } from 'node:test';
 import {
   derivedPeriodLabel, resolvedPeriodLabel, blankPeriod, nextPeriodDate,
   fillSeasonPeriods, inferSplitMode, readDate, monthDate, quarterDate, quarterOf,
-  splitYears, type PeriodDraft, type PeriodSplitMode,
+  splitYears, evenShares, isEvenWithinRounding, refitSplit,
+  type PeriodDraft, type PeriodSplitMode,
 } from '../../lib/coach-budget-period-modes.ts';
 
 function p(date: string, label = '', amount = ''): PeriodDraft {
@@ -223,5 +224,146 @@ describe('the three-Januaries defect (mode change must RESET, never convert)', (
     assert.equal(backToMonths.length, 1);
     const januaries = backToMonths.filter(r => r.date.slice(5, 7) === '01');
     assert.equal(januaries.length, 1);
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   The amounts in the rows (owner QA §133, 2026-09-04)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/** Every split has to add to its total EXACTLY — the sum check the coach meets is ±$0.02, but a
+ *  penny of slop that survives a save becomes a penny the report cannot explain. */
+const sumOf = (values: number[]) => values.reduce((s, v) => s + v, 0);
+function assertAddsUp(values: number[], total: number) {
+  assert.equal(Math.round(sumOf(values) * 100), Math.round(total * 100));
+}
+
+describe('splitting evenly', () => {
+  it('puts $6,000 across three months in $2,000 increments', () => {
+    assert.deepEqual(evenShares(6000, 3), [2000, 2000, 2000]);
+  });
+
+  it('gives the leftover cents to the last row, and still adds up', () => {
+    assert.deepEqual(evenShares(5200, 3), [1733.33, 1733.33, 1733.34]);
+    assertAddsUp(evenShares(5200, 3), 5200);
+    assert.deepEqual(evenShares(100, 3), [33.33, 33.33, 33.34]);
+    assertAddsUp(evenShares(100, 3), 100);
+  });
+
+  it('works in percent too — the mode the form shares this with', () => {
+    assert.deepEqual(evenShares(100, 4), [25, 25, 25, 25]);
+    assertAddsUp(evenShares(100, 3), 100);
+    assertAddsUp(evenShares(100, 7), 100);
+  });
+
+  /* ⚠ THE OLD ARITHMETIC LOST A CENT HERE. `Math.floor((5.85 / 3) * 100) / 100` is 1.94, not 1.95,
+     because 5.85/3*100 is 194.99999999999997 in binary floating point — so two rows were a cent
+     light and the last row silently absorbed both. Whole cents throughout is the fix. */
+  it('does not lose a cent to floating point on a value a coach really types', () => {
+    assert.deepEqual(evenShares(5.85, 3), [1.95, 1.95, 1.95]);
+    assert.deepEqual(evenShares(0.03, 3), [0.01, 0.01, 0.01]);
+  });
+
+  it('hands a single period the whole amount, and nothing an empty split', () => {
+    assert.deepEqual(evenShares(1234.56, 1), [1234.56]);
+    assert.deepEqual(evenShares(1000, 0), []);
+  });
+});
+
+describe('telling a shape from rounding', () => {
+  it('calls a coach\u2019s whole-dollar thirds even — the case that started this', () => {
+    assert.equal(isEvenWithinRounding([1733, 1733, 1734]), true);   // $5,200 / 3
+    assert.equal(isEvenWithinRounding([33, 33, 34]), true);         // $100 / 3, dollar floor
+    assert.equal(isEvenWithinRounding([1733.33, 1733.33, 1733.34]), true);
+  });
+
+  /* ⚠⚠ THE RULE THAT PROTECTS A COACH'S REAL NUMBER (/review, 2026-09-04). The first version of
+     this test asserted the OPPOSITE — that a previously-botched refit is recognised as even and
+     heals itself — and buying that convenience cost a percentage-of-the-row tolerance which
+     flattened deliberate splits on any large line. Rounding noise has a fixed size; it is never a
+     fraction of the total. The trade is stated in `isEvenWithinRounding`. */
+  it('will NOT flatten a deliberate split that happens to be nearly even', () => {
+    // $250 apart on a $100,000 line: 0.25%, and unmistakably a decision somebody made.
+    assert.equal(isEvenWithinRounding([50125, 49875]), false);
+    assert.deepEqual(refitSplit([50125, 49875], 110000), [55137.5, 54862.5]);
+    // And at a size a real team budget reaches.
+    assert.equal(isEvenWithinRounding([3010, 2995, 2995]), false);
+  });
+
+  it('does not pretend an already-botched split is even — Split evenly is the fix for that', () => {
+    assert.equal(isEvenWithinRounding([1999.62, 1999.62, 2000.76]), false);
+    assert.deepEqual(evenShares(6000, 3), [2000, 2000, 2000]);
+  });
+
+  /* Whole-dollar rounding on a long split is legitimately several dollars adrift end to end,
+     because the last row carries the entire remainder — 10,000 across 7 is 1428 six times and
+     1432 once. A flat "within a dollar" test would have called that a deliberate shape. */
+  it('recognises its own output as even, however long the split', () => {
+    assert.equal(isEvenWithinRounding([1428, 1428, 1428, 1428, 1428, 1428, 1432]), true);
+    assert.deepEqual(refitSplit([1428, 1428, 1428, 1428, 1428, 1428, 1432], 14000), evenShares(14000, 7));
+    const long = evenShares(5000, 106);
+    assert.equal(isEvenWithinRounding(long), true);
+    assert.deepEqual(refitSplit(long, 5750), evenShares(5750, 106));
+  });
+
+  /* ⚠ The banner's one-tap fix must never be a SILENT no-op (/review): rows that add to nothing
+     have no shape to keep, so they come back as an even split rather than unchanged. */
+  it('fills blank rows evenly instead of handing them back untouched', () => {
+    assert.deepEqual(refitSplit([0, 0, 0], 6000), [2000, 2000, 2000]);
+    assert.deepEqual(refitSplit([0], 5200), [5200]);
+  });
+
+  it('leaves a deliberate shape alone', () => {
+    assert.equal(isEvenWithinRounding([2000, 3200]), false);        // deposit + balance
+    assert.equal(isEvenWithinRounding([1000, 2000, 2200]), false);
+    assert.equal(isEvenWithinRounding([10000, 10000, 10090]), false); // 0.9% apart on a big line
+  });
+
+  it('treats one row, and only one row, as even by definition', () => {
+    assert.equal(isEvenWithinRounding([5200]), true);
+    assert.equal(isEvenWithinRounding([]), true);
+    assert.equal(isEvenWithinRounding([0, 0]), false);              // nothing to be even about
+  });
+});
+
+describe('refitting a split onto a new total', () => {
+  /* The owner-reported defect, verbatim: a $5,200 line split 1733 / 1733 / 1734, retotalled to
+     $6,000. It used to come back 1999.62 / 1999.62 / 2000.76. */
+  it('puts an even split back evenly instead of preserving its rounding', () => {
+    assert.deepEqual(refitSplit([1733, 1733, 1734], 6000), [2000, 2000, 2000]);
+    assert.deepEqual(refitSplit([1733, 1733, 1734], 5200), [1733.33, 1733.33, 1733.34]);
+  });
+
+  it('keeps a real shape in proportion', () => {
+    // A $2,000 deposit against a $3,200 balance stays 5/13 and 8/13 of whatever the total becomes.
+    const refit = refitSplit([2000, 3200], 6000);
+    assert.deepEqual(refit, [2307.69, 3692.31]);
+    assertAddsUp(refit, 6000);
+    assert.deepEqual(refitSplit([1000, 2000, 3200], 12400), [2000, 4000, 6400]);
+  });
+
+  it('always adds to the new total to the cent', () => {
+    for (const [values, total] of [
+      [[1733, 1733, 1734], 6000],
+      [[2000, 3200], 5000.55],
+      [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2], 10000],
+      [[100, 250, 33.33, 0.01], 999.99],
+    ] as [number[], number][]) {
+      assertAddsUp(refitSplit(values, total), total);
+    }
+  });
+
+  /* ⚠ The leftover cents used to land ENTIRELY on the last row, which on a long split of a small
+     total could push that row to zero or below — blocking the save with a different complaint than
+     the one the coach came in with. */
+  it('never drives a row negative handing out the leftover cents', () => {
+    const refit = refitSplit([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1000], 0.24);
+    assert.ok(refit.every(v => v >= 0), `a row went negative: ${refit.join(', ')}`);
+    assertAddsUp(refit, 0.24);
+  });
+
+  it('leaves the rows alone when there is nothing to refit onto', () => {
+    assert.deepEqual(refitSplit([1733, 1733, 1734], 0), [1733, 1733, 1734]);
+    assert.deepEqual(refitSplit([], 6000), []);
   });
 });

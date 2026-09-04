@@ -847,8 +847,13 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await expect(main.getByText('4 × $600')).toBeVisible();
     await expect(main.getByText('Uniforms')).toBeVisible();
     await expect(page.getByTestId('budget-checklist')).toBeVisible();
-    await expect(page.getByTestId('budget-checklist')).toContainText('Travel');
     await expectNoPageScroll(page, 'budget page after the starter');
+    /* ⚠ THE COLLAPSED FOOTNOTE STATES A COUNT, NOT TWO NAMES (owner §133 second look, 2026-09-04).
+       It used to preview two items out of forty-odd, which is where this assertion used to read
+       them; the items are behind the question now. */
+    await page.getByTestId('budget-checklist')
+      .getByRole('button', { name: /what am i forgetting/i }).click();
+    await expect(page.getByTestId('budget-checklist')).toContainText('Travel');
 
     // The database agrees: exactly the two priced lines with the coach's totals — and no
     // platform-default item gained a suggested amount (D-G1 at the data level).
@@ -866,7 +871,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${sBase()}/accounting?section=budget`);
     const strip = page.getByTestId('budget-checklist');
-    await strip.getByRole('button', { name: /review/i }).click();
+    await strip.getByRole('button', { name: /what am i forgetting/i }).click();
 
     // + opens the NORMAL Add Line modal: category+item prefilled, amount empty — the
     // coach types the number.
@@ -887,7 +892,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await page.reload();
     await expect(page.locator('main[class*="coachesMain"]').locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
     const strip2 = page.getByTestId('budget-checklist');
-    await strip2.getByRole('button', { name: /review/i }).click();
+    await strip2.getByRole('button', { name: /what am i forgetting/i }).click();
     await expect(strip2.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
     await expect(strip2.getByRole('button', { name: '+ Umpire Fees', exact: true })).toBeVisible();
   });

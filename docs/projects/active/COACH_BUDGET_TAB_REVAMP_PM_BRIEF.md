@@ -1,8 +1,10 @@
 # Coach Budget Tab Revamp — PM Brief
 
-**Status: built on dev 2026-09-02 — everything below except category rename, which is held at its
-owner checkpoint (categories are shared club-wide, so the rename policy needs the owner's call
-before any version is built). Owner QA walk owed (ledger §133).** Companion to
+**Status: built on dev 2026-09-02 — everything below except category rename. Owner QA: ledger
+§133, ✅ PASSED 2026-09-04 (28/28). Category rename grew into its own plan, 2026-09-04** —
+`COACH_BUDGET_CATEGORY_OWNERSHIP_PLAN.md` (+ PM brief) — categories split into club-wide shared
+ones and a coach's own local ones, not just a rename button; not yet approved or built. Companion
+to
 `COACH_BUDGET_TAB_REVAMP_PLAN.md`.
 Mockups (owner-approved): https://claude.ai/code/artifact/f1bd6e4d-631e-4a82-a10f-a46646b5fb4c
 
@@ -18,7 +20,7 @@ Mockups (owner-approved): https://claude.ai/code/artifact/f1bd6e4d-631e-4a82-a10
 - **The period editor stops forgetting.** A split built by quarters reopens as quarters. A named
   split ("Registration deposit / Final payment") can now carry optional dates, and the editor says
   plainly that chunks without dates sit in the Unscheduled column. If a coach edits a line's total
-  after splitting it, the form catches the mismatch and offers "Rescale the split evenly" — today it
+  after splitting it, the form catches the mismatch and offers "Rescale the split proportionally" — today it
   silently saves a split that no longer adds up.
 - **Thirty lines fit the way they should.** Rows tighten, a quiet Schedule column shows each line's
   phasing at a glance ("Jan–Mar · 3 chunks"), there's a Collapse all button, and the page remembers

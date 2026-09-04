@@ -581,3 +581,79 @@ describe('rollupBudget — the cost-only wrapper the plan page still calls', () 
     assert.equal(rows.reduce((s, c) => s + c.budgeted, 0), 1000);
   });
 });
+
+/* ── Rule 8: the nameless bucket sorts LAST, on both sides ───────────────────────────────────
+   Owner ruling 2026-09-04 (QA §133), from a screenshot of the revenue section: "No category" sat
+   ABOVE "Tournaments" because both are out of plan and N beats T. Nothing was putting it last —
+   the expense side only looked right because of where its names fall in the alphabet. */
+describe('rule 8 — a category with no name is not a category', () => {
+  const fundraising = { categoryId: 'cat-fund', categoryName: 'Fundraising' };
+  const nameless    = { categoryId: null, categoryName: null, itemId: null, itemName: '' };
+
+  it('puts No category last in REVENUE, behind a name that beats it alphabetically', () => {
+    const r = rollupMoneyReport({
+      lines: [inLine({ ...fundraising, itemId: 'item-drive', itemName: 'Fundraising drive', totalAmount: 1800 })],
+      spend: [
+        income({ ...nameless, amount: 2085.75 }),
+        income({ categoryId: TOURNAMENTS, categoryName: 'Tournaments', itemId: ENTRY, itemName: 'Entry fees', amount: 400 }),
+      ],
+    });
+    assert.deepEqual(
+      r.revenue.categories.map(c => c.categoryName),
+      ['Fundraising', 'Tournaments', NO_CATEGORY_LABEL],
+    );
+  });
+
+  it('puts No category last in EXPENSES too — a rule now, not an accident of the alphabet', () => {
+    const r = rollupMoneyReport({
+      lines: [line({ categoryId: FACILITIES, categoryName: 'Facilities', itemId: DOME, itemName: 'Dome time' })],
+      spend: [
+        spend({ ...nameless, amount: 300 }),
+        spend({ categoryId: 'cat-uniforms', categoryName: 'Uniforms', itemId: 'item-jerseys', itemName: 'Jerseys', amount: 500 }),
+      ],
+    });
+    assert.deepEqual(
+      r.expenses.categories.map(c => c.categoryName),
+      ['Facilities', 'Uniforms', NO_CATEGORY_LABEL],
+    );
+  });
+
+  it('keeps the in-plan group ahead of it, so the rule stacks rather than replaces', () => {
+    /* An in-plan category whose name sorts AFTER the placeholder still leads: planned first is the
+       older rule and it is not what this ruling changed. */
+    const r = rollupMoneyReport({
+      lines: [line({ categoryId: 'cat-zed', categoryName: 'Zamboni', itemId: 'item-ice', itemName: 'Ice time' })],
+      spend: [spend({ ...nameless, amount: 42 })],
+    });
+    assert.deepEqual(r.expenses.categories.map(c => c.categoryName), ['Zamboni', NO_CATEGORY_LABEL]);
+  });
+
+  /* The nameless bucket goes last WITHIN its group, exactly as "Not itemized" does one level down —
+     so a budget line filed under no category still leads the categories nobody planned. Verified by
+     hand during /review; pinned here so a later "simplify" cannot quietly promote it to a global
+     last-place rule. */
+  it('keeps it inside the in-plan group when the PLAN itself has a nameless line', () => {
+    const r = rollupMoneyReport({
+      lines: [
+        line({ categoryId: null, categoryName: null, itemId: null, itemName: '', totalAmount: 400 }),
+        line({ categoryId: 'cat-zed', categoryName: 'Zamboni', itemId: 'item-ice', itemName: 'Ice time' }),
+      ],
+      spend: [spend({ categoryId: 'cat-uniforms', categoryName: 'Uniforms', itemId: 'item-jerseys', itemName: 'Jerseys', amount: 500 })],
+    });
+    assert.deepEqual(
+      r.expenses.categories.map(c => c.categoryName),
+      ['Zamboni', NO_CATEGORY_LABEL, 'Uniforms'],
+    );
+  });
+
+  it('sorts the By-activity blocks the same way — one report, one answer', () => {
+    const r = rollupMoneyReport({
+      lines: [],
+      spend: [
+        spend({ ...nameless, amount: 300 }),
+        spend({ categoryId: 'cat-uniforms', categoryName: 'Uniforms', itemId: 'item-jerseys', itemName: 'Jerseys', amount: 500 }),
+      ],
+    });
+    assert.deepEqual(r.activities.map(b => b.categoryName), ['Uniforms', NO_CATEGORY_LABEL]);
+  });
+});

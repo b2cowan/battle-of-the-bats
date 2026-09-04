@@ -35,6 +35,7 @@ import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import {
   PERIOD_SPLIT_MODES, SPLIT_MODE_LABEL, SPLIT_MODE_NOUN, SPLIT_MODE_STEP_TWO, SPLIT_MODE_COLUMN,
   blankPeriod, nextPeriodDate, fillSeasonPeriods, inferSplitMode, resolvedPeriodLabel,
+  evenShares, refitSplit,
   derivedPeriodLabel, splitYears, readDate, monthDate, quarterDate, quarterOf,
   type PeriodSplitMode,
 } from '@/lib/coach-budget-period-modes';
@@ -622,6 +623,28 @@ export function BudgetPlanPanel({
   // for, so editing the total again brings the banner back. Sum validation still blocks the save
   // either way; the banner is the early, actionable version of that refusal.
   const [rescaleDismissedFor, setRescaleDismissedFor] = useState<string | null>(null);
+  /**
+   * Which of the two money fields the coach edited last — the TOTAL, or the period rows.
+   *
+   * ⚠ THIS REPLACED "the total differs from the one the modal opened with" (owner, QA §133
+   * 2026-09-04), which stranded the coach: rescale a split up to $6,000, type the original $5,200
+   * back, and the form decided nothing had changed — so the offer to refit disappeared while the
+   * rows still added to $6,000 and the red sum error still blocked the save. The MISMATCH is what
+   * the banner is about; the only thing that comparison was really protecting is the coach who is
+   * typing in the rows themselves, and that is what this records instead.
+   *
+   * ⚠⚠ NULL UNTIL THE COACH TOUCHES SOMETHING, and that is load-bearing (/review, same day).
+   * Seeding it to 'total' made the banner fire on a modal nobody had typed in yet: the month grid
+   * deep-links a lump-sum line here with the split FORCED open, so the form arrives holding one
+   * blank period against a real total — a mismatch by construction. The comparison this replaced
+   * could not do that, because a value cannot differ from itself at the moment it becomes the
+   * baseline; this has to earn the same silence deliberately.
+   */
+  const [lastMoneyEdit, setLastMoneyEdit] = useState<'total' | 'periods' | null>(null);
+  /** Changing what a period is WORTH is the coach adjusting the split by hand. A period's name and
+   *  its date are not money and deliberately do not count — dismissing a money warning because
+   *  somebody fixed a typo in a label takes the one-tap fix away without fixing anything. */
+  const markPeriodsEdited = () => setLastMoneyEdit('periods');
 
   // Delete confirm. `deleteError` replaces a native alert() (review f7-6) — the last raw
   // browser dialog anywhere in the portal. The confirm modal is STILL OPEN when a delete
@@ -959,6 +982,7 @@ export function BudgetPlanPanel({
     setSaveTried(false);
     setPeriodUndo(null);
     setRescaleDismissedFor(null);
+    setLastMoneyEdit(null);
   }
 
   /** Expand / collapse one line's period breakdown. One definition — the cost rows and the
@@ -1090,6 +1114,7 @@ export function BudgetPlanPanel({
   function chooseSplitMode(mode: PeriodSplitMode) {
     if (form.splitMode === mode) return;
     rememberSplitMode(mode);
+    markPeriodsEdited();
     setForm(f => {
       const had = f.periods;
       const worthKeeping = had.length > 1 || had.some(p => p.label.trim() || p.amount.trim());
@@ -1116,6 +1141,7 @@ export function BudgetPlanPanel({
 
   function removePeriod(index: number) {
     setPeriodUndo(null);
+    markPeriodsEdited();
     setForm(f => ({ ...f, periods: f.periods.filter((_, j) => j !== index) }));
   }
 
@@ -1135,6 +1161,7 @@ export function BudgetPlanPanel({
   }
 
   function clearPeriods() {
+    markPeriodsEdited();
     setForm(f => {
       setPeriodUndo({
         periods: f.periods,
@@ -1150,6 +1177,7 @@ export function BudgetPlanPanel({
     // A mode change is undone WHOLE — putting twelve month-rows back into quarter mode would be
     // meaningless.
     rememberSplitMode(periodUndo.splitMode);
+    markPeriodsEdited();
     setForm(f => ({ ...f, splitMode: periodUndo.splitMode, periods: periodUndo.periods }));
     setPeriodUndo(null);
   }
@@ -1173,6 +1201,7 @@ export function BudgetPlanPanel({
   }
 
   function setPeriodField(index: number, field: keyof PeriodRow, value: string) {
+    if (field === 'amount') markPeriodsEdited();
     setForm(f => {
       const periods = [...f.periods];
       periods[index] = { ...periods[index], [field]: value };
@@ -1181,29 +1210,29 @@ export function BudgetPlanPanel({
   }
 
   /**
-   * "Rescale the split evenly" (P2, owner Q2) — refit the existing split to the edited total.
+   * "Rescale the split proportionally" (P2, owner Q2) — refit the existing split to the edited
+   * total. Each period keeps its share of the old sum, EXCEPT where the rows were uneven only
+   * because of rounding, which come back exactly even.
    *
-   * PROPORTIONAL, in whole cents: each period keeps its share of the old sum ($2,000 of $5,200
-   * stays 5/13 of the new total), which on the common all-equal split IS an even rescale — the
-   * mockup's case. The last row absorbs the rounding remainder, so the result always passes the
-   * ±$0.02 gate it exists to satisfy.
+   * ⚠ THE BUTTON USED TO SAY "evenly" AND DID NOT MEAN IT (owner, QA §133 2026-09-04). Both halves
+   * were wrong. The word promised a shape the arithmetic never produced — and the arithmetic
+   * preserved rounding noise as though it were a decision, so a $5,200 split typed as
+   * 1733 / 1733 / 1734 refitted onto $6,000 as 1999.62 / 1999.62 / 2000.76 and a coach who asked
+   * for $6,000 across three months was looking at something that wasn't in $2,000 increments.
+   * `refitSplit` holds the tolerance that tells a real shape from rounding.
    */
   function rescaleSplit() {
     setPeriodUndo(null);
     setRescaleDismissedFor(null);
     setForm(f => {
+      // ⚠ DOLLARS ONLY. The banner that offers this already requires it, but the function must not
+      // depend on its one caller staying the only one: refitting percent shares onto a dollar total
+      // is nonsense arithmetic that would fail silently (/review).
+      if (f.periodMode !== 'amount') return f;
       const total = parseFloat(f.totalAmount) || 0;
       const values = f.periods.map(p => parseFloat(p.amount) || 0);
-      const oldSum = values.reduce((s, v) => s + v, 0);
-      if (total <= 0 || oldSum <= 0 || f.periods.length === 0) return f;
-      const totalCents = Math.round(total * 100);
-      let allocated = 0;
-      const amounts = values.map((v, i) => {
-        if (i === values.length - 1) return (totalCents - allocated) / 100;
-        const cents = Math.round(totalCents * (v / oldSum));
-        allocated += cents;
-        return cents / 100;
-      });
+      if (total <= 0 || f.periods.length === 0) return f;
+      const amounts = refitSplit(values, total);
       return { ...f, periods: f.periods.map((p, i) => ({ ...p, amount: String(amounts[i]) })) };
     });
   }
@@ -1217,9 +1246,8 @@ export function BudgetPlanPanel({
       const total = parseFloat(f.totalAmount) || 0;
       const whole = f.periodMode === 'percent' ? 100 : total;
       if (whole <= 0) return f;
-      const share = Math.floor((whole / n) * 100) / 100;
-      const last = Math.round((whole - share * (n - 1)) * 100) / 100;
-      const periods = f.periods.map((p, i) => ({ ...p, amount: String(i === n - 1 ? last : share) }));
+      const shares = evenShares(whole, n);
+      const periods = f.periods.map((p, i) => ({ ...p, amount: String(shares[i]) }));
       return { ...f, periods };
     });
   }
@@ -1289,14 +1317,18 @@ export function BudgetPlanPanel({
   /* P2 — the coach edited the TOTAL of a line that already had a split, and the split no longer
      adds up. Today's quiet version of this was the silent desync the server now 409s on; the
      banner is the same refusal made early and actionable. Only for a split that EXISTED when the
-     modal opened (a fresh split being typed is ordinary work-in-progress, not a mismatch), and
-     only in dollar mode (percent shares rescale themselves against the total). */
+     modal opened (a fresh split being typed is ordinary work-in-progress, not a mismatch), only in
+     dollar mode (percent shares rescale themselves against the total), and only while the TOTAL is
+     the field the coach touched last — someone part-way through retyping the rows by hand is
+     already adjusting it themselves and does not need to be asked. ⚠ That last clause replaced a
+     comparison against the total the modal OPENED with, which stranded the coach who typed the
+     original figure back: see `lastMoneyEdit`. */
   const splitOutOfStep = modalOpen
     && form.usePeriods
     && form.periodMode === 'amount'
     && formBaseline.usePeriods
     && form.periods.length > 0
-    && form.totalAmount !== formBaseline.totalAmount
+    && lastMoneyEdit === 'total'
     && rescaleDismissedFor !== form.totalAmount
     && (parseFloat(form.totalAmount) || 0) > 0
     && Math.abs(periodSum() - (parseFloat(form.totalAmount) || 0)) > 0.02;
@@ -1471,6 +1503,22 @@ export function BudgetPlanPanel({
   function toggleAllSections() {
     setClosedSections(allSectionsClosed ? new Set() : new Set(sectionKeys));
   }
+
+  /* ⚠ THE SAME CONTROL SERVES THE OTHER OUTLINE (owner, §133 walk 2026-09-04). The By-period grid
+     folds the same categories the List does — it just keeps its own closed set, because the two are
+     different shapes — and the button was rendered for the List alone, so a coach in the grid could
+     only fold one category at a time. Null here IS "not in the grid": the view builds only where it
+     is drawn, and the branch below reads that rather than re-testing the mode. */
+  const periodView = viewMode === 'period' ? buildPeriodView(allLines, granularity) : null;
+  const gridKeys = periodView ? periodView.groups.map(g => g.key) : [];
+  const allGridClosed = gridKeys.length > 0 && gridKeys.every(k => gridClosed.has(k));
+  const foldAll = periodView
+    ? {
+        keys: gridKeys,
+        allClosed: allGridClosed,
+        toggle: () => setGridClosed(allGridClosed ? new Set() : new Set(gridKeys)),
+      }
+    : { keys: sectionKeys, allClosed: allSectionsClosed, toggle: toggleAllSections };
 
   /* P1 — is the form's chosen item already carrying another line on this plan? Then this line is
      a SECOND line on that item, and the Notes field becomes the one question that keeps the fold
@@ -1816,14 +1864,16 @@ export function BudgetPlanPanel({
               )}
               {/* Collapse all / Expand all (P3) — one ghost verb for the whole outline. It acts on
                   the SECTION level (categories and the money-in sections); expanding also reopens
-                  any item folds, which is what "show me everything" means. */}
-              {viewMode === 'list' && (
+                  any item folds, which is what "show me everything" means.
+                  ⚠ ON BOTH VIEWS since the §133 walk, acting on whichever outline is on screen —
+                  and only where there is something to fold, the same rule the month pager follows. */}
+              {foldAll.keys.length > 0 && (
                 <button
                   type="button"
                   className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
-                  onClick={toggleAllSections}
+                  onClick={foldAll.toggle}
                 >
-                  {allSectionsClosed ? 'Expand all' : 'Collapse all'}
+                  {foldAll.allClosed ? 'Expand all' : 'Collapse all'}
                 </button>
               )}
               {/* The create joins the row the tab already had (ruling 2026-08-13, decision 2) —
@@ -1902,9 +1952,9 @@ export function BudgetPlanPanel({
                 secondaryAction={{ label: 'See a finished example →', onClick: () => setSampleOpen(true) }}
               />
             )
-          ) : viewMode === 'period' ? (
+          ) : periodView ? (
             <PeriodGrid
-              view={buildPeriodView(allLines, granularity)}
+              view={periodView}
               closed={gridClosed}
               onToggle={toggleGridGroup}
             />
@@ -2010,59 +2060,6 @@ export function BudgetPlanPanel({
                 </div>
               ))}
 
-              {/* Chunk G — the permanent "what am I forgetting?" strip. Derived from the
-                  standard taxonomy minus what's budgeted minus this device's dismissals;
-                  write-gated (it is a write invitation) and self-hides when complete. */}
-              {moneyCanWrite && checklistItems.length > 0 && (
-                <div className={styles.checklistStrip} data-testid="budget-checklist">
-                  <div className={styles.checklistHead}>
-                    <span className={styles.checklistLabel}>Not in your plan yet</span>
-                    {!checklistExpanded && (
-                      <span className={styles.checklistSummary}>
-                        {checklistItems.slice(0, 2).map(i => i.name).join(' · ')}
-                        {checklistItems.length > 2 ? ` · +${checklistItems.length - 2} more` : ''}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.checklistToggle}
-                      onClick={() => setChecklistExpanded(v => !v)}
-                    >
-                      {checklistExpanded ? 'Hide' : 'Review'}
-                    </button>
-                  </div>
-                  {checklistExpanded && (
-                    <>
-                      <div className={styles.checklistChips}>
-                        {checklistItems.map(item => (
-                          <span key={item.id} className={styles.checklistChip}>
-                            <button
-                              type="button"
-                              className={styles.checklistAdd}
-                              title={item.categoryName}
-                              onClick={() => openAddFromChecklist(item)}
-                            >
-                              + {item.name}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.checklistDismiss}
-                              aria-label={`We don't pay for ${item.name} — hide it`}
-                              onClick={() => dismissChecklistItem(item.id)}
-                            >
-                              <X size={11} aria-hidden />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <p className={styles.checklistFoot}>
-                        + adds it to your budget — you type the amount. ✕ hides one your team
-                        doesn&apos;t pay for.
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
 
               {/* Expected fundraising — one section, always after the costs, shown POSITIVE in
                   green (owner 2026-08-13: the label says the direction; a minus sign made readers
@@ -2170,6 +2167,74 @@ export function BudgetPlanPanel({
                     {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
                   </span>
                   <span />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Chunk G — the permanent "what am I forgetting?" question. Derived from the standard
+              taxonomy minus what's budgeted minus this device's dismissals; write-gated (it is a
+              write invitation) and self-hides when complete.
+
+              ⚠⚠ IT WAS A ROW IN THE MIDDLE OF THE PLAN UNTIL THE §133 SECOND LOOK (owner ruling
+              2026-09-04, mockup approved). Three things were wrong and they compounded:
+                · PLACEMENT. It was added at the end of the cost list, when that WAS the bottom.
+                  Everything under it — the money-in sections, "Short of covering the plan" — came
+                  later, so it ended up interrupting the plan's arithmetic between what a team
+                  spends and what covers it. It belongs after the plan has finished adding up.
+                · WEIGHT. A dashed, tinted, full-width bar is the furniture of a category row, and
+                  this carries no money and appears in no total. A coach's eye counted it as a line
+                  of the plan and then found it wasn't one.
+                · WORDS. "Registration revenue · Concession revenue · +40 more" named two arbitrary
+                  items out of forty-odd — a truncated list, not an offer. The count is the honest
+                  summary, and the question the strip was BUILT to ask ("what am I forgetting?",
+                  its own words in the Chunk G plan) is now the control rather than a "Review" verb
+                  attached to a label.
+              ⚠ List view only, as before: the By-period grid is a different reading of the same
+              plan and this has never hung under it. */}
+          {moneyCanWrite && viewMode === 'list' && allLines.length > 0 && checklistItems.length > 0 && (
+            <div data-testid="budget-checklist">
+              <p className={styles.checklistFootnote}>
+                <button
+                  type="button"
+                  className={styles.checklistAsk}
+                  aria-expanded={checklistExpanded}
+                  onClick={() => setChecklistExpanded(v => !v)}
+                >
+                  {checklistExpanded ? 'Hide' : 'What am I forgetting?'}
+                </button>
+                <span className={styles.checklistCount}>
+                  · {checklistItems.length} item{checklistItems.length === 1 ? '' : 's'}
+                </span>
+              </p>
+              {checklistExpanded && (
+                <div>
+                  <div className={styles.checklistChips}>
+                    {checklistItems.map(item => (
+                      <span key={item.id} className={styles.checklistChip}>
+                        <button
+                          type="button"
+                          className={styles.checklistAdd}
+                          title={item.categoryName}
+                          onClick={() => openAddFromChecklist(item)}
+                        >
+                          + {item.name}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.checklistDismiss}
+                          aria-label={`We don't pay for ${item.name} — hide it`}
+                          onClick={() => dismissChecklistItem(item.id)}
+                        >
+                          <X size={11} aria-hidden />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <p className={styles.checklistFoot}>
+                    + adds it to your budget — you type the amount. ✕ hides one your team
+                    doesn&apos;t pay for.
+                  </p>
                 </div>
               )}
             </div>
@@ -2324,7 +2389,10 @@ export function BudgetPlanPanel({
                   min="0.01"
                   step="0.01"
                   value={form.totalAmount}
-                  onChange={e => setForm(f => ({ ...f, totalAmount: e.target.value }))}
+                  onChange={e => {
+                    setLastMoneyEdit('total');
+                    setForm(f => ({ ...f, totalAmount: e.target.value }));
+                  }}
                   placeholder="0.00"
                 />
               </div>
@@ -2368,7 +2436,7 @@ export function BudgetPlanPanel({
                 </p>
                 <div className={styles.splitWarnActs}>
                   <button type="button" className={shared.btnPrimary} onClick={rescaleSplit}>
-                    Rescale the split evenly
+                    Rescale the split proportionally
                   </button>
                   <button
                     type="button"

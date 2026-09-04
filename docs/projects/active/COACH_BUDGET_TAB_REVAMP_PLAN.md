@@ -1,11 +1,15 @@
 # Coach Budget Tab Revamp — One Grain, Remembered Splits, a Denser Plan
 
 **Status: BUILT ON DEV 2026-09-02 (phases A–F; migration 274 applied to dev the same day) — with
-ONE deliberate hold: §6.2's category rename stopped at its owner checkpoint as this plan requires
-(the three policy options are with the owner; nothing was built silently). Owner QA = ledger §133,
-walk owed.** Approved 2026-09-02 (owner ruled Q1–Q8 in session, all as recommended, plus the
-export rider). One disclosed mockup deviation: category bars keep the build-enforced 44px tap
-floor instead of the mockup's tighter band — the density win comes from the line and sub rows.
+ONE deliberate hold: §6.2's category rename stopped at its owner checkpoint as this plan requires.
+Owner QA = ledger §133, ✅ PASSED 2026-09-04 (28/28, all eight parts).** Approved 2026-09-02 (owner
+ruled Q1–Q8 in session, all as recommended, plus the export rider). One disclosed mockup deviation:
+category bars keep the build-enforced 44px tap floor instead of the mockup's tighter band — the
+density win comes from the line and sub rows.
+
+**Q6 has grown into its OWN plan, 2026-09-04** — `COACH_BUDGET_CATEGORY_OWNERSHIP_PLAN.md` (shared
+vs. local categories, not just a rename button). Not yet approved or built; does not block this
+plan's PASSED status above.
 
 **Mockup gate (owner-approved, whole-screen before/after):**
 https://claude.ai/code/artifact/f1bd6e4d-631e-4a82-a10f-a46646b5fb4c
@@ -104,12 +108,33 @@ verified 2026-09-02 and may drift; re-verify at build time.
   the honest hint: "A chunk without a date shows under Unscheduled in the By-period view and the
   month report." One dateless period no longer hides the date controls for dated siblings
   (per-period, not per-line, rendering).
-- **Total-change guard:** in the modal, if `totalAmount` changes while a split exists and no longer
-  sums (±$0.02), a banner blocks save: "Rescale the split evenly" (recomputes period amounts,
-  preserving proportions where possible — mockup shows even; build: proportional rescale, even when
-  all equal) / "I'll adjust it myself". Server belt: lines PATCH re-checks the period sum whenever
+- **Total-change guard:** in the modal, if the period rows no longer sum to the line total (±$0.02),
+  a banner blocks save: "Rescale the split proportionally" / "I'll adjust it myself". Server belt:
+  lines PATCH re-checks the period sum whenever
   `total_amount` changes and 409s on mismatch unless the same request carries a consistent period
   set (check-then-act; re-assert org+team in every WHERE per standing memory).
+  - ⚠⚠ **BOTH HALVES OF THIS BULLET WERE WRONG AS BUILT — owner walk §133, 2026-09-04.** The plan
+    said "mockup shows even; build: proportional rescale, even when all equal", and that parenthesis
+    is where the defect lived: **a split is almost never *exactly* equal.** $5,200 across three
+    months is stored 1733 / 1733 / 1734, so refitting those shares onto $6,000 gave
+    1999.62 / 1999.62 / 2000.76 — under a button that said **"evenly"**. Two fixes, both landed:
+    - **The word matches the deed.** The button now says **"Rescale the split proportionally"**
+      (owner: proportional is the right behaviour, it just has to say so). Help copy follows.
+    - **Rounding is not a shape.** `refitSplit` treats rows as even when the gap between the
+      biggest and the smallest is within **$1.00, or half a percent of the average row**, whichever
+      is more generous — so a coach's whole-dollar thirds come back exactly even, while a $2,000
+      deposit against a $3,200 balance keeps its proportions. Unit-covered in
+      `tests/unit/coach-budget-period-modes.test.ts` (this arithmetic had **no** coverage at all).
+  - ⚠ **The banner's trigger was a dead end.** It fired on "the total differs from the one the modal
+    opened with", so typing the ORIGINAL figure back made the offer vanish while the rows still added
+    to the old number and the red sum error still blocked the save — an error you can see with no fix
+    you can reach. It now follows the mismatch itself, and steps aside only while the coach is
+    editing the period rows by hand (`lastMoneyEdit`), which is what the baseline comparison was
+    really protecting.
+  - A latent rounding defect went with them: "Split evenly" floored in floating point, so $5.85
+    across three rows produced 1.94 / 1.94 / 1.97 instead of 1.95 each. Both paths now do whole-cent
+    arithmetic through
+    `evenShares`.
 - Stretch (only if an RPC path already exists): make the periods delete-then-insert replace
   (:86-108) atomic. Otherwise record as known residual risk — do not hand-roll transactions.
 
@@ -181,8 +206,7 @@ verified 2026-09-02 and may drift; re-verify at build time.
   more than fundraising — check against the By-period section labels and `check:spelling`; if the
   wording change ripples into help/demo copy, §7 carries it.
 
-### 6.2 Category rename (Q6) — ⚠ OWNER CHECKPOINT BEFORE BUILDING (upgraded from
-investigation-first by the adversarial review, 2026-09-02)
+### 6.2 Category rename (Q6) — ✅ RULED 2026-09-04 (org/club-admin-only), owner walk §133
 - The investigation was effectively done in review: `budget_categories` carries **no team/creator
   column at all** (coach POST inserts `{org_id, name, scope:'team', is_default:false}`,
   `budget-items/route.ts:180`; dictionary confirms), and the code states the DESIGN INTENT
@@ -192,11 +216,21 @@ investigation-first by the adversarial review, 2026-09-02)
 - **Consequence:** "rename your own category" mutates one org-shared row — if a second team in the
   org has started using that category, their screens silently relabel too. Even the descoped
   variant ("only categories this team's lines use") can't fully prevent that race.
-- **Before Phase E builds this, put the policy question to the owner:** (a) rename allowed only
-  when NO other team's lines use the category (refuse otherwise, in sentences, like the item-delete
-  409s) — recommended; (b) add provenance + true team-scoping (a bigger change that contradicts the
-  code's stated sharing intent — needs an explicit reversal ruling); or (c) org/club-admin-only
-  rename. Do not build any variant silently.
+- **Owner ruling (2026-09-04, on the §133 walk): option (c) — org/club-admin-only rename.** A head
+  or assistant coach never sees or can trigger a rename; only an org/club admin can, since they are
+  positioned to know whether other teams depend on the category. The other two options considered
+  were: (a) refuse the rename while another team's lines use the category (a per-request race check,
+  no role change) and (b) add real provenance + team-scoping (reverses the code's stated org-wide
+  sharing intent — not chosen).
+- **⚠⚠ SUPERSEDED 2026-09-04 — this grew into its own plan, do not build from this section.** While
+  scoping where the rename control would live, the owner ruled the underlying model itself needs to
+  change first: categories split into **shared** (club-created, org/team-visible, Owner/Treasurer
+  only can create or rename) and **local** (a coach's own, team-only, but club-readable on reports —
+  a coach CAN rename their own). This reverses this plan's own "categories are still org-wide"
+  premise (§6.2 above), mirrors the `budget_items.team_id` three-tier model already shipped (mig
+  240), and needs a migration — out of scope for a plan that has already BUILT and PASSED (§133).
+  **See `docs/projects/active/COACH_BUDGET_CATEGORY_OWNERSHIP_PLAN.md`** (+ its PM brief) for the
+  full model, migration, routes and open questions. Not yet approved or built as of 2026-09-04.
 - BvA name-matching risk is the narrow legacy fallback path only (verified: FK trust order in
   budget-vs-actual/route.ts placeCost :325-351; name fallback :337-351) — renames are safe for
   FK-linked rows; note it in the route comment anyway.
@@ -274,6 +308,44 @@ One session can take A–B and another C–F, or one session all six — build p
   grouping for both views.
 - Owner QA: new ledger § (next number, append — never sort), checkable QA-walkthrough artifact with
   the standing sign-in card (uat-coach@uat-test-org.local / UATPassword2026!).
+
+## 11a. Owner SECOND LOOK, §133 (2026-09-04) — after the walk passed 28/28
+
+A screenshot pass over the built screens, in the pattern §132 established: a walk that passes can
+still miss the row. Four findings. The two about the Rescale banner are recorded against the bullet
+they belong to (§3, P2); these are the rest.
+
+- **The nameless bucket sorted by the alphabet, not last.** One comparator serves both sides of the
+  statement — in-plan first, then out-of-plan, each alphabetical — so "No category" sat ABOVE
+  "Tournaments" in Revenue while looking correctly last under Expenses. There was no rule; the
+  expense side was flattered by where its names fall. ✅ FIXED: the nameless bucket sorts last on
+  both sides and in the By-activity blocks, matching the rule that already governed **items** one
+  level down ("Not itemized" last — *a gap to close, not a row to read*). Unit-covered as rule 8.
+  - ⚠ NOT fixed, and it is a separate call: the **Months grid sorts its categories not at all** —
+    they come out in assembly order — so the nameless bucket lands wherever it lands there. Left
+    alone deliberately (another session held that module at the time, and "what orders the month
+    grid?" is a bigger question than this ruling).
+- **Collapse all / Expand all reached one outline of four.** ✅ FIXED on the Budget tab's **By
+  period** grid (it folds the same categories, keeps its own closed set, and the button was rendered
+  for the List alone) and added to **Budget vs. Actual's statement**, which opens fully folded — so
+  every reading of that report used to start with a row of clicks.
+  - By activity needs none: it renders items with no category fold at all.
+  - ⚠ **BvA Months is NOT wired** — that grid keeps its folds inside the shared month-grid
+    component, which was being edited by another session; lifting them is a small refactor to do
+    once that work lands.
+  - ⚠ **Two vocabularies for one gesture, unruled:** the budget says *Collapse all / Expand all*,
+    the Ledger says *Fold all / Open all*. Same control, same product. Owner to pick a pair.
+- **"Not in your plan yet" sits mid-plan wearing a budget row's clothes.** Placed at the end of the
+  cost list when that WAS the bottom; everything below it (the money-in sections, "Short of covering
+  the plan") arrived later, so it now interrupts the arithmetic — and it is a full-width tinted bar
+  carrying no money and appearing in no total. Its preview names two arbitrary items out of 42.
+  ✅ BUILT to **Option B** (owner approved the mockup 2026-09-04:
+  https://claude.ai/code/artifact/ebe1bd82-9583-4583-8650-705e8323f93c). It moves below the whole
+  plan, loses the dashed border, the tint and the bar, and states a count instead of two names —
+  and the question the Chunk G plan named it after IS the control now, replacing a `Review` verb hung off a label. The dead classes went with it. List view only, as before.
+  ⚠ The UAT walk drove this control by the name `Review` in three places and asserted an item name
+  on the COLLAPSED strip; both were updated with it. Not run here — it needs a server and the
+  fixture.
 
 ## 11. Shared-worktree cautions for the build session
 

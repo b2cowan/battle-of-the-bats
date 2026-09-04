@@ -255,3 +255,107 @@ export function inferSplitMode(periods: PeriodDraft[]): PeriodSplitMode {
 
   return 'months';
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   THE AMOUNTS IN THE ROWS — even, and the refit that keeps a shape
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Split `whole` into `count` shares that are as equal as cents allow, the remainder on the LAST
+ * row. Used for both money and percent, which is why the parameter has no unit in its name.
+ *
+ * ⚠ WHOLE CENTS THROUGHOUT. The obvious `Math.floor((whole / count) * 100) / 100` is wrong on
+ * values a coach really types: $5.85 across three rows floors to 1.94 (because 5.85/3*100 is
+ * 194.99999999999997 in binary floating point) and the last row silently absorbs the cent that
+ * should never have gone missing.
+ */
+export function evenShares(whole: number, count: number): number[] {
+  if (count <= 0) return [];
+  const cents = Math.round(whole * 100);
+  const base = Math.floor(cents / count);
+  const last = cents - base * (count - 1);
+  return Array.from({ length: count }, (_, i) => (i === count - 1 ? last : base) / 100);
+}
+
+/**
+ * Was this split MEANT to be even?
+ *
+ * Owner ruling 2026-09-04 (QA §133). A split of $5,200 across three months is stored as
+ * 1733 / 1733 / 1734 — a coach's whole-dollar rounding of a third — and refitting THOSE shares onto
+ * $6,000 lands on 1999.62 / 1999.62 / 2000.76, which is proportionally exact and obviously wrong to
+ * the coach who typed it. Rounding noise is not a shape, so it is not preserved.
+ *
+ * The test is EXACT, not a tolerance: the rows are even-but-for-rounding when they are *an even
+ * split of their own sum* at one of the two grains anybody here actually rounds to — whole cents,
+ * or whole dollars. At each grain that means either "as even as the grain allows" (no more than one
+ * grain between the biggest row and the smallest) or exactly the shape `evenShares` itself
+ * produces, whose LAST row carries the whole remainder. Order is ignored: a coach who types the odd
+ * cent into the first row meant the same thing.
+ *
+ * ⚠⚠ A TOLERANCE WAS TRIED FIRST AND IT WAS WRONG (/review, same day). It read "one dollar, or half
+ * a percent of the average row", and the percentage half is a real defect: **rounding noise has a
+ * fixed size; it is never a fraction of the line.** Half a percent of a $50,000 row is $250 — so a
+ * deliberate 50,125 / 49,875 counted as rounding and the next refit flattened it to a clean 50/50.
+ * Erasing a coach's real number to tidy an imagined one is worse than not tidying.
+ * ⚠ The accepted cost: a split ALREADY botched by the old arithmetic (1999.62 / 1999.62 / 2000.76)
+ * is not recognised and will not heal itself on the next refit — by then it is genuinely
+ * indistinguishable from a deliberate near-even shape. One tap on Split evenly fixes it, and that
+ * tap is a far better price than the one above.
+ */
+export function isEvenWithinRounding(values: number[]): boolean {
+  const count = values.length;
+  if (count < 2) return true;
+  const cents = values.map(v => Math.round(v * 100));
+  const total = cents.reduce((s, v) => s + v, 0);
+  if (total <= 0) return false;
+  const sorted = [...cents].sort((a, b) => a - b);
+  return [1, 100].some(grain => evenAtGrain(sorted, total, count, grain));
+}
+
+/** One grain's worth of the question above — 1 = whole cents, 100 = whole dollars. */
+function evenAtGrain(sorted: number[], total: number, count: number, grain: number): boolean {
+  if (total % grain !== 0 || sorted.some(c => c % grain !== 0)) return false;
+  // As even as this grain allows.
+  if (sorted[count - 1] - sorted[0] <= grain) return true;
+  // Or the shape this module generates, whose last row carries the entire remainder — on a long
+  // split that is legitimately several grains adrift of the first row.
+  const units = total / grain;
+  const base = Math.floor(units / count);
+  const shape = Array.from({ length: count }, (_, i) =>
+    (i === count - 1 ? units - base * (count - 1) : base) * grain).sort((a, b) => a - b);
+  return shape.every((v, i) => v === sorted[i]);
+}
+
+/**
+ * Refit an existing split onto a new line total — what "Rescale the split" does.
+ *
+ * Each row keeps its share of the old sum ($2,000 of $5,200 stays 5/13 of the new total), EXCEPT
+ * where the rows were even but for rounding, which comes back exactly even (see
+ * `isEvenWithinRounding`). The result always adds to the new total to the cent, so it can never
+ * fail the sum check it exists to satisfy.
+ *
+ * ⚠ The leftover cents go to the rows with the largest fractional remainder — not all onto the last
+ * row, which on a twelve-month split could push that row negative and blocked the save with a
+ * different complaint.
+ *
+ * ⚠ ROWS THAT ADD TO NOTHING GET AN EVEN SPLIT, because there is no shape to keep and handing them
+ * back untouched made this a SILENT NO-OP (/review): the banner offered a one-tap fix, the coach
+ * took it, and every row stayed blank under the same red sum error.
+ */
+export function refitSplit(values: number[], total: number): number[] {
+  const count = values.length;
+  if (count === 0) return [];
+  const oldSum = values.reduce((s, v) => s + v, 0);
+  if (!(total > 0)) return values;
+  if (oldSum <= 0 || isEvenWithinRounding(values)) return evenShares(total, count);
+
+  const totalCents = Math.round(total * 100);
+  const exact = values.map(v => (totalCents * v) / oldSum);
+  const cents = exact.map(Math.floor);
+  let leftover = totalCents - cents.reduce((s, v) => s + v, 0);
+  const byRemainder = exact
+    .map((e, i) => ({ i, frac: e - Math.floor(e) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (let k = 0; leftover > 0; k++, leftover--) cents[byRemainder[k % count].i] += 1;
+  return cents.map(c => c / 100);
+}

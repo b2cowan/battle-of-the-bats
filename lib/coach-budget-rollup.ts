@@ -448,6 +448,9 @@ export function rollupMoneyReport({ lines, spend, refunds = [] }: MoneyReportInp
     const rank = (x: ActivityBlock) => (x.revenue && x.costs ? 0 : x.revenue ? 1 : 2);
     if (rank(a) !== rank(b)) return rank(a) - rank(b);
     if (a.inPlan !== b.inPlan) return a.inPlan ? -1 : 1;
+    // Same ruling as the statement's — one report, one place for the nameless bucket.
+    const nameless = Number(isNamelessCategory(a)) - Number(isNamelessCategory(b));
+    if (nameless !== 0) return nameless;
     return a.categoryName.localeCompare(b.categoryName);
   });
 
@@ -480,9 +483,33 @@ function sideForRefund(bucket: Bucket, itemId: string | null): MoneyDirection {
   return 'out';
 }
 
-/** Planned categories first, then the ones the team only moved money in; alphabetical inside each. */
+/**
+ * Is this the bucket for money filed under no category at all?
+ *
+ * Asked through `categoryKey` rather than by comparing the label, because that function is the one
+ * owner of "these two facts are the same category" — a coach who types the placeholder's own words
+ * into a category field lands in the same bucket, and this has to agree with that or the row it
+ * sorts is not the row it tested.
+ */
+function isNamelessCategory(row: { categoryId: string | null; categoryName: string }): boolean {
+  return categoryKey(row.categoryId, row.categoryName) === 'none';
+}
+
+/**
+ * ⚠ THE NAMELESS BUCKET SORTS LAST (owner ruling 2026-09-04, QA §133) — it is not a category, it is
+ * the absence of one, so it does not take its turn in the alphabet. This rule already existed one
+ * level DOWN, where "Not itemized" is pushed to the end of its group with the reason stated: *a gap
+ * to close, not a row to read.* The category level simply never got it, which is why "No category"
+ * jumped ahead of "Tournaments" in Revenue while looking correctly last under Expenses — the same
+ * comparator, flattered by the alphabet on one side and exposed by it on the other.
+ *
+ * In full: planned categories first, then the ones the team only moved money in; alphabetical
+ * inside each, and the nameless bucket last wherever it falls.
+ */
 function compareCategories(a: CategoryRow, b: CategoryRow): number {
   if (a.inPlan !== b.inPlan) return a.inPlan ? -1 : 1;
+  const nameless = Number(isNamelessCategory(a)) - Number(isNamelessCategory(b));
+  if (nameless !== 0) return nameless;
   return a.categoryName.localeCompare(b.categoryName);
 }
 

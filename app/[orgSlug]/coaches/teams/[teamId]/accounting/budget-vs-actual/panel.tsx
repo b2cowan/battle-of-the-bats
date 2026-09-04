@@ -1690,7 +1690,33 @@ export function BudgetVsActualPanel({
   }
 
   function toggleCat(name: string) { setExpandedCats(prev => toggleKey(prev, name)); }
+
+  /* ⚠ THIS REPORT OPENS FULLY FOLDED, so every reading started with a row of clicks — the outline
+     had a toggle per category and no way to say "all of them" (owner, §133 walk 2026-09-04). The
+     Budget tab's List has carried this control since its P3; this is the same verb in the same
+     place on the bar, so the two tabs cannot drift into two vocabularies for one gesture.
+     ⚠ STATEMENT ONLY, and that is not an omission: By activity renders its items with no category
+     fold at all, so a control there would have nothing to act on. (Months keeps its folds inside
+     the grid component and is not wired to this yet.)
+     ⚠ The dues row is excluded because it is not a foldable group — counting it would make "all
+     open" unreachable and leave the button stuck on one word. */
   function toggleLine(id: string)  { setExpandedLines(prev => toggleKey(prev, id)); }
+
+  const statementCatKeys = data
+    ? [
+        ...data.report.revenue.categories.filter(c => !isDuesCategory(c.categoryId)),
+        ...data.report.expenses.categories,
+      ].map(catKeyOf)
+    : [];
+  const allCatsOpen = statementCatKeys.length > 0 && statementCatKeys.every(k => expandedCats.has(k));
+  function toggleAllCats() {
+    setExpandedCats(allCatsOpen ? new Set() : new Set(statementCatKeys));
+    /* ⚠ IT DOES NOT TOUCH THE ITEM FOLDS, and the first version did (/review). `expandedLines` is
+       shared with By activity, which renders its item rows with NO category fold above them — so
+       "Collapse all" on the statement was quietly shutting rows a coach had opened on the other
+       view. Leaving them be also means their place survives a collapse-and-expand here, which is
+       the better behaviour anyway. */
+  }
 
   if (ctxLoading) return <CoachLoading label="Loading the report…" />;
   if (!page.hasAccess) {
@@ -1929,6 +1955,18 @@ export function BudgetVsActualPanel({
                 prevDisabled={monthStart === 0}
                 nextDisabled={monthStart >= maxMonthStart}
               />
+            )}
+
+            {/* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager follows one block
+                up. See `toggleAllCats` for why that is the statement alone. */}
+            {view === 'statement' && statementCatKeys.length > 0 && (
+              <button
+                type="button"
+                className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
+                onClick={toggleAllCats}
+              >
+                {allCatsOpen ? 'Collapse all' : 'Expand all'}
+              </button>
             )}
 
             {/* On EVERY view, not just the month one — it exports whichever is on screen, so it

@@ -142,6 +142,14 @@
   .viewBar { gap: 0.4rem; }
 }
 
+/* Collapse all / Expand all — quiet ghost chrome on a desktop; a real target through the touch
+   band (≤768 is a TOUCH band, owner 2026-08-27, and the rendered sweep enforces the 44px floor
+   there — this class exists because the shared ghost carries no floor of its own). Same rule, same
+   words as the Budget tab's copy of this control. */
+@media (max-width: 768px) {
+  .collapseAllBtn { min-height: var(--tap-min, 44px); }
+}
+
 /* ── Category breakdown ──────────────────────────────────────────────────── */
 .section { margin-bottom: 1.5rem; }
 
