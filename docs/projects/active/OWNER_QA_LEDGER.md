@@ -17148,7 +17148,74 @@ workflow makes sense."*
 
 **Still owed on this section (unchanged by the pass):** the layout reseed + sweep of `coach-club`
 and `coach-club-bill` on a quiet dev server — rows→rooms re-keys the club baseline.
-## §135 · List · Room · Question, Phase B — the Fundraising tab as two lists, the drive's room, the two-zone sponsor room — BUILT 2026-09-02, awaiting QA
+## §135 · List · Room · Question, Phase B — the Fundraising tab as two lists, the drive's room, the two-zone sponsor room — ✅ PASSED 2026-09-03 (36/36, all six parts, zero defects in the built thing; eight rulings taken ON the walk and built the same day)
+
+**Result: 36/36, six parts, no defects found in what Phase B shipped.** A · lists 5/5 · B · the
+drive's room 8/8 · C · questions over the room 6/6 · D · the sponsor's two-zone room 8/8 · E · the
+promise hand-off both ways 4/4 · F · honesty at the edges 5/5. Everything below the line was raised
+BY the owner during the walk as questions about conventions, not as failures of the phase — the
+walk's own value was the eight rulings it produced.
+
+**The eight rulings, all built and verified the same day (commit `dc1756d6`):**
+
+1. **A LOCK CAN SPARE ONE QUESTION.** The drive room's Record was the last door in Money that
+   offered "What happened?" and "Which drive" as switchable dropdowns — the ghost save ruling A
+   (2026-08-23) banned everywhere else. It could not be locked because the lock was all-or-nothing
+   and would have hidden "which player" too. `lock.asks` names the ONE identity question a door did
+   not answer; the drive room now states the event and its drive and keeps asking who raised it.
+   ⚠ The quieter half was the worse half: leaving the answer alone and changing the **drive** filed
+   money against a fundraiser that was not the one on screen, with nothing about the form looking
+   different.
+2. **NOBODY LEFT TO NAME IS AN ANSWER.** Found by `/review` on the lock: a drive whose every player
+   had an amount drew an empty "Choose…" beside a required label over a Save that could never
+   succeed — survivable while the door was unlocked (re-point the drive), terminal once it was not.
+   Both that state and the empty-roster state now say so. The hint they replaced sent the coach to
+   "the drive's own row on Fundraising" — written before a drive became a ROOM, so a coach who
+   opened it FROM that room was sent where they already stood.
+3. **A FOCUS RING NEEDS ROOM ON ALL FOUR SIDES.** Escaping the Record question returned focus to the
+   room's Record door wearing three-quarters of a ring: the room's scrolling body clips on both axes
+   and the door sits flush to its edge. The bottom had been found and fixed alone; the sides never
+   were.
+4. **FUNDRAISING JOINS THE WIDE COLUMN.** It was the one money surface still on the 960px reading
+   column while the hub around it and every sibling tab were on 1200 — so it re-narrowed itself
+   inside a wide shell. It qualifies on the stylesheet's own terms and on the Budget↔BvA drift rule.
+5. **THE FACTS LINE SHARES THE DOORS' ROW.** Both rooms drew the record's quiet facts as a full line
+   under a right-aligned pair of buttons, spending a row of a height-capped overlay on a half-empty
+   one. It is clamped to one line, which is what the new note caps (140 on a sponsorship, 80 on a
+   cheque — there were none at all) exist to make safe. ⚠ Wrapping the doors to make room broke the
+   44px tap floor, which selected them at their old depth — the floor is the shell's precisely so no
+   consumer has to remember it, and it still had to be re-pointed.
+6. **THE METHOD LEAVES THE CHEQUES LIST.** It read "Jun 14, 2026 · by e-transfer" under a panel
+   headed CHEQUES — the label and its own rows disagreeing — and was the only thing wrapping that
+   cell to two lines, which is what made the panel look starved of width. Still recorded, still on
+   the row's Edit door, still exported.
+7. **UNDO AND REMOVE ARE TWO PROMISES, AND THE WORD TRACKS THE GUARD.** One word did two jobs on
+   adjacent screens: a club installment's **Undo** is one tap with no question and nothing
+   destroyed, while a sponsor's cheque **Undo** deleted a record and clawed family credits back
+   behind a confirm. Four presentations of one act (quiet+icon / neutral outlined button / red link
+   / red link, two words) became two: **Undo** = one tap and one tap back (the club installment, and
+   only that); **Remove** = it asks, because money or a family's credit moves (a cheque, a drive
+   entry, a payment on a bill). ⚠ Neither word was itself ruled before — the 2026-08-20 and §134
+   rulings were both about the GUARD — so this settles the label without reversing either.
+8. **A HALF-BUILT SPLIT LINE HAS TO SAY SO.** The split compares SHARES, and a share needs a family
+   AND an amount above zero — so a line reading *Kai Test · 0 · %* is filtered out before the
+   comparison, no Save appears, and Escape drops it silently. The Save button is right (there is
+   nothing to save); the silence was not, because that line is indistinguishable from a finished one
+   meaning zero. It now names the unfinished lines. ⚠ Deliberately NOT a discard warning on the way
+   out: answering "keep editing" would return the coach to a form whose Save is still absent.
+   **And the pledge hand-off states what it carried** — answering two questions in Record and then
+   watching that modal close, the tab change and a blank sheet open was the same trip going
+   unacknowledged. There is no sponsor dropdown to restore there: a promise always starts a NEW
+   sponsorship, because the sponsor and the pledge are one record.
+
+**Verification:** types clean · lint 0 errors · 2841/2841 unit tests · spelling · dead-selector ·
+demo sandboxes · repo root · the rendered layout gate green on `coach-fundraiser` /
+`coach-fundraisers` at 361/390/768/1440. ⚠ **Not covered:** the new empty-state copy has no
+automated test (the UAT fixture always leaves players unlogged), and the rendered sweep opens the
+Payables *list*, never the inside of a bill panel, so the restyled Remove there was verified through
+its tap-floor class rather than by measurement.
+
+**Prior state of this entry:** BUILT 2026-09-02, awaiting QA.
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4147168c-f9a2-4450-885a-b7c6208a0a77`
 — checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
