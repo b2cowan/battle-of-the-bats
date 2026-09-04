@@ -190,34 +190,18 @@ const SITES: Site[] = [
      construction rather than by convention. A money panel that wants a title is asking to be a
      route again. The `embedded` variant itself survives on `CoachPageHeader` with zero call sites —
      see the note in its docblock; retiring the shape is a design decision, not a sweep. */
-  {
-    /* ⚖ ONE COMMITMENT — a SUB-VIEW of the Payables tab (`?bill=`), not a page beside the hub,
-       matching what `?fundraiser=` already does one tab away. Nested, so the hub's header keeps
-       naming the screen and there is no second "?".
+  /* ⚰⚰ `CommitmentView.tsx` ("Money → Payables → one commitment") LEFT THIS INVENTORY on
+     2026-09-04 (List · Room · Question Phase C): the team bill became a ROOM over the Ledger, so it
+     renders `RoomShell` and no `CoachPageHeader` at all. Its row recorded a `nested` header with an
+     empty actions slot and a back arrow — the arrow retired with the page, and a room's title is
+     the shell's, named by `ariaLabel` and drawn by `CoachModalHeader`.
+     ⚠ ROOMS ARE OUT OF THIS FILE'S SCOPE BY CONSTRUCTION, and were before this: the drive and
+     sponsor rooms have never had rows here either. What this inventory pins is which PAGE headers
+     exist and what their actions slot may hold. If a room is ever given a header of its own, that
+     is the decision this file exists to catch — but it would be a `CoachPageHeader` call site, and
+     the scanner below would find it.
 
-       ⚖⚖ **IT MOVED OUT OF `expenses/panel.tsx` AND ITS ACTIONS SLOT IS NOW EMPTY** (Payables
-       Rebuild Part B, owner approval 2026-08-26). Two changes in one row, both deliberate:
-
-       · **The file.** The page owns live fields now — the bill's name, filing, payee, tags, method
-         and note, each saving itself — so it is its own component rather than four hundred lines
-         inside a panel that was already the largest file in the portal. The panel keeps everything
-         that asks a question or moves money (the schedule, Record, the scoped Change/Remove, the
-         payments and their undo) and passes it in as children. The panel therefore drops from two
-         header call sites to one; its remaining row above is the money faces' own header.
-
-       · **`actions: null`, and this is the phase.** The slot held `Edit details`, which opened a
-         window onto the six fields the page now renders in place — a screen that displayed them and
-         then asked a coach to open a form to change them. The other two actions moved in Part A
-         rather than vanishing: `Record` to the rows that name a payment, `Add an installment` under
-         the schedule it adds to. What is left in the header is the way back, and only that.
-
-       ⚠ `phoneInTitleRow` went with the actions — the flag exists to give a phone's title line a
-       corner for ONE button, and there is no button. */
-    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/CommitmentView.tsx', occurrence: 0,
-    screen: 'Money → Payables → one commitment',
-    variant: 'nested', helpHost: 'masthead', actions: null,
-  },
-  /* ⚰ `fundraisers/detail.tsx` ("Money → Fundraising → one drive") LEFT THIS INVENTORY on
+     ⚰ `fundraisers/detail.tsx` ("Money → Fundraising → one drive") LEFT THIS INVENTORY on
      2026-08-31: the drive drill-in retired when drives joined sponsors in expanding their band
      row in place, and the file was deleted with it. The band (`fundraisers/DriveBand.tsx`)
      renders no CoachPageHeader of its own — the hub's header one level up names the screen. */

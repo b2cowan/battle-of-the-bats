@@ -3,9 +3,13 @@
 **Status:** owner-ruled 2026-09-02 (D1–D7, all stamped). **Phase 0 (the room shell) + Phase A (the
 Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 owed**
 (walk artifact `4bce9d5d`). **Phase B (Fundraising) BUILT 2026-09-02 on dev, committed `e34af83a` 2026-09-03 — see §3.1 for what
-shipped and the nine mockup deviations; Owner QA §135 owed** (its walk artifact and the mockup-gate
-comparison are linked from the ledger section). Phases C, D open. The layout reseed + sweep of
-`coach-club` / `coach-club-bill` is owed (needs a quiet dev server).
+shipped and the nine mockup deviations; Owner QA §135 ✅ PASSED 36/36**, eight walk rulings built the
+same day (`dc1756d6`) and a ninth on read-back (`4a9d25a5`). **Phase C (the Ledger's bill room)
+BUILT 2026-09-04 on dev — see §4.1 for what shipped and its seven deviations; Owner QA §141 owed.**
+**Phase D (dues) needs RE-PLANNING before anything is built** — §5's four items pre-date the
+2026-09-03/04 dues rebuild (§136, §137, and the "set once, chase weekly" stream), so some are done,
+moot or contradicted. The layout reseed + sweep of `coach-club` / `coach-club-bill` is owed (needs a
+quiet dev server).
 **Ruling record:** `memory/design_decisions.md` 2026-09-02 entry "LIST · ROOM · QUESTION" (binding; names the reversals).
 **Mockups (the spec, rulings stamped in place):** `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` ("List, Room, Question", rounds 1–2c).
 **PM brief:** `COACH_MONEY_LIST_ROOM_QUESTION_PM_BRIEF.md`. **Build session opens with:**
@@ -200,6 +204,106 @@ sub-view whose styles are named "drawer" — this is a re-home, not a rebuild):
   - field column cap reconciled 34rem → 30rem;
   - the required-but-unmarked Name gets a decided treatment at build (title-slot exemption or a
     plain `*`).
+
+### 4.1 — BUILT (2026-09-04, on dev; Owner QA §141 owed)
+
+**The bill's page is gone and its room is over the Ledger.** `CommitmentView` now renders `RoomShell`
+(`sentinel="bill"`), and the panel's `{!focusBillId && …}` gate — *"the list and its chrome do not
+exist on a commitment's own page"* — was deleted, so the Ledger stays mounted underneath with its
+filters and scroll intact. `?bill=` is written through `useRoomAddress('bill')`; the panel's own
+`useSearchParams` read, both `router.push`es, `useRouter` itself and `billBackTo` all retired with
+it. Deep links unchanged.
+
+**What shipped, in the room's order:** title = the autosaving name field (title-slot exemption,
+below) · status chip "N of M paid" · tiles **Total · Paid · Left · Next due** · the **Schedule**
+first, inline, with per-piece Record / Change / Remove and the inline add row · **Details** (Filing ·
+Payee · Tags · How · Notes) under its own section label · **History** holding the recorded payments,
+closed at rest and auto-open when a payment lands this session · one lime **Record** door,
+pre-answered to the bill · foot = `GuardedDelete` "Delete this bill" + the save strip + named
+Prev/Next ("3 of 5 bills"). Read-only money staff get the same room with values and no write control.
+
+**Three field fixes, same pass:** `addAsChip` deleted outright from `TagSearchCombobox` (prop, branch
+and `.tagComboAdd`) · `paperGround` passed on the record view's Filing picker · `.commitFields`
+34rem → **30rem**. `.commitStanding`, `.payDrawerTotal` and `.commitFoot` retired with the page shape.
+
+**Two things found while building, both fixed here:**
+- **`InstallmentScopeSheet` had no accessibility floor at all** — it hand-rolled `.modalOverlay` +
+  `.modal` with no dialog role, label, Escape, focus trap or focus restore. Survivable over a page;
+  over a room it is not, because the floor's last-opened rule is the only thing that makes a bare
+  Escape peel ONE layer. It stands in `QuestionShell` now, which is what §4 asked for anyway.
+- **`CoachCollapseSection` seeds `open` once, at mount**, so a History fold asked to open itself
+  *after* a payment landed simply would not. `RoomShell` re-keys the section on `defaultOpen`.
+
+**Deviations from the prompt and the mockup, each with the ruling that forced it:**
+
+| # | Deviation | Why |
+|---|---|---|
+| D-C1 | The Payables list's trailing column keeps **Record beside the chevron** rather than the chevron alone | Owner ruling 2026-09-04, asked before building. §134's argument does not carry: that pill fired on a MINORITY of rows, so one exception sized the column for all; Record fires on nearly every unpaid row, and the By-due-date lens is the month-end instrument — the room's walk steps between BILLS, not installments, so moving the act inside costs two taps per payment. **The chevron was added** on both row shapes (bill header and piece), right-aligned in `.listRowActions`, corner-pinned on a card — closing a real accessibility gap: a `<tr onClick>` is mouse-only. `Club →` folded into the same chevron with an honest accessible name. |
+| D-C2 | "Next due" reads **"Paid off"**, not the prompt's suggested "Paid in full" | The club bill's room got here first and already says "Paid off" for the same state. Two rooms, one word. |
+| D-C3 | The name field takes **no required marker** | The 2026-09-03 title-slot ruling: *a card's lead cell is its TITLE and takes no label.* A `*` beside a heading reads as a footnote. This is the decided treatment for §4's open "required-but-unmarked Name" item. |
+| D-C4 | An **over-payment** gets its own chip — "$X over the total", amber | The mockup drew only "N OF M PAID"; with the tiles reading "Left $0.00" nothing would say where the excess went. Amber not red: over-payment is ACCEPTED by design (R6), so it is worth noticing and is not a failure. |
+| D-C5 | The **Record door is fully locked**, not partially (`lock.asks` unused) | The prompt called it "a lock that spares one question". The bill's branch (`spend`) asks *what did this pay for?*, which the door answers; what stays editable is WHICH INSTALLMENT, and that is allocation rather than identity, so it was never under the lock. Nothing to spare. |
+| D-C6 | `CommitmentView` is **no longer keyed by bill** at its call site | A key remounts `RoomShell`, firing the floor's focus RESTORE on every Prev/Next — focus lands on the list row behind the room and scrolls the Ledger to it. The draft follows the bill through a render-phase change guard instead, and every exit (✕, Escape, backdrop, both arrows) **flushes a pending edit and waits for the verdict**, because a room's ✕ is not a link and `UnsavedChangesGuard` never sees it. |
+| D-C7 | The **Schedule leads the body, Details follows** — the reverse of the page | On the page, the short fixed things sat above and the unbounded schedule took the page scroll. The room's TILES answer "where does this stand" before anything scrolls, so the rule (*what cannot grow sits above what can*) is unbroken while the order flips. Matches the mockup. |
+
+**`/review` (high-risk tier, five lenses) — 18 findings → 9 confirmed and fixed, 3 refuted with the
+ruling that refutes them, 6 advisory/pre-existing.** The nine, because several are shell-level and
+the next room will meet them:
+
+1. **The remove-payment sentence lied on an over-paid bill.** It read `remaining + amount`, and
+   `remaining` is floored at zero by design (R6 accepts over-payment) — so a $100 bill carrying $130
+   promised "$50.00 still owing" where the truth was $20, and past the tipping point promised money
+   owed on a bill that was still over. Re-derived from the standing's own arithmetic. Carried in
+   from the code this phase re-homed, but it now sits inside a confirmation whose whole promise is
+   that its figure and the outcome cannot drift.
+2. **The walk stayed live over an unanswered question.** Prev/Next is a sibling of the doors slot,
+   so the "a question replaces the controls it suspends" CSS never reached it — a coach could step
+   to the next bill and the named-dollar question simply vanished, unanswered and unrecorded. The
+   arrows are now hidden with the doors, and `useDialogFloor` carries the same check for the ←/→
+   KEYS, which no stylesheet can reach.
+3. **"Delete and reverse" was lost** when the foot adopted the shared `GuardedDelete`, which
+   hard-coded "Delete". The label is a `confirmLabel` prop now: pressing it on a bill money has
+   landed on moves cash, and the button should say the bigger of the two things.
+4. **The delete confirmation's two clauses ran together.** `GuardedDelete` wrapped `confirmBody` in
+   a `<p>`, so the cash sentence and the family's-credit sentence — two different consequences —
+   were one hedged paragraph (a `<p>` in a `<p>` is invalid and silently unnests). It is a block
+   now; both consumers are unaffected.
+5. **History re-opened itself on every RETURN to the last-paid bill**, overriding a coach who had
+   collapsed it, because the flag was set and never cleared. It clears when the room moves on —
+   which makes the shell's own claim ("it flips at most twice in a record's life") true.
+6. **A refusal could be swallowed by a tab switch.** The room is unmounted when the coach leaves the
+   Money tab (as every room is, so a hidden panel cannot leave an Escape floor armed elsewhere), and
+   the route guard only intercepts a link while the draft is *dirty*, not while a save is in flight
+   — correct, because interrupting a coach for the ~200ms of an ordinary save is worse. So a refused
+   rename set state on a component that no longer existed. It now reports to the panel, which is
+   still mounted. ⚠ The page had no such hole: it was not gated on the visible tab.
+7. **A standing refusal waved the second exit through.** `leaveFor` skipped its flush when
+   `saveError` was set, so the first ✕ blocked and showed the reason and the second sailed past with
+   the edit unsaved — which is exactly what someone presses when a window will not close. A refusal
+   is a reason to retry, not to stop trying.
+8. **Two writers had no ref latch** (Add an installment, Delete this bill) where Record and Remove
+   already did — the file argues for the latch twice in its own comments; it had not been carried.
+9. **A stalled write could hold every exit shut.** The busy gate is the room's contract and a page's
+   writers gated nothing, so the ceiling arrives with the room: the three writers that feed `busy`
+   now abort at a timeout and say so. ⚠ Aborting is not undoing — it returns the room's controls,
+   not the write.
+
+**Refuted, with the ruling:** *Escape closing the room while a confirmation is open* is the §134/§10
+rider, verified in Chromium at the time — three ways out, and Escape leaves the window. *The save
+strip not standing down during `GuardedDelete`'s own confirm* — the shell's new `:has()` rule
+already hides it. *The tiles disagreeing on a payment targeted at a later installment* is
+`commitmentStanding`'s pour semantics, faithfully reported; not this phase's.
+
+**Same-commit obligations, done:** the `coach-commitment` sweep entry re-pointed to
+`[data-room="bill"][data-room-state="loaded"]` (id deliberately unchanged — the baseline is keyed on
+it) · `tests/uat/scenarios/coach-bill-room.spec.ts` written and RUN (5 tests, all passing) — the
+`?bill=` screen had **no UAT coverage at all** before it · `premium-money-ledger` rewritten for the
+room with keywords and `searchText` (`premium-money-tags` checked: it describes the always-visible
+box already, no change) · `lib/sandbox-chrome.ts` re-read with a dated Phase C note ("Tap any row to
+open the bill behind it" got *more* true, no new stop) · the header-actions guard's
+`CommitmentView` row retired with a headstone (the room draws no `CoachPageHeader`).
+
+---
 
 ## 5. Phase D — Dues fixes (small; may ride any earlier phase)
 

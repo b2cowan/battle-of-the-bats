@@ -99,9 +99,15 @@
 }
 /* ⚠ THE DOORS ARE A GROUP, and the group is what `space-between` pushes right — without this
    wrapper two buttons would spread to the two ends of the row with the facts stranded between
-   them. It also keeps the row correct when there are NO facts: one child, pushed right, exactly
-   as `flex-end` used to do. */
-.actionDoors { display: flex; align-items: center; gap: 0.9rem; flex: none; }
+   them.
+   ⚠⚠ `margin-left: auto` IS NOT BELT-AND-BRACES ON `space-between` — it is the fix for the case
+   that rule cannot handle (found by Phase C, 2026-09-04, the first consumer with NO facts). A
+   comment here used to claim `space-between` "keeps the row correct when there are no facts: one
+   child, pushed right". It does the opposite: with a single child there is no space to distribute,
+   so the doors sat at the START of the row — the bill room's lime Record door landed hard left,
+   under the tiles, where every other room's door is on the right. The drive and sponsor rooms
+   always pass `facts`, which is why two rooms shipped over it without anyone seeing it. */
+.actionDoors { display: flex; align-items: center; gap: 0.9rem; flex: none; margin-left: auto; }
 /* ONE LINE, ALWAYS. A sponsor note is free text with no length cap, so this cannot be allowed to
    wrap: the row is the doors' row, and a note that grew it would have cost more than the line it
    saved. `min-width: 0` is what lets a flex child shrink below its content and actually
@@ -143,9 +149,33 @@
 }
 .footDoors { display: flex; align-items: center; gap: 0.9rem; min-width: 0; flex: 1 1 auto; }
 /* A shell contract, not one consumer's control: any `alertdialog` a consumer docks in the foot (a
-   delete's reason or confirm today) takes the whole width while it is open and the walk wraps
-   beneath it, so a named-dollar question is never squeezed beside two arrows. */
+   delete's reason or confirm, a payment's Remove) takes the whole width while it is open and the
+   walk wraps beneath it, so a named-dollar question is never squeezed beside two arrows. */
 .footDoors > [role="alertdialog"] { flex: 1 1 100%; margin: 0; }
+/* ⚖⚖ AND THE QUESTION REPLACES THE CONTROLS IT SUSPENDS (owner, §134 walk 2026-09-03; plan §10).
+   *A question and the controls it suspends must occupy the same place.* The club request's
+   Withdraw proved the other half of that rule expensively: its footer's buttons were DISABLED
+   while the question sat off-screen in the scrolling body, so the only control still visible was
+   dead and the sentence explaining why was somewhere the coach had to go looking for. Placement is
+   what makes a suspension legible — disabling a control elsewhere is not a substitute.
+   Once the question owns this band there is nothing left to disable, because nothing competing is
+   rendered: the bill room's Delete and its save strip simply stand down while a payment's Remove
+   is being answered, and come back when it is.
+   ⚠ `:has()` rather than a modifier class, for the reason the modal's own `:has(.modalFooter)`
+   rule states: the decision is "does this band currently HOLD a question?", which is a fact about
+   the tree and not a mode a consumer should have to remember to declare. Every consumer that docks
+   an `alertdialog` here gets it for free, which is the point of stating it once.
+   ⚠ Do NOT pair this with a `disabled` on the hidden controls — that is the defect, not the belt. */
+.footDoors:has(> [role="alertdialog"]) > :not([role="alertdialog"]) { display: none; }
+/* ⚠⚠ AND THE WALK IS SUSPENDED WITH THEM (`/review`, 2026-09-04). Prev/Next is a sibling of the
+   doors slot, not a child, so the rule above never reached it — and a confirmation is a question
+   about the record ON SCREEN. Stepping to the next one answered it by abandoning it: the dialog
+   vanished, nothing was written, and nothing said so. `display: none` is deliberate over
+   `disabled` — it takes the arrows out of the tab order as well as off the screen, which is the
+   same "the question replaces the controls it suspends" rule, not a second one.
+   ⚠ The KEYBOARD half cannot live here: ← / → are bound by `useDialogFloor`, which no stylesheet
+   can reach. It carries the identical check. Change one, change both. */
+.foot:has(.footDoors > [role="alertdialog"]) > .nav { display: none; }
 .nav {
   display: flex;
   align-items: center;

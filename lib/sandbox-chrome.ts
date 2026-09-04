@@ -644,7 +644,24 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          exactly what happens, and no dock line or tour step names the Club tab's rows, folds or
          buttons, so nothing here went stale. Should a moment show it? The seeded world
          (MIDSEASON_CLUB_MONEY) renders the new shape by itself, and the `ea8ddd14` cap says no
-         clause is added — if the owner wants the room narrated, swap a clause. */
+         clause is added — if the owner wants the room narrated, swap a clause.
+
+         ⚠⚠ RE-READ FOR LIST · ROOM · QUESTION PHASE C (2026-09-04 — the TEAM bill stopped being a
+         `?bill=` sub-view that replaced the Ledger and became a ROOM over it). Both of CLAUDE.md's
+         questions, answered:
+           · *Are the existing sentences still true?* **Yes, and one of them got MORE true.** "Tap
+             any row to open the bill behind it" described a tap that used to REPLACE this book —
+             the register, its filters and the prospect's scroll all vanished, and the way back was
+             a labelled arrow. The same tap now opens a panel OVER the book, and closing it returns
+             the prospect to the row they tapped. Nothing in the sentence has to change; what it
+             promises simply arrived. The cash-identity claim above is untouched — a room is where
+             a bill is READ, and no arithmetic moved.
+           · *Should a demo moment show this?* **Not a new stop.** The `ea8ddd14` cap holds this
+             step at a hook plus one proof point, and the room is not a claim a prospect needs
+             narrated — it is the thing that stops the demo losing their place when they follow the
+             instruction the sentence already gives them. The seeded world renders it by itself.
+           ⚠ The one thing to watch on the NEXT change here: if the tour ever gains a step that
+           tells a prospect to press "back to Ledger", that label no longer exists. */
       /* ⚠ RE-READ FOR THE PAYABLES→LEDGER FOLD (2026-08-28), per CLAUDE.md's two questions:
            · *Are the existing sentences still true?* Yes — the tab is named Ledger now and opens on
              the same Timeline this step describes (`view` stated explicitly so a prospect's

@@ -7599,18 +7599,11 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .tagComboChipX { cursor: pointer; opacity: 0.7; font-weight: 700; line-height: 1; background: none; border: none; color: inherit; padding: 0; }
 .tagComboChipX:hover { opacity: 1; }
-/* The `＋` that stands in for the search box in `addAsChip` mode — a chip among chips, so adding a
-   tag costs no row of its own. ⚠ It is a real control on a NEW surface, so it takes the tap floor
-   here rather than inheriting one: the chips beside it are text and have never needed a height. */
-.tagComboAdd {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 0 0.45rem; min-height: 1.45rem; border-radius: 999px; cursor: pointer;
-  background: none; border: 1px dashed var(--border-2); color: var(--text-tertiary);
-}
-.tagComboAdd:hover { border-color: var(--text-tertiary); color: var(--text-secondary); }
-@media (max-width: 768px) {
-  .tagComboAdd { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
-}
+/* ⚰ `.tagComboAdd` STOOD HERE AND IS DELETED WITH THE `addAsChip` PROP IT DRESSED (List · Room ·
+   Question Phase C, 2026-09-04; mockup R1). It was the `＋` chip that stood in for the search box
+   on the bill's fields block — the only place in the product a tag picker hid its own input. Its
+   headstone is here so nobody re-derives the rule for a control that no longer exists; the
+   reversal's reasoning is on the prop's own headstone in `TagSearchCombobox.tsx`. */
 .tagComboDropdown {
   position: absolute; left: 0; right: 0; top: calc(100% + 4px);
   background: var(--card-bg); border: 1px solid var(--border-2);
@@ -12070,12 +12063,10 @@ button.gdChip[aria-pressed='true'] {
   .paySchedCell:empty { display: none; }
 }
 
-.payDrawerTotal {
-  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-  margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--border-2);
-  font-size: var(--type-body); color: var(--text-secondary);
-}
-.payDrawerTotal strong { font-size: var(--type-heading); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+/* ⚰ `.payDrawerTotal` STOOD HERE AND IS DELETED WITH ITS LAST CALLER (List · Room · Question
+   Phase C, 2026-09-04). It was the drawer's closing band — "Still owing" on the left, the figure on
+   the right, above a hairline. The bill's room answers that in its TILES, which the shell owns and
+   which sit above everything that scrolls, so the band has no surface left to close. */
 /* ⚖ WHAT THE BILL IS — payee, tags, how it is paid, the note (owner walk 2026-08-26). The drawer
    used to show the schedule and nothing else, so a coach had to open EDIT to read a payee or a tag,
    and a read-only money assistant — who has no Edit button — could not read them at all.
@@ -12156,34 +12147,10 @@ button.gdChip[aria-pressed='true'] {
   .payDrawerFacts dt { padding-top: 0.4rem; }
 }
 
-/* The standing figure when it is the FIRST thing under the commitment page's header (Part B
-   correction, 2026-08-27). `.payDrawerTotal` carries a top hairline because it was designed to
-   FOLLOW content; at the top of a page it lands directly under the header's own rule and prints two
-   hairlines a few pixels apart.
-   ⚠ TWO CLASSES, NOT ONE. A bare `.commitStanding` ties at specificity with `.payDrawerTotal` and
-   would be decided by which rule sits later in this file — the silent-no-op shape this stylesheet
-   has been bitten by before. Compounded, it outranks and stays outranking. */
-/* ⚠⚠ AND IT ENDS WHERE THE FIELDS END (owner, §114 walk 2026-08-27: *"that number looks like it is
-   just floating by itself"*). The band is `space-between` across its container, so once the fields
-   below were capped the figure kept going — pinned to the far right of a 1,900px page with three
-   feet of nothing between it and the words it belongs to. A number that far from its own label has
-   stopped being a pair.
-   ⚠ THE WIDTH IS THE FIELD BLOCK'S, WRITTEN AS ITS ARITHMETIC rather than as a second magic number:
-   label lane + gap + value cap, the three values `.commitFields` is built from. Change the grid and
-   this follows, instead of drifting a few pixels out and looking like a mistake nobody made. */
-/* ⚠⚠ IT TAKES THE FIELD GRID, NOT `space-between` (owner, §114 walk 2026-08-27, second pass). The
-   band inherited a flex row that pushed the figure to the far edge of whatever contained it — first
-   the whole page, then, once capped, the far edge of the block. Both readings put a gap between
-   "Still owing" and its own number that nothing occupies, and a number that far from its label has
-   stopped being a pair.
-   Same two columns as `.commitFields`, so the figure begins exactly where every field value begins
-   and the block has ONE left edge from the standing figure down to the notes box. The label lane
-   does the separating; no space-between required. */
-.payDrawerTotal.commitStanding {
-  margin-top: 0.45rem; padding-top: 0; border-top: 0;
-  display: grid; grid-template-columns: 6rem minmax(0, 34rem);
-  gap: 0.85rem; justify-content: start; align-items: baseline;
-}
+/* ⚰ `.commitStanding` STOOD HERE AND IS DELETED (List · Room · Question Phase C, 2026-09-04). It
+   dressed the bill page's one-line "Still owing $X" band so its figure lined up with the fields
+   below it. The room answers that question in FOUR tiles above everything that scrolls — Total,
+   Paid, Left, Next due — so the band and the alignment problem it solved are both gone. */
 
 /* ── The commitment page's own fields (Payables Rebuild — Part B) ─────────────────────────────
    ⚖ THIS REPLACES `.payDrawerFacts` ON THAT SCREEN, and the difference is the whole phase: that
@@ -12197,11 +12164,14 @@ button.gdChip[aria-pressed='true'] {
    one-word method sat in boxes ~1,350px wide — the page reading as a full-bleed form rather than a
    record with a few short facts on it. These are SHORT values; a field wider than anything that
    will ever be typed into it is a field that looks broken.
-   ⚠ 34rem, not a percentage: a cap in `rem` holds at every window width, where a percentage simply
+   ⚠ A cap in `rem`, not a percentage: it holds at every window width, where a percentage simply
    re-expands on a wide screen — which is the thing being fixed. The notes box takes the same cap so
-   the block has one right edge rather than a ragged one. */
+   the block has one right edge rather than a ragged one.
+   ⚠⚠ 34rem → **30rem** (mockup R2, Phase C): 30rem is the house cap every other live field block
+   in the portal already uses (`.clubLiveField`), and this block was the one that had picked its own
+   number. One cap, or it is not a cap. */
 .commitFields {
-  display: grid; grid-template-columns: 6rem minmax(0, 34rem); gap: 0.55rem 0.85rem;
+  display: grid; grid-template-columns: 6rem minmax(0, 30rem); gap: 0.55rem 0.85rem;
   margin: 0.9rem 0 0.35rem; font-size: var(--type-body); align-items: start;
 }
 .commitFields dt {
@@ -12275,26 +12245,23 @@ button.gdChip[aria-pressed='true'] {
    ⚖ THE SAVE STATUS SHARES THIS ROW (owner, §114 walk 2026-08-27): Delete left, "Saved" right, on
    the one line that closes the page. It had a row of its own and did not earn one. `.saveStatus`
    pushes itself right with its own `margin-left: auto`, so nothing here has to place it. */
-.commitFoot {
-  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
-  margin-top: 1.1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-2);
-  min-height: 1.9rem;
-}
-/* Shared with the sheets’ own closing row (RecordEditorFooter): while the delete question is
-   open it takes the whole footer. A COMMA LIST, not :where() — :where() carries zero specificity
-   and would quietly demote this shipped rule. */
-.commitFoot .dangerConfirm,
+/* ⚰ `.commitFoot` STOOD HERE AND IS DELETED (List · Room · Question Phase C, 2026-09-04). It was
+   the bill PAGE's closing line — Delete left, the save status right, above a rule. The room's own
+   pinned foot is that line now, and it never scrolls away, which is what the page's version was
+   reaching for with a border. `RoomShell.module.css` owns the band, its tap floor and its rule
+   that a question docks in it. */
+/* While a delete question is open it takes the whole footer. A COMMA LIST, not :where() —
+   :where() carries zero specificity and would quietly demote this shipped rule. */
 .modalFooter .dangerConfirm { margin: 0; width: 100%; }
-/* Same 768 floor as the fields above, and for the same reason — this control moved out of a modal
+/* Same 768 floor the fields above take, and for the same reason — this control moved out of a modal
    footer onto a new surface, which is precisely where a floor gets lost. */
 @media (max-width: 768px) {
-  .commitFoot .deleteRecordBtn,
   .modalFooter .deleteRecordBtn { min-height: var(--tap-min, 44px); }
 }
 
 /* ⚖ `.commitSaveBar` IS GONE — the save status shares the delete row now (owner, 2026-08-27).
    Its headstone is here so the next reader does not re-add a strip of its own: the status belongs
-   on the line that closes the page, not on a line below it. */
+   on the line that closes the record, not on a line below it. */
 
 @media (max-width: 640px) {
   /* ⚠ THE PHONE PASS (§64 Part C's last step: rows become cards, group headers do not eat the

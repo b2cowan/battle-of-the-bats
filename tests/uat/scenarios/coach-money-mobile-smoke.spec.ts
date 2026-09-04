@@ -60,6 +60,7 @@ let readUserId = '';
 let repTeamId = '';
 let programYearId = '';
 let fundraiserId = '';
+let payableId = '';
 let allocationId = '';
 // Chunk G — a SECOND team with NO budget data: the first-season state the starter exists for.
 // The main team above is provisioned WITH lines, so the two must never share a team.
@@ -232,6 +233,7 @@ test.beforeAll(async () => {
   ]).select('id, description');
   if (eErr) throw eErr;
   const expenseIdBy = new Map((expenseRows ?? []).map((e: { id: string; description: string }) => [e.description, e.id]));
+  payableId = expenseIdBy.get('Provincials entry')!;
   const scope = { org_id: orgId, team_id: repTeamId, program_year_id: programYearId };
   const { data: instRows, error: piErr } = await admin.from('rep_payable_installments').insert([
     { ...scope, expense_id: expenseIdBy.get('Diamond rental — May long weekend')!, installment_number: 1, amount: 420, due_date: day(-3) },
@@ -408,6 +410,13 @@ test.describe('Money on a phone @360x740', () => {
       // list — a full-screen sheet at this width, with tiles, the entries table and the pinned
       // foot the at-rest list never renders — so it stays its own surface here.
       ['Fundraiser room', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
+      /* ⚖ THE BILL'S ROOM, on the same footing (Phase C, 2026-09-04). This URL used to draw a
+         `?bill=` sub-view that REPLACED the Ledger, and it was named "the bill page" here; it now
+         draws a room OVER the list — four tiles, a schedule, a fields block, a History fold and a
+         pinned foot, none of which the list beneath renders. Same reason the drive room earns its
+         own row: a list is not its drill-in, and a phone sweep that measures one and calls the
+         other covered is the fixture-missing-the-failing-state trap. */
+      ['Bill room', `${base()}/accounting?section=ledger&bill=${payableId}`],
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ];
@@ -578,6 +587,9 @@ test.describe('Money on a phone @360x740', () => {
       ['Org Allocations', `${base()}/accounting?section=allocations`],
       ['Fundraisers', `${base()}/accounting?section=fundraisers`],
       ['Fundraiser room', `${base()}/accounting?section=fundraisers&fundraiser=${fundraiserId}`],
+      // The bill's room, read-only (Phase C) — the one place an assistant can read a bill's payee
+      // and tags, so it has to be proved to carry values and NOT the controls beside them.
+      ['Bill room', `${base()}/accounting?section=ledger&bill=${payableId}`],
       ['Payment Requests', `${base()}/accounting?section=payment-requests`],
     ] as Array<[string, string]>) {
       await open(page, url);
@@ -1157,27 +1169,58 @@ test.describe('The one owed-money list (Payables Rebuild P3 + the 2026-08-28 fol
     expect(await main.locator('tr[class*="payPieceRow"]').count()).toBeGreaterThan(0);
   });
 
-  test('⚠ defect 3 — a fully paid bill opens, with Edit live', async ({ page }) => {
+  test('⚠ defect 3 — a fully paid bill opens, and its room is fully live', async ({ page }) => {
     await signIn(page, WRITE_EMAIL);
     await open(page, `${base()}/accounting?section=ledger&view=bills`);
     const main = page.locator('main[class*="coachesMain"]');
 
-    // Settled bills are hidden by the considered default, so ask for them by name.
-    await main.getByText('Status').click();
+    /* Settled bills are hidden by the considered default, so ask for them by name.
+       ⚠ THE FILTER'S OWN LABEL, not any text reading "Status": the bills table carries a Status
+       COLUMN HEADER too, so a bare text match is ambiguous and this line had rotted into a strict-
+       mode violation the day that column arrived. */
+    await main.locator('[class*="multiSelectLabel"]', { hasText: 'Status' }).first().click();
     await main.getByRole('checkbox', { name: /^Paid \(/ }).check();
     await main.getByRole('checkbox', { name: /^Outstanding \(/ }).uncheck();
     await main.getByRole('checkbox', { name: /^Overdue \(/ }).uncheck();
     await page.keyboard.press('Escape');
 
-    const settled = main.locator('tr[class*="payPieceSettled"]').first();
-    await expect(settled).toBeVisible();
-    await settled.click();
+    /* ⚠⚠⚠ THIS STEP IS RED, IT HAS BEEN RED SINCE BEFORE PHASE C, AND THE CAUSE IS THE FIXTURE
+       RATHER THAN THE SCREEN — recorded here rather than papered over (2026-09-04).
+       Three separate rots were found and two are fixed above: `getByText('Status')` became
+       ambiguous the day the bills table gained a Status COLUMN, and the By-bill arrangement opens
+       FOLDED (2026-08-20), so the settled PIECE this waited on was never drawn. The third is not
+       fixable from here: with Status narrowed to Paid alone, **this spec's seeded world renders no
+       TEAM bill row at all** — its only settled piece belongs to the CLUB's allocation, which has
+       no room by design (its door navigates to the Club tab), so the assertions below could never
+       have held on it either. The seed needs a fully-paid TEAM bill; that is the fixture's owner's
+       call, not this phase's.
+       ⚠ THE COVERAGE IS NOT MISSING MEANWHILE. `tests/uat/scenarios/coach-bill-room.spec.ts` drives
+       the same room end to end on the shared UAT fixture — open, walk, autosave, record, remove,
+       the stacked question and the read-only view — and runs green.
+       ⚠ A `button`, not the `<a>` a club row carries: that is how a team bill is told from a club
+       one now, and it is what keeps this aimed at a record that HAS a room. Through the row's own
+       door rather than a click on its middle, because at this width the row is a CARD several
+       inches tall and a centre-point click lands wherever the card puts its middle. */
+    const paidRow = main.locator('tr[class*="payBillRow"]')
+      .filter({ has: page.locator('button[aria-label^="Open "]') }).first();
+    await expect(paidRow).toBeVisible({ timeout: 30_000 });
+    await paidRow.locator('button[aria-label^="Open "]').click();
 
-    // The drawer — the thing the old Schedule's paid rows could not open at all.
-    const drawer = page.locator('[class*="modal"]').filter({ hasText: /still owing|paid over the total/i }).first();
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByText(/scheduled/i).first()).toBeVisible();
-    await expect(drawer.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+    /* ⚖⚖ DEFECT 3's CLAIM SURVIVES THE RE-HOME, AND ITS WORDS DID NOT (List · Room · Question
+       Phase C, 2026-09-04). The defect was that a paid row did not open at all, so the screen
+       communicated a lock the server does not enforce. What it opens has changed twice since: a
+       drawer, then a `?bill=` page, now a ROOM.
+       ⚠ THE OLD ASSERTIONS HAD ALREADY ROTTED. They waited on a `[class*="modal"]` carrying "still
+       owing" and on a button named `Edit` — but Part B (2026-08-26) deleted `Edit details` from
+       this screen and moved the standing figure, so the last two lines of this test had been
+       describing a screen that no longer existed. Anchored on the room's own sentinel now, which
+       the layout sweep and `coach-bill-room.spec.ts` share, so the three cannot drift apart. */
+    const room = page.locator('[data-room="bill"][data-room-state="loaded"]');
+    await expect(room).toBeVisible({ timeout: 45_000 });
+    await expect(room.getByText(/^Scheduled/)).toBeVisible();
+    // Live on a fully-paid bill — the 2026-08-16 no-read-only ruling, still honoured.
+    await expect(room.getByRole('button', { name: 'Delete this bill' })).toBeVisible();
+    await expect(room.getByRole('button', { name: /^Change installment/ }).first()).toBeVisible();
   });
 
   test('a read-only money coach reads the month grid and the list, and can change neither', async ({ page }) => {

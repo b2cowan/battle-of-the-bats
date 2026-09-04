@@ -44,6 +44,7 @@ export default function GuardedDelete({
   refusal,
   confirmTitle,
   confirmBody,
+  confirmLabel = 'Delete',
   deleting = false,
   onDelete,
 }: {
@@ -54,6 +55,13 @@ export default function GuardedDelete({
   confirmTitle: string;
   /** What the delete actually does, in the coach's own figures. Never a bare "Are you sure?". */
   confirmBody: ReactNode;
+  /**
+   * The confirming button's own words, when "Delete" is not the whole truth — a bill money has
+   * landed on reads **"Delete and reverse"**, because pressing it moves cash as well as removing a
+   * record (`/review`, 2026-09-04: the label was lost when the bill's foot adopted this control).
+   * ⚠ The DOOR's label is `label`; this is the ANSWER's. Default "Delete".
+   */
+  confirmLabel?: string;
   deleting?: boolean;
   onDelete: () => void;
 }) {
@@ -86,13 +94,17 @@ export default function GuardedDelete({
     return (
       <div className={styles.dangerConfirm} role="alertdialog" aria-label={confirmTitle}>
         <p className={styles.dangerConfirmTitle}>{confirmTitle}</p>
-        <p className={styles.dangerConfirmBody}>{confirmBody}</p>
+        {/* ⚠ A DIV, NOT A `<p>` (`/review`, 2026-09-04). A consumer whose consequence has TWO
+            clauses — money coming back AND a family's credit going — needs two paragraphs, and a
+            `<p>` inside a `<p>` is invalid markup the browser silently unnests, running the two
+            sentences together. Same class, same look; the block simply may hold blocks. */}
+        <div className={styles.dangerConfirmBody}>{confirmBody}</div>
         <div className={styles.dangerConfirmActions}>
           <button type="button" className={styles.btnGhost} disabled={deleting} onClick={() => setMode('rest')}>
             Keep it
           </button>
           <button type="button" className={styles.btnDanger} disabled={deleting} onClick={onDelete}>
-            {deleting ? 'Deleting…' : 'Delete'}
+            {deleting ? 'Deleting…' : confirmLabel}
           </button>
         </div>
       </div>

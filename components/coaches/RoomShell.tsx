@@ -189,8 +189,16 @@ export default function RoomShell({
           {history && (
             <div className={s.history}>
               {/* The portal's own collapsible section, closed by default — the record's table is
-                  the room's one open view, and history is read on demand. */}
+                  the room's one open view, and history is read on demand.
+                  ⚠⚠ KEYED ON `defaultOpen`, AND THAT IS NOT A TIDY-UP (Phase C). The section seeds
+                  its own `open` from `defaultOpen` ONCE, at mount — right for a page section, and
+                  useless here: the room stays mounted while a coach records a payment, so a fold
+                  asked to open itself AFTER the fact simply would not. Re-keying remounts it in the
+                  state the consumer is now asking for. It flips at most twice in a record's life
+                  (a payment lands; the walk moves to another record), and the consequence of the
+                  second flip is exactly right — the next record's history opens closed. */}
               <CoachCollapseSection
+                key={history.defaultOpen ? 'open' : 'shut'}
                 sectionId={`${sentinel ?? 'room'}-history`}
                 title="History"
                 meta={history.meta}

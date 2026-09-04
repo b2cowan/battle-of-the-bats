@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -14,6 +14,9 @@ import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel'
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import SponsorCreditPlanEditor from '@/components/coaches/SponsorCreditPlanEditor';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { useRoomAddress } from '@/components/coaches/useRoomAddress';
+import { roomNeighbours } from '@/lib/room-neighbours';
+import type { RoomTile } from '@/components/coaches/RoomShell';
 
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
@@ -260,6 +263,37 @@ const PAY_STATUS_REST: ReadonlySet<string> = new Set(PAYABLE_STATUS_DEFAULT);
 const REGISTER_STATUS_REST: ReadonlySet<string> = new Set(['actual', 'overdue']);
 
 const fmtDate = (s: string | null) => formatStoredDate(s);
+
+/**
+ * ⚠⚠ A WRITE THAT CANNOT HOLD THE ROOM SHUT (`/review`, 2026-09-04). Every writer the bill's room
+ * owns reports itself into `RoomShell`'s `busy`, and while that is true the room refuses Escape,
+ * the ✕, the backdrop and the walk — deliberately, so a surface is never torn down under its own
+ * request. The cost of that contract is that a request which never resolves (a stalled connection
+ * that throws no error) leaves every exit dead with no cancel anywhere on screen.
+ *
+ * A page did not have this problem: its writers gated nothing. So the ceiling arrives with the
+ * room. `save()` in `CommitmentView` already carried one for the same reason; this is that belt,
+ * shared by the writers the panel owns.
+ *
+ * ⚠ ABORTING IS NOT UNDOING — a request the server already received still lands. The ceiling
+ * exists to return the ROOM's controls to the coach, not to cancel the write; the reload that
+ * follows any exit is what tells them which way it went.
+ */
+const ROOM_WRITE_TIMEOUT_MS = 20_000;
+async function roomWrite(url: string, init: RequestInit): Promise<Response> {
+  const abort = new AbortController();
+  const ceiling = setTimeout(() => abort.abort(), ROOM_WRITE_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: abort.signal });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error('That took too long to save — check your connection and try again.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(ceiling);
+  }
+}
 
 /* ⚠ The Date pill's memory is keyed by TEAM ONLY, no `programYearId` — deliberate, unlike the
    sibling money panels' per-season prefs: a date-viewing habit is not season-shaped data, and a
@@ -1450,12 +1484,16 @@ function MoneyRecordsPanel({
 
   /* Nav-hide + body-scroll-lock registration for the record modal and the scope editor — one
      registration, any door.
-     ⚠⚠ THE COMMITMENT IS NO LONGER ONE OF THEM (2026-08-26). It was a modal and registered here;
-     it is a sub-view of the Payables tab now, so it must NOT hide the nav or lock the body — it is
-     a screen a coach scrolls, and the whole reason it stopped being a modal is that its schedule
-     can run longer than a viewport. Leaving it registered would have locked the page it needs to
-     scroll. */
-  useOverlayOpen(formOpen || scopeEdit !== null);
+     ⚖⚖ THE BILL IS ONE AGAIN, AND IT REGISTERS ITSELF (List · Room · Question Phase C, 2026-09-04).
+     The 2026-08-26 note here read "the commitment is no longer one of them… it is a sub-view of the
+     Payables tab now, so it must NOT hide the nav or lock the body". That was right for a PAGE, and
+     the room reverses it: `RoomShell` holds the counter for every room, and the room has its own
+     internal scroll, so locking the body behind it is exactly what should happen.
+     ⚠ THE SCOPE SHEET LEFT THIS LINE FOR THE SAME REASON (`/review`, 2026-09-04). It moved into
+     `QuestionShell`, which registers it — counting it here as well double-incremented the shared
+     counter. Harmless while both halves balanced, and precisely the bookkeeping that stops
+     balancing the day one of them is refactored. One registration per overlay, at the overlay. */
+  useOverlayOpen(formOpen);
 
   /* Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to bin it
      silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
@@ -1705,32 +1743,29 @@ function MoneyRecordsPanel({
   }
 
   /**
-   * Open one bill's page, from wherever the coach is standing.
+   * Open one bill's room, from wherever the coach is standing.
    *
-   * ⚖ THE `?from=` ORIGIN PARAM RETIRED WITH THE SECOND TAB (fold, 2026-08-28). Part B added it
-   * because two tabs could open this page and an arrow that always said "Payables" quietly moved
-   * a coach to a tab they were not on. One tab remains, and the arrow returns to the Ledger on
-   * whatever view this device REMEMBERS — which is the view the coach was just reading, because
-   * landing on a view is what writes the memory. The origin bookkeeping's job is done by the
-   * memory now; do not re-add the param without a second tab to need it.
+   * ⚖ THE `?from=` ORIGIN PARAM RETIRED WITH THE SECOND TAB (fold, 2026-08-28); the `backTo` label
+   * it fed retired with the PAGE (Phase C). A room opens over the list the coach is already
+   * reading and closes back onto it, so there is nothing left to name or to return to — which is
+   * what the code's own note about that label being "a fragility" was pointing at.
+   * ⚠ IT SETS THE ADDRESS AND NOTHING ELSE. The `section=ledger` this used to force is already
+   * where the coach is standing; forcing it again would move a coach who opened a bill from the
+   * register's own row onto a different view of the tab.
    */
   function openBillById(expenseId: string) {
-    router.push(moneySectionHref(
-      base, 'ledger',
-      { bill: expenseId },
-      seasonSearchParams.toString(),
-    ));
+    setFocusBillId(expenseId);
   }
 
   /**
-   * Leave a commitment's page for the list behind it.
+   * Leave a bill's room for the list behind it.
    *
-   * ⚠ THE BILL IS GONE BY THE TIME THIS RUNS — a page addressing a record that no longer exists is
-   * an empty screen with a back arrow, reached by the coach's own successful action. Go where they
-   * were going anyway, which is wherever the arrow was already pointing.
+   * ⚠ THE BILL IS GONE BY THE TIME THIS RUNS — a room addressing a record that no longer exists is
+   * an empty overlay, reached by the coach's own successful action. Closing reveals the Ledger,
+   * which was mounted underneath the whole time.
    */
   function leaveBillPage() {
-    router.push(billBackTo.href);
+    setFocusBillId(null);
   }
 
   /**
@@ -1755,7 +1790,7 @@ function MoneyRecordsPanel({
     undoRef.current = true;
     setUndoBusy(payment.id);
     try {
-      const res = await fetch(
+      const res = await roomWrite(
         `/api/coaches/${orgSlug}/teams/${teamId}/expenses/${e.id}/payments/${payment.id}`,
         { method: 'DELETE' });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not undo the payment');
@@ -2293,6 +2328,11 @@ function MoneyRecordsPanel({
         }),
       });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not record the payment');
+    /* ⚖ THE ROOM'S HISTORY FOLD OPENS ITSELF FOR THIS BILL (plan §4). A payment recorded from the
+       room lands in a fold that is closed by default, so without this the coach's own act appears
+       to have produced nothing. Stamped with the bill, not a bare flag: recording on one must not
+       throw the next bill's history open when the walk arrives there. */
+    if (conv.spendExpenseId) setPaidThisSession(conv.spendExpenseId);
     dismissForm();
     await refreshAfterWrite();
   }
@@ -2429,11 +2469,12 @@ function MoneyRecordsPanel({
   // flag, and a closed season no longer renders this screen at all, so a capability check is
   // just a capability check.
   const seasonSearchParams = useSearchParams();
-  /* Navigation, not state: a commitment is a route now (owner ruling 2026-08-26). */
-  const router = useRouter();
+  /* ⚰ `const router = useRouter()` STOOD HERE AND IS DELETED (Phase C). It existed for the two
+     `router.push`es that opened and closed the bill's PAGE; `useRoomAddress` owns the address now,
+     and it `replace`s rather than pushes so opening a record never stacks a history entry. */
   /**
-   * ⚠⚠ ADDRESSED BY `?bill=`, A SUB-VIEW OF THE PAYABLES TAB — not a page beside the hub, and
-   * that correction matters (2026-08-26).
+   * ⚠⚠ ADDRESSED BY `?bill=`, A ROOM OVER THE LEDGER — not a page beside the hub, and not a
+   * sub-view that replaces the list either (List · Room · Question Phase C, 2026-09-02 D4).
    *
    * The first build of this gave a commitment its own ROUTE, on the reasoning that every other
    * coach record with children has one — a game, a practice, a player, a lineup. **That read the
@@ -2442,21 +2483,25 @@ function MoneyRecordsPanel({
    * hub "took the tab row, the archive chip and the Import door with it — the last such exception
    * in Money". A commitment page would have re-created precisely what that sweep removed.
    *
-   * Everything the page shape was chosen FOR survives: it is still a URL, so Back works, a link is
-   * shareable, and the schedule may grow as long as it likes. What it keeps that a page threw away
-   * is the Money hub around it.
-   */
-  const focusBillId = seasonSearchParams.get('bill');
-  /**
-   * Which bill's page this panel is showing.
+   * Everything the page shape was chosen FOR survives: it is still a URL, so a link is shareable
+   * and the schedule may grow as long as it likes. What Phase C adds back is the list — the Ledger
+   * stays mounted BEHIND the room, filters and scroll intact.
    *
-   * ⚠ THE TWO-EDITORS HAZARD THIS LINE USED TO GUARD IS STRUCTURALLY GONE (fold, 2026-08-28).
+   * ⚠⚠ THIS FILE IS THE ONE WRITER OF `?bill=`, THROUGH THE HOOK. Its own `searchParams` read and
+   * its two `router.push`es retired here: `useRoomAddress` replaces rather than pushes (opening and
+   * closing a record must not stack history entries) and preserves every sibling param. The key is
+   * on the hub's `ONE_SHOT_KEYS`, and `tests/unit/room-address-keys-guard.test.ts` fails the build
+   * if a SECOND file ever reads it — the 2026-08-26 "mounted twice" defect, which is also why the
+   * paragraph below still matters.
+   *
+   * ⚠ THE TWO-EDITORS HAZARD THIS USED TO GUARD IS STRUCTURALLY GONE (fold, 2026-08-28).
    * Before the fold, Transactions and Payables were two mounted instances of this component
-   * reading one `?bill=` URL — so an invisible second copy of the bill page ran its own autosave
-   * timers against the same record (Part B's defect fix gated it to one face). One tab, one
-   * instance: the guard's cause retired with the second mount. If a second instance of this panel
-   * is ever mounted again, that hazard comes straight back — re-read Part B (2026-08-26) first.
+   * reading one `?bill=` URL — so an invisible second copy of the bill's editor ran its own
+   * autosave timers against the same record (Part B's defect fix gated it to one face). One tab,
+   * one instance: the guard's cause retired with the second mount. If a second instance of this
+   * panel is ever mounted again, that hazard comes straight back — re-read Part B (2026-08-26).
    */
+  const [focusBillId, setFocusBillId] = useRoomAddress('bill');
   const drawerFor = focusBillId;
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -3474,6 +3519,222 @@ function MoneyRecordsPanel({
   const drawerExpense = drawerFor ? allPayablesRaw.find(e => e.id === drawerFor) ?? null : null;
   const drawerStanding = drawerExpense ? standings[drawerExpense.id] : undefined;
 
+  /* A stale address — a bill from a season the coach has left, one another device just deleted —
+     must not leave a room "open" on nothing. Once the list has loaded without it, the key is
+     dropped, quietly. ⚠ `loading` gates it: dropping the key while the first read is still in
+     flight would close a deep link before its record arrived. */
+  useEffect(() => {
+    if (drawerFor && !loading && !error && !drawerExpense) setFocusBillId(null);
+  }, [drawerFor, loading, error, drawerExpense, setFocusBillId]);
+
+  /**
+   * ⚖ THE HISTORY FOLD OPENS ITSELF WHEN A PAYMENT LANDS THIS SESSION (plan §4), and stays closed
+   * otherwise — the schedule is the room's one open view, and what already happened is read on
+   * demand. Stamped with the BILL, so recording on one bill does not throw the next one's history
+   * open on the way past.
+   */
+  const [paidThisSession, setPaidThisSession] = useState<string | null>(null);
+
+  /**
+   * The open bill's room — its four figures, its status chip and the walk it offers.
+   *
+   * ⚠ THE WALK IS THE LEDGER'S BILLS AS THE COACH SEES THEM, minus the club's: an org allocation is
+   * not the team's record to edit and has no room here (see `PayBill.kind`), so walking onto one
+   * would open an overlay with nothing in it.
+   * ⚠ AND IT FALLS BACK TO EVERY BILL when the open one is not in the filtered list — recording the
+   * last payment under a "Outstanding" filter moves the bill out from under its own walk, and
+   * "0 of N" on the record you are reading is worse than a walk that widened (`/review`, Phase A).
+   */
+  const billRoom = useMemo(() => {
+    if (!drawerExpense) return null;
+    const shown = payBills.filter(b => b.kind !== 'org');
+    const walkList = shown.some(b => b.key === drawerExpense.id)
+      ? shown
+      : allPayablesRaw.map(e => ({ key: e.id, description: e.description }));
+    const walk = roomNeighbours(walkList, drawerExpense.id, b => b.key, b => b.description);
+
+    if (!drawerStanding) return { tiles: [] as RoomTile[], status: null as ReactNode, walk };
+
+    /* ⚠ THE LIST'S OWN CLASSIFIER, not a second reading of `state` (the vocabulary lesson the
+       schedule row already carries): `installmentStatus` is what the Status filter, the row badge
+       and the group headers all agree on, so the chip here cannot say "2 of 3 paid" about pieces
+       the list beneath is counting differently. */
+    const today = tournamentToday();
+    const unpaid = drawerStanding.installments.filter(i => installmentStatus(i, today) !== 'paid');
+    const nextDue = unpaid[0] ?? null;   // `installments` is already in due-date order
+    const paidCount = drawerStanding.installments.length - unpaid.length;
+    const overdue = unpaid.some(i => installmentStatus(i, today) === 'overdue');
+    const tiles: RoomTile[] = [
+      { label: 'Total', value: fmt(drawerStanding.total) },
+      { label: 'Paid', value: fmt(drawerStanding.paid), tone: drawerStanding.paid > 0.005 ? 'good' : undefined },
+      {
+        label: 'Left',
+        value: fmt(drawerStanding.remaining),
+        tone: overdue ? 'danger' : drawerStanding.remaining > 0.005 ? 'warn' : undefined,
+      },
+      {
+        /* ⚠ "Paid off", the CLUB BILL ROOM'S OWN WORD for this state, not a second spelling of it.
+           Two rooms describing one condition two ways is the drift the one-word rule exists to
+           stop, and the club room got here first. */
+        label: 'Next due',
+        value: nextDue ? `${fmtDate(nextDue.dueDate)} · ${fmt(nextDue.remaining)}` : 'Paid off',
+      },
+    ];
+    /* ⚠ THE CHIP COUNTS PIECES, NEVER DOLLARS — "2 of 3 paid" is the mockup's own words, and the
+       dollars are three tiles to its left.
+       ⚠ THE SAME THREE DRESSES THE CLUB BILL'S CHIP WEARS, deliberately: red overdue, green paid,
+       quiet otherwise. Two rooms showing one kind of standing must not do it in two palettes.
+       ⚠ An over-payment gets its own sentence rather than a fourth silent state — the tiles would
+       read "Left $0.00" and say nothing about the excess. AMBER, not red: over-payment is
+       ACCEPTED by design (R6), so it is worth noticing and is not a failure. */
+    const status = drawerStanding.over > 0.005
+      ? <span className={`${styles.badge} ${styles.badgeCompleted}`}>{fmt(drawerStanding.over)} over the total</span>
+      : unpaid.length === 0
+        ? <span className={`${styles.badge} ${styles.badgeApproved}`}>Paid</span>
+        : <span className={`${styles.badge} ${overdue ? styles.badgeOverdue : styles.badgeDraft}`}>
+            {paidCount} of {drawerStanding.installments.length} paid
+          </span>;
+    return { tiles, status, walk };
+  }, [drawerExpense, drawerStanding, payBills, allPayablesRaw]);
+
+  /** The payment this room is asking about, read from the OPEN bill's standing — an id left over
+   *  from a bill the walk has moved off simply finds nothing. */
+  const undoAskPayment = drawerStanding?.payments.find(p => p.id === undoAsk) ?? null;
+  /* ⚠ Neither the question nor the fold's self-opening travels between records. Without the first,
+     a coach who asked about a payment, stepped to the next bill and stepped back would find the
+     question still standing.
+     ⚠⚠ THE SECOND IS THE `/review` FIX (2026-09-04). `paidThisSession` was set and never cleared,
+     so "a payment landed on THIS bill" stayed true for the rest of the visit — and because the
+     shell re-keys the fold on that flag, every RETURN to that bill remounted History open again,
+     overriding a coach who had collapsed it. Clearing it when the room moves on is what makes the
+     shell's own claim ("it flips at most twice in a record's life") true rather than aspirational. */
+  useEffect(() => {
+    setUndoAsk(null);
+    setPaidThisSession(null);
+  }, [drawerFor]);
+
+  /**
+   * WHAT ACTUALLY HAPPENED — the recorded payments, inside the room's History fold (Phase C).
+   *
+   * ⚖ THEY USED TO SIT UNDER THE SCHEDULE, ALWAYS OPEN. The room's anatomy puts what already
+   * happened behind a fold and leaves the schedule as the one open view, which is the same call
+   * every other room made. Nothing about the rows changed on the way in EXCEPT where the Remove
+   * question lands: it docks in the foot now (`paymentRemoveQuestion`), never under its own row.
+   */
+  const billHistoryRows = drawerExpense && drawerStanding
+    ? drawerStanding.payments.map(p => {
+      const expense = drawerExpense;
+      /* ⚠⚠ WHO PAID IT, ON THE LIST ITSELF (money centralization P4). It is here rather than behind
+         an Edit because a read-only money assistant never gets one — the §104 walk found details
+         that existed only behind a button that account cannot press, and "who is the team out of
+         pocket to?" is not a detail to hide from whoever is reading the books. */
+      const payer = effectivePayerId(p, expense.paidByPlayerId);
+      /* ⚠ A WHOLE PHRASE, never a bare name substituted into a possessive — the same fallback rule
+         the consequence line follows. A payer whose roster row has gone (the column is ON DELETE
+         SET NULL) still reads honestly. */
+      const payerName = formatPlayerFirstLast(payer ? roster.find(r => r.id === payer) : undefined);
+      return (
+        <div className={styles.payDrawerLine} key={p.id}>
+          <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
+          <span className={styles.payDrawerWhat}>
+            {p.method || 'Payment'}
+            {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
+            {payer && (
+              <span className={styles.mutedInline}>
+                {' '}· {payerName ? `${payerName}’s family` : 'A family'} paid direct
+                {' '}— no team cash moved
+              </span>
+            )}
+          </span>
+          <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
+          {/* ⚠ R5 — Remove deletes THIS payment, and the books go back by exactly its amount, read
+              from its own recorded entry. It ASKS first, in the same named-consequence shape the
+              Delete flow uses — but the question is in the FOOT (plan §10), so the button simply
+              raises it and stays where it is.
+              ⚠⚠ "REMOVE", RED, LIKE EVERY OTHER DOOR THAT ASKS FIRST (owner ruling, §135 walk
+              2026-09-03). The word tracks the guard across the whole portal: UNDO is one tap with
+              no question and nothing destroyed (a club installment, and only that); REMOVE asks,
+              because money or a family's credit moves. This one asks. */}
+          {canWriteMoney && undoAsk !== p.id && (
+            <button
+              className={`${styles.btnGhost} ${styles.compactAction}`}
+              style={{ color: 'var(--danger)' }}
+              aria-label={`Remove the ${fmt(p.amount)} payment`}
+              disabled={undoBusy === p.id}
+              onClick={() => setUndoAsk(p.id)}
+            >
+              {undoBusy === p.id ? 'Removing…' : 'Remove'}
+            </button>
+          )}
+        </div>
+      );
+    })
+    : null;
+
+  /**
+   * THE QUESTION A REMOVE RAISES, WITH THE FIGURE IN IT (owner, 2026-08-20) — docked in the room's
+   * foot (owner, §134 walk 2026-09-03; plan §10).
+   *
+   * ⚠⚠ IT REPLACED A TWO-TAP ARM that re-labelled the button to "Undo $200.00?" — which reads as a
+   * label rather than a question, so nothing told a coach their previous click had armed anything.
+   * ⚠⚠ AND IT MOVED OUT OF THE BODY. Rendered under its own row it could land below the fold on a
+   * bill with a dozen pieces, so pressing Remove looked like it did nothing — the same defect the
+   * club request's Withdraw had, found by the owner on that screen and fixed on every sibling.
+   */
+  /** Who fronted the payment the room is asking about — a family, or the team itself. */
+  const askPayer = drawerExpense && undoAskPayment
+    ? effectivePayerId(undoAskPayment, drawerExpense.paidByPlayerId) : null;
+  const askPayerName = formatPlayerFirstLast(askPayer ? roster.find(r => r.id === askPayer) : undefined);
+  /**
+   * ⚠⚠ WHAT THIS BILL WILL OWE ONCE THE PAYMENT IS GONE — RE-DERIVED, never `remaining + amount`
+   * (`/review`, money lens, 2026-09-04). That addition is right only while the bill is not
+   * OVER-paid, and `remaining` is floored at zero by design (R6 accepts over-payment), so on a
+   * $100 bill carrying $130 the sentence promised "$50.00 still owing" where the truth after the
+   * removal was $20 — and past the tipping point it promised money owed on a bill that was still
+   * over. The removal takes exactly this payment off `paid`, so the answer is the standing's own
+   * arithmetic run once more without it.
+   * ⚠ Carried in from the code this phase re-homed rather than introduced here — but it now sits
+   * inside a confirmation whose whole promise is that its figure and the outcome cannot drift.
+   */
+  const owingAfterRemoval = undoAskPayment && drawerStanding
+    ? Math.max(0, Math.round((drawerStanding.total - (drawerStanding.paid - undoAskPayment.amount)) * 100) / 100)
+    : 0;
+  const billFootQuestion = drawerStanding && undoAskPayment ? (
+    <div className={styles.dangerConfirm} role="alertdialog" aria-label={`Remove the ${fmt(undoAskPayment.amount)} payment?`}>
+      <p className={styles.dangerConfirmTitle}>
+        Remove the {fmt(undoAskPayment.amount)} payment from {fmtDate(undoAskPayment.paidDate)}?
+      </p>
+      {/* ⚖ THE BRANCH THIS COMMENT PREDICTED HAS ARRIVED (money centralization P4). It used to
+          read: "a commitment can never be paid out of pocket… if a family is ever allowed to
+          front a commitment, this sentence is one of the places that has to learn about it." A
+          family can now front one PAYMENT of a bill the team otherwise pays, so the two outcomes
+          are opposites and the coach is told which. */}
+      {askPayer ? (
+        <p className={styles.dangerConfirmBody}>
+          <strong>No team cash moves</strong> — a family paid this direct. This bill returns to{' '}
+          {fmt(owingAfterRemoval)} still owing, and what the team owes{' '}
+          {askPayerName ? `${askPayerName}’s family` : 'that family'} drops by{' '}
+          <strong>{fmt(undoAskPayment.amount)}</strong>.
+        </p>
+      ) : (
+        <p className={styles.dangerConfirmBody}>
+          Cash on hand goes back <strong>up by {fmt(undoAskPayment.amount)}</strong>, and this bill
+          returns to {fmt(owingAfterRemoval)} still owing.
+        </p>
+      )}
+      <div className={styles.dangerConfirmActions}>
+        <button className={styles.btnGhost} disabled={undoBusy === undoAskPayment.id}
+          onClick={() => setUndoAsk(null)}>
+          Keep it
+        </button>
+        <button className={styles.btnDanger} disabled={undoBusy === undoAskPayment.id}
+          onClick={() => { if (drawerExpense) void undoPayment(drawerExpense, undoAskPayment); }}>
+          {undoBusy === undoAskPayment.id ? 'Removing…' : `Remove ${fmt(undoAskPayment.amount)}`}
+        </button>
+      </div>
+    </div>
+  ) : undefined;
+
   /* ── Adding one dated payment, in place under the schedule (§114 walk, 2026-08-27) ───────────
      ⚠ THE FIELDS LIVE HERE RATHER THAN IN A CHILD COMPONENT because the row belongs to the
      schedule, and the schedule is this panel's — the whole split of Part B is that the fields on
@@ -3482,6 +3743,8 @@ function MoneyRecordsPanel({
   const [addRowDate, setAddRowDate] = useState('');
   const [addRowAmount, setAddRowAmount] = useState('');
   const [addRowBusy, setAddRowBusy] = useState(false);
+  /** The belt to `addRowBusy`'s braces — see `addInstallmentInline` (`/review`, 2026-09-04). */
+  const addRowRef = useRef(false);
   const [addRowError, setAddRowError] = useState('');
 
   function closeAddRow() {
@@ -3507,7 +3770,13 @@ function MoneyRecordsPanel({
    * drifted apart before.
    */
   async function addInstallmentInline(e: RepTeamExpense) {
-    if (addRowBusy) return;
+    /* ⚠⚠ A REF LATCH, NOT THE STATE FLAG BESIDE IT (`/review`, 2026-09-04) — the same belt
+       `savingRef` and `undoRef` already wear in this file, for the reason stated on both: a second
+       click lands before React commits `disabled`, and here that sends a SECOND plan rebuilt from
+       the same pre-click schedule, appending the row twice. The state flag stays: it is what the
+       button reads. */
+    if (addRowRef.current || addRowBusy) return;
+    addRowRef.current = true;
     const standing = standings[e.id];
     setAddRowBusy(true);
     setAddRowError('');
@@ -3515,7 +3784,7 @@ function MoneyRecordsPanel({
       const existing = piecesByNumber(standing).map(p => ({
         id: p.id, dueDate: p.dueDate, amount: p.amount,
       }));
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${e.id}`, {
+      const res = await roomWrite(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${e.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3528,14 +3797,14 @@ function MoneyRecordsPanel({
     } catch (err: any) {
       setAddRowError(err?.message ?? 'Could not add the installment.');
     } finally {
+      addRowRef.current = false;
       setAddRowBusy(false);
     }
   }
 
-  /** Where the commitment page's arrow goes, and what it is called — see `openBillById`. */
-  /** One tab to return to now — the address carries no view, so the panel lands on whatever this
-   *  device remembers, which is the view the coach opened the bill from (see `openBillById`). */
-  const billBackTo = { href: moneySectionHref(base, 'ledger', undefined), label: 'Ledger' };
+  /* ⚰ `billBackTo` WAS DELETED HERE (Phase C). It named the arrow at the top of the bill's PAGE —
+     "Ledger" — and the code's own note called the hardcoded label a fragility. A room closes onto
+     the list it opened over, so there is nothing left to name. */
 
   const foldKeys = groupBy === 'due' ? payPeriods.map(p => p.key) : payBills.map(b => b.key);
   /**
@@ -3958,11 +4227,13 @@ function MoneyRecordsPanel({
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete');
       dismissForm();
-      /* ⚠⚠ DELETING THE BILL YOU ARE STANDING ON MUST LEAVE ITS PAGE. On the list this is an
-         ordinary refresh, but a commitment has a route of its own now — and a page addressing a
-         record that no longer exists is an empty screen with a back arrow, reached by the coach's
-         own successful action. Go where they were going anyway. */
-      if (focusBillId) { router.push(moneySectionHref(base, 'ledger', undefined, seasonSearchParams.toString())); return; }
+      /* ⚠⚠ DELETING THE BILL YOU ARE STANDING IN MUST CLOSE ITS ROOM — a room addressing a record
+         that no longer exists is an empty overlay, reached by the coach's own successful action.
+         ⚠ AND THE LIST STILL HAS TO BE RE-READ (Phase C). On the page this returned early: the
+         navigation itself re-rendered the list. The room closes over a Ledger that is already
+         mounted and still holding the deleted bill's row, so the refresh below is no longer
+         optional — dropping it leaves the row on screen. */
+      if (focusBillId) setFocusBillId(null);
       await refreshAfterWrite();
     } catch (e: any) {
       setSaveError(e.message);
@@ -5598,37 +5869,72 @@ function MoneyRecordsPanel({
             ? payStatusText(bill.nextBadge, bill.nextDays ?? 0, bill.nextPartly)
             : payStatusText('paid', 0, false)}
         </td>
+        {/* ⚠⚠ `.cardActionCell`, NOT `.cardActionCorner` — and that is the 2026-09-03 ruling being
+            FOLLOWED rather than departed from. The corner pin is for an *icon-only* trailing cell:
+            it lifts a lone chevron out of the card's flow so it costs no height. This cell also
+            holds **Record**, a worded button the owner kept here (2026-09-04), and the same ruling
+            says in as many words that every other trailing action cell keeps its full-width worded
+            button. Pinned, the corner dragged "Record" up beside the due date and crowded it.
+            ⚠ Which is also why the chevron takes `.cardActionLabel` here: at card width it is no
+            longer alone at the right edge, so it says "Open" beside its glyph. */}
         <td className={`${styles.td} ${styles.cardActionCell}`}>
-          {/* ⚠⚠ THE PAYMENT DOOR IS ON THE HEADER ONLY WHILE THE BILL IS FOLDED, aimed at the next
-              unpaid piece. Unfolded, the row directly beneath it IS that piece and carries its own
-              button — two identical buttons one line apart read as a bug, not as generosity. */}
-          {shut && !isOrg && canWriteMoney && bill.expense && bill.nextInstallmentId && (
-            <button
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              onClick={ev => {
-                ev.stopPropagation();
-                openRecordPayment(bill.expense!, {
-                  installmentId: bill.nextInstallmentId, amount: bill.nextOwing,
-                });
-              }}
-            >
-              Record
-            </button>
-          )}
-          {isOrg && (
-            /* ⚠ A CLUB BILL NAVIGATES, IT DOES NOT OPEN A DRAWER. It is not the team's record —
-               it is settled through Club, which owns that conversation — so a drawer here could
-               only show figures the coach cannot change. Same rule the register's derived rows
-               already follow. */
-            <Link
-              href={moneySectionHref(base, 'club', undefined)}
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              style={{ whiteSpace: 'nowrap' }}
-              onClick={ev => ev.stopPropagation()}
-            >
-              Club →
-            </Link>
-          )}
+          <span className={styles.listRowActions}>
+            {/* ⚠⚠ THE PAYMENT DOOR IS ON THE HEADER ONLY WHILE THE BILL IS FOLDED, aimed at the next
+                unpaid piece. Unfolded, the row directly beneath it IS that piece and carries its own
+                button — two identical buttons one line apart read as a bug, not as generosity. */}
+            {shut && !isOrg && canWriteMoney && bill.expense && bill.nextInstallmentId && (
+              <button
+                className={`${styles.btnSecondary} ${styles.compactAction}`}
+                onClick={ev => {
+                  ev.stopPropagation();
+                  openRecordPayment(bill.expense!, {
+                    installmentId: bill.nextInstallmentId, amount: bill.nextOwing,
+                  });
+                }}
+              >
+                Record
+              </button>
+            )}
+            {/* ⚠⚠ THE ROW'S REAL DOOR, ON EVERY ROW (owner ruling 2026-09-03, applied here in
+                Phase C — see the deviation note below). A bare clickable `<tr>` is MOUSE-ONLY: no
+                keyboard, no screen reader, which is why the Club tab's rows were given a real
+                `<button>` chevron and why this list needed one too. It carries the honest verb in
+                its accessible name, and one glyph serves both kinds of row because both of them
+                open — a team bill into its room, a club bill onto the tab that owns it.
+
+                ⚖ AND `Record` STAYS BESIDE IT — a NAMED DEVIATION from "nothing conditional beside
+                the chevron" (owner, asked and ruled 2026-09-04). The §134 reasoning that deleted
+                the Club tab's pill does not carry: that pill fired on a MINORITY of rows, so an
+                exception sized the column for everyone. Here Record fires on nearly every unpaid
+                row, and the By-due-date lens exists so a coach can work down everything owed this
+                month across several bills in one pass — the room's walk steps between BILLS, not
+                installments, so moving the act inside would make the month-end instrument two taps
+                slower per payment. */}
+            {isOrg ? (
+              /* ⚠ A CLUB BILL IS NOT THE TEAM'S RECORD TO EDIT — it is settled through Club, which
+                 owns that conversation, so it has no room here and its door NAVIGATES. Same rule
+                 the register's derived rows already follow; the accessible name says so. */
+              <Link
+                href={moneySectionHref(base, 'club', undefined)}
+                className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                aria-label={`Open ${bill.description} on the Club tab`}
+                onClick={ev => ev.stopPropagation()}
+              >
+                <span className={styles.cardActionLabel}>Open</span>
+                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                aria-label={`Open ${bill.description}`}
+                onClick={ev => { ev.stopPropagation(); openBill(bill); }}
+              >
+                <span className={styles.cardActionLabel}>Open</span>
+                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+              </button>
+            )}
+          </span>
         </td>
       </tr>
     );
@@ -5672,22 +5978,55 @@ function MoneyRecordsPanel({
         <td className={styles.td} data-label="Status">
           {payStatusText(piece.badge, piece.daysUntilDue, piece.partlyPaid)}
         </td>
+        {/* ⚠⚠ `.cardActionCell`, NOT `.cardActionCorner` — and that is the 2026-09-03 ruling being
+            FOLLOWED rather than departed from. The corner pin is for an *icon-only* trailing cell:
+            it lifts a lone chevron out of the card's flow so it costs no height. This cell also
+            holds **Record**, a worded button the owner kept here (2026-09-04), and the same ruling
+            says in as many words that every other trailing action cell keeps its full-width worded
+            button. Pinned, the corner dragged "Record" up beside the due date and crowded it.
+            ⚠ Which is also why the chevron takes `.cardActionLabel` here: at card width it is no
+            longer alone at the right edge, so it says "Open" beside its glyph. */}
         <td className={`${styles.td} ${styles.cardActionCell}`}>
-          {/* ⚠ OFFERED ON EVERY UNSETTLED PIECE, part-paid included, with the piece's REMAINDER as
-              the suggested figure — which the retired full-half door structurally could not do. */}
-          {!piece.settled && !isOrg && canWriteMoney && bill.expense && (
-            <button
-              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
-              onClick={ev => {
-                ev.stopPropagation();
-                openRecordPayment(bill.expense!, {
-                  installmentId: piece.installmentId, amount: piece.owing,
-                });
-              }}
-            >
-              Record
-            </button>
-          )}
+          <span className={styles.listRowActions}>
+            {/* ⚠ OFFERED ON EVERY UNSETTLED PIECE, part-paid included, with the piece's REMAINDER as
+                the suggested figure — which the retired full-half door structurally could not do. */}
+            {!piece.settled && !isOrg && canWriteMoney && bill.expense && (
+              <button
+                className={`${styles.btnSecondary} ${styles.compactAction}`}
+                onClick={ev => {
+                  ev.stopPropagation();
+                  openRecordPayment(bill.expense!, {
+                    installmentId: piece.installmentId, amount: piece.owing,
+                  });
+                }}
+              >
+                Record
+              </button>
+            )}
+            {/* The same door the bill header carries — the row is a `<tr onClick>` and needs one
+                real control, whichever arrangement drew it. */}
+            {isOrg ? (
+              <Link
+                href={moneySectionHref(base, 'club', undefined)}
+                className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                aria-label={`Open ${bill.description} on the Club tab`}
+                onClick={ev => ev.stopPropagation()}
+              >
+                <span className={styles.cardActionLabel}>Open</span>
+                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                aria-label={`Open ${bill.description}`}
+                onClick={ev => { ev.stopPropagation(); openBill(bill); }}
+              >
+                <span className={styles.cardActionLabel}>Open</span>
+                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+              </button>
+            )}
+          </span>
         </td>
       </tr>
     );
@@ -6034,12 +6373,14 @@ function MoneyRecordsPanel({
         />
       )}
 
-      {/* ⚠⚠ THE LIST AND ITS CHROME DO NOT EXIST ON A COMMITMENT'S OWN PAGE (owner ruling
-          2026-08-26). `focusBillId` is set from the route, and this panel then renders that ONE
-          bill — so the toolbar, the filters, the tables and every empty state below are the
-          Payables LIST's, and none of them belong on a page about a single record. The write
-          modals further down stay mounted for both: they are the same doors either way. */}
-      {!focusBillId && (<>
+      {/* ⚰⚰ THE `{!focusBillId && …}` GATE STOOD HERE AND IS DELETED (List · Room · Question
+          Phase C). It said: *the list and its chrome do not exist on a commitment's own page*
+          (owner, 2026-08-26) — true of a PAGE, and the whole thing Phase C reverses. **The Ledger
+          stays mounted behind the room**, so a coach who filtered to Overdue, scrolled to the
+          bottom and opened a bill finds that exact screen again when the room closes. Rebuilding
+          the list on close was the cost the page shape charged, and nothing now pays it.
+          ⚠ Do not re-add a gate here to "hide the list behind the overlay" — the overlay is what
+          hides it, and unmounting the list is what loses the coach's place. */}
       {/* ⚠ SUB-TABS AND ACTIONS SHARE ONE ROW (owner review 2026-08-15, Q2). They used to be two
           stacked bands, so a coach crossed THREE strips of chrome — hub tabs, sub-tabs, then a
           full-width toolbar — before the first row of money. That third strip carried nothing on
@@ -6582,55 +6923,53 @@ function MoneyRecordsPanel({
           two-tap Undo, and the Still owing figure were built as the Commitments row's "Payment
           details" expansion; nothing about the money changed in this phase, only where a coach
           finds it. */}
-      </>)}
-      {/* ⚖⚖ ONE COMMITMENT, AS A PAGE (owner ruling 2026-08-26, from the drawn options
-          `claude.ai/code/artifact/0c44d290-8a76-4235-aeab-79c8f4f8c366`). This was a MODAL, and the
-          modal was the problem: a bill can carry a dozen or more installments, and a fixed 90vh box
-          made the schedule push everything else — the standing figure, the payee, the tags — off the
-          bottom. It had already overflowed once (§64 Part E, 2026-08-21) where the content past the
-          fold was not merely below the line but UNREACHABLE.
+      {/* ⚖⚖ ONE BILL, AS A ROOM OVER THE LEDGER (List · Room · Question Phase C, owner-ruled
+          2026-09-02 D4 on the mockup at `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc`).
 
-          ⚠⚠ THE RULE THAT DECIDES THE ORDER (owner, 2026-07-09, binding): *reaching a different
-          domain must never require scrolling past other domains*, and page scroll is reserved for
-          ONE long homogeneous list, *which may grow freely*. So the short fixed things — what the
-          bill comes to, and what it is — sit above, and the SCHEDULE takes the page scroll, because
-          it is exactly the list that rule allows to grow.
+          ⚠ IT WAS A MODAL, THEN A PAGE, AND IS NOW A ROOM — and the history matters because the
+          reason for each move is still true. The modal was wrong: a fixed ~90vh box pushed a long
+          schedule's tail off the bottom, and §64 Part E found content past the fold that was not
+          merely below the line but UNREACHABLE. The page fixed that by giving the schedule the
+          page's own scroll — and paid for it by unmounting the Ledger. `RoomShell` fixes it
+          structurally instead (guard rule G3: a room is full-height with its own scroll), so the
+          overflow cannot come back and the list does not have to go away.
 
-          ⚠ THAT REVERSES THE ORDER RULED FOR THE MODAL FOUR DAYS EARLIER, and deliberately: in a
-          fixed box, Details on top pushed the schedule out of view, so it went last. On a page
-          nothing is pushed out — the page simply scrolls — so the unbounded list goes last instead.
-          The constant across both is the same sentence: **the thing that can grow without limit
-          never sits above the things that cannot.**
+          ⚠⚠ AND THE ORDER FLIPS BACK WITH IT. On the page, the short fixed things sat ABOVE and the
+          unbounded schedule took the scroll, under the rule that *the thing that can grow without
+          limit never sits above the things that cannot*. In the room the four TILES answer "where
+          does this stand?" before anything scrolls at all, so the schedule — what the room is FOR —
+          leads the body and Details follows it. The rule is unbroken: what cannot grow is still
+          above what can.
 
-          ⚠ EVERY WRITE FLOW IS UNCHANGED. Edit, Add an installment, Record, the per-row Change /
-          Remove / Record and the undo confirmation all still open the panel's own modals — which is
-          ordinary over a page, and was modal-over-modal before. The `returnToDrawerRef` bookkeeping
-          that put the drawer back after each of them is GONE: it existed only to rebuild navigation
-          history the container did not have, which is the clearest evidence the container was
-          wrong. A page has that history for free, including the browser's own back.
+          ⚠ EVERY WRITE FLOW IS UNCHANGED. Add an installment, Record, the per-row Change / Remove /
+          Record and the payment's own confirmation all still open the panel's own surfaces. The
+          three-way scope sheet and the Record conversation now stack ONCE over the room, which is
+          exactly what the grammar allows, and the floor's last-opened rule makes a bare Escape peel
+          one layer at a time.
 
           ⚠ ORG ALLOCATIONS NEVER REACH HERE. A club bill is not the team's record to edit — its
-          door is the Club tab (see `PayBill.kind`), and its key is not an expense id, so the route
-          below cannot address one. */}
-      {drawerExpense && (
-        /* ⚖⚖ THE PAGE EDITS ITSELF (Part B, owner approval 2026-08-26, from the drawn options at
-           `claude.ai/code/artifact/9c42dd82-39f1-4b12-8957-a5f43b2594de`).
-           `CommitmentView` owns the header and the bill's own six fields — name, filing, payee,
-           tags, how, notes — each a live control that saves itself. What stays HERE is everything
-           that asks a question or moves money: the standing figure, the schedule with its scoped
-           Change/Remove, Record, Add an installment, and the payments with their undo. That split
-           IS the phase's principle: **a modal is for a question, not for a field.**
+          door is the Club tab (see `PayBill.kind`), and its key is not an expense id, so the
+          address below cannot name one. */}
+      {drawerExpense && billRoom && tabActive && (
+        /* ⚖⚖ THE ROOM EDITS ITSELF (Part B, owner approval 2026-08-26, re-homed by Phase C).
+           `CommitmentView` owns the room shell, its title — which IS the bill's name field — and
+           the six live controls under Details. What stays HERE is everything that asks a question
+           or moves money: the four figures, the schedule with its scoped Change/Remove, Record,
+           Add an installment, and the recorded payments with their Remove. That split IS the
+           phase's principle: **a modal is for a question, not for a field.**
 
-           ⚠ `key` IS LOAD-BEARING. The view seeds its draft ONCE, so a background refresh cannot
-           overwrite what the coach is typing; the key is what moves it between bills.
+           ⚠⚠ NO `key` — AND THAT IS DELIBERATE (Phase C, reversing Part B's call site). A key
+           remounted the subtree per bill, which was free while this was a page and is not now that
+           it is a room: it would tear down `RoomShell` on every step of Prev/Next and fire the
+           accessibility floor's focus RESTORE, scrolling the Ledger behind the room to the row the
+           coach opened. The draft follows the bill through the view's own change guard instead —
+           read its docblock before adding a key back.
 
-           ⚖ `Edit details` IS GONE, and with it the last action in this header. It opened a window
-           onto the fields now rendered in place — a screen that displayed them and then asked you
-           to open a form to change them. The other two moved in Part A rather than vanishing:
-           Record to the rows that name a payment, `Add an installment` under the schedule it adds
-           to. The header carries the way back and nothing else. */
+           ⚖ `Edit details` IS GONE, and with it every action in the old page header. It opened a
+           window onto the fields the room renders in place. The other two moved in Part A rather
+           than vanishing: Record to the rows that name a payment, `Add an installment` under the
+           schedule it adds to. */
         <CommitmentView
-          key={drawerExpense.id}
           orgSlug={orgSlug}
           teamId={teamId}
           expense={drawerExpense}
@@ -6640,7 +6979,56 @@ function MoneyRecordsPanel({
           tagLibrary={expenseTags}
           initialTagIds={tagsByExpenseId[drawerExpense.id] ?? []}
           onCreateTag={createMoneyTag}
-          backTo={billBackTo}
+          room={{
+            onClose: () => setFocusBillId(null),
+            status: billRoom.status,
+            tiles: billRoom.tiles,
+            /* ⚠ THE SWEEP WAITS ON THE STANDING, NOT ON THE FRAME — and this is the same signal
+               `data-commitment="loaded"` used to carry, moved onto the shell's `data-room` pair so
+               there is ONE sweep convention for every room. The header draws as soon as the bill's
+               record is in hand; the schedule waits on a second read, so a sweep that unblocked on
+               the frame would measure "Loading payment details…" and report the room green — the
+               green-check-over-an-empty-state trap this repo has hit more than once. See
+               `coach-commitment` in `scripts/layout-screens.mjs`. */
+            loaded: !!drawerStanding,
+            /* ⚠ BUSY BY VALUE, from every writer the room holds: adding a piece, removing a
+               payment, deleting the bill. `CommitmentView` ORs its own autosave in. */
+            busy: addRowBusy || undoBusy !== null,
+            nav: { ...billRoom.walk, noun: 'bills', onSelect: openBillById },
+            actions: canWriteMoney ? (
+              /* ⚖ THE ONE RECORD DOOR, pre-answered to this bill (owner ruling A, 2026-08-23): a
+                 door that names one RECORD locks, so "what happened?" is stated rather than
+                 offered. What stays editable is WHICH INSTALLMENT the money lands on — allocation,
+                 not identity. ⚠ Nothing else lives here: an Edit door would open a window onto the
+                 fields three inches below it, which is the whole thing Part B removed. */
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={() => openRecordPayment(drawerExpense)}
+              >
+                Record
+              </button>
+            ) : undefined,
+            history: drawerStanding && drawerStanding.payments.length > 0 ? {
+              meta: `${fmt(drawerStanding.paid)} recorded · ${drawerStanding.payments.length} ${drawerStanding.payments.length === 1 ? 'payment' : 'payments'}`,
+              /* ⚖ IT OPENS ITSELF WHEN A PAYMENT LANDS THIS SESSION (plan §4) and is closed
+                 otherwise — the schedule is the room's one open view. Stamped with the bill, so
+                 recording on one does not throw the next one's history open on the way past. */
+              defaultOpen: paidThisSession === drawerExpense.id,
+              children: billHistoryRows,
+            } : undefined,
+          }}
+          /* ⚖⚖ THE PAYMENT'S QUESTION DOCKS IN THE FOOT, NEVER IN THE SCROLLING BODY (owner, §134
+             walk 2026-09-03; plan §10). Rendered inline under its row, a confirmation on a bill
+             with a dozen pieces lands below the fold — pressing Remove looks like it did nothing.
+             The foot is the one band that is always visible, and the question REPLACES the doors it
+             suspends rather than sitting under disabled ones. */
+          footQuestion={billFootQuestion}
+          /* ⚠ The room can be unmounted out from under an in-flight save (a Money tab switch), and
+             a refusal must not die with it. `setImportMessage` is this panel's home for a write
+             refusal that has to outlive its surface — the same channel `undoPayment` uses, and for
+             the same reason: it says its piece above the book without taking the book down. */
+          onRefusedAfterClose={setImportMessage}
           onSaved={refreshAfterWrite}
           onDeleted={leaveBillPage}
           tabActive={tabActive}
@@ -6648,18 +7036,16 @@ function MoneyRecordsPanel({
         >
           <>
           {drawerStanding ? (
-            /* ⚠ THE SWEEP'S READY SIGNAL, and it is deliberately on the branch that needs the
-               STANDING rather than on the page's header. The header draws as soon as the bill's
-               record is in hand; the schedule waits on a second read, and a sweep that unblocked on
-               the header would measure "Loading payment details…" and report the page green — the
-               green-check-over-an-empty-state trap this repo has hit more than once. A module class
-               cannot serve: it is hashed. See `coach-commitment` in `scripts/layout-screens.mjs`. */
-            <div className={styles.payDrawer} data-commitment="loaded">
-              {/* ⚖ THE STANDING FIGURE MOVED INTO `CommitmentView` (Part B correction, 2026-08-27).
-                  "The answer first, and it never scrolls away" is unchanged as a rule — what changed
-                  is that the fields above it are now this page's, so the figure has to be drawn by
-                  the component that owns them or it lands underneath the lot. It reads the same
-                  standing this block does. */}
+            /* ⚰ `data-commitment="loaded"` STOOD ON THIS DIV AND IS RETIRED (Phase C). It was the
+               layout sweep's ready signal, and its reasoning survives whole — it just moved onto
+               the shell's `data-room` / `data-room-state` pair, so every room in the portal has ONE
+               sweep convention instead of this screen having a second. The `loaded` prop at the
+               mount above carries the same condition (`!!drawerStanding`) and its comment carries
+               the same warning. */
+            <div className={styles.payDrawer}>
+              {/* ⚖⚖ THE STANDING FIGURE IS GONE FROM THE BODY (Phase C) — it is the room's TILES
+                  now, four of them, above everything that scrolls. "The answer first, and it never
+                  scrolls away" is not weakened by that; it is finally structural. */}
 
               {/* ⚖⚖ THE READ-ONLY FACTS BLOCK IS GONE, REPLACED BY LIVE FIELDS ABOVE (Part B).
                   It shipped one day earlier for a good reason that survives — before it, a bill's
@@ -6858,110 +7244,6 @@ function MoneyRecordsPanel({
                   )
                 )}
 
-                {/* ── What actually happened ───────────────────────────────────────────────── */}
-                {drawerStanding.payments.length > 0 && (
-                  <>
-                    <p className={styles.payDrawerLabel}>Payments recorded</p>
-                    {drawerStanding.payments.map(p => {
-                      /* ⚠⚠ WHO PAID IT, ON THE LIST ITSELF (money centralization P4). It is here
-                         rather than behind an Edit because a read-only money assistant never gets
-                         one — the §104 walk found details that existed only behind a button that
-                         account cannot press, and "who is the team out of pocket to?" is not a
-                         detail to hide from whoever is reading the books. */
-                      const payer = drawerExpense
-                        ? effectivePayerId(p, drawerExpense.paidByPlayerId)
-                        : (p.paidByPlayerId ?? null);
-                      const payerPlayer = payer ? roster.find(r => r.id === payer) : undefined;
-                      /* ⚠ A WHOLE PHRASE, never a bare name substituted into a possessive — the
-                         same fallback rule the consequence line follows. A payer whose roster row
-                         has gone (the column is ON DELETE SET NULL) still reads honestly. */
-                      const payerName = formatPlayerFirstLast(payerPlayer);
-                      return (
-                      <Fragment key={p.id}>
-                        <div className={styles.payDrawerLine}>
-                          <span className={styles.payDrawerDate}>{fmtDate(p.paidDate)}</span>
-                          <span className={styles.payDrawerWhat}>
-                            {p.method || 'Payment'}
-                            {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
-                            {payer && (
-                              <span className={styles.mutedInline}>
-                                {' '}· {payerName ? `${payerName}’s family` : 'A family'} paid direct
-                                {' '}— no team cash moved
-                              </span>
-                            )}
-                          </span>
-                          <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
-                          {/* ⚠ R5 — Remove deletes THIS payment, and the books go back by exactly
-                              its amount, read from its own recorded entry. It ASKS first (below), in
-                              the same named-consequence shape the Delete flow uses.
-                              ⚠⚠ "REMOVE", RED, LIKE EVERY OTHER DOOR THAT ASKS FIRST (owner ruling,
-                              §135 walk 2026-09-03). This was an outlined neutral button reading
-                              "Undo" — a third dress for one act, beside the sponsor room's red
-                              "Undo" and the drive room's red "Remove". The word now tracks the guard
-                              across the whole portal: UNDO is one tap with no question and nothing
-                              destroyed (a club installment, and only that); REMOVE asks, because
-                              money or a family's credit moves. This one asks. */}
-                          {canWriteMoney && drawerExpense && undoAsk !== p.id && (
-                            <button
-                              className={`${styles.btnGhost} ${styles.compactAction}`}
-                              style={{ color: 'var(--danger)' }}
-                              aria-label={`Remove the ${fmt(p.amount)} payment`}
-                              disabled={undoBusy === p.id}
-                              onClick={() => setUndoAsk(p.id)}
-                            >
-                              {undoBusy === p.id ? 'Removing…' : 'Remove'}
-                            </button>
-                          )}
-                        </div>
-                        {/* ⚠⚠ THE QUESTION, WITH THE FIGURE IN IT (owner, 2026-08-20). This replaced a
-                            two-tap arm that re-labelled the button to "Undo $200.00?" — which reads
-                            as a label rather than a question, so nothing told a coach their previous
-                            click had armed anything. Same block, same wording shape and the same two
-                            explicit answers as Delete, so there is ONE confirmation pattern on this
-                            screen rather than two. Inline rather than a second modal: the bill panel
-                            IS a modal, and stacking one on another hides the row being undone. */}
-                        {undoAsk === p.id && (
-                          <div className={styles.dangerConfirm} role="alertdialog"
-                            aria-label={`Remove the ${fmt(p.amount)} payment?`}>
-                            <p className={styles.dangerConfirmTitle}>
-                              Remove the {fmt(p.amount)} payment from {fmtDate(p.paidDate)}?
-                            </p>
-                            {/* ⚖ THE BRANCH THIS COMMENT PREDICTED HAS ARRIVED (money
-                                centralization P4). It used to read: "a commitment can never be paid
-                                out of pocket… if a family is ever allowed to front a commitment,
-                                this sentence is one of the places that has to learn about it." A
-                                family can now front one PAYMENT of a bill the team otherwise pays,
-                                so the two outcomes are opposites and the coach is told which. */}
-                            {payer ? (
-                              <p className={styles.dangerConfirmBody}>
-                                <strong>No team cash moves</strong> — a family paid this direct. This
-                                bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing,
-                                and what the team owes {payerName ? `${payerName}’s family` : 'that family'}
-                                {' '}drops by <strong>{fmt(p.amount)}</strong>.
-                              </p>
-                            ) : (
-                              <p className={styles.dangerConfirmBody}>
-                                Cash on hand goes back <strong>up by {fmt(p.amount)}</strong>, and this
-                                bill returns to {fmt(drawerStanding.remaining + p.amount)} still owing.
-                              </p>
-                            )}
-                            <div className={styles.dangerConfirmActions}>
-                              <button className={styles.btnGhost} disabled={undoBusy === p.id}
-                                onClick={() => setUndoAsk(null)}>
-                                Keep it
-                              </button>
-                              <button className={styles.btnDanger} disabled={undoBusy === p.id}
-                                onClick={() => undoPayment(drawerExpense, p)}>
-                                {undoBusy === p.id ? 'Removing…' : `Remove ${fmt(p.amount)}`}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </Fragment>
-                      );
-                    })}
-                  </>
-                )}
 
               </div>
             ) : (

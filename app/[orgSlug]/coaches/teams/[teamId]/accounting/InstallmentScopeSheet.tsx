@@ -1,7 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import {
   planScopedInstallmentEdit, planScopedInstallmentDelete, describeScopedOutcome,
 } from '@/lib/payable-scope-edit';
@@ -59,7 +58,10 @@ export default function InstallmentScopeSheet({
   const committingRef = useRef(false);
   const [error, setError] = useState('');
 
-  useOverlayOpen(true);
+  /* ⚰ `useOverlayOpen(true)` STOOD HERE AND IS DELETED (Phase C). `QuestionShell` holds the
+     portal's scroll-lock counter for every overlay that stands in it; keeping a second call would
+     count this sheet twice and leave the lock on after it closed. Its `max-width: 520px` went the
+     same way — that is `.modal`'s own default, so the inline style was restating it. */
 
   const count = standing.installments.length;
   /* What each option would actually reach, worked out ONCE for all three (`/simplify`, efficiency
@@ -140,16 +142,24 @@ export default function InstallmentScopeSheet({
   }
 
   const nothingToDo = mode === 'edit' && outcome.touched.length === 0;
+  const title = mode === 'remove' ? 'Remove a payment' : 'Change a payment';
 
   return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={shared.modal} style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader
-          title={mode === 'remove' ? 'Remove a payment' : 'Change a payment'}
-          subtitle={`${description} — ${count > 1 ? `installment ${installment.installmentNumber} of ${count}` : 'one payment'}`}
-          onClose={onClose}
-        />
-
+    /* ⚖⚖ THE SHARED QUESTION CHROME (List · Room · Question Phase C, 2026-09-04). This sheet
+       hand-rolled `.modalOverlay` + `.modal` + the portal header and had **no accessibility floor
+       at all** — no dialog role, no label, no Escape, no focus trap, no focus restore. That was
+       survivable over a page; over a ROOM it is not, because the floor's last-opened rule is the
+       only thing that makes a bare Escape peel ONE layer. Without it Escape reached the room
+       underneath and closed the record the coach was mid-question about.
+       ⚠ `QuestionShell` owns the chrome and the floor; the form stays this component's. */
+    <QuestionShell
+      open
+      onClose={onClose}
+      busy={busy}
+      ariaLabel={`${title} — ${description}`}
+      title={title}
+      subtitle={`${description} — ${count > 1 ? `installment ${installment.installmentNumber} of ${count}` : 'one payment'}`}
+    >
         <div className={shared.formGrid}>
           {mode === 'edit' ? (
             <>
@@ -234,7 +244,11 @@ export default function InstallmentScopeSheet({
         </div>
 
         <div className={shared.modalFooter}>
-          <button type="button" className={shared.btnGhost} onClick={onClose}>Cancel</button>
+          {/* ⚠ BUSY-GATED LIKE THE OTHER THREE WAYS OUT (`/review`, 2026-09-04). Moving into
+              `QuestionShell` gave the ✕, Escape and the backdrop a busy gate; Cancel kept calling
+              the closer raw, so it alone could dismiss the sheet mid-write — and "Cancel" that
+              cannot cancel the request it appears to abandon is the misleading half of that. */}
+          <button type="button" className={shared.btnGhost} disabled={busy} onClick={onClose}>Cancel</button>
           <button
             type="button"
             className={mode === 'remove' ? shared.btnDanger : shared.btnPrimary}
@@ -244,7 +258,6 @@ export default function InstallmentScopeSheet({
             {busy ? 'Saving…' : mode === 'remove' ? 'Remove it' : 'Save the change'}
           </button>
         </div>
-      </div>
-    </div>
+    </QuestionShell>
   );
 }

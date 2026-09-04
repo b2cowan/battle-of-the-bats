@@ -107,6 +107,17 @@ export function useDialogFloor(
         if (!walk || busy) return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (target instanceof Element && target.closest(EDITABLE)) return;
+        /* ⚠⚠ AN UNANSWERED QUESTION SUSPENDS THE WALK (`/review`, 2026-09-04). A confirmation
+           docked in a room's foot — "Remove the $200.00 payment?", "Delete this bill?" — is a
+           question about the record ON SCREEN. Stepping to the next record answers it by
+           abandoning it: the dialog vanishes, nothing is written, and nothing tells the coach their
+           question was dropped. The foot's own CSS hides the arrows while a question owns the band,
+           which takes them out of the tap and tab order; this is the same rule for the KEYS, which
+           no stylesheet can reach.
+           ⚠ It reads the DOM rather than a flag because the question can belong to the shell's
+           consumer (a payment's Remove) or to a control INSIDE the foot that owns its own state
+           (`GuardedDelete`) — an `alertdialog` in the panel is the one fact both share. */
+        if (panel.querySelector('[role="alertdialog"]')) return;
         const dest = event.key === 'ArrowLeft' ? walk.prev : walk.next;
         if (dest) {
           event.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { Plus, Settings2, X } from 'lucide-react';
+import { Settings2, X } from 'lucide-react';
 import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { claimEscape } from './escapeOwnership';
@@ -85,7 +85,6 @@ export default function TagSearchCombobox({
   placeholder = 'Type to find or create a tag…',
   disabled = false,
   showLegend = true,
-  addAsChip = false,
   single = false,
   adoptNames,
   onAdopt,
@@ -100,20 +99,16 @@ export default function TagSearchCombobox({
   placeholder?: string;
   disabled?: boolean;
   showLegend?: boolean;
-  /**
-   * ⚖ **THE SEARCH BOX HIDES BEHIND A `＋` CHIP UNTIL IT IS WANTED** (owner, §114 walk 2026-08-27).
-   *
-   * The default shape is a form field: a row of chips with a permanent search box under it, which
-   * is right inside a form where every other field is a box the same size. On the commitment page
-   * it is the only control that costs a SECOND ROW while showing nothing — the tags are already
-   * chips, and the box below them is an empty invitation taking a field's worth of height in a
-   * block a coach is reading rather than filling in.
-   *
-   * Opt-in, so the other surfaces keep the shape they were designed with. ⚠ It changes only
-   * WHERE the input is revealed from — every behaviour below (search, create, keyboard, the
-   * dropUp flip) is the same control.
-   */
-  addAsChip?: boolean;
+  /* ⚰⚰ `addAsChip` WAS DECLARED HERE AND IS DELETED (List · Room · Question Phase C, 2026-09-04;
+     mockup R1, owner-flagged 2026-09-02 — a NAMED REVERSAL of the §114 walk tweak of 2026-08-27).
+     It hid this control's search box behind a `＋` chip so the bill's fields block would cost one
+     row less: sound while that block sat at the top of a PAGE a coach was mostly reading.
+     It had exactly ONE call site in the entire product, which is what makes it a reversal rather
+     than a tidy-up — one field on one screen behaved unlike every other tag picker a coach meets,
+     and the room's own layout removed the pressure that bought the exception.
+     ⚠ DELETED, NOT LEFT UNUSED. An opt-in nobody opts into is an invitation to a second exception;
+     the CSS that served it (`.tagComboAdd`) went in the same pass. Do not re-add it without a
+     ruling of its own. */
   /** ONE tag, replaced on pick; the input hides while one is chosen (the focus-area shape). */
   single?: boolean;
   /** Legacy free-text names with no library match — each renders a one-press adopt row. */
@@ -267,14 +262,11 @@ export default function TagSearchCombobox({
 
   const selected = selectedIds.map(id => byId.get(id)).filter((t): t is ComboTag => !!t);
 
-  /* In `addAsChip` mode the input is revealed by the `＋` chip and hides again when it is left
-     empty. ⚠ It starts revealed when there is NOTHING selected — a lone `＋` beside an empty Tags
-     label says less than the box does, and the whole point of the chip is to save a row that is
-     otherwise showing chips. In `single` mode the input hides while a tag is chosen — one value,
-     one chip (the focus-area shape). */
-  const [revealed, setRevealed] = useState(false);
+  /* In `single` mode the input hides while a tag is chosen — one value, one chip (the focus-area
+     shape). Everywhere else the search box is always there, which is the shape every other field
+     in the portal has. */
   const full = single && selected.length > 0;
-  const showInput = !disabled && !full && (!addAsChip || revealed || selected.length === 0);
+  const showInput = !disabled && !full;
 
   return (
     /* ⚠ SAME CONTRACT AS THE FILES-UNDER PICKER (§134 walk): while the suggestion list is open this
@@ -297,17 +289,6 @@ export default function TagSearchCombobox({
               </span>
             );
           })}
-          {/* The `＋` sits WITH the chips, on their row — that is the whole saving. */}
-          {addAsChip && !disabled && !showInput && !full && (
-            <button
-              type="button"
-              className={styles.tagComboAdd}
-              aria-label="Add a tag"
-              onClick={() => { setRevealed(true); setTimeout(() => inputRef.current?.focus(), 0); }}
-            >
-              <Plus size={12} aria-hidden />
-            </button>
-          )}
         </div>
       )}
 
@@ -321,12 +302,7 @@ export default function TagSearchCombobox({
             autoComplete="off"
             onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
             onFocus={openDropdown}
-            onBlur={() => setTimeout(() => {
-              setOpen(false);
-              /* Fold back to the chip only if nothing was typed — a coach mid-word who clicked a
-                 dropdown option must not have the box vanish from under them. */
-              if (addAsChip && !query.trim() && selected.length > 0) setRevealed(false);
-            }, 150)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
             onKeyDown={onKeyDown}
           />
           {open && (query.length > 0 || matches.length > 0 || adoptable.length > 0 || !!manage) && (

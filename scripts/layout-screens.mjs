@@ -199,27 +199,36 @@ export const SCREENS = [
   { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1' },
   { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=bills`,    ready: 'h1' },
   { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=due`,      ready: 'h1' },
-  /* ⚠⚠ ONE COMMITMENT — AND IT HAD NEVER BEEN SWEPT AT ALL (Payables Rebuild Part B, 2026-08-26).
+  /* ⚠⚠ ONE BILL — AND IT HAD NEVER BEEN SWEPT AT ALL (Payables Rebuild Part B, 2026-08-26).
      Part A shipped this screen as a sub-view of Payables and no entry was added with it, so a whole
-     page — a header, a standing figure, a fields block, an unbounded schedule and a payments list —
-     went unmeasured at every width. It is a `?bill=` URL, not a modal, so nothing here excuses it;
+     screen — a header, a standing figure, a fields block, an unbounded schedule and a payments list
+     — went unmeasured at every width. It is a `?bill=` URL, not a modal, so nothing excused it;
      the two entries above prove the LIST, and a list is not its drill-in.
 
-     Part B makes the omission expensive rather than merely untidy: the page now draws six live
-     controls (two of them comboboxes) and a docked save strip, all in slots that inherit NO tap
-     floor from anything — which is precisely how a relocated control landed at 30px once before.
+     Part B made the omission expensive rather than merely untidy: it draws six live controls (two
+     of them comboboxes) and a docked save strip, all in slots that inherit NO tap floor from
+     anything — which is precisely how a relocated control landed at 30px once before.
+
+     ⚖⚖ AND IT IS A ROOM NOW (List · Room · Question Phase C, 2026-09-04), which is why `ready`
+     moved rather than the ID. The id is DELIBERATELY unchanged: the accepted-findings baseline is
+     keyed on it, and renaming an id silently discards every entry it holds — this file's own
+     lesson, recorded on the Payables ids above. What the sweep opens is the same URL and the same
+     record; what it now measures is the overlay, its four tiles, its pinned foot and the walk.
 
      ⚠ WHAT THIS CANNOT SEE: the sweep renders and measures, it does not TYPE. The editing states —
-     a combobox open over the schedule, "Saving…", a refused rename — are owner-QA coverage only and
-     are walked in the ledger section, not here. A green run on this entry is a claim about the page
-     at REST.
+     a combobox open over the schedule, "Saving…", a refused rename, the History fold OPEN, a
+     payment's Remove question docked in the foot — are owner-QA coverage only and are walked in the
+     ledger section, not here. A green run on this entry is a claim about the room at REST.
 
-     ⚠ `ready` IS NOT `h1` HERE, unlike every other Money entry. The hub's own `<h1>` is on screen
-     before this page's data arrives, so waiting on it would unblock the sweep over "Loading payment
-     details…" and report a green check for a page that had not drawn. The attribute below hangs off
-     the branch that needs the STANDING — the schedule, the payments, the figure — so it cannot be
-     satisfied by a half-loaded screen. */
-  { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&bill=${c.commitmentId}`, ready: '[data-commitment="loaded"]' },
+     ⚠⚠ `ready` IS NOT `h1` HERE, unlike every other Money entry, and the reason survived the
+     re-home unchanged. The hub's own `<h1>` is on screen before this record's data arrives, so
+     waiting on it would unblock the sweep over "Loading payment details…" and report a green check
+     for a room that had not drawn. The pair below is the shell's own: `data-room` names the room
+     and `data-room-state` flips to `loaded` only once the STANDING is in hand — the same condition
+     the retired `data-commitment="loaded"` carried, now spelled the way every other room spells it.
+     `tests/unit/room-address-keys-guard.test.ts` fails the build if this selector and the shell's
+     `sentinel="bill"` ever stop naming each other. */
+  { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&bill=${c.commitmentId}`, ready: '[data-room="bill"][data-room-state="loaded"]' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
   /* ⚠⚠ THE SECOND LENS IS A SECOND SCREEN, and it was missing from this list until 2026-09-03.
      `coach-dues` above measures the Season-totals table; `?duesView=installments` draws a

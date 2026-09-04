@@ -1,7 +1,9 @@
 'use client';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Pencil, Receipt, Trash2 } from 'lucide-react';
-import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import { Check, Pencil } from 'lucide-react';
+import RoomShell, { type RoomShellProps } from '@/components/coaches/RoomShell';
+import GuardedDelete from '@/components/coaches/GuardedDelete';
+import { useLatestRef } from '@/components/coaches/useLatestRef';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
@@ -14,14 +16,33 @@ import styles from '../../../coaches.module.css';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
- * **ONE COMMITMENT, AND THE PAGE EDITS ITSELF** (Payables Rebuild — Part B, owner approval
- * 2026-08-26, from the drawn options at `claude.ai/code/artifact/9c42dd82-39f1-4b12-8957-a5f43b2594de`).
+ * **THE TEAM BILL'S ROOM — and the room edits itself** (List · Room · Question Phase C, owner-ruled
+ * 2026-09-02 D4; plan `docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md` §4; mockup
+ * `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc`, section "the page exception
+ * dissolves", rulings R1–R5).
  *
- * Part A closed the duplicate doors on this screen. B answers the question underneath them: *if
+ * ⚖⚖ **IT WAS A `?bill=` SUB-VIEW THAT REPLACED THE LEDGER; IT IS A ROOM OVER IT** (Phase C). The
+ * page shape was chosen in August for one reason — a height-capped centred modal overflowed on a
+ * long schedule (§64 Part E) — and guard rule G3 solves that structurally: `RoomShell` is
+ * full-height with its own scroll. The review that re-ruled D4 confirmed the rest of the
+ * justification had no code behind it (no print capability was ever built here, and the styles are
+ * still named "drawer"). What the page bought is kept: the address still works, a link is still
+ * shareable, the schedule may still grow. What it cost is returned: the Ledger stays mounted
+ * behind the room with its filters and scroll intact, and the hardcoded "back to Ledger" label —
+ * a fragility the code itself flagged — is gone, replaced by the shell's ✕ and Escape.
+ *
+ * Part A closed the duplicate doors on this screen. B answered the question underneath them: *if
  * this is a screen, why does it open a window to change what it is already showing?* Six fields —
  * the bill's name, its filing, payee, tags, how it is paid and the note — are rendered as live
- * controls here and save themselves. `Edit details` is gone from the header, which now carries
- * only the way back.
+ * controls here and save themselves. `Edit details` is gone; so, now, is the page header it used
+ * to sit in.
+ *
+ * ⚠⚠ **THE NAME IS THE ROOM'S TITLE, AND A TITLE TAKES NO LABEL** (owner + `/design`, 2026-09-03:
+ * *"the card's lead cell is its TITLE and takes no label"*). That ruling is also this screen's
+ * answer to the plan's open "required-but-unmarked Name" item: the title slot is EXEMPT from the
+ * required marker, because a record's own name in the title position cannot be mistaken for an
+ * optional field, and a `*` floating beside a page heading reads as a footnote. The server still
+ * refuses an empty name; autosave still declines to send one; the strip still says why.
  *
  * ⚠⚠ **THE LINE THIS DRAWS: A MODAL IS FOR A QUESTION, NOT FOR A FIELD.** `Change` and `Remove` on
  * an installment ask a real one — *this payment, this and the later ones, or all unpaid?* Recording
@@ -55,9 +76,25 @@ import styles from '../../../coaches.module.css';
  * **an explicit submit rejects an empty name; autosave must NOT, because the coach is mid-typing.**
  * A blank name simply does not save yet — nothing is discarded, and the strip says why.
  *
- * ⚠ **THE DRAFT IS SEEDED ONCE, AND THE CALLER KEYS THIS COMPONENT BY BILL.** Re-seeding from props
- * would let a background refresh — and every write on this screen triggers two — overwrite what the
- * coach is typing. `key={expense.id}` at the call site is what moves the page between bills.
+ * ⚠ **THE DRAFT IS SEEDED ONCE PER BILL, AND THE BILL IS THE ONLY THING THAT RESEEDS IT.**
+ * Re-seeding from props would let a background refresh — and every write on this screen triggers
+ * two — overwrite what the coach is typing.
+ *
+ * ⚠⚠ **THE CALLER USED TO KEY THIS COMPONENT BY BILL; IT MUST NOT, NOW THAT THIS IS A ROOM**
+ * (Phase C). A key remounts the whole subtree — which now includes `RoomShell` — so every step of
+ * the room's Prev/Next would tear the overlay down and rebuild it, firing the accessibility
+ * floor's focus RESTORE on the way out: focus would land back on the list row behind the room and
+ * scroll the Ledger to it, once per step of the walk. So the record changes underneath a mounted
+ * draft, and the render-phase change guard below reseeds it — React's sanctioned
+ * derive-from-prop pattern, the one the hub page and the money panel already use. It keys on the
+ * BILL'S ID and on nothing else, which is what preserves the rule above.
+ *
+ * ⚠⚠ **AND EVERY WAY OUT FLUSHES A PENDING EDIT** (Phase C). On the page, the only exit was the
+ * header's back LINK, and `UnsavedChangesGuard` intercepts links — so a keystroke inside the
+ * ~0.9s debounce was safe. A room closes on ✕, on Escape, on the backdrop and on Prev/Next, none
+ * of which is a navigation and none of which that guard can see. This component's whole promise is
+ * that these fields save themselves, so leaving WRITES rather than asking; `leaveFor` below is the
+ * one door every exit goes through.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -83,9 +120,40 @@ interface Props {
   tagLibrary: RepTeamTag[];
   initialTagIds: string[];
   onCreateTag: (name: string) => Promise<RepTeamTag | null>;
-  /** Where the in-header arrow goes, and what it is called. See the panel's `backTo` note. */
-  backTo: { href: string; label: string };
-  /** A save landed — the panel re-reads so the list behind this page agrees with it. */
+  /**
+   * The shell slots the PANEL owns — the four figures, the status chip, the Record door, the
+   * History fold, the named walk, the busy gate and the sweep's `loaded` signal.
+   *
+   * ⚠ PASSED THROUGH RATHER THAN HOISTED, because the room's TITLE is this component's `name`
+   * field and its foot holds this component's Delete and save strip. One of the two had to own the
+   * shell; the one holding the draft is the one that cannot be split.
+   */
+  room: Omit<RoomShellProps, 'open' | 'ariaLabel' | 'title' | 'children' | 'footer' | 'sentinel' | 'recordKey' | 'facts' | 'factsTitle' | 'width'>;
+  /**
+   * A question raised by a control in the room's BODY — removing a recorded payment.
+   *
+   * ⚠⚠ IT REPLACES THE FOOT'S DOORS WHILE IT IS OPEN (owner, §134 walk 2026-09-03; plan §10): *a
+   * question and the controls it suspends must occupy the same place.* A confirmation appended to
+   * a scrolling body renders below the fold on a long schedule, so pressing Remove looks like it
+   * did nothing — the exact defect the club request's Withdraw had. The foot is the one band that
+   * is always visible.
+   */
+  footQuestion?: ReactNode;
+  /**
+   * A save was REFUSED after this room had already gone — raise it somewhere that outlives it.
+   *
+   * ⚠⚠ THE HOLE THIS CLOSES (`/review`, 2026-09-04). The room is unmounted outright when the coach
+   * switches Money tab (the mount condition carries `tabActive`, as every room's does, so a hidden
+   * panel cannot leave an Escape floor armed over another tab). The ROUTE guard only intercepts a
+   * link while the draft is `dirty`, not while a save is in FLIGHT — correct, because interrupting
+   * a coach for the ~200ms of an ordinary save would be worse than the thing it prevents. So a
+   * rename the server refuses in that window used to land its sentence on a component that no
+   * longer existed, and the coach was never told: the name simply never changed.
+   * ⚠ On the page this replaced there was nothing to close — the bill's view was not gated on the
+   * visible tab, so the refusal waited there for the coach to come back.
+   */
+  onRefusedAfterClose?: (message: string) => void;
+  /** A save landed — the panel re-reads so the list behind this room agrees with it. */
   onSaved: () => void | Promise<void>;
   /** The bill is gone; the panel decides where the coach lands. */
   onDeleted: () => void;
@@ -102,39 +170,70 @@ interface Props {
   children: ReactNode;
 }
 
+type Filing = { categoryId: string; categoryName: string; itemId: string | null; itemName: string } | null;
+
+/** ⚠ THE ITEM'S NAME COMES FROM THE LIBRARY, because a saved cost stores ids and no item name. A
+ *  word the coach creates in the picker is named by the picker's own `onChange` below — the same
+ *  order the money form's `chosenItemName` uses, and for the same reason. */
+function seedFiling(expense: RepTeamExpense, categories: BudgetCategoryWithItems[]): Filing {
+  if (!expense.budgetItemId || !expense.budgetCategoryId) return null;
+  const category = categories.find(c => c.id === expense.budgetCategoryId);
+  return {
+    categoryId: expense.budgetCategoryId,
+    categoryName: category?.name ?? expense.category ?? '',
+    itemId: expense.budgetItemId,
+    itemName: (category?.items ?? []).find(i => i.id === expense.budgetItemId)?.name ?? '',
+  };
+}
+
+function seedPayee(expense: RepTeamExpense): PayeeSelection | null {
+  return expense.payeePayer
+    ? { payeeId: expense.payeeId, payeePayer: expense.payeePayer, displayName: expense.payeePayer }
+    : null;
+}
+
 export default function CommitmentView({
-  orgSlug, teamId, expense, standing, canWrite, categories,
-  tagLibrary, initialTagIds, onCreateTag, backTo, onSaved, onDeleted, tabActive, playerNameById, children,
+  orgSlug, teamId, expense, standing, canWrite, categories, tagLibrary, initialTagIds, onCreateTag,
+  room, footQuestion, onRefusedAfterClose, onSaved, onDeleted, tabActive, playerNameById, children,
 }: Props) {
-  /* ── The draft. Seeded ONCE — see the docblock; the caller keys this component by bill. ── */
+  /* ── The draft. Seeded once per BILL — see the docblock and the change guard below. ── */
   const [name, setName] = useState(expense.description);
   const [notes, setNotes] = useState(expense.notes ?? '');
   const [method, setMethod] = useState(expense.paymentMethod ?? '');
-  const [payee, setPayee] = useState<PayeeSelection | null>(
-    expense.payeePayer
-      ? { payeeId: expense.payeeId, payeePayer: expense.payeePayer, displayName: expense.payeePayer }
-      : null,
-  );
+  const [payee, setPayee] = useState<PayeeSelection | null>(() => seedPayee(expense));
   const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
-  const [filing, setFiling] = useState<{ categoryId: string; categoryName: string; itemId: string | null; itemName: string } | null>(
-    /* ⚠ THE NAME COMES FROM THE LIBRARY, because a saved cost stores ids and no item name. A word
-       the coach creates in the picker is named by the picker's own `onChange` below — the same
-       order the money form's `chosenItemName` uses, and for the same reason. */
-    expense.budgetItemId && expense.budgetCategoryId
-      ? {
-          categoryId: expense.budgetCategoryId,
-          categoryName: categories.find(c => c.id === expense.budgetCategoryId)?.name ?? expense.category ?? '',
-          itemId: expense.budgetItemId,
-          itemName: (categories.find(c => c.id === expense.budgetCategoryId)?.items ?? [])
-            .find(i => i.id === expense.budgetItemId)?.name ?? '',
-        }
-      : null,
-  );
+  const [filing, setFiling] = useState<Filing>(() => seedFiling(expense, categories));
 
   const [state, setState] = useState<SaveState>('clean');
   const [saveError, setSaveError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  /** The belt to `deleting`'s braces — see `deleteCommitment` (`/review`, 2026-09-04). */
+  const deletingRef = useRef(false);
+
+  /**
+   * ⚠⚠ THE ROOM STAYS MOUNTED WHILE THE RECORD CHANGES (Phase C) — Prev/Next swaps the bill under
+   * this draft rather than remounting the overlay, so the draft has to follow it. Render-phase
+   * adjustment on a change guard: React's own derive-from-prop pattern, and the one the hub page
+   * and the money panel already use.
+   *
+   * ⚠ IT KEYS ON THE BILL'S ID AND NOTHING ELSE. Re-seeding from the props' VALUES would let a
+   * background refresh overwrite what the coach is typing, and every write on this screen triggers
+   * two. The outgoing bill's pending edit is written by `leaveFor`, which every exit goes through
+   * — including the walk — so nothing arrives here unsaved.
+   */
+  const [seededFor, setSeededFor] = useState(expense.id);
+  if (seededFor !== expense.id) {
+    setSeededFor(expense.id);
+    setName(expense.description);
+    setNotes(expense.notes ?? '');
+    setMethod(expense.paymentMethod ?? '');
+    setPayee(seedPayee(expense));
+    setTagIds(initialTagIds);
+    setFiling(seedFiling(expense, categories));
+    setState('clean');
+    setSaveError('');
+    setDeleting(false);
+  }
 
   /* ⚠ THE SIGNATURE COVERS THE WHOLE EDITABLE SET, not just the text — retagging a bill and then
      closing the tab must be as safe as renaming it and closing the tab. (The plan-template
@@ -142,9 +241,11 @@ export default function CommitmentView({
   const sig = JSON.stringify({ name, notes, method, payee, tagIds, filing });
   const sigRef = useRef(sig);
   useEffect(() => { sigRef.current = sig; }, [sig]);
+  /** The bill on screen RIGHT NOW, for a save that resolves after the walk has moved on. */
+  const idRef = useLatestRef(expense.id);
 
   /**
-   * ⚠⚠ **THE LIST BEHIND THIS PAGE IS RE-READ ONCE THE COACH STOPS, NOT ONCE PER FIELD.**
+   * ⚠⚠ **THE LIST BEHIND THIS ROOM IS RE-READ ONCE THE COACH STOPS, NOT ONCE PER FIELD.**
    *
    * `onSaved` is the panel's full refresh: it invalidates the money cache and re-reads the
    * expenses, the taxonomy, the budget plan and (on Payables) the club schedule. Calling it inline
@@ -157,15 +258,31 @@ export default function CommitmentView({
    * single re-read. ⚠ Longer than the save debounce on purpose: the point is to land AFTER the last
    * save of a burst, not between two of them.
    *
-   * ⚠ CLEARED ON UNMOUNT — a refresh firing into a page the coach has left is a request nobody is
-   * waiting for, and on this screen it would land on a panel that has moved to another bill.
+   * ⚠⚠ ON UNMOUNT IT IS FIRED, NOT DROPPED — and that reversed with the room (Phase C). It used to
+   * be cleared, on the sound reasoning that this was a PAGE: the coach had navigated away, and
+   * nothing was left on screen waiting for the answer. A room closes over a list that is still
+   * mounted and still showing the bill's row, so dropping the re-read leaves that row disagreeing
+   * with the save the coach just made — the one thing `onSaved` exists to prevent.
    */
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onSavedRef = useRef(onSaved);
   useEffect(() => { onSavedRef.current = onSaved; }, [onSaved]);
-  useEffect(() => () => { if (refreshTimer.current) clearTimeout(refreshTimer.current); }, []);
+  const onRefusedRef = useLatestRef(onRefusedAfterClose);
+  /** Is this component still on screen? A flush fired on the way out resolves after it is not. */
+  const mounted = useRef(true);
+  useEffect(() => () => {
+    mounted.current = false;
+    if (refreshTimer.current) {
+      clearTimeout(refreshTimer.current);
+      refreshTimer.current = null;
+      void onSavedRef.current();
+    }
+  }, []);
 
   const scheduleRefresh = useCallback(() => {
+    /* The room has already closed — the trailing collapse has nothing left to collapse, and the
+       list behind it is showing a stale row right now. */
+    if (!mounted.current) { void onSavedRef.current(); return; }
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
     refreshTimer.current = setTimeout(() => {
       refreshTimer.current = null;
@@ -173,15 +290,20 @@ export default function CommitmentView({
     }, REFRESH_AFTER_MS);
   }, []);
 
-  const save = useCallback(async () => {
-    if (!canWrite) return;
+  /** @returns whether the edit is now on the server — `leaveFor` will not leave on a `false`. */
+  const save = useCallback(async (): Promise<boolean> => {
+    if (!canWrite) return true;
     /* ⚠⚠ AUTOSAVE DOES NOT REJECT AN EMPTY NAME — the coach is mid-word. It simply does not save
        yet; nothing typed is discarded and the strip says why. An explicit submit would refuse. */
     if (!name.trim()) {
       setSaveError('Give this bill a name to save it.');
-      return;
+      return false;
     }
     const sigAtSave = sigRef.current;
+    /* ⚠ WHICH BILL THIS SAVE IS FOR. A flush fired by Prev/Next lands after the room has already
+       swapped to the next record, and settling then would stamp "Saved ✓" on a draft this write
+       never carried. Same rule as `sigAtSave`, one level up: only settle what you actually sent. */
+    const idAtSave = expense.id;
     setState('saving');
     setSaveError('');
     const abort = new AbortController();
@@ -209,17 +331,34 @@ export default function CommitmentView({
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save this bill.');
       await res.json().catch(() => ({}));
-      /* Only settle if nothing changed while the request was in flight — otherwise the coach's
-         later keystrokes would be marked saved by an earlier save that never carried them. */
-      if (sigRef.current === sigAtSave) setState('saved');
+      /* Only settle if nothing changed while the request was in flight, and only on the bill this
+         write was for — otherwise the coach's later keystrokes, or the next bill in the walk,
+         would be marked saved by an earlier save that never carried them. */
+      if (idRef.current === idAtSave && sigRef.current === sigAtSave) setState('saved');
       scheduleRefresh();
+      return true;
     } catch (e: unknown) {
-      setSaveError(
-        e instanceof DOMException && e.name === 'AbortError'
-          ? 'Saving is taking too long — check your connection.'
-          : e instanceof Error ? e.message : 'Could not save this bill.',
-      );
+      const message = e instanceof DOMException && e.name === 'AbortError'
+        ? 'Saving is taking too long — check your connection.'
+        : e instanceof Error ? e.message : 'Could not save this bill.';
+      /* ⚠ A REFUSAL BELONGS TO THE BILL THAT EARNED IT. Raising it over the NEXT bill would name a
+         field that is no longer on screen and halt an autosave loop that never failed.
+         ⚠ THE NARROW LOSS THIS ACCEPTS, STATED RATHER THAN HIDDEN: the walk AWAITS a pending edit
+         (`leaveFor`) precisely so a refusal is read before the record changes, so the only way to
+         reach this branch is a debounced autosave still in flight when the coach steps to the next
+         bill — and only a REFUSED one, which on this route means an ambiguous pre-mig-236 ledger
+         match on a rename. That edit is gone. Widening it would mean holding a second bill's
+         refusal over the bill on screen, which is worse. */
+      if (idRef.current !== idAtSave) return false;
+      /* ⚠⚠ AND IF THE ROOM HAS GONE, THE REFUSAL GOES SOMEWHERE THAT HAS NOT (`/review`,
+         2026-09-04). Switching Money tab unmounts this room outright, and the route guard does not
+         intercept a link while a save is merely IN FLIGHT — so a refused rename used to set state
+         on a component that no longer existed and the coach was simply never told. The panel is
+         still mounted; it raises the sentence above the book. */
+      if (!mounted.current) { onRefusedRef.current?.(`${expense.description}: ${message}`); return false; }
+      setSaveError(message);
       setState('dirty');
+      return false;
     } finally {
       clearTimeout(timeout);
     }
@@ -235,30 +374,87 @@ export default function CommitmentView({
     return () => clearTimeout(t);
   }, [state, saveError, canWrite, sig, save]);
 
-  /** Every setter goes through this: one place that marks the page dirty and clears a stale refusal. */
+  /** Every setter goes through this: one place that marks the room dirty and clears a stale refusal. */
   function touch<T>(set: (v: T) => void) {
     return (v: T) => { set(v); setState('dirty'); setSaveError(''); };
   }
 
+  /**
+   * ⚖⚖ EVERY WAY OUT OF THIS ROOM WRITES FIRST (Phase C) — the ✕, Escape, the backdrop and both
+   * arrows of the walk.
+   *
+   * On the page this replaced, the only exit was a LINK, and `UnsavedChangesGuard` intercepts
+   * links; none of a room's exits is a navigation, so without this a keystroke inside the ~0.9s
+   * autosave debounce would simply be discarded by the closing overlay. This component's promise
+   * is that its fields save themselves, so leaving SAVES rather than asking — asking would be the
+   * wrong question ("discard?" — nothing was ever going to be discarded).
+   *
+   * ⚠⚠ AND IT WAITS FOR THE VERDICT, WHICH IS THE POINT. The name is the one field the server can
+   * refuse (an ambiguous ledger match on a rename), and the refusal is a sentence a coach has to
+   * ACT on. Leaving optimistically would close the room over it. Refused, the room stays open with
+   * the reason in the strip and the walk does not move.
+   */
+  const leaving = useRef(false);
+  const leaveFor = useCallback(async (go: () => void) => {
+    if (leaving.current) return;
+    /* Nothing pending, or already in flight (the shell's busy gate holds the door meanwhile) —
+       either way there is nothing to wait for.
+       ⚠⚠ A STANDING REFUSAL IS RETRIED, NOT WAVED THROUGH (`/review`, 2026-09-04). This read
+       `&& !saveError`, which made the promise above true only ONCE: the first exit attempt blocked
+       and showed the reason, and the second — the coach pressing ✕ again, which is exactly what
+       someone does when a window will not close — sailed past with the edit still unsaved and
+       nothing said. The refusal is a reason to try again, not a reason to stop trying: the strip's
+       own Retry does the same thing, and if the server refuses a second time the room stays put
+       with the sentence still on screen. */
+    if (canWrite && state === 'dirty') {
+      leaving.current = true;
+      try {
+        setSaveError('');
+        if (!await save()) return;
+      } finally {
+        leaving.current = false;
+      }
+    }
+    go();
+  }, [canWrite, state, save]);
+
   async function deleteCommitment() {
-    if (deleting) return;
+    /* ⚠ A REF LATCH BESIDE THE STATE FLAG (`/review`, 2026-09-04) — the belt the money panel's own
+       writers wear, for the reason they state: a second click lands before React commits
+       `disabled`, and a second DELETE 404s, showing a failure after a success. */
+    if (deletingRef.current || deleting) return;
+    deletingRef.current = true;
     setDeleting(true);
     setSaveError('');
+    /* ⚠ THE SAME CEILING `save()` CARRIES, and now for a second reason (`/review`, 2026-09-04):
+       `deleting` feeds the room's busy gate, so a request that never resolves would leave every
+       exit — Escape, the ✕, the backdrop, the walk — refusing, with no cancel on screen. */
+    const abort = new AbortController();
+    const ceiling = setTimeout(() => abort.abort(), SAVE_TIMEOUT_MS);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expense.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expense.id}`, {
+        method: 'DELETE', signal: abort.signal,
+      });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not delete this bill.');
       onDeleted();
     } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : 'Could not delete this bill.');
-      setConfirmDelete(false);
+      setSaveError(
+        e instanceof DOMException && e.name === 'AbortError'
+          ? 'That took too long — check your connection and try again.'
+          : e instanceof Error ? e.message : 'Could not delete this bill.',
+      );
+      deletingRef.current = false;
       setDeleting(false);
+    } finally {
+      clearTimeout(ceiling);
     }
   }
 
-  /* ⚠ ONE FORMATTER, and it is the panel's — a second spelling of a dollar figure on the same page
-     is how "$1,550.00" and "$1550.00" end up one above the other. */
-  const fmt = (n: number) =>
-    `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  /* ⚰ THE SECOND `fmt` STOOD HERE AND IS DELETED (Phase C). It dressed the "Still owing" band this
+     component used to draw; the room's four tiles are the panel's, formatted by the panel's own
+     `fmt`, so there is one spelling of a dollar figure in this room again. `money` below is the
+     DELETE confirmation's, and it is deliberately a different shape (no thousands separator) —
+     word for word what the money form's own Delete says, so one fact reads one way on both doors. */
 
   /* ⚠ THE SAME PREVIEW THE SERVER REVERSES WITH, so the sentence and the outcome cannot drift —
      the rule the modal's Delete already followed, carried down the page with the control.
@@ -277,16 +473,28 @@ export default function CommitmentView({
 
   return (
     <>
-      {/* ⚠ THE GUARD FOLLOWS THE VISIBLE TAB. A page under a hidden tab must not intercept clicks
+      {/* ⚠ THE GUARD FOLLOWS THE VISIBLE TAB. A room under a hidden tab must not intercept clicks
           on the tab the coach is actually looking at — the money panel's own rule, and the reason
-          `tabActive` exists at all. */}
+          `tabActive` exists at all.
+          ⚠ IT IS THE RELOAD/LINK BELT ONLY. Every exit the ROOM itself offers goes through
+          `leaveFor`, which writes rather than asks; this catches the ways out that leave the app. */}
       <UnsavedChangesGuard active={canWrite && state !== 'clean' && state !== 'saved'} interceptClicks={tabActive && state === 'dirty'} />
 
-      <CoachPageHeader
-        /* ⚠ NESTED — this sits under the Money hub's own header, exactly as one fundraiser does.
-           A second `standard` header would print two page names and two "?"s. */
-        variant="nested"
-        icon={Receipt}
+      <RoomShell
+        {...room}
+        open
+        sentinel="bill"
+        onClose={() => { void leaveFor(room.onClose); }}
+        /* Every arrow of the walk writes a pending edit first, exactly as the ✕ does — the walk is
+           the other way the record changes under a draft. */
+        nav={room.nav ? { ...room.nav, onSelect: id => { void leaveFor(() => room.nav!.onSelect(id)); } } : undefined}
+        /* ⚠ THE SAVE JOINS THE BUSY GATE. A refusal on the name is a sentence the coach has to
+           read, and a room dismissed mid-request would close over it. */
+        busy={room.busy || deleting || state === 'saving'}
+        /* ⚠ NOT REMOUNTED BY THE WALK (see the docblock) — so the floor needs telling when the
+           record changes, or focus stays on a control that went with the last bill. */
+        recordKey={expense.id}
+        ariaLabel={`${expense.description || 'Untitled bill'} — bill`}
         title={canWrite ? (
           /* ⚠⚠ IT HAS TO LOOK LIKE A FIELD (owner, §114 walk 2026-08-27: *"why can't we edit the
              title?"*). It WAS editable — and invisible, because it was styled to look exactly like
@@ -294,15 +502,17 @@ export default function CommitmentView({
              coach cannot see is a control they do not have, and on a touch screen there is no hover
              at all, so the affordance never arrived. It now carries its dashed rule at REST and a
              pencil beside it, which is what the mockup drew.
-             ⚠ THE WRAPPER IS NOT DECORATION: `.pageTitle` is a flex row, so a bare `width: 100%`
-             input resolved against a shrink-to-fit line and sized itself to roughly twenty
-             characters — a long bill name would have scrolled inside a box nobody knew was there. */
+             ⚠ THE WRAPPER IS NOT DECORATION: the shell's title row is a flex row, so a bare
+             `width: 100%` input resolved against a shrink-to-fit line and sized itself to roughly
+             twenty characters — a long bill name would have scrolled inside a box nobody knew was
+             there. */
           <span className={styles.commitTitleField}>
-            {/* ⚖⚖ THE TITLE IS THE NAME FIELD (Part B). Rendering the name a second time under a
-                "Name" label would print the same words twice on one screen; an input in the title
-                slot is the same "everything readable is editable" rule applied to the one readable
-                thing that is not in the fields block. `title` takes a ReactNode precisely so a page
-                can do this. Read-only coaches get the plain h2 text below. */}
+            {/* ⚖⚖ THE TITLE IS THE NAME FIELD (Part B), AND IT TAKES NO REQUIRED MARKER (Phase C —
+                the 2026-09-03 title-slot ruling). Rendering the name a second time under a "Name"
+                label would print the same words twice in one room; an input in the title slot is
+                the same "everything readable is editable" rule applied to the one readable thing
+                that is not in the fields block. `title` takes a ReactNode precisely so a consumer
+                can do this. Read-only coaches get the plain heading text. */}
             <input
               className={styles.commitTitleInput}
               value={name}
@@ -314,38 +524,93 @@ export default function CommitmentView({
             <Pencil size={13} aria-hidden className={styles.commitTitlePencil} />
           </span>
         ) : expense.description}
-        /* The in-header back affordance. ⚠ IT NAMES WHERE IT RETURNS TO, AND RETURNS THERE (owner
-           ruling 2026-08-26, Part B call 3): once the Transactions register can send a coach here,
-           a link that always said "Payables" would quietly move them to a tab they were not on. */
-        backTo={backTo}
-        /* ⚖⚖ NO ACTIONS AT ALL, and that is the phase (owner ruling 2026-08-26). `Edit details` was
-           the last one: it opened a window onto the six fields this page now renders in place. The
-           other two moved in Part A — Record to the rows that name a payment, `Add an installment`
-           under the schedule it adds to. The header carries the way back and nothing else. */
-      />
-
-      {/* ⚖⚖ THE ANSWER FIRST, ABOVE THE FIELDS — and this is a CORRECTION of Part B's first build
-          (caught 2026-08-27 comparing the built page against its own mockup).
-
-          B put the six editable fields between the title and this figure, which quietly reversed the
-          owner's correction of 2026-08-26: the read-only facts block had been LAST, was moved up,
-          and the ruling was that it must not push `Still owing` and the schedule — *what the page is
-          FOR* — down the screen. B made that worse rather than repeating it: the block grew from
-          three optional rows into five permanent ones carrying two comboboxes and a textarea, so the
-          one figure a coach opens a bill to read had a whole form stacked on top of it.
-
-          ⚠ IT LIVES HERE, NOT IN THE PANEL'S `children`, because that is the only way it can sit
-          above fields this component owns. The schedule and the payments stay the panel's.
-
-          ⚠ RENDERED ONLY WITH A STANDING. Without one the figure would read $0.00 while the real
-          one is still loading — a wrong number is worse than a missing one on the line that says
-          what the team owes. */}
-      {standing && (
-        <div className={`${styles.payDrawerTotal} ${styles.commitStanding}`}>
-          <span>{standing.over > 0 ? 'Paid over the total' : 'Still owing'}</span>
-          <strong>{fmt(standing.over > 0 ? standing.over : standing.remaining)}</strong>
-        </div>
-      )}
+        footer={
+          /* ⚖⚖ THE QUESTION OWNS THE BAND WHILE IT IS OPEN (owner, §134 walk; plan §10). A
+              confirmation and the controls it suspends must occupy the same place — so a payment's
+              Remove, raised on a row that may be far down a long schedule, replaces these doors
+              rather than appearing under them where the coach would have to go looking. Nothing is
+              disabled, because nothing competing is rendered. */
+          footQuestion ?? (canWrite ? (
+            <>
+              {/* ⚖ ONE DELETE, GUARDED, AT THE FOOT — the shared control every room's foot carries
+                  (Phase B). `refusal` is null: a bill is always deletable, and what deletion COSTS
+                  is what the confirmation names. ⚠⚠ IT NAMES DOLLARS, never a bare "Are you sure?":
+                  deleting a bill money has landed on reverses what it posted, and a coach must be
+                  told the size of that before they can consent. `ledgerReversalPreview` is the SAME
+                  function the server reverses with, so the sentence and the outcome cannot drift. */}
+              <GuardedDelete
+                label="Delete this bill"
+                refusal={null}
+                confirmTitle={`Delete “${expense.description}”?`}
+                /* ⚖ "Delete and reverse" WHEN MONEY MOVES (restored, `/review` 2026-09-04). The
+                   distinction was lost when this foot adopted the shared control, which hard-coded
+                   "Delete": pressing it on a bill money has landed on reverses cash as well as
+                   removing a record, and the button should say the bigger of the two things. */
+                confirmLabel={reversal.amount > 0 ? 'Delete and reverse' : 'Delete'}
+                confirmBody={<>
+                  {/* ⚠ SEPARATE PARAGRAPHS, restored with them (`/review`). The cash sentence and
+                      the family's-credit sentence are two different consequences; run together in
+                      one block they read as one hedged clause. */}
+                  {reversal.amount > 0 && (
+                    <p className={styles.dangerConfirmBody}>This has already posted <strong>{money(reversal.amount)}</strong> out of the team’s
+                    books{reversal.legs > 1 ? ` across ${reversal.legs} payments` : ''}. Deleting it will
+                    reverse that, so cash on hand goes back up by {money(reversal.amount)}.</p>
+                  )}
+                  {reversal.amount === 0 && !reversal.owesFamily && <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>}
+                  {/* ⚠⚠ THE HOUSEHOLD IS SAID SEPARATELY, NEVER FOLDED INTO A DOLLAR FIGURE (P4). A
+                      fronted payment moved no team cash, so it contributes nothing to the amount
+                      coming back — but the credit it created disappears by cascade, and that is a
+                      change to what a family is owed. Word for word the sentence the modal's own
+                      Delete gives, so one fact has one phrasing on both doors. */}
+                  {reversal.owesFamily && (
+                    <p className={styles.dangerConfirmBody}>
+                      <strong>The credit the team owes will be removed too:</strong>{' '}
+                      {reversal.owedByFamily.map((o, at) => {
+                        const who = playerNameById?.get(o.playerId) ?? '';
+                        return (
+                          <Fragment key={o.playerId}>
+                            {at > 0 ? ', ' : ''}
+                            {who ? <>{who}’s family</> : <>a family</>} <strong>{money(o.amount)}</strong>
+                          </Fragment>
+                        );
+                      })}
+                      {reversal.amount === 0 ? '. No team cash moves.' : '.'}
+                    </p>
+                  )}
+                </>}
+                deleting={deleting}
+                onDelete={() => { void deleteCommitment(); }}
+              />
+              {/* ── The save strip, ON THE DOORS' ROW ──────────────────────────────────────────
+                  ⚖ IT HAD A ROW OF ITS OWN AND DID NOT EARN ONE (owner, §114 walk 2026-08-27).
+                  Delete sits left, the status beside it, on the one band that closes the room and
+                  never scrolls away — the same pairing the plan-template editor's docked footer
+                  uses, and the reason it is here rather than beside a field: the schedule above may
+                  grow to a dozen rows, and ONE strip serves all six fields.
+                  ⚠ IT STANDS DOWN WHILE ANY QUESTION OWNS THE BAND (`RoomShell.module.css`) — a
+                  coach being asked about dollars should not be reading a save status at the same
+                  time. `aria-live` only announces what is rendered, so nothing is lost. */}
+              <span className={styles.saveStatus} aria-live="polite">
+                {saveError
+                  ? <button type="button" className={styles.saveRetry} onClick={() => { setSaveError(''); void save(); }}>
+                      {saveError} · Retry
+                    </button>
+                  : state === 'saving' ? 'Saving…'
+                    : state === 'dirty' ? 'Unsaved changes'
+                      : state === 'saved' ? <><Check size={13} aria-hidden /> Saved</>
+                        : null}
+              </span>
+            </>
+          ) : undefined)
+        }
+      >
+      {/* ⚖⚖ THE SCHEDULE COMES FIRST, AND THE FIELDS FOLLOW IT (Phase C, the mockup's R3 and the
+          owner's own 2026-08-26 order restored). On the PAGE the fields sat on top, because the
+          page's scroll was reserved for the schedule and the short fixed things belonged above it.
+          A room answers "where does this stand?" in its TILES, so the reason that put a form above
+          the schedule is gone with the figure it was protecting: the schedule is what the room is
+          FOR, and Details is what the bill IS. */}
+      {children}
 
       {/* ── What the bill IS ──────────────────────────────────────────────────────────────────
           ⚠⚠ EVERY ROW IS DRAWN, SET OR NOT, and that is a fix rather than a layout preference. An
@@ -353,7 +618,12 @@ export default function CommitmentView({
           the product not offering one. An empty field is an invitation now — "Add a note".
           ⚠ READ-ONLY MONEY COACHES SEE VALUES, NEVER CONTROLS. This block is the only place in the
           product an assistant can read a bill's payee or its tags; the values stay, the editors do
-          not appear. */}
+          not appear.
+          ⚠ IT WEARS THE SCHEDULE'S OWN SECTION LABEL (Phase C, the mockup's two `seclab`s). On the
+          page a header and a standing figure separated these blocks; in the room the schedule ends
+          and the fields begin with nothing between them, so the block that has a name gets a
+          matching one rather than a rule of its own. */}
+      <p className={styles.payDrawerLabel}>Details</p>
       <dl className={styles.commitFields}>
         <dt>Filing</dt>
         <dd>
@@ -368,6 +638,11 @@ export default function CommitmentView({
               createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
               createItemMode="coach"
               allowCreateCategory
+              /* ⚖ THE UNIFIED PAPER GROUND (mockup R2, owner-flagged 2026-09-02). The bill's
+                 CREATION form unified all its fields on one ground on 2026-08-29 and this control
+                 opted in there; the record view was simply never given the same prop, so one
+                 picker wore two sets of clothes on two screens for the same bill. */
+              paperGround
               manageHint="Rename or remove it later from Budget Plan → Manage our items — but it stays on this side."
               onChange={v => touch(setFiling)({
                 categoryId: v.categoryId, categoryName: v.categoryName,
@@ -405,11 +680,13 @@ export default function CommitmentView({
               placeholder="Add a money tag…"
               manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }}
               onManageChanged={() => { void onSaved(); }}
-              /* ⚖ THE `＋` SHAPE (owner, §114 walk 2026-08-27). Every other field here is one row;
-                 the tag picker was two — chips, then a permanent empty search box under them —
-                 which is right in a form and wrong in a block a coach is mostly READING. The box
-                 comes back from the chip the moment it is wanted. */
-              addAsChip
+              /* ⚰⚰ THE `＋` REVEAL IS GONE, AND IT IS A NAMED REVERSAL (mockup R1; owner-flagged
+                 2026-09-02, reversing the §114 walk tweak of 2026-08-27). That tweak hid the search
+                 box behind a `＋` chip to save a row in "a block a coach is mostly READING" — sound
+                 when this was a page whose fields sat above everything else. It was also the ONLY
+                 use of that shape in the entire product: one field, on one screen, behaving unlike
+                 every other tag picker a coach meets. The prop and the chip were deleted outright
+                 rather than left unused, so there is nothing for a future surface to opt into. */
             />
           ) : tagIds.length > 0 ? (
             <div className={styles.commitReadTags}>
@@ -456,91 +733,7 @@ export default function CommitmentView({
           )}
         </dd>
       </dl>
-
-      {/* The standing figure, the schedule and the payments — the panel's own, unchanged. */}
-      {children}
-
-      {/* ── Delete, at the foot of the page ───────────────────────────────────────────────────
-          ⚖ IT MOVED OUT OF THE FORM'S FOOTER (owner ruling 2026-08-26) and lost nothing on the way
-          down. ⚠⚠ THE DIALOG NAMES DOLLARS, never a bare "Are you sure?": deleting a bill money has
-          landed on reverses what it posted, and a coach must be told the size of that before they
-          can consent. `ledgerReversalPreview` is the SAME function the server reverses with, so the
-          sentence and the outcome cannot drift. One delete path — not a quieter second one that
-          happens to be easier to reach. */}
-      {canWrite && (
-        <div className={styles.commitFoot}>
-          {confirmDelete ? (
-            <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm delete">
-              <p className={styles.dangerConfirmTitle}>Delete “{expense.description}”?</p>
-              {reversal.amount > 0 && (
-                <p className={styles.dangerConfirmBody}>
-                  This has already posted <strong>{money(reversal.amount)}</strong> out of the team’s
-                  books{reversal.legs > 1 ? ` across ${reversal.legs} payments` : ''}. Deleting it will
-                  reverse that, so cash on hand goes back up by {money(reversal.amount)}.
-                </p>
-              )}
-              {reversal.amount === 0 && !reversal.owesFamily && (
-                <p className={styles.dangerConfirmBody}>Nothing has been paid against it, so no money moves.</p>
-              )}
-              {/* ⚠⚠ THE HOUSEHOLD IS SAID SEPARATELY, NEVER FOLDED INTO A DOLLAR FIGURE (P4). A
-                  fronted payment moved no team cash, so it contributes nothing to the amount coming
-                  back — but the credit it created disappears by cascade, and that is a change to
-                  what a family is owed. Word for word the sentence the modal's own Delete gives, so
-                  one fact has one phrasing on both doors. */}
-              {/* ⚠ NAMES THE HOUSEHOLD AND THE FIGURE — owner ruling 2026-08-27, same sentence
-                  shape as the modal's Delete so one fact reads one way on both doors. */}
-              {reversal.owesFamily && (
-                <p className={styles.dangerConfirmBody}>
-                  <strong>The credit the team owes will be removed too:</strong>{' '}
-                  {reversal.owedByFamily.map((o, at) => {
-                    const who = playerNameById?.get(o.playerId) ?? '';
-                    return (
-                      <Fragment key={o.playerId}>
-                        {at > 0 ? ', ' : ''}
-                        {who ? <>{who}’s family</> : <>a family</>} <strong>{money(o.amount)}</strong>
-                      </Fragment>
-                    );
-                  })}
-                  {reversal.amount === 0 ? '. No team cash moves.' : '.'}
-                </p>
-              )}
-              <div className={styles.dangerConfirmActions}>
-                <button className={styles.btnGhost} disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep it</button>
-                <button className={styles.btnDanger} disabled={deleting} onClick={deleteCommitment}>
-                  {deleting ? 'Deleting…' : reversal.amount > 0 ? 'Delete and reverse' : 'Delete'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button className={styles.deleteRecordBtn} onClick={() => setConfirmDelete(true)} disabled={deleting}>
-                <Trash2 size={13} aria-hidden /> Delete this bill
-              </button>
-              {/* ── The save strip, ON THE DELETE ROW ──────────────────────────────────────────
-                  ⚖ IT HAD A ROW OF ITS OWN AND DID NOT EARN ONE (owner, §114 walk 2026-08-27).
-                  Delete sits left, the status right, on the one line that closes the page — the
-                  same pairing the plan-template editor's docked footer uses.
-                  ⚠ AT THE FOOT, NOT BESIDE A FIELD: the schedule above may grow to a dozen rows,
-                  and one strip serves all six fields, which is the point — six fields with five
-                  save behaviours would be worse than the modal this replaces.
-                  ⚠ IT STANDS DOWN WHILE THE DELETE QUESTION IS OPEN — the branch above takes the
-                  whole row, because a coach being asked about dollars should not be reading a
-                  save status at the same time. `aria-live` only announces what is rendered, so
-                  nothing is lost. */}
-              <span className={styles.saveStatus} aria-live="polite">
-                {saveError
-                  ? <button type="button" className={styles.saveRetry} onClick={() => { setSaveError(''); void save(); }}>
-                      {saveError} · Retry
-                    </button>
-                  : state === 'saving' ? 'Saving…'
-                    : state === 'dirty' ? 'Unsaved changes'
-                      : state === 'saved' ? <><Check size={13} aria-hidden /> Saved</>
-                        : null}
-              </span>
-            </>
-          )}
-        </div>
-      )}
+      </RoomShell>
     </>
   );
 }
