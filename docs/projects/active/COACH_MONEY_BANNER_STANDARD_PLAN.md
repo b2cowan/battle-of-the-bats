@@ -75,11 +75,12 @@ Weight 900 → 700, tabular numerals on, `.04em` → `.07em` labels, the green/p
 ink, and the two blank captions gain the sentence each figure needs ("after family credits",
 "lowers their dues"). "Raised — fundraisers" → "Raised — drives" (the word the rest of the tab uses).
 
-### D4 — Player Dues: the band arrives, **both table footers retire** — BUILT 2026-09-03
+### D4 — Player Dues: the band arrives, **both table footers retire** — ✅ SHIPPED + QA PASSED 2026-09-03
 Band on BOTH views: `Assessed` (caption "N players") · `Collected` (caption "+ $X from credits") ·
 `Balance owing` (no caption) · `Past due` (danger, caption "N families", **hidden at zero**).
 
-⚠ **THE CAPTIONS ARE NOT THE ONES THIS PLAN FIRST WROTE, and the changes are decisions.** The plan
+⚠ **THE CAPTIONS ARE NOT THE ONES THIS PLAN FIRST WROTE — and all three changes were RATIFIED by
+the owner at QA §137 Part F (2026-09-03, passed with no note). They are rulings now.** The plan
 proposed "N% of assessed" under Collected and "after $X credits" under Balance owing:
 - **Credits moved to Collected, not Balance owing.** Balance owing sums positive ROLLING balances —
   it is *not* `assessed − collected − credits` (a family in credit does not offset a family who
@@ -140,7 +141,8 @@ sessions editing the same regions.
    so these land together.
 2. **P2 — Club + Budget Plan.** Both files are currently clean.
 3. **P3 — Fundraising.** BLOCKED on the peer session.
-4. **P4 — Player Dues.** ✅ BUILT 2026-09-03. Band both views + both footers retired + the timeline
+4. **P4 — Player Dues.** ✅ BUILT + **QA PASSED 2026-09-03** (§137, 22/22, all six parts, zero
+   defects; the Past-due path the UAT fixture cannot reach was walked on a late team and passed). Band both views + both footers retired + the timeline
    shelf (`dues/CollectionSchedule.tsx`, new) + two-tone bar + `Due next`/`Balance` moved into the
    pinned zone. Also in the phase, because the work surfaced them:
    - `coach-dues-installments` added to `scripts/layout-screens.mjs` — **the By-installment lens had

@@ -17401,7 +17401,7 @@ picture EXISTS, never that it still matches the product.
 
 ---
 
-## §137 · One answer at the top of Player Dues — the summary band, both footers retired, the Collection schedule as a foldable timeline — BUILT 2026-09-03, awaiting QA
+## §137 · One answer at the top of Player Dues — the summary band, both footers retired, the Collection schedule as a foldable timeline — ✅ PASSED 2026-09-03 (22/22, all six parts, zero defects) · committed `3c40b0f9`
 
 **Owner decisions (rev 3, 2026-09-03):** D1 one band, 3–4 tiles, every money tab · **D4** band on
 BOTH dues views, footers retire · **D5** the Collection schedule as a timeline in the header on both
@@ -17430,7 +17430,8 @@ what fundraising covered.
 By-installment view. On the owner's ten-instalment screenshot that band wrapped to two rows,
 ~330px of header before the table began, repeating one sentence ten times.
 
-**Three deviations from the plan, all deliberate — argue with any of them on the walk:**
+**Three deviations from the plan — ALL THREE RATIFIED AT THE WALK, 2026-09-03 (Part F, passed with
+no note). They are decisions now, not deviations; re-opening any of them is re-arguing a ruling:**
 1. **Credits caption moved to Collected, not Balance owing.** The plan said Balance owing should read
    "after $X credits". It must not: Balance owing sums positive ROLLING balances, so it is *not*
    `assessed − collected − credits` (a family in credit does not offset a family who owes). On the
@@ -17460,11 +17461,12 @@ every width, **119px open** at 361/390 and **141px** at 768/1440 (criteria were 
 44px tall at every width; the eyebrow and per-segment dates drop below 640 while the shut summary
 sentence survives at 361; zero page overflow; the fold survives a reload on the same device.
 
-**⚠ ONE PATH THE FIXTURE COULD NOT EXERCISE: the Past due tile.** Nothing on the test team is
-overdue, so the band rendered three tiles at every width and the danger tone was never drawn on this
-screen. The four-tile stack and the danger tone are both live elsewhere (Budget vs. Actual and Club
-respectively), and the figure comes from the shared `pastDueInstallments` predicate that also
-decides the count — but **walk this on a team with a genuinely late family.**
+**⚠ THE PATH THE FIXTURE COULD NOT EXERCISE — CLOSED AT THE WALK.** Nothing on the test team is
+overdue, so verification only ever saw the band draw THREE tiles and never drew the danger tone on
+this screen. Flagged as the walk's one open risk (Part C), walked on a late team, and **passed**:
+the Past due tile, its family count, the ⚠-marked late segment and the credit-settled bill that must
+NOT read as late all behave. Worth keeping as a fixture note rather than a defect note — the UAT
+team still cannot reach this state, so the next change here needs the same manual walk.
 
 **Walkthrough artifact (checkable, per-part verdicts + paste-back):**
 `https://claude.ai/code/artifact/abf75bd5-699e-41dd-b24b-7666e743e469`
