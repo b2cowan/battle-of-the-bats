@@ -16947,7 +16947,10 @@ quiet-at-rest pills, the "Type" pill rename), the door-completes-its-field gramm
 ("Manage staff…"/"Manage equipment…"), schedule-grid required asterisks, and the cross-panel
 tag-staleness defect the owner found and this stream fixed (pickers self-refresh on open).
 
-## §132 · Budget vs Actual, Two Truths — the Season-spending reading, Cash, and the report polish — BUILT 2026-09-02, awaiting QA
+## §132 · Budget vs Actual, Two Truths — the Season-spending reading, Cash, and the report polish — ✅ PASSED 42/42, 2026-09-04 · ⚠ A THIRD ROUND OF FIXES LANDED AFTER THE PASS
+
+**✅ OWNER WALK PASSED 2026-09-04 — 42/42 steps, all nine parts (0, A–H).** Two rounds of amendments
+were made mid-walk and are recorded below; the walk was re-read against the amended screens.
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/d88950ba-9f51-4b6a-b4b5-59789325a5f8`
 — checkboxes with device-remembered state, a verdict + notes per part, and a Build-summary
@@ -17009,6 +17012,247 @@ Part A steps 5–6 were amended in place, same URL):**
   explanations on sight: the View pill already names the shape. The quick fix lasted one day;
   tombstoned in the panel and stylesheet so it is not rebuilt from the plan text. The eleven
   quick fixes are therefore ten shipped + one walked back by the owner.
+
+
+**Walk-era amendments, round two (owner, 2026-09-04, mid-§132 — all built the same day):**
+
+- **F1 · One underline, three outcomes — FIXED.** Under Budget a figure was clickable only on an
+  EXPENSE ITEM row, only with write access, and only where the plan was non-zero — and the click
+  NAVIGATED to the budget form rather than describing the number, except on a two-line row, where a
+  third behaviour opened a chooser. Category rows and the whole revenue band were dead. **Every plan
+  figure now opens one panel** naming the budget lines behind it, their amounts and their current
+  dates, with the edit door INSIDE it; the old chooser is just the case where that list has more than
+  one row. Read-only coaches get the panel without the doors. ⚠ Revenue GROUPS still do not open —
+  their plan is a dues schedule, not a budget line, and the panel correctly declines an empty list.
+- **F2 · The row-level "paid by a family" tag — REMOVED** (owner: a row can hold a mix, and the
+  modal already says who paid). It fired if ANY record in the row was fronted, mislabelling a mixed
+  row wholesale; the fixture hid this because every row in it held a single record. The fact was
+  never carried there alone — each record says it in the drill-in, and the cash sentence itemises
+  the fronted costs by name. **Standing rule attached: family-fronted and team-paid money share one
+  row, never two.** Tombstoned in the component and the stylesheet; help reworded.
+- **F3 · "No category / Not itemized · 2 lines".** Three findings in one row:
+  - *the fixture was showing a retired state* — both money-in lines were seeded with no category or
+    item, which the Add-line form has REFUSED to save since mig 243. Fixed in the seed (amounts
+    unchanged), plus a money-in repair pass the cost-only repair could never reach.
+  - *"N lines" was a dead caption* — the row's expander only exists when the lines carry DATES, and
+    even then it lists PERIODS, never names. "Which two?" was unanswerable under every data shape.
+    **The caption is now the control**, opening the same shape of panel as F1's.
+  - *a stale comment* in the budget form claiming a rule mig 243 had already retired.
+- **F4 · `other_income` had no home in the shared library — MIGRATION 276.** Mig 274 shipped the
+  fourth kind while mig 243 already required a category and item in both directions, and every
+  money-in item in the library sat under Fundraising, Sponsorship or Tournaments. `Admin` looked
+  like the answer and is `scope: 'org'`, so no coach can pick it. A coach had to invent taxonomy
+  mid-form. Adds a team-scoped **Other Income** category with Interest / Rebate / Donation / Grant /
+  Other income. ⚠⚠ **DATA-ONLY, SO NO GATE CAN SEE IT** — `check:migrations` compares schema and
+  reports "in sync" while this is outstanding. **PROD-OWED.**
+- **F5 · "Funded by players" — UN-BOXED.** It is the statement's LAST ROW, not a footnote below it;
+  the shared closing-row style drew it as a bordered card and the owner read it exactly as the
+  styling argued. Total expenses → Season net → Funded by players is one chain and now looks like
+  one. ⚠⚠ **THE LARGER HALF IS UNBUILT AND NEEDS A MOCKUP SESSION: Months·Budget puts Player dues in
+  revenue ($13,258 budgeted revenue); the Statement excludes dues entirely ($1,950). One report, two
+  views, revenue differing by $11,308, with nothing on either screen saying why.** Secondary: the
+  plan's residual ($11,650) and the dues actually assessed ($11,308) are different numbers and only
+  the first is shown.
+- **F6 · The Variance column compares two different time spans.** Whole-season plan against
+  actuals-so-far, which is why September reports "$8,690.02 under budget" — not an achievement, an
+  unfinished season. **The honest half shipped**: a sentence under the table naming how much plan
+  carries no date, read off the month grids' own totals so it can never disagree with the Months
+  view. The to-date BASIS switch is deliberately not built — it changes what "under budget" means on
+  a figure quoted across five surfaces.
+- **F7 · ⚠ THE PUBLIC PROD COACH DEMO IS SHOWING "Not itemized" ON EVERY BUDGET ROW.** All 20 of
+  `riverdale-ridge`'s budget lines carry no item on **prod**; dev's 21 all do. The seed is correct —
+  prod's demo data predates the item wiring, and the nightly cron reconciles dates, never taxonomy.
+  **Fix is a prod demo reseed. Owner approval pending — public surface.**
+
+**Owner ruling pending — required dates on a budget line.** Proposal artifact
+`9bc53080-ba3c-4856-891e-aef63e51bd7d`: every line answers *"when does this money move?"* at MONTH
+grain, with "Not yet known" as an explicit third answer. Months because a guessed day is
+indistinguishable from a known one and would make the to-date report confidently wrong; the explicit
+unknown because the estimate buffer can never carry a date at all, so the bucket has to survive. Not
+built pending the ruling.
+
+**Adversarial review of the round-two fixes (2026-09-04, high-risk tier, four lenses) — SIX real
+defects found and fixed, nine refuted.** Recorded because three of them are traps worth not
+repeating:
+
+1. **⚠⚠ THE PLAN PANEL ASSERTED ARITHMETIC THAT DOES NOT HOLD (High).** Its heading is one COLUMN's
+   slice — April's share, or the undated share — while every line it lists carries that line's
+   WHOLE-SEASON total, and a category row's panel lists every item in the category besides. So
+   "$1,734" opened a list reading "$5,200" under a sentence saying that line *made up* the figure.
+   The figures were right and the CLAIM was false, which is the harder kind to see. The panel now
+   states what the amounts are and asserts nothing a reader can disprove in their head. **A
+   month's share PER LINE is not in the payload — do not fake it by dividing.**
+2. **The panel labelled a variance "planned" under Difference (Medium-High).** That cell is plan
+   minus spending and goes negative, so an over-budget month read "($150) planned". The word now
+   follows the lens. General trap: a panel opened from a multi-lens table inherits the lens, and
+   fixed copy will be wrong on some of them.
+3. **⚠⚠ A DEPLOY-SKEW CRASH ON EVERY ROW (High).** The statement's budget-line names are new in
+   this release — the route stripped them until now — and the report is fetched in a request
+   separate from the bundle, so a rolling deploy genuinely pairs a new client with an old route.
+   The row-level predicate read that field *before* rendering, so a stale payload would have taken
+   the whole table down rather than just the panel. Belted, and **the field is now typed as
+   possibly-absent so the compiler forces the guard on the next reader.** ⚠ The same class of belt
+   already existed two feet away for the spending grid; unstripping a payload field is exactly as
+   skew-sensitive as adding one.
+4. **Migration 276 shipped a DUPLICATE library item (Medium).** "Grant" already exists as
+   `Fundraising → Grant` at the same tier and direction (mig 243). ⚠⚠ **THE DATABASE COULD NOT
+   REFUSE IT: `budget_items`' unique index is PARTIAL — `where org_id is not null` (mig 248) — so
+   platform-library rows are deliberately exempt from name uniqueness.** The picker would have
+   listed the word twice with nothing to tell the two apart, and the by-activity lens nets per
+   CATEGORY, so one real grant could report two ways depending which a coach picked. Dropped from
+   the migration and from dev; a grant stays fundraising.
+5. **Two sentences on one screen quoting different "plan with no date" figures (Medium).** The new
+   statement note counts BOTH bands; the trend chart's own footnote counts COST lines only, because
+   that is all the chart plots. Both right for their own sentence, neither saying which. Now both
+   say. ⚠ They are a pair — change one scope and re-read the other.
+6. **A seed update that did not re-assert the org (Low).** No reachable cross-tenant path (item ids
+   are globally unique), but "it cannot happen because of how ids are allocated" is an argument that
+   expires. Scoped.
+
+**Refuted (9), the useful one being the permission question:** opening the plan panel to read-only
+coaches is NOT a loosening — the route already gates the whole payload on `money !== 'off'`, the
+month grid had always SHIPPED these line rows regardless of write access (the old gate only decided
+whether a click did anything), and the line-edit route re-checks write access server-side. Also
+cleared: payload exposure, IDOR on the edit link, migration idempotency, the nested-button concern,
+`.grandTotal`'s blast radius, `lensReadsPlan`'s scope, and `undatedPlan`'s band coverage.
+
+**Verification after the review fixes:** typecheck clean · 2,865 unit tests pass · `check:money-report`
+green with every breaking shape present · `check:layout -- --changed` run against a live dev server,
+exit 0 (its printed failures are pre-existing baselined entries on other screens) · CSS purity /
+selectors / spelling / contrast / date / dictionary / demos all clean · schema parity 3 accepted
+divergences, none new.
+
+**⚠ UNCOMMITTED AND DELIBERATELY SO.** A concurrent session extended this work in the same two files
+("round three" — the panel now also names the PAYMENTS behind an actual figure, and the visible "not
+planned" word was re-reversed). Owner decision 2026-09-04: **both rounds commit together from that
+session**, once it has finished and recorded its own unit.
+
+
+**Walk-era amendments, round THREE (owner, 2026-09-04 — AFTER the 42/42 pass above, all built the
+same day).** ⚠ The walk passed and then the owner sent three screenshots of a single statement row;
+none of the three is a step the walkthrough asked about, which is worth noticing about the
+instrument rather than about the build. One
+screenshot, three questions, one defect wearing three faces:
+
+- **R1 · "What are these two figures?" — THE ACTUAL COLUMN NOW OPENS, and the strip is deleted.**
+  Under `No category / Not itemized` a white sub-row read `$815.00 paid · $125.00 back`, hanging
+  beneath a row that — having no dated periods — carried **no expander at all**, so it read as the
+  expansion of something that could not be expanded, in card white against the tint above it. The
+  two figures are the arithmetic behind the row's Actual ($815 − $125 = $690), which is the
+  one-row-never-two refund rule working correctly. What was wrong is that they were the *only* thing
+  the Actual column ever said: **which payments made that figure was unanswerable on this screen
+  under every data shape.** Reproducing the owner's $815 took five queries against the live
+  database, and that is the whole case. ⚠ It was also the *asymmetry* the owner named — the Budget
+  figure had a door ("N lines", built the day before) and the Actual figure had none, so one report
+  answered *"what is behind this number?"* on one column and refused on the other. **Both figures
+  are the same control now**, opening the same panel: the plan side lists the budget lines (and
+  still links, for a write coach); the actual side lists every payment with its date, with money
+  back listed apart and netted off, and the deleted strip's two figures at the top as the sentence
+  the list adds up to. The actual list deliberately **states and never links** — a commitment
+  contributes one entry per instalment, club money arrives under a synthetic id, and a derived pool
+  is a name with no record at all, so linking would mean four kinds of door, three of which 404.
+- **R2 · "Why is Jerseys a different colour from Bats and Socks?" — THE WORD GOES, THE TINT STAYS.**
+  Because Bats and Socks were never budgeted and Jerseys was; the tint is a *status*. ⚠⚠ **This
+  reverses D5.5 (2026-09-02) eleven days after it reversed the 2026-08-15 trim, and the third
+  reading is the one with evidence behind it**: with a tint AND a dash AND a word all saying one
+  thing, the tint stopped reading as a status and started reading as a **grouping** — two rows out
+  of five wearing a different ground reads as "these belong together" long before it reads as "these
+  were never budgeted". Owner: *"empty budget items give that away clearly."* The help article had
+  been saying exactly that ("the empty Budget figure is the whole answer; there is no label to look
+  for") the whole time D5.5 contradicted it — **the two had been live together, disagreeing, since
+  09-02.** ⚠ The visible word is gone at BOTH levels; a **visually hidden** "— not planned" replaces
+  it on item rows (the category header already had its `aria-describedby` twin), because a tint and
+  a dash are not readable and removing the word without a replacement would have taken the fact away
+  from a screen reader entirely — a regression no other gate in this repo can see.
+- **R3 · "Team Gear opens on a row click, Jerseys only on the chevron."** Correct, and it
+  contradicted the owner's own 2026-08-13 ruling, which the plan page has followed since: the whole
+  row is the pointer/touch target, the small control stays the semantic one for keyboard and screen
+  reader. The item row now opens its schedule on a click anywhere, with the plan page's
+  text-selection guard (a click that ends a selection is a copy gesture, not a tap) — and every
+  control inside stops propagation, or opening a panel would also fold the table underneath it.
+- **R4 · The bucket itself — HALF a defect, and the half that was real is fixed.** ⚠ **An earlier
+  read of this, given to the owner before the data was checked, was wrong and is corrected here:**
+  the club money in `No category / Not itemized` is **by design** — an unfiled club bill counts
+  there rather than being dropped, and the Club tab says on the row that filing it is what moves it.
+  The $815 was exactly that: a $615 paid club instalment plus a $200 approved club payment request.
+  **What WAS a retired shape were the two typed arrivals** — the $400 income and the $125 refund
+  were seeded with no category or item, which both money-in forms have refused to save since mig 243
+  (F3 repaired the money-in *budget lines*; the recorded *arrivals* were a different object and were
+  missed). Both are now filed, plus the family-fronted umpire cost that carried `category:
+  cats[0].name` — whatever sorted first — and no item at all. ⚠ **The refund files against what it
+  repaid**, which is the point: `Officials / Umpire Fees` now reads **$1,200 planned · $180 paid ·
+  $125 back · $55 actual**, so the fixture finally compares umpire spending against the umpire line
+  it has always planned four quarters of, and the walk gains a *planned* row that exercises the new
+  panel. The repair is **idempotent and reaches an already-seeded fixture** — the arrivals block
+  only ever inserted into an empty one, which is how the retired shape survived to be found on a
+  walk. ⚠ Neither demo world carries it (checked directly, both `riverdale-*` orgs: zero nameless
+  arrivals); **F7's separate prod-demo finding is untouched and still owner-pending.**
+- **R5 · "Why do I need the '2 lines' link at all when I can click the 2500?" — THE CAPTION IS TEXT
+  AGAIN**, hours after R1 gave the figure beside it a door. ⚠ **It has changed hands twice in two
+  days and that is the point, not churn**: F3 (09-04 morning) made it a control because it announced
+  a merge the coach could not inspect; R1 (09-04 afternoon) put that same list behind the Budget
+  figure, at which point two affordances a thumb's width apart opened one panel — the
+  one-underline-one-meaning defect in miniature, on the very screen that ruling came from. The
+  WORDS stay: nothing else on the row says the row is a merge. ⚠ It also put the two views of one
+  report back in agreement — **the Budget tab's by-period grid has always rendered this as plain
+  text**, so for a few hours the statement was speaking a second vocabulary about one fact. **The
+  rule to apply next time is a question, not a preference: is the number beside it already a
+  door?** Pinned both ways by the guard (exactly two openers per row, and the caption may not be a
+  button).
+
+**`/review` on round three (high-risk tier, four lenses) — FIVE real defects, all fixed, and two
+of them were in the fix rather than in what it fixed:**
+
+- ⚠⚠ **The new figures were 22.4px tall against a 44px touch floor — all sixteen of them**, beside
+  a chevron that is exactly 44px. **And the code comment asserted the opposite in so many words**
+  ("this control fills a grid cell that is already the full height of a ledger row"), which was
+  reasoning where a measurement was needed: the ledger row centres its cells rather than stretching
+  them, so a cell sizes to its own content. ⚠ **No gate would ever have caught this** — the rendered
+  sweep measures controls, but these sit inside category folds that start closed and it never opens
+  one. It was found by measuring the running page. The floor is applied with the padding cancelled
+  by an equal negative margin, and **re-measured**: 46.4px, and not one row grew.
+- ⚠⚠ **The panel had no keyboard exit.** It was built from the markup of the modal beside it and so
+  inherited none of the portal's dialog floor — no role, no focus into the panel, no Tab trap, no
+  Escape, no focus returned to the figure. A coach who opened it with the keyboard could not close
+  it with the keyboard, and a screen reader could tab straight through into the table underneath.
+  It is a `QuestionShell` now — the shared shell that exists precisely because §134 found this same
+  defect on the bill room. Verified live: opens with `role="dialog"`, focus lands inside, Escape
+  closes, focus returns to the figure.
+- **A rolling deploy would have taken the whole statement down.** The payments list is newer than
+  the client that asks for it, and the sibling field `lines` had been typed possibly-absent for
+  exactly that reason a day earlier — the new one was not, and its unguarded read sits in a
+  predicate that runs for every row on every render. Guarded, typed optional, and pinned by a test
+  that looks for the UNGUARDED spelling (asserting a guarded read exists would have passed in the
+  defective state, since one of the two reads was already safe).
+- **The fixture's "is the migration applied?" guard could not fire.** Its two lookups fall back to
+  the first category and the first item, so they never return null — a missing migration would have
+  silently filed income under whatever sorted first rather than stopping the run. A strict pair now
+  backs every decisive filing, including the two this round added.
+- **The seed's repair updates re-assert team and season in the write**, not only in the read
+  (the repo's own check-then-act rule, which the block three lines below already followed).
+
+Accepted rather than fixed, with reasons recorded in the route: the closed-season page now
+downloads records it does not render (the fix on offer puts two shapes on one route, and a reader
+that gets the wrong one opens an empty panel instead of failing), and `costCount` ships unread.
+
+
+**Verification for round three:** typecheck clean · **2,874 unit tests pass** (nine new — a guard
+pinning that the payload keeps the records behind a row, that the client type declares all three
+lists, that the hidden sentence survives, that the visible word cannot creep back, that the row
+stays tappable with its selection guard, that every control inside stops propagation, and that
+the "N lines" caption cannot become a button a third time, plus two from the review below) ·
+The rendered layout gate passes scoped to this screen at all four widths (no new findings) — but
+see the tap-floor item: it could not have caught that one. ·
+`check:money-report` green against the live fixture with **every breaking shape present**, refund
+still netting into a cost · CSS purity / selectors / spelling / contrast / date / snapshot / schema
+parity / index / dictionary / demos all clean · **the live payload probed directly** — 32 rows, all
+three record arrays present on every one, so a figure can never open onto nothing. ⚠ `check:root`
+is RED on `.tmp-fix2.mjs`, a stray patch script another session left at the repo root at 08:47; it
+is untracked, its work has landed, and it is **not this stream's file to delete**. Help updated (the
+unplanned-row sentence, the new door, the search keywords). Demo narration re-read at the two places
+that point at this report: **no sentence goes stale** — step 4's proof point is "are we on budget",
+and adding a clause about the drill-in would breach the one-proof-point cap, so it was considered
+and declined rather than missed.
 
 
 ## §133 · The Budget Tab Revamp — one grain, remembered splits, a denser plan — BUILT 2026-09-02, awaiting QA
@@ -17654,8 +17898,9 @@ preview showed). A player's panel shows the guardian's contact line where the ro
 "Last reminded Nov 3 · Installment 2 · from this page", and one "Remind this family". The
 By-installment grid heads each column with its date alone ("Oct 4", or "Varies" where families
 differ), shows in every unpaid cell what is still to send (a tick where nothing is), keeps rows and
-names to one line, reads "$0.00 · In credit" for a family in credit, lights the installment the
-Collection schedule names, and pages sideways with ‹ › beside View only when columns overflow.
+names to one line, reads **Due next as a date alone** (the oldest date a late family owes, marked;
+an em dash for a family with nothing owed), lights the installment the Collection schedule names,
+and pages sideways with ‹ › beside View only when columns overflow.
 
 **Owner's second look on the built grid (same day):** rows were 84px tall for a two-line Due next
 cell; a family in credit read its credit under Due next when zero answers "what is due next?" and
@@ -17665,6 +17910,13 @@ Two defects came out with them: the › arrow disabled itself while the last col
 hidden (a partly visible column counted as "in view"), and the grid opened one column too far
 because the pinned zone's width was read from computed styles a beat before the third column was
 sticky — it is now the first instalment column's own left edge, by construction.
+
+**A third pass, same day:** Due next became **a date and only a date** — the figures are in the
+cells now and the credit is in the Balance column, so it was saying twice what the row already said.
+The phone card keeps its figure (no table beside it). ⚠ And **the row highlight stopped dead at the
+two pinned columns**, because an opaque pin outranks `.tr:hover`; the same cascade also let the
+scrolled instalments show **through** the hovered Player cell. Both fixed, and **verified by reading
+composited pixels in a browser** — a hover state is invisible to the rendered sweep.
 
 **Built and verified:** `verify:changed` (incl. the unit suite), typecheck, eslint on every touched
 file, the dead-selector and spelling gates, and `check:layout` on `coach-dues`,
@@ -17707,3 +17959,115 @@ the pager's cached column positions follow a content-only resize; "today" is rea
    sideways.
 9. **I · Three calls.** "Showing" as one word for a filter here and a lens on Budget vs. Actual; the
    never-paid nudge leaving no "Last reminded"; a sample letter rather than the real recipient list.
+
+
+## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — BUILT 2026-09-04, awaiting QA
+
+**The ruling this executes (owner, 2026-09-02, D4 re-ruled on review):** the team bill was the last
+money-area exception to the List · Room · Question grammar. Its page shape had been justified by a
+print capability that **no code ever implemented**, and it was already a `?bill=` sub-view of the
+Ledger whose styles are still named "drawer". It left overlay-hood in August for one real reason — a
+height-capped centred modal overflowed on a long schedule (§64 Part E) — which guard rule G3 answers
+structurally. Plan `docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md` §4 and §4.1;
+mockup `claude.ai/code/artifact/11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` §4 (R1–R5).
+
+**What a coach sees.** Tapping a bill used to **replace the whole tab** — list, filters, toolbar and
+scroll position gone, a hardcoded "← Ledger" arrow the only way back. It now opens a panel **over**
+the list, which stays mounted underneath: close it and the coach is where they were. Four tiles read
+**Total · Paid · Left · Next due** with a chip saying "1 of 2 paid"; the schedule leads the body with
+its per-piece Record / Change / Remove and the inline add row; **Details** (Filing · Payee · Tags ·
+How · Notes) follows it; the recorded payments fold into **History**, closed at rest and opening
+itself when a payment lands this session; the pinned foot carries the guarded **Delete this bill**,
+the save strip and named **Prev/Next** ("1 of 2 bills", arrow keys on a desktop). Three field fixes
+ride along: the tag picker's one-off "+" reveal is **deleted outright**, Filing joins the unified
+paper ground, and the field column narrows 34rem → 30rem. Read-only money staff open the same room
+with values and no write control — still the one place they can read a bill's payee and tags.
+
+**And the bills list gained a real door.** Every row now ends in a right-aligned chevron **button**.
+That is an accessibility fix, not tidiness: the rows are `<tr onClick>`, so a keyboard or a screen
+reader had **no way into a bill at all**. `Club →` folded into the same glyph with an honest
+accessible name ("Open … on the Club tab").
+
+**⚖ THE ONE OWNER RULING TAKEN DURING THE BUILD (2026-09-04, asked before any code):** the trailing
+column keeps **Record beside the chevron** rather than the chevron alone. §134's pill argument does
+not carry — that pill fired on a MINORITY of rows, so one exception sized the column for every row;
+Record fires on nearly every unpaid row, and the by-due-date lens is where a treasurer works down a
+month in one pass. The room's walk steps between BILLS, not installments, so moving the act inside
+would cost two taps per payment. Recorded as deviation **D-C1**.
+
+**Seven deviations in all, each with the ruling that forced it** — the table is in plan §4.1 and on
+the gate sheet. The other six: "Paid off" not "Paid in full" (the club room's own word); no required
+marker on the title (the 2026-09-03 title-slot ruling, which also settles the plan's open
+"required-but-unmarked Name" item); an over-payment chip in amber, because R6 accepts over-payment;
+the Record door fully locked rather than partially (this branch's identity question is the one the
+door answers); `CommitmentView` no longer keyed by bill (a key remounts the shell and fires the
+floor's focus RESTORE on every step of the walk — the Ledger scrolled to the opened row); and the
+schedule above Details, the reverse of the page, because the tiles answer before anything scrolls.
+
+**⚠ TWO DEFECTS FOUND ON THE WAY, BOTH FIXED HERE, both invisible until a room stood over them:**
+- **`InstallmentScopeSheet` had no accessibility floor at all** — no dialog role, no label, no
+  Escape, no focus trap, no focus restore. Survivable over a page. Over a room it was not: the
+  floor's last-opened rule is the only thing that makes a bare Escape peel ONE layer, so Escape was
+  closing the record underneath the question. It stands in `QuestionShell` now.
+- **`CoachCollapseSection` seeds its open state ONCE, at mount**, so History could not open itself
+  after a payment landed — the coach's own act appeared to do nothing. `RoomShell` re-keys it.
+- ⚠ And a third, in the shell: `.actionDoors` relied on `justify-content: space-between` to push the
+  doors right, with a comment claiming it "keeps the row correct when there are NO facts". It does
+  the opposite — a single flex child has no space to distribute — so the lime Record door landed hard
+  left. The drive and sponsor rooms always pass `facts`, which is why two rooms shipped over it.
+
+**`/review` (high-risk tier, five lenses): 18 findings → 9 confirmed and FIXED, 3 refuted, 6
+advisory.** The nine, in the order they would bite: the payment-Remove sentence lied on an
+**over-paid** bill (`remaining` is floored at zero by design, so "returns to $X still owing"
+overstated — re-derived from the standing); **Prev/Next stayed live over an unanswered question**, so
+a coach could walk away from a named-dollar confirmation and it simply vanished (the arrows are
+suspended with the doors now, and the ←/→ KEYS carry the same check, which no stylesheet could);
+**"Delete and reverse" was lost** when the foot adopted the shared delete control; the delete
+confirmation's cash sentence and family's-credit sentence **ran together as one paragraph**; History
+**re-opened itself on every return** to the last-paid bill, overriding a coach who had collapsed it;
+a **refusal could be swallowed** when the coach switched Money tab mid-save (it now reports to the
+panel, which survives); a **standing refusal waved the second exit through** — the first ✕ blocked
+and the second sailed past with the edit unsaved; **two writers had no double-click latch** where
+their siblings did; and a **stalled write could hold every exit shut**, which is new with the room
+because a page's writers gated nothing.
+⚠ **Three refuted, each by a standing ruling or by the code:** Escape closing the room over an open
+confirmation is the §134/§10 rider (three ways out, and Escape leaves the window); the save strip
+DOES stand down during the delete confirm (the shell's own rule hides it); and the tiles' behaviour
+on a payment targeted at a later installment is `commitmentStanding`'s pour order, faithfully
+reported and not this phase's.
+
+**Built and verified:** typecheck, eslint on every touched file (zero errors), the full unit suite
+(2,865 pass — the header-actions inventory's `CommitmentView` row retired with a headstone, since the
+room draws no `CoachPageHeader`), the dead-selector gate (three retired classes deleted with their
+callers), CSS-module purity, the spelling gate, the palette-contrast gate and `check:demos`. **`tests/uat/scenarios/coach-bill-room.spec.ts`
+is new and RUNS — five scenarios, and the FIRST UAT coverage this screen has ever had** (grepped
+2026-09-03: nothing under `tests/uat/scenarios` opened `?bill=`). `coach-money-mobile-smoke` gained
+the bill room as its own surface in both loops, and its "defect 3" test was re-anchored — its last
+two assertions had been describing an `Edit` button Part B deleted in August.
+
+**Mockup gate (before/after captures of the running product, not drawings):**
+`https://claude.ai/code/artifact/10d66c81-a19f-471a-aafb-561b67bb2f12`
+**Walkthrough artifact (checkable, per-part verdicts + paste-back):**
+`https://claude.ai/code/artifact/02702286-1c15-4802-977b-f2b3d275292a`
+
+**Walk it (~15 min), on the UAT team's Ledger. Part D writes one $17.00 payment and takes it back:**
+
+1. **A · The Ledger stays where you left it.** Filter to Overdue, scroll down, open a bill, close it
+   — the filter and your place survive. Escape, the backdrop and the ✕ all close it. Tab to a row's
+   chevron and open it with the keyboard alone; before this build there was no keyboard way in.
+2. **B · Four figures.** Paid + Left = Total; the chip counts PIECES; the schedule leads and Details
+   follows; the tag search is always visible; Filing matches its neighbours; the walk names its
+   destination and the arrow keys move it.
+3. **C · The fields save themselves, and leaving WRITES.** Type into Notes and press ✕ inside a
+   second — the edit must survive. Same with Prev/Next. Clear the name and the strip says why
+   without discarding anything. Escape inside the Filing menu closes the menu, not the room.
+4. **D · A payment lands and comes back.** History is closed at rest; Record stacks over the room
+   pre-answered to this bill; saving throws History open; **Remove asks on the closing line, never
+   below the fold**, and the doors beside it stand down while it is up.
+5. **E · One question at a time.** Change stacks; a bare Escape peels the question and leaves the
+   room; a second Escape closes the room; Tab cannot walk out of the question; Add an installment
+   asks nothing and stays in place.
+6. **F · The phone, and the read-only coach.** A full-screen sheet with the figures and the schedule
+   above the fold (the old page put five fields there first); every card closes with "Open ›"; and
+   `uat-asst-money-read@uat-test-org.local` opens the same room with values, no write control
+   anywhere, and the walk still working.

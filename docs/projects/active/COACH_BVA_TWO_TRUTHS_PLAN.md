@@ -197,3 +197,61 @@ desktop + phone; the three export additions opened and read.
 helpers and the label resolver (old stored `actual` value); `verify:changed`; demo narration
 re-read recorded in the walk. A layout reseed is owed by the fundraiser-band work already — this
 plan's sweeps ride after it.
+
+
+---
+
+## Post-walk: what the statement row turned out to be (owner, 2026-09-04, round three)
+
+**Status: BUILT and verified on dev, after the walk passed 42/42.** Full record in the Owner QA
+Ledger §132; this section holds only the parts a future reader of *this plan* would otherwise get
+wrong.
+
+**⚠⚠ THE PLAN'S OWN QA LIST IS WHY THIS WAS FOUND LATE, AND THAT IS THE LESSON WORTH KEEPING.**
+Every item the walk covered passed. The three defects the owner then reported by screenshot —
+an unexplained figure pair, a colour that read as a grouping, and a row that opened on a 13px
+target — were all inside the statement's ROW, and the walk had no step that said *"read one row
+and tell me what it is saying."* The walk tested the five readings, the banner, the exports and the
+chart; the row itself was assumed. **A future walk on a table needs a step that reads one ROW, not
+only the report the rows add up to.**
+
+**The three rulings, in the form a later reader needs them:**
+
+1. **Every figure on a row is a door, and both doors open the same panel.** The plan figure opens
+   the budget lines behind it (linking, for a write coach); the actual figure opens the payments
+   behind it (stating, never linking — see below). ⚠ The permanent `"$X paid · $Y back"` sub-row is
+   DELETED; those two figures now head the actual panel, where they are the total of the list under
+   them rather than an unexplained pair on a row.
+   - ⚠ **The actual list must not grow links.** A movement is not one editable record: a commitment
+     contributes one entry per instalment, club money arrives under a synthetic id, and a derived
+     pool ("From your fundraisers") has no record at all. Four kinds of door, three of which 404,
+     is the dead end this change removed — do not "finish" it by linking them.
+   - ⚠ **The "N lines" caption is TEXT, not a second door.** It was made a control that morning
+     because it announced a merge nothing could inspect; the figure beside it inspects it now, so
+     it went back to being a caption the same day. The words stay — nothing else on the row says
+     the row is a merge — and this matches what the Budget tab's by-period grid has always
+     rendered. **The test before re-dressing it a third time: is the number beside it already a
+     door?**
+   - ⚠ **The route may not re-slim the payload.** `slimCategory` stripped the cost records with a
+     reason that was true while the report rendered nothing behind a figure. It is gone, and a unit
+     guard fails if it returns, because reinstating it would not break a render — it would open an
+     empty panel.
+2. **The unplanned row keeps the tint and loses the word.** This is the THIRD ruling on the same
+   two square inches (trimmed 08-15 → restored D5.5 09-02 → removed 09-04) and it is settled: the
+   em-dash under Budget states it, the tint scans it, and a **visually hidden** sentence reads it.
+   The word came back on 09-02 while the help article was still saying the dash was the whole
+   answer — the two were live and disagreeing for two days, which is the strongest argument for
+   changing help copy and screen copy in one unit of work.
+3. **A ledger row opens on a click anywhere**, matching the category bar and the plan page's rows
+   (the 2026-08-13 ruling, which this screen had never adopted). The chevron stays the keyboard and
+   screen-reader control; every control inside the row stops propagation.
+
+**Fixture (not product):** the two typed arrivals and the family-fronted umpire cost were seeded
+with no category or item — shapes the money forms have refused since mig 243 — and are now filed,
+with the refund landing against the umpire line it repays. ⚠ **The club money in `No category /
+Not itemized` is BY DESIGN and must stay there**: an unfiled club bill counts rather than being
+dropped, and that bucket is the only thing exercising the path.
+
+**Still open on this plan, unchanged by round three:** the Months-vs-Statement revenue gap
+($11,308 — dues in one, not the other), the to-date variance basis, the required-dates ruling, and
+F7's prod demo reseed.

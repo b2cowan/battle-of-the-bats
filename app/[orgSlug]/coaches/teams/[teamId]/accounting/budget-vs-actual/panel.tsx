@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
+import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import ColumnPager from '@/components/coaches/ColumnPager';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import QuestionShell from '@/components/coaches/QuestionShell';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
@@ -65,6 +67,26 @@ interface ItemResult {
   periods: PeriodResult[];
   /** The money back netted into this row, so it can show what came back and when. */
   refunds: Array<{ id: string; description: string; amount: number; receivedDate: string | null }>;
+  /** The budget lines summed into this row — what the Budget figure opens (QA §132). One entry
+   *  when `lineCount` is 1, so the panel never has to reason about a missing list. */
+  /** ⚠ OPTIONAL ON PURPOSE (adversarial review, 2026-09-04). This field is NEWER THAN THE CLIENT
+   *  that may be asking for it: the route stripped it until this release, the report is fetched in a
+   *  separate request after the bundle loads, and a rolling deploy really does pair a new bundle
+   *  with an old route. Typed as possibly-absent so the compiler forces the guard rather than
+   *  leaving it to whoever writes the next reader. */
+  lines?: Array<{ id: string; description: string; notes: string | null; totalAmount: number }>;
+  /** The individual payments summed into this row — what the ACTUAL figure opens (QA §132 round
+   *  three). ⚠ NOT ALL OF THESE ARE RECORDS A COACH CAN OPEN: a payable contributes one entry per
+   *  instalment, club money arrives as a synthetic id, and the derived pools are a NAME with no
+   *  record at all ("From your fundraisers"). That is why this panel states and never links, where
+   *  the plan panel beside it does both — see the note on `RecordsBehind`.
+   *  ⚠⚠ OPTIONAL FOR THE SAME REASON `lines` IS, AND IT WAS MISSED ON THE FIRST PASS (`/review`,
+   *  2026-09-04). Both fields were stripped by the SAME deleted helper, so both are newer than a
+   *  client that may be asking for them — but only `lines` was typed possibly-absent. Reading
+   *  `item.costs.length` unguarded runs for EVERY row on every render, so during a rolling deploy
+   *  (new bundle, old route) the whole statement threw before a single figure painted. A guarded
+   *  read degrades to a plain number; an unguarded one takes the page down. */
+  costs?: Array<{ id: string; description: string; amount: number; paidDate: string | null }>;
 }
 
 interface CategoryResult {
@@ -421,16 +443,195 @@ function catKeyOf(cat: CategoryResult): string {
   return `${cat.direction}|${cat.categoryId ?? `name:${cat.categoryName}`}`;
 }
 
+/** Which side of the row a coach asked about: the plan, or what actually moved. */
+type BehindSide = 'plan' | 'actual';
+
+/**
+ * WHAT IS BEHIND THIS FIGURE — one panel, both columns (owner ruling 2026-09-04, QA §132 round
+ * three).
+ *
+ * ⚠ THE PLAN HALF EXISTED AND THE ACTUAL HALF DID NOT, which is the whole finding. The month grid
+ * had solved "which lines?" and the statement had not; that was fixed the day before by making the
+ * "N lines" caption a door. But the ACTUAL column had never had an answer at all — its only
+ * explanation was a permanent "$815.00 paid · $125.00 back" sub-row, which named two totals and no
+ * records. A report that will name the plan lines behind a budget figure and refuses to name the
+ * payments behind an actual one is answering half of its own question.
+ *
+ * ⚠⚠ IT IS A `QuestionShell`, NOT A HAND-ROLLED OVERLAY (`/review`, 2026-09-04). The first cut
+ * copied the markup of the modal it grew out of — a bare overlay div with a header and a close
+ * button — which meant it had NONE of the floor every other money overlay stands on: no
+ * `role="dialog"`, no focus into the panel, no Tab trap, no Escape, no focus returned to the
+ * figure that opened it. **A coach who opened this with the keyboard could not close it with the
+ * keyboard**, and a screen reader could tab straight through the panel into the table underneath,
+ * which is only visually covered. This is the exact defect class the §134 walk found on the bill
+ * room, and the shared shell exists because of it — so it is used rather than re-derived.
+ *
+ * ⚠⚠ THE PLAN LIST LINKS AND THE ACTUAL LIST DOES NOT, and that asymmetry is deliberate rather
+ * than unfinished. A budget line is one editable record with a stable id, so the panel can open it.
+ * A movement is not: a commitment contributes one entry PER INSTALMENT, club money arrives under a
+ * synthetic id, and a derived pool is a name with no record behind it at all ("From your
+ * fundraisers"). Linking those would mean four kinds of door, three of which 404 — the politer face
+ * of a dead end, which is the thing this whole change removes. The list states; Transactions is
+ * where a coach edits.
+ */
+function RecordsBehind({ item, side, base, canWrite, onClose }: {
+  item: ItemResult;
+  side: BehindSide;
+  base: string;
+  canWrite: boolean;
+  onClose: () => void;
+}) {
+  const moved = item.direction === 'in' ? 'received' : 'paid';
+  return (
+    <QuestionShell
+      open
+      onClose={onClose}
+      /* Names the panel for assistive tech, and says which of the two questions it is answering —
+         "Umpire Fees" alone would read identically from either figure. */
+      ariaLabel={side === 'plan'
+        ? `What ${item.itemName} plans`
+        : `What ${item.itemName} has actually ${moved}`}
+      title={item.itemName}
+      scroll
+    >
+      <>
+        {side === 'plan' ? (
+          <>
+            <p className={styles.linesBehindSub}>
+              <strong>{fmt(item.budgeted)}</strong> planned, from {item.lineCount}{' '}
+              {item.lineCount === 1 ? 'budget line' : 'budget lines'}
+            </p>
+            <ul className={styles.linesBehindList}>
+              {(item.lines ?? []).map(l => (
+                <li key={l.id}>
+                  {canWrite ? (
+                    <Link
+                      href={moneySectionHref(base, 'budget', { line: l.id })}
+                      className={styles.linesBehindRow}
+                      onClick={onClose}
+                      title={`Open ${l.description}`}
+                    >
+                      <span className={styles.linesBehindWho}>
+                        {l.description}
+                        {l.notes && <span className={styles.linesBehindNote}>{l.notes}</span>}
+                      </span>
+                      <span className={styles.linesBehindAmt}>{fmt(l.totalAmount)}</span>
+                    </Link>
+                  ) : (
+                    <span className={styles.linesBehindRow}>
+                      <span className={styles.linesBehindWho}>
+                        {l.description}
+                        {l.notes && <span className={styles.linesBehindNote}>{l.notes}</span>}
+                      </span>
+                      <span className={styles.linesBehindAmt}>{fmt(l.totalAmount)}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className={styles.linesBehindFoot}>
+              These are shown as one row because they name the same item.
+              {canWrite ? ' Open one to edit it.' : ''}
+            </p>
+          </>
+        ) : (
+          <>
+            {/* ⚠ THE TWO FIGURES THE DELETED SUB-ROW CARRIED, IN THE ONE PLACE THEY EXPLAIN
+                SOMETHING. On the row they were an unexplained pair; here they are the total of the
+                list directly beneath them. A row with nothing back keeps a single figure — the
+                "· $0.00 back" half would be furniture. */}
+            {/* ⚠ THREE SHAPES, NOT TWO (`/review`, 2026-09-04). The pair reads as a contradiction
+                on a row that holds ONLY money back — "$0.00 paid · $125.00 back" says money came
+                back from something that cost nothing — and that row is not hypothetical: it is
+                what the table itself already calls "refund only", so the panel has to speak the
+                same words the row does. */}
+            <p className={styles.linesBehindSub}>
+              {item.refundTotal > 0.005 && item.grossActual < 0.005 ? (
+                <><strong>{fmt(item.refundTotal)}</strong> back — refund only, nothing {moved} against this row</>
+              ) : item.refundTotal > 0.005 ? (
+                <>
+                  <strong>{fmt(item.grossActual)}</strong> {moved} · <strong>{fmt(item.refundTotal)}</strong> back
+                </>
+              ) : (
+                <><strong>{fmt(item.grossActual)}</strong> {moved}</>
+              )}
+            </p>
+            <ul className={styles.linesBehindList}>
+              {(item.costs ?? []).map(c => (
+                <li key={c.id}>
+                  <span className={styles.linesBehindRow}>
+                    <span className={styles.linesBehindWho}>
+                      {c.description || 'No description'}
+                      <span className={styles.linesBehindNote}>
+                        {c.paidDate ? formatStoredDate(c.paidDate, { withYear: false }) : 'no date recorded'}
+                      </span>
+                    </span>
+                    <span className={styles.linesBehindAmt}>{fmt(c.amount)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {/* ⚠ MONEY BACK IS LISTED APART, NEVER MERGED INTO THE PAYMENTS. Merging them would
+                hide which records were spending and which were repayment — one of those is the
+                out-of-pocket trap the money-back plan's §2 exists to keep apart — and the amounts
+                pull in opposite directions, so one list would not add up to anything. */}
+            {item.refunds.length > 0 && (
+              <>
+                <p className={styles.behindGroup}>Money back, netted off the figure above</p>
+                <ul className={styles.linesBehindList}>
+                  {item.refunds.map(r => (
+                    <li key={r.id}>
+                      <span className={styles.linesBehindRow}>
+                        <span className={styles.linesBehindWho}>
+                          {r.description || 'No description'}
+                          <span className={styles.linesBehindNote}>
+                            {r.receivedDate ? formatStoredDate(r.receivedDate, { withYear: false }) : 'no date recorded'}
+                          </span>
+                        </span>
+                        <span className={styles.linesBehindAmt}>−{fmt(r.amount)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <p className={styles.linesBehindFoot}>
+              Every payment counted against this row, on the day it happened — whoever paid it.
+              {canWrite ? ' Edit them on Transactions.' : ''}
+            </p>
+          </>
+        )}
+      </>
+    </QuestionShell>
+  );
+}
+
 /**
  * The item rows of one category — shared by both shapes, so the statement and the by-activity
  * lens can never render one row two different ways.
+ *
+ * ⚠⚠ EVERY FIGURE ON THE ROW IS A DOOR, AND THE ROW ITSELF OPENS (owner ruling 2026-09-04,
+ * QA §132 round three). Three things were wrong at once and they were one thing:
+ *   · the ACTUAL figure explained itself with a permanent sub-row — "$815.00 paid · $125.00 back" —
+ *     hanging under a row that, for an item with no dated periods, had no expander at all. It read
+ *     as the expansion of something that could not be expanded, and it was WHITE against the tint
+ *     of the rows above it. Worse, it was the only thing the Actual column ever said: WHICH
+ *     payments made that figure was unanswerable on this screen under every data shape.
+ *   · the BUDGET figure had a door ("N lines") and the actual figure did not, so one report
+ *     answered "what is behind this number?" on one column and refused on the other.
+ *   · the category bar opened on a click anywhere; the item row opened only on its 13px chevron.
+ * Both figures now open the same shape of panel, the whole row toggles its schedule, and the
+ * sub-row is gone — its two figures moved INTO the panel, where they are the sentence naming what
+ * the list adds up to.
  */
 function ItemRows({
-  cat, expandedLines, toggleLine,
+  cat, expandedLines, toggleLine, openBehind,
 }: {
   cat: CategoryResult;
   expandedLines: Set<string>;
   toggleLine: (id: string) => void;
+  /** Opens "what is behind this figure?" for one side of the row — see `RecordsBehind`. */
+  openBehind: (item: ItemResult, side: BehindSide) => void;
 }) {
   const catKey = catKeyOf(cat);
   return (
@@ -438,16 +639,39 @@ function ItemRows({
       {cat.items.map(item => {
         const key = `${catKey}|${item.itemId ?? 'none'}`;
         const open = expandedLines.has(key);
+        const canExpand = item.periods.length > 0;
+        /* What each figure has to SHOW, which is not the same as whether it is non-zero: a row can
+           hold only money back (actual negative, nothing "paid"), and an unplanned row has no lines
+           at all. A figure with an empty list behind it stays a plain number — a door onto nothing
+           is the politer face of the same dead end this change exists to close. */
+        /* ⚠⚠ `item.lines?.length`, NOT `.length` — see the field's own note. This predicate runs
+           on every row of the statement, so an unguarded read against a stale payload would not
+           merely break the panel, it would take the whole table down before a figure rendered. */
+        const planBehind = (item.lines?.length ?? 0) > 0;
+        /* ⚠ `item.costs?.length`, NOT `.length` — same deploy-skew note as `lines`, and the same
+           predicate position: this runs unconditionally for every row. `refunds` needs no guard,
+           it was never stripped. */
+        const actualBehind = (item.costs?.length ?? 0) > 0 || item.refunds.length > 0;
         return (
           <Fragment key={key}>
-            <div className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow}`}>
+            {/* The whole row opens its schedule, matching the category bar above it and the plan
+                page's own rows (owner 2026-08-13, restated here 2026-09-04). The chevron stays the
+                SEMANTIC control — keyboard and screen reader reach the fold through it — and the
+                row is the pointer/touch shortcut. Every control inside stops propagation, so
+                opening a panel never also folds the row underneath it. */}
+            <div
+              className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow} ${canExpand ? shared.rowTappable : ''}`}
+              // Selecting text to copy an amount must not toggle the row — a click that ends a
+              // selection is a copy gesture, not a tap (the same guard the plan page carries).
+              onClick={canExpand ? () => { if (window.getSelection()?.toString()) return; toggleLine(key); } : undefined}
+            >
               <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                {item.periods.length > 0 ? (
+                {canExpand ? (
                   <button
                     className={shared.ledgerExpand}
                     aria-expanded={open}
                     aria-label={open ? `Hide ${item.itemName}'s periods` : `Show ${item.itemName}'s periods`}
-                    onClick={() => toggleLine(key)}
+                    onClick={e => { e.stopPropagation(); toggleLine(key); }}
                   >
                     {open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
                   </button>
@@ -456,49 +680,72 @@ function ItemRows({
                 )}
                 <span className={shared.ledgerDesc}>{item.itemName}</span>
                 {/* Two or more lines summed into one row is the SUM ruling made visible — without
-                    the caption a coach would wonder why their plan has fewer rows than they wrote. */}
+                    it a coach would wonder why their plan has fewer rows than they wrote.
+                    ⚠⚠ A CAPTION AGAIN, NOT A CONTROL — and this is the SECOND time it has changed
+                    hands in two days, which is the point rather than churn. It became a button on
+                    2026-09-04 because it announced a merge the coach could not inspect; hours later
+                    the Budget figure beside it became the door onto exactly that list, and the
+                    owner asked the obvious question: *"why do I need the 2 lines link at all when I
+                    can click the 2500?"* Two affordances a thumb's width apart, opening the same
+                    panel, is the one-underline-one-meaning defect in miniature. The announcement is
+                    worth keeping — nothing else on the row says the row is a merge — so the WORDS
+                    stay and the door goes.
+                    ⚠ AND IT PUTS THE TWO VIEWS OF ONE REPORT BACK IN AGREEMENT. The Budget tab's
+                    by-period grid has always rendered this as plain text; for a few hours the
+                    statement rendered the same fact as a link, which is the same screen speaking
+                    two vocabularies about one thing.
+                    ⚠ Its clickability is not needed to make it inspectable, and that is the whole
+                    test to apply if somebody proposes making it a button a third time: is the
+                    number beside it already a door? */}
                 {item.lineCount > 1 && (
                   <span className={shared.ledgerNote}>{item.lineCount} lines</span>
                 )}
-                {/* ⚠ A DELIBERATE REVERSAL of the 2026-08-15 label trim (owner D5.5, 2026-09-02,
-                    logged in memory/design_decisions.md): the dash and the tint stay, and one quiet
-                    visible word joins them, because the dash alone asked a reader to infer the fact
-                    this row exists to state. The sr-only sentence on the category header stays. */}
+                {/* ⚠⚠ THE VISIBLE "not planned" WORD IS GONE (owner ruling 2026-09-04, QA §132
+                    round three) — a deliberate RE-REVERSAL of D5.5 (2026-09-02), taken on the built
+                    screen rather than on a plan, and the help article had been carrying the owner's
+                    reason all along before D5.5 briefly contradicted it: *the empty Budget figure is
+                    the whole answer*. THREE signals were saying one thing — a tinted row, a dash
+                    where a number goes, and a word — and the tint was reading as GROUPING rather
+                    than status precisely because the word beside it carried the meaning. The tint
+                    stays and keeps the row honest at a glance; the dash states it exactly.
+                    ⚠ THE SENTENCE STAYS FOR A SCREEN READER, because a tint and a dash are not
+                    readable — the same reason the category header carries one. */}
                 {!item.inPlan && (
-                  <span className={shared.ledgerNote}>not planned</span>
+                  <span className={styles.srOnly}> — not planned</span>
                 )}
               </span>
+              {/* ⚠ BOTH FIGURES ARE THE SAME CONTROL. They differ only in which list they open, so
+                  a coach meeting them has one habit to learn rather than two. */}
               <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
-                {item.inPlan ? fmt(item.budgeted) : '—'}
+                {item.inPlan && planBehind ? (
+                  <button
+                    type="button"
+                    className={styles.figureBtn}
+                    onClick={e => { e.stopPropagation(); openBehind(item, 'plan'); }}
+                    title={`See what ${item.itemName} plans`}
+                  >
+                    {fmt(item.budgeted)}
+                  </button>
+                ) : item.inPlan ? fmt(item.budgeted) : '—'}
               </span>
-              <span className={shared.ledgerNum}>{fmtCell(item.actual)}</span>
+              <span className={shared.ledgerNum}>
+                {actualBehind ? (
+                  <button
+                    type="button"
+                    className={styles.figureBtn}
+                    onClick={e => { e.stopPropagation(); openBehind(item, 'actual'); }}
+                    title={`See what ${item.itemName} has actually cost`}
+                  >
+                    {fmtCell(item.actual)}
+                  </button>
+                ) : fmtCell(item.actual)}
+              </span>
               <span className={shared.ledgerNum} style={{ color: varianceInk(item.variance, item.direction, item.actual) }}>
                 {varianceText(item.variance, item.direction, item.actual)}
               </span>
             </div>
 
-            {/* ⚠ ONE ROW, NEVER TWO (money-back plan §4.3). A refund nets into the item, and the
-                figures underneath say what made that number rather than splitting it: "$2,400 paid
-                · $150 back". Two rows would make a coach add up in their head to answer the one
-                question the row exists for. ⚠ NO "refund" CHIP AND NO ROW LABEL — the same ruling
-                that retired "not budgeted" from both views. */}
-            {item.refundTotal > 0.005 && (
-              <div className={shared.ledgerSubRows}>
-                <div className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
-                  <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>
-                    {fmt(item.grossActual)} {item.direction === 'in' ? 'received' : 'paid'} · {fmt(item.refundTotal)} back
-                  </span>
-                  <span className={shared.ledgerSubMeta}>
-                    {item.refunds.map(r => formatStoredDate(r.receivedDate, { withYear: false })).join(' · ')}
-                  </span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                </div>
-              </div>
-            )}
-
-            {open && item.periods.length > 0 && (
+            {open && canExpand && (
               <div className={shared.ledgerSubRows}>
                 {item.periods.map((p, pi) => {
                   const moved = Math.abs(p.actual) > 0.005;
@@ -539,13 +786,14 @@ function ItemRows({
 
 /** A category: its collapsible header, then its items. */
 function CategoryGroup({
-  cat, expandedCats, toggleCat, expandedLines, toggleLine,
+  cat, expandedCats, toggleCat, expandedLines, toggleLine, openBehind,
 }: {
   cat: CategoryResult;
   expandedCats: Set<string>;
   toggleCat: (id: string) => void;
   expandedLines: Set<string>;
   toggleLine: (id: string) => void;
+  openBehind: (item: ItemResult, side: BehindSide) => void;
 }) {
   const catKey = catKeyOf(cat);
   /* ⚠ A CATEGORY NOBODY BUDGETED FOR IS THE POINT, NOT AN EDGE CASE (owner ruling 2026-08-15). It
@@ -567,8 +815,9 @@ function CategoryGroup({
             {expandedCats.has(catKey) ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
           </span>
           <span className={shared.ledgerName}>{cat.categoryName}</span>
-          {/* The same quiet word the item rows carry — see the reversal note there (owner D5.5). */}
-          {!cat.inPlan && <span className={shared.ledgerNote}>not planned</span>}
+          {/* No visible "not planned" word here either — see the item rows' note. The header
+              already carries the sentence for a screen reader through `aria-describedby` below,
+              which is why this one needed no replacement. */}
         </span>
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
           {cat.inPlan ? fmt(cat.budgeted) : '—'}
@@ -585,7 +834,7 @@ function CategoryGroup({
       )}
       {expandedCats.has(catKey) && (
         <div>
-          <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} />
+          <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
         </div>
       )}
     </div>
@@ -897,6 +1146,12 @@ export function BudgetVsActualPanel({
   /** The Spending trend shelf's open state — device memory beside view/lens (D2, 2026-09-02):
    *  a coach who reads the chart gets it back open; everyone else keeps the quiet page. */
   const [trendOpen, setTrendOpen] = useState(false);
+  /** "What is behind this figure?" — one panel, either side of the row (QA §132 round three).
+   *  ONE piece of state rather than two, because the two panels are one answer read on two
+   *  columns: a second state could hold both open at once, which is a shape the screen has no
+   *  drawing for. */
+  const [behind, setBehind] = useState<{ item: ItemResult; side: BehindSide } | null>(null);
+  const openBehind = useCallback((item: ItemResult, side: BehindSide) => setBehind({ item, side }), []);
   /* ⚠ NULL MEANS "wherever today is" — see `monthStart` below. Holding the DEFAULT as null rather
      than a number is what lets the window follow a data reload without an effect, and without a
      frame of the wrong months while one settles. */
@@ -1195,6 +1450,14 @@ export function BudgetVsActualPanel({
   }
 
   const inMonthView = view === 'months' && !!data?.monthGrid;
+
+  /* Plan money sitting in the "No date yet" column — BOTH bands, because a fundraising or
+     other-income line is as undatable as a permit, and the statement covers both. Read off the
+     grids' own totals rather than re-derived, so the sentence under the statement can never quote
+     a figure the months view does not show. */
+  const undatedPlan = data
+    ? r2((data.monthGrid?.totals.undated.budget ?? 0) + (data.revenueGrid?.totals.undated.budget ?? 0))
+    : 0;
 
   /**
    * ⚠ THE MONTH VIEW'S **PDF** IS THE CATEGORY STATEMENT, NOT THE MONTH GRID (owner ruling
@@ -1608,7 +1871,7 @@ export function BudgetVsActualPanel({
               </div>
             ) : null;
 
-            const groupProps = { expandedCats, toggleCat, expandedLines, toggleLine };
+            const groupProps = { expandedCats, toggleCat, expandedLines, toggleLine, openBehind };
 
             return (
             // data-sandbox-tour: the beat the demo's "is the season on budget" step rings —
@@ -1684,7 +1947,7 @@ export function BudgetVsActualPanel({
                               nothing from nothing. */}
                           {block.costs && <SectionBand label="Revenue" inner />}
                           <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                            <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} />
+                            <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
                           </div>
                         </>
                       )}
@@ -1692,7 +1955,7 @@ export function BudgetVsActualPanel({
                         <>
                           {block.revenue && <SectionBand label="Costs" inner />}
                           <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                            <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} />
+                            <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
                           </div>
                         </>
                       )}
@@ -1754,12 +2017,49 @@ export function BudgetVsActualPanel({
                Variance reads: revenue <b>+/−</b> against plan · costs <b>under / over</b> plan.
                Good news is always green.
              </p>
+             {/* HOW MUCH PLAN HAS NO DATE (owner ruling 2026-09-04, QA §132).
+                 ⚠⚠ THE VARIANCE COLUMN COMPARES TWO DIFFERENT TIME SPANS — a WHOLE-SEASON plan
+                 against actuals SO FAR — so mid-season it reports a large "under budget" that is
+                 not an achievement but an unfinished season. The basis switch that fixes that
+                 properly is its own design decision; this sentence is the honest half of it, and
+                 it earns its place either way, because undated plan money can never be compared
+                 under ANY basis. The estimate buffer, which has no lines to date, guarantees this
+                 line outlives the switch.
+                 ⚠ IT READS THE MONTH GRIDS, NOT A NEW SUM. Both bands' undated plan already
+                 travels in the payload as the "No date yet" column's own total — computing it
+                 again here is how the same figure starts disagreeing with itself across two views
+                 of one report. */}
+             {undatedPlan > 0.005 && (
+               <p className={styles.undatedNote}>
+                 <strong>{fmt(undatedPlan)}</strong> of this plan — money in and money out — has no
+                 date on it, so it sits in the season total but in no month.{' '}
+                 <button type="button" className={styles.bridgeLink} onClick={() => setView('months')}>
+                   See it in the months view
+                 </button>
+               </p>
+             )}
              {/* ⚠ THE BRIDGE BELONGS AT THE FOOT, WITH THE NOTES (owner, 2026-08-24). It was first put
                  under Total expenses, which dropped a bordered panel into the middle of the
                  statement's own closing arithmetic — Total expenses → Season net → Funded by
                  players is one continuous chain and reads as one. A basis is explained where the
                  other bases are explained: underneath, quietly, for the reader who went looking. */}
              <CashBridge data={data} onSeeMonths={() => setView('months')} />
+
+             {/* WHAT IS BEHIND THIS FIGURE (owner ruling 2026-09-04, QA §132 round three).
+                 ⚠ THE MONTH GRID SOLVED THIS AND THE STATEMENT DID NOT — the grid's plan panel
+                 names every line behind a figure, while this view captioned the merge and stopped.
+                 One report answering "which two?" on one of its two views is the drift this report
+                 has been consolidated twice to remove. Same words, same shape, same door — and now
+                 on the ACTUAL column too, which never had an answer of any kind. */}
+             {behind && (
+               <RecordsBehind
+                 item={behind.item}
+                 side={behind.side}
+                 base={base}
+                 canWrite={moneyCanWrite}
+                 onClose={() => setBehind(null)}
+               />
+             )}
              {/* The Spending trend shelf (D2, G3-approved): the chart, below the table it used to
                  sit above, closed by default and remembered per device. */}
              {data.monthlyChart.length > 1 && (
@@ -1786,9 +2086,18 @@ export function BudgetVsActualPanel({
                    {data.undatedBudget > 0.005 && (
                      /* Budget with no date used to be spread evenly across every month here, which
                         put money in months the coach never chose. It is named instead (D-H4) —
-                        and the Months view gives it a column of its own. */
+                        and the Months view gives it a column of its own.
+
+                        ⚠⚠ "your SPENDING plan", NOT "your plan" (adversarial review, 2026-09-04).
+                        This figure is COST lines only — the chart plots spending, and the route
+                        derives it from the cost-side lines alone. The sentence under the statement
+                        table names undated plan across BOTH bands, so on a team with an undated
+                        fundraising or other-income line the two quote different dollars for what
+                        read as one fact. Both are right for their own sentence; only the words were
+                        wrong. ⚠ IF EITHER SENTENCE'S SCOPE CHANGES, RE-READ THE OTHER — they sit on
+                        one screen and are the pair this note exists to keep honest. */
                      <p className={styles.chartNote}>
-                       {fmt(data.undatedBudget)} of your plan has no date yet and isn&apos;t on this chart.{' '}
+                       {fmt(data.undatedBudget)} of your spending plan has no date yet and isn&apos;t on this chart.{' '}
                        <button type="button" className={styles.chartNoteLink} onClick={() => setView('months')}>
                          See it by month
                        </button>

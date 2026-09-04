@@ -386,7 +386,7 @@ describe('rollupMoneyReport — money back nets into the row it repaid', () => {
     assert.equal(items[0].variance, 150);        // $150 under, good news, positive
   });
 
-  it('keeps the gross and the refund separately readable, for the "$2,400 paid · $150 back" line', () => {
+  it('keeps the gross and the refund separately readable, for the "$2,400 paid · $150 back" sentence', () => {
     const r = rollupMoneyReport({
       lines: [], spend: [spend({ amount: 2400 })], refunds: [refund({ amount: 150 })],
     });

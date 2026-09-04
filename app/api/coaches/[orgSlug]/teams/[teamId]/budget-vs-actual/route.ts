@@ -25,7 +25,7 @@ import { LINE_KIND_ACTUAL_SOURCE } from '@/lib/coach-budget-totals';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import {
   rollupMoneyReport, categoryKey, displayCategoryName,
-  type RollupLine, type RollupSpend, type RollupRefund, type ItemRow,
+  type RollupLine, type RollupSpend, type RollupRefund,
 } from '@/lib/coach-budget-rollup';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip } from '@/lib/coach-cash-strip';
@@ -65,13 +65,29 @@ function fmtDay(d: string | null): string {
   return y && m && day ? `${names[m - 1] ?? m} ${day}` : d;
 }
 
-/** A category row without the raw records behind each item — see the note at the payload. */
-function slimCategory<T extends { items: ItemRow[] }>(cat: T) {
-  return {
-    ...cat,
-    items: cat.items.map(({ lines: _lines, costs: _costs, costCount: _costCount, ...item }) => item),
-  };
-}
+/**
+ * ⚠⚠ `slimCategory` IS GONE, AND THE RAW RECORDS BEHIND A ROW ALL TRAVEL NOW (owner ruling
+ * 2026-09-04, QA §132 round three). It stripped `costs`/`costCount` off every item on the way out,
+ * with a reason that was true right up until the Actual figure became a door: *"the statement
+ * renders neither"*. It renders both — a coach opens an actual figure and reads the payments behind
+ * it, exactly as opening a plan figure reads the budget lines behind it.
+ *
+ * ⚠ THE COST OF THIS IS ONE EXTRA COPY, AND IT IS THE CHEAPER OF TWO WRONGS. Every movement is
+ * already on the payload once, inside the month grid's drill-in keyspace (`cellDetails`), and the
+ * statement could in principle have re-derived its rows from there. It must not: that keyspace is
+ * keyed on the GRID's identity (kind · category · month), and the statement's rows are a different
+ * cut of the same records. Reading a figure from one walk and its explanation from another is the
+ * exact defect `14af00f0` closed — a row whose drill-in can disagree with the row it explains. One
+ * arithmetic, one list, one answer; the duplication is visible, bounded by what a coach actually
+ * typed, and honest.
+ *
+ * ⚠ THE ONE READER THAT PAYS AND DOES NOT BENEFIT is the closed-season page (`/review`,
+ * 2026-09-04): it renders five narrow per-category fields and now receives a finished season's
+ * whole record set to discard it client-side. Named rather than fixed, because the fix on offer —
+ * a slim variant behind a query flag — would put TWO shapes on one route, and a reader that gets
+ * the wrong one opens an empty panel instead of failing. If this payload ever needs to shrink, the
+ * answer is paging the list inside the panel, not a second shape.
+ */
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
@@ -1451,7 +1467,6 @@ export const GET = withObservability(async (req: Request,
      ⚠ `scheduled: []` — the forward view belongs to the Scheduled lens on the cash grid; a
      spending grid holding a copy would be the same figure twice, free to drift. */
   const familyPaidIds = new Set(cashStrip.excluded.map(e => e.id));
-  const spendingFamilyPaidRows = new Set<string>();
   const spendingActuals: CategoryEvent[] = [];
   for (const mv of actualMovements) {
     spendingActuals.push({ ...mv.category, itemId: mv.itemId, date: mv.date, amount: mv.amount });
@@ -1459,11 +1474,13 @@ export const GET = withObservability(async (req: Request,
        (`effectivePayerId`, carried by the cash strip's exclusion list); the statement's movement
        list dropped it, so no reader could tag the row. Matched by id — `paidMovements` and the
        strip stamp the same `<expenseId>-payment-<paymentId>` shape on the same records. */
+    /* ⚠ PER RECORD, AND NOWHERE ELSE (owner ruling 2026-09-04, QA §132). A row-level set of
+       family-paid rows used to ride alongside this so the grid could caption the ROW — but it was
+       added whenever ANY record in the row was fronted, which mislabelled a row holding both a
+       team payment and a fronted one. The note below is now the only carrier, and it is per
+       record, which is the grain the fact actually has. The cash bridge names the same costs in
+       aggregate. */
     const familyPaid = familyPaidIds.has(mv.id);
-    if (familyPaid) {
-      spendingFamilyPaidRows.add(
-        `${categoryKey(mv.category.categoryId, mv.category.categoryName)}|${mv.itemId ?? 'no-item'}`);
-    }
     pushDetail('spending', mv.category, mv.date, {
       id: mv.id,
       itemId: mv.itemId,
@@ -1572,7 +1589,6 @@ export const GET = withObservability(async (req: Request,
   const netBudget = r2(report.revenue.budgeted - effectiveBudget);
   const netActual = r2(report.revenue.actual - totalActual);
   const seasonNet = { budgeted: netBudget, actual: netActual, variance: r2(netActual - netBudget) };
-  const expenseCategories = categoryResults.map(slimCategory);
 
   return NextResponse.json({
     headroom,
@@ -1587,13 +1603,11 @@ export const GET = withObservability(async (req: Request,
     funding,
     // Already whole (see §10): the categories now hold every paid dollar, planned or not.
     totalActual,
-    /* ⚠ SENT WITHOUT THE RAW LINES AND COSTS BEHIND EACH ROW. The rollup carries them because the
-       PLAN page uses them (it calls the same function locally to render editable lines), but this
-       report renders neither — shipping them would put two full arrays of raw records on every item
-       row of a season's report for nothing. The unbudgeted list below is already extracted from
-       them server-side.
-       ⚠ REFUNDS ARE THE EXCEPTION AND STAY. They are what lets a row say "$2,400 paid · $150 back"
-       instead of only "$2,250", and there are ordinarily nought or one of them per row. */
+    /* ⚠ THE RAW RECORDS BEHIND EACH ROW TRAVEL IN FULL — plan lines, payments and money back.
+       This comment used to say the opposite ("this report renders neither"), and it was true while
+       every figure on the statement was a dead end. Both figures are doors now, and a door has to
+       have something behind it. See the note where `slimCategory` used to stand for why the month
+       grid's drill-in keyspace was NOT reused to save the copy. */
     /* Both report shapes, off ONE grouping pass (plan §3.5). The statement is the default and the
        shape a treasurer, a board and a parent already know; by-activity answers the question a
        statement structurally cannot, because a category appears in both its sections. They end on
@@ -1602,13 +1616,9 @@ export const GET = withObservability(async (req: Request,
        tree twice in one payload, doubling the heaviest part of a season's report on every load,
        because the export builder still read the old field. It reads this one now. */
     report: {
-      revenue:  { ...report.revenue,  categories: report.revenue.categories.map(slimCategory) },
-      expenses: { ...report.expenses, categories: expenseCategories },
-      activities: report.activities.map(block => ({
-        ...block,
-        revenue: block.revenue ? slimCategory(block.revenue) : null,
-        costs:   block.costs   ? slimCategory(block.costs)   : null,
-      })),
+      revenue:  report.revenue,
+      expenses: report.expenses,
+      activities: report.activities,
       /* ⚠ THE SEASON NET IS COMPUTED HERE, not left to each screen. The pure rollup's own net is
          revenue less the ITEMIZED cost sum; the report's Total expenses row has always shown the
          EFFECTIVE budget (the estimate whenever one is set — owner ruling 2026-08-12, shared with
@@ -1643,7 +1653,6 @@ export const GET = withObservability(async (req: Request,
        lens reads this grid too (Q3: plan against spending), which is what ties it to `headroom`. */
     spendingGrid,
     /** The spending rows holding a family-paid movement, so the screen can tag them (D1). */
-    spendingFamilyPaidRows: [...spendingFamilyPaidRows],
     cellDetails,
     /* ⚠⚠ THE MONTH-BY-MONTH CASH MAPS, SHIPPED FOR THE GUARD (`check:money-report` claim 5) rather
        than for the screen, which reads the bands. They are the strip's own bucketing before the

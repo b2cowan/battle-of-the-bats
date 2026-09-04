@@ -265,6 +265,7 @@
    blocks had accumulated). */
 .fundingNote,
 .varianceKey,
+.undatedNote,
 .bridgeSentence {
   margin: 0.6rem 0 0;
   font-size: var(--type-support);
@@ -272,27 +273,53 @@
   color: var(--text-tertiary);
 }
 .varianceKey b,
+.undatedNote strong,
 .bridgeSentence strong { color: var(--text-secondary); font-weight: 650; }
 
 /* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
    retired. `.grandTotal` survives only as the hook that hands it the column tracks and its pin
-   gutter — see the `--ledger-cols` block above and the phone block below.) */
+   gutter — see the `--ledger-cols` block above and the phone block below.)
+
+   ⚠⚠ EXCEPT FOR THE CARD (owner ruling 2026-09-04, QA §132). `.ledgerTotal` draws a bordered,
+   rounded, raised panel — right everywhere else it is used, where it closes a list. Here it made
+   "Funded by players" read as a footnote sitting BELOW the statement rather than as its last line,
+   and the owner read it exactly that way: "why is funded by players below the statement table?".
+   Total expenses → Season net → Funded by players is ONE continuous chain — the comment at that
+   row has said so since 2026-08-24 while the styling quietly argued the opposite. The emphasis
+   stays; only the box goes, replaced by a rule that continues `.netRow`'s.
+   ⚠ Doubled selector for specificity over the shared class, whose module may load in either
+   order — the same reason the phone block below doubles it. */
+.grandTotal.grandTotal {
+  margin-top: 0;
+  border-radius: 0;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
 
 /* ── Spending on something nobody planned ────────────────────────────────────
    ⚠ THESE ROWS USED TO BE A SEPARATE SECTION at the foot of the report; since mig 240 they sit in
    place, inside their own category and item, where a coach reads them beside everything else.
 
-   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT. The 2026-08-15 trim removed the visible
-   "not budgeted" words on the reasoning that the Budget cell's em-dash already said it; on
-   2026-09-02 the owner DELIBERATELY REVERSED that half (D5.5, logged in
-   memory/design_decisions.md): a quiet "not planned" word now rides the row again, because the
-   dash alone asked a reader to infer the one fact the row exists to state. What carries the
-   meaning now:
+   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT. This paragraph has now been rewritten
+   three times and the SETTLED answer is the original one. The 2026-08-15 trim removed the visible
+   "not budgeted" words because the Budget cell's em-dash already said it; D5.5 (2026-09-02) put a
+   "not planned" word back beside them; and on 2026-09-04, reading the BUILT screen, the owner
+   removed the word again and kept the tint — *"empty budget items give that away clearly"*. The
+   third reading is the one that had the evidence: with all three signals present the tint stopped
+   reading as a STATUS and started reading as a GROUPING, because the word beside it was carrying
+   the meaning and the colour had nothing left to do but look structural. Two rows out of five
+   wearing a different ground reads as "these belong together" long before it reads as "these were
+   never budgeted". What carries the meaning now:
      1. the em-dash where a Budgeted figure would be — visible, textual, colour-independent;
-     2. the visible "not planned" word beside the name (D5.5);
-     3. the `aria-describedby` sentence on the category header, for a screen reader — it STAYS.
-   The amber ground is a SCANNING CUE ON TOP OF THOSE, never the thing that says it. Do not remove
-   the dash or the described-by sentence on the grounds that "the row is already amber". */
+     2. the `aria-describedby` sentence on the category header, and its item-row twin (a visually
+        hidden "— not planned" inside the name cell), for a screen reader — both STAY, and they are
+        the reason removing the visible word is not a loss of information.
+   The amber ground is a SCANNING CUE ON TOP OF THOSE, never the thing that says it. ⚠ Do not
+   remove the dash or either hidden sentence on the grounds that "the row is already amber", and do
+   not restore the visible word from D5.5's plan text — it has been walked back on the screen. */
 .unplannedRow {
   background: color-mix(in srgb, var(--bva-unbudgeted) 7%, transparent);
 }
@@ -493,3 +520,114 @@
 }
 .bridgeLink:hover { border-bottom-style: solid; }
 .bridgeLink:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 3px; }
+
+/* ── "N lines" — the caption that became the answer (owner ruling 2026-09-04, QA §132) ──────────
+   It renders inside `.ledgerNote`, so it inherits that voice and adds only what a control needs:
+   a target, a hover, a focus ring. ⚠ NOT A BUTTON-SHAPED BUTTON — a chip here would outweigh the
+   figures the row exists for, which is exactly why the fact was a caption in the first place. The
+   dotted underline is the same affordance the month grid's cells carry, so one gesture reads the
+   same on both views of this report. */
+/* ⚠ THE "N lines" CAPTION HAS NO STYLE OF ITS OWN ANY MORE, and its absence is the record of a
+   decision. It was briefly a button (2026-09-04) with a dotted underline, a focus ring and a 44px
+   touch box carved out of the row by negative margin — all correct for a control, and all removed
+   hours later when the Budget figure beside it became the door onto the same panel and the owner
+   asked why the row needed two. It is plain `.ledgerNote` text now, exactly as the Budget tab's
+   by-period grid has always rendered it. Do not re-dress it as a control without first answering:
+   is the number beside it already a door? */
+
+/* ── A FIGURE THAT OPENS WHAT IS BEHIND IT (owner ruling 2026-09-04, QA §132 round three) ─────
+   ⚠ IT MUST NOT LOOK LIKE A LINK IN A COLUMN OF NUMBERS. A statement is read by scanning a column
+   for size, and underlining every figure in it would turn the scan into a wall of rules. So the
+   figure stays a figure at rest — same weight, same tabular alignment — and earns its underline on
+   hover and focus, exactly as the `N lines` caption beside it does.
+   ⚠⚠ IT NEEDS ITS OWN TAP FLOOR, AND THE FIRST VERSION OF THIS COMMENT ASSERTED THE OPPOSITE
+   (`/review`, 2026-09-04). It read: "the tap floor is the row's, not the button's — this control
+   fills a grid cell that is already the full height of a ledger row, so it stretches to that box."
+   **That was measured and it is false.** `.ledgerRow` sets `align-items: center`, which overrides
+   the grid default of `stretch`, so every cell sizes to its own CONTENT and not to the row — the
+   buttons rendered **22.4px** tall at 361px, all sixteen of them, beside a chevron that is exactly
+   44px. The floor is applied here, with the padding cancelled by an equal negative margin so the
+   row does not grow (the same trick the `N lines` caption used while it was briefly a control).
+   ⚠⚠ AND NO GATE WOULD HAVE CAUGHT IT. `check:layout` measures controls, but these live inside
+   category folds that start CLOSED and the sweep never opens one — the known blind spot. This was
+   found by measuring the rendered page directly, which is the only thing that can settle it; if
+   you change the row's box model, re-measure rather than re-reasoning. */
+.figureBtn {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+.figureBtn:hover { text-decoration: underline dotted; text-underline-offset: 2px; }
+.figureBtn:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+@media (max-width: 768px) {
+  .figureBtn {
+    /* Right-aligned like the plain figure it replaces — a flex box would otherwise start-align the
+       number and break the column's decimal edge. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 44px;
+    padding-block: 0.75rem;
+    margin-block: -0.75rem;
+  }
+}
+
+/* The money-back group inside the panel — a heading, not a row, because the amounts under it pull
+   the other way and must never be read as more of the list above. */
+.behindGroup {
+  margin: 0.9rem 0 0.2rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* The panel it opens. Same shape and rhythm as the month grid's plan panel on purpose — a coach
+   meets them from two views of ONE report, and a second visual language would read as a second
+   feature. */
+.linesBehindSub {
+  margin: 0 0 0.5rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.linesBehindList { list-style: none; margin: 0; padding: 0; }
+.linesBehindList li + li { border-top: 1px solid var(--home-line, var(--border)); }
+.linesBehindRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  /* Past the 44px tap floor with two lines of text inside it. */
+  padding: 0.6rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: 6px;
+  font-size: var(--type-body);
+  color: inherit;
+  text-decoration: none;
+}
+/* ⚠ Anchors only — a read-only coach gets the same list without links. */
+a.linesBehindRow:hover { background: var(--home-raise, rgba(255, 255, 255, 0.05)); }
+a.linesBehindRow:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 1px;
+}
+.linesBehindWho {
+  display: flex;
+  flex-direction: column;
+  /* The typed description is the only thing telling two lines on one item apart — it wraps. */
+  min-width: 0;
+}
+.linesBehindNote { font-size: var(--type-support); color: var(--text-tertiary); }
+.linesBehindAmt { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.linesBehindFoot {
+  margin: 0.7rem 0 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}

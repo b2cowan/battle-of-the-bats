@@ -2,6 +2,198 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-04 (later) — A figure a reader cannot inspect is not an answer; a status must not be said three ways; a table has ONE opening gesture
+
+**Decision (owner, QA §132 round three, Budget vs Actual — after the walk had already passed
+42/42).** One screenshot of a single statement row, three questions, and the same defect underneath
+all three: **the row was talking, and none of it could be checked.**
+
+**1. ⚠⚠ BOTH FIGURES ON A ROW OPEN WHAT IS BEHIND THEM — the actual column too, not just the plan.**
+Round two made the plan figure inspectable and left the actual figure a dead end whose only
+explanation was a permanent sub-row reading `"$815.00 paid · $125.00 back"` — two totals and no
+records, hanging beneath a row that (having no dated periods) had no expander at all, in card white
+against the tint of the rows above it. **Reproducing that $815 took five queries against the live
+database.** A figure that requires database access to explain is not an answer, it is a claim.
+- **General form: a report that will name the records behind ONE of its columns must name them
+  behind the other.** Answering "what is behind this number?" on the plan and refusing on the
+  actual is not restraint, it is an asymmetry the reader has to discover by trying.
+- ⚠ **The sub-row is DELETED, not kept alongside.** Its two figures moved into the panel, where
+  they head the list they are the total of. A permanent row that explains another row is a second
+  register of explanation; one screen should have one.
+- ⚠ **THE ACTUAL LIST STATES AND DOES NOT LINK, and this is the rule, not an unfinished edge.** A
+  budget line is one editable record with a stable id. A *movement* is not: a commitment contributes
+  one entry per instalment, club money arrives under a synthetic id, and a derived pool is a name
+  with no record at all behind it. Linking them would be four kinds of door, three of which 404 —
+  the politer face of the dead end being removed. **Where the objects behind a figure are not all
+  openable, the panel states and points at the tab that edits.**
+- ⚠⚠ **AND THE COROLLARY, TAKEN HOURS LATER ON THE SAME SCREEN: a caption earns a click only
+  when the number beside it is not already a door.** The "N lines" caption became a control that
+  morning because it announced a merge nothing could inspect; once the Budget figure opened that
+  same list, the two sat a thumb's width apart opening one panel and the owner asked *"why do I
+  need the 2 lines link at all when I can click the 2500?"* **The words stay — nothing else on the
+  row says the row is a merge — and the door goes.** ⚠ It also restored agreement between the two
+  views of one report: the Budget tab's by-period grid has always rendered this as plain text.
+  **General form: when a figure becomes inspectable, every OTHER affordance that opened the same
+  thing is now redundant — go looking for it, because it will not announce itself.**
+- ⚠ **A payload optimisation outlives its reason silently.** The route stripped these records with a
+  correct rationale — "the report renders neither" — that expired the instant a figure became a
+  door, and reinstating it would break nothing visible: the panel would simply open empty. Pinned by
+  a guard, because that is a defect no render test can see.
+
+**2. ⚠⚠ ONE STATUS, ONE CARRIER (plus its non-visual twin) — the "not planned" word is REMOVED,
+and this is the THIRD ruling on the same two square inches.** Trimmed 2026-08-15 (the dash says it),
+restored D5.5 2026-09-02 (the dash alone asks the reader to infer it), removed again 2026-09-04 on
+the built screen: *"empty budget items give that away clearly."* **The third reading is the one with
+evidence**, and the evidence is the owner's other question — *"why is Jerseys a different colour?"*
+With a tint AND a dash AND a word all saying one thing, **the tint stopped reading as a status and
+started reading as a grouping**: two rows out of five wearing a different ground reads as "these
+belong together" long before it reads as "these were never budgeted". A redundant signal does not
+merely fail to help; it **re-assigns meaning to the signals beside it.**
+- ⚠ **The non-visual carrier is not optional and is not the tint.** A colour has no reading. The
+  visible word was removable only because a visually hidden sentence replaced it on item rows,
+  beside the `aria-describedby` the category header already had. **Removing a visible status word
+  without leaving a hidden one takes the fact away from a screen reader entirely** — invisible to
+  every gate in this repo, which is why it is now a unit guard.
+- ⚠ **Screen copy and help copy move in ONE unit of work.** D5.5 put the word back while the help
+  article went on saying "the empty Budget figure is the whole answer; there is no label to look
+  for". Both were live, contradicting each other, for two days.
+
+**3. A TABLE HAS ONE OPENING GESTURE AT EVERY LEVEL.** The category bar opened on a click anywhere;
+the item row under it opened only on its 13px chevron. The whole row opens now — the 2026-08-13
+ruling the plan page has followed for three weeks, which this screen had never adopted. The small
+control stays the **semantic** one (keyboard, screen reader); the row is the pointer/touch shortcut;
+the text-selection guard stays (a click that ends a selection is a copy gesture, not a tap); and
+every control inside stops propagation, or opening a panel also folds the table under it.
+
+**4. ⚠⚠ A COMMENT THAT ASSERTS A MEASUREMENT MUST HAVE MEASURED.** The new figure buttons carried
+a comment explaining why they needed no touch floor — "this control fills a grid cell that is
+already the full height of a ledger row". They were **22.4px against a floor of 44**, all sixteen,
+next to a chevron that is exactly 44px, because the ledger row centres its cells instead of
+stretching them. The reasoning was plausible, written in good faith, and wrong, and it would have
+shipped: **the rendered gate measures controls but never opens a fold, and these live inside
+category folds that start closed.** General form: *where a rule is enforced by measurement, a
+comment claiming the rule is met is a claim to verify, not a justification to accept* — and when
+the gate is structurally blind to the surface, measuring the running page is the only thing that
+settles it.
+
+**5. ⚠ AN OVERLAY BUILT FROM THE MARKUP OF ANOTHER OVERLAY INHERITS ITS MARKUP, NOT ITS FLOOR.**
+The records panel was copied from the modal beside it and so had no dialog role, no focus trap, no
+Escape and no focus restore — a keyboard user could open it and not close it. The portal has a
+shared shell carrying all four, written because §134 found this same defect on the bill room.
+**Reach for the shell; a hand-rolled overlay re-derives the markup and silently drops the floor.**
+
+**6. ⚠ A WALK THAT PASSES CAN STILL MISS THE ROW.** §132 passed 42/42 and every one of these was
+sitting on the default screen. The walk tested the five readings, the banner, the exports and the
+chart — the report the rows add up to — and had no step saying *"read one ROW and tell me what it
+is saying."* **A walkthrough over a table needs a row-level step**, or it verifies the totals of
+something nobody checked.
+
+### 2026-09-04 — One underline means one thing on a table; a caption that announces a merge must be able to open it; family-fronted and team-paid money share ONE row
+
+**Decision (owner, QA §132 walk round two, Budget vs Actual).** Three rulings, all from one
+observation: *"why are only some numbers clickable and of the ones that are, why do they navigate me
+to the budget instead of opening a small modal describing it like the spending/cash reports do?"*
+
+**1. ⚠⚠ ONE UNDERLINE, ONE MEANING, ACROSS A WHOLE TABLE.** The month grid's Budget reading had a
+figure do three different things depending on data the reader cannot see: open nothing (category
+rows, the entire revenue band), NAVIGATE to the budget form (a one-line expense row, with write
+access), or open a "which line's dates?" chooser (a two-line row). All three wore the same dotted
+underline. **Every plan figure now opens the same panel** — what makes up this number, the lines
+behind it with their amounts and dates, and the edit door INSIDE the panel. The two-line case stops
+being an exception and becomes a list with two rows in it.
+⚠ **The cost was accepted deliberately:** a head coach fixing a payment date goes from one click to
+two. That is the price of the underline meaning one thing, and the owner took it — the shortcut was
+invisible, and dating a budget line is a season-start chore, not a daily one.
+⚠ **Reading is not editing.** The panel opens for read-only coaches; only the doors are gated. The
+old affordance was gated on `canWrite`, which is why an assistant saw a table with nothing on it to
+open.
+⚠ **A tap DESCRIBES, it does not navigate.** This is now general across this report: the grid reaches
+the forms, it never becomes a second place to stand.
+
+**2. A CAPTION THAT ANNOUNCES A MERGE MUST BE ABLE TO OPEN IT.** The Statement's "2 lines" said two
+budget lines had been summed and offered nothing to press — the row's expander only exists when the
+underlying lines carry DATES, and even when it appears it lists PERIODS, never names. "Which two?"
+was unanswerable under every data shape. **The caption is now the control.** General form: *a label
+stating that detail exists is a promise; either keep it or delete the label.*
+
+**3. FAMILY-FRONTED AND TEAM-PAID MONEY SHARE ONE ROW, NEVER TWO — and no row-level tag claims
+otherwise.** ⚠ **This REVERSES the G1-approved "paid by a family" row tag (D1, 2026-09-02), one day
+after the D5.5 reversal in the other direction** — so both halves of that quick-fix batch have now
+been walked back, which is worth noticing about quick fixes shipped without a walk. The tag fired
+whenever ANY record in the row was fronted, labelling a row holding both a team payment and a
+fronted one wholesale; the fixture hid it because every row in it held a single record. The fact
+lives per RECORD in the drill-in and by NAME in the cash sentence — **the grain of the tag was wrong,
+not the fact.** Same principle as money-back netting into the row it repaid: one row, and the
+detail underneath says what made the number.
+
+### 2026-09-04 — The bill's page dissolves into a room; a list's last column may keep ONE worded action beside the chevron; a title takes no required marker
+
+**Decision (owner, List · Room · Question Phase C — plan
+`docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md` §4.1; mockup artifact
+`11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` §4, rulings R1–R5; gate sheet `10d66c81`).** The team bill —
+the last money-area exception to the grammar — stops being a `?bill=` sub-view that REPLACES the
+Ledger and becomes a room OVER it. Three things in this entry outlive the phase.
+
+**1. ⚠⚠ A LIST'S LAST COLUMN MAY KEEP ONE WORDED ACTION BESIDE THE CHEVRON — and this QUALIFIES the
+2026-09-03 "one shape in a list's last column" ruling rather than reversing it** (owner, asked
+before any code was written, 2026-09-04). The Payables list keeps **Record** beside its new chevron.
+**The test is not "is there a second control" — it is "does this control fire on most rows or on an
+exception".** §134 deleted the club pill because it fired on a bill with exactly one unpaid
+installment, a MINORITY of rows, while the widest cell sizes the column for every row: an exception
+charging rent to everyone. Record fires on nearly every unpaid row, and the Ledger's by-due-date
+view exists precisely so a treasurer can work down a month's payments in one pass — the room's walk
+steps between BILLS, not installments, so moving the act inside would make the month-end instrument
+two taps slower per payment. **Before deleting a trailing control on the strength of the 09-03
+ruling, count the rows it appears on.**
+⚠ What did NOT bend: the chevron went in on **every** row, right-aligned, as a real `<button>`. That
+is the accessibility half of the 09-03 ruling and it is unconditional — these rows are `<tr onClick>`,
+so a keyboard and a screen reader had **no door into a bill at all**. A club bill's row gets the same
+glyph with an honest accessible name ("Open … on the Club tab"), because it opens too.
+⚠ And `.cardActionCorner` does NOT apply to a cell that also holds a worded button. The corner pin
+is for an *icon-only* trailing cell — pinned here it dragged "Record" up beside the due date. The
+09-03 entry already says every other trailing action cell keeps its full-width worded button; a cell
+with both takes `.cardActionCell` and gives the chevron a `.cardActionLabel` ("Open").
+
+**2. A RECORD'S NAME IN THE TITLE SLOT TAKES NO REQUIRED MARKER.** The bill's name is an editable
+field sitting where the heading goes. It is required — the server refuses an empty one — and it
+still carries no `*`. This follows the 2026-09-03 title ruling (*a card's lead cell is its TITLE and
+takes no label*) to its conclusion: a record's own name in the title position cannot be mistaken for
+optional, and a marker floating beside a heading reads as a footnote rather than a requirement. The
+refusal is carried by the save strip, in words, at the moment it matters. This settles the plan's
+open "required-but-unmarked Name" item as a **title-slot exemption**, not as an oversight.
+
+**3. IN A ROOM, THE SCHEDULE LEADS AND THE DETAILS FOLLOW — the reverse of the page, same rule.**
+The 2026-07-09 ruling is *what cannot grow sits above what can*. On a page that put the short fixed
+things on top and gave the unbounded schedule the page's scroll. A room answers "where does this
+stand?" in **tiles** that never scroll at all, so the figure the old order was protecting is already
+safe: the schedule — what the room is FOR — leads the body, and Details is what the bill IS. The
+rule is unbroken; only its application moved.
+
+**Two field fixes with it, both named reversals.** The tag picker's `＋` reveal is **deleted
+outright** (prop, branch and CSS): it was the only place in the product a tag picker hid its own
+search box, and the room's layout removed the pressure that bought the 2026-08-27 exception. Filing
+joins the unified paper ground the creation form has had since 2026-08-29, and the field column
+reconciles to the **30rem house cap** every other live field block already uses.
+
+**⚠⚠ WHAT A ROOM EXPOSES THAT A PAGE HID — three shell-level defects, all found by standing one
+overlay on another, all fixed here.** Worth stating as a class, because the next room will find more:
+- **A hand-rolled overlay has no accessibility floor.** The three-way installment scope sheet built
+  its own chrome — no dialog role, label, Escape, focus trap or focus restore. Over a page nobody
+  noticed. Over a room, the floor's last-opened rule is the ONLY thing that makes a bare Escape peel
+  one layer, so Escape closed the record underneath the open question. **Every overlay stands in
+  `RoomShell` or `QuestionShell`.**
+- **A collapsible section seeds its open state once, at mount.** Right for a page section; useless in
+  a room, which stays on screen while the coach acts — a payment landed into a closed History fold
+  and the coach's own act appeared to do nothing.
+- **`justify-content: space-between` does not right-align a lone child.** The shell's doors slot
+  relied on it, with a comment claiming otherwise; two rooms shipped over it because both always pass
+  a `facts` node. The first consumer without one put its primary door hard left.
+
+**Applies to:** coach Money → Ledger (the bill's room and the bills list's trailing column);
+`RoomShell` / `QuestionShell` / `CoachCollapseSection` (portal-wide); `.cardActionCorner` scope.
+
+---
+
 ### 2026-09-04 — Player Dues is a weekly screen: the set-once door steps back, the chase says who it reaches, and the grid leads with the date
 
 **Trigger:** owner, reviewing Player Dues: *"the toggle of the table view is not consistent with
@@ -60,6 +252,35 @@ rather than silently applied.
 
 **Deferred (G4):** sticky column headings on a long roster — *"later, when a roster is long enough
 to feel it."*
+
+**Owner's second look on the built grid (same day):** **rows are one line**; **the heading is the
+date alone** ("Oct 4", or "Varies"), no installment number, no amount; and
+**every unpaid cell shows the amount still to send** in quiet ink, a tick where nothing is, the
+dashed circle and the warning keeping their figures. ⚠ The last two together revise the 2026-08-14
+"amount in the heading, figure only where money is owed" ruling: the heading no longer carries the
+amount, so the cell must. The number survives in the cell's accessible name and on the timeline.
+
+**And a third pass, same day: DUE NEXT IS A DATE, AND ONLY A DATE.** It carried a figure, a date and
+a status word; the owner's read was that *"only one of those matters and my lean is date, the amounts
+are in the table"*, and that *"'in credit' doesn't need to be there, that is clear by the balance
+column"*. Both are right, and the reason is that the two changes above created the redundancy: the
+instalment cells got their amounts back, so the figure was saying twice what the row already said.
+⚠ For a family who is BEHIND the date shown is the **oldest one they owe**, not the next one coming
+— the same "late outranks future" rule the lit column and the Collection schedule follow, so the
+three can never point at different instalments. Nothing owed reads an em dash. ⚠ **The PHONE card
+keeps its figure**: a collapsed card has no table of amounts beside it, so there the figure is the
+whole answer.
+
+**⚠ A ROW HIGHLIGHT MUST BE REPAINTED ON A PINNED CELL, and the general rule is that an opaque pin
+outranks it** (owner-spotted the same day: *"why does the row highlight miss these 2 columns?"*).
+Two defects in one mechanism. The row-hover rule is three classes; the Player column's sticky ground
+is two, so hover won there — and won with the background SHORTHAND, resetting an opaque colour to a
+translucent tint, so the scrolled instalments showed **through** the hovered Player cell. Due next
+and Balance pin at four classes and two elements, so hover lost there and the highlight stopped dead
+at the pinned block. Both fixed the way the heading tint already was: the opaque colour stays as a
+longhand, the tint arrives as a background-IMAGE layer on top. **Verified by reading composited
+pixels in a browser, not by reasoning about the cascade** — a hover state is invisible to the
+rendered sweep.
 
 ---
 

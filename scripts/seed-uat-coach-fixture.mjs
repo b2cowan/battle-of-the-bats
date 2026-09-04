@@ -802,6 +802,30 @@ const { data: catItems } = await db.from('budget_items')
  *  human reads during QA has to say things that make sense. Falls back to the first item in the
  *  category so the line is still named rather than left blank. */
 const catByName = (n) => (cats ?? []).find(c => c.name.toLowerCase() === n.toLowerCase())?.id ?? cats?.[0]?.id ?? null;
+/**
+ * ⚠⚠ THE STRICT PAIR, AND WHY BOTH HELPERS ABOVE NEEDED ONE (`/review`, 2026-09-04).
+ * `catByName` falls back to `cats[0]` and `itemFor` falls back to `inCat[0]` — sensible for a
+ * seed that just needs *a* plausible category, and quietly fatal for a filing that has to be the
+ * RIGHT one. Every "is migration 276 applied?" style guard written against them is dead code: the
+ * fallbacks return a truthy id whether or not the category exists, so a missing migration does not
+ * stop the run, it files income under whatever sorts first in the shared library. These two return
+ * null when the name is genuinely absent, so a guard can mean something.
+ */
+const catByNameStrict = (n) => (cats ?? []).find(c => c.name.toLowerCase() === n.toLowerCase())?.id ?? null;
+const itemForStrict = (catId, wanted) => catId
+  ? ((catItems ?? []).find(i => i.category_id === catId && i.name.toLowerCase() === wanted.toLowerCase())?.id ?? null)
+  : null;
+/** Both halves of one filing, or a loud stop — never a plausible-looking wrong answer. */
+const filingFor = (categoryName, itemName, why) => {
+  const category_id = catByNameStrict(categoryName);
+  const item_id = itemForStrict(category_id, itemName);
+  if (!item_id) {
+    console.error(`✗ No "${categoryName} / ${itemName}" in the budget library — ${why}`);
+    process.exit(1);
+  }
+  return { budget_category_id: category_id, budget_item_id: item_id };
+};
+
 const itemFor = (catId, wanted) => {
   const inCat = (catItems ?? []).filter(i => i.category_id === catId);
   const hit = wanted && inCat.find(i => i.name.toLowerCase() === wanted.toLowerCase());
@@ -814,6 +838,12 @@ const FIXTURE_ITEMS = {
   'Spring classic entry': { category: 'Tournaments', item: 'Entry Fees' },
   // ⚠ DELIBERATELY THE SAME ITEM as 'Spring classic entry' — see the TWO-LINE ITEM block below.
   'Regional qualifier entry': { category: 'Tournaments', item: 'Entry Fees' },
+  /* ⚠ MONEY IN IS NAMED BY ITS ITEM TOO (mig 243, owner QA §132 2026-09-04). This line carried
+     `category_id: null` until then — a shape the Add-line form has REFUSED to save since that
+     migration, which requires a category and an item in BOTH directions. The statement rolls up by
+     category+item, so a nameless money-in line landed in "No category / Not itemized" and was
+     SUMMED with its sibling, and owner QA was reading a screen no coach can produce today. */
+  'Chocolate sale':       { category: 'Fundraising', item: 'Fundraising drive' },
 };
 /** Both halves of a line's taxonomy, resolved by NAME. ⚠ The category has to be right BEFORE the
  *  item can be: an item lives in exactly one category, so a line filed under the wrong heading
@@ -836,7 +866,7 @@ if (!existingLines?.length) {
        because the claim was the useful part. The two-line item it describes is seeded below. */
     { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
     { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
-    { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', category_id: null, sort_order: 4 },
+    { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
   ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
 
   const ins = await db.from('rep_budget_lines').insert(lineRows).select('id, description');
@@ -1157,6 +1187,67 @@ if (!existingSecondLine?.length) {
  *     actuals are typed.
  * Guarded individually so fixtures seeded before this block gain them on a re-run.
  */
+/* ── The OTHER-INCOME line's taxonomy (owner QA §132, 2026-09-04) ──────────────────────────────
+   The shared library HAS a home for this kind now — "Other Income", team-scoped, added by
+   migration 276 for exactly this reason: mig 274 shipped the fourth kind while mig 243 was already
+   requiring a category and an item on every line in both directions, and every money-in item in the
+   library sat under Fundraising, Sponsorship or Tournaments. This fixture briefly created its own
+   org-scoped copy to reproduce what a coach was forced to do; the migration removed the force, so
+   the fixture files against the library like everything else. */
+const OTHER_INCOME = { category: 'Other Income', item: 'Interest' };
+/* ⚠ THROUGH THE STRICT PAIR (`/review`, 2026-09-04). This block already MEANT to stop the run on a
+   missing migration 276 and could not: `catByName`/`itemFor` fall back rather than return null, so
+   the guard below never fired and the line was filed under an arbitrary category instead. */
+const otherIncomeFiling = filingFor(
+  OTHER_INCOME.category, OTHER_INCOME.item, 'is migration 276 applied?');
+const otherIncomeCatId = otherIncomeFiling.budget_category_id;
+const otherIncomeItemId = otherIncomeFiling.budget_item_id;
+
+/* ⚠ AND REPAIR THE MONEY-IN LINES ALREADY SEEDED (owner QA §132). The itemless repair further up
+   is `line_kind = 'cost'` only — deliberately, and correctly, for what it was written to fix — so
+   an existing fixture would keep its nameless money-in rows through every re-run and the statement
+   would go on merging them into "No category / Not itemized". */
+const { data: itemlessIn } = await db.from('rep_budget_lines')
+  .select('id, description, line_kind')
+  .eq('team_id', team.id).eq('program_year_id', py.id)
+  .in('line_kind', ['funding', 'sponsorship', 'other_income'])
+  .is('item_id', null);
+let repairedIn = 0;
+for (const line of itemlessIn ?? []) {
+  const taxonomy = line.line_kind === 'other_income'
+    ? { category_id: otherIncomeCatId, item_id: otherIncomeItemId }
+    : taxonomyFor(line.description);
+  if (!taxonomy.item_id) continue;
+  const up = await db.from('rep_budget_lines').update(taxonomy).eq('id', line.id);
+  if (!up.error) repairedIn += 1;
+}
+if (repairedIn) ok(`named ${repairedIn} money-in budget line(s) that carried no category or item`);
+
+/* ⚠ AND MOVE ANY LINE OFF THE ORG-SCOPED COPY this fixture created before mig 276 existed, then
+   drop it — two categories both called "Other Income" in one picker is worse than the gap was. */
+const { data: strayCat } = await db.from('budget_categories')
+  .select('id').eq('org_id', org.id).eq('name', 'Other Income').maybeSingle();
+if (strayCat) {
+  const { data: strayItems } = await db.from('budget_items').select('id').eq('category_id', strayCat.id);
+  const strayIds = (strayItems ?? []).map(i => i.id);
+  if (strayIds.length) {
+    /* ⚠ ORG-SCOPED, and the house rule is the reason (`re-assert org+team in every WHERE`;
+       adversarial review, 2026-09-04). Item ids are globally unique so an unscoped `.in()` could
+       not actually reach another tenant — but "it cannot happen because of how ids are allocated"
+       is exactly the argument that stops being true one schema change later, and this file has no
+       reason to rely on it. Scoped to the ORG rather than the team on purpose: the stray category
+       is org-visible, so every line in this org has to come off these items BEFORE they are
+       deleted below, or a sibling team is left pointing at a row that no longer exists. */
+    await db.from('rep_budget_lines')
+      .update({ category_id: otherIncomeCatId, item_id: otherIncomeItemId })
+      .eq('org_id', org.id)
+      .in('item_id', strayIds);
+    await db.from('budget_items').delete().in('id', strayIds);
+  }
+  await db.from('budget_categories').delete().eq('id', strayCat.id);
+  ok('retired the fixture-local "Other Income" category — the library owns it now (mig 276)');
+}
+
 const REVAMP_SHAPES = [
   {
     line: {
@@ -1186,10 +1277,15 @@ const REVAMP_SHAPES = [
   },
   {
     line: {
-      // No item on purpose — the pre-243 money-in shape the section renders by description; the
-      // KIND is what this row exists to exercise.
+      /* ⚠ WAS `category_id: null, item_id: null` "on purpose — the pre-243 money-in shape". That
+         intent is retired (owner QA §132, 2026-09-04): the Add-line form has refused a line with
+         no item in BOTH directions since mig 243, so the shape this row exercised is one no coach
+         can create, and it was the ONLY money-in coverage the fixture had — which meant today's
+         shape had none at all. ⚠ PRE-243 ROWS STILL EXIST IN CUSTOMER DATA (mig 243 shipped with
+         no backfill); that shape now needs its OWN deliberate fixture row rather than riding on
+         this one. Amounts unchanged, so every downstream total the walk is reading holds. */
       description: 'Season interest', total_amount: 150, notes: null, line_kind: 'other_income',
-      split_mode: null, category_id: null, item_id: null, sort_order: 8,
+      split_mode: null, category_id: otherIncomeCatId, item_id: otherIncomeItemId, sort_order: 8,
     },
     periods: [],
     say: 'an OTHER-INCOME line (mig 274) — the fourth section heading',
@@ -1353,7 +1449,16 @@ if (!existingOop?.length && players?.length) {
       row: {
         org_id: org.id, team_id: team.id, program_year_id: py.id,
         expense_type: 'expense', description: 'Umpire fees — a parent paid the association direct',
-        category: cats?.[0]?.name ?? null, paid_by_player_id: players[0].id,
+        /* ⚠ FILED WHERE ITS OWN BUDGET LINE LIVES (owner QA §132, 2026-09-04). This carried
+           `category: cats[0].name` — whatever happened to sort first, which resolved to
+           "Tournaments" — and no item at all, a shape the cost form has REFUSED to save since
+           mig 243. Two things were wrong because of it: the row landed in "Tournaments / Not
+           itemized" instead of under the `Umpire fees by quarter` line the fixture plans four
+           quarters of, so the plan showed $1,200 budgeted against $0 spent while the spending sat
+           in a nameless bucket one category away. */
+        budget_category_id: catByName('Officials'),
+        budget_item_id: itemFor(catByName('Officials'), 'Umpire Fees'),
+        paid_by_player_id: players[0].id,
       },
       // ⚠ Its payment carries NO accounting entry, ever — the family's money moved, the team's
       // did not (mig 234); `paidOnce` leaves the entry null, which is exactly right here.
@@ -1396,6 +1501,28 @@ if (!existingOop?.length && players?.length) {
 }
 
 /**
+ * WHERE THE TWO ARRIVALS FILE (owner QA §132, 2026-09-04).
+ *
+ * ⚠⚠ THEY CARRIED NO CATEGORY AND NO ITEM, WHICH NO COACH CAN DO. Both money-in forms have
+ * refused to save without one since mig 243 — the cost form says so on the screen — so the
+ * statement's "No category / Not itemized" row was being fed by a shape the product cannot
+ * produce, and owner QA was reading a bucket that should have been empty of typed money.
+ *
+ * ⚠ AND THE REFUND FILES AGAINST WHAT IT REPAID. Money back nets into the row it names, so a
+ * "cancelled umpire assignment" filed anywhere else would reduce the wrong item — which is worse
+ * than leaving it nameless, not better. It goes where the umpire spending goes.
+ *
+ * ⚠ WHAT STAYS IN THAT BUCKET IS CLUB MONEY, AND THAT IS BY DESIGN — an unfiled club bill counts
+ * in "Not itemized" rather than being dropped, and the Club tab says on the row that filing it is
+ * what moves it. Do not "repair" those: the bucket must stay reachable, or nothing exercises the
+ * path.
+ */
+const arrivalTaxonomy = {
+  income:    filingFor('Tournaments', 'Concession revenue', 'the concession income has nowhere honest to file'),
+  moneyBack: filingFor('Officials', 'Umpire Fees', 'the umpire refund would net against the wrong row'),
+};
+
+/**
  * ⚠⚠ ONE INCOME ROW AND ONE REFUND, for the same reason.
  *
  * Recorded arrivals (`rep_team_money_in`, mig 243) reached NO cash figure in the product until
@@ -1412,17 +1539,60 @@ if (!existingIn?.length) {
       org_id: org.id, team_id: team.id, program_year_id: py.id,
       entry_kind: 'income', amount: 400, received_date: today,
       description: 'Concession takings, home opener',
+      ...arrivalTaxonomy.income,
     },
     {
       org_id: org.id, team_id: team.id, program_year_id: py.id,
       entry_kind: 'money_back', amount: 125, received_date: today,
       description: 'Cancelled umpire assignment refunded', received_from: 'vendor',
+      ...arrivalTaxonomy.moneyBack,
     },
   ]);
   if (mi.error) console.log(`  ! arrivals skipped (${mi.error.message})`);
   else ok('an income row and a refund seeded — the two the cash figure used to miss entirely');
 } else {
   ok('arrivals already present');
+}
+
+/* ⚠ AND REPAIR THE ARRIVALS AND THE FRONTED COST A PREVIOUS RUN ALREADY SEEDED (owner QA §132).
+   The block above only inserts on an EMPTY fixture, so without this every existing UAT database
+   keeps its nameless rows through every re-run — which is exactly how the retired shape survived
+   long enough to be found on a walk. Amounts, dates and descriptions are untouched; only the
+   filing moves. */
+let namedArrivals = 0;
+for (const [kind, taxonomy] of [['income', arrivalTaxonomy.income], ['money_back', arrivalTaxonomy.moneyBack]]) {
+  if (!taxonomy.budget_item_id) continue;
+  const { data: nameless } = await db.from('rep_team_money_in')
+    .select('id')
+    .eq('team_id', team.id).eq('program_year_id', py.id).eq('entry_kind', kind)
+    .is('budget_item_id', null);
+  for (const row of nameless ?? []) {
+    /* ⚠ TEAM AND SEASON RE-ASSERTED IN THE WRITE, not only in the read above (`/review`,
+       2026-09-04, and the repo's own check-then-act rule). The select already scopes them; an
+       update keyed on a bare id trusts that nothing moved in between, which is the pattern that
+       keeps producing cross-team writes elsewhere in this codebase. */
+    const up = await db.from('rep_team_money_in').update(taxonomy)
+      .eq('id', row.id).eq('team_id', team.id).eq('program_year_id', py.id);
+    if (!up.error) namedArrivals += 1;
+  }
+}
+if (namedArrivals) ok(`named ${namedArrivals} recorded arrival(s) that carried no category or item`);
+
+const umpireTaxonomy = arrivalTaxonomy.moneyBack;
+if (umpireTaxonomy.budget_item_id) {
+  const { data: strayOop } = await db.from('rep_team_expenses')
+    .select('id')
+    .eq('team_id', team.id).eq('program_year_id', py.id)
+    .eq('description', 'Umpire fees — a parent paid the association direct')
+    .is('budget_item_id', null);
+  for (const row of strayOop ?? []) {
+    // `category` goes to null with it: a free-text heading beside a real one is the two-rows-one-name
+    // defect `categoryKey` exists to prevent, and it has no reader left once the item is set.
+    const up = await db.from('rep_team_expenses')
+      .update({ ...umpireTaxonomy, category: null })
+      .eq('id', row.id).eq('team_id', team.id).eq('program_year_id', py.id);
+    if (!up.error) ok('filed the family-fronted umpire cost under its own budget line');
+  }
 }
 
 const { data: existingFr } = await db.from('rep_fundraisers')
