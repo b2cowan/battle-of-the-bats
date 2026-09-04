@@ -18,13 +18,10 @@
    by side — Planned costs · Expected fundraising · Player installments — separated by quiet
    hairlines, no operators: labels do the explaining, captions carry the relationships.
    Tokens only — no colour literals (the six colour-token baselines stay at zero). */
-.plan {
-  padding: 0.85rem 1.25rem 0.95rem;
-  border-radius: 12px;
-  background: rgba(var(--blueprint-blue-rgb), 0.07);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin-bottom: 1.75rem;
-}
+/* RETIRED WITH THE PLAN CARD (2026-09-03, owner-spotted): `.plan` was the card's own frame --
+   tinted ground, border, 12px radius. It survived the D3 swap and left the shared band sitting
+   INSIDE it, so the tab drew two borders around one summary where every other money tab draws
+   one. The band brings its own frame; a wrapper around it is always a second one. */
 
 /* RETIRED WITH THE PLAN CARD (owner D3, 2026-09-03): .planHead, .planCap, .planRow, .planTerm,
    .planKey, .planCount, .planVal, .planValGood, .planValEst, .planCapNote. The tab's summary is
@@ -1465,7 +1462,6 @@
 @media (max-width: 640px) {
   /* Plan card at phone width: tighter frame, smaller figures. (The stacking itself moves
      with the SHELL breakpoint — see the ≤900 block above the form styles.) */
-  .plan { padding: 0.85rem 1rem 0.9rem; }
   /* (`.planVal`'s phone size went with the card — the band owns its own figure step.) */
 
   /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */

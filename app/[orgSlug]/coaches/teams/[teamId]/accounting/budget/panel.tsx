@@ -1637,149 +1637,149 @@ export function BudgetPlanPanel({
             per-player alongside them is exactly the stale figure this card exists to retire.
           */}
           {!trueEmpty && (
-          <div className={styles.plan}>
-            {/* ⚠ THE SHARED BAND (owner D3, 2026-09-03). This card was approved from its own
-                mockup (artifact d37d62e3 round 3, 2026-08-13) and everything that ruling settled
-                individually SURVIVES inside the tiles: the Estimated/Scheduled chip, the estimate's
-                relationship caption in red when the lines outgrow it, the buffer-not-a-warning
-                reading, the amber short-of-plan state and both doors.
+          <>
+          {/* ⚠ THE SHARED BAND (owner D3, 2026-09-03). This card was approved from its own
+              mockup (artifact d37d62e3 round 3, 2026-08-13) and everything that ruling settled
+              individually SURVIVES inside the tiles: the Estimated/Scheduled chip, the estimate's
+              relationship caption in red when the lines outgrow it, the buffer-not-a-warning
+              reading, the amber short-of-plan state and both doors.
 
-                ⚠ WHAT WENT, and only this: the "The plan" panel title (the tab above already names
-                the screen) and the inline line-counts, which move from inside the labels into the
-                captions where the standard puts a qualifier. The estimate door, homeless once the
-                title went, rides the Planned-costs caption in both states rather than only after an
-                estimate exists. */}
-            <MoneySummaryBand
-              ariaLabel="Budget plan summary"
-              tiles={[
-                {
-                  key: 'planned',
-                  label: 'Planned costs',
-                  figure: fmt(totals.totalPlanned),
-                  caption: seasonTotal != null ? (
-                    <span className={totals.overPlanned ? styles.planCapBad : undefined}>
-                      {totals.overPlanned
-                        ? <>Your estimate — {fmt(totals.itemized)} itemized is {fmt(totals.difference)} over</>
-                        : <>Your estimate · {fmt(totals.itemized)} itemized in {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
-                      {moneyCanWrite && !editingSeason && (
+              ⚠ WHAT WENT, and only this: the "The plan" panel title (the tab above already names
+              the screen) and the inline line-counts, which move from inside the labels into the
+              captions where the standard puts a qualifier. The estimate door, homeless once the
+              title went, rides the Planned-costs caption in both states rather than only after an
+              estimate exists. */}
+          <MoneySummaryBand
+            ariaLabel="Budget plan summary"
+            tiles={[
+              {
+                key: 'planned',
+                label: 'Planned costs',
+                figure: fmt(totals.totalPlanned),
+                caption: seasonTotal != null ? (
+                  <span className={totals.overPlanned ? styles.planCapBad : undefined}>
+                    {totals.overPlanned
+                      ? <>Your estimate — {fmt(totals.itemized)} itemized is {fmt(totals.difference)} over</>
+                      : <>Your estimate · {fmt(totals.itemized)} itemized in {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
+                    {moneyCanWrite && !editingSeason && (
+                      <>
+                        {' · '}
+                        <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
+                      </>
+                    )}
+                  </span>
+                ) : (
+                  <>
+                    {totals.costLineCount > 0 && (
+                      <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>
+                    )}
+                    {!editingSeason && moneyCanWrite && (
+                      <>
+                        {totals.costLineCount > 0 && ' · '}
+                        <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
+                          set an estimated total
+                        </button>
+                      </>
+                    )}
+                  </>
+                ),
+              },
+              {
+                /* A team with no money-in lines has no middle tile — it hides rather than
+                   printing a zero nobody planned (recipe deviation 2). "Expected FUNDING", not
+                   the fundraising section's own name: this AGGREGATES every money-in kind. */
+                key: 'funding',
+                label: 'Expected funding',
+                figure: fmt(totals.expectedFunding),
+                tone: 'good',
+                caption: `${totals.fundingLineCount} line${totals.fundingLineCount === 1 ? '' : 's'}`,
+                hidden: !(totals.fundingLineCount > 0),
+              },
+              {
+                key: 'installments',
+                label: 'Player installments',
+                figure: (
+                  <>
+                    {fmt(duesAssessed > 0 ? duesAssessed : totals.fundedByPlayers)}
+                    {' '}
+                    <span className={duesAssessed > 0 ? styles.planBadgeOff : styles.planBadgeEst}>
+                      {duesAssessed > 0 ? 'Scheduled' : 'Estimated'}
+                    </span>
+                  </>
+                ),
+                caption: duesAssessed > 0 ? (
+                  // "Above the plan" needs a plan to be above — a dues-only team gets the bare
+                  // Scheduled figure, not a caption calling the whole schedule a buffer.
+                  leftToFund < -0.005 && totals.totalPlanned > 0 ? (
+                    <>Includes a {fmt(leftToFund)} buffer above the plan</>
+                  ) : leftToFund > 0.005 ? (
+                    <span className={styles.planCapWarn}>
+                      {fmt(leftToFund)} short of covering the plan
+                      {moneyCanWrite && (
                         <>
                           {' · '}
-                          <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
+                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                            set dues
+                          </button>
                         </>
                       )}
                     </span>
-                  ) : (
+                  ) : undefined
+                ) : (
+                  (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) ? (
                     <>
-                      {totals.costLineCount > 0 && (
-                        <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>
-                      )}
-                      {!editingSeason && moneyCanWrite && (
+                      {totals.perPlayer != null && <>≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
+                      {moneyCanWrite && allLines.length > 0 && (
                         <>
-                          {totals.costLineCount > 0 && ' · '}
-                          <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
-                            set an estimated total
+                          {totals.perPlayer != null && ' · '}
+                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                            set dues for all players
                           </button>
                         </>
                       )}
                     </>
-                  ),
-                },
-                {
-                  /* A team with no money-in lines has no middle tile — it hides rather than
-                     printing a zero nobody planned (recipe deviation 2). "Expected FUNDING", not
-                     the fundraising section's own name: this AGGREGATES every money-in kind. */
-                  key: 'funding',
-                  label: 'Expected funding',
-                  figure: fmt(totals.expectedFunding),
-                  tone: 'good',
-                  caption: `${totals.fundingLineCount} line${totals.fundingLineCount === 1 ? '' : 's'}`,
-                  hidden: !(totals.fundingLineCount > 0),
-                },
-                {
-                  key: 'installments',
-                  label: 'Player installments',
-                  figure: (
-                    <>
-                      {fmt(duesAssessed > 0 ? duesAssessed : totals.fundedByPlayers)}
-                      {' '}
-                      <span className={duesAssessed > 0 ? styles.planBadgeOff : styles.planBadgeEst}>
-                        {duesAssessed > 0 ? 'Scheduled' : 'Estimated'}
-                      </span>
-                    </>
-                  ),
-                  caption: duesAssessed > 0 ? (
-                    // "Above the plan" needs a plan to be above — a dues-only team gets the bare
-                    // Scheduled figure, not a caption calling the whole schedule a buffer.
-                    leftToFund < -0.005 && totals.totalPlanned > 0 ? (
-                      <>Includes a {fmt(leftToFund)} buffer above the plan</>
-                    ) : leftToFund > 0.005 ? (
-                      <span className={styles.planCapWarn}>
-                        {fmt(leftToFund)} short of covering the plan
-                        {moneyCanWrite && (
-                          <>
-                            {' · '}
-                            <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                              set dues
-                            </button>
-                          </>
-                        )}
-                      </span>
-                    ) : undefined
-                  ) : (
-                    (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) ? (
-                      <>
-                        {totals.perPlayer != null && <>≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
-                        {moneyCanWrite && allLines.length > 0 && (
-                          <>
-                            {totals.perPlayer != null && ' · '}
-                            <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                              set dues for all players
-                            </button>
-                          </>
-                        )}
-                      </>
-                    ) : undefined
-                  ),
-                },
-              ]}
-            />
+                  ) : undefined
+                ),
+              },
+            ]}
+          />
 
-            {editingSeason && (
-              <div className={styles.ladderEditor}>
-                <label className={styles.ladderEditorLabel} htmlFor="budget-estimated-total">Estimated total</label>
-                {/* Width in CSS, not inline: an inline width outranks any media query, which is
-                    what made the old editor overflow its tile on a phone. */}
-                <input
-                  id="budget-estimated-total"
-                  className={`${styles.input} ${shared.inlineField}`}
-                  style={{ '--inline-field-w': '120px' } as React.CSSProperties}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={seasonInput}
-                  onChange={e => setSeasonInput(e.target.value)}
-                  autoFocus
-                />
-                <button type="button" className={shared.btnPrimary} style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }} disabled={seasonSaving} onClick={() => saveSeasonTotal()}>
-                  {seasonSaving ? '…' : 'Save'}
+          {editingSeason && (
+            <div className={styles.ladderEditor}>
+              <label className={styles.ladderEditorLabel} htmlFor="budget-estimated-total">Estimated total</label>
+              {/* Width in CSS, not inline: an inline width outranks any media query, which is
+                  what made the old editor overflow its tile on a phone. */}
+              <input
+                id="budget-estimated-total"
+                className={`${styles.input} ${shared.inlineField}`}
+                style={{ '--inline-field-w': '120px' } as React.CSSProperties}
+                type="number"
+                min={0}
+                step="0.01"
+                value={seasonInput}
+                onChange={e => setSeasonInput(e.target.value)}
+                autoFocus
+              />
+              <button type="button" className={shared.btnPrimary} style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }} disabled={seasonSaving} onClick={() => saveSeasonTotal()}>
+                {seasonSaving ? '…' : 'Save'}
+              </button>
+              {/* Disabled while a save is in flight, like its Save/Clear neighbours: closing the
+                  editor mid-request left the response to land on whatever the coach opened next
+                  — stomping a freshly-typed number with the one they had just cancelled, and
+                  sending any failure message to a box that was no longer on screen. */}
+              <button type="button" className={shared.btnGhost} style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }} disabled={seasonSaving} onClick={() => { setEditingSeason(false); setSeasonError(''); }}>
+                Cancel
+              </button>
+              {seasonTotal != null && (
+                <button type="button" className={styles.ladderLink} disabled={seasonSaving} onClick={() => saveSeasonTotal(true)}>
+                  Clear
                 </button>
-                {/* Disabled while a save is in flight, like its Save/Clear neighbours: closing the
-                    editor mid-request left the response to land on whatever the coach opened next
-                    — stomping a freshly-typed number with the one they had just cancelled, and
-                    sending any failure message to a box that was no longer on screen. */}
-                <button type="button" className={shared.btnGhost} style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }} disabled={seasonSaving} onClick={() => { setEditingSeason(false); setSeasonError(''); }}>
-                  Cancel
-                </button>
-                {seasonTotal != null && (
-                  <button type="button" className={styles.ladderLink} disabled={seasonSaving} onClick={() => saveSeasonTotal(true)}>
-                    Clear
-                  </button>
-                )}
-                {seasonError && <span className={styles.errorText} style={{ fontSize: '0.75rem' }}>{seasonError}</span>}
-              </div>
-            )}
+              )}
+              {seasonError && <span className={styles.errorText} style={{ fontSize: '0.75rem' }}>{seasonError}</span>}
+            </div>
+          )}
 
-          </div>
+          </>
           )}
 
           {/* Line items grouped by category */}
