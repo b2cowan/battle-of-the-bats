@@ -55,6 +55,15 @@ const TABLE = 'rep_budget_lines';
  */
 const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
   {
+    path: 'app/api/admin/accounting/budget-categories/route.ts',
+    reason: 'COUNTS DISTINCT TEAMS planning under a category (mig 277, `usage=1`) so the club can '
+      + 'read what renaming a shared heading would reach. It sums nothing and reads no amount — the '
+      + 'question is "does this team plan under this heading at all?", where a funding line and a '
+      + 'cost line answer identically ON PURPOSE. Partitioning by kind would tell an Owner the '
+      + 'heading is unused because the only thing under it happens to be money coming in, and they '
+      + 'would rename it believing nobody was watching.',
+  },
+  {
     path: 'app/api/admin/accounting/team-budget-items/route.ts',
     reason: 'COUNTS lines per budget ITEM so a club can tell a word tried once from one a season '
       + 'depends on. It sums nothing and reads no amount — and a money-in line carries no item at '

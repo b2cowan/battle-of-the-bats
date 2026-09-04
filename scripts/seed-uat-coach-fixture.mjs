@@ -2032,6 +2032,36 @@ if (!pastTeam) {
 }
 ok(`between-seasons team ${pastTeam.name} (${pastTeam.id})`);
 
+/* ── Local categories, both tiers of the failing state (mig 277) ───────────────────────────────
+ * ⚠⚠ TWO OF THEM, AND THE SECOND IS THE WHOLE POINT. A category owned by THIS team proves the
+ * rename door renders; a category owned by the OTHER team in the same org proves the filter — and
+ * only the second can fail. Seeding just the first would give every screen a green tick over a leak
+ * that never had a chance to happen, which is this repo's most expensive recurring fixture defect
+ * (a fixture missing the failing state reports coverage it does not have).
+ *
+ * ⚠ `scope: 'team'` matches what the coach create path writes; the ownership lives in `team_id`,
+ * which is a different axis — scope says which planner offers it, team_id says whose it is.
+ *
+ * Idempotent by (org, team, name): this fixture is re-run constantly and a second "Provincials
+ * Trip" in the picker would be a fixture defect dressed as a product one. */
+for (const [owner, name, why] of [
+  [team.id,     'Provincials Trip', 'this team’s own — the coach can rename it'],
+  [pastTeam.id, 'Bus Fund',         'ANOTHER team’s — must never appear on this team’s screens'],
+]) {
+  const { data: existing } = await db.from('budget_categories')
+    .select('id').eq('org_id', org.id).eq('team_id', owner).eq('name', name).maybeSingle();
+  if (existing) continue;
+  const ins = await db.from('budget_categories')
+    .insert({ org_id: org.id, team_id: owner, name, scope: 'team', is_default: false })
+    .select('id').single();
+  if (ins.error) {
+    /* Loud, not silent: without these the ownership screens sweep an empty state and pass. */
+    console.error(`✗ local category "${name}" insert`, ins.error.message);
+    process.exit(1);
+  }
+  ok(`local category "${name}" — ${why}`);
+}
+
 const thisYear = new Date().getFullYear();
 const pastYears = [];
 for (const year of [thisYear - 2, thisYear - 1]) {

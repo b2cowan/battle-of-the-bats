@@ -643,7 +643,7 @@ export default function CommitmentView({
                  opted in there; the record view was simply never given the same prop, so one
                  picker wore two sets of clothes on two screens for the same bill. */
               paperGround
-              manageHint="Rename or remove it later from Budget Plan → Manage our items — but it stays on this side."
+              manageHint="Rename or remove it later from Budget Plan → Manage our words — but it stays on this side."
               onChange={v => touch(setFiling)({
                 categoryId: v.categoryId, categoryName: v.categoryName,
                 itemId: v.itemId, itemName: v.itemName,

@@ -1584,6 +1584,15 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "budget_categories",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
     "table_name": "budget_items",
     "column_name": "id",
     "data_type": "uuid",

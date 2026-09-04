@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import {
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
+  categoryOfferedToClub, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -37,15 +38,20 @@ export const POST = withObservability(async (req: Request,
   const allowedRoles = ['owner', 'treasurer', 'coach'];
   if (!allowedRoles.includes(ctx!.role)) return forbidden();
 
-  // Verify the category exists and is accessible (platform default or this org's)
+  /* Verify the category exists and is accessible (platform default or this org's).
+     ⚠⚠ AND THAT IT IS NOT ONE TEAM'S OWN (mig 277). This is the club creating a word every team will
+     be offered, so the heading it hangs under has to be one every team can reach. Filing it under a
+     team's private heading would put a club-shared item somewhere only one team can see — and would
+     hand the club's word to that team's cascade, since deleting a team drops its categories and
+     everything filed under them. Same predicate as the club's own budget-line write path. */
   const { data: cat, error: catErr } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, org_id')
+    .select('id, org_id, team_id')
     .eq('id', catId)
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     .single();
 
-  if (catErr || !cat) {
+  if (catErr || !cat || !categoryOfferedToClub(cat as OwnedBudgetCategory, ctx!.org.id)) {
     return NextResponse.json({ error: 'Category not found' }, { status: 404 });
   }
 

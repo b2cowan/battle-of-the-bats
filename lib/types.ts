@@ -2477,6 +2477,15 @@ export type BudgetScope = 'org' | 'team' | 'both';
 export interface BudgetCategory {
   id: string;
   orgId: string | null;       // null = platform default (read-only)
+  /** Who owns this heading (mig 277). null with orgId null = platform; null with orgId set =
+   *  CLUB-SHARED (every team plans under it, Owner/Treasurer renames it); set = that TEAM'S OWN
+   *  (offered to that team only, renamed by that team, read but never edited by the club). Same
+   *  three tiers as `BudgetItem.teamId` — read them through the shared predicates in
+   *  `lib/coach-budget-item-tiers.ts`, never a local `!teamId`. */
+  teamId?: string | null;
+  /** The owning team's NAME, on club-facing reads only — the club's category panel lists teams' own
+   *  headings and has to say whose they are. Absent on coach-facing reads, where it is always "ours". */
+  teamName?: string | null;
   name: string;
   scope: BudgetScope;
   sortOrder: number;

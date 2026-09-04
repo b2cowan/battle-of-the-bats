@@ -37,9 +37,14 @@ import type { BudgetItem, BudgetItemDirection } from './types';
    that file's header before moving anything back. */
 export {
   budgetItemTier, itemVisibleToTeam, itemOfferedToClub, ITEM_TIER_LABEL,
-  type BudgetItemTier, type OwnedBudgetItem,
+  /* Categories read the same three rules since mig 277 — aliases of the three above, not copies. */
+  budgetCategoryTier, categoryVisibleToTeam, categoryOfferedToClub,
+  type BudgetItemTier, type OwnedBudgetItem, type OwnedBudgetCategory,
 } from './coach-budget-item-tiers';
-import { itemVisibleToTeam, itemOfferedToClub, type OwnedBudgetItem } from './coach-budget-item-tiers';
+import {
+  itemVisibleToTeam, itemOfferedToClub, categoryVisibleToTeam, categoryOfferedToClub,
+  type OwnedBudgetItem, type OwnedBudgetCategory,
+} from './coach-budget-item-tiers';
 
 /* ⚠⚠ THE REFERENCE LIST AND THE USAGE PHRASING MOVED TO `coach-budget-item-usage.ts` (2026-08-17)
    AND ARE RE-EXPORTED HERE, so every existing caller keeps one door. Same reason as the tier split
@@ -456,4 +461,67 @@ export async function listVisibleBudgetItems(orgId: string, teamId: string) {
     .or(`org_id.is.null,org_id.eq.${orgId}`);
   return ((data ?? []) as Array<Record<string, unknown>>)
     .filter(row => itemVisibleToTeam(row as OwnedBudgetItem, orgId, teamId));
+}
+
+/**
+ * Every CATEGORY this team may pick from — one tier up, same rule, same reason (mig 277).
+ *
+ * ⚠ THE CREATE PATH NEEDS THIS, not just the list. A coach naming a new category is refused when the
+ * name already exists, and the moment categories can be private that refusal has to be scoped to
+ * what the asking team can SEE: otherwise team B types "Provincials Trip", team A invented one last
+ * week, and team B is refused a name it cannot find, open or use. Items hit this exact wall between
+ * migrations 240 and 248.
+ */
+export async function listVisibleBudgetCategories(orgId: string, teamId: string) {
+  const { data } = await supabaseAdmin
+    .from('budget_categories')
+    .select('*')
+    .or(`org_id.is.null,org_id.eq.${orgId}`);
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .filter(row => categoryVisibleToTeam(row as OwnedBudgetCategory, orgId, teamId));
+}
+
+/**
+ * Authorise a bare category id a CLUB is filing its own budget line against.
+ *
+ * ⚠⚠ THIS IS THE HOLE MIGRATION 277 OPENS IF IT SHIPS ALONE, and it is the same hole `/review`
+ * found for items on 2026-08-17 — one level up and three weeks later. The club's budget-line write
+ * path derives its category from the chosen ITEM (`resolveOrgBudgetItem`), which is checked — but a
+ * club line may name a category and NO item, and that id went to the database unvalidated. While
+ * every category was org-wide that was harmless: there was nothing a club could name that was not
+ * already the club's. The moment one team's heading is private, an unvalidated id lets the club file
+ * its own plan under a word it cannot see, rename or remove, and that the owning team can — which is
+ * the precise failure the item-level predicate exists to prevent.
+ *
+ * ⚠ NO SPORT GATE, matching `resolveOrgBudgetItem`: a club spans sports and its own plan is not
+ * written out of one team's vocabulary.
+ */
+export async function resolveOrgBudgetCategory(
+  categoryId: unknown,
+  orgId: string,
+): Promise<{ ok: true; categoryId: string | null } | { ok: false; error: string }> {
+  if (categoryId === null || categoryId === undefined || categoryId === '') {
+    return { ok: true, categoryId: null };
+  }
+  if (typeof categoryId !== 'string') {
+    return { ok: false, error: 'categoryId must be a budget category id, or null' };
+  }
+
+  const { data } = await supabaseAdmin
+    .from('budget_categories')
+    .select('id, org_id, team_id')
+    .eq('id', categoryId)
+    .maybeSingle();
+
+  // One message for "another club's", "a team's own" and "no such category" — separating them
+  // confirms the existence of rows the caller cannot see.
+  if (!data || !categoryOfferedToClub(data as OwnedBudgetCategory, orgId)) {
+    return {
+      ok: false,
+      error: 'That category is not available to this organization. A club plan can use standard '
+        + 'categories and the ones your club shares — never a heading one of its teams invented.',
+    };
+  }
+
+  return { ok: true, categoryId: data.id as string };
 }

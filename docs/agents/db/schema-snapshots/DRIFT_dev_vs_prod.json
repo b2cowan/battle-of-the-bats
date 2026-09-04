@@ -1,11 +1,11 @@
 {
   "generated": "2026-09-04",
-  "total": 3,
+  "total": 6,
   "counts": {
     "tables": 0,
-    "columns": 1,
-    "indexes": 0,
-    "constraints": 0,
+    "columns": 2,
+    "indexes": 1,
+    "constraints": 1,
     "rls": 2
   },
   "items": [
@@ -18,7 +18,19 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:budget_categories.team_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_budget_lines.split_mode",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:budget_categories.budget_categories_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:budget_categories_team_idx",
       "sig": ""
     }
   ]

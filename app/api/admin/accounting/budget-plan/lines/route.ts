@@ -4,7 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { resolveOrgBudgetItem } from '@/lib/coach-budget-items';
+import { resolveOrgBudgetItem, resolveOrgBudgetCategory } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -61,12 +61,22 @@ export const POST = withObservability(async (req: Request) => {
   const linked = await resolveOrgBudgetItem(itemId, ctx!.org.id);
   if (!linked.ok) return NextResponse.json({ error: linked.error }, { status: 400 });
 
+  /* ⚠⚠ AND THE BARE CATEGORY IS AUTHORISED TOO, SINCE MIGRATION 277. When a line names an item the
+     category is derived from it above and is therefore already checked — but a club line may name a
+     category and NO item, and that id used to go straight to the database. That was harmless while
+     every category was org-wide: there was nothing nameable that was not already the club's. Now
+     that one team's heading can be private, an unchecked id would let the club file its own plan
+     under a word it cannot see, rename or remove and the owning team can. Same hole, same shape and
+     the same remedy as the item check directly above — one level up and three weeks later. */
+  const linkedCategory = await resolveOrgBudgetCategory(categoryId, ctx!.org.id);
+  if (!linkedCategory.ok) return NextResponse.json({ error: linkedCategory.error }, { status: 400 });
+
   const { data, error } = await supabaseAdmin
     .from('org_budget_lines')
     .insert({
       org_id:       ctx!.org.id,
       season_year:  year,
-      category_id:  linked.item ? linked.item.categoryId : (categoryId ?? null),
+      category_id:  linked.item ? linked.item.categoryId : linkedCategory.categoryId,
       item_id:      linked.item?.id ?? null,
       description:  desc,
       total_amount: amount,

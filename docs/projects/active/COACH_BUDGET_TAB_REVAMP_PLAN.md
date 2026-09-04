@@ -32,7 +32,7 @@ verified 2026-09-02 and may drift; re-verify at build time.
 | Q3 | **Approved** — P3 density WITH the Schedule column, collapse-all, remembered folds. |
 | Q4 | **Approved** — P4 dropdown pills (BvA's `SingleSelectDropdown` shape) + shared page-width utility. |
 | Q5 | **Approved** — add an "other income" line kind. |
-| Q6 | **Approved** — a coach can rename their own categories (investigation-first; see §6.2). |
+| Q6 | **Approved as investigation-first 2026-09-02; RULED 2026-09-04 — org/club-admin-only rename, not built yet (see §6.2).** |
 | Q7 | **Approved as scoped** — the platform item-library placement review gets its OWN session; kept OUT of this build. TODO.md line added. |
 | Q8 | **Approved, both** — (a) PDF export of the plan; (b) "Bring last season's plan" door on the empty state for a coach who skipped the carry at rollover. |
 | **Export rider (owner, verbatim intent)** | "Make sure the export manages the groupings properly like the budget vs actual export does and formats date headers the same way." → The plan tab's exports adopt BvA's contract: the file is grouped exactly the way the screen is grouped, and month/date column headers are produced by the same helpers/format BvA's month export uses — shared code, not a re-implementation. See §5. |

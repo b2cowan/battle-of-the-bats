@@ -75,6 +75,10 @@ export default function BudgetItemManagerModal({
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  /** Renaming a HEADING is its own row state — a category id and an item id can never be the same
+   *  row, and sharing one would light up an item's input when a coach edits the heading above it. */
+  const [renamingCatId, setRenamingCatId] = useState<string | null>(null);
+  const [renameCatDraft, setRenameCatDraft] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
   /**
@@ -153,6 +157,22 @@ export default function BudgetItemManagerModal({
     };
   }, [categories, teamId]);
 
+  /* ── The headings, one level up (mig 277) ─────────────────────────────────────────────────────
+     ⚠ THE SAME TWO LISTS IN THE SAME ORDER as the words below — ours with a pencil, everyone else's
+     read-only underneath. A category a coach invents belongs to their team now, so it is theirs to
+     rename; a club-shared or standard heading names rows on every team in the org and is not.
+     ⚠ NO USAGE COUNT AND NO BIN. Removing a heading cascades its items, which would blank the
+     classification on every record filed against them at once — the reason delete is absent on both
+     tiers — so there is no count here to disable anything with. */
+  const { ourCategories, sharedCategories } = useMemo(() => {
+    const byName = (a: BudgetCategoryWithItems, b: BudgetCategoryWithItems) =>
+      a.name.localeCompare(b.name);
+    return {
+      ourCategories:    categories.filter(c => c.teamId === teamId).sort(byName),
+      sharedCategories: categories.filter(c => c.teamId !== teamId).sort(byName),
+    };
+  }, [categories, teamId]);
+
   /**
    * The fold, derived fresh on every render from the `categories` PROP.
    *
@@ -181,6 +201,30 @@ export default function BudgetItemManagerModal({
       : [];
     return { selected, side, targets, target, moving, reFiled };
   }, [ours, theirs, foldSources, foldTargetId, usage]);
+
+  /** Rename one of this team's own headings. Same shape as `patch` below, its own door on the
+   *  server — a category is not an item and the two routes refuse for different reasons. */
+  async function patchCategory(cat: BudgetCategoryWithItems, name: string) {
+    setError('');
+    setBusyId(cat.id);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/budget-categories/${cat.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, name }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not save that change');
+      }
+      setRenamingCatId(null);
+      onChanged();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not save that change');
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function patch(item: BudgetItem, body: Record<string, unknown>) {
     setError('');
@@ -312,10 +356,12 @@ export default function BudgetItemManagerModal({
   }
 
   /** Standard or Club, never colour alone — the same chip the read-only section and the picker use. */
-  function tierChip(item: BudgetItem) {
+  /** ⚠ TAKES THE TWO OWNERSHIP COLUMNS, NOT AN ITEM — a category carries the same pair since mig 277
+   *  and wears the same chip in the same words, so one helper serves both lists. */
+  function tierChip(row: { orgId: string | null; teamId?: string | null }) {
     return (
-      <span className={`${styles.badge} ${item.orgId ? styles.badgeDraft : styles.badgeArchived}`}>
-        {ITEM_TIER_LABEL[budgetItemTier({ org_id: item.orgId, team_id: item.teamId })]}
+      <span className={`${styles.badge} ${row.orgId ? styles.badgeDraft : styles.badgeArchived}`}>
+        {ITEM_TIER_LABEL[budgetItemTier({ org_id: row.orgId, team_id: row.teamId })]}
       </span>
     );
   }
@@ -477,12 +523,103 @@ export default function BudgetItemManagerModal({
   }
 
   return frame(
-    'Manage our items',
-    'The words your team invented. Everything else is read-only.',
+    /* ⚠ "WORDS", NOT "ITEMS", SINCE MIG 277 (owner ruling Q5, 2026-09-04). This screen now opens on
+       two lists — the headings and the words under them — and a door that says "items" while holding
+       both is the kind of small untruth that costs a support email. The panel button, the three
+       forms' hints and the help article move with it: one name, every surface. */
+    'Manage our words',
+    'The categories and words your team invented. Everything else is read-only.',
     (
         <>
           {error && <p className={styles.errorText}>{error}</p>}
           {notice && <p className={styles.formHint}>{notice}</p>}
+
+          {/* ── Categories ──────────────────────────────────────────────────────────────────────
+              ⚠ HEADINGS FIRST, because that is the order the budget reads in: a line sits under a
+              category, and the word names the row inside it. A coach hunting for why they cannot
+              rename "Uniforms" finds the answer at the top rather than after scrolling their words. */}
+          <h4 className={styles.formSectionTitle}>Categories</h4>
+          {ourCategories.length === 0 ? (
+            <p className={styles.formHint}>
+              Your team hasn&rsquo;t added a category of its own yet. Add one while building a budget
+              line — it&rsquo;ll show up here to rename, and only your team will see it.
+            </p>
+          ) : (
+            <>
+              <p className={styles.formHint}>
+                These are your team&rsquo;s own headings — no other team sees them. Renaming one
+                changes it <strong>everywhere</strong>, including on everything already filed under it.
+              </p>
+              {ourCategories.map(cat => (
+                <div key={cat.id} className={styles.tagManagerRow}>
+                  {renamingCatId === cat.id ? (
+                    <>
+                      <input
+                        className={`${styles.input} ${styles.tagManagerName}`}
+                        value={renameCatDraft}
+                        maxLength={80}
+                        autoFocus
+                        aria-label="Category name"
+                        onChange={e => setRenameCatDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && renameCatDraft.trim()) patchCategory(cat, renameCatDraft.trim());
+                          if (e.key === 'Escape') setRenamingCatId(null);
+                        }}
+                      />
+                      <div className={styles.tagManagerActions}>
+                        <button
+                          className={styles.btnSecondary}
+                          disabled={busyId === cat.id || !renameCatDraft.trim()}
+                          onClick={() => patchCategory(cat, renameCatDraft.trim())}
+                        >
+                          Save
+                        </button>
+                        <button className={styles.btnGhost} disabled={busyId === cat.id} onClick={() => setRenamingCatId(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className={styles.tagManagerName}>{cat.name}</span>
+                      <div className={styles.tagManagerActions}>
+                        <button
+                          title={`Rename ${cat.name}`}
+                          disabled={!!busyId}
+                          onClick={() => { setError(''); setRenamingCatId(cat.id); setRenameCatDraft(cat.name); }}
+                        >
+                          <Pencil size={14} aria-hidden />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* ⚠ THE SHARED HEADINGS ARE SHOWN, NOT HIDDEN — the same reasoning the read-only word list
+              below rests on. A coach looking for "Uniforms" has to be able to see that it exists and
+              that it is the club's, or this reads as a list missing half its contents and they go
+              hunting for a second screen that does not exist. The chip earns its place for the same
+              reason it does below: this one list MIXES standard and club headings. */}
+          {sharedCategories.length > 0 && (
+            <>
+              <p className={styles.formHint} style={{ marginTop: '0.75rem' }}>
+                <strong>Standard</strong> categories come with FieldLogicHQ and <strong>Club</strong>
+                {' '}categories are the ones your club shares with every team — both are read-only
+                here, and your club can rename its own.
+              </p>
+              {sharedCategories.map(cat => (
+                <div key={cat.id} className={styles.tagManagerRow}>
+                  <span className={`${styles.tagManagerName} ${styles.mutedInline}`}>{cat.name}</span>
+                  {tierChip(cat)}
+                </div>
+              ))}
+            </>
+          )}
+
+          <h4 className={styles.formSectionTitle} style={{ marginTop: '1.25rem' }}>Our items</h4>
 
           {ours.length === 0 ? (
             <p className={styles.formHint}>

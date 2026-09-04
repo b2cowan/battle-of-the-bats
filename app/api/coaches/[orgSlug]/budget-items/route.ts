@@ -8,8 +8,8 @@ import { canViewMoney, canWriteMoney, denyUnless, denyUnlessTeamMoneyWrite } fro
 import {
   budgetItemTier, itemVisibleToTeam, listVisibleBudgetItems, offeredForSport,
   mapBudgetItem as mapItem, parseBudgetItemDirection, BUDGET_ITEM_DIRECTION_REQUIRED,
-  countBudgetItemUsageByItem,
-  type BudgetItemTier, type OwnedBudgetItem,
+  countBudgetItemUsageByItem, categoryVisibleToTeam, listVisibleBudgetCategories,
+  type BudgetItemTier, type OwnedBudgetItem, type OwnedBudgetCategory,
 } from '@/lib/coach-budget-items';
 
 /** Ours first, then the club's, then this team's own — so a coach meets the standard vocabulary
@@ -85,9 +85,21 @@ export const GET = withObservability(async (req: Request,
   const categories: BudgetCategoryWithItems[] = (data ?? [])
     // A whole category can belong to one sport's world; its items are unreachable if it is.
     .filter(row => offeredForSport(row as { sports?: string[] | null }, teamSport))
+    /* ⚠⚠ AND A CATEGORY IS NOW OWNED, SO THE LIST MUST FILTER ON IT (mig 277). Every category in the
+       org used to be everyone's, so this list could hand back the lot; since a coach's new category
+       belongs to their team, an unfiltered list is precisely how one team's private heading would
+       appear in another team's picker — the leak the item tier below has been guarding against since
+       mig 240, one level up and previously impossible.
+       ⚠ FAILS CLOSED WITH NO TEAM NAMED, exactly like the item tier does two filters down: without a
+       team we cannot know which private headings are this caller's, and the safe answer is the
+       shared ones only. */
+    .filter(row => teamId
+      ? categoryVisibleToTeam(row as OwnedBudgetCategory, ctx.org.id, teamId)
+      : !row.team_id)
     .map(row => ({
     id:        row.id as string,
     orgId:     row.org_id as string | null,
+    teamId:    (row.team_id as string | null) ?? null,
     name:      row.name as string,
     scope:     row.scope as 'org' | 'team' | 'both',
     sortOrder: row.sort_order as number,
@@ -146,8 +158,17 @@ export const GET = withObservability(async (req: Request,
 // library and selectable for all coaches") — the item is the NAME of a budget row now, and one
 // team's specifics filling every other team's list was the cost the owner refused (2026-08-15).
 //
-// ⚠ CATEGORIES ARE STILL ORG-WIDE. A category is a heading, not a name: there are a dozen of them,
-// clubs want them shared, and the report's top level would fragment if each team invented its own.
+// ⚠⚠ AND SINCE MIGRATION 277, SO DOES A CATEGORY THE COACH CREATES. This reverses the note that
+// stood here for three weeks — "CATEGORIES ARE STILL ORG-WIDE… clubs want them shared, and the
+// report's top level would fragment if each team invented its own" — which mig 240 wrote when it
+// gave items the three tiers and withheld them from categories. The cost of that half-measure was
+// that a heading a coach invented silently became six other teams', nothing recorded who wrote it,
+// and so NOBODY could safely be given a rename. The fragmentation it feared is answered the way it
+// was answered for items: the club still SEES every team's heading on its own reports (owner ruling
+// Q1, 2026-09-04), it is simply never offered one team's word in another team's picker.
+//
+// A category created here belongs to the team named in `teamId`. Only an Owner or Treasurer creates
+// a CLUB-shared one, from the club's own budget screen.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
@@ -165,19 +186,33 @@ export const POST = withObservability(async (req: Request,
     if (newCategoryName.length > 80) {
       return NextResponse.json({ error: 'Category name must be 80 characters or fewer' }, { status: 400 });
     }
-    // No DB unique constraint exists on category names — enforce case-insensitive
-    // uniqueness here so "Uniforms" can't be created a dozen times.
-    const { data: existing } = await supabaseAdmin
-      .from('budget_categories')
-      .select('id, name')
-      .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
-      .ilike('name', newCategoryName);
-    if ((existing ?? []).some(c => (c.name as string).toLowerCase() === newCategoryName.toLowerCase())) {
+    /* ⚠ A CATEGORY NEEDS ITS TEAM NOW (mig 277), and money-write is checked on THAT team — the same
+       two rules the item branch below has carried since 2026-08-16. The handler's opening gate only
+       asks whether this coach can write money on SOME team they coach; without this, a head coach on
+       team A could add headings to team B's list while holding `money: 'off'` on team B. */
+    const catTeamId: string = typeof body.teamId === 'string' ? body.teamId.trim() : '';
+    const deniedCatTeam = denyUnlessTeamMoneyWrite(assignments, catTeamId);
+    if (deniedCatTeam) return deniedCatTeam;
+
+    /* No DB unique constraint exists on category names — enforce case-insensitive uniqueness here so
+       "Uniforms" can't be created a dozen times.
+       ⚠⚠ AGAINST WHAT THIS TEAM CAN SEE, NOT THE WHOLE ORG (mig 277). Checking every category in the
+       org made sense while every category was every team's. Now that a heading can be private, that
+       check refuses on rows the asking team cannot see: team B types "Provincials Trip", team A
+       invented one last week, and team B is refused a name it has no way to find, open or use — with
+       a message insisting something exists that, as far as that coach can tell, does not. Items hit
+       this exact wall between migrations 240 and 248. A name the coach CAN see is still refused,
+       because the remedy is right there in the list they are standing in: pick it. */
+    const visibleCategories = await listVisibleBudgetCategories(ctx.org.id, catTeamId);
+    if (visibleCategories.some(c => String(c.name).trim().toLowerCase() === newCategoryName.toLowerCase())) {
       return NextResponse.json({ error: 'A category with this name already exists' }, { status: 409 });
     }
     const { data: cat, error: catError } = await supabaseAdmin
       .from('budget_categories')
-      .insert({ org_id: ctx.org.id, name: newCategoryName, scope: 'team', is_default: false })
+      .insert({
+        org_id: ctx.org.id, team_id: catTeamId, name: newCategoryName,
+        scope: 'team', is_default: false,
+      })
       .select('*, budget_items(*)')
       .single();
 
@@ -191,6 +226,7 @@ export const POST = withObservability(async (req: Request,
     const category: BudgetCategoryWithItems = {
       id:        cat.id as string,
       orgId:     cat.org_id as string | null,
+      teamId:    (cat.team_id as string | null) ?? null,
       name:      cat.name as string,
       scope:     cat.scope as 'org' | 'team' | 'both',
       sortOrder: cat.sort_order as number,
@@ -241,16 +277,22 @@ export const POST = withObservability(async (req: Request,
   const deniedTeam = denyUnlessTeamMoneyWrite(assignments, teamId);
   if (deniedTeam) return deniedTeam;
 
-  // Verify category is accessible (platform default or this org's, team/both scope)
+  /* Verify category is accessible (platform default or this org's, team/both scope).
+     ⚠⚠ AND THAT IT IS NOT ANOTHER TEAM'S (mig 277). A heading can belong to one team now, so
+     org-membership alone stopped being the whole question: without the tier check a coach could
+     guess an id and hang their team's item under a category they cannot see — which would then
+     render that item nowhere, on a heading nobody in their team can open, while showing up in the
+     OTHER team's list as a word they never wrote. Same predicate as the list two functions up, which
+     is the point: what a list offers and what a save accepts must be one rule. */
   const { data: cat, error: catErr } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, scope')
+    .select('id, scope, org_id, team_id')
     .eq('id', catId)
     .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
     .in('scope', ['team', 'both'])
     .single();
 
-  if (catErr || !cat) {
+  if (catErr || !cat || !categoryVisibleToTeam(cat as OwnedBudgetCategory, ctx.org.id, teamId)) {
     return NextResponse.json({ error: 'Category not found' }, { status: 404 });
   }
 

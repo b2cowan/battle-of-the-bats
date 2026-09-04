@@ -17276,7 +17276,7 @@ and adding a clause about the drill-in would breach the one-proof-point cap, so 
 and declined rather than missed.
 
 
-## §133 · The Budget Tab Revamp — one grain, remembered splits, a denser plan — BUILT 2026-09-02, awaiting QA
+## §133 · The Budget Tab Revamp — one grain, remembered splits, a denser plan — ✅ PASSED 2026-09-04 (28/28, all eight parts)
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/b5d7ffd3-89ce-4a68-94a0-cb430b6b46fe`
 — checkboxes with device-remembered state, a verdict + notes per part, and a paste-back summary.
@@ -17310,6 +17310,17 @@ chevron's floor stays owed to the pass that settles the grandfathered Dome Time 
 **Open owner calls carried by this walk:** the Q6 rename policy (three options, recommendation:
 refuse while another team's lines use the category), and — optional — a scratch team to walk the
 "Bring last season's plan" door end to end.
+
+**✅ WALKED AND PASSED 2026-09-04 — 28/28 steps, all eight parts, zero defects.** Owner's own
+tally: A 3/3 · B 4/4 · C 4/4 · D 5/5 · E 3/3 · F 4/4 · G 3/3 · H 2/2.
+⚠ **The walk was run against the working tree as it stood that day, which carried three further
+changes in flight from another session** (the undated column renamed and moved to lead, BvA's year
+band, the Budget tab's month window). Those are **not** part of the commit this pass record ships
+in, and as of 2026-09-04 their session has ended with the work uncommitted and unclaimed — so read
+part (A)'s green against the screen described here, not as evidence that any of the three landed.
+**Q6, the category-rename policy, was RULED the same day: org/club-admin-only** — and then grew
+into its own plan and build (shared vs. local categories, migration 277,
+`COACH_BUDGET_CATEGORY_OWNERSHIP_PLAN.md`), which carries its own walk.
 
 ## §134 · List · Room · Question, Phase A — the Club tab as a list, the bill's room, the request's one window — ✅ PASSED 2026-09-03 (33/33, all five parts, zero defects in the built thing; six rulings taken ON the walk and built the same day) · ⚠ Part C is now VACUOUS
 

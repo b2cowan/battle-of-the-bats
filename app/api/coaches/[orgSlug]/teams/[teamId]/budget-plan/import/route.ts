@@ -11,7 +11,10 @@ import { tournamentToday } from '@/lib/timezone';
 import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
 import { isFundingKind } from '@/lib/coach-budget-totals';
-import { itemVisibleToTeam, type OwnedBudgetItem } from '@/lib/coach-budget-items';
+import {
+  itemVisibleToTeam, categoryVisibleToTeam,
+  type OwnedBudgetItem, type OwnedBudgetCategory,
+} from '@/lib/coach-budget-items';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue,
   MAX_IMPORT_ROWS,
@@ -132,13 +135,19 @@ export const POST = withObservability(async (req: Request,
   // The taxonomy this org may link to: platform defaults + its own custom entries.
   const { data: categoryRows } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, name, budget_items(id, name, org_id, team_id)')
+    .select('id, name, org_id, team_id, budget_items(id, name, org_id, team_id)')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     // Team-visible categories only â the same filter the coach's own picker applies, so an
     // imported sheet can never link a team budget to an org-admin-only category.
     .in('scope', ['team', 'both']);
 
   const categories: KnownCategory[] = (categoryRows ?? [])
+    /* ⚠⚠ AND THIS TEAM'S VISIBLE CATEGORIES ONLY (mig 277) — the same rule the items below have
+       carried since mig 240, now that the heading has an owner too. Without it an imported sheet
+       could name another team's private heading in free text, match it, and file this team's whole
+       plan under a category its own picker will never show it. An import matches on WORDS, which is
+       exactly why it needs the ownership filter the picker applies: a name is guessable. */
+    .filter(c => categoryVisibleToTeam(c as OwnedBudgetCategory, ctx!.org.id, team.id))
     .map((c: Record<string, unknown>) => ({
       id: c.id as string,
       name: c.name as string,

@@ -71,8 +71,18 @@ export default function OrgBudgetPage() {
   const [fetching, setFetching] = useState(true);
   const [error, setError]   = useState('');
 
-  // BudgetItemPicker data
+  // BudgetItemPicker data — planning-eligible only (standard + club-shared)
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
+
+  /* The Categories panel reads EVERY tier, including each team's own (mig 277, owner ruling Q1) —
+     the club sees what its teams plan under, and renames only its own. */
+  const [allCategories, setAllCategories] = useState<BudgetCategoryWithItems[]>([]);
+  const [categoryUsage, setCategoryUsage] =
+    useState<Record<string, { teamCount: number; usedByClub: boolean }>>({});
+  const [renameCatId,  setRenameCatId]  = useState<string | null>(null);
+  const [renameValue,  setRenameValue]  = useState('');
+  const [renameSaving, setRenameSaving] = useState(false);
+  const [renameError,  setRenameError]  = useState('');
 
   // Add-line form state
   const [addOpen,       setAddOpen]       = useState(false);
@@ -120,17 +130,34 @@ export default function OrgBudgetPage() {
     }
   }, [orgSlug]);
 
+  /* ⚠ `forPlanning=1` KEEPS A TEAM'S OWN HEADING OUT OF THE CLUB'S PICKER (mig 277). This list feeds
+     the Add Line form, and the club's own plan may only be filed under standard and club-shared
+     categories — the same rule the write path enforces. The panel below asks the same endpoint
+     WITHOUT that flag, because seeing every team's heading is exactly its job. */
   const loadCategories = useCallback(async () => {
-    const catQs = orgSlug ? `scope=org&orgSlug=${encodeURIComponent(orgSlug)}` : 'scope=org';
+    const catQs = orgSlug
+      ? `scope=org&forPlanning=1&orgSlug=${encodeURIComponent(orgSlug)}`
+      : 'scope=org&forPlanning=1';
     const res  = await fetch(`/api/admin/accounting/budget-categories?${catQs}`);
     const data = await res.json();
     if (res.ok) setCategories(data.categories ?? []);
+  }, [orgSlug]);
+
+  const loadAllCategories = useCallback(async () => {
+    const qs = orgSlug ? `usage=1&orgSlug=${encodeURIComponent(orgSlug)}` : 'usage=1';
+    const res  = await fetch(`/api/admin/accounting/budget-categories?${qs}`);
+    const data = await res.json();
+    if (res.ok) {
+      setAllCategories(data.categories ?? []);
+      setCategoryUsage(data.usage ?? {});
+    }
   }, [orgSlug]);
 
   useEffect(() => {
     if (currentOrg) {
       load(year);
       loadCategories();
+      loadAllCategories();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrg]);
@@ -294,6 +321,57 @@ export default function OrgBudgetPage() {
     } finally {
       setDeletingId(null);
     }
+  }
+
+  // ── Rename a shared category ──────────────────────────────────────────────
+
+  function startRename(cat: BudgetCategoryWithItems) {
+    setRenameCatId(cat.id);
+    setRenameValue(cat.name);
+    setRenameError('');
+  }
+
+  async function handleSaveRename() {
+    if (!renameCatId) return;
+    const name = renameValue.trim();
+    if (!name) { setRenameError('A name is required.'); return; }
+
+    setRenameSaving(true);
+    setRenameError('');
+    try {
+      const res = await fetch(
+        `/api/admin/accounting/budget-categories/${renameCatId}${orgQuery}`,
+        {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ name }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to rename');
+      setRenameCatId(null);
+      /* Both lists carry this heading, and the plan below prints it too — a rename that reached one
+         of the three would leave the same category reading two different names on one screen. */
+      await Promise.all([loadAllCategories(), loadCategories(), load(year)]);
+    } catch (e: any) {
+      setRenameError(e.message ?? 'Failed to rename.');
+    } finally {
+      setRenameSaving(false);
+    }
+  }
+
+  /** What a rename would reach — the sentence that sizes the one action on the row. */
+  function usageLine(cat: BudgetCategoryWithItems): string {
+    if (cat.teamId) return cat.teamName ?? 'One of your teams';
+    const use = categoryUsage[cat.id];
+    if (!use) return cat.orgId ? 'Every team can plan under this' : 'Standard across every club';
+    const parts: string[] = [];
+    if (use.teamCount > 0) parts.push(`${use.teamCount} team${use.teamCount === 1 ? '' : 's'}`);
+    if (use.usedByClub) parts.push('your club’s own budget');
+    if (!parts.length) {
+      return cat.orgId ? 'Nobody is planning under it yet' : 'Standard across every club';
+    }
+    return `Used by ${parts.join(' and ')}`;
   }
 
   // ── Period draft helpers ──────────────────────────────────────────────────
@@ -841,6 +919,112 @@ export default function OrgBudgetPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ── Categories ────────────────────────────────────────────────────────────────────────
+          ⚠ THE ONLY PLACE A CATEGORY CAN BE RENAMED (mig 277, owner ruling Q4 2026-09-04). It sits
+          here because this is where the club's money vocabulary is already managed, and because the
+          budget grid above only names a category the CLUB has filed a dollar under this year — a
+          heading six teams plan under can be absent from that grid entirely, which is precisely the
+          one that most needs fixing.
+          ⚠ ALL THREE TIERS, one list, grouped: what the club owns, what ships with the product, and
+          what its teams wrote. Only the middle group is unreachable by anybody; only the first is
+          this club's to reword. */}
+      {allCategories.length > 0 && (
+        <div className={styles.categoryPanel}>
+          <div className={styles.categoryPanelHead}>
+            <div>
+              <h2 className={styles.categoryPanelTitle}>Categories</h2>
+              <p className={styles.categoryPanelSub}>
+                The headings every budget in the club sits under — yours and your teams&rsquo;.
+              </p>
+            </div>
+          </div>
+
+          {([
+            {
+              key:   'club',
+              label: 'Your club’s — every team uses these',
+              rows:  allCategories.filter(c => c.orgId && !c.teamId),
+            },
+            {
+              key:   'platform',
+              label: 'Comes with the product',
+              rows:  allCategories.filter(c => !c.orgId),
+            },
+            {
+              key:   'team',
+              label: 'Teams’ own — visible to you, renamed by them',
+              rows:  allCategories.filter(c => c.teamId),
+            },
+          ] as const).filter(group => group.rows.length > 0).map(group => (
+            <div key={group.key}>
+              <div className={styles.categoryGroupLabel}>{group.label}</div>
+              {group.rows.map(cat => {
+                const isRenaming = renameCatId === cat.id;
+                const canRename  = canWrite && !!cat.orgId && !cat.teamId;
+                return (
+                  <div key={cat.id}>
+                    <div className={styles.categoryRow}>
+                      {isRenaming ? (
+                        <input
+                          className={styles.input}
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          maxLength={80}
+                          aria-label="Category name"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className={styles.categoryRowName}>
+                          {cat.name}
+                          <span className={styles.categoryRowUse}>{usageLine(cat)}</span>
+                        </div>
+                      )}
+
+                      {!isRenaming && (
+                        <span className={cat.teamId
+                          ? styles.categoryTagTeam
+                          : cat.orgId ? styles.categoryTagShared : styles.categoryTagFixed}>
+                          {cat.teamId ? 'Team’s own' : cat.orgId ? 'Shared' : 'Fixed'}
+                        </span>
+                      )}
+
+                      {isRenaming ? (
+                        <div className={styles.actionsCell}>
+                          <button
+                            type="button" className={styles.btnIcon} title="Save"
+                            onClick={handleSaveRename} disabled={renameSaving}
+                          >
+                            <Check size={15} />
+                          </button>
+                          <button
+                            type="button" className={styles.btnIcon} title="Cancel"
+                            onClick={() => setRenameCatId(null)}
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ) : canRename ? (
+                        <button
+                          type="button"
+                          className={styles.btnIcon}
+                          onClick={() => startRename(cat)}
+                          title={`Rename ${cat.name}`}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      ) : null}
+                    </div>
+                    {isRenaming && renameError && (
+                      <p className={styles.errorText} style={{ padding: '0 0 0.6rem' }}>{renameError}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       )}
 
       {/* ⚠ THE CLUB'S ONLY WINDOW ONTO ITS TEAMS' OWN BUDGET VOCABULARY (mig 240). A coach's item

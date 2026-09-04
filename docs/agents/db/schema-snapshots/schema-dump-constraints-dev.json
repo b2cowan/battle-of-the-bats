@@ -430,6 +430,16 @@
     "update_rule": null
   },
   {
+    "table_name": "budget_categories",
+    "constraint_name": "budget_categories_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "budget_items",
     "constraint_name": "budget_items_category_id_fkey",
     "constraint_type": "FOREIGN KEY",

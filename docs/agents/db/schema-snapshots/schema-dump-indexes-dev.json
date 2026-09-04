@@ -245,6 +245,11 @@
     "indexdef": "CREATE UNIQUE INDEX budget_categories_pkey ON public.budget_categories USING btree (id)"
   },
   {
+    "tablename": "budget_categories",
+    "indexname": "budget_categories_team_idx",
+    "indexdef": "CREATE INDEX budget_categories_team_idx ON public.budget_categories USING btree (team_id) WHERE (team_id IS NOT NULL)"
+  },
+  {
     "tablename": "budget_items",
     "indexname": "budget_items_category_idx",
     "indexdef": "CREATE INDEX budget_items_category_idx ON public.budget_items USING btree (category_id)"

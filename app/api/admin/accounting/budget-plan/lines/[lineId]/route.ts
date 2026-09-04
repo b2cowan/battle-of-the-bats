@@ -4,7 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { resolveOrgBudgetItem } from '@/lib/coach-budget-items';
+import { resolveOrgBudgetItem, resolveOrgBudgetCategory } from '@/lib/coach-budget-items';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -72,7 +72,12 @@ export const PATCH = withObservability(async (req: Request, { params }: Ctx) => 
   if (linked.item) {
     patch.category_id = linked.item.categoryId;
   } else if ('categoryId' in body) {
-    patch.category_id = body.categoryId ?? null;
+    /* ⚠ A BARE CATEGORY IS AUTHORISED TOO, SINCE MIGRATION 277 — the same check the POST beside this
+       one gained, for the same reason: with no item to derive from, this id was going to the
+       database unread, and a category can now belong to one team. */
+    const linkedCategory = await resolveOrgBudgetCategory(body.categoryId, ctx!.org.id);
+    if (!linkedCategory.ok) return NextResponse.json({ error: linkedCategory.error }, { status: 400 });
+    patch.category_id = linkedCategory.categoryId;
   }
   if ('notes'      in body) patch.notes        = body.notes      ?? null;
   if ('sortOrder'  in body) patch.sort_order   = body.sortOrder  ?? 0;

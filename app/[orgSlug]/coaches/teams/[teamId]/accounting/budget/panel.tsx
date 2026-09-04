@@ -551,7 +551,7 @@ export function BudgetPlanPanel({
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
-  /** "Manage our items" — the one door to a team's own vocabulary (mig 246). See `addLineButton`. */
+  /** "Manage our words" — the one door to a team's own vocabulary (mig 246). See `addLineButton`. */
   const [itemManagerOpen, setItemManagerOpen] = useState(false);
 
   // The optional ESTIMATED TOTAL — what the coach thinks the season costs before it is all
@@ -1473,7 +1473,7 @@ export function BudgetPlanPanel({
   const allLines = useMemo(() => plan?.lines ?? [], [plan]);
   const groups   = useMemo(() => groupLines(allLines), [allLines]);
   /** How many of the words in this team's picker the team itself created — the gate on the
-   *  "Manage our items" door, since the modal can only ever change those.
+   *  "Manage our words" door, since the modal can only ever change those.
    *  ⚠ UP HERE WITH THE OTHER MEMOS, ABOVE THE EARLY RETURNS. It is memoised for the same reason
    *  they are — the line-edit form's state lives in this component, so an un-memoised version
    *  re-scans every category on every keystroke — and a hook below `if (ctxLoading) return` would
@@ -1579,7 +1579,7 @@ export function BudgetPlanPanel({
           onClick={() => setItemManagerOpen(true)}
           title="Rename one of your team's own items, or move it to the other side"
         >
-          <Settings2 size={15} aria-hidden /> Manage our items
+          <Settings2 size={15} aria-hidden /> Manage our words
         </button>
       )}
     </>
@@ -2360,7 +2360,7 @@ export function BudgetPlanPanel({
                    literal: the whole-tree guard, and the reason a fourth kind reaches this for
                    free. */
                 direction={isFundingKind(form.lineKind) ? 'in' : 'out'}
-                manageHint="Rename or remove it later from Manage our items — but it stays on this side."
+                manageHint="Rename or remove it later from Manage our words — but it stays on this side."
               />
               <p className={styles.kindHint}>
                 These name this line everywhere. Anything else worth saying goes in Notes.

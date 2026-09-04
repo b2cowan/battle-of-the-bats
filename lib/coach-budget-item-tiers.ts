@@ -46,7 +46,7 @@ export function budgetItemTier(item: OwnedBudgetItem): BudgetItemTier {
  *
  * ⚠ "Our own", not "This team" (owner mockup 484b5971, 2026-08-17). Every surface showing this is a
  * coach looking at their OWN team's list, where "This team" reads like a column header on a club
- * report. It also matches the door it is reached through — *Manage our items*.
+ * report. It also matches the door it is reached through — *Manage our words*.
  *
  * ⚠⚠ THESE CHIPS ARE WHAT PAY FOR PUBLISHING NO LONGER DELETING. Since the item-integrity ruling a
  * club's *Grant* and a team's own *Grant* are two legitimate rows rather than something to merge
@@ -94,3 +94,31 @@ export function itemOfferedToClub(item: OwnedBudgetItem, orgId: string): boolean
   if (item.org_id !== orgId) return false;       // another club's, at any tier
   return !item.team_id;                          // the club's own, never a team's
 }
+
+/* ─── CATEGORIES READ THE SAME THREE RULES (mig 277) ──────────────────────────────────────────
+ *
+ * ⚠⚠ THESE ARE ALIASES, NOT COPIES — assignment, not re-implementation, so there is still exactly
+ * ONE definition of each rule and no way for the two levels to drift apart. Migration 277 gave
+ * `budget_categories` the same two ownership columns `budget_items` got in 240, which means the
+ * predicates above already answer the category question correctly; writing them out again for
+ * categories would be the fourth-copy mistake this whole module exists to prevent (read its header).
+ *
+ * ⚠ THEY ARE ALIASED RATHER THAN CALLED DIRECTLY because `itemVisibleToTeam(category, …)` reads
+ * like a bug at the call site — the reader has to stop and work out whether somebody passed the
+ * wrong row. A name that matches the thing being asked about costs one line here and saves that
+ * stumble at every call site.
+ *
+ * The rules themselves, restated for categories because the consequences differ one level up:
+ *   • platform   — a standard heading. Everyone sees it, nobody renames it.
+ *   • club-shared — every team plans under it and the club's own budget files against it, so a
+ *                   rename reaches every team at once: Owner/Treasurer only.
+ *   • team's own — one team's heading. Only that team is offered it, that team renames it, and the
+ *                  club READS it on cross-team reports without ever editing or filing against it
+ *                  (owner rulings Q1 + Q3, 2026-09-04).
+ */
+export const budgetCategoryTier   = budgetItemTier;
+export const categoryVisibleToTeam = itemVisibleToTeam;
+export const categoryOfferedToClub = itemOfferedToClub;
+
+/** A category row carries the same ownership columns an item does — same shape, honest name. */
+export type OwnedBudgetCategory = OwnedBudgetItem;

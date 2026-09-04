@@ -2,14 +2,14 @@
 
 **Generated:** 2026-09-04 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 3 divergence(s)** across dev/prod.
+**⚠️ 6 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 1 | 0 | 0 |
-| Indexes | 0 | 0 | 0 |
-| Constraints | 0 | 0 | — |
+| Columns | 2 | 0 | 0 |
+| Indexes | 1 | 0 | 0 |
+| Constraints | 1 | 0 | — |
 | RLS / CHECK | 1 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -20,7 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (1)
+### Only in DEV (2)
+- `budget_categories.team_id`
 - `rep_budget_lines.split_mode`
 
 ### Only in PROD (0)
@@ -30,8 +31,8 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `budget_categories_team_idx`
 
 ### Only in PROD (0)
 _none_
@@ -40,8 +41,8 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `budget_categories.budget_categories_team_id_fkey`
 
 ### Only in PROD (0)
 _none_

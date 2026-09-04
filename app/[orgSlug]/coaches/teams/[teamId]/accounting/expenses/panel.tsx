@@ -5623,7 +5623,7 @@ function MoneyRecordsPanel({
           createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
           createItemMode="coach"
           allowCreateCategory
-          manageHint="Rename or remove it later from Budget Plan → Manage our items — but it stays on this side."
+          manageHint="Rename or remove it later from Budget Plan → Manage our words — but it stays on this side."
           /* The bills group (C2). What is still owing rides each row — it is the fact that makes
              one worth choosing, and the reason a coach recognises their bill in a list of words. */
           /* The bills group (C2), built once above — a fresh object here would be a new identity

@@ -18,6 +18,11 @@ function mapCategory(row: Record<string, unknown>, orgId: string): BudgetCategor
   return {
     id:         row.id as string,
     orgId:      row.org_id as string | null,
+    /* ⚠ WHOSE HEADING THIS IS (mig 277) — the club's list is the one surface that shows every tier
+       at once, so it is the one that must say. `teamName` is filled by the GET below from the join;
+       a coach-facing read leaves it absent, where the answer is always "ours". */
+    teamId:     (row.team_id as string | null) ?? null,
+    teamName:   ((row.rep_teams as { name?: string } | null)?.name) ?? null,
     name:       row.name as string,
     scope:      row.scope as 'org' | 'team' | 'both',
     sortOrder:  row.sort_order as number,
@@ -62,7 +67,7 @@ export const GET = withObservability(async (req: Request) => {
   // Fetch platform defaults (org_id IS NULL) and org customs
   const query = supabaseAdmin
     .from('budget_categories')
-    .select('*, budget_items(*)')
+    .select('*, budget_items(*), rep_teams ( name )')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     .order('sort_order');
 
@@ -76,6 +81,54 @@ export const GET = withObservability(async (req: Request) => {
     categories = categories.filter(c => c.scope === 'org' || c.scope === 'both');
   } else if (scope === 'team') {
     categories = categories.filter(c => c.scope === 'team' || c.scope === 'both');
+  }
+
+  /* ⚠⚠ THE CLUB SEES EVERY TIER HERE, AND THAT IS THE RULING (owner Q1, 2026-09-04) — a team's own
+     heading stays visible to the club on its own reports, it is simply never the club's to edit or
+     to file its own budget against. Two different questions get two different answers, and only one
+     of them is this list:
+       • "what may the CLUB plan under?"  → `categoryOfferedToClub`, enforced on the write paths
+         (`resolveOrgBudgetCategory`) and by `?forPlanning=1` below for the picker that feeds them.
+       • "what exists in this club at all?" → this list, unfiltered, which is what the category
+         panel and the club's cross-team reporting read.
+     Answering the second with the first is what would make a team's heading vanish from the club's
+     own report; answering the first with the second is what would let the club file its plan under
+     a word it cannot rename. Both mistakes have been made one level down, on items. */
+  if (url.searchParams.get('forPlanning') === '1') {
+    categories = categories.filter(c => !c.teamId);
+  }
+
+  /* ⚠ `usage=1` IS FOR THE CATEGORY PANEL ALONE, and it is opt-in for exactly the reason the coach
+     route's own `usage=1` is: this endpoint also feeds the item picker on every club budget form,
+     and none of those need to know who plans under a heading. Two small indexed reads (mig 249 put
+     the reverse indexes on both category columns) are cheap once on a manage screen and wasteful on
+     every form mount.
+     ⚠⚠ WHAT IT ANSWERS IS "WHAT DOES RENAMING THIS REACH?", NOT "how many lines are there". The
+     2026-09-04 ruling removed the `N lines` caption from every row in the product — the test being
+     whether the reader gets the fact by opening the thing anyway. These rows do not open, a club has
+     no other way to learn which teams plan under a heading, and the figure sizes the one action on
+     the row. That is the same ground the two counts which SURVIVED that ruling stand on. */
+  if (url.searchParams.get('usage') === '1') {
+    const [{ data: teamLines }, { data: orgLines }] = await Promise.all([
+      supabaseAdmin.from('rep_budget_lines')
+        .select('category_id, team_id').eq('org_id', ctx!.org.id).not('category_id', 'is', null),
+      supabaseAdmin.from('org_budget_lines')
+        .select('category_id').eq('org_id', ctx!.org.id).not('category_id', 'is', null),
+    ]);
+
+    const teamsByCategory = new Map<string, Set<string>>();
+    for (const row of (teamLines ?? []) as Array<Record<string, unknown>>) {
+      const catId = row.category_id as string;
+      if (!teamsByCategory.has(catId)) teamsByCategory.set(catId, new Set());
+      teamsByCategory.get(catId)!.add(row.team_id as string);
+    }
+    const orgUsed = new Set((orgLines ?? []).map(r => r.category_id as string));
+
+    const usage = Object.fromEntries(categories.map(c => [c.id, {
+      teamCount: teamsByCategory.get(c.id)?.size ?? 0,
+      usedByClub: orgUsed.has(c.id),
+    }]));
+    return NextResponse.json({ categories, usage });
   }
 
   return NextResponse.json({ categories });
@@ -102,6 +155,9 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'scope must be org, team, or both' }, { status: 400 });
   }
 
+  /* ⚠ NO `team_id`, WHICH IS THE POINT (mig 277): a category the club creates is CLUB-SHARED by
+     construction — every team plans under it, and an Owner or Treasurer renames it. Only the coach
+     route sets an owning team, and only ever to a team that coach can write money for. */
   const { data, error } = await supabaseAdmin
     .from('budget_categories')
     .insert({ org_id: ctx!.org.id, name, scope, is_default: false })

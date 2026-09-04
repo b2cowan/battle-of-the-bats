@@ -1586,6 +1586,15 @@
         "column_default": null
       },
       {
+        "table_name": "budget_categories",
+        "pos": 9,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "budget_items",
         "pos": 1,
         "column_name": "id",
@@ -18357,6 +18366,13 @@
         "constraint_name": "budget_categories_org_id_fkey"
       },
       {
+        "table_name": "budget_categories",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "budget_categories_team_id_fkey"
+      },
+      {
         "table_name": "budget_items",
         "column_name": "category_id",
         "foreign_table": "budget_categories",
@@ -21955,6 +21971,11 @@
         "tablename": "budget_categories",
         "indexname": "budget_categories_pkey",
         "indexdef": "CREATE UNIQUE INDEX budget_categories_pkey ON public.budget_categories USING btree (id)"
+      },
+      {
+        "tablename": "budget_categories",
+        "indexname": "budget_categories_team_idx",
+        "indexdef": "CREATE INDEX budget_categories_team_idx ON public.budget_categories USING btree (team_id) WHERE (team_id IS NOT NULL)"
       },
       {
         "tablename": "budget_items",
