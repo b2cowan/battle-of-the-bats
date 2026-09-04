@@ -1322,7 +1322,12 @@ export function BudgetPlanPanel({
       return;
     }
 
-    // Same rule as collectProblems: funding lines save the description alone.
+    /* ⚠ THE COMMENT HERE SAID "same rule as collectProblems: funding lines save the description
+       alone" — and had been false since mig 243, which made an item REQUIRED in both directions
+       (see collectProblems above: no kind is exempt). What survives is narrower and real: a
+       money-in line keeps whatever the coach typed and does NOT fall back to the item's name,
+       because "Fundraising drive" is a worse row label than "Chocolate sale". A cost line does
+       fall back, because there its item IS the row's name. */
     const description = isFundingKind(form.lineKind)
       ? form.description.trim()
       : form.description.trim() || form.itemName.trim();

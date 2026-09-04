@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-04T01:33:51.940Z",
+  "generated": "2026-09-04T14:44:13.046Z",
   "entries": {
     "coach-dues|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
@@ -285,7 +285,7 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-payables|768|tap-floor|button·Add a commitment": {
+    "coach-payables|768|tap-floor|button·Add a bill": {
       "reason": null,
       "detail": "31px tall (floor 44)"
     },
@@ -317,7 +317,7 @@
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-payables-schedule|768|tap-floor|button·Add a commitment": {
+    "coach-payables-schedule|768|tap-floor|button·Add a bill": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "31px tall (floor 44)"
     },
@@ -2517,18 +2517,6 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-dues-settlement|361|tap-floor|button·Enabled": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-dues-settlement|390|tap-floor|button·Enabled": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-dues-settlement|768|tap-floor|button·Enabled": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
     "coach-dues-settlement|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
@@ -2536,10 +2524,6 @@
     "coach-dues-settlement|768|tap-floor|button·Help: Money": {
       "reason": null,
       "detail": "34px tall (floor 44)"
-    },
-    "coach-dues-settlement|768|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
     },
     "coach-dues-settlement|768|tap-floor|button·Send due reminders": {
       "reason": null,
@@ -3000,66 +2984,6 @@
     "coach-lineups|768|tap-floor|button·Templates": {
       "reason": null,
       "detail": "36px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|a·Notification settings": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Activity": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·All": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Needs attention": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Unread": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|a·Notification settings": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Activity": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·All": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Needs attention": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Unread": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-notifications|768|tap-floor|a·Notification settings": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-notifications|768|tap-floor|button·Activity": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|768|tap-floor|button·All": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|768|tap-floor|button·Needs attention": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|768|tap-floor|button·Unread": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
     },
     "coach-overview|361|tap-floor|button·Skip this step": {
       "reason": null,
@@ -3812,6 +3736,50 @@
     "coach-dues-behind|768|tap-floor|button·Send due reminders": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
       "detail": "33px tall (floor 44)"
+    },
+    "coach-commitment|361|tap-floor|input·<input>": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-commitment|361|tap-floor|a·Player Dues": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-commitment|390|tap-floor|input·<input>": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-commitment|390|tap-floor|a·Player Dues": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|input·<input>": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|a·Player Dues": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Export": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-commitment|768|tap-floor|button·Add a bill": {
+      "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-commitment|768|content-overflow|td·2 days overdue · partly paid": {
+      "reason": "DEFERRED, not accepted — and PRE-EXISTING: measured on coach-payables BEFORE any Phase C code was written (2026-09-04, the same 60px spill). It is the bills table's STATUS cell at the tablet width, holding the longest phrase the status vocabulary produces (\"2 days overdue · partly paid\") in a five-column table. ⚠ IT IS CALENDAR-SENSITIVE — the label carries a day count, so this key rots on its own and a later run may report a differently-worded twin rather than a fix. Its home is the Ledger table's own width pass, not this phase: Phase C widened nothing in that row (the trailing column gained a chevron) and the spill is unchanged at 60px.",
+      "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-payables|768|content-overflow|td·2 days overdue · partly paid": {
+      "reason": "DEFERRED, not accepted — and PRE-EXISTING: measured on coach-payables BEFORE any Phase C code was written (2026-09-04, the same 60px spill). It is the bills table's STATUS cell at the tablet width, holding the longest phrase the status vocabulary produces (\"2 days overdue · partly paid\") in a five-column table. ⚠ IT IS CALENDAR-SENSITIVE — the label carries a day count, so this key rots on its own and a later run may report a differently-worded twin rather than a fix. Its home is the Ledger table's own width pass, not this phase: Phase C widened nothing in that row (the trailing column gained a chevron) and the spill is unchanged at 60px.",
+      "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-payables-schedule|768|content-overflow|td·2 days overdue · partly paid": {
+      "reason": "DEFERRED, not accepted — and PRE-EXISTING: measured on coach-payables BEFORE any Phase C code was written (2026-09-04, the same 60px spill). It is the bills table's STATUS cell at the tablet width, holding the longest phrase the status vocabulary produces (\"2 days overdue · partly paid\") in a five-column table. ⚠ IT IS CALENDAR-SENSITIVE — the label carries a day count, so this key rots on its own and a later run may report a differently-worded twin rather than a fix. Its home is the Ledger table's own width pass, not this phase: Phase C widened nothing in that row (the trailing column gained a chevron) and the spill is unchanged at 60px.",
+      "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
     }
   }
 }
