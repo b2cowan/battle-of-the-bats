@@ -14,16 +14,22 @@ import {
 } from '@/lib/export';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { isNeverPaidPlayer, duesStatusLabel, hasPastDueInstallment } from '@/lib/dues-status';
+import { isNeverPaidPlayer, duesStatusLabel, pastDueInstallments } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
+import CollectionSchedule from './CollectionSchedule';
+import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { installmentToSend } from '@/lib/dues-installment-view';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
+/** Not per-team: a coach who shuts this shelf has said how they like to READ a dues list, and
+ *  re-shutting it on every team would make that preference feel like it had not been taken. */
+const SCHEDULE_FOLD_KEY = 'flhq-dues-schedule-fold';
+
 /* The shared installment-row skeleton (QA §123 Phase F1) — the generator's own layout, worn here
    through the `.duesScheduleEditor` SCOPED VARIANT. The shared classes also dress the budget
    sheet and the bill editor; the variant is what keeps this surface's choices off theirs. */
@@ -500,6 +506,25 @@ export function PlayerDuesPanel({
   const wantsInstallments = seasonSearchParams.get('duesView') === 'installments';
   function setDuesView(next: 'totals' | 'installments') {
     setUrlParam('duesView', next === 'installments' ? 'installments' : null);
+  }
+
+  /**
+   * THE COLLECTION SCHEDULE'S FOLD IS A DEVICE PREFERENCE, NOT A URL PARAM (owner ruling
+   * 2026-09-03, D5b) — open by default, remembered per device. The lens and the settlement sheet
+   * ride the URL because a coach SHARES those ("here is the by-installment view", "here is what we
+   * owe everyone"); nobody shares a shelf's fold. Hydrated in an effect rather than read during
+   * render, because localStorage does not exist on the server and a first paint that disagreed
+   * with the markup is a hydration error.
+   */
+  const [scheduleOpen, setScheduleOpen] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SCHEDULE_FOLD_KEY) === 'shut') setScheduleOpen(false);
+    } catch { /* private-mode browsers throw — keep the default. */ }
+  }, []);
+  function toggleSchedule(next: boolean) {
+    setScheduleOpen(next);
+    try { localStorage.setItem(SCHEDULE_FOLD_KEY, next ? 'open' : 'shut'); } catch { /* ignore */ }
   }
 
   /** The settlement sheet's open state rides the URL for the same reason the view lens does: a
@@ -1477,30 +1502,88 @@ export function PlayerDuesPanel({
     let collected = 0;
     let outstanding = 0;
     let overduePlayers = 0;
-    let nextDue: string | null = null;
+    /* ⚠ THE MONEY BEHIND THE COUNT, summed in THIS loop rather than a second walk (2026-09-03).
+       The band states past-due money as its figure and the family count as its caption; deriving
+       the amount anywhere else would be the fifth hand-copied dues sum this file's own credits
+       note warns about. */
+    let pastDue = 0;
     for (const p of players) {
       if (p.schedule) assessed += p.schedule.totalAmount;
       collected += p.paidAmount;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
-      // ⚠ THE SHARED PREDICATE, not a second loop. This footer's count and the Status column's
-      // "Past due" are answers to the same question, and a table that gives two different ones is
-      // a table nobody trusts. (It WAS two: the footer counted late players while the status
-      // column could not see time at all.)
-      if (hasPastDueInstallment(p.installments)) overduePlayers += 1;
-      for (const inst of p.installments) {
-        if (inst.paidAt) continue;
-        // A bill with nothing left to SEND is not late for anyone — credits settled it, and
-        // paid_at deliberately never stamps on credit-covered rows (Paid stays cash).
-        if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) <= 0.005) continue;
-        if (isInstallmentOverdue(inst.dueDate, inst.paidAt)) continue;
-        // "Next due" is the soonest date still AHEAD — an overdue date is not a plan, it's a debt,
-        // and it is already reported on its own line.
-        if (inst.dueDate && (!nextDue || inst.dueDate < nextDue)) nextDue = inst.dueDate;
+      /* ⚠⚠ ONE PREDICATE DECIDES BOTH THE COUNT AND THE MONEY, and that is the whole reason
+         `pastDueInstallments` is a shared list rather than a boolean. The band prints "$X past due"
+         over "N families"; derived apart, those two are one hand-rolled loop away from disagreeing,
+         which is the exact defect the predicate was extracted to end (the footer once counted late
+         players while the Status column could not see time at all). A bill with nothing left to
+         SEND is not late for anyone — credits settle bills, and `paid_at` deliberately never stamps
+         on a credit-covered row — and the predicate is where that rule lives.
+
+         ⚰ `nextDue` was summed in this same loop and is gone (2026-09-03). It fed the retired
+         footer's "Next due" cell as a bare season-wide date, detached from WHAT is owed on it. The
+         Collection schedule's shut line answers it better and cannot drift from it, because it
+         names the instalment, its date, what is in and how many families are left — all out of the
+         one `buildInstallmentColumns` derivation. */
+      const late = pastDueInstallments(p.installments);
+      if (late.length > 0) overduePlayers += 1;
+      for (const inst of late) {
+        pastDue += installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id));
       }
     }
-    return { assessed, credits, collected, outstanding, overduePlayers, nextDue };
+    return { assessed, credits, collected, outstanding, overduePlayers, pastDue };
   })();
-  // ⚠ NOTHING SET YET MEANS NO FOOTER, not a row of $0.00. On a roster whose dues haven't been
+  /**
+   * THE DUES BAND (owner ruling 2026-09-03, D4) — the tab's summary, on BOTH views, in the one
+   * recipe every Money tab now uses (components/coaches/MoneySummaryBand.tsx).
+   *
+   * ⚠⚠ FOUR FIGURES OUT OF FIVE, AND THE ONE THAT WENT IS CREDITS. The retired table foot printed
+   * Assessed · Credits · Collected · Balance owing · Next due, because a footer can afford a cell
+   * under every column; a band cannot, and the standard caps it at four. Credits lost the seat: it
+   * is the least actionable of the five (nobody chases a credit) and it is the only one a coach can
+   * derive by looking — so it moved INTO Collected's caption, where it also stops reading as cash.
+   * "Next due" moved to the Collection schedule's shut line, which states it with its instalment.
+   *
+   * ⚠ PAST DUE IS THE FOURTH TILE AND IT HIDES AT ZERO — the standard's self-hiding rule (recipe
+   * deviation 2). A season where nobody is behind should not print a $0.00 under a red word; the
+   * band re-fits to three and the absence IS the good news. It is also why the count that used to
+   * ride the footer's "N overdue" note is now this tile's caption: the money and the headcount are
+   * one fact, and they were two lines apart.
+   */
+  const duesTiles: MoneyTile[] = [
+    {
+      key: 'assessed',
+      label: 'Assessed',
+      figure: fmt(seasonTotals.assessed),
+      caption: `${players.length} player${players.length === 1 ? '' : 's'}`,
+    },
+    {
+      key: 'collected',
+      label: 'Collected',
+      figure: fmt(seasonTotals.collected),
+      // Credits are NOT added into the figure — collected is a cash word on every Money tab, and
+      // this caption is where the tab says what fundraising did without pretending it was cash.
+      caption: seasonTotals.credits > 0.005 ? `+ ${fmt(seasonTotals.credits)} from credits` : undefined,
+    },
+    {
+      key: 'owing',
+      label: 'Balance owing',
+      figure: fmt(seasonTotals.outstanding),
+      // ⚠ The verdict, not the sum: amber only while money is actually outstanding.
+      tone: seasonTotals.outstanding > 0.005 ? 'warn' : 'plain',
+    },
+    {
+      key: 'pastdue',
+      label: 'Past due',
+      figure: fmt(seasonTotals.pastDue),
+      tone: 'danger',
+      caption: seasonTotals.overduePlayers > 0
+        ? `${seasonTotals.overduePlayers} famil${seasonTotals.overduePlayers === 1 ? 'y' : 'ies'}`
+        : undefined,
+      hidden: seasonTotals.pastDue <= 0.005,
+    },
+  ];
+
+  // ⚠ NOTHING SET YET MEANS NO BAND, not a row of $0.00. On a roster whose dues haven't been
   // built, every figure here is zero and a totals row would total nothing — the same reason the
   // overdue line hides itself when nobody is behind (owner ruling 2026-08-13).
   // Asks whether a SCHEDULE exists, not whether `assessed > 0`: a real schedule totalling zero is
@@ -1695,6 +1778,20 @@ export function PlayerDuesPanel({
             </div>
           )}
 
+          {/* ── The tab's summary, above everything the lens can change ──────────────────────
+              ⚠ ABOVE THE TOOLBAR, AND THAT IS THE POINT (owner ruling 2026-09-03). Both of these
+              answer questions about the SEASON, which is the same season under either lens — so
+              they sit before the view switch rather than inside a view, and a coach who toggles
+              Season totals ⇄ By installment watches only the table beneath them change. The
+              figures previously lived in two different table feet, one per lens, which is how the
+              two lenses came to summarise the same list with different words. */}
+          {showSeasonTotals && (
+            <>
+              <MoneySummaryBand tiles={duesTiles} ariaLabel="Player dues summary" />
+              <CollectionSchedule players={players} open={scheduleOpen} onToggle={toggleSchedule} />
+            </>
+          )}
+
           {/* The dues list's own toolbar — the bulk actions sit with the list they act on. */}
           {duesToolbar}
 
@@ -1775,80 +1872,22 @@ export function PlayerDuesPanel({
                 })}
               </tbody>
 
-              {/* Season totals, each under the column it totals (owner ruling 2026-08-13, chosen
-                  from a four-option mockup — artifact `c19d8500`). This replaces the reference rail
-                  that stood to the right of this table; the trade the owner accepted is that these
-                  now scroll with the roster, on the grounds that a dues list runs 12–20 rows.
+              {/* ⚰ THE SEASON TOTALS FOOTER IS RETIRED (owner ruling 2026-09-03, D4). Its five
+                  figures now open the tab as a MoneySummaryBand above the toolbar — visible under
+                  either lens, and above the fold rather than below a 12–20 row roster.
 
-                  Read-only, as the rail was — no send button beside a total, because that invites
-                  nudging people you haven't looked at. (The chase card that used to carry one was
-                  deleted 2026-09-03; the never-paid nudge lives in a player's own panel now.)
+                  Two facts from its headstone, both still load-bearing:
 
-                  ⚠ `data-label` on every cell is what makes this work at 640, where the table
-                  becomes cards and this row becomes the last card in the list. */}
-              {showSeasonTotals && (
-                <tfoot className={styles.tableFoot}>
-                  <tr>
-                    {/* `footLeadCell` keeps this caption visible in card mode — the cell is named
-                        rather than reached for by position, matching `cardActionCell` at the other
-                        end of the row. */}
-                    <td className={`${styles.td} ${styles.footLeadCell}`}>
-                      <span className={styles.footLabel}>Season</span>
-                    </td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Assessed">
-                      <span className={styles.footLabel}>Assessed</span>
-                      <span className={styles.footValue}>{fmt(seasonTotals.assessed)}</span>
-                    </td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits">
-                      <span className={styles.footLabel}>Credits</span>
-                      <span className={styles.footValue}>
-                        {seasonTotals.credits > 0.005 ? fmt(-seasonTotals.credits) : '—'}
-                      </span>
-                    </td>
-                    {/* The Paid column totals to COLLECTED; the Balance column totals under its
-                        OWN name. This cell used to say "Outstanding" — but it sums positive
-                        ROLLING balances (credits subtracted), and "Outstanding" is the credits-
-                        EXCLUDED figure the digest and Ask quote. Same word, two numbers, drifting
-                        by exactly the credited amount (inventory row 2, fixed Pass 2). */}
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Collected">
-                      <span className={styles.footLabel}>Collected</span>
-                      <span className={styles.footValue}>{fmt(seasonTotals.collected)}</span>
-                    </td>
-                    <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance owing">
-                      <span className={styles.footLabel}>Balance owing</span>
-                      <span className={styles.footValue} data-warn={seasonTotals.outstanding > 0.005 ? 'true' : undefined}>
-                        {fmt(seasonTotals.outstanding)}
-                      </span>
-                    </td>
-                    {/* Next due, plus the overdue headcount when there is one. Overdue has no
-                        column of its own to sit under, and the Status column is where the per-row
-                        version of exactly this fact lives. Absent when nobody is behind — a zero
-                        here would read as a score (the 2026-08-03 ruling, carried over intact). */}
-                    {/* ⚠ `cardStackCell` ONLY WHEN THE SECOND LINE EXISTS. At ≤640 a card cell is a
-                        single-row flex (label ::before | value, space-between), so a cell carrying
-                        BOTH a value and the overdue note would print all three on one line instead
-                        of the note sitting under the figure. `cardStackCell` is this file's own
-                        answer for a cell too big for one label/value line — applied conditionally
-                        because with no overdue note this cell is exactly one line and should read
-                        like its five siblings. */}
-                    <td
-                      className={`${styles.td}${seasonTotals.overduePlayers > 0 ? ` ${styles.cardStackCell}` : ''}`}
-                      data-label="Next due"
-                    >
-                      <span className={styles.footLabel}>Next due</span>
-                      <span className={styles.footValue} style={{ fontSize: '0.82rem' }}>
-                        {seasonTotals.nextDue ? fmtDate(seasonTotals.nextDue) : '—'}
-                      </span>
-                      {seasonTotals.overduePlayers > 0 && (
-                        <span className={styles.footNote} data-warn="true">
-                          {seasonTotals.overduePlayers} overdue
-                        </span>
-                      )}
-                    </td>
-                    <td className={styles.td}></td>
-                  </tr>
-                </tfoot>
-              )}
+                  ⚠ "Balance owing" IS NOT "Outstanding". This cell summed positive ROLLING balances
+                  (credits subtracted); "Outstanding" is the credits-EXCLUDED figure the digest and
+                  Ask the Front Office quote. One word, two numbers, drifting by exactly the credited
+                  amount — the naming is what closed inventory row 2, and the band keeps it.
+
+                  ⚠ Its `data-label` on every cell was what made it survive at 640, where this table
+                  becomes cards and the totals row became the last card in the list. The band needs
+                  no such trick: it is not a table row, so it cannot be re-captioned wrongly. That is
+                  also why the settlement sheet's footer BELOW is untouched — that table really does
+                  become a card stack, and `.tableAsCards` has to re-caption it. */}
             </table>
           </div>
           )}

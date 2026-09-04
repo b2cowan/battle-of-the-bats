@@ -75,9 +75,21 @@ Weight 900 → 700, tabular numerals on, `.04em` → `.07em` labels, the green/p
 ink, and the two blank captions gain the sentence each figure needs ("after family credits",
 "lowers their dues"). "Raised — fundraisers" → "Raised — drives" (the word the rest of the tab uses).
 
-### D4 — Player Dues: the band arrives, **both table footers retire**
-Band on BOTH views: `Assessed` · `Collected` (caption "N% of assessed") · `Balance owing` (caption
-"after $X credits") · `Past due` (danger, caption "N families behind").
+### D4 — Player Dues: the band arrives, **both table footers retire** — BUILT 2026-09-03
+Band on BOTH views: `Assessed` (caption "N players") · `Collected` (caption "+ $X from credits") ·
+`Balance owing` (no caption) · `Past due` (danger, caption "N families", **hidden at zero**).
+
+⚠ **THE CAPTIONS ARE NOT THE ONES THIS PLAN FIRST WROTE, and the changes are decisions.** The plan
+proposed "N% of assessed" under Collected and "after $X credits" under Balance owing:
+- **Credits moved to Collected, not Balance owing.** Balance owing sums positive ROLLING balances —
+  it is *not* `assessed − collected − credits` (a family in credit does not offset a family who
+  owes), so "after $X credits" would have read as an arithmetic claim the figure does not make. The
+  fixture proves the gap: $11,308.30 − $2,225.00 − $2,859.63 = $6,223.67, while Balance owing is
+  $7,389.32. Under Collected the same number is exactly true and also says the thing the tab needs
+  said — that credits are not cash.
+- **"N% of assessed" was dropped.** It is derivable from the two figures either side of it, and the
+  recipe's caption rule is "the qualifier the figure cannot carry itself".
+- **Assessed gained "N players"**, which nothing else on the band says.
 ⚠⚠ **The footers RETIRE — the figures move, they do not double.** This is what makes the change
 legal against the 2026-08-14 ruling ("a number printed twice on one screen only invites the question
 of why the two might disagree"). It knowingly revises the 2026-08-13 ruling that put season totals
@@ -93,7 +105,13 @@ either table — so it moves into the header beside the band, on both.
 - **Two-tone bar** — solid `--success` for CASH IN, a lighter `--credit` band for COVERED BY CREDITS.
   ⚠ This fixes a live defect: today the figure counts cash and the meter counts cash + credits, so a
   term covered by fundraising renders "$0.00 of $970.80" beside a half-full bar.
-- Past-due segments take danger ink; the next-due segment is ringed.
+- Late segments are marked with a ⚠ glyph and a danger-tinted instalment number.
+  ⚠ **This plan first said "past-due segments take danger ink" and that was wrong** (corrected at
+  build, 2026-09-03): the bar's fill is money that ARRIVED, and inking it red colours the good news
+  by the verdict of the bar around it. What is late is the EMPTY part. The glyph + tinted number is
+  also the pairing the deutan rule requires — never colour alone.
+- The focused segment (the one the shut summary names) takes primary ink on its number rather than a
+  ring: a ring is a second shape competing with the ⚠, and the summary line already names it in words.
 - A **Due next** line beneath: "Installment 4 · Oct 4 — $97.08 of $970.80 in, 9 families to go".
 - Legend renders ONLY when credits actually exist.
 - Phone: segments keep bars + numbers, drop per-term dates; the Due-next line does the work.
@@ -122,9 +140,32 @@ sessions editing the same regions.
    so these land together.
 2. **P2 — Club + Budget Plan.** Both files are currently clean.
 3. **P3 — Fundraising.** BLOCKED on the peer session.
-4. **P4 — Player Dues.** BLOCKED. Band both views + footers retire + timeline shelf + two-tone bar +
-   pinned columns. The biggest phase; build it whole.
+4. **P4 — Player Dues.** ✅ BUILT 2026-09-03. Band both views + both footers retired + the timeline
+   shelf (`dues/CollectionSchedule.tsx`, new) + two-tone bar + `Due next`/`Balance` moved into the
+   pinned zone. Also in the phase, because the work surfaced them:
+   - `coach-dues-installments` added to `scripts/layout-screens.mjs` — **the By-installment lens had
+     never been swept**, so every check on this tab was measuring one of its two bodies.
+   - `.footLabel` retired (its last caller was the season footer) and `daysUntil()` deleted from
+     `lib/dues-installment-view.ts` (its only caller was the retired band's caption).
+   - Past-due money and the family count now come from the ONE `pastDueInstallments` predicate, so
+     the band's figure and its caption cannot disagree.
 5. **P5 — the guard** (D6), plus unit coverage for the band's own rules.
+
+### P4's pin: the offsets are MEASURED, and the first attempt was wrong
+
+⚠⚠ Worth reading before touching `.duesMatrixPin`. Three columns pin above 1024. `position: sticky`
+measures `left` from the SCROLLER's edge, so column 2's offset must equal column 1's RENDERED width.
+The first build declared those widths in CSS and reused the same custom properties as the offsets —
+which reads as airtight and is not: `width` on a table cell is a *suggestion* to auto table layout.
+Measured in a browser at 1024, an 11rem/9rem/6.5rem declaration rendered **129/120/120px**, leaving
+47px and 24px windows *between* pinned columns with the scrolled instalment cells visible through
+them. `table-layout: fixed` would make the widths authoritative and also make the table exactly its
+container's width — which removes the overflow the pin exists for. So the browser picks the widths
+and `InstallmentBreakdown` reads them back into `--dues-pin-1`/`--dues-pin-2`; the CSS is gated on
+the `data-pin-ready` that write sets, and degrades to a Player-only pin until then.
+
+⚠ The pin is **≥1024 only**, and that is a measurement rather than a taste: the trio runs ~24rem, and
+on the 641px tablet band — where this grid overflows soonest — that pins ~70% of the scroller.
 
 ## §4 Verification
 

@@ -209,7 +209,7 @@ describe('duesStatusLabel — is this family BEHIND? (the question every label n
   });
 });
 
-describe('hasPastDueInstallment — the ONE predicate the status word and the footer count share', () => {
+describe('hasPastDueInstallment — the ONE predicate the status word and the past-due band share', () => {
   it('is false for an empty or missing list', () => {
     assert.equal(hasPastDueInstallment([]), false);
     assert.equal(hasPastDueInstallment(null), false);

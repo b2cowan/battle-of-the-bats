@@ -561,6 +561,20 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              the off-season books moment lands a prospect one tab from the revamped plan — and
              the `ea8ddd14` cap (a hook plus ONE proof point per step) says no clause is added
              for it. If the owner wants the plan's one-grain story narrated, swap a clause. */
+      /* ⚠ RE-READ FOR THE MONEY BANNER STANDARD (2026-09-03 — every Money tab's summary rebuilt as
+         one shared band; on Player Dues both table footers retired and the Collection schedule
+         became a foldable timeline in the header), per CLAUDE.md's two questions:
+           · *Still true?* Yes, and the reason is worth keeping: the two sentences in this narration
+             that mention dues — "Seven in ten dollars of dues are in" here, and the off-season dock
+             line's "dues two payments in — and one family behind" — describe the seeded WORLD, not
+             the screen's furniture. No dock line or tour step names the dues totals row, its column
+             headings, or where the Collection schedule sits, and no tour step stops on Player Dues
+             at all. Moving those figures from a table foot to a header band stales nothing.
+           · *Should a moment show it?* The seeded world renders the new shape by itself — a
+             prospect who opens Player Dues from step 4's hub now meets the band and the timeline
+             with no sentence over them — and the `ea8ddd14` cap (a hook plus ONE proof point per
+             step) says no clause is added. If the owner wants the "one answer at the top of every
+             money screen" story narrated, the honest move is to SWAP a clause, not append one. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

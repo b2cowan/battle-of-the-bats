@@ -2,12 +2,16 @@
 /**
  * Player Dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14).
  *
- * Three pieces, all rendered from the SAME players array the totals view already holds — this
+ * ⚠ THE COLLECTION SCHEDULE BAND THAT USED TO OPEN THIS FILE IS GONE (owner ruling 2026-09-03,
+ * D5). It described the season's collection, which is equally true under the Season-totals lens —
+ * so it moved up to the panel header as a foldable TIMELINE that renders on both views
+ * (./CollectionSchedule.tsx). The same move took the season figures to a MoneySummaryBand; between
+ * them they are why this file's own table foot went too.
+ *
+ * Two pieces, both rendered from the SAME players array the totals view already holds — this
  * file fetches nothing and computes no money of its own (the arithmetic lives in
  * lib/dues-installment-view.ts, unit-tested):
  *
- *   • the Collection schedule band — one term per installment, in the Budget tab's plan-card
- *     visual language;
  *   • the player × installment grid (desktop / tablet);
  *   • collapsible per-player cards (phone) — closed, each answers the question coaches most
  *     often come here with: what does this family owe RIGHT NOW (past due + next installment),
@@ -17,7 +21,7 @@
  * figure must equal the remainder the reminder emails chase. The season Balance column beside
  * it is where credits show, exactly as in the totals view.
  */
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { ChevronRight, AlertTriangle, CheckCircle2, CircleDashed } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import { fmt } from '@/lib/coach-money-summary';
@@ -26,7 +30,6 @@ import { isInstallmentOverdue } from '@/lib/dues-status';
 import {
   buildInstallmentColumns,
   dueNextForPlayer,
-  daysUntil,
   installmentToSend,
   type InstallmentColumn,
   type DueNextSummary,
@@ -90,35 +93,12 @@ function dueNextCaption(d: DueNextSummary): { text: string; tone: 'warn' | 'dim'
   return { text: d.nextDueDate ? `due ${fmtShort(d.nextDueDate)}` : 'nothing scheduled', tone: 'dim' };
 }
 
-/** The one line under each band term. Warn only when someone is actually behind — a future
- *  installment nobody has paid yet is a plan, not a problem (the chase-card ruling, 2026-08-03). */
-function columnNote(col: InstallmentColumn, today: string): { text: string; tone: 'good' | 'warn' | 'dim' } {
-  if (col.assessed > 0.005 && col.remaining <= 0.005) {
-    // "Covered" when fundraising did part of the work — collected stays a cash word.
-    return {
-      text: col.creditApplied > 0.005
-        ? `Fully covered — ${col.paidCount} of ${col.playerCount} paid, rest by fundraising`
-        : `Fully collected — ${col.paidCount} of ${col.playerCount} paid`,
-      tone: 'good',
-    };
-  }
-  if (col.behindCount > 0) {
-    return {
-      text: `${fmt(col.remaining)} still to collect · ${col.behindCount} behind`,
-      tone: 'warn',
-    };
-  }
-  const parts: string[] = [];
-  if (col.paidCount > 0) parts.push(`${col.paidCount} of ${col.playerCount} paid early`);
-  if (col.commonDueDate && col.commonDueDate >= today) {
-    const days = daysUntil(col.commonDueDate, today);
-    parts.push(days === 0 ? 'due today' : days === 1 ? 'due tomorrow' : `due in ${days} days`);
-  } else if (col.remaining > 0.005) {
-    parts.push(`${fmt(col.remaining)} still to collect`);
-  }
-  if (col.dueDateVaries) parts.push('dates vary');
-  return { text: parts.join(' · ') || '—', tone: 'dim' };
-}
+/* ⚰ `columnNote()` went with the band it captioned (2026-09-03). It wrote one sentence per
+   instalment — "Fully collected — 5 of 7 paid", "$970.80 still to collect · 3 behind" — and on the
+   owner's ten-instalment schedule that was ten sentences before the table began. The timeline says
+   the same thing with a bar's fill and one shut summary line. Its one rule survives in the new
+   shelf: warn ONLY when someone is actually behind, because an unpaid future instalment is a plan,
+   not a problem (the chase-card ruling, 2026-08-03). */
 
 export default function InstallmentBreakdown({
   players,
@@ -134,6 +114,48 @@ export default function InstallmentBreakdown({
    *  phone-only (`.duesPhoneLens`). */
   desktopActive?: boolean;
 }) {
+  /**
+   * THE PIN'S OFFSETS ARE MEASURED, NOT DECLARED — and this is the second attempt, because the
+   * first one was wrong in a way only a browser could show.
+   *
+   * Three columns pin above 1024 (Player · Due next · Balance). `position: sticky` measures `left`
+   * from the SCROLLER's edge, so the second column's offset must equal the first's RENDERED width
+   * and the third's the sum of the first two. The first cut declared those widths in CSS and reused
+   * the same custom properties for the offsets — which reads as airtight and is not: `width` on a
+   * table cell is a SUGGESTION to auto table layout, not a rule. Measured live, an 11rem/9rem/6.5rem
+   * declaration rendered 129/120/120px, so each pinned column sat short of the offset holding the
+   * next one and the scrolled instalment cells showed through a 47px and a 24px window BETWEEN two
+   * pinned columns. `table-layout: fixed` would make the widths authoritative but also makes the
+   * table exactly its container's width, which removes the overflow the pin exists for.
+   *
+   * So the browser picks the widths and we read them back. Until that read happens the table carries
+   * no `data-pin-ready`, and the stylesheet pins only Player — the behaviour this grid had before,
+   * which is the right thing to degrade to.
+   */
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  useEffect(() => {
+    const table = tableRef.current;
+    if (!table) return;
+    const measure = () => {
+      const head = table.querySelector('thead tr');
+      const cells = head ? [...head.children] : [];
+      if (cells.length < 3) return;
+      const w1 = (cells[0] as HTMLElement).getBoundingClientRect().width;
+      const w2 = (cells[1] as HTMLElement).getBoundingClientRect().width;
+      // Sub-pixel column widths are ordinary; rounding down would re-open a hairline gap, so the
+      // offsets keep their fractions and the browser composites them.
+      table.style.setProperty('--dues-pin-1', `${w1}px`);
+      table.style.setProperty('--dues-pin-2', `${w2}px`);
+      table.dataset.pinReady = 'true';
+    };
+    measure();
+    // Column widths move with the viewport, with the roster, and with a name long enough to widen
+    // the Player column — all three would silently un-true a one-shot measurement.
+    const ro = new ResizeObserver(measure);
+    ro.observe(table);
+    return () => ro.disconnect();
+  });
+
   const today = tournamentToday();
   const columns = useMemo(
     () => buildInstallmentColumns(players, today),
@@ -145,9 +167,12 @@ export default function InstallmentBreakdown({
     return m;
   }, [players, today]);
 
-  // The same positive-rolling-balance sum the totals footer labels "Balance owing".
-  const balanceOwing = players.reduce((s, p) => s + (p.rollingBalance > 0.005 ? p.rollingBalance : 0), 0);
-  const toCollectNow = players.reduce((s, p) => s + (dueNextById.get(p.player.id)?.amount ?? 0), 0);
+  /* ⚰ `balanceOwing` and `toCollectNow` went with this grid's table foot (2026-09-03). Balance
+     owing is now the panel band's own tile, summed there from the same positive rolling balances —
+     one derivation for both lenses instead of one per lens, which is the whole point of moving the
+     summary above the view switch. "To collect now" had no seat in a four-tile band and no second
+     home: the Collection schedule's shut line answers the same question against the instalment a
+     coach can actually act on, rather than as a season aggregate nobody sends. */
 
   /**
    * ONE CELL OF THE GRID — a mark, and a figure only when money is owed (owner ruling 2026-08-14).
@@ -280,43 +305,6 @@ export default function InstallmentBreakdown({
 
   return (
     <div className={desktopActive ? undefined : styles.duesPhoneLens}>
-      {/* ── Collection schedule band — the Budget plan card's language, one term per installment ── */}
-      <div className={styles.duesBand}>
-        <div className={styles.duesBandCap}>Collection schedule</div>
-        <div className={styles.duesBandRow}>
-          {columns.map(col => {
-            const note = columnNote(col, today);
-            // Progress = how much of the term no longer needs to arrive (cash collected +
-            // credits applied) — a term fully covered by fundraising reads 100%, not stuck
-            // where the cash stopped.
-            const pct = col.assessed > 0 ? Math.min(100, Math.round(((col.assessed - col.remaining) / col.assessed) * 100)) : 0;
-            return (
-              <div key={col.installmentNumber} className={styles.duesTerm}>
-                <span className={styles.duesTermKey}>
-                  Installment {col.installmentNumber}
-                  <span className={styles.duesTermDue}>
-                    {' '}· {col.dueDateVaries ? 'dates vary' : col.commonDueDate ? `due ${fmtShort(col.commonDueDate)}` : ''}
-                  </span>
-                </span>
-                <span className={styles.duesTermVal}>
-                  {col.remaining > 0.005
-                    ? <>{fmt(col.collected)} <span className={styles.duesTermOf}>of {fmt(col.assessed)}</span></>
-                    : fmt(col.assessed)}
-                </span>
-                <span className={styles.duesTermNote} data-tone={note.tone}>
-                  {note.tone === 'warn' && <AlertTriangle size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 3 }} />}
-                  {note.tone === 'good' && <CheckCircle2 size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 3 }} />}
-                  {note.text}
-                </span>
-                <span className={styles.duesMeter} aria-hidden>
-                  <span className={styles.duesMeterFill} data-tone={note.tone === 'warn' ? 'warn' : undefined} style={{ width: `${pct}%` }} />
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Desktop / tablet: the player × installment grid ───────────────────────────────────
           Wrapped in CoachScrollX so the "too many installments" question answers itself: while
           the columns fit, nothing changes; the moment they genuinely overflow (the scroller
@@ -327,13 +315,21 @@ export default function InstallmentBreakdown({
         sticky
         hint="Swipe to see later installments"
         className={styles.duesMatrixWrap}
-        scrollerClassName={styles.duesMatrixScroller}
+        scrollerClassName={`${styles.duesMatrixScroller} ${styles.duesMatrixPin}`}
       >
-        <table className={styles.table}>
+        <table className={styles.table} ref={tableRef}>
           <thead>
             <tr>
+              {/* ⚠⚠ DUE NEXT AND BALANCE LEAD THE GRID NOW (owner ruling 2026-09-03, D5). They used
+                  to close it, past every instalment column — so on a schedule long enough to scroll,
+                  the two figures a coach came for were the two the swipe took away first, while
+                  eight cells of ticks stayed. Leading, they are what the pin holds (`.duesMatrixPin`,
+                  ≥1024) and the last thing to leave at any width. The instalments read left to right
+                  after them, which is also the order a season happens in. */}
               <th className={styles.th}>Player</th>
-              {/* ⚠ THE HEADING NOW CARRIES THE AMOUNT. It is the same for the whole team in every
+              <th className={`${styles.th} ${styles.thNum}`}>Due next</th>
+              <th className={`${styles.th} ${styles.thNum}`}>Balance</th>
+              {/* ⚠ THE HEADING CARRIES THE AMOUNT. It is the same for the whole team in every
                   ordinary schedule, so the grid states it once here instead of 28 times in the
                   cells — and a player whose own instalment differs still prints their own figure
                   in-cell, exactly as their own date does. */}
@@ -348,8 +344,6 @@ export default function InstallmentBreakdown({
                   </span>
                 </th>
               ))}
-              <th className={`${styles.th} ${styles.thNum}`}>Due next</th>
-              <th className={`${styles.th} ${styles.thNum}`}>Balance</th>
               <th className={styles.th}></th>
             </tr>
           </thead>
@@ -364,6 +358,16 @@ export default function InstallmentBreakdown({
                   onClick={() => onOpenPlayer(p.player.id)}
                 >
                   <td className={styles.td}>{playerName(p)}</td>
+                  <td className={`${styles.td} ${styles.tdNum}`}>
+                    <span className={styles.duesCellAmt} style={{ color: due.valueColor, fontWeight: 700 }}>{due.value}</span>
+                    <span className={styles.duesCellSt} data-tone={due.tone === 'warn' ? 'over' : due.tone === 'good' ? 'paid' : 'up'}>
+                      {due.tone === 'warn' && <AlertTriangle size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 2 }} />}
+                      {due.caption}
+                    </span>
+                  </td>
+                  <td className={`${styles.td} ${styles.tdNum}`} style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
+                    {p.schedule ? fmt(p.rollingBalance) : '—'}
+                  </td>
                   {/* One line, not two: the mark, then a figure ONLY where money is still owed.
                       A player with no schedule at all keeps an em dash — a blank cell and a
                       "nothing due yet" cell are different facts. */}
@@ -379,16 +383,6 @@ export default function InstallmentBreakdown({
                       </td>
                     );
                   })}
-                  <td className={`${styles.td} ${styles.tdNum}`}>
-                    <span className={styles.duesCellAmt} style={{ color: due.valueColor, fontWeight: 700 }}>{due.value}</span>
-                    <span className={styles.duesCellSt} data-tone={due.tone === 'warn' ? 'over' : due.tone === 'good' ? 'paid' : 'up'}>
-                      {due.tone === 'warn' && <AlertTriangle size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 2 }} />}
-                      {due.caption}
-                    </span>
-                  </td>
-                  <td className={`${styles.td} ${styles.tdNum}`} style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
-                    {p.schedule ? fmt(p.rollingBalance) : '—'}
-                  </td>
                   <td className={styles.td}>
                     <ChevronRight size={14} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
                   </td>
@@ -396,36 +390,21 @@ export default function InstallmentBreakdown({
               );
             })}
           </tbody>
-          {/* ⚠ THE PER-INSTALMENT TOTALS ARE DELETED, NOT RESTYLED (owner ruling 2026-08-14).
-              The Collection schedule band a few inches above already states each instalment's
-              collected-of-assessed WITH a progress meter and a sentence — this footer was the same
-              four figures in a weaker form, under four cells all labelled "COLLECTED". A number
-              printed twice on one screen only invites the question of why the two might disagree.
+          {/* ⚰ THIS GRID'S TABLE FOOT IS RETIRED (owner ruling 2026-09-03, D4) — the season figures
+              open the tab as a MoneySummaryBand above the view switch, so both lenses summarise the
+              list with the same four words instead of one row each.
 
-              ⚠ AND THE LABELS GO WITH THEM. "To collect now" is simply the total of the `Due next`
-              column and "Balance owing" the total of `Balance` — the headings above already name
-              both, and a totals row on the footer line reads as a total without being told. Only
-              the word "Season" survives, because that IS the thing the columns do not say.
+              It was already half a headstone, and both halves still hold:
 
-              ⚠ Safe to strip here in a way it would NOT be on the settlement table below: this
-              grid is `display: none` under 640 and the phone gets `.duesCards` instead, so it
-              never becomes the label-less card stack that `.tableAsCards` has to re-caption. */}
-          <tfoot className={styles.tableFoot}>
-            <tr>
-              <td className={`${styles.td} ${styles.footLeadCell}`}>
-                <span className={styles.footValue}>Season</span>
-                <span className={styles.footNote}>{players.length} player{players.length !== 1 ? 's' : ''}</span>
-              </td>
-              <td className={styles.td} colSpan={columns.length}></td>
-              <td className={`${styles.td} ${styles.tdNum}`}>
-                <span className={styles.footValue} data-warn={toCollectNow > 0.005 ? 'true' : undefined}>{fmt(toCollectNow)}</span>
-              </td>
-              <td className={`${styles.td} ${styles.tdNum}`}>
-                <span className={styles.footValue} data-warn={balanceOwing > 0.005 ? 'true' : undefined}>{fmt(balanceOwing)}</span>
-              </td>
-              <td className={styles.td}></td>
-            </tr>
-          </tfoot>
+              ⚠ THE PER-INSTALMENT TOTALS WERE DELETED FIRST (2026-08-14) because the Collection
+              schedule stated each instalment's collected-of-assessed a few inches above, and a
+              number printed twice on one screen only invites the question of why the two might
+              disagree. That schedule is now the header's timeline — same argument, further up.
+
+              ⚠ AND THE LABELS WENT WITH THEM: "To collect now" was simply the total of `Due next`
+              and "Balance owing" the total of `Balance`, both named by the headings above. Balance
+              owing kept a home in the band; to-collect-now did not, deliberately (see the sums'
+              own headstone near the top of this component). */}
         </table>
       </CoachScrollX>
       {legend}

@@ -220,9 +220,8 @@ export function dueNextForPlayer(
   };
 }
 
-/** Calendar days from `today` to `date` (both YYYY-MM-DD, same timezone frame). Negative = past. */
-export function daysUntil(date: string, today: string): number {
-  const [y1, m1, d1] = today.split('-').map(Number);
-  const [y2, m2, d2] = date.split('-').map(Number);
-  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
-}
+/* ⚰ `daysUntil()` LIVED HERE and is deleted (2026-09-03). Its one caller wrote the Collection
+   schedule band's "due in 12 days" caption, and the band was replaced by a timeline that prints the
+   date itself. Nothing is orphaned: `lib/marketing-schedule.ts` and `lib/tournament-phase-display.ts`
+   each keep their own, both with callers and tests, so a future need has two homes to pick from
+   rather than one unused export sitting in the dues module pretending to be shared. */

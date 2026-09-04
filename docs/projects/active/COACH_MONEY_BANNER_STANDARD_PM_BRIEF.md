@@ -55,14 +55,19 @@ that tab; nothing new is derived, no gate moves, no migration.
   that five tabs opening alike beats per-table alignment.
 - **Fundraising loses some colour.** Its green and purple figures become ordinary ink, because under
   the recipe colour marks a verdict, not a total.
-- **Sequencing:** Fundraising and Player Dues are held until a concurrent refactor of those two files
-  lands. Budget vs. Actual, Club and Budget Plan go first.
+- **Sequencing:** Budget vs. Actual, Club and Budget Plan went first; **Player Dues followed on
+  2026-09-03** once its file was released. **Fundraising is still held** — a concurrent §135 QA walk
+  owns that panel, and two sessions editing one region cannot be rescued by careful staging.
 
 ## Success criteria
 
 1. All five tabs draw their summary through one shared component; the check fails a sixth way.
 2. Budget vs. Actual's banner is ≤12 words with every figure preserved.
-3. Player Dues shows its four figures once, at the top, on both views.
+3. Player Dues shows its figures once, at the top, on both views. **Four tiles when money is past
+   due, three when none is** — the Past due tile hides itself rather than printing a red $0.00.
 4. A 10-instalment header is ≤180px open and ≤115px shut, and legible at 361px.
+   **Measured 2026-09-03 on a real 10-instalment schedule: 46px shut at every width; 119px open at
+   361/390 and 141px at 768/1440.** The eyebrow and the per-segment dates drop below 640, the shut
+   summary sentence survives at 361, and the toggle is 44px tall at every width.
 5. A credits-covered instalment reads honestly — bar and figure agree.
 6. Owner QA passes across five tabs, desktop and phone.

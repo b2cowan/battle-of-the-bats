@@ -17331,3 +17331,90 @@ predates the money-tab consolidation — it shows *Fundraisers · Expenses & Pay
 Payments* where the live screen reads *Fundraising · Ledger · Club*, writes "Send Due Reminders" in
 title case, and has no **+ Record** button. Nothing automated can catch that: the checks prove a
 picture EXISTS, never that it still matches the product.
+
+---
+
+## §137 · One answer at the top of Player Dues — the summary band, both footers retired, the Collection schedule as a foldable timeline — BUILT 2026-09-03, awaiting QA
+
+**Owner decisions (rev 3, 2026-09-03):** D1 one band, 3–4 tiles, every money tab · **D4** band on
+BOTH dues views, footers retire · **D5** the Collection schedule as a timeline in the header on both
+views, foldable, two-tone bar, `Due next`/`Balance` pinned · **D5b** open by default, remembered per
+device. Plan: `docs/projects/active/COACH_MONEY_BANNER_STANDARD_PLAN.md` (P4).
+
+**⚠⚠ THIS CLOSES THE GAP §136 DELIBERATELY LEFT OPEN, which is the first thing to check.** §136
+records that the deleted chase band was the only unconditional carrier of the team's next-due date
+and overdue count, and that afterwards those facts lived only in the Season-totals footer — inside
+`{!installmentView && …}` **and** behind `.duesDesktopOnly`, so unreadable on a phone or on the
+By-installment lens at any width. §136 ruled that this standard, not a replacement band, decides
+what the screen states. It states them, on both views, at every width: **Past due** is a band tile
+(money + family count) and **which instalment is next, its date, what is in and how many families
+are left** is the Collection schedule's shut line.
+
+**What a coach sees now.** Player Dues opens with four figures — **Assessed** (*N players*),
+**Collected** (*+ $X from credits*), **Balance owing**, **Past due** (*N families*) — above the view
+switch, so they read identically under Season totals and By installment. **Past due hides itself
+when nothing is late**; the band re-fits to three rather than printing $0.00 under a red word.
+Beneath it, **Collection schedule** draws one bar per instalment, solid for cash and lighter for
+what fundraising covered.
+
+**What went away.** BOTH table footers — the Season-totals `<tfoot>` (Assessed · Credits · Collected
+· Balance owing · Next due) and the By-installment grid's (Season · To collect now · Balance owing)
+— and the old Collection schedule BAND, which was one detailed cell per instalment inside the
+By-installment view. On the owner's ten-instalment screenshot that band wrapped to two rows,
+~330px of header before the table began, repeating one sentence ten times.
+
+**Three deviations from the plan, all deliberate — argue with any of them on the walk:**
+1. **Credits caption moved to Collected, not Balance owing.** The plan said Balance owing should read
+   "after $X credits". It must not: Balance owing sums positive ROLLING balances, so it is *not*
+   `assessed − collected − credits` (a family in credit does not offset a family who owes). On the
+   test team the two differ by $1,165.65. Under Collected the same number is exactly true and says
+   the thing that actually needs saying — credits are not cash.
+2. **A late segment's bar stays green.** The plan said past-due segments take danger ink. The fill is
+   money that ARRIVED; inking it red colours the good news by the verdict of the bar around it.
+   Lateness rides a ⚠ glyph and a danger-tinted instalment number instead — which is also the
+   colour-never-alone pairing the deutan rule requires.
+3. **"N% of assessed" was dropped** from Collected — derivable from the two figures either side of it.
+
+**⚠ The pin is measured, and the first attempt was wrong in a way only a browser showed.** `Due
+next` and `Balance` moved from the far right to sit beside `Player`, and above 1024 all three hold
+while the instalments scroll. Declaring their widths in CSS and reusing those values as the sticky
+offsets read as airtight and was not — `width` on a table cell is a suggestion to auto table layout,
+and an 11rem/9rem/6.5rem declaration rendered **129/120/120px**, leaving 47px and 24px windows
+*between* pinned columns with scrolled cells visible through them. The widths are now read back from
+the browser. Below 1024 only `Player` pins: the trio is ~24rem, and on the 641px tablet band — where
+this grid overflows soonest — that would pin ~70% of the scroller.
+
+**⚠ THE BY-INSTALLMENT LENS HAD NEVER BEEN SWEPT.** `coach-dues` measures the Season-totals table
+only; the grid is a completely different body. `coach-dues-installments` was added to
+`scripts/layout-screens.mjs` — every check on this tab had been reading one of its two faces.
+
+**Measured, not asserted** (real 10-instalment schedule, after the sweep): shelf **46px shut** at
+every width, **119px open** at 361/390 and **141px** at 768/1440 (criteria were ≤115 / ≤180); toggle
+44px tall at every width; the eyebrow and per-segment dates drop below 640 while the shut summary
+sentence survives at 361; zero page overflow; the fold survives a reload on the same device.
+
+**⚠ ONE PATH THE FIXTURE COULD NOT EXERCISE: the Past due tile.** Nothing on the test team is
+overdue, so the band rendered three tiles at every width and the danger tone was never drawn on this
+screen. The four-tile stack and the danger tone are both live elsewhere (Budget vs. Actual and Club
+respectively), and the figure comes from the shared `pastDueInstallments` predicate that also
+decides the count — but **walk this on a team with a genuinely late family.**
+
+**Walk it (~8 min), on a team with dues set, ideally one late family and one credit-covered bill:**
+
+1. **Season totals, desktop.** Four figures above the view switch (three if nobody is late). Does
+   *Collected* read as cash with credits named beneath rather than added in?
+2. **Switch to By installment.** The band and the schedule must not move, change or reload — same
+   figures, same shelf state, only the table beneath changes.
+3. **The shut line.** Fold the schedule. Does the one line still tell you which instalment you are
+   chasing, its date, what is in and how many families are left?
+4. **Reload.** It should come back folded. Fold it open, reload again: open.
+5. **A credit-covered instalment.** Its bar should be part solid, part lighter, with a legend — and
+   the legend should be absent entirely on a team with no credits.
+6. **A late instalment.** ⚠ on the segment, its number in danger ink, its bar still green for what
+   arrived. And the **Past due** tile present with the right family count.
+7. **Ten instalments, desktop ≥1024.** Swipe the grid sideways: Player, Due next and Balance stay
+   put with no gaps between them and nothing showing through; the instalments slide underneath.
+8. **The same at 768.** Only Player should pin — and the grid should still be usable.
+9. **A phone.** Band stacks, schedule keeps its bars and numbers and drops the dates, shut line still
+   readable, toggle comfortable to hit.
+10. **A team with no dues set.** No band, no schedule — not a row of zeros.

@@ -13,7 +13,6 @@ import { describe, it } from 'node:test';
 import {
   buildInstallmentColumns,
   dueNextForPlayer,
-  daysUntil,
   type ViewableInstallment,
 } from '../../lib/dues-installment-view';
 import { allocateDuesPayments } from '../../lib/dues-payments';
@@ -265,13 +264,3 @@ describe('buildInstallmentColumns', () => {
   });
 });
 
-describe('daysUntil', () => {
-  it('counts forward, backward, and zero', () => {
-    assert.equal(daysUntil('2026-09-01', TODAY), 18);
-    assert.equal(daysUntil(TODAY, TODAY), 0);
-    assert.equal(daysUntil('2026-08-13', TODAY), -1);
-  });
-  it('crosses a month boundary without drama', () => {
-    assert.equal(daysUntil('2026-09-14', TODAY), 31);
-  });
-});

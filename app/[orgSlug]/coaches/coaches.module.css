@@ -32,7 +32,7 @@
      • .cardStackCell / .cardActionCell
                                inside .tableAsCards: a cell too big for one
                                label/value line, and the trailing action cell.
-     • .tableFoot + .footLabel / .footValue / .footNote / .footLeadCell
+     • .tableFoot + .footValue / .footNote / .footLeadCell
                                a season/period TOTALS <tfoot> row under a list
                                table, each figure beneath the column it totals.
                                @640 it becomes the last card in the list. Reach
@@ -122,17 +122,14 @@
      `td[data-label]::before` and the in-cell `.footLabel` caption must stand down or the card prints
      every label twice. The footer sheds its desktop rule and tint here: as a card it is already set
      apart by the card border, and keeping them drew a stray line across the middle of the stack. */
-  .tableAsCards .footLabel { display: none; }
   .tableAsCards .tableFoot td { border-top: none; background: none; }
-  /* ⚠ EXCEPT THE LEAD CELL, which keeps its caption as the card's heading. It is the one footer
-     cell with no `data-label` — nothing in the Player column above it is a figure to caption — so
-     hiding its label too would leave a cell holding an invisible span. That is NOT `:empty`, so the
-     blank-cell rule above cannot collect it, and the card would open with a blank line.
-     ⚠ A CLASS, NOT `:first-child`. This was written positionally first; `.cardActionCell` two rules
-     up is the file's own answer to the identical problem at the other end of the row, and a
-     positional selector silently styles the wrong cell the day a column is inserted or reordered
-     rather than failing where someone would notice. */
-  .tableAsCards .tableFoot td.footLeadCell .footLabel { display: block; }
+  /* ⚰ THE TWO `.footLabel` RULES THAT STOOD HERE went with the class (2026-09-03) — one hid the
+     in-cell caption so a card would not print every label twice, the other let the LEAD cell keep
+     its caption as the card's heading. `.footLeadCell` itself stays, and so does the reason it is a
+     CLASS rather than `:first-child`: `.cardActionCell` two rules up is this file's own answer to
+     the identical problem at the other end of the row, and a positional selector silently styles
+     the wrong cell the day a column is inserted or reordered rather than failing where someone
+     would notice — which is exactly what the 2026-09-03 column move would have done. */
   /* ⚰ `.tableAsCards td.clubExpandCell` STOOD HERE and is deleted (List · Room · Question,
      2026-09-02). It pulled the Club tab's spanning fold cell out of card mode's flex row — the
      third victim of the trap `.cardStackCell` above records — because a fold panel laid its
@@ -3282,15 +3279,11 @@ a.oneChip:hover { border-color: currentColor; }
   padding-bottom: 0.6rem;
   vertical-align: top;
 }
-.footLabel {
-  display: block;
-  font-size: var(--type-token);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-  line-height: 1.6;
-}
+/* ⚰ `.footLabel` IS RETIRED (owner ruling 2026-09-03, D4). It captioned a totals cell in the
+   table foot — "ASSESSED", "COLLECTED" — and the dues Season-totals footer was its last caller;
+   the settlement sheet's footer below has never carried labels on purpose (each figure sits under
+   the column heading that already names it). The season figures are a MoneySummaryBand in the
+   panel header now, and that component brings its own label step. */
 /* ⚠ THE SHARED TOTAL TOKENS, NOT LITERALS. This is the THIRD closing-total treatment in this file
    (`.ledgerTotalNum` and `.moneyGridTotal` are the other two) and the one furthest from them, so it
    is the likeliest to drift. It was written with a hand-copied `0.92rem` and a typed `700` — which
@@ -10796,108 +10789,152 @@ button.gdChip[aria-pressed='true'] {
 }
 
 /* ── Player Dues — the By-installment lens (owner-approved mockup d7162867, 2026-08-14) ──────
-   A second way of reading the SAME dues list: a Collection-schedule band (the Budget plan
-   card's visual language, one term per installment), a player × installment grid on desktop,
-   and collapsible per-player cards on phones whose CLOSED face is the "due next" figure.
+   A second way of reading the SAME dues list: a player x installment grid on desktop, and
+   collapsible per-player cards on phones whose CLOSED face is the "due next" figure.
 
    ⚠ Colour never speaks alone here (deutan ruling, budget-card pass): every warn/behind state
    pairs its amber with an icon and words, and a settled $0 stays muted (the 2026-08-13
    settled-is-quiet ruling). */
 
-.duesBand {
+/* ⚰ THE `.duesBand` / `.duesTerm*` / `.duesMeter*` FAMILY IS RETIRED (owner ruling 2026-09-03,
+   D5). It drew the Collection schedule as one detailed CELL per instalment, in the Budget plan
+   card's type recipe, INSIDE the By-installment lens — and the owner's ten-instalment screenshot
+   is what ended it: the row wrapped to two lines, ~330px of header before the table began,
+   repeating one sentence ten times, and it was invisible on the Season-totals view where the
+   same facts are equally true. `.schedule*` below replaces it as a TIMELINE in the panel header,
+   on both views, foldable.
+
+   Two things worth keeping from its headstone, because they are the reasons it looked the way it
+   did and both survive in the replacement:
+     • the plan card's type recipe was reconciled to byte-for-byte on 2026-08-13 after shipping
+       with five near-miss values — the new shelf takes its cap/figure/caption sizes from
+       `MoneySummaryBand`'s recipe for exactly the same reason, so nobody re-picks them;
+     • its `@media (max-width: 900px)` stacking had to RESET `flex-basis`, because `flex: 1 1
+       170px` measures the main axis and a column-direction row's main axis is vertical — every
+       stacked term shipped 170px TALL. The timeline is a grid, so it cannot repeat that. */
+
+/* ── The Collection schedule shelf (owner ruling 2026-09-03, D5) ─────────────────────────────
+   One row of segments, one segment per instalment, at ANY length — a schedule of twelve is the
+   same shape as a schedule of two, because a layout that changes shape at a threshold is one a
+   coach has to re-learn. Lives in the panel header beside the summary band, on BOTH views. */
+.schedule {
   background: var(--home-card, rgba(255,255,255,0.03));
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   border-radius: 12px;
-  padding: 0.85rem 1.25rem 0.95rem; /* the plan card's inset, exactly */
   margin-bottom: 1.25rem;
+  overflow: hidden;
 }
-/* ⚠ THE TYPE RECIPE HERE IS THE PLAN CARD'S, BYTE FOR BYTE (budget.module.css `.plan*`,
-   owner-approved artifact d37d62e3). This band deliberately reads as that card's sibling —
-   cap 0.66/0.1em, key = 0.7rem uppercase eyebrow, value 1.35rem/800/-0.015em, caption
-   0.72rem, hairline separators between terms, terms stacking with border-top at 900. First
-   shipped with five near-miss values (0.8rem sentence-case keys, 1.3rem values, 0.76rem
-   notes, no separators) — exactly the "nobody decided any of that" drift the 2026-08-13
-   table pass existed to end; the owner asked, and the values were reconciled same day.
-   Differences that REMAIN are decisions, not drift: the frame stays the hub's neutral card
-   (blueprint blue is the Budget tab's PLANNING identity — this band reports collections
-   reality), each term carries a meter (a fixed 3-term card doesn't need one; a 2–6 term
-   schedule does), and the row wraps for 5+ installments (a wrapped row-leader keeps its
-   hairline — accepted, it stacks at 900 anyway). */
-.duesBandCap {
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin-bottom: 0.55rem;
-}
-.duesBandRow {
+/* The whole shut row is the control — and it meets the 44px floor, unlike a bare chevron. */
+.scheduleBar {
   display: flex;
-  align-items: stretch;
-  flex-wrap: wrap;
-  row-gap: 0.55rem;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.5rem 1.25rem;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
 }
-.duesTerm { display: flex; flex-direction: column; min-width: 0; flex: 1 1 170px; }
-.duesTerm + .duesTerm {
-  border-left: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-  padding-left: 1.1rem;
-  margin-left: 1.1rem;
-}
-.duesTermKey {
+.scheduleBar svg { flex-shrink: 0; color: var(--text-tertiary); }
+.scheduleCap {
   font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
   font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--text-tertiary);
   white-space: nowrap;
 }
-.duesTermDue {
+/* ⚠ THE SHUT SUMMARY IS THE POINT OF THE FOLD (see the component's own note): it carries the
+   one answer a coach opens this tab for, so `min-width: 0` + ellipsis rather than a wrap — a
+   two-line shut state would defeat the height the fold was bought for. */
+.scheduleSummary {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: var(--type-support);
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scheduleSummary strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.scheduleCount {
+  flex-shrink: 0;
+  font-size: var(--type-support);
   color: var(--text-tertiary);
+  white-space: nowrap;
 }
-.duesTermVal {
-  font-size: var(--type-title);
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
+.scheduleBody { padding: 0.15rem 1.25rem 0.95rem; }
+/* One track per instalment, equal width. The count rides `--schedule-terms` rather than N
+   classes, so a twelve-piece schedule needs no new rule. */
+.scheduleTrack {
+  display: grid;
+  grid-template-columns: repeat(var(--schedule-terms, 1), minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.scheduleTerm { display: flex; flex-direction: column; gap: 0.28rem; min-width: 0; }
+.scheduleNum {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
 }
-.duesTermOf { font-size: var(--type-body); font-weight: 600; letter-spacing: 0; color: var(--text-tertiary); }
-.duesTermNote { font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.1rem; }
-.duesTermNote[data-tone='good'] { color: var(--success-light); }
-/* Amber caption = the plan card's warn recipe (--warning-light, ordinary weight) — attention,
-   not alarm, and never colour alone: the JSX pairs it with the ⚠ icon and words. */
-.duesTermNote[data-tone='warn'] { color: var(--warning-light); }
-/* The plan card's own ≤900 stacking, hairline turning from left border to top.
-   ⚠ THE FLEX-BASIS MUST RESET HERE. The row's `flex: 1 1 170px` measures the MAIN axis, and in
-   a column-direction row the main axis is VERTICAL — shipped un-reset, every stacked term was
-   170px+ TALL and the owner's phone showed a band that was two-thirds empty air. */
-@media (max-width: 900px) {
-  .duesBandRow { flex-direction: column; gap: 0.55rem; }
-  .duesTerm { flex: 0 0 auto; }
-  .duesTerm + .duesTerm {
-    border-left: none;
-    border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-    padding-left: 0;
-    margin-left: 0;
-    padding-top: 0.55rem;
-  }
-}
-.duesMeter {
-  display: block;
-  height: 5px;
-  max-width: 200px;
+/* Never colour alone: a late segment gets the ⚠ glyph from the JSX as well as this tint, and
+   `now` (the piece being chased, not yet late) is stated in the shut summary's own words. */
+.scheduleTerm[data-state='late'] .scheduleNum { color: var(--danger-light); }
+.scheduleTerm[data-state='now'] .scheduleNum { color: var(--text-primary); }
+.scheduleBarTrack {
+  display: flex;
+  height: 6px;
   border-radius: 3px;
   background: var(--home-fill, rgba(255,255,255,0.08));
-  margin-top: 0.5rem;
   overflow: hidden;
 }
-.duesMeterFill { display: block; height: 100%; border-radius: 3px; background: var(--success-light); }
-.duesMeterFill[data-tone='warn'] { background: var(--warning); }
+/* ⚠ TWO TONES, ONE BAR — a defect fix, not decoration (the component's own note has the story).
+   Solid is cash that arrived; the lighter band is what a drive covered. */
+.scheduleCash { display: block; height: 100%; background: var(--success-light); }
+.scheduleCredit { display: block; height: 100%; background: var(--success-light); opacity: 0.4; }
+/* ⚠ A LATE SEGMENT'S FILL STAYS GREEN, and the plan's line saying it should take danger ink was
+   wrong (deviation recorded 2026-09-03). The fill is money that ARRIVED; inking it red would colour
+   the good news by the verdict of the bar around it. What is late is the EMPTY part, so lateness is
+   carried where a verdict belongs — the ⚠ glyph and the danger-tinted number above the bar, which
+   is also the pairing the deutan rule requires (never colour alone). */
+.scheduleDate {
+  font-size: var(--type-label);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scheduleLegend {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.6rem 0 0;
+  font-size: var(--type-label);
+  color: var(--text-tertiary);
+}
+.scheduleKey { display: inline-block; width: 10px; height: 6px; border-radius: 3px; margin-left: 0.5rem; }
+.scheduleKey:first-child { margin-left: 0; }
+.scheduleKeyCash { background: var(--success-light); }
+.scheduleKeyCredit { background: var(--success-light); opacity: 0.4; }
+/* ⚠ THE DATE IS THE FIRST THING TO GO. Ten segments across a 375px phone cannot each carry a
+   date, and the shut summary above already names the only date a coach acts on. The segments
+   themselves stay — the bar is legible at 20px wide, which a date is not. */
+@media (max-width: 640px) {
+  .schedule { margin-bottom: 1rem; }
+  .scheduleBar { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .scheduleBody { padding-left: 0.9rem; padding-right: 0.9rem; }
+  .scheduleCap { display: none; }
+  .scheduleDate { display: none; }
+  .scheduleTrack { gap: 0.3rem; }
+}
 
 /* Matrix cells: amount on top, state underneath. The state line carries the tone. */
 .duesThDue {
@@ -11157,10 +11194,61 @@ button.gdChip[aria-pressed='true'] {
   background-color: var(--card-bg);
   background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.02)), var(--home-olive-soft, rgba(255,255,255,0.02)));
 }
-/* Same for the totals row's pinned lead cell — its band tint rides on the opaque pin. */
-.duesMatrixScroller.scrollXOverflowing .tableFoot td:first-child {
-  background-color: var(--card-bg);
-  background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.03)), var(--home-olive-soft, rgba(255,255,255,0.03)));
+/* (The totals row's pinned lead cell went with the table foot itself — owner ruling 2026-09-03,
+   D4; the season figures are a MoneySummaryBand in the panel header now.) */
+
+/* ── The three-column pin (owner ruling 2026-09-03, D5) ──────────────────────────────────────
+   Due next and Balance lead the grid beside Player, and above 1024 all three hold their place
+   while the instalments scroll under them.
+
+   ⚠⚠ ONLY ABOVE 1024, AND THAT IS A MEASUREMENT RATHER THAN A TASTE. The pinned trio runs ~24rem.
+   On the 641px tablet band — where this grid overflows SOONEST — that would pin roughly 70% of the
+   scroller and leave a ~170px window to swipe ten columns through: a pin that eats the thing it was
+   meant to help you read. Below 1024 only Player pins, exactly as it did before.
+
+   ⚠⚠ THE OFFSETS COME FROM JAVASCRIPT AND THEY HAVE TO. `left` is measured from the SCROLLER's
+   edge, so column 2's offset must equal column 1's RENDERED width. Declaring those widths here and
+   reusing them as the offsets was the first attempt and it FAILED IN A BROWSER: `width` on a table
+   cell is a suggestion to auto table layout, and an 11rem/9rem/6.5rem declaration rendered
+   129/120/120px — every pinned column short of the offset holding the next, with the scrolled
+   instalment cells visible through a 47px and a 24px window between them. `table-layout: fixed`
+   would make the widths authoritative and also make the table exactly its container's width, which
+   removes the overflow the pin exists for. InstallmentBreakdown measures the two widths and writes
+   them onto the table as `--dues-pin-1` / `--dues-pin-2`; its header carries the full story.
+
+   ⚠ GATED ON `[data-pin-ready]`, which that effect sets. Before the first measurement the offsets
+   do not exist, and a `left` of 0 on three columns would stack them on top of one another — so
+   until then only Player pins, which is this grid's own previous behaviour and the right thing to
+   degrade to. */
+@media (min-width: 1024px) {
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(2),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] td:nth-child(2),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(3),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] td:nth-child(3) {
+    position: sticky;
+    z-index: 1;
+    background-color: var(--card-bg);
+  }
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(2),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] td:nth-child(2) {
+    left: var(--dues-pin-1);
+  }
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(3),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] td:nth-child(3) {
+    left: calc(var(--dues-pin-1) + var(--dues-pin-2));
+  }
+  /* The heading row's tint, painted onto the opaque pin (the .moneyGridCat longhand technique, so
+     nothing later resets the image via the shorthand). */
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(2),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(3) {
+    background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.02)), var(--home-olive-soft, rgba(255,255,255,0.02)));
+  }
+  /* A hairline where the pinned block ends, so the instalments read as sliding UNDER it rather than
+     as columns that happen to have stopped moving. */
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(3),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] td:nth-child(3) {
+    border-right: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
+  }
 }
 .duesCard,
 .duesCardStatic {
@@ -12562,15 +12650,13 @@ button.gdChip[aria-pressed='true'] {
 /* A read-only coach's split: one family per line, the share on the right. */
 .roomZoneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .roomZoneList li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: var(--type-body); }
-/* The quiet facts line under a room's tiles — what the tiles and columns can't say (a drive's
-   participation fraction and dates, a sponsor's note and tags). FACTS ONLY, never a sentence
-   restating a tile (the 2026-08-29 meta-line ruling). */
-.roomFacts {
-  margin: 0 0 0.85rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  line-height: 1.5;
-}
+/* ⚰ `.roomFacts` MOVED AND WAS DELETED HERE (§135 walk, 2026-09-03). The quiet facts line — a
+   drive's participation fraction and dates, a sponsor's note and tags — owned a full line under
+   the tiles while the action row above it left everything to the left of its two right-aligned
+   doors empty. It is `.facts` in `RoomShell.module.css` now, seated ON that row and clamped to
+   one line. Its rule travelled with it ("FACTS ONLY, never a sentence restating a tile" — the
+   2026-08-29 meta-line ruling) and matters more there: a line that restates a tile now also
+   costs the note the room it is clamped into. */
 @media (max-width: 768px) {
   .roomZones { grid-template-columns: 1fr; }
 }

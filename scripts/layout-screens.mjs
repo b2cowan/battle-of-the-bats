@@ -221,6 +221,14 @@ export const SCREENS = [
      satisfied by a half-loaded screen. */
   { id: 'coach-commitment',        session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&bill=${c.commitmentId}`, ready: '[data-commitment="loaded"]' },
   { id: 'coach-dues',              session: 'coach', path: (c) => `${team(c)}/accounting?section=dues`,             ready: 'h1' },
+  /* ⚠⚠ THE SECOND LENS IS A SECOND SCREEN, and it was missing from this list until 2026-09-03.
+     `coach-dues` above measures the Season-totals table; `?duesView=installments` draws a
+     completely different body — the player × instalment grid, with its own column order, its own
+     sticky pin above 1024 and its own phone cards. A sweep that measures one lens and calls the
+     tab covered is the "fixture missing the failing state" trap: every check passes, on markup the
+     coach never sees. The pin in particular is only provable here, because it only engages when
+     the grid actually overflows. */
+  { id: 'coach-dues-installments', session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&duesView=installments`, ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.
      That is precisely the "green sweep over an empty screen proves nothing" trap this project
