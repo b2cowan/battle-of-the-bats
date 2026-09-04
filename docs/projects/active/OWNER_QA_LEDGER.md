@@ -17247,8 +17247,9 @@ see the tap-floor item: it could not have caught that one. ·
 still netting into a cost · CSS purity / selectors / spelling / contrast / date / snapshot / schema
 parity / index / dictionary / demos all clean · **the live payload probed directly** — 32 rows, all
 three record arrays present on every one, so a figure can never open onto nothing. ⚠ `check:root`
-is RED on `.tmp-fix2.mjs`, a stray patch script another session left at the repo root at 08:47; it
-is untracked, its work has landed, and it is **not this stream's file to delete**. Help updated (the
+was RED on `.tmp-fix2.mjs`, a stray patch script another session left at the repo root at 08:47; it
+was untracked, its work had landed, and it was not this stream's file to delete — **deleted 2026-09-04**
+by the session that landed the four uncommitted tranches, and `check:root` is green again. Help updated (the
 unplanned-row sentence, the new door, the search keywords). Demo narration re-read at the two places
 that point at this report: **no sentence goes stale** — step 4's proof point is "are we on budget",
 and adding a clause about the drill-in would breach the one-proof-point cap, so it was considered
@@ -17761,7 +17762,7 @@ team still cannot reach this state, so the next change here needs the same manua
    readable, toggle comfortable to hit.
 10. **A team with no dues set.** No band, no schedule — not a row of zeros.
 
-## §138 · Coach Notifications Redraw — the house header, readable time, a pinned way home, Mark all read that leaves Needs attention alone — BUILT 2026-09-03, awaiting QA
+## §138 · Coach Notifications Redraw — the house header, readable time, a pinned way home, Mark all read that leaves Needs attention alone — BUILT 2026-09-03, committed `b9a34a4c` 2026-09-04, awaiting QA
 
 **Owner ask (2026-09-03):** *"review the notification screen on the phone and desktop… I am also
 wondering if we can improve it where it doesn't force you out of the coaches portal."* The review
@@ -17865,7 +17866,7 @@ stacking on a phone, zero page overflow at 361/390/768/1440.
    from one rule and must agree. **They did not before**, which is the defect this closes.
 
 
-## §140 · Player Dues: set once, chase weekly — the set-once door steps back, the chase says who it reaches, the grid leads with the date — BUILT 2026-09-04, awaiting QA
+## §140 · Player Dues: set once, chase weekly — the set-once door steps back, the chase says who it reaches, the grid leads with the date — BUILT 2026-09-04, committed `06645a32` (D1–D3 · E1–E5 · G1–G3) + `d7771935` (the owner's second look on the built grid), awaiting QA
 
 **Owner decisions (mockup `6bd4c6d9` rev 2, 2026-09-04, twelve answers, all on the recommended
 path):** **D1** the View pill (built before the answers came) · **D2** "Set dues for all players"
@@ -17961,7 +17962,7 @@ the pager's cached column positions follow a content-only resize; "today" is rea
    never-paid nudge leaving no "Last reminded"; a sample letter rather than the real recipient list.
 
 
-## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — BUILT 2026-09-04, awaiting QA
+## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — BUILT 2026-09-04, committed `52c2637e` 2026-09-04, awaiting QA
 
 **The ruling this executes (owner, 2026-09-02, D4 re-ruled on review):** the team bill was the last
 money-area exception to the List · Room · Question grammar. Its page shape had been justified by a
