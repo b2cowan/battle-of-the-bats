@@ -17,12 +17,19 @@ import { rollUpFundraising } from '../../lib/coach-fundraising';
 
 /** A drive: no promise, money is whatever was logged against it. */
 const drive = (totalRaised: number, teamNet: number, totalCredits: number) =>
-  ({ kind: 'fundraiser' as const, sponsorStatus: null, totalRaised, teamNet, totalCredits });
+  ({ kind: 'fundraiser' as const, totalRaised, teamNet, totalCredits });
 
-/** A sponsor. `sponsorStatus` follows the money: 'received' from the first cheque onward. */
+/**
+ * A sponsor: a promise, and what has arrived against it.
+ *
+ * ⚠ NO `sponsorStatus`, deliberately. The first cut of this helper stamped
+ * `arrived > 0 ? 'received' : 'pledged'`, which baked the function's own assumption into every
+ * fixture — so no test here could ever have caught a bug in the state where those two disagree.
+ * The function stopped reading that field entirely (review, 2026-09-04) and the helper stopped
+ * supplying it; the disagreeing state now has a test of its own, below.
+ */
 const sponsor = (pledgedAmount: number | null, arrived: number, teamNet = 0, totalCredits = 0) => ({
   kind: 'sponsor' as const,
-  sponsorStatus: (arrived > 0 ? 'received' : 'pledged') as 'received' | 'pledged',
   pledgedAmount,
   totalRaised: arrived,
   teamNet,
@@ -117,8 +124,40 @@ describe('rollUpFundraising — what a season raised', () => {
     assert.equal(r.fundraiserRaised + r.sponsorReceived, 2040);
     assert.equal(r.teamKeeps, 1190);
     assert.equal(r.creditedToFamilies, 850);
-    // Team keeps + credited = raised. The split is the whole model, and it must tie.
+    /* ⚠ THIS LINE DOCUMENTS THE MODEL; IT DOES NOT PROVE IT (review, 2026-09-04). The API builds
+       every row as `teamNet = totalRaised − totalRebates` with `totalCredits = totalRebates`, so
+       the two halves tie BY CONSTRUCTION upstream and this assertion cannot fail whatever the
+       rollup does. Kept because a reader should see the relationship the band's middle two tiles
+       rest on — but the test that can actually fail is the pass-through one below. */
     assert.equal(r.teamKeeps + r.creditedToFamilies, r.fundraiserRaised + r.sponsorReceived);
+  });
+
+  it('PASSES THROUGH what it is given — it never re-derives the team/family split', () => {
+    /* Deliberately inconsistent input: a row whose two halves do NOT tie. The API cannot currently
+       produce it, which is exactly why it belongs here — if this function ever "helpfully"
+       recomputed teamNet as raised minus credits, this is the only shape that would notice, and
+       the tie assertion above would go on passing while it did. */
+    const r = rollUpFundraising([{ kind: 'fundraiser' as const, totalRaised: 1000, teamNet: 400, totalCredits: 100 }]);
+    assert.equal(r.fundraiserRaised, 1000);
+    assert.equal(r.teamKeeps, 400, 'teamNet is the API figure, summed — never re-derived here');
+    assert.equal(r.creditedToFamilies, 100);
+  });
+
+  it('⚠ money that ARRIVED is counted even when the row is still stamped "pledged"', () => {
+    /* The state a status-gated rollup lost money in. The arrival writer flips `sponsor_status` in
+       an UNCHECKED write, after the arrival and its credits are already committed; undoing an
+       arrival decides the same flag from a read taken before its deletes run. So a failed write or
+       a concurrent arrival can leave money landed and the row still reading `pledged`. Gated on
+       that status, such a row counted in NEITHER raised (the status says no) nor still-to-come
+       (there is no shortfall once the pledge is met) — the arrived dollars vanished from every tile
+       with nothing on screen to say so. The function reads only money now, so the shape cannot
+       arise; this test is what stops the gate being reintroduced as a tidy-up. */
+    const r = rollUpFundraising([
+      { kind: 'sponsor' as const, pledgedAmount: 500, totalRaised: 500, teamNet: 500, totalCredits: 0 },
+    ]);
+    assert.equal(r.sponsorReceived, 500, 'money on the books, whatever a status column says');
+    assert.equal(r.sponsorPledged, 0);
+    assert.equal(r.teamKeeps, 500);
   });
 
   it('sums in a way that does not drift on repeating cents', () => {

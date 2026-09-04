@@ -155,6 +155,26 @@ export type CreditUnit = 'amount' | 'percent';
  * sponsor) so the two surfaces cannot disagree. It is also why the row shape gained
  * `pledgedAmount`: the promise cannot be recovered from the arrivals, which is precisely why the
  * old branch could not have computed this figure however it was written.
+ *
+ * ⚠⚠ AND NOTHING HERE READS `sponsorStatus` ANY MORE — every figure is summed from MONEY (review,
+ * 2026-09-04). This is the same ruling `sponsorStanding` above already states for the row's chip
+ * ("DERIVED FROM THE MONEY, NEVER A FIELD"); the rollup was simply still reading the field.
+ *
+ * It is not tidying. `writeSponsorArrivalRow` flips the status in an UNCHECKED write after the
+ * arrival and its credits are already committed, and `undoSponsorArrival` decides the same flag
+ * from a read taken before its deletes — so a failed write or a concurrent arrival can leave a
+ * sponsor whose money HAS landed still stamped `pledged`. Gated on the status, such a row was
+ * counted in neither `sponsorReceived` (status says no) nor `sponsorPledged` (`stillToCome` is a
+ * SHORTFALL, and there is none once the pledge is met): **the arrived dollars vanished from every
+ * tile with nothing on screen to say so.** Reading the money instead cannot lose them.
+ *
+ * ⚠ Safe because the DATABASE guarantees it, not because the app is careful. Migration 268 §5
+ * REFUSES to run while any pledged sponsor's entry carries an accounting row or credit, then
+ * deletes the remaining pledged-sponsor entries outright — so post-268 a promise has no entry to
+ * sum, and `totalRaised > 0` means money that actually arrived. That is what makes summing
+ * unconditionally safe here, and it is why this must NOT be copied to a reader that sums ENTRIES
+ * directly: the "promised money counted as banked" defect `isRealisedRecord` exists to prevent was
+ * a Critical, and it reached the settlement pot families are paid out of.
  */
 export interface FundraisingRollup {
   fundraiserRaised: number;
@@ -172,7 +192,6 @@ export interface FundraisingRollup {
 export function rollUpFundraising(
   rows: Array<{
     kind: FundraisingKind;
-    sponsorStatus: SponsorStatus | null;
     /** What a sponsor PROMISED. Null on a drive, and on a sponsor recorded without a figure. */
     pledgedAmount?: number | null;
     /** What has actually ARRIVED — arrivals for a sponsor, logged entries for a drive. */
@@ -189,13 +208,11 @@ export function rollUpFundraising(
   for (const row of rows) {
     if (row.kind === 'sponsor') {
       r.sponsorCount += 1;
-      // Arrived money, whatever the promise was. `sponsor_status` reads 'received' from the first
-      // cheque onward, so a part-paid sponsor's arrivals count here — and a sponsor with nothing
-      // arrived contributes the 0 it should.
-      if (row.sponsorStatus === 'received') r.sponsorReceived += row.totalRaised;
-      // ⚠ NOT AN else-BRANCH ANY MORE, AND THAT IS THE FIX: what is still to come is a property of
-      // every sponsor carrying an unmet promise, INCLUDING the part-paid ones the old branch could
-      // never reach.
+      // Arrived money, whatever the promise was — so a part-paid sponsor's cheques count here.
+      r.sponsorReceived += row.totalRaised;
+      // ⚠ NOT AN else-BRANCH, AND THAT IS THE FIX: what is still to come is a property of every
+      // sponsor carrying an unmet promise, INCLUDING the part-paid ones the old branch — which
+      // read the STATUS — could never reach.
       const awaited = stillToCome(row.pledgedAmount ?? null, row.totalRaised);
       if (awaited > 0.005) r.sponsorsAwaiting += 1;
       r.sponsorPledged += awaited;
@@ -203,12 +220,9 @@ export function rollUpFundraising(
       r.fundraiserCount += 1;
       r.fundraiserRaised += row.totalRaised;
     }
-    // "Team keeps" and "credited" describe money that has actually moved, so a pledge contributes
-    // to neither — it has kept nobody anything yet.
-    if (row.kind === 'fundraiser' || row.sponsorStatus === 'received') {
-      r.teamKeeps += row.teamNet;
-      r.creditedToFamilies += row.totalCredits;
-    }
+    // A pledge has kept the team nothing and credited nobody — enforced by the DATA, see above.
+    r.teamKeeps += row.teamNet;
+    r.creditedToFamilies += row.totalCredits;
   }
   const round = (n: number) => Math.round(n * 100) / 100;
   return {

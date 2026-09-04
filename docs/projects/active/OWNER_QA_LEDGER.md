@@ -17593,6 +17593,9 @@ already sits on the sponsor's own row, in red.)
 **Measured on the UAT team, and the arithmetic ties:** Raised $3,517.00 = $916.00 drives +
 $2,601.00 sponsors; Team keeps $2,504.35 + Credited $1,012.65 = $3,517.00 exactly; **Still to come
 $1,170.00 across 3 sponsors — a figure this tab had never displayed.** Band 98px on a desktop,
+⚠ Those are the figures **as measured on 2026-09-04**; the UAT fixture moves as other sessions
+record money against it, so a later walk will see different amounts. What must hold at any moment
+is the relationship: Raised = drives + sponsors, and Team keeps + Credited = Raised, to the cent.
 stacking on a phone, zero page overflow at 361/390/768/1440.
 
 **Walkthrough artifact (checkable, per-part verdicts + paste-back):**
@@ -17649,9 +17652,19 @@ reads "Send 9 emails". "See what they'll receive" shows the on-demand letter (th
 outstanding" subject and "was due" wording — a different letter from the 30-day wave the old
 preview showed). A player's panel shows the guardian's contact line where the roster allows it,
 "Last reminded Nov 3 · Installment 2 · from this page", and one "Remind this family". The
-By-installment grid heads each column with its date ("Oct 4" over "#4 · $97.08", "Varies" where
-families differ), lights the installment the Collection schedule names, keeps names on one line,
-and pages sideways with ‹ › beside View only when columns overflow.
+By-installment grid heads each column with its date alone ("Oct 4", or "Varies" where families
+differ), shows in every unpaid cell what is still to send (a tick where nothing is), keeps rows and
+names to one line, reads "$0.00 · In credit" for a family in credit, lights the installment the
+Collection schedule names, and pages sideways with ‹ › beside View only when columns overflow.
+
+**Owner's second look on the built grid (same day):** rows were 84px tall for a two-line Due next
+cell; a family in credit read its credit under Due next when zero answers "what is due next?" and
+the Balance column already holds the credit; the heading carried "#4 · $97.08" when the date alone
+was wanted; and the untouched-instalment dot gave way to the figure still to send. All four built.
+Two defects came out with them: the › arrow disabled itself while the last column was still half
+hidden (a partly visible column counted as "in view"), and the grid opened one column too far
+because the pinned zone's width was read from computed styles a beat before the third column was
+sticky — it is now the first instalment column's own left edge, by construction.
 
 **Built and verified:** `verify:changed` (incl. the unit suite), typecheck, eslint on every touched
 file, the dead-selector and spelling gates, and `check:layout` on `coach-dues`,
