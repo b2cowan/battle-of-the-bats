@@ -17432,7 +17432,7 @@ picture EXISTS, never that it still matches the product.
 **Owner decisions (rev 3, 2026-09-03):** D1 one band, 3–4 tiles, every money tab · **D4** band on
 BOTH dues views, footers retire · **D5** the Collection schedule as a timeline in the header on both
 views, foldable, two-tone bar, `Due next`/`Balance` pinned · **D5b** open by default, remembered per
-device. Plan: `docs/projects/active/COACH_MONEY_BANNER_STANDARD_PLAN.md` (P4).
+device. Plan: `docs/projects/archive/COACH_MONEY_BANNER_STANDARD_PLAN.md` (P4; archived 2026-09-04 once all five tabs, both walks and the guard were done).
 
 **⚠⚠ THIS CLOSES THE GAP §136 DELIBERATELY LEFT OPEN, which is the first thing to check.** §136
 records that the deleted chase band was the only unconditional carrier of the team's next-due date
