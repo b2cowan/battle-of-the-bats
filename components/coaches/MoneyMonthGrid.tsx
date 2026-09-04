@@ -8,7 +8,7 @@ import {
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   formatMonthLabel, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid, scheduledForward,
-  type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine,
+  type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
 } from '@/lib/coach-budget-months';
@@ -119,13 +119,6 @@ export interface MonthGridPayload {
    * makes that lens finally tie to Headroom and the Statement's variance column exactly.
    */
   spendingGrid: MonthGrid;
-  /**
-   * The rows of the spending band holding at least one family-paid movement (`<catKey>|<itemId>`),
-   * so the row can carry its quiet "paid by a family" tag (G1-approved). Sent as ids rather than
-   * a flag on every cell: the fact is per-row, and the heaviest payload in the portal does not
-   * need it twelve more times per row.
-   */
-  spendingFamilyPaidRows: string[];
   cellDetails: Record<string, CellDetailItem[]>;
   /**
    * Today's real money.
@@ -264,9 +257,6 @@ export default function MoneyMonthGrid({
    *  settlement, not spending, and revenue is the other half of a question this lens is not
    *  answering. No revenue band, no returned band, no balance rows. */
   const spendingOnly = lens === 'spending';
-  // `?? []` rides the same skew belt: a stale payload lacks the field, and a tag list is the
-  // wrong thing to crash a table over.
-  const familyPaidRows = useMemo(() => new Set(data.spendingFamilyPaidRows ?? []), [data.spendingFamilyPaidRows]);
   /* ⚠ THE BAND IS ACTUAL-ONLY *AND* ONLY WHERE IT HAS SOMETHING TO SAY. A team that has never handed
      a family money back gets no heading, no row and no subtotal — three rows of nothing on the
      narrowest table in the portal. `categoryHasFigure` is the same predicate the revenue band and
@@ -294,8 +284,19 @@ export default function MoneyMonthGrid({
      *  also how the row renderer knows which of the two it is drawing. */
     subject?: string;
   } | null>(null);
-  /** "Which line's dates?" — only ever open for a row standing for two or more budget lines. */
-  const [chooser, setChooser] = useState<{ item: string; when: string; lines: GridPlanLine[] } | null>(null);
+  /**
+   * WHAT MAKES UP A PLAN FIGURE — the Budget lens's answer to the same tap every other lens answers
+   * (owner ruling 2026-09-04, QA §132).
+   *
+   * ⚠⚠ THIS WAS "Which line's dates?", AND IT ONLY OPENED FOR A ROW STANDING FOR TWO OR MORE LINES.
+   * That is the defect the owner found: one underline, styled identically everywhere, meant THREE
+   * different things on this table — open a panel (Cash/Scheduled/Spending), jump straight to the
+   * budget form (a plan row with one line), or open this chooser (a plan row with two). Nothing on
+   * screen told a coach which they would get, and category rows and the whole revenue band were
+   * simply dead under Budget. Now every plan figure opens this, and the edit door lives INSIDE it —
+   * so the chooser's old job is just the case where the list has more than one row.
+   */
+  const [plan, setPlan] = useState<{ title: string; when: string; figure: number | null; lines: GridPlanLine[] } | null>(null);
 
   /* ⚠⚠ THE MONTHS ARE WINDOWED; THE TOTALS ARE NOT (owner ruling 2026-08-21). A repeating cost
      stretches this grid past any screen — fifteen columns the day it was found — and `Total`,
@@ -317,8 +318,6 @@ export default function MoneyMonthGrid({
   const start = Math.min(Math.max(0, monthStart), maxStart);
   const view = grid.months.slice(start, start + MONTH_WINDOW);
 
-  /** Editing a plan cell is only meaningful under a lens that reads the plan. */
-  const undatedLive = lensReadsPlan(lens);
   /* ⚠ THE COLUMN APPEARS ONLY WHERE IT CAN HOLD SOMETHING (owner ruling 2026-08-21) — but the
      rule is now enforced on the FIGURE rather than on the lens's name. Undated money used to be
      plan money and nothing else; the Scheduled forward view gave it a sponsor PLEDGE and a club
@@ -441,7 +440,7 @@ export default function MoneyMonthGrid({
   }
 
   /**
-   * What a MONEY cell does when a coach taps it — the twin of `planCell` above, for the two lenses
+   * What a MONEY cell does when a coach taps it — the twin of `planPanel` above, for the lenses
    * that hold records rather than a plan.
    *
    * ⚠ NOTHING PRETENDS TO BE TAPPABLE. The affordance appears only where the payload actually has
@@ -469,38 +468,40 @@ export default function MoneyMonthGrid({
   }
 
   /**
-   * What a PLAN cell does when a coach clicks it — the one answer for both affordances that read the
-   * budget: a month's figure ("Edit this line's payment dates") and the "No date yet" figure ("Give
-   * this money a date").
+   * What a PLAN figure does when a coach taps it — the Budget lens's twin of `drill`, and the same
+   * promise: the tap DESCRIBES the number, it never navigates away from it.
    *
-   * ⚠⚠ THE ROW IS AN ITEM AND MAY STAND FOR TWO BUDGET LINES (owner ruling 2026-08-15, and the fix
-   * approved 2026-08-17). Both cells used to hand the budget page the composite ROW id, which no
-   * longer names any line — so it found nothing and returned silently. Both were dead for two days.
-   * Now: one line behind the row, go straight to its dates; two or more, ask which. Never guess, or a
-   * coach silently edits a line they were not looking at; never withdraw the control, or the teams
-   * with the most complex plans lose their only route out of undated budget.
+   * ⚠⚠ IT USED TO NAVIGATE, and that was the whole finding (owner, QA §132, 2026-09-04). A plan cell
+   * jumped to the budget form, so the one underline on this table meant "show me what's behind this"
+   * on three lenses and "take me somewhere else" on the fourth. The edit door still exists — it is
+   * now a door inside the panel, one tap further away, which is the price of the underline meaning
+   * one thing everywhere.
    *
-   * ⚠ Both cells share this because they are ONE affordance with two labels. Fixing one and not the
-   * other is how they came apart in the first place.
+   * ⚠ THE ROW IS AN ITEM AND MAY STAND FOR TWO BUDGET LINES (owner ruling 2026-08-15). That is no
+   * longer a special case with its own modal; it is simply a list with two rows in it. Never guess
+   * which line a coach meant — the old bug where both cells handed the budget page the composite ROW
+   * id, found nothing and returned silently, is impossible now: every door is built from a real
+   * `GridPlanLine.id`.
+   *
+   * ⚠ NOTHING PRETENDS TO BE TAPPABLE. No plan lines behind the figure — a spend-only row, or a
+   * revenue group whose plan is a dues schedule rather than a budget line — and no affordance
+   * appears, exactly as on the record lenses.
    */
-  function planCell(line: { description: string; planLines: GridPlanLine[] }, when: string) {
-    const plan = line.planLines;
-    if (plan.length === 1) {
-      // ?periods=1 opens the payment-date split even on a line that is currently a lump sum — the
-      // coach was looking at a month grid, so dates are what they came for.
-      return {
-        href: moneySectionHref(base, 'budget', { line: plan[0].id, periods: '1' }),
-        title: `Edit ${line.description}’s payment dates`,
-      };
-    }
-    if (plan.length > 1) {
-      return {
-        onClick: () => setChooser({ item: line.description, when, lines: plan }),
-        title: `${line.description} has ${plan.length} budget lines — choose whose dates to change`,
-      };
-    }
-    // No budget line at all: a spend-only row. Nothing to edit, so nothing pretends to be clickable.
-    return {};
+  function planPanel(
+    who: string, lines: GridPlanLine[], when: string, figure: number | null,
+  ): { onClick?: () => void; title?: string } {
+    if (lines.length === 0) return {};
+    return {
+      onClick: () => setPlan({ title: who, when, figure, lines }),
+      title: when === UNDATED_CELL
+        ? `See the budget lines behind ${who} with no date yet`
+        : `See the budget lines behind ${who}`,
+    };
+  }
+
+  /** Every plan line a category stands for, in row order — the category row's answer to the tap. */
+  function categoryPlanLines(rows: GridLineResult[]): GridPlanLine[] {
+    return rows.flatMap(l => l.planLines ?? []);
   }
 
   /** One money cell. Becomes a link or a button only when there is genuinely something behind it. */
@@ -639,7 +640,14 @@ export default function MoneyMonthGrid({
           </th>
           {showUndated && (
             <td className={`${styles.num} ${styles.undated}`}>
-              {cellNode(Math.abs(catUndated) > 0.005 ? catUndated : null, drill(panelCat, UNDATED_CELL, null))}
+              {/* ⚠ THE BUDGET LENS ANSWERS HERE TOO NOW (QA §132). A category row was dead under
+                  Budget — `drill` returns nothing for a plan lens — so the one figure a coach most
+                  wants explained ("what is the $3,200 of Facilities with no date?") was the one
+                  figure that would not open. */}
+              {cellNode(Math.abs(catUndated) > 0.005 ? catUndated : null,
+                lensReadsPlan(lens)
+                  ? planPanel(label, categoryPlanLines(cat.lines), UNDATED_CELL, catUndated)
+                  : drill(panelCat, UNDATED_CELL, null))}
             </td>
           )}
           {/* ⚠ `k` is the position ON SCREEN, `i` the position in the SEASON. Every cell
@@ -654,7 +662,9 @@ export default function MoneyMonthGrid({
               <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
                 {cellNode(v, {
                   emphasis: lens === 'difference' ? 'signed' : undefined,
-                  ...drill(panelCat, m, null),
+                  ...(lensReadsPlan(lens)
+                    ? planPanel(label, categoryPlanLines(cat.lines), m, v)
+                    : drill(panelCat, m, null)),
                 })}
               </td>
             );
@@ -666,7 +676,6 @@ export default function MoneyMonthGrid({
 
         {open && lines.map(line => {
           const lineUndated = lensUndated(line.undated, lens);
-          const undatedEditable = canWrite && undatedLive && lineUndated > 0.005 && band === 'out';
           /* ⚠ THE ROW'S OWN KEY IS `line.id` — `<categoryKey>|<itemId>`, exactly what the payload
              stamped on each record. Rebuilding it from the parts here would be a second spelling of
              one key, and a panel that quietly resolves to an empty list is how the LAST drill-in on
@@ -676,18 +685,28 @@ export default function MoneyMonthGrid({
             <tr key={line.id} className={styles.lineRow}>
               <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
                 <span className={shared.wrap640}>{line.description}</span>
-                {/* The quiet family-paid tag (D1, G1-approved): on Season spending a fronted cost
-                    sits in its category and month like any other — this word is how the row says
-                    so without a chip or a second figure. */}
-                {lens === 'spending' && familyPaidRows.has(line.id) && (
-                  <span className={styles.familyPaidTag}>paid by a family</span>
-                )}
+                {/* ⚠⚠ THE ROW-LEVEL "paid by a family" TAG IS GONE (owner ruling 2026-09-04, QA §132)
+                    AND MUST NOT COME BACK FROM THE PLAN TEXT, which still describes it (D1,
+                    G1-approved 2026-09-02). It fired when ANY record in the row was family-fronted,
+                    so a row holding a team-paid cost AND a fronted one was labelled family-paid
+                    wholesale — a lie the fixture could not show, because every row in it happened to
+                    hold a single record. The fact was never carried here alone and is not lost:
+                    each record says "paid by a family" on its own line in the drill-in panel, and the
+                    cash sentence above the table itemises the fronted costs BY NAME.
+                    ⚠ AND NO SPLIT ROWS, EVER (same ruling): family-fronted and team-paid money share
+                    one row, exactly as money back nets into the row it repaid. */}
               </th>
               {showUndated && (
                 <td className={`${styles.num} ${styles.undated}`}>
                   {cellNode(Math.abs(lineUndated) > 0.005 ? lineUndated : null, {
-                    ...(undatedEditable
-                      ? { ...planCell(line, 'with no date yet'), title: 'Give this money a date' }
+                    ...(lensReadsPlan(lens)
+                      /* ⚠ NO LONGER GATED ON `canWrite` OR ON THE EXPENSE BAND (QA §132). Reading
+                         what a figure is made of is not an edit, so a read-only assistant sees the
+                         same panel; and a revenue plan row with real budget lines behind it — a
+                         fundraising or other-income line — opens exactly as an expense does. What a
+                         revenue GROUP still cannot open is its dues schedule, which is not a budget
+                         line: `planPanel` returns nothing when the list is empty. */
+                      ? planPanel(line.description, line.planLines ?? [], UNDATED_CELL, lineUndated)
                       /* ⚠ A SPONSOR'S PLEDGE AND A CLUB ASK LIVE ENTIRELY HERE (owner ruling
                          2026-08-23) — in the Total and in no month. Until D-2 this column's figure
                          was the one on the table with nothing behind it. */
@@ -706,10 +725,11 @@ export default function MoneyMonthGrid({
                    ⚠ It is the SAME `lensCell` the category row above uses. A second way of
                    choosing a cell's value is how a parent and its children start disagreeing. */
                 const v = lensCell(line.cells[i], lens, m, todayMonth, band);
-                const canEdit = canWrite && lens === 'budget' && band === 'out' && line.cells[i].budget > 0.005;
                 return (
                   <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
-                    {cellNode(v, canEdit ? planCell(line, `in ${formatMonthLong(m)}`) : drill(panelCat, m, row))}
+                    {cellNode(v, lensReadsPlan(lens)
+                      ? planPanel(line.description, line.planLines ?? [], m, v)
+                      : drill(panelCat, m, row))}
                   </td>
                 );
               })}
@@ -1148,40 +1168,88 @@ export default function MoneyMonthGrid({
         </div>
       )}
 
-      {/* "Which line's dates?" — the ambiguous half of the plan-cell affordance (approved 2026-08-17).
-          Only reachable from a row standing for two or more budget lines, so a coach with one line per
-          item never meets it. It also explains the row: somebody who wrote two lines and reads one
-          summed figure learns why, at the moment they are wondering. */}
-      {chooser && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setChooser(null))?.(); }}>
+      {/* WHAT MAKES UP A PLAN FIGURE (owner ruling 2026-09-04, QA §132).
+          ⚠⚠ THIS PANEL REPLACED "Which line's dates?", which opened ONLY on a row standing for two
+          or more budget lines. Every other shape of plan figure either jumped to the budget form or
+          did nothing at all, which is how one underline came to mean three things on one table. Now
+          it is the single answer for every plan figure — category or item, revenue or expense — and
+          the two-line case is simply a list with two rows in it.
+          ⚠ READ-ONLY, LIKE ITS TWIN. The panel opens for everyone; only the DOORS are gated on
+          write access, so an assistant reads the same explanation without being shown controls the
+          server would refuse. */}
+      {plan && (
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) setPlan(null); }}>
           <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
-              <h3 className={shared.modalTitle}>Which line’s dates?</h3>
-              <button className={shared.modalCloseBtn} onClick={() => setChooser(null)} aria-label="Close"><X size={16} /></button>
+              <h3 className={shared.modalTitle}>
+                {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet' : formatMonthLong(plan.when)}
+              </h3>
+              <button className={shared.modalCloseBtn} onClick={() => setPlan(null)} aria-label="Close"><X size={16} /></button>
             </div>
-            <p className={styles.chooserSub}>
-              {chooser.item} · {chooser.when}
-            </p>
+            {/* The figure the coach actually tapped, said back to them before the breakdown — the
+                panel is explaining THIS number, and a list that opens without it makes the reader
+                check they are still looking at the right cell.
+
+                ⚠⚠ THE WORD FOLLOWS THE LENS, and it used to say "planned" unconditionally
+                (adversarial review, 2026-09-04). Under DIFFERENCE a month cell is not plan money at
+                all — it is plan MINUS spending, and it goes negative — so an over-budget cell read
+                "($150) planned", describing a gap as if it were budget. */}
+            {plan.figure != null && (
+              <p className={styles.chooserSub}>
+                <strong>{fmt(plan.figure)}</strong>{' '}
+                {lens === 'difference' ? 'difference — plan against what the season has spent' : 'planned'}
+              </p>
+            )}
             <ul className={styles.chooserList}>
-              {chooser.lines.map(l => (
-                <li key={l.id}>
-                  <Link
-                    href={moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
-                    className={styles.chooserChoice}
-                    onClick={() => setChooser(null)}
-                  >
+              {plan.lines.map(l => {
+                const body = (
+                  <>
                     <span className={styles.chooserWho}>
                       {l.description}
                       <span className={styles.chooserWhen}>{whenLine(l)}</span>
                     </span>
+                    {/* ⚠ THE LINE'S WHOLE-SEASON TOTAL — see the footer. */}
                     <span className={styles.chooserAmt}>{fmt(l.amount)}</span>
-                  </Link>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={l.id}>
+                    {canWrite ? (
+                      // ?periods=1 opens the payment-date split even on a line that is currently a
+                      // lump sum — the coach was looking at a month grid, so dates are what they
+                      // came for.
+                      <Link
+                        href={moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
+                        className={styles.chooserChoice}
+                        onClick={() => setPlan(null)}
+                        title={`Edit ${l.description}’s payment dates`}
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <span className={styles.chooserChoice}>{body}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
+            {/* ⚠⚠ THIS USED TO CLAIM THE LINES *MAKE UP* THE TAPPED FIGURE, AND THAT IS FALSE
+                (adversarial review, 2026-09-04). The figure is one COLUMN's slice — April's share, or
+                the undated share — while a line carries its WHOLE-SEASON total and may be spread over
+                several months; a category row's panel lists every item in the category besides. So
+                "$1,734" would open a list reading "$5,200" beside a sentence insisting they were the
+                same money. The figures are right; the claim was not. The panel now says what the
+                amounts ARE and asserts no arithmetic a reader can disprove in their head.
+                ⚠ IF THIS EVER NEEDS A MONTH'S SHARE PER LINE, that is a payload change —
+                `GridPlanLine` carries a season total and a list of dates, and no per-month split.
+                Do not fake it by dividing. */}
             <p className={styles.chooserFoot}>
-              {chooser.lines.length} lines on this item are shown as one row. Pick the one whose dates
-              you want to change.
+              {plan.lines.length === 1
+                ? 'Amount shown is this line’s whole-season total.'
+                : `${plan.lines.length} budget lines are shown as one row. Amounts are each line’s whole-season total, not this column’s share.`}
+              {canWrite ? (plan.lines.length === 1
+                ? ' Open it to change its payment dates.'
+                : ' Open one to change its payment dates.') : ''}
             </p>
           </div>
         </div>
