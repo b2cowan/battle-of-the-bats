@@ -333,16 +333,6 @@
    column outranks both — otherwise the scrolled money columns slide over the line name. */
 .periodGrid thead .periodGridYearRow th { z-index: 2; }
 
-/* "N lines" beside a merged row's name (P1) — the List's own caption vocabulary, quiet so the
-   name stays the row's identity. */
-.periodGridCount {
-  margin-left: 0.45rem;
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
 /* The year band above the months. Quiet — it is structure, not a heading to read — and its own
    hairline shows how far each year reaches. */
 .periodGridYearRow th {

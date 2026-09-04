@@ -114,6 +114,40 @@ npm run check:migrations
 
 **Skip this step for `dev` releases** (the check compares dev↔prod; it's a production gate).
 
+### 1d-1 — The live demos still tell the truth (master / promote targets only)
+
+Both sandboxes are **fully public on production** and are the only surfaces where the product sells
+itself unattended. Their **dates** are kept right by the nightly scheduler; their **content** is not
+kept by anything — it arrives only when somebody re-seeds prod. So a release that changes the demo
+world (new screens, new taxonomy, a new money shape) ships the feature to prod and leaves the demo
+world behind, silently, on a page a prospect is reading.
+
+That is not hypothetical: on 2026-09-04 the prod coach demo was found showing *"Not itemized"* on
+all 20 budget rows, an empty Sponsorship screen, an empty club-money screen, an empty scouting book
+and no awards — 27 days old, in public. The checker that catches every one of those already existed
+and passed green daily, because it had only ever been pointed at **dev**.
+
+```powershell
+npm run check:demos:prod
+```
+- ✅ pass → continue.
+- ✖ fail → the live demo has fallen behind the demo world. Re-seed it **deliberately** (it is a
+  public surface, so this is a decision, not a build step) and re-run:
+  ```powershell
+  node --env-file=.env.production.local scripts/seed-demo-coach.mjs --allow-prod
+  node --env-file=.env.production.local scripts/seed-demo-tournament.mjs --allow-prod
+  npm run check:demos:prod
+  ```
+  A reseed reuses the org, the demo user, the teams and their program years, so **every public demo
+  link survives it**; only the child rows are rebuilt.
+
+⚠ **Read-only, always.** `--prod` checks and never writes; `--tick --prod` is refused. It fails
+rather than skips when credentials are missing or the demo org is absent — on production, a gate
+that proves nothing must not report success.
+
+**Skip this step for `dev` releases** (`npm run check:demos`, inside `verify:changed`, already
+covers dev).
+
 ### 1d-2 — Deploy-only / native-dependency verification (master / promote targets only)
 
 Some failures **cannot be caught locally or by the TypeScript check** — they only appear in the deployed Amplify Lambda, because local has the full `node_modules` and a different bundler path. The worst class is **native/compiled dependencies** (e.g. `sharp` and its `@img/*` / `detect-libc` deps) and **build-config changes**: these can crash at *module load*, which throws **before** `withObservability`'s try/catch, so the in-house observability dashboard never records it — only Amplify CloudWatch shows it (this is the 2026-06-24 `sharp` "Failed to load branding settings" prod-500 incident; see memory `reference_sharp_turbopack_webpack`).
@@ -297,6 +331,8 @@ git log origin/master..origin/dev --oneline
 If there are **no commits ahead**, report: "origin/dev and origin/master are already in sync — nothing to promote." and stop.
 
 **Migration drift gate (required):** before showing the summary, run `npm run check:migrations`. If prod is behind dev, **STOP** and report the missing tables/columns — the matching migration(s) must be applied to prod (`node scripts/apply-migration-api.mjs <file> --prod` → `node scripts/refresh-db-snapshots.mjs`) before promoting, unless the user explicitly confirms the drift is intentional.
+
+**Live-demo drift gate (required):** also run `npm run check:demos:prod`. If it fails, the public demos have fallen behind the demo world — re-seed prod (§1d-1) before promoting, or get the user's explicit confirmation to ship with a stale shop window. ⚠ Unlike the migration gate, a failure here does not break the product: it renders perfectly and reads wrong, which is why it is checked rather than noticed.
 
 Show the promote summary:
 

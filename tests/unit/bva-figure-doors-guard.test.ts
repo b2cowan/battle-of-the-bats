@@ -17,9 +17,15 @@
  *     refused on the other. ⚠ The fix moved the door onto the FIGURE, which immediately made the
  *     caption a second way into the same panel a thumb's width away — so it went back to being
  *     plain text hours later (owner: *"why do I need the 2 lines link at all when I can click the
- *     2500?"*). Both states are pinned below, because the caption has now changed hands twice in
- *     two days and the next reader deserves the RULE rather than the outcome: a caption earns a
- *     click only when the number beside it is not already a door.
+ *     2500?"*). ⚠⚠ **AND THEN THE CAPTION ITSELF WENT** (owner ruling 2026-09-04, QA §133) — the
+ *     third ruling on the same two words in three days, and the first to question the premise
+ *     rather than the styling. Every earlier round argued from "nothing else on the row says the
+ *     row is a merge"; the owner rejected that as a spiral — *"I don't know how much gas is in my
+ *     car until I turn it on... there is nothing bad that would happen for a user to see a closed
+ *     row, know it's openable, and just not immediately know the count before opening"*. The rule
+ *     that survives is wider than this caption: **a fact the coach will learn by opening the thing
+ *     does not need a label promising it.** It came off all three screens and all three export
+ *     labels in one go.
  *   · the category bar opened on a click anywhere on the row; the item row opened only on its 13px
  *     chevron — two rows in one table with two different rules.
  *
@@ -55,6 +61,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PANEL = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx';
 const ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.ts';
+/* Scanned too, because the "N lines" caption lived on three screens and in three export labels and
+   was removed from ALL of them in one ruling — a partial re-add is the drift this guards. */
+const BUDGET  = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx';
+const EXPORTS = 'lib/coach-money-exports.ts';
 
 /**
  * Comments stripped, because this guard is about CODE. Block comments go wholesale; line comments
@@ -195,22 +205,49 @@ test('every control inside the tappable row stops the row from also toggling', (
   }
 });
 
-test('the "N lines" caption is a caption, not a second door', () => {
-  /* ⚠ IT HAS CHANGED HANDS TWICE IN TWO DAYS and the rule that settles it is a question, not a
-     preference: is the number beside it already a door? It is, so the caption announces the merge
-     and nothing more — which is also how the Budget tab's by-period grid has always rendered it,
-     so the two views of one report agree again. */
-  const caption = panel.split('\n').find(l => /\{item\.lineCount\} lines/.test(l));
-  assert.ok(caption, 'the "N lines" caption is gone entirely — it is the only thing on the row that '
-    + 'says the row is a merge, which is why the words survived when the link did not');
+test('no surface counts the lines behind a merged row — not a caption, not a suffix', () => {
+  /* ⚠⚠ THIS TEST USED TO ASSERT THE OPPOSITE, and that is the point of reading it. For two days it
+     REQUIRED the "N lines" caption to exist, on the reasoning that it was "the only thing on the row
+     that says the row is a merge". The owner struck down the reasoning rather than the styling
+     (2026-09-04, QA §133): a coach who opens the row learns the count, and nothing bad happens in
+     the meantime — *"I don't know how much gas is in my car until I turn it on"*.
+
+     Guarded across every surface at once, because the words were kept in step on purpose and a
+     partial removal would put the two views of one report back into two vocabularies, which is the
+     defect all three earlier rounds of this argument were separately trying to fix.
+
+     ⚠ If you are about to re-add it, the question is not "would this be useful?" — it is: does the
+     coach get this fact by opening the thing anyway? If yes, the label is over-explaining, and
+     over-explaining is what fills these screens with text. */
+  const surfaces: Array<[string, string]> = [
+    ['the Budget vs. Actual statement', panel],
+    ['the Budget tab (list view + by-period grid)', codeOnly(readFileSync(join(ROOT, BUDGET), 'utf8'))],
+    ['the money exports', codeOnly(readFileSync(join(ROOT, EXPORTS), 'utf8'))],
+  ];
+  /* Deliberately narrow: it matches a count read OFF A ROW (`item.` / `row.`) and printed beside the
+     word. It must NOT catch the two counts that survived on their own merits — the "Bring last
+     season's plan (12 lines)" button, which sizes an action nothing on screen reveals, and the edit
+     form's "already has 2 lines on this plan" hint, which explains why the field beside it just
+     changed its label. Neither is a row telling you about itself. */
+  const COUNT_BESIDE_LINES = /\b(?:item|row)\.(?:lineCount|lines\.length)\b[^\n]{0,40}\blines\b/;
+  for (const [what, src] of surfaces) {
+    const hit = src.split('\n').find(l => COUNT_BESIDE_LINES.test(l));
+    assert.ok(
+      !hit,
+      `A line count is back on a merged row in ${what}:\n${(hit ?? '').trim()}\n`
+      + 'Owner ruling 2026-09-04 (QA §133) took it off every surface in one go. A fact the coach '
+      + 'gets by opening the row does not need a label promising it first.',
+    );
+  }
   assert.ok(
-    !/<button/.test(caption) && !/onClick/.test(caption),
-    `The "N lines" caption is a control again:\n${caption.trim()}\n`
-    + 'Before re-dressing it, answer the test: is the number beside it already a door?',
+    !/budget lines'/.test(panel),
+    'The plan panel is counting its own list again ("$2,500.00 planned, from 2 budget lines"). Those '
+    + 'lines are printed directly underneath that sentence, so it tells the reader the length of the '
+    + 'list they are already looking at.',
   );
   assert.ok(
     !panel.includes('lineCountBtn'),
-    'The caption\'s control styling is back. It was a dotted underline, a focus ring and a 44px '
-    + 'touch box — all correct for a button, and all wrong for text that no longer clicks.',
+    'The old caption\'s control styling is back — a dotted underline, a focus ring and a 44px touch '
+    + 'box. There is no caption left for it to dress.',
   );
 });

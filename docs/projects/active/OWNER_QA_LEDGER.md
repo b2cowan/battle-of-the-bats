@@ -17059,10 +17059,30 @@ Part A steps 5–6 were amended in place, same URL):**
   carries no date, read off the month grids' own totals so it can never disagree with the Months
   view. The to-date BASIS switch is deliberately not built — it changes what "under budget" means on
   a figure quoted across five surfaces.
-- **F7 · ⚠ THE PUBLIC PROD COACH DEMO IS SHOWING "Not itemized" ON EVERY BUDGET ROW.** All 20 of
-  `riverdale-ridge`'s budget lines carry no item on **prod**; dev's 21 all do. The seed is correct —
-  prod's demo data predates the item wiring, and the nightly cron reconciles dates, never taxonomy.
-  **Fix is a prod demo reseed. Owner approval pending — public surface.**
+- **F7 · ✅ FIXED ON PRODUCTION 2026-09-04 — the public coach demo reads item by item again.** All 20
+  of `riverdale-ridge`'s budget lines carried no item on **prod** (5 no category), and all 17 expenses
+  none, so BOTH sides of Budget vs. Actual read *"Not itemized"* in public. Owner-approved and
+  reseeded that day: **21 lines, 0 unfiled**, matching dev. Verified on the LIVE SITE — the deployed
+  report serves nine NAMED rows (Dome Time, Entry Fees, Jerseys, Batting Cages, Umpire Fees,
+  Printing, Fundraising drive, and Merchandise sales / Photo Day correctly out-of-plan), zero
+  *"Not itemized"*, plan total back to $12,100 from $11,700. **No migration was needed** — the demo
+  world names 7 categories, all present on prod.
+  - ⚠ **The finding was much wider than the budget rows, and only a PROD-pointed check found it.**
+    The prod demo had been seeded once (2026-08-08) and never rebuilt, so 27 days of demo-world
+    growth never arrived: Sponsorship, club money/Payments, the opponent scouting book, awards and
+    player testing all rendered EMPTY to a prospect. **The checker that catches every one of those
+    already existed and had only ever been pointed at dev** — 28 failures on prod against 0 on dev.
+  - **Recurrence closed:** `npm run check:demos:prod` (read-only; refuses to write; FAILS rather
+    than skips when credentials or the demo org are missing) is now a pre-promote release gate. The
+    nightly reconcile was deliberately **not** widened — it is date-only by design and was working
+    correctly here; content drift can only arrive via a release, so the release is the gate.
+  - ⚠⚠ **DO NOT SEED PROD FROM A WORKING COPY AHEAD OF WHAT IS DEPLOYED.** The same session also
+    reseeded the TOURNAMENT sandbox because the new gate called it broken; local `dev` was 48
+    commits ahead of the remote and the checker was asserting an **unreleased** redesign against a
+    live system. Prod's own deployed checker reports that sandbox **presentable**, and its stateless
+    reconcile self-corrected. The coach half was safe only because its demo world diffs EMPTY
+    against `origin/master` — **check that diff before every prod seed.** The gate now prints the
+    commits-ahead count before its findings.
 
 **Owner ruling pending — required dates on a budget line.** Proposal artifact
 `9bc53080-ba3c-4856-891e-aef63e51bd7d`: every line answers *"when does this money move?"* at MONTH
@@ -17271,7 +17291,7 @@ stored), a names split with one dated and one dateless chunk (`Jersey order`), a
 2026-09-02):** all six phases, with Q6 (category rename) deliberately HELD at its owner
 checkpoint — categories are org-shared with no team column (verified live), so the policy
 question is the owner's before any variant is built. Eight parts to walk: (A) one grain — the
-By-period grid sums same-item lines "2 lines", both views share one ordering; (B) the split
+By-period grid sums same-item lines into one row, both views share one ordering (⚠ the "2 lines" caption this part was written against was REMOVED mid-walk on 2026-09-04 — owner: over-explaining; the sum stays, the label is gone from both views and from the exports); (B) the split
 editor reopens in its stored mode, names-mode chunks carry optional dates; (C) the rescale banner
 replaces the silent total/split desync, and the server 409s it as a belt (the split now rides the
 line's own save request); (D) the Schedule column, Collapse all, tighter desktop rows, remembered
@@ -18072,3 +18092,55 @@ two assertions had been describing an `Edit` button Part B deleted in August.
    above the fold (the old page put five fields there first); every card closes with "Open ›"; and
    `uat-asst-money-read@uat-test-org.local` opens the same room with values, no write control
    anywhere, and the walk still working.
+
+
+## §142 · Player dues join the Budget vs Actual Statement, and "Funded by players" is deleted — BUILT 2026-09-04, awaiting QA
+
+**The ruling this executes (owner, 2026-09-04, amended twice the same day after the mockup gate):**
+the Statement counted every cost and left out the season's largest money in. One report answered
+"what is revenue?" two ways — **$11,308.30 apart** on this fixture — and Season net read
+**($11,650.00)** on a season that is really **$341.70** short. Player dues now sit first in the
+Revenue band, budgeted at what the dues **instalments** actually bill (the feed the Months view
+plots, so Total revenue equals Months to the cent by construction).
+
+**⚠ The two amendments override the approved design session, and both are load-bearing:**
+
+1. **"Funded by players" is DELETED, not rewritten** — from both report shapes, from the download,
+   and from the PDF's opening block. Once dues are revenue, its Budgeted figure is the budgeted
+   Season net with the sign flipped, and its Actual is Season net's Actual negated. With D = dues
+   billed, F = other income and E = the plan: plan needs = E − F, its shortfall (E − F) − D is
+   exactly −((D + F) − E). Two rows, four figures, no new fact. **The $341.70 still ships — it IS
+   the budgeted Season net.**
+2. **The explanation is a sentence in the stack under the table, second** — after the variance key,
+   before the undated-plan line. Four states, approved wording verbatim, **no colour in any state**.
+
+**Plan:** `docs/projects/active/COACH_BVA_REVENUE_RECONCILE_PLAN.md` + `_PM_BRIEF.md`
+**Mockup gate:** `claude.ai/code/artifact/b77eece5-228c-45f2-aa3d-d705c6c5b5d1`
+**Design session:** `claude.ai/code/artifact/245b6498-b7ff-412f-8062-a47eec82e8fa`
+**Walkthrough:** `claude.ai/code/artifact/343a8566-04c4-4a55-9354-56e0aa0d0f86`
+**No migration.** `check:money-report` gained four claims, all four adversarially verified to fail
+on demand (a one-cent drift in `billed` trips three of them; only a broken identity trips the
+fourth, which is the right shape).
+
+### ⚠ This walk ALSO covers the §132 round-three work
+
+Those changes — every figure a door, the permanent "$X paid · $Y back" sub-row deleted into the
+panel, the item row opening on a click anywhere, "not planned" removed from beside the tint — landed
+on dev **after** §132's walk had already passed 42/42. They have never been walked. They are Part B.
+
+### The parts
+
+1. **A · The row is there and the report adds up.** Player dues leads Revenue; Total revenue is
+   $13,258.30; Season net reads ($341.70) rather than ($11,650.00); switch to Months · Budget and
+   read the same $13,258.30.
+2. **B · The §132 round-three work, never walked.** Both figures on a row open; the row opens on a
+   click anywhere; no permanent paid/back sub-row; no "not planned" word beside the tint; the "N
+   lines" caption is plain text.
+3. **C · Read ONE row and say what it is saying.** The step this walk exists for.
+4. **D · The sentence.** Second in the stack, no colour, and it says the gap IS the Season net above.
+5. **E · "Funded by players" is gone everywhere.** Both shapes, the Excel/CSV, and the PDF's header.
+6. **F · By activity.** Player dues leads it too, and the blocks still sum to the same Season net.
+7. **G · Phone (361px).** The sentence reads at rest below the table, not inside a scrolling column.
+8. **H · The empty state.** A team with no dues schedule: an em-dash and a door, never $0.00.
+9. **I · Calls to make.** The dues row's figures deliberately do not open; the populated caption
+   names Player Dues without linking it; the floored season says nothing.

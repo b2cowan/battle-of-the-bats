@@ -7,6 +7,14 @@
  *     money back nets into the cost it repaid, and a cost a family paid a vendor directly counts,
  *     because the season really did spend it. They must agree with each other. (Claims 1–2.)
  *
+ *   · **AND SINCE 2026-09-04 THE TWO REPORTS SHARE ONE CLAIM ABOUT THE PLAN.** Player dues joined
+ *     the Statement's revenue band, so its BUDGETED revenue must equal the Months view's to the
+ *     cent — the identity that change exists to create. It is the budgeted column ONLY: the two
+ *     ACTUAL columns are the two bases above and legitimately differ, which is why the old
+ *     "statement = grid" claim was deleted rather than extended. The sentence under the table
+ *     ("the $X gap is the budgeted Season net") is a proof printed on screen and is checked as
+ *     one, including the single state where it must stay SILENT. (Claims 8–10.)
+ *
  *   · the **MONTHS GRID** — two bands now, REVENUE and EXPENSES — is the season's **CASH**: gross
  *     both directions, team-cash only, and it must agree with the **REGISTER**, which is the book
  *     `check:register` already proves IS Cash on hand. (Claims 3–6.)
@@ -98,6 +106,11 @@ import { resolveUatContext } from './uat-fixture-context.mjs';
 import { PAYOUT_CATEGORY_NAME, revenueGroupOf } from '../lib/coach-budget-months.ts';
 // Each name from the module that OWNS it — the rollup decides what a nameless category is called.
 import { NO_CATEGORY_LABEL } from '../lib/coach-budget-rollup.ts';
+/* The dues row's identity and the ONE predicate deciding whether the sentence renders — imported
+   from the module the SCREEN renders from, so this script cannot end up checking a different rule
+   from the one that ships. (Vocabulary and identity may be shared; the arithmetic below is still
+   derived here, per the line this file draws above.) */
+import { DUES_CATEGORY_ID, duesSentenceRenders } from '../lib/coach-dues-revenue.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SESSION = path.join(ROOT, 'tests/uat/.auth/coach.json');
@@ -591,6 +604,94 @@ async function main() {
     }
   }
 
+  /* ══ 8. DUES ARE ON THE STATEMENT, AND THE TWO VIEWS AGREE ABOUT THE PLAN ═════════════════════
+     The identity this whole change exists to earn (owner ruling 2026-09-04). Until dues joined the
+     revenue band, one report answered "what is revenue?" two ways — $11,308.30 apart on this very
+     fixture — and nothing on either screen said why.
+
+     ⚠⚠ THE **BUDGETED** COLUMN ONLY, AND THAT IS DELIBERATE RATHER THAN A GAP. The two ACTUAL
+     columns are two BASES: Months is cash (gross both ways, team-cash only, money back arriving as
+     revenue) and the Statement is what the season earned. Claiming both equal would fail on every
+     team that has ever been refunded a dollar — which is exactly why the old "statement = grid"
+     claim was deleted (see this file's header). One claim per authority; the bases differ on
+     purpose, and the screen says so in its own words.
+
+     ⚠ A SEASON TOO LONG TO DRAW IS NOT COMPARED HERE — it is FAILED, loudly, at the foot of this
+     run. A truncated band has dropped columns, so its total is short by an unknown amount and the
+     comparison would be against a figure that is not the season. */
+  const duesCat = (data.report?.revenue?.categories ?? [])
+    .find(c => String(c.categoryId ?? '').replace(/^id:/, '') === DUES_CATEGORY_ID);
+  const monthsDues = (revenue.categories ?? [])
+    .find(c => String(c.categoryKey ?? '').replace(/^id:/, '') === DUES_CATEGORY_ID);
+
+  if (!revenue.truncated) {
+    if (cents(data.report?.revenue?.budgeted) !== cents(revenue.totals?.total?.budget)) {
+      problems.push(
+        'THE STATEMENT AND MONTHS DISAGREE ABOUT BUDGETED REVENUE — statement '
+        + `${money(cents(data.report?.revenue?.budgeted))} vs Months ${money(cents(revenue.totals?.total?.budget))}`
+        + ` (out by ${money(cents(data.report?.revenue?.budgeted) - cents(revenue.totals?.total?.budget))})`
+        + '\n      ⚠ This is the identity dues joined the Statement to create, and a coach reads both'
+        + '\n        views of one report from one menu.');
+    }
+    /* ── 8b. AND THE DUES ROW ITSELF, so two groups cannot cancel each other out ─────────────────
+       A season total can be right while the row under it is wrong — the same reason claim 4 stands
+       beside claim 3. This is the tighter of the pair, and the one that would name the bug. */
+    if (cents(duesCat?.budgeted) !== cents(monthsDues?.total?.budget)) {
+      problems.push(
+        'THE PLAYER DUES ROW DISAGREES WITH THE MONTHS DUES GROUP — statement '
+        + `${money(cents(duesCat?.budgeted))} vs band ${money(cents(monthsDues?.total?.budget))}`
+        + ' — both are meant to be the same sum of the same instalments');
+    }
+  }
+
+  /* ══ 9. THE SENTENCE UNDER THE TABLE IS A PROOF, SO IT IS CHECKED RATHER THAN TRUSTED ══════════
+     It claims out loud that the gap between what the plan needs from families and what dues bill
+     IS the budgeted Season net. That claim is the entire justification for deleting the "Funded by
+     players" row, and a sentence stating an identity that has quietly stopped holding is worse than
+     no sentence at all: it reads like a proof.
+
+     ⚠⚠ AND THE ONE STATE WHERE IT MUST STAY SILENT IS ASSERTED FROM THE OTHER SIDE. When other
+     income exceeds the whole plan, "plan needs" floors at zero and the identity genuinely breaks —
+     so the screen suppresses the sentence. Checking only the happy path would let that suppression
+     regress into a false claim printed on screen. The predicate is IMPORTED from the module the
+     screen renders from, so this cannot end up checking a different rule from the one that ships. */
+  const dues = data.dues;
+  if (!dues) {
+    problems.push('the payload carries no dues block at all — the Player dues row and the sentence'
+      + ' beneath the table are both written from it, so both are gone');
+  } else if (duesSentenceRenders(dues)) {
+    const gap = cents(dues.planNeeds) - cents(dues.billed ?? 0);
+    if (gap !== -cents(data.report?.net?.budgeted)) {
+      problems.push(
+        `THE SENTENCE UNDER THE TABLE IS NOT TRUE — it tells a coach the ${money(Math.abs(gap))} gap`
+        + ` IS the budgeted Season net, but that net is ${money(cents(data.report?.net?.budgeted))}`
+        + ` (plan needs ${money(cents(dues.planNeeds))} − dues billed ${money(cents(dues.billed ?? 0))})`);
+    }
+  } else if (dues.planNeedsFloored) {
+    /* The floored season: the ROW may still render (those are real dollars, and dropping them would
+       break claim 8), the SENTENCE may not. Asserted the other way round — that the suppression is
+       doing something — because this is the branch a future tidy-up is most likely to flatten. */
+    const gap = cents(dues.planNeeds) - cents(dues.billed ?? 0);
+    if (gap === -cents(data.report?.net?.budgeted)) {
+      problems.push(
+        'the sentence is suppressed on a season whose plan needs nothing from families, and yet the'
+        + ' identity holds — the suppression rule and the arithmetic have parted company');
+    }
+  }
+
+  /* ══ 10. THE TWO SOURCES FOR "WHAT DUES BILL" HAVE NOT PARTED ═════════════════════════════════
+     This report sums the dues INSTALMENTS (the feed the Months view plots, and the owner's ruling);
+     the Budget plan page sums the SCHEDULE TOTALS those instalments were broken out of. They are
+     the same figure whenever a schedule's instalments add up to its own total, and NOTHING IN THE
+     DATABASE FORCES THAT. Two screens quoting one fact from two columns is a real defect worth
+     finding rather than a difference worth papering over — so it is a claim, not a comment. */
+  if (dues && dues.billed !== null && cents(dues.billed) !== cents(dues.assessed)) {
+    problems.push(
+      `THE TWO "WHAT DUES BILL" SOURCES DISAGREE — instalments ${money(cents(dues.billed))} (this`
+      + ` report, and the Months band) vs schedule totals ${money(cents(dues.assessed))} (the Budget`
+      + ' plan page). One family\'s instalments no longer add up to their own schedule.');
+  }
+
   if (problems.length > 0) {
     console.error('\n✗ The report tells more than one story about one season:\n');
     for (const p of problems) console.error(`  · ${p}`);
@@ -611,6 +712,22 @@ async function main() {
   console.log(`  and the cash arithmetic dated every dollar the way the register did  ✓`);
   console.log('  every group equals the rows a coach can open behind it, month by month  ✓');
   console.log(`  the Statement's bridge to Months adds up: ${money(statement)} spent → ${money(cashOutTotal())} in cash  ✓`);
+  /* ⚠ THE DUES CLAIMS SAY SO TOO (2026-09-04), on this file's own principle: a claim nobody can see
+     reads like one that did not happen. All four are new and all four are about a row a coach has
+     only just started seeing on this report. */
+  console.log(`  the Statement's budgeted revenue IS the Months view's: ${money(cents(data.report?.revenue?.budgeted))}, dues row included  ✓`);
+  console.log(`  and the Player dues row matches the Months dues group to the cent: ${money(cents(duesCat?.budgeted))}  ✓`);
+  if (dues && duesSentenceRenders(dues)) {
+    console.log(`  the sentence under the table is true: plan needs ${money(cents(dues.planNeeds))} − dues billed`
+      + ` ${money(cents(dues.billed ?? 0))} = ${money(cents(dues.planNeeds) - cents(dues.billed ?? 0))}, which IS the budgeted`
+      + ' Season net with its sign flipped  ✓');
+  } else {
+    /* ⚠ SAID OUT LOUD RATHER THAN OMITTED. The sentence is deliberately suppressed on a season whose
+       plan needs nothing from families; printing nothing here would be indistinguishable from the
+       claim having been dropped. */
+    console.log('  the sentence under the table is correctly SILENT (this season\u2019s plan needs nothing from families)  ✓');
+  }
+  console.log(`  and both "what dues bill" sources agree: instalments = schedule totals = ${money(cents(dues?.billed ?? 0))}  ✓`);
 
   /* ══ The two "this run is not evidence" gates. Both exit NON-ZERO. ═════════════════════════════
      ⚠ A SKIPPED CLAIM MUST NEVER READ AS A PASS. These used to be `console.log` notes above a green
@@ -628,6 +745,23 @@ async function main() {
     console.error(`  Grid columns: ${grid.months?.length ?? 0}${grid.truncated ? ' (TRUNCATED)' : ''}.`);
     console.error('  Usually this means a record carries a mis-typed year — find it rather than widening');
     console.error('  the cap.\n');
+    process.exit(2);
+  }
+
+  /* 1b. A SEASON TOO LONG TO DRAW. The revenue band caps its columns exactly as the expense band
+     does, and when it truncates its grand total is short by whatever fell off the end — so the
+     Statement-equals-Months identity (claim 8) would be compared against a figure that is not the
+     season. It is SKIPPED above and FAILED here, loudly, rather than quietly passing: a claim
+     nobody made must never read as a claim that held. This is the newest identity on the report and
+     the one a reader is most likely to assume was checked. */
+  if (revenue.truncated) {
+    console.error('\n⚠ THE STATEMENT-EQUALS-MONTHS CLAIM IS UNPROVEN — the revenue band TRUNCATED its');
+    console.error('  columns, so its total is short by whatever fell outside the window and cannot be');
+    console.error('  compared with the Statement\u2019s.');
+    console.error(`  Revenue band columns: ${revenue.months?.length ?? 0} (TRUNCATED).`);
+    console.error('\n  This is the identity dues joined the Statement to create, and it is exactly the');
+    console.error('  claim a coach reads across two views of one report. Usually a record carries a');
+    console.error('  mis-typed year — find it rather than widening the cap.\n');
     process.exit(2);
   }
 
@@ -680,6 +814,15 @@ async function main() {
   }
   /* ⚠ AND ROWS BEHIND THE REVENUE FIGURES (D-2). Claim 6a is a comparison between two grains; a
      season whose groups have no rows compares a figure against nothing and passes every time. */
+  /* ⚠⚠ AND A DUES SCHEDULE (2026-09-04). Claims 8, 8b, 9 and 10 are all about the dues row: with
+     no schedule, `billed` is null, the row renders as an em-dash and every one of them is either
+     trivially true or not made at all. A green run over such a team proves nothing about the
+     identity dues joined this report to create. */
+  if (!data.dues || data.dues.billed === null) {
+    missing.push(
+      'a PLAYER DUES SCHEDULE (the Statement-equals-Months identity, the dues row and the sentence'
+      + ' under the table are all about it — with none, four claims cannot fail)');
+  }
   if (!(revenue.categories ?? []).some(c => (c.lines ?? []).length > 0)) {
     missing.push(
       'a revenue group with ROWS behind it (the families, drives or sponsors D-2 opens to) — without'

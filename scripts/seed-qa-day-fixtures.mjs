@@ -1038,8 +1038,9 @@ async function seedMoneyLab() {
   // fixture reporting green is the exact failure the category+item plan's §11.9 exists to end.
   //
   // ⚠ TWO LINES ON ONE ITEM, deliberately (the owner's own screen was two lines under Entry Fees).
-  // The plan and the report SUM them into one row reading "Entry Fees · 2 lines · $2,800". Without
-  // a second line the lab cannot demonstrate the ruling at all.
+  // The plan and the report SUM them into one row reading "Entry Fees · $2,800", which opens to
+  // the two lines behind it. (The row used to carry a "2 lines" caption; that came off every
+  // surface on 2026-09-04, QA §133.) Without a second line the lab cannot demonstrate the ruling.
   //
   // ⚠ One line is left with NO periods on purpose. An undated line must NOT be smeared across the
   // months (that behaviour changed deliberately) — it is the case the cumulative chart note in the

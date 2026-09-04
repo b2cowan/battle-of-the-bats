@@ -16,6 +16,10 @@ import {
   RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
   type MonthGrid, type MonthCell, type MoneyRowDirection,
 } from '@/lib/coach-budget-months';
+import {
+  duesRowRenders, duesSentenceRenders, duesFundingState, duesGap, isDuesCategory,
+  type DuesRevenue,
+} from '@/lib/coach-dues-revenue';
 import { formatStoredDate } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
@@ -59,7 +63,10 @@ interface ItemResult {
    *  the reverse) and is decided ONCE in the rollup, so this screen has one colour rule and
    *  changes only its wording per section. */
   variance: number;
-  /** Two or more budget lines summed into this row — worth captioning, per the SUM ruling. */
+  /** Two or more budget lines summed into this row. ⚠ NOTHING RENDERS THIS ANY MORE — the caption
+   *  it existed for was removed from every surface (owner ruling 2026-09-04, QA §133). Kept because
+   *  `lines` is optional across a rolling deploy and this is the one field that still says "this
+   *  row is a merge" without it; delete it only together with that guard. */
   lineCount: number;
   /** ⚠ DERIVED, never stored: is there a budget line for this category+item? False = the team was
    *  charged for something it never planned, which is the row this whole change exists to show. */
@@ -154,13 +161,16 @@ interface BvaData extends MonthGridPayload {
   /** Signed: negative means the lines have outgrown the estimate. */
   estimateDifference: number;
   overPlanned: boolean;
-  /** Null when the team plans no money in at all — the closing row simply isn't there. */
-  funding: {
-    budget: number;
-    /** Everything coming in: typed arrivals plus the team's SHARE of what fundraisers raised. */
-    actual: number;
-    fundedByPlayers: number;
-  } | null;
+  /**
+   * What families are billed, what the plan needs from them, and whether those two meet.
+   *
+   * ⚠ THE ROW'S OWN FIGURES ARE NOT HERE — they ride inside `report.revenue` like every other row,
+   * which is what makes Total revenue and Season net move with them and the export follow without
+   * knowing anything new. This block is what the SENTENCE under the table is written from, plus the
+   * two facts no figure on the report can state: that a schedule exists at all, and that the plan's
+   * residual was floored (`lib/coach-dues-revenue.ts` carries the whole reasoning).
+   */
+  dues: DuesRevenue;
   /** Both report shapes, off one grouping pass (mig 243). */
   report: MoneyReport;
   totalActual: number;
@@ -497,9 +507,12 @@ function RecordsBehind({ item, side, base, canWrite, onClose }: {
       <>
         {side === 'plan' ? (
           <>
+            {/* The figure is the answer; the lines are listed directly underneath it. Counting
+                them here was the same over-explaining the row caption was removed for (owner,
+                2026-09-04, QA §133) — a sentence telling you the length of the list you are
+                looking at. */}
             <p className={styles.linesBehindSub}>
-              <strong>{fmt(item.budgeted)}</strong> planned, from {item.lineCount}{' '}
-              {item.lineCount === 1 ? 'budget line' : 'budget lines'}
+              <strong>{fmt(item.budgeted)}</strong> planned
             </p>
             <ul className={styles.linesBehindList}>
               {(item.lines ?? []).map(l => (
@@ -679,27 +692,17 @@ function ItemRows({
                   <span className={shared.ledgerExpandSpacer} />
                 )}
                 <span className={shared.ledgerDesc}>{item.itemName}</span>
-                {/* Two or more lines summed into one row is the SUM ruling made visible — without
-                    it a coach would wonder why their plan has fewer rows than they wrote.
-                    ⚠⚠ A CAPTION AGAIN, NOT A CONTROL — and this is the SECOND time it has changed
-                    hands in two days, which is the point rather than churn. It became a button on
-                    2026-09-04 because it announced a merge the coach could not inspect; hours later
-                    the Budget figure beside it became the door onto exactly that list, and the
-                    owner asked the obvious question: *"why do I need the 2 lines link at all when I
-                    can click the 2500?"* Two affordances a thumb's width apart, opening the same
-                    panel, is the one-underline-one-meaning defect in miniature. The announcement is
-                    worth keeping — nothing else on the row says the row is a merge — so the WORDS
-                    stay and the door goes.
-                    ⚠ AND IT PUTS THE TWO VIEWS OF ONE REPORT BACK IN AGREEMENT. The Budget tab's
-                    by-period grid has always rendered this as plain text; for a few hours the
-                    statement rendered the same fact as a link, which is the same screen speaking
-                    two vocabularies about one thing.
-                    ⚠ Its clickability is not needed to make it inspectable, and that is the whole
-                    test to apply if somebody proposes making it a button a third time: is the
-                    number beside it already a door? */}
-                {item.lineCount > 1 && (
-                  <span className={shared.ledgerNote}>{item.lineCount} lines</span>
-                )}
+                {/* ⚠⚠ THE "N lines" CAPTION IS GONE — FROM EVERY SURFACE (owner ruling 2026-09-04,
+                    QA §133), together with its twins on the Budget list and the by-period grid. It
+                    had changed hands three times in three days: a caption, then a door, then a
+                    caption again, each time argued from "nothing else on the row says the row is a
+                    merge". The owner ended the argument by rejecting its premise — *"we can spiral
+                    with logic like that; I don't know how much gas is in my car until I turn it on"*.
+                    Nothing bad happens when a coach opens a row and only then sees two lines. The
+                    words were over-explaining, and over-explaining is what fills these screens with
+                    text a coach has to read past.
+                    ⚠ The build enforces the absence: tests/unit/bva-figure-doors-guard.test.ts. If
+                    you are about to re-add it in ANY form, that test is where to argue first. */}
                 {/* ⚠⚠ THE VISIBLE "not planned" WORD IS GONE (owner ruling 2026-09-04, QA §132
                     round three) — a deliberate RE-REVERSAL of D5.5 (2026-09-02), taken on the built
                     screen rather than on a plan, and the help article had been carrying the owner's
@@ -1118,6 +1121,122 @@ function SubtotalRow({
   );
 }
 
+/**
+ * THE PLAYER DUES ROW (owner ruling 2026-09-04).
+ *
+ * ⚠⚠ IT IS NOT A `CategoryGroup`, AND THAT IS DELIBERATE. Every other row on this report opens
+ * what is behind it (QA §132 round three) — the budget figure opens the plan lines, the actual
+ * opens the payments. This row has neither: dues are a SCHEDULE, not budget lines, and the payments
+ * are another screen's book. Rendered through the ordinary group it would offer a chevron and two
+ * figure-buttons that all open nothing, which is precisely the empty-panel defect `slimCategory`
+ * caused two days before this was written. Its caption names the screen that holds the records
+ * instead, and in the not-set state that caption IS the door.
+ *
+ * ⚠ AN EM-DASH, NEVER A ZERO. A `$0.00` dues row reads "nothing owed"; the truth on a team that has
+ * not set a schedule is "not set yet", and every team is in that state on day one. The download
+ * already writes a blank rather than a 0 for the same reason.
+ */
+function DuesRow({ cat, dues, base, canWrite }: {
+  cat: CategoryResult; dues: DuesRevenue; base: string; canWrite: boolean;
+}) {
+  const isSet = dues.billed !== null;
+  const duesHref = moneySectionHref(base, 'dues');
+  return (
+    <div className={`${shared.ledgerGroup} ${styles.duesRow}`}>
+      <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
+        <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+          {/* The width of the chevron its neighbours carry, so one row without a control does not
+              sit a quarter-inch left of every other name in the band. */}
+          <span className={styles.duesIndent} aria-hidden />
+          <span className={styles.duesNameStack}>
+          <span className={shared.ledgerName}>{cat.categoryName}</span>
+          <span className={styles.duesCaption}>
+            {isSet ? (
+              `${dues.familyCount} ${dues.familyCount === 1 ? 'family' : 'families'} · set on Player Dues`
+            ) : canWrite ? (
+              <>
+                Not set yet · <Link href={duesHref} className={styles.duesLink}>Set player dues</Link>
+              </>
+            ) : (
+              /* ⚠ NO DOOR A READ-ONLY COACH CANNOT WALK THROUGH. The words are an invitation to act;
+                 offered to someone the server will refuse, they are a dead end wearing a link's
+                 clothes. The fact still gets said. */
+              'Not set yet'
+            )}
+          </span>
+          </span>
+        </span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${isSet ? '' : shared.ledgerNumMuted}`}>
+          {isSet ? fmt(cat.budgeted) : '—'}
+        </span>
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>
+          {Math.abs(cat.actual) > 0.005 ? fmtCell(cat.actual) : '—'}
+        </span>
+        {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
+            so "−$0.00" would be arithmetic on an absence. */}
+        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}
+              style={{ color: isSet ? varianceColor(cat.variance) : undefined }}>
+          {isSet ? varianceText(cat.variance, 'in') : '—'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * WHAT THE PLAN NEEDS FROM FAMILIES, WHAT DUES BILL, AND WHICH WAY THE GAP RUNS (owner ruling
+ * 2026-09-04). Approved wording, verbatim, in all four states.
+ *
+ * ⚠⚠ SECOND IN THE STACK, UNDER THE VARIANCE KEY. The key tells a reader how to read the columns;
+ * this tells them what the bottom line means; then the rest. It is prose in the footnote voice —
+ * **no colour in any state** — because on this report colour belongs to the variance column, and a
+ * sentence painted green or red would be a second verdict competing with the figures it explains.
+ *
+ * ⚠ "BUFFER" AND "SHORT" ARE NOT COINED HERE. The Budget plan page already closes with exactly this
+ * pair (*Planned buffer* / *Short of covering the plan*), so the two screens that both answer "do
+ * dues cover the plan?" answer it in one vocabulary. Do not invent a third set.
+ *
+ * ⚠ THE SECOND SENTENCE OUTLIVES THIS CHANGE. Mid-season this report compares a WHOLE-SEASON plan
+ * against money that has moved SO FAR, so every figure in the Actual column runs behind and nobody
+ * has done anything wrong. The "To date" basis is the proper fix and is its own project; this is
+ * the honest half of it either way. The not-set state omits it, because a season with no dues has
+ * no Actual-column story to tell.
+ */
+function DuesSentence({ dues, base, canWrite }: {
+  dues: DuesRevenue; base: string; canWrite: boolean;
+}) {
+  const state = duesFundingState(dues);
+  const gap = Math.abs(duesGap(dues));
+  /* One clause, so the two sentences that carry it cannot drift apart. */
+  const basisNote = ' Both columns compare a whole season’s plan against what has moved so far,'
+    + ' so they run short until the season is finished.';
+  return (
+    <p className={styles.duesNote}>
+      This plan needs <strong>{fmt(dues.planNeeds)}</strong> from families and{' '}
+      {state === 'unset' ? (
+        <>
+          no dues are set yet, which is the whole of the budgeted Season net above.
+          {canWrite && (
+            <> <Link href={moneySectionHref(base, 'dues')} className={styles.duesLink}>Set player dues</Link></>
+          )}
+        </>
+      ) : state === 'covered' ? (
+        <>dues bill exactly that.{basisNote}</>
+      ) : state === 'short' ? (
+        <>
+          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — the <strong>{fmt(gap)}</strong> gap is
+          the budgeted Season net above.{basisNote}
+        </>
+      ) : (
+        <>
+          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — a <strong>{fmt(gap)}</strong> buffer
+          above the plan, which is the budgeted Season net above.{basisNote}
+        </>
+      )}
+    </p>
+  );
+}
+
 export function BudgetVsActualPanel({
   params: paramsPromise,
 }: {
@@ -1512,9 +1631,11 @@ export function BudgetVsActualPanel({
       ['Headroom', `${data.headroom < 0 ? '-' : '+'}${fmt(data.headroom)} ${data.headroom >= 0 ? 'under' : 'over'} budget — ${fmt(data.totalActual)} spent of ${fmt(data.effectiveBudget)} planned`],
     ];
     if (data.unbudgeted > 0.005) rows.push(['Spent off-plan', fmt(data.unbudgeted)]);
-    if (data.funding) {
-      rows.push(['Funded by players', `${fmt(data.funding.fundedByPlayers)} planned · ${fmtSigned(data.totalActual - data.funding.actual)} so far`]);
-    }
+    /* ⚠ "Funded by players" WENT FROM HERE TOO (owner ruling 2026-09-04), and this was the easiest
+       half of the deletion to miss. The row left the table and the spreadsheet; this block is the
+       PDF's own opening summary, and it quoted the same two figures — so leaving it would have been
+       the deletion in name only, with a board reading the deleted row at the top of the very file
+       it was deleted from. Both of its figures are Season net's, negated (plan §2). */
     return { label: 'This season', rows };
   }
 
@@ -1901,8 +2022,16 @@ export function BudgetVsActualPanel({
                     <>
                       <SectionBand label="Revenue" />
                       <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
+                        {/* ⚠ THE DUES ROW IS RECOGNISED BY ITS KEY, the same sentinel pattern
+                            `isPayoutCategory` established for the payouts band — the route injects a
+                            synthetic category carrying the id the Months band already uses for its
+                            dues group, so the two views name one thing one way. It renders itself
+                            because it has no records of this report's kind behind it (see
+                            `DuesRow`); everything else goes through the ordinary group. */}
                         {data.report.revenue.categories.map(cat => (
-                          <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
+                          isDuesCategory(cat.categoryId)
+                            ? <DuesRow key={catKeyOf(cat)} cat={cat} dues={data.dues} base={base} canWrite={moneyCanWrite} />
+                            : <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
                         ))}
                       </div>
                       <SubtotalRow
@@ -1937,7 +2066,20 @@ export function BudgetVsActualPanel({
                    category appears in both of its sections: "did hosting the tournament pay for
                    itself?" */
                 <>
-                  {data.report.activities.map(block => (
+                  {/* ⚠⚠ DUES LEAD THIS SHAPE TOO, OR THE BLOCKS STOP ADDING UP TO SEASON NET. Both
+                      shapes close on the same figure, and it moved when dues joined the revenue
+                      half — so a by-activity reading without them would show a coach blocks that
+                      sum to one number under a total that says another.
+                      ⚠ AS A ROW, NOT A BLOCK. A band, one row and a subtotal would be the words
+                      "Player dues" three times over a category that has exactly one figure and can
+                      never have a cost half; the payload still carries the block so nothing reading
+                      `activities` is short of a category. */}
+                  {data.report.activities.filter(b => isDuesCategory(b.categoryId)).map(block => (
+                    block.revenue && (
+                      <DuesRow key="dues" cat={block.revenue} dues={data.dues} base={base} canWrite={moneyCanWrite} />
+                    )
+                  ))}
+                  {data.report.activities.filter(b => !isDuesCategory(b.categoryId)).map(block => (
                     <Fragment key={`${block.categoryId ?? 'none'}|${block.categoryName}`}>
                       <SectionBand label={block.categoryName} />
                       {block.revenue && (
@@ -1991,24 +2133,19 @@ export function BudgetVsActualPanel({
                 </span>
               </div>
 
-              {/* What players actually had to fund, once everything coming in is taken off. The
-                  season net above is the books; this is the one figure a coach is asked for by a
-                  parent, and it closes the same subtraction the budget plan's summary makes so the
-                  two pages end on the same number. */}
-              {data.funding && (() => {
-                const fundedActual = data.totalActual - data.funding.actual;
-                const fundedVariance = data.funding.fundedByPlayers - fundedActual;
-                return (
-                  <div className={`${shared.ledgerTotal} ${styles.grandTotal}`}>
-                    <span className={shared.scrollXStickyCell}>Funded by players</span>
-                    <span className={shared.ledgerTotalNum}>{fmt(data.funding.fundedByPlayers)}</span>
-                    <span className={shared.ledgerTotalNum}>{fmtCell(fundedActual)}</span>
-                    <span className={shared.ledgerTotalNum} style={{ color: varianceColor(fundedVariance) }}>
-                      {varianceText(fundedVariance, 'out')}
-                    </span>
-                  </div>
-                );
-              })()}
+              {/* ⚠⚠ "FUNDED BY PLAYERS" STOOD HERE AND IS DELETED (owner ruling 2026-09-04). The table
+                  now ends where a statement ends: Total expenses, Season net, done.
+
+                  Once dues sit in the revenue band above, this row was the budgeted Season net with
+                  the sign flipped — always, not on one team. With D = dues billed, F = other income
+                  and E = the plan, "plan needs" is E − F, so its shortfall (E − F) − D is exactly
+                  −((D + F) − E). Its Actual column was spending less money in, which under this
+                  change is Season net's own Actual negated. Two rows, four figures, no new fact.
+
+                  ⚠ THE SHORTFALL STILL SHIPS, and it is the reason the change was worth making — it
+                  ships as Season net itself, named by the sentence in the stack below, which is
+                  where an explanation belongs rather than in a money column. Do not restore this
+                  row; if a figure here seems missing, it is one of the two directly above it. */}
               </div>
              </CoachScrollX>
              {/* The variance key (owner D5.1, 2026-09-02): one column speaking two dialects finally
@@ -2017,6 +2154,12 @@ export function BudgetVsActualPanel({
                Variance reads: revenue <b>+/−</b> against plan · costs <b>under / over</b> plan.
                Good news is always green.
              </p>
+             {/* SECOND IN THE STACK (owner ruling 2026-09-04) — after the key that says how to read
+                 the columns, before the undated-plan line. See `DuesSentence` for the wording rules
+                 and for the one state it deliberately says nothing in. */}
+             {duesSentenceRenders(data.dues) && (
+               <DuesSentence dues={data.dues} base={base} canWrite={moneyCanWrite} />
+             )}
              {/* HOW MUCH PLAN HAS NO DATE (owner ruling 2026-09-04, QA §132).
                  ⚠⚠ THE VARIANCE COLUMN COMPARES TWO DIFFERENT TIME SPANS — a WHOLE-SEASON plan
                  against actuals SO FAR — so mid-season it reports a large "under budget" that is
@@ -2106,7 +2249,10 @@ export function BudgetVsActualPanel({
                  </div>
                </details>
              )}
-             {data.funding && (
+             {/* ⚠ THE CONDITION MOVED OFF THE DELETED `funding` BLOCK to the thing it was always
+                 really about: is there a revenue half on this report at all? `funding` was a
+                 stand-in for exactly that test and is gone (route, §9). */}
+             {data.report.revenue.categories.length > 0 && (
                <p className={styles.fundingNote}>
                  A fundraiser&apos;s actual is your team&apos;s share — everything raised, less anything
                  paid back to the player who raised it (that already lowers their own dues). Money

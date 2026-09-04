@@ -18,6 +18,12 @@ const eslintConfig = defineConfig([
       // space-drop: when an inline element and adjacent text are split across lines with no
       // explicit space, the rendered space is lost. Forces an explicit {' '} / same-line space.
       "react/jsx-child-element-spacing": "warn",
+      // ⚠ ERROR, NOT WARN, AND IT EARNED THAT. A block comment written in a JSX children slot
+      // WITHOUT its braces is not a comment — it is text, and it renders. On 2026-09-04 a nine-line
+      // explanatory comment shipped into the Budget by-period grid and appeared on the owner's
+      // screen as the name of a budget row, mid-QA-walk. Nothing else catches it: it is valid JSX,
+      // valid TypeScript, and no test reads that cell.
+      "react/jsx-no-comment-textnodes": "error",
     },
   },
   {

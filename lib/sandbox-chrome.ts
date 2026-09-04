@@ -166,6 +166,16 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       // The Money hub's Budget-vs-Actual TAB (query-addressed) — the standalone page is a legacy
       // redirect now, and the chrome's arrival matcher understands `?section=` destinations.
       path: moneySectionHref(teamPath(DEMO_COACH_TEAM_IDS.offSeason), 'budget-vs-actual'),
+      /* ⚠⚠ RE-READ FOR DUES-ON-THE-STATEMENT (2026-09-04), and this line needed it more than any
+         other in the file: it is the ONE dock moment that lands a prospect directly on Budget vs.
+         Actual, and it makes a claim about dues.
+           · *Still true?* **Yes, and it stopped being a claim you had to take on trust.** "dues two
+             payments in — and one family behind" describes the seeded world; the screen it lands on
+             now carries a Player dues row stating exactly that money, where before this release the
+             report showed none of it. The other two clauses ("a budget built line by line", "the
+             winter's spending already against it") are the expenses half and are untouched.
+           · *Should a moment show it?* **Not a new one.** This moment already opens on the screen
+             that changed, so the world does the showing. No copy is added. */
       said: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
       bannerNote: 'The season is still being built',
     }),
@@ -584,6 +594,25 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              with no sentence over them — and the `ea8ddd14` cap (a hook plus ONE proof point per
              step) says no clause is added. If the owner wants the "one answer at the top of every
              money screen" story narrated, the honest move is to SWAP a clause, not append one. */
+      /* ⚠⚠ RE-READ FOR DUES-ON-THE-STATEMENT (2026-09-04 — player dues joined Budget vs. Actual's
+         revenue band and the closing "Funded by players" row was deleted), per CLAUDE.md's two
+         questions. This step LANDS a prospect on the changed screen, so the read is not optional:
+           · *Still true?* **Yes — and one clause got materially truer.** "Seven in ten dollars of
+             dues are in" describes the seeded WORLD, and it always did; what changed is that the
+             screen this step stops on now SHOWS that fact, in a Player dues row a prospect can read
+             without going anywhere. Until today the tour asserted a dues ratio on a report from
+             which dues were entirely absent. "Diamond rentals are over plan" is untouched — the
+             expenses half did not move — and no step or dock line names Season net, Total revenue,
+             or the deleted row, so nothing went stale.
+           · ⚠ The seeded mid-season world's Season net moves VISIBLY with this release: it read as
+             a large negative because every cost was counted and the season's biggest money in was
+             not. Nothing narrates it, which is why nothing broke — but a prospect who reads the
+             bottom line now sees a plausible one, which is the point.
+           · *Should a moment show it?* **No new stop, and no new clause.** The `ea8ddd14` cap holds
+             every step at a hook plus ONE proof point, and this step's proof point is the variance
+             verdict. The seeded world renders the dues row and the sentence beneath the table by
+             itself. If the owner wants "do dues cover the plan?" narrated, the honest move is to
+             SWAP a clause here, not append a fourth. Flagged at Owner QA §142. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

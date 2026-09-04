@@ -253,5 +253,10 @@ Not itemized` is BY DESIGN and must stay there**: an unfiled club bill counts ra
 dropped, and that bucket is the only thing exercising the path.
 
 **Still open on this plan, unchanged by round three:** the Months-vs-Statement revenue gap
-($11,308 — dues in one, not the other), the to-date variance basis, the required-dates ruling, and
-F7's prod demo reseed.
+($11,308 — dues in one, not the other), the to-date variance basis, and the required-dates ruling.
+
+**F7's prod demo reseed is DONE — executed and live-verified 2026-09-04** (Owner QA Ledger F7). The
+public coach demo reads item by item again — 21 budget lines, none unfiled — and the wider finding
+behind it is closed too: the prod demo had never been rebuilt since 2026-08-08, so Sponsorship, club
+money, the scouting book, awards and testing were all rendering EMPTY to a prospect. `npm run
+check:demos:prod` now gates a promote on the live demos still matching the demo world.

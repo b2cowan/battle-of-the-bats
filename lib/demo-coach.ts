@@ -1164,8 +1164,9 @@ export const OFFSEASON_BUDGET_LINES = [
   { description: 'Umpire fees',                        category: 'Officials',         item: 'Umpire Fees',   total: 1200 },
   { description: 'Raffle licence and printing',        category: 'Fundraising', item: 'Printing',      total: 600 },
   // ⚠ A SECOND LINE ON THE SAME ITEM AS THE FIRST, deliberately (mig 240). The owner's own screen
-  // was two lines filed under 'Entry Fees'; the plan and the report now SUM them into one row
-  // reading 'Entry fees · 2 lines · ,000'. Without this the demo never shows the rule.
+  // was two lines filed under 'Entry Fees'; the plan and the report SUM them into one row that
+  // OPENS to reveal both. Without this the demo never shows the rule. (That row carried a
+  // '2 lines' caption until 2026-09-04, when the count came off every surface — QA §133.)
   { description: 'Provincials entry — deposit',         category: 'Tournaments',       item: 'Entry Fees',    total: 400 },
 ] as const;
 

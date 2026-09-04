@@ -376,11 +376,11 @@ function PeriodGrid({ view, closed, onToggle }: {
                   <tr key={row.id} className={isFundingKind(group.lineKind) ? styles.periodGridFunding : ''}>
                     <th scope="row" className={shared.moneyGridLead}>
                       {row.description}
-                      {/* Two or more lines summed into this row (P1) — said in the List view's own
-                          words, so the two views describe one merge the same way. */}
-                      {row.lineCount > 1 && (
-                        <span className={styles.periodGridCount}>{row.lineCount} lines</span>
-                      )}
+                      {/* ⚠ NO "N lines" COUNT ON THIS ROW, and none on the Budget list or the
+                          Budget vs. Actual statement either — owner ruling 2026-09-04, QA §133. The
+                          full reasoning lives with the gate that enforces it,
+                          tests/unit/bva-figure-doors-guard.test.ts. Short version: a fact the coach
+                          gets by opening the row does not need a label promising it first. */}
                     </th>
                     {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
                     <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
@@ -1977,11 +1977,11 @@ export function BudgetPlanPanel({
                                 ? <ChevronRight size={14} aria-hidden />
                                 : <ChevronDown size={14} aria-hidden />}
                             </span>
+                            {/* ⚠ NO "N lines" CAPTION (owner ruling 2026-09-04, QA §133) — the full
+                                reasoning sits on the by-period grid above. The chevron says the row
+                                opens; opening it shows the lines. That is enough. */}
                             <span className={styles.lineInfo}>
                               <span className={shared.ledgerDesc}>{item.itemName}</span>
-                              <span className={`${shared.ledgerNote} ${shared.wrap640}`}>
-                                {item.lines.length} lines
-                              </span>
                             </span>
                           </span>
                           <span className={styles.schedCell} />

@@ -81,8 +81,10 @@ export interface PeriodViewRow {
   id: string;
   description: string;
   lineKind: BudgetLineKind;
-  /** How many budget lines were summed into this row (rule 3 — the SUM ruling). Two or more is
-   *  worth captioning: "2 lines", the List view's existing vocabulary. */
+  /** How many budget lines were summed into this row (rule 3 — the SUM ruling). ⚠ NOT RENDERED:
+   *  the "N lines" caption this once fed came off every surface on 2026-09-04 (owner ruling, QA
+   *  §133 — a fact the coach gets by opening the row does not need a label promising it). The
+   *  count still decides shape upstream; nothing prints it. */
   lineCount: number;
   /** Column key → amount. Absent key = nothing in that column (rendered as a dash, never $0.00 —
    *  a zero and a nothing are different facts). */

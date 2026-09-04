@@ -156,7 +156,6 @@
    unplanned spending is a flagged row in place now, not a card at the foot). */
 .linesContainer,
 .tableHeader,
-.grandTotal,
 .categoryHeader,
 .lineMain,
 .periodRow,
@@ -266,6 +265,12 @@
 .fundingNote,
 .varianceKey,
 .undatedNote,
+/* ⚠ THE DUES SENTENCE IS ONE OF THE FOUR, NOT A FIFTH BLOCK (owner ruling 2026-09-04) — it sits
+   second in this stack and must read in the same quiet voice as the key above it. **No colour in
+   any state**, and that is a ruling rather than an omission: on this report colour belongs to the
+   variance column, and a sentence painted green or red would be a second verdict arguing with the
+   figures it exists to explain. */
+.duesNote,
 .bridgeSentence {
   margin: 0.6rem 0 0;
   font-size: var(--type-support);
@@ -274,30 +279,16 @@
 }
 .varianceKey b,
 .undatedNote strong,
+.duesNote strong,
 .bridgeSentence strong { color: var(--text-secondary); font-weight: 650; }
 
-/* (The closing rows are the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own copy is
-   retired. `.grandTotal` survives only as the hook that hands it the column tracks and its pin
-   gutter — see the `--ledger-cols` block above and the phone block below.)
-
-   ⚠⚠ EXCEPT FOR THE CARD (owner ruling 2026-09-04, QA §132). `.ledgerTotal` draws a bordered,
-   rounded, raised panel — right everywhere else it is used, where it closes a list. Here it made
-   "Funded by players" read as a footnote sitting BELOW the statement rather than as its last line,
-   and the owner read it exactly that way: "why is funded by players below the statement table?".
-   Total expenses → Season net → Funded by players is ONE continuous chain — the comment at that
-   row has said so since 2026-08-24 while the styling quietly argued the opposite. The emphasis
-   stays; only the box goes, replaced by a rule that continues `.netRow`'s.
-   ⚠ Doubled selector for specificity over the shared class, whose module may load in either
-   order — the same reason the phone block below doubles it. */
-.grandTotal.grandTotal {
-  margin-top: 0;
-  border-radius: 0;
-  background: none;
-  border: 0;
-  border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
-  padding-top: 0.7rem;
-  padding-bottom: 0.7rem;
-}
+/* ⚠⚠ `.grandTotal` IS GONE, AND SO IS THE ROW IT DRESSED. It existed for one element — the
+   closing "Funded by players" line — which the owner deleted on 2026-09-04 once dues joined the
+   revenue band and it became the budgeted Season net with the sign flipped. Its whole history was
+   about making a card stop reading as a footnote below the statement; there is now nothing after
+   Season net, so the statement ends on `.netRow` and needs no continuation rule.
+   (The closing rows are otherwise the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own
+   copy is retired.) */
 
 /* ── Spending on something nobody planned ────────────────────────────────────
    ⚠ THESE ROWS USED TO BE A SEPARATE SECTION at the foot of the report; since mig 240 they sit in
@@ -323,6 +314,41 @@
 .unplannedRow {
   background: color-mix(in srgb, var(--bva-unbudgeted) 7%, transparent);
 }
+
+/* ── The Player dues row (owner ruling 2026-09-04) ───────────────────────────
+   ⚠ IT BORROWS `.categoryHeader`'s TRACKS AND NOTHING ELSE. It is a div, not a button — there is
+   nothing behind its figures to open (dues are a schedule, and the payments are Player Dues' own
+   book), so it deliberately takes none of `.ledgerGroupHeadBtn`'s hover, cursor or tap-floor
+   treatment: those belong to a control, and offering them on a row that does nothing is how a
+   coach learns to distrust the ones that do. */
+.duesRow .duesNameStack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* The chevron's own width, so the one row in the band without a control still lines its name up
+   with the rest. (14px is `ChevronRight size={14}`; `.ledgerCell`'s gap supplies the rest.) */
+.duesIndent {
+  width: 14px;
+  flex: none;
+}
+.duesCaption {
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  /* ⚠ IT WRAPS, where `.ledgerNote` beside it ellipsises. That class truncates a caption whose
+     whole content is a count; this one carries the door to Player Dues on a team that has not set
+     dues yet, and a door with its label cut off is not a door. */
+  line-height: 1.35;
+}
+.duesLink {
+  color: var(--primary-light);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--border-2);
+}
+.duesLink:hover { border-bottom-style: solid; }
+.duesLink:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 3px; }
 
 /* For a sentence that exists only to give a screen reader what the amber flag gives everyone
    else — see the `aria-describedby` on the category header. */
@@ -408,11 +434,9 @@
   .tableHeader.tableHeader,
   .categoryHeader.categoryHeader,
   .lineMain.lineMain,
-  .periodRow.periodRow,
-  .grandTotal.grandTotal { padding-left: 0; padding-right: 0.7rem; }
+  .periodRow.periodRow { padding-left: 0; padding-right: 0.7rem; }
   .tableHeader,
-  .categoryHeader,
-  .grandTotal { --scrollx-pin-gutter: 0.7rem; }
+  .categoryHeader { --scrollx-pin-gutter: 0.7rem; }
   .lineMain   { --scrollx-pin-gutter: 1.4rem; }
   .periodRow  { --scrollx-pin-gutter: 2.1rem; }
 

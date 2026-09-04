@@ -28,15 +28,49 @@
  * ⚠ It reads a DATABASE, unlike everything else in the sweep, which reads source text. That is
  * unavoidable — a demo's state IS data — and it is why the skip rule has to be this forgiving.
  *
- * Run directly: `node scripts/check-demos.mjs`
+ * ── AND THE SAME CHECK, POINTED AT PRODUCTION (`--prod`) ────────────────────
+ *
+ * The two demos a prospect actually walks into are the PRODUCTION ones, and until 2026-09-04 this
+ * wrapper could not look at them: the env file below was hard-wired to `.env.local`, so every run
+ * anywhere judged the development copy. That is how the prod coach demo came to show *"Not
+ * itemized"* on all 20 of its budget rows, an empty Sponsorship screen, an empty club-money screen,
+ * an empty scouting book and no awards — for 27 days, in public — while this very script passed
+ * green on dev every day. **The assertions that catch it already existed. Nothing was ever allowed
+ * to run them against the database a customer sees.**
+ *
+ * `--prod` runs the same two READ-ONLY checkers against `.env.production.local`. It can never
+ * write: the re-anchor allow-list below recognises only a local or development project, so
+ * production is checked and never ticked, and `--tick --prod` is refused outright.
+ *
+ * ⚠ **Under `--prod` a SKIP is a FAILURE.** The ordinary sweep is forgiving on purpose — a
+ * contributor with no credentials, or a database nobody seeded, is not a problem. On production
+ * both of those mean the gate proved *nothing* while reporting success, which is worse than not
+ * running it at all. The prod demos are supposed to exist; if they are missing or unreachable, that
+ * is the finding.
+ *
+ * ⚠ **Deliberately NOT in `verify:changed`.** The routine sweep stays on dev — it runs constantly,
+ * on every machine, and pointing it at the live database would be both slow and wrong. This belongs
+ * on the pre-promote release gate, beside `check:migrations`: prod demo CONTENT can only drift when
+ * a release changes the demo world, so a release is exactly when to look. (Prod demo DATES are the
+ * nightly scheduler's job, and it reports separately.)
+ *
+ * Run directly: `node scripts/check-demos.mjs` · `npm run check:demos:prod`
  */
-import { spawnSync } from 'child_process';
+import { spawnSync, execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ENV_FILE = path.join(ROOT, '.env.local');
+
+/**
+ * `--prod` judges the live demos; the default judges dev. ONE env file is chosen here and used for
+ * both this process and the children it spawns — loading two would leave the parent and the
+ * children disagreeing about which database they are looking at, which is precisely the bug the
+ * note below records having already been fixed once.
+ */
+const wantProd = process.argv.includes('--prod');
+const ENV_FILE = path.join(ROOT, wantProd ? '.env.production.local' : '.env.local');
 
 const CHECKS = [
   { label: 'tournament sandbox', script: 'check-demo-sandbox.mjs', tick: 'tick-demo-sandbox.mjs' },
@@ -77,13 +111,20 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const haveCredentials = !!supabaseUrl && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!haveCredentials) {
+  // ⚠ On production this is the "green check over an empty fixture" trap: a gate that proves
+  // nothing must not report success. Off production it stays the generous skip it has always been.
+  if (wantProd) {
+    console.error('✗ demo sandboxes (production) — NOT CHECKED: no credentials in .env.production.local.');
+    console.error('  This gate exists to judge the live demos; it must fail rather than pass vacuously.');
+    process.exit(1);
+  }
   console.log('✓ demo sandboxes — skipped (no Supabase credentials in this environment)');
   process.exit(0);
 }
 
 // `--env-file` only when the file is actually there; node errors on a missing one, and a machine
 // with credentials already in its environment does not need it.
-const nodeArgs = existsSync(ENV_FILE) ? ['--env-file=.env.local'] : [];
+const nodeArgs = existsSync(ENV_FILE) ? [`--env-file=${path.basename(ENV_FILE)}`] : [];
 
 /**
  * ── RE-ANCHOR FIRST, OFF PRODUCTION ONLY ─────────────────────────────────────
@@ -156,6 +197,58 @@ const skipped = [];
  * with no environment file, which is the one machine most likely to be running it by mistake.
  */
 const tickOnly = process.argv.includes('--tick');
+
+/**
+ * ⚠ **`--prod` verifies it actually reached production before judging anything.** Without this a
+ * mis-pointed `.env.production.local` would quietly grade the dev demos and report the live ones
+ * healthy — the same class of false green as the credential skip above, and harder to notice
+ * because every assertion would genuinely pass.
+ */
+if (wantProd && !isKnownProd) {
+  console.error('✗ demo sandboxes (production) — .env.production.local does not point at the production project.');
+  console.error(`  Refusing to report on production from ${supabaseUrl || '(no URL)'}.`);
+  process.exit(1);
+}
+/**
+ * ⚠⚠ **A `--prod` FAILURE CAN MEAN "NOT YET RELEASED", NOT "PRODUCTION IS BROKEN".**
+ *
+ * This gate compares production's DATA against the demo world in the WORKING COPY. Those are the
+ * same thing only when the working copy is what production is running. When local commits are
+ * AHEAD OF WHAT IS DEPLOYED, an unreleased change to the demo world reads here as a live defect —
+ * a checker from the future judging a running system.
+ *
+ * Found the hard way, 2026-09-04: this gate reported three failures on the live tournament demo,
+ * all of them assertions from an unreleased redesign (the daily-snapshot reversal). Production was
+ * correct by the standard of the code actually deployed there, and its own reconcile was busy
+ * putting back the state this checker was calling broken. **The seed has the same asymmetry, and it
+ * is the more expensive half: seeding prod from an unreleased world writes rows the deployed code
+ * does not expect.**
+ *
+ * So: say how far ahead the working copy is, and say it BEFORE the findings rather than after.
+ * At promote time the count is zero and this is silent, which is the moment the gate is designed
+ * for. Any other time it is the first thing to check before believing a failure.
+ */
+if (wantProd) {
+  try {
+    const ahead = execFileSync('git', ['rev-list', '--count', 'origin/master..HEAD'], {
+      cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (ahead && ahead !== '0') {
+      console.warn(`⚠ working copy is ${ahead} commit(s) ahead of origin/master (what production runs).`);
+      console.warn('  A failure below may be an UNRELEASED demo-world change, not a live defect —');
+      console.warn('  and do NOT re-seed production from here: it would write a world the deployed');
+      console.warn('  code does not expect. Verify against the deployed checker, or promote first.');
+      console.warn('');
+    }
+  } catch {
+    /* no git, no remote, a detached checkout — the gate still runs; it just cannot add this note */
+  }
+}
+
+if (tickOnly && wantProd) {
+  console.error('✗ refusing to re-anchor production. --prod is read-only, always.');
+  process.exit(1);
+}
 if (tickOnly && !mayReAnchor) {
   console.error(`✗ refusing to re-anchor: ${isKnownProd ? 'this is production' : 'unrecognised database'}.`);
   process.exit(1);
@@ -177,6 +270,15 @@ for (const { label, script, tick } of CHECKS) {
   }
 
   if (result.status === NOT_SEEDED) {
+    // ⚠ Both demos are public on production. "Not seeded" there is not a machine without a
+    // database — it is the shop window missing, which is the loudest finding this script has.
+    if (wantProd) {
+      failed.push(label);
+      console.error(`
+──────── ${label} ────────`);
+      console.error('  NOT SEEDED ON PRODUCTION — the public demo org is absent.');
+      continue;
+    }
     skipped.push(label);
     continue;
   }
@@ -192,10 +294,20 @@ for (const { label, script, tick } of CHECKS) {
 }
 
 if (failed.length) {
-  console.error(`\n✗ demo sandboxes — ${failed.join(' and ')} would not be presentable to a prospect.`);
+  console.error(`
+✗ ${wantProd ? 'PRODUCTION demo sandboxes' : 'demo sandboxes'} — ${failed.join(' and ')} would not be presentable to a prospect.`);
   if (mayReAnchor) console.error('  A re-anchor was already attempted, so this is not merely stale dates.');
-  console.error('  Re-seed it (scripts/seed-demo-*.mjs), or fix what changed underneath it. A broken');
-  console.error('  demo still renders perfectly, which is why this is checked rather than noticed.');
+  if (wantProd) {
+    // The prod repair is a deliberate reseed, never a tick: the nightly scheduler already keeps
+    // the DATES right there, so anything this gate catches is CONTENT the live world never got.
+    console.error('  The live demo has fallen behind the demo world. Re-seed it deliberately:');
+    console.error('    node --env-file=.env.production.local scripts/seed-demo-coach.mjs --allow-prod');
+    console.error('    node --env-file=.env.production.local scripts/seed-demo-tournament.mjs --allow-prod');
+    console.error('  Do NOT promote a release that changes the demo world while this is red.');
+  } else {
+    console.error('  Re-seed it (scripts/seed-demo-*.mjs), or fix what changed underneath it. A broken');
+    console.error('  demo still renders perfectly, which is why this is checked rather than noticed.');
+  }
   process.exit(1);
 }
 
@@ -203,4 +315,4 @@ const checked = CHECKS.length - skipped.length;
 const parts = [];
 if (checked) parts.push(`${checked} presentable`);
 if (skipped.length) parts.push(`${skipped.join(', ')} not seeded here`);
-console.log(`✓ demo sandboxes — ${parts.join('; ')}`);
+console.log(`✓ ${wantProd ? 'PRODUCTION demo sandboxes' : 'demo sandboxes'} — ${parts.join('; ')}`);

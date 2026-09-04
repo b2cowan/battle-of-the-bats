@@ -46,6 +46,7 @@
     "check:spelling:report": "node scripts/check-spelling-consistency.mjs --report",
     "check:demos": "node scripts/check-demos.mjs",
     "tick:demos": "node scripts/check-demos.mjs --tick",
+    "check:demos:prod": "node scripts/check-demos.mjs --prod",
     "measure:memory": "node scripts/measure-dev-memory.mjs",
     "capture:help-shots": "node scripts/capture-help-shots.mjs",
     "check:help-shots": "node scripts/capture-help-shots.mjs --check",

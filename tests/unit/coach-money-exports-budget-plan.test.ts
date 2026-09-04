@@ -51,7 +51,10 @@ describe('the statement file (List view, and every PDF)', () => {
     const { rows, kinds } = budgetPlanStatementRows(STATEMENT_SOURCE);
     assert.deepEqual(rows.map(r => r.item), [
       'Tournaments',
-      'Entry Fees (2 lines)',
+      // ⚠ NO "(2 lines)" SUFFIX. The count came off every screen and every export label in one
+      // ruling (owner 2026-09-04, QA §133) — and this file is where it read emptiest, since the two
+      // lines it counted are the very next rows. The SUM ruling still holds; only the label went.
+      'Entry Fees',
       '  — Spring classic',
       '  — Regional qualifier',
       'Expected fundraising',
@@ -145,12 +148,13 @@ describe('the period-grid file (By-period view)', () => {
     assert.ok(cols.every(c => c.headerMonth === undefined));
   });
 
-  it('rows follow the screen: merged items counted, money-in positive, the closing row a real subtraction', () => {
+  it('rows follow the screen: merged items summed and unlabelled, money-in positive, the closing row a real subtraction', () => {
     const view = buildPeriodView(LINES, 'months');
     const { rows, kinds } = budgetPeriodGridRows(view);
     assert.deepEqual(rows.map(r => r.item), [
       'Tournaments',
-      '  — Entry Fees (2 lines)',
+      // Unlabelled, exactly as the grid on screen now renders it (owner 2026-09-04, QA §133).
+      '  — Entry Fees',
       'Expected fundraising',
       '  — Chocolate Sale',
       'Costs less funding',

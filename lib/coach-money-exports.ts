@@ -27,6 +27,7 @@ import {
 } from './coach-budget-totals';
 import { scheduleSummaryLabel, type PeriodView } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
+import { isDuesCategory } from './coach-dues-revenue';
 import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
@@ -179,7 +180,10 @@ export function budgetPlanStatementRows(
       }
       // The SUM ruling's shape: one summed row per item, the lines beneath it named by the note
       // the form asked for ("What makes this line different?") — never two identical twins.
-      push({ item: `${item.itemName} (${item.lines.length} lines)`, schedule: '', planned: item.total, notes: '' }, 'item');
+      // ⚠ NO "(N lines)" ON THE LABEL (owner ruling 2026-09-04, QA §133 — the same ruling took it
+      // off all three screens). Here it was the emptiest version of it: the lines it counts are
+      // the very next rows in the file.
+      push({ item: item.itemName, schedule: '', planned: item.total, notes: '' }, 'item');
       for (const l of item.lines) {
         push({
           item: `  — ${l.notes || l.description}`,
@@ -290,8 +294,10 @@ export function budgetPeriodGridRows(
     push(groupRow, 'category');
 
     for (const row of group.rows) {
-      const label = row.lineCount > 1 ? `${row.description} (${row.lineCount} lines)` : row.description;
-      const lineRow: ExportRow = { item: `  — ${label}` };
+      // ⚠ NO "(N lines)" SUFFIX (owner ruling 2026-09-04, QA §133) — the screen this file mirrors
+      // no longer says it either, and a file that annotated a merge the report had stopped
+      // annotating would be the two-vocabularies defect the suffix was added to avoid.
+      const lineRow: ExportRow = { item: `  — ${row.description}` };
       for (const col of view.columns) lineRow[periodColumnKey(col)] = cell(funding, row.cells[col.key]);
       lineRow.total = cell(funding, row.total);
       push(lineRow, 'item');
@@ -844,6 +850,10 @@ export const BVA_EXPORT_COLUMNS: ExportColumnDef[] = [
 
 /** One category, in either direction — the shape both report sections share. */
 type BvaCategory = {
+  /** ⚠ THE SYNTHETIC DUES ROW IS RECOGNISED BY THIS (2026-09-04) — the same sentinel key the
+   *  screen and the Months band use. It is the only category on this report that is not a budget
+   *  category, and the file has to say "not set yet" where it would otherwise say "not budgeted". */
+  categoryId?: string | null;
   categoryName: string; budgeted: number; actual: number; variance: number;
   /** False = nothing in this category was budgeted; the file leaves Budgeted blank, as the
    *  screen does, rather than printing a zero that reads like a plan of $0. */
@@ -883,7 +893,11 @@ export type BvaCategorySource = {
     /** Measured against the EFFECTIVE budget, so the file's closing rows match the screen's. */
     net: { budgeted: number; actual: number; variance: number };
   };
-  funding: { budget: number; actual: number; fundedByPlayers: number } | null;
+  /* ⚠ `funding` IS GONE (owner ruling 2026-09-04). It fed one thing here — the closing "Funded by
+     players" row — and that row is deleted: once dues sit in the revenue band its Budgeted figure
+     is the budgeted Season net with the sign flipped, and its Actual is Season net's Actual negated.
+     Season net itself is no longer gated on it either; it closes this file the way it closes the
+     screen, always. */
 };
 
 /**
@@ -908,8 +922,14 @@ export function bvaCategoryRows(
 
   /** One category and its items — the same two levels in both sections. */
   const pushCategory = (cat: BvaCategory) => {
+    /* ⚠ "not budgeted" IS THE WRONG WORD FOR THE DUES ROW, and it is the only row on this file that
+       is not a budget category. A team with no schedule has not failed to budget something — it has
+       not set its dues up yet, which is a different fact and the one the screen states. The row
+       carries no items either, so the loop below writes nothing under it: a lone item repeating its
+       own category's name would print the same figures twice. */
+    const notPlannedSuffix = isDuesCategory(cat.categoryId) ? ' (not set yet)' : ' (not budgeted)';
     push({
-      item: cat.inPlan ? cat.categoryName : `${cat.categoryName} (not budgeted)`,
+      item: cat.inPlan ? cat.categoryName : `${cat.categoryName}${notPlannedSuffix}`,
       // ⚠ BLANK, NEVER ZERO, where nothing was budgeted. A 0 in a spreadsheet is a plan of nothing;
       // an empty cell is the absence of a plan, and those are different facts a treasurer acts on
       // differently.
@@ -920,7 +940,8 @@ export function bvaCategoryRows(
     // Every item, planned or not — the file carries the same two levels the screen does, so a
     // coach can reconcile one against the other line for line.
     for (const item of cat.items) {
-      const label = item.lineCount > 1 ? `${item.itemName} (${item.lineCount} lines)` : item.itemName;
+      // ⚠ NO "(N lines)" SUFFIX — owner ruling 2026-09-04, QA §133; see the by-period export above.
+      const label = item.itemName;
       /* ⚠ MONEY BACK IS SAID IN THE LABEL, NOT GIVEN A ROW. The screen puts "$2,400 paid · $150
          back" underneath the row; a spreadsheet has no underneath, and a second row would make the
          column add up to more spending than the team did — the exact defect that took the
@@ -973,22 +994,24 @@ export function bvaCategoryRows(
     push({ item: '  of which never budgeted', budgeted: '', actual: data.unbudgeted, variance: '' }, 'item');
   }
 
-  if (data.funding) {
+  /* ⚠⚠ THE FILE ENDS WHERE THE SCREEN ENDS (owner ruling 2026-09-04). "Funded by players" used to
+     follow Season net here; it is deleted, because once dues sit in the revenue band its Budgeted
+     figure is the budgeted Season net with the sign flipped and its Actual is Season net's Actual
+     negated — two rows, four figures, no new fact. A board reading the spreadsheet alone loses the
+     phrase "the plan needs $X from families"; that was ruled acceptable, because a file has no
+     footnotes and the Budget plan file owns and already prints that figure. Do not solve it with a
+     trailing note row: a string in a money column is what this file has twice been cleaned up to
+     stop doing.
+     ⚠ AND SEASON NET IS NO LONGER GATED. It was pushed only when `funding` existed — an accident of
+     sitting inside that block — while the screen has always printed it unconditionally. Deleting
+     the row it shared a branch with is what made the difference visible. */
+  if (data.report.revenue.categories.length > 0) {
     // The server's figure, the same one the screen prints — never a fourth recomputation.
     push({
       item: 'Season net',
       budgeted: data.report.net.budgeted,
       actual: data.report.net.actual,
       variance: data.report.net.variance,
-    }, 'total');
-    // ⚠ Whole totals, INCLUDING unbudgeted spending — the total row above does the same,
-    // because this export lists every unbudgeted expense as its own row rather than splitting
-    // them into a separate section the way the screen does.
-    push({
-      item: 'Funded by players',
-      budgeted: data.funding.fundedByPlayers,
-      actual: data.totalActual - data.funding.actual,
-      variance: data.funding.fundedByPlayers - (data.totalActual - data.funding.actual),
     }, 'total');
   }
   return { rows, kinds };

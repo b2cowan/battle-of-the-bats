@@ -27,6 +27,9 @@ import {
   rollupMoneyReport, categoryKey, displayCategoryName,
   type RollupLine, type RollupSpend, type RollupRefund,
 } from '@/lib/coach-budget-rollup';
+import {
+  buildDuesCategory, duesRowRenders, type DuesRevenue,
+} from '@/lib/coach-dues-revenue';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip } from '@/lib/coach-cash-strip';
 import { placeDerivedActual } from '@/lib/coach-money-derived';
@@ -1225,6 +1228,9 @@ export const GET = withObservability(async (req: Request,
     amount,
   });
 
+  /** Money to the cent, once — the whole file rounds the same way. */
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+
   /* ══ THE REVENUE BAND'S OWN ROWS ══════════════════════════════════════════════════════════════
      ⚠⚠ ONE ROW PER SUBJECT, LEARNED FROM THE MONEY ITSELF. A revenue group has no budget lines to
      be fed from — what a season collects in dues is a schedule, what it raises is a drive — so the
@@ -1309,6 +1315,74 @@ export const GET = withObservability(async (req: Request,
        nobody has phased would silently plan nothing. */
     const rest = Math.round((((line.total_amount as number) ?? 0) - placed) * 100) / 100;
     if (rest > 0.005) revenueBudgets.push(revenueEvent(group, null, rest));
+  }
+
+  /* ══ PLAYER DUES JOIN THE STATEMENT (owner ruling 2026-09-04) ════════════════════════════════
+     ⚠⚠ THE STATEMENT COUNTED EVERY COST AND LEFT OUT THE SEASON'S LARGEST MONEY IN. Its rollup
+     groups by category + item, and a dues schedule is neither — so one report answered "what is
+     revenue?" two ways, $11,308.30 apart on the UAT team, and Season net read ($11,650.00) on a
+     season that was really $341.70 short. The row that used to close the report ("Funded by
+     players") was the same shortfall with the sign flipped, which is why it is deleted rather than
+     rewritten; the reasoning lives in lib/coach-dues-revenue.ts and the plan's §2.
+
+     ⚠⚠ BUILT FROM THE STREAMS THAT FEED MONTHS, NOT FROM A SECOND WALK. `billed` and `actual` are
+     sums of the very arrays the revenue band's month grid is built from a few lines below — so
+     "Total revenue equals the Months view's Budgeted revenue to the cent" is true BY CONSTRUCTION
+     rather than because two derivations happened to agree. `check:money-report` proves it anyway,
+     because a construction can be edited apart. */
+  const duesGroupTotal = (events: CategoryEvent[]) => Math.round(events
+    .filter(e => revenueGroupOf(e.categoryId) === 'dues')
+    .reduce((sum, e) => sum + e.amount, 0) * 100) / 100;
+  /* ⚠ THE PLAN RESIDUAL BEFORE ITS FLOOR, so the ONE state where the floor bites is a fact the
+     payload carries rather than something each reader has to re-derive from figures that no longer
+     say it. `computeBudgetTotals` floors at zero — correct for "what must dues cover", wrong as an
+     input to the identity the sentence claims. See `duesSentenceRenders`. */
+  const planNeedsRaw = Math.round((budgetTotals.totalPlanned - budgetTotals.expectedFunding) * 100) / 100;
+  const dues: DuesRevenue = {
+    /* ⚠ NULL, NEVER ZERO. "No schedule has been set up" and "a schedule of nothing" are different
+       facts and a coach acts on them differently — the row shows an em-dash and a door for the
+       first, and the download writes a blank rather than a 0 for the same reason. */
+    billed: duesInstallments.length > 0 ? duesGroupTotal(revenueBudgets) : null,
+    actual: duesGroupTotal(revenueActuals),
+    planNeeds: budgetTotals.fundedByPlayers,
+    planNeedsFloored: planNeedsRaw < -0.005,
+    familyCount: new Set(duesInstallments
+      .map(i => i.player_id ?? scheduleOwner.get(i.schedule_id) ?? null)
+      .filter((id): id is string => id !== null)).size,
+    /* The Budget plan page's own source for the same question, carried so the guard can hold the
+       two equal. It is compared, never shown — see the field's note. */
+    assessed: Math.round(((schedules ?? []) as Array<{ total_amount: number | null }>)
+      .reduce((sum, sch) => sum + Number(sch.total_amount ?? 0), 0) * 100) / 100,
+  };
+
+  /* ⚠⚠ INJECTED INTO THE ASSEMBLED REPORT, AND NOTHING IS WRITTEN TO THE PLANNER. A fabricated
+     budget line would double-count the moment anyone totals the planner (plan §2). The category
+     carries the SAME key the Months band uses for its dues group, so the two views name one thing
+     one way and the guard can address it.
+
+     ⚠ BOTH SHAPES, OR THEY STOP ENDING ON THE SAME FIGURE. Season net is shared; without a block of
+     its own in `activities`, the by-activity blocks would no longer sum to the net a coach reads
+     underneath them — the dues would be in the closing figure and in no block above it. */
+  if (duesRowRenders(dues)) {
+    const duesCategory = buildDuesCategory(dues);
+    report.revenue.categories = [duesCategory, ...report.revenue.categories];
+    report.revenue.budgeted = r2(report.revenue.budgeted + duesCategory.budgeted);
+    report.revenue.actual   = r2(report.revenue.actual + duesCategory.actual);
+    report.revenue.variance = r2(report.revenue.actual - report.revenue.budgeted);
+    report.activities = [{
+      categoryId: duesCategory.categoryId,
+      categoryName: duesCategory.categoryName,
+      revenue: duesCategory,
+      /* ⚠ NO COST HALF, AND NEVER ONE. Collecting dues costs the season nothing; a "Player dues"
+         block with an Expenses heading under it would invite a coach to file something there. */
+      costs: null,
+      net: {
+        budgeted: duesCategory.budgeted,
+        actual: duesCategory.actual,
+        variance: duesCategory.variance,
+      },
+      inPlan: duesCategory.inPlan,
+    }, ...report.activities];
   }
 
   /* ── Revenue · SCHEDULED: the season's FORWARD view (owner ruling 2026-08-23, drawn).
@@ -1523,8 +1597,6 @@ export const GET = withObservability(async (req: Request,
     categories: [...revenueGridRaw.categories].sort((a, b) => revenueRank(a) - revenueRank(b)),
   };
 
-  /** Money to the cent, once — the whole file rounds the same way. */
-  const r2 = (n: number) => Math.round(n * 100) / 100;
 
   /* ⚠⚠ CASH ON HAND, COMPUTED THE GRID'S OWN WAY. The Scheduled lens's running balance starts from
      TODAY'S REAL MONEY — a forward view projected from zero would be a work of fiction — and this
@@ -1557,11 +1629,17 @@ export const GET = withObservability(async (req: Request,
      it, because a rebate already lowers that player's own dues and counting it here would lower the
      same dues twice. ⚠ RECEIPTS ONLY — a pledge that counted as actual would flatter the season
      (mig 237; enforced in the shared reader). */
-  const funding = report.revenue.categories.length === 0 ? null : {
-    budget: budgetTotals.expectedFunding,
-    actual: report.revenue.actual,
-    fundedByPlayers: budgetTotals.fundedByPlayers,
-  };
+  /* ⚠⚠ THE `funding` BLOCK IS GONE FROM THIS PAYLOAD (owner ruling 2026-09-04), and it went with
+     the row it existed to feed. "Funded by players" closed this report with the plan residual and
+     "spending less money in" — and once dues sit in the revenue band, the first is the budgeted
+     Season net with the sign flipped and the second is Season net's own Actual, negated. Two rows,
+     four figures, no new fact.
+
+     ⚠ THE SHARED DERIVATION IS UNTOUCHED. `fundedByPlayers` still means exactly what it meant, and
+     the Budget plan page and the Money hub still quote it; what changed is only this report's
+     sentence about it, which now rides on `dues` above. It could not stay on `funding`: that block
+     was null whenever the report had no revenue categories, which is precisely the team the new
+     sentence has the most to say to — costs in the plan, nothing coming in, and no dues set. */
 
   /* ⚠⚠ THE STRIP'S TWO "MONEY IN" BASE MAPS RETIRED HERE (Option D, owner ruling 2026-08-23).
      They existed because the strip was three rows the grid could not express: Money in, Money out,
@@ -1599,8 +1677,11 @@ export const GET = withObservability(async (req: Request,
     /** Signed, so a report can say "over your estimate" rather than showing nothing. */
     estimateDifference: budgetTotals.difference,
     overPlanned:        budgetTotals.overPlanned,
-    /** Null when the team budgets no funding — the row simply isn't there. */
-    funding,
+    /* WHAT FAMILIES ARE BILLED, WHAT THE PLAN NEEDS FROM THEM, AND WHETHER THOSE MEET (2026-09-04).
+       The Player dues row's own figures ride inside `report` like every other row; this block is
+       what the SENTENCE under the table is written from, plus the two facts no figure on the report
+       can state — that a schedule exists at all, and that the plan's residual was floored. */
+    dues,
     // Already whole (see §10): the categories now hold every paid dollar, planned or not.
     totalActual,
     /* ⚠ THE RAW RECORDS BEHIND EACH ROW TRAVEL IN FULL — plan lines, payments and money back.
