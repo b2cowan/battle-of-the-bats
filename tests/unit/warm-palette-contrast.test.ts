@@ -97,6 +97,17 @@ const GROUNDS: Record<string, RGB> = {
   'status pill': parseHex('#E1E5D6'),    // roster "Active"
   'warm chip': parseHex('#F1E8DA'),      // announcements empty-state chip
   'help link row': parseHex('#EDEFEC'),  // help hub topic links
+  // ⚠ ADDED 2026-09-03, and it is the SECOND time the sweep has taught this test a ground.
+  // The money tabs' card rows at 361/390 are DARKER than every ground above, and --home-dim
+  // measured 4.26:1 on one (the Club tab's "Facilities ·" filing label). The gate had never
+  // seen it because no fixture had put a FILED bill on that screen until a reseed did — a green
+  // check over data that could not fail. The token moved to #655E57; this line is what stops it
+  // drifting back. ⚠ THE LIST IS STILL NOT THE PRODUCT: add the next ground the sweep measures.
+  'money card row': parseHex('#E0DBC9'), // dues/club/expenses rows once they become cards
+  // ⚠ DARKER STILL, and found only because a PORTAL-WIDE sweep ran rather than a scoped one: the
+  // first attempt at the 2026-09-03 correction cleared the card row above and still measured
+  // 4.46:1 here. Chasing the ground a finding names, one finding at a time, is the trap.
+  'empty-state chip': parseHex('#D9D8C5'), // development "no readings yet", and its siblings
 };
 
 /**

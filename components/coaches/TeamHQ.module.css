@@ -131,7 +131,7 @@
      band collapses onto ONE token (--home-dim), and --white-70 resolves to --home-ink-soft, which
      reads a clear step below a real figure — all "muted" has to mean here.
      ⚠ The original reason was contrast: --home-dim was #8A8177 at ~3.8:1 on a white card, under AA
-     for text this size. That token was corrected to #6A635C on 2026-08-02 (5.91:1), so --home-dim
+     for text this size. That token was corrected to #6A635C on 2026-08-02 and to #615A54 on 2026-09-03 (6.78:1), so --home-dim
      is now a legitimate choice for this line if the lighter step ever reads better. */
   color: var(--text-secondary);
   font-size: var(--type-heading);

@@ -30,7 +30,7 @@
 
 /* The eyebrow stays visually quiet through size/mono/tracking rather than through low contrast.
    (This line was originally forced onto --home-ink-soft because --home-dim was #8A8177 and only
-   reached 3.3:1 on paper. The token was corrected to #6A635C on 2026-08-02 and now clears AA on
+   reached 3.3:1 on paper. The token was corrected to #6A635C on 2026-08-02, again to #615A54 on 2026-09-03, and clears AA on
    every ground, so --home-dim would be legitimate here — but ink-soft is also the deliberate
    choice for a label this small, so it stays.) */
 :global(html[data-user-theme="warm"]) .page :global(.hud-label) { color: var(--home-ink-soft); }

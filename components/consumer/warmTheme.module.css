@@ -23,13 +23,17 @@
                                                    dark-gate doesn't reach through the content card token */
   --home-ink:          #241E15;                 /* primary text / ink-filled chips bg */
   --home-ink-soft:     #4A4235;                 /* slightly lifted ink for secondary headings */
-  /* ⚠ AA-corrected 2026-08-02, in step with the coaches copy in globals.css — these two blocks
-     are meant to mirror, so they move together. Was #8A8177: 3.83:1 on a white card, 2.93:1 on
-     a nav ground, under the 4.5:1 floor everywhere it carried text. Now 5.91:1 / 4.53:1, same
-     hue, still a clear step lighter than --home-ink-soft. NOTE: the consumer surfaces were not
-     covered by the layout sweep that measured this — the value is corrected here for palette
-     parity, and these screens still want their own pass. */
-  --home-dim:          #6A635C;                 /* secondary / meta text */
+  /* ⚠ AA-corrected TWICE, in step with the coaches copy in globals.css — these two blocks are
+     meant to mirror, so they move together. Was #8A8177 (3.83:1 on a white card, 2.93:1 on a nav
+     ground); then #6A635C from 2026-08-02; now #615A54 from 2026-09-03, after the rendered sweep
+     caught the ink at 4.26:1 on a money card row and then at 4.46:1 on an empty-state chip darker
+     still — two grounds the palette test did not hold. Worst case is now 4.70:1, and it is still a
+     clear step lighter than --home-ink-soft. The full story, including where this re-opens, lives
+     on the globals.css copy — read it before moving this again.
+     NOTE: the consumer surfaces are STILL not covered by the layout sweep that measured either
+     correction; the value is carried here for palette parity, and these screens still want their
+     own pass. That gap is exactly how a ground goes unmeasured. */
+  --home-dim:          #615A54;                 /* secondary / meta text */
   --home-line:         rgba(70, 55, 30, 0.12);  /* hairline */
   --home-line-strong:  rgba(70, 55, 30, 0.20);  /* stronger hairline */
   --home-olive:        #57651E;                 /* darkened-lime accent: links, active tab, filled star */

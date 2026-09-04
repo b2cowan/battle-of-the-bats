@@ -536,7 +536,7 @@ body:has([data-chat-fullbleed]) {
   --sandbox-warm-band:  #EFE7DB;
   --sandbox-warm-card:  #FFFFFF;
   --sandbox-warm-ink:   #241E15;
-  --sandbox-warm-dim:   #6A635C;
+  --sandbox-warm-dim:   #615A54;   /* moves with --home-dim by the note above (AA, 2026-09-03) */
   --sandbox-warm-gold:  #835006;
   --sandbox-warm-blue:  #134FD3;
   --sandbox-warm-line-rgb: 70, 55, 30;
@@ -752,14 +752,36 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-card:        #FFFFFF;
   --home-ink:         #241E15;
   --home-ink-soft:    #4A4235;
-  /* ⚠ AA-corrected 2026-08-02. Was #8A8177, which measured 3.83:1 on a white card, 3.49:1 on
-     paper, 3.31:1 on a tinted panel and 2.93:1 on the bottom nav — under the 4.5:1 floor on
-     EVERY ground it lands on, in 1,835 places. It failed even the 3:1 large-text floor on the
-     nav, so no size or per-surface exception could rescue it. Same hue, taken down until the
-     darkest ground clears: worst case is now 4.53:1 (nav), 5.91:1 on a white card. It still
-     sits a clear step lighter than --home-ink-soft (9.90:1), so the three-step ink hierarchy
-     survives — this reads muted, it just also reads. */
-  --home-dim:         #6A635C;
+  /* ⚠ AA-corrected TWICE. Was #8A8177 until 2026-08-02: 3.83:1 on a white card, 2.93:1 on the
+     bottom nav — under the 4.5:1 floor on EVERY ground it landed on, in 1,835 places, failing
+     even the 3:1 large-text floor, so no size or per-surface exception could rescue it. Taken
+     down the same hue to #6A635C, which cleared every ground the palette test then knew.
+
+     ⚠⚠ CORRECTED AGAIN 2026-09-03, and the SECOND correction is the instructive one. #6A635C did
+     not fail because it was wrong about its grounds — it failed because the GROUND LIST was short
+     again. The rendered sweep found this ink at 4.26:1 on a money card row (rgb 224,219,201), a
+     ground darker than any of the nine the test held, and the gate had never seen it because no
+     fixture had put a FILED bill on that screen. Same lesson as 2026-08-03, same shape: the test
+     was not wrong, its list was incomplete.
+
+     ⚠⚠⚠ AND THE FIRST ATTEMPT AT THIS CORRECTION WAS ITSELF TOO SMALL — READ THIS BEFORE MOVING
+     THE VALUE AGAIN. #655E57 was computed to clear that card row (4.60:1) and shipped nothing,
+     because the FULL-PORTAL sweep then found an empty-state chip at rgb(217,216,197) — darker
+     still — where it measured 4.46:1. Fixing the ground the finding named would have left the
+     product failing on a ground nobody had looked for. **Chasing grounds one finding at a time is
+     the trap; the value has to clear the darkest ground that EXISTS.** That is what the full sweep
+     is for, and it is why a portal-wide ink change runs one rather than a scoped one.
+
+     Now #615A54: worst case 4.70:1 (the empty-state chip), 4.89:1 on the money card row, 5.19:1 on
+     the nav, 6.18:1 on paper, 6.78:1 on a white card. Still a clear step lighter than
+     --home-ink-soft (9.03:1 on paper), so the three-step ink hierarchy survives.
+
+     ⚠ WHERE THIS RE-OPENS, STATED PRECISELY so the next person does not have to re-derive it:
+     #615A54 holds 4.5:1 down to a ground of about rgb(211,210,191) and fails below it. If a
+     surface darker than that appears, the answer may no longer be another darkening — at some
+     point the honest finding is that the ground is too dark for a quiet ink, and that is a design
+     conversation, not a palette tweak. Add the ground to the palette test either way. */
+  --home-dim:         #615A54;
   --home-line:        rgba(70, 55, 30, 0.12);
   --home-line-strong: rgba(70, 55, 30, 0.20);
   --home-olive:       #57651E;

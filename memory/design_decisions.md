@@ -3,6 +3,57 @@
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
 
+### 2026-09-03 — The warm muted ink is `#615A54`, corrected a SECOND time, and the lesson is the GROUND LIST
+
+**Decision (owner-directed):** `--home-dim` moves from `#6A635C` to **`#615A54`** — a 9% step,
+imperceptible in isolation — in all three places the warm palette is declared: `app/globals.css`
+(the coach block), `components/consumer/warmTheme.module.css` (the mirror it is documented to move
+with) and `--sandbox-warm-dim` (the sandbox chrome's copy, whose own comment says "if those move,
+move these"). Supersedes rider R1 of the 2026-08-02 palette ruling on the VALUE only; every
+principle that ruling stated still stands.
+
+**What was actually wrong — and it was not the colour.** The rendered sweep caught the ink at
+**4.26:1** on the Club tab's "Facilities ·" filing label at 361/390, against the 4.5:1 floor. The
+palette test that exists to prevent exactly this **was green**, because the ground — a money card
+row, `rgb(224,219,201)` — was **darker than any of the nine grounds it held**, and it had never
+been measured. The gate could not see the failure because **no fixture had put a filed bill on that
+screen** until a reseed did. A green check over data that could not fail.
+
+**⚠ THIS IS THE SECOND TIME, IN THE SAME SHAPE.** On 2026-08-03 the sweep found real AA failures on
+chips, table rows, status pills and the help hub's link row — grounds the test had never heard of —
+and the file's own comment recorded the conclusion: *"The test was not wrong; its GROUND LIST was
+incomplete, which is the cheaper thing to fix than any individual finding."* It happened again
+because the list was treated as finished. **It is not finished now either.**
+
+**The binding rule:** when the rendered sweep measures a ground the palette test does not hold,
+**add the ground in the same unit of work** — before, or instead of, arguing about the individual
+finding. `money card row` `#E0DBC9` AND `empty-state chip` `#D9D8C5` are now in `GROUNDS`, and the assertion was **proved to bite**
+(restoring the old value reproduces `--home-dim on money card row: 4.26:1 (needs 4.5:1)`) rather
+than assumed to.
+
+**Why the token moved and not the label.** `var(--text-tertiary)` (which resolves to `--home-dim`
+in warm) appears **605 times across 55 files**. Recolouring the one label would have turned the gate
+green while leaving every other instance failing on that ground — and invisible for exactly the
+reason this one was. **Do not fix a token defect at a call site.**
+
+**Riders that survive unchanged.** The three-step ink hierarchy must stay visibly distinct: on cream
+paper it is now `--home-ink` 15.06:1 → `--home-ink-soft` 9.03:1 → `--home-dim` **6.18:1**. The new
+worst case is 4.70:1 (empty-state chip) and 4.89:1 (money card row).
+
+**⚠ THE FIRST ATTEMPT AT THIS FIX WAS TOO SMALL, AND THAT IS THE SECOND LESSON.** `#655E57` was
+computed to clear the ground the finding named, passed a SCOPED `--only=coach-club` run, and was
+still wrong: the portal-wide sweep then measured 4.46:1 on an empty-state chip at `rgb(217,216,197)`.
+**Chasing the ground a finding names, one finding at a time, is the trap** — a portal-wide token
+change runs a portal-wide sweep, and that is the whole reason the rule says so.
+
+**Where this re-opens, stated precisely:** `#615A54` holds 4.5:1 down to about `rgb(211,210,191)`.
+Below that, the honest answer may no longer be another darkening — at some point the ground is too
+dark for a quiet ink, and that is a design conversation, not a palette tweak.
+
+**Still uncovered, stated so it is not mistaken for covered:** the consumer surfaces carrying
+`warmTheme.module.css` are not in the layout sweep's screen list, so neither correction was ever
+measured on them. They still want their own pass.
+
 ### 2026-09-03 — A confirmation docks in the sticky FOOTER of a modal, never in its scrolling body
 
 **Decision (owner §134 walk):** when a control inside a modal raises a confirmation, that
