@@ -17399,6 +17399,9 @@ screen. The four-tile stack and the danger tone are both live elsewhere (Budget 
 respectively), and the figure comes from the shared `pastDueInstallments` predicate that also
 decides the count — but **walk this on a team with a genuinely late family.**
 
+**Walkthrough artifact (checkable, per-part verdicts + paste-back):**
+`https://claude.ai/code/artifact/abf75bd5-699e-41dd-b24b-7666e743e469`
+
 **Walk it (~8 min), on a team with dues set, ideally one late family and one credit-covered bill:**
 
 1. **Season totals, desktop.** Four figures above the view switch (three if nobody is late). Does
