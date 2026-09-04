@@ -26,84 +26,18 @@
   margin-bottom: 1.75rem;
 }
 
-.planHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 0.55rem;
-}
+/* RETIRED WITH THE PLAN CARD (owner D3, 2026-09-03): .planHead, .planCap, .planRow, .planTerm,
+   .planKey, .planCount, .planVal, .planValGood, .planValEst, .planCapNote. The tab's summary is
+   the shared `MoneySummaryBand`, which owns the label/figure/caption steps for every money tab.
+   The card's own APPROVED readings all survive inside the tiles (mockup d37d62e3 r3, 2026-08-13):
+   the Estimated/Scheduled tag, the estimate-relationship caption, the buffer-as-confirmation
+   reading and the amber short-of-plan state.
 
-.planCap {
-  font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  color: var(--text-tertiary);
-}
-
-.planRow {
-  display: flex;
-  align-items: stretch;
-}
-
-.planTerm { min-width: 0; flex: 1; }
-.planTerm + .planTerm {
-  border-left: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-  padding-left: 1.1rem;
-  margin-left: 1.1rem;
-}
-
-.planKey {
-  display: block;
-  font-size: var(--type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-weight: 700;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
-/* The line count beside a category's name — quiet, and never competing with the money. */
-.planCount {
-  margin-left: 0.35rem;
-  font-size: var(--type-support);
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--text-tertiary);
-}
-
-.planVal {
-  display: block;
-  font-size: var(--type-title);
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  line-height: 1.3;
-}
-.planVal.planValGood { color: var(--success-light); }
-/* The estimated installment figure: real, but visibly a projection — one step lighter and
-   one step less bold than the scheduled figure it will become. */
-.planVal.planValEst {
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-/* The caption under a figure — where every relationship lives (estimate↔lines, buffer,
-   per-player). Ordinary ink on purpose: a PLANNED buffer stated here must read as
-   confirmation, not a warning (owner ruling 2026-08-13). */
-.planCapNote {
-  display: block;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  margin-top: 0.1rem;
-}
-.planCapNote.planCapBad  { color: var(--danger-light); }
-/* Short of the plan — the one cautionary state. Amber: attention, not alarm.
-   --warning-light resolves per theme (AA-corrected --home-amber on warm). */
-.planCapNote.planCapWarn { color: var(--warning-light); }
+   ⚠ WHAT THIS BLOCK KNEW, kept because both tones are still applied to captions below: a PLANNED
+   buffer reads as CONFIRMATION in ordinary ink, never a warning (owner ruling 2026-08-13), and
+   coming up SHORT is the one cautionary state -- amber for attention, not alarm. */
+.planCapBad  { color: var(--danger-light); }
+.planCapWarn { color: var(--warning-light); }
 
 /* Estimated vs Scheduled — the third figure's state, worn as a tag. */
 .planBadgeEst,
@@ -126,8 +60,11 @@
   /* Tap floor without layout shift (rendered-sweep finding: these quiet links measured 20px
      against the 44px floor). The padding grows the HIT BOX to the floor; the matching negative
      margin keeps the caption line it sits in at text height. */
-  padding: 13px 0;
-  margin: -13px 0;
+  /* 14, not 13: at the caption’s 12px/1.45 line the old pair measured 43px — one pixel
+     under the floor, which the rendered sweep caught the day these links moved into the shared
+     band’s captions. Padding and margin cancel, so nothing moves visually. */
+  padding: 14px 0;
+  margin: -14px 0;
   font: inherit;
   font-size: var(--type-support);
   color: var(--blueprint-blue, var(--link));
@@ -155,21 +92,11 @@
    .planCapWarn, on the ledger's total row. */
 .closeWarn { color: var(--warning-light); }
 
-/* ── ≤900 (the shell breakpoint): the plan card stacks ───────────────────────
-   Three side-by-side categories pinch at tablet widths — the rendered sweep caught the row
-   spilling 25px at 768 with `overflow-x: visible` and nothing owning it (the same failure mode
-   the list's own `minmax(0,1fr)` note records). Below the shell breakpoint the terms stack,
-   the hairline turning from a left border into a top one so each keeps its quiet frame. */
-@media (max-width: 900px) {
-  .planRow { flex-direction: column; gap: 0.55rem; }
-  .planTerm + .planTerm {
-    border-left: none;
-    border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-    padding-left: 0;
-    margin-left: 0;
-    padding-top: 0.55rem;
-  }
-}
+/* RETIRED WITH THE PLAN CARD (2026-09-03). It stacked the three terms below the SHELL
+   breakpoint because the rendered sweep caught the old flex row spilling 25px at 768 with
+   nothing owning the overflow. The shared `MoneySummaryBand` cannot reproduce that: it is a
+   GRID whose tiles carry `min-width: 0`, so a column shrinks instead of pushing, and it stacks
+   all-or-nothing at 760 like every other money tab. Verified at 768 by the sweep. */
 
 /* ── Line items ──────────────────────────────────────────────────────────── */
 /* ⚠ THE PLAN'S OUTLINE NOW COMES FROM THE SHARED LEDGER (coaches.module.css `.ledgerList` and
@@ -1539,7 +1466,7 @@
   /* Plan card at phone width: tighter frame, smaller figures. (The stacking itself moves
      with the SHELL breakpoint — see the ≤900 block above the form styles.) */
   .plan { padding: 0.85rem 1rem 0.9rem; }
-  .planVal { font-size: var(--type-title); }
+  /* (`.planVal`'s phone size went with the card — the band owns its own figure step.) */
 
   /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */
   .kindChoice { flex-direction: column; }

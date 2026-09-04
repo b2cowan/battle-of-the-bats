@@ -11256,78 +11256,15 @@ button.gdChip[aria-pressed='true'] {
    rule's headstone above for the reasoning and for what to write instead. It was this tab's own
    red required-field marker, and the Club form now writes a plain ` *` like every other form. */
 
-/* ── The standing band ──────────────────────────────────────────────────────
-   ⚠ THREE FIGURES, NOT `.summaryGrid`. The shared summary grid is auto-fit and was carrying FOUR
-   tiles on one old screen and THREE on the other; merged, an auto-fit row would reflow 3 → 2 + 1 at
-   the widths this hub actually gets, orphaning whichever figure landed alone. These three are one
-   sentence — owed, awaiting, settled — so they hold one row and stack all-or-nothing at 760. */
-.clubBand {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--home-line, var(--border-2));
-  border: 1px solid var(--home-line, var(--border-2));
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-.clubBandCell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.9rem 1rem;
-  background: var(--home-card, var(--white-4));
-}
-.clubBandLabel {
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.clubBandFigure {
-  font-size: var(--type-figure);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  color: var(--text-primary);
-}
-/* ⚠ THE HUE IS NEVER THE ONLY CARRIER. Each figure's own label says what it is ("Still to pay the
-   club", "Waiting on the club"), and the third states its direction in a word beside the number —
-   so these two tints are reinforcement, not information. Both use the contrast-tuned badge inks
-   rather than the raw --*-light values, which fail the contrast floor in the warm theme. */
-.clubBandOut  { color: var(--badge-danger-ink); }
-.clubBandWait { color: var(--badge-warning-ink); }
-.clubBandDirection {
-  font-size: var(--type-support);
-  font-weight: 600;
-  margin-left: 0.35rem;
-  color: var(--text-tertiary);
-}
-.clubBandSub {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-.clubBandOverdue {
-  color: var(--badge-danger-ink);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.clubBandOverdue svg { vertical-align: -1px; margin-right: 1px; }
-/* The sentence under the band. ⚠ It is the one line this screen cannot do without: a pending
-   request sits inches from money that has genuinely moved, and this says which is which. */
-.clubBandNote {
-  font-size: var(--type-support);
-  line-height: 1.55;
-  color: var(--text-tertiary);
-  margin: 0 0 1.75rem;
-}
-.clubBandNote strong { color: var(--badge-warning-ink); }
-@media (max-width: 760px) {
-  .clubBand { grid-template-columns: 1fr; }
-}
+/* RETIRED: the Club standing band (2026-09-03). It was the closest thing the money tabs had to
+   a considered summary, so the shared `MoneySummaryBand` was written FROM it -- the geometry,
+   the 1px gutters, the note beneath, and the part that is easy to lose: it stacks
+   ALL-OR-NOTHING at 760 rather than auto-fitting, because at this hub's real widths an
+   auto-fit row reflows 3 to 2+1 and orphans whichever figure lands alone. Nine classes went:
+   .clubBand, .clubBandCell, .clubBandLabel, .clubBandFigure, .clubBandSub, .clubBandNote,
+   .clubBandOut, .clubBandWait, .clubBandDirection. `.clubBandOverdue` SURVIVES -- it is the
+   inline warning glyph inside a caption, not part of the band recipe. */
+
 
 /* ══ THE MONEY TAB SUMMARY BAND — one recipe, every money tab ═══════════════════════════════════
    Owner ruling 2026-09-03 (D1), mockup artifact `2b5bd78b-cbc5-4c5c-b7e0-d3956121caf6`. Drawn by

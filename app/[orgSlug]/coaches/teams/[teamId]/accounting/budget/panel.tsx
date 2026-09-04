@@ -5,6 +5,7 @@ import { BarChart3, Plus, X, ChevronDown, ChevronRight, AlertTriangle, Settings2
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
@@ -1637,113 +1638,111 @@ export function BudgetPlanPanel({
           */}
           {!trueEmpty && (
           <div className={styles.plan}>
-            <div className={styles.planHead}>
-              <span className={styles.planCap}>The plan</span>
-              {/* The estimate door lives here only until an estimate exists; after that, its
-                  Edit link rides the Planned costs caption below. */}
-              {seasonTotal == null && !editingSeason && moneyCanWrite && (
-                <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
-                  Set an estimated total
-                </button>
-              )}
-            </div>
+            {/* ⚠ THE SHARED BAND (owner D3, 2026-09-03). This card was approved from its own
+                mockup (artifact d37d62e3 round 3, 2026-08-13) and everything that ruling settled
+                individually SURVIVES inside the tiles: the Estimated/Scheduled chip, the estimate's
+                relationship caption in red when the lines outgrow it, the buffer-not-a-warning
+                reading, the amber short-of-plan state and both doors.
 
-            <div className={styles.planRow}>
-              <div className={styles.planTerm}>
-                <span className={styles.planKey}>
-                  Planned costs
-                  {seasonTotal == null && totals.costLineCount > 0 && (
-                    <span className={styles.planCount}>
-                      {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}
-                    </span>
-                  )}
-                </span>
-                <span className={styles.planVal}>{fmt(totals.totalPlanned)}</span>
-                {/* The estimate wins whenever one is set (ruling 2026-08-12) — so it IS the
-                    figure above, and this caption states its relationship to the lines. Lines
-                    outgrowing the estimate turn the caption red: as informative as the old
-                    ladder row, one line shorter. Clear lives inside the editor. */}
-                {seasonTotal != null && (
-                  <span className={`${styles.planCapNote} ${totals.overPlanned ? styles.planCapBad : ''}`}>
-                    {totals.overPlanned
-                      ? <>Your estimate — {fmt(totals.itemized)} itemized is {fmt(totals.difference)} over</>
-                      : <>Your estimate · {fmt(totals.itemized)} itemized in {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
-                    {moneyCanWrite && !editingSeason && (
-                      <>
-                        {' · '}
-                        <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-
-              {/* A team with no money-in lines simply has no middle category. "Expected FUNDING",
-                  not the fundraising section's own name (mockup + owner Q5 copy check): this tile
-                  AGGREGATES every money-in kind — fundraising, sponsorship, other income — and a
-                  per-kind word over an aggregate figure was already wrong once sponsorship
-                  existed. The sections below keep their own names. */}
-              {totals.fundingLineCount > 0 && (
-                <div className={styles.planTerm}>
-                  <span className={styles.planKey}>
-                    Expected funding
-                    <span className={styles.planCount}>
-                      {totals.fundingLineCount} line{totals.fundingLineCount === 1 ? '' : 's'}
-                    </span>
-                  </span>
-                  <span className={`${styles.planVal} ${styles.planValGood}`}>{fmt(totals.expectedFunding)}</span>
-                </div>
-              )}
-
-              <div className={styles.planTerm}>
-                <span className={styles.planKey}>
-                  Player installments{' '}
-                  <span className={duesAssessed > 0 ? styles.planBadgeOff : styles.planBadgeEst}>
-                    {duesAssessed > 0 ? 'Scheduled' : 'Estimated'}
-                  </span>
-                </span>
-                <span className={`${styles.planVal} ${duesAssessed > 0 ? '' : styles.planValEst}`}>
-                  {fmt(duesAssessed > 0 ? duesAssessed : totals.fundedByPlayers)}
-                </span>
-                {duesAssessed > 0 ? (
-                  // "Above the plan" needs a plan to be above — a dues-only team gets the bare
-                  // Scheduled figure, not a caption calling the whole schedule a buffer.
-                  leftToFund < -0.005 && totals.totalPlanned > 0 ? (
-                    <span className={styles.planCapNote}>
-                      Includes a {fmt(leftToFund)} buffer above the plan
-                    </span>
-                  ) : leftToFund > 0.005 ? (
-                    <span className={`${styles.planCapNote} ${styles.planCapWarn}`}>
-                      {fmt(leftToFund)} short of covering the plan
-                      {moneyCanWrite && (
+                ⚠ WHAT WENT, and only this: the "The plan" panel title (the tab above already names
+                the screen) and the inline line-counts, which move from inside the labels into the
+                captions where the standard puts a qualifier. The estimate door, homeless once the
+                title went, rides the Planned-costs caption in both states rather than only after an
+                estimate exists. */}
+            <MoneySummaryBand
+              ariaLabel="Budget plan summary"
+              tiles={[
+                {
+                  key: 'planned',
+                  label: 'Planned costs',
+                  figure: fmt(totals.totalPlanned),
+                  caption: seasonTotal != null ? (
+                    <span className={totals.overPlanned ? styles.planCapBad : undefined}>
+                      {totals.overPlanned
+                        ? <>Your estimate — {fmt(totals.itemized)} itemized is {fmt(totals.difference)} over</>
+                        : <>Your estimate · {fmt(totals.itemized)} itemized in {totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
+                      {moneyCanWrite && !editingSeason && (
                         <>
                           {' · '}
-                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                            Set dues for all players
-                          </button>
+                          <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>Edit</button>
                         </>
                       )}
                     </span>
-                  ) : null
-                ) : (
-                  (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) && (
-                    <span className={styles.planCapNote}>
-                      {totals.perPlayer != null && <>≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
-                      {moneyCanWrite && allLines.length > 0 && (
+                  ) : (
+                    <>
+                      {totals.costLineCount > 0 && (
+                        <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>
+                      )}
+                      {!editingSeason && moneyCanWrite && (
                         <>
-                          {totals.perPlayer != null && ' · '}
-                          {/* One name for the bulk act (owner Q20, QA §123) — the same words as
-                              the window this opens and the Player Dues door. */}
-                          <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
-                            Set dues for all players
+                          {totals.costLineCount > 0 && ' · '}
+                          <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
+                            set an estimated total
                           </button>
                         </>
                       )}
-                    </span>
-                  )
-                )}
-              </div>
-            </div>
+                    </>
+                  ),
+                },
+                {
+                  /* A team with no money-in lines has no middle tile — it hides rather than
+                     printing a zero nobody planned (recipe deviation 2). "Expected FUNDING", not
+                     the fundraising section's own name: this AGGREGATES every money-in kind. */
+                  key: 'funding',
+                  label: 'Expected funding',
+                  figure: fmt(totals.expectedFunding),
+                  tone: 'good',
+                  caption: `${totals.fundingLineCount} line${totals.fundingLineCount === 1 ? '' : 's'}`,
+                  hidden: !(totals.fundingLineCount > 0),
+                },
+                {
+                  key: 'installments',
+                  label: 'Player installments',
+                  figure: (
+                    <>
+                      {fmt(duesAssessed > 0 ? duesAssessed : totals.fundedByPlayers)}
+                      {' '}
+                      <span className={duesAssessed > 0 ? styles.planBadgeOff : styles.planBadgeEst}>
+                        {duesAssessed > 0 ? 'Scheduled' : 'Estimated'}
+                      </span>
+                    </>
+                  ),
+                  caption: duesAssessed > 0 ? (
+                    // "Above the plan" needs a plan to be above — a dues-only team gets the bare
+                    // Scheduled figure, not a caption calling the whole schedule a buffer.
+                    leftToFund < -0.005 && totals.totalPlanned > 0 ? (
+                      <>Includes a {fmt(leftToFund)} buffer above the plan</>
+                    ) : leftToFund > 0.005 ? (
+                      <span className={styles.planCapWarn}>
+                        {fmt(leftToFund)} short of covering the plan
+                        {moneyCanWrite && (
+                          <>
+                            {' · '}
+                            <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                              set dues
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    ) : undefined
+                  ) : (
+                    (totals.perPlayer != null || (moneyCanWrite && allLines.length > 0)) ? (
+                      <>
+                        {totals.perPlayer != null && <>≈ {fmt(totals.perPlayer)} per player ÷ {totals.rosterCount}</>}
+                        {moneyCanWrite && allLines.length > 0 && (
+                          <>
+                            {totals.perPlayer != null && ' · '}
+                            <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                              set dues for all players
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : undefined
+                  ),
+                },
+              ]}
+            />
 
             {editingSeason && (
               <div className={styles.ladderEditor}>

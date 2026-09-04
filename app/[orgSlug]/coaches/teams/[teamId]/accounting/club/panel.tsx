@@ -14,6 +14,7 @@ import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { roomNeighbours } from '@/lib/room-neighbours';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
@@ -1284,41 +1285,55 @@ export function ClubPanel({
               Paid, Outstanding, Overdue · Pending, Approved, Denied). Those counted each LIST; these
               describe the RELATIONSHIP, which is the only reason the two lists now share a screen.
               The old per-list counts survive where they belong — beside their own rows. */}
-          <div className={styles.clubBand}>
-            <div className={styles.clubBandCell}>
-              <span className={styles.clubBandLabel}>Still to pay the club</span>
-              <span className={`${styles.clubBandFigure} ${styles.clubBandOut}`}>{fmt(standing.owed)}</span>
-              <span className={styles.clubBandSub}>
-                {standing.owedCount === 0
-                  ? 'nothing outstanding'
-                  : `${standing.owedCount} installment${standing.owedCount === 1 ? '' : 's'}`}
-                {standing.overdueCount > 0 && (
-                  <> · <span className={styles.clubBandOverdue}>
-                    <AlertTriangle size={11} aria-hidden /> {standing.overdueCount} overdue
-                  </span></>
-                )}
-              </span>
-            </div>
-            <div className={styles.clubBandCell}>
-              <span className={styles.clubBandLabel}>Waiting on the club</span>
-              <span className={`${styles.clubBandFigure} ${styles.clubBandWait}`}>{fmt(standing.waiting)}</span>
-              <span className={styles.clubBandSub}>
-                {standing.waitingCount === 0
+          {/* ⚠ THE SHARED BAND (owner D1, 2026-09-03). This tab's own three-cell band WAS the
+              reference the standard was written from — its geometry, its all-or-nothing stack at
+              760 and its note-line-beneath are what `MoneySummaryBand` now gives every money tab.
+              What changed here is only what the standard settles: the trailing direction word
+              leaves the figure (the caption already says "out · in"), and the label step aligns.
+
+              ⚠ THE COLOURS SURVIVE BECAUSE THEY ARE VERDICTS, not decoration — money owed reads
+              danger, a request nobody has answered reads warning. A plain total would not. */}
+          <MoneySummaryBand
+            ariaLabel="Club money summary"
+            tiles={[
+              {
+                key: 'owed',
+                label: 'Still to pay the club',
+                figure: fmt(standing.owed),
+                tone: 'danger',
+                caption: (
+                  <>
+                    {standing.owedCount === 0
+                      ? 'nothing outstanding'
+                      : `${standing.owedCount} installment${standing.owedCount === 1 ? '' : 's'}`}
+                    {standing.overdueCount > 0 && (
+                      <> · <span className={styles.clubBandOverdue}>
+                        <AlertTriangle size={11} aria-hidden /> {standing.overdueCount} overdue
+                      </span></>
+                    )}
+                  </>
+                ),
+              },
+              {
+                key: 'waiting',
+                label: 'Waiting on the club',
+                figure: fmt(standing.waiting),
+                tone: 'warn',
+                caption: standing.waitingCount === 0
                   ? 'nothing awaiting a decision'
-                  : `${standing.waitingCount} request${standing.waitingCount === 1 ? '' : 's'}, not yet decided`}
-              </span>
-            </div>
-            <div className={styles.clubBandCell}>
-              <span className={styles.clubBandLabel}>Settled this season</span>
-              <span className={styles.clubBandFigure}>
-                {fmt(Math.abs(standing.settledNet))}
-                <span className={styles.clubBandDirection}>{standing.settledNet >= 0 ? 'out' : 'in'}</span>
-              </span>
-              <span className={styles.clubBandSub}>
-                {fmt(standing.settledOut)} out · {fmt(standing.settledIn)} in
-              </span>
-            </div>
-          </div>
+                  : `${standing.waitingCount} request${standing.waitingCount === 1 ? '' : 's'}, not yet decided`,
+              },
+              {
+                key: 'settled',
+                label: 'Settled this season',
+                /* ⚠ THE DIRECTION IS IN THE CAPTION, NOT STAPLED TO THE FIGURE (standard, 2026-09-03).
+                   `settledNet` is signed and the caption states both sides, so the absolute figure
+                   is not hiding anything a reader cannot see one line down. */
+                figure: fmt(Math.abs(standing.settledNet)),
+                caption: `${fmt(standing.settledOut)} out · ${fmt(standing.settledIn)} in`,
+              },
+            ]}
+          />
           {/* ⚠⚠ THE ONE SENTENCE THIS SCREEN CANNOT DO WITHOUT. A pending request sits inches from
               money that has genuinely moved, and the two are not the same kind of thing. It is out
               of Cash on hand and out of the Budget Plan — but it DOES appear in the register's
@@ -1340,7 +1355,7 @@ export function ClubPanel({
               and the note only has to do two things — say the money is not theirs yet, and say
               where to find it. */}
           {standing.waiting > 0.005 && (
-            <p className={styles.clubBandNote}>
+            <p className={styles.moneyBandNote}>
               <strong>Waiting on the club isn&apos;t yours yet.</strong> You&apos;ll find it on the
               {' '}<strong>Ledger</strong> under <strong>Scheduled</strong>.
             </p>
