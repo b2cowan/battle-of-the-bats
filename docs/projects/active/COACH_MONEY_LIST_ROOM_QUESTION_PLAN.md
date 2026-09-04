@@ -143,7 +143,7 @@ A shared room component all four roomed surfaces consume:
   inside its panel or from the bare document; if the bare-document case double-fires, narrow it to
   the most recently opened dialog — never build a full overlay stack in `lib/coaches-overlay`.
 
-### 3.1 Phase B — BUILT 2026-09-02, committed `e34af83a` 2026-09-03 · **Owner QA §135 ✅ PASSED 2026-09-03 (36/36, six parts, zero defects), eight walk rulings built and committed `dc1756d6`**
+### 3.1 Phase B — BUILT 2026-09-02, committed `e34af83a` 2026-09-03 · **Owner QA §135 ✅ PASSED 2026-09-03 (36/36, six parts, zero defects), eight walk rulings built and committed `dc1756d6`, plus a NINTH taken on the read-back that reversed Phase B's promise flow (`4a9d25a5`) — ⚠ which makes the walk's Part E VACUOUS**
 
 **What shipped.** `fundraisers/panel.tsx` rebuilt as two flat lists over one `useRoomAddress('fundraiser')`
 (the record's kind decides the room); `fundraisers/DriveRoom.tsx` (the drive room's body, the entry

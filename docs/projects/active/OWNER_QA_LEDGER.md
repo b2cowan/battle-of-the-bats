@@ -17215,6 +17215,32 @@ automated test (the UAT fixture always leaves players unlogged), and the rendere
 Payables *list*, never the inside of a bill panel, so the restyled Remove there was verified through
 its tap-floor class rather than by measurement.
 
+**⚖ A NINTH RULING, TAKEN AFTER THE WALK CLOSED — and it reversed a Phase B decision**
+(committed `4a9d25a5`; design log 2026-09-03). Reading the passed walk back, the owner pushed on
+the promise flow: *"we say 'a sponsor came through' under 'money came in', then we give the option
+of 'this is a promise' under the sponsor name itself — this doesn't make sense."* He was right, and
+the precedent was already in the same dropdown.
+
+**"A sponsor promised us money" is a row in "Not paid yet" now**, beside "We agreed to pay something
+later"; picking it turns the form into the pledge form IN PLACE, and picking any other answer hands
+back with the typing intact. Fundraising's "+ Pledge" opens that SAME conversation with the answer
+STATED — one form, one save path, the only difference being whether the answer can be switched.
+
+⚠ **THE ARGUMENT THAT PUT IT IN THE PICKER WAS A MISREAD, AND THAT IS THE LESSON.** Phase B cited
+the 2026-08-25 cap of eight answers. The cap governs the two MONEY groups — and a promise belongs
+to neither, which is exactly why "Not paid yet" already existed as a third group holding a hand-off
+row rather than a branch. The money-OUT side of "a promise, nothing moved" had been a first-class
+answer since 2026-08-29; the money-IN side was hidden two questions deep. **A cap on one list was
+read as a cap on the screen.** Standing rule set by the reversal: when two events are the same
+SHAPE in opposite directions, they get the same treatment in the same place.
+
+Deleted with it: the standalone pledge sheet (179 lines — and the two forms had already drifted, one
+capping its note and the other not), the cross-panel `requestPledge`/`pledgeNonce`/`pledgeCarry`
+wire and its tab switch, "Record it instead" and its reverse hand-off, and the stated band added
+hours earlier to make the jump legible. The walk's Part E ("the promise hand-off, both ways")
+therefore walks a flow that no longer exists — **it is VACUOUS, the same way §134's Part C is**, and
+its browser test was rewritten to prove the two states instead of the journey.
+
 **Prior state of this entry:** BUILT 2026-09-02, awaiting QA.
 
 **Walkthrough artifact (the instrument):** `claude.ai/code/artifact/4147168c-f9a2-4450-885a-b7c6208a0a77`
@@ -17490,3 +17516,35 @@ team still cannot reach this state, so the next change here needs the same manua
 9. **A phone.** Band stacks, schedule keeps its bars and numbers and drops the dates, shut line still
    readable, toggle comfortable to hit.
 10. **A team with no dues set.** No band, no schedule — not a row of zeros.
+
+## §138 · Coach Notifications Redraw — the house header, readable time, a pinned way home, Mark all read that leaves Needs attention alone — BUILT 2026-09-03, awaiting QA
+
+**Owner ask (2026-09-03):** *"review the notification screen on the phone and desktop… I am also
+wondering if we can improve it where it doesn't force you out of the coaches portal."* The review
+(`COACH_NOTIFICATIONS_REVIEW.md`) found the phone was the only notifications surface and the broken
+one, and that the real "forces you out" is the ROWS (a coach-role member lands in the admin shell). The
+owner took six decisions from the mockups the same day — D1 approve · D2 Option B · D3 yes · D4 warm ·
+D5 yes · D6 yes — and the build shipped on dev. Plan: `COACH_NOTIFICATIONS_REDRAW_PLAN.md`.
+
+**What a coach sees differently.** The Notifications page wears the house header (bell tile, "?",
+actions in a finger-sized icon-only row on phones — nothing scrolls sideways and Mark all read is on
+the screen); timestamps and day headers read in the muted ink; Notification settings opens with a
+"← Back to your Coaches Portal" bar pinned under the top bar from both the feed and the bell; Mark all
+read clears Activity only and Needs attention clears when opened (the admin bell inherits this); the
+desktop bell panel is warm; the sidebar keeps the team's navigation on this page; a coach's "Game
+moved" opens their own Schedule; a failed load says so with Try again.
+
+**Verified before hand-off:** typecheck clean; palette test green with a new ground; the rendered gate
+at 361/390/768/1440 on the seeded fixture — zero new findings, 15 grandfathered entries retired;
+Playwright as the UAT coach confirmed each behaviour (the server keeps the three Needs-attention
+rows unread after Mark all read; the return bar is sticky and visible after the focus scroll at both
+widths; the rail resolves the team; the panel carries the warm marker).
+
+**Walk:** the checkable artifact `https://claude.ai/code/artifact/74443f14-cdfc-4a95-98bf-6b73ef533c1b`
+(22 checks, five parts, Sign-in-as card). Sign in as `uat-coach@uat-test-org.local` / `UATPassword2026!`; the feed is seeded (64 rows,
+16 unread; reseed with `node scripts/seed-uat-coach-notifications.mjs`). ⚠ Restart the dev server
+first — the build added files. Part E3 (the coach's "Game moved" door) needs a team with two coaches
+and a family-visible schedule; skip and note it if the fixture has neither.
+
+**Open after this build:** R8 (client navigation + URL filters), D4 recipient scoping (coaches still
+receive org-admin events with admin links — its own ticket), the demo's empty bell.
