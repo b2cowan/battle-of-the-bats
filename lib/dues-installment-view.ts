@@ -203,6 +203,11 @@ export interface DueNextSummary {
   nextAmount: number;
   /** That due date (null when nothing is upcoming). */
   nextDueDate: string | null;
+  /** The EARLIEST past-due date with money still missing (null when nothing is late). The grid's
+   *  `Due next` column shows a date rather than a figure (owner, 2026-09-04), and for a family who
+   *  is behind, the date that matters is the oldest one they owe — not the next one coming. Same
+   *  rule the lit column follows: late outranks future. */
+  pastDueDate: string | null;
   /** Every installment fully covered — nothing to chase now or later. */
   allSettled: boolean;
 }
@@ -217,6 +222,7 @@ export function dueNextForPlayer(
   let pastDue = 0;
   let nextAmount = 0;
   let nextDueDate: string | null = null;
+  let pastDueDate: string | null = null;
   let totalRemaining = 0;
   for (const inst of [...installments].sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.installmentNumber - b.installmentNumber)) {
     const cov = coverage.find(c => c.installmentId === inst.id);
@@ -225,6 +231,8 @@ export function dueNextForPlayer(
     totalRemaining += rem;
     if (inst.dueDate < today) {
       pastDue += rem;
+      // Date-sorted, so the first late one we meet is the oldest.
+      if (pastDueDate === null) pastDueDate = inst.dueDate;
     } else if (nextDueDate === null || inst.dueDate === nextDueDate) {
       // "Next" = every installment sharing the EARLIEST not-yet-due date with money missing
       // (due today included). Two installments due the same day are one obligation to the
@@ -239,6 +247,7 @@ export function dueNextForPlayer(
     pastDue: toDollars(pastDue),
     nextAmount: toDollars(nextAmount),
     nextDueDate,
+    pastDueDate,
     allSettled: totalRemaining === 0,
   };
 }

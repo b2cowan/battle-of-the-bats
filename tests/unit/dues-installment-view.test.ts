@@ -41,7 +41,7 @@ describe('dueNextForPlayer', () => {
 
   it('on-track player owes exactly the next upcoming remainder', () => {
     const d = dueNextForPlayer(schedule, covered(schedule, 400), TODAY)!;
-    assert.deepEqual(d, { amount: 200, pastDue: 0, nextAmount: 200, nextDueDate: '2026-09-01', allSettled: false });
+    assert.deepEqual(d, { amount: 200, pastDue: 0, nextAmount: 200, nextDueDate: '2026-09-01', pastDueDate: null, allSettled: false });
   });
 
   it('a part-paid past-due installment contributes its REMAINDER, plus the next one', () => {
@@ -77,7 +77,7 @@ describe('dueNextForPlayer', () => {
 
   it('fully covered schedule reads settled with nothing to chase', () => {
     const d = dueNextForPlayer(schedule, covered(schedule, 600), TODAY)!;
-    assert.deepEqual(d, { amount: 0, pastDue: 0, nextAmount: 0, nextDueDate: null, allSettled: true });
+    assert.deepEqual(d, { amount: 0, pastDue: 0, nextAmount: 0, nextDueDate: null, pastDueDate: null, allSettled: true });
   });
 
   it('no installments means null — nothing can be due', () => {
@@ -315,5 +315,23 @@ describe('chaseableInstallment / familiesOwingOn — the on-demand reminder rule
     const cols = buildInstallmentColumns(players, TODAY);
     assert.equal(familiesOwingOn(players, cols[0]), 2);
     assert.equal(familiesOwingOn(players, null), 0);
+  });
+});
+
+describe('dueNextForPlayer — the date the grid shows', () => {
+  it('names the OLDEST past-due date, not the next one coming', () => {
+    // Two late, one upcoming: the grid's Due next must read the oldest thing owed.
+    const s = [inst(1, 100, '2026-07-01'), inst(2, 100, '2026-08-01'), inst(3, 100, '2026-09-01')];
+    const d = dueNextForPlayer(s, covered(s, 0), TODAY)!;
+    assert.equal(d.pastDueDate, '2026-07-01');
+    assert.equal(d.nextDueDate, '2026-09-01');
+  });
+
+  it('leaves the past-due date null when nothing is late, and when the late one is paid', () => {
+    const upcoming = [inst(1, 100, '2026-09-01')];
+    assert.equal(dueNextForPlayer(upcoming, covered(upcoming, 0), TODAY)!.pastDueDate, null);
+    const late = [inst(1, 100, '2026-07-01'), inst(2, 100, '2026-09-01')];
+    // The late one is settled: no date, because nothing is owed on it.
+    assert.equal(dueNextForPlayer(late, covered(late, 100), TODAY)!.pastDueDate, null);
   });
 });

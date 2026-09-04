@@ -10937,15 +10937,6 @@ button.gdChip[aria-pressed='true'] {
 }
 
 /* Matrix cells: amount on top, state underneath. The state line carries the tone. */
-.duesThDue {
-  display: block;
-  font-size: var(--type-label);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: var(--text-tertiary);
-  margin-top: 1px;
-}
 .duesCellAmt { font-variant-numeric: tabular-nums; font-weight: 600; }
 .duesCellSt {
   display: block;
@@ -11238,6 +11229,11 @@ button.gdChip[aria-pressed='true'] {
   .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(2),
   .duesMatrixPin.scrollXOverflowing table[data-pin-ready] th:nth-child(3) {
     background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.02)), var(--home-olive-soft, rgba(255,255,255,0.02)));
+  }
+  /* The row highlight, painted onto the opaque pin — see the note beside `.duesDueNextCell`. */
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] .tr:hover > td:nth-child(2),
+  .duesMatrixPin.scrollXOverflowing table[data-pin-ready] .tr:hover > td:nth-child(3) {
+    background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.03)), var(--home-olive-soft, rgba(255,255,255,0.03)));
   }
   /* A hairline where the pinned block ends, so the instalments read as sliding UNDER it rather than
      as columns that happen to have stopped moving. */
@@ -12913,8 +12909,8 @@ button.gdChip[aria-pressed='true'] {
 .scheduleFootSep { opacity: 0.5; }
 .scheduleFootLink { min-height: var(--tap-min, 44px); }
 
-/* G1 — the date leads the instalment heading; `.duesThDue` beneath it carries "#4 · $97.08".
-   `.th` is uppercase, spaced, secondary ink — a date is none of those. */
+/* G1 — the instalment heading is the date, ALONE (owner's second look, 2026-09-04: the number and
+   the amount left it). `.th` is uppercase, spaced, secondary ink — a date is none of those. */
 .duesThDate {
   display: block;
   font-size: var(--type-body);
@@ -12950,3 +12946,22 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    last reminded. Quiet lines; the money tiles below stay the panel's first figure. */
 .duesPanelFacts { display: flex; flex-direction: column; gap: 0.15rem; margin: -0.6rem 0 0.9rem; }
 .duesPanelFact { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+
+/* One-line rows (owner's second look, 2026-09-04): the Due next caption follows its figure instead
+   of stacking under it — the two-line cell was the whole reason every row stood 84px tall. */
+.duesDueNextCell { white-space: nowrap; }
+/* ⚠⚠ THE ROW HIGHLIGHT HAS TO BE REPAINTED ON A PINNED CELL, and this is two defects in one
+   mechanism (owner-spotted 2026-09-04: "why does the row highlight miss these 2 columns?").
+   `.tr:hover .td` is three classes. The Player column's sticky ground is two, so hover WINS
+   there — and wins with the `background` SHORTHAND, which resets the opaque colour to a
+   translucent tint, so a hovered Player cell let the scrolled instalments show through it.
+   Due next and Balance pin at four classes and two elements, so hover LOSES there and the
+   highlight stopped dead at the pinned block. Both are fixed the way the heading tint already
+   was: the opaque colour stays as a longhand, and the tint arrives as an image layer on top. */
+.duesMatrixScroller.scrollXOverflowing .tr:hover > td:first-child {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.03)), var(--home-olive-soft, rgba(255,255,255,0.03)));
+}
+/* An untouched future instalment shows its figure in quiet ink — a plan, not a problem. The mark
+   still carries the meaning where there is one (part paid, late); this cell has none. */
+.duesCell[data-tone='up'] .duesCellAmt { color: var(--text-tertiary); font-weight: 500; }

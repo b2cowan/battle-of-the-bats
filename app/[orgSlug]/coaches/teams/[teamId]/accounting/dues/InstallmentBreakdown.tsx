@@ -1,7 +1,8 @@
 'use client';
 /**
  * Player Dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14;
- * headings, lit column and pager per mockup `6bd4c6d9` G1–G3, 2026-09-04).
+ * headings, lit column and pager per mockup `6bd4c6d9` G1–G3, 2026-09-04; the owner-spotted
+ * follow-up the same day: one-line rows, date-only headings, the amount back in every cell).
  *
  * ⚠ THE COLLECTION SCHEDULE BAND THAT USED TO OPEN THIS FILE IS GONE (owner ruling 2026-09-03,
  * D5). It described the season's collection, which is equally true under the Season-totals lens —
@@ -22,19 +23,20 @@
  * figure must equal the remainder the reminder emails chase. The season Balance column beside
  * it is where credits show, exactly as in the totals view.
  *
- * ⚖ THREE THINGS THE OWNER NAMED ON 2026-09-04, all verified against what rendered:
- *   G1 — the heading led with the installment's NUMBER and put the date in small type, though the
- *        date is what a coach is thinking about. It now leads with the date; the number and the
- *        amount follow. That is also why more columns fit: "Oct 4" is a third the width of
- *        "INSTALLMENT 4", and the freed room goes to the Player column, so names stop wrapping.
- *   G2 — no column said "this is the one to chase". The installment the Collection schedule names
- *        (one shared derivation, `focusInstallmentColumn`) is lit with the shared `.gridColNow`
- *        tint the month grid uses for today, and the grid opens with it first after the pin.
- *   G3 — the real scrollbar sat under the last row, off the bottom of a twelve-family grid, and
- *        the only affordance at the top was a chip that said "Swipe" — which on a desktop
- *        "functionally didn't work" (owner). The chip is gone. The panel draws a ‹ › ColumnPager
- *        beside View whenever this grid reports that it overflows, one column per press; the
- *        scrollbar and shift-scroll keep working underneath.
+ * ⚖ THE OWNER'S SECOND LOOK (2026-09-04, on the built grid) — rulings, all built here:
+ *   • ONE-LINE ROWS. The Due next cell stacked its caption under the figure and every row stood
+ *     84px tall for it.
+ *   • ⚠⚠ DUE NEXT IS A DATE, AND ONLY A DATE (the owner's third pass, same day). It had carried a
+ *     figure, a date and a status word. The figures are in the instalment cells now and the credit
+ *     is in the Balance column one cell over, so the date is the only thing this column says that
+ *     nothing else does. "In credit" went with the figure for the same reason: the Balance column
+ *     states it. A family with nothing owed reads an em dash — not a nought to be decoded.
+ *   • THE HEADING IS THE DATE, ALONE. "Oct 4", or "Varies". The number and the amount left the
+ *     heading; the number survives in the cell's accessible name and on the Collection schedule.
+ *   • THE AMOUNT IS BACK IN EVERY UNPAID CELL, in quiet ink; a tick means nothing to send;
+ *     part-paid keeps the dashed circle and late keeps the warning, each with its figure. This
+ *     revises the 2026-08-14 "figure only where money is owed / amount in the heading" ruling —
+ *     the heading no longer carries the amount, so the cell must.
  *
  * ⚠ THE COLUMNS ARRIVE BUILT (cleanup 2026-09-04). The panel derives them once from the whole
  * roster and hands the same array to this grid and to the Collection schedule; `players` here may
@@ -82,7 +84,7 @@ export interface GridViewport {
   overflows: boolean;
   /** Zero-based index of the first installment column fully visible past the pinned zone. */
   first: number;
-  /** Zero-based index of the last installment column at least partly visible. */
+  /** Zero-based index of the last installment column FULLY visible. */
   last: number;
   total: number;
 }
@@ -116,7 +118,8 @@ function playerName(p: BreakdownPlayer) {
   return [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ');
 }
 
-/** The words under a due-next figure — shared by the desktop column and the phone card caption. */
+/** The words beside a due-next figure — the PHONE card's, where there is no table of amounts
+ *  beside it and the collapsed card is the whole answer. The desktop grid shows a date instead. */
 function dueNextCaption(d: DueNextSummary): { text: string; tone: 'warn' | 'dim' | 'good' } {
   if (d.allSettled) return { text: 'All caught up', tone: 'good' };
   if (d.pastDue > 0.005) {
@@ -137,15 +140,10 @@ function dueNextCaption(d: DueNextSummary): { text: string; tone: 'warn' | 'dim'
    shelf: warn ONLY when someone is actually behind, because an unpaid future instalment is a plan,
    not a problem (the chase-card ruling, 2026-08-03). */
 
-/** The heading's two lines (owner G1): the date leads; the number and amount follow. "Varies"
- *  where families have different dates for one installment — the number is then the only name
- *  the column has, and it is still on the second line. */
-function headingFor(col: InstallmentColumn) {
-  const amount = col.amountVaries ? 'amounts vary' : col.commonAmount > 0.005 ? fmt(col.commonAmount) : '';
-  return {
-    primary: col.dueDateVaries ? 'Varies' : col.commonDueDate ? fmtShort(col.commonDueDate) : '—',
-    secondary: amount ? `#${col.installmentNumber} · ${amount}` : `#${col.installmentNumber}`,
-  };
+/** The heading (owner, 2026-09-04): the date, alone. "Varies" where families have different dates
+ *  for one installment. The number lives in the cell's accessible name and on the timeline. */
+function headingFor(col: InstallmentColumn): string {
+  return col.dueDateVaries ? 'Varies' : col.commonDueDate ? fmtShort(col.commonDueDate) : '—';
 }
 
 const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
@@ -231,15 +229,20 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
      a time.
 
      ⚠ LAYOUT IS MEASURED ON RESIZE, NEVER ON SCROLL. A column's left edge (relative to the
-     scroller's content) and the pinned zone's width are scroll-invariant, so they are read once
-     into `layout` when the grid mounts, resizes or changes its column count; the scroll handler —
-     the highest-frequency path here — reads two numbers off the scroller and scans that cache.
-     Offsets are read from the rendered cells, never declared: the pin note above is the reason.
-     The pinned zone is whatever the stylesheet has made sticky at this width, so the same arithmetic
-     holds above 1024 (three pinned columns) and below it (one). */
+     scroller's content) is scroll-invariant, so the edges are read once into `layout` when the
+     grid mounts, resizes or changes its column count; the scroll handler — the highest-frequency
+     path here — reads two numbers off the scroller and scans that cache.
+
+     ⚠⚠ THE PINNED ZONE'S WIDTH IS THE FIRST INSTALLMENT COLUMN'S LEFT EDGE — by construction, not
+     by inspection. The pinned cells are in normal flow (sticky does not remove them), so at rest
+     the first installment column begins exactly where the pin ends. The first cut asked
+     `getComputedStyle` which cells were sticky and summed their widths, and read the answer a
+     beat before the stylesheet had made the third column sticky: the pin came back one column
+     short, the grid opened scrolled one column too far, and Installment 1 sat hidden under the
+     Balance column (owner-spotted 2026-09-04). Geometry cannot be early. */
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [overflows, setOverflows] = useState(false);
-  const layout = useRef<{ pin: number; cols: { left: number; right: number }[] }>({ pin: 0, cols: [] });
+  const layout = useRef<{ cols: { left: number; right: number }[] }>({ cols: [] });
   const lastViewport = useRef<GridViewport | null>(null);
 
   const measureLayout = useCallback(() => {
@@ -247,32 +250,30 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
     const scroller = scrollerRef.current;
     if (!table || !scroller) return;
     const origin = scroller.getBoundingClientRect().left - scroller.scrollLeft;
-    let pin = 0;
-    const head = table.querySelector('thead tr');
-    for (const cell of head ? [...head.children] : []) {
-      if (getComputedStyle(cell as HTMLElement).position !== 'sticky') break;
-      pin += (cell as HTMLElement).getBoundingClientRect().width;
-    }
-    const cols = [...table.querySelectorAll<HTMLElement>('thead th[data-col]')].map(th => {
-      const r = th.getBoundingClientRect();
-      return { left: r.left - origin, right: r.right - origin };
-    });
-    layout.current = { pin, cols };
+    layout.current = {
+      cols: [...table.querySelectorAll<HTMLElement>('thead th[data-col]')].map(th => {
+        const r = th.getBoundingClientRect();
+        return { left: r.left - origin, right: r.right - origin };
+      }),
+    };
   }, []);
 
   const reportViewport = useCallback(() => {
     const scroller = scrollerRef.current;
     if (!scroller || !onViewportChange) return;
-    const { pin, cols } = layout.current;
+    const { cols } = layout.current;
+    const pin = cols[0]?.left ?? 0;
     const viewStart = scroller.scrollLeft + pin;
     const viewEnd = scroller.scrollLeft + scroller.clientWidth;
     let first = -1;
     let last = -1;
     cols.forEach((c, i) => {
-      // First: the first column whose left edge clears the pin (a 2px tolerance for the pin's own
-      // sub-pixel width). Last: the last column any part of which is inside the box.
+      // First: the first column whose left edge clears the pin. Last: the last column WHOLLY
+      // inside the box — a column cut at the right edge is not "in view", and calling it so is
+      // what disabled the › arrow while the last column was still half hidden (owner-spotted
+      // 2026-09-04). A 2px tolerance covers sub-pixel widths at both edges.
       if (first < 0 && c.left >= viewStart - 2) first = i;
-      if (c.left < viewEnd - 1) last = i;
+      if (c.right <= viewEnd + 2) last = i;
     });
     if (first < 0) first = Math.max(0, cols.length - 1);
     const next: GridViewport = { overflows, first, last: Math.max(last, first), total: cols.length };
@@ -284,10 +285,10 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
 
   const scrollToColumn = useCallback((index: number, behavior: ScrollBehavior) => {
     const scroller = scrollerRef.current;
-    const { pin, cols } = layout.current;
+    const { cols } = layout.current;
     if (!scroller || !cols.length) return;
     const i = Math.max(0, Math.min(index, cols.length - 1));
-    scroller.scrollTo({ left: Math.max(0, cols[i].left - pin), behavior });
+    scroller.scrollTo({ left: Math.max(0, cols[i].left - cols[0].left), behavior });
   }, []);
 
   useImperativeHandle(ref, () => ({
@@ -334,30 +335,16 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
      coach can actually act on, rather than as a season aggregate nobody sends. */
 
   /**
-   * ONE CELL OF THE GRID — a mark, and a figure only when money is owed (owner ruling 2026-08-14).
+   * ONE CELL OF THE GRID — a mark, and the figure still to send (owner, 2026-09-04).
    *
-   * This used to print the instalment amount plus a sentence underneath ("paid May 12", "covered
-   * by fundraising", "$150.00 to send"). On a 7×4 roster that is 28 amounts — the same "$200.00"
-   * over and over — and 28 sentences, and the owner's read was that the eye has to decode the
-   * caption before the figure means anything.
-   *
-   * Two changes make the cell answer one question:
-   *
-   *  • **The amount moved to the column heading.** It is the same for the whole team in every
-   *    ordinary schedule, so it is stated once. A player whose own instalment differs still
-   *    prints their own figure — the same exception rule the DATES already use.
-   *
-   *  • **The cell shows what is STILL TO SEND, not what was assessed** — and nothing at all when
-   *    that is zero. A settled row goes almost blank, so every figure left on the grid is money
-   *    to chase.
+   * The 2026-08-14 cut printed a figure only where money was owed and moved the common amount
+   * into the heading, so a settled row went almost blank. The heading no longer carries the amount
+   * (it is the date alone), so the cell carries it again — in quiet ink for an untouched future
+   * instalment, with the dashed circle when part-paid, with the warning when late. A tick still
+   * means "nothing left to send", by cash, by fundraising, or both.
    *
    * ⚠ SOURCE IS OUT (owner ruling 2026-08-14). Cash and fundraising both mean "nothing left to
-   * send" and both draw the same tick. The grid used to distinguish them, which made a coach read
-   * two facts to answer one question; WHERE the money came from is still on the player's record,
-   * which is where anyone actually asks it.
-   *
-   * ⚠ Part-paid is the one state that keeps a figure whatever happens: a tick would say settled
-   * and a blank would say untouched, and both are wrong. A mark cannot carry it.
+   * send" and both draw the same tick; WHERE the money came from is on the player's record.
    *
    * ⚠ It returns a STATE, not a rendering. Two surfaces draw it — the terse desktop grid and the
    * wordier phone card, which has room and no column heading to inherit from — and they must never
@@ -370,10 +357,9 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
     }
     const cov = p.coverage.find(c => c.installmentId === inst.id);
     const toSend = installmentToSend(inst, cov);
-    // Shown in-cell only when they differ from the column heading's — the heading speaks for the
-    // team's common amount and date; a hand-edited schedule keeps its own visible.
+    // Shown in-cell only when it differs from the column heading's — the heading speaks for the
+    // team's common date; a hand-edited schedule keeps its own visible.
     const ownDate = inst.dueDate !== col.commonDueDate ? fmtShort(inst.dueDate) : null;
-    const ownAmount = Math.abs(inst.amount - col.commonAmount) > 0.005 ? fmt(inst.amount) : null;
 
     // Nothing left to send — by cash, by fundraising, or both.
     if (toSend <= 0.005) return { tone: 'paid' as const, started: true, amount: null, ownDate };
@@ -384,19 +370,18 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
 
     if (overdue) return { tone: 'over' as const, started, amount: fmt(toSend), ownDate };
     if (started) return { tone: 'part' as const, started, amount: fmt(toSend), ownDate };
-    // Untouched and not yet due — the quietest state, and the commonest early in a season. A
-    // figure only when this player's own amount is not the column's.
-    return { tone: 'up' as const, started, amount: ownAmount, ownDate };
+    // Untouched and not yet due — the quietest state, and the commonest early in a season.
+    return { tone: 'up' as const, started, amount: fmt(toSend), ownDate };
   }, []);
 
   type CellState = ReturnType<typeof cellFor>;
 
-  /** The grid's mark for a state. */
-  const iconFor = (c: CellState): 'check' | 'warn' | 'part' | 'dot' | null =>
+  /** The grid's mark for a state. An untouched future instalment has no mark — its figure is the
+   *  whole cell. */
+  const iconFor = (c: CellState): 'check' | 'warn' | 'part' | null =>
     c.tone === 'paid' ? 'check'
     : c.tone === 'over' ? 'warn'
     : c.tone === 'part' ? 'part'
-    : c.tone === 'up' && !c.amount && !c.ownDate ? 'dot'
     : null;
 
   /**
@@ -419,36 +404,54 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
 
   /** ⚠ THE MARK CARRIES THE MEANING, never the colour on its own — the warm palette's amber and
    *  danger sit at ΔE ~1.0 for deutan vision, so a grid that said "late" in red alone would say
-   *  nothing to some coaches. Four distinct shapes, one per state. */
-  const statusIcon = (icon: 'check' | 'warn' | 'part' | 'dot' | null) =>
+   *  nothing to some coaches. Three distinct shapes, one per state that has one. */
+  const statusIcon = (icon: 'check' | 'warn' | 'part' | null) =>
     icon === 'check' ? <CheckCircle2 size={13} aria-hidden style={{ verticalAlign: '-2px' }} />
     : icon === 'warn' ? <AlertTriangle size={13} aria-hidden style={{ verticalAlign: '-2px', marginRight: 3 }} />
     : icon === 'part' ? <CircleDashed size={13} aria-hidden style={{ verticalAlign: '-2px', marginRight: 3 }} />
-    : icon === 'dot' ? <span aria-hidden>·</span>
     : null;
 
-  /** The one-line key under the grid. It exists BECAUSE the captions went: four marks a coach has
+  /** The one-line key under the grid. It exists BECAUSE the captions went: three marks a coach has
    *  not seen before need naming once, and once is cheaper than 28 sentences. */
   const legend = (
     <p className={styles.duesLegend}>
-      <span data-tone="paid"><CheckCircle2 size={12} aria-hidden /> settled</span>
+      <span data-tone="paid"><CheckCircle2 size={12} aria-hidden /> nothing to send</span>
       <span data-tone="part"><CircleDashed size={12} aria-hidden /> part paid</span>
       <span data-tone="over"><AlertTriangle size={12} aria-hidden /> overdue</span>
-      <span data-tone="up">· upcoming</span>
-      {/* A footnote about the whole grid, not a fifth tone — no `data-tone`, so a future rule
+      {/* A footnote about the whole grid, not a fourth tone — no `data-tone`, so a future rule
           targeting one cannot silently start styling it. */}
       <span>a figure is what is still to send</span>
     </p>
   );
 
-  /** Desktop "Due next" cell / phone card summary — one renderer so they cannot drift. */
+  /**
+   * THE GRID'S "DUE NEXT" IS A DATE, ALONE (owner, 2026-09-04). It carried the figure and the date
+   * and a status word; the figures are in the instalment cells now and the credit is in the Balance
+   * column one cell over, so the date is the only thing this column says that nothing else does —
+   * WHEN this family is next wanted. Null means nothing is owed at all (settled, in credit, or no
+   * schedule): the cell prints an em dash rather than a nought that has to be read.
+   *
+   * ⚠ FOR A FAMILY WHO IS BEHIND IT IS THE OLDEST DATE THEY OWE, not the next one coming — the
+   * same "late outranks future" rule the lit column and the Collection schedule follow, so the
+   * three cannot point at different instalments.
+   */
+  const dueNextDate = (p: BreakdownPlayer): { date: string; late: boolean } | null => {
+    const d = dueNextById.get(p.player.id) ?? null;
+    if (!p.schedule || !d || d.allSettled) return null;
+    if (d.pastDue > 0.005 && d.pastDueDate) return { date: fmtShort(d.pastDueDate), late: true };
+    return d.nextDueDate ? { date: fmtShort(d.nextDueDate), late: false } : null;
+  };
+
+  /** The PHONE card's summary — it keeps the figure: a collapsed card has no table beside it. */
   const dueNextFigure = (p: BreakdownPlayer) => {
     const d = dueNextById.get(p.player.id) ?? null;
     if (!p.schedule || !d) {
       return { value: '—', valueColor: 'var(--home-dim, rgba(255,255,255,0.3))', caption: 'Not set', tone: 'dim' as const };
     }
+    // A family in credit is due nothing (owner, 2026-09-04): the credit itself is the Balance
+    // column's fact, one cell over; printing it here twice answered a different question.
     if (d.allSettled && p.rollingBalance < -0.005) {
-      return { value: fmt(p.rollingBalance), valueColor: 'var(--success-light)', caption: 'In credit', tone: 'good' as const };
+      return { value: fmt(0), valueColor: 'var(--home-dim, rgba(255,255,255,0.35))', caption: 'In credit', tone: 'good' as const };
     }
     const cap = dueNextCaption(d);
     return {
@@ -492,13 +495,9 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
               <th className={styles.th}>Player</th>
               <th className={`${styles.th} ${styles.thNum}`}>Due next</th>
               <th className={`${styles.th} ${styles.thNum}`}>Balance</th>
-              {/* ⚠ THE HEADING CARRIES THE AMOUNT. It is the same for the whole team in every
-                  ordinary schedule, so the grid states it once here instead of 28 times in the
-                  cells — and a player whose own instalment differs still prints their own figure
-                  in-cell, exactly as their own date does. */}
               {columns.map((col, i) => {
-                const h = headingFor(col);
                 const lit = i === focusIndex;
+                const heading = headingFor(col);
                 return (
                   <th
                     key={col.installmentNumber}
@@ -506,10 +505,9 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
                     data-col={i}
                     data-focus={lit ? 'true' : undefined}
                     /* The number is still the column's name for anyone reading it aloud. */
-                    aria-label={`Installment ${col.installmentNumber}, ${h.primary === 'Varies' ? 'dates vary' : `due ${h.primary}`}`}
+                    aria-label={`Installment ${col.installmentNumber}, ${heading === 'Varies' ? 'dates vary' : `due ${heading}`}`}
                   >
-                    <span className={styles.duesThDate}>{h.primary}</span>
-                    <span className={styles.duesThDue}>{h.secondary}</span>
+                    <span className={styles.duesThDate}>{heading}</span>
                   </th>
                 );
               })}
@@ -518,7 +516,7 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
           </thead>
           <tbody>
             {players.map(p => {
-              const due = dueNextFigure(p);
+              const due = dueNextDate(p);
               return (
                 <tr
                   key={p.player.id}
@@ -527,19 +525,25 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
                   onClick={() => onOpenPlayer(p.player.id)}
                 >
                   <td className={`${styles.td} ${styles.duesPlayerCell}`}>{playerName(p)}</td>
-                  <td className={`${styles.td} ${styles.tdNum}`}>
-                    <span className={styles.duesCellAmt} style={{ color: due.valueColor, fontWeight: 700 }}>{due.value}</span>
-                    <span className={styles.duesCellSt} data-tone={due.tone === 'warn' ? 'over' : due.tone === 'good' ? 'paid' : 'up'}>
-                      {due.tone === 'warn' && <AlertTriangle size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 2 }} />}
-                      {due.caption}
-                    </span>
+                  {/* The date, alone — see `dueNextDate`. */}
+                  <td className={`${styles.td} ${styles.tdNum} ${styles.duesDueNextCell}`}>
+                    {due ? (
+                      <span
+                        className={styles.duesCellAmt}
+                        style={{ color: due.late ? 'var(--warning)' : 'var(--home-ink, rgba(255,255,255,0.85))' }}
+                      >
+                        {due.late && <AlertTriangle size={11} aria-hidden style={{ verticalAlign: '-1px', marginRight: 3 }} />}
+                        {due.date}
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>—</span>
+                    )}
                   </td>
                   <td className={`${styles.td} ${styles.tdNum}`} style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
                     {p.schedule ? fmt(p.rollingBalance) : '—'}
                   </td>
-                  {/* One line, not two: the mark, then a figure ONLY where money is still owed.
-                      A player with no schedule at all keeps an em dash — a blank cell and a
-                      "nothing due yet" cell are different facts. */}
+                  {/* The mark, then the figure still to send. A player with no schedule at all keeps
+                      an em dash — a blank cell and a "nothing due yet" cell are different facts. */}
                   {columns.map((col, i) => {
                     const cell = cellFor(p, col);
                     return (
