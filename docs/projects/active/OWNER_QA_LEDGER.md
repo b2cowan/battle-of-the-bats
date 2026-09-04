@@ -18094,7 +18094,7 @@ two assertions had been describing an `Edit` button Part B deleted in August.
    anywhere, and the walk still working.
 
 
-## §142 · Player dues join the Budget vs Actual Statement, and "Funded by players" is deleted — BUILT 2026-09-04, awaiting QA
+## §142 · Player dues join the Budget vs Actual Statement, and "Funded by players" is deleted — BUILT 2026-09-04, committed `77fa11ae` 2026-09-04, awaiting QA
 
 **The ruling this executes (owner, 2026-09-04, amended twice the same day after the mockup gate):**
 the Statement counted every cost and left out the season's largest money in. One report answered

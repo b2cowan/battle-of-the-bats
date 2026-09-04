@@ -1,6 +1,6 @@
 # Player dues join the Budget vs Actual Statement — and "Funded by players" is deleted
 
-**Status:** built on `dev` 2026-09-04 · Owner QA §142 owed
+**Status:** committed `77fa11ae` 2026-09-04 on `dev` · Owner QA §142 owed
 **Owner rulings:** 2026-09-04 (the design session), amended twice the same day after the mockup gate
 **Design session:** `https://claude.ai/code/artifact/245b6498-b7ff-412f-8062-a47eec82e8fa`
 **Approved mockups (the gate):** `https://claude.ai/code/artifact/b77eece5-228c-45f2-aa3d-d705c6c5b5d1`

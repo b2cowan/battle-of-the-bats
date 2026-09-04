@@ -1,7 +1,7 @@
 # PM brief — the season report finally counts the money families pay
 
 **Plan:** `COACH_BVA_REVENUE_RECONCILE_PLAN.md` · **Priority:** high · **Owner QA:** §142
-**Status:** built on `dev` 2026-09-04, awaiting the owner's walk
+**Status:** committed `77fa11ae` 2026-09-04 on `dev`, awaiting the owner’s walk
 
 ---
 
