@@ -17594,6 +17594,9 @@ $2,601.00 sponsors; Team keeps $2,504.35 + Credited $1,012.65 = $3,517.00 exactl
 $1,170.00 across 3 sponsors — a figure this tab had never displayed.** Band 98px on a desktop,
 stacking on a phone, zero page overflow at 361/390/768/1440.
 
+**Walkthrough artifact (checkable, per-part verdicts + paste-back):**
+`https://claude.ai/code/artifact/7848acb4-9e13-4da2-87c7-92510bbbdb96`
+
 **Walk it (~5 min), on a team with at least one drive and one sponsor:**
 
 1. **Open Fundraising.** Four figures above both lists. Does *Raised* match the two lists' own
