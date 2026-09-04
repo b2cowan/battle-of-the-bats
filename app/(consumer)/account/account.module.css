@@ -324,6 +324,14 @@
   gap: 0.45rem;
   min-height: 42px;
   padding: 0.5rem 1.1rem;
+  /* Pinned under the consumer top bar (D2 = Option B, 2026-09-03): the one visit this bar exists
+     for arrives via `?focus=`, which scrolls straight past a bar that merely sits at the top. The
+     top bar is `position: sticky; top: 0; z-index: 200` (ConsumerShell), so this rides just under
+     it and just below it in the stack; the paper ground keeps scrolled content from showing through. */
+  position: sticky;
+  top: var(--consumer-top-h, var(--chrome-bar-h, 48px));
+  z-index: 150;
+  background: var(--home-paper);
   border-bottom: 1px solid var(--home-line);
   color: var(--home-ink-soft);
   font-family: var(--font-sans, system-ui, sans-serif);

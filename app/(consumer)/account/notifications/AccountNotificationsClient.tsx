@@ -277,9 +277,13 @@ export default function AccountNotificationsClient({
       const el = document.getElementById(focus);
       if (!el) return;
       const standalone = isStandalonePWA();
-      // Clear the sticky consumer-shell top bar (id set in ConsumerNav) + a little breathing room.
+      // Clear the sticky consumer-shell top bar (id set in ConsumerNav) AND the pinned
+      // "Back to your …" return bar beneath it (AccountReturnBar, sticky since 2026-09-03 — a
+      // coach arriving from their bell must land on their card with the way home still visible),
+      // + a little breathing room.
       const topbarHeight = document.getElementById('consumer-topbar')?.getBoundingClientRect().height ?? 0;
-      const top = el.getBoundingClientRect().top + window.scrollY - topbarHeight - 16;
+      const returnBarHeight = document.getElementById('account-return-bar')?.getBoundingClientRect().height ?? 0;
+      const top = el.getBoundingClientRect().top + window.scrollY - topbarHeight - returnBarHeight - 16;
       window.scrollTo({ top, behavior: standalone ? 'auto' : 'smooth' });
     });
     return () => cancelAnimationFrame(raf);

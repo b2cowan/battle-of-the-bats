@@ -260,3 +260,26 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     default:              return true;
   }
 }
+
+/**
+ * Which team the navs are FOR when the URL does not say — the /coaches hub, the notifications
+ * page, the help guide. The team in the URL wins; otherwise the coach's first live team, then the
+ * first team with no live season.
+ *
+ * ONE rule for both navs (coach-notifications review R7, owner-approved D5 2026-09-03). The phone
+ * bar always had this fallback and the desktop rail did not, so on the notifications page the rail
+ * emptied to "Choose a team…" and Help while the bar beneath it still pointed at the coach's team —
+ * two navs telling two stories on the one screen a coach reads off-team. The rail now resolves the
+ * same team, so the coach never loses their place to read a notification.
+ *
+ * ⚠ Deliberately NOT the remembered last team (localStorage). Both navs render on the server; a
+ * fallback that read browser storage during render would hydrate differently from the HTML it
+ * replaced. The /coaches entry point is where the remembered team is honoured, on a navigation.
+ */
+export function resolveNavTeamId(
+  urlTeamId: string | null,
+  assignments: readonly { teamId: string }[],
+  closedAssignments: readonly { teamId: string }[],
+): string | null {
+  return urlTeamId ?? assignments[0]?.teamId ?? closedAssignments[0]?.teamId ?? null;
+}

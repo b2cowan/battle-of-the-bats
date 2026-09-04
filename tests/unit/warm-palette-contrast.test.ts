@@ -108,6 +108,13 @@ const GROUNDS: Record<string, RGB> = {
   // first attempt at the 2026-09-03 correction cleared the card row above and still measured
   // 4.46:1 here. Chasing the ground a finding names, one finding at a time, is the trap.
   'empty-state chip': parseHex('#D9D8C5'), // development "no readings yet", and its siblings
+  // ⚠ ADDED 2026-09-03 by the coach-notifications review — the THIRD ground the sweep has taught
+  // this test. An unread notification row is the olive accent at 6% over a white card; the feed's
+  // timestamps and day headers sit on it. The sweep measured them at 1.43:1 because they were
+  // painted with the HAIRLINE token (--white-30 → --home-line-strong in warm) — a token defect, not
+  // a ground defect — but the ground was still unheld, and the fix moves that text onto --home-dim,
+  // which must now clear it. Lighter than paper, so it cannot fail alone; held so it stays measured.
+  'unread row tint': parseHex('#F4F5F1'), // the "See all" feed + bell panel, unread rows
 };
 
 /**

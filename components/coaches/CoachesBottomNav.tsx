@@ -10,7 +10,7 @@ import {
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
-import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
+import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
@@ -141,7 +141,9 @@ export default function CoachesBottomNav() {
   // team switcher in More lets multi-team coaches change it.
   const teamMatch     = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const urlTeamId     = teamMatch?.[1] ?? null;
-  const currentTeamId = urlTeamId ?? assignments[0]?.teamId ?? closedAssignments[0]?.teamId ?? null;
+  // Shared with the desktop rail since 2026-09-03 (lib/coach-nav-visibility.ts) — one fallback, so
+  // the two navs cannot point at different teams on an off-team page.
+  const currentTeamId = resolveNavTeamId(urlTeamId, assignments, closedAssignments);
   const teamBase      = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
 
   // The team's LIVE season — ONE resolution rule with the sidebar, the masthead and every page

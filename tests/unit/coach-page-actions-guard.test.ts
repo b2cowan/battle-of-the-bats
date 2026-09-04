@@ -164,6 +164,20 @@ const SITES: Site[] = [
       phoneHidden: null, phoneInTitleRow: null,
     },
   },
+  {
+    // The coach frame around the shared notifications feed (coach-notifications review, owner
+    // D1 2026-09-03). Outside the team layout, so the header draws its own "?". Two secondaries,
+    // both `.headerBtnLabel` icon-only on phones in the standard right-pinned row; no primary.
+    // "Mark all read" renders only while an unread ACTIVITY row exists (D3).
+    file: 'components/coaches/CoachNotificationsPage.tsx', occurrence: 0,
+    screen: 'Notifications (the coach "See all" feed)',
+    variant: 'standard', helpHost: 'own',
+    actions: {
+      from: 'inline', slot: 'action',
+      holds: 'Notification settings (the universal settings page, carrying the way back) + Mark all read (Activity only)',
+      phoneHidden: null, phoneInTitleRow: null,
+    },
+  },
 
   // ── The Money hub and its seven panels ───────────────────────────────────────────────────────
   {

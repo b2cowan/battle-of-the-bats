@@ -46,6 +46,7 @@
  * chat-unread pipeline, which retires the KNOWN COST this file used to carry.
  */
 
+import { usePathname } from 'next/navigation';
 import BrandLockup from '@/components/shared/BrandLockup';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
@@ -69,6 +70,12 @@ export default function CoachTopStrip({ wall = false }: {
   /** "See it live" demo: hidden rather than disabled — the binding sandbox rule is hide the
    *  entry point, never let it dead-end. False for every real org. */
   const inSandbox = useIsSandbox();
+  // The bell's settings door carries the way home, exactly as the AccountMenu's row does —
+  // AccountReturnBar reads `?back=` and pins "← Back to your Coaches Portal" over /account. Until
+  // 2026-09-03 this was the one strip door that ejected a coach with no way back (coach-notifications
+  // review A3/D2): the mechanism existed three rows away and this link simply never used it.
+  const pathname = usePathname() ?? '';
+  const back = encodeURIComponent(pathname);
 
   return (
     <header className={styles.strip}>
@@ -83,9 +90,10 @@ export default function CoachTopStrip({ wall = false }: {
         {!wall && currentOrg?.slug && currentOrg.id && (
           <NotificationBell
             orgId={currentOrg.id}
-            settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}`}
+            settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}&back=${back}`}
             seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
             panelPlacement="topStrip"
+            warm
           />
         )}
         {!inSandbox && (

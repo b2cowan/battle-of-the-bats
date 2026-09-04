@@ -21,9 +21,14 @@ interface Props {
    *  default 'sidebar' (the classic left-rail anchor); 'topStrip' when the bell lives in
    *  the Stage C operator top strip (drops from the top-right corner instead). */
   panelPlacement?: 'sidebar' | 'topStrip';
+  /** The panel wears the warm paper/ink skin when the account theme is warm — the coach strip passes
+   *  this, exactly as it does for its AccountMenu. The panel is portaled to <body>, so it cannot
+   *  inherit the shell's warm marker; the prop is what tells it which portal it belongs to. Omitted
+   *  by the admin strip, whose shell has no warm skin (coach-notifications review D4, 2026-09-03). */
+  warm?: boolean;
 }
 
-export default function NotificationBell({ orgId, settingsHref, seeAllHref, count, onCountChange, panelPlacement }: Props) {
+export default function NotificationBell({ orgId, settingsHref, seeAllHref, count, onCountChange, panelPlacement, warm }: Props) {
   // Skip the internal fetch+Realtime when an ancestor provides the count (avoids a duplicate subscription).
   const internal = useNotificationUnread(count === undefined ? orgId : null);
   const unreadCount = count ?? internal.count;
@@ -72,6 +77,7 @@ export default function NotificationBell({ orgId, settingsHref, seeAllHref, coun
           settingsHref={settingsHref}
           seeAllHref={seeAllHref}
           placement={panelPlacement}
+          warm={warm}
         />
       )}
     </div>

@@ -89,6 +89,15 @@
   left: 248px;        /* same sidebar width */
 }
 
+/* The coach strip's panel under a warm account theme (D4, 2026-09-03). The palette itself arrives
+   through the coach warm MARKER on the panel root (see NotificationPanel) — this class only swaps
+   the one thing that marker does not: a shadow written for a near-black page, which reads as a
+   smudge on paper. `--home-shadow` exists only inside the warm block, so the fallback keeps dark
+   exactly as it was. */
+.panelWarm {
+  box-shadow: var(--home-shadow, 0 8px 32px rgba(0, 0, 0, 0.45));
+}
+
 /* Bell in the Stage C operator TOP STRIP (desktop, top-RIGHT corner): drop the panel from
    the trigger's corner instead of the sidebar anchor above. Declared AFTER .panel in this
    same file, so the override order is deterministic. The var fallback is what actually
@@ -142,7 +151,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -188,7 +197,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
   padding: 0.26rem 0.7rem;
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
@@ -204,9 +213,14 @@
   color: var(--fl-text);
 }
 
-/* Chevron hint on a bundle row ("6 new registrations →"). */
+/* Chevron hint on a bundle row ("6 new registrations →").
+   ⚠ TEXT AND GLYPHS IN THIS FILE READ THE SEMANTIC INKS (--text-secondary / --text-tertiary), NOT
+   THE --white-N ALPHA LADDER (coach-notifications review R2, 2026-09-03). In the warm coach portal
+   --white-30/25/20 remap to the HAIRLINE token — right for a border, 1.43:1 for a word. Timestamps,
+   day headers and this chevron were invisible for that reason. The semantic inks resolve to
+   data-gray in the dark admin shell and to --home-dim / --home-ink-soft under the warm marker. */
 .bundleChevron {
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  color: var(--text-tertiary);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -227,13 +241,13 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.72rem;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .settingsLink:hover {
-  color: var(--white-90);
+  color: var(--fl-text);
 }
 
 /* ── Notification rows ─────────────────────────────────────────────────────── */
@@ -255,7 +269,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
 }
 
 /* "Needs attention" — amber, the platform's attention/action cue (--warning). */
@@ -278,7 +292,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  color: var(--text-tertiary);
 }
 
 /* Act rows in "Needs attention" carry a subtle amber left edge (inset shadow =
@@ -292,7 +306,9 @@
   align-items: flex-start;
   gap: 0.65rem;
   padding: 0.7rem 1rem;
-  border-bottom: 1px solid var(--white-5, rgba(255,255,255,0.05));
+  /* --home-line where the warm marker defines it (paper-on-white is not a separator); the alpha
+     hairline everywhere else. */
+  border-bottom: 1px solid var(--home-line, var(--white-5, rgba(255,255,255,0.05)));
   cursor: pointer;
   transition: background 0.12s;
   text-decoration: none;
@@ -342,12 +358,12 @@
 
 .notifRead .notifTitle {
   font-weight: 400;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--text-secondary);
 }
 
 .notifBody {
   font-size: 0.75rem;
-  color: var(--white-50, rgba(255,255,255,0.5));
+  color: var(--text-tertiary);
   margin: 0 0 0.2rem;
   white-space: nowrap;
   overflow: hidden;
@@ -357,7 +373,7 @@
 .notifTime {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--text-tertiary);
   margin: 0;
 }
 
@@ -366,7 +382,7 @@
 .emptyState {
   padding: 2.5rem 1rem;
   text-align: center;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--text-tertiary);
   font-size: 0.82rem;
   display: flex;
   flex-direction: column;
@@ -382,5 +398,5 @@
   padding: 1.5rem 1rem;
   text-align: center;
   font-size: 0.8rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--text-tertiary);
 }

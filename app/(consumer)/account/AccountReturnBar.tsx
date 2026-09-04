@@ -12,6 +12,12 @@
  *
  * v1 limitation, accepted in the plan: the bar lives on the arrival URL — navigating the
  * account rail drops the param and the bar. Same behavior as Chat's.
+ *
+ * PINNED as of 2026-09-03 (coach-notifications review, D2 = Option B): the bar sticks under the
+ * consumer top bar on every width. The `?focus=` deep-link scrolls the arrival to the card the
+ * bell came from, which used to push this bar above the fold on the one visit it exists for — and
+ * on a phone, where the desktop "Coaches Portal" pill never renders, that left no way back at all.
+ * The id lets the focus scroll clear it (AccountNotificationsClient).
  */
 
 import { Suspense } from 'react';
@@ -40,7 +46,7 @@ function Bar() {
   const label = back ? returnLabel(back) : null;
   if (!back || !label) return null;
   return (
-    <Link href={back} className={styles.returnBar}>
+    <Link href={back} id="account-return-bar" className={styles.returnBar}>
       <ArrowLeft size={14} aria-hidden /> Back to your {label}
     </Link>
   );

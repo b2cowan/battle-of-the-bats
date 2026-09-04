@@ -231,6 +231,21 @@ export function notificationCategory(eventType: string): NotificationCategory {
   return (NOTIFICATION_CATEGORY as Record<string, NotificationCategory>)[eventType] ?? 'know';
 }
 
+/**
+ * The 'act' event types — the rows the "Needs attention" zone pins. Derived from the category map so
+ * a new act type joins without a second list to forget.
+ *
+ * ⚠ "Mark all read" LEAVES THESE ALONE (owner ruling 2026-09-03, coach-notifications review D3):
+ * the zone is a triage list, and one tap used to make its admin decisions look handled. They clear
+ * when opened. Read by the API's mark-all-read (the truth) and by both clients' optimistic updates
+ * (the bell panel and the "See all" feed), so the three cannot disagree about what the button does.
+ */
+export const ACT_EVENT_TYPES: ReadonlySet<string> = new Set(
+  (Object.entries(NOTIFICATION_CATEGORY) as [string, NotificationCategory][])
+    .filter(([, cat]) => cat === 'act')
+    .map(([evt]) => evt),
+);
+
 // ── Simple-view groups (Notification Settings Phase 2) ─────────────────────────
 
 export interface SimpleGroup {

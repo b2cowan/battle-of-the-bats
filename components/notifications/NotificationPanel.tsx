@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { CheckCheck, BellOff, Settings, ChevronRight, List } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
-import { notificationCategory } from '@/lib/notification-labels';
+import { notificationCategory, ACT_EVENT_TYPES } from '@/lib/notification-labels';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import {
   iconFor, relativeTime, DAY_ORDER, dayBucket, BUNDLE_NOUN, groupActivityItems,
 } from '@/lib/notification-view';
@@ -30,9 +31,11 @@ interface Props {
    *  sidebar-left anchor; 'topStrip' = drop from the operator top strip's right corner
    *  (Stage C — the admin bell moved there 2026-07-31). */
   placement?: 'sidebar' | 'topStrip';
+  /** Warm paper/ink skin under a warm account theme (see NotificationBell). */
+  warm?: boolean;
 }
 
-export default function NotificationPanel({ orgId, onClose, onUnreadChange, panelRef, settingsHref, seeAllHref, placement = 'sidebar' }: Props) {
+export default function NotificationPanel({ orgId, onClose, onUnreadChange, panelRef, settingsHref, seeAllHref, placement = 'sidebar', warm = false }: Props) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [markingAll,    setMarkingAll]    = useState(false);
@@ -80,12 +83,17 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     }
   }
 
+  // "Mark all read" marks ACTIVITY only (D3, 2026-09-03): Needs-attention rows stay unread until
+  // opened. The server applies the same rule (app/api/notifications), so this optimistic pass and
+  // the badge count it pushes up agree with what a reload would show.
   async function handleMarkAllRead() {
     if (markingAll) return;
     setMarkingAll(true);
     const now = new Date().toISOString();
-    setNotifications(prev => prev.map(n => ({ ...n, readAt: n.readAt ?? now })));
-    onUnreadChange(0);
+    setNotifications(prev => prev.map(n =>
+      n.readAt || ACT_EVENT_TYPES.has(n.eventType) ? n : { ...n, readAt: now },
+    ));
+    onUnreadChange(notifications.filter(n => !n.readAt && ACT_EVENT_TYPES.has(n.eventType)).length);
 
     await fetch('/api/notifications', {
       method:  'POST',
@@ -118,7 +126,8 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     if (link) { onClose(); window.location.href = link; }
   }
 
-  const unreadCount = notifications.filter(n => !n.readAt).length;
+  // The button appears only when it would DO something: an unread row outside Needs attention.
+  const anyActivityUnread = notifications.some(n => !n.readAt && !ACT_EVENT_TYPES.has(n.eventType));
 
   // ── Visible set — the Unread toggle filters here (P2). Marking read then drops an
   //    item straight out of the default view; read is never destroyed, just filtered.
@@ -197,14 +206,21 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
   const panel = (
     <div
       ref={panelRef}
-      className={`${styles.panel}${placement === 'topStrip' ? ` ${styles.panelTopStrip}` : ''}`}
+      className={`${styles.panel}${placement === 'topStrip' ? ` ${styles.panelTopStrip}` : ''}${warm ? ` ${styles.panelWarm}` : ''}`}
       role="dialog"
       aria-label="Notifications"
       data-notification-panel
+      /* The warm skin is the coach shell's OWN marker, carried on this root (D4, 2026-09-03). The
+         panel is portaled to <body>, outside the shell, so the `html[data-user-theme="warm"]
+         [data-coach-warm-enabled]` token block never reached it — which is the only reason it was
+         dark. With the marker here the whole warm set (--surface, --fl-text, the olive accent, the
+         --white-N remaps) resolves inside the panel exactly as it does on the "See all" page, with
+         no second copy of the palette. Inert under an explicit dark preference, by the same selector. */
+      {...(warm ? coachWarmAttr : {})}
     >
       <div className={styles.panelHeader}>
         <p className={styles.panelTitle}>Notifications</p>
-        {unreadCount > 0 && (
+        {anyActivityUnread && (
           <button
             className={styles.markAllBtn}
             onClick={handleMarkAllRead}

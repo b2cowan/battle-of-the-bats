@@ -1208,3 +1208,12 @@ sequential; each is independently shippable.
   summary. ⚠ Build the tick state on browser storage, **not** the artifact runtime capability: that
   one republishes the document and reloads every open view, which loses the walker's place every
   few ticks. The ledger stays the record; the artifact is the instrument.
+
+- **2026-09-03** — **A 39th page header: the coach Notifications feed** (`components/coaches/
+  CoachNotificationsPage.tsx`, coach-notifications review, owner-approved D1). The coaches route
+  used to render the ADMIN page's component, whose hand-rolled header had no responsive rules —
+  two controls beside a title wanted 443px at 361 and "Mark all read" sat past the edge with no
+  scroller. It now wears `CoachPageHeader` outside the team layout (own "?"), with two secondaries
+  in the standard slot — Notification settings and Mark all read — both `.headerBtnLabel`
+  icon-only on phones in the right-pinned row, no primary, nothing phone-hidden. Logged in the
+  guard's `SITES`. The feed body stays shared with the admin page; only the frame is the coach's.

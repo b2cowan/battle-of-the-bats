@@ -1,5 +1,18 @@
 /* Full "See all" notifications page (Notification Center Rework P4). Full-width
-   companion to the bell dropdown; reuses the same zones/grouping/bundling. */
+   companion to the bell dropdown; reuses the same zones/grouping/bundling.
+
+   ⚠ TWO SHELLS, ONE BODY (coach-notifications review R1/R2, 2026-09-03). The FEED BODY
+   (toolbar · list · load more · states — NotificationFeedBody) is shared by the admin page and the
+   coach page; each shell owns its own FRAME. The admin frame is the `.header` block below; the coach
+   frame is CoachPageHeader, which is why nothing in this file styles a coach title.
+
+   ⚠ TEXT READS THE SEMANTIC INKS, NEVER THE --white-N ALPHA LADDER. In the warm coach portal
+   --white-30/25/20 remap to the HAIRLINE token — correct for a border, 1.43:1 for a word. The
+   timestamps, the day headers, the bundle chevron and "Loading…" were all invisible for that reason,
+   and the same remap paints text in six other coach-reachable stylesheets (swept in the same change).
+   --text-secondary / --text-tertiary resolve to data-gray in the dark admin shell and to
+   --home-ink-soft / --home-dim under the warm marker; --home-line falls back to the alpha hairline
+   wherever the warm block is not in scope. */
 
 .page {
   max-width: 720px;
@@ -7,7 +20,7 @@
   padding: 1.25rem 1rem 3rem;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────────── */
+/* ── Header (ADMIN frame only — the coach page wears CoachPageHeader) ─────────── */
 
 .header {
   display: flex;
@@ -15,6 +28,9 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+  /* Two controls beside a title wanted 443px at 361 and nothing could give — the page scrolled
+     sideways and "Mark all read" sat past the edge. Wrapping is the least the admin frame owes. */
+  flex-wrap: wrap;
 }
 
 /* Right-side header actions (optional "Notification settings" link + Mark all read). */
@@ -22,7 +38,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .headerActions a.markAllBtn { text-decoration: none; }
 
@@ -37,7 +53,7 @@
 
 .sub {
   font-size: 0.8rem;
-  color: var(--white-50, rgba(255, 255, 255, 0.5));
+  color: var(--text-tertiary);
   margin: 0.2rem 0 0;
 }
 
@@ -47,7 +63,7 @@
   gap: 0.35rem;
   background: none;
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.4);
-  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  color: var(--text-secondary);
   font-size: 0.76rem;
   font-weight: 600;
   border-radius: 6px;
@@ -80,6 +96,9 @@
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   border: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
   background: none;
   cursor: pointer;
@@ -88,7 +107,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
@@ -104,6 +123,13 @@
   border-color: transparent;
   color: var(--fl-text);
 }
+
+/* The count on "Needs attention" — the one chip that carries a number, in the zone's own amber. */
+.chipCount {
+  color: var(--warning);
+  letter-spacing: 0;
+}
+.chipActive .chipCount { color: inherit; }
 
 /* Unread / All segmented toggle (matches the dropdown's) */
 .segToggle {
@@ -123,7 +149,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
   padding: 0.28rem 0.75rem;
   border-radius: 4px;
   transition: color 0.15s, background 0.15s;
@@ -158,7 +184,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  color: var(--text-tertiary);
 }
 
 .sectionHeaderAct {
@@ -172,6 +198,17 @@
   color: var(--warning);
 }
 
+/* "clears as you open them" — says what Mark all read no longer does to this zone (D3). */
+.sectionHint {
+  margin-left: auto;
+  font-family: var(--font-sans, inherit);
+  font-size: var(--type-support, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+
 .dateHeader {
   padding: 0.6rem 1.1rem 0.3rem;
   font-family: var(--font-data);
@@ -179,8 +216,13 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  color: var(--text-tertiary);
+  /* A day header sits on a band of the page ground so the list reads as days rather than as one
+     block; where the warm block is out of scope (admin) both vars are absent and it stays flat. */
+  background: var(--home-paper, transparent);
+  border-top: 1px solid var(--home-line, transparent);
 }
+.dateHeader:first-child { border-top: 0; }
 
 /* ── Rows ─────────────────────────────────────────────────────────────────────── */
 
@@ -189,7 +231,7 @@
   align-items: flex-start;
   gap: 0.8rem;
   padding: 0.85rem 1.1rem;
-  border-top: 1px solid var(--white-5, rgba(255, 255, 255, 0.05));
+  border-top: 1px solid var(--home-line, var(--white-5, rgba(255, 255, 255, 0.05)));
   cursor: pointer;
   transition: background 0.12s;
 }
@@ -231,20 +273,25 @@
 }
 
 .read .itemTitle {
-  font-weight: 400;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .itemBody {
   font-size: 0.8rem;
-  color: var(--white-50, rgba(255, 255, 255, 0.5));
+  color: var(--text-secondary);
   margin: 0 0 0.2rem;
+}
+
+.read .itemBody {
+  color: var(--text-tertiary);
 }
 
 .itemTime {
   font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  font-size: var(--type-support, 0.7rem);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
   margin: 0;
 }
 
@@ -258,12 +305,12 @@
 }
 
 .bundleChevron {
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  color: var(--text-tertiary);
   flex-shrink: 0;
   margin-top: 3px;
 }
 
-/* ── Load more + empty/loading ───────────────────────────────────────────────── */
+/* ── Load more + empty/error/loading ─────────────────────────────────────────── */
 
 .loadMoreWrap {
   display: flex;
@@ -274,7 +321,7 @@
 .loadMoreBtn {
   background: none;
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.4);
-  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 600;
   border-radius: 6px;
@@ -293,24 +340,98 @@
   cursor: default;
 }
 
+/* The quiet empty state: a medallion beside a headline and the sentence that says what arrives
+   here. No call to action — nothing on this surface is the coach's to do. */
 .empty {
-  padding: 3.5rem 1rem;
-  text-align: center;
-  color: var(--white-40, rgba(255, 255, 255, 0.4));
-  font-size: 0.9rem;
+  padding: 1.25rem 1.1rem 1.5rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
+  align-items: flex-start;
+  gap: 0.9rem;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
 }
 
 .emptyIcon {
-  opacity: 0.35;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--home-paper, var(--white-5, rgba(255, 255, 255, 0.05)));
+  border: 1px solid var(--home-line, var(--white-10, rgba(255, 255, 255, 0.1)));
+  color: var(--text-tertiary);
+}
+
+.emptyText {
+  min-width: 0;
+}
+
+.emptyHeadline {
+  font-family: var(--font-display, inherit);
+  font-size: var(--type-heading, 1rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin: 0.35rem 0 0;
+}
+
+.emptyDesc {
+  font-size: var(--type-body, 0.875rem);
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0;
+  max-width: 46ch;
+}
+
+.emptyNote {
+  font-size: var(--type-support, 0.75rem);
+  color: var(--text-tertiary);
+  margin: 0.5rem 0 0;
+}
+
+/* A failed load says so and offers the way out (the Money tabs' CoachLoadError shape). Colour is
+   the danger token, which the warm marker remaps to the portal's red. */
+.errorRow {
+  margin: 0.35rem 0 0;
+  font-size: var(--type-body, 0.875rem);
+  color: var(--danger);
+}
+
+.retryBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .loadingRow {
   padding: 2.5rem 1rem;
   text-align: center;
   font-size: 0.85rem;
-  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  color: var(--text-tertiary);
+}
+
+/* ── Touch widths (≤768): the 44px floor on every control in the body ─────────── */
+/* The frame's controls get theirs from CoachPageHeader's own phone rule; these are the body's.
+   Heights only — the chips keep their pill shape and simply grow to a finger. */
+@media (max-width: 768px) {
+  .chip,
+  .segBtn,
+  .loadMoreBtn,
+  .markAllBtn {
+    min-height: var(--tap-min, 44px);
+  }
+  .segToggle { border-radius: 999px; }
+  .segBtn { border-radius: 999px; padding: 0 0.9rem; }
+  .chip { padding: 0 0.9rem; font-size: var(--type-support, 0.75rem); }
+  .retryBtn {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
+  /* The hint would crowd a 361px zone header beside its count. */
+  .sectionHint { display: none; }
 }

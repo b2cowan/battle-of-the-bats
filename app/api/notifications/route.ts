@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { AppNotification } from '@/lib/types';
-import { NOTIFICATION_CATEGORY } from '@/lib/notification-labels';
+import { NOTIFICATION_CATEGORY, ACT_EVENT_TYPES } from '@/lib/notification-labels';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +16,13 @@ const BELL_EXCLUDED_EVENTS = Object.entries(NOTIFICATION_CATEGORY)
   .map(([evt]) => evt);
 const BELL_EXCLUDE_IN = BELL_EXCLUDED_EVENTS.length > 0
   ? `(${BELL_EXCLUDED_EVENTS.map(e => `"${e}"`).join(',')})`
+  : null;
+
+// "Mark all read" marks ACTIVITY only (owner ruling 2026-09-03, D3): the "Needs attention" rows are
+// a triage list and clear when opened, so one tap must not make an unhandled decision look handled.
+// Same source as both clients' optimistic updates (lib/notification-labels ACT_EVENT_TYPES).
+const ACT_EXCLUDE_IN = ACT_EVENT_TYPES.size > 0
+  ? `(${[...ACT_EVENT_TYPES].map(e => `"${e}"`).join(',')})`
   : null;
 
 function unauthorized() {
@@ -122,12 +129,15 @@ export const POST = withObservability(async (req: Request) => {
   if (body.action === 'mark-all-read') {
     if (!body.orgId) return NextResponse.json({ error: 'Missing orgId.' }, { status: 400 });
 
-    const { error } = await supabaseAdmin
+    let markAll = supabaseAdmin
       .from('notifications')
       .update({ read_at: now })
       .eq('user_id', user.id)
       .eq('org_id', body.orgId)
       .is('read_at', null);
+    // Needs-attention rows stay unread — they clear when opened (D3, see ACT_EXCLUDE_IN above).
+    if (ACT_EXCLUDE_IN) markAll = markAll.not('event_type', 'in', ACT_EXCLUDE_IN);
+    const { error } = await markAll;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });

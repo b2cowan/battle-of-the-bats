@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
+import { getRepTeamCoaches } from './db';
 import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 import { formatInOrgZone } from './timezone';
 import { endSentence } from './utils';
@@ -29,6 +30,7 @@ interface EventFacts {
   id: string;
   teamId: string;
   orgId: string;
+  programYearId: string;
   eventType: string;
   name: string;
   startsAt: string;
@@ -90,7 +92,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
   try {
     const { data: eventRow } = await supabaseAdmin
       .from('rep_team_events')
-      .select('id, team_id, org_id, event_type, name, starts_at, location, opponent, home_away, team_score, opponent_score, result, status')
+      .select('id, team_id, org_id, program_year_id, event_type, name, starts_at, location, opponent, home_away, team_score, opponent_score, result, status')
       .eq('id', params.eventId)
       .maybeSingle();
     if (!eventRow) return;
@@ -100,6 +102,7 @@ export async function notifyFamiliesOfGameUpdate(params: {
       id: row.id as string,
       teamId: row.team_id as string,
       orgId: row.org_id as string,
+      programYearId: row.program_year_id as string,
       eventType: row.event_type as string,
       name: row.name as string,
       startsAt: row.starts_at as string,
@@ -146,16 +149,45 @@ export async function notifyFamiliesOfGameUpdate(params: {
     const userIds = links
       .map(l => l.user_id)
       .filter((id): id is string => !!id && id !== params.actorUserId);
-    if (userIds.length > 0) {
-      await notify({
+
+    // A COACH's copy opens their own Schedule, not the family app (coach-notifications review R4,
+    // owner-approved D6 2026-09-03). Coaches are followed to their own team automatically, so
+    // they sit in `links` beside the families — and one `notify()` call carries ONE link, which
+    // used to eject every coach who tapped "Game moved" into the consumer shell. Split by hat;
+    // the words are identical, only the door differs. Resolved from the same assignment table the
+    // digest uses. A failed lookup degrades to the family link for everyone rather than to silence.
+    let coachIds = new Set<string>();
+    if (org.slug) {
+      try {
+        coachIds = new Set((await getRepTeamCoaches(event.programYearId)).map(c => c.userId));
+      } catch (lookupErr) {
+        console.error('[family-notify] coach lookup failed; coaches get the family link', lookupErr);
+      }
+    }
+    const coachRecipients  = userIds.filter(id => coachIds.has(id));
+    const familyRecipients = userIds.filter(id => !coachIds.has(id));
+    const sends: Promise<void>[] = [];
+    if (familyRecipients.length > 0) {
+      sends.push(notify({
         orgId: event.orgId,
         eventType: 'family_game_update',
         title,
         body,
         link,
-        userIds,
-      });
+        userIds: familyRecipients,
+      }));
     }
+    if (coachRecipients.length > 0) {
+      sends.push(notify({
+        orgId: event.orgId,
+        eventType: 'family_game_update',
+        title,
+        body,
+        link: `/${org.slug}/coaches/teams/${event.teamId}/schedule`,
+        userIds: coachRecipients,
+      }));
+    }
+    await Promise.all(sends);
 
     // ── Email, through the one guarded sender. ──
     // The opt-out list is loaded ONCE and handed to each send, so the guard runs per

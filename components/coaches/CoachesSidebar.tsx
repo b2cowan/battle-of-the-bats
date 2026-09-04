@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
-import { isCoachNavItemVisible, withClosedSeasonNav, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
+import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
@@ -162,14 +162,20 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const chatUnread = useChatUnread();
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
-  const currentTeamId = teamMatch?.[1] ?? null;
+  const urlTeamId = teamMatch?.[1] ?? null;
+  // Off-team pages (notifications, the hub) keep the coach's team in the rail — the SAME fallback
+  // the phone bar has always used, from one shared rule (lib/coach-nav-visibility.ts; review R7,
+  // owner-approved D5 2026-09-03). Before this the rail emptied to "Choose a team…" + Help on the
+  // one screen a coach reads off-team, while the bar beneath it still pointed at their team.
+  const currentTeamId = resolveNavTeamId(urlTeamId, assignments, closedAssignments);
 
   // Remember the last team the coach was in (per org) — the /coaches entry point lands
   // there on the next visit (owner call, Batch 3 QA 2026-07-29). Best-effort only.
+  // ⚠ The URL's team, not the resolved one: a fallback must never overwrite a real visit.
   useEffect(() => {
-    if (!currentTeamId) return;
-    try { localStorage.setItem(`flhq-coach-last-team:${orgSlug}`, currentTeamId); } catch { /* ignore */ }
-  }, [currentTeamId, orgSlug]);
+    if (!urlTeamId) return;
+    try { localStorage.setItem(`flhq-coach-last-team:${orgSlug}`, urlTeamId); } catch { /* ignore */ }
+  }, [urlTeamId, orgSlug]);
 
   // The team's LIVE season, and — when it has none — its newest closed one. ONE resolution rule,
   // shared with the bottom nav, the masthead and every page (lib/coach-season-view.ts), so no
