@@ -19,10 +19,10 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import SettlementRow from '@/components/coaches/SettlementRow';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
-import InstallmentBreakdown, { balanceColor } from './InstallmentBreakdown';
+import InstallmentBreakdown, { balanceColor, type GridViewport, type InstallmentGridHandle } from './InstallmentBreakdown';
 import CollectionSchedule from './CollectionSchedule';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
-import { installmentToSend } from '@/lib/dues-installment-view';
+import { installmentToSend, buildInstallmentColumns, focusInstallmentColumn, familiesOwingOn, chaseableInstallment } from '@/lib/dues-installment-view';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
@@ -70,6 +70,10 @@ import {
 } from '@/lib/dues-credits';
 import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import ColumnPager from '@/components/coaches/ColumnPager';
+import { pluralize } from '@/lib/utils';
+import { describeExistingSchedules } from '@/lib/dues-bulk-run';
 import DuesMoneySettingRows from '@/components/coaches/DuesMoneySettingRows';
 import { closeOutBlockers } from '@/lib/season-settlement';
 import type { SettlementSheet, SettlementSheetRow } from '@/lib/season-settlement';
@@ -171,6 +175,55 @@ const DUES_STATUS_COLOR: Record<ReturnType<typeof duesStatusLabel>, string> = {
   'Past due':    'var(--danger-light)',
   'Up to date':  'var(--home-ink-soft, rgba(255,255,255,0.7))',
 };
+
+/** The Showing pill's four answers (owner E3, 2026-09-04). It rides the URL like the View pill —
+ *  a coach shares "here's who is behind" — and defaults to everyone. */
+type DuesShow = 'all' | 'behind' | 'owing' | 'clear';
+const SHOW_LABEL: Record<DuesShow, string> = {
+  all: 'Everyone',
+  behind: 'Behind',
+  owing: 'Still owing',
+  clear: 'Nothing owing',
+};
+/** ⚠ ONE PREDICATE PER ANSWER, read by the counts in the menu, the two lenses and the export —
+ *  so "Behind · 3" can never show four rows. Behind IS the Status column's "Past due"; a player
+ *  with no schedule appears under Everyone only (owing nothing is not the same as being set). */
+function matchesShow(p: PlayerWithDues, show: DuesShow): boolean {
+  if (show === 'all') return true;
+  if (!p.schedule) return false;
+  if (show === 'behind') return duesStatusLabel(p) === 'Past due';
+  if (show === 'owing') return p.leftToSend > 0.005;
+  return p.leftToSend <= 0.005;
+}
+/** The Send-due-reminders confirmation's one answer: fetching, could not fetch, or the counts. */
+type ReminderPreviewState =
+  | 'loading'
+  | 'failed'
+  | { families: number; installments: number; skippedRecent: number; missingEmail: number }
+  | null;
+
+const SHOW_EMPTY: Record<DuesShow, string> = {
+  all: '',
+  behind: 'No families are behind right now.',
+  owing: 'No families still owe anything.',
+  clear: 'No families are fully settled yet.',
+};
+
+/** When a family was last reminded, and by whom (owner E2, 2026-09-04). The three stamps live on
+ *  the installments: `reminderSentAt` is the coach's own send (the page button or the family's
+ *  own Remind), the 30/7 stamps are the automatic waves. The never-paid nudge stamps nothing. */
+function lastReminderFor(p: PlayerWithDues): { at: string; installmentNumber: number; kind: 'auto' | 'manual' } | null {
+  let best: { at: string; installmentNumber: number; kind: 'auto' | 'manual' } | null = null;
+  for (const i of p.installments) {
+    const stamps: [string | null, 'auto' | 'manual'][] = [
+      [i.reminderSentAt, 'manual'], [i.reminder30SentAt, 'auto'], [i.reminder7SentAt, 'auto'],
+    ];
+    for (const [at, kind] of stamps) {
+      if (at && (!best || at > best.at)) best = { at, installmentNumber: i.installmentNumber, kind };
+    }
+  }
+  return best;
+}
 
 function statusLabel(p: PlayerWithDues) {
   // ⚠ Installments go in, because the label is a question about TIME — "is this family behind?"
@@ -450,6 +503,21 @@ export function PlayerDuesPanel({
   // Emails to real families is the one click on this toolbar that can't be un-clicked — it
   // confirms first, and the confirm states the scope (owner call 2026-08-14).
   const [confirmRemindersOpen, setConfirmRemindersOpen] = useState(false);
+  /** Who the on-demand send would reach — fetched the moment the confirmation opens (owner D3),
+   *  from the same selection the send uses, so the button never promises a number it cannot
+   *  deliver. `'failed'` degrades to the old rule-only confirmation rather than a dead button. */
+  const [reminderPreview, setReminderPreview] = useState<ReminderPreviewState>(null);
+  /** Which letter the preview modal shows: the automatic wave (Team settings' "See an example")
+   *  or the coach's on-demand send ("See what they'll receive"). */
+  const [reminderPreviewVariant, setReminderPreviewVariant] = useState<'wave' | 'onDemand'>('wave');
+  /** The By-installment grid's sideways position, for the pager beside View (owner G3). */
+  const [gridViewport, setGridViewport] = useState<GridViewport | null>(null);
+  const gridRef = useRef<InstallmentGridHandle | null>(null);
+  /** Only the LATEST preview request may write the confirmation's state (/review 2026-09-04). A
+   *  close-and-reopen fires a second fetch; without this a slow first response could land after
+   *  the second and overwrite fresher counts — or downgrade a good answer to "failed". The same
+   *  belt the generator's preview wears (`previewToken`). */
+  const reminderPreviewToken = useRef(0);
 
   // "Haven't paid anything yet" nudges — ONE PLAYER AT A TIME since the chase card went
   // (owner call 2026-09-03). The band it lived on carried a SECOND bulk send beside "Send due
@@ -458,7 +526,7 @@ export function PlayerDuesPanel({
   // it was sent for — opening the next family must not show them the last family's receipt.
   const [remindingId, setRemindingId] = useState<string | null>(null);
   const [unpaidFor, setUnpaidFor] = useState<string | null>(null);
-  const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersReminded: number; playersMissingEmail: number } | null>(null);
+  const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersMissingEmail: number; skippedRecent?: boolean } | null>(null);
   const [unpaidError, setUnpaidError] = useState('');
 
   // ── The season settlement sheet (Pass 3, 2026-08-14) ─────────────────────────────────────
@@ -507,6 +575,90 @@ export function PlayerDuesPanel({
   function setDuesView(next: 'totals' | 'installments') {
     setUrlParam('duesView', next === 'installments' ? 'installments' : null);
   }
+  const showRaw = seasonSearchParams.get('duesShow');
+  const duesShow: DuesShow = showRaw === 'behind' || showRaw === 'owing' || showRaw === 'clear' ? showRaw : 'all';
+  function setDuesShow(next: DuesShow) {
+    setUrlParam('duesShow', next === 'all' ? null : next);
+  }
+
+  /* ⚠ DERIVED HERE, ABOVE THE PANEL'S EARLY RETURNS — these are hooks, and hooks after a
+     conditional return trip the rules-of-hooks gate (and would genuinely reorder on a loading
+     render). They read only `players` and the URL. */
+  /* ── The Showing filter's lists (owner E3) ──────────────────────────────────────────────────
+     Counts in the menu, one filtered list for both lenses and the export. The band and the
+     Collection schedule keep reading `players` — they describe the season, not the list. */
+  const { showCounts, shownPlayers } = useMemo(() => {
+    const counts = { behind: 0, owing: 0, clear: 0 };
+    const shown: PlayerWithDues[] = [];
+    for (const p of players) {
+      const behind = matchesShow(p, 'behind');
+      const owing = matchesShow(p, 'owing');
+      const clear = matchesShow(p, 'clear');
+      if (behind) counts.behind += 1;
+      if (owing) counts.owing += 1;
+      if (clear) counts.clear += 1;
+      if (duesShow === 'all' || (duesShow === 'behind' ? behind : duesShow === 'owing' ? owing : clear)) shown.push(p);
+    }
+    return { showCounts: counts, shownPlayers: shown };
+  }, [players, duesShow]);
+  const emptyShowMessage = duesShow === 'all' ? null : SHOW_EMPTY[duesShow];
+
+  /* ── What the Collection schedule's foot says (owner D2) ────────────────────────────────────
+     Hand-set = the ONE judgement the write route makes (lib/dues-bulk-run.ts): a family whose
+     schedule is not the shape most of the roster shares. Computed here from the same installment
+     rows the route would read, so the sentence and the generator's "keep the ones I set by hand"
+     can never name different families. */
+  const handSetCount = useMemo(() => describeExistingSchedules(
+    players.flatMap(p => p.installments.map(i => ({
+      playerId: p.player.id, installmentNumber: i.installmentNumber, amount: i.amount, dueDate: i.dueDate,
+    }))),
+  ).handSetPlayerIds.size, [players]);
+  /** "set Aug 20 from the budget plan" — the schedules' own notes (the generator records which
+   *  of its three bases produced them) and the earliest creation date. Null when it cannot say. */
+  const scheduleOrigin = useMemo(() => {
+    const scheds = players.map(p => p.schedule).filter((x): x is NonNullable<typeof x> => !!x);
+    if (!scheds.length) return null;
+    const tally = new Map<string, number>();
+    for (const sc of scheds) if (sc.notes) tally.set(sc.notes, (tally.get(sc.notes) ?? 0) + 1);
+    const note = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const basis = note === 'Generated from budget plan' ? 'from the budget plan'
+      : note === 'Generated from the season estimate' ? 'from the season estimate'
+      : note === 'Set by the coach' ? 'by hand'
+      : null;
+    const earliest = scheds.map(sc => sc.createdAt).filter(Boolean).sort()[0];
+    if (!earliest) return null;
+    return `set ${formatStoredDate(earliest, { withYear: false })}${basis ? ` ${basis}` : ''}`;
+  }, [players]);
+
+  /* ── The next thing to chase, for the reminder confirmation's zero state (owner D3) ────────
+     The SAME derivation the Collection schedule and the lit grid column use. */
+  /** The season's instalment columns, built ONCE and handed to the Collection schedule, the grid
+   *  and the reminder confirmation — the same array, so the "installment to chase" is the same
+   *  object everywhere by construction rather than by three calls agreeing. */
+  // `today` is read on every render and is a dependency — a string, so the memo holds within a
+  // day and refreshes at the org-timezone midnight rather than freezing on the last roster change.
+  const duesToday = tournamentToday();
+  const duesColumns = useMemo(() => buildInstallmentColumns(players, duesToday), [players, duesToday]);
+  const reminderFocus = useMemo(() => {
+    const f = focusInstallmentColumn(duesColumns);
+    if (!f) return null;
+    return { installmentNumber: f.installmentNumber, dueDate: f.commonDueDate, families: familiesOwingOn(players, f) };
+  }, [players, duesColumns]);
+
+  /* ── Who to reach, and when they were last reminded (owner E5 / E2) ─────────────────────────
+     The guardian fields arrive already redacted for a coach without the roster's PII grant (the
+     dues route), so for them the line simply has nothing to say. */
+  const panelFacts = useMemo(() => {
+    if (!selected) return null;
+    const g = selected.player;
+    const contact = [
+      [g.guardianFirstName, g.guardianLastName].filter(Boolean).join(' '),
+      g.guardianEmail ?? '',
+      g.guardianPhone ?? '',
+    ].filter(Boolean);
+    const last = lastReminderFor(selected);
+    return contact.length || last ? { contact, last } : null;
+  }, [selected]);
 
   /**
    * THE COLLECTION SCHEDULE'S FOLD IS A DEVICE PREFERENCE, NOT A URL PARAM (owner ruling
@@ -725,9 +877,11 @@ export function PlayerDuesPanel({
       dataset: 'player-dues',
       title: 'Player Dues',
       columns: DUES_EXPORT_COLUMNS,
-      rows: duesExportRows(players),
+      // The list on screen, not the roster (owner E3): an export that ignored the filter would
+      // hand a coach twelve rows under a title that promised three.
+      rows: duesExportRows(shownPlayers),
       pdfRows: duesPdfRows,
-      scopeLabel: assignment?.programYearName ?? '',
+      scopeLabel: [assignment?.programYearName ?? '', duesShow === 'all' ? '' : SHOW_LABEL[duesShow]].filter(Boolean).join(' · '),
       teamName: assignment?.teamName ?? '',
       emptyMessage: 'There are no player dues to export yet.',
     };
@@ -739,8 +893,17 @@ export function PlayerDuesPanel({
   // download (this family's conversation) and the Export dialog's whole-team print run.
 
   /** The dues payload, projected onto the statement assembler's input shape. */
+  /** The households the print run covers: everyone, or — when the Showing filter is on — every
+   *  household with a member on screen, kept WHOLE. Siblings roll into one page, so a filter that
+   *  split a family would print half a statement. The Export dialog labels the run with the
+   *  filter, so the run must honour it (/review 2026-09-04). */
+  function statementPlayers(): PlayerWithDues[] {
+    if (duesShow === 'all') return players;
+    const keys = new Set(shownPlayers.map(p => p.familyKey ?? p.player.id));
+    return players.filter(p => keys.has(p.familyKey ?? p.player.id));
+  }
   function toStatementInput(): StatementPlayerInput[] {
-    return players.map(p => ({
+    return statementPlayers().map(p => ({
       playerId: p.player.id,
       playerFirstName: p.player.playerFirstName,
       playerLastName: p.player.playerLastName ?? null,
@@ -1340,6 +1503,68 @@ export function PlayerDuesPanel({
     }
   }
 
+  /** Opens the confirmation and asks the route who the send would reach (owner D3). */
+  function openReminderConfirm() {
+    setConfirmRemindersOpen(true);
+    setReminderPreview('loading');
+    const token = ++reminderPreviewToken.current;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues/send-reminders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preview: true }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data) throw new Error('preview failed');
+        if (token !== reminderPreviewToken.current) return;
+        setReminderPreview({
+          families: Number(data.families ?? 0),
+          installments: Number(data.installments ?? 0),
+          skippedRecent: Number(data.skippedRecent ?? 0),
+          missingEmail: Number(data.missingEmail ?? 0),
+        });
+      } catch {
+        if (token !== reminderPreviewToken.current) return;
+        setReminderPreview('failed');
+      }
+    })();
+  }
+
+  /**
+   * ONE BUTTON, THE RIGHT LETTER (owner E4, 2026-09-04). "Remind this family" is offered to any
+   * family who is late, due within 3 days, or has paid nothing yet. The first two get the same
+   * installment email the page-wide send uses, for their household only, with the same 7-day
+   * courtesy — a suppressed family is reported, never re-dunned. A family whose first bill is
+   * further out and who has paid nothing gets the "nothing paid yet" nudge, exactly as before.
+   * The outcome lands in the same line under the button either way.
+   */
+  async function remindFamily(p: PlayerWithDues) {
+    if (!chaseableInstallment(p, tournamentToday())) { await remindUnpaid(p.player.id); return; }
+    setRemindingId(p.player.id);
+    setUnpaidFor(p.player.id);
+    setUnpaidError('');
+    setUnpaidResult(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues/send-reminders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: p.player.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send the reminder');
+      setUnpaidResult({
+        emailsSent: Number(data.emailsSent ?? 0),
+        playersMissingEmail: data.missingEmail ? 1 : 0,
+        skippedRecent: !!data.skippedRecent,
+      });
+    } catch (e: unknown) {
+      setUnpaidError(e instanceof Error ? e.message : 'Failed to send the reminder.');
+    } finally {
+      setRemindingId(null);
+    }
+  }
+
   /** Nudge ONE family who has recorded no payment at all. The route still accepts a whole-team
    *  send; nothing in the portal asks for one any more (owner call 2026-09-03), so this takes a
    *  player and always names them. */
@@ -1502,6 +1727,12 @@ export function PlayerDuesPanel({
     let collected = 0;
     let outstanding = 0;
     let overduePlayers = 0;
+    /* ⚠ THE BAND DID NOT TIE OUT AND NEVER SAID WHY (owner E1, 2026-09-04). Balance owing sums only
+       the families who owe; a family in credit is (rightly) not netted off other families' bills —
+       so a treasurer doing Assessed − Collected − credits lands short by exactly this figure. Summed
+       in this loop, said in the tile's caption. */
+    let inCredit = 0;
+    let inCreditFamilies = 0;
     /* ⚠ THE MONEY BEHIND THE COUNT, summed in THIS loop rather than a second walk (2026-09-03).
        The band states past-due money as its figure and the family count as its caption; deriving
        the amount anywhere else would be the fifth hand-copied dues sum this file's own credits
@@ -1511,6 +1742,7 @@ export function PlayerDuesPanel({
       if (p.schedule) assessed += p.schedule.totalAmount;
       collected += p.paidAmount;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
+      if (p.rollingBalance < -0.005) { inCredit += -p.rollingBalance; inCreditFamilies += 1; }
       /* ⚠⚠ ONE PREDICATE DECIDES BOTH THE COUNT AND THE MONEY, and that is the whole reason
          `pastDueInstallments` is a shared list rather than a boolean. The band prints "$X past due"
          over "N families"; derived apart, those two are one hand-rolled loop away from disagreeing,
@@ -1530,7 +1762,7 @@ export function PlayerDuesPanel({
         pastDue += installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id));
       }
     }
-    return { assessed, credits, collected, outstanding, overduePlayers, pastDue };
+    return { assessed, credits, collected, outstanding, overduePlayers, pastDue, inCredit: Math.round(inCredit * 100) / 100, inCreditFamilies };
   })();
   /**
    * THE DUES BAND (owner ruling 2026-09-03, D4) — the tab's summary, on BOTH views, in the one
@@ -1570,6 +1802,10 @@ export function PlayerDuesPanel({
       figure: fmt(seasonTotals.outstanding),
       // ⚠ The verdict, not the sum: amber only while money is actually outstanding.
       tone: seasonTotals.outstanding > 0.005 ? 'warn' : 'plain',
+      // Only when somebody is in credit — with nobody, the three tiles already tie out.
+      caption: seasonTotals.inCreditFamilies > 0
+        ? `excludes ${fmt(seasonTotals.inCredit)} owed back to ${pluralize(seasonTotals.inCreditFamilies, 'family', 'families')}`
+        : undefined,
     },
     {
       key: 'pastdue',
@@ -1589,6 +1825,7 @@ export function PlayerDuesPanel({
   // Asks whether a SCHEDULE exists, not whether `assessed > 0`: a real schedule totalling zero is
   // a decision a coach made, and its footer should say zero rather than vanish.
   const showSeasonTotals = players.some(p => p.schedule);
+
   /** The two money settings have arrived. Their two consumers — the setup block (no dues yet)
    *  and the policy line (dues exist) — are mutually exclusive on `showSeasonTotals`, so this
    *  says only "we know the answer yet", nothing about which of the two is showing. */
@@ -1629,23 +1866,58 @@ export function PlayerDuesPanel({
     <div className={styles.panelToolbar}>
       {/* The view lens sits on the toolbar's left — exactly the slot the panel-toolbar ruling
           reserved for "a view switch, a status filter, a lens picker". Desktop-only: phones
-          have one view (the cards), so a toggle there would be two buttons that do nothing. */}
+          have one view (the cards), so a control there would choose between nothing.
+
+          ⚠ THE SAME PILL EVERY OTHER MONEY TAB USES (owner, 2026-09-04 — finishing the 2026-08-20
+          "one control shape" ruling, whose adoption list named Player Dues next). This was the
+          last segmented view switch on any Money tab: Ledger, Budget Plan and Budget vs. Actual
+          all choose their arrangement with a labelled `View` pill, so one product asked the same
+          question two ways. Only the control's SHAPE changed — the choice still rides the URL
+          (mockup d7162867: a coach shares "here is the by-installment view"), and the default is
+          still Season totals. The wrapper carries the phone rule, not the pill: the shared
+          control knows nothing about this tab's cards. */}
       {showSeasonTotals && (
-        <div className={`${styles.segChoice} ${styles.duesViewSeg} ${styles.duesDesktopOnly}`} role="group" aria-label="Dues view">
-          <button
-            type="button"
-            className={`${styles.segBtn} ${!installmentView ? styles.segBtnActive : ''}`}
-            onClick={() => setDuesView('totals')}
-          >
-            Season totals
-          </button>
-          <button
-            type="button"
-            className={`${styles.segBtn} ${installmentView ? styles.segBtnActive : ''}`}
-            onClick={() => setDuesView('installments')}
-          >
-            By installment
-          </button>
+        <div className={styles.duesToolbarLeft}>
+          <div className={`${styles.duesDesktopOnly} ${styles.duesToolbarLeft}`}>
+            <SingleSelectDropdown
+              label="View"
+              lead
+              value={installmentView ? 'installments' : 'totals'}
+              options={[
+                { id: 'totals', label: 'Season totals' },
+                { id: 'installments', label: 'By installment' },
+              ]}
+              onChange={next => setDuesView(next === 'installments' ? 'installments' : 'totals')}
+            />
+            {/* ⚠ THE WAY SIDEWAYS (owner G3, 2026-09-04) — only while the grid actually overflows,
+                which it measures and reports; a control that can never do anything is worse than
+                no control. One installment per press, the Budget-vs-Actual month pager's rule. */}
+            {installmentView && gridViewport?.overflows && (
+              <ColumnPager
+                unit="installment"
+                range={<><strong>Installments {gridViewport.first + 1}–{gridViewport.last + 1}</strong>{` · of ${gridViewport.total}`}</>}
+                onPrev={() => gridRef.current?.stepColumns(-1)}
+                onNext={() => gridRef.current?.stepColumns(1)}
+                prevDisabled={gridViewport.first <= 0}
+                nextDisabled={gridViewport.last >= gridViewport.total - 1}
+              />
+            )}
+          </div>
+          {/* The Showing filter (owner E3) — a status filter in the slot the panel-toolbar ruling
+              reserved for one. NOT desktop-only: the phone cards are a long list too, and this is
+              a new control rather than a replacement for one. Counts in the labels so the answer
+              is read before the click. */}
+          <SingleSelectDropdown
+            label="Showing"
+            value={duesShow}
+            options={[
+              { id: 'all', label: SHOW_LABEL.all },
+              { id: 'behind', label: `${SHOW_LABEL.behind} · ${showCounts.behind}` },
+              { id: 'owing', label: `${SHOW_LABEL.owing} · ${showCounts.owing}` },
+              { id: 'clear', label: `${SHOW_LABEL.clear} · ${showCounts.clear}` },
+            ]}
+            onChange={next => setDuesShow(next === 'behind' || next === 'owing' || next === 'clear' ? next : 'all')}
+          />
         </div>
       )}
       <div className={styles.panelToolbarActions}>
@@ -1654,15 +1926,18 @@ export function PlayerDuesPanel({
             {duesExport}
             {moneyCanWrite && (
             <>
+            {/* ⚰ "SET DUES FOR ALL PLAYERS" IS NOT A TOOLBAR BUTTON ANY MORE (owner D2, 2026-09-04).
+                It is a set-once act that sat beside the weekly ones on a screen a coach visits to
+                chase payments. Before dues exist the setup block above carries it as the primary;
+                once they exist it is the quiet "Change the schedule for everyone" at the foot of
+                the Collection schedule — the timeline it rewrites. Budget Plan and Overview had
+                already made the same call. ⚠ NOT A LOCK: re-running mid-season stays legitimate
+                (owner ruling 2026-08-14, reaffirmed) — the protection is the generator's preview. */}
             {/* Secondaries go icon-only on phones (`.headerBtnLabel` — the page-header
-                ruling's mechanism, same reason: three worded buttons stacked three rows
-                deep before the list began). aria-labels carry the words. */}
-            <button className={styles.btnSecondary} onClick={() => setApplyAllOpen(true)} aria-label="Set dues for all players">
-              <DollarSign size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Set dues for all players</span>
-            </button>
+                ruling's mechanism). aria-labels carry the words. */}
             <button
               className={styles.btnSecondary}
-              onClick={() => setConfirmRemindersOpen(true)}
+              onClick={openReminderConfirm}
               disabled={sendingReminders}
               style={{ opacity: sendingReminders ? 0.6 : 1 }}
               /* Tracks the visible ternary — a static label would tell AT "Send due
@@ -1691,6 +1966,105 @@ export function PlayerDuesPanel({
   );
 
 
+
+  /* ⚠ THE COUNT COMES BEFORE THE BUTTON (owner D3, 2026-09-04). This used to state the rule and let
+     the coach learn the result after pressing Send — on a fixture whose first installment is weeks
+     away, the honest result was "0 sent". The route now answers "who would this reach?" from the
+     SAME selection the send uses, so the button says how many emails, is disabled at zero with the
+     reason, and the preview link shows the letter. If that answer cannot be fetched the old
+     rule-only wording returns and Send stays live — a network blip must not take the button away. */
+  const confirmText = { fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' } as const;
+  const confirmDim = { margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' } as const;
+  function reminderConfirmBody() {
+    const loading = reminderPreview === 'loading';
+    const pv = reminderPreview !== null && typeof reminderPreview === 'object' ? reminderPreview : null;
+    const zero = !!pv && pv.families === 0;
+    return (
+      <>
+        <div style={confirmText}>
+          {loading ? (
+            <p style={{ margin: 0 }}>Working out who this would reach…</p>
+          ) : !pv ? (
+            <>
+              <p style={{ margin: 0 }}>
+                This emails every family with an installment that is <strong>past due</strong> or{' '}
+                <strong>due within the next 3 days</strong> — one email per family, asking only for
+                what&apos;s still owing.
+              </p>
+              <p style={confirmDim}>
+                A family already reminded in the last 7 days isn&apos;t emailed again. Fully paid and
+                up-to-date families never receive one.
+              </p>
+            </>
+          ) : zero && pv.missingEmail > 0 ? (
+            /* ⚠ ZERO FOR THE WRONG REASON (/review 2026-09-04): somebody IS late or due, and the
+               only reason nothing sends is that their household has no email on file. Saying
+               "no installment is past due" here would tell the coach the team is caught up. */
+            <>
+              <p style={{ margin: 0 }}>
+                <strong>Nothing can be sent.</strong> {pluralize(pv.missingEmail, 'family', 'families')} with an installment
+                past due or due within the next 3 days {pv.missingEmail === 1 ? 'has' : 'have'} no guardian email on file, so
+                there is nobody to email. Add an email on the Roster, or reach them another way.
+              </p>
+              <p style={confirmDim}>
+                {pv.skippedRecent > 0 && <>{pluralize(pv.skippedRecent, 'family', 'families')} {pv.skippedRecent === 1 ? 'was' : 'were'} reminded in the last 7 days. </>}
+                Fully paid and up-to-date families never receive one.
+              </p>
+            </>
+          ) : zero ? (
+            <>
+              <p style={{ margin: 0 }}>
+                <strong>Nothing to send today.</strong> No installment is past due or due within the next 3 days.
+                {reminderFocus?.dueDate && (
+                  <> Installment {reminderFocus.installmentNumber} is due {fmtDate(reminderFocus.dueDate)}
+                    {autoReminders ? ' — with automatic reminders on, families hear about it 30 and 7 days before.' : '.'}</>
+                )}
+              </p>
+              <p style={confirmDim}>
+                {reminderFocus && reminderFocus.families > 0 && <>{pluralize(reminderFocus.families, 'family', 'families')} still owe on Installment {reminderFocus.installmentNumber}. </>}
+                To nudge one family now, open that player from the table.
+                {pv.skippedRecent > 0 && <> {pluralize(pv.skippedRecent, 'family', 'families')} {pv.skippedRecent === 1 ? 'was' : 'were'} reminded in the last 7 days.</>}
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: 0 }}>
+                This emails <strong>{pluralize(pv.families, 'family', 'families')}</strong> about{' '}
+                <strong>{pluralize(pv.installments, 'installment')}</strong> that {pv.installments === 1 ? 'is' : 'are'} past due
+                or due within the next 3 days — one email per family, asking only for what&apos;s still owing.
+              </p>
+              <p style={confirmDim}>
+                {pv.skippedRecent > 0 && <>{pv.skippedRecent} more {pv.skippedRecent === 1 ? 'family qualifies' : 'families qualify'} but {pv.skippedRecent === 1 ? 'was' : 'were'} reminded in the last 7 days, so {pv.skippedRecent === 1 ? "it's" : "they're"} skipped. </>}
+                Fully paid and up-to-date families never receive one.
+                {pv.missingEmail > 0 && <> {pluralize(pv.missingEmail, 'family', 'families')} {pv.missingEmail === 1 ? 'has' : 'have'} no guardian email on file.</>}
+              </p>
+            </>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* The letter itself — the on-demand variant, which is what THIS button sends. */}
+          <button
+            type="button"
+            className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
+            style={{ minHeight: 44, marginRight: 'auto' }}
+            onClick={() => { setReminderPreviewVariant('onDemand'); setReminderPreviewOpen(true); }}
+          >
+            {zero ? 'See what families receive' : 'See what they\'ll receive'}
+          </button>
+          <button className={styles.btnGhost} onClick={() => setConfirmRemindersOpen(false)}>{zero ? 'Close' : 'Cancel'}</button>
+          <button
+            className={styles.btnPrimary}
+            /* Waits for a per-family send the same way that button waits for this one. */
+            disabled={loading || zero || sendingReminders || !!remindingId}
+            onClick={() => { setConfirmRemindersOpen(false); sendReminders(); }}
+          >
+            <Bell size={14} aria-hidden />{' '}
+            {pv ? `Send ${pluralize(pv.families, 'email')}` : 'Send reminders'}
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
@@ -1756,7 +2130,7 @@ export function PlayerDuesPanel({
                   creditModeSaving={creditModeSaving}
                   onToggleReminders={enabled => void toggleAutoReminders(enabled)}
                   onChangeCreditMode={mode => void saveCreditMode(mode)}
-                  onPreviewReminder={() => setReminderPreviewOpen(true)}
+                  onPreviewReminder={() => { setReminderPreviewVariant('wave'); setReminderPreviewOpen(true); }}
                 />
                 {moneySettingError && (
                   <div className={styles.settingRow}>
@@ -1788,7 +2162,15 @@ export function PlayerDuesPanel({
           {showSeasonTotals && (
             <>
               <MoneySummaryBand tiles={duesTiles} ariaLabel="Player dues summary" />
-              <CollectionSchedule players={players} open={scheduleOpen} onToggle={toggleSchedule} />
+              <CollectionSchedule
+                players={players}
+                columns={duesColumns}
+                open={scheduleOpen}
+                onToggle={toggleSchedule}
+                handSetCount={handSetCount}
+                origin={scheduleOrigin}
+                onChangeSchedule={moneyCanWrite ? () => setApplyAllOpen(true) : undefined}
+              />
             </>
           )}
 
@@ -1803,8 +2185,12 @@ export function PlayerDuesPanel({
               player lands in the same drawer from everywhere. */}
           {showSeasonTotals && (
             <InstallmentBreakdown
-              players={players}
+              ref={gridRef}
+              players={shownPlayers}
+              columns={duesColumns}
               desktopActive={installmentView}
+              emptyMessage={emptyShowMessage}
+              onViewportChange={setGridViewport}
               onOpenPlayer={id => {
                 const p = players.find(x => x.player.id === id);
                 if (!p) return;
@@ -1827,7 +2213,12 @@ export function PlayerDuesPanel({
                 </tr>
               </thead>
               <tbody>
-                {players.map(p => {
+                {shownPlayers.length === 0 && emptyShowMessage && (
+                  <tr>
+                    <td className={styles.td} colSpan={7}><span className={styles.mutedInline}>{emptyShowMessage}</span></td>
+                  </tr>
+                )}
+                {shownPlayers.map(p => {
                   const { label, color } = statusLabel(p);
                   return (
                     <tr
@@ -2469,6 +2860,17 @@ export function PlayerDuesPanel({
               </button>
             </div>
 
+            {panelFacts && (
+              <div className={styles.duesPanelFacts}>
+                {panelFacts.contact.length > 0 && <p className={styles.duesPanelFact}>{panelFacts.contact.join(' · ')}</p>}
+                {panelFacts.last && (
+                  <p className={styles.duesPanelFact}>
+                    Last reminded {fmtDate(panelFacts.last.at)} · Installment {panelFacts.last.installmentNumber} · {panelFacts.last.kind === 'auto' ? 'automatic' : 'from this page'}
+                  </p>
+                )}
+              </div>
+            )}
+
             {!editingSchedule ? (
               <>
                 {selected.schedule ? (
@@ -2598,14 +3000,17 @@ export function PlayerDuesPanel({
                           {statementBusyFor === selected.player.id ? 'Building…' : 'Family statement'}
                         </button>
                       )}
-                      {moneyCanWrite && isNeverPaidPlayer(selected) && (
+                      {moneyCanWrite && (isNeverPaidPlayer(selected) || chaseableInstallment(selected, tournamentToday())) && (
                         <button
                           className={styles.btnSecondary}
-                          onClick={() => remindUnpaid(selected.player.id)}
-                          disabled={!!remindingId}
+                          onClick={() => { void remindFamily(selected); }}
+                          /* ⚠ AND while the page-wide send is in flight (/review 2026-09-04): both
+                             doors reach the same read-then-write route, and a family in both
+                             selections would be emailed twice in one minute. */
+                          disabled={!!remindingId || sendingReminders}
                           style={{ fontSize: '0.78rem', opacity: remindingId ? 0.6 : 1 }}
                         >
-                          {remindingId === selected.player.id ? 'Sending…' : 'Remind'}
+                          <Bell size={13} aria-hidden /> {remindingId === selected.player.id ? 'Sending…' : 'Remind this family'}
                         </button>
                       )}
                       {/* ⚠ Gated like the payments and payouts lists beside it (QA §123 Phase B):
@@ -2788,6 +3193,8 @@ export function PlayerDuesPanel({
                       <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', textAlign: 'right', color: unpaidError ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                         {unpaidError || (unpaidResult && unpaidResult.emailsSent > 0
                           ? 'Reminder sent.'
+                          : unpaidResult?.skippedRecent
+                            ? 'Reminded in the last 7 days — not sent again yet.'
                           : unpaidResult?.playersMissingEmail
                             ? 'No guardian email on file for this player.'
                             // ⚠ NEVER FALL THROUGH TO ''. The route returns all-zeros when this
@@ -3552,7 +3959,7 @@ export function PlayerDuesPanel({
       })()}
 
       {confirmRemindersOpen && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (() => setConfirmRemindersOpen(false))?.(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setConfirmRemindersOpen(false); }}>
           <div className={styles.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>Send due reminders?</span>
@@ -3560,26 +3967,7 @@ export function PlayerDuesPanel({
                 <X size={18} />
               </button>
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1.1rem' }}>
-              <p style={{ margin: 0 }}>
-                This emails every family with an installment that is <strong>past due</strong> or{' '}
-                <strong>due within the next 3 days</strong> — one email per family, asking only for
-                what&apos;s still owing.
-              </p>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                A family already reminded in the last 7 days isn&apos;t emailed again. Fully paid and
-                up-to-date families never receive one.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button className={styles.btnGhost} onClick={() => setConfirmRemindersOpen(false)}>Cancel</button>
-              <button
-                className={styles.btnPrimary}
-                onClick={() => { setConfirmRemindersOpen(false); sendReminders(); }}
-              >
-                <Bell size={14} aria-hidden /> Send reminders
-              </button>
-            </div>
+            {reminderConfirmBody()}
           </div>
         </div>
       )}
@@ -3587,6 +3975,7 @@ export function PlayerDuesPanel({
       {reminderPreviewOpen && (
         <DuesReminderPreviewModal
           teamName={assignment?.teamName ?? ''}
+          variant={reminderPreviewVariant}
           onClose={() => setReminderPreviewOpen(false)}
         />
       )}

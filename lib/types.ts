@@ -2329,6 +2329,9 @@ export interface RepDueReminderCandidate {
   /** Already past its due date (org-timezone calendar). Only the coach's ad-hoc send produces
    *  these — the automated 30/7 waves look forward by construction. */
   overdue: boolean;
+  /** The 7-day courtesy would hold this installment back today. Only ever true when the query was
+   *  asked to keep such rows (`includeRecentlyReminded`); the default result never contains one. */
+  recentlyReminded: boolean;
 }
 
 export interface RepAllocationReminderCandidate {

@@ -26,6 +26,7 @@
  */
 
 import type { InstallmentCoverage } from './dues-payments';
+import { addCalendarDays } from './timezone';
 
 export interface ViewableInstallment {
   id: string;
@@ -170,6 +171,28 @@ export function buildInstallmentColumns(players: readonly PlayerScheduleLike[], 
   });
 }
 
+/**
+ * THE ONE INSTALLMENT A COACH CAN ACT ON — the earliest still owed, with a late piece outranking a
+ * future one (a debt is more actionable than a plan). `null` when every installment is collected.
+ *
+ * ⚠ ONE DEFINITION, TWO READERS (owner G2, 2026-09-04). The Collection schedule's shut line names
+ * this installment and the By-installment grid lights its column and opens with it in view; derived
+ * separately they could point at two different columns on one screen, which is the exact defect
+ * the timeline was moved into the header to end. Late is the column's own `behindCount` — money
+ * still to send on a bill past THAT PLAYER'S due date — never re-derived from the heading's common
+ * date, so a hand-edited schedule is late on the family's day rather than the team's.
+ */
+export function focusInstallmentColumn(columns: readonly InstallmentColumn[]): InstallmentColumn | null {
+  let late: InstallmentColumn | null = null;
+  let next: InstallmentColumn | null = null;
+  for (const col of columns) {
+    if (col.remaining <= 0.005) continue;
+    if (col.behindCount > 0) { if (!late) late = col; continue; }
+    if (!next) next = col;
+  }
+  return late ?? next ?? null;
+}
+
 export interface DueNextSummary {
   /** Dollars to chase right now: pastDue + nextAmount. */
   amount: number;
@@ -225,3 +248,37 @@ export function dueNextForPlayer(
    date itself. Nothing is orphaned: `lib/marketing-schedule.ts` and `lib/tournament-phase-display.ts`
    each keep their own, both with callers and tests, so a future need has two homes to pick from
    rather than one unused export sitting in the dues module pretending to be shared. */
+
+/**
+ * How far ahead the coach's on-demand "Send due reminders" looks — past due, or due within this
+ * many days. ⚠ ONE NUMBER, TWO READERS (cleanup 2026-09-04): the server's candidate query decides
+ * who is emailed, and the player's panel decides whether to offer "Remind this family". Defined
+ * once so a future change to the window cannot leave the button and the send disagreeing.
+ */
+export const DUE_REMINDER_DAYS_AHEAD = 3;
+
+/** Would the on-demand reminder have anything to say to this family today? The same rule the
+ *  send-reminders route applies: an installment past due or due within the window, with money
+ *  still to send. */
+export function chaseableInstallment(p: PlayerScheduleLike, today: string): boolean {
+  const cutoff = addCalendarDays(today, DUE_REMINDER_DAYS_AHEAD);
+  return p.installments.some(i =>
+    !i.paidAt && i.dueDate <= cutoff && installmentToSend(i, p.coverage.find(c => c.installmentId === i.id)) > 0.005);
+}
+
+/**
+ * How many families still owe something on ONE installment — the number a coach chases. Runs
+ * through `installmentToSend` so it cannot disagree with the grid's cells or with what a reminder
+ * email asks for. Shared by the Collection schedule's shut line and the reminder confirmation's
+ * zero state, which used to carry two copies of this loop.
+ */
+export function familiesOwingOn(players: readonly PlayerScheduleLike[], column: InstallmentColumn | null): number {
+  if (!column) return 0;
+  let n = 0;
+  for (const p of players) {
+    const inst = p.installments.find(i => i.installmentNumber === column.installmentNumber);
+    if (!inst || inst.paidAt) continue;
+    if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) > 0.005) n += 1;
+  }
+  return n;
+}

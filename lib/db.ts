@@ -12259,6 +12259,14 @@ export async function getDueReminderCandidates(
   teamId: string,
   daysAhead: number,
   window?: 30 | 7,
+  /**
+   * `includeRecentlyReminded` keeps the installments the 7-day courtesy would skip, each marked
+   * `recentlyReminded: true`, so ONE read answers both "who is emailed today" and "who is being
+   * held back" (the Send-due-reminders confirmation, owner D3 2026-09-04). ⚠ A sender that passes
+   * it MUST filter the flag out before sending — the coach route does; a send that ignores the
+   * courtesy re-duns a family twice in a week.
+   */
+  opts: { includeRecentlyReminded?: boolean } = {},
 ): Promise<RepDueReminderCandidate[]> {
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return [];
@@ -12353,16 +12361,15 @@ export async function getDueReminderCandidates(
     // stay forward-looking — they are proximity notices, and folding past-due into them would
     // re-dun every behind family on the sweep's schedule instead of the coach's.
     if (window !== undefined && i.due_date < todayStr) return false;
-    // Check window-specific sent column, fall back to legacy reminder_sent_at
-    if (window === 30) {
-      if (i.reminder_30_sent_at && new Date(i.reminder_30_sent_at) >= sevenDaysAgo) return false;
-    } else if (window === 7) {
-      if (i.reminder_7_sent_at && new Date(i.reminder_7_sent_at) >= sevenDaysAgo) return false;
-    } else {
-      if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
-    }
+    // The 7-day courtesy — window-specific sent column, falling back to legacy reminder_sent_at.
+    // Filtered here unless the caller asked to see the held-back rows flagged instead.
+    if (!opts.includeRecentlyReminded && recentlyReminded(i)) return false;
     return true;
   });
+  function recentlyReminded(i: any): boolean {
+    const stamp = window === 30 ? i.reminder_30_sent_at : window === 7 ? i.reminder_7_sent_at : i.reminder_sent_at;
+    return !!stamp && new Date(stamp) >= sevenDaysAgo;
+  }
 
   if (!candidates.length) return [];
 
@@ -12397,6 +12404,7 @@ export async function getDueReminderCandidates(
       creditNote: creditNoteById.get(i.id) ?? null,
       dueDate: i.due_date,
       overdue: i.due_date < todayStr,
+      recentlyReminded: recentlyReminded(i),
     };
   });
 }

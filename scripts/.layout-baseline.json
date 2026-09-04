@@ -9,10 +9,6 @@
       "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-dues|768|tap-floor|button·Set dues for all players": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "33px tall (floor 44)"
-    },
     "coach-dues|768|tap-floor|button·Send due reminders": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "33px tall (floor 44)"
@@ -22,10 +18,6 @@
       "detail": "34px tall (floor 44)"
     },
     "coach-dues-installments|768|tap-floor|button·Export": {
-      "reason": "2026-09-03 money-banner standard (owner decisions D1-D6): `coach-dues-installments` is a NEW SCREEN ID, not new geometry. The By-installment lens draws a completely different body from the Season-totals table and had never been swept — the pin and column order added that day are only provable under it — so it was added to scripts/layout-screens.mjs, and these four are the SAME toolbar controls already accepted at this width on `coach-dues` (identical selectors, identical pixel heights, verbatim the reasons recorded there by the 2026-08-11 header pass and the 2026-08-13 legacy-route / export-placement passes). The >=768px compact control height is the portal-wide grandfathered decision none of those passes took; <=640px they clear the 44px floor via the header grid / .panelToolbarActions, which this run measured green at 361 and 390. The controls introduced by that ruling — the Collection schedule fold and the summary band — were measured clean at every width and are NOT covered by this entry.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-dues-installments|768|tap-floor|button·Set dues for all players": {
       "reason": "2026-09-03 money-banner standard (owner decisions D1-D6): `coach-dues-installments` is a NEW SCREEN ID, not new geometry. The By-installment lens draws a completely different body from the Season-totals table and had never been swept — the pin and column order added that day are only provable under it — so it was added to scripts/layout-screens.mjs, and these four are the SAME toolbar controls already accepted at this width on `coach-dues` (identical selectors, identical pixel heights, verbatim the reasons recorded there by the 2026-08-11 header pass and the 2026-08-13 legacy-route / export-placement passes). The >=768px compact control height is the portal-wide grandfathered decision none of those passes took; <=640px they clear the 44px floor via the header grid / .panelToolbarActions, which this run measured green at 361 and 390. The controls introduced by that ruling — the Collection schedule fold and the summary band — were measured clean at every width and are NOT covered by this entry.",
       "detail": "33px tall (floor 44)"
     },
@@ -2553,10 +2545,6 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-dues-settlement|768|tap-floor|button·Set dues for all players": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
     "coach-help|361|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
       "reason": null,
       "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
@@ -3812,6 +3800,18 @@
     "coach-budget|768|tap-floor|button·Show Jerseys's payment periods": {
       "reason": "The shared ledger expand chevron at 768 — the SAME grandfathered class as the Dome Time entry (20px, geometry unchanged): two NEW fixture lines (the quarters and names splits the budget revamp gates need, 2026-09-02) gave the same control new labels, which is the label-keyed rot the baseline memory warns about. The floor for this shared control is owed to the pass that settles the Dome Time entry, not to a fixture change.",
       "detail": "20px tall (floor 44)"
+    },
+    "coach-dues-behind|768|tap-floor|button·Help: Money": {
+      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions. (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-dues-behind|768|tap-floor|button·Export": {
+      "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass. (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-dues-behind|768|tap-floor|button·Send due reminders": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
+      "detail": "33px tall (floor 44)"
     }
   }
 }

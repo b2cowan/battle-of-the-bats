@@ -9,8 +9,10 @@ import {
   markInstallments30ReminderSent,
   markInstallments7ReminderSent,
 } from '@/lib/db';
+import type { RepDueReminderCandidate } from '@/lib/types';
 import { sendEmail } from '@/lib/email';
 import { duesReminderEmail } from '@/lib/dues-reminder-email';
+import { DUE_REMINDER_DAYS_AHEAD } from '@/lib/dues-installment-view';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -36,6 +38,27 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
+/** One family = one guardian email. A candidate with no email is its own (unreachable) family. */
+function familiesOf(list: readonly RepDueReminderCandidate[]): Set<string> {
+  return new Set(list.filter(c => c.guardianEmail).map(c => c.guardianEmail as string));
+}
+
+// POST /api/coaches/[orgSlug]/teams/[teamId]/dues/send-reminders
+// Body (all optional):
+//   window: 30 | 7        — an automatic wave (honours the team's toggle; forward-looking only)
+//   preview: true         — ⚠ SENDS NOTHING, STAMPS NOTHING. Answers "who would this reach?" for
+//                           the Send-due-reminders confirmation (owner D3, 2026-09-04): the same
+//                           selection the send uses, so the button can never promise a different
+//                           number than it delivers.
+//   playerId: string      — ONE family (owner E4, 2026-09-04): the on-demand email, sent only to the
+//                           guardian of this player, listing every qualifying installment of theirs
+//                           (siblings on the same guardian email included — it is one letter to one
+//                           household). The 7-day courtesy still applies; a suppressed family is
+//                           reported as `skippedRecent` rather than re-dunned.
+//
+// ⚠ ONE READ. The candidate query is seven round trips and a coverage pass over the whole roster;
+// it runs ONCE here with the courtesy carried as a FLAG, and every mode filters the flag in memory.
+// The send path must never email a `recentlyReminded` row — that is the courtesy.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -47,14 +70,50 @@ export const POST = withObservability(async (req: Request,
 
   const body = await req.json().catch(() => ({}));
   const window: 30 | 7 | undefined = body.window === 30 ? 30 : body.window === 7 ? 7 : undefined;
+  const preview = body.preview === true;
+  const playerId: string | null = typeof body.playerId === 'string' && body.playerId ? body.playerId : null;
 
   // Automated reminder windows: respect coach toggle
   if (window !== undefined && !programYear.autoRemindersEnabled) {
     return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0, skipped: true });
   }
 
-  const daysAhead = window === 30 ? 32 : window === 7 ? 9 : 3;
-  const candidates = await getDueReminderCandidates(teamId, daysAhead, window);
+  const daysAhead = window === 30 ? 32 : window === 7 ? 9 : DUE_REMINDER_DAYS_AHEAD;
+  const all = await getDueReminderCandidates(teamId, daysAhead, window, { includeRecentlyReminded: true });
+  const reachable = all.filter(c => !c.recentlyReminded);
+
+  if (preview) {
+    // The families the courtesy is holding back this week: everyone who qualifies on the dates,
+    // less everyone who qualifies today. Counted by household, the unit an email goes to.
+    const reachableFamilies = familiesOf(reachable);
+    const skippedRecent = [...familiesOf(all)].filter(e => !reachableFamilies.has(e)).length;
+    const missingEmail = new Set(reachable.filter(c => !c.guardianEmail).map(c => c.playerId)).size;
+    return NextResponse.json({
+      preview: true,
+      families: reachableFamilies.size,
+      installments: reachable.filter(c => c.guardianEmail).length,
+      skippedRecent,
+      missingEmail,
+    });
+  }
+
+  let candidates = reachable;
+  if (playerId) {
+    // The household this player belongs to, by guardian email — looked up in the unfiltered list so
+    // a family the courtesy is holding back is recognised and REPORTED, not silently skipped.
+    const own = all.find(c => c.playerId === playerId);
+    if (!own) {
+      return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });
+    }
+    if (!own.guardianEmail) {
+      return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, missingEmail: true });
+    }
+    const email = own.guardianEmail;
+    candidates = reachable.filter(c => c.guardianEmail === email);
+    if (!candidates.length) {
+      return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, skippedRecent: true });
+    }
+  }
 
   if (!candidates.length) {
     return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });
@@ -77,7 +136,7 @@ export const POST = withObservability(async (req: Request,
     const guardianFirst = first.guardianFirstName ?? 'there';
 
     // ONE template (lib/dues-reminder-email.ts) — shared with the sweep, the org-admin route,
-    // and the on-screen "See an example" preview, so the sample a coach reads is the send.
+    // and the on-screen "See what they'll receive" preview, so the sample a coach reads is the send.
     const { subject, html } = duesReminderEmail({
       teamName: team.name,
       orgName: ctx.org.name,

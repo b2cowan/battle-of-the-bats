@@ -17615,3 +17615,81 @@ stacking on a phone, zero page overflow at 361/390/768/1440.
 8. **A phone.** Four figures stack, nothing scrolls sideways.
 9. **Cross-check the Money hub rail.** Its "pledged" figure and this tab's *Still to come* now come
    from one rule and must agree. **They did not before**, which is the defect this closes.
+
+
+## §140 · Player Dues: set once, chase weekly — the set-once door steps back, the chase says who it reaches, the grid leads with the date — BUILT 2026-09-04, awaiting QA
+
+**Owner decisions (mockup `6bd4c6d9` rev 2, 2026-09-04, twelve answers, all on the recommended
+path):** **D1** the View pill (built before the answers came) · **D2** "Set dues for all players"
+leaves the toolbar once dues exist and becomes "Change the schedule for everyone" at the foot of the
+Collection schedule · **D3** the reminder confirmation says how many families and installments it
+reaches, how many the 7-day courtesy skips, how many have no email, and shows the on-demand letter ·
+**E1** Balance owing explains the credit it excludes · **E2** "Last reminded" in the player's panel ·
+**E3** a `Showing` filter beside View · **E4** "Remind this family" for anyone late, due within 3
+days, or never paid · **E5** a guardian contact line, gated by the roster's PII grant · **G1** date-
+first grid headings · **G2** the installment to chase is lit and in view on open · **G3** a ‹ › pager
+beside View while the grid overflows; the swipe chip removed outright (owner: *"it functionally
+didn't work on desktop anyways"*) · **G4** sticky headings **deferred**. Plan:
+`docs/projects/active/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
+
+**⚠ NO LOCK ON DUES, and the question was re-framed.** The owner re-asked the 2026-08-14 lock
+question; the ruling stands (re-running mid-season is legitimate; the exceptions-first preview is
+the protection) and the real ask underneath was **prominence** — Budget Plan and Overview already
+hid their Set-dues doors once dues exist. Recorded in `memory/design_decisions.md` (2026-09-04).
+Corrected premise, so it is not re-argued: changing dues does **not** change the budget plan.
+
+**What a coach sees.** Once dues exist the toolbar holds View, Showing, Export and Send due
+reminders. The Collection schedule's foot reads "Same 10 installments for every family, set Aug 20
+from the budget plan" (or "10 installments · 2 families set by hand") beside the quiet link. Balance
+owing carries "excludes $1,165.65 owed back to 2 families" on the UAT team, so the band ties out.
+Send due reminders works out who it reaches before anything sends — on the UAT team today it says
+"Nothing to send today", names Installment 1 and its date, and disables the button; mid-season it
+reads "Send 9 emails". "See what they'll receive" shows the on-demand letter (the "Player dues
+outstanding" subject and "was due" wording — a different letter from the 30-day wave the old
+preview showed). A player's panel shows the guardian's contact line where the roster allows it,
+"Last reminded Nov 3 · Installment 2 · from this page", and one "Remind this family". The
+By-installment grid heads each column with its date ("Oct 4" over "#4 · $97.08", "Varies" where
+families differ), lights the installment the Collection schedule names, keeps names on one line,
+and pages sideways with ‹ › beside View only when columns overflow.
+
+**Built and verified:** `verify:changed` (incl. the unit suite), typecheck, eslint on every touched
+file, the dead-selector and spelling gates, and `check:layout` on `coach-dues`,
+`coach-dues-installments` and the new `coach-dues-behind` (three pre-existing tap-floor entries
+carried to the new screen id; the stale "Set dues for all players" entries pruned). `/simplify`
+applied eleven cleanups (the shared `ColumnPager` that Budget vs. Actual now uses too, one shared
+`.gridColNow` lit-column rule for both grids, columns built once and handed down, one read in the
+reminder route instead of two, the reminder rule in one lib home). `/review` (high-risk tier, five
+lenses, 14 findings → 7 confirmed and fixed, 7 advisory): the two sends can no longer run at once
+from one screen (a family could have been emailed twice in a minute); a stale preview response can
+no longer overwrite a fresher count; the zero state no longer claims "no installment is past due"
+when the truth is that the late families have no email on file; the help article's searchable text
+follows its visible copy; Family statements honour the Showing filter with households kept whole;
+the pager's cached column positions follow a content-only resize; "today" is read per render.
+
+**Walkthrough artifact (checkable, per-part verdicts + paste-back):**
+`https://claude.ai/code/artifact/92122f73-a728-4b60-b913-aa3e994a4601`
+
+**Walk it (~15 min), on the UAT team — Part E makes one family late by hand and restores them:**
+
+1. **A · The door.** View pill; two toolbar buttons; the Collection schedule's foot sentence and
+   "Change the schedule for everyone" opening the same Set-dues window. (Step 04 needs a read-only
+   money account the fixture lacks — leave it and note it.)
+2. **B · The band ties out.** The Balance owing caption equals the two credit balances added
+   together; Assessed − Collected − credits = Balance owing − the excluded figure.
+3. **C · Showing.** Counts in the labels; Behind on this team shows one line; the band and the
+   schedule never move; both views narrow; the export's scope line carries the filter; the address
+   carries it.
+4. **D · Send due reminders.** "Nothing to send today", Installment 1 named, "Send 0 emails"
+   disabled; "See what families receive" opens the on-demand letter; Team settings still shows the
+   30-day wave.
+5. **E · Make Devon late, chase, restore.** Past due tile, Status, the schedule's warning, Behind ·
+   1; the lit column; "Send 1 email"; "Last reminded … from this page"; "Reminded in the last 7
+   days — not sent again yet"; the confirmation says so too; put the date back.
+6. **F · A never-paid family, not yet due.** "Remind this family" sends the nothing-paid nudge; no
+   "Last reminded" line for it (a call in Part I).
+7. **G · The grid.** Date first; names on one line; the lit column is the schedule's installment;
+   the pager appears only when columns overflow and moves one at a time; no swipe chip.
+8. **H · Phone.** Showing is there (View is not); the foot link is tappable; nothing scrolls
+   sideways.
+9. **I · Three calls.** "Showing" as one word for a filter here and a lens on Budget vs. Actual; the
+   never-paid nudge leaving no "Last reminded"; a sample letter rather than the real recipient list.

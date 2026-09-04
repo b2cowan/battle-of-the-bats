@@ -1,6 +1,7 @@
 'use client';
 /**
- * Player Dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14).
+ * Player Dues — the "By installment" lens (owner-approved mockup, artifact d7162867, 2026-08-14;
+ * headings, lit column and pager per mockup `6bd4c6d9` G1–G3, 2026-09-04).
  *
  * ⚠ THE COLLECTION SCHEDULE BAND THAT USED TO OPEN THIS FILE IS GONE (owner ruling 2026-09-03,
  * D5). It described the season's collection, which is equally true under the Season-totals lens —
@@ -20,16 +21,35 @@
  * ⚠ "Due next" excludes credits ON PURPOSE — credits sit against the season balance, and this
  * figure must equal the remainder the reminder emails chase. The season Balance column beside
  * it is where credits show, exactly as in the totals view.
+ *
+ * ⚖ THREE THINGS THE OWNER NAMED ON 2026-09-04, all verified against what rendered:
+ *   G1 — the heading led with the installment's NUMBER and put the date in small type, though the
+ *        date is what a coach is thinking about. It now leads with the date; the number and the
+ *        amount follow. That is also why more columns fit: "Oct 4" is a third the width of
+ *        "INSTALLMENT 4", and the freed room goes to the Player column, so names stop wrapping.
+ *   G2 — no column said "this is the one to chase". The installment the Collection schedule names
+ *        (one shared derivation, `focusInstallmentColumn`) is lit with the shared `.gridColNow`
+ *        tint the month grid uses for today, and the grid opens with it first after the pin.
+ *   G3 — the real scrollbar sat under the last row, off the bottom of a twelve-family grid, and
+ *        the only affordance at the top was a chip that said "Swipe" — which on a desktop
+ *        "functionally didn't work" (owner). The chip is gone. The panel draws a ‹ › ColumnPager
+ *        beside View whenever this grid reports that it overflows, one column per press; the
+ *        scrollbar and shift-scroll keep working underneath.
+ *
+ * ⚠ THE COLUMNS ARRIVE BUILT (cleanup 2026-09-04). The panel derives them once from the whole
+ * roster and hands the same array to this grid and to the Collection schedule; `players` here may
+ * be the Showing filter's subset, and a grid whose headings changed with the filter would
+ * re-describe the season every time a coach narrowed the list.
  */
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { ChevronRight, AlertTriangle, CheckCircle2, CircleDashed } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import { fmt } from '@/lib/coach-money-summary';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import {
-  buildInstallmentColumns,
   dueNextForPlayer,
+  focusInstallmentColumn,
   installmentToSend,
   type InstallmentColumn,
   type DueNextSummary,
@@ -54,6 +74,23 @@ export interface BreakdownPlayer {
   }[];
   coverage: InstallmentCoverage[];
   rollingBalance: number;
+}
+
+/** What the panel's pager needs to know about the grid's sideways position. */
+export interface GridViewport {
+  /** The grid is wider than its box — the only time a pager has anywhere to go. */
+  overflows: boolean;
+  /** Zero-based index of the first installment column fully visible past the pinned zone. */
+  first: number;
+  /** Zero-based index of the last installment column at least partly visible. */
+  last: number;
+  total: number;
+}
+
+/** The grid's imperative surface, for the pager the panel draws beside View. */
+export interface InstallmentGridHandle {
+  /** Scroll so column `first + delta` sits first after the pinned zone. */
+  stepColumns: (delta: number) => void;
 }
 
 /** ⚠ A SETTLED BALANCE IS QUIET, NOT GREEN (Money-hub table pass 2026-08-13, approved render
@@ -100,12 +137,21 @@ function dueNextCaption(d: DueNextSummary): { text: string; tone: 'warn' | 'dim'
    shelf: warn ONLY when someone is actually behind, because an unpaid future instalment is a plan,
    not a problem (the chase-card ruling, 2026-08-03). */
 
-export default function InstallmentBreakdown({
-  players,
-  onOpenPlayer,
-  desktopActive = true,
-}: {
+/** The heading's two lines (owner G1): the date leads; the number and amount follow. "Varies"
+ *  where families have different dates for one installment — the number is then the only name
+ *  the column has, and it is still on the second line. */
+function headingFor(col: InstallmentColumn) {
+  const amount = col.amountVaries ? 'amounts vary' : col.commonAmount > 0.005 ? fmt(col.commonAmount) : '';
+  return {
+    primary: col.dueDateVaries ? 'Varies' : col.commonDueDate ? fmtShort(col.commonDueDate) : '—',
+    secondary: amount ? `#${col.installmentNumber} · ${amount}` : `#${col.installmentNumber}`,
+  };
+}
+
+const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
   players: BreakdownPlayer[];
+  /** The season's instalment columns, built once by the panel from the whole roster. */
+  columns: InstallmentColumn[];
   /** Opens the same player drawer a row-tap opens in the totals view. */
   onOpenPlayer: (playerId: string) => void;
   /** False when the DESKTOP lens is Season totals. Phones have no lens toggle (owner call
@@ -113,7 +159,18 @@ export default function InstallmentBreakdown({
    *  both lenses and, when the desktop shows the totals table, everything here is
    *  phone-only (`.duesPhoneLens`). */
   desktopActive?: boolean;
-}) {
+  /** The Showing pill's own empty sentence, when the filter leaves nobody. */
+  emptyMessage?: string | null;
+  /** Reports the grid's sideways position for the panel's pager (owner G3). */
+  onViewportChange?: (v: GridViewport) => void;
+}>(function InstallmentBreakdown({
+  players,
+  columns,
+  onOpenPlayer,
+  desktopActive = true,
+  emptyMessage = null,
+  onViewportChange,
+}, ref) {
   /**
    * THE PIN'S OFFSETS ARE MEASURED, NOT DECLARED — and this is the second attempt, because the
    * first one was wrong in a way only a browser could show.
@@ -157,15 +214,117 @@ export default function InstallmentBreakdown({
   });
 
   const today = tournamentToday();
-  const columns = useMemo(
-    () => buildInstallmentColumns(players, today),
-    [players, today],
-  );
+  /** The lit column — the SAME installment the Collection schedule names (owner G2). */
+  const focus = useMemo(() => focusInstallmentColumn(columns), [columns]);
+  const focusIndex = focus ? columns.findIndex(c => c.installmentNumber === focus.installmentNumber) : -1;
+
   const dueNextById = useMemo(() => {
     const m = new Map<string, DueNextSummary | null>();
     for (const p of players) m.set(p.player.id, dueNextForPlayer(p.installments, p.coverage, today));
     return m;
   }, [players, today]);
+
+  /* ── The way sideways (owner G3) ──────────────────────────────────────────────────────────────
+     The scroller stays a real scroll region (scrollbar, shift-wheel, swipe all work). What this
+     adds is knowledge: which installment columns are in view, reported up so the panel can draw a
+     pager beside View, and an imperative `stepColumns` so that pager moves this grid one column at
+     a time.
+
+     ⚠ LAYOUT IS MEASURED ON RESIZE, NEVER ON SCROLL. A column's left edge (relative to the
+     scroller's content) and the pinned zone's width are scroll-invariant, so they are read once
+     into `layout` when the grid mounts, resizes or changes its column count; the scroll handler —
+     the highest-frequency path here — reads two numbers off the scroller and scans that cache.
+     Offsets are read from the rendered cells, never declared: the pin note above is the reason.
+     The pinned zone is whatever the stylesheet has made sticky at this width, so the same arithmetic
+     holds above 1024 (three pinned columns) and below it (one). */
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [overflows, setOverflows] = useState(false);
+  const layout = useRef<{ pin: number; cols: { left: number; right: number }[] }>({ pin: 0, cols: [] });
+  const lastViewport = useRef<GridViewport | null>(null);
+
+  const measureLayout = useCallback(() => {
+    const table = tableRef.current;
+    const scroller = scrollerRef.current;
+    if (!table || !scroller) return;
+    const origin = scroller.getBoundingClientRect().left - scroller.scrollLeft;
+    let pin = 0;
+    const head = table.querySelector('thead tr');
+    for (const cell of head ? [...head.children] : []) {
+      if (getComputedStyle(cell as HTMLElement).position !== 'sticky') break;
+      pin += (cell as HTMLElement).getBoundingClientRect().width;
+    }
+    const cols = [...table.querySelectorAll<HTMLElement>('thead th[data-col]')].map(th => {
+      const r = th.getBoundingClientRect();
+      return { left: r.left - origin, right: r.right - origin };
+    });
+    layout.current = { pin, cols };
+  }, []);
+
+  const reportViewport = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !onViewportChange) return;
+    const { pin, cols } = layout.current;
+    const viewStart = scroller.scrollLeft + pin;
+    const viewEnd = scroller.scrollLeft + scroller.clientWidth;
+    let first = -1;
+    let last = -1;
+    cols.forEach((c, i) => {
+      // First: the first column whose left edge clears the pin (a 2px tolerance for the pin's own
+      // sub-pixel width). Last: the last column any part of which is inside the box.
+      if (first < 0 && c.left >= viewStart - 2) first = i;
+      if (c.left < viewEnd - 1) last = i;
+    });
+    if (first < 0) first = Math.max(0, cols.length - 1);
+    const next: GridViewport = { overflows, first, last: Math.max(last, first), total: cols.length };
+    const prev = lastViewport.current;
+    if (prev && prev.overflows === next.overflows && prev.first === next.first && prev.last === next.last && prev.total === next.total) return;
+    lastViewport.current = next;
+    onViewportChange(next);
+  }, [onViewportChange, overflows]);
+
+  const scrollToColumn = useCallback((index: number, behavior: ScrollBehavior) => {
+    const scroller = scrollerRef.current;
+    const { pin, cols } = layout.current;
+    if (!scroller || !cols.length) return;
+    const i = Math.max(0, Math.min(index, cols.length - 1));
+    scroller.scrollTo({ left: Math.max(0, cols[i].left - pin), behavior });
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    stepColumns: (delta: number) => {
+      const from = lastViewport.current?.first ?? 0;
+      scrollToColumn(from + delta, 'smooth');
+    },
+  }), [scrollToColumn]);
+
+  // Measure on mount, on resize and when the column set changes; report on every scroll. The
+  // comparison in reportViewport keeps the panel quiet between real changes.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    measureLayout();
+    reportViewport();
+    const onScroll = () => reportViewport();
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    const ro = new ResizeObserver(() => { measureLayout(); reportViewport(); });
+    ro.observe(scroller);
+    // ⚠ AND the table (/review 2026-09-04): the Showing filter can narrow the Player column without
+    // the scroller's own box changing, which shifts every column's left edge — an observer on the
+    // scroller alone left the pager's range and targets stale until the next window resize.
+    if (tableRef.current) ro.observe(tableRef.current);
+    return () => { scroller.removeEventListener('scroll', onScroll); ro.disconnect(); };
+  }, [measureLayout, reportViewport, columns.length]);
+
+  // Open with the lit column in view (owner G2) — once per focus, and only when there is somewhere
+  // to scroll to. A coach who then pages away is not dragged back on the next re-render.
+  const positionedFor = useRef<number | null>(null);
+  useEffect(() => {
+    if (!overflows || focusIndex < 0) return;
+    if (positionedFor.current === focusIndex) return;
+    positionedFor.current = focusIndex;
+    measureLayout();
+    scrollToColumn(focusIndex, 'auto');
+  }, [overflows, focusIndex, measureLayout, scrollToColumn]);
 
   /* ⚰ `balanceOwing` and `toCollectNow` went with this grid's table foot (2026-09-03). Balance
      owing is now the panel band's own tile, summed there from the same positive rolling balances —
@@ -303,17 +462,21 @@ export default function InstallmentBreakdown({
     };
   };
 
+  const filteredOut = players.length === 0 && !!emptyMessage;
+
   return (
     <div className={desktopActive ? undefined : styles.duesPhoneLens}>
       {/* ── Desktop / tablet: the player × installment grid ───────────────────────────────────
-          Wrapped in CoachScrollX so the "too many installments" question answers itself: while
-          the columns fit, nothing changes; the moment they genuinely overflow (the scroller
-          MEASURES rather than counting columns) the grid scrolls sideways WITH the swipe hint
-          and the Player column pinned (the Budget-vs-Actual month-grid pattern) — no manual
-          format switch, no silent sideways scroll, at any installment count. */}
+          Wrapped in CoachScrollX with an EXTERNAL affordance: the grid scrolls sideways with the
+          Player column pinned (the Budget-vs-Actual month-grid pattern) the moment its columns
+          genuinely overflow — measured, never counted — and the panel's ColumnPager beside View is
+          the visible way there. No swipe chip (owner G3, 2026-09-04). */}
       <CoachScrollX
         sticky
-        hint="Swipe to see later installments"
+        hint="Later installments"
+        affordance="external"
+        scrollerRef={scrollerRef}
+        onOverflowChange={setOverflows}
         className={styles.duesMatrixWrap}
         scrollerClassName={`${styles.duesMatrixScroller} ${styles.duesMatrixPin}`}
       >
@@ -333,17 +496,23 @@ export default function InstallmentBreakdown({
                   ordinary schedule, so the grid states it once here instead of 28 times in the
                   cells — and a player whose own instalment differs still prints their own figure
                   in-cell, exactly as their own date does. */}
-              {columns.map(col => (
-                <th key={col.installmentNumber} className={`${styles.th} ${styles.thNum}`}>
-                  Installment {col.installmentNumber}
-                  <span className={styles.duesThDue}>
-                    {[
-                      col.amountVaries ? 'amounts vary' : col.commonAmount > 0.005 ? fmt(col.commonAmount) : '',
-                      col.dueDateVaries ? 'dates vary' : col.commonDueDate ? `due ${fmtShort(col.commonDueDate)}` : '',
-                    ].filter(Boolean).join(' · ')}
-                  </span>
-                </th>
-              ))}
+              {columns.map((col, i) => {
+                const h = headingFor(col);
+                const lit = i === focusIndex;
+                return (
+                  <th
+                    key={col.installmentNumber}
+                    className={`${styles.th} ${styles.thNum} ${lit ? styles.gridColNow : ''}`}
+                    data-col={i}
+                    data-focus={lit ? 'true' : undefined}
+                    /* The number is still the column's name for anyone reading it aloud. */
+                    aria-label={`Installment ${col.installmentNumber}, ${h.primary === 'Varies' ? 'dates vary' : `due ${h.primary}`}`}
+                  >
+                    <span className={styles.duesThDate}>{h.primary}</span>
+                    <span className={styles.duesThDue}>{h.secondary}</span>
+                  </th>
+                );
+              })}
               <th className={styles.th}></th>
             </tr>
           </thead>
@@ -357,7 +526,7 @@ export default function InstallmentBreakdown({
                   style={{ cursor: 'pointer' }}
                   onClick={() => onOpenPlayer(p.player.id)}
                 >
-                  <td className={styles.td}>{playerName(p)}</td>
+                  <td className={`${styles.td} ${styles.duesPlayerCell}`}>{playerName(p)}</td>
                   <td className={`${styles.td} ${styles.tdNum}`}>
                     <span className={styles.duesCellAmt} style={{ color: due.valueColor, fontWeight: 700 }}>{due.value}</span>
                     <span className={styles.duesCellSt} data-tone={due.tone === 'warn' ? 'over' : due.tone === 'good' ? 'paid' : 'up'}>
@@ -371,10 +540,10 @@ export default function InstallmentBreakdown({
                   {/* One line, not two: the mark, then a figure ONLY where money is still owed.
                       A player with no schedule at all keeps an em dash — a blank cell and a
                       "nothing due yet" cell are different facts. */}
-                  {columns.map(col => {
+                  {columns.map((col, i) => {
                     const cell = cellFor(p, col);
                     return (
-                      <td key={col.installmentNumber} className={`${styles.td} ${styles.tdNum}`}>
+                      <td key={col.installmentNumber} className={`${styles.td} ${styles.tdNum} ${i === focusIndex ? styles.gridColNow : ''}`}>
                         <span className={styles.duesCell} data-tone={cell.tone}>
                           {cell.tone === 'none' ? '—' : statusIcon(iconFor(cell))}
                           {cell.amount && <span className={styles.duesCellAmt}>{cell.amount}</span>}
@@ -389,28 +558,27 @@ export default function InstallmentBreakdown({
                 </tr>
               );
             })}
+            {filteredOut && (
+              <tr>
+                <td className={styles.td} colSpan={columns.length + 4}>
+                  <span className={styles.mutedInline}>{emptyMessage}</span>
+                </td>
+              </tr>
+            )}
           </tbody>
           {/* ⚰ THIS GRID'S TABLE FOOT IS RETIRED (owner ruling 2026-09-03, D4) — the season figures
               open the tab as a MoneySummaryBand above the view switch, so both lenses summarise the
-              list with the same four words instead of one row each.
-
-              It was already half a headstone, and both halves still hold:
-
-              ⚠ THE PER-INSTALMENT TOTALS WERE DELETED FIRST (2026-08-14) because the Collection
-              schedule stated each instalment's collected-of-assessed a few inches above, and a
-              number printed twice on one screen only invites the question of why the two might
-              disagree. That schedule is now the header's timeline — same argument, further up.
-
-              ⚠ AND THE LABELS WENT WITH THEM: "To collect now" was simply the total of `Due next`
-              and "Balance owing" the total of `Balance`, both named by the headings above. Balance
-              owing kept a home in the band; to-collect-now did not, deliberately (see the sums'
-              own headstone near the top of this component). */}
+              list with the same four words instead of one row each. The per-instalment totals went
+              first (2026-08-14) because the Collection schedule states each instalment's
+              collected-of-assessed a few inches above, and a number printed twice on one screen only
+              invites the question of why the two might disagree. */}
         </table>
       </CoachScrollX>
       {legend}
 
       {/* ── Phone: collapsible per-player cards, closed on the "due next" figure ─────────────── */}
       <div className={styles.duesCards}>
+        {filteredOut && <p className={styles.muted} style={{ margin: '0.5rem 0' }}>{emptyMessage}</p>}
         {players.map(p => {
           const due = dueNextFigure(p);
           const d = dueNextById.get(p.player.id);
@@ -482,4 +650,6 @@ export default function InstallmentBreakdown({
       </div>
     </div>
   );
-}
+});
+
+export default InstallmentBreakdown;

@@ -604,7 +604,7 @@ test.describe('Money on a phone @360x740', () => {
              first — so a sponsor's cheque and a bill's payment became "Remove the …"). The CLUB
              installment's one-tap "Undo the … payment" is still there and is still a write, so
              dropping the alternative would stop guarding the one control that kept the word. */
-          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|edit drive|edit sponsorship|edit the |remove the |delete this |save split|generate installments|set dues for all players|start — about a minute/i,
+          name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|edit drive|edit sponsorship|edit the |remove the |delete this |save split|generate installments|set dues for all players|change the schedule for everyone|remind this family|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);

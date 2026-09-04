@@ -11158,14 +11158,10 @@ button.gdChip[aria-pressed='true'] {
 /* Phone cards replace the matrix below 640 — the grid would silently sideways-scroll there,
    the exact defect the Money-hub table pass closed everywhere else.
 
-   PHONES HAVE NO LENS TOGGLE (owner call 2026-08-14): the collapsible cards are the phone
-   view, full stop. `.duesDesktopOnly` hides the toggle and the totals table below 640;
+   PHONES HAVE NO LENS CONTROL (owner call 2026-08-14): the collapsible cards are the phone
+   view, full stop. `.duesDesktopOnly` hides the View pill and the totals table below 640;
    `.duesPhoneLens` wraps the whole breakdown when the DESKTOP lens is Season totals, so the
    band + cards still appear on a phone while desktop shows the table. */
-/* The lens toggle's tap floor. `.segBtn`'s compact height is a grandfathered portal decision,
-   but NEW controls meet the 44px floor at every width (the money-rail ruling: quiet by type
-   size, not by tap size) — and the rendered gate flags sub-floor newcomers on sight. */
-.duesViewSeg .segBtn { min-height: var(--tap-min, 44px); }
 .duesCards { display: none; }
 .duesPhoneLens { display: none; }
 @media (max-width: 640px) {
@@ -12849,3 +12845,108 @@ button.gdChip[aria-pressed='true'] {
    select, never a pill row; the FILTER above it stays the segmented viewToggle. */
 .scoutLogRow { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .scoutLogRow .select { max-width: 220px; }
+
+/* ── The column pager (components/coaches/ColumnPager.tsx) ────────────────────────────────────
+   ⚖ SHARED, NOT COPIED (owner G3, 2026-09-04). Budget vs. Actual's month window carried these
+   rules privately as `.monthPager*` in bva.module.css; the By-installment grid needed the same
+   control, and a second copy per panel is precisely how the budget/bva header CSS forked before.
+   It sits IN the view strip beside View and Showing, because it changes what the grid shows and
+   belongs with the other controls that do (owner call 2026-08-21). It wraps to its own line on a
+   narrow screen like everything else in that row.
+
+   ⚠ IT MOVES ONE COLUMN PER PRESS, not a whole window (owner call 2026-08-21): a twelve-column
+   jump skipped past the column a coach was aiming for; stepping by one is reversible by
+   construction — press › then ‹, and you are back. */
+.colPager {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.colPagerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 0.4rem;
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.colPagerBtn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.colPagerBtn:disabled { color: var(--text-tertiary); cursor: default; opacity: 0.55; }
+.colPagerRange {
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  padding: 0 0.4rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.colPagerRange strong { color: var(--text-primary); font-weight: 600; }
+/* The tap floor is a touch rule — HEIGHT only, never width. These sit either side of a label in
+   a wrapping row; widening them pushes the range onto its own line on a phone. */
+@media (max-width: 768px) {
+  .colPagerBtn { min-height: 44px; }
+}
+
+/* ── Player Dues: set once, chase weekly (owner rulings 2026-09-04, mockup 6bd4c6d9) ───────── */
+/* The toolbar's left group: View, Showing, and the grid's pager when it overflows. One flex row
+   so the pager wraps under the pills on a narrow desktop rather than pushing Export off the end. */
+.duesToolbarLeft { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* The Collection schedule's foot (owner D2): one sentence about the schedule, and the quiet
+   set-once door. The link is `.linkBtn` + `.linkBtnAccent` (the roster page's quiet accent link)
+   with only the tap floor added here — quiet by type size, never by tap size. */
+.scheduleFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.7rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.scheduleFootSep { opacity: 0.5; }
+.scheduleFootLink { min-height: var(--tap-min, 44px); }
+
+/* G1 — the date leads the instalment heading; `.duesThDue` beneath it carries "#4 · $97.08".
+   `.th` is uppercase, spaced, secondary ink — a date is none of those. */
+.duesThDate {
+  display: block;
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+/* Names on one line: the shorter headings hand the Player column the room it lacked. */
+.duesPlayerCell { white-space: nowrap; }
+
+/* THE LIT COLUMN — one class for every grid that has a "now" (cleanup 2026-09-04). Budget vs.
+   Actual's month grid lights today's month and the By-installment dues grid lights the installment
+   to chase; they carried the same rule in two stylesheets, each re-explaining the same trick.
+   A tint needs no decoding: the column is lit, the rest is not. It pairs with accent ink on the
+   heading, which is the label half of the colour-never-alone rule.
+   ⚠ TRIPLED CLASS ON PURPOSE. A category row in the month grid paints its own tint at (0,2,3), and
+   the dues grid's hover row paints at (0,3,0); this has to win on both or the lit column goes dark
+   exactly where the table is busiest. Tripling takes it to (0,3,0) here — later in source than the
+   dues hover rule, more classes than the category rule — rather than relying on bundler order,
+   which is how a rule became a silent no-op twice before.
+   ⚠ It REPLACES a row's tint in this one column rather than stacking on it, deliberately, so the
+   column reads at one strength whatever row it crosses. background-IMAGE, so a row's own
+   background shorthand does not erase it. */
+.gridColNow.gridColNow.gridColNow {
+  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
+}
+th.gridColNow.gridColNow.gridColNow,
+th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
+
+/* E2 / E5 — the facts under a player's name in their panel: who to reach, and when they were
+   last reminded. Quiet lines; the money tiles below stay the panel's first figure. */
+.duesPanelFacts { display: flex; flex-direction: column; gap: 0.15rem; margin: -0.6rem 0 0.9rem; }
+.duesPanelFact { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }

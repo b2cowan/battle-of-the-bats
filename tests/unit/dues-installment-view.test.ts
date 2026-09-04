@@ -13,6 +13,10 @@ import { describe, it } from 'node:test';
 import {
   buildInstallmentColumns,
   dueNextForPlayer,
+  focusInstallmentColumn,
+  chaseableInstallment,
+  familiesOwingOn,
+  DUE_REMINDER_DAYS_AHEAD,
   type ViewableInstallment,
 } from '../../lib/dues-installment-view';
 import { allocateDuesPayments } from '../../lib/dues-payments';
@@ -264,3 +268,52 @@ describe('buildInstallmentColumns', () => {
   });
 });
 
+describe('focusInstallmentColumn — the one installment a coach can act on', () => {
+  it('is the earliest installment with money still to send', () => {
+    const s = [inst(1, 100, '2026-09-01'), inst(2, 100, '2026-10-01'), inst(3, 100, '2026-11-01')];
+    const cols = buildInstallmentColumns([{ installments: s, coverage: covered(s, 100) }], TODAY);
+    assert.equal(focusInstallmentColumn(cols)?.installmentNumber, 2);
+  });
+
+  it('a late installment outranks an earlier-numbered future one', () => {
+    // A hand-edited schedule: #1 is not due until October, but #2 fell due in July and is unpaid.
+    const s = [inst(1, 100, '2026-10-01'), inst(2, 100, '2026-07-01')];
+    const cols = buildInstallmentColumns([{ installments: s, coverage: covered(s, 0) }], TODAY);
+    assert.equal(cols[1].behindCount, 1);
+    assert.equal(focusInstallmentColumn(cols)?.installmentNumber, 2);
+  });
+
+  it('is null when every installment is collected — nothing to chase, nothing lit', () => {
+    const s = [inst(1, 100, '2026-09-01'), inst(2, 100, '2026-10-01')];
+    const cols = buildInstallmentColumns([{ installments: s, coverage: covered(s, 200) }], TODAY);
+    assert.equal(focusInstallmentColumn(cols), null);
+  });
+});
+
+describe('chaseableInstallment / familiesOwingOn — the on-demand reminder rule, shared', () => {
+  it('is chaseable when an installment is past due or due within the window, with money to send', () => {
+    const late = [inst(1, 100, '2026-08-01')];
+    const soon = [inst(1, 100, '2026-08-16')];
+    const later = [inst(1, 100, '2026-08-30')];
+    assert.equal(DUE_REMINDER_DAYS_AHEAD, 3);
+    assert.equal(chaseableInstallment({ installments: late, coverage: covered(late, 0) }, TODAY), true);
+    assert.equal(chaseableInstallment({ installments: soon, coverage: covered(soon, 0) }, TODAY), true);
+    assert.equal(chaseableInstallment({ installments: later, coverage: covered(later, 0) }, TODAY), false);
+    // Paid in full: nothing to say, however late the date.
+    assert.equal(chaseableInstallment({ installments: late, coverage: covered(late, 100) }, TODAY), false);
+  });
+
+  it('counts the families with money still to send on one installment, not the roster', () => {
+    const a = [inst(1, 100, '2026-09-01')];
+    const b = [inst(1, 100, '2026-09-01')];
+    const c = [inst(1, 100, '2026-09-01')];
+    const players = [
+      { installments: a, coverage: covered(a, 100) },
+      { installments: b, coverage: covered(b, 40) },
+      { installments: c, coverage: covered(c, 0) },
+    ];
+    const cols = buildInstallmentColumns(players, TODAY);
+    assert.equal(familiesOwingOn(players, cols[0]), 2);
+    assert.equal(familiesOwingOn(players, null), 0);
+  });
+});

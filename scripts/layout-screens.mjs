@@ -229,6 +229,9 @@ export const SCREENS = [
      coach never sees. The pin in particular is only provable here, because it only engages when
      the grid actually overflows. */
   { id: 'coach-dues-installments', session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&duesView=installments`, ready: 'h1' },
+  /* The Showing filter (owner E3, 2026-09-04) narrows both lenses; `behind` is the state a coach
+     actually filters to, and the one whose empty line has to be measured. */
+  { id: 'coach-dues-behind', session: 'coach', path: (c) => `${team(c)}/accounting?section=dues&duesShow=behind`, ready: 'h1' },
   /* ⚠ THE SETTLEMENT SHEET IS A DISCLOSURE, so `coach-dues` above measures it CLOSED — a pot
      card, a five-column table, two honesty strips and a payout sheet, all with zero geometry.
      That is precisely the "green sweep over an empty screen proves nothing" trap this project

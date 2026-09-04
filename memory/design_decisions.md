@@ -2,6 +2,67 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-04 — Player Dues is a weekly screen: the set-once door steps back, the chase says who it reaches, and the grid leads with the date
+
+**Trigger:** owner, reviewing Player Dues: *"the toggle of the table view is not consistent with
+other pages"*, *"should we do something to lock or change functional behavior after dues are set?"*,
+*"should we offer them the option of seeing what the dues reminder says?"*, then on the
+By-installment grid: *"the fact that 'installment #' is the primary header is strange whereas the
+date might be a better primary"*, *"I can't scroll sideways"*, *"there could be a highlighted column
+for the current next installment (look at how the monthly report functions in budget vs. actual)"*.
+Twelve decisions on mockup artifact `6bd4c6d9` ("Set Once, Chase Weekly"), all on the recommended
+path. Plan: `docs/projects/active/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
+
+**⚠ NO LOCK ON DUES — the 2026-08-14 ruling is reaffirmed, and the question was re-framed.** The
+owner asked the lock question a second time; the answer is unchanged (re-running mid-season is
+legitimate; the help guide promises it; the exceptions-first preview is the protection) and the
+real ask underneath it was **prominence**. *A set-once door does not belong beside the weekly
+buttons.* Budget Plan and Overview already hid their Set-dues doors once dues exist; Player Dues
+was the odd one out. **Decision (D2):** once a schedule exists, "Set dues for all players" leaves the
+toolbar and becomes the quiet **"Change the schedule for everyone"** at the foot of the Collection
+schedule — the timeline it rewrites — beside one sentence saying whether every family is on the same
+schedule (the hand-set judgement is `describeExistingSchedules`, the ONE home the write route uses).
+Before dues exist the setup block keeps its primary button. ⚠ The corrected premise is recorded so
+it is not re-argued: changing dues does **not** change the budget plan (the plan feeds dues); what
+moves is Assessed, family balances, reminder dates and expected player money.
+
+**A confirmation that sends must say who it reaches (D3).** "Send due reminders" stated the rule
+and let the coach learn the result after pressing Send — on a fixture whose first installment was
+weeks away the honest result was "0 sent". The route now answers *who would this reach?* from the
+SAME selection the send uses (families, installments, families skipped by the 7-day courtesy,
+families with no email), the button reads **"Send 9 emails"** and is disabled at zero with the
+reason, and **"See what they'll receive"** opens the real template in its **on-demand** variant
+(the "Player dues outstanding" subject and "was due" wording) — the preview that already existed
+showed the 30-day wave, which is a different letter. No per-team editing: four senders share one
+template.
+
+**The By-installment grid (G1–G3), verified against what rendered.** The heading led with the
+installment's number and put the date in small type; it now leads with the **date** ("Oct 4" over
+"#4 · $97.08", "Varies" where families differ), which is also why more columns fit. The installment
+to chase — the Collection schedule's own "earliest still owed, late outranks future", now ONE shared
+derivation `focusInstallmentColumn` — is **lit with the Budget-vs-Actual this-month tint and in view
+on open**. And the swipe chip is **gone**: the real scrollbar sat under the last row and the chip
+named a gesture a mouse cannot make (owner: *"it functionally didn't work on desktop"*); a **‹ ›
+pager beside View, one column per press**, appears only while the grid overflows. The pager is the
+shared `ColumnPager` (Budget vs. Actual's month window adopted it — no visible change there).
+`CoachScrollX` gained `affordance="external"` for exactly this: the sideways rule is met by the
+caller's pager, not relaxed.
+
+**Four gaps a treasurer hits by week six (E1–E5), all yes:** Balance owing explains the credit it
+excludes ("excludes $1,165.65 owed back to 2 families") so the band ties out; the player's panel
+shows **Last reminded** (the stamps existed, no screen read them) and a **guardian contact line**
+gated by the roster's PII grant (already applied by the dues route's redaction); a **Showing**
+filter beside View (Everyone · Behind · Still owing · Nothing owing, counts in the labels, rides the
+URL, narrows both lenses and the export, never the band or the schedule); and **one "Remind this
+family"** for anyone late, due within 3 days, or never paid — the on-demand email for a household
+when there is something to chase, the never-paid nudge otherwise, the 7-day courtesy reported
+rather than silently applied.
+
+**Deferred (G4):** sticky column headings on a long roster — *"later, when a roster is long enough
+to feel it."*
+
+---
+
 ### 2026-09-03 — A promise is an ANSWER, not a detour: the pledge joins "Not paid yet"
 
 **Decision (owner-directed, §135 walk).** "A sponsor promised us money" becomes a row in the

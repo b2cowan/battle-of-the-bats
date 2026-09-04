@@ -226,20 +226,11 @@
    July and August but for no other months?"* A marker nobody can decode is noise, and it also broke
    the platform rule that colour is always paired with something readable.
 
-   A tint needs no decoding: the column is lit, the rest is not. It pairs with the header's accent
-   ink, which stays and is the label half of that rule.
+   A tint needs no decoding: the column is lit, the rest is not.
 
-   ⚠ DOUBLED CLASS ON PURPOSE. A category row paints its own tint at (0,2,3); this has to win on
-   that row too or the current month would go dark exactly where the table is busiest. Doubling
-   `.thisMonth` takes it to (0,3,3) rather than relying on which stylesheet the bundler emitted
-   last — source-order luck is how a rule in this file became a silent no-op twice already.
-   ⚠ It REPLACES the row tint in this one column rather than stacking on it; that is deliberate, so
-   the column reads at one strength whatever row it crosses. */
-.grid tbody tr > td.thisMonth.thisMonth,
-.grid thead th.thisMonth.thisMonth {
-  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
-}
-.grid thead th.thisMonth { color: var(--primary-light); }
+   ⚰ THE TINT RULE LEFT THIS FILE (cleanup 2026-09-04): it is `.gridColNow` in coaches.module.css
+   now, shared with the By-installment dues grid, which lights the installment to chase the same
+   way. The doubled-class trick and its reasoning went with it. */
 
 /* ⚠⚠ TOTAL IS PINNED TO THE RIGHT EDGE (owner ruling 2026-08-21) — it is the figure the whole
    report exists to deliver, and a repeating cost used to push it off the screen entirely.

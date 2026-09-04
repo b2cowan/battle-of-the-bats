@@ -2,8 +2,8 @@
 import { useMemo } from 'react';
 import { ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
 import { fmt } from '@/lib/coach-money-summary';
-import { formatStoredDate, tournamentToday } from '@/lib/timezone';
-import { buildInstallmentColumns, installmentToSend } from '@/lib/dues-installment-view';
+import { formatStoredDate } from '@/lib/timezone';
+import { focusInstallmentColumn, familiesOwingOn, type InstallmentColumn } from '@/lib/dues-installment-view';
 import type { BreakdownPlayer } from './InstallmentBreakdown';
 import styles from '../../../../coaches.module.css';
 
@@ -26,50 +26,42 @@ import styles from '../../../../coaches.module.css';
  * credits a drive earned — so an instalment settled by fundraising rendered as a zero next to a
  * half-full bar, two millimetres apart, saying different things. Solid is cash; the lighter band is
  * credit. The difference is now legible instead of contradictory.
+ *
+ * ⚖ THE SET-ONCE DOOR LIVES AT ITS FOOT (owner D2, 2026-09-04 — mockup `6bd4c6d9`). "Set dues for
+ * all players" used to be a permanent toolbar button on a screen a coach visits weekly to chase
+ * payments. It is a set-once act, and Budget Plan and Overview already hide their doors to the same
+ * window once dues exist; this fold is the timeline that door rewrites, so the quiet link sits
+ * under it and folds away with it. ⚠ NOT A LOCK: re-running mid-season is legitimate (owner ruling
+ * 2026-08-14, reaffirmed 2026-09-04) — the protection is the generator's own preview, which names
+ * every hand-set schedule and keeps it by default. The sentence beside the link says whether every
+ * family is on the same schedule, using the ONE hand-set judgement the write route uses.
+ *
+ * ⚠ THE COLUMNS ARRIVE BUILT. The panel derives them once from the roster and hands them to this
+ * shelf and to the grid; the "installment to chase" is then the same object in both places by
+ * construction, not by two calls agreeing.
  */
 export interface CollectionScheduleProps {
   players: BreakdownPlayer[];
+  /** The season's instalment columns, built once by the panel from the whole roster. */
+  columns: InstallmentColumn[];
   /** Open state is the CALLER's — it is remembered per device beside the tab's other prefs. */
   open: boolean;
   onToggle: (next: boolean) => void;
+  /** Families whose schedule is not the one most of the roster shares (lib/dues-bulk-run.ts). */
+  handSetCount: number;
+  /** "set Aug 20 from the budget plan" — the panel words it from the schedules' own notes and
+   *  dates; null when it cannot say. */
+  origin: string | null;
+  /** The set-once door. Absent for a read-only money coach — the sentence still renders. */
+  onChangeSchedule?: () => void;
 }
 
-export default function CollectionSchedule({ players, open, onToggle }: CollectionScheduleProps) {
-  const today = tournamentToday();
-  const columns = useMemo(() => buildInstallmentColumns(players, today), [players, today]);
-
-  /**
-   * The one instalment a coach can act on: the earliest still owed. An overdue piece outranks a
-   * future one — a debt is more actionable than a plan.
-   *
-   * ⚠ LATE IS THE COLUMN'S OWN `behindCount` — money still to send on a bill past THAT PLAYER'S
-   * due date. Re-deriving it from the heading's common date would call a hand-edited schedule late
-   * on the team's day rather than the family's, and would call a credit-covered piece late when
-   * nothing is owed on it at all. Same reason "N families to go" runs through `installmentToSend`:
-   * it cannot be allowed to disagree with the row figures or with what a reminder email asks for.
-   */
-  const focus = useMemo(() => {
-    let late: (typeof columns)[number] | null = null;
-    let next: (typeof columns)[number] | null = null;
-    for (const col of columns) {
-      if (col.remaining <= 0.005) continue;
-      if (col.behindCount > 0) { if (!late) late = col; continue; }
-      if (!next) next = col;
-    }
-    return late ?? next ?? null;
-  }, [columns]);
-
+export default function CollectionSchedule({ players, columns, open, onToggle, handSetCount, origin, onChangeSchedule }: CollectionScheduleProps) {
+  /** The one instalment a coach can act on — the SAME derivation the By-installment grid lights
+   *  (owner G2, 2026-09-04), so the line here and the lit column there cannot disagree. */
+  const focus = useMemo(() => focusInstallmentColumn(columns), [columns]);
   /** How many families still owe something on the focused piece — the number a coach chases. */
-  const familiesToGo = useMemo(() => {
-    if (!focus) return 0;
-    let n = 0;
-    for (const p of players) {
-      const inst = p.installments.find(i => i.installmentNumber === focus.installmentNumber);
-      if (!inst || inst.paidAt) continue;
-      if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) > 0.005) n += 1;
-    }
-    return n;
-  }, [players, focus]);
+  const familiesToGo = useMemo(() => familiesOwingOn(players, focus), [players, focus]);
 
   if (columns.length === 0) return null;
 
@@ -93,6 +85,12 @@ export default function CollectionSchedule({ players, open, onToggle }: Collecti
   /** Credits only earn a legend where a credit actually exists — see the two-tone note above. */
   const anyCredit = columns.some(c => c.assessed - c.remaining - c.collected > 0.005);
 
+  const n = columns.length;
+  const installments = `${n} installment${n === 1 ? '' : 's'}`;
+  const footSentence = handSetCount > 0
+    ? `${installments} · ${handSetCount} famil${handSetCount === 1 ? 'y' : 'ies'} set by hand`
+    : `Same ${installments} for every family`;
+
   return (
     <section className={styles.schedule}>
       <button
@@ -104,9 +102,7 @@ export default function CollectionSchedule({ players, open, onToggle }: Collecti
         {open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
         <span className={styles.scheduleCap}>Collection schedule</span>
         <span className={styles.scheduleSummary}>{summary}</span>
-        <span className={styles.scheduleCount}>
-          {columns.length} installment{columns.length === 1 ? '' : 's'}
-        </span>
+        <span className={styles.scheduleCount}>{installments}</span>
       </button>
 
       {open && (
@@ -131,7 +127,7 @@ export default function CollectionSchedule({ players, open, onToggle }: Collecti
                   className={styles.scheduleTerm}
                   data-state={overdue ? 'late' : isFocus ? 'now' : undefined}
                   /* The whole story of one piece, for a reader who hovers rather than counts. */
-                  title={`Installment ${col.installmentNumber}${col.commonDueDate ? ` · due ${formatStoredDate(col.commonDueDate, { withYear: false })}` : ' · dates vary'} — ${fmt(col.collected)} of ${fmt(col.assessed)} in`}
+                  title={`Installment ${col.installmentNumber}${col.commonDueDate ? ` · due ${formatStoredDate(col.commonDueDate, { withYear: false })}` : ' · dates vary'} — ${fmt(col.collected)} of ${fmt(col.assessed)} in${col.behindCount > 0 ? ` · ${col.behindCount} behind` : ''}`}
                 >
                   <span className={styles.scheduleNum}>
                     {overdue && <AlertTriangle size={10} aria-hidden />}
@@ -162,9 +158,26 @@ export default function CollectionSchedule({ players, open, onToggle }: Collecti
               <span>covered by credits</span>
             </p>
           )}
+
+          {/* The set-once door — see the header note. The sentence renders for every reader; the
+              link only for a coach the server would let through. */}
+          <div className={styles.scheduleFoot}>
+            <span>{footSentence}{origin ? `, ${origin}` : ''}</span>
+            {onChangeSchedule && (
+              <>
+                <span aria-hidden className={styles.scheduleFootSep}>·</span>
+                <button
+                  type="button"
+                  className={`${styles.linkBtn} ${styles.linkBtnAccent} ${styles.scheduleFootLink}`}
+                  onClick={onChangeSchedule}
+                >
+                  Change the schedule for everyone
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </section>
   );
 }
-

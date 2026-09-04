@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
-import { TrendingUp, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
+import ColumnPager from '@/components/coaches/ColumnPager';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
@@ -1529,33 +1530,21 @@ export function BudgetVsActualPanel({
             {/* ⚠ ONLY WHEN THERE IS SOMETHING TO MOVE. Twelve months or fewer is the whole season
                 already, and a control that can never do anything is worse than no control. */}
             {view === 'months' && monthsPaged && (
-              <div className={styles.monthPager}>
-                <button
-                  type="button"
-                  className={styles.monthPagerBtn}
-                  onClick={() => setMonthStartRaw(Math.max(0, monthStart - 1))}
-                  disabled={monthStart === 0}
-                  aria-label="Show the previous month"
-                >
-                  <ChevronLeft size={15} aria-hidden />
-                </button>
-                {/* ⚠ THE RANGE IS NAMED, and it is not decoration: `Total` is the WHOLE SEASON,
-                    never these twelve months, so a reader adding up what they can see has to be
-                    able to tell why it does not match. */}
-                <span className={styles.monthPagerRange}>
-                  <strong>{formatMonthLabel(monthWindow[0])} – {formatMonthLabel(monthWindow[monthWindow.length - 1])}</strong>
-                  {` · of ${gridMonths.length} months`}
-                </span>
-                <button
-                  type="button"
-                  className={styles.monthPagerBtn}
-                  onClick={() => setMonthStartRaw(Math.min(maxMonthStart, monthStart + 1))}
-                  disabled={monthStart >= maxMonthStart}
-                  aria-label="Show the next month"
-                >
-                  <ChevronRight size={15} aria-hidden />
-                </button>
-              </div>
+              /* ⚖ THE SHARED PAGER (owner G3, 2026-09-04). This control was born here (owner call
+                 2026-08-21: in the view bar beside View and Showing, one month per press) and the
+                 By-installment dues grid needed the same one — so it became ColumnPager and both
+                 grids read it. Nothing visible changed on this screen.
+                 ⚠ THE RANGE IS NAMED, and it is not decoration: `Total` is the WHOLE SEASON,
+                 never these twelve months, so a reader adding up what they can see has to be
+                 able to tell why it does not match. */
+              <ColumnPager
+                unit="month"
+                range={<><strong>{formatMonthLabel(monthWindow[0])} – {formatMonthLabel(monthWindow[monthWindow.length - 1])}</strong>{` · of ${gridMonths.length} months`}</>}
+                onPrev={() => setMonthStartRaw(Math.max(0, monthStart - 1))}
+                onNext={() => setMonthStartRaw(Math.min(maxMonthStart, monthStart + 1))}
+                prevDisabled={monthStart === 0}
+                nextDisabled={monthStart >= maxMonthStart}
+              />
             )}
 
             {/* On EVERY view, not just the month one — it exports whichever is on screen, so it

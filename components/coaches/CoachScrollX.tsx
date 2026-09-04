@@ -1,10 +1,10 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { MoveHorizontal } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * A horizontally-scrolling 2-D grid that CANNOT ship without its swipe affordance.
+ * A horizontally-scrolling 2-D grid that CANNOT ship without an affordance for the sideways.
  *
  * The portal's `.scrollX` / `.scrollXSticky` primitives have carried the rule "never a
  * silent sideways scroll — always pair with a visible hint" since 2026-06-29, but there
@@ -17,6 +17,14 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * A grid that fits on the current screen never claims a swipe that would do nothing,
  * which is why this can be used on surfaces that only overflow on small viewports.
  *
+ * ⚠ `affordance="external"` (owner G3, 2026-09-04): the caller draws its OWN way sideways — a
+ * ‹ › `ColumnPager` in the view strip — and this renders no chip. The rule is not relaxed, it
+ * is met differently: the swipe chip named a gesture a mouse has no way to make, and the owner's
+ * verdict was that on a desktop "it functionally didn't work". The caller learns whether the grid
+ * overflows through `onOverflowChange` (so the pager appears only when there is somewhere to go)
+ * and drives the scroll through `scrollerRef`. The a11y region label still comes from `hint`, so a
+ * screen reader hears the same sentence either way.
+ *
  * `sticky` pins the first column. Rows must then mark their first cell with
  * `shared.scrollXStickyCell` and carry an opaque background of their own — see the
  * primitive's comment in coaches.module.css.
@@ -28,9 +36,13 @@ export default function CoachScrollX({
   frame = true,
   className = '',
   scrollerClassName = '',
+  affordance = 'hint',
+  scrollerRef,
+  onOverflowChange,
 }: {
   children: ReactNode;
-  /** What the coach gains by swiping — name the columns, not the gesture. */
+  /** What the coach gains by going sideways — name the columns, not the gesture. Read aloud as
+   *  the scroll region's label even when the chip is not drawn. */
   hint: string;
   sticky?: boolean;
   /** Set false when the content already carries its own borders, so the scroller
@@ -40,13 +52,20 @@ export default function CoachScrollX({
   /** Styles the SCROLLER element itself (e.g. `isolation: isolate` for Safari sticky
    *  stacking) — callers must never reach into this component's structure by position. */
   scrollerClassName?: string;
+  /** `'hint'` draws the one-time swipe chip; `'external'` means the caller supplies the way
+   *  sideways (a `ColumnPager`) and no chip is drawn. */
+  affordance?: 'hint' | 'external';
+  /** The scrolling element, for a caller that pages it (`affordance="external"`). */
+  scrollerRef?: MutableRefObject<HTMLDivElement | null>;
+  /** Fires when the content starts or stops overflowing its box — the pager's show/hide. */
+  onOverflowChange?: (overflows: boolean) => void;
 }) {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
   const [overflows, setOverflows] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   const measure = useCallback(() => {
-    const el = scrollerRef.current;
+    const el = innerRef.current;
     if (!el) return;
     // 1px of tolerance: sub-pixel layout rounding otherwise reports a permanent
     // 0.5px overflow on grids that visibly fit, which would pin the hint on forever.
@@ -54,7 +73,7 @@ export default function CoachScrollX({
   }, []);
 
   useEffect(() => {
-    const el = scrollerRef.current;
+    const el = innerRef.current;
     if (!el) return;
     measure();
     // Observe the scroller AND its content: a ResizeObserver on the scroller alone
@@ -71,16 +90,25 @@ export default function CoachScrollX({
     return () => ro.disconnect();
   }, [measure]);
 
+  // The caller's pager shows only while there is somewhere to go. Reported from an effect so a
+  // parent's setState never runs inside this component's render.
+  useEffect(() => { onOverflowChange?.(overflows); }, [overflows, onOverflowChange]);
+
+  const setRefs = useCallback((el: HTMLDivElement | null) => {
+    innerRef.current = el;
+    if (scrollerRef) scrollerRef.current = el;
+  }, [scrollerRef]);
+
   return (
     <div className={className}>
-      {overflows && !scrolled && (
+      {affordance === 'hint' && overflows && !scrolled && (
         <p className={styles.scrollXHint} data-testid="coach-scrollx-hint" aria-hidden>
           <MoveHorizontal size={12} className={styles.scrollXHintIcon} />
           {hint}
         </p>
       )}
       <div
-        ref={scrollerRef}
+        ref={setRefs}
         // Stable handle for the layout probes: a `[class*="scrollX"]` selector also matches the
         // hint, which sits earlier in the DOM and has no overflow of its own.
         data-testid="coach-scrollx"

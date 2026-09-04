@@ -534,7 +534,7 @@ export default function MoneyMonthGrid({
   const spacerCells = (key: string) => (
     <>
       {showUndated && <td key={`${key}-u`} className={`${styles.num} ${styles.undated}`} />}
-      {view.map(m => <td key={`${key}-${m}`} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`} />)}
+      {view.map(m => <td key={`${key}-${m}`} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`} />)}
       <td className={`${styles.num} ${styles.totalCol}`} />
     </>
   );
@@ -569,7 +569,7 @@ export default function MoneyMonthGrid({
         </td>
       )}
       {view.map((m, k) => (
-        <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
+        <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
           {cellNode(lensCell(g.totals.cells[start + k], lens, m, todayMonth, band),
             { emphasis: lens === 'difference' ? 'signed' : undefined })}
         </td>
@@ -651,7 +651,7 @@ export default function MoneyMonthGrid({
             const i = start + k;
             const v = lensCell(cat.cells[i], lens, m, todayMonth, band);
             return (
-              <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
+              <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
                 {cellNode(v, {
                   emphasis: lens === 'difference' ? 'signed' : undefined,
                   ...drill(panelCat, m, null),
@@ -708,7 +708,7 @@ export default function MoneyMonthGrid({
                 const v = lensCell(line.cells[i], lens, m, todayMonth, band);
                 const canEdit = canWrite && lens === 'budget' && band === 'out' && line.cells[i].budget > 0.005;
                 return (
-                  <td key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>
+                  <td key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>
                     {cellNode(v, canEdit ? planCell(line, `in ${formatMonthLong(m)}`) : drill(panelCat, m, row))}
                   </td>
                 );
@@ -743,7 +743,7 @@ export default function MoneyMonthGrid({
                   that was not true. Cross-season belongs in its own view. */}
               {showUndated && <th className={`${styles.num} ${styles.undated}`}>No date yet</th>}
               {view.map(m => (
-                <th key={m} className={`${styles.num} ${m === todayMonth ? styles.thisMonth : ''}`}>{formatMonthLabel(m)}</th>
+                <th key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>{formatMonthLabel(m)}</th>
               ))}
               <th className={`${styles.num} ${styles.totalCol}`}>Total</th>
             </tr>
@@ -804,7 +804,7 @@ export default function MoneyMonthGrid({
                       </td>
                     )}
                     {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
-                      <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                      <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? shared.gridColNow : ''}`}>
                         {cellNode(r.moneyOut || null)}
                       </td>
                     ))}
@@ -859,7 +859,7 @@ export default function MoneyMonthGrid({
                       row's arithmetic. */}
                   {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
                   {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
-                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? shared.gridColNow : ''}`}>
                       {/* ⚠ A MONTH STILL AHEAD HAS NO ACTUAL BALANCE — see `balanceShowsMonth`. */}
                       {cellNode(balanceShowsMonth(lens, r.month, todayMonth) ? r.opening : null, { emphasis: 'negative' })}
                     </td>
@@ -878,7 +878,7 @@ export default function MoneyMonthGrid({
                     </td>
                   )}
                   {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
-                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? shared.gridColNow : ''}`}>
                       {cellNode(r.net, { emphasis: 'negative' })}
                     </td>
                   ))}
@@ -904,7 +904,7 @@ export default function MoneyMonthGrid({
                       part of where the season ends up) and no single month. */}
                   {showUndated && <td className={`${styles.num} ${styles.undated}`}><span className={styles.nil}>—</span></td>}
                   {cash.rows.slice(start, start + MONTH_WINDOW).map(r => (
-                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? styles.thisMonth : ''}`}>
+                    <td key={r.month} className={`${styles.num} ${r.month === todayMonth ? shared.gridColNow : ''}`}>
                       {/* Same rule as Opening — and `Net for the month` above already went quiet here. */}
                       {cellNode(balanceShowsMonth(lens, r.month, todayMonth) ? r.running : null, { emphasis: 'negative' })}
                     </td>
