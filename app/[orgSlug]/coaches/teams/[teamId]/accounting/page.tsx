@@ -10,7 +10,7 @@ import { useLatestRef } from '@/components/coaches/useLatestRef';
 import MoneyImportMenu, { type MoneyDataNotice } from '@/components/coaches/MoneyImportMenu';
 import { MoneyRefreshProvider, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
-  RecordMoneyProvider, type RecordMoneyIntent, type ConversationBranch, type PledgeCarry,
+  RecordMoneyProvider, type RecordMoneyIntent, type ConversationBranch,
 } from '@/lib/coach-record-money';
 import { type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import { legacyMoneyAddress, type CoachMoneySection } from '@/lib/coach-money-links';
@@ -281,29 +281,19 @@ export default function CoachesAccountingPage({
     setRecordIntent(intent ?? null);
     setRecordNonce(n => n + 1);
   }, []);
-  /* ── The promise hand-off (List · Room · Question Phase B, 2026-09-02) ───────────────────────
-     The conversation's sponsor branch can discover mid-answer that nothing has arrived yet. A
-     promise is not money, so the conversation never writes one (Record records money that MOVED);
-     it hands the coach INTO the pledge sheet on Fundraising with the typed name and amount, the
-     mirror of that sheet's own "Record it instead". The sheet is not portaled — it lives in the
-     Fundraising panel — so the hand-off is also a tab switch, which is honest: a pledge lives where
-     its status does. Same shape as `requestRecord`: carry first, then the nonce the panel listens
-     for. ⚠ The navigation rides a ref so the signal object stays stable across renders. */
-  const [pledgeNonce, setPledgeNonce] = useState(0);
-  const [pledgeCarry, setPledgeCarry] = useState<PledgeCarry | null>(null);
-  const goToFundraisers = useLatestRef(() => router.replace(sectionHref('fundraisers'), { scroll: false }));
-  const requestPledge = useCallback((carry: PledgeCarry) => {
-    setVisited(v => v.has('fundraisers') ? v : new Set(v).add('fundraisers'));
-    setPledgeCarry(carry);
-    setPledgeNonce(n => n + 1);
-    goToFundraisers.current();
-  }, []);
+  /* ⚰⚰ THE PROMISE HAND-OFF WAS DELETED HERE (owner ruling, §135 walk 2026-09-03).
+     It carried a typed name and amount out of the conversation, marked Fundraising visited,
+     switched the tab and bumped a nonce that panel listened for — all so a coach who answered
+     "a sponsor came through" and then said *actually, nothing came through* could reach a second
+     form. Its own header called the tab switch "honest, because a pledge lives where its status
+     does"; the walk's answer was that the coach should never have had to assert the arrival in
+     the first place. The promise is a row in "Not paid yet" now and the form is the
+     conversation's, so there is no second form to reach and nothing to carry to it. */
   const recordSignal = useMemo(
     () => ({
       summary, openNonce: recordNonce, intent: recordIntent, request: requestRecord,
-      pledgeNonce, pledgeCarry, requestPledge,
     }),
-    [summary, recordNonce, recordIntent, requestRecord, pledgeNonce, pledgeCarry, requestPledge],
+    [summary, recordNonce, recordIntent, requestRecord],
   );
 
   /**

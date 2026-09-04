@@ -262,43 +262,58 @@ test.describe('the fundraising rooms', () => {
     await expect(share).toHaveValue('20');
   });
 
-  test('the conversation’s promise row hands off into the pledge sheet with the typing carried, and back', async ({ page }) => {
+  /**
+   * ⚰ WAS: "the conversation's promise row hands off into the pledge sheet … and back". That test
+   * proved a JOURNEY between two forms — typing carried out of Record into a sheet, and carried
+   * back through "Record it instead". Owner ruling, §135 walk 2026-09-03: there is no journey. The
+   * promise is an answer in Record's own list, the form is the conversation's, and "+ Pledge"
+   * opens that same conversation locked. What is worth proving now is the pair of states.
+   */
+  test('the promise is an answer: switchable from Record, stated from + Pledge', async ({ page }) => {
     test.setTimeout(180_000);
     await signIn(page, COACH_EMAIL);
     await open(page, fundraising());
 
-    // The hub's Record door opens the conversation pre-answered for this tab; switch it to the
-    // sponsor branch.
+    // ── FROM RECORD: the promise is one row among the answers, and every other stays a tap away.
     await page.getByRole('button', { name: /^Record/ }).first().click();
     const conversation = page.getByRole('dialog', { name: 'Record money' });
     await expect(conversation).toBeVisible({ timeout: 30_000 });
-    await conversation.locator('button').filter({ hasText: 'Fundraiser money came in' }).first().click();
-    await conversation.locator('[role="option"], li').filter({ hasText: 'A sponsor came through' }).first().click();
+    const what = conversation.locator('button').filter({ hasText: 'Fundraiser money came in' }).first();
+    await what.click();
+    const promise = conversation.locator('[role="option"]').filter({ hasText: 'A sponsor promised us money' }).first();
+    await expect(promise, 'the promise sits in the answer list, not inside the sponsor picker').toBeVisible();
+    await promise.click();
 
-    const which = fieldAfter(conversation, 'Which sponsor?', 'select');
-    await expect(which).toBeVisible();
-    await which.selectOption('new');
+    /* The form is the pledge form, IN PLACE — the conversation never closed and the tab never
+       changed, which is the whole point of the ruling. */
+    await expect(conversation).toBeVisible();
+    await expect(conversation.locator('label:has-text("Expected by")')).toHaveCount(1);
     await fieldAfter(conversation, 'Sponsor *').fill('Handoff Test Sponsor');
-    await fieldAfter(conversation, 'Amount *').fill('123');
-    // The promise row: typing travels, the conversation leaves, the pledge sheet arrives.
-    await which.selectOption('pledge');
-    await expect(conversation).toBeHidden();
-    const pledge = page.getByRole('dialog', { name: 'Log a pledge' });
-    await expect(pledge).toBeVisible({ timeout: 30_000 });
-    await expect(fieldAfter(pledge, 'Sponsor *')).toHaveValue('Handoff Test Sponsor');
-    await expect(fieldAfter(pledge, 'Pledged amount *')).toHaveValue('123');
+    await fieldAfter(conversation, 'Pledged amount *').fill('123');
 
-    // And back the other way — the sheet's own "Record it instead" carries the same two fields.
-    await pledge.getByRole('button', { name: 'Record it instead' }).click();
-    await expect(pledge).toBeHidden();
-    await expect(conversation).toBeVisible({ timeout: 30_000 });
-    await expect(fieldAfter(conversation, 'Sponsor *')).toHaveValue('Handoff Test Sponsor');
-    await expect(fieldAfter(conversation, 'Amount *')).toHaveValue('123');
-    // Nothing was written anywhere; close without a question (carried typing is not the coach's edit).
+    /* ⚠ SWITCHING IS PICKING ANOTHER ANSWER, which is what replaced "Record it instead" — and the
+       typing survives it, because the name and amount never left the form they live on. */
+    await conversation.locator('button').filter({ hasText: 'A sponsor promised us money' }).first().click();
+    await conversation.locator('[role="option"]').filter({ hasText: 'A sponsor came through' }).first().click();
+    await expect(fieldAfter(conversation, 'Which sponsor?', 'select')).toBeVisible();
+    await expect(conversation.locator('label:has-text("Expected by")'), 'the promise field goes with the answer').toHaveCount(0);
+
     await page.keyboard.press('Escape');
     await expect(conversation).toBeHidden();
     const { data: stray } = await admin.from('rep_fundraisers').select('id').eq('name', 'Handoff Test Sponsor');
-    expect(stray ?? [], 'a hand-off writes nothing').toHaveLength(0);
+    expect(stray ?? [], 'answering and leaving writes nothing').toHaveLength(0);
+
+    // ── FROM "+ Pledge": the SAME form, with the answer stated and nothing to select away to.
+    await page.getByRole('button', { name: 'Pledge', exact: true }).first().click();
+    await expect(conversation).toBeVisible({ timeout: 30_000 });
+    await expect(conversation).toContainText('A sponsor promised us money');
+    await expect(conversation.locator('label:has-text("Expected by")'), 'the same form as Record opens').toHaveCount(1);
+    await expect(
+      conversation.locator('label:has-text("What happened?")'),
+      'a door that named what it is for states the answer — there is nothing to switch to',
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(conversation).toBeHidden();
   });
 
   test('a read-only money coach sees the same rooms with no write control at all', async ({ page }) => {

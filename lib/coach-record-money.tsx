@@ -44,6 +44,16 @@ export type ConversationBranch =
   | 'spend' | 'club' | 'payout';
 
 /**
+ * The answers that are NOT one of the eight — the "Not paid yet" rows, which hand the form over
+ * to a setup form instead of recording money that moved (owner ruling, §135 walk 2026-09-03).
+ *
+ * ⚠ THEY ARE NOT BRANCHES AND MUST NOT BECOME ONE. A branch records an event on the books; these
+ * two set up an obligation that has not happened yet, and the 2026-08-25 cap counts branches. A
+ * door names one with `handOff` instead of `branch`.
+ */
+export type ConversationHandOff = 'pledge';
+
+/**
  * The identity questions a branch can ask — *which one?*, in each branch's own words.
  *
  * ⚠⚠ THIS EXISTS SO A LOCK CAN BE PARTIAL (owner ruling, §135 walk 2026-09-03). Every identity
@@ -71,7 +81,18 @@ export type IdentityQuestion =
  * tab-shaped guess stays changeable. Absent `lock`, everything is editable.
  */
 export interface RecordMoneyIntent {
-  branch: ConversationBranch;
+  /**
+   * ⚠ OPTIONAL SINCE §135, and exactly one of `branch`/`handOff` is meaningful. A door that names
+   * a "Not paid yet" answer has no branch to name — the promise is not an event on the books.
+   */
+  branch?: ConversationBranch;
+  /**
+   * The hand-off answer this door opens on, instead of a branch. With `lock`, the answer is
+   * STATED and cannot be selected away from — which is the whole difference between Fundraising's
+   * "+ Pledge" door (it named what it is for) and picking the same answer inside Record (the coach
+   * is still choosing, so every other answer stays one tap away).
+   */
+  handOff?: ConversationHandOff;
   /**
    * Present = this door named one record. `subject` is the thing itself (a player, a drive and a
    * player, a bill); `detail` is the quiet second line — what they owe, where it came from.
@@ -91,7 +112,14 @@ export interface RecordMoneyIntent {
    * `asks` names the ONE identity question this door did not answer; every other question the
    * branch would ask stays stated. Absent, the lock hides them all, exactly as before.
    */
-  lock?: { subject: string; detail?: string; asks?: IdentityQuestion };
+  lock?: {
+    /** ⚠ EMPTY when the door names what the form is FOR rather than a record that exists — the
+     *  Fundraising "+ Pledge" door, whose sponsor is the thing the coach is about to type. The
+     *  band drops its dash rather than trailing one with nothing after it. */
+    subject: string;
+    detail?: string;
+    asks?: IdentityQuestion;
+  };
   /** The branch's own answers, pre-filled. Only the keys that branch reads are ever set. */
   ids?: {
     duesPlayerId?: string;
@@ -120,18 +148,12 @@ export interface RecordMoneyIntent {
   amount?: string;
 }
 
-/**
- * What travels when the conversation hands a PROMISE off to the pledge sheet (the carried ruling
- * built in List · Room · Question Phase B, 2026-09-02): the sponsor's name and the amount, as
- * typed. ⚠ NOT a ninth "What happened?" sentence — the 2026-08-25 ruling capped the list at eight
- * and folded hand-offs INTO a branch ("Bills you owe" inside "we paid for something"); this rides
- * the sponsor branch's own Which-sponsor picker as one more row. Record still never creates unpaid
- * money itself: the pledge sheet on Fundraising is the one door that does.
- */
-export interface PledgeCarry {
-  name: string;
-  amount: string;
-}
+/* ⚰ `PledgeCarry` WAS DELETED HERE (owner ruling, §135 walk 2026-09-03). It carried a sponsor's
+   name and amount ACROSS panels, from the conversation into a pledge sheet on Fundraising. Its own
+   header argued the promise could not be a "What happened?" answer because the 2026-08-25 ruling
+   capped that list at eight — but the cap governs the two MONEY groups, and a promise belongs to
+   neither. It is a row in "Not paid yet" now, and the form is the conversation's own, so nothing
+   travels between panels and there is nothing to carry. */
 
 export interface RecordMoneySignal {
   summary: MoneySummary | null;
@@ -141,16 +163,6 @@ export interface RecordMoneySignal {
   intent: RecordMoneyIntent | null;
   /** Open the recording conversation. Called by every door outside the shared money panel. */
   request: (intent?: RecordMoneyIntent) => void;
-  /** 0 = never handed off. Bumped by each hand-off into the pledge sheet. */
-  pledgeNonce: number;
-  /** What the hand-off at `pledgeNonce` carried. */
-  pledgeCarry: PledgeCarry | null;
-  /**
-   * Hand the coach into the pledge sheet on Fundraising with their typing carried — the mirror of
-   * the pledge sheet's own "Record it instead". The hub switches the tab and the Fundraising panel
-   * opens the sheet; the conversation only says what was typed.
-   */
-  requestPledge: (carry: PledgeCarry) => void;
 }
 
 const RecordMoneyContext = createContext<RecordMoneySignal | null>(null);

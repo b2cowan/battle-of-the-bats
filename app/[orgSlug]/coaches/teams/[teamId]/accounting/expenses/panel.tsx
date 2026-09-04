@@ -667,6 +667,29 @@ const BILL_HAND_OFF_ROW = {
   name: 'We agreed to pay something later',
   sub: 'Nothing moves today — set up a bill on your payment schedule.',
 };
+/**
+ * ⚖⚖ THE MIRROR OF THAT ROW, AND IT SHOULD HAVE BEEN THERE FROM THE START (owner ruling, §135
+ * walk 2026-09-03 — this REVERSES the 2026-09-02 Phase B decision to hide the promise inside the
+ * sponsor picker).
+ *
+ * "Not paid yet" was built as a group of one. An obligation the TEAM takes on was a first-class
+ * answer to "What happened?"; an obligation a sponsor takes on toward the team was buried two
+ * questions deep inside *"A sponsor came through"* — an answer the coach had to assert and then
+ * retract, since nothing came through — and picking it CLOSED the conversation, switched the tab
+ * and opened a different form with no way back but a link on the far side.
+ *
+ * ⚠ THE EIGHT-ANSWER CAP IS NOT IN THE WAY, and citing it is what put the promise in the picker.
+ * The 2026-08-25 ruling caps the two MONEY groups. "Not paid yet" is a third group that already
+ * sits outside them and holds hand-off rows rather than branches — so this fills out a group that
+ * was half-built; it does not grow the eight.
+ *
+ * ⚠ AND "RECORD NEVER CREATES UNPAID MONEY" SURVIVES INTACT. The bill row does not write a bill
+ * from the conversation either — it hands the FORM over. This does the same, in place.
+ */
+const PLEDGE_HAND_OFF_ROW = {
+  name: 'A sponsor promised us money',
+  sub: 'Nothing arrives today — log the promise and record each cheque as it comes.',
+};
 /** The answers that submit through their own home-tab writer instead of this form's ledger save. */
 const CONV_DIRECT = new Set<ConversationBranch>(CONV_IDS.filter(id => CONV_BRANCH[id].direct));
 /** Which side of the books a LEDGER answer files under, or null for the rest. */
@@ -1070,6 +1093,12 @@ function MoneyRecordsPanel({
    * bill asked no question, so it still shows none — this flag is false there.
    */
   const [billHandOff, setBillHandOff] = useState(false);
+  /** The conversation showing the PLEDGE form (§135) — the money-in mirror of `billHandOff`, and
+   *  it behaves identically: the "What happened?" control stays, with the pledge row as its
+   *  standing answer, and picking any other answer hands back. */
+  const [pledgeHandOff, setPledgeHandOff] = useState(false);
+  /** The pledge's own field — a date in the FUTURE, which no other answer on this form has. */
+  const [pledgeExpected, setPledgeExpected] = useState('');
   /**
    * Which scheduled piece the coach is changing or removing, and which of the two they asked for.
    *
@@ -1486,6 +1515,8 @@ function MoneyRecordsPanel({
     setFormPlan([{ ...BLANK_PLAN_ROW }]);
     setFormPlanOpenedWith([{ ...BLANK_PLAN_ROW }]);
     setBillHandOff(false);
+    setPledgeHandOff(false);
+    setPledgeExpected('');
     setFormTags([]);
     setFormPayee(null);
     setConfirmDelete(false);
@@ -1809,7 +1840,11 @@ function MoneyRecordsPanel({
   function openConversationFrom(intent: RecordMoneyIntent | null) {
     openConversation();
     if (!intent) return;
-    selectBranch(intent.branch);
+    /* ⚠ A HAND-OFF DOOR NAMES NO BRANCH (§135). "+ Pledge" opens this same conversation on the
+       promise form; with a lock the answer is stated and there is nothing to select away to, which
+       is the ONLY difference between that door and picking the same answer inside Record. */
+    if (intent.handOff === 'pledge') handOffToPledgeForm();
+    else if (intent.branch) selectBranch(intent.branch);
     if (intent.lock) setConvLock(intent.lock);
     if (intent.ids) {
       /* ⚠ `sponsorNewName` is NOT a conv key — it maps onto the picker's own two ("new" +
@@ -2121,28 +2156,50 @@ function MoneyRecordsPanel({
    * away SHOULD ask before discarding.
    */
   /**
-   * The promise hand-off — the sponsor branch's mirror of `handOffToBillForm` (List · Room ·
-   * Question Phase B, 2026-09-02). "A sponsor came through" turned out to be a promise: the
-   * typed name and amount travel into the pledge sheet on Fundraising, which is the one door that
-   * writes unpaid money. ⚠ Straight past the discard guard, deliberately — the typing goes WITH
-   * the coach, so there is nothing to ask about discarding (the bill hand-off's own reasoning).
-   * The way back is the sheet's "Record it instead", which carries the same two fields here.
+   * ⚰⚰ `handOffToPledge` IS GONE (owner ruling, §135 walk 2026-09-03), and with it the whole
+   * cross-panel pledge wire. It closed the conversation, switched the tab underneath and opened a
+   * different sheet — the shape the §80 walk had already rejected once for the sponsor branch
+   * ("it re-asked the question the coach had just answered"), rebuilt for the promise.
+   *
+   * The promise is an ANSWER now, in the same list as everything else, and it transforms this form
+   * in place. Below is the transform and its mirror — exactly the pair the bill row has.
+   *
+   * ⚠ WHAT TRAVELS: the sponsor's typed name and the amount, because neither field is touched.
+   * Nothing else can — a pledge has no method and no date-received, and its date is in the FUTURE,
+   * which is why `pledgeExpected` is its own field rather than a reuse of any date on `form`.
    */
-  function handOffToPledge() {
-    const carry = { name: conv.sponsorName.trim(), amount: form.amount };
-    dismissForm();
-    recordSignal?.requestPledge(carry);
+  function handOffToPledgeForm() {
+    setPledgeHandOff(true);
+    setConvBranch(null);
+    setWhatOpen(false);
   }
 
   /**
-   * The cold sponsor branch's first answer — WHICH sponsor (Direction A, 2026-08-29): a pledge
-   * (its target is then loaded for the accrual consequence), a new sponsor, or — Phase B — the
-   * promise row, which hands off and leaves this form. ⚖ NOT a ninth "What happened?" sentence:
-   * the 2026-08-25 ruling capped the list at eight and folded hand-offs INTO a branch, so the
-   * promise is one more answer to "which sponsor?". Record never creates unpaid money itself.
+   * The way BACK out of the pledge form, into any other answer — the twin of
+   * `handBackFromBillForm`. This is what replaced the pledge sheet's "Record it instead" link:
+   * switching is picking a different answer now, like every other row in the list.
+   *
+   * ⚠ The expected-by date is dropped on purpose: it is a promise's field, and no other answer has
+   * anywhere to put a date that has not happened yet.
+   */
+  function handBackFromPledgeForm(target: ConversationBranch) {
+    setPledgeHandOff(false);
+    setPledgeExpected('');
+    selectBranch(target);
+  }
+
+  /**
+   * The cold sponsor branch's first answer — WHICH sponsor (Direction A, 2026-08-29): an existing
+   * sponsor (its target is then loaded for the accrual consequence), or a new one this cheque
+   * creates.
+   *
+   * ⚰ THE PROMISE ROW IS GONE FROM HERE (owner ruling, §135 walk 2026-09-03). It sat in this list
+   * on the reasoning that the eight-answer cap forbade a ninth sentence — but the cap governs the
+   * two MONEY groups, and the promise belongs to neither: nothing came in. It is a row in
+   * "Not paid yet" now, beside the bill, where a coach never has to answer *"a sponsor came
+   * through"* in order to say that one has not.
    */
   function pickSponsor(v: string) {
-    if (v === 'pledge') { handOffToPledge(); return; }
     setConv(c => ({ ...c, sponsorPicked: v, sponsorId: v && v !== 'new' ? v : '', sponsorName: '' }));
     if (v && v !== 'new') void loadSponsorTarget(v);
   }
@@ -3632,6 +3689,42 @@ function MoneyRecordsPanel({
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
   }
 
+  /**
+   * Create a sponsorship that is still a PROMISE (§135). The sponsor branch's create with
+   * `sponsorStatus: 'pledged'` — no date received, no method, an expected-by instead — which is
+   * exactly the body the retired pledge sheet sent, to the same route.
+   *
+   * ⚠ THE REFUSALS ARE THE SHEET'S, WORD FOR WORD. They were the only thing that form owned that
+   * this one did not, and re-wording them on the way across would have been a silent copy change
+   * inside a mechanical move.
+   */
+  async function savePledge() {
+    const name = conv.sponsorName.trim();
+    if (!name) throw new Error('The sponsor needs a name.');
+    const n = Number(form.amount);
+    if (isNaN(n) || n <= 0) throw new Error('A pledge needs an amount greater than zero.');
+    const plan = sharesFromRows(convSponsorPlan);
+    const planProblem = creditPlanProblem(plan, n);
+    if (planProblem) throw new Error(planProblem);
+    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'sponsor',
+        sponsorStatus: 'pledged',
+        name,
+        description: form.notes.trim() || null,
+        sponsorAmount: n,
+        expectedBy: pledgeExpected || null,
+        creditPlan: plan,
+        tagIds: formTags,
+      }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not log the pledge');
+    dismissForm();
+    await refreshAfterWrite();
+  }
+
   async function saveRecord() {
     /* ⚠⚠ BELT TO `saving`'s BRACES (`/review`, concurrency lens, 2026-08-20). A second click can
        land before React commits the disabled attribute, and on the ADD path there is no server-side
@@ -3650,7 +3743,15 @@ function MoneyRecordsPanel({
         /* ⚠ A COMMITMENT'S OWN DOOR ASKS NO SUCH QUESTION. Payables' "Add a commitment" opens this
            form in its setup mode — one kind of record, stated rather than chosen — so there is no
            conversation answer to be missing (owner ruling B2, 2026-08-23). */
-        if (convBranch === null && !isPayableForm) throw new Error('Choose what happened first.');
+        if (convBranch === null && !isPayableForm && !pledgeHandOff) throw new Error('Choose what happened first.');
+        /* ⚠ THE PLEDGE WRITES THROUGH THE SAME ROUTE THE "+ Pledge" DOOR ALWAYS USED (§135) —
+           one flag apart from the sponsor branch's own create. Like every other hand-off answer
+           it leaves this form's ledger save entirely: the conversation still adds no write path,
+           it just hosts one more form. */
+        if (pledgeHandOff) {
+          await savePledge();
+          return;
+        }
         if (convBranch !== null && CONV_DIRECT.has(convBranch)) {
           await saveConversationBranch();
           return;
@@ -4014,11 +4115,17 @@ function MoneyRecordsPanel({
     /* ⚠ LOCKED — the door named one record (owner ruling A). Both answers collapse into one stated
        band: the branch's own sentence, the subject the door supplied, and a quiet second line. No
        control at all, so there is nothing to switch and no ghost save to make. */
-    if (convLock && convBranch) {
+    if (convLock && (convBranch || pledgeHandOff)) {
+      /* ⚠ THE SUBJECT IS OPTIONAL SINCE §135. Every lock until now came from a door standing on
+         one existing RECORD, so there was always something to name after the dash. Fundraising's
+         "+ Pledge" locks without one: it names what the form is FOR, not a record that exists —
+         the sponsor is what the coach is about to type. A bare dash with nothing after it would be
+         the band describing a subject it does not have. */
+      const stated = convBranch ? CONV_BRANCH[convBranch].name : PLEDGE_HAND_OFF_ROW.name;
       return (
         <div className={`${styles.formGridFull} ${styles.convLockBand}`}>
           <span className={styles.convLockLine}>
-            {CONV_BRANCH[convBranch].name} — {convLock.subject}
+            {stated}{convLock.subject ? ` — ${convLock.subject}` : ''}
           </span>
           {convLock.detail && <span className={styles.convLockDetail}>{convLock.detail}</span>}
         </div>
@@ -4068,9 +4175,14 @@ function MoneyRecordsPanel({
             setWhatOpen(o => !o);
           }}
         >
-          {/* On a handed-off bill form the field's standing answer is the bill row — the whole
-              reason it renders there (see `billHandOff`). */}
-          <span>{convBranch ? CONV_BRANCH[convBranch].name : isPayableForm ? BILL_HAND_OFF_ROW.name : 'Choose…'}</span>
+          {/* On a handed-off form the field's standing answer is that form's own row — the whole
+              reason it renders there (see `billHandOff` / `pledgeHandOff`). */}
+          <span>
+            {convBranch ? CONV_BRANCH[convBranch].name
+              : pledgeHandOff ? PLEDGE_HAND_OFF_ROW.name
+              : isPayableForm ? BILL_HAND_OFF_ROW.name
+              : 'Choose…'}
+          </span>
           <ChevronDown size={15} className={styles.convWhatCaret} aria-hidden />
         </button>
         {whatOpen && whatRect && (
@@ -4099,8 +4211,16 @@ function MoneyRecordsPanel({
                            always used one screen up). False positive, documented not obeyed. */
                         /* From a handed-off bill form, choosing a real answer is the way BACK —
                            the mirror of the hand-off, typing carried (owner, 2026-08-29). */
+                        /* ⚠⚠ THE DIRECTIVE BELOW COVERS ONE LINE, SO THE HANDLER STAYS ON ONE
+                           LINE. Both traps were sprung building §135: prose slipped BETWEEN the
+                           directive and `onClick` moves the exemption onto the prose, and breaking
+                           the handler across lines leaves everything past the first line
+                           unexempted. Comments go above the directive; the expression stays here.
+                           Picking an ordinary answer from a handed-off form hands BACK first —
+                           each hand-off has its own mirror because each carries different fields
+                           home (§135: the pledge's expected-by has nowhere else to live). */
                         // eslint-disable-next-line react-hooks/refs
-                        onClick={() => (isPayableForm ? handBackFromBillForm(id) : selectBranch(id))}
+                        onClick={() => (isPayableForm ? handBackFromBillForm(id) : pledgeHandOff ? handBackFromPledgeForm(id) : selectBranch(id))}
                       >
                         <span>
                           <span className={styles.convWhatOptName}>{CONV_BRANCH[id].name}</span>
@@ -4122,6 +4242,11 @@ function MoneyRecordsPanel({
                   (owner, 2026-08-29): what happened is the team AGREED to pay — a real event even
                   though no money moved — so the field can stand on this row on the bill form and
                   every choice in this list stays revisable, this one included. */}
+              {/* ⚖ TWO ROWS NOW, ONE EACH WAY (owner ruling, §135 walk 2026-09-03). The group was
+                  built holding only the obligation the TEAM takes on; the one a sponsor takes on
+                  toward the team was hidden inside "a sponsor came through" — an answer a coach had
+                  to give before they could say that nobody had. Both are the same event: a promise,
+                  no money, a form that sets one up. */}
               <div className={styles.convWhatGroup}>Not paid yet</div>
               <button
                 type="button"
@@ -4135,6 +4260,18 @@ function MoneyRecordsPanel({
                 <span>
                   <span className={styles.convWhatOptName}>{BILL_HAND_OFF_ROW.name}</span>
                   <span className={styles.convWhatOptSub}>{BILL_HAND_OFF_ROW.sub}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                role="option"
+                aria-selected={pledgeHandOff}
+                className={styles.convWhatOpt}
+                onClick={() => { setWhatOpen(false); if (!pledgeHandOff) handOffToPledgeForm(); }}
+              >
+                <span>
+                  <span className={styles.convWhatOptName}>{PLEDGE_HAND_OFF_ROW.name}</span>
+                  <span className={styles.convWhatOptSub}>{PLEDGE_HAND_OFF_ROW.sub}</span>
                 </span>
               </button>
             </div>
@@ -4158,6 +4295,66 @@ function MoneyRecordsPanel({
         <strong>When you save:</strong> {body}
       </p>
     );
+
+    /**
+     * ⚖ THE PLEDGE FORM — the promise, in the conversation (owner ruling, §135 walk 2026-09-03).
+     *
+     * It is the new-sponsor form with the two facts that only apply to money that ARRIVED taken
+     * out (date received, how it came) and the one that only applies to money that has not put in
+     * its place (expected by, a date in the FUTURE — the only such field on this form, which is
+     * why `max` is deliberately absent where every other date here carries `moneyMovedMaxDate()`).
+     *
+     * ⚠ IT IS THE SAME FORM THE "+ Pledge" DOOR OPENS, not a copy of it — that door opens THIS
+     * conversation locked (see the Fundraising panel). One form means the owner's "both should
+     * look the same" cannot rot: there is no second thing to keep in step.
+     */
+    if (pledgeHandOff) {
+      const plan = sharesFromRows(convSponsorPlan);
+      const planProblem = amount > 0 ? creditPlanProblem(plan, amount) : null;
+      return (
+        <>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Sponsor *</label>
+            <input
+              className={styles.input}
+              value={conv.sponsorName}
+              onChange={e => setConv(c => ({ ...c, sponsorName: e.target.value }))}
+              placeholder="e.g. Riverdale Dental"
+            />
+          </div>
+          {convAmountField('Pledged amount *')}
+          <div className={styles.field}>
+            {/* ⚠ NO `max`. Every other date on this form is a day money moved and cannot be in the
+                future; this one is the whole point of the answer — when the money is expected. */}
+            <label className={styles.label}>Expected by</label>
+            <input
+              className={styles.input} type="date"
+              value={pledgeExpected}
+              onChange={e => setPledgeExpected(e.target.value)}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Credit families</label>
+            <SponsorCreditPlanEditor
+              rows={convSponsorPlan}
+              onChange={setConvSponsorPlan}
+              families={roster.map(pl => ({ id: pl.id, name: formatPlayerLastFirst(pl) }))}
+              defaultShare={sponsorDefaultPct !== null ? String(sponsorDefaultPct) : '0'}
+              problem={planProblem}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Tags</label>
+            <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
+          </div>
+          {convNoteField('Optional details…')}
+          {consequence(<>
+            <strong>nothing moves.</strong> The promise joins the plan and the forward view —
+            record each cheque against it as it arrives.
+          </>)}
+        </>
+      );
+    }
 
     if (convBranch === 'dues') {
       const sel = (duesBook ?? []).find(p => p.id === conv.duesPlayerId) ?? null;
@@ -4416,7 +4613,6 @@ function MoneyRecordsPanel({
             >
               <option value="">Choose…</option>
               <option value="new">A new sponsor…</option>
-              {recordSignal && <option value="pledge">This is a promise — nothing arrived yet</option>}
               {convSponsors.map(sp => (
                 <option key={sp.id} value={sp.id}>
                   {sp.name}{sp.stillToCome > 0.005 ? ` — ${fmt(sp.stillToCome)} still to come` : ''}
@@ -4537,8 +4733,8 @@ function MoneyRecordsPanel({
           </div>
           {convNoteField('Optional details…')}
           <p className={`${styles.formHint} ${styles.formGridFull}`}>
-            A promised sponsorship isn&apos;t money yet — pick <strong>This is a promise</strong> under
-            &ldquo;Which sponsor?&rdquo; and the pledge sheet opens with your typing carried.
+            Nothing arrived yet? Answer <strong>{PLEDGE_HAND_OFF_ROW.name}</strong> instead — your
+            typing stays.
           </p>
           {amount > 0 && conv.sponsorName.trim() && consequence(<>
             <strong>{fmt(amount)} arrives</strong> — shows on the ledger as sponsorship income.
@@ -6872,6 +7068,12 @@ function MoneyRecordsPanel({
                 <p className={`${styles.formHint} ${styles.formGridFull}`} style={{ marginTop: 0 }}>
                   {copy.statedFact} Wrong kind? Delete this and add it again.
                 </p>
+              ) : pledgeHandOff ? (
+                /* ⚖ A handed-off PLEDGE keeps the question for the same reason a handed-off bill
+                   does: the coach reached here by answering it. Opened from the "+ Pledge" door it
+                   arrives LOCKED instead — that door named what it is for, so the answer is stated
+                   and there is nothing to select away to (owner, §135). */
+                renderWhatField()
               ) : isPayableForm ? (
                 /* ⚠ NO INTRO PARAGRAPH ON A NEW BILL (fold form redesign, 2026-08-28 — finding 1).
                    The subtitle says what a bill is; the consequence line pinned by the footer says
@@ -6890,11 +7092,15 @@ function MoneyRecordsPanel({
               {/* ⚠ `!isPayableForm` — the commitment door has no unanswered question to promise an
                   answer to, and "choose above" over a form with no chooser above it would be the
                   screen describing a control that is not there (B2). */}
-              {formMode === 'add' && convBranch === null && !isPayableForm ? (
+              {formMode === 'add' && convBranch === null && !isPayableForm && !pledgeHandOff ? (
                 /* Frame A's quiet promise — the cold open shows the question, not a form. */
                 <p className={`${styles.formGridFull} ${styles.convGhostNote}`}>
                   Choose above — the rest of the form fills in from your answer.
                 </p>
+              ) : pledgeHandOff ? (
+                /* The promise writes through the Fundraising route, so it never reaches the ledger
+                   fields below — the same shape every direct branch already has. */
+                renderConvBody()
               ) : formMode === 'add' && convBranch !== null && CONV_DIRECT.has(convBranch) ? (
                 renderConvBody()
               ) : (

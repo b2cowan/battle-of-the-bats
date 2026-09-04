@@ -2,6 +2,43 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-03 — A promise is an ANSWER, not a detour: the pledge joins "Not paid yet"
+
+**Decision (owner-directed, §135 walk).** "A sponsor promised us money" becomes a row in the
+**"Not paid yet"** group of the Record conversation's "What happened?" list, beside "We agreed to
+pay something later". Picking it turns the form into the pledge form **in place**; picking any
+other answer hands back, typing intact. Fundraising's **"+ Pledge"** door opens that **same**
+conversation with the answer **stated** — one form, one save path, and the only difference between
+the doors is whether the answer can be switched.
+
+**⚠ THIS REVERSES THE 2026-09-02 PHASE B DECISION** that put the promise inside the sponsor
+branch's "Which sponsor?" picker, and it retires the cross-panel hand-off that decision required.
+
+**Why the original was wrong, in the owner's words:** *"we say 'a sponsor came through' under
+'money came in', then we give the option of 'this is a promise' under the sponsor name itself —
+this doesn't make sense."* A coach had to assert that money arrived in order to say that it had
+not, and then watch the modal close, the tab change and a second form open.
+
+**The argument that put it there does not hold, and this is the transferable part.** Phase B cited
+the 2026-08-25 cap of eight answers. But that cap governs the two MONEY groups — *Money came in*
+and *Money went out* — and a promise belongs to neither, which is exactly why "Not paid yet"
+already existed as a third group holding a HAND-OFF row rather than a branch. The money-out side of
+"a promise, nothing moved" had been a first-class answer since 2026-08-29; the money-in side was
+hidden. **A cap on one list was read as a cap on the screen.**
+
+**And "Record never creates unpaid money itself" survives untouched** — the bill row does not write
+a bill from the conversation either. It hands the FORM over. Both rows now do.
+
+**What the reversal deleted:** the standalone pledge sheet (179 lines), the
+`requestPledge`/`pledgeNonce`/`pledgeCarry` wire and its tab switch, the "Record it instead" link
+and its reverse hand-off, and a stated band added hours earlier to make the jump legible. Two forms
+asking the same questions had already drifted — one capped its note, the other did not.
+
+**Standing rule this sets:** when two events are the same SHAPE in opposite directions, they get the
+same treatment in the same place. A first-class answer one way and a footnote the other is a bug,
+not a preference.
+
+
 
 ### 2026-09-03 — The warm muted ink is `#615A54`, corrected a SECOND time, and the lesson is the GROUND LIST
 

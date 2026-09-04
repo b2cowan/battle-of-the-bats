@@ -57,7 +57,7 @@ import { pluralize } from '@/lib/utils';
 import type { DriveEntryRow, Fundraiser, RoomRecord, SponsorArrival } from './types';
 import { DriveRoomBody, DriveEntryQuestion, DriveStatusChip, EditDriveSheet, driveFacts } from './DriveRoom';
 import {
-  SponsorRoomBody, ArrivalQuestion, EditSponsorshipSheet, PledgeSheet, SponsorStatusChip, expectedClause,
+  SponsorRoomBody, ArrivalQuestion, EditSponsorshipSheet, SponsorStatusChip, expectedClause,
   sponsorFacts,
 } from './SponsorRoom';
 
@@ -359,45 +359,17 @@ export function FundraisersPanel({
   // ── Questions and sheets the room asks ───────────────────────────────────────────────────
   const [editDrive, setEditDrive] = useState<Fundraiser | null>(null);
   const [editSponsor, setEditSponsor] = useState<Fundraiser | null>(null);
-  /**
-   * The open pledge sheet, and WHICH DOOR opened it (owner, §135 walk 2026-09-03).
-   *
-   * ⚠ `fromRecord` cannot be inferred from the carry. A hand-off out of the Record conversation
-   * where the coach typed nothing first carries `{ name: '', amount: '' }` — byte-identical to a
-   * cold "+ Pledge" — so the sheet could not tell that the coach had just answered two questions
-   * on their way here, and greeted them with a blank form that mentioned neither.
-   */
-  const [pledge, setPledge] = useState<{ name: string; amount: string; fromRecord: boolean } | null>(null);
   const [entryEdit, setEntryEdit] = useState<DriveEntryRow | null>(null);
   const [arrivalEdit, setArrivalEdit] = useState<SponsorArrival | null>(null);
 
-  /* The conversation's promise row hands off HERE (the carried ruling): the hub switched the tab
-     and bumped the nonce; this opens the pledge sheet with the typed name and amount. A
-     render-phase adjustment on a change guard (the hub page's own idiom) rather than an effect,
-     so the sheet opens in the same pass the nonce arrives and nothing cascades. */
-  /* ⚠ Seeded at ZERO, never at the nonce (`/review`, 2026-09-02): the hub marks this tab visited
-     and bumps the nonce in the same commit, so on a coach's FIRST visit the panel mounts with the
-     nonce already raised — seeding "seen" from it would swallow the very hand-off that mounted it. */
-  const pledgeNonce = recordSignal?.pledgeNonce ?? 0;
-  const [pledgeNonceSeen, setPledgeNonceSeen] = useState(0);
-  if (pledgeNonce !== pledgeNonceSeen) {
-    setPledgeNonceSeen(pledgeNonce);
-    if (pledgeNonce > 0 && canWriteMoney) {
-      setPledge({ name: recordSignal?.pledgeCarry?.name ?? '', amount: recordSignal?.pledgeCarry?.amount ?? '', fromRecord: true });
-    }
-  }
-
-  /** The cheque-in-hand hand-off OUT of the pledge sheet, into the conversation (owner, §121 walk). */
-  const recordInstead = recordSignal
-    ? (carry: { name: string; amount: string }) => {
-        setPledge(null);
-        recordSignal.request({
-          branch: 'sponsor',
-          ids: { sponsorNewName: carry.name },
-          ...(carry.amount ? { amount: carry.amount } : {}),
-        });
-      }
-    : null;
+  /* ⚰⚰ THE CROSS-PANEL PLEDGE WIRE IS GONE (owner ruling, §135 walk 2026-09-03).
+     What stood here: the sheet's own state, a nonce listener for the hand-off OUT of Record (with
+     its own "seeded at ZERO, never at the nonce" trap) and `recordInstead`, the hand-off back IN.
+     All three existed only to move a coach BETWEEN two forms that asked the same questions.
+     There is one form now — the promise is an answer in Record's own list, and this tab's
+     "+ Pledge" opens that same conversation locked — so switching is picking a different answer
+     and nothing has to travel between panels. `requestPledge` / `pledgeNonce` / `pledgeCarry`
+     left the signal with it, and `PledgeSheet` was deleted. */
 
   // ── The guarded delete (the room's foot) ─────────────────────────────────────────────────
   async function deleteRecord(f: Fundraiser) {
@@ -632,7 +604,17 @@ export function FundraisersPanel({
                   {/* ⚖ "+ Pledge", NOT "+ Sponsorship" (owner, §121 walk): "Sponsorship" claims the
                       whole relationship, cheques included. Pledge is the promise door; Record is the
                       money door. */}
-                  <button type="button" className={styles.btnSecondary} onClick={() => setPledge({ name: '', amount: '', fromRecord: false })}>
+                  <button type="button" className={styles.btnSecondary} /* ⚠⚠ THE SAME FORM RECORD OPENS, LOCKED (owner ruling, §135 walk 2026-09-03). This door
+                      used to open a sheet of its own that happened to ask the same questions — two
+                      forms to keep in step, and they had already drifted (the sheet capped its note,
+                      the conversation did not). One form now; this door's only difference is that it
+                      STATES the answer, because it named what it is for and there is nothing to
+                      select away to. Picking the same answer inside Record leaves every other one a
+                      tap away. */
+                    onClick={() => recordSignal?.request({
+                      handOff: 'pledge',
+                      lock: { subject: '', detail: 'Nothing arrives today — record each cheque against it as it comes.' },
+                    })}>
                     <Plus size={15} aria-hidden /> Pledge
                   </button>
                 </div>
@@ -932,22 +914,6 @@ export function FundraisersPanel({
           onManageChanged={quietReload}
           onSaved={() => { setEditSponsor(null); afterRoomWrite(); }}
           onClose={() => setEditSponsor(null)}
-          tabActive={tabActive}
-        />
-      )}
-      {pledge && (
-        <PledgeSheet
-          orgSlug={orgSlug}
-          teamId={teamId}
-          prefill={pledge}
-          roster={roster}
-          defaultCreditPercent={defaultCreditPercent}
-          moneyTags={moneyTags}
-          onCreateTag={addMoneyTag}
-          onManageChanged={quietReload}
-          onSaved={() => { setPledge(null); bumpMoneyRevision(); }}
-          onClose={() => setPledge(null)}
-          onRecordInstead={recordInstead}
           tabActive={tabActive}
         />
       )}
