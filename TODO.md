@@ -492,6 +492,10 @@ the portal can say what a player OWES but not what they PAID, when, or how much:
 
 ---
 
+- [ ] **📸 The in-app help screenshot of Player Dues is STALE — and nothing automated can ever tell you** (found 2026-09-03 while checking a review claim about a different picture) — `public/help/coaches/money-record-payment.png` predates the money-tab consolidation: it shows *Fundraisers · Expenses & Payables · Allocations · Payments* where the live screen reads *Fundraising · Ledger · Club*, writes "Send Due Reminders" in title case against the settled lowercase spelling, and has no **+ Record** button. ⚠ **This is a CLASS, not one file:** `check:demos` and the marketing-shot `--check` prove a picture EXISTS and has alt/caption/size — neither can see that it no longer matches the product, so every captured screenshot in `lib/help-shots.ts` and `lib/marketing-shots.ts` rots silently the way the demo narration does. Re-take with `node scripts/capture-help-shots.mjs --only=money-record-payment` (needs the dev server up and the demo world seeded); the worthwhile version of this task is a sweep of both manifests against today's screens, plus a decision on whether a shot's `takenAt` should be checked against the last change to the route it photographs.
+
+---
+
 ## 🧭 Deferred Enhancements (Confirmed scope, build later)
 
 - [ ] **🖨️ Two printable schedules a family could put on a fridge — coach team-season + house-league season (decided OWED in the PDF Schedules pass, QA §102; ⏸ DEFERRED by owner 2026-08-26 — "we don't need those now")** — neither exists on paper today: a coach hands a family a calendar feed or nothing. The decision that they are owed still stands; the timing does not. ⚠ When it comes back, each is its OWN pass and each needs an owner mockup session BEFORE building, because the question is what a FAMILY needs on paper — arrival time, uniform, where to park — not the eleven columns an admin table happens to hold. Everything underneath is already built: the shared engine, the identity pipeline, and the rendered gate, which either document joins by adding one fixture entry. (see docs/projects/archive/PDF_EXPORT_QUALITY_PLAN.md §4)

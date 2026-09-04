@@ -52,11 +52,13 @@ export default function DuesReminderPreviewModal({
             <strong> 7 days</strong> before — one email per family per wave, never twice in the same week.
           </p>
           <p style={{ margin: 0 }}>
-            {/* ⚠ These two buttons live on the Dues page, and this modal now opens from Team
-                settings as well — so they are named by WHERE they are, not "above the table". */}
-            <strong>Send Due Reminders</strong> on the Dues page emails right now about anything past
-            due or due in the next 3 days. The <strong>Remind all</strong> button on the chase card is
-            separate — it only ever writes to families with no payment recorded at all.
+            {/* ⚠ These sends live on the Dues page and this modal now opens from Team settings
+                as well — so they are named by WHERE they are, not "above the table". The bulk
+                "Remind all" went with the chase card (owner call 2026-09-03); the never-paid nudge
+                survives only inside a player's own panel, and this sentence says so. */}
+            <strong>Send due reminders</strong> on the Dues page emails right now about anything past
+            due or due in the next 3 days. To nudge one family who has paid nothing at all, open that
+            player from the dues table and use <strong>Remind</strong> in their panel.
           </p>
           <p style={{ margin: 0 }}>
             Emails ask only for <strong>what&apos;s still owing</strong> — a family part-way through paying

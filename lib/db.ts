@@ -12415,10 +12415,10 @@ export interface UnpaidDuesReminderTarget {
 /**
  * Players on the team's active program year who OWE dues but have recorded ZERO payments
  * (a schedule exists / balance is owed, and no installment is marked paid). Mirrors the
- * `isNeverPaidPlayer` predicate the portal shows so "Remind all" targets exactly the list —
- * including its credit rule (owner model 2026-08-14): a family whose fundraising settled the
- * season has nothing left to send and is never nudged, and each target's `outstanding` is the
- * NET figure (schedule minus credits applied), not the face amount.
+ * `isNeverPaidPlayer` predicate the portal shows, so this route targets exactly the players
+ * whose panels offer Remind — including its credit rule (owner model 2026-08-14): a family
+ * whose fundraising settled the season has nothing left to send and is never nudged, and each
+ * target's `outstanding` is the NET figure (schedule minus credits applied), not the face amount.
  */
 export async function getUnpaidDuesReminderTargets(teamId: string): Promise<UnpaidDuesReminderTarget[]> {
   const programYear = await getActiveRepProgramYear(teamId);
@@ -12449,7 +12449,7 @@ export async function getUnpaidDuesReminderTargets(teamId: string): Promise<Unpa
   }
 
   // Payment FACTS (mig 232): a family two part-payments into an installment has every paid_at
-  // still null — the stamp is only a full-coverage projection. Without this, "Remind all" would
+  // still null — the stamp is only a full-coverage projection. Without this, the nudge would
   // email "no dues payments yet" to a paying family, and its count would disagree with the
   // panel's isNeverPaidPlayer banner (which reads paidAmount).
   const [{ data: payRows, error: payErr }, seasonCredits, seasonPayouts] = await Promise.all([

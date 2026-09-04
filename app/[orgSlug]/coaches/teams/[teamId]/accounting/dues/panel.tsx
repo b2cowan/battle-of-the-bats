@@ -445,9 +445,13 @@ export function PlayerDuesPanel({
   // confirms first, and the confirm states the scope (owner call 2026-08-14).
   const [confirmRemindersOpen, setConfirmRemindersOpen] = useState(false);
 
-  // "Haven't paid anything yet" nudges (never-paid players)
-  const [remindingAll, setRemindingAll] = useState(false);
+  // "Haven't paid anything yet" nudges — ONE PLAYER AT A TIME since the chase card went
+  // (owner call 2026-09-03). The band it lived on carried a SECOND bulk send beside "Send due
+  // reminders", over a count the table already prints three ways. The per-player Remind inside
+  // a player's own panel is the whole surface now, so unpaidFor keys the outcome to the player
+  // it was sent for — opening the next family must not show them the last family's receipt.
   const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [unpaidFor, setUnpaidFor] = useState<string | null>(null);
   const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersReminded: number; playersMissingEmail: number } | null>(null);
   const [unpaidError, setUnpaidError] = useState('');
 
@@ -1157,6 +1161,12 @@ export function PlayerDuesPanel({
     setPayError('');
     setPayNotice('');
     setCreditError('');
+    // ⚠ The reminder's outcome is transient like the rest of these. Without it, reopening a
+    // family re-shows a send from earlier in the session — and keeps showing it after they have
+    // paid, when the Remind button that explains it is no longer rendered beside it.
+    setUnpaidFor(null);
+    setUnpaidResult(null);
+    setUnpaidError('');
   }
 
   // ── The discard guards (owner Q21, QA §123 Phase F4) ─────────────────────────────────────────
@@ -1305,15 +1315,19 @@ export function PlayerDuesPanel({
     }
   }
 
-  async function remindUnpaid(playerId?: string) {
-    if (playerId) setRemindingId(playerId); else setRemindingAll(true);
+  /** Nudge ONE family who has recorded no payment at all. The route still accepts a whole-team
+   *  send; nothing in the portal asks for one any more (owner call 2026-09-03), so this takes a
+   *  player and always names them. */
+  async function remindUnpaid(playerId: string) {
+    setRemindingId(playerId);
+    setUnpaidFor(playerId);
     setUnpaidError('');
     setUnpaidResult(null);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues/remind-unpaid`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(playerId ? { playerId } : {}),
+        body: JSON.stringify({ playerId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to send reminder');
@@ -1322,7 +1336,6 @@ export function PlayerDuesPanel({
       setUnpaidError(e instanceof Error ? e.message : 'Failed to send reminder.');
     } finally {
       setRemindingId(null);
-      setRemindingAll(false);
     }
   }
 
@@ -1359,9 +1372,6 @@ export function PlayerDuesPanel({
   const payoutErrorNote = payoutError
     ? <p className={styles.errorText} style={{ margin: '0 0 0.6rem', fontSize: '0.78rem' }}>{payoutError}</p>
     : null;
-  // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
-  const neverPaid = players.filter(isNeverPaidPlayer);
-
   // ── The settlement section's own derived values ──────────────────────────────────────────
   // The closed-state headline comes from figures THIS PAGE ALREADY HOLDS, so a coach learns the
   // team is holding families' money without the sheet being fetched at all.
@@ -1490,8 +1500,6 @@ export function PlayerDuesPanel({
     }
     return { assessed, credits, collected, outstanding, overduePlayers, nextDue };
   })();
-  /** Is anyone ACTUALLY late? Distinct from "hasn't paid" — see the chase card below. */
-  const anyoneLate = seasonTotals.overduePlayers > 0;
   // ⚠ NOTHING SET YET MEANS NO FOOTER, not a row of $0.00. On a roster whose dues haven't been
   // built, every figure here is zero and a totals row would total nothing — the same reason the
   // overdue line hides itself when nobody is behind (owner ruling 2026-08-13).
@@ -1687,68 +1695,6 @@ export function PlayerDuesPanel({
             </div>
           )}
 
-          {/* Who to chase — ONE LINE plus the bulk action (owner ruling 2026-08-03).
-              It used to list every never-paid player with a per-player Remind. On a team early in
-              its season that WAS the table: eleven names here, the same eleven a screen below with
-              "Unpaid" beside them. The table is the list; this is only the summary and the one
-              thing the table can't do — nudge everyone at once. Per-player Remind moved into the
-              player's own modal, beside Mark Paid, where the coach is already looking at them.
-
-              ⚠ AND IT ONLY RAISES AN ALARM WHEN SOMEONE IS ACTUALLY LATE. It fired on "nothing
-              paid yet" regardless of whether anything was DUE yet, so a roster four weeks ahead of
-              its first due date opened under a warning triangle and eleven flagged names. A status
-              surface that cries wolf gets ignored. Before the due date this is a quiet line. */}
-          {neverPaid.length > 0 && (
-            <div style={{
-              marginBottom: '1.5rem', borderRadius: 10, overflow: 'hidden',
-              border: `1px solid ${anyoneLate ? 'color-mix(in srgb, var(--warning) 25%, transparent)' : 'var(--home-line, rgba(255,255,255,0.08))'}`,
-              background: anyoneLate ? 'color-mix(in srgb, var(--warning) 6%, transparent)' : 'transparent',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.85rem 1.1rem' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--home-ink, #f0f0f0)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    {anyoneLate && <AlertTriangle size={15} style={{ color: 'var(--warning)' }} />}
-                    {anyoneLate
-                      ? `${seasonTotals.overduePlayers} past their due date`
-                      : `${neverPaid.length} ${neverPaid.length !== 1 ? 'players have' : 'player has'} not paid yet`}
-                  </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                    {anyoneLate
-                      ? `${neverPaid.length} ${neverPaid.length !== 1 ? 'players owe' : 'player owes'} dues with no payment recorded.`
-                      : seasonTotals.nextDue
-                        ? `Nothing is late — the first payment is due ${fmtDate(seasonTotals.nextDue)}.`
-                        : 'Nothing is late.'}
-                  </p>
-                </div>
-                {moneyCanWrite && (
-                  <button
-                    className={styles.btnPrimary}
-                    onClick={() => remindUnpaid()}
-                    disabled={remindingAll || !!remindingId}
-                    style={{ opacity: (remindingAll || remindingId) ? 0.6 : 1, whiteSpace: 'nowrap' }}
-                  >
-                    {remindingAll ? 'Sending…' : `Remind all ${neverPaid.length}`}
-                  </button>
-                )}
-              </div>
-
-              {(unpaidResult || unpaidError) && (
-                <div style={{ padding: '0.55rem 1.1rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))', fontSize: '0.8rem' }}>
-                  {unpaidError && <span style={{ color: 'var(--danger-light)' }}>{unpaidError}</span>}
-                  {unpaidResult && (
-                    <span style={{ color: unpaidResult.emailsSent > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                      {unpaidResult.emailsSent > 0
-                        ? `Sent ${unpaidResult.emailsSent} reminder${unpaidResult.emailsSent !== 1 ? 's' : ''} covering ${unpaidResult.playersReminded} player${unpaidResult.playersReminded !== 1 ? 's' : ''}.`
-                        : 'No reminders sent.'}
-                      {unpaidResult.playersMissingEmail > 0 &&
-                        ` ${unpaidResult.playersMissingEmail} ${unpaidResult.playersMissingEmail !== 1 ? 'players have' : 'player has'} no guardian email on file.`}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* The dues list's own toolbar — the bulk actions sit with the list they act on. */}
           {duesToolbar}
 
@@ -1834,8 +1780,9 @@ export function PlayerDuesPanel({
                   that stood to the right of this table; the trade the owner accepted is that these
                   now scroll with the roster, on the grounds that a dues list runs 12–20 rows.
 
-                  Read-only, as the rail was: "Remind all" stays with the chase card it belongs to,
-                  because a send button beside a total invites nudging people you haven't looked at.
+                  Read-only, as the rail was — no send button beside a total, because that invites
+                  nudging people you haven't looked at. (The chase card that used to carry one was
+                  deleted 2026-09-03; the never-paid nudge lives in a player's own panel now.)
 
                   ⚠ `data-label` on every cell is what makes this work at 640, where the table
                   becomes cards and this row becomes the last card in the list. */}
@@ -2616,8 +2563,8 @@ export function PlayerDuesPanel({
                         <button
                           className={styles.btnSecondary}
                           onClick={() => remindUnpaid(selected.player.id)}
-                          disabled={remindingAll || !!remindingId}
-                          style={{ fontSize: '0.78rem', opacity: (remindingAll || remindingId) ? 0.6 : 1 }}
+                          disabled={!!remindingId}
+                          style={{ fontSize: '0.78rem', opacity: remindingId ? 0.6 : 1 }}
                         >
                           {remindingId === selected.player.id ? 'Sending…' : 'Remind'}
                         </button>
@@ -2793,14 +2740,21 @@ export function PlayerDuesPanel({
                     {!recordingPayment && payError && (
                       <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', color: 'var(--danger-light)' }}>{payError}</p>
                     )}
-                    {/* The reminder's own result, beside the button that sent it. */}
-                    {(unpaidError || unpaidResult) && remindingId === null && (
+                    {/* The reminder's own result, beside the button that sent it — and since the
+                        chase card went (owner call 2026-09-03) the ONLY report a send gets.
+                        ⚠ Keyed to the player it was sent FOR: the outcome outlives this drawer, so
+                        without `unpaidFor` the next family opened is greeted by the last one's
+                        confirmation. */}
+                    {unpaidFor === selected.player.id && (unpaidError || unpaidResult) && remindingId === null && (
                       <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', textAlign: 'right', color: unpaidError ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                         {unpaidError || (unpaidResult && unpaidResult.emailsSent > 0
                           ? 'Reminder sent.'
                           : unpaidResult?.playersMissingEmail
                             ? 'No guardian email on file for this player.'
-                            : '')}
+                            // ⚠ NEVER FALL THROUGH TO ''. The route returns all-zeros when this
+                            // family is no longer one of its targets, and an empty <p> is a send
+                            // that reports nothing — the coach presses Remind again.
+                            : 'No reminder sent — nothing outstanding for this family.')}
                       </p>
                     )}
 

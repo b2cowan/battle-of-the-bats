@@ -169,17 +169,9 @@
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "25px tall (floor 44)"
     },
-    "coach-dues|361|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
     "coach-budget|390|tap-floor|button·Review": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "25px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-budget|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
@@ -220,10 +212,6 @@
     "coach-dues|768|tap-floor|button·Import": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "33px tall (floor 44)"
-    },
-    "coach-dues|768|tap-floor|button·Remind all 1": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
     },
     "coach-dues|768|tap-floor|button·Export": {
       "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass.",
@@ -2541,17 +2529,9 @@
       "reason": null,
       "detail": "23px tall (floor 44)"
     },
-    "coach-dues-settlement|361|tap-floor|button·Remind all 1": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
     "coach-dues-settlement|390|tap-floor|button·Enabled": {
       "reason": null,
       "detail": "23px tall (floor 44)"
-    },
-    "coach-dues-settlement|390|tap-floor|button·Remind all 1": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "coach-dues-settlement|768|tap-floor|button·Enabled": {
       "reason": null,
@@ -2568,10 +2548,6 @@
     "coach-dues-settlement|768|tap-floor|button·Import": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-dues-settlement|768|tap-floor|button·Remind all 1": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
     },
     "coach-dues-settlement|768|tap-floor|button·Send due reminders": {
       "reason": null,

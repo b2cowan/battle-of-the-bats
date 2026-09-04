@@ -41,10 +41,19 @@ function fmt(n: number) {
 /**
  * "Haven't paid anything yet" reminder (Coaches Portal Phase 4 F1).
  *
- * Nudges the guardians of players who OWE dues but have recorded zero payments. Distinct from
+ * Nudges the guardian of ONE player who OWES dues but has recorded zero payments. Distinct from
  * the proximity reminder (`/dues/send-reminders`), which only emails when an installment falls
- * due within a few days — it would skip exactly these never-paid families. Body: `{ playerId? }`
- * — one player, or (omitted) every never-paid player. Requires money = write.
+ * due within a few days — it would skip exactly this never-paid family. Body: `{ playerId }`,
+ * required. Requires money = write.
+ *
+ * ⚠ THERE IS NO WHOLE-TEAM SEND HERE, AND THERE IS NOT MEANT TO BE (owner ruling 2026-09-03).
+ * An omitted `playerId` used to mean "every never-paid player", behind a "Remind all N" button on
+ * a chase card above the dues table. Both were deleted: chasing the whole team is already served
+ * twice over — automatic reminders cover everyone on the 30-day and 7-day waves, and "Send due
+ * reminders" emails everyone outstanding on demand. A third bulk send that deliberately targeted
+ * families who had paid NOTHING added nothing those two do not, and the button cost a permanent
+ * band on the screen. What survives is the single-family nudge, from that player's own panel.
+ * Re-adding the branch means re-arguing the ruling, not restoring a convenience.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -56,10 +65,14 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
-  const playerId: string | undefined = typeof body.playerId === 'string' ? body.playerId : undefined;
+  const playerId: string = typeof body.playerId === 'string' ? body.playerId : '';
+  // ⚠ REFUSE rather than fan out. Defaulting a missing id to "everyone" is exactly the branch the
+  // 2026-09-03 ruling removed, and a bulk send is not something to arrive at by accident.
+  if (!playerId) {
+    return NextResponse.json({ error: 'A playerId is required — this route nudges one family.' }, { status: 400 });
+  }
 
-  let targets = await getUnpaidDuesReminderTargets(teamId);
-  if (playerId) targets = targets.filter(t => t.playerId === playerId);
+  const targets = (await getUnpaidDuesReminderTargets(teamId)).filter(t => t.playerId === playerId);
 
   if (!targets.length) {
     return NextResponse.json({ emailsSent: 0, playersReminded: 0, playersMissingEmail: 0 });

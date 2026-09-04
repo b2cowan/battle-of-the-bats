@@ -1277,8 +1277,9 @@ books-safety hardening). Two review checks join the walk:
 - [ ] Record **$100, e-transfer, dated last month** on an unpaid player. Drawer: Payments section
       appears with the receipt; installment #1 shows **$100.00 of $300.00**; table row: Paid
       $100.00, Balance drops $100, Status **Partial**.
-- [ ] The chase card ("N have not paid yet") **no longer counts them**, and per-player Remind is
-      gone from their drawer. Ask the Front Office "Who hasn't paid anything yet?" agrees.
+- [ ] Per-player **Remind** is gone from their drawer. Ask the Front Office "Who hasn't paid
+      anything yet?" agrees. *(The chase card this step also watched — "N have not paid yet" —
+      was deleted 2026-09-03; there is no banner left for the count to drop on.)*
 - [ ] Org-admin ledger (Accounting → team ledger): a **"Player dues — {name}"** income entry dated
       **the day you typed**, not today.
 - [ ] Record **$250 more**: #1 flips to Paid (dated the completing payment's day), #2 shows
@@ -16585,7 +16586,8 @@ keys on label TEXT, so it rots with the calendar and with every reseed.** The ba
 `coach-transactions|390|control-offscreen|button·Around todayJul 27 – Sep 25`; the same button
 renders `Around todayAug 2 – Oct 1` today and reports as NEW — six of that screen's findings are
 pure clock drift and will re-key again next month. Likewise the baseline's `Remind all 1` against
-the reseeded fixture's `Remind all 8`. Any label carrying a date range, a count or a dollar figure
+the reseeded fixture's `Remind all 8` (that button was deleted 2026-09-03 and its six baseline
+keys with it — the example is retired, the defect class is not). Any label carrying a date range, a count or a dollar figure
 does this. Until the key strips them, a large and growing share of every sweep is phantom, and a
 gate that is mostly phantom is a gate people stop reading. **Not fixed here — it is not this
 change's to fix — but it should not wait long.**
@@ -17248,3 +17250,84 @@ alone in 38 s; the layout re-run clean.
 some money in; the mockup drew PLEDGED on that state, which reads wrong once $250 of $500 has
 arrived. **Known deviation to confirm:** Delete at the room's foot is pressable and answers (owner
 ruling 2026-08-30), not the dead-button-plus-sentence the build prompt restated.
+
+## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, awaiting QA
+
+**Owner instruction (the whole brief):** *"let's remove this 'remind all 8' banner, we already have
+a 'send dues reminders' button and automatic reminders, this is not a good use of real estate on the
+page."* Then, on the review: *"we don't need the whole team one since we have automatic ones for the
+whole team and we have the button that sends to all outstanding, all outstanding is really all we
+need (no need to send reminders to players who have paid)."*
+
+**What was deleted.** The band between the Player Dues tab row and the lens toggle: the headline
+("N players have not paid yet" / amber "N past their due date"), the sub-line ("Nothing is late —
+the first payment is due <date>."), the **Remind all N** button, and the send-result strip.
+
+**⚠ THE WHOLE-TEAM NUDGE IS NOW REFUSED AT THE API, NOT MERELY UNBUTTONED.** `remind-unpaid`
+requires a `playerId` and answers **400** without one. The three ways to chase are now: automatic
+reminders (30-day and 7-day waves, everyone), **Send due reminders** (everyone outstanding —
+anything past due or due within 3 days), and per-player **Remind** in a family's own panel (a family
+who has paid nothing, one at a time). A fourth bulk send aimed only at never-paid families is a
+settled NO — re-adding it is re-arguing the ruling, and the route's own header says so.
+
+**Two defects the review found and fixed, both worth a look on the walk:**
+1. Per-player **Remind** could report **nothing at all** — a blank line — when the server answered
+   "sent none" (the family stopped qualifying between page load and the press). The deleted band
+   had a sentence for that case; the drawer did not. It now says so.
+2. The confirmation **outlived its moment** — "Reminder sent." came back every time that family was
+   reopened, including after they had paid and the Remind button was gone. It now clears with the
+   panel, like every other message there.
+
+**⚠ A GAP THE OWNER CLOSED DELIBERATELY, RECORDED SO IT IS NOT RE-OPENED AS A BUG.** The deleted
+band was the only **unconditional** carrier of *"Nothing is late — the first payment is due X."*
+That fact now renders in exactly one place: the Season-totals footer, which sits inside
+`{!installmentView && …}` **and** carries `.duesDesktopOnly` (`display:none` under 640px). So on a
+phone, or on the **By installment** lens at any width, the team's next due date and the overdue
+**count** are not readable. The same double gate applies to the Status column, since Status is a
+column of that table; the breakdown's per-installment "N behind" notes are the phone's only overdue
+signal. **The owner closed this item 2026-09-03** — it is not to be patched with a replacement
+band. The approved money summary-band standard (one hairline band of 3–4 tiles on every money tab;
+Player Dues gets it on BOTH views with both table footers retiring) is the surface that decides
+what this screen states — whether it carries next-due is that standard's call, not a regression
+to fix here.
+
+**Copy trued up in the same unit of work.** The help article had been rewritten to describe that
+footer as if it were universal — it is not (see above), and the sentences now name what is true on
+each view. Touched: the "How do I see who hasn't paid anything and remind them?" article and its
+search text, the Fees overview's Premium-adds sentence, and the **Dues reminder emails** explainer
+(the *See an example* window), which had told coaches to press a button that no longer exists.
+
+**Walk it (~5 min), on a team with dues set and at least one family who has paid nothing:**
+- [ ] Player Dues opens straight onto the lens toggle — **no band** above it, on desktop and phone.
+- [ ] A family who is behind still reads **Past due** in red with a ⚠ in the Status column, and the
+      totals row still prints **Next due** with **N overdue** under it. (Desktop, Season totals.)
+- [ ] **By installment**: each term still says *"$X still to collect · N behind"*, and a late row
+      still flags **overdue**.
+- [ ] Open a family who has paid **nothing** → **Remind** is offered beside Family statement. Press
+      it: *"Reminder sent."* appears, and that family gets one email.
+- [ ] Close the panel and reopen the same family — **the confirmation is gone**, not repeated.
+- [ ] Record a payment for them, reopen: **Remind** is no longer offered, and no stale confirmation
+      is left sitting where it was.
+- [ ] A family with **no guardian email**: Remind answers *"No guardian email on file for this
+      player."* — never a blank line.
+- [ ] **Send due reminders** above the table still works and still states its past-due + 3-day
+      scope before sending.
+- [ ] Team settings → Money → **See an example**: the explainer no longer names "Remind all"; it
+      points at Send due reminders and at Remind in a player's panel.
+- [ ] Help → the dues reminder article matches what the screen actually does on **both** views.
+
+**Gates at build time:** `typecheck` exit 0 · lint 0 errors · `verify:changed` exit 0 on these
+files · `check:spelling` ✓ · **rendered `check:layout --only=coach-dues,coach-dues-settlement`: no
+new findings at 361/390/768/1440**, and the deletion retired **six** grandfathered tap-floor entries
+(the button measured 31px against the 44px floor). ⚠ `--only` needs an **equals sign** — passing
+`--only a,b` is silently ignored and sweeps the whole suite instead.
+
+**Reviewed** with the adversarial funnel (3 lenses, standard tier): nine findings fixed, three
+refuted. One reviewer claim was **wrong, and is recorded here so it is not re-raised**: the
+marketing walkthrough screenshot was reported as showing the deleted banner. It does not — it is
+clipped to seven family cards and the band was never in frame. **A separate, real staleness was
+found while checking that and is NOT fixed here:** the in-app help screenshot of Player Dues
+predates the money-tab consolidation — it shows *Fundraisers · Expenses & Payables · Allocations ·
+Payments* where the live screen reads *Fundraising · Ledger · Club*, writes "Send Due Reminders" in
+title case, and has no **+ Record** button. Nothing automated can catch that: the checks prove a
+picture EXISTS, never that it still matches the product.
