@@ -138,6 +138,20 @@ test.describe('the fundraising rooms', () => {
     await expect(conversation).toBeVisible({ timeout: 30_000 });
     await expect(drive).toBeVisible();
 
+    /* ── THE PARTIAL LOCK (owner ruling, §135 walk 2026-09-03) ────────────────────────────────
+       The room named the drive, so the event and the drive are STATED — there is no "What
+       happened?" control to switch and no "Which drive" to re-point, which is the ghost save this
+       door used to allow: change either from inside this room and money files against something
+       the screen behind never mentions.
+       ⚠ AND THE PLAYER QUESTION SURVIVES IT, which is the whole reason the lock had to learn to be
+       partial. Asserting only the two absences would pass just as well on a FULL lock — the shape
+       that hides the player picker and leaves nobody to credit. Both halves, or this proves the
+       wrong thing. */
+    await expect(conversation.getByText('Fundraiser money came in — Chocolate sale')).toBeVisible();
+    await expect(conversation.locator('label:has-text("What happened?")')).toHaveCount(0);
+    await expect(conversation.locator('label:has-text("Which drive")')).toHaveCount(0);
+    await expect(fieldAfter(conversation, 'Which player', 'select')).toBeVisible({ timeout: 30_000 });
+
     // Escape with NOTHING focused closes only the top layer — the room beneath stays.
     await blurAll(page);
     await page.keyboard.press('Escape');

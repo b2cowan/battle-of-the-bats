@@ -596,9 +596,14 @@ test.describe('Money on a phone @360x740', () => {
              write-capable coach may see and a read-only one may not, so a converged name has
              to be spelled here or the guard stops guarding.
              ⚠ The rooms' verbs joined 2026-09-02 (List · Room · Question Phase B): "Edit drive" /
-             "Edit sponsorship" in the action row, "Edit the … logged for" / "Remove the …" /
-             "Undo the …" on the rows (their accessible names), and the guarded "Delete this …"
-             at the foot. A read-only coach opens the same room and must see none of them. */
+             "Edit sponsorship" in the action row, "Edit the … logged for" / "Remove the …" on the
+             rows (their accessible names), and the guarded "Delete this …" at the foot. A read-only
+             coach opens the same room and must see none of them.
+             ⚠ `undo` STAYS IN THE PATTERN even though the money rooms no longer use that word
+             (owner ruling, §135 walk 2026-09-03: UNDO is one tap with no question, REMOVE asks
+             first — so a sponsor's cheque and a bill's payment became "Remove the …"). The CLUB
+             installment's one-tap "Undo the … payment" is still there and is still a write, so
+             dropping the alternative would stop guarding the one control that kept the word. */
           name: /record|record as paid|undo|add line|add expense|add a commitment|add a bill|recategorize|new request|new fundraiser|settings|edit amount|edit drive|edit sponsorship|edit the |remove the |delete this |save split|generate installments|set dues for all players|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,

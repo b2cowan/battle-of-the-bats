@@ -55,9 +55,10 @@ import { fmt } from '@/lib/coach-money-summary';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
 import { pluralize } from '@/lib/utils';
 import type { DriveEntryRow, Fundraiser, RoomRecord, SponsorArrival } from './types';
-import { DriveRoomBody, DriveEntryQuestion, DriveStatusChip, EditDriveSheet } from './DriveRoom';
+import { DriveRoomBody, DriveEntryQuestion, DriveStatusChip, EditDriveSheet, driveFacts } from './DriveRoom';
 import {
   SponsorRoomBody, ArrivalQuestion, EditSponsorshipSheet, PledgeSheet, SponsorStatusChip, expectedClause,
+  sponsorFacts,
 } from './SponsorRoom';
 
 export function FundraisersPanel({
@@ -358,7 +359,15 @@ export function FundraisersPanel({
   // ── Questions and sheets the room asks ───────────────────────────────────────────────────
   const [editDrive, setEditDrive] = useState<Fundraiser | null>(null);
   const [editSponsor, setEditSponsor] = useState<Fundraiser | null>(null);
-  const [pledge, setPledge] = useState<{ name: string; amount: string } | null>(null);
+  /**
+   * The open pledge sheet, and WHICH DOOR opened it (owner, §135 walk 2026-09-03).
+   *
+   * ⚠ `fromRecord` cannot be inferred from the carry. A hand-off out of the Record conversation
+   * where the coach typed nothing first carries `{ name: '', amount: '' }` — byte-identical to a
+   * cold "+ Pledge" — so the sheet could not tell that the coach had just answered two questions
+   * on their way here, and greeted them with a blank form that mentioned neither.
+   */
+  const [pledge, setPledge] = useState<{ name: string; amount: string; fromRecord: boolean } | null>(null);
   const [entryEdit, setEntryEdit] = useState<DriveEntryRow | null>(null);
   const [arrivalEdit, setArrivalEdit] = useState<SponsorArrival | null>(null);
 
@@ -374,7 +383,7 @@ export function FundraisersPanel({
   if (pledgeNonce !== pledgeNonceSeen) {
     setPledgeNonceSeen(pledgeNonce);
     if (pledgeNonce > 0 && canWriteMoney) {
-      setPledge({ name: recordSignal?.pledgeCarry?.name ?? '', amount: recordSignal?.pledgeCarry?.amount ?? '' });
+      setPledge({ name: recordSignal?.pledgeCarry?.name ?? '', amount: recordSignal?.pledgeCarry?.amount ?? '', fromRecord: true });
     }
   }
 
@@ -467,7 +476,14 @@ export function FundraisersPanel({
   const openRow = (id: string) => { if (window.getSelection()?.toString()) return; void goTo(id); };
 
   return (
-    <div className={styles.page}>
+    /* ⚠ WIDE, like every other Money tab (owner, §135 walk 2026-09-03). This panel was the ONE
+       money surface still on the 960px reading column while the hub around it, Budget Plan,
+       Budget vs. Actual, Player Dues, Ledger and Club were all on the 1200px data column — so it
+       re-narrowed itself INSIDE a wide shell and read as a mis-set page rather than a choice. It
+       qualifies on the stylesheet's own terms (`pageWide` is for table surfaces) and on the
+       Budget↔BvA drift rule written beside it: sibling surfaces sharing a grid shape share a
+       width. Fundraising has been two tables since Phase B. */
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {/* ⚰ The "Back to Money" row and this panel's own CoachPageHeader are GONE (back-in-header
           ruling 2026-08-26; cleanup tranche 6, 2026-09-01) — every legacy money route is a
           permanent redirect into the hub, whose header is the live one. */}
@@ -616,7 +632,7 @@ export function FundraisersPanel({
                   {/* ⚖ "+ Pledge", NOT "+ Sponsorship" (owner, §121 walk): "Sponsorship" claims the
                       whole relationship, cheques included. Pledge is the promise door; Record is the
                       money door. */}
-                  <button type="button" className={styles.btnSecondary} onClick={() => setPledge({ name: '', amount: '' })}>
+                  <button type="button" className={styles.btnSecondary} onClick={() => setPledge({ name: '', amount: '', fromRecord: false })}>
                     <Plus size={15} aria-hidden /> Pledge
                   </button>
                 </div>
@@ -697,19 +713,37 @@ export function FundraisersPanel({
           title={openRecord.name}
           status={<DriveStatusChip active={openRecord.isActive} />}
           tiles={driveRoom.tiles}
+          /* Waits on the room's own read — the facts count who has logged. Until it lands the
+             row is just the doors, which is what it was before the facts moved onto it. */
+          facts={roomRead?.data ? driveFacts(openRecord, roomRead.data, moneyTags) : undefined}
+          factsTitle={openRecord.description ?? undefined}
           actions={canWriteMoney ? (
             <>
               <button type="button" className={styles.btnGhost} onClick={() => setEditDrive(openRecord)}>
                 <Pencil size={14} aria-hidden /> Edit drive
               </button>
-              {/* No Record door on a closed drive — closing means no new money. The drive is
-                  PRE-ANSWERED, not locked: a lock would hide "which player" too (the conversation's
-                  one lock gate covers every identity question), and there would be nobody to record for. */}
+              {/* No Record door on a closed drive — closing means no new money.
+                  ⚠⚠ STATED, SPARING ONE QUESTION (owner ruling, §135 walk 2026-09-03). This door was
+                  PRE-ANSWERED rather than locked until the lock learned to spare a question: it
+                  names one drive, but it still has to ask WHO raised the money, and the old
+                  all-or-nothing lock would have hidden that too. `asks` is which question it
+                  leaves open — the ghost save this closes is argued once, on
+                  `RecordMoneyIntent.lock` in `lib/coach-record-money`, not retold here. */}
               {openRecord.isActive && recordSignal && (
                 <button
                   type="button"
                   className={styles.btnPrimary}
-                  onClick={() => recordSignal.request({ branch: 'drive', ids: { driveId: openRecord.id } })}
+                  onClick={() => recordSignal.request({
+                    branch: 'drive',
+                    lock: {
+                      subject: openRecord.name,
+                      detail: openRecord.totalRaised > 0.005
+                        ? `${fmt(openRecord.totalRaised)} raised so far`
+                        : 'opened from its room',
+                      asks: 'drive-player',
+                    },
+                    ids: { driveId: openRecord.id },
+                  })}
                 >
                   Record
                 </button>
@@ -772,6 +806,8 @@ export function FundraisersPanel({
           title={openRecord.name}
           status={<SponsorStatusChip standing={sponsorRoom.standing} />}
           tiles={sponsorRoom.tiles}
+          facts={sponsorFacts(openRecord, moneyTags)}
+          factsTitle={openRecord.description ?? undefined}
           actions={canWriteMoney ? (
             <>
               {/* Waits for the room's own read: the sheet's foreseeable-refusal check needs the

@@ -50,7 +50,10 @@ export function DriveStatusChip({ active }: { active: boolean }) {
 /** The quiet facts line under the tiles — what the columns and tiles can't say: the participation
  *  fraction, the dates, the description, the tags. FACTS ONLY (the 2026-08-29 meta-line ruling),
  *  never a sentence restating a tile. */
-function driveFacts(d: Fundraiser, record: RoomRecord, moneyTags: RepTeamTag[]): ReactNode {
+/** ⚠ EXPORTED because the room's facts now sit on the ACTION ROW, which the shell draws above the
+ *  body (§135 walk, 2026-09-03) — so the panel that mounts the shell composes them, while the
+ *  composing stays here with the room that owns the words. */
+export function driveFacts(d: Fundraiser, record: RoomRecord, moneyTags: RepTeamTag[]): ReactNode {
   const loggedActive = record.entries.filter(en => en.playerActive).length;
   const dates = d.startDate && d.endDate
     ? `${formatStoredDate(d.startDate, { withYear: false })} → ${formatStoredDate(d.endDate, { withYear: false })}`
@@ -150,7 +153,6 @@ export function DriveRoomBody({
 
   return (
     <>
-      <p className={styles.roomFacts}>{driveFacts(drive, record, moneyTags)}</p>
       {record.entries.length === 0 ? (
         <p className={styles.mutedInline} style={{ margin: 0 }}>
           Nothing logged yet.{canWriteMoney && drive.isActive && <> Press <strong>Record</strong> to log what a player raised.</>}

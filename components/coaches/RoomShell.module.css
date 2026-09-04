@@ -40,7 +40,20 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  /* Room for a focus ring on the last control before the pinned foot. */
+  /* ⚠⚠ ROOM FOR A FOCUS RING ON ALL FOUR SIDES, and the horizontal pair is NOT redundant
+     (§135 walk, 2026-09-03). Scrolling this box makes it a clipping box on BOTH axes — CSS
+     promotes the untouched `overflow-x: visible` to `auto` the moment the other axis is not
+     visible — so a control flush with an edge has its ring sliced off. The global ring is a 2px
+     outline at a 2px offset, so it needs 4px of clearance, and the room's own 1.5rem padding
+     cannot supply it: the clip happens at the SCROLL box, inside that padding.
+     The bottom was found first (the last control before the pinned foot) and fixed alone; the
+     RIGHT edge went unnoticed until the drive room's Record door took focus back from a closed
+     Record question and returned wearing three-quarters of a ring.
+     ⚠ THE NEGATIVE MARGIN IS LOAD-BEARING — it hands the 4px back so every child still lines up
+     with the header and the foot. Delete it and the whole body shifts 4px inward on both sides;
+     delete the padding and the ring is clipped again. They only make sense as a pair. */
+  padding-inline: 4px;
+  margin-inline: -4px;
   padding-bottom: 0.25rem;
 }
 
@@ -74,13 +87,42 @@
 .tileValue[data-tone="warn"]   { color: var(--badge-warning-ink); }
 .tileValue[data-tone="danger"] { color: var(--danger); }
 
-/* The action row: a quiet Edit door and the one Record door, right-aligned like the dues drawer. */
+/* The action row: the record's quiet facts on the left, a quiet Edit door and the one Record door
+   right-aligned like the dues drawer. The facts used to own a full line UNDER this row while the
+   doors left half of this one empty (§135 walk, 2026-09-03). */
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 0.9rem;
   margin: 0 0 0.75rem;
+}
+/* ⚠ THE DOORS ARE A GROUP, and the group is what `space-between` pushes right — without this
+   wrapper two buttons would spread to the two ends of the row with the facts stranded between
+   them. It also keeps the row correct when there are NO facts: one child, pushed right, exactly
+   as `flex-end` used to do. */
+.actionDoors { display: flex; align-items: center; gap: 0.9rem; flex: none; }
+/* ONE LINE, ALWAYS. A sponsor note is free text with no length cap, so this cannot be allowed to
+   wrap: the row is the doors' row, and a note that grew it would have cost more than the line it
+   saved. `min-width: 0` is what lets a flex child shrink below its content and actually
+   ellipsize — without it the text wins and pushes the doors off the row. */
+.facts {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* On a phone the room is a full-screen sheet and every door already carries a 44px floor — one
+   row cannot hold both, so the facts drop to their own line and wrap freely, exactly as they did
+   before. Read above acted on, which is the right order on the narrow screen. */
+@media (max-width: 640px) {
+  .actions { flex-wrap: wrap; }
+  .facts { flex-basis: 100%; white-space: normal; overflow: visible; }
 }
 
 /* History — the portal's own CoachCollapseSection, closed by default; this only spaces it. */
@@ -149,7 +191,7 @@
    buttons; the floor is the shell's, so no consumer has to remember it. */
 @media (max-width: 768px) {
   .navBtn,
-  .actions > button,
+  .actionDoors > button,
   .footDoors > button { min-height: var(--tap-min, 44px); }
 }
 

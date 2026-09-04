@@ -23,7 +23,7 @@
  * pledge sheet's "Record it instead" carries the typed name and amount into the conversation, and
  * the conversation's "This is a promise — nothing arrived yet" carries them back here.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import styles from '../../../../coaches.module.css';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
@@ -115,9 +115,16 @@ function RefusalLines({ refusals }: { refusals: { playerId: string; exposure: nu
 }
 
 /**
- * The room's body: the two zones. Owns two writes — Undo on a cheque, and the split's Save — and
+ * The room's body: the two zones. Owns two writes — Remove on a cheque, and the split's Save — and
  * hands the cheque Edit up as a Question the panel opens.
  */
+/** The sponsor's quiet facts — its note and tags — for the shell's action row (§135 walk). Needs
+ *  only the record itself, so the panel can draw it before the room's own read has landed. */
+export function sponsorFacts(s: Fundraiser, moneyTags: RepTeamTag[]): ReactNode {
+  if (!s.description && s.tagIds.length === 0) return null;
+  return <>{s.description}<TagChips tagIds={s.tagIds} moneyTags={moneyTags} /></>;
+}
+
 export function SponsorRoomBody({
   orgSlug,
   teamId,
@@ -151,42 +158,51 @@ export function SponsorRoomBody({
   onEditArrival: (arrival: SponsorArrival) => void;
 }) {
   const confirmDialog = useConfirm();
-  const [undoingId, setUndoingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   /* The split zone's save reports here, not to the room: the room hears ONE busy value per body,
      derived from both writers, so neither's "done" can clear the other's gate (`/review`,
      2026-09-02). The cleanup releases it through the LATEST callback when the body unmounts. */
   const [zoneBusy, setZoneBusy] = useState(false);
   const busyRef = useLatestRef(onBusyChange);
-  const busy = undoingId !== null || zoneBusy;
+  const busy = removingId !== null || zoneBusy;
   useEffect(() => { busyRef.current(busy); }, [busy, busyRef]);
   useEffect(() => () => busyRef.current(false), [busyRef]);
 
-  async function undoArrival(a: SponsorArrival) {
+  /**
+   * ⚠⚠ IT IS "REMOVE", NOT "UNDO" (owner ruling, §135 walk 2026-09-03). The portal had one word
+   * doing two jobs on adjacent screens: a club installment's **Undo** is one tap, no question,
+   * nothing destroyed — it voids a transfer that stays in the audit trail — while this one deletes
+   * a cheque and claws family credits back behind a named-consequence confirm. Same word, two
+   * promises. The word now tracks the guard: **Undo** = one tap and one tap back; **Remove** = it
+   * asks, because money or a family's credit moves. The drive room's entry door was already
+   * "Remove" for exactly this act, so this also ends a same-act-two-words split.
+   */
+  async function removeArrival(a: SponsorArrival) {
     if (!record) return;
     const lastOne = record.arrivals.length === 1;
     const ok = await confirmDialog({
-      title: 'Undo this arrival?',
+      title: 'Remove this cheque?',
       message: `Removes the ${fmt(a.amount)} that arrived ${a.receivedDate ? formatStoredDate(a.receivedDate) : 'undated'} from the team’s books`
         + (a.credited > 0.005 ? `, and takes back the ${fmt(a.credited)} credited to families from it` : '')
         + (lastOne ? '. This is the last arrival, so the sponsor returns to a pledge.' : '.'),
-      confirmText: `Undo ${fmt(a.amount)}`,
+      confirmText: `Remove ${fmt(a.amount)}`,
       cancelText: 'Cancel',
       tone: 'danger',
     });
     if (!ok) return;
-    setUndoingId(a.entryId);
+    setRemovingId(a.entryId);
     try {
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${sponsor.id}/arrivals/${a.entryId}`,
         { method: 'DELETE' },
       );
       if (!res.ok) {
-        onFailure(writeFailure(res, await res.json().catch(() => ({})), 'That arrival could not be undone.'));
+        onFailure(writeFailure(res, await res.json().catch(() => ({})), 'That cheque could not be removed.'));
         return;
       }
       onChanged();
     } finally {
-      setUndoingId(null);
+      setRemovingId(null);
     }
   }
 
@@ -197,12 +213,6 @@ export function SponsorRoomBody({
 
   return (
     <>
-      {(sponsor.description || sponsor.tagIds.length > 0) && (
-        <p className={styles.roomFacts}>
-          {sponsor.description}
-          <TagChips tagIds={sponsor.tagIds} moneyTags={moneyTags} />
-        </p>
-      )}
       <div className={styles.roomZones}>
         {/* ── Zone one: the cheques ──────────────────────────────────────────────────────── */}
         <section className={styles.roomZone} aria-label="Cheques">
@@ -226,10 +236,13 @@ export function SponsorRoomBody({
                   {record.arrivals.map(a => (
                     <tr key={a.entryId} className={styles.tr}>
                       <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Arrived">
+                        {/* ⚠⚠ THE METHOD IS NOT DRAWN HERE (owner, §135 walk 2026-09-03). It read
+                            "Jun 14, 2026 · by e-transfer" under a panel headed CHEQUES — the label
+                            and its own rows disagreeing — and it was the only thing making this
+                            cell wrap to two lines, which is what made the panel look starved of
+                            width. It is still recorded, still edited on the row's own Edit door,
+                            and still exported; it is just not a fact this list has to carry. */}
                         {a.receivedDate ? formatStoredDate(a.receivedDate) : <span className={styles.mutedInline}>—</span>}
-                        {a.method && (
-                          <span className={styles.mutedInline}> · by {(DUES_PAYMENT_METHOD_LABEL[a.method as DuesPaymentMethod] ?? a.method).toLowerCase()}</span>
-                        )}
                         {a.notes && <span className={styles.listRowSub}>{a.notes}</span>}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>
@@ -255,11 +268,11 @@ export function SponsorRoomBody({
                               type="button"
                               className={`${styles.btnGhost} ${styles.compactAction}`}
                               style={{ color: 'var(--danger)' }}
-                              disabled={undoingId === a.entryId}
-                              onClick={() => void undoArrival(a)}
-                              aria-label={`Undo the ${fmt(a.amount)} arrival`}
+                              disabled={removingId === a.entryId}
+                              onClick={() => void removeArrival(a)}
+                              aria-label={`Remove the ${fmt(a.amount)} cheque`}
                             >
-                              {undoingId === a.entryId ? '…' : 'Undo'}
+                              {removingId === a.entryId ? '…' : 'Remove'}
                             </button>
                           </span>
                         )}
@@ -357,6 +370,26 @@ function CreditPlanZone({
     && !sameShares(shares, storedShares)
     && !(savedShares !== null && sameShares(shares, savedShares));
   const problem = creditPlanProblem(shares, sponsor.pledgedAmount);
+  /**
+   * ⚠⚠ A HALF-BUILT ROW HAS TO SAY SO (owner, §135 walk 2026-09-03).
+   *
+   * The split is compared as SHARES, and a share needs both a family and an amount above zero —
+   * so a row holding a family and a 0 is filtered out before the comparison and the split reads as
+   * unchanged. That is the right answer for the Save button (there is genuinely nothing to save)
+   * and it made the screen lie: the coach picks "Kai Test", the row sits there reading *Kai Test ·
+   * 0 · %* — which is indistinguishable from a finished row that means zero — and no Save appears,
+   * with nothing on screen saying why. Escaping then loses the row silently.
+   *
+   * ⚠ THE FIX IS TO NAME IT, NOT TO ARM SAVE. Offering Save would offer a write that does nothing,
+   * and warning on the way out would send the coach back to a form whose Save is still absent —
+   * both answer the symptom at the wrong end. Saying which row is unfinished answers it where it
+   * happens, and doubles as the reason Save has not appeared.
+   */
+  /* ⚠ ANY row that will not become a share, not just a half-filled one — the freshly added
+     "Pick a family… · 0" is the first state the coach reaches, and it needs the explanation as
+     much as the deceptive "Kai Test · 0" does. The test is deliberately the SAME condition
+     `sharesFromRows` filters on, so the line can never disagree with what actually saves. */
+  const unfinished = rows.filter(r => !(r.playerId && Number(r.value) > 0));
   const refusals = useMemo(
     () => (dirty && !problem ? foreseeableRefusals(record, shares, sponsor.pledgedAmount, roster) : []),
     [dirty, problem, record, shares, sponsor.pledgedAmount, roster],
@@ -412,8 +445,15 @@ function CreditPlanZone({
         problem={problem}
       />
       {refused && <RefusalLines refusals={refusals} />}
+      {unfinished.length > 0 && (
+        <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
+          {unfinished.length === 1 ? 'One line isn’t finished' : `${unfinished.length} lines aren’t finished`}
+          {' '}— a family needs a share above zero to be credited. Set an amount, or drop the line
+          with its <strong>×</strong>. Unfinished lines are not saved.
+        </p>
+      )}
       {error && <p className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>{error}</p>}
-      {record.arrivals.length > 0 && !dirty && (
+      {record.arrivals.length > 0 && !dirty && unfinished.length === 0 && (
         <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
           Each cheque already earned its share; changing the split re-figures every credit.
         </p>
@@ -545,7 +585,9 @@ export function ArrivalQuestion({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="arrival-notes">Notes</label>
-            <input id="arrival-notes" className={styles.input} type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional" />
+            {/* ⚠ CAPPED (§135 walk, 2026-09-03). Free text with no ceiling in the form OR the
+                column: a pasted paragraph rendered in full under the arrival's date. */}
+            <input id="arrival-notes" className={styles.input} type="text" maxLength={80} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional" />
           </div>
           <p className={`${styles.formHint} ${styles.formHintConsequence} ${styles.formGridFull}`}>
             The books entry follows the new figure and date, and every family&apos;s credit from this sponsor is re-figured against the split.
@@ -670,7 +712,12 @@ export function EditSponsorshipSheet({
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Notes</label>
-            <textarea className={styles.textarea} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
+            {/* ⚠⚠ CAPPED, AND THE CAP IS WHAT LETS THE NOTE SHARE THE DOORS' ROW (§135 walk,
+                2026-09-03). It is the room's facts line now, clamped to one line beside Edit and
+                Record — uncapped free text there would be a paragraph behind an ellipsis. 140 is
+                a sentence about a sponsor ("Season sponsor — banner at the diamond"), which is
+                what every real one has been. */}
+            <textarea className={styles.textarea} maxLength={140} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Pledged amount *</label>
@@ -734,7 +781,8 @@ export function PledgeSheet({
 }: {
   orgSlug: string;
   teamId: string;
-  prefill: { name: string; amount: string };
+  /** What the door carried, and WHICH door it was — see `fromRecord` where the panel sets it. */
+  prefill: { name: string; amount: string; fromRecord: boolean };
   roster: { id: string; name: string }[];
   defaultCreditPercent: number;
   moneyTags: RepTeamTag[];
@@ -799,20 +847,53 @@ export function PledgeSheet({
       onClose={() => { void close(); }}
       ariaLabel="Log a pledge"
       title="Log a pledge"
-      subtitle="A promise on the plan — nothing moves until money arrives."
+      /* ⚠ THE BAND REPLACES THIS, IT DOES NOT SIT UNDER IT (§135 walk). Handed over from Record,
+         the stated band below already says "this is a promise — nothing arrived yet"; leaving the
+         subtitle up would open the sheet by saying one thing twice, in two voices, before the
+         first field — and the save's own consequence line says it a third time at the foot. */
+      subtitle={prefill.fromRecord ? undefined : 'A promise on the plan — nothing moves until money arrives.'}
       busy={saving}
       scroll
       leaveGuard={{ dirty, tabActive, message: "You haven't logged this pledge yet. Leave without saving it?" }}
     >
       <form onSubmit={save}>
         <div className={styles.formGrid}>
+          {/* ⚠⚠ THE ANSWER THE COACH ALREADY GAVE, STATED (owner, §135 walk 2026-09-03).
+              Reaching this sheet from Record means answering two questions — *a sponsor came
+              through*, then *this is a promise — nothing arrived yet* — and then watching the
+              modal that asked them close, the tab change underneath, and a blank form open that
+              mentioned neither. The coach's own words for it were that they "lose the dropdown".
+              ⚠ THE FIX IS TO STATE, NOT TO RE-OFFER, and that is the coach's own call: a promise
+              is always a NEW sponsorship — a sponsor record IS its pledge — so there is no
+              existing record a dropdown here could offer, and bringing one back would ask a
+              question with one possible answer. This is the same treatment every locked door in
+              Money now gets (the `convLockBand` it borrows is literally the Record form's own),
+              so the hand-off lands somewhere that acknowledges the trip.
+              ⚠ ONLY FROM THAT DOOR. Opened cold from "+ Pledge" there is no prior answer to
+              state, and a band asserting one would be inventing a step the coach never took. */}
+          {prefill.fromRecord && (
+            <div className={`${styles.formGridFull} ${styles.convLockBand}`}>
+              <span className={styles.convLockLine}>This is a promise — nothing arrived yet</span>
+              {/* ⚠ NOT "record each cheque as it arrives" — the consequence line at the foot of
+                  this form already owns that sentence. This line owns the TRIP: where the coach
+                  came from, and what is left for them to do here. */}
+              <span className={styles.convLockDetail}>
+                Carried from <strong>Record</strong> — name the sponsor and what they promised.
+              </span>
+            </div>
+          )}
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Sponsor *</label>
             <input className={styles.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Riverdale Dental" autoFocus required />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Notes</label>
-            <textarea className={styles.textarea} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
+            {/* ⚠⚠ CAPPED, AND THE CAP IS WHAT LETS THE NOTE SHARE THE DOORS' ROW (§135 walk,
+                2026-09-03). It is the room's facts line now, clamped to one line beside Edit and
+                Record — uncapped free text there would be a paragraph behind an ellipsis. 140 is
+                a sentence about a sponsor ("Season sponsor — banner at the diamond"), which is
+                what every real one has been. */}
+            <textarea className={styles.textarea} maxLength={140} value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Pledged amount *</label>

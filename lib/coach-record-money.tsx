@@ -44,6 +44,24 @@ export type ConversationBranch =
   | 'spend' | 'club' | 'payout';
 
 /**
+ * The identity questions a branch can ask — *which one?*, in each branch's own words.
+ *
+ * ⚠⚠ THIS EXISTS SO A LOCK CAN BE PARTIAL (owner ruling, §135 walk 2026-09-03). Every identity
+ * control on the form is gated by one of these keys, so a door that answered the EVENT but not the
+ * WHO can name the one question it is leaving open — see `lock.asks`. A branch that hand-builds a
+ * picker without a key is the one control the gate cannot hide, which is why the keys are a closed
+ * union rather than a free string.
+ */
+export type IdentityQuestion =
+  | 'dues-player'      // "Which player *" — whose bill a dues receipt lands on
+  | 'drive'            // "Which drive *"  — which fundraiser the money was raised for
+  | 'drive-player'     // "Which player *" — who raised it, off that drive's leaderboard
+  | 'club-installment' // "Which installment *" — which club bill a settlement pays down
+  | 'payout-family'    // "Which family *" — whose held credit is being handed back
+  | 'sponsor'          // "Which sponsor?" — an existing sponsor, or one this cheque creates
+  | 'spend-target';    // "What did this pay for? *" — a bill owed, or a budget item
+
+/**
  * What a door has already answered on the coach's behalf.
  *
  * ⚠⚠ `lock` IS THE OWNER'S A-RULING (2026-08-23): *a door that names one RECORD locks; a door that
@@ -59,8 +77,21 @@ export interface RecordMoneyIntent {
    * player, a bill); `detail` is the quiet second line — what they owe, where it came from.
    * The form composes the sentence from the branch's own name plus these, so eight doors cannot
    * produce eight phrasings of one fact.
+   *
+   * ⚠⚠ `asks` IS THE PARTIAL LOCK (owner ruling, §135 walk 2026-09-03). A lock used to be
+   * all-or-nothing: it stated the event AND hid every *which one?* on the form. That is right for a
+   * door standing on one money record (a family's dues row, a sponsor), but it left the DRIVE ROOM
+   * with nowhere to sit — the room names one drive, yet its Record still has to ask **which player
+   * raised it**, and a full lock would hide that question and leave nobody to record for. So the
+   * room was left fully switchable, and from inside "Chocolate sale" a coach could switch the answer
+   * to *a sponsor came through* — or, far quieter, leave the answer alone and change the DRIVE — and
+   * file money somewhere else while the room behind the modal never moved. The same ghost save the
+   * A-ruling exists to prevent, one door further along.
+   *
+   * `asks` names the ONE identity question this door did not answer; every other question the
+   * branch would ask stays stated. Absent, the lock hides them all, exactly as before.
    */
-  lock?: { subject: string; detail?: string };
+  lock?: { subject: string; detail?: string; asks?: IdentityQuestion };
   /** The branch's own answers, pre-filled. Only the keys that branch reads are ever set. */
   ids?: {
     duesPlayerId?: string;

@@ -70,6 +70,21 @@ export interface RoomShellProps {
   tiles?: RoomTile[];
   /** The action row above the table: a quiet Edit door and the one Record door. */
   actions?: ReactNode;
+  /**
+   * The record's quiet facts — a sponsor's note and tags, a drive's participation fraction —
+   * seated on the LEFT of the action row (owner, §135 walk 2026-09-03).
+   *
+   * ⚠⚠ IT SHARES THE DOORS' ROW RATHER THAN TAKING ITS OWN. Both rooms drew this as a full line
+   * under the buttons, which spent a whole row of a height-capped overlay on a half-empty one —
+   * the doors are right-aligned, so the space beside them was already there. It CLAMPS to one
+   * line, because the sponsor note is free text with no length limit: left to wrap it would push
+   * the doors down and cost more rows than it saved, which is the opposite of the point.
+   * ⚠ Passed here rather than rendered by each room, so the two rooms cannot drift apart on it.
+   */
+  facts?: ReactNode;
+  /** The plain-text form of `facts`, for the `title` a one-line clamp owes whoever wrote the
+   *  note it cut. Composed nodes cannot supply their own, so the room passes it. */
+  factsTitle?: string;
   /** The record's own table and body. */
   children: ReactNode;
   history?: RoomHistory;
@@ -95,6 +110,8 @@ export default function RoomShell({
   status,
   tiles,
   actions,
+  facts,
+  factsTitle,
   children,
   history,
   footer,
@@ -159,7 +176,15 @@ export default function RoomShell({
               ))}
             </div>
           )}
-          {actions && <div className={s.actions}>{actions}</div>}
+          {(actions || facts) && (
+            <div className={s.actions}>
+              {/* `title` carries the full text for a note the clamp has cut — the one affordance
+                  a truncation owes the person who wrote it. The facts are composed nodes, so the
+                  plain-text form comes alongside rather than being stringified out of them. */}
+              {facts && <p className={s.facts} title={factsTitle}>{facts}</p>}
+              {actions && <div className={s.actionDoors}>{actions}</div>}
+            </div>
+          )}
           {children}
           {history && (
             <div className={s.history}>

@@ -63,7 +63,7 @@ import type {
 } from '@/lib/types';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
 import {
-  useRecordMoneySignal, type ConversationBranch, type RecordMoneyIntent,
+  useRecordMoneySignal, type ConversationBranch, type RecordMoneyIntent, type IdentityQuestion,
 } from '@/lib/coach-record-money';
 import { formatPlayerLastFirst, formatPlayerFirstLast } from '@/lib/player-name';
 import DuesMethodSelect from '@/components/coaches/DuesMethodSelect';
@@ -1184,8 +1184,14 @@ function MoneyRecordsPanel({
    * dropdown that cannot be opened is a control lying about itself. This is mockup 02's who-line
    * returning in the one place it makes sense, WITHOUT its "Change" hatch: the escape from a wrong
    * door is Cancel and reopen.
+   *
+   * ⚠⚠ `asks` IS THE PARTIAL LOCK (owner ruling, §135 walk 2026-09-03) — the door stated the event
+   * and its record, and named the ONE identity question it did not answer. The DRIVE ROOM is why it
+   * exists: the room names one drive, so the event and the drive are its to state, but it still has
+   * to ask which player raised the money — and the all-or-nothing lock could only offer both or
+   * neither. The full argument lives on `RecordMoneyIntent.lock`; the gate is `identityField`.
    */
-  const [convLock, setConvLock] = useState<{ subject: string; detail?: string } | null>(null);
+  const [convLock, setConvLock] = useState<{ subject: string; detail?: string; asks?: IdentityQuestion } | null>(null);
   const [whatOpen, setWhatOpen] = useState(false);
   /** The "What happened?" field + its open list — outside-press closes the list. */
   const whatWrapRef = useRef<HTMLDivElement>(null);
@@ -1650,13 +1656,13 @@ function MoneyRecordsPanel({
      compare. */
 
   /**
-   * Undo a recorded payment — the books go back by exactly that payment's amount (R5).
+   * Remove a recorded payment — the books go back by exactly that payment's amount (R5).
    * Two taps: the first arms the button with the figure, the second sends the DELETE.
    */
   /**
-   * Shut the bill panel, and take the unanswered Undo question with it.
+   * Shut the bill panel, and take the unanswered Remove question with it.
    *
-   * ⚠ THE SECOND HALF IS THE POINT. A coach who opens "Undo the $200 payment?" and then closes the
+   * ⚠ THE SECOND HALF IS THE POINT. A coach who opens "Remove the $200 payment?" and then closes the
    * panel has answered nothing — leaving the flag set means the question is still hanging there the
    * next time any bill is opened, on a row they never touched. Same rule the form's reset carries:
    * state raised for one action clears when that action's surface goes away.
@@ -4164,6 +4170,7 @@ function MoneyRecordsPanel({
       return (
         <>
           {convPickerField({
+            question: 'dues-player',
             label: 'Which player *',
             error: duesBookError,
             items: duesBook,
@@ -4214,6 +4221,7 @@ function MoneyRecordsPanel({
       return (
         <>
           {convPickerField({
+            question: 'drive',
             label: 'Which drive *',
             error: drivesError,
             items: drives,
@@ -4236,7 +4244,15 @@ function MoneyRecordsPanel({
           })}
           {/* Hand-built rather than `convPickerField` (it has a retry link and a footnote), but it
               goes through the SAME lock gate — see `identityField`. Opened from a leaderboard row,
-              the drive AND the player are stated in the band above. */}
+              the drive AND the player are stated in the band above.
+              ⚠⚠ THIS IS THE QUESTION THE DRIVE ROOM'S LOCK SPARES (owner ruling, §135 walk
+              2026-09-03). That door states the event and the drive and passes `asks: 'drive-player'`,
+              so this one control survives its lock while "Which drive" above it does not — the room
+              has already named the drive, and the money still has to be credited to somebody.
+              ⚠ NO DOOR PRE-ANSWERS THE PLAYER TODAY, though the intent carries `drivePlayerId` for
+              one that names a leaderboard ROW. Such a door would name a whole money record and so
+              would pass NO `asks` — hiding this control again, which is the correct behaviour for
+              it and the reason the key is matched rather than merely present. */}
           {conv.driveId && identityField(
             <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>Which player *</label>
@@ -4254,7 +4270,28 @@ function MoneyRecordsPanel({
                     Try again
                   </button>
                 </p>
-              ) : !detail ? <p className={styles.formHint}>Loading the leaderboard…</p> : (
+              ) : !detail ? <p className={styles.formHint}>Loading the leaderboard…</p>
+                /* ⚠⚠ NOBODY LEFT TO NAME IS AN ANSWER, NOT AN EMPTY DROPDOWN (/review, §135 walk
+                   2026-09-03 — the finding this pass was pointed at). A drive whose every player
+                   already has an amount drew a `<select>` holding only "Choose…" beside a required
+                   label, over a Save that could never succeed. It was survivable while this door
+                   was unlocked — the coach could re-point "Which drive" in place — but §135's lock
+                   states the drive, so that exit closed and the dead end became terminal. Every
+                   other branch's identity question already says its empty state out loud through
+                   `convPickerField`'s `empty`; this block is hand-built and never got one.
+                   ⚠ AND IT NAMES THE RIGHT DOOR. The old hint sent the coach to "the drive's own
+                   row on Fundraising" — written before the drive became a ROOM, so a coach who
+                   opened this FROM that room was being sent to where they already stood. The
+                   entries list with its Edit door is the thing that actually changes a logged
+                   amount, so that is what both states point at. */
+                : openPlayers.length === 0 ? (
+                  <p className={styles.formHint}>
+                    {detail.players.length === 0
+                      ? <>Nobody is on this team&rsquo;s roster yet, so there is no one to credit.</>
+                      : <>Every player already has an amount logged for this drive. To change one,
+                          use <strong>Edit</strong> on their row in the drive&rsquo;s entries.</>}
+                  </p>
+                ) : (
                 <>
                   <select
                     className={styles.select}
@@ -4269,12 +4306,14 @@ function MoneyRecordsPanel({
                   {loggedCount > 0 && (
                     <p className={styles.formHint}>
                       {loggedCount === 1 ? '1 player already has' : `${loggedCount} players already have`}{' '}
-                      an amount logged — change those from the drive&apos;s own row on Fundraising.
+                      an amount logged — change those with <strong>Edit</strong> on their row in the
+                      drive&rsquo;s entries.
                     </p>
                   )}
                 </>
               )}
-            </div>
+            </div>,
+            'drive-player',
           )}
           {convAmountField('Amount raised *')}
           {/* Ruled IN (owner, §80 walk 2026-08-23 — was deviation ①): treasurers log drive money
@@ -4323,6 +4362,7 @@ function MoneyRecordsPanel({
       return (
         <>
           {convPickerField({
+            question: 'club-installment',
             label: 'Which installment *',
             error: clubBillsError,
             items: clubBills,
@@ -4433,9 +4473,11 @@ function MoneyRecordsPanel({
             </>)}
           </>
         );
-        // A locked door already answered "which sponsor"; the cold picker's choice keeps the
-        // question on screen so it can be changed.
-        return convLock ? arrivalBody : <>{sponsorPicker()}{arrivalBody}</>;
+        /* A locked door already answered "which sponsor"; the cold picker's choice keeps the
+           question on screen so it can be changed. ⚠ Through the SAME gate as every other identity
+           control since §135 — it read `convLock` directly before, which is exactly the "one picker
+           not routed through it" the gate's own header warns about. */
+        return <>{identityField(sponsorPicker(), 'sponsor')}{arrivalBody}</>;
       }
 
       // The question comes first, and nothing else renders until it is answered — a form that
@@ -4528,6 +4570,7 @@ function MoneyRecordsPanel({
       return (
         <>
           {convPickerField({
+            question: 'payout-family',
             label: 'Which family *',
             error: duesBookError,
             items: duesBook === null ? null : inCredit,
@@ -4597,12 +4640,24 @@ function MoneyRecordsPanel({
    *
    * ⚠ IDENTITY ONLY. Allocation — which installment a payment lands on — stays editable under a
    * lock by the same ruling, so it is deliberately NOT wrapped.
+   *
+   * ⚠⚠ A LOCK CAN LEAVE ONE QUESTION OPEN (owner ruling, §135 walk 2026-09-03). `question` is what
+   * this control asks; a door's `lock.asks` is the one it admits it did not answer, and they are
+   * matched here. Everything else about the lock is unchanged — a lock with no `asks` hides every
+   * identity control exactly as it did before, which is every door but the drive room's.
+   *
+   * ⚠ THE KEY IS REQUIRED, ON PURPOSE. An optional one would let a new branch's picker default to
+   * "hidden under any lock", which is the old all-or-nothing behaviour returning silently through
+   * the one place built to prevent it. A branch that forgets is a compile error instead.
    */
-  function identityField(node: ReactNode): ReactNode {
-    return convLock ? null : node;
+  function identityField(node: ReactNode, question: IdentityQuestion): ReactNode {
+    if (!convLock) return node;
+    return convLock.asks === question ? node : null;
   }
 
   function convPickerField(opts: {
+    /** Which *which one?* this picker is — matched against a door's `lock.asks`. */
+    question: IdentityQuestion;
     label: string;
     error: string;
     /** null = still loading. The EMPTY test runs on this list, so pass the filtered one. */
@@ -4616,9 +4671,13 @@ function MoneyRecordsPanel({
        the player / the drive / the installment / the family, and the stated band at the top of the
        form says so — a picker underneath repeating the question would be the second control the
        ruling exists to remove, and re-answering it is the ghost save. Every branch's identity
-       question goes through this helper, so locking here locks all of them; a future branch that
-       hand-builds its own picker has to remember, which is what the drive's player block's own
-       guard is a note about. */
+       question goes through this helper, so a lock reaches all of them from one place; a future
+       branch that hand-builds its own picker has to remember, which is what the drive's player
+       block's own guard is a note about.
+       ⚠ SINCE §135 THE LOCK CAN SPARE ONE QUESTION — `opts.question` is which one this is, and the
+       gate matches it against the door's `lock.asks`. Passing the wrong key does not fail loudly;
+       it silently hides a question the door meant to leave open (or shows one it answered), so the
+       key belongs beside the label it names. */
     return identityField(
       <div className={`${styles.field} ${styles.formGridFull}`}>
         <label className={styles.label}>{opts.label}</label>
@@ -4628,6 +4687,7 @@ function MoneyRecordsPanel({
           : opts.select}
         {opts.after}
       </div>,
+      opts.question,
     );
   }
 
@@ -5046,7 +5106,7 @@ function MoneyRecordsPanel({
     /* Locked to a bill (a door on the Payables face or the register): the band above states which
        one, so this field has nothing left to ask. Through the SAME gate as every other branch's
        identity question — see `identityField`. */
-    if (payingBill) return identityField(field());
+    if (payingBill) return identityField(field(), 'spend-target');
 
     return field();
 
@@ -6635,17 +6695,25 @@ function MoneyRecordsPanel({
                             )}
                           </span>
                           <span className={styles.payDrawerAmt}>{fmt(p.amount)}</span>
-                          {/* ⚠ R5 — Undo deletes THIS payment, and the books go back by exactly its
-                              amount, read from its own recorded entry. It ASKS first (below), in the
-                              same named-consequence shape the Delete flow uses. */}
+                          {/* ⚠ R5 — Remove deletes THIS payment, and the books go back by exactly
+                              its amount, read from its own recorded entry. It ASKS first (below), in
+                              the same named-consequence shape the Delete flow uses.
+                              ⚠⚠ "REMOVE", RED, LIKE EVERY OTHER DOOR THAT ASKS FIRST (owner ruling,
+                              §135 walk 2026-09-03). This was an outlined neutral button reading
+                              "Undo" — a third dress for one act, beside the sponsor room's red
+                              "Undo" and the drive room's red "Remove". The word now tracks the guard
+                              across the whole portal: UNDO is one tap with no question and nothing
+                              destroyed (a club installment, and only that); REMOVE asks, because
+                              money or a family's credit moves. This one asks. */}
                           {canWriteMoney && drawerExpense && undoAsk !== p.id && (
                             <button
-                              className={`${styles.btnSecondary} ${styles.compactAction}`}
-                              aria-label={`Undo the ${fmt(p.amount)} payment`}
+                              className={`${styles.btnGhost} ${styles.compactAction}`}
+                              style={{ color: 'var(--danger)' }}
+                              aria-label={`Remove the ${fmt(p.amount)} payment`}
                               disabled={undoBusy === p.id}
                               onClick={() => setUndoAsk(p.id)}
                             >
-                              {undoBusy === p.id ? 'Undoing…' : 'Undo'}
+                              {undoBusy === p.id ? 'Removing…' : 'Remove'}
                             </button>
                           )}
                         </div>
@@ -6658,9 +6726,9 @@ function MoneyRecordsPanel({
                             IS a modal, and stacking one on another hides the row being undone. */}
                         {undoAsk === p.id && (
                           <div className={styles.dangerConfirm} role="alertdialog"
-                            aria-label={`Undo the ${fmt(p.amount)} payment?`}>
+                            aria-label={`Remove the ${fmt(p.amount)} payment?`}>
                             <p className={styles.dangerConfirmTitle}>
-                              Undo the {fmt(p.amount)} payment from {fmtDate(p.paidDate)}?
+                              Remove the {fmt(p.amount)} payment from {fmtDate(p.paidDate)}?
                             </p>
                             {/* ⚖ THE BRANCH THIS COMMENT PREDICTED HAS ARRIVED (money
                                 centralization P4). It used to read: "a commitment can never be paid
@@ -6688,7 +6756,7 @@ function MoneyRecordsPanel({
                               </button>
                               <button className={styles.btnDanger} disabled={undoBusy === p.id}
                                 onClick={() => undoPayment(drawerExpense, p)}>
-                                {undoBusy === p.id ? 'Undoing…' : `Undo ${fmt(p.amount)}`}
+                                {undoBusy === p.id ? 'Removing…' : `Remove ${fmt(p.amount)}`}
                               </button>
                             </div>
                           </div>
