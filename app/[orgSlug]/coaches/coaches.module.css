@@ -11329,6 +11329,85 @@ button.gdChip[aria-pressed='true'] {
   .clubBand { grid-template-columns: 1fr; }
 }
 
+/* ══ THE MONEY TAB SUMMARY BAND — one recipe, every money tab ═══════════════════════════════════
+   Owner ruling 2026-09-03 (D1), mockup artifact `2b5bd78b-cbc5-4c5c-b7e0-d3956121caf6`. Drawn by
+   `components/coaches/MoneySummaryBand.tsx`, whose header carries the measured finding this
+   replaces — five tabs, five implementations, differing in label size, tracking, figure weight and
+   whether the digits even lined up.
+
+   ⚠ THE GEOMETRY IS THE CLUB BAND'S, ON PURPOSE. That band was the closest thing to a considered
+   answer already, including the part that is easy to get wrong: it stacks ALL-OR-NOTHING at 760
+   rather than auto-fitting, because at this hub's real widths an auto-fit row reflows 3 → 2 + 1 and
+   orphans whichever figure lands alone. `.clubBand` retires once every tab is on this. */
+.moneyBand {
+  display: grid;
+  gap: 1px;
+  background: var(--home-line, var(--border-2));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+.moneyBand[data-tiles="2"] { grid-template-columns: repeat(2, 1fr); }
+.moneyBand[data-tiles="3"] { grid-template-columns: repeat(3, 1fr); }
+.moneyBand[data-tiles="4"] { grid-template-columns: repeat(4, 1fr); }
+
+.moneyBandTile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.85rem 1rem;
+  background: var(--home-card, var(--white-4));
+  min-width: 0;
+}
+
+/* The three type steps, fixed. A tab that wants a different size wants a different component. */
+.moneyBandLabel {
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.moneyBandFigure {
+  font-size: var(--type-figure);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: var(--text-primary);
+}
+/* ⚠ COLOUR MARKS A VERDICT, NEVER A TOTAL. `plain` is the default and the common case; the other
+   three are for figures where the hue IS the reading (under/over budget, overdue, awaiting). */
+.moneyBandFigure[data-tone="good"]   { color: var(--success-light); }
+.moneyBandFigure[data-tone="warn"]   { color: var(--badge-warning-ink); }
+.moneyBandFigure[data-tone="danger"] { color: var(--badge-danger-ink); }
+
+.moneyBandCaption {
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ⚠ THE NOTE SITS BENEATH THE BAND, NEVER INSIDE A TILE — one sentence, for the thing no figure can
+   carry ("Waiting on the club isn't yours yet"). */
+.moneyBandNote {
+  margin: 0 0 1rem;
+  font-size: var(--type-support);
+  line-height: 1.55;
+  color: var(--text-tertiary);
+}
+.moneyBandNote strong { color: var(--text-secondary); }
+
+@media (max-width: 760px) {
+  /* All-or-nothing — see the note above. */
+  .moneyBand[data-tiles="2"],
+  .moneyBand[data-tiles="3"],
+  .moneyBand[data-tiles="4"] { grid-template-columns: 1fr; }
+}
+
 /* ── The two halves ─────────────────────────────────────────────────────────
    Each is a titled block with its own toolbar. The title is an h3 sitting INSIDE `.panelToolbar`
    so the export/create controls land on the same baseline as it — the toolbar's own flex row does

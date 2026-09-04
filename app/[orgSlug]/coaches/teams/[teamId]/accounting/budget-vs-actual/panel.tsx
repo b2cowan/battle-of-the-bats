@@ -21,6 +21,7 @@ import { toggleKey } from '@/lib/toggle-key';
 import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat, type MoneyRowKind } from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import type { ExportColumnDef } from '@/lib/export';
 import styles from './bva.module.css';
@@ -1414,68 +1415,67 @@ export function BudgetVsActualPanel({
               it did not earn a second row. The over-planned warning below DID: it is the only
               thing on this page that explains why this total disagrees with the budget plan
               page, so it stays INLINE rather than wrapping the strip. */}
-          <div className={`${styles.resultStrip} ${shared.stack640}`}>
-            <span className={styles.stripLead}>
-              <span className={styles.stripLabel}>Headroom</span>
-              <span
-                className={styles.stripValue}
-                style={{ color: data.headroom >= 0 ? 'var(--success-light)' : 'var(--danger-light)' }}
-              >
-                {data.headroom < 0 ? '-' : '+'}{fmt(data.headroom)}
-              </span>
-              <span className={styles.stripState}>
-                {data.headroom >= 0 ? 'under budget' : 'over budget'}
-              </span>
-            </span>
-            <span className={styles.stripRule} aria-hidden />
-            <span className={styles.stripSupport}>
-              <b>{fmt(data.totalActual)}</b> spent of <b>{fmt(data.effectiveBudget)}</b> planned
-            </span>
-            {/* ⚠ THE OFF-PLAN FIGURE FINALLY RENDERS (owner D5.6, 2026-09-02). `unbudgeted` had
-                been computed and exported since mig 240 and shown nowhere on screen — the one
-                fact a coach most wants from this banner after headroom. Named, never added:
-                every one of these dollars is already inside `totalActual`. */}
-            {data.unbudgeted > 0.005 && (
-              <>
-                <span className={styles.stripRule} aria-hidden />
-                <span className={styles.stripSupport}>
-                  <b>{fmt(data.unbudgeted)}</b> spent off-plan
-                </span>
-              </>
-            )}
-            {/* When the plan is over its own estimate this report measures against the ESTIMATE
-                (the shared rule), which is a lower number than the lines add up to. The budget
-                page says so in red; without this the report just showed the smaller figure and
-                left the coach to notice — the same two-pages-disagree problem the rule fixed. */}
-            {data.overPlanned && (
-              <>
-                <span className={styles.stripRule} aria-hidden />
-                <span className={styles.stripWarn}>
-                  your lines are {fmt(Math.abs(data.estimateDifference))} over this estimate
-                </span>
-              </>
-            )}
-            {/* The forward stat (D4, G2 Variant 1): a sentence, because this page exists to give
-                ONE big number and Headroom is it. Pledges and pending asks stay a labelled
-                "possible" clause — a pledge is never banked.
-                ⚰ THE FIGURE STOPPED BEING A LINK (owner, mid-§132 walk 2026-09-02: "not sure why
-                we decided that that 1 metric should be a link") — it reads as plain text like its
-                banner siblings now. The Months · Scheduled notes still derive this exact figure
-                (`scheduledForward`, one source), so a coach who goes looking finds the arithmetic;
-                the banner just stopped pretending the trip was the point. Do not re-link it. */}
-            {forward && (
-              <>
-                <span className={styles.stripRule} aria-hidden />
-                <span className={styles.stripSupport}>
-                  on what&rsquo;s scheduled you end the season with{' '}
-                  <b>{fmtSigned(forward.headline)}</b>
-                  {forward.possible > 0.005 && (
-                    <span className={styles.stripPossible}> · plus {fmt(forward.possible)} possible</span>
-                  )}
-                </span>
-              </>
-            )}
-          </div>
+          {/* ══ THE TAB'S SUMMARY BAND (owner D1/D2 Option A, 2026-09-03) ══════════════════════
+              ⚰ THE PROSE STRIP IS GONE. It carried five numbers in ~25 words and wrapped to two
+              lines, with no two facts aligned; the owner's read was that it was "too wordy for a
+              banner". Four tiles carry the same five figures in ~12 words — the plan total and the
+              "possible" money ride captions — through the shared `MoneySummaryBand`, so this tab
+              and every other money tab draw their summary one way.
+
+              ⚠ THIS DOES NOT UNDO THE 2026-08-26 ONE-ROW RULING. That ruling cut ~280px of banner
+              (three tiles plus a dues card) down to one row; this is still one row at the same
+              height. What changed is that the figures land in columns instead of a sentence.
+
+              ⚠ THE OVER-PLANNED WARNING IS NOT A TILE, deliberately. It is a sentence about the
+              PLAN disagreeing with itself, not a figure about the season — it rides the band's one
+              note line, which is exactly what that slot is for. */}
+          <MoneySummaryBand
+            ariaLabel="Budget vs. actual summary"
+            tiles={[
+              {
+                key: 'headroom',
+                label: 'Headroom',
+                figure: `${data.headroom < 0 ? '-' : '+'}${fmt(data.headroom)}`,
+                /* The page's one verdict — the only figure here whose colour IS the reading. */
+                tone: data.headroom >= 0 ? 'good' : 'danger',
+                caption: data.headroom >= 0 ? 'under budget' : 'over budget',
+              },
+              {
+                key: 'spent',
+                label: 'Spent',
+                figure: fmt(data.totalActual),
+                caption: `of ${fmt(data.effectiveBudget)} planned`,
+              },
+              {
+                /* ⚠ HIDES AT ZERO, AND THAT IS THE POINT (recipe deviation 2). Off-plan spending is
+                   a WARNING rather than a fact, so it gets a tile of its own rather than a clause
+                   in someone else's caption — and a well-run team simply sees three tiles. */
+                key: 'offplan',
+                label: 'Off-plan',
+                figure: fmt(data.unbudgeted),
+                tone: 'warn',
+                caption: 'nobody budgeted this',
+                hidden: !(data.unbudgeted > 0.005),
+              },
+              {
+                /* The forward stat (D4, G2 Variant 1). ⚰ It stopped being a LINK on 2026-09-02
+                   (owner: "not sure why we decided that that 1 metric should be a link"); the
+                   Months · Scheduled notes derive this exact figure from the same helper, so the
+                   arithmetic is still findable. Do not re-link it. */
+                key: 'season-end',
+                label: 'Season end',
+                figure: forward ? fmtSigned(forward.headline) : '—',
+                caption: forward && forward.possible > 0.005
+                  ? `plus ${fmt(forward.possible)} possible`
+                  : undefined,
+                hidden: !forward,
+              },
+            ]}
+            note={data.overPlanned
+              ? <>Your lines are <strong>{fmt(Math.abs(data.estimateDifference))}</strong> over this
+                  estimate, and this report measures against the estimate.</>
+              : undefined}
+          />
 
           {/* ⚠ THE TWO NEW SHAPES JOIN THE CONTROL THAT WAS ALREADY HERE (plan §3.5), rather than
               introducing a second idea of "switching views" beside it. Statement is the default —

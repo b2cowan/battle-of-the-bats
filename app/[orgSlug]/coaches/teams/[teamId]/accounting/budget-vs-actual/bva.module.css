@@ -25,82 +25,19 @@
 .muted { color: var(--text-tertiary); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: var(--type-body); margin: 0.5rem 0; }
 
-/* ── The result strip ────────────────────────────────────────────────────────
-   ⚠⚠ ONE ROW, WHERE A THREE-TILE BANNER AND A FOUR-TILE DUES CARD USED TO STACK
-   (owner ruling 2026-08-26). ~280px of summary became ~70px, which is the whole point:
-   the month columns now arrive in the same screenful as the controls that shape them.
-   The reasoning for what was cut lives on the markup in `panel.tsx` — read it before
-   adding anything back here. Headroom keeps 1.45rem and its semantic colour because it
-   is the answer; budget and actual are the WORKING and read at supporting size. */
-.resultStrip {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.55rem 1.15rem;
-  padding: 0.7rem 1.15rem;
-  border-radius: 10px;
-  background: rgba(var(--blueprint-blue-rgb), 0.07);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin-bottom: 1rem;
-}
+/* RETIRED: the result strip. The tab's summary is the shared `MoneySummaryBand` (owner ruling
+   2026-09-03, D1/D2). Ten classes went with it -- `.resultStrip`, `.stripLead`, `.stripLabel`,
+   `.stripValue`, `.stripState`, `.stripRule`, `.stripSupport`, `.stripWarn`, `.stripPossible`,
+   and `.stripForwardLink` (removed by the owner mid-QA when the forward figure stopped being a
+   link).
 
-.stripLead {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
+   WHAT THE STRIP KNEW, so it is not re-learned: its muted text took `--text-tertiary` and never
+   `--white-30`/`--white-45` -- the banner this replaced shipped "under budget" in a token the warm
+   portal remaps to a HAIRLINE, far under AA on its own ground and invisible to every gate until
+   2026-08-13. The band's caption step is `--text-tertiary` for exactly that reason.
+   And Headroom's colour was always SEMANTIC (under vs over budget), never decoration -- which is
+   the band's "colour marks a verdict, never a total" rule, inherited rather than invented. */
 
-.stripLabel {
-  font-size: var(--type-label);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-tertiary);
-}
-
-.stripValue {
-  font-size: var(--type-figure);
-  font-weight: 700;
-  line-height: 1.05;
-  font-variant-numeric: tabular-nums;
-  /* colour is set inline — it is SEMANTIC (under vs over budget), not decorative. */
-}
-
-/* ⚠ THE MUTED TEXT ON THIS STRIP TAKES `--text-tertiary`, NEVER `--white-30`/`--white-45`.
-   The banner this replaced shipped "under budget" in `--white-30`, which the warm portal
-   remaps to a HAIRLINE token — rgba(70,55,30,0.2) as ink on the strip's own ground, far under
-   AA, and invisible to every gate until 2026-08-13 (`check:text-contrast` reads DECLARED
-   colours, and the rendered sweep had never drawn this banner because the layout fixture had
-   no budget in it). `--text-tertiary` is the portal's third text tier and the floor the ladder
-   is capped at. */
-.stripState { font-size: var(--type-body); color: var(--text-secondary); }
-
-.stripRule {
-  width: 1px;
-  align-self: stretch;
-  flex-shrink: 0;
-  background: rgba(var(--blueprint-blue-rgb), 0.2);
-}
-
-.stripSupport {
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.stripSupport b { font-weight: 700; color: var(--text-primary); }
-
-/* The plan's own lines exceeding the estimate this report measures against — the only thing on
-   the page that explains a disagreement with the budget plan screen, so it sits INLINE on the
-   result rather than pushing the strip to a second row. */
-.stripWarn { font-size: var(--type-support); color: var(--danger-light); }
-
-/* ⚰ `.stripForwardLink` REMOVED BY THE OWNER (mid-§132 walk, 2026-09-02) — the forward figure
-   is plain bold text like its banner siblings now; the Months · Scheduled notes carry the
-   derivation for anyone who goes looking. Do not re-link the figure. */
-
-/* "· plus $Y possible" — quieter than the sentence it rides, exactly as the G2 frame drew it. */
-.stripPossible { color: var(--text-tertiary); }
 
 /* ⚠ THE TOUCH FLOOR FOR THE PROSE-EMBEDDED WALK-THROUGH BUTTON (rendered sweep, 2026-09-02 —
    23px at every touch width; the forward figure shared this rule for a day before the owner
@@ -458,23 +395,11 @@
    Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
    ════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
-  /* The result reads top-to-bottom on a phone — headroom, then the spent-of-planned line —
-     rather than one row squeezed behind a vertical rule. The axis flip comes from the shared
-     .stack640 on the element; only the page's own spacing and its own rule live here.
-
-     ⚠ THE CLASS IS DOUBLED ON PURPOSE, and it is not tidiness. .stack640's own ≤640 rule sets
-     `align-items: stretch` at 0-1-0, and `.resultStrip` sets `align-items: center` at 0-1-0 —
-     a tie ACROSS TWO STYLESHEETS, resolved by whichever order the bundler emits them in. That
-     is a build detail deciding whether a phone gets a left-aligned stack or a centred one.
-     0-2-0 settles it here, deliberately. (Same failure mode as the funding accent in
-     `budget.module.css` and the pinned-column gutter below; see
-     `memory/reference_cascade_collisions_coach_budget.md`.) */
-  .resultStrip.resultStrip {
-    align-items: flex-start;
-    gap: 0.4rem;
-    padding: 0.85rem 1.1rem;
-  }
-  .stripRule { display: none; }
+  /* RETIRED WITH THE STRIP (2026-09-03): the phone override and its doubled-class cascade fix.
+     The shared `MoneySummaryBand` stacks all-or-nothing at 760 from ONE stylesheet, so the
+     cross-stylesheet 0-1-0 tie this block existed to settle cannot arise -- there is no second
+     rule to tie with. The lesson it recorded survives in
+     `memory/reference_cascade_collisions_coach_budget.md` and in the two siblings below. */
 
   /* The pinned first column owns its own leading gutter — see --scrollx-pin-gutter in the
      shared primitive. Each row hands down what its left padding used to be, INCLUDING the
