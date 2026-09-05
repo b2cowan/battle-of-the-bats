@@ -20,6 +20,8 @@ import {
   duesRowRenders, duesSentenceRenders, duesFundingState, duesGap, isDuesCategory,
   type DuesRevenue,
 } from '@/lib/coach-dues-revenue';
+import ReportNotes from '@/components/coaches/ReportNotes';
+import { statementNotes, monthGridNotesFor } from '@/lib/coach-money-report-notes';
 import {
   COMPARE_BASES, normalizeBasis, budgetedOn, varianceOn,
   planColumnLabel, netRowLabel, type CompareBasis,
@@ -32,7 +34,10 @@ import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import { toggleKey } from '@/lib/toggle-key';
-import { BVA_EXPORT_COLUMNS, bvaCategoryRows, type MoneyExportFormat, type MoneyRowKind } from '@/lib/coach-money-exports';
+import {
+  bvaExportColumns, bvaCategoryRows, bvaActivityRows,
+  type MoneyExportFormat, type MoneyRowKind, type MoneyMasthead,
+} from '@/lib/coach-money-exports';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
@@ -750,11 +755,25 @@ function ItemRows({
         const actualBehind = (item.costs?.length ?? 0) > 0 || item.refunds.length > 0;
         return (
           <Fragment key={key}>
-            {/* The whole row opens its schedule, matching the category bar above it and the plan
-                page's own rows (owner 2026-08-13, restated here 2026-09-04). The chevron stays the
-                SEMANTIC control — keyboard and screen reader reach the fold through it — and the
+            {/* The whole row opens its schedule, matching the category bar above it. The chevron stays
+                the SEMANTIC control — keyboard and screen reader reach the fold through it — and the
                 row is the pointer/touch shortcut. Every control inside stops propagation, so
-                opening a panel never also folds the row underneath it. */}
+                opening a panel never also folds the row underneath it.
+
+                ⚠⚠ THIS DOES **NOT** MATCH THE BUDGET PLAN'S ROWS, AND THE DIFFERENCE IS DELIBERATE
+                (owner ruling 2026-09-05). This comment claimed it did — wrongly, and for long enough
+                that the claim was cited as precedent. Over there the row opens the EDITOR; here it
+                folds. The reason is the job each screen does:
+                  · This is the REPORT. Nothing on it can be edited, most rows have figures behind
+                    them, and folding is the only thing a tap could mean.
+                  · The plan tab is the WORKLIST. Its pencil is clipped out of the layout on a phone
+                    (its own ruling), so the row is the ONLY edit door a thumb has; and its chevron
+                    exists only on lines split across two or more periods — "One month" and
+                    "No date yet" have nothing to open — so row-to-fold would be a dead gesture on
+                    most rows and on every row of the coach demo's mid-season plan.
+                Reading a plan line's split is served over there by its WHEN CELL, which folds the row
+                the same way this one does. Before "aligning" the two screens, re-read those two
+                bullets — they are why they differ. */}
             <div
               className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow} ${canExpand ? shared.rowTappable : ''}`}
               // Selecting text to copy an amount must not toggle the row — a click that ends a
@@ -1266,99 +1285,14 @@ function DuesRow({ cat, dues, base, canWrite }: {
   );
 }
 
-/**
- * WHAT THE PLAN NEEDS FROM FAMILIES, WHAT DUES BILL, AND WHICH WAY THE GAP RUNS (owner ruling
- * 2026-09-04). Approved wording, verbatim, in all four states.
- *
- * ⚠⚠ SECOND IN THE STACK, UNDER THE VARIANCE KEY. The key tells a reader how to read the columns;
- * this tells them what the bottom line means; then the rest. It is prose in the footnote voice —
- * **no colour in any state** — because on this report colour belongs to the variance column, and a
- * sentence painted green or red would be a second verdict competing with the figures it explains.
- *
- * ⚠ "BUFFER" AND "SHORT" ARE NOT COINED HERE. The Budget plan page already closes with exactly this
- * pair (*Planned buffer* / *Short of covering the plan*), so the two screens that both answer "do
- * dues cover the plan?" answer it in one vocabulary. Do not invent a third set.
- *
- * ⚠⚠ THE SECOND SENTENCE NOW MOVES WITH THE BASIS (owner ruling 2026-09-04). It shipped on
- * 2026-09-04 as an APOLOGY — "both columns compare a whole season's plan against what has moved so
- * far, so they run short until the season is finished" — written deliberately as the honest half of
- * a fix that did not exist yet. It does now, so:
- *
- *   · **Whole season** — the apology becomes a DOOR. The fact is unchanged and still worth saying;
- *     what changes is that there is finally something to do about it, one tap up the page.
- *   · **To date** — it is DELETED, not reworded. Under that basis the plan column is no longer a
- *     whole season's, so the sentence is simply false, and the column heading already says
- *     "Plan to date". A reworded version would be a second voice explaining the basis beside the
- *     undated-plan line that already does it.
- *
- * ⚠ THE TWO SENTENCES UNDER THIS TABLE MUST NOT DESCRIBE THE SAME MONEY DIFFERENTLY. This one is
- * about the SPAN being compared; its neighbour is about money that carries no date and so is
- * outside any span. One topic each, in both bases. See the undated-plan note at the render site.
- *
- * The not-set state omits the clause under either basis, because a season with no dues has no
- * Actual-column story to tell.
+/*
+ * ⚰ DuesSentence LIVED HERE. Its wording, and every ruling behind it, moved to
+ * lib/coach-money-report-notes.ts on 2026-09-05 when the owner asked for the disclaimers to
+ * travel with the Excel and PDF exports — a sentence a board reads in a file cannot have a
+ * second author on the screen. The four states, the basis clause and the identity it may only
+ * claim under Whole season are all argued there now. The stack renders through <ReportNotes />
+ * at the foot of the statement.
  */
-function DuesSentence({ dues, base, canWrite, basis, onToDate }: {
-  dues: DuesRevenue; base: string; canWrite: boolean;
-  basis: CompareBasis; onToDate: () => void;
-}) {
-  const state = duesFundingState(dues);
-  const gap = Math.abs(duesGap(dues));
-  /* One clause, so the three sentences that carry it cannot drift apart. */
-  const basisNote = basis === 'todate' ? null : (
-    <> Both columns compare a whole season&rsquo;s plan against what has moved so far.{' '}
-      <button type="button" className={styles.bridgeLink} onClick={onToDate}>
-        Compare to date
-      </button>{' '}sets the plan against the same span.
-    </>
-  );
-  /**
-   * ⚠⚠ THE IDENTITY THIS SENTENCE CLAIMS IS TRUE ONLY ON THE WHOLE-SEASON BASIS, and getting that
-   * wrong would have been a real defect rather than a wording slip.
-   *
-   * "The gap IS the budgeted Season net above" holds because, with D = dues billed, F = other
-   * income and E = the plan, (E − F) − D is exactly −((D + F) − E). Every one of those is a
-   * WHOLE-SEASON figure. Under **To date** the closing row is revenue-to-date less
-   * expenses-to-date — a different quantity with a different name — so the claim stops being true
-   * and the sentence must stop making it. The gap itself is still a real, useful fact about the
-   * season, so it is stated plainly and labelled as the season's rather than pointed at a row it
-   * no longer equals.
-   */
-  const netRef = basis === 'todate'
-    ? <> across the whole season.</>
-    : <> the budgeted Season net above.</>;
-
-  return (
-    <p className={styles.duesNote}>
-      This plan needs <strong>{fmt(dues.planNeeds)}</strong> from families and{' '}
-      {state === 'unset' ? (
-        <>
-          no dues are set yet
-          {basis === 'todate'
-            ? <>, so the whole of that gap is still to come.</>
-            : <>, which is the whole of the budgeted Season net above.</>}
-          {canWrite && (
-            <> <Link href={moneySectionHref(base, 'dues')} className={styles.duesLink}>Set player dues</Link></>
-          )}
-        </>
-      ) : state === 'covered' ? (
-        <>dues bill exactly that.{basisNote}</>
-      ) : state === 'short' ? (
-        <>
-          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — a <strong>{fmt(gap)}</strong> gap
-          {basis === 'todate' ? netRef : <> is{netRef}</>}{basisNote}
-        </>
-      ) : (
-        <>
-          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — a <strong>{fmt(gap)}</strong> buffer
-          above the plan
-          {basis === 'todate' ? netRef : <>, which is{netRef}</>}{basisNote}
-        </>
-      )}
-    </p>
-  );
-}
-
 export function BudgetVsActualPanel({
   params: paramsPromise,
 }: {
@@ -1718,6 +1652,32 @@ export function BudgetVsActualPanel({
     : 0;
 
   /**
+   * THE FOOTNOTE STACK, BUILT ONCE — read by the screen below AND by the Excel and PDF exports
+   * (owner ruling 2026-09-05).
+   *
+   * ⚠ THIS IS THE POINT. A treasurer downloads this report and emails it to a board; before today
+   * the figures travelled and every sentence explaining what they mean stayed on the screen, so a
+   * board read "Total expenses" with no way to know which costs it deliberately leaves out. One
+   * array, two renderers — the file cannot fall behind the page.
+   *
+   * ⚠ THE FIGURES ARE FORMATTED HERE, by this screen's own `fmt`. The notes module never formats
+   * money: a second formatter is how one report starts printing one number two ways.
+   */
+  const statementNoteStack = useMemo(() => statementNotes({
+    basis,
+    dues: data && duesSentenceRenders(data.dues)
+      ? {
+        state: duesFundingState(data.dues),
+        planNeeds: fmt(data.dues.planNeeds),
+        billed: fmt(data.dues.billed ?? 0),
+        gap: fmt(Math.abs(duesGap(data.dues))),
+      }
+      : null,
+    canWriteDues: moneyCanWrite,
+    undatedPlan: undatedPlan > 0.005 ? fmt(undatedPlan) : null,
+  }), [basis, data, moneyCanWrite, undatedPlan]);
+
+  /**
    * THE REPORT THE TWO SHAPES ACTUALLY DRAW — re-cut onto the chosen basis, once.
    *
    * ⚠ EVERY RENDER SITE READS THIS, NOT `data.report`. That is the whole design: the statement,
@@ -1790,9 +1750,64 @@ export function BudgetVsActualPanel({
     return { label: 'This season', rows };
   }
 
+  /**
+   * THE BLOCK ABOVE THE TABLE (owner ruling 2026-09-05, QA §145) — whose money, what report, on
+   * what settings, true as of when. Everything identifying this file used to live in its FILENAME,
+   * which is the first thing lost when a treasurer saves the attachment or pastes the table into an
+   * email to their board.
+   *
+   * ⚠⚠ "THE PARAMETERS, IF ANY" — and *if any* is load-bearing. The two shapes of this report take
+   * DIFFERENT settings: Months takes a reading and never a Compare (its columns already are the
+   * calendar); the Statement and By activity take a Compare and never a reading. Naming a setting
+   * the file does not have would be worse than naming none, so each shape lists only its own.
+   *
+   * ⚠ "As at" IS NOT DECORATION ON A TO DATE FILE — it is what the figures mean. "Plan to date"
+   * with no date attached is an unreadable number.
+   *
+   * ⚠ NO FIGURES, EVER. A spreadsheet's opening rows sum into whatever a treasurer later pivots or
+   * selects — the ruling that keeps the PDF's board block out of Excel — and a headline goes stale
+   * inside its own file the moment anyone filters the rows beneath it.
+   */
+  function exportMasthead(asMonthGrid: boolean, asActivity: boolean): MoneyMasthead {
+    const shape = asMonthGrid ? 'Months' : asActivity ? 'By activity' : 'Statement';
+    const setting = asMonthGrid
+      ? `Reading: ${MONEY_LENSES.find(l => l.id === lens)?.label ?? ''}`
+      : `Compare: ${COMPARE_BASES.find(b => b.id === basis)?.label ?? ''}`;
+    return {
+      title: `${assignment?.teamName ?? ''} · ${assignment?.programYearName ?? ''}`.replace(/^ · | · $/g, ''),
+      subtitle: `Budget vs. Actual — ${shape} · ${setting}`,
+      /**
+       * ⚠⚠ THE SAME `today` THE FIGURES ARE CUT ON — never a fresh `new Date()` (/review,
+       * 2026-09-05). This line and the To date basis have to agree about what day it is, and a
+       * browser clock does not: a coach in Vancouver exporting at 9:30 p.m. on the 4th is already
+       * on the 5th in the org's timezone, so every Budgeted figure in the file would be cut to the
+       * 5th under a masthead saying the 4th. That is precisely the failure this line exists to
+       * prevent — its own comment two lines up calls the date "what the figures mean".
+       *
+       * ⚠ The first version got the LOCALE right (en-CA, so a Canadian club's board paper does not
+       * carry a US date) and missed the TIMEZONE entirely, which is a comment that looks like it
+       * addressed the problem sitting directly on top of the problem. `formatStoredDate` is the
+       * product's one date formatter and takes the org's own day.
+       */
+      meta: `As at ${formatStoredDate(today, { withYear: true, longMonth: true })}`,
+    };
+  }
+
   function buildExport(format: MoneyExportFormat) {
     const asMonthGrid = monthGridInFormat(format);
-    const exportCols = asMonthGrid ? monthExportColumns() : BVA_EXPORT_COLUMNS;
+    /**
+     * ⚠⚠ BY ACTIVITY GETS ITS OWN FILE (owner ruling 2026-09-05, QA §145). It used to fall through
+     * to the statement — never a decision, just what was left when the view was not Months — and it
+     * cost the reader the only rows that view exists for: a category's revenue set against its own
+     * costs, closing on "<name> netted". A coach reading "did the tournament pay for itself?" and
+     * pressing Export got a file that could not answer it.
+     *
+     * ⚠ THE MONTHS PDF SWAP IS DIFFERENT AND STAYS. That one is a ruling (a month grid on paper can
+     * only leave months off) and it is ANNOUNCED in the file-type dialog. The by-activity one was
+     * silent, which is how nobody noticed for a release.
+     */
+    const asActivity = !asMonthGrid && view === 'activity';
+    const exportCols = asMonthGrid ? monthExportColumns() : bvaExportColumns(basis);
     // The category table comes from the SHARED builder, so this page's export and the Money hub's
     // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
     // without which the spreadsheet's totals would disagree with the screen.
@@ -1812,7 +1827,17 @@ export function BudgetVsActualPanel({
           headroom: report!.expenses.variance,
         }
       : data;
-    const built = asMonthGrid ? buildMonthExportRows() : bvaCategoryRows(exportSource);
+    const built = asMonthGrid
+      ? buildMonthExportRows()
+      : asActivity
+        /* The blocks come from the re-cut report, so the by-activity file follows Compare exactly
+           as the statement does — every figure in it is already on the chosen basis. */
+        ? bvaActivityRows(
+          { activities: report!.activities, buffer: basis === 'todate' ? 0 : (data?.buffer ?? 0), net: report!.net },
+          basis,
+          isDuesCategory,
+        )
+        : bvaCategoryRows(exportSource, basis);
     if (!asMonthGrid) {
       // D6.1: the statement file ends on the same walk the screen shows — all three formats,
       // the months-view PDF included, because that PDF IS the whole-season statement.
@@ -1821,10 +1846,12 @@ export function BudgetVsActualPanel({
       built.kinds.push(...recon.kinds);
     }
     return {
-      dataset: asMonthGrid ? `budget-by-month-${lens}` : 'budget-vs-actual',
+      // The filename says which shape it is, so two downloads a minute apart cannot overwrite
+      // each other in a downloads folder and be told apart only by opening them.
+      dataset: asMonthGrid ? `budget-by-month-${lens}` : asActivity ? 'budget-by-activity' : 'budget-vs-actual',
       title: asMonthGrid
         ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
-        : 'Budget vs. Actual',
+        : asActivity ? 'Budget vs. Actual — By activity' : 'Budget vs. Actual',
       columns: exportCols,
       rows: built.rows,
       rowKinds: built.kinds,
@@ -1850,6 +1877,29 @@ export function BudgetVsActualPanel({
       // D6.3: the PDF opens on the board block. The PDF is always the whole-season statement
       // (the month grid stays in Excel/CSV), so the intro applies to every PDF from this tab.
       pdfIntro: format === 'pdf' ? pdfIntro() : undefined,
+      /**
+       * THE REPORT'S OWN CAVEATS, CARRIED INTO THE FILE (owner ruling 2026-09-05).
+       *
+       * ⚠ THE SAME ARRAY THE SCREEN RENDERS, never a second copy — that is the whole reason
+       * `lib/coach-money-report-notes.ts` exists. Change a sentence there and it changes in the
+       * spreadsheet a board receives on the same line of code.
+       *
+       * ⚠ WHICH STACK FOLLOWS THE VIEW, because the two say different things: the month grid's
+       * notes are about the LENS being read (Cash vs Season spending vs Scheduled), the
+       * statement's are about the SPAN being compared and what could not be. Sending the wrong
+       * one would be a file explaining a reading it does not contain.
+       *
+       * ⚠ THE MONTH GRID'S LENS IS COERCED THE WAY THE GRID COERCES IT — a payload with no
+       * spending grid falls back to the cash reading, and a file must state the reading it
+       * actually holds rather than the one that was asked for.
+       */
+      notes: asMonthGrid
+        ? monthGridNotesFor(data!, lensReadsSpendingGrid(lens) && !data!.spendingGrid ? 'actual' : lens)
+        : statementNoteStack,
+      /* ⚠ EXCEL ONLY, and the download path enforces it: the PDF already opens on its own titled
+         header drawn with the club's branding, so a second title block under it would be the title
+         twice, and a CSV is a data file that must start on its column row. */
+      masthead: exportMasthead(asMonthGrid, asActivity),
       emptyMessage: asMonthGrid
         ? 'There is nothing in this month view to export yet.'
         : 'Budget vs. Actual has nothing to report yet — it needs a budget plan.',
@@ -2244,7 +2294,7 @@ export function BudgetVsActualPanel({
                 {/* ⚠ THE HEADING MOVES WITH THE BASIS, so a reader who has scrolled past the
                     control can still tell which span these figures cover. "Budgeted" alone over a
                     to-date column is how one report ends up meaning two things. */}
-                <span className={shared.thNum}>{basis === 'todate' ? planColumnLabel(basis) : 'Budgeted'}</span>
+                <span className={shared.thNum}>{planColumnLabel(basis)}</span>
                 <span className={shared.thNum}>Actual</span>
                 <span className={shared.thNum}>Variance</span>
               </div>
@@ -2398,59 +2448,38 @@ export function BudgetVsActualPanel({
                   row; if a figure here seems missing, it is one of the two directly above it. */}
               </div>
              </CoachScrollX>
-             {/* The variance key (owner D5.1, 2026-09-02): one column speaking two dialects finally
-                 says so. Approved wording from the gate mockup, verbatim. */}
-             <p className={styles.varianceKey}>
-               Variance reads: revenue <b>+/−</b> against plan · costs <b>under / over</b> plan.
-               Good news is always green.
-             </p>
-             {/* SECOND IN THE STACK (owner ruling 2026-09-04) — after the key that says how to read
-                 the columns, before the undated-plan line. See `DuesSentence` for the wording rules
-                 and for the one state it deliberately says nothing in. */}
-             {duesSentenceRenders(data.dues) && (
-               <DuesSentence
-                 dues={data.dues}
-                 base={base}
-                 canWrite={moneyCanWrite}
-                 basis={basis}
-                 onToDate={() => setBasis('todate')}
-               />
-             )}
-             {/* HOW MUCH PLAN HAS NO DATE (owner ruling 2026-09-04, QA §132).
-                 ⚠⚠ THE VARIANCE COLUMN COMPARES TWO DIFFERENT TIME SPANS — a WHOLE-SEASON plan
-                 against actuals SO FAR — so mid-season it reports a large "under budget" that is
-                 not an achievement but an unfinished season. The basis switch that fixes that
-                 properly is its own design decision; this sentence is the honest half of it, and
-                 it earns its place either way, because undated plan money can never be compared
-                 under ANY basis. The estimate buffer, which has no lines to date, guarantees this
-                 line outlives the switch.
-                 ⚠ IT READS THE MONTH GRIDS, NOT A NEW SUM. Both bands' undated plan already
-                 travels in the payload as the "No date yet" column's own total — computing it
-                 again here is how the same figure starts disagreeing with itself across two views
-                 of one report. */}
-             {undatedPlan > 0.005 && (
-               <p className={styles.undatedNote}>
-                 <strong>{fmt(undatedPlan)}</strong> of this plan — money in and money out — has no
-                 date
-                 {/* ⚠⚠ THE VERB IS THE WHOLE DIFFERENCE, and only one of these is honest per basis
-                     (owner ruling 2026-09-04). Whole season COUNTS undated money in full, so there
-                     it is present-but-unplaceable and the sentence says where it sits. Only To date
-                     can EXCLUDE it, so only there is "not compared" true — saying it under Whole
-                     season would tell a coach their money had been left out of a total it is
-                     actually inside. This was a real defect in the first mockup and the owner
-                     caught it. */}
-                 {basis === 'todate'
-                   ? <>, so it is <strong>not compared here</strong>. Give it a month to include it.</>
-                   : <> on it, so it sits in the season total but in no month.</>}{' '}
-                 {/* ⚠ THE FIGURE IS UNDATED MONEY ONLY — never money dated AFTER today. That is
-                     excluded from a to-date reading too, but correctly so: it is the basis working,
-                     not a gap, and naming it here would send a coach off to date money that is
-                     already dated. */}
-                 <button type="button" className={styles.bridgeLink} onClick={() => setView('months')}>
-                   See it in the months view
-                 </button>
-               </p>
-             )}
+             {/* THE FOOTNOTE STACK — the variance key, what the bottom line means, and what could
+                 not be compared, in the order the owner ruled (2026-09-04).
+
+                 ⚠⚠ EVERY SENTENCE AND EVERY RULING ABOUT ITS WORDING NOW LIVES IN
+                 lib/coach-money-report-notes.ts (owner ruling 2026-09-05). The Excel and PDF files
+                 carry this stack too, and a note with two authors drifts — which this report has
+                 already proved three times. Change the copy there, not here.
+
+                 ⚠ THE PER-NOTE CLASSES SURVIVE. Each of the three has its own, and folding them
+                 into one would have restyled the stack on adoption — so the class comes from this
+                 call site and the words come from the module. */}
+             <ReportNotes
+               notes={statementNoteStack}
+               noteClassName={n => n.id === 'variance-key' ? styles.varianceKey
+                 : n.id === 'dues' ? styles.duesNote : styles.undatedNote}
+               controls={{
+                 /* The sentence names the control AND is the control. */
+                 'compare-to-date': text => (
+                   <button type="button" className={styles.bridgeLink} onClick={() => setBasis('todate')}>
+                     {text}
+                   </button>
+                 ),
+                 'months-view': text => (
+                   <button type="button" className={styles.bridgeLink} onClick={() => setView('months')}>
+                     {text}
+                   </button>
+                 ),
+                 'set-dues': text => (
+                   <Link href={moneySectionHref(base, 'dues')} className={styles.duesLink}>{text}</Link>
+                 ),
+               }}
+             />
              {/* ⚠ THE BRIDGE BELONGS AT THE FOOT, WITH THE NOTES (owner, 2026-08-24). It was first put
                  under Total expenses, which dropped a bordered panel into the middle of the
                  statement's own closing arithmetic — Total expenses → Season net → Funded by

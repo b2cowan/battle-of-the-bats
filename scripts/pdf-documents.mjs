@@ -559,8 +559,17 @@ export async function buildDocuments() {
    * spreadsheet shape; for `format === 'pdf'` the panel deliberately swaps in the four-column
    * whole-season statement instead, and announces the swap in the file-type dialog (owner
    * ruling 2026-08-21). Fixturing the month grid here would render a document nobody can get. */
+  /* ⚠ THE COLUMNS ARE NOW A FUNCTION OF THE COMPARE BASIS (2026-09-05): the plan column is headed
+   * "Budgeted" on the whole season and "Plan to date" under To date. `'season'` is the right basis
+   * to fixture — it is the default the report opens on, and the one a board's copy is almost always
+   * cut on.
+   * ⚠⚠ THIS LINE READ `money$.BVA_EXPORT_COLUMNS` AND THAT CONSTANT WAS REPLACED, WHICH BROKE THE
+   * WHOLE GATE — silently, because a missing named export on a namespace import is `undefined`
+   * rather than a compile error, so `columns.map` threw at fixture-build time and every PDF
+   * document lost its coverage at once. `check:pdf` is NOT part of `verify:changed`, so a green
+   * verify run says nothing about it. Run it explicitly after touching an export's columns. */
   moneyDoc('coach-budget-vs-actual', 'Budget vs. Actual', 'Budget vs. Actual',
-    money$.BVA_EXPORT_COLUMNS,
+    money$.bvaExportColumns('season'),
     ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx'], 24);
 
   /* ⚠ The plan's PDF is ALWAYS the statement — the By-period grid is a spreadsheet shape, and

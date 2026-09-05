@@ -12,12 +12,13 @@ export { generateCSV, downloadCSVBlob } from './csv';
 
 export type { XlsxRowStyle } from './xlsx';
 export { downloadXLSX } from './xlsx';
+export type { XlsxNote, XlsxMasthead, XlsxFooterMark } from './xlsx';
 
 export type { ICSEventInput } from './ics';
 export { downloadICS } from './ics';
 
 export type { OrgPdfSettings, LineupPosterOptions, LineupPosterPlayer, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions } from './pdf';
-export { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements } from './pdf';
+export { BRANDING_TEXT, DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements } from './pdf';
 
 
 // The two roster documents' column lists (Rosters pass) — imported by the roster page

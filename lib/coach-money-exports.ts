@@ -19,7 +19,7 @@
 import type { ExportColumnDef, XlsxRowStyle } from './export';
 import {
   buildFilename, serializeHeaders, serializeRows, generateCSV, downloadCSVBlob, downloadXLSX,
-  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
 import {
@@ -27,6 +27,8 @@ import {
 } from './coach-budget-totals';
 import { whenSummary, whenSummaryText, type PeriodView } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
+import { planColumnLabel, netRowLabel, type CompareBasis } from './coach-budget-basis';
+import { noteRunsForFile, noteTextForFile, type ReportNote } from './coach-money-report-notes';
 import { isDuesCategory } from './coach-dues-revenue';
 import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
@@ -856,12 +858,25 @@ export function paymentRequestRows(
 // ⚠ NOT the month grid. That one's columns depend on the season's months and its cells on the
 // chosen reading, so it is built by the panel that owns those switches.
 
-export const BVA_EXPORT_COLUMNS: ExportColumnDef[] = [
-  { label: 'Item',     key: 'item',     format: 'text' },
-  { label: 'Budgeted', key: 'budgeted', format: 'currency' },
-  { label: 'Actual',   key: 'actual',   format: 'currency' },
-  { label: 'Variance', key: 'variance', format: 'currency' },
-];
+/**
+ * The Budget-vs-Actual columns — and the plan column is NAMED BY THE BASIS.
+ *
+ * ⚠⚠ IT WAS A FLAT CONSTANT AND THAT WAS A REAL DEFECT (owner QA §145, 2026-09-05). The To date
+ * basis shipped re-cutting every figure in this file correctly, and left both of its LABELS behind:
+ * a part-year plan came out headed "Budgeted", under a closing row called "Season net", with no
+ * mark anywhere saying which span it covered. The figures were right and the file lied about them —
+ * which is worse than being wrong, because a board reading the attachment has nothing to check
+ * against. The screen has renamed both since the day the basis shipped; this is the file catching
+ * up, through the same two helpers, so a third name can never be invented here.
+ */
+export function bvaExportColumns(basis: CompareBasis): ExportColumnDef[] {
+  return [
+    { label: 'Item',                   key: 'item',     format: 'text' },
+    { label: planColumnLabel(basis),   key: 'budgeted', format: 'currency' },
+    { label: 'Actual',                 key: 'actual',   format: 'currency' },
+    { label: 'Variance',               key: 'variance', format: 'currency' },
+  ];
+}
 
 /** One category, in either direction — the shape both report sections share. */
 type BvaCategory = {
@@ -915,6 +930,37 @@ export type BvaCategorySource = {
      screen, always. */
 };
 
+/** One row-pusher, shared by everything that writes into a Budget-vs-Actual file. */
+type PushRow = (row: ExportRow, kind?: MoneyRowKind) => void;
+
+/**
+ * Every item, planned or not — the file carries the same two levels the screen does, so a coach can
+ * reconcile one against the other line for line.
+ *
+ * ⚠ SHARED BY BOTH SHAPES (2026-09-05). The statement and the by-activity file describe the same
+ * items; giving the second one its own copy of this loop would let one item read two ways in two
+ * files downloaded a minute apart, which is the drift this whole module exists to prevent.
+ */
+function pushItemRows(items: BvaCategory['items'], push: PushRow): void {
+  for (const item of items) {
+    // ⚠ NO "(N lines)" SUFFIX — owner ruling 2026-09-04, QA §133; see the by-period export above.
+    const label = item.itemName;
+    /* ⚠ MONEY BACK IS SAID IN THE LABEL, NOT GIVEN A ROW. The screen puts "$2,400 paid · $150
+       back" underneath the row; a spreadsheet has no underneath, and a second row would make the
+       column add up to more spending than the team did — the exact defect that took the
+       unbudgeted rows out of this file. */
+    const back = item.refundTotal > 0.005
+      ? ` — ${item.grossActual.toFixed(2)} less ${item.refundTotal.toFixed(2)} back`
+      : '';
+    push({
+      item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}${back}`,
+      budgeted: item.inPlan ? item.budgeted : '',
+      actual:   item.actual,
+      variance: item.variance,
+    }, 'item');
+  }
+}
+
 /**
  * The Budget-vs-Actual CATEGORY table. Both the hub-era export and the panel's own call this, so
  * the same report cannot come out two ways.
@@ -928,6 +974,8 @@ export type BvaCategorySource = {
  */
 export function bvaCategoryRows(
   data: BvaCategorySource | null,
+  /** Names the closing row. See `bvaExportColumns` for why the file has to be told. */
+  basis: CompareBasis = 'season',
 ): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
   const rows: ExportRow[] = [];
   // Index-aligned with `rows` — how the Excel file dresses each one. CSV/PDF never read it.
@@ -935,7 +983,7 @@ export function bvaCategoryRows(
   const push = (row: ExportRow, kind?: MoneyRowKind) => { rows.push(row); kinds.push(kind); };
   if (!data) return { rows, kinds };
 
-  /** One category and its items — the same two levels in both sections. */
+  /** One category and its items — the same two levels in both sections, and in both SHAPES. */
   const pushCategory = (cat: BvaCategory) => {
     /* ⚠ "not budgeted" IS THE WRONG WORD FOR THE DUES ROW, and it is the only row on this file that
        is not a budget category. A team with no schedule has not failed to budget something — it has
@@ -952,25 +1000,7 @@ export function bvaCategoryRows(
       actual: cat.actual,
       variance: cat.variance,
     }, 'category');
-    // Every item, planned or not — the file carries the same two levels the screen does, so a
-    // coach can reconcile one against the other line for line.
-    for (const item of cat.items) {
-      // ⚠ NO "(N lines)" SUFFIX — owner ruling 2026-09-04, QA §133; see the by-period export above.
-      const label = item.itemName;
-      /* ⚠ MONEY BACK IS SAID IN THE LABEL, NOT GIVEN A ROW. The screen puts "$2,400 paid · $150
-         back" underneath the row; a spreadsheet has no underneath, and a second row would make the
-         column add up to more spending than the team did — the exact defect that took the
-         unbudgeted rows out of this file. */
-      const back = item.refundTotal > 0.005
-        ? ` — ${item.grossActual.toFixed(2)} less ${item.refundTotal.toFixed(2)} back`
-        : '';
-      push({
-        item: `  — ${label}${item.inPlan ? '' : ' — not budgeted'}${back}`,
-        budgeted: item.inPlan ? item.budgeted : '',
-        actual:   item.actual,
-        variance: item.variance,
-      }, 'item');
-    }
+    pushItemRows(cat.items, push);
   };
 
   /* ⚠ THE FILE IS THE STATEMENT, because the screen is (mig 243). Revenue first with its own
@@ -1023,7 +1053,11 @@ export function bvaCategoryRows(
   if (data.report.revenue.categories.length > 0) {
     // The server's figure, the same one the screen prints — never a fourth recomputation.
     push({
-      item: 'Season net',
+      /* ⚠ RENAMED BY THE BASIS (owner QA §145). Under To date this figure is a CASH-TIMING
+         statement wearing a PROFITABILITY name, which is the whole reason the screen renames it —
+         and a file that kept the season's name for it would be the only place a reader could not
+         tell. Same helper as the screen; never a second spelling. */
+      item: netRowLabel(basis),
       budgeted: data.report.net.budgeted,
       actual: data.report.net.actual,
       variance: data.report.net.variance,
@@ -1032,7 +1066,124 @@ export function bvaCategoryRows(
   return { rows, kinds };
 }
 
+/** One activity block, as the by-activity view draws it: what a category earned, what it cost,
+ *  what it netted. Mirrors the screen's own `ActivityBlock`. */
+export type BvaActivityBlock = {
+  categoryId?: string | null;
+  categoryName: string;
+  revenue: BvaCategory | null;
+  costs: BvaCategory | null;
+  net: { budgeted: number; actual: number; variance: number };
+};
+
+export type BvaActivitySource = {
+  activities: BvaActivityBlock[];
+  buffer: number;
+  net: { budgeted: number; actual: number; variance: number };
+};
+
+/**
+ * THE BY-ACTIVITY TABLE — its own file at last (owner ruling 2026-09-05, QA §145).
+ *
+ * ⚠⚠ WHY IT EXISTS. Until today this view had no export of its own and fell through to the
+ * STATEMENT — never a decision, just what was left when the view was not Months. That was not a
+ * cosmetic mismatch: by activity is the only shape that sets a category's revenue against its own
+ * costs and closes on "<name> netted", which is the one question a statement structurally cannot
+ * answer, because a category appears in both of its sections. A coach who read "did hosting the
+ * tournament pay for itself?" on screen and pressed Export got a file that could not tell them.
+ *
+ * ⚠ THE SILENT PART WAS THE TELL. The one comparable swap on this screen — the Months view's PDF,
+ * which is deliberately the statement because a month grid on paper can only leave months off — is
+ * ANNOUNCED in the file-type dialog, with its own note saying "never silent". This one announced
+ * nothing.
+ *
+ * ⚠ DUES LEAD, AS A ROW AND NOT A BLOCK, exactly as on screen: a band, one row and a subtotal would
+ * be the words "Player dues" three times over a category with one figure that can never have a cost
+ * half. Omitting them is not an option either — both shapes close on the same Season net, and it
+ * moved when dues joined the revenue half, so blocks without them would sum to one number under a
+ * total that says another.
+ *
+ * ⚠ THE INNER Revenue / Costs BANDS APPEAR ONLY WHERE A BLOCK HAS BOTH. On a one-sided category
+ * they are a heading distinguishing nothing from nothing — the screen's rule, kept.
+ */
+export function bvaActivityRows(
+  data: BvaActivitySource | null,
+  basis: CompareBasis = 'season',
+  /** Recognises the synthetic dues block — the one "category" that is not a budget category. */
+  isDues: (categoryId?: string | null) => boolean = id => isDuesCategory(id ?? null),
+): { rows: ExportRow[]; kinds: (MoneyRowKind | undefined)[] } {
+  const rows: ExportRow[] = [];
+  const kinds: (MoneyRowKind | undefined)[] = [];
+  const push: PushRow = (row, kind) => { rows.push(row); kinds.push(kind); };
+  if (!data) return { rows, kinds };
+
+  for (const block of data.activities) {
+    if (!isDues(block.categoryId)) continue;
+    const cat = block.revenue;
+    if (!cat) continue;
+    push({
+      // "not set yet", never "not budgeted" — a team with no schedule has not failed to budget
+      // something, it has not set its dues up. Same wording as the statement file.
+      item: cat.inPlan ? cat.categoryName : `${cat.categoryName} (not set yet)`,
+      budgeted: cat.inPlan ? cat.budgeted : '',
+      actual: cat.actual,
+      variance: cat.variance,
+    }, 'category');
+  }
+
+  for (const block of data.activities) {
+    if (isDues(block.categoryId)) continue;
+    const bothHalves = !!block.revenue && !!block.costs;
+    push({ item: block.categoryName.toUpperCase(), budgeted: '', actual: '', variance: '' }, 'section');
+
+    if (block.revenue) {
+      if (bothHalves) push({ item: 'Revenue', budgeted: '', actual: '', variance: '' }, 'category');
+      pushItemRows(block.revenue.items, push);
+    }
+    if (block.costs) {
+      if (bothHalves) push({ item: 'Costs', budgeted: '', actual: '', variance: '' }, 'category');
+      pushItemRows(block.costs.items, push);
+    }
+
+    /* ⚠ A COST-ONLY BLOCK NETS NEGATIVE, and it says so rather than being hidden or flipped: that
+       is the honest reading of a category that earned nothing. The label follows suit — "netted"
+       only where something came in. Both words are the screen's. */
+    push({
+      item: block.revenue ? `${block.categoryName} netted` : `${block.categoryName} cost`,
+      budgeted: block.net.budgeted,
+      actual: block.net.actual,
+      variance: block.net.variance,
+    }, 'total');
+  }
+
+  if (data.buffer > 0) {
+    push({ item: 'Estimate not yet broken out', budgeted: data.buffer, actual: '', variance: '' }, 'category');
+  }
+
+  // Where both shapes end, on the same figure and under the basis's own name.
+  push({
+    item: netRowLabel(basis),
+    budgeted: data.net.budgeted,
+    actual: data.net.actual,
+    variance: data.net.variance,
+  }, 'total');
+
+  return { rows, kinds };
+}
+
 // ── The one download path ───────────────────────────────────────────────────────────────────
+
+/** What the masthead says. The caller supplies the words; this module supplies the layout. */
+export interface MoneyMasthead {
+  /** Line 1 — the team and the season. */
+  title: string;
+  /** Line 2 — the report and every setting that shaped it. Omit a setting the report does not
+   *  take: naming one the file does not have would be worse than naming none. */
+  subtitle?: string;
+  /** Line 3 — the day the figures were true. On a part-year reading this is not decoration; it is
+   *  what the numbers mean, and the first thing a forwarded attachment loses. */
+  meta?: string;
+}
 
 export interface MoneyDownload {
   /** Filename segment: `{org}-{dataset}-{scope}-{date}.{ext}`. */
@@ -1058,6 +1209,36 @@ export interface MoneyDownload {
    * whatever a treasurer pivots.
    */
   pdfIntro?: { label: string; rows: Array<[string, string]> };
+  /**
+   * THE REPORT'S OWN FOOTNOTES, carried into the file (owner ruling 2026-09-05).
+   *
+   * ⚠ THE POINT: a treasurer downloads a money report and emails it to a board. Before this, the
+   * figures travelled and every sentence explaining what they mean stayed behind on the screen —
+   * so a board read "Total expenses" with no way to know it deliberately excludes costs a family
+   * paid a vendor directly. These are the same `ReportNote`s the screen renders, from the same
+   * array, so the file cannot fall behind the page.
+   *
+   * ⚠ EXCEL AND PDF ONLY, and CSV's absence is a decision. A CSV is the file a treasurer pivots
+   * and re-imports; prose rows under the data break both, and the import round trip is a shipped
+   * feature of this hub rather than a hypothetical.
+   *
+   * ⚠ A `screenOnly` CLAUSE NEVER ARRIVES HERE — `noteRunsForFile` has already dropped it. A file
+   * that says "tap a category's figure" is telling a reader to tap paper.
+   */
+  notes?: ReportNote[];
+  /**
+   * THE BLOCK ABOVE THE TABLE — whose money, what report, on what settings, true as of when
+   * (owner ruling 2026-09-05). Everything identifying an export used to live in its FILENAME, which
+   * is the first thing lost when somebody saves the attachment or pastes the table into an email.
+   *
+   * ⚠⚠ REPORTS ONLY. The importer takes the first non-empty row as the column header, so a masthead
+   * on a file the product re-imports — the budget plan, the bills schedule — is read AS the header
+   * and the import fails on a file this product produced.
+   *
+   * ⚠ EXCEL ONLY. The PDF already opens on its own titled header, drawn by the PDF engine with the
+   * club's branding; a second title block under it would be the title twice.
+   */
+  masthead?: MoneyMasthead;
   orgLabel: string;
   /** Season name — in the filename, and under a PDF's title. */
   scopeLabel: string;
@@ -1082,6 +1263,12 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
     format,
   );
 
+  /* ⚠ THE CLUB'S DOCUMENT SETTINGS, RESOLVED ONCE FOR EVERY FORMAT (owner ruling 2026-09-05).
+     They used to be read only inside the PDF branch, which is why an Excel file could not carry a
+     crest even where the club had uploaded one — and why a caller that never passed them got
+     default paper in both. Same object, same defaults, both branches. */
+  const settings = { ...DEFAULT_PDF_SETTINGS, ...(spec.pdfSettings ?? {}) };
+
   if (format === 'pdf') {
     const body = spec.pdfRows ? spec.pdfRows(spec.rows) : serializeRows(spec.rows, spec.columns);
     await downloadPDF(
@@ -1091,9 +1278,14 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
       spec.scopeLabel || undefined,
       spec.columns.map(c => c.label),
       body,
-      { ...DEFAULT_PDF_SETTINGS, ...(spec.pdfSettings ?? {}) },
+      settings,
       {
         identity: spec.teamName,
+        // Flattened to plain sentences here — the PDF engine has no rich text inside a wrapped
+        // paragraph, and the screen-only clauses are already gone.
+        ...(spec.notes?.length
+          ? { notes: spec.notes.map(n => ({ text: noteTextForFile(n), tone: n.tone })) }
+          : {}),
         /* The opening block rides the engine's grouped mode: its own blank-header group first
            (a key/value block), then the table under the report's own title. Absent, the flat
            path is byte-identical to what every export always produced. */
@@ -1141,5 +1333,36 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
       if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) return undefined;
       return new Date(Date.UTC(y, m - 1, 1));
     }),
+    // Merged, wrapped cells under the table — the screen's own bold, kept. See `XlsxNote`.
+    notes: spec.notes?.map(n => ({ runs: noteRunsForFile(n), tone: n.tone })),
+    /* ⚠ THE CLUB'S LOGO ON TOP, OURS AT THE FOOT (owner ruling 2026-09-05). The masthead is
+       letterhead — it says whose document this is, and a team's financial statement is the club's.
+       Both ride the settings the PDF already uses, so a club sets its branding once. */
+    masthead: spec.masthead && {
+      ...spec.masthead,
+      logoDataUrl: settings.logoDataUrl,
+    },
+    /* Our own mark, under the notes, on the club's own branding switch — force-on for the free
+       plan, off-able for the rest, exactly as the PDF footer already behaves. Same words, too. */
+    /**
+     * ⚠⚠ ONLY ON A FILE THAT CARRIES A MASTHEAD, AND THAT GATE IS LOAD-BEARING (/review, same
+     * day it was written). The first version branded every Money spreadsheet, which quietly
+     * broke the import round trip: the budget plan and bills files are read back in, the parser
+     * treats every non-blank row after the header as DATA, and a trailing "Generated by
+     * FieldLogicHQ" would have come back as a budget line in the import preview.
+     *
+     * A masthead is what makes a file a REPORT — something read, emailed, filed. A file without
+     * one is a DATASET: it must start on its column row and end on its last data row, because
+     * this product reads it back. One flag decides both ends of the file, so they can never
+     * disagree about which kind it is.
+     *
+     * ⚠ TEXT, NOT A MARK — for now, and worth recording so nobody "finishes" it by accident. A
+     * spreadsheet can only embed a raster (png/jpeg/gif) and our own brand asset is an SVG;
+     * rasterising it in the browser at download time to decorate a footer is more machinery than
+     * the decoration is worth. The writer already takes a logo here, so the day a raster mark
+     * exists this is one string. The CLUB logo is unaffected — theirs is already stored as a PNG
+     * data URL, so the masthead crest works today.
+     */
+    footer: spec.masthead && settings.showBranding ? { text: BRANDING_TEXT } : undefined,
   });
 }

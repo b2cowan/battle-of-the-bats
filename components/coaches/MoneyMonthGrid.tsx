@@ -3,11 +3,15 @@ import { Fragment, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
+import ReportNotes, { NoteText } from '@/components/coaches/ReportNotes';
+import { monthGridNotesFor } from '@/lib/coach-money-report-notes';
 import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid, scheduledForward,
+  /* ⚠ `scheduledForward` LEFT WITH THE SENTENCE THAT QUOTED IT — the forward derivation is now
+     read inside the notes module, so the grid no longer calls it directly. */
+  formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
@@ -266,6 +270,15 @@ export default function MoneyMonthGrid({
   const showReturned = lens === 'actual'
     && returnedGrid.categories.some(c => categoryHasFigure(c.total, lens));
   const opening = data.openingBalance ?? null;
+
+  /* ⚠ ONE DERIVATION, SHARED WITH THE EXPORT (owner ruling 2026-09-05). The sentences under this
+     grid now travel into the Excel file, so both readers go through the same function — see
+     `lib/coach-money-report-notes.ts` for why that is not optional on this report. The lens passed
+     is the COERCED one above (a stale payload with no spending grid falls back to the cash
+     reading); the fallback is deploy-skew belt, not a sentence, so it stays here. */
+  const notes = useMemo(() => monthGridNotesFor(data, lens), [data, lens]);
+  const quietNotes = useMemo(() => notes.filter(n => n.tone === 'note'), [notes]);
+  const alertNote = notes.find(n => n.tone === 'alert') ?? null;
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<{
     title: string;
@@ -969,169 +982,26 @@ export default function MoneyMonthGrid({
         </table>
       </CoachScrollX>
 
-      {/* Every claim the grid makes about its own basis, in one place under it. */}
-      <div className={styles.notes}>
-        {/* ⚠⚠ THE "player dues only… same dollar twice" SENTENCE RETIRED HERE (owner ruling
-            2026-08-23, reversing 2026-07-30 — memory/design_decisions.md). Its rationale survived
-            three model changes it was no longer true under, restated on screen the whole time; the
-            durable lesson is that a footnote explaining a rule is also that rule's expiry
-            checklist. Each lens now states its own basis, because they genuinely differ. */}
-        {/* ⚠⚠ REWRITTEN WITH THE THIRD BAND (owner ruling 2026-09-02). The old copy said expenses
-            were "bills paid, payments to the club, and money paid back to families", and closed by
-            promising a family-fronted cost "lands here the day you pay that family back" — both
-            sentences described the arrangement this change ended. Leaving either would have been the
-            demo-drift failure happening on the product itself: every figure right, the sentence
-            underneath quietly false. */}
-        {/* ⚠⚠ THE THREE REWRITTEN BASIS NOTES ARE THE G1 GATE MOCKUP'S, VERBATIM (approved
-            2026-09-02) — each shows only under its own reading. */}
-        {lens === 'actual' && (
-          <p className={styles.note}>
-            <strong>Cash is money that moved.</strong> Revenue is every dollar that arrived — dues,
-            fundraising and sponsor money received, income and money back you recorded, and anything
-            the club sent. <strong>Expenses are what you paid vendors.</strong> A cost a{' '}
-            <strong>family paid a vendor directly</strong> is season spending, not cash — flip to{' '}
-            <strong>Season spending</strong> to see it. Money you hand back to a family is your cash,
-            but it isn’t spending, so it has its own band below.
-          </p>
-        )}
-        {lens === 'spending' && (
-          <p className={styles.note}>
-            <strong>Season spending is what the season spent</strong> — the Statement, month by month.
-            A cost counts the day it happened, <strong>whoever paid it</strong>; a family-paid cost is
-            here, tagged. Money back subtracts from the cost it repaid. Cheques you write back to
-            families aren’t spending — flip to <strong>Cash</strong> for what your money did.
-          </p>
-        )}
-        {/* ⚠ THE CARRY EXPLAINS ITSELF WHERE THERE IS ROOM FOR A SENTENCE — see the note on the
-            Opening balance row. Shown on the two lenses that start from it; Scheduled projects from
-            today's real money, which already contains it. */}
-        {opening !== null && lens !== 'scheduled' && (
-          <p className={styles.note}>
-            <strong>This season opened with {fmt(opening)}</strong>
-            {data.openingBalanceFrom
-              ? ` — carried from ${data.openingBalanceFrom} when this season was started.`
-              : ' that the team was already holding.'}
-            {' '}Change it in <strong>Team settings → Money</strong>.
-          </p>
-        )}
-        {/* The other half of the provenance (owner D5.10, 2026-09-02): a season with NO opening
-            balance says so, pointing a wrong bank tie-out at its likeliest cause instead of
-            leaving a coach to discover the assumed zero by arithmetic. */}
-        {opening === null && lens !== 'scheduled' && (
-          <p className={styles.note}>
-            <strong>No opening balance is set</strong> — the balance rows assume the season started
-            from $0. If the team was already holding money on day one, set it in{' '}
-            <strong>Team settings → Money</strong>.
-          </p>
-        )}
-        {lens === 'scheduled' && (
-          <p className={styles.note}>
-            <strong>Scheduled is what’s still to come.</strong> Dues installments not yet paid, sponsor
-            pledges and anything you’ve asked the club for, against what you still owe. A pledge and a
-            pending request have no date, so they sit under <strong>No date yet</strong> — in the Total,
-            in no month, counted as possible rather than arrived. The running balance starts from
-            today’s real money, {fmt(cashOnHand)}.
-          </p>
-        )}
-        {/* ⚠ THE BANNER'S FIGURE, DERIVED OUT LOUD (owner walk feedback, 2026-09-02: the forward
-            stat linked here and its number appeared nowhere on this screen). Same helper as the
-            banner (`scheduledForward`), so the sentence and the headline cannot disagree; it only
-            renders when the two figures genuinely differ — with nothing "possible", the Closing
-            balance IS the banner's number and a derivation would explain a gap that isn't there. */}
-        {lens === 'scheduled' && cash && (() => {
-          const fwd = scheduledForward(revenueGrid, grid, returnedGrid, cashOnHand, opening);
-          if (fwd.possible <= 0.005) return null;
-          return (
-            <p className={styles.note}>
-              {/* ⚠ `fmtSignedAmount`, not the sign-stripping local `fmt` — a season can END short,
-                  and a negative ending printed as a plain positive would be the exact confusion
-                  this sentence exists to remove. */}
-              The Closing balance ends the season at <strong>{fmtSignedAmount(fwd.ending)}</strong>;
-              take back out the {fmt(fwd.possible)} that’s only possible — the pledges and pending
-              asks under <strong>No date yet</strong> — and on what’s certain you end with{' '}
-              <strong>{fmtSignedAmount(fwd.headline)}</strong>, the banner’s forward figure.
-            </p>
-          );
-        })()}
-        {lens === 'budget' && (
-          <p className={styles.note}>
-            <strong>Budget is your plan</strong>, not your bills — the dues installments you set,
-            your expected funding, and the months you gave your costs.
-            {showUndated && ` ${fmt(lensUndated(grid.totals.undated, lens) + lensUndated(revenueGrid.totals.undated, lens))} with no date yet is in the Total and in no month.`}
-          </p>
-        )}
-        {/* ⚠ REWRITTEN FOR Q3 (ruled 2026-09-02): Difference compares plan against SPENDING now,
-            which is why it can finally claim Headroom by name. The G1 mockup's copy, verbatim. */}
-        {lens === 'difference' && (
-          <p className={styles.note}>
-            <strong>Difference is your plan against what the season spent</strong>, for months that
-            have already happened — it matches Headroom exactly. A positive figure is good news on
-            both bands: revenue that <strong>came in ahead</strong>, or spending that came in{' '}
-            <strong>under</strong>. A month still ahead shows “—”.
-          </p>
-        )}
-        {/* ⚠⚠ THIS NOTE USED TO SAY THE OPPOSITE, and it was the THIRD copy of one stale claim
-            (2026-08-21): the same sentence lived in a code comment, in this component’s own cell
-            logic, and here in front of the coach. Spending now lands on the item row it names — so
-            the line telling a coach to expect a dash was the last thing still asserting the old
-            behaviour, and the most expensive, because a reader believes it. */}
-        {(lens === 'actual' || lens === 'scheduled' || lens === 'spending') && (
-          <p className={styles.note}>
-            {lens === 'scheduled' ? 'A bill' : 'Spending'} sits on the <strong>item</strong> it names, so a
-            category is what its rows add up to. Money recorded without an item sits on that
-            category’s <strong>Not itemized</strong> row. Tap a <strong>category’s</strong> figure to see
-            what makes it up.
-          </p>
-        )}
-        {/* ⚠⚠ THE TWO TRUTHS, NAMED (owner ruling 2026-08-23). Months is CASH and the Statement is
-            the season's spending, so their Total expenses can differ — and the coach who spots that
-            gap deserves to be told why by the screen rather than by support. The three causes are
-            listed because "they use different bases" answers nothing a treasurer can check. */}
-        {/* ⚠⚠ THE FIRST CAUSE STOPPED BEING TRUE ON 2026-09-02 AND THE SENTENCE DID NOT NOTICE.
-            It read "this view adds money paid back to families" — which is exactly what the returned
-            band ended: those cheques are no part of Total expenses any more. A note explaining a gap
-            by naming a cause that no longer exists is worse than no note, because a treasurer
-            reconciling by hand will look for an adjustment that isn't there. Two causes now, and the
-            band is named as the third thing the reader can see rather than as an adjustment. */}
-        {lens === 'actual' && (
-          <p className={styles.note}>
-            Total expenses here can differ from the <strong>Statement</strong>’s and{' '}
-            <strong>Season spending</strong>’s: this view leaves out costs a family paid a vendor
-            directly, and shows money back as revenue instead of subtracting it from the cost it
-            repaid. Money you return to families is in its own band — counted in your balance, never
-            in Total expenses.
-          </p>
-        )}
-        {grid.truncated && (
-          <p className={styles.note}>
-            Showing the first {grid.months.length} months. Anything dated outside them still counts in
-            the Total column.
-          </p>
-        )}
-      </div>
+      {/* Every claim the grid makes about its own basis, in one place under it.
 
-      {cash?.shortfall && (
-        /* ⚠⚠ THE TENSE FOLLOWS THE LENS, and it did not until the coach demo was read back with
-           the bands in place (2026-08-23). "On this plan you go short" is a PROJECTION's sentence —
-           true under Budget and Scheduled, and plainly wrong under Actual, where the money has
-           already gone and no plan is being discussed. The advice underneath moves with it: you
-           cannot bring dues forward in a month that has already happened. */
+          ⚠⚠ THE SENTENCES THEMSELVES LIVE IN `lib/coach-money-report-notes.ts` (owner ruling
+          2026-09-05) — because the Excel and PDF exports carry them now, and a sentence with two
+          authors drifts. Every ⚠ that used to sit in this block moved WITH the copy it argues
+          about; that module is where a wording change is fought over. What is left here is the
+          screen’s rendering of them and nothing else. */}
+      <div className={styles.notes}>
+        <ReportNotes notes={quietNotes} noteClassName={() => styles.note} />
+      </div>
+      {/* ⚠ THE ONE BAND THAT IS A FINDING RATHER THAN AN EXPLANATION — its tense follows the lens
+          and its wording lives with the other notes; see the notes module. It is also the one note
+          an EXPORT carries out of this stack for its own sake (owner ruling 2026-09-05): it is the
+          single most useful line on the page for a board reading the emailed file. */}
+      {alertNote && (
         <div className={styles.shortfall}>
           <CalendarClock size={15} aria-hidden />
-          {lens === 'actual' ? (
-            <span>
-              <strong>Your balance went below zero in {formatMonthLong(cash.shortfall.month)} — by about {fmt(cash.shortfall.amount)}.</strong>
-              {' '}More went out than had come in by then. Check Scheduled for what’s still to come.
-            </span>
-          ) : (
-            <span>
-              <strong>On this plan you go short in {formatMonthLong(cash.shortfall.month)} — about {fmt(cash.shortfall.amount)}.</strong>
-              {' '}Move a payment, bring dues forward, or plan the gap.
-            </span>
-          )}
+          <span><NoteText note={alertNote} /></span>
         </div>
       )}
-
       {/* Drill-in: what a single Actual or Scheduled cell is made of. Read-only by design —
           the grid is a way to REACH the forms, never a second editor. Visible to read-only
           coaches, who can already see every number on this page. */}

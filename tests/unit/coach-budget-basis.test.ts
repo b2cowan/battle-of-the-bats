@@ -164,6 +164,11 @@ describe('the labels that move with the basis', () => {
 
   it('renames the plan column so a scrolled reader can still tell the span', () => {
     assert.equal(planColumnLabel('todate'), 'Plan to date');
+    /* The ordinary basis is pinned too, because it is the one that used to be wrong in a way
+       nothing could see: the helper said 'Budget', the screen wanted 'Budgeted', so the screen
+       routed around it — and the export, which now asks the same helper, would have shipped a
+       different word from the page it came from. */
+    assert.equal(planColumnLabel('season'), 'Budgeted');
   });
 
   it('falls back to the season basis for anything a corrupt preference could hold', () => {

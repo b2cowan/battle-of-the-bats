@@ -50,10 +50,19 @@ export function normalizeBasis(raw: unknown): CompareBasis {
   return raw === 'todate' ? 'todate' : 'season';
 }
 
-/** The plan column's heading. It changes with the basis so a reader who scrolled past the control
- *  can still tell which span the figures beside it belong to. */
+/**
+ * The plan column's heading. It changes with the basis so a reader who scrolled past the control
+ * can still tell which span the figures beside it belong to.
+ *
+ * ⚠ THE WHOLE-SEASON VALUE IS "Budgeted", NOT "Budget", and it was the other way round until
+ * 2026-09-05. Nothing ever used it: the screen wanted "Budgeted", so its one caller wrote
+ * `basis === 'todate' ? planColumnLabel(basis) : 'Budgeted'` and routed around the helper. That
+ * workaround was invisible while the file had a hard-coded header of its own — and the moment the
+ * export started asking this function for its heading, the two surfaces would have disagreed on
+ * the ordinary basis to fix a bug on the rare one. One word, one home, both callers.
+ */
 export function planColumnLabel(basis: CompareBasis): string {
-  return basis === 'todate' ? 'Plan to date' : 'Budget';
+  return basis === 'todate' ? 'Plan to date' : 'Budgeted';
 }
 
 /**

@@ -3620,6 +3620,30 @@ a.oneChip:hover { border-color: currentColor; }
   transition: color 0.12s;
 }
 .ledgerExpand:hover { color: var(--text-secondary); }
+
+/* ⚠ THE DESKTOP HIT AREA, GROWN WITHOUT MOVING ANYTHING (owner ruling 2026-09-05). Through the
+   touch band this control already takes the 44px floor (the `[data-touch-floor]` rule below), so
+   the small target was only ever a POINTER problem: a 20px square is a fussy thing to hit with a
+   mouse, and it is the reason the row had to carry the job in the first place.
+
+   ⚠ A PSEUDO-ELEMENT, NOT PADDING. Padding would grow the flex box, which sets the row's height —
+   every ledger in Money would gain a few pixels per row and the layout baseline would move on
+   screens that asked for nothing. This grows the CLICKABLE box and leaves the drawn one alone.
+
+   ⚠⚠ VERTICAL ONLY — NOT ONE PIXEL SIDEWAYS, and the rendered sweep is what settled it. The first
+   attempt reached 4px to each side on the reasoning that the line's name starts immediately right,
+   so a *small* horizontal bite was harmless. It was not: `check:layout` reported every expander on
+   both money grids spilling 4px with `overflow-x: visible` and no scroller owning it — five rows
+   per screen, at three widths. An absolutely-positioned box still contributes to its ancestors'
+   overflow, so "it does not affect layout" is true of the flow and false of the scroll box.
+   Vertically there is genuinely nothing to collide with: the row's own height is the only thing
+   above and below, and that is where the useful reach was anyway. */
+.ledgerExpand { position: relative; }
+.ledgerExpand::after {
+  content: '';
+  position: absolute;
+  inset: -8px 0;
+}
 /* Matches the focus treatment its sibling controls already carry (`.ledgerGroupHeadBtn`,
    `.moneyGridToggle`) — this one was the odd one out. */
 .ledgerExpand:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }

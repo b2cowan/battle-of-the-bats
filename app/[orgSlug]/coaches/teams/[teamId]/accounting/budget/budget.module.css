@@ -172,6 +172,21 @@
   background: rgba(var(--warning-rgb), 0.10);
   font-weight: 600;
 }
+/* ── The chip that folds its own row (owner ruling 2026-09-05) ────────────
+   Only on a line with a real split: the chip answers "Mar · Nov", the fold answers "how much in
+   each", so the thing that raises the question opens the answer. It is a POINTER shortcut, exactly
+   like the row itself — the chevron beside it stays the named control a keyboard reaches.
+
+   ⚠ THE HOVER IS A DOTTED UNDERLINE, NOT A FILL. This chip already carries a background in its
+   "No date yet" state and a colour change in its partly-dated one; a hover fill would collide with
+   the first and a colour shift would fight the second. An underline reads as "this does something"
+   in every state and in both themes, and costs no token. */
+.whenChipTappable { cursor: pointer; }
+.whenChipTappable:hover {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
 /* The undated HALF of a partly-dated line — the case the old column could not say at all
    ("Mar · 2 chunks" over a $1,000 balance with no date). Colour alone would be the whole signal,
    so it carries WEIGHT too (deutan memory: olive↔danger ΔE 1.0 on these cards). */

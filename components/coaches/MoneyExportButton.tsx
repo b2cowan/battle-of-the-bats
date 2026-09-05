@@ -103,7 +103,13 @@ export default function MoneyExportButton({
       await downloadMoneyExport(f, {
         ...build(f),
         orgLabel: currentOrg?.slug ?? '',
-        pdfSettings: f === 'pdf' ? await loadPdfSettings() : null,
+        /* ⚠ EXCEL NEEDS THESE TOO (owner ruling 2026-09-05). The club's document settings were
+           loaded for the PDF alone, so an Excel report could not carry a club's crest even where
+           they had uploaded one, and could not honour the branding switch they had already set.
+           A spreadsheet now opens on the same letterhead as the printed report.
+           ⚠ CSV STILL GETS NOTHING, and that is right: it has no masthead and no footer to brand,
+           and a fetch on the way to a plain data file is a round trip for nobody. */
+        pdfSettings: f === 'csv' ? null : await loadPdfSettings(),
       });
     },
   }));

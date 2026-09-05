@@ -214,7 +214,13 @@ const FOCUS_WHEN  = 'budget-line-when';
  */
 const WHEN_ANSWERS: { id: WhenAnswer; label: string }[] = [
   { id: 'month', label: 'One month' },
-  { id: 'split', label: 'Split across months' },
+  /* ⚠ "periods", NOT "months" (owner ruling 2026-09-05, §145 walk). This answer opens a box
+     that splits by month, QUARTER, specific date or name, so "months" named a quarter of what it
+     does and told a quarterly budgeter the option was not for them. "Period" is not new jargon:
+     the box this reveals is headed "Period Breakdown", its step 2 reads "Add a period for each
+     …", and the plan's second view is "By period" — "Split across months" was the odd one out,
+     not the word to keep. No customer ever saw the old label: the When question is post-7f21df47. */
+  { id: 'split', label: 'Split across periods' },
   /* ⚠ "No date yet", NOT "Not yet known" — ONE SPELLING, and this is the wider word (owner ruling
      2026-09-04). It is what the month grid's column has been called since the same day, and a
      coach who picks an answer has to find their own words in the column it lands in. The column's
@@ -265,14 +271,44 @@ function fundingCell(kind: BudgetLineKind, n: number | undefined): number | unde
  * ⚠ ONE SPELLING, THREE SURFACES: "No date yet" here, in the line form's third answer, and as the
  * month grid's column heading. The export says it too, through `whenSummaryText`.
  */
-function WhenChip({ line, className }: { line: RepBudgetLineWithPeriods; className?: string }) {
+function WhenChip({ line, className, onToggle }: {
+  line: RepBudgetLineWithPeriods;
+  className?: string;
+  /**
+   * Fold this line's periods open (owner ruling 2026-09-05).
+   *
+   * ⚠ THE CHIP IS THE ANSWER TO THE QUESTION THE FOLD ANSWERS, which is the whole reason it got
+   * this job. A coach reading "Mar · Nov" wants to know *how much in each* — so the thing that
+   * raised the question is the thing to tap, and it is a far bigger target than a 20px chevron.
+   *
+   * ⚠ A CLICK HANDLER ON A SPAN, DELIBERATELY, NOT A SECOND BUTTON. The chevron stays the one
+   * SEMANTIC control — keyboard and screen reader reach the fold through it, and it already
+   * carries `aria-expanded` and a real name. A button here would put a second `aria-expanded` on
+   * one fold, and an `aria-label` naming the action would REPLACE the chip's own text — which at
+   * ≤640 is the only copy of the When answer anywhere on the screen. Same split the row itself
+   * already uses: named control for the keyboard, pointer shortcut for everyone else.
+   *
+   * Passed only when the line HAS a fold — undefined on a one-month or undated line, so the chip
+   * never offers to open something that isn't there.
+   */
+  onToggle?: () => void;
+}) {
   const s = whenSummary(line.periods ?? [], Number(line.totalAmount ?? 0) || 0);
-  const cls = `${styles.whenChip} ${className ?? ''}`;
+  const cls = `${styles.whenChip} ${onToggle ? styles.whenChipTappable : ''} ${className ?? ''}`;
+  // Same copy-gesture guard the row carries: a click that ends a text selection is someone
+  // lifting a date out of the cell, not asking for the split.
+  const onClick = onToggle
+    ? (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (window.getSelection()?.toString()) return;
+      onToggle();
+    }
+    : undefined;
   if (s.months.length === 0) {
-    return <span className={`${cls} ${styles.whenChipNone}`}>No date yet</span>;
+    return <span className={`${cls} ${styles.whenChipNone}`} onClick={onClick}>No date yet</span>;
   }
   return (
-    <span className={`${cls} ${styles.whenChipSet}`}>
+    <span className={`${cls} ${styles.whenChipSet}`} onClick={onClick}>
       {s.months.join(' · ')}
       {s.undated > 0.005 && (
         <> · <span className={styles.whenChipPart}>{fmt(s.undated)} no date</span></>
@@ -292,6 +328,11 @@ function BudgetLineRow({
   onEdit: () => void;
 }) {
   const moneyClass = funding ? styles.fundingAmount : '';
+  /* One predicate for "this line has a fold", read by the chevron and by both When chips — they
+     must never disagree about whether there is something to open. Same test the chevron already
+     used: a single period restates the row above it, so only a real split folds. */
+  const canExpand = line.periods.length > 1;
+  const foldFromChip = canExpand ? onToggle : undefined;
 
   /* A line and its expanded periods are siblings inside the category frame — the shared
      `.ledgerRow` draws the rule that separates one line from the next, so no wrapper is needed
@@ -302,7 +343,25 @@ function BudgetLineRow({
           the SEMANTIC control (keyboard, screen reader, and the visible desktop door); the row
           is the pointer/touch shortcut, and on a phone the only visible one. The chevron stops
           propagation so expanding a split line never also opens its form. Delete lives in the
-          edit modal now, behind the same confirm as always — one door, full capability inside. */}
+          edit modal now, behind the same confirm as always — one door, full capability inside.
+
+          ⚠⚠ RE-EXAMINED AND KEPT 2026-09-05, and the reasons are worth having here because the
+          opposite reading is intuitive: reading a plan is more common than editing it, so why
+          doesn't the row fold? Two facts, both about THIS screen:
+            1. The fold exists on a MINORITY of rows. A chevron needs two or more periods, so
+               "One month" (one) and "No date yet" (none) have nothing to open — and in the coach
+               demo's mid-season world every dated line has exactly one period, meaning row-to-fold
+               would do nothing at all on the version of this screen a prospect sees. A row that
+               ignores a tap is worse than one that does something unasked.
+            2. On a phone the pencil is CLIPPED OUT OF THE LAYOUT (its own ruling, so the ledger
+               reads clean and the money column reaches the edge). It stays focusable for a keyboard
+               and a screen reader, but a thumb cannot see it — so the row is the only edit door a
+               phone has. Folding here would leave a coach able to read the plan on their phone and
+               unable to change it.
+          ⚠ Budget vs. Actual's rows DO fold on a tap, and that screen's comment used to claim it
+          was matching this one. It never was. The difference is worklist vs. report — see the note
+          on its own row for the full statement. What closed the gap instead is the WHEN CELL below,
+          which folds the row without taking the edit door off a phone. */}
       <div
         className={`${shared.ledgerRow} ${canWrite ? shared.rowTappable : ''}`}
         // Selecting text to copy an amount must not open the form — a click that ends a
@@ -315,7 +374,7 @@ function BudgetLineRow({
               restates the row above it — the same empty caption §133 removed from the item rows the
               same week. Two or more chunks still open, because then the sub-rows say something the
               When cell cannot. */}
-          {line.periods.length > 1
+          {canExpand
             ? (
               <button
                 type="button"
@@ -339,14 +398,15 @@ function BudgetLineRow({
                 take room from the line name, which already ellipses, or from the money. The note
                 slot is already here, already quiet, and already where a line says something extra
                 about itself. */}
-            <WhenChip line={line} className={styles.whenUnderName} />
+            <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />
           </span>
         </div>
 
         {/* The When column — was "Schedule" until 2026-09-04, and printed chunk counts over a line
-            whose undated half it never mentioned. See `whenSummary` for both defects. */}
+            whose undated half it never mentioned. See `whenSummary` for both defects.
+            ⚠ The chip inside it FOLDS THE ROW on a split line (2026-09-05) — see WhenChip. */}
         <span className={styles.schedCell}>
-          <WhenChip line={line} />
+          <WhenChip line={line} onToggle={foldFromChip} />
         </span>
 
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{fmt(line.totalAmount)}</span>
