@@ -18105,7 +18105,7 @@ two assertions had been describing an `Edit` button Part B deleted in August.
    anywhere, and the walk still working.
 
 
-## §142 · Player dues join the Budget vs Actual Statement, and "Funded by players" is deleted — BUILT 2026-09-04, committed `77fa11ae` 2026-09-04, awaiting QA
+## §142 · Player dues join the Budget vs Actual Statement, and "Funded by players" is deleted — ✅ PASSED 2026-09-04 (40/40, all nine parts, zero flags) · committed `77fa11ae` 2026-09-04
 
 **The ruling this executes (owner, 2026-09-04, amended twice the same day after the mockup gate):**
 the Statement counted every cost and left out the season's largest money in. One report answered
@@ -18155,3 +18155,110 @@ on dev **after** §132's walk had already passed 42/42. They have never been wal
 8. **H · The empty state.** A team with no dues schedule: an em-dash and a door, never $0.00.
 9. **I · Calls to make.** The dues row's figures deliberately do not open; the populated caption
    names Player Dues without linking it; the floored season says nothing.
+
+
+**✅ WALKED AND PASSED 2026-09-04 — 40/40 steps, all nine parts (A–I), ZERO flags.** The §132
+round-three work carried in Part B is walked at last, and it passes with the rest.
+
+**The Part C reading, verbatim — the step this whole document existed for:** *"the fundraising
+drives we budgeted 1800 for and have collected 778.60, we are short 1021.40. easy to understand."*
+That is a row read left to right with no pause, no guess and no arithmetic performed by the reader.
+§132 passed forty-two checks without ever asking anyone to do it, which is how it shipped a report
+whose largest revenue was missing.
+
+**Two prompts came back unanswered, and in both the silence IS the answer:**
+- **H — seed a no-dues team?** Left unseeded. The empty state keeps its five unit assertions and the
+  mockup, and nobody has looked at it in a browser: a **known, accepted** gap rather than an
+  oversight. Closing it costs a re-key of the shared UAT layout baseline every other session works
+  against, which is why it was never done unasked.
+- **I — the four calls on the record** (the dues row's figures open nothing; the populated caption
+  names Player Dues without linking it; a season whose other income covers the plan prints the row
+  and no sentence; "Funded by players" left the PDF's summary header too). Ticked, not argued —
+  they stand as built.
+
+**⚠ PART B'S STEP 4 WAS WRONG IN THE WALK, NOT IN THE PRODUCT** — caught by the owner mid-walk,
+and the walkthrough was corrected in place the same day. The step said *"tap the row anywhere else
+and its payment schedule opens"* under a preamble that said to work on *"a row with figures in both
+columns"* — two different predicates. A row folds open only when its plan line is **split across
+payment dates**, and the chevron at the row's left edge is the tell; a row holding a single undated
+amount (and the Player dues row) does nothing on a tap, correctly. The owner clicked a legitimately
+inert row and read the product as broken. The step now leads with the chevron and says the inert
+case out loud; item ids were left untouched so ticks already earned survived the republish.
+**The general lesson: a walk step that names a BEHAVIOUR must also name the state the row has to be
+in to show it** — otherwise a passing product reads as a defect, and the walk spends the owner's
+attention proving the walk wrong.
+
+## §143 · The month grid's plan panel lands ON the line, every time — the one-shot deep link re-arms — BUILT 2026-09-04, awaiting QA
+
+**Found by the owner during §142's walk.** Tapping a budget line inside the month grid's "what makes
+up this plan figure?" panel already carried an instruction to open that exact line's edit drawer with
+its payment dates expanded — and the Budget tab obeyed it **only the first time that tab was opened
+in a session**. Every later tap dropped the coach at the top of the plan list to hunt the line by
+hand, which is the exact journey the panel exists to remove.
+
+**Why it hid.** The grid lives on Budget vs Actual, so every one of these links is a cross-tab hop
+inside the Money hub — and the hub keeps every visited panel mounted rather than rebuilding it. The
+deep link was armed once per mount, so it was already spent by the time the link arrived. Anyone
+testing it on a fresh page load saw it work perfectly.
+
+**The fix.** The deep link now re-arms on the line it names rather than firing once ever. Within one
+visit it stays held — a plan refetch, or a save, never reopens the drawer over the coach's work —
+and the address is scrubbed on any other tab, so the SAME line opens again after a round-trip.
+
+⚠ **The bug class, which is the part worth keeping:** a fire-once-ever guard is only safe on a
+surface that gets rebuilt, and **nothing in the Money hub does**. The `?starter=1` door beside it
+already carried that warning in its own comment; this one did not, and the comment it carries now
+says so.
+
+⚖ **ONE CALL OPEN, not built:** on that same panel a **read-only** coach gets no way out at all —
+the lines are only tappable if you can edit — while the spending-side panel's doors ("Open the
+Ledger", "Open Sponsors") are ungated and an assistant does get them. The consistency fix is a
+single **Open the budget** button shown only when the rows are not tappable. Awaiting the owner.
+
+### ⚠ /review found the fix's OWN defect, and two lenses found it independently
+
+**A deep link that opens a form is a WRITE onto that form, and neither guard in this file could see
+it.** The panel has two protections against losing typed work — one on the modal's backdrop/X/Cancel,
+one on in-app link clicks and page unload — and the deep link went through neither, because it writes
+the form from an effect rather than from a click. **The browser's Back button is not a click.** So:
+open a budget line, type an amount and a couple of payment dates, press Back, tap another line in the
+grid — and the first line's unsaved work was replaced without a word. The modal's overlay covers the
+tab bar, which is precisely what makes Back the only way out of a dirty form, and this the only hole.
+It was structurally unreachable before the re-arm fix (the old guard could only fire once per page
+load); making the link work reliably is what turned it into an everyday path.
+
+**Fixed by reusing the guard the file already owns** — same dialog, same words, same noun. A clean
+form opens straight away; a dirty one asks "Discard this budget line?" and names what is at stake
+(the amount, the description, the count of payment periods). "Keep editing" drops that arrival rather
+than nagging: the coach's form stays put, and the line is still one ordinary trip through the grid
+away. **The general rule: a guard that only watches clicks does not protect state a deep link
+writes.**
+
+**A second, quieter defect went with it:** the link marked itself "handled" BEFORE it looked the line
+up, so a link arriving while a background refresh was still in flight met a stale plan, found
+nothing, and was swallowed for good — the address left naming a line that would never open. It now
+claims the link only once the line is actually in hand, and simply retries when the newer plan lands.
+
+**Deliberately NOT changed:** pressing Back onto an address that still says "open line A" reopens
+line A, even if the coach had closed it. The address encodes that intent and nothing distinguishes
+it from a fresh tap; no work is lost, and the form re-reads current data. Recorded here rather than
+engineered around.
+
+### The walk (3 steps)
+1. Money → **Budget Plan** first (this is the step that used to poison it), then **Budget vs
+   Actual** → tap a plan figure → tap a line. Budget opens with that line's drawer up and its
+   payment dates expanded.
+2. Close it, return to Budget vs Actual, tap the **same** line again. It opens again.
+4. ⚠ **The unsaved-work guard (found by /review, not by the build).** Open a line's drawer, type
+   an amount (do NOT save), press the browser **Back** button, then tap a DIFFERENT line in the
+   grid. You should be asked *"Discard this budget line?"* naming what you typed — **Keep editing**
+   leaves your work exactly as it was; **Discard** opens the line you tapped. Before the fix the
+   first line's work vanished silently.
+3. ⚠ **The seam with the concurrent §133 second-look work, which neither session owns alone.**
+   Because the grid link forces the payment split ON, the drawer arrives holding one blank period
+   against a real total — a mismatch **by construction**, on a form the coach has not touched. It
+   must open **clean**: no red "this split no longer adds up" banner, and if you do reach for
+   **Rescale**, it fills the empty rows evenly rather than doing nothing. That interaction was
+   found and fixed from the other side (session tournament-website-84) while this fix was in
+   review; the step lives here because this deep link is the only way a coach reaches that state
+   routinely. Before the fix it happened once per page load; now it happens on every tap.

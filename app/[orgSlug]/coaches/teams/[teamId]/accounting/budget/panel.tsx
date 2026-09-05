@@ -55,6 +55,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { tournamentToday } from '@/lib/timezone';
 
 /**
@@ -690,18 +691,44 @@ export function BudgetPlanPanel({
   const filledPeriods = modalOpen && form.usePeriods
     ? form.periods.filter(p => p.label || p.date || p.amount).length
     : 0;
+  // Names the work at stake rather than "unsaved changes" — the period split is the whole reason
+  // this guard exists, so it gets counted out loud. ONE sentence, read by BOTH guards below: the
+  // coach loses the same work whether they tap the backdrop or arrive from the month grid on top
+  // of it, so they have to be told about it in the same words.
+  const lineDiscardDetail = [
+    form.totalAmount && 'an amount',
+    form.description && 'a description',
+    filledPeriods > 0 && `${filledPeriods} payment period${filledPeriods === 1 ? '' : 's'}`,
+  ].filter(Boolean).join(' and ') || undefined;
   const closeLineModal = useDiscardGuard({
     dirty: lineDirty,
     close: () => setModalOpen(false),
     noun: 'budget line',
-    // Names the work at stake rather than "unsaved changes" — the period split is the
-    // whole reason this guard exists, so it gets counted out loud.
-    detail: [
-      form.totalAmount && 'an amount',
-      form.description && 'a description',
-      filledPeriods > 0 && `${filledPeriods} payment period${filledPeriods === 1 ? '' : 's'}`,
-    ].filter(Boolean).join(' and ') || undefined,
+    detail: lineDiscardDetail,
   });
+
+  /* ⚠⚠ THE SECOND DISCARD GUARD — AND IT EXISTS BECAUSE OF A DEFECT THIS FILE SHIPPED FOR A FEW
+     HOURS, CAUGHT BY TWO INDEPENDENT REVIEW LENSES (/review, 2026-09-04). The month grid's deep
+     link (further down) opens a line by writing `form`/`formBaseline` straight from an EFFECT.
+     That is not a click, so neither existing guard can see it: `closeLineModal` covers the
+     backdrop/X/Cancel, and `UnsavedChangesGuard` covers in-app <a> clicks and beforeunload. The
+     browser's BACK button is neither of those. So: type into line A, press Back, tap line B in the
+     grid — and A's unsaved amount and payment periods were gone without a word.
+     ⚠ The modal overlay outranks the tab bar, which is what makes Back the ONLY way out of a dirty
+     form and this guard the only thing standing in front of the loss.
+     `pendingDeepLink` carries the line to open: the guard runs it immediately on a clean form, and
+     only after "Discard" on a dirty one. Same dialog, same words, same noun as its twin — a second
+     way of saying "you are about to lose this" would be a second thing to learn. */
+  const pendingDeepLink = useRef<(() => void) | null>(null);
+  // Latest-ref because the deep-link effect deliberately does NOT list `lineDirty` in its deps
+  // (listing it would re-run the effect on every keystroke) — so the handler it reaches for must be
+  // THIS render's, not the one captured when the address last changed.
+  const openDeepLinkedLine = useLatestRef(useDiscardGuard({
+    dirty: lineDirty,
+    close: () => { const go = pendingDeepLink.current; pendingDeepLink.current = null; go?.(); },
+    noun: 'budget line',
+    detail: lineDiscardDetail,
+  }));
 
   // The delete confirm holds no typed work, so it closes silently — it just has to clear
   // the failure message so reopening it doesn't show a stale reason.
@@ -903,38 +930,64 @@ export function BudgetPlanPanel({
     if (plan.lines.length > 0 && !plan.hasInstallments) setGenOpen(true);
   }, [wantsGenerate, loading, plan, assignments, teamId]);
 
-  // Deep link from the month grid (chunk H): ?line=<id> opens THIS page's existing edit modal
-  // on that line, with its payment periods expanded. The grid is a way to REACH the form that
-  // already exists — it never grows an editor of its own. Same one-shot recipe as ?generate=1:
-  // write-capable only, silently ignored when the line has gone.
-  const lineDeepLinkDone = useRef(false);
+  // Deep link from the month grid: ?line=<id> opens THIS page's existing edit modal on that line,
+  // with its payment periods expanded. The grid is a way to REACH the form that already exists —
+  // it never grows an editor of its own. Write-capable only, silently ignored when the line has
+  // gone.
+  //
+  // ⚠⚠ IT RE-ARMS ON THE PARAM, AND A `useRef(false)` ONE-SHOT IS WHY IT SILENTLY STOPPED WORKING
+  // (owner, QA §142, 2026-09-04). The grid lives on the Budget-vs-actual TAB, so every one of
+  // these links is a cross-tab hop inside the hub — and the hub navigates by `router.replace` on
+  // the same route while keeping every visited panel MOUNTED. So the ref was already spent by the
+  // time the link arrived: a coach who had opened Budget even once that session landed on the
+  // plan list with no drawer and had to hunt for the line by hand. The fire-once-ever guard is
+  // only safe on a panel that remounts, and no panel in this hub does — `?starter=1` next door
+  // carries the same warning for the same reason.
+  //
+  // Keyed on the id rather than a boolean so the SAME line can be opened again after a tab
+  // round-trip: `line`/`periods` are scrubbed from the address on any other tab's href
+  // (ONE_SHOT_KEYS in the hub), which clears the key on the way past. Within one visit it stays
+  // held, so a plan refetch — or a save — never reopens the modal over the coach's work.
+  const deepLinkLine = seasonSearchParams.get('line');
+  const deepLinkPeriods = seasonSearchParams.get('periods') === '1';
+  const deepLinkHandled = useRef<string | null>(null);
   useEffect(() => {
-    if (lineDeepLinkDone.current || loading || !plan) return;
+    if (!deepLinkLine) { deepLinkHandled.current = null; return; }
+    if (deepLinkHandled.current === deepLinkLine || loading || !plan) return;
     const a = assignments.find(x => x.teamId === teamId);
     if (!a) return; // assignments still loading — try again next render
-    lineDeepLinkDone.current = true;
     if (a.capabilities.money !== 'write') return;
-    if (typeof window === 'undefined') return;
-    const q = new URLSearchParams(window.location.search);
-    const lineId = q.get('line');
-    if (!lineId) return;
-    const line = plan.lines.find(l => l.id === lineId);
+    const line = plan.lines.find(l => l.id === deepLinkLine);
+    /* ⚠ NOT FOUND IS NOT THE SAME AS HANDLED (/review, 2026-09-04). The key used to be claimed
+       above this lookup — so a link that arrived while a QUIET reload was still in flight (a bump
+       from another money tab re-READS without ever touching `loading`) met a stale plan, failed
+       the lookup, and was swallowed for good: the id was marked done, so the retry could never
+       run and the address sat there naming a line nothing would open. Claiming it only once the
+       line is in hand costs nothing — in the not-found case the deps are unchanged, so this simply
+       re-evaluates when the newer plan lands. */
     if (!line) return;
+    deepLinkHandled.current = deepLinkLine;
     const opened = formFromLine(line, seasonYear, lastSplitMode);
     // ?periods=1 arrives from a month cell, where the coach was looking at dates — so the period
     // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
     // opening the split is not the coach's work, so an untouched form must still close silently.
-    if (q.get('periods') === '1') opened.usePeriods = true;
-    setEditingLine(line);
-    setForm(opened);
-    setFormBaseline(opened);
-    resetModalTransients();
-    setModalOpen(true);
-    // One-shot deep link (guarded by lineDeepLinkDone). `seasonYear`/`lastSplitMode` are read for
-    // the opening form only — listing them would re-run this and reopen the modal over whatever
-    // the coach is doing.
+    if (deepLinkPeriods) opened.usePeriods = true;
+    pendingDeepLink.current = () => {
+      setEditingLine(line);
+      setForm(opened);
+      setFormBaseline(opened);
+      resetModalTransients();
+      setModalOpen(true);
+    };
+    /* A clean form opens straight away; a dirty one is ASKED about first — see the guard above.
+       "Keep editing" DROPS this arrival rather than nagging: the key stays claimed, and the coach
+       still reaches the line the ordinary way, because going back to the grid scrubs `line` from
+       the address on the way past and re-arms it. */
+    void openDeepLinkedLine.current?.();
+    // `seasonYear`/`lastSplitMode` are read for the opening form only — listing them would re-run
+    // this and reopen the modal over whatever the coach is doing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, plan, assignments, teamId]);
+  }, [deepLinkLine, deepLinkPeriods, loading, plan, assignments, teamId]);
 
   // Deep link from the Money hub's plan anchor: ?starter=1 opens the budget starter
   // directly (write-capable + still-empty plan only — the ?generate=1 recipe above).
