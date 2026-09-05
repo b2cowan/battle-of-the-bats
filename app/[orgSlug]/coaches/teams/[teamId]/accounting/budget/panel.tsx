@@ -11,8 +11,10 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
+import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/lib/coach-budget-months';
+import ColumnPager from '@/components/coaches/ColumnPager';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
-import { monthKeyOf } from '@/lib/coach-budget-months';
+import { todayLocal } from '@/lib/measurable-format';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
@@ -290,8 +292,16 @@ function BudgetLineRow({
  * already enter. Read-only by design: this is a way to SEE the plan, and every edit still happens
  * in the list's own form, so there is exactly one place a budget line can be changed.
  */
-function PeriodGrid({ view, closed, onToggle }: {
+function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onToggle }: {
   view: ReturnType<typeof buildPeriodView>;
+  /** Months page; quarters never do — eight columns always fit. Passed rather than inferred from
+   *  a column key's shape, so the reason is stated where the decision is made. */
+  granularity: PeriodGranularity;
+  /** First visible month, or null for "wherever today is". The PANEL owns it (same reason the
+   *  folds were lifted in P3): held here, stepping to a later month and flipping to the List and
+   *  back would silently return the coach to today. */
+  monthStart: number | null;
+  onMonthStart: (n: number) => void;
   /**
    * ⚠ COLLAPSED CATEGORIES, tracked as the set that is CLOSED rather than the set that is open
    * (owner ruling 2026-08-13: *"any hierarchy should be collapsable in a table"*).
@@ -313,8 +323,47 @@ function PeriodGrid({ view, closed, onToggle }: {
   closed: Set<string>;
   onToggle: (key: string) => void;
 }) {
+  /* ⚠⚠ THE MONTH WINDOW (owner ruling 2026-09-04, QA §133) — the same twelve-at-a-time control
+     Budget vs. Actual has always had. This grid used to draw EVERY column it had and leave the
+     coach swiping: fine at the ten a normal plan produces, unusable at the twenty-four a single
+     far-off payment date can produce. That is the worse failure mode of the two — it works right
+     up until somebody's real plan breaks it.
+     ⚠ The undated column is NOT a month and never pages; it leads, on both grids.
+     ⚠ QUARTERS DO NOT PAGE. Two years of quarters is eight columns and always fits, so a control
+     there would be furniture that never does anything. */
+  const undatedCol = view.columns.find(c => c.unscheduled) ?? null;
+  const dateCols = view.columns.filter(c => !c.unscheduled);
+  const paged = granularity === 'months' && dateCols.length > MONTH_WINDOW;
+  const maxStart = Math.max(0, dateCols.length - MONTH_WINDOW);
+  /* Opens on today when today is inside the plan, centred the way the statement centres it, and
+     falls back to the start for a plan that has not reached this month. */
+  const todayKey = todayLocal().slice(0, 7);
+  const here = dateCols.findIndex(c => c.key >= todayKey);
+  const defaultStart = !paged || here < 0 ? 0 : Math.max(0, here - Math.floor(MONTH_WINDOW / 2));
+  const start = paged ? Math.min(Math.max(0, monthStart ?? defaultStart), maxStart) : 0;
+  const windowCols = paged ? dateCols.slice(start, start + MONTH_WINDOW) : dateCols;
+  const cols = undatedCol ? [undatedCol, ...windowCols] : windowCols;
+  /* The band describes WHAT IS ON SCREEN, so it is rebuilt from the window rather than read off
+     the view — a band naming columns a coach cannot see is worse than no band at all. */
+  const bands = monthYearBands(windowCols.map(c => c.key));
+
   return (
     <div className={styles.periodGridWrap}>
+      {paged && (
+        /* ⚖ THE SHARED CONTROL, not a third copy of it. Budget vs. Actual's month window and the
+           By-installment dues grid already read ColumnPager; a hand-rolled pager per panel is
+           exactly how the budget and bva header CSS forked before.
+           ⚠ The range is NAMED because Total is the whole plan, never the visible twelve months —
+           a coach adding up what they can see has to be able to tell why it does not match. */
+        <ColumnPager
+          unit="month"
+          range={<><strong>{periodRangeLabel(windowCols.map(c => c.key))}</strong>{` · of ${dateCols.length} months`}</>}
+          onPrev={() => onMonthStart(Math.max(0, start - 1))}
+          onNext={() => onMonthStart(Math.min(maxStart, start + 1))}
+          prevDisabled={start === 0}
+          nextDisabled={start >= maxStart}
+        />
+      )}
       {/* `sticky` pins the line name; the hint is structural (a grid that scrolls silently
           sideways is the defect CoachScrollX exists to prevent). */}
       <CoachScrollX sticky hint="Swipe the table to see every period">
@@ -325,24 +374,28 @@ function PeriodGrid({ view, closed, onToggle }: {
                 and it labelled a single column with something that describes a GROUP of them. The
                 band groups instead, and pays for itself on a season crossing New Year: Sep–Dec
                 under one year, Jan–Feb under the next, told apart at a glance.
-                ⚠ Unscheduled and Total sit under an EMPTY band on purpose — they belong to no
-                year, and giving them one would be a tidy lie in a table whose job is to add up. */}
-            {view.yearBands.length > 0 && (
+                ⚠ "No date yet" and Total sit under an EMPTY band on purpose — they belong to no
+                year, and giving them one would be a tidy lie in a table whose job is to add up.
+                ⚠ THE EMPTY SPANS SWAPPED ENDS on 2026-09-04 when the undated column moved to the
+                FRONT to match Budget vs. Actual: two blank cells lead (the name and the undated
+                column), one trails (Total). Getting this wrong shifts every year one column and
+                the table still renders. */}
+            {bands.length > 0 && (
               <tr className={styles.periodGridYearRow}>
-                <th scope="col" aria-hidden />
-                {view.yearBands.map(band => (
+                <th scope="col" aria-hidden colSpan={view.hasUnscheduled ? 2 : 1} />
+                {bands.map(band => (
                   <th key={band.year} scope="colgroup" colSpan={band.span} className={styles.periodGridYear}>
                     {band.year}
                   </th>
                 ))}
-                <th scope="col" aria-hidden colSpan={view.hasUnscheduled ? 2 : 1} />
+                <th scope="col" aria-hidden />
               </tr>
             )}
             <tr>
               {/* Named the same as Budget vs. Actual's month grid — one grid, one word for its
                   first column. It was "Line" here and "Category / line" there. */}
               <th scope="col">Category / line</th>
-              {view.columns.map(col => (
+              {cols.map(col => (
                 <th key={col.key} scope="col" className={col.unscheduled ? styles.periodGridUnscheduled : ''}>
                   {col.label}
                 </th>
@@ -372,7 +425,7 @@ function PeriodGrid({ view, closed, onToggle }: {
                       <span className={shared.wrap640}>{group.name}</span>
                     </button>
                   </th>
-                  {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
+                  {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(group.lineKind, group.cells[col.key]))}</td>)}
                   <td>{fmtCell(fundingCell(group.lineKind, group.total))}</td>
                 </tr>
                 {open && group.rows.map(row => (
@@ -385,7 +438,7 @@ function PeriodGrid({ view, closed, onToggle }: {
                           tests/unit/bva-figure-doors-guard.test.ts. Short version: a fact the coach
                           gets by opening the row does not need a label promising it first. */}
                     </th>
-                    {view.columns.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
+                    {cols.map(col => <td key={col.key}>{fmtCell(fundingCell(row.lineKind, row.cells[col.key]))}</td>)}
                     <td>{fmtCell(fundingCell(row.lineKind, row.total))}</td>
                   </tr>
                 ))}
@@ -401,7 +454,7 @@ function PeriodGrid({ view, closed, onToggle }: {
                     aggregate word must cover sponsorship too. */}
                 {view.groups.some(g => isFundingKind(g.lineKind)) ? 'Costs less funding' : 'Total planned budget'}
               </th>
-              {view.columns.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
+              {cols.map(col => <td key={col.key}>{fmtCell(view.totals.cells[col.key])}</td>)}
               <td>{fmtCell(view.totals.total)}</td>
             </tr>
           </tbody>
@@ -409,7 +462,7 @@ function PeriodGrid({ view, closed, onToggle }: {
       </CoachScrollX>
       {view.hasUnscheduled && (
         <p className={styles.periodGridNote}>
-          <strong>Unscheduled</strong> holds anything without payment dates. Split a line by period
+          <strong>No date yet</strong> holds anything without payment dates. Split a line by period
           to move it into a month.
         </p>
       )}
@@ -600,6 +653,14 @@ export function BudgetPlanPanel({
      the List's own — see the prop's note on PeriodGrid. */
   const [gridClosed, setGridClosed] = useState<Set<string>>(new Set());
   const toggleGridGroup = (key: string) => setGridClosed(prev => toggleKey(prev, key));
+  /* ⚠ NULL MEANS "wherever today is" (2026-09-04, QA §133) — the same shape the month grid's own
+     control uses. Holding the DEFAULT as null rather than a number is what lets the plan change
+     underneath without stranding the coach on a month that no longer exists: the default is
+     recomputed, a deliberate step is remembered.
+     ⚠ Lifted here rather than held in PeriodGrid for the reason the folds were (P3): the component
+     unmounts on every List↔By-period toggle, so state held inside it would silently return the
+     coach to today every time they checked something on the List and came back. */
+  const [gridMonthStart, setGridMonthStart] = useState<number | null>(null);
 
   // Add/Edit modal
   const [modalOpen,   setModalOpen]   = useState(false);
@@ -2009,6 +2070,9 @@ export function BudgetPlanPanel({
           ) : periodView ? (
             <PeriodGrid
               view={periodView}
+              granularity={granularity}
+              monthStart={gridMonthStart}
+              onMonthStart={setGridMonthStart}
               closed={gridClosed}
               onToggle={toggleGridGroup}
             />
