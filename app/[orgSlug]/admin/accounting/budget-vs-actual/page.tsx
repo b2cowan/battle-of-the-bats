@@ -8,7 +8,9 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+  BRANDING_TEXT, loadBrandMark,
 } from '@/lib/export';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import ExportMenu from '@/components/admin/ExportMenu';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './bva.module.css';
@@ -103,14 +105,51 @@ export default function OrgBudgetVsActualPage() {
     return rows;
   }
 
+  /**
+   * THE BLOCK ABOVE THE TABLE (owner ruling 2026-09-05) — whose money, what report, true as of
+   * when. The club's copy of the same masthead the team-level Budget vs. Actual carries: it is the
+   * same report one level up, read by the same kind of person reporting to the same kind of board,
+   * and until now it arrived anonymous while the team's introduced itself.
+   *
+   * ⚠ NO SETTING ON LINE 2, and that is the rule working rather than an omission. The team report
+   * names the reading or the basis it was cut on because those change its figures; this screen has
+   * exactly one parameter — the year — and that is already in line 1. Naming a setting the file
+   * does not have would be worse than naming none.
+   *
+   * ⚠ THE ORG'S DAY, NOT THE BROWSER'S. An admin abroad, or west of the club at night, is already
+   * on a different date; the report's own "as at" has to be the club's.
+   *
+   * ⚠ NO FIGURES UP HERE. A spreadsheet's opening rows sum into whatever a treasurer later pivots,
+   * and a headline goes stale the moment anyone filters the rows beneath it.
+   */
+  function exportMasthead() {
+    return {
+      title: `${currentOrg?.name ?? ''} · ${year} Season`.replace(/^ · /, ''),
+      subtitle: 'Budget vs. Actual',
+      meta: `As at ${formatStoredDate(tournamentToday(), { withYear: true, longMonth: true })}`,
+    };
+  }
+
   async function handleExportXLSX() {
     const src = buildBVARows();
     if (!src.length) return;
     const headers = serializeHeaders(BVA_EXPORT_COLS);
     const rows = serializeRows(src, BVA_EXPORT_COLS);
+    const settings = { ...DEFAULT_PDF_SETTINGS, ...(pdfSettings ?? {}) };
     await downloadXLSX(
       buildFilename({ org: currentOrg?.slug, dataset: 'budget-vs-actual', scope: String(year) }, 'xlsx'),
       headers, rows, 'Budget vs. Actual',
+      {
+        /* The club's crest rides the masthead — the same logo their PDFs already print, so a club
+           sets its branding once and both documents wear it. */
+        masthead: { ...exportMasthead(), logoDataUrl: settings.logoDataUrl },
+        /* Ours goes at the foot, where a document says who produced it rather than whose it is,
+           on the same switch that governs the PDF footer. Fails soft to text if the mark cannot
+           be read. */
+        ...(settings.showBranding
+          ? { footer: { text: BRANDING_TEXT, logoDataUrl: (await loadBrandMark()) ?? undefined } }
+          : {}),
+      },
     );
   }
 
