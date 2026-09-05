@@ -1,7 +1,7 @@
 # Budget dates, and the "to date" reading
 
-**Status:** owner-ruled and mockup-approved 2026-09-04 — committed `394ae7b0` 2026-09-05 on `dev`
-**Owner QA:** ledger **§145** (§144 was claimed by a concurrent session mid-build — the tail is the only truth)
+**Status:** ✅ COMPLETE — committed `394ae7b0` 2026-09-05 on `dev`, Owner QA **§145 PASSED** 2026-09-05, 42/42, zero defects
+**Owner QA:** ledger **§145** — PASSED (§144 was claimed by a concurrent session mid-build — the tail is the only truth)
 **Build brief:** `COACH_BUDGET_DATES_BUILD_PROMPT.md`
 **Proposal artifact (the four rulings):** https://claude.ai/code/artifact/9bc53080-ba3c-4856-891e-aef63e51bd7d
 **Mockup gate (approved 2026-09-04):** https://claude.ai/code/artifact/91368ba1-0e89-4f30-a7e9-422b782976e3
@@ -97,7 +97,7 @@ a fully dated line. That row, not the rename, is why the column needs rewriting.
 ## 6. Storage — no new column, and the reason
 
 **A line's answer IS its periods.** `One month` → one period dated to the 1st of that month.
-`Split across months` → many. `No date yet` → none.
+`Split across periods` → many. `No date yet` → none.
 
 The alternative considered and rejected: a column recording *which answer the coach picked*, so a
 report could tell "answered: no date yet" from "never asked".
@@ -160,12 +160,16 @@ only the undated part.** Conflating them would be a defect.
 ### 8.1 Money › Budget › the line form
 
 - New required question **"When does this money move? *"**, after Amount.
-- Three answers, a radio group, in this order: **One month · Split across months · No date yet**.
+- Three answers, a radio group, in this order: **One month · Split across periods · No date yet**.
+  ⚠ **"periods", not "months" (owner ruling 2026-09-05, during the §145 walk).** The answer opens a
+  box that splits by month, **quarter**, specific date or name, so "months" named a quarter of what
+  it does. "Period" is the vocabulary already on that box (**Period Breakdown**, "Add a period for
+  each …") and on the plan's second view (**By period**). Never shipped under the old label.
 - **Nothing pre-selected. Save disabled until one is chosen.** No month pre-filled.
 - **No sub-lines.** Bold label only.
 - `One month` reveals a **month select** — the split editor's own control, grouped by year,
   offering the season year and the next, options reading `Apr 2026`.
-- `Split across months` opens the existing split editor unchanged; each chunk answers the same
+- `Split across periods` opens the existing split editor unchanged; each chunk answers the same
   question via the controls it already has.
 - `No date yet` reveals **one consequence line**, stated once, never repeated:
   > This **$3,200.00** counts in your season total and in no month, and a **To date** comparison

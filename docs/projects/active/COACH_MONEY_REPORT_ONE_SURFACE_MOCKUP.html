@@ -1,0 +1,603 @@
+<title>Money Reports on One Surface</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+  :root {
+    --doc-bg: #E7EAEF;
+    --doc-card: #F6F7F9;
+    --doc-ink: #171C23;
+    --doc-dim: #5B6473;
+    --doc-line: rgba(23, 28, 35, .14);
+    --doc-mark: #1D4FA3;
+    --doc-mark-ink: #FFFFFF;
+    --doc-soft: rgba(29, 79, 163, .08);
+
+    /* The product's warm palette, fixed: the frames are specimens and do not follow the reader's theme. */
+    --p-paper: #F8F4ED;
+    --p-card: #FFFFFF;
+    --p-ink: #241E15;
+    --p-ink-soft: #4A4235;
+    --p-dim: #615A54;
+    --p-line: rgba(70, 55, 30, .12);
+    --p-line-strong: rgba(70, 55, 30, .20);
+    --p-fill: rgba(70, 55, 30, .08);
+    --p-olive: #57651E;
+    --p-olive-soft: rgba(87, 101, 30, .10);
+    --p-win: #34662A;
+    --p-live: #B03A22;
+    --p-amber: #835006;
+    --p-unplanned: rgba(249, 115, 22, .07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg: #12151A; --doc-card: #1A1E25; --doc-ink: #E7EAEE; --doc-dim: #98A2B0;
+      --doc-line: rgba(231, 234, 238, .14); --doc-mark: #8FB4F0; --doc-mark-ink: #0F1520; --doc-soft: rgba(143, 180, 240, .12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #12151A; --doc-card: #1A1E25; --doc-ink: #E7EAEE; --doc-dim: #98A2B0;
+    --doc-line: rgba(231, 234, 238, .14); --doc-mark: #8FB4F0; --doc-mark-ink: #0F1520; --doc-soft: rgba(143, 180, 240, .12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font: 400 15px/1.55 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  .doc { max-width: 1560px; margin: 0 auto; padding: 40px 28px 80px; }
+  .eyebrow { font: 500 12px/1 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-dim); }
+  h1 { font: 600 34px/1.15 'IBM Plex Sans', sans-serif; letter-spacing: -.01em; margin: 10px 0 12px; text-wrap: balance; }
+  h2 { font: 600 22px/1.25 'IBM Plex Sans', sans-serif; margin: 0 0 6px; text-wrap: balance; }
+  h3 { font: 600 16px/1.3 'IBM Plex Sans', sans-serif; margin: 0 0 6px; }
+  p { margin: 0 0 12px; max-width: 72ch; }
+  .lede { font-size: 17px; color: var(--doc-dim); max-width: 78ch; }
+  section { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--doc-line); }
+  .findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 36px; margin-top: 18px; }
+  .finding p { margin: 0; color: var(--doc-dim); }
+  .finding h3 { display: flex; align-items: baseline; gap: 10px; }
+  .num { font: 500 12px/1 'IBM Plex Mono', monospace; color: var(--doc-mark); }
+  .meas { font: 500 13px/1.4 'IBM Plex Mono', monospace; color: var(--doc-dim); }
+  .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 36px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .legend li { display: flex; gap: 10px; align-items: baseline; color: var(--doc-dim); }
+  .legend b { color: var(--doc-ink); font-weight: 600; }
+
+  /* Callout badge: the document's colour inside the product frame, so it reads as annotation. */
+  .k {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--doc-mark); color: var(--doc-mark-ink);
+    font: 600 11px/1 'IBM Plex Mono', monospace; margin-left: 8px; vertical-align: middle;
+  }
+  .legend .k { margin: 0; position: relative; top: 3px; }
+
+  /* Frame chrome */
+  .frame-label { display: flex; align-items: baseline; gap: 14px; margin: 22px 0 8px; }
+  .tag { font: 600 11px/1 'IBM Plex Mono', monospace; letter-spacing: .1em; text-transform: uppercase; padding: 5px 8px; border-radius: 3px; background: var(--doc-soft); color: var(--doc-mark); }
+  .tag.now { background: transparent; border: 1px solid var(--doc-line); color: var(--doc-dim); }
+  .frame-wrap { overflow-x: auto; padding: 2px 0 14px; }
+  .frame {
+    width: 1500px; height: 760px; overflow: hidden; position: relative;
+    padding: 0 40px;
+    background-color: var(--p-paper);
+    background-image: linear-gradient(rgba(70,55,30,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(70,55,30,.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 10px 28px rgba(0,0,0,.12);
+    font-family: Inter, system-ui, sans-serif; color: var(--p-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .frame.tall { height: auto; padding-bottom: 28px; }
+  .frame.mini { width: 700px; height: auto; padding: 18px 20px 20px; }
+  .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(rgba(248,244,237,0), rgba(248,244,237,.95)); pointer-events: none; }
+
+  /* Product chrome inside a frame: team header, summary band, toolbar (UNCHANGED in every frame). */
+  .p-team { display: flex; align-items: center; gap: 10px; padding: 16px 0 0; }
+  .p-team b { font: 700 19px Inter; }
+  .p-chip { font: 600 10.5px 'IBM Plex Mono', monospace; letter-spacing: .06em; padding: 4px 8px; border: 1px solid var(--p-line-strong); border-radius: 14px; color: var(--p-ink-soft); }
+  .p-sub { font: 400 13px 'IBM Plex Mono', monospace; color: var(--p-olive); padding: 4px 0 0; }
+  .p-sub b { color: var(--p-ink); }
+  .p-band { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; margin: 14px 0 16px; }
+  .p-tile { padding: 12px 18px 14px; border-left: 1px solid var(--p-line); }
+  .p-tile:first-child { border-left: 0; }
+  .p-tile-label { font: 700 11px/1 Inter; letter-spacing: .08em; text-transform: uppercase; color: var(--p-dim); }
+  .p-tile-value { font: 700 30px/1.1 'Barlow Condensed', sans-serif; margin: 6px 0 2px; }
+  .p-tile-cap { font: 400 13px Inter; color: var(--p-dim); }
+  .p-tools { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; }
+  .p-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border: 1px solid var(--p-line-strong); border-radius: 8px; background: var(--p-card); font: 500 14px Inter; color: var(--p-ink-soft); }
+  .p-btn b { color: var(--p-ink); font-weight: 600; }
+  .p-btn.on { background: var(--p-olive-soft); border-color: transparent; }
+  .p-btn svg { width: 14px; height: 14px; }
+  .p-link { font: 500 15px Inter; color: var(--p-ink-soft); padding: 0 4px; }
+  .p-spacer { flex: 1; }
+  .pos { color: var(--p-win); }
+  .neg { color: var(--p-live); }
+  .nil { color: var(--p-dim); }
+  .un { color: var(--p-amber); }
+  .chev { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; margin-right: 6px; color: var(--p-dim); flex: none; }
+  .chev.sp { visibility: hidden; }
+
+  /* ── BEFORE: the card-stack recipe, measured off the current build ─────────────── */
+  .b-cols { display: grid; grid-template-columns: 1fr 110px 110px 150px; gap: 8px; align-items: center; }
+  .b-head { padding: 6px 16px; font: 700 11px/1.4 Inter; letter-spacing: .08em; text-transform: uppercase; color: var(--p-dim); }
+  .b-head span + span { text-align: right; }
+  .b-band { padding: 0 12px; min-height: 44px; background: var(--p-card); border-top: 1px solid var(--p-line-strong); font: 700 12px/1.4 Inter; letter-spacing: .09em; text-transform: uppercase; color: var(--p-ink-soft); }
+  .b-band.inner { background: transparent; border-top: 0; text-transform: none; letter-spacing: .01em; padding-left: 22px; min-height: 40px; }
+  .b-list { display: flex; flex-direction: column; gap: 12px; }
+  .b-row { padding: 0 16px 0 26px; min-height: 50px; border-top: 1px solid rgba(70,55,30,.05); }
+  .b-row.un { background: var(--p-unplanned); }
+  .b-name { display: flex; align-items: center; gap: 8px; font: 600 13.4px Inter; color: var(--p-ink); }
+  .b-num { text-align: right; font: 400 14px Inter; color: var(--p-ink-soft); }
+  .b-group { border: 1px solid var(--p-line); border-radius: 10px; }
+  .b-ghead { padding: 11px 16px; background: var(--p-fill); border-radius: 9px 9px 0 0; min-height: 44px; }
+  .b-group > .b-ghead:last-child { border-radius: 9px; }
+  .b-ghead.un { background: var(--p-unplanned); }
+  .b-ghead .b-name { font: 700 14.7px Inter; }
+  .b-ghead .b-num { font: 700 13.8px Inter; color: var(--p-ink); }
+  .b-ghead.dues { min-height: 72px; }
+  .b-cap { display: block; font: 400 13px Inter; color: var(--p-dim); margin-top: 2px; }
+  .b-sub { padding: 0 12px; min-height: 48px; border-top: 1px solid var(--p-line); font: 600 14px Inter; color: var(--p-ink); }
+  .b-sub .b-num { font-weight: 700; color: var(--p-ink); }
+  .b-net { padding: 0 12px; min-height: 52px; border-top: 2px solid var(--p-line-strong); font: 700 14.7px Inter; color: var(--p-ink); }
+  .b-net .b-num { font: 700 14.7px Inter; color: var(--p-ink); }
+  .b-stack { display: flex; flex-direction: column; }
+
+  /* ── AFTER: the Months recipe, with three money columns ───────────────────────── */
+  .a-card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; width: 100%; position: relative; }
+  .a-card.wide { width: 100%; }
+  table.a { border-collapse: collapse; width: 100%; font: 400 14px Inter; }
+  .a th, .a td { padding: 7px 12px; box-shadow: inset 0 -1px 0 var(--p-line); white-space: nowrap; text-align: right; height: 36px; }
+  .a th:first-child, .a td:first-child { text-align: left; }
+  .a thead th { font: 700 12.5px 'Barlow Condensed', sans-serif; letter-spacing: .07em; text-transform: uppercase; color: var(--p-ink-soft); box-shadow: inset 0 -1px 0 var(--p-line-strong); }
+  .a tbody th { font: 600 13.4px Inter; color: var(--p-ink); }
+  .a tbody td { color: var(--p-ink-soft); }
+  .a tr.band th, .a tr.band td { background: var(--p-olive-soft); padding-top: 15px; height: auto; }
+  .a tr.band th { font: 700 11px Inter; letter-spacing: .09em; text-transform: uppercase; color: var(--p-olive); }
+  .a tr.cat th, .a tr.cat td { background: var(--p-fill); font: 700 14.7px Inter; color: var(--p-ink); height: 38px; }
+  .a tr.cat td { font-size: 13.8px; }
+  .a tr.cat.two th, .a tr.cat.two td { height: 48px; }
+  .a tr.cat .cap { display: block; font: 400 12px Inter; color: var(--p-dim); margin: 1px 0 0 19px; }
+  .a tr.line th { padding-left: 36px; }
+  .a tr.line.deep th { padding-left: 52px; }
+  .a tr.sub th, .a tr.sub td { box-shadow: none; height: 22px; padding-top: 6px; padding-bottom: 0; }
+  .a tr.sub th { padding-left: 36px; font: 700 10.5px Inter; letter-spacing: .08em; text-transform: uppercase; color: var(--p-dim); }
+  .a tr.period th { padding-left: 60px; font: 500 13px Inter; color: var(--p-ink-soft); }
+  .a tr.period td { font-size: 13px; color: var(--p-dim); }
+  .a tr.total th, .a tr.total td { box-shadow: inset 0 1px 0 var(--p-line-strong), inset 0 -1px 0 var(--p-line); font-weight: 700; color: var(--p-ink); }
+  .a tr.net th, .a tr.net td { box-shadow: inset 0 2px 0 var(--p-line-strong); font: 700 14.7px Inter; color: var(--p-ink); height: 46px; padding-bottom: 12px; }
+  .a td.when { text-align: left; font: 500 13px Inter; color: var(--p-ink-soft); }
+  .a td.when.undated { color: var(--p-amber); }
+  .a td.act { width: 48px; padding-right: 14px; }
+  .a td.act svg { width: 14px; height: 14px; color: var(--p-dim); vertical-align: middle; }
+  .a tr.fund td.money, .a tr.fund th .money { color: var(--p-win); }
+  .a tr.close td.warn { color: var(--p-amber); }
+  .a .note { display: block; font: 400 12px Inter; color: var(--p-dim); margin-top: 1px; }
+  .edge { position: absolute; right: 8px; top: 8px; }
+
+  /* Specimens */
+  .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px 28px; margin-top: 16px; }
+  .spec { display: flex; flex-direction: column; gap: 8px; }
+  .spec p { color: var(--doc-dim); margin: 0; font-size: 14px; }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .sw { width: 128px; padding: 8px 10px; border-radius: 6px; font: 500 11.5px/1.35 Inter; color: var(--p-ink); border: 1px solid var(--p-line); font-family: Inter, sans-serif; }
+  .sw small { display: block; font: 400 11px 'IBM Plex Mono', monospace; color: var(--p-dim); }
+  .stay { columns: 2; column-gap: 36px; margin: 12px 0 0; padding-left: 18px; color: var(--doc-dim); }
+  .stay li { break-inside: avoid; margin-bottom: 6px; }
+  .q { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 36px; margin-top: 12px; }
+  .q p { color: var(--doc-dim); margin: 0; }
+  @media (max-width: 900px) { .findings, .legend, .q { grid-template-columns: 1fr; } .stay { columns: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="doc">
+  <div class="eyebrow">Coaches portal · Money · Statement · By activity · Budget list</div>
+  <h1>Money Reports on One Surface</h1>
+  <p class="lede">A fresh look at the three list-shaped money reports, measured against the one you already like. The frames below are drawn at the real width of your screen (1,500 px of content) so density can be judged by eye, and each "before" is a redraw of what the build paints today, not a caricature. Figures are the UAT team's, carried across so the comparison is like for like.</p>
+
+  <section>
+    <h2>What the screens are doing today</h2>
+    <p>Months works because it is a single table: one white surface on the page, hairlines between rows, and exactly two tints, both meaning structure. The other three are drawn from a different recipe, and every complaint in your note traces back to that choice.</p>
+    <div class="findings">
+      <div class="finding">
+        <h3><span class="num">01</span>Two recipes for one hub</h3>
+        <p>Statement, By activity and the Budget list draw every category as its own bordered, rounded card with a 12 px gap under it, sitting directly on the paper ground. Months draws nothing but rows. The card recipe was a deliberate choice for the list views in August; a month of use has shown the table is the better reading experience, and nothing about these reports needs a card.</p>
+      </div>
+      <div class="finding">
+        <h3><span class="num">02</span>The row colour is a status pretending to be a structure</h3>
+        <p>An amber row means "nobody planned this". In By activity a planned line sits bare on the paper and an unplanned one is amber, so the colour splits a group in two instead of holding it together. The dues row is a third tint (a tan card) and the section band a fourth (white). Four grounds on one screen, and none of them means "these belong together".</p>
+      </div>
+      <div class="finding">
+        <h3><span class="num">03</span>A name and its figures are a screen-width apart, with nothing to walk across</h3>
+        <p>On your monitor "Concession revenue" and its $400.00 sit about 1,200 px apart, and a row on the paper has no rule under it, so the eye has nothing to follow between them. Months has the same distance from a name to its Total column and nobody notices, because a hairline under every row carries the eye across. The distance was never the problem; the missing rule was.</p>
+      </div>
+      <div class="finding">
+        <h3><span class="num">04</span>The two shapes put their totals in different places</h3>
+        <p>The Statement carries a category's total on the category row, as Months does. By activity carries it in a closing "netted" row at the foot of the block, under a band, an inner label and its lines. Same report, two grammars, and the second one costs three extra rows per activity, which is where most of the height goes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The proposal, in one sentence</h2>
+    <p>Give the three list reports the Months recipe: one white table spanning the page, hairline rows, tints only for structure, and the total on the category row. Nothing about what the reports say changes; only how the same rows are drawn. The numbered badges on the "after" frames map to this list.</p>
+    <ul class="legend">
+      <li><span class="k">1</span><span><b>One surface.</b> The whole report is a single white table with a hairline between rows. No per-category frames, no rounded corners inside, no gaps.</span></li>
+      <li><span class="k">2</span><span><b>Tints mean structure only.</b> Olive for a band heading (Revenue / Expenses), tan for a category row. Nothing else gets a ground.</span></li>
+      <li><span class="k">3</span><span><b>Status stops wearing a row colour.</b> A line nobody planned shows an amber dash in the Plan column and nothing else. The amber row ground goes.</span></li>
+      <li><span class="k">4</span><span><b>Full width, like everything above it.</b> The table spans the page as the band, the toolbar and Months do. The hairline under every row is what carries the eye from a name to its figures, exactly as it does on Months.</span></li>
+      <li><span class="k">5</span><span><b>Months' rhythm and headings.</b> Condensed uppercase column headings, 36–38 px rows, tabular figures, the heading row sticky as you scroll.</span></li>
+      <li><span class="k">6</span><span><b>An activity is a category row that carries its own net.</b> The "netted" closing row goes; Revenue and Costs become quiet sub-labels inside it.</span></li>
+      <li><span class="k">7</span><span><b>Player dues is an ordinary category row</b> with its caption under the name. It no longer has a card of its own.</span></li>
+      <li><span class="k">8</span><span><b>The Budget list takes the same recipe.</b> The When column and the pencil stay where they are; only the card stack goes.</span></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════ BY ACTIVITY ═══════════════════════════ -->
+  <section>
+    <h2>By activity, whole screen</h2>
+    <p>Both frames are cropped at 760 px tall, a laptop's worth of screen below the portal's top strip, so what fits is what you would actually see.</p>
+
+    <div class="frame-label"><span class="tag now">Before · today's build</span><span class="meas">50–68 px per row · four grounds · name → figure ≈ 1,200 px</span></div>
+    <div class="frame-wrap">
+      <div class="frame">
+        <div class="p-team"><b>UAT Test Team</b><span class="p-chip">HEAD COACH</span></div>
+        <div class="p-sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+        <div class="p-band">
+          <div class="p-tile"><div class="p-tile-label">Headroom</div><div class="p-tile-value pos">+$8,711.02</div><div class="p-tile-cap">under budget</div></div>
+          <div class="p-tile"><div class="p-tile-label">Spent</div><div class="p-tile-value">$4,909.98</div><div class="p-tile-cap">of $13,621.00 planned</div></div>
+          <div class="p-tile"><div class="p-tile-label">Off-plan</div><div class="p-tile-value un">$3,794.98</div><div class="p-tile-cap">nobody budgeted this</div></div>
+          <div class="p-tile"><div class="p-tile-label">Season end</div><div class="p-tile-value pos">$5,031.32</div><div class="p-tile-cap">plus $1,220.00 possible</div></div>
+        </div>
+        <div class="p-tools">
+          <span class="p-btn on">View <b>By activity</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-btn">Compare <b>To date</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-spacer"></span>
+          <span class="p-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg> <b>Export</b></span>
+        </div>
+
+        <div class="b-cols b-head"><span>Category / Line item</span><span>Plan to date</span><span>Actual</span><span>Variance</span></div>
+        <div class="b-stack">
+          <div class="b-group"><div class="b-cols b-ghead dues"><span><span class="b-name">Player dues</span><span class="b-cap">12 families · set on Player Dues</span></span><span class="b-num">$0.00</span><span class="b-num">$3,075.00</span><span class="b-num pos">+$3,075.00</span></div></div>
+          <div class="b-cols b-band"><span>Tournaments</span></div>
+          <div class="b-cols b-band inner"><span>Revenue</span></div>
+          <div class="b-list"><div class="b-cols b-row un"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Concession revenue</span><span class="b-num nil">—</span><span class="b-num">$400.00</span><span class="b-num pos">+$400.00</span></div></div>
+          <div class="b-cols b-band inner"><span>Costs</span></div>
+          <div class="b-list">
+            <div class="b-cols b-row"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</span><span class="b-num">$900.00</span><span class="b-num">$0.00</span><span class="b-num pos">$900.00 under</span></div>
+            <div class="b-cols b-row un"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Not itemized</span><span class="b-num nil">—</span><span class="b-num">$240.00</span><span class="b-num neg">$240.00 over</span></div>
+          </div>
+          <div class="b-cols b-sub"><span>Tournaments netted</span><span class="b-num">($900.00)</span><span class="b-num">$160.00</span><span class="b-num pos">+$1,060.00</span></div>
+          <div class="b-cols b-band"><span>No category</span></div>
+          <div class="b-cols b-band inner"><span>Revenue</span></div>
+          <div class="b-list"><div class="b-cols b-row un"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Not itemized</span><span class="b-num nil">—</span><span class="b-num">$2,085.75</span><span class="b-num pos">+$2,085.75</span></div></div>
+          <div class="b-cols b-band inner"><span>Costs</span></div>
+          <div class="b-list"><div class="b-cols b-row un"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Not itemized</span><span class="b-num nil">—</span><span class="b-num">$815.00</span><span class="b-num neg">$815.00 over</span></div></div>
+          <div class="b-cols b-sub"><span>No category netted</span><span class="b-num nil">—</span><span class="b-num">$1,270.75</span><span class="b-num pos">+$1,270.75</span></div>
+          <div class="b-cols b-band"><span>Facilities</span></div>
+          <div class="b-list">
+            <div class="b-cols b-row"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>McTavish Arena — winter block</span><span class="b-num">$1,734.00</span><span class="b-num">$1,734.00</span><span class="b-num nil">—</span></div>
+          </div>
+        </div>
+        <div class="fade"></div>
+      </div>
+    </div>
+
+    <div class="frame-label"><span class="tag">After · proposed</span><span class="meas">36–38 px per row · one surface, two tints · full width, a hairline under every row</span></div>
+    <div class="frame-wrap">
+      <div class="frame">
+        <div class="p-team"><b>UAT Test Team</b><span class="p-chip">HEAD COACH</span></div>
+        <div class="p-sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+        <div class="p-band">
+          <div class="p-tile"><div class="p-tile-label">Headroom</div><div class="p-tile-value pos">+$8,711.02</div><div class="p-tile-cap">under budget</div></div>
+          <div class="p-tile"><div class="p-tile-label">Spent</div><div class="p-tile-value">$4,909.98</div><div class="p-tile-cap">of $13,621.00 planned</div></div>
+          <div class="p-tile"><div class="p-tile-label">Off-plan</div><div class="p-tile-value un">$3,794.98</div><div class="p-tile-cap">nobody budgeted this</div></div>
+          <div class="p-tile"><div class="p-tile-label">Season end</div><div class="p-tile-value pos">$5,031.32</div><div class="p-tile-cap">plus $1,220.00 possible</div></div>
+        </div>
+        <div class="p-tools">
+          <span class="p-btn on">View <b>By activity</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-btn">Compare <b>To date</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-link">Expand all</span>
+          <span class="p-spacer"></span>
+          <span class="p-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg> <b>Export</b></span>
+        </div>
+
+        <div class="a-card">
+          <table class="a">
+            <colgroup><col><col style="width:150px"><col style="width:150px"><col style="width:170px"></colgroup>
+            <thead><tr><th>Category / Line item <span class="k">5</span><span class="k">4</span></th><th>Plan to date</th><th>Actual</th><th>Variance</th></tr></thead>
+            <tbody>
+              <tr class="cat two"><th><svg class="chev sp" viewBox="0 0 16 16"></svg>Player dues <span class="k">7</span><span class="cap">12 families · set on Player Dues</span></th><td>$0.00</td><td>$3,075.00</td><td class="pos">+$3,075.00</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Tournaments <span class="k">6</span></th><td>($900.00)</td><td>$160.00</td><td class="pos">+$1,060.00</td></tr>
+              <tr class="sub"><th>Revenue</th><td></td><td></td><td></td></tr>
+              <tr class="line deep"><th>Concession revenue</th><td class="un">— <span class="k">3</span></td><td>$400.00</td><td class="pos">+$400.00</td></tr>
+              <tr class="sub"><th>Costs</th><td></td><td></td><td></td></tr>
+              <tr class="line deep"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</th><td>$900.00</td><td>$0.00</td><td class="pos">$900.00 under</td></tr>
+              <tr class="line deep"><th>Not itemized</th><td class="un">—</td><td>$240.00</td><td class="neg">$240.00 over</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>No category</th><td class="un">—</td><td>$1,270.75</td><td class="pos">+$1,270.75</td></tr>
+              <tr class="sub"><th>Revenue</th><td></td><td></td><td></td></tr>
+              <tr class="line deep"><th>Not itemized</th><td class="un">—</td><td>$2,085.75</td><td class="pos">+$2,085.75</td></tr>
+              <tr class="sub"><th>Costs</th><td></td><td></td><td></td></tr>
+              <tr class="line deep"><th>Not itemized</th><td class="un">—</td><td>$815.00</td><td class="neg">$815.00 over</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Facilities <span class="k">2</span></th><td>($4,934.00)</td><td>($3,200.00)</td><td class="pos">$1,734.00 under</td></tr>
+              <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>McTavish Arena — winter block</th><td>$1,734.00</td><td>$1,734.00</td><td class="nil">—</td></tr>
+              <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Spring turf rental</th><td>$3,200.00</td><td>$1,466.00</td><td class="pos">$1,734.00 under</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Officials</th><td>($600.00)</td><td>($300.00)</td><td class="pos">$300.00 under</td></tr>
+              <tr class="line"><th>Umpires — April</th><td>$300.00</td><td>$300.00</td><td class="nil">—</td></tr>
+              <tr class="line"><th>Umpires — July</th><td>$300.00</td><td>$0.00</td><td class="pos">$300.00 under</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Team Gear</th><td>($521.00)</td><td>($521.00)</td><td class="nil">—</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Fundraising</th><td>$1,800.00</td><td>$778.60</td><td class="neg">−$1,021.40</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Other Income</th><td>$0.00</td><td>$0.00</td><td class="nil">—</td></tr>
+              <tr class="net"><th>Season net to date</th><td>−$5,155.00</td><td class="pos">+$1,263.35</td><td class="pos">+$6,418.35</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="fade"></div>
+      </div>
+    </div>
+    <p>In the same 760 px the report now closes on Season net with three categories still collapsed, where before it was cut off inside its third block. The "Revenue" and "Costs" sub-labels survive, at the quiet size a sub-label deserves rather than the height of a row.</p>
+  </section>
+
+  <!-- ═══════════════════════════ STATEMENT ═══════════════════════════ -->
+  <section>
+    <h2>Statement, whole screen</h2>
+    <p>The Statement is the shape a treasurer already knows, and it holds up better than By activity today. The same four changes still remove a card, a border and a gap from every category, and put the figures back within reach of their names.</p>
+
+    <div class="frame-label"><span class="tag now">Before · today's build</span><span class="meas">every category a bordered card · 12 px gap between cards · amber cards for unplanned</span></div>
+    <div class="frame-wrap">
+      <div class="frame">
+        <div class="p-team"><b>UAT Test Team</b><span class="p-chip">HEAD COACH</span></div>
+        <div class="p-sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+        <div class="p-band">
+          <div class="p-tile"><div class="p-tile-label">Headroom</div><div class="p-tile-value pos">+$8,711.02</div><div class="p-tile-cap">under budget</div></div>
+          <div class="p-tile"><div class="p-tile-label">Spent</div><div class="p-tile-value">$4,909.98</div><div class="p-tile-cap">of $13,621.00 planned</div></div>
+          <div class="p-tile"><div class="p-tile-label">Off-plan</div><div class="p-tile-value un">$3,794.98</div><div class="p-tile-cap">nobody budgeted this</div></div>
+          <div class="p-tile"><div class="p-tile-label">Season end</div><div class="p-tile-value pos">$5,031.32</div><div class="p-tile-cap">plus $1,220.00 possible</div></div>
+        </div>
+        <div class="p-tools">
+          <span class="p-btn on">View <b>Statement</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-btn">Compare <b>To date</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-link">Expand all</span>
+          <span class="p-spacer"></span>
+          <span class="p-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg> <b>Export</b></span>
+        </div>
+
+        <div class="b-cols b-head"><span>Category / Line item</span><span>Plan to date</span><span>Actual</span><span>Variance</span></div>
+        <div class="b-stack">
+          <div class="b-cols b-band"><span>Revenue</span></div>
+          <div class="b-list">
+            <div class="b-group"><div class="b-cols b-ghead dues"><span><span class="b-name">Player dues</span><span class="b-cap">12 families · set on Player Dues</span></span><span class="b-num">$0.00</span><span class="b-num">$3,075.00</span><span class="b-num pos">+$3,075.00</span></div></div>
+            <div class="b-group">
+              <div class="b-cols b-ghead"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Fundraising</span><span class="b-num">$1,800.00</span><span class="b-num">$778.60</span><span class="b-num neg">−$1,021.40</span></div>
+              <div class="b-cols b-row"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Fundraising drive</span><span class="b-num">$1,800.00</span><span class="b-num">$778.60</span><span class="b-num neg">−$1,021.40</span></div>
+            </div>
+            <div class="b-group">
+              <div class="b-cols b-ghead"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Other Income</span><span class="b-num">$0.00</span><span class="b-num">$0.00</span><span class="b-num nil">—</span></div>
+              <div class="b-cols b-row"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Interest</span><span class="b-num">$0.00</span><span class="b-num">$0.00</span><span class="b-num nil">—</span></div>
+            </div>
+            <div class="b-group"><div class="b-cols b-ghead un"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Tournaments</span><span class="b-num nil">—</span><span class="b-num">$400.00</span><span class="b-num pos">+$400.00</span></div></div>
+            <div class="b-group">
+              <div class="b-cols b-ghead un"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>No category</span><span class="b-num nil">—</span><span class="b-num">$2,085.75</span><span class="b-num pos">+$2,085.75</span></div>
+              <div class="b-cols b-row un"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Not itemized</span><span class="b-num nil">—</span><span class="b-num">$2,085.75</span><span class="b-num pos">+$2,085.75</span></div>
+            </div>
+          </div>
+          <div class="b-cols b-sub"><span>Total revenue</span><span class="b-num">$1,800.00</span><span class="b-num">$6,339.35</span><span class="b-num pos">+$4,539.35</span></div>
+          <div class="b-cols b-band"><span>Expenses</span></div>
+          <div class="b-list">
+            <div class="b-group"><div class="b-cols b-ghead"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Facilities</span><span class="b-num">$4,934.00</span><span class="b-num">$3,200.00</span><span class="b-num pos">$1,734.00 under</span></div></div>
+          </div>
+        </div>
+        <div class="fade"></div>
+      </div>
+    </div>
+
+    <div class="frame-label"><span class="tag">After · proposed</span><span class="meas">the full statement, revenue to season net, inside 760 px</span></div>
+    <div class="frame-wrap">
+      <div class="frame">
+        <div class="p-team"><b>UAT Test Team</b><span class="p-chip">HEAD COACH</span></div>
+        <div class="p-sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+        <div class="p-band">
+          <div class="p-tile"><div class="p-tile-label">Headroom</div><div class="p-tile-value pos">+$8,711.02</div><div class="p-tile-cap">under budget</div></div>
+          <div class="p-tile"><div class="p-tile-label">Spent</div><div class="p-tile-value">$4,909.98</div><div class="p-tile-cap">of $13,621.00 planned</div></div>
+          <div class="p-tile"><div class="p-tile-label">Off-plan</div><div class="p-tile-value un">$3,794.98</div><div class="p-tile-cap">nobody budgeted this</div></div>
+          <div class="p-tile"><div class="p-tile-label">Season end</div><div class="p-tile-value pos">$5,031.32</div><div class="p-tile-cap">plus $1,220.00 possible</div></div>
+        </div>
+        <div class="p-tools">
+          <span class="p-btn on">View <b>Statement</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-btn">Compare <b>To date</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-link">Expand all</span>
+          <span class="p-spacer"></span>
+          <span class="p-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg> <b>Export</b></span>
+        </div>
+
+        <div class="a-card">
+          <table class="a">
+            <colgroup><col><col style="width:150px"><col style="width:150px"><col style="width:170px"></colgroup>
+            <thead><tr><th>Category / Line item <span class="k">5</span><span class="k">4</span></th><th>Plan to date</th><th>Actual</th><th>Variance</th></tr></thead>
+            <tbody>
+              <tr class="band"><th>Revenue <span class="k">2</span></th><td></td><td></td><td></td></tr>
+              <tr class="cat two"><th><svg class="chev sp" viewBox="0 0 16 16"></svg>Player dues <span class="k">7</span><span class="cap">12 families · set on Player Dues</span></th><td>$0.00</td><td>$3,075.00</td><td class="pos">+$3,075.00</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Fundraising</th><td>$1,800.00</td><td>$778.60</td><td class="neg">−$1,021.40</td></tr>
+              <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Fundraising drive</th><td>$1,800.00</td><td>$778.60</td><td class="neg">−$1,021.40</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Other Income</th><td>$0.00</td><td>$0.00</td><td class="nil">—</td></tr>
+              <tr class="line"><th>Interest</th><td>$0.00</td><td>$0.00</td><td class="nil">—</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Tournaments</th><td class="un">— <span class="k">3</span></td><td>$400.00</td><td class="pos">+$400.00</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>No category</th><td class="un">—</td><td>$2,085.75</td><td class="pos">+$2,085.75</td></tr>
+              <tr class="line"><th>Not itemized</th><td class="un">—</td><td>$2,085.75</td><td class="pos">+$2,085.75</td></tr>
+              <tr class="total"><th>Total revenue</th><td>$1,800.00</td><td>$6,339.35</td><td class="pos">+$4,539.35</td></tr>
+              <tr class="band"><th>Expenses</th><td></td><td></td><td></td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Facilities</th><td>$4,934.00</td><td>$3,200.00</td><td class="pos">$1,734.00 under</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Officials</th><td>$600.00</td><td>$300.00</td><td class="pos">$300.00 under</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>Team Gear</th><td>$521.00</td><td>$521.00</td><td class="nil">—</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Tournaments</th><td>$900.00</td><td>$240.00</td><td class="pos">$660.00 under</td></tr>
+              <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</th><td>$900.00</td><td>$0.00</td><td class="pos">$900.00 under</td></tr>
+              <tr class="line"><th>Not itemized</th><td class="un">—</td><td>$240.00</td><td class="neg">$240.00 over</td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l4 4-4 4"/></svg>No category</th><td class="un">—</td><td>$815.00</td><td class="neg">$815.00 over</td></tr>
+              <tr class="total"><th>Total expenses</th><td>$6,955.00</td><td>$5,076.00</td><td class="pos">$1,879.00 under</td></tr>
+              <tr class="net"><th>Season net to date</th><td>−$5,155.00</td><td class="pos">+$1,263.35</td><td class="pos">+$6,418.35</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="fade"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ BUDGET LIST ═══════════════════════════ -->
+  <section>
+    <h2>Budget list, after</h2>
+    <p>Today the plan's List view is the same card stack as the Statement, with a slightly tighter row and a When column. The recipe carries straight across: the When column and the pencil stay in their places, the funding sections keep their green, and the closing row keeps its amber when the plan is short. The plan's rows still open the editor on a tap; only the drawing changes.</p>
+
+    <div class="frame-label"><span class="tag">After · proposed</span><span class="meas">the When column reads as a column again, not a chip floating in a gap</span></div>
+    <div class="frame-wrap">
+      <div class="frame tall">
+        <div class="p-team"><b>UAT Test Team</b><span class="p-chip">HEAD COACH</span></div>
+        <div class="p-sub">UAT Test Org · 2026 Season · <b>3-2-1</b></div>
+        <div class="p-band">
+          <div class="p-tile"><div class="p-tile-label">Headroom</div><div class="p-tile-value pos">+$8,711.02</div><div class="p-tile-cap">under budget</div></div>
+          <div class="p-tile"><div class="p-tile-label">Spent</div><div class="p-tile-value">$4,909.98</div><div class="p-tile-cap">of $13,621.00 planned</div></div>
+          <div class="p-tile"><div class="p-tile-label">Off-plan</div><div class="p-tile-value un">$3,794.98</div><div class="p-tile-cap">nobody budgeted this</div></div>
+          <div class="p-tile"><div class="p-tile-label">Season end</div><div class="p-tile-value pos">$5,031.32</div><div class="p-tile-cap">plus $1,220.00 possible</div></div>
+        </div>
+        <div class="p-tools">
+          <span class="p-btn on">View <b>List</b> <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg></span>
+          <span class="p-spacer"></span>
+          <span class="p-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg> <b>Export</b></span>
+        </div>
+
+        <div class="a-card">
+          <table class="a">
+            <colgroup><col><col style="width:220px"><col style="width:150px"><col style="width:48px"></colgroup>
+            <thead><tr><th>Category / Line <span class="k">8</span></th><th style="text-align:left">When</th><th>Planned</th><th></th></tr></thead>
+            <tbody>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Facilities</th><td></td><td>$8,400.00</td><td></td></tr>
+              <tr class="line"><th>McTavish Arena — winter block</th><td class="when">Mar 2026</td><td>$1,734.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="line"><th>Spring turf rental</th><td class="when">Apr 2026</td><td>$3,200.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="line"><th>Practice permits</th><td class="when undated">No date yet</td><td>$3,466.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Officials</th><td></td><td>$1,200.00</td><td></td></tr>
+              <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg>Umpires</th><td class="when">Apr · Jul · Oct 2026</td><td>$900.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="period"><th>April</th><td class="when">Apr 15, 2026</td><td>$300.00</td><td></td></tr>
+              <tr class="period"><th>July</th><td class="when">Jul 15, 2026</td><td>$300.00</td><td></td></tr>
+              <tr class="period"><th>October</th><td class="when">Oct 15, 2026</td><td>$300.00</td><td></td></tr>
+              <tr class="line"><th>Tournament umpires</th><td class="when">Oct 2026</td><td>$300.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Team Gear</th><td></td><td>$1,521.00</td><td></td></tr>
+              <tr class="line"><th>Jerseys</th><td class="when">Mar 2026</td><td>$500.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="line"><th>Batting helmets</th><td class="when undated">No date yet</td><td>$21.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="line"><th>Warm-up jackets</th><td class="when">Nov 2026</td><td>$1,000.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Tournaments</th><td></td><td>$2,500.00</td><td></td></tr>
+              <tr class="line"><th>Entry Fees</th><td class="when undated">No date yet</td><td>$1,600.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="line"><th>Spring Classic entry</th><td class="when">May 2026</td><td>$900.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat fund"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Expected fundraising</th><td></td><td class="money">$1,800.00</td><td></td></tr>
+              <tr class="line fund"><th>Fundraising drive</th><td class="when">Mar · Apr 2026</td><td class="money">$1,800.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat fund"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Other income</th><td></td><td class="money">$150.00</td><td></td></tr>
+              <tr class="line fund"><th>Interest</th><td class="when undated">No date yet</td><td class="money">$150.00</td><td class="act"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-8 8H3v-3z"/></svg></td></tr>
+              <tr class="cat two fund"><th><svg class="chev sp" viewBox="0 0 16 16"></svg>Player installments<span class="cap">What players are scheduled to pay</span></th><td></td><td class="money">$11,308.00</td><td></td></tr>
+              <tr class="net close"><th>Short of covering the plan</th><td></td><td class="warn">$363.00</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SPECIMENS ═══════════════════════════ -->
+  <section>
+    <h2>Three details, up close</h2>
+    <div class="spec-grid">
+      <div class="spec">
+        <h3>Four grounds become one surface and two tints</h3>
+        <p>Every ground a row can wear today, against the two that survive. A tint that means structure has to be the only kind of tint on the screen, or the eye cannot tell which one it is reading.</p>
+        <div class="frame mini" style="width:auto">
+          <div class="swatches">
+            <div class="sw" style="background:var(--p-paper);background-image:linear-gradient(rgba(70,55,30,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.05) 1px,transparent 1px);background-size:25px 25px">Paper<small>planned lines sit here</small></div>
+            <div class="sw" style="background:var(--p-card)">White<small>the section band</small></div>
+            <div class="sw" style="background:var(--p-fill)">Tan<small>category head, dues card</small></div>
+            <div class="sw" style="background:var(--p-unplanned)">Amber<small>unplanned row</small></div>
+          </div>
+          <div style="height:14px"></div>
+          <div class="swatches">
+            <div class="sw" style="background:var(--p-card)">White<small>the whole report</small></div>
+            <div class="sw" style="background:var(--p-olive-soft)">Olive<small>a band heading</small></div>
+            <div class="sw" style="background:var(--p-fill)">Tan<small>a category row</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec">
+        <h3>A status is not a colour of row</h3>
+        <p>The amber ground was kept last week because the dash already said the words. It does say them; the ground is what makes two neighbouring rows look like they belong to different groups. Proposed: the dash, in amber, and no ground.</p>
+        <div class="frame mini" style="width:auto;padding:14px">
+          <div class="b-stack" style="margin-bottom:14px">
+            <div class="b-list">
+              <div class="b-cols b-row" style="grid-template-columns:1fr 100px 100px 130px"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</span><span class="b-num">$900.00</span><span class="b-num">$0.00</span><span class="b-num pos">$900.00 under</span></div>
+              <div class="b-cols b-row un" style="grid-template-columns:1fr 100px 100px 130px"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Not itemized</span><span class="b-num nil">—</span><span class="b-num">$240.00</span><span class="b-num neg">$240.00 over</span></div>
+            </div>
+          </div>
+          <div class="a-card wide">
+            <table class="a">
+              <colgroup><col><col style="width:100px"><col style="width:100px"><col style="width:130px"></colgroup>
+              <tbody>
+                <tr class="line"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</th><td>$900.00</td><td>$0.00</td><td class="pos">$900.00 under</td></tr>
+                <tr class="line"><th>Not itemized</th><td class="un">—</td><td>$240.00</td><td class="neg">$240.00 over</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec">
+        <h3>Where an activity's net sits</h3>
+        <p>Today: a band, an inner label per side, then a "netted" row at the foot. Proposed: the activity is a category row carrying its own net, the way the Statement and Months already do it, and the sides are sub-labels inside it.</p>
+        <div class="frame mini" style="width:auto;padding:14px">
+          <div class="b-stack" style="margin-bottom:14px">
+            <div class="b-cols b-band" style="grid-template-columns:1fr 100px 100px 130px"><span>Tournaments</span></div>
+            <div class="b-cols b-band inner" style="grid-template-columns:1fr 100px 100px 130px"><span>Revenue</span></div>
+            <div class="b-list"><div class="b-cols b-row un" style="grid-template-columns:1fr 100px 100px 130px"><span class="b-name"><svg class="chev sp" viewBox="0 0 16 16"></svg>Concession revenue</span><span class="b-num nil">—</span><span class="b-num">$400.00</span><span class="b-num pos">+$400.00</span></div></div>
+            <div class="b-cols b-band inner" style="grid-template-columns:1fr 100px 100px 130px"><span>Costs</span></div>
+            <div class="b-list"><div class="b-cols b-row" style="grid-template-columns:1fr 100px 100px 130px"><span class="b-name"><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</span><span class="b-num">$900.00</span><span class="b-num">$0.00</span><span class="b-num pos">$900.00 under</span></div></div>
+            <div class="b-cols b-sub" style="grid-template-columns:1fr 100px 100px 130px"><span>Tournaments netted</span><span class="b-num">($900.00)</span><span class="b-num">$160.00</span><span class="b-num pos">+$1,060.00</span></div>
+          </div>
+          <div class="a-card wide">
+            <table class="a">
+              <colgroup><col><col style="width:100px"><col style="width:100px"><col style="width:130px"></colgroup>
+              <tbody>
+                <tr class="cat"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>Tournaments</th><td>($900.00)</td><td>$160.00</td><td class="pos">+$1,060.00</td></tr>
+                <tr class="sub"><th>Revenue</th><td></td><td></td><td></td></tr>
+                <tr class="line deep"><th>Concession revenue</th><td class="un">—</td><td>$400.00</td><td class="pos">+$400.00</td></tr>
+                <tr class="sub"><th>Costs</th><td></td><td></td><td></td></tr>
+                <tr class="line deep"><th><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4l4 4-4 4"/></svg>Entry Fees</th><td>$900.00</td><td>$0.00</td><td class="pos">$900.00 under</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What does not change</h2>
+    <ul class="stay">
+      <li>Every figure that opens a panel today still opens it. The budget figure shows its plan lines, the actual shows its payments.</li>
+      <li>A report row still folds on a tap; a plan row still opens its editor. The two screens keep their different jobs.</li>
+      <li>Compare (Whole season / To date), Expand all, the exports and the footnotes under the table are untouched.</li>
+      <li>Months is the reference and is not redrawn.</li>
+      <li>The table spans the full width, as the band, the toolbar and Months do.</li>
+      <li>On a phone the table scrolls sideways with the first column pinned, which is the same behaviour Months already has, so the phone gets simpler rather than harder.</li>
+      <li>Variance still says the word, "under" and "over", and colour never carries the meaning on its own.</li>
+      <li>Screen-reader sentences for an unplanned row stay; only the visible ground goes.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>One call settled, one that is yours</h2>
+    <div class="q">
+      <div>
+        <h3>Width: full, settled</h3>
+        <p>Round one capped the table at a document width and it looked odd under a full-width band. Round two spans it. If the right-hand cluster ever wants company, the honest way to fill the width is a column that means something, a "Season plan" beside "Plan to date" under the To-date comparison. That is a product change and not needed for this pass.</p>
+      </div>
+      <div>
+        <h3>Any cue at all for an unplanned line?</h3>
+        <p>The frames keep the amber dash in the Plan column. Dropping the colour and leaving a plain dash is also defensible, since the Off-plan tile at the top already totals what nobody budgeted. What I would not do is keep the row ground; it is the thing your note is describing.</p>
+      </div>
+    </div>
+  </section>
+</div>

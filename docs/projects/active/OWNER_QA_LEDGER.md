@@ -17643,7 +17643,7 @@ some money in; the mockup drew PLEDGED on that state, which reads wrong once $25
 arrived. **Known deviation to confirm:** Delete at the room's foot is pressable and answers (owner
 ruling 2026-08-30), not the dead-button-plus-sentence the build prompt restated.
 
-## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, awaiting QA
+## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, committed `e046df39`, awaiting QA · walk artifact `b5bbcd8d`
 
 **Owner instruction (the whole brief):** *"let's remove this 'remind all 8' banner, we already have
 a 'send dues reminders' button and automatic reminders, this is not a good use of real estate on the
@@ -17688,6 +17688,37 @@ footer as if it were universal — it is not (see above), and the sentences now 
 each view. Touched: the "How do I see who hasn't paid anything and remind them?" article and its
 search text, the Fees overview's Premium-adds sentence, and the **Dues reminder emails** explainer
 (the *See an example* window), which had told coaches to press a button that no longer exists.
+
+**Walkthrough artifact (checkable, per-part verdicts + paste-back):**
+`https://claude.ai/code/artifact/b5bbcd8d-8979-4127-a46b-dab6c7cf2b7b`
+
+**⚠ THE WALK WAS REWRITTEN AGAINST THE SCREEN THAT EXISTS, NOT THE ONE §136 SHIPPED ONTO.** The
+Player Dues tab has been rebuilt twice since — §137 (the summary band, both footers retired) and
+§140 (the set-once door, "Remind this family", the Showing filter, the date-first grid). **Four of
+the bullets below are ghosts** and the artifact names them rather than testing them: (1) "opens
+straight onto the lens toggle — no band above it" — §137 deliberately put a band there, and what
+must be absent is the CHASE card, not every band; (2) "the totals row still prints Next due with N
+overdue" — both table footers were retired by §137; (3) "each term still says *$X still to collect ·
+N behind*" — `columnNote()` went with the old Collection schedule band; (4) "Remind is offered
+beside Family statement" — the button is **Remind this family** since §140, and Family statement is
+plan-gated on `pdf_exports`, which UAT Test Org's Tournament plan does not carry, so it never
+renders on the fixture.
+
+**⚠ THE FIXTURE WAS READ, NOT ASSUMED** (reseeded 2026-09-05, then read in a browser as the UAT
+coach). Three states the walk needs and their standing: **nobody is late** — the Past due tile is
+hidden and the band draws three, so the artifact's Part D makes one family late by hand and restores
+the date; **no family on the roster carries a guardian email** — so per-player Remind answers *"No
+guardian email on file for this player."*, which is exactly the never-a-blank-line fix, while
+*"Reminder sent."* is unreachable without adding an address (the artifact's optional Part G, which
+sends a real email); **the API refusal was executed**, not read — a no-`playerId` POST answers
+`400 A playerId is required — this route nudges one family.`
+
+**Found on the walk's preparation, not fixed here — one customer-visible word drifted.** The Fees
+overview's Premium-adds sentence, trued up by this very commit, still names the control **Remind**;
+§140 renamed it **Remind this family**. One control, two spellings, which is the one-spelling
+ruling's own failure mode. Raised as a call in the artifact's Part F.
+
+**The original bullets, kept as the record of what was claimed on 2026-09-03 — walk the artifact, not this list:**
 
 **Walk it (~5 min), on a team with dues set and at least one family who has paid nothing:**
 - [ ] Player Dues opens straight onto the lens toggle — **no band** above it, on desktop and phone.
@@ -18322,7 +18353,7 @@ and proves nothing.
    Budget Plan**, and the lines are still plain text. Before this, that panel had no way out.
 ---
 
-## §145 · Budget dates, and the "to date" reading — every line answers when the money moves, and the report can finally compare like with like — BUILT 2026-09-05, committed `394ae7b0`, awaiting QA · walk artifact `8c6a7dd7`
+## §145 · Budget dates, and the "to date" reading — every line answers when the money moves, and the report can finally compare like with like — ✅ PASSED 2026-09-05, 42/42, zero defects · committed `394ae7b0` · walk artifact `8c6a7dd7`
 
 **Owner-ruled and mockup-approved 2026-09-04/05.** Proposal artifact `9bc53080`; mockup gate
 `91368ba1` (the plan list's When column, the statement's control row, and the amended line form —
@@ -18353,6 +18384,25 @@ figure a treasurer can act on.
 5. **No date yet** shows ONE consequence line naming the money, what happens to it, and where to fix
    it later. Choose it, switch away, switch back — it must not repeat or nag.
 6. Edit an existing line: it reopens on the answer it already has (a quarters split stays a split).
+
+**Part A2 — the exported file (added 2026-09-05, after the walk found two defects).**
+A. Statement → Download → Excel. Above the header row: the team and season, then
+   **Budget vs. Actual — Statement · Compare: Whole season**, then **As at <date>**, then a blank
+   row. The header band freezes under THAT row, not row 1 — scroll and the column names must stay.
+B. Switch Compare to **To date** and download again. The plan column must now read **Plan to date**
+   and the closing row **Net to date**. ⚠ THIS WAS THE DEFECT: the figures were re-cut correctly and
+   both labels were left saying "Budgeted" and "Season net", so a part-year file called itself the
+   season and a board had no way to tell.
+C. Switch to **By activity** and download. It must be the BY-ACTIVITY shape — a band per category,
+   inner Revenue/Costs bands where a category has both, and a "<name> netted" row. ⚠ IT USED TO GIVE
+   YOU THE STATEMENT, silently. The filename says `budget-by-activity` now.
+D. A club with a logo uploaded: it rides in the masthead beside the team name. A club without one:
+   the three text lines must look finished, not like a layout missing a picture.
+E. Foot of the file, under the notes: **Generated by FieldLogicHQ** — text, no mark (we have no
+   raster brand asset; the writer takes one the day we do). Turn the club's branding off and it must
+   disappear.
+F. Download the same view as **CSV**: no masthead, no notes, no footer — it starts on the column row,
+   because that is the file people pivot and re-import.
 
 **Part B — the plan list.**
 7. The **Schedule** column is now **When**, and it names months instead of counting chunks.
@@ -18439,3 +18489,23 @@ lines were the shop window demonstrating the very problem this build fixes; ever
 now carries dated lines plus one deliberate "No date yet". The tour's budget step was re-read and
 **stands unchanged** — Whole season is still the default, so the report it describes is the report a
 prospect meets.
+
+### Verdict — ✅ PASSED, 42/42, zero defects
+
+All four parts (A–D), the export re-checks (A2), and the demo-tour re-run walked clean with no
+catches — every line item marked good on first pass. Four open judgment calls the walk carried for
+the owner were answered and are now **settled, do not re-open**:
+
+| Question | Ruling |
+|---|---|
+| Does "Net to date" need its own explanatory sentence, or does the label alone carry it? | **No — the label stands alone.** No new sentence added. |
+| Should the fix-it bar ("N lines have no date") count dollars as well as lines? | **No — line count only.** Stays as built. |
+| Does anything in this build argue for flipping the default basis (Whole season → To date)? | **No.** Whole season stays default, per §3's original ruling — unchanged by seeing To date live. |
+| A date is advisory in every split mode — even **Specific dates** lets a chunk save with no date. Is that the intended rule? | **Yes, confirmed as the rule.** No enforcement added; a chunk-level date stays optional everywhere, consistent with "No date yet" being a legitimate line-level answer. |
+
+**Also verified in this walk, ruled live and confirmed working (uncommitted at time of walk — see
+TODO.md "The report's caveats travel with its file"):** the middle answer's rename to **Split across
+periods**, the split-line When-cell fold, and the report's footnote sentences travelling into the
+Excel (merged/wrapped cells under the table) and PDF (prose, flowing to a new page) exports while
+CSV deliberately carries none. In-app help search for "split across periods" and "when does this
+money move" both resolve to the rewritten article.

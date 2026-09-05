@@ -4,7 +4,7 @@
 the money report can finally answer *"are we on track right now?"* instead of *"has the season
 finished yet?"*
 
-**Plan:** `COACH_BUDGET_DATES_PLAN.md` · **Owner QA:** ledger §145
+**Plan:** `COACH_BUDGET_DATES_PLAN.md` · **Owner QA:** ledger §145 — ✅ PASSED 2026-09-05, 42/42, zero defects
 **Approved mockups:** https://claude.ai/code/artifact/91368ba1-0e89-4f30-a7e9-422b782976e3
 
 ---
@@ -22,7 +22,7 @@ Under the new reading the same team is **$1,690.02 under**, which is a figure a 
 ## What a coach sees change
 
 **Adding a budget line asks one more question.** After the amount: *"When does this money move?"* —
-one month, split across months, or **no date yet**. Nothing is chosen for them and no month is
+one month, split across periods, or **no date yet**. Nothing is chosen for them and no month is
 pre-filled; **Add Line stays off until they answer.** It is the same rule Category & Item already
 follow: a line says what it is and when it happens.
 
