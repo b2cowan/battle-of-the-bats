@@ -100,16 +100,23 @@ export default function MoneyExportButton({
     phone: f === 'pdf' ? 'keep' : 'drop',
     feature: f === 'pdf' ? 'pdf_exports' : undefined,
     run: async () => {
+      const spec = build(f);
+      /**
+       * ⚠ EXCEL NEEDS THE CLUB'S SETTINGS TOO (owner ruling 2026-09-05) — they were loaded for the
+       * PDF alone, so a spreadsheet could not carry a club's crest even where one had been
+       * uploaded, nor honour the branding switch they had already set.
+       *
+       * ⚠ BUT ONLY WHERE THE FILE HAS SOMEWHERE TO PUT THEM. The first version fetched for every
+       * format except CSV, which quietly put a network round trip in front of five Excel downloads
+       * that have no masthead and therefore nothing to brand — a request whose answer is thrown
+       * away. A masthead is what makes a file a report; a report is the only thing with letterhead.
+       * The PDF always wants them: it draws its own branded header regardless.
+       */
+      const wantsBranding = f === 'pdf' || (f === 'xlsx' && !!spec.masthead);
       await downloadMoneyExport(f, {
-        ...build(f),
+        ...spec,
         orgLabel: currentOrg?.slug ?? '',
-        /* ⚠ EXCEL NEEDS THESE TOO (owner ruling 2026-09-05). The club's document settings were
-           loaded for the PDF alone, so an Excel report could not carry a club's crest even where
-           they had uploaded one, and could not honour the branding switch they had already set.
-           A spreadsheet now opens on the same letterhead as the printed report.
-           ⚠ CSV STILL GETS NOTHING, and that is right: it has no masthead and no footer to brand,
-           and a fetch on the way to a plain data file is a round trip for nobody. */
-        pdfSettings: f === 'csv' ? null : await loadPdfSettings(),
+        pdfSettings: wantsBranding ? await loadPdfSettings() : null,
       });
     },
   }));
