@@ -129,22 +129,29 @@ describe('the period-grid file (By-period view)', () => {
     },
   ];
 
-  it('columns follow the screen: BvA month labels with real Excel header dates, Unscheduled, Total', () => {
+  it('columns follow the screen: undated first, BvA month labels with real Excel header dates, Total', () => {
     const view = buildPeriodView(LINES, 'months');
     const cols = budgetPeriodGridColumns(view);
     assert.deepEqual(cols.map(c => c.label),
-      ['Category / line', "Apr '27", "May '27", 'Unscheduled', 'Total']);
+      // ⚠ "No date yet", AND IT LEADS (owner ruling 2026-09-04, QA §133). The heading is the half
+      // that was losing money: nothing in the importer's aliases matched "Unscheduled", so a plan
+      // exported here and read back dropped every undated amount in silence.
+      ['Category / line', 'No date yet', "Apr '27", "May '27", 'Total']);
     // The BvA mechanism verbatim: `headerMonth` is what downloadMoneyExport turns into a real
     // date cell in the Excel header row.
-    assert.equal(cols[1].headerMonth, '2027-04');
-    assert.equal(cols[2].headerMonth, '2027-05');
-    assert.equal(cols[3].headerMonth, undefined);
+    // ⚠ INDEXES SHIFTED BY ONE when the undated column moved to the front. Asserted by NAME as
+    // well, so the next reordering fails on the thing that moved rather than on an off-by-one.
+    assert.equal(cols[1].label, 'No date yet');
+    assert.equal(cols[1].headerMonth, undefined, 'the undated column is not a date and must never carry one');
+    assert.equal(cols[2].headerMonth, '2027-04');
+    assert.equal(cols[3].headerMonth, '2027-05');
+    assert.equal(cols[4].headerMonth, undefined, 'Total is not a date either');
   });
 
   it('quarter columns carry the year in text and never a headerMonth — a quarter is not a date', () => {
     const view = buildPeriodView(LINES, 'quarters');
     const cols = budgetPeriodGridColumns(view);
-    assert.deepEqual(cols.map(c => c.label), ['Category / line', "Q2 '27", 'Unscheduled', 'Total']);
+    assert.deepEqual(cols.map(c => c.label), ['Category / line', 'No date yet', "Q2 '27", 'Total']);
     assert.ok(cols.every(c => c.headerMonth === undefined));
   });
 

@@ -1313,6 +1313,80 @@ export function formatMonthLabel(month: MonthKey): string {
   return `${names[m - 1] ?? month} '${month.slice(2, 4)}`;
 }
 
+/**
+ * "2026-03" → "Mar". The heading a month column carries when a YEAR BAND sits above it.
+ *
+ * ⚠ THE COMPANION TO `monthYearBands`, and neither is safe alone: a bare month with no band over
+ * it is a column that does not say which year it is, and a band over years-in-the-headings is the
+ * same fact printed twice. Use them together or use `formatMonthLabel`.
+ */
+export function formatMonthBare(month: MonthKey): string {
+  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return names[Number(month.slice(5, 7)) - 1] ?? month;
+}
+
+/**
+ * How many month columns a monthly grid shows at once before it starts paging.
+ *
+ * ⚠ ONE NUMBER FOR EVERY MONTHLY GRID (moved here 2026-09-04 from MoneyMonthGrid, when the Budget
+ * tab's by-period view gained the same window). Two grids showing one season a different number of
+ * months at a time is the drift this whole reconciliation exists to end.
+ */
+export const MONTH_WINDOW = 12;
+
+/**
+ * What a visible column window is called — "Jan – Oct 2026", or "Mar 2026 – Feb 2027" when it
+ * straddles New Year.
+ *
+ * ⚠ THE WINDOW MUST SAY ITS OWN NAME, on every grid that pages. Arrows alone leave a coach reading
+ * twelve figures with no statement of which twelve months they are — and the Total beside them is
+ * the WHOLE season, never the window, so a reader adding up what they can see has to be able to
+ * tell why it does not match.
+ *
+ * ⚠ ONE WORDING FOR BOTH GRIDS (2026-09-04). Reads a quarter key correctly too, so a future
+ * quarters window cannot quietly print a month name.
+ */
+export function periodRangeLabel(keys: readonly string[]): string {
+  if (keys.length === 0) return '';
+  const one = (k: string): string => (k.includes('-Q') ? k.slice(5) : formatMonthBare(k as MonthKey));
+  const first = keys[0];
+  const last = keys[keys.length - 1];
+  const y1 = first.slice(0, 4);
+  const y2 = last.slice(0, 4);
+  if (first === last) return `${one(first)} ${y1}`;
+  // One year over the whole window is said once, at the end, rather than on both ends.
+  return y1 === y2
+    ? `${one(first)} – ${one(last)} ${y1}`
+    : `${one(first)} ${y1} – ${one(last)} ${y2}`;
+}
+
+/** A run of consecutive columns sharing one year — `{ year: '2026', span: 10 }`. */
+export interface MonthYearBand { year: string; span: number; }
+
+/**
+ * The year band above a row of month columns (owner ruling 2026-08-13, extended to every monthly
+ * grid 2026-09-04).
+ *
+ * WHY A BAND AND NOT A SUFFIX. The year used to print on the one column where it changed, which
+ * made that column taller than its neighbours and read as a glitch — and it labelled a single
+ * column with something that describes a GROUP of them. On a season crossing New Year the band
+ * pays for itself twice over: Mar–Dec under one year, Jan–Feb under the next, told apart at a
+ * glance instead of by reading thirteen suffixes.
+ *
+ * ⚠ Takes the months ALREADY WINDOWED for display, never the whole season — a band describing
+ * columns that are not on screen is worse than no band at all.
+ */
+export function monthYearBands(months: readonly MonthKey[]): MonthYearBand[] {
+  const bands: MonthYearBand[] = [];
+  for (const m of months) {
+    const year = m.slice(0, 4);
+    const last = bands[bands.length - 1];
+    if (last && last.year === year) last.span += 1;
+    else bands.push({ year, span: 1 });
+  }
+  return bands;
+}
+
 /** "2026-03" → "March 2026", for prose (the shortfall sentence, a drill-in panel title). */
 export function formatMonthLong(month: MonthKey): string {
   const names = ['January', 'February', 'March', 'April', 'May', 'June',

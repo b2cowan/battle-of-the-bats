@@ -7,7 +7,7 @@ import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
   categoryHasFigure, hasUndated, isPayoutCategory, cellPanelSpec, panelRowWords, UNDATED_CELL,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
-  formatMonthLabel, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid, scheduledForward,
+  formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid, scheduledForward,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
@@ -79,7 +79,9 @@ export interface CellDetailItem {
  * That measurement is also why nothing else gets pinned: every pinned column costs a visible
  * month at every width.
  */
-export const MONTH_WINDOW = 12;
+/* Re-exported, not redefined — the number lives in the lib now so the Budget tab's by-period grid
+   reads the same one. Every existing consumer imports it from here. */
+export { MONTH_WINDOW };
 
 export interface MonthGridPayload {
   /**
@@ -317,6 +319,9 @@ export default function MoneyMonthGrid({
      long the season is, and an out-of-range slice renders an empty grid with no error. */
   const start = Math.min(Math.max(0, monthStart), maxStart);
   const view = grid.months.slice(start, start + MONTH_WINDOW);
+  /* Bands follow the WINDOW, so stepping the months re-groups them — a band describes what is on
+     screen, not the season. */
+  const bands = monthYearBands(view);
 
   /* ⚠ THE COLUMN APPEARS ONLY WHERE IT CAN HOLD SOMETHING (owner ruling 2026-08-21) — but the
      rule is now enforced on the FIGURE rather than on the lens's name. Undated money used to be
@@ -754,6 +759,27 @@ export default function MoneyMonthGrid({
             three things a search for `.grid {` will not show you. */}
         <table className={`${shared.moneyGrid} ${styles.grid}`}>
           <thead>
+            {/* ⚠⚠ THE YEAR BAND (owner ruling 2026-09-04, QA §133) — this grid was the LAST monthly
+                surface still spelling the year into every heading. The Budget tab has grouped them
+                under a band since 2026-08-13 (its quarters view too), so two views of one season
+                answered "which year is this column?" two different ways, one tab apart.
+                ⚠ "No date yet" and Total sit under an EMPTY band on purpose: they belong to no
+                year, and labelling them would be a tidy lie in a table whose job is to add up.
+                ⚠⚠ THE SPANS ARE LOAD-BEARING AND HAVE NO VISUAL TELL. Get the leading colSpan
+                wrong and every year shifts one column while the table still renders perfectly.
+                Leading = the name cell plus the undated column when it is showing; trailing =
+                Total alone.
+                ⚠ Built from the WINDOWED months, never the whole season — a band naming columns
+                that are off screen is worse than no band. */}
+            {bands.length > 0 && (
+              <tr className={styles.yearRow}>
+                <th aria-hidden colSpan={showUndated ? 2 : 1} />
+                {bands.map(b => (
+                  <th key={b.year} scope="colgroup" colSpan={b.span} className={styles.yearBand}>{b.year}</th>
+                ))}
+                <th aria-hidden />
+              </tr>
+            )}
             <tr>
               <th className={styles.lead}>Category / line</th>
               {/* ⚠ NO PRIOR-SEASON COLUMN HERE, and it is not an oversight (owner ruling
@@ -763,7 +789,7 @@ export default function MoneyMonthGrid({
                   that was not true. Cross-season belongs in its own view. */}
               {showUndated && <th className={`${styles.num} ${styles.undated}`}>No date yet</th>}
               {view.map(m => (
-                <th key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>{formatMonthLabel(m)}</th>
+                <th key={m} className={`${styles.num} ${m === todayMonth ? shared.gridColNow : ''}`}>{formatMonthBare(m)}</th>
               ))}
               <th className={`${styles.num} ${styles.totalCol}`}>Total</th>
             </tr>

@@ -250,7 +250,10 @@ export function budgetPeriodGridColumns(view: PeriodView): ExportColumnDef[] {
   const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
   for (const col of view.columns) {
     if (col.unscheduled) {
-      cols.push({ label: 'Unscheduled', key: 'unscheduled', format: 'currency' });
+      // ⚠ THE HEADING THE IMPORTER READS. It said "Unscheduled" until 2026-09-04, which no import
+      // alias matched, so a plan exported here and read back lost every undated amount without
+      // saying so. Change this word only together with ALIASES.undated in coach-budget-import.
+      cols.push({ label: 'No date yet', key: 'unscheduled', format: 'currency' });
     } else if (/^\d{4}-\d{2}$/.test(col.key)) {
       cols.push({ label: formatMonthLabel(col.key), key: `m_${col.key}`, format: 'currency', headerMonth: col.key });
     } else {

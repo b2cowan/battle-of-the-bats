@@ -17291,7 +17291,26 @@ stored), a names split with one dated and one dateless chunk (`Jersey order`), a
 2026-09-02):** all six phases, with Q6 (category rename) deliberately HELD at its owner
 checkpoint — categories are org-shared with no team column (verified live), so the policy
 question is the owner's before any variant is built. Eight parts to walk: (A) one grain — the
-By-period grid sums same-item lines into one row, both views share one ordering (⚠ the "2 lines" caption this part was written against was REMOVED mid-walk on 2026-09-04 — owner: over-explaining; the sum stays, the label is gone from both views and from the exports); (B) the split
+By-period grid sums same-item lines into one row, both views share one ordering (⚠ the "2 lines" caption this part was written against was REMOVED mid-walk on 2026-09-04 — owner: over-explaining; the sum stays, the label is gone from both views and from the exports);
+
+**⚠ THREE CHANGES LANDED MID-WALK on 2026-09-04, after the owner read the two period grids side
+by side and asked whether their differences were reasons or drift. They were drift, and one was
+losing money — walk part (A) against these rather than against the text above:**
+1. **The undated column is "No date yet" and it LEADS, on BOTH grids.** It was "Unscheduled",
+   last, on the Budget tab. ⚠ THE NAME WAS A DATA-LOSS BUG: the by-period export wrote
+   "Unscheduled" as a heading and no import alias matched it, so a plan exported from that screen
+   and read straight back dropped every undated amount silently — $4,750 of costs and $1,950 of
+   income on this very fixture. The importer now accepts BOTH words, so spreadsheets already
+   downloaded still work.
+2. **Budget vs. Actual gained the year band** and its month headings went bare (`MAR '26` → `MAR`).
+   It was the last monthly grid still spelling the year into every column.
+3. **The Budget tab gained the month window** — twelve at a time with the shared `‹ range ›`
+   control, months only (quarters top out at eight columns and always fit). It does NOT appear on
+   this fixture, whose plan spans ten months; verified by temporarily widening the plan past the
+   window and restoring it.
+
+Both grids were verified RENDERED against this fixture before hand-off (band spans align, undated
+column leads, pager steps and re-groups the band). Mockup: `month-grid-reconcile` artifact. (B) the split
 editor reopens in its stored mode, names-mode chunks carry optional dates; (C) the rescale banner
 replaces the silent total/split desync, and the server 409s it as a belt (the split now rides the
 line's own save request); (D) the Schedule column, Collapse all, tighter desktop rows, remembered
@@ -18155,7 +18174,6 @@ on dev **after** §132's walk had already passed 42/42. They have never been wal
 8. **H · The empty state.** A team with no dues schedule: an em-dash and a door, never $0.00.
 9. **I · Calls to make.** The dues row's figures deliberately do not open; the populated caption
    names Player Dues without linking it; the floored season says nothing.
-
 
 **✅ WALKED AND PASSED 2026-09-04 — 40/40 steps, all nine parts (A–I), ZERO flags.** The §132
 round-three work carried in Part B is walked at last, and it passes with the rest.

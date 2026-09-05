@@ -367,3 +367,27 @@ a.chooserChoice:hover { background: var(--home-raise, rgba(255, 255, 255, 0.05))
   /* (`.lineLead`'s phone indent moved to the shared `.moneyGridLead` — the class is no longer
      applied here, so this override had been orphaned and the tightening lost.) */
 }
+
+/* ── The year band above the months (owner ruling 2026-09-04, QA §133) ────────────────────────
+   ⚠ MIRRORS the Budget tab's band (budget.module.css .periodGridYearRow / .periodGridYear) to the
+   value. The two grids show one season and had to stop looking like two products; if you change
+   one of these rules, change both, or they fork again — which is the note the sticky-header block
+   below already carries for the same pair of files.
+   Quiet on purpose: the band is structure, not a heading to read. Its own hairline shows how far
+   each year reaches. */
+.yearRow th {
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  padding-bottom: 0.2rem;
+}
+.yearBand {
+  text-align: center !important;
+  font-size: var(--type-label);
+  letter-spacing: 0.14em;
+  color: var(--text-tertiary);
+}
+/* The blank cells over Category / No date yet / Total carry NO rule: those columns are outside
+   time, and a hairline there would imply they belong to the year beside them. */
+.yearRow th[aria-hidden] { border-bottom-color: transparent; }
+/* The band pins with the rest of the header — without this it scrolls away under the month row
+   and the months are left unlabelled mid-scroll, which is worse than never having had a band. */
+.grid thead .yearRow th { z-index: 2; }

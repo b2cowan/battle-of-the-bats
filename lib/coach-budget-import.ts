@@ -86,7 +86,11 @@ const ALIASES = {
   combined:    ['category / line', 'category line', 'category or line'],
   amount:      ['amount', 'total', 'cost', 'budget', 'estimated', 'estimate'],
   notes:       ['notes', 'note', 'comment', 'comments'],
-  undated:     ['no date yet', 'no date', 'undated'],
+  /* ⚠ 'unscheduled' IS HERE FOR THE FILES ALREADY ON PEOPLE'S MACHINES. The by-period export wrote
+     that heading until 2026-09-04 and nothing here matched it, so those sheets round-tripped with
+     every undated amount dropped. Renaming the export fixes tomorrow's files; this line fixes the
+     ones already downloaded, and must not be removed as tidy-up. */
+  undated:     ['no date yet', 'no date', 'undated', 'unscheduled'],
   payee:       ['payee', 'pay to', 'paid to', 'vendor', 'supplier'],
   description: ['description', 'what', 'what for', 'item'],
   dueDate:     ['due date', 'due', 'date due'],

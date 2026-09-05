@@ -119,7 +119,11 @@ describe('unscheduled', () => {
       line('b', 'Uniforms', 2000, []),
     ], 'months');
     assert.equal(view.hasUnscheduled, true);
-    assert.equal(view.columns[view.columns.length - 1].key, UNSCHEDULED);
+    /* ⚠ IT LEADS — it used to be asserted LAST (owner ruling 2026-09-04, QA §133). Both grids
+       now open on undated money instead of hiding it off the right-hand edge, so the assertion
+       that was describing the old screen moves to the front with the column. The MONEY has not
+       moved: the next line is the one that proves the amount still lands in that bucket. */
+    assert.equal(view.columns[0].key, UNSCHEDULED);
     assert.equal(view.groups[0].rows[1].cells[UNSCHEDULED], 2000);
   });
 

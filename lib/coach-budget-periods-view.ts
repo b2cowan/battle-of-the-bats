@@ -8,7 +8,8 @@
  *
  * Three rules the shape depends on:
  *
- * 1. **Unscheduled is a real column.** A line with no period split, or a period entered in
+ * 1. **The undated column is a real column** ("No date yet" since 2026-09-04, matching the
+ *    statement — see the note where it is built). A line with no period split, or a period entered in
  *    "just names" mode with no date, has to go somewhere. Dropping it would make the columns
  *    quietly disagree with the plan's own total — the failure mode where a coach trusts a row of
  *    numbers that is missing $2,000. Naming it is honest, and doubles as the nudge to split it.
@@ -71,7 +72,7 @@ export interface PeriodViewLine {
 export interface PeriodColumn {
   /** `2027-04`, `2027-Q2`, or `unscheduled`. */
   key: string;
-  /** `Apr`, `Q2`, `Unscheduled` — the column heading. The YEAR is not here: it lives in the band
+  /** `Apr`, `Q2`, `No date yet` — the column heading. The YEAR is not here: it lives in the band
    *  above (see PeriodYearBand), because it describes a group of columns, not this one. */
   label: string;
   unscheduled: boolean;
@@ -107,7 +108,7 @@ export interface PeriodViewGroup {
  * ⚠ This replaced printing the year on the one column where it CHANGED (owner, 2026-08-13). That
  * made a single column taller than its neighbours — it read as a glitch — and it treated the year
  * as a label on one column when it is really a property of a GROUP of them. `span` counts only
- * dated columns; Unscheduled belongs to no year and sits under a deliberately empty band.
+ * dated columns; the undated column belongs to no year and sits under a deliberately empty band.
  */
 export interface PeriodYearBand {
   year: string;
@@ -123,7 +124,7 @@ export interface PeriodView {
   groups: PeriodViewGroup[];
   /** Costs − funding, per column: what players fund month by month. */
   totals: { cells: Record<string, number>; total: number };
-  /** Did anything land in Unscheduled? Drives whether that column exists at all. */
+  /** Did anything land in the undated column? Drives whether that column exists at all. */
   hasUnscheduled: boolean;
   /** True when the plan's dated span was wider than the window and the far end was dropped. The
    *  view SAYS so rather than showing a total that silently excludes it. */
@@ -381,10 +382,17 @@ export function buildPeriodView(
       return a.name.localeCompare(b.name);
     });
 
-  const columns: PeriodColumn[] = [...dateColumns];
-  if (hasUnscheduled) {
-    columns.push({ key: UNSCHEDULED, label: 'Unscheduled', unscheduled: true });
-  }
+  /* ⚠ "No date yet", AND IT LEADS (owner ruling 2026-09-04, QA §133). Both halves were drift, and
+     the NAME half was losing money: this view's export wrote "Unscheduled" as a heading and the
+     importer has never known that word, so a plan exported from here and read back dropped every
+     undated amount silently — the row still arrived, with no figure on it. Budget vs. Actual has
+     always said "No date yet" and always put it first, so this view moves to meet it rather than
+     the other way round.
+     ⚠ The word is also SPOKEN FOR elsewhere: "Unscheduled" is what the schedule tools call a game
+     with no date. One product, one meaning per word. */
+  const columns: PeriodColumn[] = hasUnscheduled
+    ? [{ key: UNSCHEDULED, label: 'No date yet', unscheduled: true }, ...dateColumns]
+    : [...dateColumns];
 
   return {
     columns,
