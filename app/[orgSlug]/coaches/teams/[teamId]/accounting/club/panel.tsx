@@ -1918,33 +1918,39 @@ export function ClubPanel({
                 </div>
               ) : (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>Which way is the money going? *</label>
-                  <div className={styles.clubDirectionPair}>
-                    <button
-                      type="button"
-                      className={`${styles.clubDirectionPick} ${formType === 'charge_to_org' ? styles.clubDirectionOn : ''}`}
-                      data-side="in"
-                      onClick={() => { setFormType('charge_to_org'); clearFormItem(); }}
-                      aria-pressed={formType === 'charge_to_org'}
-                    >
-                      <span className={styles.clubDirectionHead}><ArrowDownLeft size={14} aria-hidden /> From the club</span>
-                      <span className={styles.clubDirectionSub}>They cover or pay back a cost</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.clubDirectionPick} ${formType === 'payment_to_org' ? styles.clubDirectionOn : ''}`}
-                      data-side="out"
-                      /* ⚠ TURNING THE REQUEST ROUND DROPS THE ANSWER. Money the team SENDS the club
-                         is a cost, which has no second reading — the server refuses a meaning on
-                         this direction and the column's own CHECK agrees, so a stale answer left
-                         in state would be a 400 the coach cannot see the cause of. */
-                      onClick={() => { setFormType('payment_to_org'); setFormMeaning(null); clearFormItem(); }}
-                      aria-pressed={formType === 'payment_to_org'}
-                    >
-                      <span className={styles.clubDirectionHead}><ArrowUpRight size={14} aria-hidden /> To the club</span>
-                      <span className={styles.clubDirectionSub}>We send them money</span>
-                    </button>
-                  </div>
+                  {/* ⚠⚠ A DROPDOWN, NOT TWO CARDS (owner ruling 2026-09-04). This was a pair of
+                      radio-cards on a form that ALREADY used SublinedChoice a few rows down, so one
+                      screen was showing both patterns at once — and the direction stays correctable
+                      (a request can be turned round), so it never met the exemption the 2026-08-22
+                      ruling reserves for a choice that cannot be changed afterwards.
+                      ⚠ THE TWO DIRECTION ARROWS WENT WITH THE CARDS, and that was the owner's call
+                      made on the mockup rather than discovered afterwards: SublinedChoice has no
+                      icon slot, and growing it one to serve a single caller is exactly what its own
+                      design note warns against. The words carry the direction twice — "From the
+                      club" / "To the club", then the sub-line — which is what makes the loss
+                      affordable. Do not re-add an icon prop here without re-opening that call. */}
+                  {/* ⚠ The visible label is the caller's — `label` below is the accessible name
+                      only and renders nothing. */}
+                  <label className={styles.label} htmlFor="club-money-direction">Which way is the money going? *</label>
+                  <SublinedChoice
+                    id="club-money-direction"
+                    label="Which way is the money going? *"
+                    options={[
+                      { value: 'charge_to_org' as const, name: 'From the club', sub: 'They cover or pay back a cost' },
+                      { value: 'payment_to_org' as const, name: 'To the club', sub: 'We send them money' },
+                    ]}
+                    value={formType === 'charge_to_org' || formType === 'payment_to_org' ? formType : null}
+                    /* ⚠ TURNING THE REQUEST ROUND DROPS THE ANSWER. Money the team SENDS the club
+                       is a cost, which has no second reading — the server refuses a meaning on
+                       this direction and the column's own CHECK agrees, so a stale answer left
+                       in state would be a 400 the coach cannot see the cause of. The clear is
+                       ASYMMETRIC on purpose; do not "tidy" it into one shared handler. */
+                    onChange={side => {
+                      setFormType(side);
+                      if (side === 'payment_to_org') setFormMeaning(null);
+                      clearFormItem();
+                    }}
+                  />
                 </div>
               )}
 
@@ -2094,7 +2100,10 @@ export function ClubPanel({
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="club-amount">Amount ($) {!readOnly && '*'}</label>
+                {/* "Amount", not "Amount ($)" (owner 2026-09-04) — the currency marker was one of only
+                    two left in the portal and the field itself already says it. The other was the
+                    budget line form, changed in the same pass. */}
+                <label className={styles.label} htmlFor="club-amount">Amount {!readOnly && '*'}</label>
                 {readOnly ? (
                   <p className={styles.recordValue} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(parseFloat(formAmount) || 0)}</p>
                 ) : (

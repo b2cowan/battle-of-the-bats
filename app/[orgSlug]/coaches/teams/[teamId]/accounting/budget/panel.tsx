@@ -11,6 +11,7 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
+import SublinedChoice from '@/components/coaches/SublinedChoice';
 import { monthKeyOf } from '@/lib/coach-budget-months';
 import { rollupBudget } from '@/lib/coach-budget-rollup';
 import { useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
@@ -2333,32 +2334,46 @@ export function BudgetPlanPanel({
             <p className={styles.formHint}>* Required</p>
 
             {/* What KIND of line — asked first, because it changes what every field under it
-                means. Amounts stay positive either way; the kind carries the sign. */}
+                means. Amounts stay positive either way; the kind carries the sign.
+                ⚠⚠ A DROPDOWN, NOT FOUR TILES (owner ruling 2026-09-04). It was a row of
+                radio-cards until then, which is the shape the 2026-08-22 ruling reserves for a
+                choice that CANNOT be changed afterwards — the Fundraiser/Sponsor precedent. A
+                budget line's kind is correctable forever (the edit form flips it and deliberately
+                keeps everything typed), so it never qualified; the screen simply predated the
+                ruling. Four tiles also cost ~130px above every other field on desktop and closer
+                to 300px on a phone, where they stack.
+                ⚠ THE SHARED CONTROL, not a fifth hand-rolled listbox — the same one the Club tab
+                uses and the same CSS the Record conversation's "What happened?" is drawn in, which
+                is what keeps them reading as one control rather than four cousins.
+                ⚠ IT KEEPS ITS DEFAULT rather than opening on "Choose…" like the Record
+                conversation does (owner, same ruling). That form's eight answers are genuinely
+                equal; nearly every budget line is an Expense, and making a coach answer a question
+                they almost always answer identically is a step, not a safeguard. */}
             <div className={styles.field}>
-              <label className={styles.label}>This line is</label>
-              <div className={styles.kindChoice} role="group" aria-label="This line is">
-                {BUDGET_LINE_KINDS.map(kind => (
-                  <button
-                    key={kind}
-                    type="button"
-                    className={styles.kindOption}
-                    aria-pressed={form.lineKind === kind}
-                    /* ⚠ FLIPPING THE KIND KEEPS THE CATEGORY AND ITEM (mig 243). It used to clear
-                       them, correctly, while money-in lines carried no taxonomy and the picker was
-                       cost-only — a stale "Tournaments" pick would have ridden along to the save.
-                       Both halves of that reasoning are now false: every line names an item, and
-                       the item is REQUIRED on every kind. Left as it was, flipping a line to
-                       Sponsorship silently emptied the picker and blocked Save on "Pick a category
-                       and item" — the change fighting its own new rule (/review, regression lens).
-                       ⚠ Switching keeps what has been typed, the same promise the money form makes
-                       one screen over. */
-                    onClick={() => setForm(f => (f.lineKind === kind ? f : { ...f, lineKind: kind }))}
-                  >
-                    {LINE_KIND_LABEL[kind]}
-                    <small>{LINE_KIND_HINT[kind]}</small>
-                  </button>
-                ))}
-              </div>
+              {/* ⚠ THE VISIBLE LABEL IS THE CALLER'S. SublinedChoice's `label` prop is the
+                  ACCESSIBLE name only — it renders no text — so a caller that passes it and stops
+                  ships a field with no heading. Caught on the screen, not by any gate. */}
+              <label className={styles.label} htmlFor="budget-line-kind">This line is</label>
+              <SublinedChoice
+                id="budget-line-kind"
+                label="This line is"
+                options={BUDGET_LINE_KINDS.map(kind => ({
+                  value: kind,
+                  name: LINE_KIND_LABEL[kind],
+                  sub: LINE_KIND_HINT[kind],
+                }))}
+                value={form.lineKind}
+                /* ⚠ FLIPPING THE KIND KEEPS THE CATEGORY AND ITEM (mig 243). It used to clear
+                   them, correctly, while money-in lines carried no taxonomy and the picker was
+                   cost-only — a stale "Tournaments" pick would have ridden along to the save.
+                   Both halves of that reasoning are now false: every line names an item, and
+                   the item is REQUIRED on every kind. Left as it was, flipping a line to
+                   Sponsorship silently emptied the picker and blocked Save on "Pick a category
+                   and item" — the change fighting its own new rule (/review, regression lens).
+                   ⚠ Switching keeps what has been typed, the same promise the money form makes
+                   one screen over. */
+                onChange={kind => setForm(f => (f.lineKind === kind ? f : { ...f, lineKind: kind }))}
+              />
               {isFundingKind(form.lineKind) && (
                 <p className={styles.kindHint}>{KIND_HINT_LONG[form.lineKind]}</p>
               )}

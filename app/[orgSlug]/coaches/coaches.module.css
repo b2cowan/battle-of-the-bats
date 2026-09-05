@@ -3196,42 +3196,24 @@ a.oneChip:hover { border-color: currentColor; }
    be a class. */
 .tdShrink { width: 1%; white-space: nowrap; }
 
-/* ── The kind picker: two cards, not a dropdown ──────────────────────────────────────────────
-   A fundraiser and a sponsor are different enough that each needs a sentence, and this is the one
-   choice on the form that CANNOT be changed afterwards (a drive's rows are players, a sponsor is a
-   single arrival — a switch has nothing sensible to do with what is already recorded). A select
-   would hide both facts behind a closed control. */
-.kindPick { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.kindOption {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  text-align: left;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
-  border-radius: 8px;
-  background: var(--home-card, rgba(255, 255, 255, 0.03));
-  cursor: pointer;
-  /* The whole card is the target, so it clears the phone tap floor by construction rather than
-     by a min-height that would have to be remembered. */
-  min-height: var(--tap-min, 44px);
-}
-.kindOptionOn {
-  border-color: var(--home-olive, var(--logic-lime));
-  background: var(--home-olive-soft, rgba(255, 255, 255, 0.06));
-  box-shadow: inset 0 0 0 1px var(--home-olive, var(--logic-lime));
-}
-.kindOptionName {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--type-body);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.kindOptionOn .kindOptionName { color: var(--home-olive, var(--logic-lime)); }
-.kindOptionHint { font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.35; }
-@media (max-width: 640px) { .kindPick { grid-template-columns: 1fr; } }
+/* ⚰ ── The kind picker (`.kindPick` / `.kindOption*`) IS GONE — and it had been dead a while ──
+   The fundraiser-or-sponsor choice it styled was removed when fundraisers became DRIVES ONLY
+   (Direction A); a sponsor is created from its own form now, so the choice has no markup left.
+
+   ⚠⚠ IT SURVIVED THE DEAD-CLASS GATE FOR WEEKS BECAUSE OF THE EXACT COLLISION THE NOTE FURTHER
+   DOWN THIS FILE WARNED ABOUT. The budget panel had its own `.kindOption` in its own module;
+   the scan matches `styles.kindOption` by NAME, so one module's live reference vouched for the
+   other module's corpse. It only surfaced on 2026-09-04 when the budget tiles became a dropdown
+   and took the last reference with them. ⚠ A shared class name does not just risk the cascade —
+   it blinds the gate that would have told you.
+
+   ⚠ THE REASONING IS WORTH KEEPING, because this picker is the CANONICAL EXEMPTION the
+   "a one-value field is a dropdown" ruling (2026-08-22) names: a fundraiser and a sponsor are
+   different enough that each needs a sentence, and it was the one choice on the form that COULD
+   NOT be changed afterwards — a drive's rows are players, a sponsor is a single arrival, so a
+   switch had nothing sensible to do with what was already recorded. That is the test a future
+   two-card choice has to pass; everything else is a dropdown. */
+
 
 /* ── A number with a unit switch ($ | %) ─────────────────────────────────────────────────────
    A sponsor's family credit is entered either way (owner ruling 2026-08-15) — a coach who agreed
@@ -11813,49 +11795,28 @@ button.gdChip[aria-pressed='true'] {
   color: var(--text-secondary);
 }
 
-/* ── Which way is the money going? ──────────────────────────────────────────
-   ⚠ WAS ~30 LINES OF INLINE STYLE OBJECTS PER BUTTON in the old panel, including the selected
-   state's border, background and colour computed in three ternaries each. The pair is now a class
-   with a `data-side` hook, which is also what let the two buttons be REORDERED: "From the club" now
-   comes first because it is far and away the common case, and reordering inline-styled buttons
-   meant moving two 30-line literals rather than two lines. */
-.clubDirectionPair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.clubDirectionPick {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  border: 2px solid var(--home-line, var(--border-2));
-  background: var(--home-card, var(--white-3));
-  color: var(--text-tertiary);
-  font-size: var(--type-body);
-  text-align: left;
-  cursor: pointer;
-  min-height: var(--tap-min, 44px);
-}
-.clubDirectionHead { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; }
-.clubDirectionSub { font-size: var(--type-support); font-weight: 400; opacity: 0.85; }
-/* ⚠ THE ARROW AND THE WORDS CARRY THE MEANING; the tint only confirms it. Same rule as the row
-   badges — red-against-green is the one pairing a deutan reader cannot separate, and the two
-   buttons say "From the club" and "To the club" in as many words. */
-/* ⚠⚠ ONE SELECTED COLOUR, NOT TWO (owner-found 2026-09-01). These were success-GREEN for money in
-   and danger-RED for money out — semantic colouring borrowed from the register, where it belongs on
-   a FIGURE. On a CHOICE it misreads badly: red is this product's danger ink (Declined, Overdue,
-   Delete), so picking "To the club — we send them money" lit up as though the coach had done
-   something wrong. Sending your club money is not an error.
-   ⚠ The direction is still carried three ways that do not depend on colour: the arrow icon, the
-   heading, and the sub-line under it. What the fill says now is only "this is the one you picked",
-   which is the same thing every other selected control in the portal says with the same accent. */
-.clubDirectionPick.clubDirectionOn {
-  border-color: var(--home-olive, var(--logic-lime));
-  background: color-mix(in srgb, var(--home-olive, var(--logic-lime)) 10%, transparent);
-  color: var(--text-primary);
-}
-.clubDirectionOn .clubDirectionSub { color: inherit; }
-@media (max-width: 520px) {
-  .clubDirectionPair { grid-template-columns: 1fr; }
-}
+/* ⚰ ── Which way is the money going? — THE TWO CARDS ARE GONE (owner ruling 2026-09-04) ────────
+   `.clubDirectionPair` / `.clubDirectionPick` / `.clubDirectionOn` / `.clubDirectionHead` /
+   `.clubDirectionSub` all retired here. The field renders through the shared `SublinedChoice`
+   now, drawn in the `convWhat*` rules below — the same control the Record conversation and the
+   budget line's "This line is" use. The panel this served was already importing SublinedChoice
+   for a DIFFERENT field a few rows down, so one form was showing both patterns at once.
+
+   ⚠ THE DIRECTION ARROWS WENT WITH THEM, deliberately: SublinedChoice has no icon slot, and the
+   owner took that trade on the mockup rather than discovering it after. "From the club" / "To the
+   club" plus the sub-line say the direction twice in words.
+
+   ⚠⚠ TWO RULINGS THESE RULES CARRIED SURVIVE THEM, and both are already honoured by the shared
+   control — do not re-derive them from scratch on the next choice control:
+   · ONE SELECTED COLOUR, NOT TWO (owner-found 2026-09-01). These were success-GREEN for money in
+     and danger-RED for money out — semantic colouring borrowed from the register, where it belongs
+     on a FIGURE. On a CHOICE it misread badly: red is this product's danger ink (Declined,
+     Overdue, Delete), so picking "To the club — we send them money" lit up as though the coach had
+     done something wrong. Sending your club money is not an error. The shared control uses the one
+     olive accent every other selected control uses.
+   · THE MEANING NEVER RIDES ON COLOUR. Red-against-green is the one pairing a deutan reader cannot
+     separate; the words carried it then and carry it now. */
+
 
 /* ══ THE ONE PAYABLES LIST (Payables Rebuild P3, 2026-08-20) ═══════════════════════════════════
    `Schedule | Commitments` is gone; one list, arranged by commitment or by due date. Two row

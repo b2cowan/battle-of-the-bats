@@ -50,6 +50,13 @@ export default function SublinedChoice<T extends string>({
   disabled = false,
   id,
 }: {
+  /**
+   * ⚠⚠ THE ACCESSIBLE NAME ONLY — THIS RENDERS NO VISIBLE TEXT. Every caller draws its own
+   * `<label className={styles.label} htmlFor={id}>` above, inside its own `.field` block. The prop
+   * name reads like it paints one, and on 2026-09-04 a third caller passed it and stopped, shipping
+   * a field with no heading — invisible to typecheck, lint and every gate, and only caught by
+   * opening the screen. If a fourth caller arrives, consider moving the label in here instead.
+   */
   label: string;
   options: ReadonlyArray<SublinedOption<T>>;
   /** null = nothing chosen yet, which the field says out loud rather than defaulting to answer one. */
