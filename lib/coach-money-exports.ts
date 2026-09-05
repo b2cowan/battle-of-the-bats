@@ -19,7 +19,7 @@
 import type { ExportColumnDef, XlsxRowStyle } from './export';
 import {
   buildFilename, serializeHeaders, serializeRows, generateCSV, downloadCSVBlob, downloadXLSX,
-  downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, type OrgPdfSettings,
+  downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, loadBrandMark, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
 import {
@@ -1316,6 +1316,9 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
     // own serialization, so mutating it cannot reach the CSV or PDF paths above.
     if (kind === 'item') body[i][0] = String(body[i][0]).replace(ITEM_PREFIX, '');
   });
+  /* Fetched only when this file is actually going to draw one — a plain dataset export makes no
+     request. Cached for the page, so a treasurer downloading four views pays for it once. */
+  const brandMark = spec.masthead && settings.showBranding ? await loadBrandMark() : null;
   const numFmt = CURRENCY_NUMFMT[spec.currencyNotation ?? 'minus'];
   // Aligned with `headers` — the same sensitive-column filter serializeHeaders just applied.
   const activeCols = spec.columns.filter(c => !c.sensitive);
@@ -1356,13 +1359,14 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
      * this product reads it back. One flag decides both ends of the file, so they can never
      * disagree about which kind it is.
      *
-     * ⚠ TEXT, NOT A MARK — for now, and worth recording so nobody "finishes" it by accident. A
-     * spreadsheet can only embed a raster (png/jpeg/gif) and our own brand asset is an SVG;
-     * rasterising it in the browser at download time to decorate a footer is more machinery than
-     * the decoration is worth. The writer already takes a logo here, so the day a raster mark
-     * exists this is one string. The CLUB logo is unaffected — theirs is already stored as a PNG
-     * data URL, so the masthead crest works today.
+     * ⚠ IT CARRIES OUR MARK NOW (owner, 2026-09-05). It shipped as text that morning under a note
+     * saying a spreadsheet can only embed a raster and our brand asset was an SVG — which was half
+     * true and stopped one step early: `public/favicon.svg` is a vector, but the PWA icons beside
+     * it have been real PNGs since July. Nothing had to be stored; it had to be found. The mark
+     * fails soft, so a footer that cannot load it is still the sentence it always was.
      */
-    footer: spec.masthead && settings.showBranding ? { text: BRANDING_TEXT } : undefined,
+    footer: spec.masthead && settings.showBranding
+      ? { text: BRANDING_TEXT, logoDataUrl: brandMark ?? undefined }
+      : undefined,
   });
 }

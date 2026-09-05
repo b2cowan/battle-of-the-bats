@@ -309,8 +309,9 @@ export async function downloadXLSX(
     cell.font = { size: 8.5, color: { argb: 'FF6C6559' } };
     cell.alignment = { vertical: 'middle', indent: opts.footer.logoDataUrl ? 5 : 0 };
     if (width > 1) ws.mergeCells(row.number, 1, row.number, width);
-    row.height = 20;
     const parsed = opts.footer.logoDataUrl ? parseDataUrl(opts.footer.logoDataUrl) : null;
+    // The row has to be taller than the mark or the mark hangs out of the bottom of the sheet.
+    row.height = parsed ? 30 : 20;
     if (parsed) {
       ws.addImage(workbook.addImage(parsed), {
         tl: { col: 0.1, row: row.number - 1 + 0.1 },
