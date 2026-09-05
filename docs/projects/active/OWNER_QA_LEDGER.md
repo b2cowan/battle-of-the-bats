@@ -18316,7 +18316,7 @@ and proves nothing.
    Budget Plan**, and the lines are still plain text. Before this, that panel had no way out.
 ---
 
-## §145 · Budget dates, and the "to date" reading — every line answers when the money moves, and the report can finally compare like with like — BUILT 2026-09-05, committed `394ae7b0`, awaiting QA
+## §145 · Budget dates, and the "to date" reading — every line answers when the money moves, and the report can finally compare like with like — BUILT 2026-09-05, committed `394ae7b0`, awaiting QA · walk artifact `8c6a7dd7`
 
 **Owner-ruled and mockup-approved 2026-09-04/05.** Proposal artifact `9bc53080`; mockup gate
 `91368ba1` (the plan list's When column, the statement's control row, and the amended line form —
