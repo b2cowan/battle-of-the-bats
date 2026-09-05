@@ -18210,7 +18210,7 @@ case out loud; item ids were left untouched so ticks already earned survived the
 in to show it** — otherwise a passing product reads as a defect, and the walk spends the owner's
 attention proving the walk wrong.
 
-## §143 · The month grid's plan panel lands ON the line, every time — the one-shot deep link re-arms — BUILT 2026-09-04, awaiting QA
+## §143 · The month grid's plan panel lands ON the line, every time — the one-shot deep link re-arms — BUILT 2026-09-04, committed `d14a4c8c` 2026-09-04, awaiting QA · walk artifact `f552d112`
 
 **Found by the owner during §142's walk.** Tapping a budget line inside the month grid's "what makes
 up this plan figure?" panel already carried an instruction to open that exact line's edit drawer with
@@ -18266,16 +18266,16 @@ line A, even if the coach had closed it. The address encodes that intent and not
 it from a fresh tap; no work is lost, and the form re-reads current data. Recorded here rather than
 engineered around.
 
-### The walk (3 steps)
+**Walkthrough artifact (the instrument, shared with §144):** `claude.ai/code/artifact/f552d112-2fca-4fbd-a10b-9062141699ef`
+Six checks and one question in one sitting — the deep link, its unsaved-work guard, the read-only
+door, and the wording call on that door's label. Two personas: the head coach and
+`uat-asst-money-read@uat-test-org.local`, which only the fixture seeder creates.
+
+### The walk (4 steps)
 1. Money → **Budget Plan** first (this is the step that used to poison it), then **Budget vs
    Actual** → tap a plan figure → tap a line. Budget opens with that line's drawer up and its
    payment dates expanded.
 2. Close it, return to Budget vs Actual, tap the **same** line again. It opens again.
-4. ⚠ **The unsaved-work guard (found by /review, not by the build).** Open a line's drawer, type
-   an amount (do NOT save), press the browser **Back** button, then tap a DIFFERENT line in the
-   grid. You should be asked *"Discard this budget line?"* naming what you typed — **Keep editing**
-   leaves your work exactly as it was; **Discard** opens the line you tapped. Before the fix the
-   first line's work vanished silently.
 3. ⚠ **The seam with the concurrent §133 second-look work, which neither session owns alone.**
    Because the grid link forces the payment split ON, the drawer arrives holding one blank period
    against a real total — a mismatch **by construction**, on a form the coach has not touched. It
@@ -18284,8 +18284,14 @@ engineered around.
    found and fixed from the other side (session tournament-website-84) while this fix was in
    review; the step lives here because this deep link is the only way a coach reaches that state
    routinely. Before the fix it happened once per page load; now it happens on every tap.
+4. ⚠ **The unsaved-work guard — found by /review, not by the build.** Open a line's drawer, type an
+   amount (do NOT save), press the browser **Back** button, then tap a DIFFERENT line in the grid.
+   You should be asked *"Discard this budget line?"*, naming what you typed — **Keep editing**
+   leaves your work exactly as it was; **Discard** opens the line you tapped. Before the fix the
+   first line's work vanished silently, because a deep link writes the form without a click and
+   neither guard on this screen watches anything but clicks.
 
-## §144 · The plan panel stops dead-ending for a coach who can only read — BUILT 2026-09-04, committed `36124583`, awaiting QA
+## §144 · The plan panel stops dead-ending for a coach who can only read — BUILT 2026-09-04, committed `36124583`, awaiting QA · walk artifact `f552d112`
 
 **The asymmetry the owner found while asking a different question.** He asked whether the planned
 figure's panel should carry buttons "for consistency" with the spent figure's. For him: no — his
@@ -18334,8 +18340,10 @@ figure a treasurer can act on.
 
 **Part A — the line form (Money › Budget › Add line).**
 1. The optional **Split by period** checkbox beside Amount is **gone**. In its place, a required
-   question after Amount: **"When does this money move?"** — One month · Split across months ·
-   No date yet.
+   question after Amount: **"When does this money move?"** — One month · Split across periods ·
+   No date yet. ⚠ The middle answer was renamed from "Split across months" mid-walk (owner,
+   2026-09-05): it opens a box that also splits by quarter, date and name, and "period" is the word
+   already on that box and on the plan's By-period view.
 2. **Nothing is pre-selected and no month is pre-filled.** Add Line stays off until you answer.
    ⚠ This is the ruling that matters most: a pre-picked month makes a plausible-looking date the
    fastest way out of the form, which is the day-grain failure one level up.
