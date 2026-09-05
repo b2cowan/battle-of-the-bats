@@ -105,14 +105,6 @@
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
     },
-    "coach-budget-vs-actual|1440|content-overflow|text·$3,450.00": {
-      "reason": "An SVG <text> y-axis label inside the Spending-trend shelf's chart — the same accepted phantom class as the retired $1,300/$2,600/$3,900/$5,200 entries (2026-08-13), re-keyed because the 2026-09-02 fixture reseed changed the chart's max value. Verified by direct geometry probe on the live screen: the label sits fully inside the SVG viewBox (left edge at +16px of a 64-unit margin), the scroll container reports zero overflow, and nothing clips onto the page; the 12px figure is Chromium reporting a phantom scrollWidth on an SVG text node inside a closed <details>.",
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-budget-vs-actual|1440|content-overflow|text·$6,900.00": {
-      "reason": "An SVG <text> y-axis label inside the Spending-trend shelf's chart — the same accepted phantom class as the retired $1,300/$2,600/$3,900/$5,200 entries (2026-08-13), re-keyed because the 2026-09-02 fixture reseed changed the chart's max value. Verified by direct geometry probe on the live screen: the label sits fully inside the SVG viewBox (left edge at +16px of a 64-unit margin), the scroll container reports zero overflow, and nothing clips onto the page; the 12px figure is Chromium reporting a phantom scrollWidth on an SVG text node inside a closed <details>.",
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
     "coach-commitment|768|tap-floor|button·Help: Money": {
       "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
       "detail": "34px tall (floor 44)"
@@ -189,14 +181,6 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-budget|361|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
-    },
     "coach-budget|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "34px tall (floor 44)"
@@ -208,14 +192,6 @@
     "coach-budget|768|tap-floor|button·Add Line": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "31px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Show Dome Time's payment periods": {
-      "reason": "A budget row named by its ITEM (mig 240, §29) rather than by a typed description — so the LABEL changed and the geometry did not. The equivalent entries under the old descriptions (Edit Diamond permits, Edit Winter dome block) are the same 24px pencil and 20px periods chevron this file has always held; this is the first layout run since that rename. The pencil leaves the layout entirely at ≤640, where the row itself is the door.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Review": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "25px tall (floor 44)"
     },
     "coach-club|768|tap-floor|button·Help: Money": {
       "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
@@ -3716,14 +3692,6 @@
     "coach-lineup-template|768|tap-floor|button·Save template": {
       "reason": "DEFERRED, not accepted — SHARED PAGE-HEADER ACTION, same family and same reason as the \"Help:\" entries beside it. \"Save template\" is the shared .btnPrimary in the shared .pageHeaderActions slot, which every coaches page with a primary action uses, so raising it here would either move every page header in the portal or fork this one screen away from the rest. The 641-768 pass raised the controls this screen owns — the lineup grid, the three view tabs, the format and innings selects, the toolbar buttons and the template-name field — and stopped at the header, which is the boundary the commitment page set. Belongs to the portal-wide header/toolbar decision in docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md.",
       "detail": "31px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Show Umpire Fees's payment periods": {
-      "reason": "The shared ledger expand chevron at 768 — the SAME grandfathered class as the Dome Time entry (20px, geometry unchanged): two NEW fixture lines (the quarters and names splits the budget revamp gates need, 2026-09-02) gave the same control new labels, which is the label-keyed rot the baseline memory warns about. The floor for this shared control is owed to the pass that settles the Dome Time entry, not to a fixture change.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Show Jerseys's payment periods": {
-      "reason": "The shared ledger expand chevron at 768 — the SAME grandfathered class as the Dome Time entry (20px, geometry unchanged): two NEW fixture lines (the quarters and names splits the budget revamp gates need, 2026-09-02) gave the same control new labels, which is the label-keyed rot the baseline memory warns about. The floor for this shared control is owed to the pass that settles the Dome Time entry, not to a fixture change.",
-      "detail": "20px tall (floor 44)"
     },
     "coach-dues-behind|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions. (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",

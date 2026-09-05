@@ -73,6 +73,22 @@ export interface DuesRevenue {
    * this whole change exists to surface.
    */
   billed: number | null;
+  /**
+   * Σ the dues instalments **due on or before today** — what the row shows under the **To date**
+   * basis (owner ruling 2026-09-04).
+   *
+   * ⚠ THIS BUILD DOES NOT DATE DUES, AND DOES NOT NEED TO. Dues are not budget lines, so the
+   * "when does this money move?" question never reaches them — but every instalment already
+   * carries a due date, which makes this the ONE revenue row that can answer a to-date question
+   * honestly. Without it the whole revenue band would read $0.00 under To date on a season whose
+   * families are being billed on schedule.
+   *
+   * ⚠ ZERO IS A REAL ANSWER HERE, unlike `billed`. A season whose first instalment falls next
+   * month has genuinely asked families for nothing yet, and a coach reading "+$3,075.00" against
+   * it is being told something true and useful: families have paid ahead. Null still means no
+   * schedule exists at all.
+   */
+  billedToDate: number | null;
   /** Dues money that has arrived — the Months band's own dues actual. */
   actual: number;
   /**

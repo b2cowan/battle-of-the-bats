@@ -26,10 +26,15 @@ import {
   type DuesRevenue,
 } from '../../lib/coach-dues-revenue.ts';
 
-/** The UAT team's real shape: the plan needs $11,650 and dues bill $11,308.30. */
+/** The UAT team's real shape: the plan needs $11,650 and dues bill $11,308.30.
+ *  ⚠ `billedToDate` IS 0 ON THIS TEAM AND THAT IS NOT A PLACEHOLDER — every one of its instalments
+ *  falls between 2026-10-01 and 2027-03-01, so on the September the basis was built for, families
+ *  have genuinely been asked for nothing yet while $3,075 has already arrived. It is the case that
+ *  made "Net to date" need its own name. */
 function dues(over: Partial<DuesRevenue> = {}): DuesRevenue {
   return {
     billed: 11308.30,
+    billedToDate: 0,
     actual: 3075,
     planNeeds: 11650,
     planNeedsFloored: false,

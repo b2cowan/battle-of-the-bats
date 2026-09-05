@@ -25,7 +25,7 @@ import { duesStatusLabel } from './dues-status';
 import {
   LINE_KIND_SECTION, FUNDING_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
 } from './coach-budget-totals';
-import { scheduleSummaryLabel, type PeriodView } from './coach-budget-periods-view';
+import { whenSummary, whenSummaryText, type PeriodView } from './coach-budget-periods-view';
 import { formatMonthLabel } from './coach-budget-months';
 import { isDuesCategory } from './coach-dues-revenue';
 import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
@@ -109,8 +109,11 @@ export { money as formatMoneyCell };
 
 export const BUDGET_PLAN_COLUMNS: ExportColumnDef[] = [
   { label: 'Category / line', key: 'item',     format: 'text' },
-  // The List's own Schedule vocabulary ("Jan–Mar · 3 chunks") — WHEN, never a second amount.
-  { label: 'Schedule',        key: 'schedule', format: 'text' },
+  /* The List's own WHEN vocabulary ("Jan · Feb · Mar", "No date yet", "Mar · $1,000.00 no date").
+     ⚠ SAME WORDS AS THE SCREEN, from the same helper — the two have drifted before, and a file a
+     treasurer reconciles against a screen must not describe one line two ways. It carries a dollar
+     figure only for the undated HALF of a partly-dated line, which the row's own total cannot say. */
+  { label: 'When',            key: 'schedule', format: 'text' },
   { label: 'Planned',         key: 'planned',  format: 'currency' },
   { label: 'Notes',           key: 'notes',    format: 'text' },
 ];
@@ -150,6 +153,15 @@ export interface BudgetPlanExportSource {
   leftToFund: number;
 }
 
+/** The **When** cell, in the screen's own words. `money()` rather than a bare number so the undated
+ *  half of a partly-dated line reads as the money it is. */
+function whenText(
+  periods: Array<{ periodDate: string | null; amount?: number | string | null }>,
+  lineTotal: number | string | null | undefined,
+): string {
+  return whenSummaryText(whenSummary(periods, Number(lineTotal ?? 0) || 0), money);
+}
+
 /**
  * The plan's STATEMENT file — the List view, and every PDF (a period grid does not fit paper, the
  * same ruling that shapes Budget vs. Actual's PDF).
@@ -172,7 +184,7 @@ export function budgetPlanStatementRows(
         const l = item.lines[0];
         push({
           item: item.itemName,
-          schedule: scheduleSummaryLabel(l.periods),
+          schedule: whenText(l.periods, l.totalAmount),
           planned: l.totalAmount,
           notes: l.notes ?? '',
         }, 'item');
@@ -187,7 +199,7 @@ export function budgetPlanStatementRows(
       for (const l of item.lines) {
         push({
           item: `  — ${l.notes || l.description}`,
-          schedule: scheduleSummaryLabel(l.periods),
+          schedule: whenText(l.periods, l.totalAmount),
           planned: l.totalAmount,
           notes: l.notes ?? '',
         }, 'item');
@@ -205,7 +217,7 @@ export function budgetPlanStatementRows(
     for (const l of kindLines) {
       push({
         item: `  — ${l.itemName ?? l.description}`,
-        schedule: scheduleSummaryLabel(l.periods ?? []),
+        schedule: whenText(l.periods ?? [], l.totalAmount),
         planned: l.totalAmount,
         notes: l.notes ?? '',
       }, 'item');

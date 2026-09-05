@@ -612,7 +612,25 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              every step at a hook plus ONE proof point, and this step's proof point is the variance
              verdict. The seeded world renders the dues row and the sentence beneath the table by
              itself. If the owner wants "do dues cover the plan?" narrated, the honest move is to
-             SWAP a clause here, not append a fourth. Flagged at Owner QA §142. */
+             SWAP a clause here, not append a fourth. Flagged at Owner QA §142.
+
+         (Re-read for BUDGET DATES + the "To date" basis, 2026-09-05 — this tab gained a **Compare**
+         control and every budget line now answers "when does this money move?", per CLAUDE.md's two
+         questions:
+           · *Still true?* YES, every clause, and the reason is the ruling rather than luck:
+             **Whole season stays the default basis**, so a prospect who lands here reads exactly the
+             report this sentence describes. "Diamond rentals are over plan" is a whole-season
+             verdict and is untouched by dating lines — dates re-cut the plan only when a coach asks
+             them to. "A plan built in the spring" is now more literally true than it was: the
+             demo's lines carry the months they land in.
+           · *Should a moment show it?* NO CLAUSE IS ADDED, by the `ea8ddd14` cap (a hook plus ONE
+             proof point per step) — the same answer §137 and §142 got at this step. The honest move
+             if the owner wants the basis narrated is to SWAP a clause, not append a fifth.
+           ⚠ THE SEEDED WORLD DID CHANGE, and that is where the feature shows: thirteen undated
+             demo lines were the shop window demonstrating the exact problem this build fixes. Every
+             live world now carries dated lines plus ONE deliberate "No date yet", so a prospect who
+             opens the plan sees the When column working AND the product being honest about what it
+             cannot date. See `datePlanLines` in the coach seed for why one is left unanswered. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },

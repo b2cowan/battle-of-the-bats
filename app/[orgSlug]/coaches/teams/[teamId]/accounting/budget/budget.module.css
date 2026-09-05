@@ -146,10 +146,107 @@
   text-align: right;
   white-space: nowrap;
 }
-.schedInk {
+
+/* ── The When chip (owner ruling 2026-09-04) ──────────────────────────────
+   ⚰ `.schedInk` — one flat tertiary ink for the whole cell — went with the Schedule column it
+   painted. The cell now carries TWO inks, and that is the point: undated money is the only
+   actionable thing in this column, so it is the only thing that takes the attention colour. A
+   dated line stays quiet, which is what makes the gold ones findable at a glance. */
+.whenChip {
+  display: inline-block;
   font-size: var(--type-support);
-  color: var(--text-tertiary);
+  line-height: 1.3;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+.whenChipSet {
+  color: var(--text-tertiary);
+}
+/* Amber, not danger: a coach who deliberately answered "No date yet" has done nothing wrong, and
+   painting it red would make the form's own third answer look like a mistake. Same register as the
+   consequence line in the form it was chosen in. */
+.whenChipNone {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.10);
+  font-weight: 600;
+}
+/* The undated HALF of a partly-dated line — the case the old column could not say at all
+   ("Mar · 2 chunks" over a $1,000 balance with no date). Colour alone would be the whole signal,
+   so it carries WEIGHT too (deutan memory: olive↔danger ΔE 1.0 on these cards). */
+.whenChipPart {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* ⚠⚠ THE PHONE'S ONLY COPY. `.schedCell` is display:none below 640 (see the rule further down) and
+   the tracks drop to three, so the answer rides under the line name instead of disappearing —
+   the screen whose job is clearing a season's unknowns said nothing about dates on a phone until
+   this. Hidden ABOVE 640, where the real column carries it, so the answer is never printed twice. */
+/* ⚠ THE PLAN LIST'S OWN CONTROLS THROUGH THE TOUCH BAND (rendered sweep, 2026-09-05).
+   ≤768 is a TOUCH band (owner 2026-08-27), and two controls in this list sat well under the floor
+   there: the item group head that opens a two-line item (36px) and the chevron that opens a line's
+   payment periods (20px). Both were reachable before today; what surfaced them is that the fixture
+   finally had a dated fundraising line and a two-line item on screen at the same width — the
+   green-over-empty trap, one more time.
+
+   ⚠ THE RULE ITSELF LIVES IN `coaches.module.css`, NOT HERE, and the first attempt that put it here
+   was silently inert: `.ledgerExpand` and `.ledgerGroupHeadBtn` belong to that module, so their
+   real class names are hashed and a `:global(.ledgerExpand)` written from this file matches
+   nothing at all. It compiled, passed purity, and changed zero pixels — the sweep is the only
+   reason it was caught. The hook is `[data-touch-floor]` on this list; see the rule there. */
+
+/* ── "What still has no date?" ────────────────────────────────────────────
+   A worklist bar, not a warning. It sits ABOVE the list because it is about the list, and it
+   disappears the moment there is nothing to fix.
+
+   ⚠ NOT A CARD. Border, fill, radius and shadow each say "separate object", and this is a
+   sentence with a door in it — the §133 second look retired a dashed, tinted, full-width bar from
+   this very screen for reading as a line of the plan when it carried no money. One quiet rule
+   above the list, and the door carries the only emphasis. */
+.undatedBar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.6rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.undatedBar strong { color: var(--text-primary); font-weight: 600; }
+.undatedBarDoor {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--logic-lime);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.undatedBarDoor:hover { color: var(--text-primary); }
+/* ≤768 is a TOUCH band (owner 2026-08-27) and this is a real target, not decoration — the shared
+   ghost carries no floor of its own, which is why `.collapseAllBtn` above needs the same rule. */
+@media (max-width: 768px) {
+  .undatedBarDoor { min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
+}
+
+.whenUnderName { display: none; }
+@media (max-width: 640px) {
+  .whenUnderName {
+    display: inline-block;
+    margin-top: 0.15rem;
+    /* Back to the row's own left edge — the chip is a property of the line, not of its note. */
+    margin-left: -0.4rem;
+    /* ⚠ IT WRAPS HERE, AND ONLY HERE. `.whenChip` is nowrap so the desktop COLUMN sizes to the
+       widest answer in one line; under the name at 329px the longest answer a line can give
+       ("Mar · $1,000.00 no date") is wider than the track and spilled 17px off the page with
+       nothing owning the overflow — caught by the rendered sweep the moment the fixture had a
+       partly-dated line to draw. The note slot is a block, so wrapping costs nothing. */
+    white-space: normal;
+  }
 }
 
 /* Collapse all / Expand all — quiet ghost chrome on a desktop; a real target through the touch
@@ -231,37 +328,13 @@
 }
 .fundingAmount.fundingAmount { color: var(--success-light); }
 
-/* ── What KIND of line (cost / expected funding) ─────────────────────────── */
-.kindChoice {
-  display: flex;
-  gap: 0.5rem;
-}
-.kindOption {
-  flex: 1;
-  text-align: left;
-  font: inherit;
-  font-size: var(--type-body);
-  padding: 0.5rem 0.65rem;
-  border-radius: 9px;
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.kindOption:hover { border-color: var(--home-olive, var(--logic-lime)); color: var(--text-primary); }
-.kindOption[aria-pressed='true'] {
-  background: var(--home-olive-soft, rgba(255,255,255,0.14));
-  border-color: var(--home-olive, var(--logic-lime));
-  color: var(--text-primary);
-  font-weight: 700;
-}
-.kindOption small {
-  display: block;
-  font-weight: 400;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  margin-top: 0.1rem;
-}
+/* ⚰ `.kindChoice` / `.kindOption` LEFT THIS FILE on 2026-09-04. "This line is" was a row of four
+   radio-cards; the owner ruled it a dropdown, and it now renders through the shared
+   `SublinedChoice`, drawn in the `convWhat*` rules in coaches.module.css alongside the Record
+   conversation's own chooser. Recorded so the cards are not rebuilt from the old markup — the
+   rule that decides it is in the panel, on the field itself.
+   `.kindHint` STAYS: the longer explanation under the field for the money-in kinds is this
+   screen's own, and has no home in the shared control. */
 .kindHint {
   margin: 0.5rem 0 0;
   font-size: var(--type-support);
@@ -415,12 +488,9 @@
 .field { margin-bottom: 1rem; }
 .field:last-child { margin-bottom: 0; }
 
-.formRow {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-end;
-  margin-bottom: 1rem;
-}
+/* ⚰ `.formRow` HELD THE AMOUNT FIELD BESIDE THE "Split by period" CHECKBOX AND HAS NO OTHER
+   CONSUMER (2026-09-04). Both are gone: the amount is a full-width field now and the split is an
+   answer, not a toggle.  is the gate that would have caught it left behind. */
 
 .label {
   display: block;
@@ -505,16 +575,10 @@
 }
 .dateFieldBtn:hover { color: var(--text-primary); }
 
-.toggleLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  padding-bottom: 0.55rem;
-}
+/* ⚰ `.toggleLabel` WENT WITH THE "Split by period" CHECKBOX (owner ruling 2026-09-04). It styled
+   the portal's only copy of a checkbox-beside-a-field, and splitting is now one of the three
+   answers to "When does this money move?" rather than an opt-in toggle. Do not rebuild it here to
+   put a second door on the split. */
 
 /* ── Period inputs ───────────────────────────────────────────────────────── */
 .periodsSection {
@@ -557,6 +621,79 @@
   background: rgba(var(--danger-rgb), 0.07);
 }
 .inputBad:focus { border-color: var(--danger); }
+
+/* ── "When does this money move?" (owner ruling 2026-09-04) ────────────────
+   The required third part of a line: what it is, how much, and when. Three answers in a single
+   bordered group, so the radio list reads as ONE control answering ONE question rather than as
+   three loose checkboxes down the form.
+
+   ⚠ NOTHING IS PRE-SELECTED, so the resting state of this group is three plain rows and no fill.
+   That is the ruling (see the panel's `whenAnswer` comment): the encouragement to date a line is
+   its ORDER and PROMINENCE, never a pre-filled month, because a pre-picked month is a guess the
+   report cannot tell from a fact.
+
+   ⚠ NO SUB-LINE STYLES HERE ON PURPOSE. Each answer carried a describing sentence and all three
+   were cut by the owner on sight — "A day is never asked for" was the form defending a design
+   decision to the coach. A rule for them would invite them back. */
+.whenAnswers {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  overflow: hidden;
+}
+.whenAnswersBad { border-color: var(--danger); }
+
+.whenAnswer + .whenAnswer { border-top: 1px solid var(--home-line, rgba(255,255,255,0.12)); }
+/* The chosen answer is tinted, so the group says which of three it is holding without the reader
+   having to find a small dot. */
+.whenAnswerOn { background: var(--home-olive-soft, rgba(255,255,255,0.06)); }
+
+/* ⚠ THE LABEL WRAPS THE RADIO, so the whole row is the target. That is what carries this over the
+   44px touch floor without a second rule and without stretching the radio itself — the same
+   reasoning the reporting dropdowns' option rows already carry. */
+.whenAnswerHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  min-height: var(--tap-min, 44px);
+}
+.whenRadio { flex: none; margin: 0; accent-color: var(--logic-lime); cursor: pointer; }
+.whenAnswerName {
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* The month select sits INSIDE its answer, indented past the radio so it reads as belonging to
+   "One month" rather than to the group. */
+.whenMonth {
+  width: auto;
+  min-width: 11rem;
+  max-width: 100%;
+  margin: 0 0.85rem 0.75rem 2rem;
+}
+
+/* Said once, at the moment of choosing. Amber — attention, not alarm — the same register the
+   rescale banner uses, because "No date yet" is a legitimate answer with a cost, never a mistake.
+   ⚠ Do not add a second copy of this anywhere. A form that repeats it teaches coaches to guess a
+   month to make it stop, which trades an honest gap for a confident lie. */
+.whenConsequence {
+  margin: 0 0.85rem 0.75rem 2rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 2px solid var(--warning);
+  border-radius: 0 6px 6px 0;
+  background: rgba(var(--warning-rgb), 0.09);
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* A required question the coach walked past. The label carries it because the group has no single
+   field to outline — same rule as `.inputBad`: only ever after Save has been pressed. */
+.labelBad { color: var(--danger); }
 
 /* ── The split: step 1 (how) then step 2 (the rows) ───────────────────────── */
 .splitStep {
@@ -1463,7 +1600,6 @@
   /* (`.planVal`'s phone size went with the card — the band owns its own figure step.) */
 
   /* The kind choice stacks: two side-by-side options squeeze their hint onto three lines. */
-  .kindChoice { flex-direction: column; }
 
   /* The period grid keeps its shape and scrolls (CoachScrollX) rather than card-stacking —
      a 2-D comparison stops being one the moment it becomes a list. */
@@ -1472,7 +1608,6 @@
   /* (The amount field and the "split by period" checkbox stop sharing a row via the
      shared .stack640 on .formRow — the page's own gap is all that's left here.) */
   .formRow { gap: 0.5rem; }
-  .toggleLabel { padding-bottom: 0; }
 
   /* ── The period split: a row of three shrunken inputs becomes a labelled group ──
      This is the work a coach least wants to retype, so each field gets full width

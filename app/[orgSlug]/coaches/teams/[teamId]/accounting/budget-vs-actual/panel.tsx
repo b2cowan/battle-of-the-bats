@@ -10,7 +10,7 @@ import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import MoneyMonthGrid, { MONEY_LENSES, MONTH_WINDOW, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
 import {
-  formatMonthLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
+  formatMonthLabel, periodRangeLabel, lensCell, lensTotal, lensUndated, lensReadsSpendingGrid,
   buildBandCashFlow, categoryHasFigure, hasUndated, isPayoutCategory, balanceShowsMonth,
   bandTotalLabel, revenueGroupLabel, revenueGroupOf, scheduledForward,
   RETURNED_BAND_LABEL, RETURNED_TOTAL_LABEL,
@@ -20,7 +20,14 @@ import {
   duesRowRenders, duesSentenceRenders, duesFundingState, duesGap, isDuesCategory,
   type DuesRevenue,
 } from '@/lib/coach-dues-revenue';
-import { formatStoredDate } from '@/lib/timezone';
+import {
+  COMPARE_BASES, normalizeBasis, budgetedOn, varianceOn,
+  planColumnLabel, netRowLabel, type CompareBasis,
+} from '@/lib/coach-budget-basis';
+// ⚠ ORG TIMEZONE, never the runtime's UTC — a naive slice puts a coach in Vancouver a day ahead of
+// themselves all evening, and this basis is entirely a question about which side of today money
+// falls on.
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 // The coach-money accounting-bracket formatter, shared with the settlement and payout sheets.
 import { fmt as fmtBrackets } from '@/lib/coach-money-summary';
 import { useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
@@ -133,6 +140,77 @@ interface MoneyReport {
   activities: ActivityBlock[];
   /** Where BOTH shapes end. Variance is actual − budgeted: more net is the good news. */
   net: { budgeted: number; actual: number; variance: number };
+}
+
+/**
+ * The whole report, re-cut onto a comparison basis — ONE pass, so every figure the two shapes draw
+ * comes from the same arithmetic and no render site has to know which basis it is in.
+ *
+ * ⚠ THIS IS WHY THE BASIS DID NOT NEED A SERVER CHANGE. `ItemResult.periods` already ships every
+ * period with its date and amount (it feeds the row's own expander), so "plan dated on or before
+ * today" is a filter over data the report has always carried. Re-deriving it on the server would
+ * have created a second source for a figure the Months view also plots — the drift this report has
+ * been consolidated twice to remove.
+ *
+ * ⚠⚠ TOTALS ARE RE-SUMMED FROM THE ITEMS UP, never scaled. A category's to-date plan is the sum of
+ * its items' to-date plans; a section's is the sum of its categories'. Anything else lets a
+ * category disagree with the rows a coach can open underneath it.
+ *
+ * ⚠ THE DUES ROW IS THE ONE SPECIAL CASE, and it has to be. Dues are not budget lines and carry no
+ * periods, so the generic rule would report $0.00 for the season's largest money in — on a team
+ * whose families are being billed perfectly on schedule. Its instalments already carry due dates,
+ * so the route ships `billedToDate` and this reads it (owner ruling 2026-09-04).
+ */
+function rebaseReport(
+  report: MoneyReport, dues: DuesRevenue, basis: CompareBasis, today: string,
+): MoneyReport {
+  if (basis === 'season') return report;
+
+  const rebaseItem = (it: ItemResult): ItemResult => {
+    const budgeted = budgetedOn('todate', it.budgeted, it.periods, today);
+    return { ...it, budgeted, variance: varianceOn(it.direction, budgeted, it.actual) };
+  };
+
+  const rebaseCat = (cat: CategoryResult): CategoryResult => {
+    /* The synthetic dues category has no items to sum — see the note above. */
+    if (isDuesCategory(cat.categoryId)) {
+      const budgeted = dues.billedToDate ?? 0;
+      return { ...cat, budgeted, variance: varianceOn('in', budgeted, cat.actual) };
+    }
+    const items = cat.items.map(rebaseItem);
+    const budgeted = r2(items.reduce((s, i) => s + i.budgeted, 0));
+    return { ...cat, items, budgeted, variance: varianceOn(cat.direction, budgeted, cat.actual) };
+  };
+
+  const rebaseSection = (sec: ReportSection): ReportSection => {
+    const categories = sec.categories.map(rebaseCat);
+    const budgeted = r2(categories.reduce((s, c) => s + c.budgeted, 0));
+    return { ...sec, categories, budgeted, variance: varianceOn(sec.direction, budgeted, sec.actual) };
+  };
+
+  const revenue  = rebaseSection(report.revenue);
+  const expenses = rebaseSection(report.expenses);
+
+  const activities = report.activities.map(block => {
+    const rev = block.revenue ? rebaseCat(block.revenue) : null;
+    const cst = block.costs   ? rebaseCat(block.costs)   : null;
+    const budgeted = r2((rev?.budgeted ?? 0) - (cst?.budgeted ?? 0));
+    const actual   = r2((rev?.actual ?? 0) - (cst?.actual ?? 0));
+    /* A block's net is money IN less money OUT, so more of it is the good news — the same rule the
+       report's own closing row uses, and the reason both take direction 'in'. */
+    return { ...block, revenue: rev, costs: cst,
+      net: { budgeted, actual, variance: varianceOn('in', budgeted, actual) } };
+  });
+
+  const netBudget = r2(revenue.budgeted - expenses.budgeted);
+  return {
+    revenue, expenses, activities,
+    net: {
+      budgeted: netBudget,
+      actual: report.net.actual,
+      variance: varianceOn('in', netBudget, report.net.actual),
+    },
+  };
 }
 
 interface UnbudgetedActual {
@@ -365,9 +443,14 @@ function CumulativeChart({ data, undatedBudget }: { data: MonthlyPoint[]; undate
   const actualPath = `M ${actualPoints.join(' L ')}`;
   const areaPath   = `M ${xPos(0).toFixed(1)},${(MT + CH).toFixed(1)} L ${actualPoints.join(' L ')} L ${xPos(n - 1).toFixed(1)},${(MT + CH).toFixed(1)} Z`;
 
+  /* ⚠ NO CENTS ON AN AXIS, and this is a clipping fix rather than a taste one. The labels are
+     right-anchored at `ML - 4` = 60px, so a full "$11,000.00" at 10px runs past the left edge of
+     the viewBox and is cut — caught by the rendered sweep at 1440 the moment this fixture's plan
+     gained dates and the axis climbed above $9,999. Cents on a gridline were never information
+     anyway: the axis says the SCALE, and every exact figure is in the table above it. */
   const gridLines = [0.5, 1].map(ratio => ({
     y: MT + (1 - ratio) * CH,
-    label: fmt(maxVal * ratio),
+    label: fmt(Math.round(maxVal * ratio)).replace(/\.00$/, ''),
   }));
 
   /* The last month the PLAN placed money in — after it the budgeted line runs flat, and when the
@@ -1196,26 +1279,64 @@ function DuesRow({ cat, dues, base, canWrite }: {
  * pair (*Planned buffer* / *Short of covering the plan*), so the two screens that both answer "do
  * dues cover the plan?" answer it in one vocabulary. Do not invent a third set.
  *
- * ⚠ THE SECOND SENTENCE OUTLIVES THIS CHANGE. Mid-season this report compares a WHOLE-SEASON plan
- * against money that has moved SO FAR, so every figure in the Actual column runs behind and nobody
- * has done anything wrong. The "To date" basis is the proper fix and is its own project; this is
- * the honest half of it either way. The not-set state omits it, because a season with no dues has
- * no Actual-column story to tell.
+ * ⚠⚠ THE SECOND SENTENCE NOW MOVES WITH THE BASIS (owner ruling 2026-09-04). It shipped on
+ * 2026-09-04 as an APOLOGY — "both columns compare a whole season's plan against what has moved so
+ * far, so they run short until the season is finished" — written deliberately as the honest half of
+ * a fix that did not exist yet. It does now, so:
+ *
+ *   · **Whole season** — the apology becomes a DOOR. The fact is unchanged and still worth saying;
+ *     what changes is that there is finally something to do about it, one tap up the page.
+ *   · **To date** — it is DELETED, not reworded. Under that basis the plan column is no longer a
+ *     whole season's, so the sentence is simply false, and the column heading already says
+ *     "Plan to date". A reworded version would be a second voice explaining the basis beside the
+ *     undated-plan line that already does it.
+ *
+ * ⚠ THE TWO SENTENCES UNDER THIS TABLE MUST NOT DESCRIBE THE SAME MONEY DIFFERENTLY. This one is
+ * about the SPAN being compared; its neighbour is about money that carries no date and so is
+ * outside any span. One topic each, in both bases. See the undated-plan note at the render site.
+ *
+ * The not-set state omits the clause under either basis, because a season with no dues has no
+ * Actual-column story to tell.
  */
-function DuesSentence({ dues, base, canWrite }: {
+function DuesSentence({ dues, base, canWrite, basis, onToDate }: {
   dues: DuesRevenue; base: string; canWrite: boolean;
+  basis: CompareBasis; onToDate: () => void;
 }) {
   const state = duesFundingState(dues);
   const gap = Math.abs(duesGap(dues));
-  /* One clause, so the two sentences that carry it cannot drift apart. */
-  const basisNote = ' Both columns compare a whole season’s plan against what has moved so far,'
-    + ' so they run short until the season is finished.';
+  /* One clause, so the three sentences that carry it cannot drift apart. */
+  const basisNote = basis === 'todate' ? null : (
+    <> Both columns compare a whole season&rsquo;s plan against what has moved so far.{' '}
+      <button type="button" className={styles.bridgeLink} onClick={onToDate}>
+        Compare to date
+      </button>{' '}sets the plan against the same span.
+    </>
+  );
+  /**
+   * ⚠⚠ THE IDENTITY THIS SENTENCE CLAIMS IS TRUE ONLY ON THE WHOLE-SEASON BASIS, and getting that
+   * wrong would have been a real defect rather than a wording slip.
+   *
+   * "The gap IS the budgeted Season net above" holds because, with D = dues billed, F = other
+   * income and E = the plan, (E − F) − D is exactly −((D + F) − E). Every one of those is a
+   * WHOLE-SEASON figure. Under **To date** the closing row is revenue-to-date less
+   * expenses-to-date — a different quantity with a different name — so the claim stops being true
+   * and the sentence must stop making it. The gap itself is still a real, useful fact about the
+   * season, so it is stated plainly and labelled as the season's rather than pointed at a row it
+   * no longer equals.
+   */
+  const netRef = basis === 'todate'
+    ? <> across the whole season.</>
+    : <> the budgeted Season net above.</>;
+
   return (
     <p className={styles.duesNote}>
       This plan needs <strong>{fmt(dues.planNeeds)}</strong> from families and{' '}
       {state === 'unset' ? (
         <>
-          no dues are set yet, which is the whole of the budgeted Season net above.
+          no dues are set yet
+          {basis === 'todate'
+            ? <>, so the whole of that gap is still to come.</>
+            : <>, which is the whole of the budgeted Season net above.</>}
           {canWrite && (
             <> <Link href={moneySectionHref(base, 'dues')} className={styles.duesLink}>Set player dues</Link></>
           )}
@@ -1224,13 +1345,14 @@ function DuesSentence({ dues, base, canWrite }: {
         <>dues bill exactly that.{basisNote}</>
       ) : state === 'short' ? (
         <>
-          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — the <strong>{fmt(gap)}</strong> gap is
-          the budgeted Season net above.{basisNote}
+          dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — a <strong>{fmt(gap)}</strong> gap
+          {basis === 'todate' ? netRef : <> is{netRef}</>}{basisNote}
         </>
       ) : (
         <>
           dues bill <strong>{fmt(dues.billed ?? 0)}</strong> — a <strong>{fmt(gap)}</strong> buffer
-          above the plan, which is the budgeted Season net above.{basisNote}
+          above the plan
+          {basis === 'todate' ? netRef : <>, which is{netRef}</>}{basisNote}
         </>
       )}
     </p>
@@ -1275,7 +1397,23 @@ export function BudgetVsActualPanel({
      than a number is what lets the window follow a data reload without an effect, and without a
      frame of the wrong months while one settles. */
   const [monthStartRaw, setMonthStartRaw] = useState<number | null>(null);
+  /**
+   * WHICH SPAN THE PLAN COLUMN COVERS (owner ruling 2026-09-04) — device memory beside view/lens,
+   * the shipped pattern for quiet per-coach state.
+   *
+   * ⚠ 'season' STAYS THE DEFAULT and flipping it is its own decision, taken after the owner has
+   * seen To date working. Headroom is quoted against the whole-season plan on five surfaces and
+   * pinned by a build gate; a default that moved underneath them would change five screens as a
+   * side effect of adding a control to one.
+   */
+  const [basis, setBasis] = useState<CompareBasis>('season');
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  /* ⚠ ONE 'today' PER RENDER, in the ORG's timezone. Computed here rather than inside the
+     arithmetic so every figure on one screen is cut against the same day — a helper calling
+     tournamentToday() per row would straddle midnight on the one night a year it matters, and
+     would make the memo below impossible to key. */
+  const today = tournamentToday();
 
   /* ⚠ THERE IS NO MONEY-TAG FILTER ON THIS REPORT, and its absence is a ruling rather than a gap
      (owner, 2026-08-21 — the route carries the full argument at the same point in its read). A
@@ -1355,13 +1493,14 @@ export function BudgetVsActualPanel({
     try {
       const raw = localStorage.getItem(prefsKey);
       // Shape-check, not just parse-check: a corrupt value must fall back, never crash.
-      const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown; trendOpen?: unknown } : {};
+      const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown; trendOpen?: unknown; basis?: unknown } : {};
       // ⚠ The retired `categories` value still resolves — see `readStoredView`. It is stored per
       // device, so refusing it would silently reset every treasurer who had chosen a view.
       const stored = readStoredView(parsed.view);
       if (stored) setView(stored);
       if (MONEY_LENSES.some(l => l.id === parsed.lens)) setLens(parsed.lens as MoneyLens);
       if (typeof parsed.trendOpen === 'boolean') setTrendOpen(parsed.trendOpen);
+      if (parsed.basis !== undefined) setBasis(normalizeBasis(parsed.basis));
     } catch { /* device memory only */ }
     setPrefsLoaded(true);
   }, [prefsKey]);
@@ -1370,8 +1509,8 @@ export function BudgetVsActualPanel({
     // Don't write back the defaults before the read has happened, or the first render would
     // stomp a remembered preference.
     if (!prefsKey || !prefsLoaded) return;
-    try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens, trendOpen })); } catch { /* device memory only */ }
-  }, [prefsKey, prefsLoaded, view, lens, trendOpen]);
+    try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens, trendOpen, basis })); } catch { /* device memory only */ }
+  }, [prefsKey, prefsLoaded, view, lens, trendOpen, basis]);
 
   // ── Export helpers ─────────────────────────────────────────────────────────
   // The export always matches what is on screen. In the Months view that means the month grid
@@ -1579,6 +1718,18 @@ export function BudgetVsActualPanel({
     : 0;
 
   /**
+   * THE REPORT THE TWO SHAPES ACTUALLY DRAW — re-cut onto the chosen basis, once.
+   *
+   * ⚠ EVERY RENDER SITE READS THIS, NOT `data.report`. That is the whole design: the statement,
+   * By activity, the totals, the closing row and the export all take one object, so a figure
+   * cannot be on the wrong basis in one place and right in another. If you add a reader of
+   * `data.report` below this line, it will silently ignore the control.
+   */
+  const report = useMemo(
+    () => (data ? rebaseReport(data.report, data.dues, basis, today) : null),
+    [data, basis, today]);
+
+  /**
    * ⚠ THE MONTH VIEW'S **PDF** IS THE CATEGORY STATEMENT, NOT THE MONTH GRID (owner ruling
    * 2026-08-21, built in the Phase 2 Registers pass). The grid's columns are one per month of
    * the season, so on paper it could only ever leave months off and admit it — which is what it
@@ -1645,7 +1796,23 @@ export function BudgetVsActualPanel({
     // The category table comes from the SHARED builder, so this page's export and the Money hub's
     // "Budget vs. actual" row produce the same file — including the buffer and unbudgeted rows,
     // without which the spreadsheet's totals would disagree with the screen.
-    const built = asMonthGrid ? buildMonthExportRows() : bvaCategoryRows(data);
+    /* ⚠⚠ THE FILE FOLLOWS THE CONTROL. A treasurer who switched to To date and pressed Download
+       must not get a whole-season file — a spreadsheet is exactly where nobody re-checks which
+       basis they were on, and it is the copy that gets emailed to a board. The re-cut report goes
+       in, and with it the buffer and the expense total, for the same reasons the screen re-cuts
+       them (an undatable estimate cannot sit inside a to-date column).
+       ⚠ The MONTH grid is untouched: its columns already are the time axis, which is why Compare
+       never renders on that view. */
+    const exportSource = basis === 'todate'
+      ? {
+          ...data!,
+          report: report!,
+          buffer: 0,
+          effectiveBudget: report!.expenses.budgeted,
+          headroom: report!.expenses.variance,
+        }
+      : data;
+    const built = asMonthGrid ? buildMonthExportRows() : bvaCategoryRows(exportSource);
     if (!asMonthGrid) {
       // D6.1: the statement file ends on the same walk the screen shows — all three formats,
       // the months-view PDF included, because that PDF IS the whole-season statement.
@@ -1919,6 +2086,25 @@ export function BudgetVsActualPanel({
               onChange={next => setView(next as BvaView)}
             />
 
+            {/* ⚠ NOT ON MONTHS, and that is the ruling rather than an omission (owner 2026-09-04).
+                The month view's columns already ARE the time axis — a coach reading across them
+                can see exactly which months have happened — so a basis there would be a second,
+                quieter way of saying the same thing over a grid that already says it.
+                ⚠ ON BOTH THE STATEMENT AND BY ACTIVITY. They are one set of rows read two ways and
+                they close on the same net; a basis on one and not the other would let one report
+                end on two different numbers depending on which shape a coach opened.
+                ⚠ THE BRIEF EXPECTED A THREE-SELECTOR CRUSH HERE AND IT CANNOT HAPPEN: `Showing`
+                renders only under `view === 'months'`, so Compare and Showing are never on this
+                row together. Measured at 361 / 641 / 768 — two lines before, two lines after. */}
+            {view !== 'months' && (
+              <SingleSelectDropdown
+                label="Compare"
+                value={basis}
+                options={COMPARE_BASES.map(b => ({ id: b.id, label: b.label }))}
+                onChange={next => setBasis(normalizeBasis(next))}
+              />
+            )}
+
             {view === 'months' && (
               /* ⚠ THE FULL WORD, ALWAYS. The segmented buttons abbreviated to "Diff." to survive a
                  phone and carried an `aria-label` so a screen reader still heard the whole word.
@@ -1949,7 +2135,10 @@ export function BudgetVsActualPanel({
                  able to tell why it does not match. */
               <ColumnPager
                 unit="month"
-                range={<><strong>{formatMonthLabel(monthWindow[0])} – {formatMonthLabel(monthWindow[monthWindow.length - 1])}</strong>{` · of ${gridMonths.length} months`}</>}
+                /* ⚠ ONE WORDING, BOTH GRIDS (2026-09-04). This built its range inline from
+                   `formatMonthLabel` while the Budget tab's new pager said it differently — two
+                   controls a tab apart naming the same kind of window in two vocabularies. */
+                range={<><strong>{periodRangeLabel(monthWindow)}</strong>{` · of ${gridMonths.length} months`}</>}
                 onPrev={() => setMonthStartRaw(Math.max(0, monthStart - 1))}
                 onNext={() => setMonthStartRaw(Math.min(maxMonthStart, monthStart + 1))}
                 prevDisabled={monthStart === 0}
@@ -2003,18 +2192,25 @@ export function BudgetVsActualPanel({
           {/* ── The report, in whichever shape the coach chose (plan §3.5) ──────────────────
               Both come off ONE grouping pass on the server and end on the same season net,
               because they are the same rows read two ways. */}
-          {(data.report.revenue.categories.length > 0 || data.report.expenses.categories.length > 0) && (() => {
+          {(report!.revenue.categories.length > 0 || report!.expenses.categories.length > 0) && (() => {
             /* ⚠ THE SERVER'S FIGURE, not a fourth recomputation. It is measured against the
                EFFECTIVE budget — the estimate whenever a coach has set one (owner ruling
                2026-08-12, shared with the plan page, the Money hub and headroom) — which is the
                same number the Total expenses row below shows. Both shapes and the export read it. */
-            const { budgeted: netBudget, actual: netActual, variance: netVariance } = data.report.net;
+            const { budgeted: netBudget, actual: netActual, variance: netVariance } = report!.net;
 
             /* The part of the estimated total not yet covered by lines. Positive only — an
                estimate BELOW the lines has nothing unallocated to stand in for, and a negative
                pseudo-row here would read as a refund. Rendered in BOTH shapes so the rows a reader
                can see add up to the same Total expenses either way. */
-            const bufferRow = data.buffer > 0 ? (
+            /* ⚠⚠ NO BUFFER ROW UNDER "To date", and this is the load-bearing half of the basis's
+               honesty. The estimate buffer is plan money with NO LINES UNDERNEATH IT — a coach who
+               set a season total before itemising anything — so there is nothing to attach a month
+               to, and it can never join a to-date comparison however diligently every line is
+               dated. Printing it here would put undatable money inside a column that claims to hold
+               only money dated on or before today. It is also why the excluded figure in the
+               sentence below the table can never reach zero on a team that sets an estimate. */
+            const bufferRow = basis === 'season' && data.buffer > 0 ? (
               <div className={shared.ledgerGroup}>
                 <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
                   <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
@@ -2045,7 +2241,10 @@ export function BudgetVsActualPanel({
               <div className={styles.gridInner}>
               <div className={`${shared.ledgerHead} ${styles.tableHeader}`}>
                 <span className={shared.scrollXStickyCell}>Category / Line Item</span>
-                <span className={shared.thNum}>Budgeted</span>
+                {/* ⚠ THE HEADING MOVES WITH THE BASIS, so a reader who has scrolled past the
+                    control can still tell which span these figures cover. "Budgeted" alone over a
+                    to-date column is how one report ends up meaning two things. */}
+                <span className={shared.thNum}>{basis === 'todate' ? planColumnLabel(basis) : 'Budgeted'}</span>
                 <span className={shared.thNum}>Actual</span>
                 <span className={shared.thNum}>Variance</span>
               </div>
@@ -2056,7 +2255,7 @@ export function BudgetVsActualPanel({
                    expenses; SEASON NET. The shape every treasurer, board and parent already
                    knows, and the one that answers "are we going to be short?" */
                 <>
-                  {data.report.revenue.categories.length > 0 && (
+                  {report!.revenue.categories.length > 0 && (
                     <>
                       <SectionBand label="Revenue" />
                       <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
@@ -2066,7 +2265,7 @@ export function BudgetVsActualPanel({
                             dues group, so the two views name one thing one way. It renders itself
                             because it has no records of this report's kind behind it (see
                             `DuesRow`); everything else goes through the ordinary group. */}
-                        {data.report.revenue.categories.map(cat => (
+                        {report!.revenue.categories.map(cat => (
                           isDuesCategory(cat.categoryId)
                             ? <DuesRow key={catKeyOf(cat)} cat={cat} dues={data.dues} base={base} canWrite={moneyCanWrite} />
                             : <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
@@ -2074,9 +2273,9 @@ export function BudgetVsActualPanel({
                       </div>
                       <SubtotalRow
                         label="Total revenue"
-                        budgeted={data.report.revenue.budgeted}
-                        actual={data.report.revenue.actual}
-                        variance={data.report.revenue.variance}
+                        budgeted={report!.revenue.budgeted}
+                        actual={report!.revenue.actual}
+                        variance={report!.revenue.variance}
                         direction="in"
                       />
                     </>
@@ -2084,16 +2283,24 @@ export function BudgetVsActualPanel({
 
                   <SectionBand label="Expenses" />
                   <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                    {data.report.expenses.categories.map(cat => (
+                    {report!.expenses.categories.map(cat => (
                       <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
                     ))}
                     {bufferRow}
                   </div>
+                  {/* ⚠ THE SEASON TOTAL IS `effectiveBudget` — the categories PLUS the estimate
+                      buffer, which is what makes the rows a reader can see add up to this figure.
+                      Under To date the buffer is gone (see `bufferRow`), so the total has to come
+                      from the re-cut categories instead. Reading `effectiveBudget` under either
+                      basis would print a whole-season total over a to-date column and hand a coach
+                      a variance measured against two different spans — the exact defect this whole
+                      control exists to remove. `headroom` is the season's variance for the same
+                      reason. */}
                   <SubtotalRow
                     label="Total expenses"
-                    budgeted={data.effectiveBudget}
+                    budgeted={basis === 'todate' ? report!.expenses.budgeted : data.effectiveBudget}
                     actual={data.totalActual}
-                    variance={data.headroom}
+                    variance={basis === 'todate' ? report!.expenses.variance : data.headroom}
                     direction="out"
                   />
                 </>
@@ -2112,12 +2319,12 @@ export function BudgetVsActualPanel({
                       "Player dues" three times over a category that has exactly one figure and can
                       never have a cost half; the payload still carries the block so nothing reading
                       `activities` is short of a category. */}
-                  {data.report.activities.filter(b => isDuesCategory(b.categoryId)).map(block => (
+                  {report!.activities.filter(b => isDuesCategory(b.categoryId)).map(block => (
                     block.revenue && (
                       <DuesRow key="dues" cat={block.revenue} dues={data.dues} base={base} canWrite={moneyCanWrite} />
                     )
                   ))}
-                  {data.report.activities.filter(b => !isDuesCategory(b.categoryId)).map(block => (
+                  {report!.activities.filter(b => !isDuesCategory(b.categoryId)).map(block => (
                     <Fragment key={`${block.categoryId ?? 'none'}|${block.categoryName}`}>
                       <SectionBand label={block.categoryName} />
                       {block.revenue && (
@@ -2163,7 +2370,12 @@ export function BudgetVsActualPanel({
 
               {/* Where both shapes end. */}
               <div className={styles.netRow}>
-                <span className={shared.scrollXStickyCell}>Season net</span>
+                {/* ⚠⚠ RENAMED UNDER To date, BY RULING (owner 2026-09-04) — see `netRowLabel`.
+                    Under that basis this figure is a CASH-TIMING statement wearing a PROFITABILITY
+                    name: a team whose costs run early and whose dues start in October reads deeply
+                    under water while its bank balance is fine, and dating every budget line cannot
+                    move it. One row, two bases, two honest names. */}
+                <span className={shared.scrollXStickyCell}>{netRowLabel(basis)}</span>
                 <span className={shared.ledgerTotalNum}>{fmtCell(netBudget)}</span>
                 <span className={shared.ledgerTotalNum}>{fmtCell(netActual)}</span>
                 <span className={shared.ledgerTotalNum} style={{ color: varianceColor(netVariance) }}>
@@ -2196,7 +2408,13 @@ export function BudgetVsActualPanel({
                  the columns, before the undated-plan line. See `DuesSentence` for the wording rules
                  and for the one state it deliberately says nothing in. */}
              {duesSentenceRenders(data.dues) && (
-               <DuesSentence dues={data.dues} base={base} canWrite={moneyCanWrite} />
+               <DuesSentence
+                 dues={data.dues}
+                 base={base}
+                 canWrite={moneyCanWrite}
+                 basis={basis}
+                 onToDate={() => setBasis('todate')}
+               />
              )}
              {/* HOW MUCH PLAN HAS NO DATE (owner ruling 2026-09-04, QA §132).
                  ⚠⚠ THE VARIANCE COLUMN COMPARES TWO DIFFERENT TIME SPANS — a WHOLE-SEASON plan
@@ -2213,7 +2431,21 @@ export function BudgetVsActualPanel({
              {undatedPlan > 0.005 && (
                <p className={styles.undatedNote}>
                  <strong>{fmt(undatedPlan)}</strong> of this plan — money in and money out — has no
-                 date on it, so it sits in the season total but in no month.{' '}
+                 date
+                 {/* ⚠⚠ THE VERB IS THE WHOLE DIFFERENCE, and only one of these is honest per basis
+                     (owner ruling 2026-09-04). Whole season COUNTS undated money in full, so there
+                     it is present-but-unplaceable and the sentence says where it sits. Only To date
+                     can EXCLUDE it, so only there is "not compared" true — saying it under Whole
+                     season would tell a coach their money had been left out of a total it is
+                     actually inside. This was a real defect in the first mockup and the owner
+                     caught it. */}
+                 {basis === 'todate'
+                   ? <>, so it is <strong>not compared here</strong>. Give it a month to include it.</>
+                   : <> on it, so it sits in the season total but in no month.</>}{' '}
+                 {/* ⚠ THE FIGURE IS UNDATED MONEY ONLY — never money dated AFTER today. That is
+                     excluded from a to-date reading too, but correctly so: it is the basis working,
+                     not a gap, and naming it here would send a coach off to date money that is
+                     already dated. */}
                  <button type="button" className={styles.bridgeLink} onClick={() => setView('months')}>
                    See it in the months view
                  </button>
@@ -2290,7 +2522,7 @@ export function BudgetVsActualPanel({
              {/* ⚠ THE CONDITION MOVED OFF THE DELETED `funding` BLOCK to the thing it was always
                  really about: is there a revenue half on this report at all? `funding` was a
                  stand-in for exactly that test and is gone (route, §9). */}
-             {data.report.revenue.categories.length > 0 && (
+             {report!.revenue.categories.length > 0 && (
                <p className={styles.fundingNote}>
                  A fundraiser&apos;s actual is your team&apos;s share — everything raised, less anything
                  paid back to the player who raised it (that already lowers their own dues). Money

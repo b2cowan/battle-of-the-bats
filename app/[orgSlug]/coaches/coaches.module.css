@@ -21,8 +21,8 @@
                                mandatory swipe hint together. Rows mark their first
                                cell .scrollXStickyCell and pass their own leading
                                indent via --scrollx-pin-gutter.
-     • .stack640               flex ROW → COLUMN @640 (the axis flip only; bring
-                               your own gap). Replaces per-page `1fr 1fr` grids.
+     • .stack640               RETIRED 2026-09-04, zero consumers — see its headstone.
+                               Was: flex ROW → COLUMN @640 (the axis flip only).
      • .block640               compact inline control → full-width, full-touch
                                button @640. The companion to .stack640.
      • .wrap640                nowrap+ellipsis text → wraps @640, for a name whose
@@ -265,11 +265,15 @@
    they should share the row evenly. Replaces per-page `1fr 1fr` grids that had no
    phone handling (Chunk A: tournament payables, the allocation split header, the
    fundraiser log form). */
-.stack640 { display: flex; }
+/* ⚰ `.stack640` IS RETIRED (2026-09-04) — its LAST consumer was the budget line form's
+   amount-beside-checkbox row, and that row went when "Split by period" became one of the three
+   answers to "When does this money move?". Zero consumers is dead code by `check:css-selectors`,
+   which is a gate and not a report.
+   ⚠ ITS COMPANION `.block640` IS ALIVE (4 consumers) and the pair is now broken, so a future
+   row-→-column flip at 640 has no primitive to reach for. If you need one, bring this back rather
+   than writing a bespoke @640 rule in a page stylesheet — which is the exact failure the header
+   block above exists to prevent. The @640 rule below survives for the in-card variant alone. */
 @media (max-width: 640px) {
-  /* ONE axis flip, shared by the utility and by the in-card variant that adds
-     left-alignment on top of it. */
-  .stack640,
   .tableAsCards td.cardStackCell { flex-direction: column; align-items: stretch; }
 }
 
@@ -3619,6 +3623,26 @@ a.oneChip:hover { border-color: currentColor; }
 /* Matches the focus treatment its sibling controls already carry (`.ledgerGroupHeadBtn`,
    `.moneyGridToggle`) — this one was the odd one out. */
 .ledgerExpand:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
+
+/* ⚠ THE TABLET BAND, OPT-IN — a list marks itself `data-touch-floor` and its expanders and group
+   heads take the portal's 44px floor from 641 up to 768 as well as below 640, where they already
+   have it.
+
+   ⚠ OPT-IN RATHER THAN RAISED FOR EVERYONE, and the restraint is the point. ≤768 IS a touch band by
+   ruling (owner 2026-08-27) and every ledger in Money is arguably owed this — but lifting the bare
+   class here moves the tablet layout of seven money screens in one commit, which belongs to the
+   tablet-band programme and not to whatever build happens to trip the sweep first. Adding the
+   attribute to another list is a one-word change when that programme comes.
+
+   ⚠ WRITTEN HERE BECAUSE THE CLASSES LIVE HERE. A page stylesheet cannot reach them: CSS Modules
+   hashes them per file, so a `:global(.ledgerExpand)` written from the budget module matches
+   nothing, compiles clean, and silently changes no pixels. */
+@media (max-width: 768px) {
+  [data-touch-floor] .ledgerExpand,
+  [data-touch-floor] .ledgerGroupHeadBtn {
+    min-height: var(--tap-min, 44px);
+  }
+}
 
 /* ── The money grid (Money-hub table consistency 2026-08-13, "job three") ────────────────────
    ONE recipe for a comparison read ACROSS — Budget Plan's `By period` view and Budget vs. Actual's

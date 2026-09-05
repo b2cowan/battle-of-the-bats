@@ -18314,3 +18314,120 @@ and proves nothing.
    that no redundant door appeared.)
 2. As an **assistant coach with view-only money access**: the same panel now ends with **Open
    Budget Plan**, and the lines are still plain text. Before this, that panel had no way out.
+---
+
+## §145 · Budget dates, and the "to date" reading — every line answers when the money moves, and the report can finally compare like with like — BUILT 2026-09-05, awaiting QA
+
+**Owner-ruled and mockup-approved 2026-09-04/05.** Proposal artifact `9bc53080`; mockup gate
+`91368ba1` (the plan list's When column, the statement's control row, and the amended line form —
+all at true size on this fixture's real eight lines). Plan: `COACH_BUDGET_DATES_PLAN.md` +
+`_PM_BRIEF.md`. **No migration.**
+
+### Why it exists, in one number
+
+On this fixture in September the report said the season was **$8,690.02 under budget**. That reads
+as an achievement and is really an unfinished season — a whole year's plan set against five months
+of spending. Under the new **To date** reading the same team is **$1,690.02 under**, which is a
+figure a treasurer can act on.
+
+### What to walk
+
+**Part A — the line form (Money › Budget › Add line).**
+1. The optional **Split by period** checkbox beside Amount is **gone**. In its place, a required
+   question after Amount: **"When does this money move?"** — One month · Split across months ·
+   No date yet.
+2. **Nothing is pre-selected and no month is pre-filled.** Add Line stays off until you answer.
+   ⚠ This is the ruling that matters most: a pre-picked month makes a plausible-looking date the
+   fastest way out of the form, which is the day-grain failure one level up.
+3. **No sub-lines under the three answers** — three labels and a dropdown.
+4. **One month** reveals a month **dropdown** (not chips): the split editor's own control, grouped
+   by year, offering the season year and the next. ⚠ 24 options is why a chip row could not survive.
+5. **No date yet** shows ONE consequence line naming the money, what happens to it, and where to fix
+   it later. Choose it, switch away, switch back — it must not repeat or nag.
+6. Edit an existing line: it reopens on the answer it already has (a quarters split stays a split).
+
+**Part B — the plan list.**
+7. The **Schedule** column is now **When**, and it names months instead of counting chunks.
+8. ⚠ **Jersey order** is the row to read first: a $500 deposit dated March plus a $1,000 balance
+   with no date. It used to read "Mar · 2 chunks" — fully dated, to anyone scanning — and now reads
+   **Mar · $1,000.00 no date**, with the undated half in the attention colour.
+9. **Spring classic entry** and **Season interest** read **No date yet** (gold). Both are undated
+   *on purpose* in the fixture so the bar and the filter have something to find.
+10. Above the list: **"3 lines have no date. Show just those →"** — one tap sets the new **When**
+    filter (All · No date yet · Dated) beside View. A second line offers the way back out.
+11. A one-month line has **no chevron** — its single period would only restate the row above it.
+12. **On a phone (361px):** the When column does not exist below 640, so the answer rides under the
+    line's name. Before this build a phone said nothing about dates at all on this screen.
+
+**Part C — Budget vs Actual, the new basis.**
+13. A **Compare** dropdown beside View: **Whole season** (default, unchanged) · **To date**.
+    It is on the Statement and By activity, and deliberately **not** on Months.
+14. Switch to **To date**: the plan column counts only plan money dated on or before today, its
+    heading becomes **Plan to date**, and the closing row is renamed **Net to date**.
+15. ⚠ **Expect Net to date to look alarming, and check that it does not look wrong.** Every dues
+    instalment on this team falls Oct 2026 → Mar 2027, so to-date revenue is small while the costs
+    are mostly behind us. The **variance** column is the figure to read. The rename exists because
+    on this basis that row is a cash-timing statement, not a profitability one.
+16. The **estimate buffer row** disappears under To date (undatable plan money cannot sit in a
+    to-date column). This fixture has no estimate, so confirm by setting one if you want to see it.
+17. **Download while on To date** — the file must match the screen, not the season.
+
+**Part D — the two sentences (the thing this build was told to re-read).**
+18. Under **Whole season**, the dues sentence's tail is now a door: *"…what has moved so far.
+    **Compare to date** sets the plan against the same span."*
+19. Under **To date** that clause is **deleted outright** — there it would simply be false.
+20. The undated-plan line keeps its figure and changes one verb: *"sits in the season total but in
+    no month"* → *"is **not compared here**. Give it a month to include it."*
+21. ⚠ **The sentence must never name money dated AFTER today.** This team's $300 Q4 umpire chunk is
+    excluded from the to-date plan and is *not* a gap — naming it would send a coach to date money
+    that is already dated.
+
+### Deliberate deviations from the approved mockup, disclosed
+
+- **The month is a dropdown, not the mockup's chip row.** House rule (form selects are dropdowns)
+  and, decisively, the split editor already picks a month with exactly this control — 24 options.
+- **"No date yet" everywhere**, not the proposal's "Not yet known". One spelling across the form's
+  answer, the plan list's chip, the month grid's column and the export.
+
+### Not built, by ruling
+
+The default basis is unchanged; dues schedules are not dated (dues are not budget lines, though the
+row reads instalments due by today under To date); no new column records *which* answer was chosen.
+
+### Verification
+
+typecheck ✓ · **2,982 unit tests ✓** (30 new: the basis arithmetic and the When column, both
+grounded in this fixture's real figures) · `check:money-report` ✓ · `verify:changed` all green ✓ ·
+`check:demos` ✓ · `check:css-selectors` ✓ · **rendered layout sweep ✓ on both changed screens at
+361 / 390 / 768 / 1440**, and it earned its keep — it found four real defects this build introduced
+or exposed, all fixed:
+
+- the phone's When chip **spilled 17px off the page** on the partly-dated line (it inherited the
+  desktop column's `nowrap`; it wraps under the name now);
+- the Spending-trend chart's axis labels **ran past the left edge** once this plan's dates pushed the
+  scale above $9,999 — a clipping bug for any team with a plan over that, fixed by dropping cents
+  from an axis that never needed them;
+- two controls in the plan list sat **20px and 36px tall in the 641–768 touch band** (floor 44) — the
+  line expander and the two-line item head. Both were reachable before today; what surfaced them was
+  the fixture finally having a dated fundraising line and a two-line item on screen at once. Fixed
+  opt-in on this list rather than by raising the shared class, which would move seven money screens.
+
+⚠ **One of those fixes was silently inert on the first attempt** and only the sweep caught it: the
+touch-floor rule was written in the page stylesheet against classes that belong to the shared one,
+so CSS Modules hashed them apart and it matched nothing. It compiled, passed purity, and changed
+zero pixels. Worth knowing the next time a page stylesheet reaches for a shared class.
+
+**8 stale baseline entries pruned** — the five tap floors these fixes actually cleared and the two
+chart overflows, plus a "Review" button §133 removed. ⚠ `--prune` re-sweeps everything and offered
+to drop **239** entries across the whole product; that was reverted and only these 8 removed by
+hand. The rest was measured against a working tree holding another session's uncommitted work, and
+re-recording the whole ratchet belongs to the layout-gate session the run order already parks.
+
+### Fixture and demo
+
+The UAT plan now holds the full mix the mockup was approved on — a single month, two multi-month
+splits, a partly-dated split, and **two deliberate unknowns**. The coach demo's thirteen undated
+lines were the shop window demonstrating the very problem this build fixes; every live demo world
+now carries dated lines plus one deliberate "No date yet". The tour's budget step was re-read and
+**stands unchanged** — Whole season is still the default, so the report it describes is the report a
+prospect meets.

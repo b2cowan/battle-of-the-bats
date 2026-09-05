@@ -62,10 +62,11 @@ describe('the statement file (List view, and every PDF)', () => {
       'Player installments (estimated)',
     ]);
     assert.deepEqual(kinds, ['category', 'item', 'item', 'item', 'category', 'item', 'total']);
-    // The summed item row carries the sum; its lines carry their own money and schedules.
+    // The summed item row carries the sum; its lines carry their own money and their own answer to
+    // "when does this money move?" — WHEN, not a chunk count (owner ruling 2026-09-04).
     assert.equal(rows[1].planned, 2500);
     assert.equal(rows[2].planned, 1600);
-    assert.equal(rows[2].schedule, 'Apr · 1 chunk');
+    assert.equal(rows[2].schedule, 'Apr');
     assert.equal(rows[3].notes, 'Regional qualifier');
     // The closing row is the screen's: players' side of a funded plan.
     assert.equal(rows[6].planned, 700);
@@ -91,7 +92,9 @@ describe('the statement file (List view, and every PDF)', () => {
     };
     const { rows } = budgetPlanStatementRows(src);
     assert.deepEqual(rows.map(r => r.item), ['Facilities', 'Dome Time', 'Total planned budget']);
-    assert.equal(rows[1].schedule, 'Jan–Mar · 3 chunks');
+    // ⚠ THE MONTHS THEMSELVES, not "Jan–Mar · 3 chunks". A count is not an answer to "when",
+    // and the old label could not say that a partly-dated line had money with no date at all.
+    assert.equal(rows[1].schedule, 'Jan · Feb · Mar');
     assert.equal(rows[1].notes, '16 sessions, Jan–Mar');
   });
 

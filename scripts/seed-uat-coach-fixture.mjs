@@ -1309,6 +1309,63 @@ for (const shape of REVAMP_SHAPES) {
 }
 
 /**
+ * ⚠⚠ THE PLAN ANSWERS "WHEN DOES THIS MONEY MOVE?" — but deliberately NOT all of it (owner ruling
+ * 2026-09-04, the budget-dates build).
+ *
+ * Until this block, five of the team's eight lines carried no date at all, which made the whole
+ * fixture useless for the thing the feature exists to show: the **To date** basis read $0.00 of
+ * plan on the revenue side and almost nothing on the cost side, so the control looked broken rather
+ * than useful. Dating them is what lets a walk see the payoff — a season that reads $8,690.02
+ * "under budget" against a whole-season plan and a truthful figure against the plan to date.
+ *
+ * ⚠⚠ TWO LINES STAY UNDATED ON PURPOSE, AND THEY ARE NOT AN OVERSIGHT. A fixture where every line
+ * is dated cannot exercise:
+ *   · the plan list's **"N lines have no date · Show just those"** bar and its `When` filter, both
+ *     of which render only while something is undated;
+ *   · the statement's disclosure sentence, which is the honest half of the whole basis;
+ *   · the "No date yet" chip itself, in either of its two inks.
+ * A green sweep over a fixture with nothing to find is the trap this file exists to end — the same
+ * reasoning the two-line item and the three split shapes above already carry.
+ *
+ * So the plan ends up holding the real mix the mockup was approved on: a single month, two
+ * multi-month splits, a PARTLY-dated split (the jersey order's undated $1,000 balance — the row the
+ * old Schedule column read as fully dated), and two deliberate unknowns.
+ *
+ * ⚠ FIXED MONTHS INSIDE THE PROGRAM YEAR, never offsets from "today". A relative date would move
+ * lines across the to-date boundary as the calendar advanced, so the walk's figures would change
+ * depending on the day it ran — the same reason the two-month commitment below pins its dates.
+ * Guarded per line, so a fixture seeded before this block gains the dates on a re-run and one that
+ * already has them is left alone.
+ */
+const WHEN_ANSWERS_SEED = [
+  // A single month — the ordinary answer, and the one the form's first option produces.
+  { description: 'Diamond permits',   periods: [['Apr', `${py.year}-04-01`, 3200]] },
+  { description: 'Regional qualifier entry', periods: [['May', `${py.year}-05-01`, 900]] },
+  /* ⚠ DATED IN THE PAST, not to the drive's own October. This line has $778.60 of actual money
+     against it already, so a plan dated after today would report a fundraiser that has collected
+     three quarters of its target as having been asked for nothing — true under the basis, and
+     useless as the one revenue row a walk can read a real to-date variance on. */
+  { description: 'Chocolate sale',    periods: [['Mar', `${py.year}-03-01`, 900],
+                                                ['Apr', `${py.year}-04-01`, 900]] },
+];
+for (const want of WHEN_ANSWERS_SEED) {
+  const { data: target } = await db.from('rep_budget_lines')
+    .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
+    .eq('description', want.description).maybeSingle();
+  if (!target) continue;
+  const { data: had } = await db.from('rep_budget_periods')
+    .select('id').eq('budget_line_id', target.id).limit(1);
+  if (had?.length) continue;
+  const ins = await db.from('rep_budget_periods').insert(want.periods.map(([label, date, amount], i) => ({
+    budget_line_id: target.id, period_label: label, period_date: date, amount, sort_order: i,
+  })));
+  if (ins.error) console.log(`  ! "${want.description}" dates skipped (${ins.error.message})`);
+  else ok(`"${want.description}" answers when it moves — ${want.periods.map(p => p[0]).join(' · ')}`);
+}
+ok('and "Spring classic entry" + "Season interest" stay "No date yet" ON PURPOSE — the fix-it bar, '
+  + 'the When filter and the statement\'s disclosure sentence all need something to find');
+
+/**
  * ⚠⚠ A COMMITMENT PAID ACROSS TWO MONTHS — the shape the money report's arithmetic check needs.
  *
  * The payable above has its balance UNPAID, which is the right fixture for the Expenses screen and

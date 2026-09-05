@@ -31,7 +31,7 @@ import {
   type BudgetLineKind,
 } from '@/lib/coach-budget-totals';
 import {
-  buildPeriodView, scheduleSummaryLabel, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
+  buildPeriodView, whenSummary, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
   type PeriodGranularity,
 } from '@/lib/coach-budget-periods-view';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
@@ -105,6 +105,37 @@ function today() {
 interface PeriodRow { label: string; date: string; amount: string }
 const BLANK_PERIOD: PeriodRow = { label: '', date: '', amount: '' };
 
+/**
+ * The three answers to "when does this money move?", in the order the coach meets them.
+ *
+ * `month` and `split` are one storage shape wearing two questions: a month IS a period dated to
+ * the 1st, so `month` is simply the split every coach actually wants — one chunk — without the
+ * editor. That is deliberate; it means nothing downstream (the report, the month grid, instalment
+ * generation) learns a new word, and a line can move between the two answers without a migration.
+ */
+type WhenAnswer = 'month' | 'split' | 'none';
+
+/** Does this form save periods? `month` does — one of them. Derived, never a second stored flag:
+ *  the `usePeriods` boolean this replaced could disagree with the answer beside it, which is the
+ *  two-halves-out-of-step defect this file has already shipped twice. */
+function usesPeriods(f: Pick<LineForm, 'whenAnswer'>): boolean {
+  return f.whenAnswer === 'month' || f.whenAnswer === 'split';
+}
+
+/**
+ * Reading a saved line back into its answer. No periods = `none`; one period entered as a MONTH =
+ * `month`; anything else = `split`.
+ *
+ * ⚠ THE MODE IS PART OF THE TEST, not just the count. One period in `quarters`, `dates` or `names`
+ * mode is a split that happens to have one chunk — reopening it as `month` would silently discard
+ * the coach's chosen mode (and, in `dates` mode, the exact day they picked for a reason).
+ */
+function whenAnswerFor(periods: { date: string }[], mode: PeriodSplitMode): WhenAnswer {
+  if (periods.length === 0) return 'none';
+  if (mode === 'months' && periods.length === 1) return 'month';
+  return 'split';
+}
+
 interface LineForm {
   description: string;
   categoryId: string;
@@ -116,7 +147,27 @@ interface LineForm {
    *  because it changes what every field below it means. */
   lineKind: BudgetLineKind;
   notes: string;
-  usePeriods: boolean;
+  /**
+   * ⚠⚠ "WHEN DOES THIS MONEY MOVE?" — REQUIRED, AND `null` MEANS UNANSWERED (owner ruling
+   * 2026-09-04). It blocks the save exactly as category and item do: one rule, three parts — a
+   * line says what it is and when it happens.
+   *
+   * ⚠ NOTHING IS PRE-SELECTED, and that is the ruling rather than an oversight. The first mockup
+   * opened on `month` with a month already highlighted, which makes a plausible-looking date the
+   * fastest way OUT of the form — reintroducing, one level up, the exact failure the month grain
+   * exists to avoid: a guessed answer is indistinguishable from a known one. `none` stays a real,
+   * respectable answer (see §4 of the plan: the undated bucket can never be eliminated, because a
+   * season estimate set before any lines exist has no lines to date), so the nudge comes from
+   * ORDER and PROMINENCE and never from pre-filling or nagging.
+   *
+   * ⚠ THIS IS NOT STORED. A line's answer IS its periods — none / one dated month / many — which
+   * is what every report already reads. A column recording which answer was picked would let a
+   * screen tell "answered no" from "never asked", and no screen wants to: the plan list's fix-it
+   * bar and the statement's disclosure sentence both count money that isn't dated, full stop,
+   * because their job is "here is what a To date reading leaves out", not "here is what you
+   * forgot". See `whenAnswerFor` for the read-back.
+   */
+  whenAnswer: WhenAnswer | null;
   periodMode: 'amount' | 'percent';
   /** HOW the split is entered — months / quarters / specific dates / just names. Never stored:
    *  the month or quarter the coach picks IS the period's date, so nothing downstream learns a
@@ -134,7 +185,7 @@ const BLANK_FORM: LineForm = {
   totalAmount:  '',
   lineKind:     'cost',
   notes:        '',
-  usePeriods:   false,
+  whenAnswer:   null,
   periodMode:   'amount',
   splitMode:    'months',
   periods:      [{ ...BLANK_PERIOD }],
@@ -153,6 +204,24 @@ const FOCUS_DESC  = 'budget-line-desc';
 const FOCUS_ADD   = 'budget-period-add';
 /** The item picker's own select — where "pick a category and item" sends a coach (mig 240). */
 const FOCUS_ITEM  = 'budget-item-picker';
+const FOCUS_WHEN  = 'budget-line-when';
+
+/**
+ * The three answers, in the order that does the nudging (owner ruling 2026-09-04). Dating is first
+ * and obvious; the exception is last and plain. Both cost exactly one tap — the ordering is the
+ * whole of the encouragement, because making the honest answer HARDER to reach is what produces a
+ * guessed month, and a guessed month is worse than a gap since the report treats it as fact.
+ */
+const WHEN_ANSWERS: { id: WhenAnswer; label: string }[] = [
+  { id: 'month', label: 'One month' },
+  { id: 'split', label: 'Split across months' },
+  /* ⚠ "No date yet", NOT "Not yet known" — ONE SPELLING, and this is the wider word (owner ruling
+     2026-09-04). It is what the month grid's column has been called since the same day, and a
+     coach who picks an answer has to find their own words in the column it lands in. The column's
+     word wins because it also holds a sponsor's pledge and a club ask, which are not budget
+     answers at all. Before adding a third phrasing anywhere, grep for both. */
+  { id: 'none',  label: 'No date yet' },
+];
 const focusPeriodAmount = (i: number) => `budget-period-amount-${i}`;
 
 interface FormProblem {
@@ -185,6 +254,33 @@ function fundingCell(kind: BudgetLineKind, n: number | undefined): number | unde
  * kinds — the minus sign is gone (owner 2026-08-13: "expenses minus the funding" is intuitive;
  * the section label says the direction, and a sign made readers re-check arithmetic).
  */
+/**
+ * A line's answer to "when does this money move?", as the plan list paints it.
+ *
+ * ⚠ TWO INKS, WHICH IS WHY `whenSummary` RETURNS DATA AND NOT A SENTENCE. Undated money is the
+ * only actionable thing in this column, so it is the only thing that carries the attention colour
+ * — on a line that is entirely undated, and on the undated HALF of a partly-dated one. Everything
+ * dated stays quiet. A single string could not be split back apart to paint it.
+ *
+ * ⚠ ONE SPELLING, THREE SURFACES: "No date yet" here, in the line form's third answer, and as the
+ * month grid's column heading. The export says it too, through `whenSummaryText`.
+ */
+function WhenChip({ line, className }: { line: RepBudgetLineWithPeriods; className?: string }) {
+  const s = whenSummary(line.periods ?? [], Number(line.totalAmount ?? 0) || 0);
+  const cls = `${styles.whenChip} ${className ?? ''}`;
+  if (s.months.length === 0) {
+    return <span className={`${cls} ${styles.whenChipNone}`}>No date yet</span>;
+  }
+  return (
+    <span className={`${cls} ${styles.whenChipSet}`}>
+      {s.months.join(' · ')}
+      {s.undated > 0.005 && (
+        <> · <span className={styles.whenChipPart}>{fmt(s.undated)} no date</span></>
+      )}
+    </span>
+  );
+}
+
 function BudgetLineRow({
   line, expanded, funding, canWrite, onToggle, onEdit,
 }: {
@@ -214,7 +310,12 @@ function BudgetLineRow({
         onClick={canWrite ? () => { if (window.getSelection()?.toString()) return; onEdit(); } : undefined}
       >
         <div className={shared.ledgerCell}>
-          {line.periods.length > 0
+          {/* ⚠ NO EXPANDER ON A ONE-MONTH LINE (2026-09-04). "One month" saves a single period, so
+              a lump sum that gained a date would otherwise grow a chevron opening one sub-row that
+              restates the row above it — the same empty caption §133 removed from the item rows the
+              same week. Two or more chunks still open, because then the sub-rows say something the
+              When cell cannot. */}
+          {line.periods.length > 1
             ? (
               <button
                 type="button"
@@ -231,13 +332,21 @@ function BudgetLineRow({
           <span className={styles.lineInfo}>
             <span className={shared.ledgerDesc}>{line.description}</span>
             {line.notes && <span className={`${shared.ledgerNote} ${shared.wrap640}`}>{line.notes}</span>}
+            {/* ⚠⚠ THE PHONE'S ONLY COPY OF THE ANSWER. Below 640 the When column leaves the grid
+                entirely (`.schedCell` is display:none and the tracks drop to three), so until
+                today a phone said NOTHING about when any of this money moved — on the screen
+                whose job is clearing a season's unknowns. A fourth track at 329px would have to
+                take room from the line name, which already ellipses, or from the money. The note
+                slot is already here, already quiet, and already where a line says something extra
+                about itself. */}
+            <WhenChip line={line} className={styles.whenUnderName} />
           </span>
         </div>
 
-        {/* The Schedule column (P3) — the line's phasing at a glance, and the first time the
-            periods feature is visible without expanding anything. Words, never dollars. */}
-        <span className={`${styles.schedCell} ${styles.schedInk}`}>
-          {scheduleSummaryLabel(line.periods)}
+        {/* The When column — was "Schedule" until 2026-09-04, and printed chunk counts over a line
+            whose undated half it never mentioned. See `whenSummary` for both defects. */}
+        <span className={styles.schedCell}>
+          <WhenChip line={line} />
         </span>
 
         <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{fmt(line.totalAmount)}</span>
@@ -505,7 +614,7 @@ function formFromLine(
     totalAmount:  String(line.totalAmount),
     lineKind:     normalizeBudgetLineKind(line.lineKind),
     notes:        line.notes ?? '',
-    usePeriods:   line.periods.length > 0,
+    whenAnswer:   whenAnswerFor(periods, splitMode),
     periodMode:   'amount', // stored periods are always dollars
     splitMode,
     periods:      periods.length > 0 ? periods : [blankPeriod(splitMode, seasonYear)],
@@ -526,7 +635,7 @@ function sameLineForm(a: LineForm, b: LineForm): boolean {
     || a.totalAmount !== b.totalAmount
     || a.lineKind !== b.lineKind
     || a.notes !== b.notes
-    || a.usePeriods !== b.usePeriods
+    || a.whenAnswer !== b.whenAnswer
     || a.periods.length !== b.periods.length
   ) return false;
   return a.periods.every((p, i) =>
@@ -750,7 +859,7 @@ export function BudgetPlanPanel({
   // used to vanish on a backdrop tap. Dirtiness compares the form against the baseline captured
   // when the modal opened — see `formBaseline`.
   const lineDirty = modalOpen && !sameLineForm(form, formBaseline);
-  const filledPeriods = modalOpen && form.usePeriods
+  const filledPeriods = modalOpen && usesPeriods(form)
     ? form.periods.filter(p => p.label || p.date || p.amount).length
     : 0;
   // Names the work at stake rather than "unsaved changes" — the period split is the whole reason
@@ -1033,7 +1142,7 @@ export function BudgetPlanPanel({
     // ?periods=1 arrives from a month cell, where the coach was looking at dates — so the period
     // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
     // opening the split is not the coach's work, so an untouched form must still close silently.
-    if (deepLinkPeriods) opened.usePeriods = true;
+    if (deepLinkPeriods && opened.whenAnswer !== 'split') opened.whenAnswer = 'split';
     pendingDeepLink.current = () => {
       setEditingLine(line);
       setForm(opened);
@@ -1161,7 +1270,7 @@ export function BudgetPlanPanel({
   }
 
   function periodSumError(): string | null {
-    if (!form.usePeriods || form.periods.length === 0) return null;
+    if (form.whenAnswer !== 'split' || form.periods.length === 0) return null;
     const total = parseFloat(form.totalAmount) || 0;
     if (form.periodMode === 'percent') {
       if (total <= 0) return 'Enter the line total first — percentages are computed against it';
@@ -1226,6 +1335,64 @@ export function BudgetPlanPanel({
   // correspond and they don't — twelve months mapped onto four quarters piled three rows into each
   // quarter, and mapping back produced three Januaries. One rule, no exception for the one
   // conversion (months → dates) that would have been lossless.
+  /**
+   * Answering "when does this money move?".
+   *
+   * ⚠ THE PERIODS FOLLOW THE ANSWER, and the two conversions that lose work are the ones worth
+   * reading twice:
+   *   · → `month` keeps the FIRST existing period if there is one (so split → one month keeps the
+   *     month a coach already picked) and otherwise starts a blank one. Anything beyond the first
+   *     is dropped, which is what "one month" means.
+   *   · → `none` clears the periods outright.
+   * Both are offered `periodUndo`, the same one-tap restore the split-mode chips already use, for
+   * the same reason: this is the single worst thing in the product to retype.
+   *
+   * ⚠ A MONTH'S AMOUNT IS NEVER TYPED. It is the line total, resolved at save (see the payload) —
+   * so there is no second money field on this form that could drift out of step with the first.
+   */
+  function chooseWhenAnswer(next: WhenAnswer) {
+    if (form.whenAnswer === next) return;
+    setForm(f => {
+      const had = f.periods;
+      const worthKeeping = usesPeriods(f)
+        && (had.length > 1 || had.some(p => p.label.trim() || p.date || p.amount.trim()));
+      if (next === 'none') {
+        setPeriodUndo(worthKeeping
+          ? {
+              periods: had,
+              splitMode: f.splitMode,
+              text: `Marked “No date yet”. The previous ${had.length} `
+                + `period${had.length === 1 ? '' : 's'} ${had.length === 1 ? 'was' : 'were'} cleared.`,
+            }
+          : null);
+        markPeriodsEdited();
+        return { ...f, whenAnswer: next, periods: [] };
+      }
+      if (next === 'month') {
+        const kept = had[0] ?? blankPeriod('months', seasonYear);
+        setPeriodUndo(worthKeeping && had.length > 1
+          ? {
+              periods: had,
+              splitMode: f.splitMode,
+              text: `Now one month. The other ${had.length - 1} `
+                + `period${had.length === 2 ? '' : 's'} ${had.length === 2 ? 'was' : 'were'} cleared.`,
+            }
+          : null);
+        markPeriodsEdited();
+        return { ...f, whenAnswer: next, splitMode: 'months', periods: [kept] };
+      }
+      /* → split. A coach arriving from `none` needs the one empty period a new split starts with
+         (owner ruling: one, never zero and never twelve); one arriving from `month` keeps theirs. */
+      setPeriodUndo(null);
+      return {
+        ...f,
+        whenAnswer: next,
+        periods: had.length > 0 ? had : [blankPeriod(f.splitMode, seasonYear)],
+      };
+    });
+    setSaveTried(false);
+  }
+
   function chooseSplitMode(mode: PeriodSplitMode) {
     if (form.splitMode === mode) return;
     rememberSplitMode(mode);
@@ -1395,11 +1562,38 @@ export function BudgetPlanPanel({
       out.push({ id: 'total', message: 'Enter a total amount for this line.', focusId: FOCUS_TOTAL });
     }
 
-    if (form.usePeriods) {
+    /* ⚠⚠ THE THIRD PART OF THE ONE RULE (owner ruling 2026-09-04): a line says what it is
+       (category and item), how much it is (total), and WHEN IT HAPPENS. Unanswered blocks the
+       save exactly as the first two do. "No date yet" is a complete answer and passes here —
+       what is refused is not undated money, it is silence. */
+    if (form.whenAnswer === null) {
+      out.push({
+        id: 'when',
+        message: 'Say when this money moves — a month, a split, or “No date yet”.',
+        focusId: FOCUS_WHEN,
+      });
+    }
+
+    /* One month, no month picked. Its own problem rather than a period-amount one: the coach is
+       looking at a single select, not at a split, so "Enter an amount for Period 1" would name a
+       row that is not on their screen. */
+    if (form.whenAnswer === 'month' && !form.periods[0]?.date) {
+      out.push({
+        id: 'when-month',
+        message: 'Pick the month this money moves.',
+        focusId: FOCUS_WHEN,
+      });
+    }
+
+    /* ⚠ THE SPLIT'S OWN CHECKS ARE FOR THE SPLIT ALONE. A one-month line carries a period too,
+       but its amount is the line total resolved at save — it is never typed, so it can never be
+       blank and can never fail to add up. Running these over it would block a save on a field the
+       form does not show. */
+    if (form.whenAnswer === 'split') {
       if (form.periods.length === 0) {
         out.push({
           id: 'no-periods',
-          message: 'Add at least one period, or turn the split off.',
+          message: 'Add at least one period, or choose a different answer above.',
           focusId: FOCUS_ADD,
         });
       }
@@ -1424,6 +1618,15 @@ export function BudgetPlanPanel({
     return out;
   }
 
+  /** The figure the "No date yet" consequence line names. Zero or unparsed means the coach has not
+   *  typed an amount yet, and the sentence says "this money" rather than "this $0.00" — a
+   *  consequence quoted at $0.00 reads as though nothing is at stake, which is the opposite of
+   *  what the line is for. */
+  const lineTotalForConsequence = (() => {
+    const n = parseFloat(form.totalAmount);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  })();
+
   const problems = modalOpen ? collectProblems() : [];
   const problemIds = new Set(problems.map(p => p.id));
   /** Nothing is drawn as at fault until Save has actually been pressed. */
@@ -1439,9 +1642,9 @@ export function BudgetPlanPanel({
      comparison against the total the modal OPENED with, which stranded the coach who typed the
      original figure back: see `lastMoneyEdit`. */
   const splitOutOfStep = modalOpen
-    && form.usePeriods
+    && form.whenAnswer === 'split'
     && form.periodMode === 'amount'
-    && formBaseline.usePeriods
+    && formBaseline.whenAnswer === 'split'
     && form.periods.length > 0
     && lastMoneyEdit === 'total'
     && rescaleDismissedFor !== form.totalAmount
@@ -1497,14 +1700,26 @@ export function BudgetPlanPanel({
       // The label the coach typed, else the one the form has been showing them all along
       // ("Apr 2027"). The stored column is NOT NULL and the API rejects a blank, so resolving
       // here is what lets the field be optional on screen.
-      const periodsPayload = form.usePeriods && form.periods.length > 0
-        ? form.periods.map((p, i) => ({
-            periodLabel: resolvedPeriodLabel(form.splitMode, p, i),
-            periodDate:  p.date || null,
-            amount:      dollarAmounts[i],
-            sortOrder:   i,
-          }))
-        : [];
+      /* ⚠ A ONE-MONTH LINE'S PERIOD CARRIES THE WHOLE TOTAL, resolved here rather than typed. It
+         is the only place the two figures meet, which is what stops a second money field existing
+         on the form at all — and why `periodSumError` and the rescale banner both sit out this
+         answer. `dollarAmounts` is the SPLIT's arithmetic (it honours $/% mode); a single month
+         has no share to compute. */
+      const periodsPayload = !usesPeriods(form) || form.periods.length === 0
+        ? []
+        : form.whenAnswer === 'month'
+          ? [{
+              periodLabel: resolvedPeriodLabel('months', form.periods[0], 0),
+              periodDate:  form.periods[0].date || null,
+              amount:      Math.round((parseFloat(form.totalAmount) || 0) * 100) / 100,
+              sortOrder:   0,
+            }]
+          : form.periods.map((p, i) => ({
+              periodLabel: resolvedPeriodLabel(form.splitMode, p, i),
+              periodDate:  p.date || null,
+              amount:      dollarAmounts[i],
+              sortOrder:   i,
+            }));
 
       const res  = await fetch(url, {
         method:  isEdit ? 'PATCH' : 'POST',
@@ -1586,7 +1801,37 @@ export function BudgetPlanPanel({
      keystroke in the Add/Edit modal re-ran the whole category→item rollup over a plan that had
      not changed. */
   const allLines = useMemo(() => plan?.lines ?? [], [plan]);
-  const groups   = useMemo(() => groupLines(allLines), [allLines]);
+
+  /**
+   * "Which lines have no date?" — a FILTER, and deliberately not a sort (owner ruling 2026-09-04).
+   * Month names have no useful order: alphabetical puts April first and December second, and
+   * chronological is what the By-period view already is. What a coach actually wants from this
+   * column is *the subset that still needs an answer*, in one sitting, near season start.
+   *
+   * ⚠ IT NARROWS THE LIST, NOT THE TOTALS. The plan's own figures above the list are the season's,
+   * always — a filtered view whose Headroom moved with it would be the "tag filter" defect this
+   * report already refused once (a slice of spending set against the whole plan, so Headroom ROSE
+   * as you narrowed).
+   */
+  const [whenFilter, setWhenFilter] = useState<'all' | 'undated' | 'dated'>('all');
+
+  /** A line counts as undated when ANY of its plan money carries no date — so a partly-dated split
+   *  (a dated deposit, an undated balance) is in the "No date yet" set. That is the whole point:
+   *  its $1,000 is exactly as absent from a to-date reading as a lump sum's is, and the old column
+   *  hid it behind "Mar · 2 chunks". */
+  const lineIsUndated = useCallback((l: RepBudgetLineWithPeriods) =>
+    whenSummary(l.periods ?? [], Number(l.totalAmount ?? 0) || 0).undated > 0.005, []);
+
+  const undatedLines = useMemo(
+    () => allLines.filter(lineIsUndated), [allLines, lineIsUndated]);
+
+  const shownLines = useMemo(() => (
+    whenFilter === 'all' ? allLines
+      : whenFilter === 'undated' ? allLines.filter(lineIsUndated)
+        : allLines.filter(l => !lineIsUndated(l))
+  ), [allLines, whenFilter, lineIsUndated]);
+
+  const groups   = useMemo(() => groupLines(shownLines), [shownLines]);
   /** How many of the words in this team's picker the team itself created — the gate on the
    *  "Manage our words" door, since the modal can only ever change those.
    *  ⚠ UP HERE WITH THE OTHER MEMOS, ABOVE THE EARLY RETURNS. It is memoised for the same reason
@@ -1600,7 +1845,10 @@ export function BudgetPlanPanel({
   if (ctxLoading) return <CoachLoading label="Loading your budget…" />;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
 
-  const fundingLines = allLines.filter(l => isFundingKind(l.lineKind));
+  /* ⚠ THE FILTERED SET, so the money-in sections narrow with the cost ones. Filtering only
+     half the list would leave a coach who asked for "No date yet" looking at every dated
+     fundraising line as well. */
+  const fundingLines = shownLines.filter(l => isFundingKind(l.lineKind));
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
   const moneyCanWrite = (page.capabilities?.money === 'write');
@@ -1977,6 +2225,23 @@ export function BudgetPlanPanel({
                   onChange={next => setGranularity(next as PeriodGranularity)}
                 />
               )}
+              {/* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager and Collapse all
+                  already follow. A plan with every line dated has nothing to narrow to, and a
+                  control that can never change anything is worse than no control.
+                  ⚠ LIST ONLY. The By-period view answers "when" with its columns; hiding rows
+                  there would empty months a coach is reading across. */}
+              {viewMode === 'list' && undatedLines.length > 0 && (
+                <SingleSelectDropdown
+                  label="When"
+                  value={whenFilter}
+                  options={[
+                    { id: 'all',     label: 'All' },
+                    { id: 'undated', label: 'No date yet' },
+                    { id: 'dated',   label: 'Dated' },
+                  ]}
+                  onChange={next => setWhenFilter(next as 'all' | 'undated' | 'dated')}
+                />
+              )}
               {/* Collapse all / Expand all (P3) — one ghost verb for the whole outline. It acts on
                   the SECTION level (categories and the money-in sections); expanding also reopens
                   any item folds, which is what "show me everything" means.
@@ -2077,13 +2342,59 @@ export function BudgetPlanPanel({
               onToggle={toggleGridGroup}
             />
           ) : (
-            <div className={`${shared.ledgerList} ${styles.linesContainer} ${moneyCanWrite ? styles.linesCanWrite : ''}`}>
+            <>
+            {/* ── "What still has no date?" ────────────────────────────────────────────────
+                The one tap that turns the When column into a tool. It renders ONLY while there is
+                something to fix, so a fully dated plan is quiet — the same rule as the filter that
+                it sets.
+
+                ⚠ ONE FACT, ONE LINE (owner ruling 2026-09-04). It read "N lines have no date. They
+                are counted in the season plan and in no month. Show just those →" and the middle
+                sentence was cut: that consequence is already told at the moment of choosing, in
+                the line form, and again under the Budget vs Actual table. A third telling on a bar
+                whose whole job is one tap is filler.
+
+                ⚠ IT COUNTS LINES, NOT DOLLARS, and does not colour the figure. The money is on the
+                report; this is a worklist. */}
+            {undatedLines.length > 0 && whenFilter !== 'undated' && (
+              <p className={styles.undatedBar}>
+                <strong>{undatedLines.length} line{undatedLines.length === 1 ? '' : 's'}</strong>
+                {' '}{undatedLines.length === 1 ? 'has' : 'have'} no date.
+                <button
+                  type="button"
+                  className={styles.undatedBarDoor}
+                  onClick={() => setWhenFilter('undated')}
+                >
+                  Show just those
+                </button>
+              </p>
+            )}
+            {/* The way back out, in the bar's own place, so a coach who narrowed the list is never
+                left hunting the toolbar for the control that did it. */}
+            {whenFilter !== 'all' && (
+              <p className={styles.undatedBar}>
+                Showing <strong>{whenFilter === 'undated' ? 'only lines with no date' : 'only dated lines'}</strong>.
+                <button
+                  type="button"
+                  className={styles.undatedBarDoor}
+                  onClick={() => setWhenFilter('all')}
+                >
+                  Show the whole plan
+                </button>
+              </p>
+            )}
+            <div
+              className={`${shared.ledgerList} ${styles.linesContainer} ${moneyCanWrite ? styles.linesCanWrite : ''}`}
+              /* Opts this list into the 44px floor through the 641–768 touch band — see the rule
+                 in coaches.module.css for why it is opt-in rather than raised for every ledger. */
+              data-touch-floor
+            >
               {/* The column headings the plan never had. They sit in the same track rhythm as the
                   category frames below, which is what makes "Planned" name the column rather than
                   hover over it — and is how Budget vs. Actual next door already reads. */}
               <div className={shared.ledgerHead}>
                 <span>Category / line</span>
-                <span className={styles.schedCell}>Schedule</span>
+                <span className={styles.schedCell}>When</span>
                 <span style={{ textAlign: 'right' }}>Planned</span>
                 <span />
               </div>
@@ -2288,6 +2599,7 @@ export function BudgetPlanPanel({
                 </div>
               )}
             </div>
+            </>
           )}
 
           {/* Chunk G — the permanent "what am I forgetting?" question. Derived from the standard
@@ -2505,50 +2817,115 @@ export function BudgetPlanPanel({
                 "Entry Fees", and two reports cannot be lined up on words somebody typed. Notes
                 carries whatever is worth saying. */}
 
-            {/* Total amount + period toggle. This row uses the page's OWN .formRow, which is
-                why Batch 1's shared one-column-≤640 reflow never reached it: the amount field
-                and the checkbox stayed side by side on a phone, wrapping the label and
-                shrinking the input (Chunk A D5). The shared .stack640 supplies the flip. */}
-            <div className={`${styles.formRow} ${shared.stack640}`}>
-              <div className={styles.field} style={{ flex: 1 }}>
-                {/* Associated label — tapping it focuses the field, which matters most on the
-                    phone layout where label and input are now on separate lines. */}
-                <label className={styles.label} htmlFor={FOCUS_TOTAL}>Total Amount ($) *</label>
-                <input
-                  id={FOCUS_TOTAL}
-                  className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={form.totalAmount}
-                  onChange={e => {
-                    setLastMoneyEdit('total');
-                    setForm(f => ({ ...f, totalAmount: e.target.value }));
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-              <div style={{ paddingTop: '1.6rem' }}>
-                <label className={styles.toggleLabel}>
-                  <input
-                    type="checkbox"
-                    checked={form.usePeriods}
-                    onChange={e => {
-                      const on = e.target.checked;
-                      setPeriodUndo(null);
-                      // Turning the split on must never land on an empty section — a coach who
-                      // cleared the periods and toggled off/on would otherwise face a bare button.
-                      setForm(f => ({
-                        ...f,
-                        usePeriods: on,
-                        periods: on && f.periods.length === 0
-                          ? [blankPeriod(f.splitMode, seasonYear)]
-                          : f.periods,
-                      }));
-                    }}
-                  />{' '}
-                  Split by period
-                </label>
+            {/* ⚰ "SPLIT BY PERIOD" STOOD BESIDE THIS FIELD AS A CHECKBOX AND IS DELETED (owner
+                ruling 2026-09-04). Splitting was an optional extra a coach opted into, which is
+                why almost nobody did and why most plan money carried no date at all — the form
+                simply never asked. It is now one of the three answers to the required question
+                below, so the form loses a control and gains a decision. Do not reinstate it: two
+                ways to reach one split is how the two halves start disagreeing. */}
+            <div className={styles.field}>
+              {/* Associated label — tapping it focuses the field, which matters most on the
+                  phone layout where label and input are on separate lines. */}
+              {/* "Amount", not "Total Amount ($)" (owner 2026-09-04) — every other money form in the portal
+                  says Amount, and the currency marker was a third thing the label was doing that
+                  the field itself already says. */}
+              <label className={styles.label} htmlFor={FOCUS_TOTAL}>Amount *</label>
+              <input
+                id={FOCUS_TOTAL}
+                className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={form.totalAmount}
+                onChange={e => {
+                  setLastMoneyEdit('total');
+                  setForm(f => ({ ...f, totalAmount: e.target.value }));
+                }}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* ── When does this money move? (owner ruling 2026-09-04) ─────────────────────
+                ⚠ NO SUB-LINES UNDER THE ANSWERS (owner, same day). Each carried a describing
+                sentence and all three were cut: "A day is never asked for" was the form defending
+                a design decision to the coach, which is the reliable tell for filler, and the
+                other two described what the next tap plainly shows. Three labels and a dropdown
+                say all of it. The ONE consequence line under "No date yet" survives and is
+                sharper for being alone — it now reads as a consequence rather than as the third
+                in a row of captions.
+                ⚠ NO GROUP HINT EITHER. A disabled "Save Line" already says the form is waiting. */}
+            <div className={styles.field}>
+              <span className={`${styles.label} ${flagged('when') ? styles.labelBad : ''}`} id={FOCUS_WHEN}>
+                When does this money move? *
+              </span>
+              <div
+                className={`${styles.whenAnswers} ${flagged('when') ? styles.whenAnswersBad : ''}`}
+                role="radiogroup"
+                aria-labelledby={FOCUS_WHEN}
+              >
+                {WHEN_ANSWERS.map(({ id, label }) => (
+                  <div
+                    key={id}
+                    className={`${styles.whenAnswer} ${form.whenAnswer === id ? styles.whenAnswerOn : ''}`}
+                  >
+                    {/* The label wraps the input, so the whole row is the target — the portal's
+                        own radio idiom, and what keeps this over the 44px floor on a phone
+                        without a second rule. */}
+                    <label className={styles.whenAnswerHead}>
+                      <input
+                        type="radio"
+                        name="budget-line-when"
+                        className={styles.whenRadio}
+                        checked={form.whenAnswer === id}
+                        onChange={() => chooseWhenAnswer(id)}
+                      />
+                      <span className={styles.whenAnswerName}>{label}</span>
+                    </label>
+
+                    {/* The month, picked with the SPLIT EDITOR'S OWN CONTROL — a select grouped by
+                        year, offering the season year and the next (24 options, which is why the
+                        approved mockup's chip row could not survive contact: 24 chips is a wall,
+                        and a second way to answer one question inside a form that already holds
+                        the first). Same control, same words, one place to change it. */}
+                    {id === 'month' && form.whenAnswer === 'month' && (
+                      <select
+                        className={`${styles.select} ${styles.whenMonth} ${flagged('when-month') ? styles.inputBad : ''}`}
+                        aria-label="Month this money moves"
+                        value={periodSlotValue(form.periods[0] ?? BLANK_PERIOD, 'months')}
+                        onChange={e => setPeriodSlot(0, 'months', e.target.value)}
+                      >
+                        <option value="">Pick a month</option>
+                        {splitYears(seasonYear).map(year => (
+                          <optgroup key={year} label={String(year)}>
+                            {Array.from({ length: 12 }, (_, m) => m).map(slot => (
+                              <option key={slot} value={`${year}|${slot}`}>
+                                {derivedPeriodLabel('months',
+                                  { label: '', amount: '', date: monthDate(year, slot) }, slot)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    )}
+
+                    {/* ⚠ SAID ONCE, AT THE MOMENT OF CHOOSING, AND NEVER REPEATED. It names the
+                        money, what happens to it, and where to fix it later. A form that scolds
+                        would teach coaches to guess a month to make it stop — trading an honest
+                        gap for a confident lie — and the undated bucket can never be emptied
+                        anyway, because a season estimate set before any lines exist has no lines
+                        to date. */}
+                    {id === 'none' && form.whenAnswer === 'none' && (
+                      <p className={styles.whenConsequence}>
+                        {lineTotalForConsequence
+                          ? <>This <strong>{fmt(lineTotalForConsequence)}</strong> counts in your season total</>
+                          : <>This money counts in your season total</>}
+                        {' '}and in no month, and a <strong>To date</strong> comparison leaves it
+                        out. You can give it a month any time from the plan&apos;s{' '}
+                        <strong>When</strong> column.
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -2582,7 +2959,7 @@ export function BudgetPlanPanel({
             )}
 
             {/* Period distribution */}
-            {form.usePeriods && (
+            {form.whenAnswer === 'split' && (
               <div className={styles.periodsSection}>
                 <div className={styles.periodsSectionHeader}>
                   <span className={styles.label}>Period Breakdown</span>

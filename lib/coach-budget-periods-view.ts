@@ -139,30 +139,88 @@ function r2(n: number): number {
 }
 
 /**
- * A line's phasing at a glance — the List view's Schedule column and the plan export's Schedule
- * cell (P3, owner-approved mockup): "Jan–Mar · 3 chunks", "Apr · 1 chunk", "3 chunks · no dates",
- * or "—" for a lump sum. NO dollar figures, by ruling (2026-08-15 §9.6 / Chunk G rule 1) — this
- * says WHEN, and the row's own amount says how much.
+ * ⚰ `scheduleSummaryLabel` STOOD HERE AND IS REPLACED BY `whenSummary` (owner ruling 2026-09-04).
+ * It printed "Jan–Mar · 3 chunks", "Apr · 1 chunk", "3 chunks · no dates" or "—", and it had two
+ * defects that the date requirement made unignorable:
  *
- * Yearless inside one year (the mockup's spelling); a span crossing New Year borrows
- * `formatMonthLabel`'s year tag ("Sep '26–Jan '27") rather than letting two Januaries read alike.
+ *   1. **It counted chunks.** A count is not an answer to "when", and §133 ruled counts off rows
+ *      elsewhere the same week.
+ *   2. **⚠⚠ IT LIED ON A PARTLY-DATED LINE.** The UAT team's jersey order is a $500 deposit dated
+ *      March plus a $1,000 balance with NO date; the column read "Mar · 2 chunks", so a coach
+ *      scanning for undated money saw a fully dated line and the $1,000 stayed invisible until
+ *      they opened it. That row, not the rename, is why this became a rewrite.
+ *
+ * And "—" could not tell a lump sum apart from an oversight, which is the whole point of the new
+ * required answer.
  */
-export function scheduleSummaryLabel(periods: Array<{ periodDate: string | null }>): string {
-  if (periods.length === 0) return '—';
-  const chunks = `${periods.length} chunk${periods.length === 1 ? '' : 's'}`;
-  const months = periods
-    .map(p => monthKeyOf(p.periodDate))
-    .filter((m): m is MonthKey => m !== null)
-    .sort();
-  if (months.length === 0) return `${chunks} · no dates`;
+
+/** How many months are listed before the label switches to a span. Beyond four, the months stop
+ *  being scannable and "spread across the year" is what a coach would say out loud anyway. */
+const WHEN_MONTHS_LISTED = 4;
+
+/**
+ * What a budget line's **When** column says, as data rather than a string — because the chip paints
+ * the undated half in the attention colour and the dated half in the plain one, and a caller cannot
+ * split a sentence back apart safely.
+ *
+ * ⚠ THE UNDATED FIGURE IS A DOLLAR AMOUNT, and that is a deliberate reversal of the 2026-08-15
+ * "no dollar figures in this column" rule (§9.6 / Chunk G rule 1). That rule was right when the
+ * column only said WHEN: the row's own amount said how much. It stops being right the moment a
+ * line can be *partly* dated, because then "how much of it is undated" is exactly the thing the
+ * column is failing to say, and it is never the row's total.
+ */
+export interface WhenSummary {
+  /** Month labels in order — `['Apr']`, `['Jan','Feb','Mar']`, or a single `['Jan–Dec']` span once
+   *  more than four months carry money. Empty means nothing on this line has a date. */
+  months: string[];
+  /** Plan money on this line carrying no date at all. Zero when every chunk is dated. */
+  undated: number;
+}
+
+/**
+ * Yearless inside one year; the moment a line crosses New Year every label borrows
+ * `formatMonthLabel`'s year tag ("Dec '26 · Jan '27") rather than letting two Januaries read alike.
+ *
+ * ⚠ A LINE WITH NO PERIODS IS THE WHOLE LINE UNDATED, which is why the total has to be passed in:
+ * there are no chunks to add up, and reporting `undated: 0` there would make a lump sum look dated.
+ */
+export function whenSummary(
+  periods: Array<{ periodDate: string | null; amount?: number | string | null }>,
+  lineTotal: number,
+): WhenSummary {
+  if (periods.length === 0) return { months: [], undated: r2(lineTotal) };
+
+  const dated = periods
+    .map(p => ({ month: monthKeyOf(p.periodDate), amount: Number(p.amount ?? 0) || 0 }));
+  const undated = r2(dated.filter(d => d.month === null).reduce((s, d) => s + d.amount, 0));
+
+  const months = Array.from(new Set(
+    dated.map(d => d.month).filter((m): m is MonthKey => m !== null),
+  )).sort();
+  if (months.length === 0) return { months: [], undated: r2(lineTotal) };
+
   const first = months[0];
-  const last = months[months.length - 1];
-  const span = first === last
-    ? MONTH_SHORT[Number(first.slice(5, 7)) - 1]
-    : first.slice(0, 4) === last.slice(0, 4)
-      ? `${MONTH_SHORT[Number(first.slice(5, 7)) - 1]}–${MONTH_SHORT[Number(last.slice(5, 7)) - 1]}`
-      : `${formatMonthLabel(first)}–${formatMonthLabel(last)}`;
-  return `${span} · ${chunks}`;
+  const last  = months[months.length - 1];
+  const crossesYear = first.slice(0, 4) !== last.slice(0, 4);
+  const name = (m: MonthKey) => (crossesYear
+    ? formatMonthLabel(m)
+    : MONTH_SHORT[Number(m.slice(5, 7)) - 1]);
+
+  return {
+    months: months.length <= WHEN_MONTHS_LISTED
+      ? months.map(name)
+      : [`${name(first)}–${name(last)}`],
+    undated,
+  };
+}
+
+/** The same answer as one string — for the export and anywhere a cell cannot carry two inks.
+ *  ⚠ ONE SPELLING: "No date yet" is the month grid's column heading and the line form's own
+ *  answer, so this is the third surface saying the same word rather than a fourth wording. */
+export function whenSummaryText(s: WhenSummary, fmtMoney: (n: number) => string): string {
+  if (s.months.length === 0) return 'No date yet';
+  const dated = s.months.join(' · ');
+  return s.undated > 0.005 ? `${dated} · ${fmtMoney(s.undated)} no date` : dated;
 }
 
 /** `2027-04` → `2027-Q2`. */

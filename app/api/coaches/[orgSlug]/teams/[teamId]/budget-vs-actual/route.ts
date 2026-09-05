@@ -1343,6 +1343,18 @@ export const GET = withObservability(async (req: Request,
        facts and a coach acts on them differently — the row shows an em-dash and a door for the
        first, and the download writes a blank rather than a 0 for the same reason. */
     billed: duesInstallments.length > 0 ? duesGroupTotal(revenueBudgets) : null,
+    /* ⚠ THE SAME STREAM, NARROWED BY DATE — never a second query against the instalments table.
+       The whole reason `billed` reads off the Months feed is that "Total revenue equals Months to
+       the cent" is then true by construction; a to-date figure derived any other way could differ
+       from the months a coach can see, which is the exact drift this report has been consolidated
+       twice to remove.
+       ⚠ ORG TIMEZONE, NOT THE RUNTIME'S UTC. `tournamentToday()` is the platform's own "today" —
+       a naive UTC slice puts a coach in Vancouver a day ahead of themselves for most of the
+       evening, which on a report about deadlines is exactly the wrong day to be wrong about.
+       An undated dues event (there should be none) is excluded, matching every other basis rule. */
+    billedToDate: duesInstallments.length > 0
+      ? duesGroupTotal(revenueBudgets.filter(e => e.date !== null && e.date <= tournamentToday()))
+      : null,
     actual: duesGroupTotal(revenueActuals),
     planNeeds: budgetTotals.fundedByPlayers,
     planNeedsFloored: planNeedsRaw < -0.005,

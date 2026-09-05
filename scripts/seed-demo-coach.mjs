@@ -76,6 +76,42 @@ function die(label, error) {
   if (error) { console.error(`❌ ${label}:`, error.message); process.exit(1); }
 }
 
+/**
+ * ⚠⚠ EVERY BUDGET LINE ANSWERS "WHEN DOES THIS MONEY MOVE?" (owner ruling 2026-09-04).
+ *
+ * Thirteen of the live demo's budget lines carried no date at all, which meant the shop window
+ * demonstrated the exact problem the date requirement was built to fix: the plan list's **When**
+ * column read "No date yet" down most of the page, and Budget vs Actual's **To date** basis had
+ * almost no plan to compare against. A prospect would have concluded the product could not date a
+ * budget — the same failure mode as the "Not itemized" rows found in August.
+ *
+ * ⚠ ONE MONTH PER LINE, ROUND-ROBIN ACROSS THE SEASON, so the month grid has a real shape and the
+ * to-date reading has both sides of today in it. A single month for every line would put the whole
+ * plan in one column and make the Months view look broken in a different way.
+ *
+ * ⚠ ONE LINE IS LEFT UNANSWERED ON PURPOSE in a live season (`leaveOneUndated`). "No date yet" is
+ * a legitimate answer that can never be designed away — a coach who sets a season estimate before
+ * itemising has money with no line to date — so a demo where every line is dated would never show
+ * the gold chip, the "N lines have no date" bar, or the sentence under the report that names what a
+ * To date reading had to leave out. Showing the product being honest is part of the story.
+ */
+async function datePlanLines(lineRows, year, startMonth, { leaveOneUndated = true } = {}) {
+  const datable = leaveOneUndated ? lineRows.slice(0, -1) : lineRows;
+  if (datable.length === 0) return;
+  await insertAll('rep_budget_periods', datable.map((row, i) => {
+    /* Six months from `startMonth`, wrapping inside the year — every demo season sits well inside
+       one calendar year, so this never needs to roll over and never produces an invalid month. */
+    const month = String(startMonth + (i % 6)).padStart(2, '0');
+    return {
+      budget_line_id: row.id,
+      period_label: `${year}-${month}`,
+      period_date: `${year}-${month}-01`,
+      amount: row.total_amount,
+      sort_order: 0,
+    };
+  }));
+}
+
 /** Chunked insert — attendance alone is ~500 rows. */
 async function insertAll(table, rows) {
   for (let i = 0; i < rows.length; i += 400) {
@@ -1013,6 +1049,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     description: line.description, total_amount: line.total, sort_order: i,
   }));
   await insertAll('rep_budget_lines', seasonStartLineRows);
+  /* Dated from the season's opening month — a coach who has just built a plan has answered when
+     each cost lands, which is exactly the moment this world is showing. One line is left
+     unanswered so the plan list's "no date" bar and chip have something to say here too. */
+  await datePlanLines(seasonStartLineRows, state.year, 4);
   // The plan is complete; the spending has barely started. That contrast IS this moment's books.
   await insertDemoExpenses(team, pyId, state.expenses, seasonStartItems);
 
@@ -1239,6 +1279,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     description: line.description, total_amount: line.total, sort_order: i,
   }));
   await insertAll('rep_budget_lines', budgetRows);
+  await datePlanLines(budgetRows, state.year, 3);
   /* ⚠ TAGS RIDE THE SAME CALL, keyed off the ids it hands back — a second lookup by description
      would break the moment a demo cost is renamed, and this world renames things. */
   const midSeasonExpenseIds = await insertDemoExpenses(team, pyId, state.expenses, midSeasonItems, playerIds);
@@ -1375,12 +1416,18 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   // The archive's plan carries categories and items too (mig 240) — a finished season a coach
   // opens read-only must not be the one place the report says "Not itemized".
   const seasonsEndItems = await budgetItemIds(team.id, SEASONS_END_BUDGET_LINES);
-  await insertAll('rep_budget_lines', SEASONS_END_BUDGET_LINES.map((line, i) => ({
+  const seasonsEndLineRows = SEASONS_END_BUDGET_LINES.map((line, i) => ({
+    id: randomUUID(),
     org_id: org.id, team_id: team.id, program_year_id: pyId,
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     item_id: itemRef(seasonsEndItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
-  })));
+  }));
+  await insertAll('rep_budget_lines', seasonsEndLineRows);
+  /* A finished season's plan is entirely in the past, so every line is dated and nothing here
+     answers "No date yet" — a closed year with unanswered money would be a story about a coach
+     who never finished their budget, which is not what this world is showing. */
+  await datePlanLines(seasonsEndLineRows, state.year, 4, { leaveOneUndated: false });
 
   // Awards — Player of the Game through the year, Most Improved at the banquet.
   const awardTypeIds = await insertAwardTypes(team, SEASONS_END_AWARD_TYPES);
