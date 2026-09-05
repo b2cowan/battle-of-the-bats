@@ -17334,9 +17334,13 @@ refuse while another team's lines use the category), and — optional — a scra
 tally: A 3/3 · B 4/4 · C 4/4 · D 5/5 · E 3/3 · F 4/4 · G 3/3 · H 2/2.
 ⚠ **The walk was run against the working tree as it stood that day, which carried three further
 changes in flight from another session** (the undated column renamed and moved to lead, BvA's year
-band, the Budget tab's month window). Those are **not** part of the commit this pass record ships
-in, and as of 2026-09-04 their session has ended with the work uncommitted and unclaimed — so read
-part (A)'s green against the screen described here, not as evidence that any of the three landed.
+band, the Budget tab's month window). Those were **not** part of the commit this pass record ships
+in. **Two of the three landed 2026-09-04 in `f031ba54`** — the undated column renamed to "No date
+yet" and moved to lead, and the export/import round trip that was silently dropping it — adopted by
+the §142 session after the owner ruled on them a second time (artifact `d74d160a`). ⚠ **The third,
+the Budget tab's twelve-month pager, did NOT land here**: it is entangled with the live When-column
+rewrite in the same regions of the budget panel, and its reconcile guard asserts the pager exists,
+so both travel with that session's commit. Read part (A)'s green against the screen described here.
 **Q6, the category-rename policy, was RULED the same day: org/club-admin-only** — and then grew
 into its own plan and build (shared vs. local categories, migration 277,
 `COACH_BUDGET_CATEGORY_OWNERSHIP_PLAN.md`), which carries its own walk.
@@ -18280,3 +18284,33 @@ engineered around.
    found and fixed from the other side (session tournament-website-84) while this fix was in
    review; the step lives here because this deep link is the only way a coach reaches that state
    routinely. Before the fix it happened once per page load; now it happens on every tap.
+
+## §144 · The plan panel stops dead-ending for a coach who can only read — BUILT 2026-09-04, committed `36124583`, awaiting QA
+
+**The asymmetry the owner found while asking a different question.** He asked whether the planned
+figure's panel should carry buttons "for consistency" with the spent figure's. For him: no — his
+version of that panel makes every budget line a link that lands on the line itself, which beats any
+button. **But the links are drawn only for a coach who can write.** An assistant coach with
+view-only money access opens the same panel and meets no links and no buttons: the only panel in
+the set that goes nowhere, two inches from a twin whose doors ("Open the Ledger", "Open Sponsors")
+were never gated on write access at all.
+
+One door — **Open Budget Plan** — in the same corner its twin puts them, shown **exactly when the
+lines are not links**. A coach who can write still sees no button.
+
+⚠ **Wording deviates from the approved mockup**, deliberately and reversibly: the mockup drew "Open
+the budget"; this ships "Open Budget Plan" to match the tab's own name and the sibling doors' idiom
+("Open Player Dues", "Open the Ledger"). Owner's to overturn.
+
+**Guarded both ways** (the doors guard now scans the shared month grid): the door must exist for a
+read-only coach and must NOT exist for a writer. Both assertions were adversarially verified to
+fail on demand. ⚠ The negative one needs a lookbehind — "!canWrite" contains "canWrite", so the
+naive pattern fires on the very door it protects, which is the kind of guard that passes forever
+and proves nothing.
+
+### The walk (2 steps)
+1. As the **head coach**: Budget vs Actual → tap a **Budgeted** figure. The panel lists its budget
+   lines, each one a link, and there is **no button** underneath. (Unchanged — this is the check
+   that no redundant door appeared.)
+2. As an **assistant coach with view-only money access**: the same panel now ends with **Open
+   Budget Plan**, and the lines are still plain text. Before this, that panel had no way out.
