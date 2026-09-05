@@ -1,6 +1,6 @@
 # Budget dates, and the "to date" reading
 
-**Status:** owner-ruled and mockup-approved 2026-09-04 — BUILDING
+**Status:** owner-ruled and mockup-approved 2026-09-04 — committed `394ae7b0` 2026-09-05 on `dev`
 **Owner QA:** ledger **§145** (§144 was claimed by a concurrent session mid-build — the tail is the only truth)
 **Build brief:** `COACH_BUDGET_DATES_BUILD_PROMPT.md`
 **Proposal artifact (the four rulings):** https://claude.ai/code/artifact/9bc53080-ba3c-4856-891e-aef63e51bd7d
@@ -245,9 +245,22 @@ contradicts the other — which was the whole instruction.
 - `check:money-report` gains the basis claims: to-date plan ≤ whole-season plan on both sides, the
   undated figure equals the two grids' "No date yet" totals, and Net to date ties to its own columns.
 
-## 11. Working-copy note (2026-09-04)
+## 11. Working-copy note (2026-09-04, resolved)
 
 Built on top of an uncommitted tranche left by a concurrent session (§143's month-grid work, plus
 styling). `budget/panel.tsx`, `budget-vs-actual/panel.tsx`, the month grid and the coach stylesheet
-each carry two features' edits and **must be split by hunk at commit time** — the precedent is the
+each carried two features' edits and **were split by hunk at commit time** — the precedent was the
 2026-09-04 A1 landing, which split two shared files the same way.
+
+**How it actually split (2026-09-05).** Three commits, staged as constructed blobs rather than from
+disk, so nothing of anyone else's rode along:
+
+| Commit | What |
+|---|---|
+| `adc0b45f` | **Adopted, not this work** — the club form's two pickers and the budget line form's "This line is" became `SublinedChoice`, with their two stylesheet blocks. |
+| `64160ae2` | **Adopted, not this work** — the Budget tab's twelve-month pager and its guard test, handed over by the session that landed the rest of §133. |
+| `394ae7b0` | This build. |
+
+⚠ The two shared files were split by building each commit's content explicitly and verifying it,
+never by staging what happened to be on disk. Every pager dependency was confirmed to exist at the
+commit before it, so the middle commit's tree is self-consistent rather than only the final one.
