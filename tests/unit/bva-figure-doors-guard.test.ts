@@ -65,6 +65,9 @@ const ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual/route.t
    was removed from ALL of them in one ruling — a partial re-add is the drift this guards. */
 const BUDGET  = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx';
 const EXPORTS = 'lib/coach-money-exports.ts';
+/* The shared month grid, which draws BOTH drill-in panels — the one behind a spent figure and the
+   one behind a planned figure. It is scanned for the rule below: neither may dead-end. */
+const GRID = 'components/coaches/MoneyMonthGrid.tsx';
 
 /**
  * Comments stripped, because this guard is about CODE. Block comments go wholesale; line comments
@@ -81,6 +84,7 @@ function codeOnly(src: string): string {
 
 const panel = codeOnly(readFileSync(join(ROOT, PANEL), 'utf8'));
 const route = codeOnly(readFileSync(join(ROOT, ROUTE), 'utf8'));
+const grid  = codeOnly(readFileSync(join(ROOT, GRID), 'utf8'));
 
 test('the payload keeps the records behind a row — both lists, or the doors open onto nothing', () => {
   assert.ok(
@@ -249,5 +253,36 @@ test('no surface counts the lines behind a merged row — not a caption, not a s
     !panel.includes('lineCountBtn'),
     'The old caption\'s control styling is back — a dotted underline, a focus ring and a 44px touch '
     + 'box. There is no caption left for it to dress.',
+  );
+});
+
+/**
+ * A READ-ONLY COACH MUST NOT MEET A PANEL WITH NO WAY OUT (owner ruling 2026-09-04).
+ *
+ * The two drill-in panels were asymmetric for exactly one role. A spent figure's panel carries
+ * ungated doors ("Open the Ledger", "Open Sponsors"), so an assistant coach gets them. A planned
+ * figure's panel has no doors at all — its way out is that every line IS a link, and those links
+ * are drawn only for a coach who can write. Take them away and the panel ended.
+ *
+ * The rule is not "add a button": a coach who can write must NOT see one, because the line beside
+ * it lands on the line itself and a second, worse door to the same screen is how a panel becomes a
+ * menu. So the door exists exactly when the lines are not links.
+ */
+test('the plan panel gives a read-only coach a door, and gives a writer none', () => {
+  assert.match(
+    grid,
+    /!canWrite && \(\s*<div className={shared\.modalFooter}>[\s\S]{0,320}?moneySectionHref\(base, 'budget'\)/,
+    'The plan panel no longer offers a read-only coach any way out. Every line in it is a link only '
+    + 'when the coach can write, so without this door an assistant opens the panel, reads it, and '
+    + 'can go nowhere — while the spent-figure panel two inches away hands them "Open the Ledger". '
+    + 'Restore the door, or give read-only coaches the line links.',
+  );
+  assert.ok(
+    // ⚠ THE BANG IS THE WHOLE ASSERTION, so the pattern has to refuse to match it: without the
+    // lookbehind, "!canWrite" contains "canWrite" and this fires on the very door above.
+    !/(?<![!\w])canWrite && \(\s*<div className={shared\.modalFooter}>/.test(grid),
+    'The plan panel is offering its budget door to a coach who can WRITE. Their lines already open '
+    + 'the exact budget line; a button beside them is a second door to the same screen that lands '
+    + 'further from the work.',
   );
 });

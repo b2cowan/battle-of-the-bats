@@ -1288,6 +1288,25 @@ export default function MoneyMonthGrid({
                 ? ' Open it to change its payment dates.'
                 : ' Open one to change its payment dates.') : ''}
             </p>
+            {/* ⚠⚠ THE READ-ONLY DOOR, AND IT IS THE ONLY WAY OUT THIS PANEL HAS FOR AN ASSISTANT
+                (owner ruling 2026-09-04). Every line above is a link for a coach who can write —
+                a better door than any button, because it lands on the line itself — so a button
+                beside them would be a second, worse door to the same screen. Take the links away
+                and nothing replaces them: this panel was the only one in the set that dead-ended,
+                while its twin's doors ("Open the Ledger", "Open Sponsors") are ungated and an
+                assistant gets them. So the door appears exactly when the lines are not links.
+                ⚠ It names the TAB, like every door on the other panel does. */}
+            {!canWrite && (
+              <div className={shared.modalFooter}>
+                <Link
+                  href={moneySectionHref(base, 'budget')}
+                  className={shared.btnSecondary}
+                  onClick={() => setPlan(null)}
+                >
+                  Open Budget Plan
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
