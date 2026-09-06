@@ -1,0 +1,1321 @@
+<title>Budget vs Actual Run Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,60px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:15ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:62ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:28px 0 0;padding:11px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.track{flex:1 1 200px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:140px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.trackhead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.trackhead .eyebrow{color:var(--olive)}
+.trackhead h2{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.trackhead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:16px;margin-top:20px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step.para{border-style:dashed}
+.step-head{display:flex;gap:13px;padding:14px 17px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1;color:var(--dim);min-width:2.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:23px;line-height:1.1;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.chat{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.block{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.tag.owner{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.step-body{padding:14px 17px 16px;display:flex;flex-direction:column;gap:12px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.prompt{border:1px solid var(--rule-strong);border-radius:var(--r-sm);overflow:hidden;background:var(--sunk)}
+.prompt-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.prompt-head span{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.prompt pre{margin:0;padding:13px 14px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word;max-height:300px}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b{color:var(--ink)}
+.walklink{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;padding:6px 11px;border:1px solid var(--olive);border-radius:99px;color:var(--olive);text-decoration:none;background:var(--olive-soft);width:fit-content}
+.parked ul{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5;color:var(--ink-soft)}
+.parked li b{color:var(--ink)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Coaches portal · everything open as of 2026-09-04</p>
+  <h1>Budget vs Actual run order</h1>
+  <p class="lede">Every project touched in the last three days that still has something open, sorted
+    into four tracks: the report's build order, the walks waiting on you, the decisions waiting on
+    you, and the release. Every step that needs a fresh chat has a ready-to-paste prompt, and
+    each of those chats ticks its own boxes into this page as its work lands — so what you see
+    here is the state of the work, not a list you have to keep by hand. Boxes you tick yourself
+    also save in this browser. Walks and rulings stay yours: no chat may claim one.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> done</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn" id="copyprog">Copy progress</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<!-- ═══════════════════════ TRACK A ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Track A</p>
+  <h2>The report, in the order it has to happen</h2>
+  <p>Nine steps on one screen. 1 and 3 are done and 6 is committed; 8 is built and waiting on your go
+    to commit. What is left here is yours: three walks (4, 7, 9) and the rename checkpoint in 5.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span>
+    <div class="step-t"><h3>Land the working copy</h3>
+      <div class="tags"><span class="tag block">blocks B3 · B5 · B6</span><span class="tag chat">fresh chat</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Done 2026-09-04.</b> The working copy was landed in reviewed tranches:
+      the dues grid's second look <code>d7771935</code>, the bill room <code>52c2637e</code>, the
+      notifications redraw <code>b9a34a4c</code>. The stray scratch file is gone and
+      <code>check:root</code> is green again.</p>
+    <p class="why"><b>A fourth tranche turned up that this step did not expect</b> — the Months
+      grid's plan panel (<code>b2a901d1</code>), which was <i>not</i> part of <code>859defd2</code>.
+      Two shared files carried two tranches each and were split by hunk; the layout baseline could
+      not be split (one file, one timestamp, three contributors) so it landed once in a housekeeping
+      commit, <code>3f7daf4d</code>, with <code>97fd2846</code> naming every commit in §138, §140,
+      §141 and TODO.</p>
+    <div class="tip"><b>Then <code>/review</code> ran over all four</b> — high-risk tier, five
+      lenses, 2,881 unit tests green. Three real defects found and fixed in <code>8d5a6650</code>: a
+      Budget panel that called a plain budget figure a "difference", the bill room's walk-suspension
+      halves disagreeing so a <i>mouse</i> could step past an unanswered question, and a new seed
+      script that could be pointed at production. The first two are pinned by a guard test.</div>
+    <div class="warn"><b>One thing this step uncovered that is NOT fixed.</b> The rendered layout
+      gate is red on the Ledger's Timeline screen — 15 filter controls up to 170px off a phone's
+      right edge with no way to scroll to them. <b>None of it is new:</b> that screen's accepted
+      baseline was recorded 2026-08-26 and never re-swept, so its saved labels still carry August
+      dates and the keys rotted with the calendar. The gate has been reporting green on a screen it
+      stopped measuring, through three money releases. It wants its own session — see Parked.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a" checked><label for="a1a">Dues grid second look committed<span class="hintline">Player Dues — one-line rows, date-only headings, the pinned column</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b" checked><label for="a1b">Bill room committed<span class="hintline">List · Room · Question Phase C</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c" checked><label for="a1c">Notifications redraw committed</label></div>
+      <div class="chk"><input type="checkbox" id="a1d" checked><label for="a1d">Stray scratch file removed — tree clean</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p1">Copy</button></div>
+<pre id="p1">Land the uncommitted work in the shared working copy on `dev`, in reviewed tranches.
+
+Several sessions built into one working copy and did not commit. You are not fixing or
+finishing anyone's work — you are landing it.
+
+1. Check the branch. If it is not `dev`, switch to `dev` first.
+
+2. Inventory the working copy and group every change into tranches by feature. Expected as of
+   2026-09-04 (the Budget vs Actual row work has ALREADY landed as 859defd2 — leave it alone):
+   - Player Dues — the collection grid's "second look": one-line rows, $0.00 in the credit
+     column, date-only headings, amounts in cells, the pinned first column.
+   - List · Room · Question Phase C — the team bill's page dissolved into a room over the
+     Ledger (the room shell, the commitment view, the instalment scope sheet, the dialog floor).
+   - Coach notifications redraw — the house header, readable time, a pinned way home, Mark all
+     read that leaves Needs attention alone (new feed components, the bell, the panel, the nav
+     visibility rule, the account return bar).
+   Some files may carry two tranches' edits at once (the shared month grid, the coach stylesheet,
+   the layout baseline and screen list, the schema snapshots). Say so rather than guessing; do
+   not split a file's changes unless you can prove which is which.
+
+3. `.tmp-fix2.mjs` in the repo root is a stray scratch file. Confirm nothing references it and
+   delete it rather than committing it.
+
+4. PRESENT the tranches to me for approval before committing anything.
+
+5. Commit one tranche at a time, staging EXPLICIT PATHSPECS ONLY — never `git add -A` or
+   `git add .`. After each commit show its file list and confirm only that tranche landed; if a
+   foreign file slipped in, undo softly, unstage, re-commit. Paths with bracketed segments need
+   bracket-safe pathspecs — a plain glob stages NOTHING and still reports success.
+
+6. Do not push. Do not touch `master`.
+
+7. Report one line per commit: hash and what it was. Then update the three ledger sections
+   (§138, §140, §141) and TODO to name their commits — a positive fact with a hash, never
+   "uncommitted".
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step A1 — all four already ticked, 2026-09-04. Re-tick only if you re-run this step.:
+  a1a  Dues grid second look committed
+  a1b  Bill room committed
+  a1c  Notifications redraw committed
+  a1d  Stray scratch file removed — tree clean</pre></div>
+  </div>
+</article>
+
+<article class="step para" data-step="A2">
+  <div class="step-head"><span class="num">A2</span>
+    <div class="step-t"><h3>Fix the public demo's budget rows</h3>
+      <div class="tags"><span class="tag">runs any time</span><span class="tag chat">fresh chat</span><span class="tag owner">touches production</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Every budget line in the live coach demo reads <b>"Not itemized"</b> — all 20
+      production rows, while dev's 21 are correct. It's the only item on this page a prospect can
+      see, needs no code, and has been queued behind two feature builds. Do it whenever.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">Claim verified against live production data</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">Fix approved and executed</label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Recurrence closed — the nightly refresh can't let it drift back</label></div>
+      <div class="chk"><input type="checkbox" id="a2d"><label for="a2d">Re-checked on the live site</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p2">Copy</button></div>
+<pre id="p2">Fix the public coach demo's budget rows on PRODUCTION.
+
+Every budget line in the live no-login coach demo (`riverdale-ridge`) reads "Not itemized" on
+the Budget and Budget vs Actual screens. All 20 production rows carry no budget item; the 21
+on dev all do. The seed script is correct — the nightly refresh never reconciles taxonomy, so
+rows seeded before the taxonomy existed have stayed wrong ever since. A prospect sees a product
+that apparently cannot itemise a budget.
+
+⚠ This touches PRODUCTION data. I have approved fixing it; confirm the exact plan with me
+before executing anything against prod.
+
+1. Read item F7 in docs/projects/active/COACH_BVA_TWO_TRUTHS_PLAN.md and the demo-sandbox
+   rules in CLAUDE.md.
+2. Verify the claim against the LIVE production database, not a plan document — plans here
+   have been wrong in both directions. Count the rows on prod and on dev.
+3. Propose the narrowest fix that leaves the demo in the state a prospect should find it, and
+   say whether it is a reseed, a targeted backfill, or a change to the nightly refresh so it
+   cannot recur. Recurrence matters more than the one-off.
+4. Present the plan, wait for my go, execute, then re-verify on the live SITE, not just the
+   database.
+5. Record it in the release history and the Owner QA Ledger as a dated positive fact.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step A2:
+  a2a  Claim verified against live production data
+  a2b  Fix approved and executed        ⚠ only once I have approved AND you have run it
+  a2c  Recurrence closed — the nightly refresh can't let it drift back
+  a2d  Re-checked on the live site      ⚠ the live SITE, not the database</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span>
+    <div class="step-t"><h3>Dues join the Statement</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag">unblocked</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Player dues get a row in the report's revenue band, both views of the report
+      finally total the same, and <b>Season net stops reading ($11,650) and starts reading
+      ($341.70)</b>. The "Funded by players" row is deleted — once dues are counted it is the
+      budgeted Season net with the sign flipped. Mockups approved; all four decisions taken.</p>
+    <div class="tip"><b>Why before the dates project:</b> this changes what the rows <i>mean</i>;
+      dates adds a comparison basis <i>over</i> them.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">Plan + PM brief written, TODO line added</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">Built on dev, money-report guard extended and green</label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">Help article rewritten · demo narration re-read</label></div>
+      <div class="chk"><input type="checkbox" id="a3d"><label for="a3d">Walkthrough artifact built (covers the §132 round-three work too)</label></div>
+      <div class="chk"><input type="checkbox" id="a3e"><label for="a3e">Committed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p3">Copy</button></div>
+<pre id="p3">Build: player dues join the Budget vs Actual Statement, and "Funded by players" is deleted.
+
+START GATE: confirm the working copy has no uncommitted changes on the Budget vs Actual screen
+(its row work landed as 859defd2). If it is dirty, stop and tell me.
+
+The brief is docs/projects/active/COACH_BVA_REVENUE_RECONCILE_BUILD_PROMPT.md. Read it in full.
+TWO of its rulings were CHANGED by the owner on 2026-09-04 after the mockup gate. These win.
+
+⚠ CHANGE 1 — "Funded by players" is DELETED, not rewritten.
+Once dues sit in the revenue band, the shortfall and the budgeted Season net are the same
+number with opposite signs — always. "Plan needs" is expenses less other income, so
+(E − F) − D is exactly −(D + F − E). The row's Actual column becomes the negative of Season
+net's Actual for the same reason. The row goes from BOTH report shapes and from the download.
+The $341.70 still ships — it IS the budgeted Season net, in the closing chain.
+One exception, where the row already disappears: a season whose other income exceeds the whole
+plan needs nothing from families, "plan needs" floors at zero, and the identity breaks. That
+team gets no dues row and no sentence.
+
+⚠ CHANGE 2 — the explanation is a sentence in the stack under the table, SECOND: after the
+variance key, before the undated-plan line. Approved wording, verbatim:
+  "This plan needs $11,650.00 from families and dues bill $11,308.30 — the $341.70 gap is the
+   budgeted Season net above. Both columns compare a whole season's plan against what has
+   moved so far, so they run short until the season is finished."
+  - over-billed: "...and dues bill $12,000.00 — a $350.00 buffer above the plan, which is the
+    budgeted Season net above."
+  - exactly covered: "...and dues bill exactly that."
+  - no dues set: "...and no dues are set yet, which is the whole of the budgeted Season net
+    above." plus a "Set player dues" link.
+"Buffer" and "short" are the Budget plan page's own words — do not coin a third set. No colour
+on the sentence in any state.
+
+APPROVED MOCKUPS (all four states at true phone size, the empty state, the download):
+  https://claude.ai/code/artifact/b77eece5-228c-45f2-aa3d-d705c6c5b5d1
+The design session it follows:
+  https://claude.ai/code/artifact/245b6498-b7ff-412f-8062-a47eec82e8fa
+Build to the mockups. Do not re-open the gate.
+
+RULINGS TAKEN — do not re-open:
+- Budgeted dues = what is BILLED, specifically the dues INSTALMENTS — the feed the Months view
+  plots — so "Total revenue equals Months to the cent" is true by construction. Use the same
+  figure for the sentence's "billed" half. The brief also points at the Budget plan page's
+  schedule-total source; they agree today and can drift. If they ever differ, surface it.
+- The Player dues row renders when the season has a dues schedule OR the plan needs money
+  from families. Figures in the first case; an em-dash and a "Set player dues" door in the
+  second. Never $0.00. The sentence follows the same rule.
+- The download loses "the plan needs $X from families" — the Budget plan file owns it. No
+  sentence in a money column.
+- Do NOT restore the Dues Collection card deleted 2026-08-26.
+- Dues are NOT budget lines. Do not invent a synthetic budget line to give the rollup a home —
+  that double-counts the moment anyone totals the planner.
+
+ALSO REQUIRED:
+- Extend `npm run check:money-report`: Statement revenue equals the Months view's budgeted
+  revenue, AND the sentence's gap really is the budgeted Season net. Fail LOUDLY on a season
+  too long to draw; a skipped claim must never read as a pass.
+- Help is code-time: the coaches help article teaches "Funded by players" by name and says it
+  sits under both shapes. Rewrite it, keywords and search text included.
+- Ask both demo questions: should a demo moment show this, and are the coach demo's existing
+  sentences about this screen still true?
+- Plan + PM brief pair (COACH_BVA_REVENUE_RECONCILE_PLAN.md + _PM_BRIEF.md) and a TODO line.
+- Verification: npm test · npx tsc --noEmit · npm run check:money-report · npm run
+  verify:changed · npm run check:layout -- --changed (dev server up, fixture seeded). State
+  any skipped check.
+- Build the owner QA walkthrough as a checkable Claude Artifact (checkboxes, saved state,
+  paste-back, sign-in card). It must ALSO cover the §132 round-three work already on dev
+  (every figure a door, the deleted sub-row, rows opening on a click anywhere) — that landed
+  after §132's walk passed. Include a step that says "read ONE row and tell me what it is
+  saying". Claim the next free number at the TAIL of the Owner QA Ledger; never renumber.
+- Work on `dev`, explicit pathspecs only, confirm before committing.
+
+Sign-in: uat-coach@uat-test-org.local / UATPassword2026! on localhost:3000
+(org uat-test-org, UAT Test Team → Money → Budget vs Actual).
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step A3:
+  a3a  Plan + PM brief written, TODO line added
+  a3b  Built on dev, money-report guard extended and green
+  a3c  Help article rewritten · demo narration re-read
+  a3d  Walkthrough artifact built (covers the §132 round-three work too)
+  a3e  Committed
+
+⚠ STEP A4 IS NOT YOURS. Its two boxes (a4a, a4b) are my walk of what you just built — leave
+them alone, and when you hand me the walkthrough remind me that A4 is mine to do.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span>
+    <div class="step-t"><h3>Walk the statement's rows</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">no chat</span></div></div></div>
+  <div class="step-body">
+    <p class="why">One walk for the new revenue row <i>and</i> the row work that landed after §132
+      passed. The A3 chat builds it. <b>It must include "read ONE row and tell me what it says"</b> —
+      §132 went 42/42 and still missed three defects, all inside a row.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a">Walked, findings reported</label></div>
+      <div class="chk"><input type="checkbox" id="a4b"><label for="a4b">Findings fixed and re-checked</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="A5">
+  <div class="step-head"><span class="num">A5</span>
+    <div class="step-t"><h3>Settle the Budget tab first</h3>
+      <div class="tags"><span class="tag owner">you walk + rule</span><span class="tag chat">fresh chat for the checkpoint</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The Budget tab revamp is built and waiting on your walk, with an open checkpoint on
+      letting a coach rename their own categories. <b>The dates project reopens the same budget line
+      form</b> — settle this first or that form gets rebuilt twice, a week apart.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/b5d7ffd3-89ce-4a68-94a0-cb430b6b46fe">§133 walkthrough →</a>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a5a"><label for="a5a">§133 walked</label></div>
+      <div class="chk"><input type="checkbox" id="a5b"><label for="a5b">Category-rename checkpoint decided</label></div>
+      <div class="chk"><input type="checkbox" id="a5c"><label for="a5c">Walk findings fixed and committed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat, the checkpoint only</span><button class="btn ghost copy" data-for="p5">Copy</button></div>
+<pre id="p5">Bring me the category-rename checkpoint on the Budget tab revamp so I can rule on it.
+
+docs/projects/active/COACH_BUDGET_TAB_REVAMP_PLAN.md marks Q6 (a coach renaming their own
+categories) approved in principle with an OWNER CHECKPOINT BEFORE BUILDING, investigation
+first (§6.2). That investigation is what I want.
+
+1. Establish from the CODE, not the plan, what a rename touches: where names are stored,
+   which surfaces group or match on the NAME rather than an id, and what happens to money
+   already filed under the old name. Reports here have matched costs to categories by name.
+2. Say plainly whether this is a safe rename or a migration wearing a rename's clothes, and
+   what a coach would see go wrong in the worst realistic case.
+3. Say whether platform-owned categories are in scope or only coach-created ones.
+4. Present it as a short owner-facing decision page (a Claude Artifact) with a recommendation
+   and the two or three calls I have to make. No code.
+
+⚠ Do not build anything. Note for whoever picks it up: the budget-dates project reopens the
+same line form, so this must be settled before that build starts.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step A5:
+  a5b  Category-rename checkpoint decided   ⚠ ONLY after I have actually ruled. Until then say
+       it is waiting on me — do not tick it because you presented the decision well.
+
+⚠ THE OTHER TWO BOXES ON A5 ARE NOT YOURS: a5a ("§133 walked") is my walk, and a5c ("Walk
+findings fixed and committed") belongs to whoever fixes what that walk finds. This step is the
+checkpoint only. Leave both.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="A6">
+  <div class="step-head"><span class="num">A6</span>
+    <div class="step-t"><h3>Budget dates and the "To date" reading</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag">committed 394ae7b0 · §145 walk ready</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Ruled, approved, built and committed <code>394ae7b0</code> on dev
+      2026-09-05.</b> Every budget line now answers <b>"when does this money move?"</b> in months, with
+      <b>No date yet</b> as a real third answer, and Budget vs Actual has a <b>Compare</b> control:
+      <b>Whole season</b> (still the default) or <b>To date</b>. You ruled the proposal, sharpened it
+      (nothing pre-selected, no month pre-filled, no explanatory sub-lines) and approved the three
+      screens at <code>91368ba1</code>. Owner QA is <b>§145</b> — §144 was claimed by another session
+      mid-build.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/91368ba1-0e89-4f30-a7e9-422b782976e3">A6 mockup gate →</a>
+    <p class="why"><b>The payoff, on this fixture's real numbers:</b> the report said the season was
+      <b>$8,690.02 under budget</b> in September — an achievement it had not earned. Switch Compare
+      to To date and the same team reads <b>$1,690.02 under</b>.</p>
+    <p class="why"><b>Three findings from the gate changed the brief, and all three held.</b> The
+      "When" column already existed — it was P3's <b>Schedule</b> column, so this was a rewrite; it
+      printed "Mar · 2 chunks" over a line whose $1,000 balance had no date, which is the row that
+      made a rename insufficient. It was hidden entirely below 640px, so the answer now rides under
+      the line's name on a phone. And <b>Showing</b> never renders on the Statement, so no
+      three-selector crush was possible — confirmed in the browser, not just argued.</p>
+    <div class="tip"><b>Your rulings, built as given.</b> Nothing pre-selected and no month
+      pre-filled (a pre-picked month is the day-grain failure one level up); the three answers carry
+      no sub-lines; the month is a <b>dropdown</b>, not chips, because the split editor already picks
+      one that way and offers 24 options; the closing row becomes <b>Net to date</b> under the new
+      basis; and <b>"No date yet"</b> is the one spelling across the form, the column, the chip and
+      the download.</div>
+    <div class="tip"><b>Carry forward, now delivered:</b> A3's sentence — "both columns compare a
+      whole season's plan against what has moved so far" — is a door under Whole season ("Compare to
+      date sets the plan against the same span") and is <b>deleted outright</b> under To date, where
+      it is simply false. The undated-plan line keeps its figure and changes one verb: "sits in the
+      season total but in no month" → "is not compared here".</div>
+    <div class="warn"><b>The rendered sweep earned its keep — four real defects, all fixed.</b> The
+      phone's When chip spilled 17px off the page; the spending chart's axis labels ran past the left
+      edge once this plan's dates pushed the scale over $9,999; and two controls in the plan list sat
+      20px and 36px tall in the touch band. <b>One of those fixes was silently inert on the first
+      attempt</b> — written in the page stylesheet against classes belonging to the shared one, so it
+      compiled, passed every static gate and changed zero pixels. Only the browser caught it.</div>
+    <div class="tip"><b>Landed as three commits, split by hand so nothing rode along.</b>
+      <code>394ae7b0</code> is this build. <code>adc0b45f</code> and <code>64160ae2</code> are
+      <b>adopted, not this work</b> — three hand-rolled pickers becoming the shared control, and the
+      Budget tab's twelve-month pager handed over by the session that landed the rest of §133. Each
+      commit's content was built and verified explicitly rather than staged from whatever sat on
+      disk; the middle one was checked to stand on its own, not just the final tree.
+      ⚠ Three stray <code>.tmp-*</code> scratch files remain untracked in <code>scripts/</code>.
+      Neither session claims them and both of us left them rather than delete somebody's notes —
+      A1's precedent says a stray gets deleted, not committed, so they want a decision.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a6a" checked><label for="a6a">Proposal ruled on</label></div>
+      <div class="chk"><input type="checkbox" id="a6b" checked><label for="a6b">Two remaining mockups approved</label></div>
+      <div class="chk"><input type="checkbox" id="a6c" checked><label for="a6c">Built on dev · A3's sentence re-read</label></div>
+      <div class="chk"><input type="checkbox" id="a6d" checked><label for="a6d">Committed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p6">Copy</button></div>
+<pre id="p6">Execute docs/projects/active/COACH_BUDGET_DATES_BUILD_PROMPT.md — budget dates, and the
+"to date" reading. It is self-contained. Four things happened after it was written:
+
+1. ⚠ THE SCREEN CHANGED. Player dues now have their own row in the statement's revenue band,
+   both views total the same, and "Funded by players" was DELETED (it was the budgeted Season
+   net with the sign flipped). Read the statement as it stands before designing a basis over
+   it. Reference: docs/projects/active/COACH_BVA_REVENUE_RECONCILE_PLAN.md.
+
+2. ⚠ A SENTENCE IS ALREADY ON THE SCREEN THAT THIS BUILD MUST RE-READ. Second in the stack
+   under the table: "...Both columns compare a whole season's plan against what has moved so
+   far, so they run short until the season is finished." It was shipped as the honest half of
+   what To-date fixes. When the basis lands, rewrite or retire it — do not leave it standing
+   beside a control that makes it half true, and do not let it and the basis's own disclosure
+   sentence say different things about the same money.
+
+3. The ruling on the proposal itself is still open — confirm with me before treating the
+   month-grain requirement as settled.
+
+4. The Budget tab's category-rename checkpoint touches the same line form. Confirm it has been
+   decided before you change that form.
+
+Everything else stands: the mockup gate comes first and still owes two screens (the plan list
+with its "When" column at true size, and the statement's control row at 361px and in the
+tablet band once a third selector joins it). Publish as a Claude Artifact and wait for my
+approval before writing code.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step A6:
+  a6a  Proposal ruled on                    ⚠ ONLY after I have ruled
+  a6b  Two remaining mockups approved        ⚠ ONLY after I have approved them, not when published
+  a6c  Built on dev · A3's sentence re-read
+  a6d  Committed
+
+⚠ STEP A7 IS NOT YOURS — its boxes are my walk of the new basis. Leave them, and remind me A7
+is mine when you hand over.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="A7">
+  <div class="step-head"><span class="num">A7</span>
+    <div class="step-t"><h3>Walk the new basis</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">no chat</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Its own walk — a new control and a new way of reading the whole table.
+      <b>Written and published 2026-09-05</b>, against <code>394ae7b0</code> on the seeded fixture:
+      six parts, a verdict and a notes box per step, state saved in your browser, and
+      <b>Copy findings</b> at the top to paste back.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/8c6a7dd7-3205-49d7-aab4-2dc2234e5f75">§145 walkthrough →</a>
+    <div class="tip"><b>Three steps are the ones I actually want your eye on.</b> <b>Part B step 1</b>
+      asks you to read the Jerseys row and say what it tells you — that row used to claim it was fully
+      dated while $1,000 of it had no date, and it is the reason the column was rewritten rather than
+      renamed. <b>Part C step 3</b> asks you to look at <b>Net to date</b> and expect to dislike it;
+      I want to know whether you think it still generates a support ticket. And <b>Part D step 5</b>
+      tests the distinction I am least sure lands: money with no date is a gap, money dated after
+      today is not, and the sentence must never conflate them.</div>
+    <div class="tip"><b>Part F is three things I am not sure about</b> rather than checks — whether
+      renaming that row was enough, whether the fix-it bar should count dollars as well as lines, and
+      whether using To date for real makes you want to flip the default.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a7a"><label for="a7a">Walked, findings reported</label></div>
+      <div class="chk"><input type="checkbox" id="a7b"><label for="a7b">Findings fixed, committed, screen closed out</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="A8">
+  <div class="step-head"><span class="num">A8</span>
+    <div class="step-t"><h3>The list reports become one surface</h3>
+      <div class="tags"><span class="tag">built 2026-09-05 · §146 walk ready</span><span class="tag owner">your go to commit</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Built on dev 2026-09-05, reviewed, documented — and deliberately NOT committed,
+      because committing needs your word.</b> You looked at By activity and said <i>"there is so much
+      space and the row colors do not make it at all clear how these are grouped … the way the monthly
+      view fits everything so well on the screen still is the best viewing experience that I have
+      had."</i> So the <b>Statement</b>, <b>By activity</b> and the Budget tab's <b>List</b> left the
+      card stack and took the Months grid's table: one full-width white surface, a hairline under
+      every row, and shading that means exactly one thing — a heading.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/dde45c3f-7faf-4d5c-869f-627c0c52fb8b">A8 mockup, round 2 →</a>
+    <p class="why"><b>You rejected the first round on sight</b> — it capped the table's width, and you
+      asked <i>"do we need to cut off the width? this format looks odd to me when the rest of the
+      screen fits the width."</i> Round 2 spans the page. The distance from a name to its figure was
+      never the problem; the missing rule under each row was.</p>
+    <p class="why"><b>What else changed:</b> the amber unplanned <i>row</i> became an amber <i>dash</i>
+      in the Plan column; an activity's net moved off its closing "… netted" row onto its own category
+      row, so By activity is about a third shorter; Player dues became an ordinary row. The whole
+      card-stack recipe was <b>deleted</b> — it had exactly two users, both converted — so the Money
+      hub now has one way of drawing a money hierarchy instead of two.</p>
+    <div class="warn"><b>A latent bug turned up on Months — the one screen this pass was told not to
+      redraw.</b> Its <b>Revenue</b> and <b>Expenses</b> headings have been rendering as plain dark
+      text since 2026-08-13, not the small olive capitals they were designed as: the whole treatment
+      was being silently outranked. It is visible in the screenshot you sent. Fixed, and the walk asks
+      you to confirm it.</div>
+    <div class="warn"><b>⚠ <code>/review</code> caught two things every automated gate called
+      green.</b> (1) <b>Seven style rules were silently deleted by this build's own scripted edit</b> —
+      including the amber dash itself and all four footnote sentences under the table. A missing style
+      resolves to nothing and renders as plain text in silence; the dead-code gate looks for the
+      opposite problem. (2) <b>Five new rules were losing a specificity contest</b>, so the name column
+      never wrapped and the closing row rendered <i>quieter</i> than its own subtotals. Both fixed and
+      then <b>measured in a browser</b> rather than argued. A review that found nothing would have been
+      the worrying outcome here.</div>
+    <div class="tip"><b>Also from the review:</b> collapsible rows had quietly lost their full-width
+      tap target — the tap-floor gate measures height, so it could not see it. Restored. <b>Help and
+      the demo were done in the same unit of work:</b> the money guide no longer describes a tinted
+      row, and the coach demo's tour step 4 was re-read clause by clause and survives intact.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a8a" checked><label for="a8a">Mockup approved (round 2, full width)</label></div>
+      <div class="chk"><input type="checkbox" id="a8b" checked><label for="a8b">Built on dev · gates green<span class="hintline">typecheck · 3,008 tests · full verify:changed · rendered layout sweep at 361/390/768/1440, no new findings</span></label></div>
+      <div class="chk"><input type="checkbox" id="a8c" checked><label for="a8c">/review run · findings fixed and re-verified</label></div>
+      <div class="chk"><input type="checkbox" id="a8d" checked><label for="a8d">Help updated · demo narration re-read · §146 claimed</label></div>
+      <div class="chk"><input type="checkbox" id="a8e" checked><label for="a8e">Walk artifact built</label></div>
+      <div class="chk"><input type="checkbox" id="a8f"><label for="a8f">Committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="A9">
+  <div class="step-head"><span class="num">A9</span>
+    <div class="step-t"><h3>Walk the one surface</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">no chat</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Six parts against the seeded fixture, with a verdict and a notes box per step and
+      <b>Copy findings</b> at the top. Nothing the reports <i>say</i> changed, so the walk is about
+      whether they now <b>read</b>.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/d4984cf8-cb81-4018-9bf6-10c7a11106c7">§146 walkthrough →</a>
+    <div class="tip"><b>Part B asks you to read the Facilities row aloud and say what it tells you</b>
+      — the same instrument §132 was missing when it went 42 for 42 and still shipped three defects,
+      all inside one row. <b>Part C2</b> puts your original complaint back to you: is it actually
+      fixed, or merely different? <b>Part D2</b> is the tap-target fix, which needs a thumb rather
+      than a mouse to test honestly.</div>
+    <div class="warn"><b>Part F is three questions, and two of them are rulings I need.</b> (1) The
+      unplanned dash ships <b>amber</b> — but the Off-plan tile already totals that money, and amber
+      also means "no date yet" on the Budget tab, so it may now be saying two things. (2) The
+      <b>exported</b> By-activity file still prints a "Tournaments netted" line the screen no longer
+      has. (3) Now that everything is a table, <b>three different row heights</b> are visible across
+      Budget vs Actual, Dues and Transactions — the next piece of work, if you want it.</div>
+    <div class="tip"><b>Restart the dev server before you walk it.</b> A shared stylesheet moved, and a
+      half-warm cache is the one thing that would make this walk lie to you.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a9a"><label for="a9a">Walked, findings reported</label></div>
+      <div class="chk"><input type="checkbox" id="a9b"><label for="a9b">Part F ruled — the amber dash, the export's netted line, the row heights</label></div>
+      <div class="chk"><input type="checkbox" id="a9c"><label for="a9c">Findings fixed, committed, screen closed out</label></div>
+    </div>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ TRACK B ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Track B</p>
+  <h2>Built, waiting on your walk</h2>
+  <p>Seven items are finished and sitting on dev, and every one of them now has a walkthrough ready to run. None of these block Track A. <b>B7 is the newest and did not exist when this page was written</b> — it came out of the §146 walk itself.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span>
+    <div class="step-t"><h3>Player Dues — the chase card is gone (§136)</h3>
+      <div class="tags"><span class="tag">✅ passed 26/26</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>✅ Walked 2026-09-06 — 26 of 26, all seven parts, zero defects.</b> The chase
+      card left the Player Dues tab and the whole-team nudge was refused; reminders need a named
+      family. Committed <code>e046df39</code> 09-03, and <code>885e56a1</code> 09-05 for the
+      confirmation and the courtesy that came out of your question about this very button. §136 is
+      closed.</p>
+    <p class="why"><b>The walk grew from 23 checks to 26 because you changed the thing mid-way.</b>
+      You asked whether "Remind this family" should confirm before emailing a parent. It should — and
+      answering it turned up the bigger problem: one button reached <i>two</i> letters with two
+      different protections, and the never-paid one had none, so three presses sent three emails and
+      left no record. Parts C and G walk both halves.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/b5bbcd8d-8979-4127-a46b-dab6c7cf2b7b">§136 walkthrough →</a>
+    <div class="tip"><b>Part F's call, taken:</b> the Fees help article said <b>Remind</b> where the
+      button says <b>Remind this family</b>. One control, two spellings — now one.</div>
+    <div class="warn"><b>⚠ <code>/review</code> found six things, and two of them were in the
+      REASONING rather than the code.</b> (1) Marking every one of a family's bills as "reminded"
+      reached far past the letter and would have silenced the ordinary due-date notice for a bill
+      falling due days later — the justification for it read well and mistook a suppression clock for
+      a record of what was said. (2) The greyed-out button could lie: a bill already <i>paid</i> keeps
+      the mark that chased it, so a family with a different bill newly due was blocked from a send the
+      server would have accepted. Also fixed: no re-read after a send (so the confirmation contradicted
+      itself), a schedule with no bills that could be emailed without limit, a question that survived
+      the schedule editor, and a confirmation that promised delivery it could not see.</div>
+    <div class="warn"><b>⚖ One real race, reported and deliberately NOT fixed.</b> Two tabs in the same
+      moment both pass the courtesy check and both send. It is older than this change and shared with
+      the bulk-send door, so closing it means changing what happens when a send fails on <i>both</i>
+      doors. Written up in §136 as its own item.</div>
+    <div class="tip"><b>Fixture note.</b> Part G was tidied up, but Part D's late family was left late
+      — Devon Test's first bill was still dated a week back. Put right 2026-09-06. Left alone it would
+      have quietly changed what every later dues walk sees.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a" checked><label for="b1a">Walkthrough written</label></div>
+      <div class="chk"><input type="checkbox" id="b1b" checked><label for="b1b">Walked, findings fixed, section closed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p8">Copy</button></div>
+<pre id="p8">Write the owner QA walkthrough for Owner QA Ledger §136 — "The Player Dues chase card is GONE,
+and the whole-team nudge with it" (built 2026-09-03, commit e046df39).
+
+Read the §136 section in docs/projects/active/OWNER_QA_LEDGER.md and the plan it points at.
+Then read the CODE as it stands today — the Player Dues tab has been rebuilt twice since
+(§137 the summary band, §140 set once / chase weekly), so the walk must test the screen that
+exists, not the one §136 was written against. Where a §136 claim is no longer observable
+because a later change replaced it, say so in the walk rather than testing a ghost.
+
+Build it as a checkable Claude Artifact: checkboxes, saved state, paste-back, the sign-in card
+(uat-coach@uat-test-org.local / UATPassword2026!, localhost:3000, UAT Test Team → Money →
+Player Dues). Include a step that reads ONE family's row and says what it is telling the
+coach. Seed the fixture first (node scripts/seed-uat-coach-fixture.mjs) and confirm every
+state the walk asks me to look at actually exists in it — a walk over an empty state reports
+coverage it does not have.
+
+Record the artifact URL in §136. Do not renumber anything.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step B1:
+  b1a  Walkthrough written
+
+⚠ b1b ("Walked, findings fixed, section closed") IS NOT YOURS — that is my walk. Leave it, and
+remind me the walk itself is mine to do.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span>
+    <div class="step-t"><h3>Coach notifications redraw (§138)</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">ready</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The house header, readable times, a pinned way home, and Mark-all-read that leaves
+      Needs-attention alone. Built 09-03, <b>committed <code>b9a34a4c</code></b> 09-04 — ready to
+      walk. Two open notes: coach-role members still land in the admin shell (D4), and R8 is deferred.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/74443f14-cdfc-4a95-98bf-6b73ef533c1b">§138 walkthrough →</a>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Walked, findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">D4 (admin shell) ruled — build or park</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span>
+    <div class="step-t"><h3>Player Dues — set once, chase weekly (§140)</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">ready</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The set-once door steps back, the reminder says who it reaches, and the grid leads
+      with the date. Main build committed <code>06645a32</code>; the grid's second look committed
+      <code>d7771935</code> 09-04. G4 was deferred by ruling.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/92122f73-a728-4b60-b913-aa3e994a4601">§140 walkthrough →</a>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b3a"><label for="b3a">Walked, findings fixed, section closed</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span>
+    <div class="step-t"><h3>The bill room — List · Room · Question Phase C (§141)</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">ready</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The team bill's page dissolves into a room over the Ledger. Built 09-04,
+      <b>committed <code>52c2637e</code></b>. Three shell defects only a stacked overlay exposes were
+      found and fixed on the way, and a fourth by <code>/review</code> afterwards — the walk
+      suspension's mouse and keyboard halves disagreed, so a body-level question (the tag manager's
+      delete confirm) left Prev/Next live and clickable. Fixed in <code>8d5a6650</code> and pinned.
+      Its UAT spec is the first coverage this screen has ever had: 9/9 green.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/02702286-1c15-4802-977b-f2b3d275292a">§141 walkthrough →</a>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b4a"><label for="b4a">Walked, findings fixed, section closed</label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B5">
+  <div class="step-head"><span class="num">B5</span>
+    <div class="step-t"><h3>The line and the door (§143 + §144)</h3>
+      <div class="tags"><span class="tag owner">you walk it</span><span class="tag">ready</span><span class="tag">one instrument, two sections</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Two small sections you found yourself, both committed 09-04.</b> §143
+      (<code>d14a4c8c</code>): tapping a budget line in the month grid's plan panel now opens
+      <i>that</i> line's drawer every time — it had been obeying that instruction only on the first
+      visit to the Budget tab in a session, so you landed on the plan list and hunted the line by
+      hand. §144 (<code>36124583</code>): the plan panel no longer dead-ends for a coach who can only
+      read. Its lines are links only for a coach who can write, so an assistant met the one panel in
+      the set with no way out — while the spent-figure panel beside it hands them two.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/f552d112-2fca-4fbd-a10b-9062141699ef">§143 + §144 walkthrough →</a>
+    <div class="warn"><b>The step worth your attention is the one the fix itself created.</b> Opening
+      a line from a link WRITES the form, and both guards on that screen only watch clicks — the
+      browser's Back button is not a click. So: type an amount, press Back, tap another line, and the
+      first line's unsaved work vanished silently. Found by <code>/review</code> before it reached
+      you, not by the build. The walk asks you to run that exact sequence and confirm you are now
+      asked before anything is discarded.</div>
+    <div class="tip"><b>Two people, one sitting.</b> Parts A and B step 1 are the head coach; B step 2
+      needs <code>uat-asst-money-read@uat-test-org.local</code> — the read-only money persona, which
+      only the fixture seeder creates. Six checks and one question, and no figures to match: every
+      check is a behaviour, so nothing in it goes stale as the calendar moves.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b5a"><label for="b5a">Walked, findings reported</label></div>
+      <div class="chk"><input type="checkbox" id="b5b"><label for="b5b">Findings fixed, both sections closed</label></div>
+      <div class="chk"><input type="checkbox" id="b5c"><label for="b5c">Door wording ruled<span class="hintline">It shipped as “Open Budget Plan”, matching the tab and its sibling doors; the approved mockup drew “Open the budget”. One word, one place — your call.</span></label></div>
+    </div>
+  </div>
+</article>
+
+
+<article class="step" data-step="B6">
+  <div class="step-head"><span class="num">B6</span>
+    <div class="step-t"><h3>The words in the budget template (§147)</h3>
+      <div class="tags"><span class="tag">built 2026-09-06 · §147 walk ready</span><span class="tag owner">your go to commit</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>You asked a narrow question and the answer was wider than the ask.</b> You wanted
+      the template to list the standard category and item names so an accounting user could not mistype
+      one into existence. It shipped — an Excel <b>Reference</b> tab carrying every word the team can
+      use and where each came from, plus real <b>dropdowns</b> on Category and Line — but building it
+      turned up the reason the mistype was expensive in the first place.</p>
+    <p class="why"><b>The two halves of a row were policed completely differently.</b> A category we did
+      not hold <i>blocked</i> the row. A cost name we did not hold sailed through as a clean "Adds" —
+      and the import then created a permanent new budget item for the team, silently. Matching was case
+      and outer spaces only, so <code>Entry&nbsp;&nbsp;Fees</code>, <code>Entry-Fees</code> and
+      <code>Entry Fees.</code> each minted a second word beside <code>Entry Fees</code>, splitting one
+      cost across two rows on Budget vs. Actual for the rest of the season.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/854b93f7-87bf-4536-83ee-c207dff2a488">§147 walkthrough →</a>
+    <div class="tip"><b>So the preview learned to speak.</b> Punctuation, spacing and capitals now snap
+      to your library's own spelling <i>before</i> the preview draws — visibly, in the cell you are
+      reading, so it is an offer rather than a liberty. Anything still unmatched warns, and where there
+      is one good candidate it offers <b>Use “Entry Fees”</b> as a one-tap fix. Nothing blocks: a
+      genuinely new cost still imports in one pass, because that path is why an imported line has a name
+      at all.</div>
+    <div class="warn"><b>⚠ Part C1 is the step I most want your eye on.</b> Type <code>Entry-Fees</code>
+      and confirm the preview shows you <code>Entry Fees</code> <i>before</i> you import. If the
+      correction is invisible and only shows up afterwards, the feature is taking a liberty rather than
+      offering one — and that is the difference between this being a fix and being a new bug wearing a
+      helpful face.</div>
+    <div class="warn"><b>A live defect turned up in the same twenty lines and was fixed with it.</b> The
+      importer matched cost rows against <i>both</i> sides of the books, so a spending row could attach
+      itself to an income word like "Grant" — a word the coach's own picker never shows on that side,
+      because a migration in August made a word's side part of its identity. It also cleared a rare
+      failure where two same-named words on opposite sides made a row fail with an error a coach could
+      do nothing about.</div>
+    <div class="tip"><b>Two calls taken, both explained in Part B and Part F.</b> The cost-name dropdown
+      is <b>flat</b> — every word, not just the chosen category's — because a dependent list needs Excel
+      formula tricks that break on a category containing an <code>&amp;</code> and break again in Google
+      Sheets; a mismatched pair is caught in the preview instead. And the <b>CSV template is
+      unchanged</b>, because a CSV cannot carry a tab or a dropdown; those coaches are covered by the
+      preview, which is the half that works whatever the sheet came from. Part F asks you to rule on
+      both.</div>
+    <div class="tip"><b>Gates:</b> typecheck · <b>3,044 unit tests</b> · full <code>verify:changed</code>
+      green (spelling, CSS purity, dead selectors, contrast, dictionary, export registry, demos). A new
+      round-trip test writes the workbook, reloads the bytes and proves the three tabs, the hidden one,
+      the dropdowns on rows 2 / 7 / 301, and that <b>our own importer still reads the file back</b> —
+      including a template downloaded before today, which is the regression that would be silent if it
+      broke. Help updated in the same unit of work; the demo narration mentions neither the import door
+      nor the template, checked rather than assumed. <b>Not run:</b> the rendered layout sweep. The one
+      new control takes a 44px height on touch so it adds nothing to that table's existing debt, but
+      that is argued rather than measured.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b6a" checked><label for="b6a">Built on dev · gates green · walk artifact written</label></div>
+      <div class="chk"><input type="checkbox" id="b6b"><label for="b6b">Walked, findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b6c"><label for="b6c">Part F ruled — the flat dropdown, the silent correction, the bare CSV</label></div>
+      <div class="chk"><input type="checkbox" id="b6d"><label for="b6d">Committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+    </div>
+  </div>
+</article>
+
+<article class="step" data-step="B7">
+  <div class="step-head"><span class="num">B7</span>
+    <div class="step-t"><h3>A family's own money leaves the Credits column (§148)</h3>
+      <div class="tags"><span class="tag">built 2026-09-06 · §148 walk ready</span><span class="tag owner">your go to commit</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>This was not a planned project.</b> It fell out of your §146 walk: you asked
+      whether Player dues could open into the families behind it, which produced a plan, which
+      produced a reconciliation nobody could explain, which — chased on your instruction <i>before</i>
+      any build — produced this. It is <b>step 1 of 7</b> in the dues-by-family project.</p>
+    <p class="why"><b>You found it by reading one row.</b> The Dues tab said <b>Avery · Paid
+      $700.00</b> beside <b>Credits ($1,128.15)</b>. Avery had sent <b>$1,250.00</b>. Now the row says
+      <b>Paid $1,250.00 · Credits ($578.15) · Overpaid</b>, with <i>"sent $550.00 more than billed"</i>
+      underneath the name.</p>
+    <a class="walklink" href="https://claude.ai/code/artifact/027b0322-ba35-4a35-b65f-b99ec1773329">§148 walkthrough →</a>
+    <div class="tip"><b>An earlier round of the plan proposed removing the cap on Paid, and was
+      wrong.</b> The cap exists because an overpayment is auto-converted to a credit, and it stops the
+      same dollars being counted as paid <i>and</i> as a credit. What was actually wrong was the
+      <b>word</b>: "Credits" carried Avery's own $550 overpayment, $380 the club owes them for team
+      costs they paid, and $198.15 they raised — three different actions under one number. So
+      <b>Credits</b> now means money from someone <i>other</i> than the family, and <b>Paid</b> means
+      what the family sent. <b>Overpaid</b> is a new status distinct from <b>In credit</b>: you can
+      write Avery a cheque; there is nothing to write Casey, whose credit is a sponsor's.</div>
+    <div class="warn"><b>⚠ A real defect shipped for one round and only the RENDERED SCREEN caught
+      it.</b> The balance is <code>outstanding − credits</code>, and <code>outstanding</code> is built
+      from the <i>capped</i> paid figure — so pairing it with the narrowed credit column double-counted
+      the money that had just moved, and <b>Avery's balance read ($578.15) instead of
+      ($1,128.15)</b>. The one number this change promised not to touch. The typecheck could not see
+      it and neither could the new unit test, whose invariant is about the two columns a coach reads
+      while that line was quietly using a different pair. <b>Part B of the walk is you re-proving all
+      twelve balances</b> rather than taking my word for it.</div>
+    <div class="tip"><b>Gates:</b> typecheck · <b>3,058 unit tests</b> (13 new, pinning the balance
+      invariant across the awkward cases including a refunded overpayment) · full
+      <code>verify:changed</code> · rendered layout sweep at 361/390/768/1440, no new findings. All
+      twelve rows were read off the page and compared to their pre-change values; the season-totals
+      band still ties, and the roster player panel agrees with the dues table to the cent.</div>
+    <div class="warn"><b>Two things are owed and neither has been done:</b> <code>/review</code> has
+      not run, and the in-app dues help almost certainly still describes <b>Credits</b> and <b>Paid</b>
+      the old way (the demo's money narration wants the same question). Walk step E1 asks you to
+      sequence them. Given this build shipped a balance defect three automated gates called green, I
+      would run the review before committing.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b7a" checked><label for="b7a">Built on dev · gates green · walk artifact written</label></div>
+      <div class="chk"><input type="checkbox" id="b7b"><label for="b7b">Walked, findings fixed, section closed</label></div>
+      <div class="chk"><input type="checkbox" id="b7c"><label for="b7c">Part C ruled — is “Overpaid” the right word?</label></div>
+      <div class="chk"><input type="checkbox" id="b7d"><label for="b7d">/review run · help + demo updated</label></div>
+      <div class="chk"><input type="checkbox" id="b7e"><label for="b7e">Committed<span class="hintline">Waiting on you — your standing rule is that nothing commits without your word</span></label></div>
+    </div>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ TRACK C ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Track C</p>
+  <h2>Waiting on a decision from you</h2>
+  <p>Nothing here gets built until you rule. Three already appear in Track A (the dates ruling, the rename checkpoint, the demo approval); these are the rest.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span>
+    <div class="step-t"><h3>List · Room · Question — Phase D needs re-planning</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag owner">then you rule</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Phase D was four small dues fixes drawn against a Player Dues screen that has since
+      been rebuilt twice (§137, §140). <b>The plan itself says do not build it as written.</b> A short
+      re-plan against the screen as it stands, then your call on what survives.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">Re-plan presented</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Ruled — build, shrink, or close</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p9">Copy</button></div>
+<pre id="p9">Re-plan List · Room · Question Phase D (the dues fixes) against the Player Dues screen as it
+stands today. Do not build anything.
+
+Read docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md §5 (Phase D). Its four items
+were written against a Player Dues screen that has since been rebuilt twice: §137 (one summary
+band at the top, both footers retired, the Collection schedule as a foldable timeline) and
+§140 (set once / chase weekly, the grid leading with the date). The plan's own header says
+Phase D needs re-planning before anything is built.
+
+For each of the four items, establish from the CODE whether it is: already delivered by a
+later change; still open and still right; still open but now wrong; or moot. Then say what a
+Phase D worth building actually contains — it may be nothing, and that is a legitimate answer.
+
+Present it as a short owner-facing decision page (a Claude Artifact): what survives, what
+died, and the one or two calls I have to make. Update the plan's Phase D section to match
+once I have ruled.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step C1:
+  c1a  Re-plan presented
+  c1b  Ruled — build, shrink, or close      ⚠ ONLY after I have ruled. "Nothing survives" is a
+       legitimate ruling and ticks this box; presenting the options does not.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span>
+    <div class="step-t"><h3>Cleanup tranche 6 — Part 3's four calls</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag owner">then you rule</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Parts 1 and 2 landed 09-02 (the money panels stopped pretending to be pages).
+      <b>Part 3 is four yes/no calls</b> the TODO still lists as waiting on you. Tranches 4 and 5 of
+      the wider cleanup remain open behind it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">The four calls presented</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">Ruled and executed</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p10">Copy</button></div>
+<pre id="p10">Bring me Cleanup Tranche 6 Part 3 — the four yes/no calls — so I can rule, then execute
+whatever I approve.
+
+Read docs/projects/active/CODEBASE_CLEANUP_PLAN.md and the tranche 6 entry in TODO.md. Parts 1
+and 2 landed on 2026-09-02 (commit 2b45a735). Part 3 was recorded as awaiting four yes/no calls
+from the owner.
+
+1. Verify each of the four against the CODE as it stands today — the repo has moved a lot in
+   three days and one or more may already be moot or already done. Say which.
+2. Present the surviving ones as plain yes/no questions with the consequence of each answer,
+   in one short message. No code until I answer.
+3. Execute only what I approve. Dead-code removals must pass the repo's gates (check:root,
+   check:css-selectors are gates; knip is report-only). Explicit pathspecs, confirm before
+   committing.
+4. Then tell me what tranches 4 and 5 still hold, in two lines each, so I can decide whether
+   they get a session.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step C2:
+  c2a  The four calls presented             (or fewer, if some are already moot — say which)
+  c2b  Ruled and executed                    ⚠ BOTH halves: I have ruled AND you have executed
+       what I approved, gates green. Not one or the other.</pre></div>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span>
+    <div class="step-t"><h3>Tagging across the portal — planning only</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag owner">then you rule</span></div></div></div>
+  <div class="step-body">
+    <p class="why">You raised it: creating and managing tags should feel the same everywhere, and
+      whether they get one central home is an open question. One Tag Idiom (§129) fixed the
+      <i>picker</i>; this is the wider question. Planning prompt written 09-01, <b>no rulings, nothing
+      built</b>.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">Options presented</label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b">Ruled — build, or park with a date</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p11">Copy</button></div>
+<pre id="p11">Run the planning session for "Tagging across the coaches portal — one experience, one home?"
+
+The planning prompt is in TODO.md under that title (written 2026-09-01) and its records are in
+docs/projects/active/ under the COACH_TAGGING prefix. One Tag Idiom (Owner QA §129, commit
+4485bcce) already unified the picker, the drawer, the door name and the shelf — read what it
+settled first so this session does not re-plan it.
+
+The open question is wider: should tags have ONE management home, or stay managed in place on
+each surface? Establish from the code every surface that creates, renames or deletes a tag
+today, and what each does differently. Then present two or three directions as owner-facing
+mockups in a Claude Artifact — whole screens, not crops — with a recommendation and the
+trade-off each carries. No code. Wait for my ruling.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step C3:
+  c3a  Options presented
+  c3b  Ruled — build, or park with a date    ⚠ ONLY after I have ruled. Parking IS a ruling and
+       ticks this box — but only when I have said so and named the date.</pre></div>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ TRACK D ═══════════════════════ -->
+<div class="trackhead">
+  <p class="eyebrow">Track D</p>
+  <h2>The production release</h2>
+  <p>Dev is 49 commits ahead of production (measured 2026-09-04, after Track A1 landed). Three things about this release that no gate will tell you.</p>
+</div>
+
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span>
+    <div class="step-t"><h3>Promote dev to production</h3>
+      <div class="tags"><span class="tag chat">fresh chat</span><span class="tag owner">you approve the promote</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Since the 09-02 promote: the whole Two Truths report, List · Room · Question A–C,
+      the money banner on every tab, Player Dues rebuilt twice, One Tag Idiom, the fundraising four
+      figures, the tournament demo becoming a nightly snapshot, and whatever Track A lands before you
+      call it.</p>
+    <div class="warn"><b>Three things the checks can't see.</b> (1) One database change is <b>held on
+      your approval</b> — a data-only delete of three retired tryout email templates — and no gate will
+      ever flag it because it changes rows, not structure. (2) Another data-only change from the report's
+      row work is owed for the same reason. (3) The tournament demo's real-time refresh: the code
+      retiring it is on dev only, so <b>production is still ticking every two minutes</b> until the
+      release lands <i>and</i> the production schedule is updated to match.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">Held migration 264 — approved or explicitly parked</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Prod-owed database changes listed from the parity check, not the migration folder</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Promote pinned to a SHA, Amplify green, both demo doors verified live</label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">Tournament demo's production schedule updated to nightly</label></div>
+      <div class="chk"><input type="checkbox" id="d1e"><label for="d1e">Post-release truth-up run (ledger, release history, CLAUDE.md prod-HEAD paragraph)</label></div>
+    </div>
+    <div class="prompt"><div class="prompt-head"><span>Prompt · new chat</span><button class="btn ghost copy" data-for="p12">Copy</button></div>
+<pre id="p12">Run /release to promote `dev` to production. Before you do anything, bring me the pre-flight.
+
+Facts as of 2026-09-04: production is at bf1efee6 (the 2026-09-02 promote); dev is ~49 commits
+ahead. Migration files run to 276.
+
+Pre-flight I want to see before you touch anything:
+1. The prod-owed database changes, from `npm run check:schema-parity` and a direct read of the
+   live prod schema — NOT from the migration folder and NOT from check:migrations, which cannot
+   see data-only migrations, column drops or function signatures. Two of the owed changes are
+   data-only by design: 264 (a DELETE of three retired tryout email templates — HELD on my
+   approval; ask me explicitly) and 276 (the other-income library home). Say which of 273–276
+   is actually applied on prod today.
+2. The tournament demo went from a 2-minute live tick to a nightly snapshot on dev
+   (commit 14e7a5e4, migration 273). Confirm what production's cron.job table says today and
+   what the release must change so prod stops ticking every two minutes.
+3. The SHA you intend to promote — pinned, not "dev". Say whether anything uncommitted is being
+   left behind and whether any Track A work should land first.
+4. Both demo doors and the coach-money demo narration: the coach money vocabulary changed again
+   this week (dues on the Statement, the banner on every tab). Say whether the dock lines and
+   tour steps were re-read, because that surface has gone stale three releases running.
+
+Then, on my go: promote pinned to the SHA, watch Amplify to SUCCEED, verify both demo doors
+307 into their worlds on the live domain, apply approved migrations to prod, and run the
+post-release truth-up in .claude/commands/release.md Phase 2b — release history, the Owner QA
+Ledger, and the prod-HEAD paragraph in CLAUDE.md, all as dated positive facts.
+
+TICK YOUR OWN BOXES AS THE WORK LANDS — do not ask me to, and do not wait for me.
+This step lives on the run order at
+https://claude.ai/code/artifact/5ef0163e-376a-48b1-834b-6c5bdd198546
+To tick: Artifact tool, action "read", that url. Read the saved file it hands you IN FULL, add
+the word checked to the input tag with the id below, and republish passing the same url. The
+page's script only ever turns a box ON, so a checked written into the HTML sticks. Tick once
+near the end of your session rather than after every box — and while you are in the file, true
+up that step's own paragraph too: a positive fact with a commit hash, never "uncommitted". If
+the publish is refused because somebody republished first, re-read and merge onto their
+version. Never force.
+
+⚠ Tick a box only when the thing it NAMES has actually happened, verified — not when you
+believe it will. A box is a claim about the product, and this page is the only place I read
+those claims back.
+
+Step D1:
+  d1a  Held migration 264 — approved or explicitly parked   ⚠ ONLY after I have said which
+  d1b  Prod-owed database changes listed from the parity check, not the migration folder
+  d1c  Promote pinned to a SHA, Amplify green, both demo doors verified live
+  d1d  Tournament demo's production schedule updated to nightly
+  d1e  Post-release truth-up run (ledger, release history, CLAUDE.md prod-HEAD paragraph)
+
+⚠ THIS STEP TOUCHES PRODUCTION, so the rule above is not a formality: d1c and d1d are claims
+that a live site behaves a certain way. Tick them from what you OBSERVED on the live domain,
+never from a green build.</pre></div>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════ PARKED ═══════════════════════ -->
+<div class="trackhead parked">
+  <p class="eyebrow">Parked — noted so nothing is lost</p>
+  <h2>Older than three days, or deliberately not now</h2>
+  <ul style="margin-top:12px">
+    <li><b>⚠ The Ledger Timeline's layout debt, and the blind gate under it</b> — found by
+      <code>/review</code> 2026-09-04. 19 findings on <code>coach-transactions</code>, none of them
+      new: the screen's accepted baseline was written 2026-08-26 and never re-swept, and because the
+      baseline keys on visible label text, the date-range buttons' labels rotted with the calendar.
+      Two jobs, not one: fix the phone spill, and re-record the baseline so the gate stops reporting
+      green on a screen it is not measuring.</li>
+    <li><b>Row density across the money tabs</b> — surfaced by A8 and deliberately left for its own
+      session. Budget vs Actual, Dues, Fundraising, Club and Transactions were already consistent
+      with each other and were aligned to the budget grids back in August; what remains is that they
+      run at <b>three different row heights</b>, which nobody could see while one of them was a card
+      stack. Recommendation on the table: two heights, chosen by what a row <i>holds</i> rather than
+      which screen it is on. A9 Part F3 asks you to look at it.</li>
+    <li><b>Player dues opens into the families — steps 2 to 7</b> — the project B7 is step 1 of.
+      Approved from its mockup; <b>step 2 moves a number on the face of Budget vs Actual</b>, so it
+      ships alone: credits from anyone but the family come off the planned dues figure, taking dues
+      planned $11,308.30 → <b>$8,958.67</b> and Total revenue $13,258.30 → <b>$10,908.67</b>. The
+      report currently overstates what families owe by $2,349.63 nobody will be asked for. Then the
+      per-family fold rows on the Statement, By activity, Months and the Budget plan. Plan:
+      <code>COACH_DUES_BY_PLAYER_PLAN.md</code>;
+      <a href="https://claude.ai/code/artifact/73f68f92-603f-47eb-8c1d-d12dc5bd1496">mockup, round 3</a>.</li>
+    <li><b>The Budget tab's item-library review</b> — kept out of the revamp by ruling and given its own session. Unstarted.</li>
+    <li><b>Two walk parts are now vacuous</b> — §134 Part C and the §135 walk's Part E test states that no longer exist after later rulings. Not defects; worth a line in each section so a future re-walk doesn't count them as coverage.</li>
+    <li><b>Sponsorship lifecycle Phases B–E</b> and the <b>money-forms review questions Q4–Q10</b> — last worked before this window; still open in TODO.</li>
+    <li><b>Several money-banner / money-returned TODO lines still read unchecked</b> although their walks passed and their commits landed — a tidy-up for whichever chat next touches TODO.</li>
+  </ul>
+</div>
+
+<footer>
+  <span>FieldLogicHQ</span>
+  <span>Everything open · 2026-09-04</span>
+  <span>Chats tick their own boxes · yours also save in this browser</span>
+</footer>
+
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast">Copied</span></div>
+
+<script>
+(function(){
+  var KEY='bva-run-order-v2';
+  var boxes=Array.prototype.slice.call(document.querySelectorAll('.chk input'));
+  var done=document.getElementById('cdone'),total=document.getElementById('ctotal'),fill=document.getElementById('fillbar');
+  var toastwrap=document.getElementById('toastwrap'),toast=document.getElementById('toast'),timer=0;
+  total.textContent=String(boxes.length);
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){return{}}}
+  function write(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+  function say(m){toast.textContent=m;toastwrap.hidden=false;clearTimeout(timer);timer=setTimeout(function(){toastwrap.hidden=true},1600)}
+  function paint(){
+    var n=0;
+    boxes.forEach(function(b){var r=b.closest('.chk');if(r)r.classList.toggle('on',b.checked);if(b.checked)n++});
+    document.querySelectorAll('.step').forEach(function(s){
+      var ins=Array.prototype.slice.call(s.querySelectorAll('.chk input'));
+      s.classList.toggle('done',ins.length>0&&ins.every(function(i){return i.checked}));
+    });
+    done.textContent=String(n);
+    fill.style.width=(boxes.length?Math.round(n/boxes.length*100):0)+'%';
+  }
+  var st=read();
+  boxes.forEach(function(b){
+    if(st[b.id])b.checked=true;
+    b.addEventListener('change',function(){var s=read();if(b.checked)s[b.id]=1;else delete s[b.id];write(s);paint()});
+  });
+  paint();
+  function fallback(t,ok){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');say(ok)}catch(e){say('Select and copy manually')}
+    document.body.removeChild(ta);
+  }
+  function copyText(t,ok){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){say(ok)},function(){fallback(t,ok)})}
+    else fallback(t,ok);
+  }
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click',function(){var el=document.getElementById(btn.getAttribute('data-for'));if(el)copyText(el.textContent,'Prompt copied')});
+  });
+  document.getElementById('copyprog').addEventListener('click',function(){
+    var lines=['Run order — progress '+new Date().toISOString().slice(0,10)];
+    document.querySelectorAll('.step').forEach(function(s){
+      var h=s.querySelector('h3');lines.push('');lines.push(s.getAttribute('data-step')+'  '+(h?h.textContent:''));
+      s.querySelectorAll('.chk').forEach(function(r){
+        var i=r.querySelector('input'),l=r.querySelector('label');
+        var t=l?l.childNodes[0].textContent.trim():'';
+        lines.push('   ['+(i&&i.checked?'x':' ')+'] '+t);
+      });
+    });
+    copyText(lines.join('\n'),'Progress copied');
+  });
+  document.getElementById('resetall').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false});write({});paint();say('Reset')});
+})();
+</script>
+
+
+
+

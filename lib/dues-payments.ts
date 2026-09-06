@@ -127,6 +127,94 @@ export function duesPaidAmount(paymentsTotal: number, scheduleTotal: number): nu
   return toDollars(Math.min(toCents(paymentsTotal), toCents(scheduleTotal)));
 }
 
+/**
+ * ⚠⚠ A FAMILY'S OWN MONEY IS NOT A CREDIT TO THEM (owner ruling 2026-09-06, QA §146 · D6).
+ *
+ * When a family sends more than their bill, the excess is auto-converted to a credit (owner ruling
+ * 2026-08-13, no prompt) and the dues-facing `Paid` figure is capped at the schedule total so the
+ * same dollars are not counted as paid AND as a credit. That cap is correct and stays. What it left
+ * behind is a WORD problem the owner found by reading one row:
+ *
+ *   Avery   Total Dues $700.00 · Credits ($1,128.15) · Paid $700.00 · Balance ($1,128.15)
+ *
+ * Avery had sent **$1,250.00**. The row said $700, and the $1,128.15 beside it was three unrelated
+ * things added together — $550.00 of Avery's own overpayment, $380.00 the club owes them for team
+ * costs they paid out of pocket, and $198.15 they raised. Those call for three different actions,
+ * and a family asking *"how much of my own money are you holding?"* could not be answered.
+ *
+ * So `Credits` comes to mean MONEY FROM SOMEONE OTHER THAN THIS FAMILY, and `Paid` shows what the
+ * family actually sent.
+ *
+ * ⚠⚠ THE BALANCE MUST NOT MOVE, AND HERE IT CANNOT — the two returned figures always sum to
+ * `cappedPaid + netCredits`, which is exactly what every balance in the product already subtracts.
+ * This is a RE-SPLIT of one total, never a re-derivation, and that is deliberate: a coach has acted
+ * on those balances, and a redesign that quietly moved them would be a different (and much worse)
+ * change. Do not "simplify" this into two independent sums.
+ *
+ * ⚠ ONLY THE OVERPAYMENT THAT IS STILL STANDING MOVES. A credit handed back in cash has already
+ * stopped reducing what the family owes (`netCredits` nets payouts off — a /review finding,
+ * 2026-08-14), so an overpayment that was refunded must not be re-counted as money they paid.
+ * Missing this is not hypothetical: it made two figures wrong in the QA §146 mockup and would have
+ * chased two families for money they do not owe.
+ *
+ * ⚠ BOTH HALVES OR NEITHER. Uncapping `Paid` while the overpayment is still inside `Credits` counts
+ * it twice — the exact double-count the cap exists to prevent. They ship together.
+ */
+export function splitFamilyOwnMoney(input: {
+  /** `Paid` as the dues surfaces compute it today: payments capped at the schedule total. */
+  cappedPaid: number;
+  /** `Credits` as the dues surfaces compute it today: issued less anything handed back. */
+  netCredits: number;
+  /** Credits of type `overpayment` ISSUED to this player this season. */
+  overpaymentCredits: number;
+  /** Everything handed back to this player in cash this season. */
+  paidOut: number;
+}): {
+  /** What this family has actually paid — their capped figure plus their own money back out of credits. */
+  paid: number;
+  /** What OTHER people covered: fundraising, sponsorship, reimbursement, contribution. */
+  credits: number;
+  /** The family's own money still sitting in the team's hands. Drives the "Overpaid" wording. */
+  ownMoneyHeld: number;
+} {
+  const cappedPaid = toCents(input.cappedPaid);
+  const netCredits = toCents(input.netCredits);
+  /* ⚠⚠ A REFUND LANDS AGAINST THE FAMILY'S OWN MONEY FIRST, AND THAT IS A CHOICE, NOT A FACT.
+     A payout record carries no link to the credit it refunded — the schema has no such column — so
+     when a family holds BOTH a standing overpayment and other credits, nothing in the data says
+     which one the coach handed back. Something has to be assumed, and the assumption is visible
+     here rather than buried.
+
+     WHY THIS WAY. The case that actually occurs is the designed one: an overpayment is
+     auto-converted to a credit (owner ruling 2026-08-13) and later handed back in cash. Assuming
+     the refund drains their own money first makes that case exactly right — the family stops being
+     shown as overpaid the moment they are repaid. The opposite assumption would keep telling a
+     coach the team was holding money it had already returned, which is the worse failure: it
+     invites paying the same family twice.
+
+     WHAT IT COSTS. If a coach refunds a SPONSOR's credit while an overpayment also stands, this
+     understates the family's own money held by the refunded amount. The balance is unaffected
+     either way — only the split between the two columns moves — and the family is still shown as
+     owed at least what they are owed, never more.
+
+     ⚠ IF A PAYOUT EVER GAINS A LINK TO ITS CREDIT, delete this assumption and read the link. Until
+     then, do not "improve" the allocation order without re-reading the paragraph above: the other
+     order is not more correct, it is wrong about the common case instead of the rare one.
+
+     Clamped to what the credit column actually still holds, so a player whose payouts exceed their
+     credits (possible after a schedule change) can never move more than there is. */
+  const standing = Math.min(
+    Math.max(0, toCents(input.overpaymentCredits) - toCents(input.paidOut)),
+    Math.max(0, netCredits),
+  );
+  return {
+    paid: toDollars(cappedPaid + standing),
+    credits: toDollars(netCredits - standing),
+    ownMoneyHeld: toDollars(standing),
+  };
+}
+
+
 /** How much of a NEW payment lands beyond everything left on the schedule — the amount that
  *  becomes an overpayment credit automatically (owner ruling 2026-08-13, no prompt). */
 export function overpaymentExcess(

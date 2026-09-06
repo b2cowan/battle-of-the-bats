@@ -53,11 +53,15 @@ export interface StatementPlayerInput {
   /** Per-installment CASH coverage — the "$200.00 of $300.00" figures. */
   coverage: { installmentId: string; allocated: number }[];
   payments: { amount: number; receivedDate: string; method: DuesPaymentMethod; note: string | null }[];
-  credits: { amount: number; creditDate: string; description: string }[];
+  credits: { amount: number; creditDate: string; description: string; creditType?: string }[];
   payouts: { amount: number; paidDate: string; method: DuesPaymentMethod; note: string | null }[];
+  /** What the family actually SENT — cappedPaid plus their own standing overpayment (D6). */
   paidAmount: number;
   outstanding: number;
+  /** What OTHER people covered. Their own overpayment is inside `paidAmount`, not here. */
   totalCredits: number;
+  /** The family's own money the team is holding. Optional so an older caller still builds. */
+  ownMoneyHeld?: number;
   leftToSend: number;
   creditApplied: number;
   owedBack: number;
@@ -179,8 +183,28 @@ export function buildFamilyDuesStatements(input: {
     if (creditApplied > CENT) {
       next.push(`Credits of ${money(creditApplied)} have already been applied for you.`);
     }
+    /* ⚠⚠ THIS SENTENCE IS ON A DOCUMENT A PARENT KEEPS, and it used to disagree with the stats
+       band four lines above it (owner ruling 2026-09-06, QA §148). The band's "Credits" is now what
+       OTHER people covered, while `owedBack` is unapplied credit from any source including the
+       family's own overpayment — so Avery's statement printed "Credits $578.15" over
+       "$1,128.15 in credit is set aside", two numbers for what reads as one idea.
+
+       ⚠ THE FIGURE IS STILL `owedBack`, because that is genuinely what the team can hand back. What
+       changed is that the sentence now separates the family's own money from everyone else's, so
+       the two numbers on the page explain each other instead of contradicting. */
     if (owedBack > CENT) {
-      next.push(`${money(owedBack)} in credit is set aside for your family — your coach can hand it back or apply it.`);
+      /* ⚠ THE FAMILY WHOSE MONEY IT IS NOT KEEPS THE SENTENCE THEY ALWAYS HAD. Only a household
+         that actually sent more than their bill reads anything different — changing the wording for
+         everyone would have altered a line on a document parents compare against last month's copy,
+         to fix a problem those parents do not have. (A unit test held this; it was right to.) */
+      const own = members.reduce((sum, p) => sum + (p.ownMoneyHeld ?? 0), 0);
+      if (own <= CENT) {
+        next.push(`${money(owedBack)} in credit is set aside for your family — your coach can hand it back or apply it.`);
+      } else if (own >= owedBack - CENT) {
+        next.push(`${money(owedBack)} you sent beyond your bill is set aside for your family — your coach can hand it back or apply it.`);
+      } else {
+        next.push(`${money(owedBack)} is set aside for your family — ${money(own)} of it sent beyond your bill, the rest in credit. Your coach can hand it back or apply it.`);
+      }
     }
     if (next.length === 0) {
       next.push(`Nothing — ${childrenLine}’s dues are fully paid. Thank you!`);
@@ -222,8 +246,13 @@ export function buildFamilyDuesStatements(input: {
       .flatMap(p => p.payments.map(pay => ({ child: displayName(p), ...pay })))
       .sort((a, b) => a.receivedDate.localeCompare(b.receivedDate))
       .map(pay => [formatStoredDate(pay.receivedDate), pay.child, money(pay.amount), methodLabel(pay.method), pay.note ?? '']);
+    /* ⚠⚠ AN OVERPAYMENT IS NOT A CREDIT EARNED (QA §148). The band's "Credits" figure excludes the
+       family's own overpayment — it moved into "Received" — so listing it here under a heading that
+       says "earned" made the table disagree with the number printed above it, with a row literally
+       labelled "Overpayment" doing the disagreeing. The money is not hidden: it is in Received, and
+       every payment behind it is itemised in the payments table on the same page. */
     const creditRows = members
-      .flatMap(p => p.credits.map(c => ({ child: displayName(p), ...c })))
+      .flatMap(p => p.credits.filter(c => c.creditType !== 'overpayment').map(c => ({ child: displayName(p), ...c })))
       .sort((a, b) => a.creditDate.localeCompare(b.creditDate))
       // The engine's follows-the-schedule credit has no single day — its stored date moves to
       // the last schedule change, and printing THAT reads as when the money arose (review

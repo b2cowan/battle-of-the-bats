@@ -125,6 +125,8 @@ interface PlayerWithDues {
   outstanding: number;
   credits: DuesCredit[];
   totalCredits: number;
+  /** The family's own money the team is holding — see `splitFamilyOwnMoney`. */
+  ownMoneyHeld: number;
   rollingBalance: number;
   /** The three-state position (owner model 2026-08-14): dues − cash − credits applied. */
   leftToSend: number;
@@ -167,6 +169,7 @@ const fmtDate = formatStoredDate;
    action. (Past due also carries a ⚠ glyph at the cell: colour never states a verdict alone.) */
 const DUES_STATUS_COLOR: Record<ReturnType<typeof duesStatusLabel>, string> = {
   'Not set':     'var(--home-dim, rgba(255,255,255,0.3))',
+  Overpaid:      'var(--success-light)',
   'In credit':   'var(--success-light)',
   // Settled = the balance cleared with credits doing part of the work (Paid stays cash — owner
   // model 2026-08-14). Same good green as Fully paid: the family owes nothing either way.
@@ -973,11 +976,15 @@ export function PlayerDuesPanel({
       payments: p.payments.map(pay => ({
         amount: pay.amount, receivedDate: pay.receivedDate, method: pay.method, note: pay.note,
       })),
-      credits: p.credits.map(c => ({ amount: c.amount, creditDate: c.creditDate, description: c.description })),
+      /* ⚠ THE KIND RIDES ALONG (QA §148). The statement filters the family own overpayment out
+         of its Credits-earned table, and without this field that filter matches nothing and fails
+         SILENTLY — the exact shape of defect this pass exists to close. */
+      credits: p.credits.map(c => ({ amount: c.amount, creditDate: c.creditDate, description: c.description, creditType: c.creditType })),
       payouts: p.payouts.map(po => ({
         amount: po.amount, paidDate: po.paidDate, method: po.method, note: po.note,
       })),
       paidAmount: p.paidAmount,
+      ownMoneyHeld: p.ownMoneyHeld,
       outstanding: p.outstanding,
       totalCredits: p.totalCredits,
       leftToSend: p.leftToSend,
@@ -1809,6 +1816,21 @@ export function PlayerDuesPanel({
        in this loop, said in the tile's caption. */
     let inCredit = 0;
     let inCreditFamilies = 0;
+    /* ⚠⚠ THE FAMILY'S OWN MONEY, SUMMED SEPARATELY — and the reason `collected` below subtracts it
+       (owner ruling 2026-09-06, QA §148, second pass).
+
+       The Paid COLUMN answers "what did this family send"; the Collected TILE answers "how much of
+       what we billed has been settled". Those are different questions, and an overpayment is
+       exactly where they diverge: Avery sent $1,250 against a $700 bill, so the column reads $1,250
+       and only $700 of it settled anything.
+
+       ⚠ THE FIRST ATTEMPT SUMMED THE COLUMN, and it broke two things at once. Collected could
+       exceed Assessed beside a $0 Balance owing — a band that visibly does not add up — and it
+       silently broke a promise written in the money hub's own code: that its Collections tile and
+       this table "can never disagree". The hub was RIGHT and deliberately so: it keeps a capped
+       figure for Collections (a balance question) and an uncapped one for Cash on hand (a cash
+       question). This band now does the same, so the two tiles agree again. */
+    let ownMoneyHeld = 0;
     /* ⚠ THE MONEY BEHIND THE COUNT, summed in THIS loop rather than a second walk (2026-09-03).
        The band states past-due money as its figure and the family count as its caption; deriving
        the amount anywhere else would be the fifth hand-copied dues sum this file's own credits
@@ -1816,7 +1838,11 @@ export function PlayerDuesPanel({
     let pastDue = 0;
     for (const p of players) {
       if (p.schedule) assessed += p.schedule.totalAmount;
-      collected += p.paidAmount;
+      /* The SETTLED half of what they sent. `paidAmount` is cappedPaid + their own standing
+         overpayment, so removing `ownMoneyHeld` recovers the capped figure exactly — no second
+         field on the payload, and no way for the two to drift apart. */
+      collected += p.paidAmount - p.ownMoneyHeld;
+      ownMoneyHeld += p.ownMoneyHeld;
       if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
       if (p.rollingBalance < -0.005) { inCredit += -p.rollingBalance; inCreditFamilies += 1; }
       /* ⚠⚠ ONE PREDICATE DECIDES BOTH THE COUNT AND THE MONEY, and that is the whole reason
@@ -1838,7 +1864,7 @@ export function PlayerDuesPanel({
         pastDue += installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id));
       }
     }
-    return { assessed, credits, collected, outstanding, overduePlayers, pastDue, inCredit: Math.round(inCredit * 100) / 100, inCreditFamilies };
+    return { assessed, credits, collected, outstanding, overduePlayers, pastDue, inCredit: Math.round(inCredit * 100) / 100, inCreditFamilies, ownMoneyHeld: Math.round(ownMoneyHeld * 100) / 100 };
   })();
   /**
    * THE DUES BAND (owner ruling 2026-09-03, D4) — the tab's summary, on BOTH views, in the one
@@ -1868,9 +1894,15 @@ export function PlayerDuesPanel({
       key: 'collected',
       label: 'Collected',
       figure: fmt(seasonTotals.collected),
-      // Credits are NOT added into the figure — collected is a cash word on every Money tab, and
-      // this caption is where the tab says what fundraising did without pretending it was cash.
-      caption: seasonTotals.credits > 0.005 ? `+ ${fmt(seasonTotals.credits)} from credits` : undefined,
+      /* Credits are NOT added into the figure — collected is a cash word on every Money tab, and
+         this caption is where the tab says what fundraising did without pretending it was cash.
+         ⚠ IT ALSO HAS TO ACCOUNT FOR THE PAID COLUMN NOW (QA §148). A coach who adds that column up
+         gets a bigger number than this tile whenever a family has overpaid, and without a word here
+         that reads as an error rather than as two different questions. */
+      caption: [
+        seasonTotals.credits > 0.005 ? `+ ${fmt(seasonTotals.credits)} from credits` : null,
+        seasonTotals.ownMoneyHeld > 0.005 ? `${fmt(seasonTotals.ownMoneyHeld)} more sent than billed` : null,
+      ].filter(Boolean).join(' · ') || undefined,
     },
     {
       key: 'owing',
@@ -2305,6 +2337,20 @@ export function PlayerDuesPanel({
                     >
                       <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
+                        {/* ⚠ THE ONE FACT THIS SCREEN COULD NOT SAY (owner ruling 2026-09-06, QA
+                            §146 · D6). A family that sends more than their bill has the excess
+                            auto-converted to a credit, so the row used to read "Paid $700.00"
+                            for a family that had sent $1,250.00 and file the other $550.00 under
+                            a "Credits" total that also held sponsor money and out-of-pocket
+                            reimbursements. Both columns are honest now; this line answers the
+                            question a parent actually asks — how much of MY money are you
+                            holding? Rendered only when there is some, so eleven quiet rows stay
+                            quiet. */}
+                        {p.ownMoneyHeld > 0.005 && (
+                          <span className={styles.rowSubNote}>
+                            sent {fmt(p.ownMoneyHeld)} more than billed
+                          </span>
+                        )}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Total Dues">
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
@@ -2312,7 +2358,11 @@ export function PlayerDuesPanel({
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                         {/* Credits reduce the bill, so they read as a negative — and since the
                             brackets ruling (2026-08-14) the FORMATTER draws that, not a
-                            hand-written dash in front of a positive number. */}
+                            hand-written dash in front of a positive number.
+                            ⚠ THIS IS OTHER PEOPLE'S MONEY ONLY (D6, 2026-09-06) — fundraising,
+                            sponsorship, reimbursement, contribution. The family's own
+                            overpayment moved into Paid, where it belongs. The Balance beside it
+                            did not move: the two columns are a RE-SPLIT of one total. */}
                         {p.totalCredits > 0 ? fmt(-p.totalCredits) : '—'}
                       </td>
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.paidAmount > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
@@ -3009,8 +3059,24 @@ export function PlayerDuesPanel({
                         fontSize: '0.82rem', color: 'var(--success-light)',
                       }}>
                         <span style={{ flex: 1, minWidth: 200 }}>
+                          {/* ⚠⚠ "THIS FAMILY'S MONEY" HAD TO STOP MEANING EVERY CREDIT (owner ruling
+                              2026-09-06, QA §148). `owedBack` is unapplied credit from ANY source, so
+                              for Avery it read "$1,128.15 of this family's money" while $578.15 of it
+                              was a sponsor's and a reimbursement — and the row two inches above now
+                              says "sent $550.00 more than billed". Two numbers, one question, one
+                              screen. This is the exact sentence the whole ruling was written to make
+                              honest, and it was the last place still getting it wrong.
+
+                              ⚠ THE TOTAL IS UNCHANGED, and deliberately: the team really is holding
+                              `owedBack`, and all of it is payable (payouts are not restricted by
+                              source — see `payoutCeiling`). What changed is that the sentence now
+                              says whose it is when the answer is mixed, instead of calling a
+                              sponsor's money the family's. */}
                           {selected.owedBack > 0.005
-                            ? <>The team is holding {fmt(selected.owedBack)} of this family&apos;s money
+                            ? <>The team is holding {fmt(selected.owedBack)} for this family
+                                {selected.ownMoneyHeld > 0.005 && selected.ownMoneyHeld < selected.owedBack - 0.005
+                                  ? ` — ${fmt(selected.ownMoneyHeld)} of it their own, the rest from credits`
+                                  : selected.ownMoneyHeld > 0.005 ? ' — their own, sent beyond their bill' : ' — all of it from credits'}
                                 {selected.leftToSend > 0.005 ? ` — and ${fmt(selected.leftToSend)} is still to send on their installments.` : '.'}</>
                             /* "installments", not "bills" (owner 2026-08-14): the word the rest of
                                this screen, the schedule editor and the help guide all use. A second

@@ -145,14 +145,29 @@ export function duesStatusLabel(p: {
   leftToSend: number;
   /** The family's money the team is holding (never includes forgiveness). */
   owedBack: number;
+  /**
+   * The family's OWN money the team is holding — their overpayment, less anything handed back
+   * (`splitFamilyOwnMoney`). Optional so the older callers that cannot see it keep working.
+   *
+   * ⚠ NOT THE SAME FACT AS `owedBack`, which is unapplied credit from ANY source. A family whose
+   * sponsor covered their season is in credit without having overpaid a cent, and telling them
+   * they "overpaid" would be a lie about where the money came from. On the QA §146 fixture that
+   * is Casey exactly: $37.50 of leftover fundraiser credit, and nothing of her own.
+   */
+  ownMoneyHeld?: number;
   /** Schedule total − cash paid (credit-blind, the shared definition). */
   outstanding: number;
   /** The bills, so lateness can be judged. Absent ⇒ nothing carries a due date ⇒ nothing is late. */
   installments?: DuesInstallmentTiming[] | null;
-}): 'Not set' | 'In credit' | 'Settled' | 'Fully paid' | 'Past due' | 'Up to date' {
+}): 'Not set' | 'Overpaid' | 'In credit' | 'Settled' | 'Fully paid' | 'Past due' | 'Up to date' {
   if (!p.schedule) return 'Not set';
   // Nothing left to send — the season's terminal states, none of which can be late.
   if (p.leftToSend <= 0.005) {
+    /* ⚠ THE FAMILY'S OWN MONEY IS NAMED FIRST (owner ruling 2026-09-06, QA §146 · D6). "In
+       credit" was doing two jobs: a family the club owes money to, and a family whose dues a
+       sponsor happened to cover. A coach can hand the first one their money back and cannot do
+       anything for the second, so they are not one word. */
+    if ((p.ownMoneyHeld ?? 0) > 0.005) return 'Overpaid';
     if (p.owedBack > 0.005) return 'In credit';
     return p.outstanding <= 0.005 ? 'Fully paid' : 'Settled';
   }

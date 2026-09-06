@@ -76,6 +76,13 @@ export interface BreakdownPlayer {
   }[];
   coverage: InstallmentCoverage[];
   rollingBalance: number;
+  /**
+   * The family's OWN money the team is holding (D6, QA §148). Optional so a caller that cannot
+   * see it still builds — but see the caption below: without it this lens says "In credit" for a
+   * family the main table calls "Overpaid", which is the two-screens-one-family defect the whole
+   * ruling exists to remove.
+   */
+  ownMoneyHeld?: number;
 }
 
 /** What the panel's pager needs to know about the grid's sideways position. */
@@ -451,7 +458,12 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
     // A family in credit is due nothing (owner, 2026-09-04): the credit itself is the Balance
     // column's fact, one cell over; printing it here twice answered a different question.
     if (d.allSettled && p.rollingBalance < -0.005) {
-      return { value: fmt(0), valueColor: 'var(--home-dim, rgba(255,255,255,0.35))', caption: 'In credit', tone: 'good' as const };
+      /* ⚠ THE SAME TWO WORDS THE MAIN TABLE USES (QA §148). This lens hardcoded "In credit" and
+         never asked whose money it was, so a family the table called "Overpaid" read "In credit"
+         here — one family, one screen, two vocabularies. The distinction is not decoration: a
+         coach can hand back the money in the first case and can do nothing in the second. */
+      const caption = (p.ownMoneyHeld ?? 0) > 0.005 ? 'Overpaid' : 'In credit';
+      return { value: fmt(0), valueColor: 'var(--home-dim, rgba(255,255,255,0.35))', caption, tone: 'good' as const };
     }
     const cap = dueNextCaption(d);
     return {

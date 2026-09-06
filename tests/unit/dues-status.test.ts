@@ -97,6 +97,55 @@ describe('duesStatusLabel — the terminal states (Paid stays cash)', () => {
       'In credit',
     );
   });
+  /**
+   * ⚠⚠ "OVERPAID" AND "IN CREDIT" ARE TWO DIFFERENT FACTS (owner ruling 2026-09-06, QA §148), and
+   * the difference is what a coach can DO about it. A family that sent more than their bill can be
+   * handed their money back. A family whose sponsor covered their season is in credit without
+   * having overpaid a cent — there is nothing of theirs to return. One word for both hid that.
+   *
+   * These three cases are the fixture's own shapes: Avery (own money held), Casey (overpaid, then
+   * handed all of it back, so nothing of hers remains), and Kai (a sponsor covered the season).
+   */
+  it('the family sent more than their bill and the team still holds it: Overpaid', () => {
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 1250, totalCredits: 578.15,
+        leftToSend: 0, owedBack: 1128.15, outstanding: 0, ownMoneyHeld: 550,
+      }),
+      'Overpaid',
+    );
+  });
+  it('overpaid, then handed all of it back: In credit, not Overpaid', () => {
+    // Casey: the $300 excess became a credit and was refunded in cash, so none of it is hers now.
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 900, totalCredits: 37.5,
+        leftToSend: 0, owedBack: 37.5, outstanding: 0, ownMoneyHeld: 0,
+      }),
+      'In credit',
+    );
+  });
+  it('a sponsor covered the season: In credit, never Overpaid', () => {
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 0, totalCredits: 900,
+        leftToSend: 0, owedBack: 900, outstanding: 0, ownMoneyHeld: 0,
+      }),
+      'In credit',
+    );
+  });
+  it('a caller that cannot see the new fact still gets the OLD word, never a crash', () => {
+    // The input is optional on purpose, so an older caller keeps working — but that also means a
+    // caller who forgets it silently reports "In credit" for an overpaid family. This test states
+    // that trade-off so it is a decision rather than a surprise.
+    assert.equal(
+      duesStatusLabel({
+        schedule: {}, paidAmount: 1250, totalCredits: 578.15,
+        leftToSend: 0, owedBack: 1128.15, outstanding: 0,
+      }),
+      'In credit',
+    );
+  });
   it('a forgiveness larger than the debt evaporates — never In credit', () => {
     // forgiven $800 against $600 owing: leftToSend 0, owedBack 0 (forgiveness is never the
     // family's money), outstanding still 600 (credit-blind) → Settled, not In credit.

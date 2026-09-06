@@ -1,0 +1,507 @@
+<title>Whose Money Is It</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.rowtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:2px 0}
+.rowtable th,.rowtable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rowtable th{font-family:var(--disp);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.rowtable td:first-child,.rowtable th:first-child{text-align:left}
+.scrollx{overflow-x:auto}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §148 · Coaches portal → Money → Player Dues</p>
+  <h1>Whose money is it</h1>
+  <p class="lede">You read one row and asked how a family could have sent $1,250 while the screen
+    said $700. This is the answer, built. Five parts. <b>Most of it is arithmetic you can check
+    yourself</b> — the whole promise of this change is that one number did <em>not</em> move, and
+    Part B is you proving that rather than taking my word for it.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Player Dues</b>, then the
+    <b>Season totals</b> table. Part D also visits <b>Roster → Avery Test</b>.</p>
+  <div class="warn"><b>Two things that would make this walk lie to you.</b> A shared module moved, so
+    restart the dev server if the screens look unchanged. And <b>another session is working in the
+    same copy</b> — if a figure below does not match, check whether the whole row moved (data changed
+    under us) before recording it as a defect. Devon already changed status on his own today.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The row you found</h2>
+  <p>Player Dues → Season totals. Find <b>Avery Test</b>, the first row.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>Avery's row now says what Avery sent</h3></div></div>
+  <div class="step-body">
+    <p class="why">The row should read exactly this — and the line underneath the name is the answer
+      to the question a parent actually asks:</p>
+    <div class="scrollx"><table class="rowtable">
+      <thead><tr><th>Player</th><th>Total Dues</th><th>Credits</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+      <tbody><tr><td>Avery Test</td><td>$700.00</td><td>($578.15)</td><td>$1,250.00</td><td>($1,128.15)</td><td>Overpaid</td></tr></tbody>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a"><b>Paid</b> reads <b>$1,250.00</b> — what Avery actually sent<span class="hintline">It read $700.00 before, which is what they were billed, not what they sent</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b"><b>Credits</b> reads <b>($578.15)</b> — only other people's money</label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Underneath the name: <b>“sent $550.00 more than billed”</b>, small and quiet</label></div>
+      <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">Status reads <b>Overpaid</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>Only rows with something to say say it</h3></div></div>
+  <div class="step-body">
+    <p class="why">Eleven other families have no overpayment. None of them should have gained a line
+      under their name — a note on every row is noise, not information.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">Only Avery carries a note; the other eleven rows are unchanged in height</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">The note is quiet — it does not compete with the player's name</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Prove the balance did not move</h2>
+  <p>This is the part that matters. The whole promise is that this change re-labelled money without
+    moving a single balance — because you and your coaches have already acted on those numbers.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Twelve balances, unchanged</h3>
+    <div class="tags"><span class="tag think">check the arithmetic</span></div></div></div>
+  <div class="step-body">
+    <p class="why">These are the balances the screen showed <b>before</b> this change. Every one
+      should still read the same. <b>Avery's is the one to look at hardest</b> — it broke during the
+      build and read ($578.15) for a while.</p>
+    <div class="scrollx"><table class="rowtable">
+      <thead><tr><th>Player</th><th>Balance</th><th>Player</th><th>Balance</th></tr></thead>
+      <tbody>
+        <tr><td>Avery</td><td>($1,128.15)</td><td>Harper</td><td>$970.83</td></tr>
+        <tr><td>Blake</td><td>$168.85</td><td>Indigo</td><td>$730.83</td></tr>
+        <tr><td>Casey</td><td>($37.50)</td><td>Jules</td><td>$845.83</td></tr>
+        <tr><td>Devon</td><td>$943.83</td><td>Kai</td><td>$70.83</td></tr>
+        <tr><td>Emerson</td><td>$970.83</td><td>Logan</td><td>$870.83</td></tr>
+        <tr><td>Frankie</td><td>$930.83</td><td colspan="2"></td></tr>
+        <tr><td>Gray</td><td>$845.83</td><td colspan="2"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">All twelve balances match the list above</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">Avery's balance is <b>($1,128.15)</b><span class="hintline">$700.00 − $578.15 − $1,250.00. If this reads ($578.15) the defect is back — flag it hard</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>The band at the bottom still ties</h3></div></div>
+  <div class="step-body">
+    <p class="why">Scroll to the season totals band. <b>Collected</b> should have gone <em>up</em> by
+      $550 and the credits figure beside it <em>down</em> by the same — the money moved buckets, it
+      did not appear or vanish. Everything else holds.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a"><b>Collected $2,775.00</b>, with <b>+ $2,349.63 from credits</b> beside it<span class="hintline">Was $2,225.00 and $2,899.63. Both totals add to $5,124.63 either way</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b"><b>Assessed $11,308.30</b> — untouched</label></div>
+      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c"><b>Balance owing $7,349.32</b> — untouched</label></div>
+      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d"><b>$1,165.65 owed back to 2 families</b> — untouched</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The distinction I am least sure lands</h2>
+  <p>“Overpaid” and “In credit” are now two different things. This is the part to argue with.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Casey is In credit, not Overpaid — is that right?</h3>
+    <div class="tags"><span class="tag think">your judgement</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Avery reads Overpaid. Casey reads In credit.</b> Both have a negative balance,
+      so the old screen called them the same thing. The difference: Avery has <b>$550 of their own
+      money</b> sitting with the team, and Casey's ($37.50) is a leftover <b>fundraiser rebate</b> —
+      Casey overpaid too, but was handed all of it back in cash already.</p>
+    <p class="why"><b>The argument for splitting them:</b> you can write Avery a cheque. There is
+      nothing to write Casey. One word for both hid that.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">Avery reads <b>Overpaid</b>, Casey reads <b>In credit</b></label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Reading them side by side, the two words mean different things to me</label></div>
+    </div>
+    <div class="ask"><b>Tell me if “Overpaid” is the wrong word.</b> It is the one piece of new
+      vocabulary this change introduces, and it is a one-line fix while nothing has shipped.</div>
+    <textarea placeholder="Is “Overpaid” right? Would you call it something else?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>Read Kai's row out loud</h3>
+    <div class="tags"><span class="tag think">say it in your own words</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Find <b>Kai Test</b>: billed $970.83, credits ($900.00), paid $0.00, balance
+      $70.83, <b>Up to date</b>. Say out loud what that row is telling you about Kai's family, then
+      write it below — and say whether it is true.</p>
+    <div class="tip"><b>What I am fishing for:</b> whether a coach reads “$0.00 paid” and concludes
+      the family has done nothing, when in fact a sponsor covered all but $70.83 of their season.
+      This is the row where the two columns have to work together or the screen misleads.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">I read Kai's row aloud and wrote down what it says</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">What it says is true, and a coach would not misread it</label></div>
+    </div>
+    <textarea placeholder="What does Kai's row tell you? Is it true?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The other screen that shows the same family</h2>
+  <p>The point of the change was that two screens stop disagreeing. This is where that gets tested.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Avery's player page agrees, to the cent</h3></div></div>
+  <div class="step-body">
+    <p class="why">Go to <b>Roster → Avery Test</b> and find the money boxes. They should read
+      <b>Assessed $700.00 · Paid $1,250.00 · Credits $578.15 · Balance −$1,128.15</b> — the same four
+      numbers as the dues table, because they now come from one shared calculation.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">Paid reads <b>$1,250.00</b>, matching the dues table</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">Credits reads <b>$578.15</b>, matching the dues table</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Balance matches too</label></div>
+    </div>
+    <div class="ask"><b>One thing I noticed and did not touch:</b> this page prints the balance as
+      <code>$-1128.15</code> where the dues table draws <code>($1,128.15)</code>. That is older than
+      this change and outside its scope — but it is two spellings of one number, so tell me if you
+      want it fixed.</div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>Open Avery's drawer, and the phone</h3>
+    <div class="tags"><span class="tag phone">phone</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Back on Player Dues, tap Avery's row to open the drawer — its <b>Paid</b> stat
+      reads the same figure. Then narrow to about 390px and confirm the table still behaves: the note
+      under the name wraps rather than being cut off, and nothing runs off the right edge.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">The drawer's <b>Paid</b> stat says $1,250.00</label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">On a phone the note wraps under the name and reads cleanly</label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">Nothing is cut off at the right edge</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>Two things owed, and one question</h2>
+  <p>Answer in the boxes — the answers come back with your findings.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>The help and the demo have not been touched</h3>
+    <div class="tags"><span class="tag think">your call on sequencing</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Two columns just changed what they mean on a screen customers read</b>, and the
+      in-app dues help almost certainly still describes the old meaning. The coach demo's money
+      narration wants the same question asked of it — that surface has gone stale three releases
+      running.</p>
+    <p class="why"><b><code>/review</code> has also not run on this.</b> Given the build shipped a
+      balance defect that three automated gates called green, I would run it before this is closed.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">Ruled: help + demo now, or after the rest of the dues-by-family project</label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Ruled: run <code>/review</code> before committing, or after</label></div>
+    </div>
+    <textarea placeholder="Sequencing: help, demo, review — now or later?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>Does the rest of the project still look right?</h3>
+    <div class="tags"><span class="tag think">your ruling</span></div></div></div>
+  <div class="step-body">
+    <p class="why">This was <b>step 1 of 7</b>. Next is the one that moves a number on the face of
+      Budget vs Actual: credits from anyone but the family come off the planned dues figure, so
+      <b>dues planned goes $11,308.30 → $8,958.67</b> and <b>Total revenue $13,258.30 →
+      $10,908.67</b>. Only then do the per-family fold rows get built.</p>
+    <div class="tip">Now that you have seen the columns actually behave, it is worth re-reading the
+      mockup's arithmetic once more before that number moves — it is the one change in this project a
+      coach would notice without being told.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Happy for step 2 (the netting) to proceed as planned</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">Committed<span class="hintline">Nothing commits without your word — this is still uncommitted on dev</span></label></div>
+    </div>
+    <textarea placeholder="Notes on E2…"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Press <b>Copy findings</b> at the top, or copy from here, and paste it back into the
+    chat. Everything you typed and every verdict comes with it.</p>
+  <textarea class="out" id="outbox" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §148</span><span>Coach Money — whose money is it</span>
+  <span>Built on dev 2026-09-06, uncommitted</span><span>Fixture: UAT Test Team</span>
+</footer>
+</div>
+
+<div class="toastwrap" hidden id="toastwrap"><div class="toast" id="toast">Copied</div></div>
+
+<script>
+(function(){
+  var KEY='coach-dues-own-money-walk-148';
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('textarea:not(#outbox)'));
+  var out=document.getElementById('outbox');
+
+  function load(){
+    var s={};
+    try{ s=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ s={}; }
+    return s&&typeof s==='object'?s:{};
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v) st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §148 — Coach Money: whose money is it','Fixture: UAT Test Team · built on dev 2026-09-06',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var txt=lab.textContent.split('\n')[0].trim();
+        var hint=lab.querySelector('.hintline');
+        if(hint) txt=txt.replace(hint.textContent.trim(),'').trim();
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt);
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

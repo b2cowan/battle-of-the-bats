@@ -5572,8 +5572,12 @@ export async function getRepTeamAttendanceMarks(
 export interface RepPlayerDuesSummary {
   hasSchedule: boolean;
   totalAssessed: number;
+  /** What the family actually sent — see `splitFamilyOwnMoney` (owner ruling 2026-09-06, D6). */
   totalPaid: number;
+  /** What someone OTHER than the family covered. Their own overpayment is in `totalPaid`. */
   totalCredits: number;
+  /** The family's own money the team is still holding. */
+  ownMoneyHeld: number;
   balance: number;        // assessed − paid − credits (can be negative if over-credited)
   overdue: boolean;
   nextDueDate: string | null;
@@ -5588,30 +5592,58 @@ export async function getRepPlayerDuesSummary(
   playerId: string, programYearId: string,
 ): Promise<RepPlayerDuesSummary> {
   const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
-  const [installments, payments, creditsRes] = await Promise.all([
+  const [installments, payments, creditsRes, payoutsRes] = await Promise.all([
     schedule ? getRepPlayerDuesInstallments(schedule.id) : Promise.resolve([]),
     getRepDuesPaymentsForPlayer(programYearId, playerId),
     supabaseAdmin
       .from('rep_dues_credits')
+      /* ⚠ THE TYPE RIDES ALONG NOW (D6, 2026-09-06). A family's own overpayment is not a credit to
+         them, so this reader has to be able to tell an overpayment from a sponsor's money. */
+      .select('amount, credit_type')
+      .eq('player_id', playerId)
+      .eq('program_year_id', programYearId),
+    /* ⚠ AND SO DO PAYOUTS. A credit handed back in cash has already stopped reducing what this
+       family owes; without this the refund would be re-counted as money they paid. */
+    supabaseAdmin
+      .from('rep_dues_payouts')
       .select('amount')
       .eq('player_id', playerId)
       .eq('program_year_id', programYearId),
   ]);
   if (creditsRes.error) throw creditsRes.error;
+  if (payoutsRes.error) throw payoutsRes.error;
   const creditRows = creditsRes.data;
 
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const totalAssessed = schedule?.totalAmount ?? 0;
   const paymentsTotal = payments.reduce((s, p) => s + p.amount, 0);
-  const totalPaid = schedule ? duesPaidAmount(paymentsTotal, totalAssessed) : 0;
+  const cappedPaid = schedule ? duesPaidAmount(paymentsTotal, totalAssessed) : 0;
   // ONE credit definition (lib/dues-credits.ts) — this was one of five hand-copied credit sums.
-  const totalCredits = creditsTotal((creditRows ?? []).map((c: any) => ({ amount: Number(c.amount) })));
+  const creditsIssued = creditsTotal((creditRows ?? []).map((c: any) => ({ amount: Number(c.amount) })));
+  const paidOut = amountsTotal((payoutsRes.data ?? []).map((r: any) => ({ amount: Number(r.amount) })));
+  /* ⚠⚠ THE SAME RE-SPLIT THE DUES TAB DOES, from the same helper — this reader is the roster
+     player's own money panel, and two screens quoting one family must not disagree about what that
+     family paid. Read `splitFamilyOwnMoney` before changing either figure; the balance below is
+     unchanged by construction. */
+  const own = splitFamilyOwnMoney({
+    cappedPaid,
+    netCredits: Math.max(0, round2(creditsIssued - paidOut)),
+    overpaymentCredits: creditsTotal(
+      (creditRows ?? [])
+        .filter((c: any) => c.credit_type === 'overpayment')
+        .map((c: any) => ({ amount: Number(c.amount) })),
+    ),
+    paidOut,
+  });
+  const totalPaid = own.paid;
+  const totalCredits = own.credits;
   const today = tournamentToday();
   return {
     hasSchedule: !!schedule,
     totalAssessed: round2(totalAssessed),
     totalPaid: round2(totalPaid),
     totalCredits: round2(totalCredits),
+    ownMoneyHeld: round2(own.ownMoneyHeld),
     balance: round2(totalAssessed - totalPaid - totalCredits),
     overdue: installments.some(i => !i.paidAt && i.dueDate < today),
     nextDueDate: installments
@@ -9314,7 +9346,7 @@ export async function markRepPlayerDuesInstallmentPaid(
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
-import { allocateDuesPayments, duesPaidAmount, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
+import { allocateDuesPayments, duesPaidAmount, splitFamilyOwnMoney, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
 import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {

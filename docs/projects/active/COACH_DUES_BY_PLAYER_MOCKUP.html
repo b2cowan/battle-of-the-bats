@@ -1,0 +1,432 @@
+<title>Dues by Family</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ── Tokens: the coach portal's own warm paper, so the mock reads as the product ── */
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC; --tint:#F0EDE4; --band:#E7EAF1;
+  --ink:#241E15; --ink-soft:#463E32; --dim:#6B6357; --faint:#8C8478;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --good:#2F6B34;
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710; --tint:#282218; --band:#232A38;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92; --faint:#8B8377;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --good:#7FBF84;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710; --tint:#282218; --band:#232A38;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92; --faint:#8B8377;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --good:#7FBF84;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:960px;margin:0 auto;padding:44px 22px 90px;display:flex;flex-direction:column;gap:0}
+p{margin:0}
+b,strong{font-weight:650}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,56px);line-height:.98;letter-spacing:-.015em;margin:8px 0 0;text-wrap:balance;max-width:15ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:66ch;margin-top:15px}
+.rev{margin-top:14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:var(--dim)}
+
+.sec{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:6px}
+.sec .eyebrow{color:var(--olive)}
+.sec h2{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.06;margin:0;text-wrap:balance}
+.sec > p{font-size:14.5px;color:var(--ink-soft);max-width:70ch}
+.body{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.body p{font-size:14.5px;line-height:1.6;color:var(--ink-soft);max-width:70ch}
+
+.note{border-left:3px solid var(--olive);background:var(--olive-soft);padding:11px 15px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.55;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:11px 15px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.55;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:11px 15px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.55;max-width:74ch}
+.note b,.warn b,.ask b{color:var(--ink)}
+
+/* ── The mock screen. TRUE SIZE — every measurement below is read off the built report. ── */
+.screen{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.screen-cap{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;padding:10px 15px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.screen-cap .who{font-family:var(--disp);font-weight:700;font-size:16px;letter-spacing:.02em;color:var(--ink)}
+.screen-cap .what{font-size:12.5px;color:var(--dim)}
+.scrollx{overflow-x:auto}
+
+table.mock{width:100%;border-collapse:collapse;font-family:var(--sans);table-layout:auto}
+table.mock th,table.mock td{padding:6.72px 12px;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--rule);text-align:right;font-variant-numeric:tabular-nums;font-size:13.44px;font-weight:600;color:var(--ink)}
+table.mock thead th{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);background:var(--card)}
+table.mock th.lead{text-align:left;white-space:normal;font-weight:600;font-size:13.44px;color:var(--ink);letter-spacing:0;text-transform:none;padding-left:53px}
+table.mock thead th.lead{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding-left:14px}
+
+tr.band th,tr.band td{background:var(--band);font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--olive)}
+tr.band th.lead{padding-left:14px;font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--olive)}
+tr.cat th,tr.cat td{background:var(--tint);font-size:13.76px;font-weight:800}
+tr.cat th.lead{padding-left:35px;font-size:14.72px;font-weight:800}
+tr.kid th.lead{padding-left:71px;font-weight:500;color:var(--ink-soft)}
+tr.kid th,tr.kid td{font-weight:500;color:var(--ink-soft)}
+tr.tot th,tr.tot td{box-shadow:inset 0 2px 0 var(--rule-strong);font-size:14.72px;font-weight:800}
+tr.tot th.lead{padding-left:14px;font-size:14.72px;font-weight:800}
+tr.newrow th,tr.newrow td{background:var(--olive-soft)}
+
+.chev{display:inline-block;width:20px;margin-left:-28px;margin-right:8px;color:var(--faint);font-size:11px;vertical-align:middle}
+.sub{display:block;font-size:11.5px;font-weight:400;color:var(--faint);letter-spacing:0;line-height:1.35;margin-top:1px}
+.up{color:var(--good)} .down{color:var(--brick)} .nil{color:var(--faint)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 15px;border-top:1px solid var(--rule);background:var(--fill);font-size:12px;color:var(--dim)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--olive-soft);border:1px solid var(--olive);vertical-align:-1px;margin-right:5px}
+
+.recon{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;font-family:var(--mono);font-size:13px;line-height:1.9;overflow-x:auto}
+.recon .row{display:flex;justify-content:space-between;gap:22px;min-width:380px}
+.recon .row.gap{border-top:1px solid var(--rule-strong);margin-top:5px;padding-top:5px;font-weight:600}
+.recon .lbl{color:var(--ink-soft)}
+.recon .val{font-variant-numeric:tabular-nums;color:var(--ink)}
+.recon .row.good .val,.recon .row.good .lbl{color:var(--good)}
+
+.decks{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.deck{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.deck-h{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.deck-h .id{font-family:var(--disp);font-weight:700;font-size:19px;line-height:1;color:var(--dim);min-width:3ch;padding-top:2px}
+.deck-h h3{font-family:var(--disp);font-weight:700;font-size:19px;line-height:1.14;margin:0;text-wrap:balance;flex:1}
+.settled{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--olive);background:var(--olive-soft);border:1px solid var(--olive);border-radius:99px;padding:2px 9px;white-space:nowrap;margin-top:3px}
+.settled.open{color:var(--gold);background:var(--gold-soft);border-color:var(--gold)}
+.deck-b{padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px}
+.deck-b p{font-size:14px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.rec{display:flex;gap:9px;align-items:baseline;font-size:14px;line-height:1.5;background:var(--olive-soft);border-radius:var(--r-sm);padding:9px 13px;max-width:74ch}
+.rec .tag{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--olive);white-space:nowrap;padding-top:2px}
+.rec.against{background:var(--gold-soft)}
+.rec.against .tag{color:var(--gold)}
+
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:34px} table.mock th.lead{padding-left:40px} tr.kid th.lead{padding-left:52px} .chev{margin-left:-22px;margin-right:5px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Mockup for approval · Coach Money · raised in QA §146</p>
+  <h1>Dues by family</h1>
+  <p class="lede">Player dues is the biggest single figure on the revenue side of a season, and the
+    only row on this report a coach cannot open. This is what opening it would look like — drawn at
+    the report's real sizes, with the UAT team's real numbers.</p>
+  <p class="rev">Round 3 &middot; rebuilt again after the owner asked how a dues payment could belong
+    to no player. It cannot. Every figure below is read from the payment and credit records
+    themselves, never inferred from screen totals.</p>
+</header>
+
+<!-- ═══ THE CORRECTION ═══ -->
+<div class="sec">
+  <p class="eyebrow">Round 3 · I was wrong twice, and you caught both</p>
+  <h2>The cap is deliberate, and it is right</h2>
+</div>
+<div class="body">
+  <p><b>Round 1</b> claimed $850 of dues belonged to no player. <b>Round 2</b> called it overpayment
+    the Dues tab was hiding, and recommended the Dues tab stop capping. Both were inferred from
+    totals rather than read from the records. <b>I am withdrawing the round-2 recommendation as
+    written: the cap is not hiding anything.</b></p>
+  <p>When a family sends more than their bill, the excess is <b>automatically turned into a credit</b>
+    — your ruling, 2026-08-13, no prompt. The Paid column stops at the bill precisely so that money
+    is not counted twice, once as paid and again as a credit. Avery's $550 is not lost. It is sitting
+    inside their $1,128.15 of &ldquo;credits&rdquo;.</p>
+  <div class="note"><b>So nothing is missing. What is wrong is the word.</b> &ldquo;Credits&rdquo; is
+    one number carrying four different meanings, and one of them is the family's own cash.</div>
+</div>
+
+<!-- ═══ AVERY ═══ -->
+<div class="sec">
+  <p class="eyebrow">D6 · the mockup you asked for</p>
+  <h2>What Avery's row cannot tell a coach</h2>
+</div>
+<div class="body">
+  <div class="screen">
+    <div class="screen-cap"><span class="who">Player Dues &rarr; Season totals</span><span class="what">Today</span></div>
+    <div class="scrollx">
+      <table class="mock">
+        <thead><tr><th class="lead">Player</th><th>Total Dues</th><th>Credits</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="kid"><th class="lead" scope="row">Avery</th><td>$700.00</td><td>($1,128.15)</td><td>$700.00</td><td>($1,128.15)</td><td>In credit</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p><b>Avery actually sent $1,250.00.</b> The row says $700.00. And the $1,128.15 beside it is three
+    unrelated things added together:</p>
+  <div class="recon">
+    <div class="row"><span class="lbl">overpayment &nbsp;&middot; Avery's own money, held by the team</span><span class="val">$550.00</span></div>
+    <div class="row"><span class="lbl">reimbursement &middot; Avery paid team costs out of pocket</span><span class="val">$380.00</span></div>
+    <div class="row"><span class="lbl">fundraising &nbsp;&nbsp;&middot; rebates and sponsorships they raised</span><span class="val">$198.15</span></div>
+    <div class="row gap"><span class="lbl">shown as one word: &ldquo;Credits&rdquo;</span><span class="val">$1,128.15</span></div>
+  </div>
+  <p>Those call for three different actions. The club <b>owes Avery</b> the $380 and the $550; the
+    $198.15 they earned. &ldquo;In credit $1,128.15&rdquo; tells a coach none of that &mdash; and a
+    family asking <em>&ldquo;how much of my own money are you holding?&rdquo;</em> cannot be answered
+    from this screen at all.</p>
+</div>
+
+<!-- ═══ PROPOSED DUES ROW ═══ -->
+<div class="sec">
+  <p class="eyebrow">Proposed</p>
+  <h2>Two columns stop lying about which bucket the money is in</h2>
+</div>
+<div class="body">
+  <div class="screen">
+    <div class="screen-cap"><span class="who">Player Dues &rarr; Season totals</span><span class="what">Proposed</span></div>
+    <div class="scrollx">
+      <table class="mock">
+        <thead><tr><th class="lead">Player</th><th>Total Dues</th><th>Credits</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr class="kid newrow"><th class="lead" scope="row">Avery<span class="sub">$380.00 reimbursed &middot; $198.15 raised &middot; sent $550.00 more than billed</span></th><td>$700.00</td><td>($578.15)</td><td>$1,250.00</td><td>($1,128.15)</td><td>Overpaid</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p><b>Two changes, and they only work as a pair.</b> <b>Credits</b> comes to mean money from someone
+    other than this family, so the overpayment leaves it. <b>Paid</b> can then show what the family
+    actually sent, because the double-count the cap existed to prevent is gone.</p>
+  <div class="note"><b>The Balance does not move.</b> $700.00 &minus; $578.15 &minus; $1,250.00 =
+    <b>($1,128.15)</b> &mdash; exactly what the row says today. Nothing a coach has already acted on
+    changes value; the $550 just stops being filed under the wrong word. <b>Either change on its own
+    breaks it:</b> uncapping Paid while the overpayment is still a credit counts it twice.</div>
+  <p>And it settles D6 for free. The report would show Avery's dues as <b>$1,250.00</b>; the Dues tab
+    would now say <b>$1,250.00</b>. One family, one number, two screens.</p>
+</div>
+
+<!-- ═══ KNOCK-ON ═══ -->
+<div class="sec">
+  <p class="eyebrow">Knock-on &mdash; and it fixes a flaw in round 2</p>
+  <h2>Only other people's credits come off the plan</h2>
+</div>
+<div class="body">
+  <p>Round 2 netted <em>all</em> credits off the planned figure. Wrong, for the same reason: an
+    overpayment credit is the family's own cash, already counted in what arrived, so netting it would
+    reduce the plan by money that also sits in the actual column. <b>Only external credits &mdash;
+    raised, reimbursed or contributed by someone else &mdash; come off.</b></p>
+  <div class="recon">
+    <div class="row"><span class="lbl">Player dues, planned &mdash; as the report reads today</span><span class="val">$11,308.30</span></div>
+    <div class="row"><span class="lbl">less credits from anyone but the family</span><span class="val">&minus;$2,349.63</span></div>
+    <div class="row gap"><span class="lbl">what families are actually asked to send</span><span class="val">$8,958.67</span></div>
+  </div>
+  <div class="note"><b>An edge case disappears with it.</b> Round 2 had Avery's plan flooring at $0.00
+    with $428.15 of credit having nothing left to reduce. With the overpayment out, Avery's plan is
+    <b>$121.85</b> &mdash; a real figure, no floor, no residue to explain.</div>
+  <div class="warn"><b>The header still moves, and this is the part to approve knowingly.</b> Dues
+    planned $11,308.30 &rarr; <b>$8,958.67</b>. <b>Total revenue $13,258.30 &rarr; $10,908.67.</b>
+    Dues shortfall &minus;$8,233.30 &rarr; <b>&minus;$5,883.67</b>. The new figure is the true one: a
+    coach cannot chase a credit, and the fundraising behind it is already counted in its own row.</div>
+</div>
+
+<!-- ═══ BEFORE ═══ -->
+<div class="sec">
+  <p class="eyebrow">Today</p>
+  <h2>Closed, and overstating the shortfall</h2>
+</div>
+<div class="body">
+  <div class="screen">
+    <div class="screen-cap"><span class="who">Budget vs. Actual</span><span class="what">View: Statement · Compare: Whole season · UAT Test Team</span></div>
+    <div class="scrollx">
+      <table class="mock">
+        <thead><tr><th class="lead">Category / line item</th><th>Budgeted</th><th>Actual</th><th>Variance</th></tr></thead>
+        <tbody>
+          <tr class="band"><th class="lead" scope="row">Revenue</th><td></td><td></td><td></td></tr>
+          <tr class="cat"><th class="lead" scope="row">Player dues</th><td>$11,308.30</td><td>$3,075.00</td><td class="down">−$8,233.30</td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">›</span>Fundraising</th><td>$1,800.00</td><td>$778.60</td><td class="down">−$1,021.40</td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">›</span>Other Income</th><td>$150.00</td><td>$0.00</td><td class="down">−$150.00</td></tr>
+          <tr class="tot"><th class="lead" scope="row">Total revenue</th><td>$13,258.30</td><td>$6,339.35</td><td class="down">−$6,918.95</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p>No chevron, and a $8,233.30 shortfall that includes $2,471.48 nobody is going to be asked for.</p>
+</div>
+
+<!-- AFTER -->
+<div class="sec">
+  <p class="eyebrow">Proposed</p>
+  <h2>Open, netted, and it adds up</h2>
+</div>
+<div class="body">
+  <div class="screen">
+    <div class="screen-cap"><span class="who">Budget vs. Actual</span><span class="what">View: Statement &middot; Player dues opened</span></div>
+    <div class="scrollx">
+      <table class="mock">
+        <thead><tr><th class="lead">Category / line item</th><th>Budgeted</th><th>Actual</th><th>Variance</th></tr></thead>
+        <tbody>
+          <tr class="band"><th class="lead" scope="row">Revenue</th><td></td><td></td><td></td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">&#8964;</span>Player dues</th><td>$8,958.67</td><td>$3,075.00</td><td class="down">&minus;$5,883.67</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Avery<span class="sub">$578.15 covered by others &middot; sent $550.00 more than billed</span></th><td>$121.85</td><td>$1,250.00</td><td class="up">+$1,128.15</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Blake<span class="sub">$176.98 covered by credits, after $100.00 was handed back</span></th><td>$793.85</td><td>$625.00</td><td class="down">&minus;$168.85</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Casey<span class="sub">$37.50 covered by credits &middot; $300.00 returned to them</span></th><td>$862.50</td><td>$1,200.00</td><td class="up">+$337.50</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Devon<span class="sub">$27.00 covered by credits</span></th><td>$943.83</td><td>$0.00</td><td class="down">&minus;$943.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Emerson</th><td>$970.83</td><td>$0.00</td><td class="down">&minus;$970.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Frankie<span class="sub">$40.00 covered by credits</span></th><td>$930.83</td><td>$0.00</td><td class="down">&minus;$930.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Gray<span class="sub">$125.00 covered by credits</span></th><td>$845.83</td><td>$0.00</td><td class="down">&minus;$845.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Harper</th><td>$970.83</td><td>$0.00</td><td class="down">&minus;$970.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Indigo<span class="sub">$240.00 covered by credits</span></th><td>$730.83</td><td>$0.00</td><td class="down">&minus;$730.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Jules<span class="sub">$125.00 covered by credits</span></th><td>$845.83</td><td>$0.00</td><td class="down">&minus;$845.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Kai<span class="sub">$900.00 covered by credits</span></th><td>$70.83</td><td>$0.00</td><td class="down">&minus;$70.83</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Logan<span class="sub">$100.00 covered by credits, after $200.00 was handed back</span></th><td>$870.83</td><td>$0.00</td><td class="down">&minus;$870.83</td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">&rsaquo;</span>Fundraising</th><td>$1,800.00</td><td>$778.60</td><td class="down">&minus;$1,021.40</td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">&rsaquo;</span>Other Income</th><td>$150.00</td><td>$0.00</td><td class="down">&minus;$150.00</td></tr>
+          <tr class="tot"><th class="lead" scope="row">Total revenue</th><td>$10,908.67</td><td>$6,339.35</td><td class="down">&minus;$4,569.32</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="legend"><span><span class="swatch"></span>Tinted rows are the new ones &mdash; they would render on the ordinary white ground, like every other line.</span></div>
+  </div>
+  <div class="note"><b>Check it yourself.</b> The twelve planned figures add to <b>$8,958.67</b> and
+    the three payments to <b>$3,075.00</b> &mdash; both exactly the row above. Kai now reads $70.83
+    against $0.00, which is the number you would chase. No thirteenth row, no invented concept.</div>
+  <div class="note"><b>Eleven of the twelve variances equal that family&rsquo;s Balance on the Dues
+    tab, to the cent.</b> Blake &minus;$168.85 against a $168.85 balance; Kai &minus;$70.83 against
+    $70.83; Avery +$1,128.15 against ($1,128.15). Two screens derived independently landing on the
+    same numbers is the strongest evidence available that the rule is right.<br><br>
+    <b>The twelfth is Casey, and the difference is exactly the $300.00 handed back to them.</b> This
+    report shows money returned to a family in its own place rather than subtracting it from dues, so
+    Casey&rsquo;s row reads what they sent. Said on the row, not adjusted away.</div>
+  <p><b>Two families read as ahead, not behind.</b> Avery and Casey sent more than they were asked
+    for. That is a fact the report cannot show today at any level, and the fold surfaces it free.</p>
+</div>
+
+<!-- ═══ OTHER SURFACES ═══ -->
+<div class="sec">
+  <p class="eyebrow">Same fold, other views</p>
+  <h2>Months and the Budget plan</h2>
+</div>
+<div class="body">
+  <p>On <b>Months</b> the dues group folds into the same families across the month columns — which is
+    how every other revenue group already behaves there, so dues stop being the exception:</p>
+  <div class="screen">
+    <div class="screen-cap"><span class="who">Budget vs. Actual</span><span class="what">View: Months · Reading: Cash</span></div>
+    <div class="scrollx">
+      <table class="mock">
+        <thead><tr><th class="lead">Category / line</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr class="band"><th class="lead" scope="row">Revenue</th><td></td><td></td><td></td><td></td></tr>
+          <tr class="cat"><th class="lead" scope="row"><span class="chev">⌄</span>Player dues</th><td>$1,875.00</td><td>$1,200.00</td><td class="nil">—</td><td>$3,075.00</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Avery</th><td>$1,250.00</td><td class="nil">—</td><td class="nil">—</td><td>$1,250.00</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Blake</th><td>$625.00</td><td class="nil">—</td><td class="nil">—</td><td>$625.00</td></tr>
+          <tr class="kid newrow"><th class="lead" scope="row">Casey</th><td class="nil">—</td><td>$1,200.00</td><td class="nil">—</td><td>$1,200.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="legend"><span>Real records, real dates — Avery's two Aug 13 payments, Blake's Aug 13, Casey's Sep 1. Families with nothing paid show a quiet dash across the row.</span></div>
+  </div>
+  <p>On the <b>Budget</b> tab, <b>Player installments</b> gains the same fold — plan only, since that
+    screen has no actual column. It answers “who makes up this figure?” where the coach sets it.</p>
+</div>
+
+<!-- ═══ DECISIONS ═══ -->
+<div class="sec">
+  <p class="eyebrow">Where we are</p>
+  <h2>Six settled, one open</h2>
+</div>
+<div class="decks">
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D1</span><h3>By family, not by player</h3><span class="settled">Settled</span></div>
+    <div class="deck-b">
+      <p>Siblings named together (“Avery and Sam”), because that is how the money arrives and how the
+        Dues tab reads. The mock shows single names only because every player on this fixture shares
+        one surname and would collapse into a single unreadable family.</p>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D2</span><h3>The fold follows “To date”</h3><span class="settled">Settled</span></div>
+    <div class="deck-b">
+      <p>Under that basis a family's planned figure means instalments due so far, net of credits —
+        never their whole season schedule. Anything else contradicts the heading above it.</p>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D3</span><h3>“Expand all” opens it, like everything else</h3><span class="settled">Settled — you overruled me</span></div>
+    <div class="deck-b">
+      <p>Your call, and the right one: <em>“clicking expand all and keeping anything closed deviates
+        from what that button means.”</em> A control that quietly excludes one row is a worse problem
+        than a long page. It still ships closed by default, so the length is opt-in either way.</p>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D4</span><h3>Credits net into the planned figure</h3><span class="settled">Settled</span></div>
+    <div class="deck-b">
+      <p>Planned shows what the family is actually asked to send; the note says what covered the
+        rest. Drawn above. <b>Carries the header change</b> in the red panel near the top — worth
+        re-reading before you approve, because Total revenue and Season net both move.</p>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D5</span><h3>Anyone with money access sees every money screen</h3><span class="settled">Settled</span></div>
+    <div class="deck-b">
+      <p>Your ruling: there is no separate gate for this. The fold inherits money access exactly as
+        every other money surface does, and no new permission concept enters the product.</p>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D6</span><h3>Split the family&rsquo;s own money out of &ldquo;Credits&rdquo;</h3><span class="settled open">Mockup above &mdash; needs your yes</span></div>
+    <div class="deck-b">
+      <p>Withdrawn and replaced. Round 2 said &ldquo;stop capping&rdquo;; the cap turns out to be
+        deliberate and correct. What is actually wrong is that one word covers the family&rsquo;s own
+        overpayment, money they raised, and money the club owes them for costs they paid.</p>
+      <div class="rec"><span class="tag">Recommend</span><span><b>Credits means money from someone other than this family; Paid shows what the family sent.</b> The Balance is unchanged, so nothing a coach has acted on moves &mdash; and the two screens then agree on every family without either being taught about the other.</span></div>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-h"><span class="id">D7</span><h3>Chased before building &mdash; and it was never a bug</h3><span class="settled">Closed</span></div>
+    <div class="deck-b">
+      <p>You asked to settle this before work started. Right call: it moved two of the figures above.</p>
+      <p><b>The Credits column is shown net of money already handed back to the family.</b> A credit
+        refunded in cash must stop reducing what that family owes, or a coach is told their dues are
+        lowered by money they have already been given. Deliberate, documented, and it is exactly the
+        three families &mdash; Blake $100.00 handed back, Casey $300.00, Logan $200.00.</p>
+      <div class="rec"><span class="tag">Consequence</span><span><b>Two figures in the last round were wrong and are corrected above.</b> Blake&rsquo;s planned dues are $793.85, not $693.85; Logan&rsquo;s $870.83, not $670.83. The fold total moves to <b>$8,958.67</b> and Total revenue to <b>$10,908.67</b>. Built on the earlier numbers, two families would have been chased for money they do not owe.</span></div>
+      <div class="rec against"><span class="tag">Carried into the build</span><span>The rule is <b>external credits, net of anything handed back</b> &mdash; never gross credits. The eleven-of-twelve cross-check against the Dues tab is how the build proves it.</span></div>
+    </div>
+  </div>
+
+<div class="sec">
+  <p class="eyebrow">If approved</p>
+  <h2>Order of work</h2>
+</div>
+<div class="body">
+  <p><b>1.</b> Split the family&rsquo;s own money out of &ldquo;Credits&rdquo; on the Dues tab (D6)
+    &mdash; the two screens must agree on what a family sent before either shows it per family.
+    <b>2.</b> Net external credits into the dues row on the report, on its own, so the move in Total
+    revenue is visible as one thing rather than buried in a feature. <b>3.</b> Statement and By
+    activity fold. <b>4.</b> Months fold. <b>5.</b> Budget plan fold. <b>6.</b> Exports follow the
+    screen. <b>7.</b> Help articles and the coach demo&rsquo;s dues narration.</p>
+  <div class="ask"><b>The gate that matters</b> is a test on the pure arithmetic proving the fold's
+    rows sum to the row above them, on every basis and every view — not a visual check. Round 1 of
+    this mockup failed exactly that test and I did not notice until you asked the right question.</div>
+</div>
+
+<footer>
+  <span>Coach Money · dues by family</span>
+  <span>Round 2 · 2026-09-06</span>
+  <span>Plan: COACH_DUES_BY_PLAYER_PLAN.md</span>
+  <span>Figures: UAT Test Team, read from the payment records</span>
+  <span>Not built</span>
+</footer>
+
+</div>

@@ -22,7 +22,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
-import { duesPaidAmount } from '@/lib/dues-payments';
+import { duesPaidAmount, splitFamilyOwnMoney } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
@@ -121,11 +121,11 @@ export const GET = withObservability(async (_req: Request,
       // Paid = recorded payment FACTS (mig 232), capped at the schedule total — the auto-created
       // overpayment credit already carries the excess, and counting it twice would push a family
       // "In credit" twice over. The stamps on installments are only a projection of coverage.
-      const paidAmount = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
+      const cappedPaid = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
       // ONE shared definition (lib/dues-status.ts) — this figure is also quoted by the weekly
       // digest and by an Ask the Front Office answer, and three hand-copies each promised in a
       // comment that they matched, with nothing enforcing it.
-      const outstanding = outstandingForSchedule(schedule, paidAmount);
+      const outstanding = outstandingForSchedule(schedule, cappedPaid);
       // Per-installment coverage for the drawer's "$200.00 of $300.00" chips, plus the credit
       // position over the remainders — ONE assembly (lib/dues-credits.ts deriveDuesPosition),
       // shared with every other dues reader so they cannot drift.
@@ -174,8 +174,42 @@ export const GET = withObservability(async (_req: Request,
       // column, the Balance column, the drawer stat, the season-totals footer and the dues export
       // all read these two figures, and showing the GROSS credit after a payout tells a coach a
       // family's dues are lowered by money they have already been given (/review 2026-08-14).
-      const totalCredits = Math.max(0, Math.round((creditsIssuedTotal - position.paidOut) * 100) / 100);
-      const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
+      const netCredits = Math.max(0, Math.round((creditsIssuedTotal - position.paidOut) * 100) / 100);
+
+      /* ⚠⚠ A FAMILY'S OWN MONEY LEAVES THE CREDITS COLUMN (owner ruling 2026-09-06, QA §146 · D6).
+         `Credits` now means what someone OTHER than this family covered; `Paid` shows what the
+         family actually sent. The full reasoning — and the reason this is a RE-SPLIT of one total
+         rather than two new sums — lives on `splitFamilyOwnMoney`. Read it before touching either
+         figure: the balance below is unchanged BY CONSTRUCTION, and that is the whole point. */
+      const own = splitFamilyOwnMoney({
+        cappedPaid,
+        netCredits,
+        overpaymentCredits: creditsTotal(
+          credits.filter(c => c.creditType === 'overpayment').map(c => ({ amount: c.amount as number })),
+        ),
+        paidOut: position.paidOut,
+      });
+      const paidAmount  = own.paid;
+      const totalCredits = own.credits;
+      /* The family's own money the team is still holding. Drives the "Overpaid" wording, which is
+         NOT the same fact as a negative balance: a family can be in credit purely because a sponsor
+         covered their dues, and calling that overpaid would be a lie about where the money came
+         from. Casey on the QA fixture is exactly that case. */
+      const ownMoneyHeld = own.ownMoneyHeld;
+
+      /* ⚠⚠ THE BALANCE SUBTRACTS `netCredits`, NOT THE NARROWED `totalCredits`, AND THAT DISTINCTION
+         IS THE WHOLE RE-SPLIT. `outstanding` is built from `cappedPaid`, so pairing it with the
+         narrowed credit figure double-counts the money that just moved into `paidAmount`.
+
+         ⚠ THIS WAS A REAL DEFECT IN THIS BUILD, caught on the rendered screen and by nothing else:
+         Avery's balance read ($578.15) instead of ($1,128.15) — the one number D6 promised not to
+         move. A type could not see it and neither could the unit test, because the helper's
+         invariant is about `paid + credits` and this line was quietly using a different pair.
+
+         (cappedPaid, netCredits) is the BALANCE's pair, and always was. (paidAmount, totalCredits)
+         is what a coach READS. They sum to the same total by construction — see
+         `splitFamilyOwnMoney` — which is exactly why both can be true at once. */
+      const rollingBalance = Math.round((outstanding - netCredits) * 100) / 100;
 
       // ⚠ `remainingAmount` is the NET figure since Pass 1 of the credit model — the cash
       // remainder MINUS credits applied: what the family is actually asked to send. Every
@@ -210,6 +244,7 @@ export const GET = withObservability(async (_req: Request,
         outstanding,
         credits,
         totalCredits: Math.round(totalCredits * 100) / 100,
+        ownMoneyHeld,
         rollingBalance,
         // The three-state position (owner model 2026-08-14): what credits did, per player.
         leftToSend: position.leftToSend,
