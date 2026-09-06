@@ -18100,7 +18100,7 @@ stacking on a phone, zero page overflow at 361/390/768/1440.
    from one rule and must agree. **They did not before**, which is the defect this closes.
 
 
-## §140 · Player Dues: set once, chase weekly — the set-once door steps back, the chase says who it reaches, the grid leads with the date — BUILT 2026-09-04, committed `06645a32` (D1–D3 · E1–E5 · G1–G3) + `d7771935` (the owner's second look on the built grid), awaiting QA
+## §140 · Player Dues: set once, chase weekly — the set-once door steps back, the chase says who it reaches, the grid leads with the date — ✅ PASSED 2026-09-06, 37/37, all nine parts, zero defects · committed `06645a32` (D1–D3 · E1–E5 · G1–G3) + `d7771935` (the owner's second look on the built grid) · walk artifact `92122f73`
 
 **Owner decisions (mockup `6bd4c6d9` rev 2, 2026-09-04, twelve answers, all on the recommended
 path):** **D1** the View pill (built before the answers came) · **D2** "Set dues for all players"
@@ -18113,7 +18113,7 @@ days, or never paid · **E5** a guardian contact line, gated by the roster's PII
 first grid headings · **G2** the installment to chase is lit and in view on open · **G3** a ‹ › pager
 beside View while the grid overflows; the swipe chip removed outright (owner: *"it functionally
 didn't work on desktop anyways"*) · **G4** sticky headings **deferred**. Plan:
-`docs/projects/active/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
+`docs/projects/archive/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
 
 **⚠ NO LOCK ON DUES, and the question was re-framed.** The owner re-asked the 2026-08-14 lock
 question; the ruling stands (re-running mid-season is legitimate; the exceptions-first preview is
@@ -18194,6 +18194,34 @@ the pager's cached column positions follow a content-only resize; "today" is rea
    sideways.
 9. **I · Three calls.** "Showing" as one word for a filter here and a lens on Budget vs. Actual; the
    never-paid nudge leaving no "Last reminded"; a sample letter rather than the real recipient list.
+
+### Verdict — ✅ PASSED 2026-09-06, 37/37, zero defects
+
+**All nine parts walked clean on the first pass** — A (the door steps back), B (the band ties out),
+C (Showing), D (Send due reminders, before anything sends), E (make one family late, then chase
+them), F (a family who has paid nothing, not yet due), G (the By-installment grid), H (phone) and
+I (three calls to ratify). Nothing was found to fix, so the twelve owner answers, the second look
+on the grid and the third pass on Due next all stand exactly as built and committed.
+
+**Part I's three calls — all ratified, do not re-open:**
+
+| Call | Ruling |
+|---|---|
+| "Showing" names a **filter** on Player Dues and a **lens** on Budget vs. Actual. One word, two jobs. | **Ratified as built.** Both stay. |
+| The never-paid nudge left no "Last reminded" stamp. | **Already closed in the *stamp it* direction** by §136 (`885e56a1`, ruled 2026-09-05, walked ✅ 26/26 2026-09-06) — the nudge now honours the same 7-day courtesy and stamps every bill it chased. This walk confirms it live. |
+| "See what they'll receive" shows a **sample** letter, not the real recipient list. | **Ratified as built.** A sample, not a roster. |
+
+⚠ **One step could not be proven by observation, and it is worth knowing which:** Part A's step 04
+asks that the "Change the schedule for everyone" door is withheld from a coach who cannot write
+money, and **the UAT fixture has no read-only money account to sign in as**. The gate is enforced
+server-side (`moneyCanWrite`) and the walk records the part as passing, but that particular
+assertion rests on the code path rather than on a signed-in look. A read-only fixture coach would
+close it properly — small, and worth adding the next time the fixture is touched.
+
+**Still deferred, deliberately:** **G4 — sticky column headings** on the By-installment grid. The
+owner parked it at ruling time to revisit at the first twenty-family roster; this walk gives no
+reason to bring it forward (the fixture roster is short enough that headings never leave the
+screen). It is carried in TODO.md's Deferred Enhancements, not lost with the archived plan.
 
 
 ## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — ✅ PASSED 2026-09-06 (36/36, all six parts, zero defects) · committed `52c2637e` 2026-09-04 · walk artifact `02702286`
@@ -18689,6 +18717,153 @@ periods**, the split-line When-cell fold, and the report's footnote sentences tr
 Excel (merged/wrapped cells under the table) and PDF (prose, flowing to a new page) exports while
 CSV deliberately carries none. In-app help search for "split across periods" and "when does this
 money move" both resolve to the rewritten article.
+
+
+## §146 · The list reports become ONE SURFACE — the Statement, By activity and the Budget list leave the card stack for the Months grid's table — ✅ PASSED 2026-09-06, 49/49, zero defects · three rulings taken (F1 keep amber · F2 the file follows the screen · F3 spun out) · committed `1fe89a94` 2026-09-06 · walk artifact `d4984cf8`
+
+**Walk:** https://claude.ai/code/artifact/d4984cf8-cb81-4018-9bf6-10c7a11106c7
+**Plan:** `docs/projects/active/COACH_MONEY_ONE_SURFACE_PLAN.md` (+ `_PM_BRIEF.md`, `_MOCKUP.html`)
+**Mockup, owner-approved round 2:** https://claude.ai/code/artifact/dde45c3f-7faf-4d5c-869f-627c0c52fb8b
+
+**What the owner asked for, in his own words:** *"I am not a fan of the design of this by activity
+report, there is so much space and the row colors do not make it at all clear how these are
+grouped… the way the monthly view fits everything so well on the screen still is the best viewing
+experience that I have had."* He released the standing rulings on these surfaces for the pass
+(*"do not worry about any old 'rules' that we have logged regarding these"*), and in round 2
+rejected a capped table width on sight: *"do we need to cut off the width? … this format looks odd
+to me when the rest of the screen fits the width."*
+
+**What shipped.** All three list reports draw on the shared `.moneyGrid` table recipe: one
+full-width white surface, a hairline under every row, and tints ONLY for structure (a band heading,
+a category row). The unplanned row's amber GROUND is replaced by an amber DASH in the Plan column.
+An activity's net moved from a closing "X netted" row onto its own category row, with Revenue and
+Costs demoted to quiet sub-labels. Player dues became an ordinary category row. **The whole
+`.ledger*` outline family was deleted** — it had exactly two adopters, both converted — so the
+Money hub is down to one recipe for a money hierarchy.
+
+**⚠ A LATENT BUG WAS FOUND AND FIXED ON THE WAY, and it is on the MONTHS view — the one screen this
+pass was told not to redraw.** Its "Revenue" / "Expenses" band headings had been rendering as
+ordinary dark sentence-case row headings **since 2026-08-13**: the whole text treatment sat on a
+leading-cell class at (0,1,0) while the "a row heading is not a column heading" reset added the same
+week sets size, weight, colour, letter-spacing AND text-transform at (0,1,2). Every declaration
+lost. It is visible in the owner's own screenshot from this session. Nothing caught it — a
+file-reading gate cannot see an inherited cascade, and the band still got its TINT because that half
+was written on the row at (0,2,3). The band is now shared (`.moneyGridBand`) with its treatment on
+the row selector, and `money-hierarchy-type-scale.test.ts` pins the outcome.
+
+**⚠⚠ WHAT `/review` CAUGHT, AND WHY THIS SECTION EXISTS TO SAY SO.** Two classes of defect passed
+every automated gate in the repo:
+
+1. **Seven rules were silently deleted from the report's stylesheet by the build's own scripted
+   edit** — including `.unplannedDash` (the amber dash itself, i.e. the entire replacement for the
+   removed tint) and all four footnote sentences under the table (`.varianceKey`, `.duesNote`,
+   `.undatedNote`, `.fundingNote`, `.bridgeSentence`), plus the dues caption and its row padding.
+   A CSS-module class with no rule resolves to `undefined`, React drops the attribute, and the
+   element renders unstyled **in silence**. `check:css-selectors` finds rules with no markup — this
+   is markup with no rule, the exact inverse. **A used-class/defined-class reconciliation is now
+   mandatory after any scripted edit to a CSS module.**
+2. **Five new rules were written at a specificity that loses to the shared recipe** — all
+   deterministic, all silent: the name column never wrapped, the Revenue/Costs sub-labels rendered
+   as ordinary line names, and the closing row rendered QUIETER than the subtotals above it. Every
+   one is now compounded and carries both competing specificities in its comment. ⚠ Two of the fixes
+   also had to stop naming a SHARED class: a local module cannot select one — CSS Modules hashes per
+   file, so it compiles clean and matches nothing.
+
+Also fixed from the review: **collapsible rows had lost their full-width tap target** (found
+independently by two lenses; the tap-floor gate measures HEIGHT, so it could not see it), and an
+unnamed action-column header.
+
+**Verified by MEASUREMENT, not arithmetic**, reading computed styles off the rendered page at 1440:
+band heading uppercase / 11px / 700 / olive; category name `white-space: normal` with a 14.4px
+gutter; closing row 14.72px / 800 with its inset cap; amber `#835006` present among the table's
+inks; zero document side-scroll.
+
+**Gates:** typecheck clean · 3,008 unit tests · full `verify:changed` (every token ratchet, both
+contrast gates, spelling, date correctness, snapshot freshness, schema parity, index + dictionary
+coverage, org-context guard, marketing shots, **demo sandboxes presentable**, CSS selectors, repo
+root) · `lint:focused` 0 errors · rendered `check:layout` on both screens at 361/390/768/1440 with
+**no new findings**. ⚠ A full 28-screen sweep reported 8 findings on 6 OTHER screens; all were
+**proved pre-existing** by stashing this work and reproducing them against unchanged code — they
+belong to concurrent sessions in the shared worktree.
+
+**Help + demo, done in the same unit of work.** The money guide said an unbudgeted row sits *"on a
+faintly tinted row"* — now the amber dash; By activity re-described; a new paragraph states the rule
+(*shading means a heading*); search metadata extended ("why does budget vs actual look different",
+"row colours gone", "amber dash"). The coach demo's tour step 4 was re-read and **no clause went
+stale** — the clause most at risk, *"the report says so rather than hiding it"*, is carried by the
+variance WORD, not by the removed tint, which marked unbudgeted spending instead. Verdict recorded
+in `lib/sandbox-chrome.ts`.
+
+**✅ RESULT — PASSED 2026-09-06, 49 of 49, no step flagged.** Every part signed off first time: one
+surface, band headings, the amber dash, Player dues as an ordinary row, the loudest bottom line,
+Months unchanged, a row read out loud and found true, every figure still a door, an activity
+carrying its own net, the plan list, both phone widths, and all three Part F rulings taken. On B1
+the owner read the Facilities row aloud and confirmed it: *"facilities includes diamond permits,
+dome time, indoor space and non-itemized facility costs. this is true."*
+
+**⚠⚠ THE WALK CHANGED THE PRODUCT WHILE IT WAS RUNNING, and Part C2 is why.** Looking at By activity
+mid-walk the owner asked: *"why aren't the items grouped in the categories? the categories are just
+headers."* He was right, and the diagnosis has two halves worth keeping: the ARITHMETIC grouped —
+an activity's row has always been its own revenue less its own costs, and the items beneath it are
+the rows that make that figure — and the DRAWING did not. The row shipped **inert**: no chevron, no
+fold, no click, every item of every category on screen at once, and a blank chevron-width gap that
+reads as a control gone missing. So one report taught two gestures for one object (a category on the
+Statement is a fold you open; here it was a dead heading), `Expand all` vanished on this tab with no
+explanation, and the plan's own success criterion 4 — *"By activity reaches Season net inside a
+laptop screen with categories collapsed"* — was unreachable, because there was nothing to collapse.
+That last line is the strongest evidence the fold was intended all along and simply never got built.
+
+**An activity is now the same fold the Statement has always had, closed by default**, so the tab
+opens as a short list of bottom lines. Owner, on seeing it: *"that looks so much better."* C2 was
+signed off against the folded screen, not the flat one. Written up as §11 of the plan; proven in a
+browser 11/11 (eight activities fold, all open closed, chevron and row both open them, Player dues
+offers none, Expand all opens all eight, and the Statement's own folds are untouched by it).
+
+**⚠ A LATENT DEFECT FIXED WITH IT:** Collapse all used to clear the whole report's open/closed
+state. Harmless while one shape folded; with two it would have meant collapsing on one tab silently
+shutting rows a coach had opened on the other. It now acts only on the view being read.
+
+**THE THREE PART-F RULINGS.**
+
+1. **F1 — the unplanned dash KEEPS ITS AMBER.** Owner: *"keep it."* Settled; do not re-open.
+
+2. **F2 — THE FILE FOLLOWS THE SCREEN.** Owner: *"the file should match the screen."* Done in the
+   same unit of work. The exported By-activity table now leads each block with the category's own
+   name carrying its net — the figure a coach reads on screen, on the row they read it on — and the
+   shouted `TOURNAMENTS` band above it and the closing `Tournaments netted` row below it are both
+   gone. The words *netted* and *cost* leave with that row rather than surviving as orphans: they
+   existed only because the row sat BELOW the lines and had to say what it was summing. A cost-only
+   block still nets negative and still says so, in brackets, carried by the figure instead of a
+   label. The figures themselves are untouched — the same three, in the same order, one row up.
+   **The standing rule this leaves behind: this file's shape IS the screen's shape, and when one
+   moves the other moves in the same unit of work.** It drifted once within a day of being written,
+   which is roughly how long that takes.
+
+3. **F3 — PARKED AND SPUN OUT, deliberately widened by the owner.** He declined to rule on row
+   heights alone: *"this is worth a review session, not just heights but font, color, etc
+   consistency as well. we may have exceptions for certain things but they should be documented so
+   the non-exceptions still follow the same rules (i.e. if the ledger screen is intentionally
+   shorter row height to fit more on the screen the fonts should still be the same, row colors the
+   same, etc. unless also documented as a known exception). please write up a prompt to conduct this
+   review and provide recommendations with mockups. these design rules should not be limited to
+   money screens but should include standardization where applicable across the app."* That is a
+   different and much larger piece of work than §9 of this plan — a whole-app table standard with a
+   documented exception register, not a density tweak on four money tabs. Brief written:
+   `docs/projects/active/APP_WIDE_TABLE_CONSISTENCY_REVIEW_PROMPT.md`.
+
+**⚰ SUPERSEDED — the two "open decisions" recorded below were both taken above (F1 and F2).**
+
+**⚠ TWO DECISIONS ARE OPEN AND THE WALK ASKS FOR BOTH (Part F).**
+1. The unplanned dash ships **amber**; a plain dash is defensible because the Off-plan tile already
+   totals that money, and amber currently means two things across the hub.
+2. **The exported By-activity file still prints a "Tournaments netted" line** the screen no longer
+   has. Exports were out of scope; a flat file arguably needs a label on a closing row. The help
+   article describes the FILE and remains accurate either way.
+
+**Not done, deliberately:** the row-density follow-up across Dues / Fundraising / Club /
+Transactions (§9 of the plan) — sequenced after this so the whole money area can be judged with one
+recipe gone. The walk's Part F3 puts it in front of the owner.
+
 ## §147 · The budget template teaches its own vocabulary — a Reference tab, real dropdowns, and a review step that stops minting duplicate cost words — BUILT 2026-09-06 on dev, awaiting QA · walk artifact `854b93f7`
 
 **The ask, from the owner (2026-09-06).** *"An accounting user who wants to import a budget file may
@@ -18784,3 +18959,114 @@ To be run against a team with a real taxonomy. The parts that matter most:
   liberty rather than offering one.
 - **Part E** is the regression that costs the most if it broke: a template downloaded **before**
   today must still import.
+
+## §148 · A family's own money leaves the Credits column — Player Dues says what a family actually sent — committed `1d9b627b` 2026-09-06, awaiting QA · walk artifact `027b0322`
+
+**Plan:** `docs/projects/active/COACH_DUES_BY_PLAYER_PLAN.md` §6 (D6) · **Mockup, owner-approved
+round 3:** https://claude.ai/code/artifact/73f68f92-603f-47eb-8c1d-d12dc5bd1496
+
+**Where this came from.** Not a planned project. It fell out of the §146 walk: the owner asked
+whether Player dues could open into the families behind it, which produced a plan, which produced a
+reconciliation nobody could explain, which — chased on his instruction before any build — produced
+this. It is **step 1** of the dues-by-family project and the only part built so far.
+
+**What the owner found, reading one row.** The Dues tab showed
+`Avery · Total Dues $700.00 · Credits ($1,128.15) · Paid $700.00 · Balance ($1,128.15)`. Avery had
+sent **$1,250.00**. The row said $700.
+
+**Why it said that, and why the cap is RIGHT.** A family who overpays has the excess auto-converted
+to a credit (owner ruling 2026-08-13), and `Paid` is capped at the bill so the same dollars are not
+counted as paid AND as a credit. ⚠ **An earlier round of the plan recommended removing that cap and
+was wrong** — it would have re-created the exact double-count the cap prevents. The cap stays.
+
+**What was actually wrong was the WORD.** "Credits" carried three unrelated things: $550.00 of
+Avery's own overpayment, $380.00 the club owes them for team costs they paid out of pocket, and
+$198.15 they raised. Three different actions, one number — and a family asking *"how much of my own
+money are you holding?"* could not be answered from the screen.
+
+**What shipped.** `Credits` means **money from someone other than this family**; `Paid` shows **what
+the family actually sent**; the row says *"sent $550.00 more than billed"* underneath when there is
+some. **`Overpaid` is a new status, deliberately distinct from `In credit`** — a family whose sponsor
+covered their dues is in credit without having overpaid a cent, and a coach can hand the first their
+money back but can do nothing for the second. Casey on the fixture is exactly that case and still
+reads *In credit*. One shared helper does the re-split for both producers of these figures (the dues
+route and the roster player's money panel), so the two screens cannot drift.
+
+**⚠⚠ THE BALANCE DOES NOT MOVE, AND THAT IS THE LOAD-BEARING PART.** This is a RE-SPLIT of one total,
+never a re-derivation: the two figures always sum to what they replaced. Coaches have acted on those
+balances; moving them would be a different and much worse change.
+
+**⚠⚠ A REAL DEFECT SHIPPED FOR ONE ROUND AND ONLY THE RENDERED SCREEN CAUGHT IT.** The balance is
+`outstanding − credits`, where `outstanding` is built from the CAPPED paid figure — so pairing it
+with the narrowed credit column double-counted the money that had just moved, and **Avery's balance
+read ($578.15) instead of ($1,128.15)**. The one number this change promised not to touch. Neither
+the typecheck nor the new unit test could see it: the helper's invariant is about `paid + credits`,
+and that line was quietly using a different pair. Fixed, with the reasoning written at the line.
+
+**Verified by MEASUREMENT.** All twelve rows read off the rendered page and compared to their
+pre-change values — **every balance identical**. The season-totals band still ties (Collected
+$2,225 → $2,775, credits $2,899.63 → $2,349.63, sum unchanged). The roster player panel agrees with
+the dues table to the cent.
+
+**Gates:** typecheck clean · **3,058 unit tests** (13 new, pinning the invariant across the awkward
+cases including the refunded-overpayment one) · full `verify:changed` · rendered layout sweep at
+361/390/768/1440 with no new findings · `check:css-selectors` clean.
+
+**⚠⚠ `/review` RAN AND FOUND THE JOB WAS TWO-FIFTHS DONE.** Five lenses, high-risk tier. The change
+itself held up — but changing what `Paid` and `Credits` MEAN reached five surfaces and only two had
+been updated. Every one below was confirmed, and all five are now fixed:
+
+1. **The Money hub and this tab disagreed about "collected".** The hub's own code carries the
+   promise — *"the same figure as the dues route, the digest and Ask, so the Collections tile can
+   never disagree with the table"* — and this change broke it without touching that file. ⚠ **The
+   hub was RIGHT and deliberately so**: it keeps a capped figure for Collections (a balance
+   question) and an uncapped one for Cash on hand (a cash question). The first fix attempt was to
+   make the hub uncapped; reading its header note showed the drift was on THIS tab. Collected is a
+   settled figure again — **$2,225.00 on both, verified against the live payload** — and the tile's
+   caption now names the overpayment so the Paid column adding to more than the tile reads as two
+   questions rather than an error.
+2. **Collected could exceed Assessed** beside a $0 Balance owing. Gone with the same fix.
+3. **The drawer contradicted the row two inches above it** — *"holding $1,128.15 of this family's
+   money"* while the row said *"sent $550.00 more than billed"*, because that figure counts credit
+   from any source. It now says whose money it is when the answer is mixed. This was the single
+   sentence the whole ruling was written to make honest.
+4. **The family statement PDF gave three answers** — a headline "Credits $578.15", an itemised
+   Credits-earned table totalling $1,128.15 with a row labelled "Overpayment", and a sentence
+   claiming $1,128.15 set aside. Found independently by two lenses. The table no longer lists a
+   family's own overpayment as something they *earned*, and the sentence separates the two. ⚠ **A
+   unit test caught the first attempt rewording the sentence for families it does not concern** — a
+   household with no overpayment reads exactly what it always did.
+5. **One more screen still said "In credit"** where the table said "Overpaid" — the by-instalment
+   phone card, which had its own hardcoded vocabulary and was never wired to the distinction.
+
+**Refuted by measurement:** a High finding that the Statement and Months views would now name the
+same money differently. The Months revenue band labels GROUPS, not items — read off the rendered
+screen, not argued.
+
+**Also hardened:** the export type now REQUIRES the new fact (it took it optionally, so a future
+builder could have dropped "Overpaid" from the spreadsheet in silence); four tests pin the new
+status branch including the caller-forgot case; and the one genuinely ambiguous rule — which credit
+a refund came out of, which the data cannot say — is now a written decision with its cost stated and
+two tests, rather than an unexamined guess.
+
+**Help updated in the same unit of work:** the guide taught the old meaning in five places (a credit
+defined as including an overpayment, the overpayment callout, the status glossary, the drawer
+wording, and the four figures at the top). All corrected, "Overpaid" added to the glossary beside a
+narrowed "In credit", two FAQ answers and their search mirrors trued up together, and ~20 search
+terms added so a coach searching *"why is paid more than the bill"* or *"overpaid vs in credit"*
+lands somewhere.
+
+**Demo checked, both questions asked:** no dock line or tour step names any of these words or rows,
+so **nothing went stale**. ⚠ One thing to look at: the demo's fundraising budget line is described
+*"Raffle proceeds — team share (estimated)"*, and after the §146 revenue-label change that
+description is now the ROW LABEL on Budget vs. Actual — where "(estimated)" reads oddly beside an
+actual figure. Honest either way; flagged rather than changed, because shortening it would cost the
+Budget plan the word that belongs there.
+
+**Gates after all of it:** typecheck clean · **3,084 unit tests** · full `verify:changed` · rendered
+layout sweep on all three money screens at 361/390/768/1440 with no new findings — and one accepted
+piece of layout debt no longer reproduces.
+
+**⚠ Observed, not caused by this change:** Devon Test read *Up to date* earlier the same day and
+reads *Past due* now. The changed branch is unreachable for a family with money still to send, so
+this is fixture data moving underneath a shared working copy — noted so a walker does not chase it.
