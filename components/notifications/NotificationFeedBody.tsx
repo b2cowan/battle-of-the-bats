@@ -1,7 +1,7 @@
 'use client';
 import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
-import { iconFor, relativeTime, BUNDLE_NOUN, groupActivityItems } from '@/lib/notification-view';
+import { iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems } from '@/lib/notification-view';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
 import styles from './notifications-page.module.css';
 
@@ -43,8 +43,8 @@ export default function NotificationFeedBody({
   const {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly, filter, setFilter,
-    reload, loadMore, markRead, bundleClick,
-    needsAttention, activityGroups, showNeeds, showActivity, needsCount,
+    reload, loadMore, markRead, bundleClick, clearRow,
+    needsAttention, activityGroups, showNeeds, showActivity, needsCount, groupedAt,
   } = feed;
 
   // ── Row renderers ─────────────────────────────────────────────────────────────
@@ -63,7 +63,26 @@ export default function NotificationFeedBody({
         <div className={styles.content}>
           <p className={styles.itemTitle}>{n.title}</p>
           {n.body && <p className={styles.itemBody}>{n.body}</p>}
-          <p className={styles.itemTime}>{relativeTime(n.createdAt)}</p>
+          {isAct ? (
+            /* Clear rides the meta line rather than the row's right edge: it costs no width, so a
+               two-line body never squeezes to make room for it (mockup 9427bc24, plate 04-C). Both
+               handlers stop propagation — the row itself is a button that opens the notification,
+               and finishing with something is not the same gesture as opening it. */
+            <div className={styles.meta}>
+              <span className={styles.itemTime}>{notificationTime(n.createdAt, groupedAt, { withDay: true })}</span>
+              <button
+                type="button"
+                className={styles.clearBtn}
+                aria-label={`Clear “${n.title}” from Needs attention`}
+                onClick={e => { e.stopPropagation(); clearRow(n); }}
+                onKeyDown={e => e.stopPropagation()}
+              >
+                Clear
+              </button>
+            </div>
+          ) : (
+            <p className={styles.itemTime}>{notificationTime(n.createdAt, groupedAt)}</p>
+          )}
         </div>
         {isUnread && <span className={styles.dot} aria-label="Unread" />}
       </div>
@@ -85,7 +104,7 @@ export default function NotificationFeedBody({
         <span className={styles.icon}>{iconFor(eventType)}</span>
         <div className={styles.content}>
           <p className={styles.itemTitle}>{members.length} {BUNDLE_NOUN[eventType] ?? 'notifications'}</p>
-          <p className={styles.itemTime}>{relativeTime(newest.createdAt)}</p>
+          <p className={styles.itemTime}>{notificationTime(newest.createdAt, groupedAt)}</p>
         </div>
         <ChevronRight size={16} className={styles.bundleChevron} aria-hidden />
         {anyMemberUnread && <span className={styles.dot} aria-label="Unread" />}
@@ -191,7 +210,10 @@ export default function NotificationFeedBody({
                 <div className={`${styles.sectionHeader} ${styles.sectionHeaderAct}`}>
                   <span>Needs attention</span>
                   <span className={styles.sectionCount}>{needsAttention.length}</span>
-                  <span className={styles.sectionHint}>clears as you open them</span>
+                  {/* The zone's promise, in the zone. Visible on phones since 2026-09-06 — removing
+                      the filter pills is what made room for it, which is why those two changes
+                      shipped together rather than as separate tidy-ups. */}
+                  <span className={styles.sectionHint}>stays until you clear it</span>
                 </div>
                 {needsAttention.map(n => row(n, true))}
               </>

@@ -99,9 +99,36 @@ export function useNotificationFeed(orgId: string | undefined) {
     if (link) window.location.href = link;
   }, []);
 
+  // ── Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24) ──────
+  // The ONLY thing that takes a row out of "Needs attention". Opening one no longer does, which
+  // is the whole change: the zone used to answer "have you looked at it?" while its heading
+  // promised "have you dealt with it?". Also stamps read, because a row you are finished with
+  // should not sit unread — the server does the same, guarded, so a reload agrees.
+  const clearRow = useCallback(async (n: AppNotification) => {
+    if (n.clearedAt) return;
+    const now = new Date().toISOString();
+    setItems(prev => prev.map(x =>
+      x.id === n.id ? { ...x, clearedAt: now, readAt: x.readAt ?? now } : x,
+    ));
+    const res = await postAction({ action: 'clear', id: n.id });
+    // ⚠ CLEAR IS THE ONE ACTION HERE THAT ROLLS BACK, and the asymmetry is deliberate (review,
+    // 2026-09-06). Its siblings post fire-and-forget: a lost mark-read costs a coach a bold row.
+    // A lost CLEAR costs them the decision itself — the row vanishes from the triage list while
+    // `cleared_at` was never written, which is precisely "an unmade decision looks handled", the
+    // failure this whole zone exists to prevent. A `.catch()` alone does not cover it either,
+    // since an HTTP 401/500 RESOLVES; the status has to be read. So the row goes back.
+    if (!res?.ok) {
+      setItems(prev => prev.map(x =>
+        x.id === n.id ? { ...x, clearedAt: null, readAt: n.readAt } : x,
+      ));
+    }
+  }, []);
+
   // ── Mark all read — ACTIVITY only (D3, 2026-09-03) ───────────────────────────
-  // Needs-attention rows are a triage list and clear when opened; one tap must not make an
-  // unhandled decision look handled. The server applies the same exclusion, from the same set.
+  // Needs-attention rows are a triage list; one tap must not make an unhandled decision look
+  // handled. The server applies the same exclusion, from the same set. ⚠ Since rows now leave the
+  // zone on cleared_at, this exclusion is the only thing standing between "Mark all read" and
+  // silently emptying a list of unmade decisions — it must never learn to write cleared_at.
   const markAllRead = useCallback(async () => {
     if (!orgId) return;
     const now = new Date().toISOString();
@@ -109,22 +136,36 @@ export function useNotificationFeed(orgId: string | undefined) {
     await postAction({ action: 'mark-all-read', orgId });
   }, [orgId]);
 
-  // ── Derive the view — same zones as the dropdown, over the visible set ────────
+  // ── Derive the view — same zones as the dropdown ─────────────────────────────
   const view = useMemo(() => {
-    const visible = unreadOnly ? items.filter(n => !n.readAt) : items;
-    const needsAttention = visible.filter(n => !n.readAt && notificationCategory(n.eventType) === 'act');
+    // ⚠ ONE CLOCK PER GROUPING PASS, AND THE ROWS MUST READ THE SAME ONE (review, 2026-09-06).
+    // This memo only re-runs when items/unreadOnly/filter change, but a row's label is computed
+    // fresh on every render. Left to their own `new Date()` calls the two drift apart the moment a
+    // day boundary passes without the items changing — tap "Load more" just after midnight and the
+    // memo still says "Today" while the labels below it have already moved on. That is the very
+    // contradiction this whole change exists to remove, coming back through the side door. So the
+    // clock is stamped ONCE here and handed to the body as `groupedAt`; a label may go a few
+    // minutes stale, which nobody can see, but it can never disagree with the heading above it.
+    const now = new Date();
+    // ⚠ "Needs attention" IS COMPUTED OVER EVERYTHING, NOT OVER THE UNREAD FILTER, and that is
+    // deliberate. A row now stays until it is CLEARED, so it can be read and still owed a decision
+    // — and under "Unread" the filter would hide exactly the rows the zone exists to keep in front
+    // of the coach. The Unread/All toggle therefore filters the ACTIVITY feed; the triage list is
+    // not a slice of time or of read state, and is never filtered out from under itself.
+    const needsAttention = items.filter(n => !n.clearedAt && notificationCategory(n.eventType) === 'act');
     const naIds = new Set(needsAttention.map(n => n.id));
+    const visible = unreadOnly ? items.filter(n => !n.readAt) : items;
     const activity = visible.filter(n => !naIds.has(n.id));
     const activityGroups = DAY_ORDER
-      .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt) === label) }))
+      .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt, now) === label) }))
       .filter(g => g.items.length > 0);
     const showNeeds    = (filter === 'all' || filter === 'needs')    && needsAttention.length > 0;
     const showActivity = (filter === 'all' || filter === 'activity') && activityGroups.length > 0;
-    // The chip's count is over EVERYTHING loaded, not the filtered view — it is a badge, not a tally.
-    const needsCount = items.filter(n => !n.readAt && notificationCategory(n.eventType) === 'act').length;
+    // The chip's count is the zone's own length now that the zone ignores the read filter.
+    const needsCount = needsAttention.length;
     // "Mark all read" appears only when it would do something: an unread row outside Needs attention.
     const anyActivityUnread = items.some(n => !n.readAt && !ACT_EVENT_TYPES.has(n.eventType));
-    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyActivityUnread };
+    return { needsAttention, activityGroups, showNeeds, showActivity, needsCount, anyActivityUnread, groupedAt: now };
   }, [items, unreadOnly, filter]);
 
   const isEmpty = !loading && !error && !view.showNeeds && !view.showActivity;
@@ -132,7 +173,7 @@ export function useNotificationFeed(orgId: string | undefined) {
   return {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly, filter, setFilter,
-    reload: load, loadMore, markRead, bundleClick, markAllRead,
+    reload: load, loadMore, markRead, bundleClick, markAllRead, clearRow,
     ...view,
   };
 }

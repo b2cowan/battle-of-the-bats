@@ -5850,6 +5850,15 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "notifications",
+    "column_name": "cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
     "table_name": "observability_cron_heartbeat",
     "column_name": "job_name",
     "data_type": "text",

@@ -177,6 +177,9 @@
 .sectionHeader {
   display: flex;
   align-items: center;
+  /* The hint is inline down to 361px and drops to its own line below that rather than overflowing
+     a header that cannot scroll. */
+  flex-wrap: wrap;
   gap: 0.4rem;
   padding: 0.7rem 1.1rem 0.5rem;
   font-family: var(--font-data);
@@ -198,7 +201,9 @@
   color: var(--warning);
 }
 
-/* "clears as you open them" — says what Mark all read no longer does to this zone (D3). */
+/* "stays until you clear it" — the zone's promise, in the zone. Was suppressed on phones until
+   2026-09-06 because the filter pills left it nowhere to go; removing them is what bought the room,
+   which is why those two changes shipped in one pass. */
 .sectionHint {
   margin-left: auto;
   font-family: var(--font-sans, inherit);
@@ -293,6 +298,45 @@
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   margin: 0;
+}
+
+/* ── The act row's meta line: timestamp + Clear ───────────────────────────────── */
+/* Clear sits BESIDE the timestamp rather than at the row's right edge, so it costs the title and
+   body no width and a two-line body never squeezes to make room for it (owner mockup 9427bc24,
+   plate 04-C). The line carries the tap floor; see the ≤768 block at the foot of this file. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: -0.15rem;
+}
+
+.clearBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--home-line-strong, var(--white-15, rgba(255, 255, 255, 0.15)));
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.clearBtn:hover {
+  color: var(--fl-text);
+  border-color: var(--warning);
+}
+
+.clearBtn:focus-visible {
+  outline: 2px solid var(--warning);
+  outline-offset: 2px;
 }
 
 .dot {
@@ -421,7 +465,8 @@
   .chip,
   .segBtn,
   .loadMoreBtn,
-  .markAllBtn {
+  .markAllBtn,
+  .clearBtn {
     min-height: var(--tap-min, 44px);
   }
   .segToggle { border-radius: 999px; }
@@ -432,6 +477,12 @@
     align-items: center;
     min-height: var(--tap-min, 44px);
   }
-  /* The hint would crowd a 361px zone header beside its count. */
-  .sectionHint { display: none; }
+  /* ── The zone pills come off the phone (owner, 2026-09-06) ──────────────────────
+     They named "Needs attention" and "Activity" — the two headings the list carries a finger
+     below — and the count repeated the count in the heading underneath it. Two wrapped rows plus
+     the read toggle cost 164px of a 720px screen to filter a list already on it. The read toggle
+     stays: "everything, or only what I haven't read" is a question the list cannot answer itself.
+     ⚠ DESKTOP KEEPS THEM — there the row fits on one line and the list is long enough to filter.
+     Display-only, so the zone filter state survives a rotation back to a wide viewport. */
+  .chips { display: none; }
 }

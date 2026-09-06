@@ -69,8 +69,18 @@
   top: 8px;
   left: 248px;        /* right edge of 240px sidebar + 8px gap */
   width: 320px;
-  max-height: calc(100vh - 16px);
-  overflow-y: auto;
+  /* dvh, not vh — matched to .panelTopStrip and the ≤900 block below. On a mobile browser vh
+     ignores the retracting URL bar, which is the same "taller than the window" shape the top-strip
+     anchor was just fixed for; no current caller uses this default placement, so this is closing
+     the trap rather than fixing a live bug (review, 2026-09-06). */
+  max-height: calc(100dvh - 16px);
+  /* ⚠ HIDDEN, NOT auto — THE LIST IS THE SCROLLER, and this rule is what keeps it that way
+     (2026-09-06). With `overflow-y: auto` here the panel became a second scroller, and once the
+     content outgrew the cap it was the one that scrolled: the header, the Unread/All toggle and the
+     footer — which carries "See all", the escape hatch you want most when the dropdown is too long
+     — all scrolled away with it. Header, filter bar and footer are already `flex-shrink: 0` for
+     exactly this reason; they only hold if nothing above them can scroll. */
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
   border-radius: 8px;
@@ -112,7 +122,17 @@
      banner, and without this term the panel opened at the strip's REAL-customer position —
      overlapping the banner (review 2026-08-17; the var is set on <html>, so it reaches this
      body-portaled panel, and resolves to 0px for every real org). */
-  top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + var(--sandbox-chrome-h, 0px) + 6px);
+  /* ⚠ THE HEIGHT BUDGET MOVES WITH THE ANCHOR, and it did not until 2026-09-06. This variant
+     overrode `top` (≈54px down, under the strip) but inherited `.panel`'s
+     `max-height: calc(100vh - 16px)` — a budget written for a panel that starts 8px from the TOP.
+     A panel starting 54px down and allowed to be a full viewport tall ends ~54px BELOW the window,
+     and everything in that overhang — the last notifications and the whole footer — is unreachable:
+     you cannot scroll a container whose own bottom edge is off-screen. It only bit once the feed
+     grew tall enough to hit the cap. The anchor offset is now named ONCE and subtracted from the
+     budget, so the two cannot drift apart again. */
+  --panel-anchor-top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + var(--sandbox-chrome-h, 0px) + 6px);
+  top: var(--panel-anchor-top);
+  max-height: calc(100dvh - var(--panel-anchor-top) - 16px);
   left: auto;
   right: 16px;
 }
@@ -254,6 +274,11 @@
 
 .notifList {
   flex: 1;
+  /* ⚠ min-height: 0 IS LOad-BEARING, not defensive tidying (2026-09-06). A flex item defaults to
+     `min-height: auto`, which resolves to its CONTENT height and refuses to shrink below it — so
+     `overflow-y: auto` here never engaged, the list pushed the panel past its max-height, and the
+     panel scrolled instead. This one line is what makes the list the scroller. */
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -375,6 +400,51 @@
   font-size: 0.68rem;
   color: var(--text-tertiary);
   margin: 0;
+}
+
+/* ── The act row's meta line: timestamp + Clear (2026-09-06) ──────────────────── */
+/* The bell carries the same Clear as the "See all" page — the two share a zone, and a row a coach
+   could only dispatch on one of them would be exactly the drift lib/notification-view exists to
+   prevent. On the meta line rather than the row's right edge because these rows truncate title and
+   body to one line each and have no width to give up. */
+.notifMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.clearBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--home-line-strong, var(--white-15, rgba(255, 255, 255, 0.15)));
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.clearBtn:hover {
+  color: var(--fl-text);
+  border-color: var(--warning);
+}
+
+.clearBtn:focus-visible {
+  outline: 2px solid var(--warning);
+  outline-offset: 2px;
+}
+
+/* The panel is reachable on a phone (the coach bell lives in the top strip), so Clear takes the
+   same touch floor every other control in the portal does. */
+@media (max-width: 768px) {
+  .clearBtn { min-height: var(--tap-min, 44px); }
 }
 
 /* ── Empty + loading states ────────────────────────────────────────────────── */

@@ -5852,6 +5852,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "notifications",
+        "pos": 11,
+        "column_name": "cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "observability_cron_heartbeat",
         "pos": 1,
         "column_name": "job_name",

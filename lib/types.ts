@@ -2710,6 +2710,13 @@ export interface AppNotification {
   body: string | null;
   link: string | null;
   readAt: string | null;
+  /**
+   * When the recipient said they were FINISHED with this one (the "Clear" button on a
+   * "Needs attention" row — mig 278). ⚠ Not a second `readAt`: read means the words were seen,
+   * cleared means the thing was handled, and the zone pins an 'act' event until THIS is set.
+   * Clearing also sets `readAt` when it is still null; the reverse never happens.
+   */
+  clearedAt: string | null;
   createdAt: string;
   metadata: Record<string, unknown>;
 }

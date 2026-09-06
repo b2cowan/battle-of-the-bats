@@ -19,8 +19,10 @@ const BELL_EXCLUDE_IN = BELL_EXCLUDED_EVENTS.length > 0
   : null;
 
 // "Mark all read" marks ACTIVITY only (owner ruling 2026-09-03, D3): the "Needs attention" rows are
-// a triage list and clear when opened, so one tap must not make an unhandled decision look handled.
-// Same source as both clients' optimistic updates (lib/notification-labels ACT_EVENT_TYPES).
+// a triage list, so one tap must not make an unhandled decision look handled. ⚠ D3 is now LOAD-
+// BEARING rather than merely tidy — since 2026-09-06 those rows leave the zone on `cleared_at`,
+// not on read, so a mark-all that touched them would be the only way to silently empty a list of
+// unmade decisions. Same source as both clients' optimistic updates (ACT_EVENT_TYPES).
 const ACT_EXCLUDE_IN = ACT_EVENT_TYPES.size > 0
   ? `(${[...ACT_EVENT_TYPES].map(e => `"${e}"`).join(',')})`
   : null;
@@ -37,9 +39,10 @@ function mapRow(row: any): AppNotification {
     title:     row.title,
     body:      row.body      ?? null,
     link:      row.link      ?? null,
-    readAt:    row.read_at   ?? null,
+    readAt:    row.read_at    ?? null,
+    clearedAt: row.cleared_at ?? null,
     createdAt: row.created_at,
-    metadata:  row.metadata  ?? {},
+    metadata:  row.metadata   ?? {},
   };
 }
 
@@ -98,7 +101,7 @@ export const GET = withObservability(async (req: Request) => {
   });
 }, { route: '/api/notifications' });
 
-// ── POST — mark-read | mark-all-read ─────────────────────────────────────────
+// ── POST — mark-read | mark-all-read | clear ─────────────────────────────────
 
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
@@ -135,11 +138,39 @@ export const POST = withObservability(async (req: Request) => {
       .eq('user_id', user.id)
       .eq('org_id', body.orgId)
       .is('read_at', null);
-    // Needs-attention rows stay unread — they clear when opened (D3, see ACT_EXCLUDE_IN above).
+    // Needs-attention rows are left entirely alone — not read, and certainly not cleared (D3).
     if (ACT_EXCLUDE_IN) markAll = markAll.not('event_type', 'in', ACT_EXCLUDE_IN);
     const { error } = await markAll;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // ── clear — "I am finished with this one" (mig 278) ────────────────────────
+  // The only writer of cleared_at. Deliberately per-row: there is no clear-all, because the
+  // whole point of the zone is that emptying it is a series of decisions, not one gesture.
+  if (body.action === 'clear') {
+    if (!body.id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 });
+
+    const { error } = await supabaseAdmin
+      .from('notifications')
+      .update({ cleared_at: now })
+      .eq('id', body.id)
+      .eq('user_id', user.id); // safety: only own notifications
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // A row you are finished with should not also sit unread. Guarded on `read_at is null` rather
+    // than written unconditionally so clearing an old row never rewrites when it was first seen.
+    const { error: readError } = await supabaseAdmin
+      .from('notifications')
+      .update({ read_at: now })
+      .eq('id', body.id)
+      .eq('user_id', user.id)
+      .is('read_at', null);
+
+    // The clear itself landed; a failed read stamp is cosmetic and must not report failure.
+    if (readError) console.error('[notifications clear → read]', readError.message);
     return NextResponse.json({ success: true });
   }
 

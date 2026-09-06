@@ -4,6 +4,7 @@
     "check:changed:rep_budget_lines.rep_budget_lines_line_kind_check": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text, 'other_income'::text])) :: (line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))",
     "check:only-dev:rep_budget_lines.rep_budget_lines_split_mode_check": "",
     "column:only-dev:budget_categories.team_id": "",
+    "column:only-dev:notifications.cleared_at": "",
     "column:only-dev:rep_budget_lines.split_mode": "",
     "constraint:only-dev:budget_categories.budget_categories_team_id_fkey": "",
     "index:only-dev:budget_categories_team_idx": ""

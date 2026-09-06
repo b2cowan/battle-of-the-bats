@@ -1,9 +1,9 @@
 {
-  "generated": "2026-09-05",
-  "total": 6,
+  "generated": "2026-09-06",
+  "total": 7,
   "counts": {
     "tables": 0,
-    "columns": 2,
+    "columns": 3,
     "indexes": 1,
     "constraints": 1,
     "rls": 2
@@ -19,6 +19,10 @@
     },
     {
       "key": "column:only-dev:budget_categories.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:notifications.cleared_at",
       "sig": ""
     },
     {

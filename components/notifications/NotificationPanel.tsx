@@ -7,7 +7,7 @@ import type { AppNotification } from '@/lib/types';
 import { notificationCategory, ACT_EVENT_TYPES } from '@/lib/notification-labels';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import {
-  iconFor, relativeTime, DAY_ORDER, dayBucket, BUNDLE_NOUN, groupActivityItems,
+  iconFor, notificationTime, DAY_ORDER, dayBucket, BUNDLE_NOUN, groupActivityItems,
 } from '@/lib/notification-view';
 import styles from './notifications.module.css';
 
@@ -83,9 +83,42 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
     }
   }
 
-  // "Mark all read" marks ACTIVITY only (D3, 2026-09-03): Needs-attention rows stay unread until
-  // opened. The server applies the same rule (app/api/notifications), so this optimistic pass and
-  // the badge count it pushes up agree with what a reload would show.
+  // Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24). The only thing that takes
+  // a row out of "Needs attention"; opening one no longer does. The bell carries the same button as
+  // the "See all" page on purpose — the two surfaces share a zone, so a row a coach can only
+  // dispatch on one of them would be the same drift lib/notification-view exists to prevent.
+  async function handleClear(notification: AppNotification) {
+    if (notification.clearedAt) return;
+    const now = new Date().toISOString();
+    setNotifications(prev => prev.map(n =>
+      n.id === notification.id ? { ...n, clearedAt: now, readAt: n.readAt ?? now } : n,
+    ));
+    if (!notification.readAt) {
+      onUnreadChange(notifications.filter(n => !n.readAt && n.id !== notification.id).length);
+    }
+    const res = await fetch('/api/notifications', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ action: 'clear', id: notification.id }),
+    }).catch(console.error);
+    // ⚠ CLEAR IS THE ONE ACTION HERE THAT ROLLS BACK, and the asymmetry is deliberate (review,
+    // 2026-09-06). Its siblings post fire-and-forget: a lost mark-read costs a bold row. A lost
+    // CLEAR costs the decision — the row leaves the triage list while `cleared_at` was never
+    // written, which is exactly "an unmade decision looks handled". A `.catch()` alone does not
+    // cover it: an HTTP 401/500 RESOLVES, so the status has to be read. Mirrors useNotificationFeed.
+    if (!res?.ok) {
+      setNotifications(prev => prev.map(n =>
+        n.id === notification.id ? { ...n, clearedAt: null, readAt: notification.readAt } : n,
+      ));
+      if (!notification.readAt) onUnreadChange(notifications.filter(n => !n.readAt).length);
+    }
+  }
+
+  // "Mark all read" marks ACTIVITY only (D3, 2026-09-03): Needs-attention rows are left entirely
+  // alone. The server applies the same rule (app/api/notifications), so this optimistic pass and
+  // the badge count it pushes up agree with what a reload would show. ⚠ Since rows now leave the
+  // zone on cleared_at, this exclusion is the only thing between one tap and an emptied list of
+  // unmade decisions — it must never learn to write cleared_at.
   async function handleMarkAllRead() {
     if (markingAll) return;
     setMarkingAll(true);
@@ -129,19 +162,29 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
   // The button appears only when it would DO something: an unread row outside Needs attention.
   const anyActivityUnread = notifications.some(n => !n.readAt && !ACT_EVENT_TYPES.has(n.eventType));
 
+  // ── P1 zones — "Needs attention" (UNCLEARED act items) pinned above a date-grouped Activity
+  //    feed (everything else). Each row appears in exactly one zone.
+  //
+  // ⚠ THE ZONE IS COMPUTED OVER EVERYTHING, NOT OVER THE UNREAD FILTER (2026-09-06). A row now
+  // stays until it is CLEARED, so it can be read and still owed a decision — and this panel
+  // defaults to Unread, which would have hidden exactly the rows the zone exists to keep in front
+  // of the coach. The toggle filters the ACTIVITY feed; the triage list is never filtered out from
+  // under itself. Mirrors useNotificationFeed's view, which carries the same note.
+  // ⚠ ONE CLOCK for the grouping AND the row labels below it (review, 2026-09-06). This panel
+  // recomputes its groups on every render, so the two agree today by luck of ordering rather than
+  // by construction — stamping the clock once makes it structural, and matches useNotificationFeed.
+  const now = new Date();
+  const needsAttention = notifications.filter(
+    n => !n.clearedAt && notificationCategory(n.eventType) === 'act'
+  );
+  const naIds = new Set(needsAttention.map(n => n.id));
+
   // ── Visible set — the Unread toggle filters here (P2). Marking read then drops an
   //    item straight out of the default view; read is never destroyed, just filtered.
   const visible = unreadOnly ? notifications.filter(n => !n.readAt) : notifications;
-
-  // ── P1 zones over the visible set — "Needs attention" (unread Act items) pinned above
-  //    a date-grouped Activity feed (everything else). Each row appears in exactly one zone.
-  const needsAttention = visible.filter(
-    n => !n.readAt && notificationCategory(n.eventType) === 'act'
-  );
-  const naIds = new Set(needsAttention.map(n => n.id));
   const activity = visible.filter(n => !naIds.has(n.id));
   const activityGroups = DAY_ORDER
-    .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt) === label) }))
+    .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt, now) === label) }))
     .filter(g => g.items.length > 0);
 
   function renderItem(n: AppNotification, isAct: boolean) {
@@ -160,7 +203,26 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
         <div className={styles.notifContent}>
           <p className={styles.notifTitle}>{n.title}</p>
           {n.body && <p className={styles.notifBody}>{n.body}</p>}
-          <p className={styles.notifTime}>{relativeTime(n.createdAt)}</p>
+          {isAct ? (
+            /* Clear rides the meta line so it costs the title and body no width — the panel's rows
+               already truncate to one line each and cannot give any up. Both handlers stop
+               propagation: the row is a button that OPENS the notification, and being finished
+               with something is a different gesture from opening it. */
+            <div className={styles.notifMeta}>
+              <span className={styles.notifTime}>{notificationTime(n.createdAt, now, { withDay: true })}</span>
+              <button
+                type="button"
+                className={styles.clearBtn}
+                aria-label={`Clear “${n.title}” from Needs attention`}
+                onClick={e => { e.stopPropagation(); handleClear(n); }}
+                onKeyDown={e => e.stopPropagation()}
+              >
+                Clear
+              </button>
+            </div>
+          ) : (
+            <p className={styles.notifTime}>{notificationTime(n.createdAt, now)}</p>
+          )}
         </div>
         {isUnread && <span className={styles.notifDot} aria-label="Unread" />}
       </div>
@@ -185,7 +247,7 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
         <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
         <div className={styles.notifContent}>
           <p className={styles.notifTitle}>{members.length} {noun}</p>
-          <p className={styles.notifTime}>{relativeTime(newest.createdAt)}</p>
+          <p className={styles.notifTime}>{notificationTime(newest.createdAt, now)}</p>
         </div>
         <ChevronRight size={14} className={styles.bundleChevron} aria-hidden />
         {anyUnread && <span className={styles.notifDot} aria-label="Unread" />}
@@ -257,7 +319,10 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
       <div className={styles.notifList}>
         {loading ? (
           <p className={styles.loadingRow}>Loading…</p>
-        ) : visible.length === 0 ? (
+        /* ⚠ The zone is counted here too. It sits OUTSIDE the unread filter now, so an empty
+           `visible` no longer means an empty panel — a read-but-uncleared decision would have
+           rendered "You're all caught up" over the top of itself. */
+        ) : visible.length === 0 && needsAttention.length === 0 ? (
           <div className={styles.emptyState}>
             <BellOff size={28} className={styles.emptyIcon} />
             <span>

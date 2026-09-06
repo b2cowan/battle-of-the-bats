@@ -1,0 +1,1179 @@
+<title>Four Fixes to the Notification Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════════════
+   DOCUMENT CHROME — deliberately cool, so the warm product frames read as
+   specimens pinned to a sheet rather than as the page itself.
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root{
+  --sheet:#E7EBF0;
+  --sheet-2:#DDE3EB;
+  --panel:#FFFFFF;
+  --ink:#10141B;
+  --ink-soft:#414B59;
+  --ink-dim:#6B7686;
+  --rule:rgba(16,28,48,.14);
+  --rule-soft:rgba(16,28,48,.08);
+  --accent:#1E3A8A;
+  --accent-soft:rgba(30,58,138,.09);
+  --now:#9E3B22;          /* "today" / the problem */
+  --now-soft:rgba(158,59,34,.10);
+  --prop:#455A16;         /* "proposed" */
+  --prop-soft:rgba(69,90,22,.12);
+  --shadow:0 1px 2px rgba(16,28,48,.06), 0 10px 28px -14px rgba(16,28,48,.30);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sheet:#11151B;
+    --sheet-2:#0C1015;
+    --panel:#191E26;
+    --ink:#E8ECF2;
+    --ink-soft:#AAB4C1;
+    --ink-dim:#7E8895;
+    --rule:rgba(178,199,228,.16);
+    --rule-soft:rgba(178,199,228,.09);
+    --accent:#8FAAF2;
+    --accent-soft:rgba(143,170,242,.13);
+    --now:#E58A6B;
+    --now-soft:rgba(229,138,107,.13);
+    --prop:#AFC765;
+    --prop-soft:rgba(175,199,101,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --sheet:#11151B;
+  --sheet-2:#0C1015;
+  --panel:#191E26;
+  --ink:#E8ECF2;
+  --ink-soft:#AAB4C1;
+  --ink-dim:#7E8895;
+  --rule:rgba(178,199,228,.16);
+  --rule-soft:rgba(178,199,228,.09);
+  --accent:#8FAAF2;
+  --accent-soft:rgba(143,170,242,.13);
+  --now:#E58A6B;
+  --now-soft:rgba(229,138,107,.13);
+  --prop:#AFC765;
+  --prop-soft:rgba(175,199,101,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box;}
+body{
+  background:var(--sheet);
+  color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 96px;}
+
+/* ── Title block (a drawing sheet's, not a hero) ──────────────────────────── */
+.masthead{
+  border-bottom:2px solid var(--ink);
+  padding:44px 0 20px;
+  margin-bottom:34px;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-dim);margin:0 0 14px;
+}
+h1{
+  font-family:'Barlow Condensed','Inter',sans-serif;
+  font-size:clamp(44px,8vw,86px);font-weight:700;line-height:.94;
+  letter-spacing:-.015em;margin:0 0 18px;text-wrap:balance;
+}
+.standfirst{
+  max-width:60ch;font-size:18px;line-height:1.55;color:var(--ink-soft);margin:0 0 26px;
+}
+.standfirst strong{color:var(--ink);font-weight:600;}
+.titleblock{
+  display:grid;gap:1px;background:var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+  border:1px solid var(--rule);
+}
+.tb{background:var(--sheet);padding:11px 14px;}
+.tb dt{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 3px;
+}
+.tb dd{margin:0;font-size:13.5px;font-weight:500;line-height:1.4;}
+
+/* ── Legend ───────────────────────────────────────────────────────────────── */
+.legend{
+  display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;
+  padding:14px 0 0;margin:20px 0 0;border-top:1px solid var(--rule-soft);
+  font-size:13px;color:var(--ink-soft);
+}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;
+  padding:3px 8px;border-radius:3px;white-space:nowrap;
+}
+.tag.new{background:var(--prop-soft);color:var(--prop);}
+.tag.res{background:var(--accent-soft);color:var(--accent);}
+.tag.unc{background:var(--rule-soft);color:var(--ink-dim);}
+.tag.old{background:var(--now-soft);color:var(--now);}
+
+/* ── Plates ───────────────────────────────────────────────────────────────── */
+.plate{
+  background:var(--panel);
+  border:1px solid var(--rule);
+  border-radius:4px;
+  margin:26px 0 0;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.plate-head{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:0 26px;
+  padding:26px 28px 22px;
+  border-bottom:1px solid var(--rule-soft);
+}
+.plate-no{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:64px;font-weight:700;line-height:.8;
+  color:var(--accent);opacity:.32;
+  letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.plate-title{min-width:0;}
+.plate-eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-dim);
+  margin:0 0 8px;
+}
+h2{
+  font-family:'Barlow Condensed','Inter',sans-serif;
+  font-size:clamp(28px,3.6vw,40px);font-weight:600;line-height:1.02;
+  letter-spacing:-.005em;margin:0 0 14px;text-wrap:balance;
+}
+.plate-body{max-width:64ch;font-size:15.5px;line-height:1.62;color:var(--ink-soft);margin:0;}
+.plate-body + .plate-body{margin-top:12px;}
+.plate-body strong{color:var(--ink);font-weight:600;}
+.plate-body code{
+  font-family:'IBM Plex Mono',monospace;font-size:.9em;
+  background:var(--rule-soft);padding:1px 5px;border-radius:3px;color:var(--ink);
+}
+
+/* ── Specimen rail — frames never reflow, the rail scrolls ────────────────── */
+.rail{
+  display:flex;gap:26px;align-items:flex-start;
+  overflow-x:auto;
+  padding:26px 28px 30px;
+  background:var(--sheet-2);
+  border-top:1px solid var(--rule-soft);
+  scrollbar-width:thin;
+}
+.spec{flex:0 0 auto;width:390px;}
+.spec-cap{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin:0 0 10px;
+}
+.spec-name{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink);
+}
+.spec-note{
+  font-size:12.5px;line-height:1.45;color:var(--ink-dim);margin:10px 0 0;
+}
+.spec-note b{color:var(--ink-soft);font-weight:600;}
+.spec-parts{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;
+  color:var(--ink-dim);margin:8px 0 0;line-height:1.7;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PRODUCT SPECIMENS — FieldLogicHQ warm coach-portal tokens, verbatim.
+   These stay in the product's light warm theme in BOTH page themes: a specimen
+   is a photograph of the product, not a surface that follows the reader.
+   All sizes in px = true size at a 390 px phone width.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.fl{
+  --paper:#F8F4ED;
+  --card:#FFFFFF;
+  --fink:#241E15;
+  --fink-soft:#4A4235;
+  --fdim:#615A54;
+  --fline:rgba(70,55,30,.12);
+  --fline-2:rgba(70,55,30,.20);
+  --ffill:rgba(70,55,30,.08);
+  --olive:#57651E;
+  --amber:#835006;
+  --nav:#EFEAE1;
+  width:390px;
+  background:var(--paper);
+  color:var(--fink);
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:14px;line-height:1.5;
+  border:1px solid var(--fline-2);
+  border-radius:6px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 12px 30px -18px rgba(36,30,21,.55);
+}
+.fl-tall{height:720px;}
+.fl-crop{height:auto;}
+.fl-pad{padding:20px 16px 0;}
+
+/* header */
+.fl-hdr{display:flex;align-items:center;gap:12px;}
+.fl-tile{
+  width:44px;height:44px;flex:0 0 44px;border-radius:50%;
+  background:rgba(87,101,30,.10);border:1px solid rgba(87,101,30,.22);
+  display:flex;align-items:center;justify-content:center;color:var(--olive);
+}
+.fl-h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;flex:1;}
+.fl-help{
+  width:38px;height:38px;flex:0 0 38px;border-radius:50%;
+  background:var(--ffill);display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:600;color:var(--fdim);
+}
+.fl-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+.fl-act{
+  width:44px;height:44px;border-radius:9px;background:var(--card);
+  border:1px solid var(--fline-2);display:flex;align-items:center;justify-content:center;
+  color:var(--fink-soft);
+}
+
+/* toolbar */
+.fl-toolbar{margin-top:12px;margin-bottom:12px;}
+.fl-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.fl-chip{
+  display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;
+  border:1px solid var(--fline-2);border-radius:999px;background:none;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--fdim);
+}
+.fl-chip-on{background:rgba(87,101,30,.35);border-color:transparent;color:var(--fink);}
+.fl-chip-n{color:var(--amber);letter-spacing:0;}
+.fl-seg{
+  display:inline-flex;gap:2px;padding:2px;background:var(--ffill);
+  border-radius:999px;margin-top:10px;
+}
+.fl-toolbar-solo .fl-seg{margin-top:0;}
+.fl-segb{
+  min-height:44px;padding:0 16px;border-radius:999px;border:none;background:none;
+  display:inline-flex;align-items:center;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--fdim);
+}
+.fl-segb-on{background:rgba(87,101,30,.35);color:var(--fink);}
+
+/* list */
+.fl-list{
+  border:1px solid rgba(87,101,30,.20);border-radius:10px;overflow:hidden;
+  background:var(--card);
+}
+.fl-sec{
+  display:flex;align-items:center;gap:7px;padding:11px 18px 8px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--amber);
+}
+.fl-sec-hint{
+  margin-left:auto;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:500;
+  letter-spacing:0;text-transform:none;color:var(--fdim);
+}
+.fl-day{
+  padding:10px 18px 5px;background:var(--paper);border-top:1px solid var(--fline);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--fdim);
+}
+.fl-day:first-child{border-top:0;}
+.fl-row{
+  display:flex;align-items:flex-start;gap:13px;padding:14px 18px;
+  border-top:1px solid var(--fline);
+}
+.fl-row-unread{background:rgba(87,101,30,.06);}
+.fl-row-act{box-shadow:inset 2px 0 0 var(--amber);}
+.fl-ico{font-size:17px;flex:0 0 auto;line-height:1.2;margin-top:1px;}
+.fl-body{flex:1;min-width:0;}
+.fl-t{font-size:14px;font-weight:600;line-height:1.35;margin:0 0 3px;color:var(--fink);}
+.fl-row-read .fl-t{font-weight:500;color:var(--fink-soft);}
+.fl-b{font-size:13px;line-height:1.4;color:var(--fink-soft);margin:0 0 3px;}
+.fl-row-read .fl-b{color:var(--fdim);}
+.fl-time{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--fdim);
+  font-variant-numeric:tabular-nums;margin:0;
+}
+.fl-meta{display:flex;align-items:center;gap:12px;min-height:44px;margin-top:-4px;}
+.fl-meta .fl-time{margin:0;}
+.fl-clear{
+  display:inline-flex;align-items:center;min-height:34px;padding:0 13px;
+  border:1px solid var(--fline-2);border-radius:999px;background:var(--card);
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--fink-soft);
+}
+.fl-state{
+  display:inline-flex;align-items:center;gap:5px;margin:0 0 3px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--amber);
+}
+.fl-state::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--amber);}
+.fl-dot{width:7px;height:7px;border-radius:50%;background:var(--olive);flex:0 0 7px;margin-top:6px;}
+.fl-chev{color:var(--fdim);flex:0 0 auto;margin-top:3px;}
+
+/* bottom nav */
+.fl-nav{
+  position:absolute;left:0;right:0;bottom:0;height:72px;
+  background:var(--nav);border-top:1px solid var(--fline-2);
+  display:flex;align-items:center;
+}
+.fl-navi{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:var(--fdim);position:relative;
+}
+.fl-navi svg{display:block;}
+.fl-navl{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.fl-navi-on{color:var(--fink);}
+.fl-badge{
+  position:absolute;top:-3px;right:16px;min-width:19px;height:15px;padding:0 4px;
+  border-radius:999px;background:var(--olive);color:#fff;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* fold shade — the frame edge IS the fold; this just names it */
+.fl-fold{
+  position:absolute;left:0;right:0;bottom:72px;height:34px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(248,244,237,0),rgba(248,244,237,.92));
+}
+
+/* ── Callout strips inside plates ─────────────────────────────────────────── */
+.strip{
+  padding:22px 28px 26px;border-top:1px solid var(--rule-soft);
+  background:var(--panel);
+}
+.strip-h{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 14px;
+}
+.clockrule{
+  display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+}
+.cr{background:var(--panel);padding:12px 14px;}
+.cr dt{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 5px;
+}
+.cr dd{
+  margin:0;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;
+  color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.cr small{display:block;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:400;
+  color:var(--ink-dim);letter-spacing:0;margin-top:5px;line-height:1.4;}
+
+/* bucket bars */
+.buckets{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+.bk-h{
+  display:flex;align-items:baseline;gap:9px;margin:0 0 12px;
+}
+.bk-h .tag{margin:0;}
+.bar{display:flex;height:34px;border-radius:3px;overflow:hidden;border:1px solid var(--rule);}
+.bar span{
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#fff;
+  white-space:nowrap;overflow:hidden;
+}
+.bar .b1{background:#2F4A9E;}
+.bar .b2{background:#5A6FA8;}
+.bar .b3{background:#7E8B4A;}
+.bar .b4{background:#A8A091;}
+.bklabels{
+  display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-dim);
+  letter-spacing:.04em;
+}
+.bklabels i{font-style:normal;display:inline-flex;align-items:center;gap:6px;}
+.sw{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+/* measurement strip */
+.measure{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+.ms{background:var(--panel);padding:13px 15px;}
+.ms dt{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 6px;}
+.ms dd{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:600;
+  line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;}
+.ms dd em{font-style:normal;font-size:15px;font-weight:500;color:var(--ink-dim);
+  font-family:'Inter',sans-serif;margin-left:4px;}
+.ms.hi dd{color:var(--prop);}
+
+/* option verdicts */
+.verdict{
+  border-top:1px solid var(--rule-soft);padding:16px 0 0;margin:14px 0 0;
+  font-size:13px;line-height:1.55;color:var(--ink-soft);
+}
+.verdict p{margin:0 0 7px;}
+.verdict p:last-child{margin:0;}
+.verdict b{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-dim);
+  display:inline-block;min-width:66px;
+}
+.pick{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;
+  background:var(--prop);color:var(--panel);padding:3px 9px;border-radius:3px;
+}
+
+/* closing */
+.close{
+  margin:34px 0 0;padding:32px 28px 34px;border:1px solid var(--ink);
+  background:var(--panel);border-radius:4px;
+}
+.close h2{margin-bottom:16px;}
+.asks{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);}
+.asks li{background:var(--panel);padding:15px 17px;display:grid;grid-template-columns:auto 1fr;gap:16px;}
+.asks .q{
+  font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;line-height:1;
+  color:var(--accent);font-variant-numeric:tabular-nums;
+}
+.asks p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink-soft);}
+.asks p b{color:var(--ink);font-weight:600;}
+.foot{
+  margin:30px 0 0;padding-top:16px;border-top:1px solid var(--rule);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;
+  color:var(--ink-dim);line-height:1.8;
+}
+
+@media (max-width:760px){
+  .plate-head{grid-template-columns:1fr;gap:10px;padding:22px 18px 18px;}
+  .plate-no{font-size:44px;}
+  .rail{padding:20px 18px 24px;gap:20px;}
+  .strip,.close{padding:20px 18px 24px;}
+  .wrap{padding:0 14px 72px;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+
+<div class="wrap">
+
+  <!-- ══════════════════ TITLE BLOCK ══════════════════ -->
+  <header class="masthead">
+    <p class="eyebrow">Coach portal · Notifications · Owner QA §138</p>
+    <h1>Four fixes to the feed</h1>
+    <p class="standfirst">
+      Three filter pills wrap onto two rows. Two zones read as the same thing. And a row stamped
+      <strong>“1d ago”</strong> sits underneath a heading that says <strong>“Earlier”</strong>.
+      Three of those are drawing problems with obvious answers. The fourth is a decision about what
+      <strong>Needs attention</strong> is actually promising.
+    </p>
+    <dl class="titleblock">
+      <div class="tb"><dt>Sheet</dt><dd>Feed grouping, ordering &amp; filters</dd></div>
+      <div class="tb"><dt>Drawn</dt><dd>6 September 2026</dd></div>
+      <div class="tb"><dt>Specimen width</dt><dd>390&nbsp;px — true phone size</dd></div>
+      <div class="tb"><dt>Status</dt><dd>Proposal — nothing built</dd></div>
+    </dl>
+    <div class="legend">
+      <span class="tag new">New</span>
+      <span class="tag res">Restyled</span>
+      <span class="tag unc">Unchanged</span>
+      <span class="tag old">Today</span>
+      <span>Every specimen carries these on its caption. Product frames keep the portal’s warm light theme in both page themes — a specimen is a photograph, not a surface that follows you.</span>
+    </div>
+  </header>
+
+  <!-- ══════════════════ PLATE 00 — WHOLE SCREEN ══════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="plate-no">00</div>
+      <div class="plate-title">
+        <p class="plate-eyebrow">The sum of all four · whole screen</p>
+        <h2>What a coach sees before they scroll</h2>
+        <p class="plate-body">
+          Each change below is small on its own. This is the one that decides whether they are worth
+          making. Today the controls take <strong>164&nbsp;px</strong> off the top of the screen, so the
+          list begins <strong>296&nbsp;px</strong> down and three rows fit — all three of them club-admin
+          decisions a coach may not be able to act on. Nothing on the phone explains why they sit above
+          the day headings.
+        </p>
+        <p class="plate-body">
+          With the filters gone and the headings honest, <strong>five rows fit in the same space</strong>,
+          today’s news is visible without scrolling, and the sentence that explains the pinned zone
+          appears on a phone for the first time — it is suppressed today because it had nowhere to go.
+        </p>
+      </div>
+    </div>
+    <div class="rail">
+
+      <!-- BEFORE -->
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Today</span><span class="tag old">As shipped</span></div>
+        <div class="fl fl-tall">
+          <div class="fl-pad">
+            <div class="fl-hdr">
+              <span class="fl-tile"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+              <h1 class="fl-h1">Notifications</h1>
+              <span class="fl-help">?</span>
+            </div>
+            <div class="fl-acts">
+              <span class="fl-act"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+              <span class="fl-act"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m2 12 5 5L17 7"/><path d="m12 17 5-5"/></svg></span>
+            </div>
+
+            <div class="fl-toolbar">
+              <div class="fl-chips">
+                <span class="fl-chip fl-chip-on">All</span>
+                <span class="fl-chip">Needs attention <b class="fl-chip-n">3</b></span>
+                <span class="fl-chip">Activity</span>
+              </div>
+              <div class="fl-seg">
+                <span class="fl-segb">Unread</span>
+                <span class="fl-segb fl-segb-on">All</span>
+              </div>
+            </div>
+
+            <div class="fl-list">
+              <div class="fl-sec"><span>Needs attention</span><span style="color:var(--amber)">3</span></div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">✋</span>
+                <div class="fl-body">
+                  <p class="fl-t">Assistant coach invite awaiting approval</p>
+                  <p class="fl-b">Dana Whitfield invited m.okafor@example.com to U13 Hawks.</p>
+                  <p class="fl-time">2h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">🚫</span>
+                <div class="fl-body">
+                  <p class="fl-t">Team marked no-show</p>
+                  <p class="fl-b">Riverside Rockets did not check in for game 14.</p>
+                  <p class="fl-time">1d ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">⚠️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Payment failed</p>
+                  <p class="fl-b">The club’s subscription payment could not be processed.</p>
+                  <p class="fl-time">3d ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-day">Today</div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">🗓️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Game moved: U13 Hawks vs Northside Thunder</p>
+                  <p class="fl-b">Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.</p>
+                  <p class="fl-time">1h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+          <div class="fl-fold"></div>
+          <nav class="fl-nav">
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="fl-navl">Overview</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="fl-navl">Schedule</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="fl-navl">Chat</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><span class="fl-navl">Roster</span></span>
+            <span class="fl-navi fl-navi-on"><span class="fl-badge">9+</span><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg><span class="fl-navl">More</span></span>
+          </nav>
+        </div>
+        <p class="spec-note">
+          <b>3 rows fit.</b> The pills wrap to two lines, then the read toggle takes a third.
+          The list’s first day heading (<b>Today</b>) is only just reachable, and today’s
+          game change is cut off at the fold.
+        </p>
+        <p class="spec-parts">HEADER · UNCHANGED &nbsp;|&nbsp; FILTER PILLS · TODAY &nbsp;|&nbsp; LIST · TODAY &nbsp;|&nbsp; BOTTOM NAV · UNCHANGED (drawn approximately)</p>
+      </div>
+
+      <!-- AFTER -->
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Proposed</span><span class="tag new">All four changes</span></div>
+        <div class="fl fl-tall">
+          <div class="fl-pad">
+            <div class="fl-hdr">
+              <span class="fl-tile"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+              <h1 class="fl-h1">Notifications</h1>
+              <span class="fl-help">?</span>
+            </div>
+            <div class="fl-acts">
+              <span class="fl-act"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+              <span class="fl-act"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m2 12 5 5L17 7"/><path d="m12 17 5-5"/></svg></span>
+            </div>
+
+            <div class="fl-toolbar fl-toolbar-solo">
+              <div class="fl-seg">
+                <span class="fl-segb">Unread</span>
+                <span class="fl-segb fl-segb-on">All</span>
+              </div>
+            </div>
+
+            <div class="fl-list">
+              <div class="fl-sec">
+                <span>Needs attention</span><span style="color:var(--amber)">3</span>
+                <span class="fl-sec-hint">stays until you clear it</span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">✋</span>
+                <div class="fl-body">
+                  <p class="fl-t">Assistant coach invite awaiting approval</p>
+                  <p class="fl-b">Dana Whitfield invited m.okafor@example.com to U13 Hawks.</p>
+                  <div class="fl-meta"><span class="fl-time">2h ago</span><span class="fl-clear">Clear</span></div>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">🚫</span>
+                <div class="fl-body">
+                  <p class="fl-t">Team marked no-show</p>
+                  <p class="fl-b">Riverside Rockets did not check in for game 14.</p>
+                  <div class="fl-meta"><span class="fl-time">Yesterday, 11:40 a.m.</span><span class="fl-clear">Clear</span></div>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">⚠️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Payment failed</p>
+                  <p class="fl-b">The club’s subscription payment could not be processed.</p>
+                  <div class="fl-meta"><span class="fl-time">Wed, 9:15 a.m.</span><span class="fl-clear">Clear</span></div>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-day">Today</div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">🗓️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Game moved: U13 Hawks vs Northside Thunder</p>
+                  <p class="fl-b">Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.</p>
+                  <p class="fl-time">1h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">📢</span>
+                <div class="fl-body">
+                  <p class="fl-t">Rain delay — all 4:00 p.m. games pushed 45 minutes</p>
+                  <p class="fl-b">Fields are being dragged. Check the schedule before you leave.</p>
+                  <p class="fl-time">3h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+          <div class="fl-fold"></div>
+          <nav class="fl-nav">
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="fl-navl">Overview</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="fl-navl">Schedule</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="fl-navl">Chat</span></span>
+            <span class="fl-navi"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg><span class="fl-navl">Roster</span></span>
+            <span class="fl-navi fl-navi-on"><span class="fl-badge">9+</span><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg><span class="fl-navl">More</span></span>
+          </nav>
+        </div>
+        <p class="spec-note">
+          <b>5 rows fit</b>, and today’s two announcements are above the fold. The zone now says
+          what it does — <b>“stays until you clear it”</b> — and the three pinned rows carry the
+          date they arrived, not a countdown that disagrees with the heading below them.
+        </p>
+        <p class="spec-parts">HEADER · UNCHANGED &nbsp;|&nbsp; FILTER PILLS · REMOVED (phone only) &nbsp;|&nbsp; READ TOGGLE · UNCHANGED &nbsp;|&nbsp; ZONE HINT · NEW ON PHONE &nbsp;|&nbsp; CLEAR BUTTON · NEW &nbsp;|&nbsp; TIMESTAMPS · RESTYLED</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════ PLATE 01 — THE CLOCK ══════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="plate-no">01</div>
+      <div class="plate-title">
+        <p class="plate-eyebrow">Change 01 · the clock</p>
+        <h2>A row and its heading stop disagreeing</h2>
+        <p class="plate-body">
+          This is the defect in your screenshot, and it is real — not the fixture being stale.
+          <code>1d ago</code> counts <strong>elapsed hours</strong>. <code>Earlier</code> counts
+          <strong>calendar days</strong>. A notification posted Friday at 6:21 p.m. reads “1d ago”
+          for the whole of Sunday morning while filing under <em>Earlier</em>, because by the calendar
+          it is two days back.
+        </p>
+        <p class="plate-body">
+          It runs the other way too: at half past midnight, something posted an hour ago sits under
+          <strong>Yesterday</strong> reading “1h ago”. The two can be a full day apart in
+          <strong>both</strong> directions. The fix is to stop asking them the same question — the
+          heading owns the day, the row owns the time inside that day.
+        </p>
+      </div>
+    </div>
+    <div class="rail">
+
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Today</span><span class="tag old">Two clocks</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding-bottom:20px">
+            <div class="fl-list">
+              <div class="fl-day">Earlier</div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">🗓️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Game moved: U13 Hawks vs Northside Thunder</p>
+                  <p class="fl-b">Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.</p>
+                  <p class="fl-time" style="color:#B03A22;font-weight:700">1d ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">📢</span>
+                <div class="fl-body">
+                  <p class="fl-t">Rain delay — all 4:00 p.m. games pushed 45 minutes</p>
+                  <p class="fl-b">Fields are being dragged. Check the schedule before you leave.</p>
+                  <p class="fl-time" style="color:#B03A22;font-weight:700">1d ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          Both rows were posted <b>Friday evening</b>. The heading has already moved them to
+          <b>Earlier</b>; the timestamp still insists they are one day old. Nothing on the screen
+          tells the coach which one to believe.
+        </p>
+        <p class="spec-parts">LIST · TODAY &nbsp;|&nbsp; MISMATCH HIGHLIGHTED FOR THIS DRAWING ONLY</p>
+      </div>
+
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Proposed</span><span class="tag new">One clock</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding-bottom:20px">
+            <div class="fl-list">
+              <div class="fl-day">Earlier this week</div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">🗓️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Game moved: U13 Hawks vs Northside Thunder</p>
+                  <p class="fl-b">Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.</p>
+                  <p class="fl-time">Fri, 6:21 p.m.</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread">
+                <span class="fl-ico">📢</span>
+                <div class="fl-body">
+                  <p class="fl-t">Rain delay — all 4:00 p.m. games pushed 45 minutes</p>
+                  <p class="fl-b">Fields are being dragged. Check the schedule before you leave.</p>
+                  <p class="fl-time">Fri, 4:21 p.m.</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          The heading places the day; the row places the moment inside it. There is nothing left
+          for the two to disagree about — and a coach can now tell two Friday notices apart,
+          which “1d ago” never let them do.
+        </p>
+        <p class="spec-parts">TIMESTAMPS · RESTYLED &nbsp;|&nbsp; DAY HEADING · NEW WORDING (see 02) &nbsp;|&nbsp; ROWS · UNCHANGED</p>
+      </div>
+
+    </div>
+    <div class="strip">
+      <p class="strip-h">The rule, in full — one clock, four shapes</p>
+      <dl class="clockrule">
+        <div class="cr"><dt>Today</dt><dd>2h ago</dd><small>Recency is the useful fact while it is still today. “just now”, “14m ago”, “2h ago”.</small></div>
+        <div class="cr"><dt>Yesterday</dt><dd>6:21 p.m.</dd><small>The heading already said the day. The row adds the hour.</small></div>
+        <div class="cr"><dt>Earlier this week</dt><dd>Fri, 6:21 p.m.</dd><small>The weekday, because the heading covers several.</small></div>
+        <div class="cr"><dt>Earlier</dt><dd>Aug 30</dd><small>Past a week, the date is the only thing anyone reads.</small></div>
+      </dl>
+      <p class="spec-note" style="margin-top:14px;max-width:66ch">
+        <b>House clock applies:</b> lowercase with periods — <b>6:21 p.m.</b>, never 6:21 PM. That
+        spelling is already build-enforced everywhere else a customer reads a time, and these rows
+        would be new places it has to hold.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ PLATE 02 — EARLIER THIS WEEK ══════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="plate-no">02</div>
+      <div class="plate-title">
+        <p class="plate-eyebrow">Change 02 · the buckets</p>
+        <h2>“Earlier” stops being a three-month drawer</h2>
+        <p class="plate-body">
+          In the QA fixture, <strong>Earlier holds 39 of the 61 activity rows</strong> — Wednesday’s
+          champions sit in the same bucket as a weekly digest from 10 July. A coach opening the feed
+          on a Sunday has no heading for “the back half of this week”, which is exactly the period
+          they are most likely to be catching up on.
+        </p>
+        <p class="plate-body">
+          One heading between <em>Yesterday</em> and <em>Earlier</em> splits that pile roughly in half.
+          <strong>“Earlier this week”</strong> rather than “This week”, because Today and Yesterday are
+          already out of it — and it stays on the calendar clock, so it does not reintroduce the
+          disagreement plate 01 just removed.
+        </p>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="buckets">
+        <div>
+          <div class="bk-h"><span class="tag old">Today</span><span style="font-size:13.5px;color:var(--ink-dim)">3 buckets · 61 activity rows</span></div>
+          <div class="bar">
+            <span class="b1" style="flex:12">12</span>
+            <span class="b2" style="flex:10">10</span>
+            <span class="b4" style="flex:39">39</span>
+          </div>
+          <div class="bklabels">
+            <i><span class="sw" style="background:#2F4A9E"></span>Today</i>
+            <i><span class="sw" style="background:#5A6FA8"></span>Yesterday</i>
+            <i><span class="sw" style="background:#A8A091"></span>Earlier — Wed back to 10 July</i>
+          </div>
+        </div>
+        <div>
+          <div class="bk-h"><span class="tag new">Proposed</span><span style="font-size:13.5px;color:var(--ink-dim)">4 buckets · same 61 rows</span></div>
+          <div class="bar">
+            <span class="b1" style="flex:12">12</span>
+            <span class="b2" style="flex:10">10</span>
+            <span class="b3" style="flex:16">16</span>
+            <span class="b4" style="flex:23">23</span>
+          </div>
+          <div class="bklabels">
+            <i><span class="sw" style="background:#2F4A9E"></span>Today</i>
+            <i><span class="sw" style="background:#5A6FA8"></span>Yesterday</i>
+            <i><span class="sw" style="background:#7E8B4A"></span>Earlier this week</i>
+            <i><span class="sw" style="background:#A8A091"></span>Earlier</i>
+          </div>
+        </div>
+      </div>
+      <p class="spec-note" style="margin-top:18px;max-width:66ch">
+        Counts are the seeded QA fixture as it stands. The exact split moves with where the week
+        boundary falls — the point is the shape: <b>Earlier goes from two-thirds of the feed to
+        about a third</b>, and the most recent past gets a name.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ PLATE 03 — THE FILTERS ══════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="plate-no">03</div>
+      <div class="plate-title">
+        <p class="plate-eyebrow">Change 03 · the filters</p>
+        <h2>The pills go — the list already says this</h2>
+        <p class="plate-body">
+          They can be made to fit on one row. I don’t think they should be, because the row is
+          buying nothing: the pills name <strong>Needs attention</strong> and <strong>Activity</strong>,
+          and the list labels both, a finger below. The <strong>3</strong> on the pill repeats the
+          <strong>3</strong> in the heading directly underneath it. On a five-item list, they filter
+          to something already on screen.
+        </p>
+        <p class="plate-body">
+          Two rows of pills plus the read toggle cost <strong>164&nbsp;px</strong>. The toggle alone costs
+          <strong>60</strong>. That <strong>104&nbsp;px</strong> is one full notification row — and it is
+          also the room the zone’s own explanation needs, which is why that sentence is switched off
+          on phones today. <strong>Desktop keeps the pills:</strong> there the row fits, the list is
+          longer, and filtering earns its place.
+        </p>
+      </div>
+    </div>
+    <div class="rail">
+
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Today</span><span class="tag old">164 px</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-toolbar" style="margin-top:0;margin-bottom:0">
+              <div class="fl-chips">
+                <span class="fl-chip fl-chip-on">All</span>
+                <span class="fl-chip">Needs attention <b class="fl-chip-n">3</b></span>
+                <span class="fl-chip">Activity</span>
+              </div>
+              <div class="fl-seg">
+                <span class="fl-segb">Unread</span>
+                <span class="fl-segb fl-segb-on">All</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          Three pills, two rows, then the toggle on a third. The pill labels repeat the two section
+          headings in the list below, and the count repeats the count.
+        </p>
+        <p class="spec-parts">ZONE PILLS · TODAY &nbsp;|&nbsp; READ TOGGLE · TODAY</p>
+      </div>
+
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">Proposed — phone</span><span class="tag new">60 px</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-toolbar fl-toolbar-solo" style="margin-top:0;margin-bottom:0">
+              <div class="fl-seg">
+                <span class="fl-segb">Unread</span>
+                <span class="fl-segb fl-segb-on">All</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          One control, one question: <b>everything, or only what I haven’t read?</b> The zones are
+          still there — they are the headings in the list, where they were always visible.
+        </p>
+        <p class="spec-parts">ZONE PILLS · REMOVED (≤768 px only) &nbsp;|&nbsp; READ TOGGLE · UNCHANGED</p>
+      </div>
+
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">If you’d rather keep them</span><span class="tag res">One row</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-toolbar" style="margin-top:0;margin-bottom:0">
+              <div class="fl-chips">
+                <span class="fl-chip fl-chip-on" style="font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;padding:0 15px">All</span>
+                <span class="fl-chip" style="font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;padding:0 15px">Needs attention</span>
+                <span class="fl-chip" style="font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;padding:0 15px">Activity</span>
+              </div>
+              <div class="fl-seg">
+                <span class="fl-segb">Unread</span>
+                <span class="fl-segb fl-segb-on">All</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          Sentence case instead of all-caps-with-tracking, and the count badge dropped as a
+          duplicate. That alone fits all three at 390&nbsp;px — but it still costs
+          <b>104&nbsp;px more</b> than removing them, and the tracked-caps treatment is shared with
+          chips elsewhere in the portal, so changing it here starts a wider question.
+        </p>
+        <p class="spec-parts">ZONE PILLS · RESTYLED &nbsp;|&nbsp; COUNT BADGE · REMOVED &nbsp;|&nbsp; FALLBACK OPTION, NOT THE RECOMMENDATION</p>
+      </div>
+
+    </div>
+    <div class="strip">
+      <p class="strip-h">Measured — drawn to the shipped values, 390 px phone</p>
+      <dl class="measure">
+        <div class="ms"><dt>Pills, row 1</dt><dd>44<em>px</em></dd></div>
+        <div class="ms"><dt>Pills, row 2</dt><dd>44<em>px</em></dd></div>
+        <div class="ms"><dt>Read toggle</dt><dd>48<em>px</em></dd></div>
+        <div class="ms"><dt>Gaps + margin</dt><dd>28<em>px</em></dd></div>
+        <div class="ms hi"><dt>Reclaimed</dt><dd>104<em>px</em></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ══════════════════ PLATE 04 — THE ZONE ══════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="plate-no">04</div>
+      <div class="plate-title">
+        <p class="plate-eyebrow">Change 04 · the decision · three options</p>
+        <h2>The zone answers “looked at”, not “dealt with”</h2>
+        <p class="plate-body">
+          This is the one that isn’t a drawing problem. <strong>Needs attention</strong> holds the
+          events that want a decision from you — a failed payment, an assistant-coach invite, a team
+          marked no-show. <strong>Activity</strong> is everything that just happened: registrations,
+          payments received, scores, the weekly digest.
+        </p>
+        <p class="plate-body">
+          But a row leaves the zone the moment you <em>tap</em> it. Open a failed payment on the bus,
+          fix nothing, and the zone quietly reports you are clear. The heading promises
+          <strong>“have you dealt with this?”</strong>; the list is answering
+          <strong>“have you looked at it?”</strong>. Three ways to close that gap.
+        </p>
+      </div>
+    </div>
+    <div class="rail">
+
+      <!-- OPTION A -->
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">A · Leave it</span><span class="tag old">Today</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-list">
+              <div class="fl-sec"><span>Needs attention</span><span style="color:var(--amber)">2</span></div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">✋</span>
+                <div class="fl-body">
+                  <p class="fl-t">Assistant coach invite awaiting approval</p>
+                  <p class="fl-time">2h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">🚫</span>
+                <div class="fl-body">
+                  <p class="fl-t">Team marked no-show</p>
+                  <p class="fl-time">Yesterday, 11:40 a.m.</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-day">Earlier this week</div>
+              <div class="fl-row fl-row-read">
+                <span class="fl-ico">⚠️</span>
+                <div class="fl-body">
+                  <p class="fl-t">Payment failed</p>
+                  <p class="fl-b">The club’s subscription payment could not be processed.</p>
+                  <p class="fl-time">Wed, 9:15 a.m.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          The coach opened the failed payment and fixed nothing. It has <b>dropped out of the zone,
+          greyed itself, and joined Wednesday’s history</b> — and the count went 3 → 2. The club
+          subscription is still unpaid.
+        </p>
+        <div class="verdict">
+          <p><b>Cost</b> Nothing to build.</p>
+          <p><b>Risk</b> The zone’s count is not trustworthy, which over time teaches a coach to ignore it. That is the failure mode that ends with a missed payment, not a cosmetic one.</p>
+        </div>
+      </div>
+
+      <!-- OPTION B -->
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">B · It resolves itself</span><span class="tag new">Platform-watched</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-list">
+              <div class="fl-sec">
+                <span>Needs attention</span><span style="color:var(--amber)">3</span>
+                <span class="fl-sec-hint">clears itself when handled</span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">✋</span>
+                <div class="fl-body">
+                  <p class="fl-state">Waiting on an admin</p>
+                  <p class="fl-t">Assistant coach invite awaiting approval</p>
+                  <p class="fl-time">2h ago</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">🚫</span>
+                <div class="fl-body">
+                  <p class="fl-state">No signal</p>
+                  <p class="fl-t">Team marked no-show</p>
+                  <p class="fl-time">Yesterday, 11:40 a.m.</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">⚠️</span>
+                <div class="fl-body">
+                  <p class="fl-state">Still failing · last tried 6:00 a.m.</p>
+                  <p class="fl-t">Payment failed</p>
+                  <p class="fl-time">Wed, 9:15 a.m.</p>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          The platform watches the underlying thing and removes the row when it changes. Honest
+          where it works — and it adds a genuinely useful line (<b>“still failing”</b>) that no
+          other option gives you.
+        </p>
+        <div class="verdict">
+          <p><b>Cost</b> Per event type, and the most work of the three.</p>
+          <p><b>Breaks</b> Only two of the current act events have a resolved signal to read. “Team marked no-show” has none — <b>that row would never leave</b>. And a coach can’t approve their own assistant invite, so the row sits there waiting on someone else.</p>
+        </div>
+      </div>
+
+      <!-- OPTION C -->
+      <div class="spec">
+        <div class="spec-cap"><span class="spec-name">C · You clear it</span><span class="pick">Recommended</span></div>
+        <div class="fl fl-crop">
+          <div class="fl-pad" style="padding:16px 16px 16px">
+            <div class="fl-list">
+              <div class="fl-sec">
+                <span>Needs attention</span><span style="color:var(--amber)">3</span>
+                <span class="fl-sec-hint">stays until you clear it</span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">✋</span>
+                <div class="fl-body">
+                  <p class="fl-t">Assistant coach invite awaiting approval</p>
+                  <p class="fl-b">Dana Whitfield invited m.okafor@example.com to U13 Hawks.</p>
+                  <div class="fl-meta"><span class="fl-time">2h ago</span><span class="fl-clear">Clear</span></div>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+              <div class="fl-row fl-row-unread fl-row-act">
+                <span class="fl-ico">🚫</span>
+                <div class="fl-body">
+                  <p class="fl-t">Team marked no-show</p>
+                  <p class="fl-b">Riverside Rockets did not check in for game 14.</p>
+                  <div class="fl-meta"><span class="fl-time">Yesterday, 11:40 a.m.</span><span class="fl-clear">Clear</span></div>
+                </div>
+                <span class="fl-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec-note">
+          Opening a row no longer removes it — only <b>Clear</b> does, and Clear is its own tap
+          target on the row’s meta line, so it costs no width and the body text never squeezes.
+          A cleared row still sits in the day feed as history; nothing is deleted.
+        </p>
+        <div class="verdict">
+          <p><b>Cost</b> One button and one flag. Works for every event type, present and future — no per-event wiring.</p>
+          <p><b>Risk</b> The zone only empties if the coach clears it. If it fills up and stays full it becomes wallpaper — which argues for keeping the act list short (see the note below).</p>
+          <p><b>Watch</b> “Mark all read” and “Clear” become two verbs a coach has to hold apart. Mark all read already leaves these rows alone by your ruling, so the split exists today — this names it rather than creating it.</p>
+        </div>
+      </div>
+
+    </div>
+    <div class="strip">
+      <p class="strip-h">The thing underneath all three</p>
+      <p class="plate-body" style="max-width:66ch">
+        All three of the rows in your screenshot are <strong>club-admin decisions</strong> — billing,
+        tournament check-in, rep-team admin — and every one of them links to an admin screen a coach
+        may not be able to open. That is the recipient-scoping gap already ticketed from the redraw,
+        and it is doing more damage to this zone than the read-state rule is. Whichever option you
+        pick, <strong>a coach’s Needs attention should hold things a coach can actually do.</strong>
+        I’d fix that before, or with, option C — otherwise C just makes an unactionable list stickier.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ CLOSE ══════════════════ -->
+  <section class="close">
+    <p class="plate-eyebrow">Recommendation</p>
+    <h2>Ship 01–03 together; 04 is your call</h2>
+    <p class="plate-body" style="max-width:66ch">
+      Changes 01, 02 and 03 are corrections — the clock is a defect, the bucket is a gap, and the
+      pills are chrome the list already replaced. They are small, they don’t touch the database, and
+      they can go in one pass with the §138 walk still open.
+    </p>
+    <p class="plate-body" style="max-width:66ch">
+      Change 04 changes what a word on the screen promises, so it wants your ruling rather than my
+      judgment. <strong>C</strong> is what I’d build: it works for every event type, it needs nothing
+      the platform can’t already see, and it puts the decision with the person who has it. <strong>B</strong>
+      is better where it works and impossible where it doesn’t — it could layer on later for the failed
+      payment specifically, which is the one row that genuinely knows whether it is still true.
+    </p>
+    <ol class="asks">
+      <li><span class="q">1</span><p><b>Pills:</b> remove on phone (keep on desktop), or restyle to one row and keep them everywhere?</p></li>
+      <li><span class="q">2</span><p><b>Bucket wording:</b> “Earlier this week”, or plain “This week”?</p></li>
+      <li><span class="q">3</span><p><b>The zone:</b> A, B or C — and does “Clear” read right, or would you rather it said <em>Done</em> or <em>Dismiss</em>?</p></li>
+      <li><span class="q">4</span><p><b>Scoping:</b> pull the admin-only events out of a coach’s Needs attention in the same pass, or leave it on its own ticket?</p></li>
+    </ol>
+    <p class="foot">
+      Specimens are 390 px wide and do not reflow — open this on your phone to judge the tap targets
+      and the fold, which is the only test that settles them.<br>
+      The QA fixture is currently spent: 62 of its 64 rows are read, and it was seeded Friday, so its
+      “Today” block has aged into Earlier. Worth reseeding before the rest of the §138 walk.
+    </p>
+  </section>
+
+</div>
