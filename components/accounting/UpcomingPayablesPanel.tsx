@@ -17,6 +17,10 @@ export interface PayableItem {
   /** For a commitment's piece: the record it belongs to and the piece's own id, so a schedule can
    *  open Record a payment pre-aimed at it (Payables Rebuild P2 — the `half` vocabulary is gone). */
   expenseId?: string;
+  /** The club-bill twin of `expenseId`: which allocation split this piece sits on, so the Ledger's
+   *  club rows can link straight into that bill's room on the Club tab (`?clubBill=`) instead of
+   *  dropping the coach at the top of a list that looks like the one they just left. */
+  splitId?: string;
   installmentId?: string;
   installmentNumber?: number;
   installmentCount?: number;

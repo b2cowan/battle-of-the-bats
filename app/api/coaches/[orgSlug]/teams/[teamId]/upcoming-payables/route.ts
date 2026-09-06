@@ -299,6 +299,14 @@ export const GET = withObservability(async (req: Request,
       const d = daysUntil(i.due_date);
       return {
         id:          i.id,
+        /* ⚠ THE BILL THIS PIECE BELONGS TO, not just the piece (2026-09-06). Without it the Ledger
+           knew a club bill's instalments but had no way to name the BILL those instalments are on,
+           so its "open on the Club tab" link could only land on the TOP of that tab — a list that
+           reads as a repeat of the one the coach just left, with the same row to find and click a
+           third time. The Club tab has been addressable by `?clubBill=<splitId>` since List · Room ·
+           Question; this is the id that fills it. `expenseId` on the team lane beside it is the
+           exact same idea for the other kind of bill. */
+        splitId:     i.split_id,
         description: splitDescMap.get(i.split_id) ?? 'Org allocation',
         amount:      Number(i.amount),
         dueDate:     i.due_date,

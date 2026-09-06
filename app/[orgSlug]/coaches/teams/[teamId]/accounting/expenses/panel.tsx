@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -477,6 +477,11 @@ interface PayBill {
   nextOwing: number;
   expense?: RepTeamExpense;
   standing?: CommitmentStanding;
+  /** CLUB BILLS ONLY — which allocation split this is, so the row's door can open that bill's own
+   *  room on the Club tab rather than the top of it. Optional because a team bill has no such id
+   *  and because a cached response from before the lane carried it would arrive without one; the
+   *  link falls back to the bare tab in that case rather than building a `?clubBill=undefined`. */
+  splitId?: string;
 }
 
 /**
@@ -2470,9 +2475,15 @@ function MoneyRecordsPanel({
   // flag, and a closed season no longer renders this screen at all, so a capability check is
   // just a capability check.
   const seasonSearchParams = useSearchParams();
-  /* ⚰ `const router = useRouter()` STOOD HERE AND IS DELETED (Phase C). It existed for the two
+  /* ⚰ `const router = useRouter()` STOOD HERE AND WAS DELETED (Phase C). It existed for the two
      `router.push`es that opened and closed the bill's PAGE; `useRoomAddress` owns the address now,
-     and it `replace`s rather than pushes so opening a record never stacks a history entry. */
+     and it `replace`s rather than pushes so opening a record never stacks a history entry.
+     ⚠ IT IS BACK FOR ONE THING ONLY, AND NOT THAT ONE (2026-09-06): a CLUB bill's row leaves this
+     tab entirely for the Club tab, which no room address on this screen can reach. It `push`es on
+     purpose — that IS a navigation, and Back should return the coach to the Ledger they left.
+     ⚠ Do not reach for it to open a TEAM bill: that is a room over this list and belongs to
+     `useRoomAddress`, for every reason the paragraph above gives. */
+  const router = useRouter();
   /**
    * ⚠⚠ ADDRESSED BY `?bill=`, A ROOM OVER THE LEDGER — not a page beside the hub, and not a
    * sub-view that replaces the list either (List · Room · Question Phase C, 2026-09-02 D4).
@@ -3210,14 +3221,25 @@ function MoneyRecordsPanel({
        is settled through Club, which owns that conversation — so the bill's door is the Club tab
        rather than the drawer. Dropping them would silently lose a club-run team's other half. */
     const orgRows = (schedule ?? []).filter(r => r.source === 'org');
-    const byAllocation = new Map<string, ScheduleRow[]>();
+    /* ⚠⚠ GROUPED BY THE BILL, NOT BY ITS WORDS (2026-09-06). This keyed on `description` — so two
+       club bills a club happened to describe the same way ("League registration", twice in a
+       season) silently merged into ONE row whose figures were their sum, and no filter or fold
+       could take them apart again. The description is a LABEL a person typed; the split is the
+       record. Keying on the split also gives the row the id its door needs.
+       ⚠ The fallback is not defensive dressing: a response cached from before the lane carried
+       `splitId` has none, and falling back to the old key keeps those bills grouped as they were
+       rather than exploding one row per instalment. Such a bill's door then opens the Club tab
+       without an address — the pre-2026-09-06 behaviour, which is the honest degradation. */
+    const byAllocation = new Map<string, { description: string; splitId?: string; rows: ScheduleRow[] }>();
     for (const r of orgRows) {
+      const key = r.splitId ?? `desc:${r.description}`;
       // Append in place — spreading the bucket into a fresh array per row makes grouping O(n²)
       // in the instalments sharing one allocation (/simplify, efficiency lens).
-      const bucket = byAllocation.get(r.description);
-      if (bucket) bucket.push(r); else byAllocation.set(r.description, [r]);
+      const bucket = byAllocation.get(key);
+      if (bucket) bucket.rows.push(r);
+      else byAllocation.set(key, { description: r.description, splitId: r.splitId, rows: [r] });
     }
-    for (const [description, rows] of byAllocation) {
+    for (const [billKey, { description, splitId, rows }] of byAllocation) {
       /* ⚠⚠ A CLUB BILL CARRIES NO TAG, SO A TAG FILTER DROPS IT (fixed 2026-08-26). This is the
          register's own rule — "every other row simply has no such label, which is a match of zero,
          not a match of all" — finally applied to the other face. Until now these were pushed onto
@@ -3250,9 +3272,10 @@ function MoneyRecordsPanel({
       const total = pieces.reduce((s, p) => s + p.faceAmount, 0);
       admitted.push({
         bill: {
-          key: `org:${description}`,
+          key: `org:${billKey}`,
           kind: 'org',
           description,
+          splitId,
           category: 'From your club',
           itemName: null,
           total, paid: total - owing, owing, over: 0,
@@ -5806,6 +5829,88 @@ function MoneyRecordsPanel({
    * pay is indistinguishable from the single case, and any rule keyed on what is LEFT changes a
    * bill's shape as it is paid down.
    */
+  /**
+   * WHERE A CLUB BILL'S DOOR GOES — the Club tab, OPENED ON THAT BILL.
+   *
+   * ⚠⚠ IT USED TO CARRY NO ADDRESS AT ALL (fixed 2026-09-06). The link landed on the TOP of the
+   * Club tab, whose bills band lists the very rows the coach was just reading — so the door read
+   * as a repeat of the list they left, and reaching the bill took two more taps: find the same row
+   * again, then open its room. The Club tab has been addressable by `?clubBill=` since List · Room
+   * · Question and every other money link in this hub deep-links; this one simply never did.
+   *
+   * ⚠ NO ADDRESS WHEN THE BILL HAS NO `splitId` — a response cached from before the club lane
+   * carried one. Falling back to the bare tab is the old behaviour, which is worse but not wrong;
+   * building `?clubBill=undefined` would open the tab on a room that cannot exist.
+   */
+  function clubBillHref(bill: PayBill) {
+    return moneySectionHref(base, 'club', bill.splitId ? { clubBill: bill.splitId } : undefined);
+  }
+
+  /**
+   * THE ROW'S REAL DOOR, ON EVERY ROW OF BOTH ARRANGEMENTS (owner ruling 2026-09-03, applied in
+   * Phase C). A bare clickable `<tr>` is MOUSE-ONLY: no keyboard, no screen reader, which is why
+   * the Club tab's rows were given a real `<button>` chevron and why this list needed one too. It
+   * carries the honest verb in its accessible name.
+   *
+   * ⚖ ONE GLYPH SERVES BOTH KINDS, and that is the ruling being kept rather than departed from:
+   * both rows OPEN — a team bill into its room, a club bill onto the tab that owns it. What
+   * separates them is the WORD, not the shape: a club row's button says "Open in Club". ⚠ That
+   * word is `.cardActionLabel`, so it is visible in card mode only; on a desktop the row's own
+   * "From your club" line is what says where the chevron leads. Giving a club row a DIFFERENT
+   * GLYPH would reverse the 2026-09-03 ruling and needs the owner, not this function.
+   *
+   * ⚠ A CLUB BILL IS NOT THE TEAM'S RECORD TO EDIT — it is settled through Club, which owns that
+   * conversation — so it has no room here and its door NAVIGATES. Same rule the register's derived
+   * rows already follow; the accessible name says so out loud.
+   *
+   * ⚠ ONE FUNCTION, TWO CALLERS. The bill header and the piece row had a byte-identical copy of
+   * this each, so a fix to one door was a fix to half the rows (which is exactly how the missing
+   * address survived a rebuild). Whichever arrangement drew the row, it gets the same door.
+   */
+  function payRowDoor(bill: PayBill) {
+    if (bill.kind === 'org') {
+      return (
+        <Link
+          href={clubBillHref(bill)}
+          className={`${styles.linkBtn} ${styles.listRowToggle}`}
+          aria-label={`Open ${bill.description} on the Club tab`}
+          onClick={ev => ev.stopPropagation()}
+        >
+          <span className={styles.cardActionLabel}>Open in Club</span>
+          <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+        </Link>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className={`${styles.linkBtn} ${styles.listRowToggle}`}
+        aria-label={`Open ${bill.description}`}
+        onClick={ev => { ev.stopPropagation(); openBill(bill); }}
+      >
+        <span className={styles.cardActionLabel}>Open</span>
+        <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
+      </button>
+    );
+  }
+
+  /**
+   * WHAT TAPPING A ROW DOES — the same thing its trailing chevron does, which is the whole rule.
+   *
+   * ⚠⚠ A CLUB ROW IS TAPPABLE AGAIN (2026-09-06), and this is not the false affordance of 2026-08-20
+   * coming back. That defect was a row styled as clickable whose handler bailed on the first line:
+   * pointer cursor, hover highlight, nothing on click, because a club bill had no door at all here.
+   * It has one now — the Club tab, opened on that bill — so the affordance is honest and the row
+   * behaves like every neighbour around it. ⚠ If a future change ever takes that destination away,
+   * take the CURSOR away with it; a row that looks tappable and is not is the bug being fixed here.
+   */
+  function payRowTap(bill: PayBill) {
+    // A coach dragging to copy a figure is selecting, not opening — the same guard both rows had.
+    if (window.getSelection()?.toString()) return;
+    if (bill.kind === 'org') router.push(clubBillHref(bill));
+    else openBill(bill);
+  }
+
   function payBillHeader(bill: PayBill) {
     const shut = isShut(bill.key);
     const isOrg = bill.kind === 'org';
@@ -5815,20 +5920,16 @@ function MoneyRecordsPanel({
     /* ⚠ ONE VARIABLE DECIDES BOTH THE CURSOR AND THE HANDLER (/review, 2026-08-20). They were two
        different conditions — the class said `canWriteMoney || !isOrg`, the handler bailed on
        `isOrg` — so a coach WITH write access got a pointer cursor and hover styling on a club bill
-       that did nothing at all when clicked. A club bill has no drawer to open (it is not the team's
-       record); its door is the `Club →` button in the action cell. The sibling piece row already
-       derived both from one value, which is why only this row wore the false affordance.
+       that did nothing at all when clicked.
+       ⚠ THE ANSWER IS NOW YES FOR BOTH KINDS (2026-09-06) and the rule is untouched: `payRowTap`
+       is the single handler, every row is styled tappable, and every row opens — which is only
+       true because a club bill finally has a door. See that function's own note.
        ⚠ Reading a bill is never gated on write — the drawer is legible to a read-only money coach,
        and it is the write CONTROLS inside it that are gated. */
-    const tappable = !isOrg;
     return (
       <tr
-        className={`${styles.tr} ${styles.payBillRow} ${tappable ? styles.rowTappable : ''}`}
-        onClick={() => {
-          if (!tappable) return;
-          if (window.getSelection()?.toString()) return;
-          openBill(bill);
-        }}
+        className={`${styles.tr} ${styles.payBillRow} ${styles.rowTappable}`}
+        onClick={() => payRowTap(bill)}
       >
         <td className={`${styles.td} ${styles.payDueCell}`} data-label="Due">
           <button
@@ -5911,30 +6012,7 @@ function MoneyRecordsPanel({
                 month across several bills in one pass — the room's walk steps between BILLS, not
                 installments, so moving the act inside would make the month-end instrument two taps
                 slower per payment. */}
-            {isOrg ? (
-              /* ⚠ A CLUB BILL IS NOT THE TEAM'S RECORD TO EDIT — it is settled through Club, which
-                 owns that conversation, so it has no room here and its door NAVIGATES. Same rule
-                 the register's derived rows already follow; the accessible name says so. */
-              <Link
-                href={moneySectionHref(base, 'club', undefined)}
-                className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                aria-label={`Open ${bill.description} on the Club tab`}
-                onClick={ev => ev.stopPropagation()}
-              >
-                <span className={styles.cardActionLabel}>Open</span>
-                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
-              </Link>
-            ) : (
-              <button
-                type="button"
-                className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                aria-label={`Open ${bill.description}`}
-                onClick={ev => { ev.stopPropagation(); openBill(bill); }}
-              >
-                <span className={styles.cardActionLabel}>Open</span>
-                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
-              </button>
-            )}
+            {payRowDoor(bill)}
           </span>
         </td>
       </tr>
@@ -5951,16 +6029,11 @@ function MoneyRecordsPanel({
    */
   function payPieceRow(bill: PayBill, piece: PayPiece, withBill: boolean) {
     const isOrg = bill.kind === 'org';
-    const tappable = !isOrg;
     return (
       <tr
         key={piece.key}
-        className={`${styles.tr} ${styles.payPieceRow} ${tappable ? styles.rowTappable : ''} ${piece.settled ? styles.payPieceSettled : ''}`}
-        onClick={() => {
-          if (window.getSelection()?.toString()) return;
-          if (!tappable) return;
-          openBill(bill);
-        }}
+        className={`${styles.tr} ${styles.payPieceRow} ${styles.rowTappable} ${piece.settled ? styles.payPieceSettled : ''}`}
+        onClick={() => payRowTap(bill)}
       >
         <td className={`${styles.td} ${styles.payDueCell}`} data-label="Due">{fmtDate(piece.dueDate)}</td>
         {/* No `data-label` — a card's lead cell is its TITLE and takes no caption (owner +
@@ -6006,27 +6079,7 @@ function MoneyRecordsPanel({
             )}
             {/* The same door the bill header carries — the row is a `<tr onClick>` and needs one
                 real control, whichever arrangement drew it. */}
-            {isOrg ? (
-              <Link
-                href={moneySectionHref(base, 'club', undefined)}
-                className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                aria-label={`Open ${bill.description} on the Club tab`}
-                onClick={ev => ev.stopPropagation()}
-              >
-                <span className={styles.cardActionLabel}>Open</span>
-                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
-              </Link>
-            ) : (
-              <button
-                type="button"
-                className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                aria-label={`Open ${bill.description}`}
-                onClick={ev => { ev.stopPropagation(); openBill(bill); }}
-              >
-                <span className={styles.cardActionLabel}>Open</span>
-                <ChevronRight size={16} className={styles.listRowChevron} aria-hidden />
-              </button>
-            )}
+            {payRowDoor(bill)}
           </span>
         </td>
       </tr>
