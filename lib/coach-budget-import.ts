@@ -1,5 +1,6 @@
 import { getCell } from './import/tabular.ts';
 import type { ParsedImportFile } from './import/types.ts';
+import type { XlsxOptions } from './export/xlsx.ts';
 import { formatMonthLabel, type MonthKey } from './coach-budget-months.ts';
 
 /**
@@ -403,6 +404,18 @@ export interface KnownCategory {
   id: string;
   name: string;
   items: KnownItem[];
+  /**
+   * How many names this heading holds on the INCOME side — the ones `items` deliberately drops.
+   *
+   * ⚠ IT EXISTS SO THE TEMPLATE CAN TELL TWO BLANKS APART, and they are not the same fact. A
+   * heading with nothing under it at all ("Provincials Trip", freshly created) is waiting for its
+   * first cost name. A heading whose every name is income ("Other Income", "Sponsorship") has a
+   * full vocabulary that this sheet is simply not about. Both used to render as an empty row on the
+   * Reference sheet, which reads as missing data rather than as either state.
+   *
+   * Never consulted by the readers or the writer — a cost import still matches `items` alone.
+   */
+  incomeNameCount?: number;
 }
 
 /**
@@ -433,6 +446,9 @@ export function toKnownCategories(
         // The three tiers migration 240 built, said in words a coach reads.
         source: (i.orgId === null ? 'standard' : i.teamId === null ? 'club' : 'team') as BudgetWordSource,
       })),
+    // Counted from the SAME list, before the filter above throws them away — the only place both
+    // sides of a category are in hand at once. See `KnownCategory.incomeNameCount`.
+    incomeNameCount: c.items.filter(i => i.direction === 'in').length,
   }));
 }
 
@@ -798,6 +814,42 @@ export const TEMPLATE_LISTS_SHEET = 'Lists';
 
 export const REFERENCE_SHEET_HEADERS = ['Category', 'Cost name', 'Where it comes from'] as const;
 
+/**
+ * The two messages Excel shows beside a cell the moment a coach selects it.
+ *
+ * ⚠ THIS IS THE ONLY PLACE THE FILL-IN SHEET CAN SPEAK (owner, 2026-09-06). The file ships a
+ * Reference tab pairing every cost name with its heading, and nothing on the grid a coach types
+ * into mentioned that it exists — so a flat Line list looked like a claim that the pairing does not
+ * matter. A sentence anywhere else on that sheet is read back as data on import; a validation
+ * prompt is not.
+ *
+ * ⚠ THEY SAY THE OPPOSITE THINGS ON PURPOSE, because the two columns behave differently and a
+ * coach cannot see why. A cost name we have never heard of is CREATED on import. A category we
+ * have never heard of BLOCKS the row — the importer will not invent one — and the only place to
+ * add it is the Budget page. That asymmetry has always been there and has never been said.
+ *
+ * ⚠ THE WORD IS "CATEGORY", NEVER "HEADING" (/review, 2026-09-06). These sentences shipped for one
+ * review cycle calling it a heading, on a tooltip attached to a column literally titled `Category`,
+ * while both money screens say "Pick a category and item". Two words for one thing is a product
+ * bug, not a synonym — and it is the exact drift the one-spelling rule exists to catch.
+ *
+ * Excel truncates at 32 / 255 characters; the writer clips to match, so keep both under.
+ */
+export const TEMPLATE_CATEGORY_PROMPT = {
+  title: 'Pick a category from the list',
+  body:
+    'Unlike cost names, we can’t create a new category for you at import. If the one you want isn’t '
+    + 'here, add it on your Budget page first, then download a fresh template.',
+} as const;
+
+export const TEMPLATE_LINE_PROMPT = {
+  title: 'Any cost name works here',
+  body:
+    'This list shows every cost name your team uses, not just this category’s. The Reference tab '
+    + 'shows which category each name belongs to. A name we don’t have yet is fine: type it, and we '
+    + 'add it when you import.',
+} as const;
+
 const SOURCE_LABELS: Record<BudgetWordSource, string> = {
   standard: 'Standard',
   club: 'Your club',
@@ -810,12 +862,33 @@ const SOURCE_LABELS: Record<BudgetWordSource, string> = {
  * ⚠ NO AMOUNT COLUMN, AND THERE NEVER WILL BE (D-G1). This sheet answers *what can we budget
  * for*; the coach answers *how much*. A category with no cost names still gets a row, so a coach
  * can see the heading exists rather than concluding we do not have one.
+ *
+ * ⚠ AND IT SAYS WHICH KIND OF EMPTY IT IS (owner, 2026-09-06). Three headings arrived on a real
+ * team's sheet as three identical blank rows, and they were not one thing: one was a club heading
+ * with no cost names yet, two were income headings whose every word this spending sheet filters
+ * out. A blank cell reads as data that failed to load — the coach's fair conclusion was "I can't
+ * budget under these", when in fact they can budget under all three by typing the cost themselves.
  */
+export const NO_COST_NAMES_YET = 'No cost names yet — type your own';
+export const INCOME_NAMES_ONLY = 'Income names only — type your own';
+
+/** The sentence under the Reference table, saying once what the two labels above imply. */
+export const REFERENCE_SHEET_NOTE =
+  'This template plans spending only. A category with no cost names still works — type the cost '
+  + 'yourself and we add it to your list when you import.';
+
 export function referenceSheetRows(categories: KnownCategory[]): string[][] {
   const rows: string[][] = [];
   for (const category of categories) {
     if (category.items.length === 0) {
-      rows.push([category.name, '', '']);
+      /* The third column stays blank DELIBERATELY: it says where a cost NAME came from, and there
+         is no name on this row to answer for. Filling it with the category's own provenance would
+         be a different question answered in the same column. */
+      rows.push([
+        category.name,
+        (category.incomeNameCount ?? 0) > 0 ? INCOME_NAMES_ONLY : NO_COST_NAMES_YET,
+        '',
+      ]);
       continue;
     }
     for (const item of category.items) {
@@ -853,6 +926,66 @@ export function templateChoiceLists(categories: KnownCategory[]): { categories: 
   return {
     categories: categories.map(c => c.name),
     items: items.sort((a, b) => a.localeCompare(b, 'en-CA')),
+  };
+}
+
+/**
+ * The whole Excel template, assembled once: its example rows, its dropdowns, the sentence each
+ * dropdown says, and its two vocabulary sheets.
+ *
+ * ⚠ IT LIVES HERE SO THE TEST CAN OPEN THE REAL FILE. The workbook test used to rebuild this by
+ * hand under a comment claiming it was "exactly what the sheet hands the writer" — which is a claim
+ * that decays silently, and was about to, since this template gained cell messages and a note the
+ * copy knew nothing about. One builder, two callers, no second version to keep true.
+ *
+ * The CSV path deliberately does not come through here: a CSV carries no second tab and no
+ * dropdown, so there is nowhere to put any of it.
+ */
+export function budgetTemplateWorkbook(
+  headers: string[],
+  categories: KnownCategory[],
+): { rows: string[][]; options: XlsxOptions } {
+  const rows = templateExampleRows(categories, headers.length);
+  const choices = templateChoiceLists(categories);
+
+  const columnChoices: (string | undefined)[] = headers.map(() => undefined);
+  const columnChoicePrompts: ({ title: string; body: string } | undefined)[] = headers.map(() => undefined);
+
+  const categoryColumn = headers.indexOf('Category');
+  // The bills sheet has no Line column — a payable's description is genuinely free text.
+  const lineColumn = headers.indexOf('Line');
+
+  if (categoryColumn >= 0 && choices.categories.length > 0) {
+    columnChoices[categoryColumn] = `${TEMPLATE_LISTS_SHEET}!$A$2:$A$${choices.categories.length + 1}`;
+    columnChoicePrompts[categoryColumn] = { ...TEMPLATE_CATEGORY_PROMPT };
+  }
+  if (lineColumn >= 0 && choices.items.length > 0) {
+    columnChoices[lineColumn] = `${TEMPLATE_LISTS_SHEET}!$B$2:$B$${choices.items.length + 1}`;
+    columnChoicePrompts[lineColumn] = { ...TEMPLATE_LINE_PROMPT };
+  }
+
+  const listRows: string[][] = [];
+  for (let i = 0; i < Math.max(choices.categories.length, choices.items.length); i += 1) {
+    listRows.push([choices.categories[i] ?? '', choices.items[i] ?? '']);
+  }
+
+  return {
+    rows,
+    options: {
+      columnChoices,
+      columnChoicePrompts,
+      // Every row a coach could fill in, not just the examples we ship.
+      choiceRowCount: MAX_IMPORT_ROWS,
+      extraSheets: [
+        {
+          name: TEMPLATE_REFERENCE_SHEET,
+          headers: [...REFERENCE_SHEET_HEADERS],
+          rows: referenceSheetRows(categories),
+          note: REFERENCE_SHEET_NOTE,
+        },
+        { name: TEMPLATE_LISTS_SHEET, headers: ['Categories', 'Cost names'], rows: listRows, hidden: true },
+      ],
+    },
   };
 }
 

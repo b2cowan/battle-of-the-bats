@@ -77,6 +77,22 @@ export type XlsxExtraSheet = {
   name: string;
   headers: string[];
   rows: (string | number | null | undefined)[][];
+  /**
+   * One quiet sentence under this sheet's table, after a blank spacer row.
+   *
+   * ⚠ SAFE HERE IN A WAY IT IS NOT ON THE DATA SHEET, and that asymmetry is the whole reason it
+   * lives on this type rather than being written as a `note` on the main table. `parseXLSX` skips a
+   * sheet called `Reference` BY NAME, so prose on one can never be read back; the same sentence
+   * under the fill-in grid returns as a row with a category and no cost name, which the review step
+   * blocks — a template manufacturing its own error.
+   *
+   * ⚠ THE SECOND GUARD NEEDS TWO COLUMNS (/review, 2026-09-06). A merged note reads its own text
+   * back through every column it spans, which is what `isBannerRow` in the tabular reader keys on
+   * to throw a sentence away. On a ONE-column extra sheet nothing is merged, so that backstop is
+   * not there and only the sheet's name is holding the line. Keep a noted sheet at two columns or
+   * wider, or make sure its name is one the parser skips.
+   */
+  note?: string;
   /** Hidden from the tab strip. A hidden sheet still works as a dropdown source. */
   hidden?: boolean;
 };
@@ -164,6 +180,19 @@ export type XlsxOptions = {
      * coach is a convenience over a field that must still accept a word we have never heard of.
      */
     columnChoices?: (string | undefined)[];
+    /**
+     * The message Excel pops beside a cell the moment it is SELECTED, index-aligned with `headers`.
+     * Only meaningful where `columnChoices` also has an entry — it rides the same validation object.
+     *
+     * ⚠ THIS IS HOW A RE-IMPORTED TEMPLATE EXPLAINS ITSELF. Every other way of writing a sentence
+     * on a fill-in sheet — a note under the table, a masthead, a longer column heading — is either
+     * read back as data or breaks the header match. A validation prompt is presentation on the
+     * cell: the parser reads `cell.value` and never sees it, and a coach cannot type over it.
+     *
+     * ⚠ EXCEL TRUNCATES: 32 characters for the title, 255 for the body. Longer text is not
+     * rejected, it is silently cut, so keep both short enough to read whole.
+     */
+    columnChoicePrompts?: ({ title: string; body: string } | undefined)[];
     /**
      * How many rows below the header the dropdowns cover. Defaults to the data rows actually
      * written, which is almost never what a template wants — a template's whole point is the empty
@@ -399,12 +428,20 @@ export function buildXLSXWorkbook(
     const lastRow = headerRow.number + Math.max(opts.choiceRowCount ?? rows.length, 1);
     opts.columnChoices.forEach((source, colIndex) => {
       if (!source) return;
+      const hint = opts.columnChoicePrompts?.[colIndex];
       for (let r = headerRow.number + 1; r <= lastRow; r += 1) {
         ws.getRow(r).getCell(colIndex + 1).dataValidation = {
           type: 'list',
           allowBlank: true,
           formulae: [source],
           showErrorMessage: false,
+          // Excel's own limits, enforced here so a long sentence is caught in review rather than
+          // arriving on a coach's screen with its last clause missing.
+          ...(hint ? {
+            showInputMessage: true,
+            promptTitle: hint.title.slice(0, 32),
+            prompt: hint.body.slice(0, 255),
+          } : {}),
         };
       }
     });
@@ -425,6 +462,22 @@ export function buildXLSXWorkbook(
       extra.rows.forEach(row => { widest = Math.max(widest, String(row[i] ?? '').length); });
       column.width = Math.min(widest + 2, 60);
     });
+    /* The sheet's one sentence, merged across its width — added AFTER the widths are measured, for
+       the same reason the main table's notes are excluded from them: a merged sentence is why it
+       does not need the room, and measuring it would stretch column A to the cap. */
+    if (extra.note) {
+      const width = Math.max(1, extra.headers.length);
+      sheet.addRow([]);
+      const row = sheet.addRow([]);
+      const cell = row.getCell(1);
+      cell.value = extra.note;
+      cell.font = { size: 9, color: { argb: 'FF56534B' } };
+      cell.alignment = { wrapText: true, vertical: 'top' };
+      if (width > 1) sheet.mergeCells(row.number, 1, row.number, width);
+      // Excel does not auto-fit a merged cell's row — the one documented gap that turns a wrapped
+      // note into a single clipped line. Generously estimated, as on the main table.
+      row.height = Math.max(16, Math.ceil(extra.note.length / Math.max(40, width * 14)) * 12 + 6);
+    }
     sheet.views = [{ state: 'frozen', ySplit: 1 }];
     // ⚠ 'veryHidden' would put it beyond the sheet-unhide menu. A coach who finds this tab and
     // wonders what it is should be able to look at it, not be locked out of their own file.

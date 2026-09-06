@@ -149,22 +149,32 @@ export const POST = withObservability(async (req: Request,
        plan under a category its own picker will never show it. An import matches on WORDS, which is
        exactly why it needs the ownership filter the picker applies: a name is guessable. */
     .filter(c => categoryVisibleToTeam(c as OwnedBudgetCategory, ctx!.org.id, team.id))
-    .map((c: Record<string, unknown>) => ({
-      id: c.id as string,
-      name: c.name as string,
+    .map((c: Record<string, unknown>) => {
       // ⚠ THIS TEAM'S VISIBLE ITEMS ONLY (mig 240) — platform, club-published, or its own. Another
       // team's word must never be matched against, or an import would silently file this team's
       // budget under vocabulary its own picker will not even show.
-      items: ((c.budget_items ?? []) as Array<Record<string, unknown>>)
-        .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id))
+      const visible = ((c.budget_items ?? []) as Array<Record<string, unknown>>)
+        .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id));
+      return {
+        id: c.id as string,
+        name: c.name as string,
         /* ⚠ AND COST WORDS ONLY (mig 248). A word's SIDE is part of what identifies it — a team may
            hold "Grant" as income (the cheque) and "Grant" as an expense (the application fee) — and
            the coach's own picker shows one side at a time. This importer writes cost lines and
            nothing else, so an unfiltered list let a spending row attach itself to an income word
            the coach was never offered, on a screen where they could not see it happen. */
-        .filter(i => (i.direction as string) === 'out')
-        .map(i => ({ id: i.id as string, name: i.name as string })),
-    }));
+        items: visible
+          .filter(i => (i.direction as string) === 'out')
+          .map(i => ({ id: i.id as string, name: i.name as string })),
+        /* ⚠ COUNTED EVEN THOUGH THIS ROUTE NEVER READS IT (/review, 2026-09-06). It is the field
+           that lets the template tell "no cost names yet" from "income names only", and this is the
+           second place in the product that builds a `KnownCategory`. Leaving it off here is correct
+           only for as long as nobody feeds this list to a reader that shows it — and the day someone
+           does, the failure is a category quietly mislabelled on a coach's downloaded file, with no
+           gate anywhere able to see it. Two lines now beats that. */
+        incomeNameCount: visible.filter(i => (i.direction as string) === 'in').length,
+      };
+    });
   const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
 
   const created: Array<{ rowNumber: number; name: string }> = [];

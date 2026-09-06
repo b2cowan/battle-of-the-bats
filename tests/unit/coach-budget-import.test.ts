@@ -461,16 +461,36 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
       ] },
       { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }] },
       { id: 'c3', name: 'Empty', items: [] },
+      { id: 'c4', name: 'Other Income', items: [], incomeNameCount: 4 },
     ];
     assert.deepEqual(referenceSheetRows(cats), [
       ['Tournaments', 'Entry Fees', 'Standard'],
       ['Tournaments', 'Charter Bus', 'This team'],
       ['Officials', 'Umpire Fees', 'Your club'],
-      // A heading with no cost names still gets a row: a coach must be able to see it exists.
-      ['Empty', '', ''],
+      /* A heading with no cost names still gets a row: a coach must be able to see it exists.
+         ⚠ AND THE ROW SAYS WHICH EMPTY IT IS (owner, 2026-09-06). These two used to be the same
+         blank row, and they are two different facts — one heading is waiting for its first cost
+         name, the other has a full vocabulary that this spending sheet filters out. A coach reading
+         either blank concluded they could not budget under it, when they can budget under both. */
+      ['Empty', 'No cost names yet — type your own', ''],
+      ['Other Income', 'Income names only — type your own', ''],
     ]);
     // Three columns, and not one of them can hold a figure the product proposed.
     for (const row of referenceSheetRows(cats)) assert.equal(row.length, 3);
+  });
+
+  it('counts the income names it drops, so the two empty headings can be told apart', () => {
+    const [fundraising] = toKnownCategories([{
+      id: 'c1', name: 'Fundraising', items: [
+        { id: 'i1', name: 'Raffle', orgId: null, teamId: null, direction: 'in' },
+        { id: 'i2', name: 'Bottle drive', orgId: null, teamId: null, direction: 'in' },
+      ],
+    }]);
+    assert.deepEqual(fundraising.items, [], 'cost words only, as it has always been');
+    assert.equal(fundraising.incomeNameCount, 2);
+    assert.deepEqual(referenceSheetRows([fundraising]), [
+      ['Fundraising', 'Income names only — type your own', ''],
+    ]);
   });
 
   it('builds dropdown sources that are de-duplicated, with cost names sorted for a flat list', () => {

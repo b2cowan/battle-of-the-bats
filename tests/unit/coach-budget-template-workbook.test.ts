@@ -4,8 +4,10 @@ import ExcelJS from 'exceljs';
 import { buildXLSXWorkbook } from '../../lib/export/xlsx.ts';
 import { parseXLSX } from '../../lib/import/xlsx.ts';
 import {
-  monthGridTemplateHeaders, templateExampleRows, templateChoiceLists, referenceSheetRows,
-  TEMPLATE_DATA_SHEET, TEMPLATE_REFERENCE_SHEET, TEMPLATE_LISTS_SHEET, REFERENCE_SHEET_HEADERS,
+  monthGridTemplateHeaders, templateExampleRows, budgetTemplateWorkbook,
+  TEMPLATE_DATA_SHEET, REFERENCE_SHEET_NOTE,
+  TEMPLATE_CATEGORY_PROMPT, TEMPLATE_LINE_PROMPT,
+  NO_COST_NAMES_YET, INCOME_NAMES_ONLY,
   MAX_IMPORT_ROWS, type KnownCategory,
 } from '../../lib/coach-budget-import.ts';
 
@@ -25,33 +27,20 @@ const CATEGORIES: KnownCategory[] = [
     { id: 'i2', name: 'Charter Bus', source: 'team' },
   ] },
   { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }] },
+  // The two blanks that are NOT the same blank — a heading waiting for its first cost name, and a
+  // heading whose whole vocabulary sits on the income side this sheet filters out.
+  { id: 'c3', name: 'Provincials Trip', items: [] },
+  { id: 'c4', name: 'Other Income', items: [], incomeNameCount: 4 },
 ];
 
 const MONTHS = ['2026-09', '2026-10'] as const;
 
-/** Exactly what `BudgetImportSheet.downloadTemplate` hands the writer for a month grid. */
+const HEADERS = monthGridTemplateHeaders([...MONTHS]);
+
+/** THE builder the download button calls — not a copy of it. */
 function buildTemplate() {
-  const headers = monthGridTemplateHeaders([...MONTHS]);
-  const rows = templateExampleRows(CATEGORIES, headers.length);
-  const choices = templateChoiceLists(CATEGORIES);
-
-  const columnChoices: (string | undefined)[] = headers.map(() => undefined);
-  columnChoices[headers.indexOf('Category')] = `${TEMPLATE_LISTS_SHEET}!$A$2:$A$${choices.categories.length + 1}`;
-  columnChoices[headers.indexOf('Line')] = `${TEMPLATE_LISTS_SHEET}!$B$2:$B$${choices.items.length + 1}`;
-
-  const listRows: string[][] = [];
-  for (let i = 0; i < Math.max(choices.categories.length, choices.items.length); i += 1) {
-    listRows.push([choices.categories[i] ?? '', choices.items[i] ?? '']);
-  }
-
-  return buildXLSXWorkbook(headers, rows, TEMPLATE_DATA_SHEET, {
-    columnChoices,
-    choiceRowCount: MAX_IMPORT_ROWS,
-    extraSheets: [
-      { name: TEMPLATE_REFERENCE_SHEET, headers: [...REFERENCE_SHEET_HEADERS], rows: referenceSheetRows(CATEGORIES) },
-      { name: TEMPLATE_LISTS_SHEET, headers: ['Categories', 'Cost names'], rows: listRows, hidden: true },
-    ],
-  });
+  const { rows, options } = budgetTemplateWorkbook(HEADERS, CATEGORIES);
+  return buildXLSXWorkbook(HEADERS, rows, TEMPLATE_DATA_SHEET, options);
 }
 
 async function reload(workbook: ExcelJS.Workbook): Promise<{ book: ExcelJS.Workbook; bytes: ArrayBuffer }> {
@@ -79,14 +68,48 @@ describe('the budget template workbook', () => {
     const sheet = book.getWorksheet('Reference')!;
     const read: string[][] = [];
     sheet.eachRow(row => read.push([1, 2, 3].map(c => String(row.getCell(c).value ?? ''))));
+
+    // The table, then a merged sentence on the last row — asserted apart, because a merged cell
+    // reads its master's value back through every column it spans.
+    const note = read.pop()!;
     assert.deepEqual(read, [
       ['Category', 'Cost name', 'Where it comes from'],
       ['Tournaments', 'Entry Fees', 'Standard'],
       ['Tournaments', 'Charter Bus', 'This team'],
       ['Officials', 'Umpire Fees', 'Your club'],
+      /* ⚠ TWO BLANKS, TWO SENTENCES (owner, 2026-09-06). These rows shipped identical and empty,
+         which reads as data that failed to load. The third column stays empty on purpose: it says
+         where a cost NAME came from, and there is no name here to answer for. */
+      ['Provincials Trip', NO_COST_NAMES_YET, ''],
+      ['Other Income', INCOME_NAMES_ONLY, ''],
     ]);
+    assert.equal(note[0], REFERENCE_SHEET_NOTE);
+
     // D-G1: nothing on this sheet can be read as a figure the product proposed.
-    for (const row of read) for (const cell of row) assert.equal(/\d/.test(cell), false, `"${cell}" holds a digit`);
+    for (const row of [...read, note]) {
+      for (const cell of row) assert.equal(/\d/.test(cell), false, `"${cell}" holds a digit`);
+    }
+  });
+
+  it('says, on the cells a coach types into, what each dropdown will and will not create', async () => {
+    const { book } = await reload(buildTemplate());
+    const data = book.getWorksheet('Data')!;
+
+    for (const [column, expected] of [[1, TEMPLATE_CATEGORY_PROMPT], [2, TEMPLATE_LINE_PROMPT]] as const) {
+      for (const rowNumber of [2, MAX_IMPORT_ROWS + 1]) {
+        const validation = data.getRow(rowNumber).getCell(column).dataValidation;
+        assert.equal(validation?.showInputMessage, true, `row ${rowNumber} col ${column} says nothing`);
+        assert.equal(validation!.promptTitle, expected.title);
+        assert.equal(validation!.prompt, expected.body);
+      }
+    }
+
+    /* ⚠ EXCEL TRUNCATES SILENTLY at 32 and 255. A prompt that outgrows either arrives on a coach's
+       screen with its last clause missing and nothing anywhere says so. */
+    for (const prompt of [TEMPLATE_CATEGORY_PROMPT, TEMPLATE_LINE_PROMPT]) {
+      assert.ok(prompt.title.length <= 32, `"${prompt.title}" is over Excel's title limit`);
+      assert.ok(prompt.body.length <= 255, 'prompt body is over Excel’s 255-character limit');
+    }
   });
 
   it('puts a dropdown on Category and Line — pointed at a RANGE, and covering every row a coach can fill in', async () => {

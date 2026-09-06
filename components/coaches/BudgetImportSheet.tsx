@@ -12,8 +12,7 @@ import {
   reviewBudgetRows, reviewPayableRows, committable,
   snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
-  referenceSheetRows, templateChoiceLists,
-  TEMPLATE_DATA_SHEET, TEMPLATE_REFERENCE_SHEET, TEMPLATE_LISTS_SHEET, REFERENCE_SHEET_HEADERS,
+  budgetTemplateWorkbook, TEMPLATE_DATA_SHEET,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS, MAX_IMPORT_ROWS,
   type BudgetImportShape, type DraftBudgetRow, type DraftPayableRow,
   type ReviewedBudgetRow, type ReviewedPayableRow, type KnownCategory, type ExistingBudgetLine,
@@ -137,45 +136,23 @@ export default function BudgetImportSheet({
 
   async function downloadTemplate(format: 'xlsx' | 'csv') {
     const headers = templateHeaders();
-    // Category and line NAMES from the coach's own taxonomy; every amount cell blank (D-G1).
-    const rows = templateExampleRows(categories, headers.length);
     const name = `budget-${shape}-template`;
 
-    /* ⚠ THE CSV KEEPS THE HEADINGS AND THE SIX EXAMPLES, AND THAT IS THE WHOLE OF IT. A CSV file
-       cannot carry a second tab or a dropdown — there is nowhere to put the vocabulary. Coaches
-       who take this format are covered by the review step's new-name warning instead, which is
-       the half that works whatever the sheet came from. */
-    if (format === 'csv') { downloadCSVBlob(`${name}.csv`, generateCSV(headers, rows)); return; }
-
-    /* The Excel file carries the team's whole vocabulary: a readable Reference tab, and a hidden
-       Lists tab the dropdowns point at. Neither ever holds an amount (D-G1) — they say what a
-       team can budget FOR, never how much. */
-    const choices = templateChoiceLists(categories);
-    const columnChoices: (string | undefined)[] = headers.map(() => undefined);
-    const categoryColumn = headers.indexOf('Category');
-    // The bills sheet has no Line column — a payable's description is genuinely free text.
-    const lineColumn = headers.indexOf('Line');
-    if (categoryColumn >= 0 && choices.categories.length > 0) {
-      columnChoices[categoryColumn] = `${TEMPLATE_LISTS_SHEET}!$A$2:$A$${choices.categories.length + 1}`;
-    }
-    if (lineColumn >= 0 && choices.items.length > 0) {
-      columnChoices[lineColumn] = `${TEMPLATE_LISTS_SHEET}!$B$2:$B$${choices.items.length + 1}`;
+    /* ⚠ THE CSV KEEPS THE HEADINGS AND THE EXAMPLES, AND THAT IS THE WHOLE OF IT. A CSV file
+       cannot carry a second tab, a dropdown or a cell message — there is nowhere to put the
+       vocabulary. Coaches who take this format are covered by the review step's new-name warning
+       instead, which is the half that works whatever the sheet came from. */
+    if (format === 'csv') {
+      // Category and line NAMES from the coach's own taxonomy; every amount cell blank (D-G1).
+      downloadCSVBlob(`${name}.csv`, generateCSV(headers, templateExampleRows(categories, headers.length)));
+      return;
     }
 
-    const listRows: string[][] = [];
-    for (let i = 0; i < Math.max(choices.categories.length, choices.items.length); i += 1) {
-      listRows.push([choices.categories[i] ?? '', choices.items[i] ?? '']);
-    }
-
-    await downloadXLSX(`${name}.xlsx`, headers, rows, TEMPLATE_DATA_SHEET, {
-      columnChoices,
-      // Every row a coach could fill in, not just the six examples we ship.
-      choiceRowCount: MAX_IMPORT_ROWS,
-      extraSheets: [
-        { name: TEMPLATE_REFERENCE_SHEET, headers: [...REFERENCE_SHEET_HEADERS], rows: referenceSheetRows(categories) },
-        { name: TEMPLATE_LISTS_SHEET, headers: ['Categories', 'Cost names'], rows: listRows, hidden: true },
-      ],
-    });
+    /* The Excel file carries the team's whole vocabulary: a readable Reference tab, a hidden Lists
+       tab the dropdowns point at, and the sentence each dropdown says when a coach lands on it.
+       None of it ever holds an amount (D-G1) — it says what a team can budget FOR, never how much. */
+    const { rows, options } = budgetTemplateWorkbook(headers, categories);
+    await downloadXLSX(`${name}.xlsx`, headers, rows, TEMPLATE_DATA_SHEET, options);
   }
 
   // ── input ──────────────────────────────────────────────────────────────────
