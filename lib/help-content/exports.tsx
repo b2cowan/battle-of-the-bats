@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 import { HelpNote } from '@/components/help/HelpBlocks';
+import ExportAvailabilityTable from '@/components/help/ExportAvailabilityTable';
 
 const exportsHelp: HelpPageContent = {
   title: 'Exports & Downloads',
@@ -136,176 +137,18 @@ const exportsHelp: HelpPageContent = {
       id: 'availability',
       heading: 'Where exports are available',
       summary: 'Every module and page that has an Export button, and which formats are supported.',
-      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings', 'tryout applicants pdf', 'registrations pdf', 'family statement', 'family dues statement', 'dues statement pdf'],
+      keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings', 'tryout applicants pdf', 'registrations pdf', 'family statement', 'family dues statement', 'dues statement pdf', 'edit and re-upload', 'import it back', 'round trip', 'can i re-upload an export', 'export edit import'],
       searchText:
-        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout applicants coaches portal dues budget vs actual accounting ledger budget org members data tools download where bracket pdf season registrations pdf tryout applicants pdf family dues statement family statements parent statement',
+        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout applicants coaches portal dues budget vs actual accounting ledger budget org members data tools download where bracket pdf season registrations pdf tryout applicants pdf family dues statement family statements parent statement which exports can i edit and put back round trip export edit re-upload import it back one way export not designed for re-upload can i change the spreadsheet and import it',
       content: (
         <>
           <p>
             Exports are available on every major data table in FieldLogicHQ. If a page shows a
             list of records — registrations, teams, games, rosters, ledger entries, standings — it
-            has an Export button. The table below lists each surface, the formats available, and
-            the plan required.
+            has an Export button. The table below lists each surface, the formats available, the plan
+            it needs, and whether you can edit the file and bring it back in.
           </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Module</th>
-                <th>Page</th>
-                <th>Excel</th>
-                <th>CSV</th>
-                <th>Calendar (.ics)</th>
-                <th>PDF</th>
-                <th>Plan required</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Tournaments</strong></td>
-                <td>Teams &amp; Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Tournament Plus</td>
-              </tr>
-              <tr>
-                <td><strong>Tournaments</strong></td>
-                <td>Schedule</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Excel/CSV: any plan · PDF: Plus</td>
-              </tr>
-              <tr>
-                <td><strong>Tournaments</strong></td>
-                <td>Results &amp; Scoring</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Excel/CSV: any plan · PDF: Plus</td>
-              </tr>
-              <tr>
-                <td><strong>House League</strong></td>
-                <td>Season Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>League Plus</td>
-              </tr>
-              <tr>
-                <td><strong>House League</strong></td>
-                <td>Season Schedule</td>
-                <td>✓</td><td>✓</td><td>✓</td><td>—</td>
-                <td>League Plus</td>
-              </tr>
-              <tr>
-                <td><strong>House League</strong></td>
-                <td>Season Standings</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>League Plus</td>
-              </tr>
-              <tr>
-                <td><strong>House League</strong></td>
-                <td>Season Teams</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>League Plus</td>
-              </tr>
-              <tr>
-                <td><strong>Rep Teams</strong></td>
-                <td>Tryout Registrations</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Rep Teams</strong></td>
-                <td>Roster (admin view)</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Team Roster</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Premium Coaches Portal · PDF: any plan with PDF exports</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Roster with contacts (the Document dropdown in the same Export box — adds dates of birth and guardian details, only for coaches with family-contact access)</td>
-                <td>—</td><td>—</td><td>—</td><td>✓</td>
-                <td>Same as Team Roster</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Player Dues</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Family dues statements (per-family page — from a player&apos;s record, or every family in one file from the Player Dues Export dialog)</td>
-                <td>—</td><td>—</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Budget vs. Actual</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Team Schedule</td>
-                <td>✓</td><td>✓</td><td>✓</td><td>—</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Tryout report (board summary, or full detail behind a staff-only confirmation)</td>
-                <td>✓</td><td>—</td><td>—</td><td>✓</td>
-                <td>Head coach with tryouts access · PDF: any plan with PDF exports</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Tryout check-in sheet (the paper backup for the day — bib, name, age, a box to tick)</td>
-                <td>—</td><td>—</td><td>—</td><td>✓</td>
-                <td>Head coach with tryouts access</td>
-              </tr>
-              <tr>
-                <td><strong>Coaches Portal</strong></td>
-                <td>Practice run sheet (the night&apos;s plan, from the practice itself)</td>
-                <td>—</td><td>—</td><td>—</td><td>✓</td>
-                <td>Coach with schedule access</td>
-              </tr>
-              <tr>
-                <td><strong>Accounting</strong></td>
-                <td>Ledger</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Accounting</strong></td>
-                <td>Budget vs. Actual</td>
-                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Accounting</strong></td>
-                <td>Budget Plan</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>Club</td>
-              </tr>
-              <tr>
-                <td><strong>Org Admin</strong></td>
-                <td>Members</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>Tournament Plus</td>
-              </tr>
-              <tr>
-                <td><strong>Org Admin</strong></td>
-                <td>Member Audit Log</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>Owner only</td>
-              </tr>
-              <tr>
-                <td><strong>Org Admin</strong></td>
-                <td>Venues</td>
-                <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>Any plan</td>
-              </tr>
-            </tbody>
-          </table>
+          <ExportAvailabilityTable />
           <p>
             If a page you expect to have an export doesn't: check your plan level first. If your
             plan includes the module and the Export button is missing, contact support — every data

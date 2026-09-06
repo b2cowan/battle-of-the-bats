@@ -33,6 +33,7 @@ export type PlatformArea =
   | 'feedback'
   | 'email_templates'
   | 'help'
+  | 'export_registry'
   | 'dev_tools';
 
 type AreaAccess = { viewRoles: PlatformRole[]; writeRoles: PlatformRole[] };
@@ -55,6 +56,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   plans_pricing:   { viewRoles: ['super_admin', 'product', 'billing'], writeRoles: ['super_admin', 'product'] },
   change_requests: { viewRoles: ['super_admin', 'product', 'billing'], writeRoles: ['super_admin', 'product'] },
   email_templates: { viewRoles: ['super_admin', 'product'], writeRoles: ['super_admin', 'product'] },
+  /* Every way data leaves the product — read-only, and no writes exist: the list is generated
+     from the code and proven against it on every build, so there is nothing here to edit.
+     SUPPORT can see it because "can this customer export X?" is a support question before it
+     is a product one. */
+  export_registry: { viewRoles: ['super_admin', 'product', 'billing', 'support'], writeRoles: [] },
 
   // Growth domain
   early_access:    { viewRoles: ['super_admin', 'product', 'growth'], writeRoles: ['super_admin', 'product', 'growth'] },

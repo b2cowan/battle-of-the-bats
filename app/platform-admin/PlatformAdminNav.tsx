@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Eye, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Table2, Eye, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { canViewPlatformArea, isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
@@ -42,6 +42,7 @@ const BASE_NAV_GROUPS: NavGroup[] = [
       { href: '/platform-admin/plans-pricing', label: 'Plans & Pricing', Icon: SlidersHorizontal, area: 'plans_pricing' },
       { href: '/platform-admin/bulk-operations', label: 'Bulk Operations', Icon: ListChecks, area: 'bulk_operations' },
       { href: '/platform-admin/email-templates', label: 'Email Templates', Icon: FileText, area: 'email_templates' },
+      { href: '/platform-admin/exports', label: 'Export Registry', Icon: Table2, area: 'export_registry' },
     ],
   },
   {
