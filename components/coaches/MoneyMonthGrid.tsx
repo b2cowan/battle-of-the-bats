@@ -566,8 +566,8 @@ export default function MoneyMonthGrid({
    * scrolls out from under a table whose whole point is that its ends do not.
    */
   const bandHeading = (key: string, label: string) => (
-    <tr className={styles.bandRow}>
-      <th scope="row" className={`${styles.lead} ${styles.bandLead}`}>{label}</th>
+    <tr className={shared.moneyGridBand}>
+      <th scope="row" className={styles.lead}>{label}</th>
       {spacerCells(key)}
     </tr>
   );

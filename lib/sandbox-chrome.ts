@@ -631,6 +631,34 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
              live world now carries dated lines plus ONE deliberate "No date yet", so a prospect who
              opens the plan sees the When column working AND the product being honest about what it
              cannot date. See `datePlanLines` in the coach seed for why one is left unanswered. */
+      /* (Re-read for ONE SURFACE, 2026-09-05 — the Statement, By activity and the Budget tab's
+         List left the card-stack outline for the Months grid's table recipe, the unplanned row's
+         amber GROUND became an amber DASH, and an activity's net moved onto its category row.
+         This step lands a prospect on the changed screen, so the read is not optional:
+           · *Still true?* YES, every clause, and this time for a structural reason rather than
+             luck: **nothing here names the report's furniture.** "Diamond rentals are over plan"
+             is a variance VERDICT, and the variance word is untouched — it still reads "over",
+             still in prose rather than colour alone. "A plan built in the spring" and "seven in
+             ten dollars of dues are in" describe the seeded WORLD, which did not move at all: no
+             seed, figure or date changed in this release. The one thing a prospect sees
+             differently is that the report is now legible at a glance, which is the change.
+           · ⚠ THE CLAUSE MOST AT RISK WAS "the report says so rather than hiding it", because the
+             tint this release REMOVED was a way the report said something. It was never what said
+             *this*: over-plan has always been carried by the variance word, and the tint marked
+             UNBUDGETED spending — a different fact, which the amber dash still states in the
+             column where a plan figure would be. Checked rather than assumed.
+           · *Should a moment show it?* **No new stop, no new clause.** `ea8ddd14` caps every step
+             at a hook plus ONE proof point, and this step's is the variance verdict — the same
+             answer §137, §142 and the budget-dates re-read reached. A drawing change is also the
+             weakest possible candidate for narration: it is the kind of thing a prospect should
+             simply find easy, not be told about. If the owner ever wants it said, SWAP a clause. */
+      /* (Re-read for BY ACTIVITY FOLDS, 2026-09-06 — an activity became a fold, closed by default,
+         so that tab now opens as a list of bottom lines. Read rather than assumed, and the answer
+         is short: *Still true?* YES, and for the same structural reason as the note above —
+         **nothing in this sentence names the report's furniture**, and this step lands a prospect
+         on the STATEMENT, whose folds already behaved this way and did not move. *Should a moment
+         show it?* No — same `ea8ddd14` cap, same reasoning: a prospect should find the report easy,
+         not be told it folds. Nothing changed here. */
       said: 'Halfway through the year, against a plan built in the spring. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in.',
       nextLabel: 'Next: where the money actually went',
     },
@@ -678,6 +706,16 @@ function coachSandboxTourSteps(org: { slug: string; landingPath: string }): Sand
          the widest of the three: a club row opens the Club screen and a dues row opens Player Dues,
          so "the bill" is the common case rather than the universal one. Pre-existing, noted rather
          than quietly rewritten — approved narration is the owner's to change.
+
+         ⚠⚠ AND ON 2026-09-06 THE SENTENCE STOPPED BEING GENEROUS AND BECAME LITERAL for the club
+         row — which means it had been quietly FALSE there, not merely wide. Tapping a club row did
+         nothing at all (no room to open, so the handler bailed), and the row's chevron landed on the
+         TOP of the Club tab rather than on that bill. Both are fixed: every row of this book is
+         tappable, and a club row now opens THE BILL BEHIND IT, in its room on the tab that owns it.
+         A prospect who tests the claim on the first row of the seeded world — which is a club bill
+         — now gets what the narration promised instead of a dead tap. No copy changes; the sentence
+         simply came true. Should a moment show it? No: the `ea8ddd14` cap holds this step at a hook
+         plus one proof point, and "the tap works" is not a claim that earns a stop.
 
          ⚠ NO FIGURES ANYWHERE IN THIS STEP, deliberately and now permanently: the world re-anchors
          nightly, so any amount named here would be made wrong by a steady day.

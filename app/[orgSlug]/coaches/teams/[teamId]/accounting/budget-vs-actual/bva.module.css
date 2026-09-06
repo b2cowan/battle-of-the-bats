@@ -1,20 +1,16 @@
-/* The WIDTH now comes from the shared `.page .pageWide` pair the panel composes (P4, 2026-09-02)
+/* The page WIDTH comes from the shared `.page .pageWide` pair the panel composes (P4, 2026-09-02)
    — the utility whose own comment names "the Budget↔BvA drift rule" as its reason to exist, and
-   which both budget tabs hand-copied instead of using. What stays here is only what is true of
-   THIS page alone: its unbudgeted accent token. */
-.page {
-  --bva-unbudgeted: #f97316; /* token-exempt: distinct from schedule event accent */
-}
+   which both budget tabs hand-copied instead of using.
 
-/* The scrolling comparison grid's inner track. Below the content breakpoint the fixed
-   money columns (3 × 110px, plus 100px for the period date) no longer fit beside a
-   readable line name, so the track keeps its natural width and <CoachScrollX> scrolls
-   it — first column pinned, swipe hint shown. Above it, min-width: 100% means the grid
-   fills the page exactly as before and the scroller never engages. */
-.gridInner { min-width: 100%; }
-@media (max-width: 640px) {
-  .gridInner { min-width: 520px; }
-}
+   ⚰ `.page` ALSO DECLARED `--bva-unbudgeted` (raw orange, remapped to `--home-rust` under warm),
+   AND BOTH DECLARATIONS ARE GONE with the unplanned ROW GROUND they painted (one-surface pass
+   2026-09-05). That status is an amber DASH in the Plan column now — see `.unplannedDash`, which
+   takes `--warning`, a real palette token rather than this page's private one. Nothing here needs
+   a page-scoped custom property any more, so the rule itself is gone rather than left empty.
+
+   ⚰ `.gridInner` AND ITS PHONE `min-width` WENT THE SAME WAY. They floored the div-grid's inner
+   track so the fixed money columns could scroll on a phone; a real <table> sizes itself from its
+   own columns, so there is no inner track to floor. */
 
 /* The local .pageHeader/.pageTitle/.headerIcon/.pageSub fork that used to live here is GONE
    (page-header ruling 2026-08-11): the panel moved to the shared CoachPageHeader, so the copy
@@ -150,126 +146,317 @@
   .collapseAllBtn { min-height: var(--tap-min, 44px); }
 }
 
-/* ── Category breakdown ──────────────────────────────────────────────────── */
+/* ══ THE REPORT IS A TABLE ══════════════════════════════════════════════════════════════════
+   ⚠⚠ THIS PAGE LEFT THE SHARED LEDGER OUTLINE ON 2026-09-05 (owner ruling, mockup artifact
+   `dde45c3f-7faf-4d5c-869f-627c0c52fb8b`). It drew every category as a bordered, rounded card on
+   the paper ground with a 12px gap under it; it now draws one white table with a hairline under
+   every row, which is the `.moneyGrid` recipe the Months view next door already uses.
+
+   ⚠ THE OWNER'S REASONING, because it overturns three logged rulings and the next contributor will
+   find them: *"there is so much space and the row colors do not make it at all clear how these are
+   grouped… the way the monthly view fits everything so well on the screen still is the best viewing
+   experience that I have had."* What the card stack got wrong was not any one rule but the sum:
+     1. FOUR GROUNDS on one screen — paper (a planned line), white (a section band), tan (a category
+        head, and the dues card), amber (an unplanned row) — and none of them meant "these belong
+        together". The `.unplannedRow` note below had already conceded the tint "stopped reading as
+        a STATUS and started reading as a GROUPING", and kept it anyway. It is gone.
+     2. NOTHING TO WALK ACROSS. A name and its figure sit ~1,200px apart at 1440. Months has the
+        same distance to its Total column and nobody notices, because a hairline under every row
+        carries the eye. Outline rows had no rule under them at all. **The distance was never the
+        defect; the missing rule was** — which is also why the table SPANS the page (owner, round 2:
+        *"do we need to cut off the width? … this format looks odd when the rest of the screen fits
+        the width"*). Do not re-cap it.
+     3. TWO GRAMMARS. The Statement carried a category's total on the category row; By activity
+        carried it in a closing "netted" row under a band and two inner labels — three extra rows
+        per activity. Both now put it on the category row.
+
+   ⚠ THE RETIRED FORK, so nobody re-adds half of it: `.linesContainer`, `.tableHeader`,
+   `.categoryHeader`, `.lineMain`, `.periodRow`'s grid form, `.sectionBand`, `.sectionBandInner`,
+   `.sectionSubtotal`, `.expandIcon`, `.unplannedRow`, `.duesRow`/`.duesNameStack`/`.duesIndent`,
+   `.gridInner`, both `--ledger-cols` custom properties and the whole `@media (max-width: 640px)`
+   pin-gutter block. The gutter mechanics went with the div rows: a real table pins through
+   `.scrollXSticky th:first-child, td:first-child`, the older primitive, which needs no hand-off.
+
+   WHAT COMES FROM THE SHARED RECIPE (coaches.module.css): geometry, the row rule, the heading row,
+   the row-heading reset, `.moneyGridCat` (a category), `.moneyGridBand` (a band heading),
+   `.moneyGridTotal` (a band's closing total), `.moneyGridLead` (a line's indent) and
+   `.moneyGridToggle` (the chevron). Only what is true of THIS report lives here. */
+
 .section { margin-bottom: 1.5rem; }
 
-/* ⚠ THIS PAGE'S OUTLINE NOW COMES FROM THE SHARED LEDGER (coaches.module.css `.ledgerList` and
-   friends, Money-hub table consistency 2026-08-13). The `.categoryGroup` / `.catHeaderInner` /
-   `.lineInner` / `.lineNum` / `.periodNum` / `.grandNum` fork this file carried is GONE: it was
-   the same categories-holding-lines structure Budget Plan had written independently, and the two
-   disagreed on radius, category-bar layout, name size and ink for no decided reason.
+/* The money columns are fixed so all three land in one right-aligned stack whatever the names do;
+   the name column takes the remainder. Widths are stated on <col> elements in the markup — a
+   colgroup is the one place a table's columns can be sized without tagging every cell.
 
-   What survives here is only what is specific to THIS page: its four column tracks, the scroller
-   and pin gutters that let the comparison scroll on a phone, and nothing else — the unbudgeted section that used to live here went with its markup (mig 240:
-   unplanned spending is a flagged row in place now, not a card at the foot). */
-.linesContainer,
-.tableHeader,
-.categoryHeader,
-.lineMain,
-.periodRow,
-/* The mig-243 section bands, subtotals and season net lay out in the SAME tracks — listed here
-   rather than restating the values under their own heading, because the variance column had to be
-   widened at both sites in one change the first time it moved, and nothing would catch a mismatch. */
-.sectionBand,
-.sectionSubtotal,
-.netRow {
-  /* Category / line · Budgeted · Actual · Variance. Declared on every part that lays out in these
-     tracks rather than once on a wrapper, because the header and the totals are SIBLINGS of the
-     list, not children of it. */
-  /* ⚠ THE VARIANCE TRACK IS WIDER THAN THE OTHER TWO, and that is not a rounding of taste. A cost
-     variance reads "$7,800.00 under", not "+$7,800.00" — the WORD is what carries the polarity
-     for a reader who cannot separate our overrun tone from our healthy one (mig 243). At 110px it
-     overflowed by up to 11px with no scroller owning it, caught by check:layout at 768 and 1440,
-     which would have clipped the one part of the cell that must never be lost. */
-  --ledger-cols: 1fr 110px 110px 150px;
-  /* The period sub-row inserts a date column; the three money tracks stay fixed-width, so they
-     still land under the line figures above them. */
-  --ledger-sub-cols: 1fr 100px 110px 110px 150px;
+   ⚠ THE VARIANCE COLUMN IS WIDER THAN THE OTHER TWO, and that is not a rounding of taste. A cost
+   variance reads "$7,800.00 under", not "+$7,800.00" — the WORD carries the polarity for a reader
+   who cannot separate our overrun tone from our healthy one. At the money columns' width it
+   overflowed by up to 11px, caught by check:layout at 768 and 1440, which would have clipped the
+   one part of the cell that must never be lost. */
+.reportTable { width: 100%; }
+
+/* ⚠⚠ THE HEADING ROW DOES NOT STICK ON THESE TWO REPORTS, AND THAT IS A CORRECTION, NOT AN
+   OMISSION (rendered sweep, 2026-09-05). The shared `.moneyGrid thead th` declares
+   `position: sticky; top: 0`, which is right for a grid the PAGE scrolls. Both report tables live
+   inside <CoachScrollX>, and a box with `overflow-x: auto` computes `overflow-y` to `auto` as
+   well — so the scroller is the sticky element's containing block, and its height is its content's
+   height. There is no vertical travel inside it, so the heading sticks to a box that scrolls away
+   with the page: an inert rule, not a working one. The sweep states it exactly — "runs 1135px past
+   a 1024px viewport yet has no vertical travel (1133≤1133)".
+
+   ⚠ IT CANNOT BE FIXED BY ASKING FOR IT HARDER. `overflow-x: auto` with `overflow-y: visible` is
+   not expressible in CSS; the y axis is forced to `auto`. A sticky heading on these tables needs
+   the SCROLLER to go, which would take the horizontal scroll and the pinned first column with it —
+   the comparison this report exists to show. So the rule is cancelled where it cannot work rather
+   than left declared and inert.
+
+   ⚠ THE MONTH GRID CARRIES THE SAME INERT DECLARATION for the same reason and is deliberately NOT
+   touched here — it is the reference screen this pass was measured against, the rule costs nothing
+   where it sits, and changing it belongs to whoever fixes the sticky properly for all three. */
+/* ⚠⚠ `top: auto`, NOT `position: static`, AND THE CLASS IS DOUBLED. Two traps, both measured:
+   · `position: static` also kills the LEFT pin. The first heading cell takes `position: sticky;
+     left: 0` from `.scrollXSticky th:first-child` — the pinned line-name column, which is the
+     whole point of the scroller. Cancelling the position cancelled both axes; the sweep then
+     reported the other cells fixed and this one still stuck, which is what exposed it.
+   · A single class TIES with `.moneyGrid thead th` at (0,1,1) and the winner is decided by which
+     stylesheet the bundler emitted last — a build detail deciding whether a heading pins. The
+     doubled class reaches (0,2,1) and settles it here, deliberately. This file's own history has
+     the same failure twice over; see `memory/reference_cascade_collisions_coach_budget.md`. */
+.reportTable.reportTable thead th { top: auto; }
+/* ⚠ AND THE CELLS THAT ARE NOT THE PIN GO BACK TO `static` OUTRIGHT. Left sticky with every
+   offset auto, they are a position that can never engage — which the sweep reports in its own
+   words. Only the FIRST heading cell stays sticky, because that is the line-name pin. */
+.reportTable.reportTable thead th:not(:first-child) { position: static; }
+
+
+/* ══ SPECIFICITY: EVERY RULE BELOW HAS TO BEAT THE SHARED RECIPE, AND SAYING SO IS THE POINT ═══
+   ⚠⚠ THE FIRST BUILD OF THIS BLOCK LOST FIVE CONTESTS SILENTLY AND AN ADVERSARIAL REVIEW FOUND
+   THEM (2026-09-05). Every one was a rule that reads correctly, compiles clean, passes every gate
+   and applies NOTHING. The shared money-grid recipe reaches into these cells with descendant
+   selectors, and a bare local class simply loses:
+
+       .moneyGrid th, .moneyGrid td              (0,1,1)   geometry, the row rule, nowrap
+       .moneyGrid tbody th                       (0,1,2)   the row-heading reset: size, weight,
+                                                           colour, letter-spacing, text-transform
+       .moneyGrid tbody tr.moneyGridCat th       (0,2,3)   the category treatment
+       .moneyGrid tbody tr.moneyGridTotal th     (0,2,3)   the closing total
+       .moneyGrid tbody tr.moneyGridBand th      (0,2,3)   the band heading
+
+   So a local rule that must win is written as `.reportTable th.x` (0,2,1) or
+   `.reportTable tbody tr.x th` (0,2,3) — never as a bare `.x` (0,1,0) or `.x th` (0,1,1).
+
+   ⚠ THIS IS THE SAME BUG THE MONTH GRID ALREADY DOCUMENTS, in a file edited in this very pass:
+   its `.lead { white-space: normal }` was "a SILENT NO-OP on every desktop since it was written"
+   for exactly this reason, and its fix — compounding to `.grid th.lead` — is the pattern copied
+   below. Writing the bare version again, one file away from that warning, is why the warning is
+   now repeated here rather than merely cross-referenced. */
+
+/* The name column. It is the pinned one inside <CoachScrollX sticky>, so its opaque ground comes
+   from the shared primitive; this owns the leading gutter and the wrap.
+
+   ⚠ COMPOUNDED (0,2,1), because the shared `.moneyGrid th, .moneyGrid td` sets `white-space:
+   nowrap` at (0,1,1) AND a `padding` SHORTHAND that includes padding-left. A bare `.lead` loses
+   both, so the name would neither wrap nor keep its gutter.
+
+   ⚠ THE CAP GOES ON THE CONTENT, NOT THE CELL. Auto table layout treats a cell's `max-width` as a
+   suggestion and hands the column its longest label's full width anyway — measured on the month
+   grid at 261px against a 208px cap. Capping a real block inside the cell is what binds. */
+.reportTable th.lead,
+.reportTable td.lead {
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  padding-left: 0.9rem;
 }
+.reportTable th.lead > * { max-width: 42ch; }
 
+/* A line's name — a real block, because `overflow-wrap` does nothing on an inline box.
+   ⚠ IT SITS BESIDE A CHEVRON, AND A BLOCK WILL NOT. The shared recipe re-levels this to
+   `inline-block` when an expander leads it (`.moneyGrid th.moneyGridLead > .moneyGridExpand + *`
+   in coaches.module.css) — wrapping still works, because an inline-BLOCK is not an inline box.
+   Left as `block` here so the name still fills the cell on its own; do not "tidy" the two into one
+   without reading the note over there, which is where the two-rows-tall defect of QA §146 is
+   written up. */
+.lineName { display: block; }
 
+/* ── The two inner labels of an activity block ────────────────────────────────
+   ⚠ A SUB-LABEL, NOT A BAND. In the By-activity shape a category holds both halves of the
+   statement, so "Revenue" and "Costs" name which half the rows under them belong to. They are the
+   QUIETEST thing in the table — no ground, no rule, smaller than the line they introduce — because
+   as bands they were full-height tinted bars and a block cost three rows before its first figure.
 
-.expandIcon {
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
+   ⚠ THE TEXT TREATMENT IS ON A (0,2,3) SELECTOR. `.moneyGrid tbody th` (0,1,2) sets font-size,
+   font-weight, colour, letter-spacing AND text-transform; a bare `.subLead` at (0,1,0) lost every
+   one of them and the label rendered as an ordinary line name. This is the identical failure the
+   shared `.moneyGridBand` was rewritten to fix in this same pass — the fix was applied there and
+   missed here, one file apart. */
+.reportTable tbody tr.subRow th,
+.reportTable tbody tr.subRow td {
+  box-shadow: none;
+  padding-top: 0.5rem;
+  padding-bottom: 0;
 }
-
-/* ── Sections, subtotals and the season net (mig 243) ────────────────────────
-   ⚠⚠ THE SECTION IS WHAT CARRIES VARIANCE POLARITY, and that is the entire reason this report
-   has bands instead of a direction column. Over budget is GOOD news on income and BAD news on a
-   cost; the previous design ran both formulas behind one "Variance" heading with a two-letter
-   IN/OUT tag as the only distinguisher — a tag the eye skips. A heading a reader is already
-   under cannot be skipped.
-
-   ⚠ COLOUR NEVER CARRIES IT ALONE. The overrun and healthy tones are near-identical to a deutan
-   eye (project_coach_budget_card_plan_vs_actual), so the meaning is in the WORDS: revenue varies
-   "+$400" / "−$160", costs run "$150 under" / "$160 over". These rules set weight and ground
-   only — never a hue that has to be read. */
-.sectionBand {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  background: var(--home-card, rgba(255,255,255,0.05));
-  border-top: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
-  font-size: var(--type-support);
+.reportTable tbody tr.subRow th.lead {
+  padding-left: 2.2rem;
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* A line's expanded payment periods — one step deeper than the line, in quieter ink.
+   ⚠ THE PERIOD'S DATE RIDES IN THE NAME CELL. The outline gave sub-rows a fifth track, so they
+   laid out on different columns from the rows above them — something a table cannot do, and does
+   not want to: a period's date is meta about that period, so it reads as meta beside its name.
+
+   ⚠ (0,2,3) AGAIN for the label, same reason as the sub-label above.
+   ⚠⚠ AND THE VALUE CELLS DELIBERATELY DO **NOT** TAKE A BLANKET COLOUR. A `.periodRow td { color }`
+   rule at (0,1,1) beats the shared `.moneyGridNumMuted` (0,1,0) that an unmoved period's em-dash
+   carries — so every "nothing happened here" dash rendered at reading strength instead of the
+   quiet ink, which is the one thing that class exists to prevent ("a nil is not news"). The row's
+   cells inherit the grid's ordinary cell colour instead, and only the LABEL is quietened. */
+.reportTable tbody tr.periodRow th.lead {
+  font-size: var(--money-line-size);
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
-/* A band one level in — the "Revenue" / "Costs" split inside an activity block. Sentence case and
-   no tint, so it reads as a part of the block above rather than a second block. */
-.sectionBandInner {
-  text-transform: none;
-  letter-spacing: 0.01em;
+/* ⚠⚠ 4.45rem IS MEASURED, NOT CHOSEN — and the number it replaced put a period ABOVE its own line
+   in the tree. Owner-found, QA §146: *"shouldn't the date rows be indented more than their
+   preceding item rows?"* They were not. Rendered at 1440, the label positions were:
+
+       band heading   14px        Revenue / Expenses
+       category       35px        Facilities
+       line           53px        Dome Time
+       period         48px   ←    January — FIVE PIXELS SHALLOWER THAN ITS PARENT
+
+   The comment above has said "one step deeper than the line" since the outline, and it was true
+   THERE: a period was a nested block inside its line's card, so the indent was structural and 3rem
+   was measured against a different left edge. In a flat table every row starts at the same place
+   and the indent is the ONLY thing saying who belongs to whom — so the number had to be re-measured
+   against the line's real text position, which is 1.55rem of cell padding PLUS a 20px chevron PLUS
+   the 0.5rem gap = 53px. One family step (18px, the same gap category→line) lands at 71px.
+
+   ⚠ THE PHONE KEEPS 3rem, because below 640 the line's name does not sit beside its chevron at all
+   — the 44px tap floor pushes it onto its own line at the cell's padding (17.6px), so 48px is
+   already a clear step deeper there and 71px would eat a third of a 138px name column.
+
+   ⚠ IF THE CHEVRON'S WIDTH OR THE LEAD PADDING EVER MOVES, THIS MOVES WITH IT. It is derived from
+   both. Re-measure rather than nudge: the defect this replaces was invisible for exactly as long as
+   nobody put a ruler on two adjacent rows. */
+.reportTable tbody tr.periodRow th.lead { padding-left: 4.45rem; }
+@media (max-width: 640px) {
+  .reportTable tbody tr.periodRow th.lead { padding-left: 3rem; }
+}
+.periodDate {
+  margin-left: 0.5rem;
   font-size: var(--type-support);
-  background: transparent;
-  border-top: none;
-  padding-left: 1.4rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
 }
 
-.sectionSubtotal {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.55rem 0.75rem;
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.09));
-  font-weight: 640;
-  font-size: var(--type-body);
-}
+/* ── Where both shapes end ───────────────────────────────────────────────────
+   The season's closing figure — set apart by SPACE and POSITION, never by size (owner ruling
+   2026-09-06, QA §146). It measures exactly what `.moneyGridTotal` measures; what it gets of its
+   own is the padding below, the heavier cap, and being last.
 
-/* Where both shapes end, on the same number, because they are the same money.
-   ⚠ THE TOKENS, NOT THE LITERALS. This shipped as a hand-typed `0.92rem`/`700`, which is the
-   money-total treatment at one weight step LIGHTER than `.ledgerTotal` and `.moneyGridTotal`
-   directly beside it — the exact drift `--money-cat-size`/`--money-cat-weight` were extracted to
-   prevent, and which had already happened twice before. A page-level module is not scanned by
-   `money-hierarchy-type-scale.test.ts`, so nothing would have caught it. */
-.netRow {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.7rem 0.75rem;
-  border-top: 2px solid var(--home-line-strong, rgba(255,255,255,0.16));
+   ⚠⚠ TWO CLAIMS THAT LIVED HERE WERE BOTH FALSE, AND THAT IS THE REASON FOR THE GATE. This
+   paragraph used to say the difference was the cap — "a 2px cap over the band totals' 1px" — while
+   `.moneyGridTotal` paints the same 2px cap this row does. A walk step said the same thing in
+   product language ("larger and bolder"). Measured 2026-09-06, all three rows came back
+   byte-identical on size, weight, ink AND cap. A comment describing a distinction nobody built is
+   worse than no comment: it is what let the walk step assert it and pass.
+
+   ⚠ A SIZE STEP WAS BUILT AND THEN RULED OUT, so do not re-propose it. Raised to 1rem, shown to the
+   owner, reverted the same session: *"go back to making the font size the same as the
+   revenue/expense rows. It keeps it in line with the other monthly statement and looks better."*
+   The Months view is the reason — one report behind a View pill, and its closing row is this size.
+
+   ⚠ (0,2,3), because `.moneyGrid tbody th` (0,1,2) sets font-size and font-weight on the label and
+   `.moneyGrid th, .moneyGrid td` (0,1,1) sets the box-shadow. A bare `.netRow th` tied with the
+   second and lost to the first, so the closing row rendered at ordinary line size — the row this
+   whole report ends on, quieter than the subtotals above it.
+   ⚠ THE TOKENS, NOT THE LITERALS. This shipped once as a hand-typed `0.92rem`/`700`, one weight
+   step lighter than the totals beside it — the exact drift these variables were extracted to stop. */
+.reportTable tbody tr.netRow th,
+.reportTable tbody tr.netRow td {
+  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
   font-size: var(--money-cat-size);
   font-weight: var(--money-cat-weight);
+  color: var(--text-primary);
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
 }
 
-/* ── Line rows ───────────────────────────────────────────────────────────── */
-/* (The expanded category's lines need no wrapper rule at all — the shared `.ledgerRow` draws each
-   line's separating rule and `.ledgerSubRows` its expanded periods.) */
+/* ── Spending on something nobody planned ────────────────────────────────────
+   ⚠⚠ THE AMBER ROW GROUND IS GONE (owner ruling 2026-09-05) — the third and final turn of an
+   argument this file has had three times. The 2026-08-15 trim removed the visible "not budgeted"
+   words because the empty Budget cell already said it; D5.5 (2026-09-02) put a "not planned" word
+   back; on 2026-09-04 the owner removed the word again and KEPT the tint. This pass removes the
+   tint, and the reason is the one the 09-04 note had already written down without acting on it:
+   with the row wearing a colour, **two rows out of five on a different ground read as "these
+   belong together" long before they read as "these were never budgeted"** — the tint was doing
+   grouping's job on a screen whose grouping was already unclear. On one white surface there is
+   nothing left for it to be confused with, so the fact moves onto the figure that states it.
+
+   What carries the meaning now, unchanged in substance:
+     1. the em-dash where a Budgeted figure would be — visible, textual, and now AMBER, the same
+        ink the month grid's "No date yet" column uses for money that needs a decision;
+     2. the `aria-describedby` sentence on the category row, and its item-row twin (a visually
+        hidden "— not planned"), for a screen reader. Both STAY.
+   ⚠ Do not remove the dash or either hidden sentence, and do not restore a row ground.
+
+   ⚠ (0,2,1). It paints a `<td>`, which the shared `.moneyGrid th, .moneyGrid td` (0,1,1) already
+   colours; a bare `.unplannedDash` (0,1,0) would lose, and on a CATEGORY row it must additionally
+   beat `.moneyGrid tbody tr.moneyGridCat td` (0,2,3) — hence the row-qualified second rule. */
+.reportTable td.unplannedDash.unplannedDash { color: var(--warning); }
+
+/* ── The Player dues row (owner ruling 2026-09-04, restated for the table) ───
+   ⚠ IT IS AN ORDINARY CATEGORY ROW NOW. In the card stack it had a card of its own, which made the
+   row holding one figure the tallest object in the revenue band. It keeps the one thing genuinely
+   different about it — a caption naming the screen its records live on — and takes the category
+   row's ground, type and rhythm like everything else.
+
+   ⚠ STILL NOT A CONTROL. There is nothing behind its figures to open (dues are a schedule, and the
+   payments are Player Dues' own book), so it takes no chevron, no hover and no tap floor: those
+   belong to a row that does something, and offering them on a row that does nothing is how a coach
+   learns to distrust the ones that do.
+
+   ⚠⚠ THE CAPTION NEEDS (0,2,3) OR IT SHOUTS. It sits inside a `<th>` on a row carrying
+   `.moneyGridCat`, whose (0,2,3) rule sets `--money-cat-size` at weight 800 in primary ink — so a
+   bare `.duesCaption` (0,1,0) loses every property and the caption renders at the same size and
+   weight as the category name beside it. It also has to re-assert `white-space: normal`, because
+   the shared cell rule sets `nowrap` at (0,1,1). */
+.reportTable .duesCaption {
+  display: block;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  line-height: 1.35;
+}
+/* A two-line cell needs the row to breathe, or the caption crowds the rule under it. */
+.reportTable tbody tr.catTwoLine.catTwoLine th,
+.reportTable tbody tr.catTwoLine.catTwoLine td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
 
 /* ── The quiet footnote voice, once ──────────────────────────────────────────
-   One rule for the three sentences under the table — the funding note, the variance key (owner
-   D5.1) and the promoted cash sentence (owner D5.3). They are one voice by design ("same voice as
-   the funding note"), so they are one declaration (`/simplify`, 2026-09-02 — three byte-identical
-   blocks had accumulated). */
+   One rule for the sentences under the table — the funding note, the variance key (owner D5.1) and
+   the promoted cash sentence (owner D5.3). They are one voice by design ("same voice as the funding
+   note"), so they are one declaration (`/simplify`, 2026-09-02 — three byte-identical blocks had
+   accumulated).
+
+   ⚠⚠ THIS BLOCK WAS DELETED BY ACCIDENT IN THIS PASS AND RESTORED BY THE REVIEW (2026-09-05). A
+   scripted edit searched for a heading comment by text; the new block inserted higher in the file
+   repeated that heading, so `indexOf` matched the NEW one and the cut ran from there to the old
+   one — taking these four sentences, the unplanned rule and the dues rules with it. Nothing failed:
+   a CSS-module class with no rule resolves to `undefined`, React drops the attribute, and the
+   element renders unstyled in silence. **The dead-CSS gate cannot see this — it finds rules with no
+   markup, never markup with no rule.** If you script an edit against this file again, anchor on
+   something unique, and diff the class list before and after. */
 .fundingNote,
 .varianceKey,
 .undatedNote,
@@ -290,65 +477,7 @@
 .duesNote strong,
 .bridgeSentence strong { color: var(--text-secondary); font-weight: 650; }
 
-/* ⚠⚠ `.grandTotal` IS GONE, AND SO IS THE ROW IT DRESSED. It existed for one element — the
-   closing "Funded by players" line — which the owner deleted on 2026-09-04 once dues joined the
-   revenue band and it became the budgeted Season net with the sign flipped. Its whole history was
-   about making a card stop reading as a footnote below the statement; there is now nothing after
-   Season net, so the statement ends on `.netRow` and needs no continuation rule.
-   (The closing rows are otherwise the shared `.ledgerTotal` / `.ledgerTotalNum`; this page's own
-   copy is retired.) */
 
-/* ── Spending on something nobody planned ────────────────────────────────────
-   ⚠ THESE ROWS USED TO BE A SEPARATE SECTION at the foot of the report; since mig 240 they sit in
-   place, inside their own category and item, where a coach reads them beside everything else.
-
-   ⚠⚠ THE TINT IS NOT THE CARRIER AND MUST NEVER BECOME IT. This paragraph has now been rewritten
-   three times and the SETTLED answer is the original one. The 2026-08-15 trim removed the visible
-   "not budgeted" words because the Budget cell's em-dash already said it; D5.5 (2026-09-02) put a
-   "not planned" word back beside them; and on 2026-09-04, reading the BUILT screen, the owner
-   removed the word again and kept the tint — *"empty budget items give that away clearly"*. The
-   third reading is the one that had the evidence: with all three signals present the tint stopped
-   reading as a STATUS and started reading as a GROUPING, because the word beside it was carrying
-   the meaning and the colour had nothing left to do but look structural. Two rows out of five
-   wearing a different ground reads as "these belong together" long before it reads as "these were
-   never budgeted". What carries the meaning now:
-     1. the em-dash where a Budgeted figure would be — visible, textual, colour-independent;
-     2. the `aria-describedby` sentence on the category header, and its item-row twin (a visually
-        hidden "— not planned" inside the name cell), for a screen reader — both STAY, and they are
-        the reason removing the visible word is not a loss of information.
-   The amber ground is a SCANNING CUE ON TOP OF THOSE, never the thing that says it. ⚠ Do not
-   remove the dash or either hidden sentence on the grounds that "the row is already amber", and do
-   not restore the visible word from D5.5's plan text — it has been walked back on the screen. */
-.unplannedRow {
-  background: color-mix(in srgb, var(--bva-unbudgeted) 7%, transparent);
-}
-
-/* ── The Player dues row (owner ruling 2026-09-04) ───────────────────────────
-   ⚠ IT BORROWS `.categoryHeader`'s TRACKS AND NOTHING ELSE. It is a div, not a button — there is
-   nothing behind its figures to open (dues are a schedule, and the payments are Player Dues' own
-   book), so it deliberately takes none of `.ledgerGroupHeadBtn`'s hover, cursor or tap-floor
-   treatment: those belong to a control, and offering them on a row that does nothing is how a
-   coach learns to distrust the ones that do. */
-.duesRow .duesNameStack {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-/* The chevron's own width, so the one row in the band without a control still lines its name up
-   with the rest. (14px is `ChevronRight size={14}`; `.ledgerCell`'s gap supplies the rest.) */
-.duesIndent {
-  width: 14px;
-  flex: none;
-}
-.duesCaption {
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--text-tertiary);
-  /* ⚠ IT WRAPS, where `.ledgerNote` beside it ellipsises. That class truncates a caption whose
-     whole content is a count; this one carries the door to Player Dues on a team that has not set
-     dues yet, and a door with its label cut off is not a door. */
-  line-height: 1.35;
-}
 .duesLink {
   color: var(--primary-light);
   font-weight: 600;
@@ -415,48 +544,28 @@
   color: var(--text-tertiary);
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
-   query at all: the page had no phone handling whatsoever, so the fixed money
-   columns pushed the WHOLE page sideways and Variance fell off the screen.
-   Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
-   ════════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 640px) {
-  /* RETIRED WITH THE STRIP (2026-09-03): the phone override and its doubled-class cascade fix.
-     The shared `MoneySummaryBand` stacks all-or-nothing at 760 from ONE stylesheet, so the
-     cross-stylesheet 0-1-0 tie this block existed to settle cannot arise -- there is no second
-     rule to tie with. The lesson it recorded survives in
-     `memory/reference_cascade_collisions_coach_budget.md` and in the two siblings below. */
+/* ═════════════════════════════════════════════════════════════════════════════
+   ⚰ THE 640 CONTENT BLOCK IS GONE, AND SO IS THE WARM ACCENT OVERRIDE (one-surface pass
+   2026-09-05).
 
-  /* The pinned first column owns its own leading gutter — see --scrollx-pin-gutter in the
-     shared primitive. Each row hands down what its left padding used to be, INCLUDING the
-     hierarchy indent (line rows sit inside categories, period rows inside lines), so the
-     nesting still reads while the label stays put through a swipe. */
-  /* ⚠ THE SELECTORS ARE DOUBLED ON PURPOSE. Each of these rows now also carries a shared
-     `.ledger*` class that sets the `padding` SHORTHAND — which includes padding-left. Written as
-     a single class this rule would tie with the shared one on specificity, leaving the winner to
-     source order ACROSS TWO STYLESHEETS: a bundling detail deciding whether the pinned label
-     lurches by 16px on the first swipe. 0-2-0 settles it here, deliberately.
-     (Same failure mode as the funding accent in `budget.module.css`; see
-     `memory/reference_cascade_collisions_coach_budget.md`.) */
-  .tableHeader.tableHeader,
-  .categoryHeader.categoryHeader,
-  .lineMain.lineMain,
-  .periodRow.periodRow { padding-left: 0; padding-right: 0.7rem; }
-  .tableHeader,
-  .categoryHeader { --scrollx-pin-gutter: 0.7rem; }
-  .lineMain   { --scrollx-pin-gutter: 1.4rem; }
-  .periodRow  { --scrollx-pin-gutter: 2.1rem; }
+   The media block held nothing but the div rows' `--scrollx-pin-gutter` hand-off and the
+   doubled-class padding resets that made it work — the mechanism that stopped a pinned label
+   lurching 16px on the first swipe, because `left: 0` is measured from the SCROLLER's edge and a
+   row keeping its own `padding-left` starts inset then snaps flush. A real <table> pins through
+   `.scrollXSticky th:first-child, td:first-child`, where the sticky box IS the cell, so there is
+   no gutter to hand down and no cross-stylesheet specificity tie to settle. The shared
+   `.moneyGrid` already tightens its own cells at 640 for both money grids, and now for this one.
 
-  
-  
-  
-}
+   ⚠ THE LESSON IS NOT LOST, only its patient: a descendant rule in another stylesheet outranking
+   a single class is still how a sizing rule becomes a silent no-op here. See
+   `memory/reference_cascade_collisions_coach_budget.md`, and the shared `.moneyGridBand` note,
+   which is the same trap caught a third time.
 
-/* ── Warm Coaches Portal — Stage 3 (dev-gated) ───────────────────────────────
-   ADDITIVE and warm-gated, so dark output is untouched. Under the warm theme,
-   the "Unbudgeted Expenses" accent switches from raw orange to warm burnt-orange. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .page { --bva-unbudgeted: var(--home-rust); }
+   The warm override remapped `--bva-unbudgeted` to `--home-rust` for the unplanned row ground.
+   There is no row ground any more, and `.unplannedDash` takes `--warning`, which the palette
+   already resolves per theme — so no page-scoped remap is needed at all.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
 
 /* ── The cash bridge (owner ruling 2026-08-24, Option A) ──────────────────────
    Why this statement's total is not the team's bank balance.

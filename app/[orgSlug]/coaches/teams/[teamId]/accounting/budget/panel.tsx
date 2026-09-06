@@ -363,13 +363,13 @@ function BudgetLineRow({
           was matching this one. It never was. The difference is worklist vs. report — see the note
           on its own row for the full statement. What closed the gap instead is the WHEN CELL below,
           which folds the row without taking the edit door off a phone. */}
-      <div
-        className={`${shared.ledgerRow} ${canWrite ? shared.rowTappable : ''}`}
+      <tr
+        className={canWrite ? shared.rowTappable : ''}
         // Selecting text to copy an amount must not open the form — a click that ends a
         // selection is a copy gesture, not a tap (review finding).
         onClick={canWrite ? () => { if (window.getSelection()?.toString()) return; onEdit(); } : undefined}
       >
-        <div className={shared.ledgerCell}>
+        <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
           {/* ⚠ NO EXPANDER ON A ONE-MONTH LINE (2026-09-04). "One month" saves a single period, so
               a lump sum that gained a date would otherwise grow a chevron opening one sub-row that
               restates the row above it — the same empty caption §133 removed from the item rows the
@@ -379,7 +379,7 @@ function BudgetLineRow({
             ? (
               <button
                 type="button"
-                className={shared.ledgerExpand}
+                className={shared.moneyGridExpand}
                 aria-expanded={expanded}
                 aria-label={expanded ? `Hide ${line.description}'s payment periods` : `Show ${line.description}'s payment periods`}
                 onClick={e => { e.stopPropagation(); onToggle(); }}
@@ -387,11 +387,11 @@ function BudgetLineRow({
                 {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
             )
-            : <span className={shared.ledgerExpandSpacer} />}
+            : <span className={shared.moneyGridExpandSpacer} />}
 
-          <span className={styles.lineInfo}>
-            <span className={shared.ledgerDesc}>{line.description}</span>
-            {line.notes && <span className={`${shared.ledgerNote} ${shared.wrap640}`}>{line.notes}</span>}
+          <span className={styles.lineStack}>
+            <span className={styles.lineName}>{line.description}</span>
+            {line.notes && <span className={`${styles.rowNote} ${shared.wrap640}`}>{line.notes}</span>}
             {/* ⚠⚠ THE PHONE'S ONLY COPY OF THE ANSWER. Below 640 the When column leaves the grid
                 entirely (`.schedCell` is display:none and the tracks drop to three), so until
                 today a phone said NOTHING about when any of this money moved — on the screen
@@ -401,21 +401,21 @@ function BudgetLineRow({
                 about itself. */}
             <WhenChip line={line} className={styles.whenUnderName} onToggle={foldFromChip} />
           </span>
-        </div>
+        </th>
 
         {/* The When column — was "Schedule" until 2026-09-04, and printed chunk counts over a line
             whose undated half it never mentioned. See `whenSummary` for both defects.
             ⚠ The chip inside it FOLDS THE ROW on a split line (2026-09-05) — see WhenChip. */}
-        <span className={styles.schedCell}>
+        <td className={styles.schedCell}>
           <WhenChip line={line} onToggle={foldFromChip} />
-        </span>
+        </td>
 
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${moneyClass}`}>{fmt(line.totalAmount)}</span>
+        <td className={moneyClass}>{fmt(line.totalAmount)}</td>
 
-        {/* Always rendered so every row keeps the same three tracks. For a write coach the track
-            is fixed (.linesCanWrite) so the money column holds still; read-only rows have no
-            button and the auto track collapses uniformly instead. */}
-        <span className={shared.ledgerActions}>
+        {/* Always rendered so every row keeps the same four columns. The colgroup fixes the action
+            column's width for a write coach, so the money column holds still; a read-only coach
+            gets no button and the column collapses uniformly instead. */}
+        <td className={shared.ledgerActions}>
           {/* The shared row-edit control (2026-08-15). This screen had the portal's only copy of
               the pencil; the component now carries the markup — crucially the required accessible
               name, which is what a shared CLASS could never enforce. `onPhone="clip"` keeps this
@@ -429,29 +429,31 @@ function BudgetLineRow({
               onPhone="clip"
             />
           )}
-        </span>
-      </div>
+        </td>
+      </tr>
 
       {expanded && line.periods.length > 0 && (
-        <div className={shared.ledgerSubRows}>
+        <>
           {line.periods.map((p, i) => (
-            <div key={i} className={shared.ledgerSubRow}>
-              <span className={shared.ledgerCell}>
-                <span className={`${shared.ledgerSubLabel} ${shared.wrap640}`}>{p.periodLabel}</span>
+            <tr key={i} className={styles.periodRow}>
+              {/* The period's DATE rides in the name cell, not a column of its own — the outline
+                  gave sub-rows their own track set, which a table cannot do. */}
+              <th scope="row" className={styles.lead}>
+                <span className={shared.wrap640}>{p.periodLabel}</span>
                 {p.periodDate && (
-                  <span className={shared.ledgerSubMeta}>
+                  <span className={styles.periodDate}>
                     {new Date(p.periodDate + 'T00:00:00').toLocaleDateString('en-CA', {
                       month: 'short', day: 'numeric', year: 'numeric',
                     })}
                   </span>
                 )}
-              </span>
-              <span className={styles.schedCell} />
-              <span className={`${shared.ledgerNum} ${moneyClass}`}>{fmt(p.amount)}</span>
-              <span />
-            </div>
+              </th>
+              <td className={styles.schedCell} />
+              <td className={moneyClass}>{fmt(p.amount)}</td>
+              <td />
+            </tr>
           ))}
-        </div>
+        </>
       )}
     </>
   );
@@ -2444,49 +2446,81 @@ export function BudgetPlanPanel({
                 </button>
               </p>
             )}
-            <div
-              className={`${shared.ledgerList} ${styles.linesContainer} ${moneyCanWrite ? styles.linesCanWrite : ''}`}
-              /* Opts this list into the 44px floor through the 641–768 touch band — see the rule
-                 in coaches.module.css for why it is opt-in rather than raised for every ledger. */
+            {/* ⚠⚠ THE PLAN IS ONE TABLE (owner ruling 2026-09-05, one-surface pass). It was a stack
+                of bordered category cards on the paper ground; it is the same `.moneyGrid` recipe
+                the By-period view beside it and Budget vs. Actual next door now use — one white
+                surface, a hairline under every row, tints only where they mean structure.
+                The When column, the pencil and every behaviour on this screen are unchanged. */}
+            <CoachScrollX sticky hint="Swipe the table to see When and Planned">
+            <table
+              className={`${shared.moneyGrid} ${styles.planTable}`}
+              /* Opts the category toggles and line expanders into the 44px floor through the
+                 641–768 touch band — see the rule in coaches.module.css for why it is opt-in
+                 rather than raised for every money table. */
               data-touch-floor
             >
-              {/* The column headings the plan never had. They sit in the same track rhythm as the
-                  category frames below, which is what makes "Planned" name the column rather than
-                  hover over it — and is how Budget vs. Actual next door already reads. */}
-              <div className={shared.ledgerHead}>
-                <span>Category / line</span>
-                <span className={styles.schedCell}>When</span>
-                <span style={{ textAlign: 'right' }}>Planned</span>
-                <span />
-              </div>
+              {/* The column headings the plan never had — "Planned" names the column rather than
+                  hovering over it, which is how Budget vs. Actual next door already reads.
+
+                  ⚠ THE ACTION COLUMN IS FIXED FOR A WRITE COACH so the money column holds still
+                  from row to row; a read-only coach has no pencil anywhere, so it collapses to
+                  nothing and the figures sit at the edge — aligned either way, no dead gutter.
+                  This replaces the `--ledger-cols` / `.linesCanWrite` pair that did the same job
+                  on the div grid.
+
+                  ⚠⚠ THE WIDTHS SIT ON THE HEADING CELLS RATHER THAN IN A <colgroup>, AND THE PHONE
+                  IS WHY. Below 640 the When column leaves the table entirely — `.schedCell` is
+                  display:none on this heading AND on every row's cell, a standing ruling, with the
+                  answer riding under the line name as a chip instead. A <col> list is POSITIONAL:
+                  with one column's cells gone, the remaining <col> elements shift onto the wrong
+                  columns and the money column can inherit the When column's width. A width declared
+                  on a cell travels with that cell, so a column that disappears takes its width with
+                  it. Budget vs. Actual keeps a <colgroup> because none of its columns ever leaves. */}
+              <thead>
+                <tr>
+                  <th scope="col" className={styles.lead}>Category / line</th>
+                  <th scope="col" className={styles.schedCell} style={{ width: 200 }}>When</th>
+                  <th scope="col" style={{ width: 150 }}>Planned</th>
+                  {/* ⚠ A REAL HEADER CELL NEEDS A NAME. As a div-grid this was an empty <span>
+                      with no table semantics; as a <th> a screen reader's table navigation
+                      announces it, and an unnamed column header reads as a blank. The label is
+                      for assistive tech only — the column is the pencil, which needs no visible
+                      heading. */}
+                  <th scope="col" aria-label="Row actions" style={{ width: moneyCanWrite ? 48 : 0 }} />
+                </tr>
+              </thead>
+              <tbody>
               {groups.map(({ categoryName: catName, total: catTotal, items }) => (
-                <div key={catName} className={shared.ledgerGroup}>
+                <Fragment key={catName}>
                   {/* ⚠ COLLAPSIBLE, by the same ruling that gave the By-period grid its chevrons
                       (owner 2026-08-13: any hierarchy in a table is collapsible). This was the last
                       hierarchy in Money that could not be closed — Budget vs. Actual's category
                       view already could, which made two views of the same structure behave
                       differently. Closed-set, not open-set, so a newly added category arrives
                       OPEN rather than hidden. */}
-                  <button
-                    type="button"
-                    className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn}`}
-                    aria-expanded={!isClosed(catKey(catName))}
-                    onClick={() => toggleSectionClosed(catKey(catName))}
+                  {/* ⚠ THE ROW IS A ROW; THE CONTROL IS INSIDE ITS FIRST CELL. A <button> cannot
+                      wrap a <tr>, and the month grid already solved this the same way. */}
+                  <tr
+                    className={`${shared.moneyGridCat} ${shared.rowTappable}`}
+                    onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(catKey(catName)); }}
                   >
-                    <span className={shared.ledgerCell}>
-                      <span className={shared.ledgerExpandSpacer}>
+                    <th scope="row" className={styles.lead}>
+                      <button
+                        type="button"
+                        className={shared.moneyGridToggle}
+                        aria-expanded={!isClosed(catKey(catName))}
+                        onClick={e => { e.stopPropagation(); toggleSectionClosed(catKey(catName)); }}
+                      >
                         {isClosed(catKey(catName))
                           ? <ChevronRight size={14} aria-hidden />
                           : <ChevronDown size={14} aria-hidden />}
-                      </span>
-                      <span className={shared.ledgerName}>{catName}</span>
-                    </span>
-                    <span className={styles.schedCell} />
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>
-                      {fmt(catTotal)}
-                    </span>
-                    <span />
-                  </button>
+                        <span>{catName}</span>
+                      </button>
+                    </th>
+                    <td className={styles.schedCell} />
+                    <td>{fmt(catTotal)}</td>
+                    <td />
+                  </tr>
                   {!isClosed(catKey(catName)) && items.map(item => (
                     /* ⚠ ONE ROW PER ITEM. With a single line behind it — which is the ordinary
                        shape — the row IS that line, named by its item, and behaves exactly as it
@@ -2505,29 +2539,30 @@ export function BudgetPlanPanel({
                       />
                     ) : (
                       <Fragment key={item.key}>
-                        <button
-                          type="button"
-                          className={`${shared.ledgerRow} ${shared.ledgerRowBtn} ${shared.ledgerGroupHeadBtn}`}
-                          aria-expanded={!isClosed(item.key)}
-                          onClick={() => toggleSectionClosed(item.key)}
+                        <tr
+                          className={shared.rowTappable}
+                          onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(item.key); }}
                         >
-                          <span className={shared.ledgerCell}>
-                            <span className={shared.ledgerExpandSpacer}>
+                          <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
+                            <button
+                              type="button"
+                              className={shared.moneyGridToggle}
+                              aria-expanded={!isClosed(item.key)}
+                              onClick={e => { e.stopPropagation(); toggleSectionClosed(item.key); }}
+                            >
                               {isClosed(item.key)
                                 ? <ChevronRight size={14} aria-hidden />
                                 : <ChevronDown size={14} aria-hidden />}
-                            </span>
-                            {/* ⚠ NO "N lines" CAPTION (owner ruling 2026-09-04, QA §133) — the full
-                                reasoning sits on the by-period grid above. The chevron says the row
-                                opens; opening it shows the lines. That is enough. */}
-                            <span className={styles.lineInfo}>
-                              <span className={shared.ledgerDesc}>{item.itemName}</span>
-                            </span>
-                          </span>
-                          <span className={styles.schedCell} />
-                          <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(item.total)}</span>
-                          <span />
-                        </button>
+                              {/* ⚠ NO "N lines" CAPTION (owner ruling 2026-09-04, QA §133) — the
+                                  full reasoning sits on the by-period grid above. The chevron says
+                                  the row opens; opening it shows the lines. That is enough. */}
+                              <span>{item.itemName}</span>
+                            </button>
+                          </th>
+                          <td className={styles.schedCell} />
+                          <td>{fmt(item.total)}</td>
+                          <td />
+                        </tr>
                         {!isClosed(item.key) && item.lines.map(line => (
                           <BudgetLineRow
                             key={line.id}
@@ -2547,7 +2582,7 @@ export function BudgetPlanPanel({
                       </Fragment>
                     )
                   ))}
-                </div>
+                </Fragment>
               ))}
 
 
@@ -2570,27 +2605,30 @@ export function BudgetPlanPanel({
                 const sectionKey = `kind:${kind}`;
                 const sectionTotal = kindLines.reduce((s, l) => s + Number(l.totalAmount ?? 0), 0);
                 return (
-                  <div key={kind} className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
-                    <button
-                      type="button"
-                      className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn}`}
-                      aria-expanded={!isClosed(sectionKey)}
-                      onClick={() => toggleSectionClosed(sectionKey)}
+                  <Fragment key={kind}>
+                    <tr
+                      className={`${shared.moneyGridCat} ${styles.fundingRow} ${shared.rowTappable}`}
+                      onClick={() => { if (window.getSelection()?.toString()) return; toggleSectionClosed(sectionKey); }}
                     >
-                      <span className={shared.ledgerCell}>
-                        <span className={shared.ledgerExpandSpacer}>
+                      <th scope="row" className={styles.lead}>
+                        <button
+                          type="button"
+                          className={shared.moneyGridToggle}
+                          aria-expanded={!isClosed(sectionKey)}
+                          onClick={e => { e.stopPropagation(); toggleSectionClosed(sectionKey); }}
+                        >
                           {isClosed(sectionKey)
                             ? <ChevronRight size={14} aria-hidden />
                             : <ChevronDown size={14} aria-hidden />}
-                        </span>
-                        <span className={shared.ledgerName}>{LINE_KIND_SECTION[kind]}</span>
-                      </span>
-                      <span className={styles.schedCell} />
-                      <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
+                          <span>{LINE_KIND_SECTION[kind]}</span>
+                        </button>
+                      </th>
+                      <td className={styles.schedCell} />
+                      <td className={styles.fundingAmount}>
                         {fmt(Math.round(sectionTotal * 100) / 100)}
-                      </span>
-                      <span />
-                    </button>
+                      </td>
+                      <td />
+                    </tr>
                     {!isClosed(sectionKey) && kindLines.map(line => (
                       <BudgetLineRow
                         key={line.id}
@@ -2602,7 +2640,7 @@ export function BudgetPlanPanel({
                         onEdit={() => openEdit(line)}
                       />
                     ))}
-                  </div>
+                  </Fragment>
                 );
               })}
 
@@ -2612,24 +2650,15 @@ export function BudgetPlanPanel({
                   Expected fundraising (see the note above). No View-dues link — the hub's Dues
                   tab is two inches up, the same reason the BvA foot link went (owner 08-12). */}
               {duesAssessed > 0 && (
-                <div className={`${shared.ledgerGroup} ${styles.fundingGroup}`}>
-                  <div className={shared.ledgerRow}>
-                    <div className={shared.ledgerCell}>
-                      <span className={shared.ledgerExpandSpacer} />
-                      <span className={styles.lineInfo}>
-                        <span className={shared.ledgerDesc}>Player installments</span>
-                        <span className={`${shared.ledgerNote} ${shared.wrap640}`}>
-                          What players are scheduled to pay
-                        </span>
-                      </span>
-                    </div>
-                    <span className={styles.schedCell} />
-                    <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${styles.fundingAmount}`}>
-                      {fmt(duesAssessed)}
-                    </span>
-                    <span className={shared.ledgerActions} />
-                  </div>
-                </div>
+                <tr className={`${shared.moneyGridCat} ${styles.fundingRow} ${styles.installmentsRow}`}>
+                  <th scope="row" className={styles.lead}>
+                    <span className={shared.moneyGridChevronSpacer} aria-hidden />
+                    <span>Player installments</span>
+                  </th>
+                  <td className={styles.schedCell} />
+                  <td className={styles.fundingAmount}>{fmt(duesAssessed)}</td>
+                  <td />
+                </tr>
               )}
 
               {/* ONE closing row, in the plan card's vocabulary. Before dues: what the plan asks
@@ -2638,28 +2667,32 @@ export function BudgetPlanPanel({
                   row at all when the schedules match the plan (a $0.00 close says nothing). */}
               {duesAssessed > 0 ? (
                 Math.abs(leftToFund) >= 0.005 && (
-                  <div className={shared.ledgerTotal}>
-                    <span>{leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan'}</span>
-                    <span className={styles.schedCell} />
-                    <span className={`${shared.ledgerTotalNum} ${leftToFund > 0 ? styles.closeWarn : ''}`}>
+                  <tr className={styles.closeRow}>
+                    <th scope="row" className={styles.lead}>
+                      {leftToFund < 0 ? 'Planned buffer' : 'Short of covering the plan'}
+                    </th>
+                    <td className={styles.schedCell} />
+                    <td className={leftToFund > 0 ? styles.closeWarn : ''}>
                       {fmt(leftToFund)}
-                    </span>
-                    <span />
-                  </div>
+                    </td>
+                    <td />
+                  </tr>
                 )
               ) : (
-                <div className={shared.ledgerTotal}>
-                  <span>
+                <tr className={styles.closeRow}>
+                  <th scope="row" className={styles.lead}>
                     {totals.fundingLineCount > 0 ? 'Player installments (estimated)' : 'Total planned budget'}
-                  </span>
-                  <span className={styles.schedCell} />
-                  <span className={shared.ledgerTotalNum}>
+                  </th>
+                  <td className={styles.schedCell} />
+                  <td>
                     {fmt(totals.fundingLineCount > 0 ? totals.fundedByPlayers : totals.totalPlanned)}
-                  </span>
-                  <span />
-                </div>
+                  </td>
+                  <td />
+                </tr>
               )}
-            </div>
+              </tbody>
+            </table>
+            </CoachScrollX>
             </>
           )}
 

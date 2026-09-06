@@ -361,6 +361,12 @@ export type DuesExportPlayer = {
    *  table beside it flagged who was behind would be the same one-product-two-answers defect the
    *  shared word list exists to prevent. */
   installments: Array<{ dueDate: string | null; paidAt: string | null; remainingAmount?: number; amount?: number }>;
+  /** ⚠ REQUIRED for the same reason as the two above: without it `duesStatusLabel` can only ever
+   *  reach "In credit", so an OVERPAID family — one the team owes money back to — would read the
+   *  same in the file as one whose sponsor covered their season (QA §148). Required rather than
+   *  optional deliberately: the label takes it optionally, so a builder that assembled this shape
+   *  field-by-field would drop the word in silence and nothing would catch it. */
+  ownMoneyHeld: number;
 };
 
 export function duesExportRows(players: DuesExportPlayer[]): ExportRow[] {
@@ -1085,12 +1091,12 @@ export type BvaActivitySource = {
 /**
  * THE BY-ACTIVITY TABLE — its own file at last (owner ruling 2026-09-05, QA §145).
  *
- * ⚠⚠ WHY IT EXISTS. Until today this view had no export of its own and fell through to the
+ * ⚠⚠ WHY IT EXISTS. Until 2026-09-05 this view had no export of its own and fell through to the
  * STATEMENT — never a decision, just what was left when the view was not Months. That was not a
  * cosmetic mismatch: by activity is the only shape that sets a category's revenue against its own
- * costs and closes on "<name> netted", which is the one question a statement structurally cannot
- * answer, because a category appears in both of its sections. A coach who read "did hosting the
- * tournament pay for itself?" on screen and pressed Export got a file that could not tell them.
+ * costs, which is the one question a statement structurally cannot answer, because a category
+ * appears in both of its sections. A coach who read "did hosting the tournament pay for itself?"
+ * on screen and pressed Export got a file that could not tell them.
  *
  * ⚠ THE SILENT PART WAS THE TELL. The one comparable swap on this screen — the Months view's PDF,
  * which is deliberately the statement because a month grid on paper can only leave months off — is
@@ -1103,8 +1109,13 @@ export type BvaActivitySource = {
  * moved when dues joined the revenue half, so blocks without them would sum to one number under a
  * total that says another.
  *
- * ⚠ THE INNER Revenue / Costs BANDS APPEAR ONLY WHERE A BLOCK HAS BOTH. On a one-sided category
+ * ⚠ THE INNER Revenue / Costs LABELS APPEAR ONLY WHERE A BLOCK HAS BOTH. On a one-sided category
  * they are a heading distinguishing nothing from nothing — the screen's rule, kept.
+ *
+ * ⚠⚠ ONE BLOCK IS NOW ONE HEADING PLUS ITS LINES — no shouted band above, no "netted" row below
+ * (owner ruling 2026-09-06, QA §146 F2). The full argument is at the push site; the rule to carry
+ * away is that **this file's shape is the screen's shape, and when one moves the other moves in the
+ * same unit of work.** It has now drifted once, within a day of being written, in exactly that way.
  */
 export function bvaActivityRows(
   data: BvaActivitySource | null,
@@ -1134,26 +1145,55 @@ export function bvaActivityRows(
   for (const block of data.activities) {
     if (isDues(block.categoryId)) continue;
     const bothHalves = !!block.revenue && !!block.costs;
-    push({ item: block.categoryName.toUpperCase(), budgeted: '', actual: '', variance: '' }, 'section');
 
-    if (block.revenue) {
-      if (bothHalves) push({ item: 'Revenue', budgeted: '', actual: '', variance: '' }, 'category');
-      pushItemRows(block.revenue.items, push);
-    }
-    if (block.costs) {
-      if (bothHalves) push({ item: 'Costs', budgeted: '', actual: '', variance: '' }, 'category');
-      pushItemRows(block.costs.items, push);
-    }
+    /* ⚠⚠ THE NET LEADS THE BLOCK, AND THE "netted" ROW IS GONE (owner ruling 2026-09-06, QA §146
+       F2: *"the file should match the screen"*).
 
-    /* ⚠ A COST-ONLY BLOCK NETS NEGATIVE, and it says so rather than being hidden or flipped: that
-       is the honest reading of a category that earned nothing. The label follows suit — "netted"
-       only where something came in. Both words are the screen's. */
+       This file used to open each block with the category's name SHOUTED as a band and close it,
+       three rows later, on "<name> netted" carrying the figures. That was faithful to the screen it
+       was written against — for one day. The screen moved the net onto the category's own row at
+       the TOP of the block and deleted both the band and the closing subtotal; the file did not
+       follow, so a coach reading "Tournaments · ($2,500.00)" on screen and pressing Export got a
+       spreadsheet with an empty TOURNAMENTS heading and the figure at the bottom under a different
+       word. Same arithmetic, two documents.
+
+       ⚠ THE WORDS "netted" AND "cost" LEAVE WITH THE ROW, and that is the point rather than a
+       casualty. They existed because the row sat BELOW the lines and had to say what it was
+       summing; above them, on a category row that every shape already reads as a total, the
+       category's own name is the whole label. A cost-only block still nets NEGATIVE and still says
+       so in brackets — the honest reading of a category that earned nothing, carried by the figure
+       rather than the label.
+
+       ⚠ THE FIGURES ARE UNTOUCHED: `block.net`, the same three the closing row stated, in the same
+       order. Only their row moved. */
     push({
-      item: block.revenue ? `${block.categoryName} netted` : `${block.categoryName} cost`,
+      item: block.categoryName,
       budgeted: block.net.budgeted,
       actual: block.net.actual,
       variance: block.net.variance,
-    }, 'total');
+    }, 'category');
+
+    /* ⚠ THE INNER LABELS SIT INSIDE THE BLOCK, not over it. On screen they are the quietest thing
+       in the table — a sub-label, no ground, no rule — and they live behind the activity's fold, so
+       in the file they take the ITEM level: one outline step in, under the row that totals them,
+       collapsing with the lines they introduce. As `category` rows they were bold and level-0, and
+       they split one activity into two Excel groups.
+
+       ⚠⚠ AND THEY ARE SHOUTED, which is the ONE thing a spreadsheet cell can do that the screen
+       does with CSS (/review, 2026-09-06). Demoting them to item level took their bold with it, and
+       a plain "Revenue" at the same indent as "Concession revenue" with three empty money cells is
+       not a heading — it is a line somebody forgot to fill in. The screen renders these in small
+       capitals precisely so they cannot be mistaken for a line name; `text-transform` has no
+       spreadsheet equivalent, so the file carries the case in the string. This is the same rule
+       that removed the shouted band above: **match the screen**, and here the screen shouts. */
+    if (block.revenue) {
+      if (bothHalves) push({ item: 'REVENUE', budgeted: '', actual: '', variance: '' }, 'item');
+      pushItemRows(block.revenue.items, push);
+    }
+    if (block.costs) {
+      if (bothHalves) push({ item: 'COSTS', budgeted: '', actual: '', variance: '' }, 'item');
+      pushItemRows(block.costs.items, push);
+    }
   }
 
   if (data.buffer > 0) {

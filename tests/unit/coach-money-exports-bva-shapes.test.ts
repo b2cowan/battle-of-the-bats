@@ -114,34 +114,60 @@ describe('by activity gets the shape it is named for', () => {
     net: { budgeted: -900, actual: 160, variance: 1060 },
   };
 
-  test('a two-sided block reads revenue, costs, then what it netted', () => {
-    const rows = label(bvaActivityRows({
+  test('a block LEADS with its own net, then revenue, then costs', () => {
+    const out = bvaActivityRows({
       activities: [BLOCK], buffer: 0, net: { budgeted: 0, actual: 0, variance: 0 },
-    }, 'season', () => false).rows);
+    }, 'season', () => false);
+    const rows = label(out.rows);
 
-    /* ⚠ THIS IS THE ROW THE WHOLE SHAPE EXISTS FOR, and the statement structurally cannot produce
-       it — a category appears in both of its sections, so nothing there sets one against the
-       other. It is exactly what was lost while this view exported the statement. */
-    assert.ok(rows.includes('Tournaments netted'));
-    assert.ok(rows.includes('TOURNAMENTS'));
-    assert.ok(rows.includes('Revenue') && rows.includes('Costs'));
+    /* ⚠⚠ THE FILE'S SHAPE IS THE SCREEN'S SHAPE (owner ruling 2026-09-06, QA §146 F2). The heading
+       row IS the total — the figure a coach reads on screen, on the row they read it on — and there
+       is no shouted band above it and no "netted" row below. This is the row the whole shape exists
+       for, and the statement structurally cannot produce it: a category appears in both of its
+       sections, so nothing there sets one against the other. */
+    assert.equal(rows[0], 'Tournaments');
+    assert.deepEqual(
+      { b: out.rows[0].budgeted, a: out.rows[0].actual, v: out.rows[0].variance },
+      { b: -900, a: 160, v: 1060 },
+      'the heading row carries the block net, unchanged — only its position moved',
+    );
+    assert.ok(!rows.includes('TOURNAMENTS'), 'no shouted band over the block');
+    assert.ok(!rows.some(r => /netted|Tournaments cost/.test(r)), 'no closing subtotal row');
+
+    assert.ok(rows.includes('REVENUE') && rows.includes('COSTS'));
     assert.ok(rows.some(r => r.includes('Concession revenue')));
-    assert.ok(rows.indexOf('Revenue') < rows.indexOf('Costs'));
-    assert.ok(rows.indexOf('Costs') < rows.indexOf('Tournaments netted'));
+    assert.ok(rows.indexOf('Tournaments') < rows.indexOf('REVENUE'));
+    assert.ok(rows.indexOf('REVENUE') < rows.indexOf('COSTS'));
   });
 
-  test('a one-sided block loses the inner bands and says "cost", not "netted"', () => {
-    const rows = label(bvaActivityRows({
+  test('the inner labels ride INSIDE the block, at the level of the lines they introduce', () => {
+    const out = bvaActivityRows({
+      activities: [BLOCK], buffer: 0, net: { budgeted: 0, actual: 0, variance: 0 },
+    }, 'season', () => false);
+    const at = (name: string) => out.kinds[label(out.rows).indexOf(name)];
+
+    /* On screen these are the quietest thing in the table and they live behind the activity's fold.
+       As `category` rows they were bold, level-0, and split one activity into two Excel groups. */
+    assert.equal(at('Tournaments'), 'category', 'the activity is the group parent');
+    assert.equal(at('REVENUE'), 'item');
+    assert.equal(at('COSTS'), 'item');
+  });
+
+  test('a one-sided block loses the inner labels, and still nets negative', () => {
+    const out = bvaActivityRows({
       activities: [{ ...BLOCK, revenue: null }], buffer: 0,
       net: { budgeted: 0, actual: 0, variance: 0 },
-    }, 'season', () => false).rows);
+    }, 'season', () => false);
+    const rows = label(out.rows);
 
     /* On a category with one half, "Revenue" and "Costs" are headings distinguishing nothing from
        nothing — the screen's rule, kept. And a cost-only block nets negative and says so, rather
-       than being hidden or flipped. */
-    assert.ok(!rows.includes('Revenue') && !rows.includes('Costs'));
-    assert.ok(rows.includes('Tournaments cost'));
-    assert.ok(!rows.includes('Tournaments netted'));
+       than being hidden or flipped: the FIGURE carries that now, not a "cost" suffix on the label.
+       The screen prints it in brackets and the spreadsheet's own number format does the same. */
+    assert.ok(!rows.includes('REVENUE') && !rows.includes('COSTS'));
+    assert.equal(rows[0], 'Tournaments', 'the name alone is the label — no "cost" suffix');
+    assert.ok(!rows.some(r => /netted|Tournaments cost/.test(r)));
+    assert.equal(out.rows[0].budgeted, -900, 'the negative net is stated, not hidden or flipped');
   });
 
   test('dues lead as a ROW, never as a block', () => {
@@ -161,7 +187,7 @@ describe('by activity gets the shape it is named for', () => {
     /* ⚠ And they can never be OMITTED: both shapes close on the same Season net, and it moved when
        dues joined the revenue half — blocks without them would sum to one number under a total
        saying another. */
-    assert.ok(rows.includes('Tournaments netted'));
+    assert.ok(rows.includes('Tournaments'));
   });
 
   test('an unset dues row says "not set yet", not "not budgeted"', () => {

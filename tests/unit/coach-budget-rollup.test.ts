@@ -316,7 +316,10 @@ describe('rollupBudget — the category that split in two (/review, 2026-08-15)'
 describe('rollupMoneyReport — a row is revenue or an expense, never both at once', () => {
   it('sorts a line into the section its direction names', () => {
     const r = rollupMoneyReport({ lines: [line(), inLine()], spend: [] });
-    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['Registration revenue']);
+    /* ⚠ THE REVENUE ROW WEARS THE COACH'S TYPED WORDS, not its item's — owner ruling 2026-09-06,
+       and the reason it reads oddly here is that this fixture's description is a sentence. The rule
+       has its own tests below; this one is only about which SECTION each line lands in. */
+    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['what we expect to take']);
     assert.deepEqual(r.expenses.categories.flatMap(c => c.items.map(i => i.itemName)), ['Entry fees']);
   });
 
@@ -655,5 +658,71 @@ describe('rule 8 — a category with no name is not a category', () => {
       ],
     });
     assert.deepEqual(r.activities.map(b => b.categoryName), ['Uniforms', NO_CATEGORY_LABEL]);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   THE NAME A REVENUE ROW WEARS (owner ruling 2026-09-06, QA §146)
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+describe('rollupMoneyReport — a revenue row wears the words the coach typed, where the plan agrees', () => {
+  /* ⚠⚠ WHY THIS EXISTS AT ALL. The owner read the two reports side by side and found the same money
+     under two names: the Budget list said **Chocolate sale**, Budget vs. Actual said **Fundraising
+     drive**. Neither screen was wrong — the plan deliberately keeps a money-in line's typed words
+     ("Fundraising drive" is a worse row label than "Chocolate sale"), and this module deliberately
+     names rows by their ITEM (a coach once picked "Entry Fees" and their plan rendered a row called
+     "test"). The amendment is the narrowest thing that answers him, and these tests pin its edges,
+     because widening any one of them re-opens the 2026-08-15 defect. */
+
+  it('uses the typed description when the item holds exactly one revenue line', () => {
+    const r = rollupMoneyReport({ lines: [inLine({ description: 'Chocolate sale' })], spend: [] });
+    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['Chocolate sale']);
+  });
+
+  it('falls back to the ITEM when two lines sum into one row — two typed names, no honest choice', () => {
+    /* Rule 3: two lines on one item are ONE row. Picking either name would be confident-and-wrong,
+       the same answer `placeDerivedActual` gives when two lines claim one pool of raised money. */
+    const r = rollupMoneyReport({
+      lines: [
+        inLine({ id: 'a', description: 'Chocolate sale' }),
+        inLine({ id: 'b', description: 'Bottle drive' }),
+      ],
+      spend: [],
+    });
+    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['Registration revenue']);
+  });
+
+  it('NEVER renames a cost row — this is the 2026-08-15 defect, and it stays fixed', () => {
+    // "test" typed on a line whose item is "Entry fees" must not become the row's name again.
+    const r = rollupMoneyReport({ lines: [line({ description: 'test' })], spend: [] });
+    assert.deepEqual(r.expenses.categories.flatMap(c => c.items.map(i => i.itemName)), ['Entry fees']);
+  });
+
+  it('falls back to the ITEM when the description is blank or only spaces', () => {
+    const r = rollupMoneyReport({ lines: [inLine({ description: '   ' })], spend: [] });
+    assert.deepEqual(r.revenue.categories.flatMap(c => c.items.map(i => i.itemName)), ['Registration revenue']);
+  });
+
+  it('leaves an un-itemised revenue row alone — it is a gap to close, not a line with a name', () => {
+    const r = rollupMoneyReport({
+      lines: [inLine({ itemId: null, itemName: null, description: 'Chocolate sale' })],
+      spend: [],
+    });
+    const names = r.revenue.categories.flatMap(c => c.items.map(i => i.itemName));
+    assert.deepEqual(names, ['Not itemized']);
+  });
+
+  it('does not move the KEY — the row still groups on its item, so both reports still line up', () => {
+    /* The label changed; the taxonomy did not. A renamed row that also re-keyed would split a
+       plan line away from the money recorded against it. */
+    const r = rollupMoneyReport({
+      lines: [inLine({ description: 'Chocolate sale' })],
+      spend: [income({ amount: 500 })],
+    });
+    const items = r.revenue.categories.flatMap(c => c.items);
+    assert.equal(items.length, 1, 'the plan line and the money it earned must stay one row');
+    assert.equal(items[0].itemId, REGISTRATION);
+    assert.equal(items[0].itemName, 'Chocolate sale');
+    assert.equal(items[0].actual, 500);
   });
 });

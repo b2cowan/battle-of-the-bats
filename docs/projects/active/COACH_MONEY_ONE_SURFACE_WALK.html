@@ -1,0 +1,629 @@
+<title>One Surface Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §146 · Coaches portal → Money</p>
+  <h1>One surface</h1>
+  <p class="lede">The Statement, By activity and the Budget tab's List left the card stack for the
+    Months grid's table. Nothing they <em>say</em> changed — this walk is about whether they now
+    <em>read</em>. Six parts. Two of them are questions rather than checks, and one asks you to read
+    a single row and tell me what it says, because the last walk of this report went 42 for 42 and
+    still missed three defects that were all inside one row.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b>. The walk moves between three tabs:
+    <b>Budget vs. Actual</b> (its <b>View</b> pill switches Statement / By activity / Months) and
+    <b>Budget</b> (its <b>View</b> pill switches List / By period).</p>
+  <div class="tip"><b>If the screens look unchanged, the server is stale.</b> Stop the dev server,
+    delete <code>.next</code>, start it again, and wait for “✓ Ready”. A shared stylesheet moved in
+    this change, and a half-warm cache is the one thing that makes this walk lie to you.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The Statement, at a glance</h2>
+  <p>Money → Budget vs. Actual. It opens on <b>Statement</b>. Don't read the numbers yet — just look
+    at the shape.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>One surface, not a stack of cards</h3></div></div>
+  <div class="step-body">
+    <p class="why">The whole report should be a <b>single white table</b> with a faint line under
+      every row — no bordered box around each category, no gaps between them, and it should span the
+      full width of the page like the four summary tiles above it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">One table, edge to edge — no per-category cards or gaps</label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">A faint line under every row, all the way across<span class="hintline">This is the thing that lets your eye travel from a name to its figure</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Only two kinds of row are shaded: <b>Revenue</b> / <b>Expenses</b>, and the category rows</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>The band headings read as headings</h3>
+    <div class="tags"><span class="tag think">fixed a 3-week-old bug</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Revenue</b> and <b>Expenses</b> should be small olive capitals on a tinted row,
+      with a little air above each — clearly a <em>heading</em>, not another category.</p>
+    <div class="warn"><b>Worth knowing why this is a check.</b> On the <b>Months</b> view these two
+      headings have been rendering as ordinary dark sentence-case text since mid-August — their
+      styling was being silently overruled. It is visible in the screenshot you sent me. That is
+      fixed, and Months is included below in A6 so you can confirm it there too.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">Revenue and Expenses are small olive capitals, not plain dark text</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">A band heading is obviously different from a category row beneath it</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A2…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>Nothing budgeted shows an amber dash, and no amber row</h3></div></div>
+  <div class="step-body">
+    <p class="why">Four rows on this fixture were never budgeted for. In <b>Revenue</b> they are
+      <b>Tournaments</b> and <b>No category</b>; in <b>Expenses</b> they are <b>Events</b> and
+      <b>No category</b>. Each should show an <b>amber dash</b> in the Plan column — and sit on the
+      same white ground as every other row.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">Those four rows have an amber dash where a plan figure would be</label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">None of them has a coloured background any more</label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">Nothing else on the table is amber<span class="hintline">Amber should mean exactly one thing here: nobody planned this</span></label></div>
+    </div>
+    <div class="ask"><b>This is one of the two things I want you to rule on.</b> The dash ships amber.
+      A plain grey dash is also defensible — the <b>Off-plan</b> tile at the top already totals what
+      nobody budgeted, so the colour may be saying it twice. Tell me which you want; either is a
+      one-line change. (Answer in Part F.)</div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A3…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><div class="step-t"><h3>Player dues is an ordinary row now</h3></div></div>
+  <div class="step-body">
+    <p class="why">First row under <b>Revenue</b>. It should look like every other category row —
+      not a card of its own, and <b>carrying no message of its own</b>.</p>
+    <p class="tip"><b>Changed mid-walk, on your ruling.</b> This row used to caption itself
+      “12&nbsp;families · set on Player&nbsp;Dues”. It was the only category on the report carrying a
+      message, it told a coach something they had just done, and it cost real height — the row ran
+      52px against every other category’s 36px, making the quietest fact on the report the tallest
+      row in the band. It is gone. The dues sentence <em>under</em> the table still carries what dues
+      bill and whether they cover the plan.<br><br>
+      <b>One state kept, and you can overrule it:</b> a team with <em>no</em> dues schedule still sees
+      “Not set yet · <em>Set player dues</em>” on this row. That one is not telling a coach what they
+      know — it is the reason the Plan cell shows a dash, and it is the first thing a new team has to
+      do. You cannot see it on this fixture, which has dues set.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a">Player dues sits in the table like any other category</label></div>
+      <div class="chk"><input type="checkbox" id="a4b2"><label for="a4b2">It carries no caption, and stands exactly as tall as Fundraising below it<span class="hintline">Both should measure the same — no extra breathing room on this one row</span></label></div>
+      <div class="chk"><input type="checkbox" id="a4c"><label for="a4c">It has no chevron and doesn't respond to a tap<span class="hintline">Correct — there is nothing behind its figures to open</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A4…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A5">
+  <div class="step-head"><span class="num">A5</span><div class="step-t"><h3>The bottom line is the loudest thing on the table</h3></div></div>
+  <div class="step-body">
+    <p class="why"><b>Season net</b> closes the report. It should measure <em>exactly</em> what
+      <b>Total revenue</b> and <b>Total expenses</b> measure — set apart by the space around it, by
+      its heavier rule, and by being last. Not by size.</p>
+    <p class="tip"><b>Settled, and you ruled it twice.</b> When you flagged this step, all three rows
+      measured <em>identically</em> — and the step was wrong to claim otherwise. It said the net read
+      “larger and bolder”; a note in the code claimed the subtotals wore a thinner rule. Neither was
+      ever built. (The closing row had originally rendered <em>smaller</em> than its own subtotals; a
+      fix lifted it to parity, and both descriptions went on claiming it had ended up louder.)<br><br>
+      A size step up was then built and shown to you, and you ruled it back out on sight — <em>“go back
+      to making the font size the same as the revenue/expense rows. It keeps it in line with the other
+      monthly statement and looks better.”</em> That is what ships. A build check now pins the three
+      rows as <em>equal</em>, which catches it growing (your ruling) and shrinking (the original
+      defect) alike.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a5a3"><label for="a5a3">Season net measures the same as Total revenue and Total expenses<span class="hintline">Switch View to Months and back — the closing row should look the same on both</span></label></div>
+      <div class="chk"><input type="checkbox" id="a5b"><label for="a5b">The sentences under the table still read as quiet footnotes, in the same voice as before<span class="hintline">The variance key, the dues sentence, the undated-plan line</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A5…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A6">
+  <div class="step-head"><span class="num">A6</span><div class="step-t"><h3>Months, unchanged except for its headings</h3></div></div>
+  <div class="step-body">
+    <p class="why">Switch <b>View</b> to <b>Months</b>. This is the screen you told me was the best
+      reading experience in the product, and it should be exactly as you left it — with one
+      difference: its <b>Revenue</b> and <b>Expenses</b> headings now read as small olive capitals
+      instead of plain dark text.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a6a"><label for="a6a">Months looks as it did, apart from the two band headings</label></div>
+      <div class="chk"><input type="checkbox" id="a6b"><label for="a6b">Its headings now match the Statement's</label></div>
+      <div class="chk"><input type="checkbox" id="a6c"><label for="a6c">Paging months, the pinned first column and the Total column all still behave</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A6…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Read one row and tell me what it says</h2>
+  <p>Not a checkbox exercise. The last walk of this report passed every single check and still shipped
+    three defects, all inside a row.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>The Facilities row, out loud</h3>
+    <div class="tags"><span class="tag think">say it in your own words</span></div></div></div>
+  <div class="step-body">
+    <p class="why">On the <b>Statement</b>, find <b>Facilities</b> under Expenses and open it. Read
+      the category row and one line beneath it, and write below what you think the screen is telling
+      you — as if explaining it to a parent. Then say whether that is actually true.</p>
+    <div class="tip"><b>What I am fishing for:</b> whether the four columns still say what they used
+      to say now that the drawing changed, whether the indent makes it obvious which lines belong to
+      Facilities, and whether anything reads as a different <em>kind</em> of thing than it is.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">I read a row aloud and wrote down what it says</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">What it says is true</label></div>
+    </div>
+    <textarea placeholder="What does the Facilities row say? Is it true?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>Every figure still opens what's behind it</h3></div></div>
+  <div class="step-body">
+    <p class="why">Inside an open category, the <b>Plan</b> and <b>Actual</b> figures on a line are
+      doors. Tap both on one line. Tap the line itself to fold its payment schedule open.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">The plan figure opens its budget lines</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">The actual figure opens the payments behind it</label></div>
+      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c">Tapping the row folds its periods open, and the dates read correctly<span class="hintline">The date now sits beside the period's name rather than in its own column</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d">A period with nothing against it shows a quiet dash, not a loud one</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>By activity — the shape that actually changed</h2>
+  <p><b>View → By activity.</b> This is the one you disliked, and the only view whose structure moved.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>An activity carries its own bottom line</h3></div></div>
+  <div class="step-body">
+    <p class="why">There used to be a closing <b>“Tournaments netted”</b> row underneath each block.
+      It's gone: the net now sits on the <b>Tournaments</b> heading row itself, with <b>Revenue</b>
+      and <b>Costs</b> as small quiet labels beneath it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">No “… netted” row anywhere</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Tournaments shows its net on its own row<span class="hintline">Tournaments and No category are the two blocks here with both a revenue and a cost side</span></label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">Revenue / Costs are small quiet labels, not full tinted bars</label></div>
+      <div class="chk"><input type="checkbox" id="c1d"><label for="c1d">A cost-only block like <b>Facilities</b> shows no Revenue/Costs labels at all<span class="hintline">Correct — there is nothing for them to distinguish</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>Does it fit, and is it clear what's grouped?</h3>
+    <div class="tags"><span class="tag think">the original complaint</span></div></div></div>
+  <div class="step-body">
+    <p class="why">This is the screen that started the whole change. Your words were <em>“so much
+      space, and the row colors do not make it at all clear how these are grouped.”</em> Read it now
+      and tell me whether that is fixed — not whether it is different.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">It is obvious which lines belong to which activity</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">The report reaches Season net without an absurd amount of scrolling</label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">My eye gets from a name to its figures without losing the row</label></div>
+    </div>
+    <textarea placeholder="Is the original complaint actually fixed?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>The Budget tab's List</h2>
+  <p>Money → <b>Budget</b>, <b>View → List</b>. Same recipe, and everything it does should be untouched.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>The plan reads as one table, and still works</h3></div></div>
+  <div class="step-body">
+    <p class="why">The <b>When</b> column, the pencil, the green money-in figures and the closing
+      row should all behave exactly as before — only the drawing changed.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">One table, hairline rows, no category cards</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">The <b>When</b> column still reads correctly<span class="hintline">Pants, Spring classic entry and Season interest all say “No date yet”, in amber</span></label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Money in is still green — <b>Chocolate sale</b> and <b>Season interest</b></label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d"><b>Short of covering the plan</b> closes the table, and is the loudest row</label></div>
+      <div class="chk"><input type="checkbox" id="d1e"><label for="d1e">Tapping a line still opens its editor; the pencil still works</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>A row that holds two lines still opens</h3></div></div>
+  <div class="step-body">
+    <p class="why"><b>Entry Fees</b> under <b>Tournaments</b> is the one item here with two lines
+      behind it (<b>Spring classic entry</b> and <b>Second line on the same item</b>). Open and close
+      it, and open and close the <b>Facilities</b> category above it.</p>
+    <div class="tip"><b>Tap the row anywhere</b> — including out on the right, next to the figures,
+      not just on the name. A review found that these rows had quietly stopped being tappable except
+      on their name; this is the check that proves the fix.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">Entry Fees opens to reveal its two lines</label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">Tapping anywhere along a category row folds it — including beside the figures</label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">Tapping the chevron itself opens it once, not twice<span class="hintline">If it opens and instantly closes, that is a real defect — flag it</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>On a phone</h2>
+  <p>Narrow the window to about 390px wide, or open it on your phone. Every money table scrolls
+    sideways rather than stacking into cards, with the line name pinned.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Sideways, with the name pinned</h3>
+    <div class="tags"><span class="tag phone">phone</span></div></div></div>
+  <div class="step-body">
+    <p class="why">On both the Statement and the Budget list: swipe the table sideways. The line name
+      column should stay put while the money columns move, and <em>the page itself</em> should never
+      slide.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">Budget vs. Actual scrolls sideways, name pinned, page still</label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">The Budget list does the same<span class="hintline">This is new — the plan used to squeeze instead of scroll</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">The pinned name doesn't lurch or go see-through on the first swipe</label></div>
+      <div class="chk"><input type="checkbox" id="e1d"><label for="e1d">On the Budget list, each line still shows its When answer under its name</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>Things are big enough to hit</h3>
+    <div class="tags"><span class="tag phone">phone + tablet</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Try folding categories with your thumb, on a phone and again at tablet width
+      (about 768px). A review found these had shrunk to the width of their name.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Category rows are comfortable to fold with a thumb at both sizes</label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">The chevrons on lines are comfortable too</label></div>
+      <div class="chk"><input type="checkbox" id="e2c"><label for="e2c">Nothing important is cut off at the right edge on either screen</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>Three things I'm not sure about</h2>
+  <p>Questions, not checks. Answer in the boxes — the answers come back with your findings.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>Amber dash, or a plain one?</h3>
+    <div class="tags"><span class="tag think">your ruling</span></div></div></div>
+  <div class="step-body">
+    <p class="why">A line nobody budgeted shows an amber dash. The <b>Off-plan</b> tile at the top of
+      the screen already totals that money, so the colour may be saying it twice — and the whole point
+      of this change was that colour should mean one thing. Amber currently means both “nobody planned
+      this” here and “no date yet” on the Budget tab.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">Ruled</label></div>
+    </div>
+    <textarea placeholder="Keep the amber, or make it a plain dash?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>The exported file still says “netted”</h3>
+    <div class="tags"><span class="tag think">your ruling</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Export <b>By activity</b> and open it. The file still prints a <b>“Tournaments
+      netted”</b> closing line, because exports were out of scope and a flat spreadsheet arguably needs
+      a label on a closing row. The screen now carries that figure on the category row instead.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f2a"><label for="f2a">Looked at the exported file</label></div>
+      <div class="chk"><input type="checkbox" id="f2b"><label for="f2b">Ruled</label></div>
+    </div>
+    <textarea placeholder="Should the file match the screen, or is a closing label right in a spreadsheet?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F3">
+  <div class="step-head"><span class="num">F3</span><div class="step-t"><h3>Now that everything is a table — the row heights</h3>
+    <div class="tags"><span class="tag think">the next piece of work</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Look at <b>Budget vs. Actual</b>, then <b>Dues</b>, then <b>Transactions</b>.
+      Three different row heights. Nobody noticed before because one was a card stack; now they are
+      all tables and sit side by side. I recommended two heights, chosen by what a row holds rather
+      than which screen it's on — but I wanted you to see it first.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f3a"><label for="f3a">Compared the three tabs</label></div>
+      <div class="chk"><input type="checkbox" id="f3b"><label for="f3b">Ruled, or parked</label></div>
+    </div>
+    <textarea placeholder="Does the density difference bother you? Worth a session?"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Press <b>Copy findings</b> at the top, or copy from here, and paste it back into the
+    chat. Everything you typed and every verdict comes with it.</p>
+  <textarea class="out" id="outbox" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §146</span><span>Coach Money — one surface</span>
+  <span>Built on dev 2026-09-05, uncommitted</span><span>Fixture: UAT Test Team</span>
+</footer>
+</div>
+
+<div class="toastwrap" hidden id="toastwrap"><div class="toast" id="toast">Copied</div></div>
+
+<script>
+(function(){
+  var KEY='coach-one-surface-walk-146';
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('textarea:not(#outbox)'));
+  var out=document.getElementById('outbox');
+
+  function load(){
+    var s={};
+    try{ s=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ s={}; }
+    return s&&typeof s==='object'?s:{};
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v) st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §146 — Coach Money: one surface','Fixture: UAT Test Team · built on dev 2026-09-05',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var txt=lab.childNodes[0]?lab.textContent.split('\n')[0].trim():'';
+        var hint=lab.querySelector('.hintline');
+        if(hint) txt=txt.replace(hint.textContent.trim(),'').trim();
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt);
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

@@ -528,6 +528,38 @@ function varianceFor(direction: MoneyDirection, budgeted: number, actual: number
   return direction === 'in' ? r2(actual - budgeted) : r2(budgeted - actual);
 }
 
+/**
+ * THE NAME A REVENUE ROW WEARS — the ONE amendment to "the item names the row" (owner ruling
+ * 2026-09-06, QA §146), and it is deliberately the narrowest one that answers the complaint.
+ *
+ * ⚠ THE COMPLAINT. Owner, comparing the two reports side by side: *"why does the budget break out
+ * fundraising into the fundraiser but the statement does not?"* The Budget list showed **Chocolate
+ * sale**; Budget vs. Actual showed **Fundraising drive** — the same money, two names, and only one
+ * of them the coach's own word.
+ *
+ * ⚠⚠ NEITHER SCREEN WAS WRONG, WHICH IS WHY THIS IS SO NARROW. Two standing rulings met:
+ *   · Here (2026-08-15): the ITEM names the row, because a coach once picked "Entry Fees" and their
+ *     plan rendered a row called "test". Two reports cannot line up on words somebody typed.
+ *   · On the plan (mig 243): a money-in line keeps whatever the coach typed and does NOT fall back
+ *     to its item, because "Fundraising drive" is a worse row label than "Chocolate sale".
+ * A cost line's description already falls back to its item name, so the two agree on the whole
+ * expense side by construction. The divergence exists only where the plan deliberately created it.
+ *
+ * ⚠ SO: MONEY IN, and ONLY when the item holds exactly ONE line. Two lines summing into one row
+ * (rule 3) have two typed names and no honest way to choose between them — the same "as deep as the
+ * plan actually agrees, and no deeper" answer `placeDerivedActual` gives for raised money, and for
+ * the same reason. It also stops the 2026-08-15 defect returning: a cost row can never reach here.
+ *
+ * ⚠ THE KEY DOES NOT MOVE. Rows are keyed on `itemId`; this changes the LABEL only, so the two
+ * reports still line up on the taxonomy and the export (which reads this same field) says what the
+ * screen says. Do not start matching on it.
+ *
+ * ⚠ AND NOT FOR "Not itemized". That row is a gap to close, not a line with a name.
+ */
+function rowLabel(entry: Entry, direction: MoneyDirection): string {
+  if (direction !== 'in' || !entry.itemId || entry.lines.length !== 1) return entry.itemName;
+  return (entry.lines[0].description ?? '').trim() || entry.itemName;
+}
 function buildCategoryRow(
   bucket: Bucket, direction: MoneyDirection, side: Map<string, Entry>,
 ): CategoryRow {
@@ -539,7 +571,8 @@ function buildCategoryRow(
     const actual      = r2(grossActual - refundTotal);
     items.push({
       itemId: entry.itemId,
-      itemName: entry.itemName,
+      // The coach's own word where the plan agrees on one — see `rowLabel`.
+      itemName: rowLabel(entry, direction),
       direction,
       budgeted,
       actual,

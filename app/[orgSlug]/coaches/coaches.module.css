@@ -2106,6 +2106,29 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .insightsOpsLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); margin-top: 0.5rem; padding: 0.4rem 0; color: var(--blueprint-light); font-size: var(--type-support); font-weight: 600; text-decoration: none; }
 .insightsOpsLink:hover { text-decoration: underline; }
 .mutedInline { color: var(--text-tertiary); font-weight: 400; }
+
+/* A second line under a table cell's own words — the dues table's "sent $550.00 more than billed"
+   (owner ruling 2026-09-06, QA §146 · D6), and anything after it that needs to say one quiet thing
+   about the row it sits in.
+
+   ⚠ A REAL BLOCK, so it drops under the name instead of running on after it, and `normal` because
+   the surrounding table sets `nowrap` on its cells — the same two properties the money grid's line
+   names needed for the same reason, one file away.
+
+   ⚠ NOT A STATUS CHIP. It carries a FIGURE a coach may act on, in the quietest ink on the table, so
+   ten rows that have nothing to add stay silent — this renders only when there is something to
+   say. If it ever earns a colour, that is a different element and a different ruling. */
+.rowSubNote {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  line-height: 1.35;
+}
 .insightsSeasonStatLbl { font-size: var(--type-support); color: var(--text-tertiary); }
 /* Overview safety-tier bridge line (the one finding that crosses dashboards). */
 .insightsBridge { display: flex; align-items: baseline; gap: 0.4rem; font-size: var(--type-body); color: var(--text-tertiary); margin: 0.6rem 0 0; }
@@ -3300,31 +3323,46 @@ a.oneChip:hover { border-color: currentColor; }
    bespoke phone rule. They were originally written here, ~2,500 lines away from the primitive they
    extend, which made `.tableAsCards` have two sources of truth about its own behaviour. */
 
-/* ── The ledger group (Money-hub table consistency 2026-08-13, plan §3.1 "job two") ─────────
-   ONE outline treatment: a bordered group per category, a tinted bar carrying the category name
-   and its figures, line rows inside it, sub-rows when a line expands, and a closing total.
+/* ══ THE OUTLINE IS RETIRED — ONE RECIPE DRAWS A MONEY HIERARCHY NOW ═══════════════════════════
+   ⚰ THE WHOLE `.ledger*` FAMILY WAS DELETED HERE on 2026-09-05 (owner ruling, one-surface pass,
+   mockup artifact `dde45c3f-7faf-4d5c-869f-627c0c52fb8b`). It drew a money hierarchy as an
+   OUTLINE — a bordered, rounded card per category on the paper ground, with a gap under each —
+   while `.moneyGrid` below drew the same category → line → total tree as a TABLE. Two recipes for
+   one structure, in one hub, and on the Budget tab they were ONE TOGGLE APART.
 
-   ⚠ WHY THIS EXISTS: Budget Plan's List and Budget vs. Actual's Categories are the SAME
-   structure — categories holding lines holding periods, a figure at every level — and were
-   written from scratch twice. They disagreed on corner radius (12px vs 10px), on whether the
-   category bar was flex or grid, on the name's size (0.72 vs 0.78rem) and ink (--white-40 vs
-   --white-50), on the figure's ink, and on row padding. Nobody decided any of that. Two tabs of
-   one hub reading as two products is exactly what the owner raised.
+   Its only two adopters — Budget vs. Actual's Statement and By activity, and the Budget tab's
+   List — are tables now, so the family had no users left. Deleted rather than orphaned, because
+   `check:css-selectors` is a real gate: dead CSS fails the build, which is the correct outcome.
 
-   ⚠ THE COLUMN COUNT IS A VARIABLE, NOT A DIFFERENT TREATMENT. An adopting surface sets
-   `--ledger-cols` ONCE on its container and every part below inherits it — Budget Plan uses
-   `1fr <amount> auto` (the trailing `auto` is its per-row actions, and collapses to nothing for
-   a read-only coach), Budget vs. Actual uses `1fr 110px 110px 110px`. Sub-rows may carry a track
-   the line rows don't (BvA puts the period DATE in one) via `--ledger-sub-cols`, which defaults
-   to the row tracks so a surface that needs no such column says nothing.
+   ⚠⚠ WHY THE OWNER OVERTURNED IT, because this reverses several rulings that survive in comments
+   elsewhere: *"there is so much space and the row colors do not make it at all clear how these
+   are grouped… the way the monthly view fits everything so well on the screen still is the best
+   viewing experience that I have had."* Four grounds were in play on one report — paper (a planned
+   line), white (a section band), tan (a category head), amber (an unplanned row) — and none of
+   them meant "these belong together", while the rows themselves had NO RULE UNDER THEM, so nothing
+   carried the eye from a name to a figure a thousand pixels away. The tint was doing grouping's
+   job, and doing it wrongly. A table's hairline does that job correctly, which is why Months never
+   had the problem and why the fix was to stop having two answers.
 
-   ⚠ EACH ROW OWNS ITS OWN LEADING INDENT, and hands it down as `--scrollx-pin-gutter` at the
-   phone breakpoint if it lives inside <CoachScrollX sticky>. Do not "simplify" the indent onto a
-   wrapper: `left: 0` on a pinned cell is measured from the SCROLLER's edge, so a row keeping its
-   own padding-left makes the label lurch on the first swipe (the Chunk A D3 lesson).
+   ⚠ WHAT SURVIVED, and where it went:
+     · `.ledgerExpand` / `.ledgerExpandSpacer` → `.moneyGridExpand` / `.moneyGridExpandSpacer`
+       (below). A chevron that opens a row is not outline-specific, and this one carries a hard-won
+       pointer hit area and the tablet-band tap floor. Renamed rather than left as `.ledger*`,
+       because a stray class from a deleted family is how somebody re-derives it from the fossils.
+     · `.ledgerNumMuted` → `.moneyGridNumMuted` (below), comment and all.
+     · `.ledgerActions` is untouched, further down this file — it is a row's action cell, and the
+       Budget tab's pencil still sits in one.
+     · The five type-scale variables directly below. The grid reads them too.
 
-   These are LIFTABLE — nothing here knows it is about money — but they land inside Money only in
-   this pass, by scope ruling. */
+   ⚠ `tests/unit/money-hierarchy-type-scale.test.ts` EXISTED TO KEEP THE TWO FAMILIES IN STEP and is
+   retired with the family it guarded — read its tombstone before concluding the guard was dropped
+   carelessly. The relationship it protected (a category reads larger than its own lines) is now
+   asserted against the grid alone.
+
+   ⚠ DO NOT REINTRODUCE A CARD-STACK RECIPE FOR A MONEY HIERARCHY. If a surface needs one it needs
+   an owner ruling first: this is the SECOND consolidation of this tree onto one drawing, and the
+   first consolidation is what created the outline. */
+
 
 /* ══ ONE SOURCE FOR THE MONEY HIERARCHY'S TYPE SCALE ═══════════════════════════════════════════
    The OUTLINE (`.ledger*`, a card stack) and the GRID (`.moneyGrid*`, a real table) draw the same
@@ -3352,265 +3390,43 @@ a.oneChip:hover { border-color: currentColor; }
   --money-line-weight: 600;
   /* A category's own figure sits a step under its name — it is read across, not scanned down. */
   --money-catnum-size: 0.86rem;
+  /* ⚠⚠ THERE IS NO FOURTH RUNG FOR A CLOSING ANSWER, AND THAT IS A RULING (owner 2026-09-06, QA
+     §146) — taken TWICE in one session, on the built screen both times, which is why it is written
+     here rather than left to the next person's taste.
+       1. Season net, Total revenue and Total expenses were measuring IDENTICALLY. Owner: *"the
+          fonts of all 3 rows look the same."* He was right — and two pieces of prose were wrong
+          about it, a walk step claiming the net read "larger and bolder" and a stylesheet comment
+          claiming the subtotals wore a thinner cap. Neither was ever built. (The row had in fact
+          been rendering SMALLER than its subtotals — a specificity defect — and the fix lifted it
+          to parity while both descriptions went on claiming primacy.)
+       2. A step up to 1rem was built and shown to him. He ruled it back OUT on sight: *"go back to
+          making the font size the same as the revenue/expense rows. It keeps it in line with the
+          other monthly statement and looks better."*
+     So the closing answer is set apart by SPACE and by POSITION — its extra padding, its heavier
+     cap, and being last — never by size. The Months view's closing row is the reason: these are one
+     report behind a View pill, and a coach who switches should not find the last row grown.
+     ⚠ `money-hierarchy-type-scale.test.ts` pins the EQUALITY, so a future "the answer should shout"
+     fails the build and lands here instead. */
 }
 
-.ledgerList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
 
-/* The column headings, sitting in the same track rhythm as the frames below rather than
-   floating loose above them. */
-.ledgerHead {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  padding: 0.35rem 1rem;
-  font-size: var(--type-label);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-tertiary);
-}
-
-/* ⚠ NO `overflow: hidden` HERE, deliberately — the category bar rounds its own corners instead.
-   A clipping frame around these rows is the obvious way to keep the head's tint inside the radius,
-   and it is a trap: it becomes the nearest clipping ancestor of the PINNED first cell, so inside
-   Budget vs. Actual's horizontal scroller the pin ends up trapped in a box that runs past the
-   viewport and cannot scroll — the label sails away on the first swipe instead of sticking. The
-   rendered sweep names this exactly (`sticky-no-travel`), and only once there is real data to make
-   the grid overflow. Rounding the one child that has a background costs nothing and keeps the pin
-   answerable to the real scroller. */
-.ledgerGroup {
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  border-radius: 10px;
-}
-
-/* Used for BOTH a <div> (Budget Plan, whose categories don't collapse) and a <button> (Budget
-   vs. Actual, whose do). The button-only affordances are a separate class rather than an
-   element selector, so a surface opts into "this bar is clickable" explicitly. */
-.ledgerGroupHead {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  width: 100%;
-  /* 0.7rem, not 0.65 — at 0.65 the bar rendered 43px tall, one pixel under the portal's tap floor,
-     on every width. A one-pixel miss on a full-width row is cheaper to fix than to justify, and it
-     clears the floor at every width rather than only on a phone. */
-  padding: 0.7rem 1rem;
-  /* The SAME band the grid's category row paints (`.moneyGridCat`). It was the olive tint here and
-     the neutral fill there, so switching List → By period changed the colour of the same row. */
-  background: var(--home-fill, rgba(255,255,255,0.05));
-  border: none;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  /* Rounds itself rather than being clipped by the frame — see the note on `.ledgerGroup`. 9px is
-     10px less the frame's 1px border, so the tint meets the border cleanly. A collapsed category
-     is a head with no rows under it, and rounds all four. */
-  border-radius: 9px 9px 0 0;
-}
-.ledgerGroupHead:last-child { border-radius: 9px; }
-.ledgerGroupHeadBtn { cursor: pointer; transition: background 0.12s; }
-.ledgerGroupHeadBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
-.ledgerGroupHeadBtn:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
-/* A category bar that opens and closes is a real control, so it clears the portal's tap floor at
-   the phone breakpoint. Its natural height lands at ~39px, which the rendered sweep caught the
-   moment these bars became buttons (2026-08-13). */
-@media (max-width: 640px) {
-  .ledgerGroupHeadBtn { min-height: var(--tap-min, 44px); }
-}
-
-/* The leading cell of any row: a chevron (or its spacer) beside a name, sharing one track. */
-.ledgerCell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-/* ⚠ ONE TYPE SCALE FOR A MONEY HIERARCHY, WHATEVER DRAWS IT — the outline (these `.ledger*` classes)
-   and the grid (`.moneyGrid*` below) are two VIEWS OF THE SAME DATA, one toggle apart on the same
-   screen, so their category / line / total must measure the same:
-
-       category  0.92rem · 800    line  0.84rem · 600    total  0.92rem · 800
-
-   ⚠ This is the SECOND time the two halves drifted, and both times the fix was applied to the half
-   being looked at. Owner, 2026-08-13, on List vs By-period: *"shouldn't we also be consistent
-   between list and by period?"* — the grid had adopted the ruling and the outline still carried
-   small caps, so one toggle turned "Tournaments" into "TOURNAMENTS" and inverted the hierarchy back.
-   `tests/unit/money-hierarchy-type-scale.test.ts` now parses this stylesheet and FAILS THE BUILD if
-   the three pairs stop matching, because a comment asking the next contributor to remember has
-   already not worked twice. */
-.ledgerName {
-  font-size: var(--money-cat-size);
-  font-weight: var(--money-cat-weight);
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ledgerRow {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  /* Vertical rhythm is a VARIABLE with the shipped value as its default (P3, 2026-09-02): the
-     Budget Plan tightens its own container without touching what BvA and every other ledger
-     renders. Override the var, never this rule. */
-  padding: var(--ledger-row-pad-y, 0.6rem) 1rem var(--ledger-row-pad-y, 0.6rem) 1.6rem;
-  border-top: 1px solid var(--white-05);
-}
-/* A .ledgerRow drawn by a <button> (Budget Plan's multi-line item group). A button never
-   stretches on width:auto and carries UA chrome — the same trap .ledgerGroupHead already
-   strips for the category bar. Declared AFTER .ledgerRow in this file on purpose: border
-   must be re-narrowed to border-top here, and same-specificity order is what guarantees it. */
-.ledgerRowBtn {
-  width: 100%;
-  background: none;
-  border: none;
-  border-top: 1px solid var(--white-05);
-  text-align: left;
-  font: inherit;
-  color: inherit;
-}
-
-/* ⚠ `display: block` IS LOAD-BEARING, not tidiness. `overflow` and `text-overflow` do nothing on an
-   inline box, so without it a long line name simply ran on and pushed the row past the page — 39px
-   of document-level sideways scroll at 361px, found by the rendered sweep. It reads as blockified
-   when it happens to be a direct flex child (Budget vs. Actual's rows), and NOT when it sits inside
-   a stacked name+note cell (Budget Plan's), which is exactly the kind of difference a file-reading
-   gate cannot see. */
-.ledgerDesc {
-  display: block;
-  font-size: var(--money-line-size);
-  font-weight: var(--money-line-weight);
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* (The phone wrap for this and its two sibling text classes is declared AFTER all three — see the
-   block below `.ledgerSubLabel`. It cannot live here.) */
-/* A second line under the description — a coach's own note. Never a column of its own. */
-.ledgerNote {
-  display: block;
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ledgerSubRows {
-  background: var(--home-card, rgba(255,255,255,0.015));
-  border-top: 1px solid var(--white-05);
-}
-.ledgerSubRow {
-  display: grid;
-  grid-template-columns: var(--ledger-sub-cols, var(--ledger-cols));
-  gap: 0.5rem;
-  align-items: center;
-  /* Same variable treatment as .ledgerRow — see the note there. */
-  padding: var(--ledger-sub-pad-y, 0.45rem) 1rem var(--ledger-sub-pad-y, 0.45rem) 3.05rem;
-  font-size: var(--type-body);
-  border-bottom: 1px solid var(--white-05);
-}
-.ledgerSubRow:last-child { border-bottom: none; }
-.ledgerSubLabel {
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ⚠ THE PHONE WRAP FOR ALL THREE LEDGER TEXT CLASSES, AND IT MUST STAY BELOW ALL THREE.
-   `.wrap640` at the top of this file is a single-class rule, so every `nowrap` declared later in
-   the file silently beat it — the class sat on every ledger row doing nothing. A name or note that
-   truncates on a phone is worse than one that takes two lines.
-   ⚠ THIS BLOCK WAS ITSELF WRITTEN IN THE WRONG PLACE ONCE: it was first put after `.ledgerDesc`
-   only, where it still preceded `.ledgerNote` (declared later) and so lost to it in exactly the
-   same way. Measured at 390px both times — the note stayed `nowrap` while the name wrapped.
-   A media query adds NO specificity; only position saves you. Any new `.ledger*` text class that
-   sets `nowrap` must be declared ABOVE this block and added to the list. */
-@media (max-width: 640px) {
-  .ledgerDesc,
-  .ledgerNote,
-  .ledgerSubLabel { white-space: normal; }
-}
-.ledgerSubMeta {
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
-/* The number cell for all three levels. Weight is what separates them, not alignment or face —
-   so a category total, a line and a period all land in one column. */
-.ledgerNum {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
-  white-space: nowrap;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-}
-/* A category's total and a line's amount — matched to the grid's category figure. */
-.ledgerNumStrong { font-size: var(--money-catnum-size); font-weight: var(--money-cat-weight); color: var(--text-primary); }
-/* A nil is not news. Dropping it to a quiet ink leaves the colour to the figures that actually
-   need reading — the same call the Dues balance column makes.
-
-   ⚠⚠ IT WAS `--white-30`, WHICH IN THE WARM THEME IS `rgba(70,55,30,0.2)` — about 1.1:1 against the
-   report's ground, i.e. an em-dash a sighted reader cannot see at all. Found 2026-08-17 when club
-   money reached this report for the first time (money redesign P4) and made the refund sub-row
-   render on the layout fixture; the rule itself is older than that change and was simply never
-   measured, because nothing on the fixture had produced one of these rows before.
-
-   ⚠ MOVE THE INK, NOT THE MEANING. `--white-45` is still the quietest step on the ledger and still
-   reads as "nothing to see here" beside the live figures — it is just now actually visible. A
-   placeholder a reader cannot perceive is not quiet, it is missing, and the column then looks like
-   it failed to render rather than like it has nothing to say. */
-.ledgerNumMuted { color: var(--text-tertiary); }
-
-.ledgerTotal {
-  display: grid;
-  grid-template-columns: var(--ledger-cols);
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  margin-top: 0.5rem;
-  border-radius: 10px;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  font-size: var(--money-cat-size);
-  font-weight: var(--money-cat-weight);
-  color: var(--text-primary);
-}
-.ledgerTotalNum {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
-  white-space: nowrap;
-  font-size: var(--money-cat-size);
-  font-weight: var(--money-cat-weight);
-  color: var(--text-primary);
-}
-
-/* The expand chevron, and the spacer that keeps a childless row's name in the same place. */
-.ledgerExpand,
-.ledgerExpandSpacer {
+/* ── The chevron that opens a row, and the spacer that keeps a childless row's name in line ──
+   ⚰ Was `.ledgerExpand` / `.ledgerExpandSpacer`; renamed into the grid family when the outline was
+   retired (2026-09-05). Nothing about it was outline-specific. Distinct from `.moneyGridToggle`,
+   which wraps chevron AND label in one control: this is the chevron alone, for a row whose whole
+   surface is already the pointer target and which therefore needs the chevron to be the SEMANTIC
+   control a keyboard and a screen reader reach the fold through. */
+.moneyGridExpand,
+.moneyGridExpandSpacer {
   width: 20px;
   height: 20px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  vertical-align: middle;
 }
-.ledgerExpand {
+.moneyGridExpand {
   background: none;
   border: none;
   padding: 0;
@@ -3619,54 +3435,115 @@ a.oneChip:hover { border-color: currentColor; }
   cursor: pointer;
   transition: color 0.12s;
 }
-.ledgerExpand:hover { color: var(--text-secondary); }
+.moneyGridExpand:hover { color: var(--text-secondary); }
 
 /* ⚠ THE DESKTOP HIT AREA, GROWN WITHOUT MOVING ANYTHING (owner ruling 2026-09-05). Through the
    touch band this control already takes the 44px floor (the `[data-touch-floor]` rule below), so
    the small target was only ever a POINTER problem: a 20px square is a fussy thing to hit with a
    mouse, and it is the reason the row had to carry the job in the first place.
 
-   ⚠ A PSEUDO-ELEMENT, NOT PADDING. Padding would grow the flex box, which sets the row's height —
-   every ledger in Money would gain a few pixels per row and the layout baseline would move on
-   screens that asked for nothing. This grows the CLICKABLE box and leaves the drawn one alone.
+   ⚠ A PSEUDO-ELEMENT, NOT PADDING. Padding would grow the box that sets the row's height — every
+   money row would gain a few pixels and the layout baseline would move on screens that asked for
+   nothing. This grows the CLICKABLE box and leaves the drawn one alone.
 
-   ⚠⚠ VERTICAL ONLY — NOT ONE PIXEL SIDEWAYS, and the rendered sweep is what settled it. The first
-   attempt reached 4px to each side on the reasoning that the line's name starts immediately right,
-   so a *small* horizontal bite was harmless. It was not: `check:layout` reported every expander on
-   both money grids spilling 4px with `overflow-x: visible` and no scroller owning it — five rows
-   per screen, at three widths. An absolutely-positioned box still contributes to its ancestors'
-   overflow, so "it does not affect layout" is true of the flow and false of the scroll box.
-   Vertically there is genuinely nothing to collide with: the row's own height is the only thing
-   above and below, and that is where the useful reach was anyway. */
-.ledgerExpand { position: relative; }
-.ledgerExpand::after {
+   ⚠⚠ VERTICAL ONLY — THE 4px OF SIDEWAYS REACH IS GONE (rendered sweep, 2026-09-05). It was
+   already the smaller half of the idea: the line's name starts immediately to the right, so a
+   generous horizontal reach would sit on top of its first characters and steal both the row's own
+   click and the ability to select the name to copy it, which is why it was 4px and not 12px. In a
+   table cell those 4px also overflow the cell in a way nothing owns, and the sweep reports the
+   button spilling 4px at 1440. Vertically there is nothing to collide with and nothing to overflow,
+   so that is where all the room comes from now: a 20×36px pointer target instead of 20×20. */
+.moneyGridExpand { position: relative; }
+.moneyGridExpand::after {
   content: '';
   position: absolute;
   inset: -8px 0;
 }
-/* Matches the focus treatment its sibling controls already carry (`.ledgerGroupHeadBtn`,
-   `.moneyGridToggle`) — this one was the odd one out. */
-.ledgerExpand:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
+/* Matches the focus treatment its sibling controls carry (`.moneyGridToggle`). */
+.moneyGridExpand:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
 
-/* ⚠ THE TABLET BAND, OPT-IN — a list marks itself `data-touch-floor` and its expanders and group
-   heads take the portal's 44px floor from 641 up to 768 as well as below 640, where they already
-   have it.
+/* ⚠⚠ THE CHEVRON AND THE NAME SHARE A LINE — and after the table conversion nothing said so.
+   The outline wrapped both in `.ledgerCell`, a flex row with a 0.5rem gap. Converting the three
+   list reports to real tables (2026-09-05) replaced that wrapper with the CELL and did not replace
+   the flex, so a name declared `display: block` — which both panels do, because `overflow-wrap` is
+   inert on an inline box — dropped BELOW the inline-flex chevron. Every line on the Statement, on
+   By activity and on the Budget list rendered two rows tall with an empty first line. Owner-found
+   in QA §146; no gate saw it, because both halves are valid CSS and each file is right on its own.
+
+   ⚠ NOT `display: flex` ON THE CELL, which is the obvious fix and the wrong one. A `<th>` set to
+   flex stops generating a table-cell box — the table wraps it in an anonymous cell, and the pinned
+   first column's `position: sticky`, the row hairline and the column sizing all belong to the box
+   that just stopped existing. The name goes inline-level instead, which is what it was before the
+   wrapper it sat in happened to be flex.
+
+   ⚠ (0,3,1) ON PURPOSE. Both panels declare their own `display: block` on the name at (0,1,0), and
+   CSS Modules gives no guarantee which file's rules come out first — a (0,1,0) fix here would win
+   or lose by build order. Adjacent-sibling, so only the element the chevron actually leads is
+   touched: a further sibling (the screen-reader sentence) is left alone. */
+.moneyGrid th.moneyGridLead > .moneyGridExpand + *,
+.moneyGrid th.moneyGridLead > .moneyGridExpandSpacer + * {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+
+/* ⚠⚠ AND THE PHONE KEEPS WHAT SHIPPED, ON PURPOSE. Below 640 the chevron and its spacer take the
+   44px tap floor, which on a 138px pinned name column (measured at 390) leaves ~68px for the name
+   — too narrow for a two-word line name to sit beside it at all. Inline-block then puts SHORT
+   names beside the chevron and drops LONG ones underneath, so the column reads ragged and rows
+   range from 36px to 126px tall. Uniformly underneath is what shipped, and it is the lesser of the
+   two until the real question is answered.
+
+   ⚠ THE REAL QUESTION, RAISED IN QA §146 AND NOT TAKEN HERE: the phone name column is a third
+   chevron. The two ways out are a WIDER pinned column, or a 20px drawn chevron leaning on the
+   whole-row tap — and the second has different answers on the two screens, which is why it is not
+   a one-line change. On Budget vs. Actual the row tap FOLDS, so the chevron there is only the
+   semantic control and could shrink. On the Budget list the row tap opens the EDITOR, so the
+   chevron is the only phone-reachable way to open a line's periods and shrinking it would hide a
+   control with nothing to replace it. */
+@media (max-width: 640px) {
+  .moneyGrid th.moneyGridLead > .moneyGridExpand + *,
+  .moneyGrid th.moneyGridLead > .moneyGridExpandSpacer + * {
+    display: block;
+    margin-left: 0;
+  }
+}
+
+/* A nil is not news. Dropping it to a quiet ink leaves the colour to the figures that actually
+   need reading — the same call the Dues balance column makes.
+
+   ⚠⚠ IT WAS `--white-30`, WHICH IN THE WARM THEME IS `rgba(70,55,30,0.2)` — about 1.1:1 against the
+   report's ground, i.e. an em-dash a sighted reader cannot see at all. Found 2026-08-17 when club
+   money reached the report for the first time and made the refund sub-row render on the layout
+   fixture; the rule itself was older than that and had simply never been measured, because nothing
+   on the fixture had produced one of these rows before.
+
+   ⚠ MOVE THE INK, NOT THE MEANING. `--text-tertiary` is still the quietest step here and still
+   reads as "nothing to see" beside the live figures — it is just now actually visible. A
+   placeholder a reader cannot perceive is not quiet, it is missing, and the column then looks like
+   it failed to render rather than like it has nothing to say. */
+.moneyGridNumMuted { color: var(--text-tertiary); }
+
+/* ⚠ THE TABLET BAND, OPT-IN — a table marks itself `data-touch-floor` and its expanders and
+   category toggles take the portal's 44px floor from 641 up to 768 as well as below 640, where
+   they already have it.
 
    ⚠ OPT-IN RATHER THAN RAISED FOR EVERYONE, and the restraint is the point. ≤768 IS a touch band by
-   ruling (owner 2026-08-27) and every ledger in Money is arguably owed this — but lifting the bare
+   ruling (owner 2026-08-27) and every money table is arguably owed this — but lifting the bare
    class here moves the tablet layout of seven money screens in one commit, which belongs to the
    tablet-band programme and not to whatever build happens to trip the sweep first. Adding the
-   attribute to another list is a one-word change when that programme comes.
+   attribute to another table is a one-word change when that programme comes.
 
    ⚠ WRITTEN HERE BECAUSE THE CLASSES LIVE HERE. A page stylesheet cannot reach them: CSS Modules
-   hashes them per file, so a `:global(.ledgerExpand)` written from the budget module matches
+   hashes them per file, so a `:global(.moneyGridExpand)` written from the budget module matches
    nothing, compiles clean, and silently changes no pixels. */
 @media (max-width: 768px) {
-  [data-touch-floor] .ledgerExpand,
-  [data-touch-floor] .ledgerGroupHeadBtn {
+  [data-touch-floor] .moneyGridExpand,
+  [data-touch-floor] .moneyGridToggle {
     min-height: var(--tap-min, 44px);
   }
 }
+
 
 /* ── The money grid (Money-hub table consistency 2026-08-13, "job three") ────────────────────
    ONE recipe for a comparison read ACROSS — Budget Plan's `By period` view and Budget vs. Actual's
@@ -3844,6 +3721,50 @@ a.oneChip:hover { border-color: currentColor; }
 .moneyGridFlowFirst th,
 .moneyGridFlowFirst td { box-shadow: inset 0 1px 0 var(--home-line-strong, var(--border-2)) !important; padding-top: 0.55rem; }
 
+/* ── A BAND HEADING — "Revenue" / "Expenses", or an activity's own name ──────────────────────
+   Lifted here from MoneyMonthGrid's local `.bandRow` / `.bandLead` pair (one-surface pass,
+   owner-approved 2026-09-05) so the month grid and the three list reports name the halves of a
+   statement one way. A band is a HEADING, not a row of money: it carries no figures at all.
+
+   ⚠⚠ AND LIFTING IT FIXED A RULE THAT HAD BEEN INERT SINCE 2026-08-13. The local `.bandLead`
+   carried the whole text treatment at specificity (0,1,0), while `.moneyGrid tbody th` — the
+   "a row heading is not a column heading" reset added the same week — sets font-size, weight,
+   colour, letter-spacing AND text-transform at (0,1,1). Every single declaration in `.bandLead`
+   lost. Months has been rendering "Revenue" and "Expenses" as ordinary dark sentence-case row
+   headings ever since, which is what the owner's own screenshot shows; nothing caught it because
+   a file-reading gate cannot see an inherited cascade and the band still got its TINT (that rule
+   was written at (0,2,3) and always worked).
+
+   ⚠ SO THE TEXT TREATMENT LIVES ON THE ROW SELECTOR, NOT ON A LEADING-CELL CLASS. At (0,2,3) it
+   outranks the reset by construction and cannot be quietly beaten by the next descendant rule
+   somebody adds. This is the identical lesson `.moneyGridCat` above already carries — put a row
+   kind's treatment on the row, or watch it lose to a `tbody` selector.
+
+   ⚠ AN OPAQUE GROUND WITH THE TINT PAINTED ON IT, never a translucent `background` shorthand: the
+   first cell of this row is a PINNED column and the last may be a pinned Total, and a translucent
+   pin lets the scrolled money columns read straight through (the Chunk A D3 lesson, which has
+   shipped as a real defect in both money grids once already).
+
+   ⚠ THE GUTTER IS THE SEPARATOR, NOT MORE COLOUR (design pass 2026-08-24, carried across with the
+   rule). A band heading and a category row were both tinted rows told apart only by small
+   uppercase type, so the heading read as one more category. The band opens with room above it.
+
+   ⚠ A BOX-SHADOW RULE, NOT `border-bottom`. `border-collapse: collapse` hands a border to the
+   TABLE to paint, which does not travel with a sticky column's own paint layer — the hairline then
+   agrees at some scroll offsets and steps by a pixel at others. The month grid's local copy used a
+   border; it does not any more. */
+.moneyGrid tbody tr.moneyGridBand th,
+.moneyGrid tbody tr.moneyGridBand td {
+  background-color: var(--card-bg);
+  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
+  box-shadow: inset 0 -1px 0 var(--home-line, var(--border));
+  padding-top: 1.05rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
 /* The chevron that opens a category. ⚠ It appears ONLY where the category actually collapses — an
    affordance for a behaviour, never decoration. Owner ruling 2026-08-13: every hierarchy in a
    table IS collapsible, so in practice both money grids carry one. */
@@ -3905,13 +3826,13 @@ a.oneChip:hover { border-color: currentColor; }
 @media (max-width: 640px) {
   .ledgerActions button,
   .ledgerActions a,
-  .ledgerExpand {
+  .moneyGridExpand {
     min-height: var(--tap-min, 44px);
     min-width: var(--tap-min, 44px);
   }
   /* The spacer has to grow with the chevron it stands in for, or a childless line's name starts
      in a different place from its siblings'. */
-  .ledgerExpandSpacer { width: var(--tap-min, 44px); }
+  .moneyGridExpandSpacer { width: var(--tap-min, 44px); }
 }
 
 .playerName { font-weight: 600; font-size: var(--type-body); }

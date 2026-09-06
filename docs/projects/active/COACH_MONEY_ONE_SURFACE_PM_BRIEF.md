@@ -82,3 +82,36 @@ shape is already approved on a mockup, and doing it now avoids adding a third va
 **Should an unplanned line keep the amber dash, or a plain one?** The mockup keeps amber. A plain
 dash is also defensible because the Off-plan tile at the top already totals what nobody budgeted.
 Either way the amber row background goes.
+
+---
+
+## Follow-on, 2026-09-06 — **By activity folds**
+
+**What the coach sees.** By activity now opens as a short list: one row per activity — Player dues,
+Tournaments, Fundraising, Facilities and so on — each stating its own bottom line, with Season net
+reachable without scrolling. Click any activity (the row or its chevron) to open its revenue and
+cost lines underneath; click again to close. **Expand all / Collapse all** now appears on this tab
+too, where before it silently disappeared when you switched to it.
+
+**Why it matters.** The owner's own reading, on sight: *"why aren't the items grouped in the
+categories? the categories are just headers."* The numbers were grouped — an activity's row has
+always been its own revenue less its own costs — but the screen didn't draw it that way. A category
+was a fold on the Statement and a dead heading here, so one report taught two different gestures for
+the same object, and every item of every category sat on screen at once with nothing marking where
+one activity ended and the next began.
+
+**What it costs.** Detail is now one click away instead of always visible. That is the trade this
+change exists to make: this view answers *"did each activity pay for itself?"*, and that question is
+answered by the list of bottom lines, not by the lines underneath them.
+
+**What did not move.** Every figure, every door behind a figure, both downloads, and the footnotes.
+Player dues stays a plain row — it has no lines to hold, so it opens nothing, exactly as on the
+Statement.
+
+**Also fixed on the way:** Collapse all used to clear the whole report's open/closed state. With two
+folding shapes that would have meant collapsing on one tab silently shutting rows you had opened on
+the other; it now acts only on the view you are reading.
+
+**Success criteria.** Success criterion 4 above — *"By activity reaches Season net inside a laptop
+screen with categories collapsed"* — is now actually reachable. It was not before, because there
+were no categories to collapse.

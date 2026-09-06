@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import ColumnPager from '@/components/coaches/ColumnPager';
@@ -541,6 +541,19 @@ function catKeyOf(cat: CategoryResult): string {
   return `${cat.direction}|${cat.categoryId ?? `name:${cat.categoryName}`}`;
 }
 
+/**
+ * The same address for an ACTIVITY block — one category holding BOTH halves.
+ *
+ * ⚠⚠ THE `activity|` PREFIX IS LOAD-BEARING, not decoration. It puts these keys in a namespace of
+ * their own, which is what lets one `expandedCats` set serve both shapes: a coach who opens
+ * Tournaments here does not silently open the two Tournaments rows on the statement, and Collapse
+ * all on one view cannot shut rows opened on the other. `catKeyOf` can only ever emit `in|…` or
+ * `out|…`, so the three namespaces are disjoint by construction.
+ */
+function activityKeyOf(block: ActivityBlock): string {
+  return `activity|${block.categoryId ?? `name:${block.categoryName}`}`;
+}
+
 /** Which side of the row a coach asked about: the plan, or what actually moved. */
 type BehindSide = 'plan' | 'actual';
 
@@ -774,16 +787,16 @@ function ItemRows({
                 Reading a plan line's split is served over there by its WHEN CELL, which folds the row
                 the same way this one does. Before "aligning" the two screens, re-read those two
                 bullets — they are why they differ. */}
-            <div
-              className={`${shared.ledgerRow} ${styles.lineMain} ${item.inPlan ? '' : styles.unplannedRow} ${canExpand ? shared.rowTappable : ''}`}
+            <tr
+              className={canExpand ? shared.rowTappable : ''}
               // Selecting text to copy an amount must not toggle the row — a click that ends a
               // selection is a copy gesture, not a tap (the same guard the plan page carries).
               onClick={canExpand ? () => { if (window.getSelection()?.toString()) return; toggleLine(key); } : undefined}
             >
-              <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
+              <th scope="row" className={`${styles.lead} ${shared.moneyGridLead}`}>
                 {canExpand ? (
                   <button
-                    className={shared.ledgerExpand}
+                    className={shared.moneyGridExpand}
                     aria-expanded={open}
                     aria-label={open ? `Hide ${item.itemName}'s periods` : `Show ${item.itemName}'s periods`}
                     onClick={e => { e.stopPropagation(); toggleLine(key); }}
@@ -791,9 +804,9 @@ function ItemRows({
                     {open ? <ChevronDown size={13} aria-hidden /> : <ChevronRight size={13} aria-hidden />}
                   </button>
                 ) : (
-                  <span className={shared.ledgerExpandSpacer} />
+                  <span className={shared.moneyGridExpandSpacer} />
                 )}
-                <span className={shared.ledgerDesc}>{item.itemName}</span>
+                <span className={styles.lineName}>{item.itemName}</span>
                 {/* ⚠⚠ THE "N lines" CAPTION IS GONE — FROM EVERY SURFACE (owner ruling 2026-09-04,
                     QA §133), together with its twins on the Budget list and the by-period grid. It
                     had changed hands three times in three days: a caption, then a door, then a
@@ -809,19 +822,21 @@ function ItemRows({
                     round three) — a deliberate RE-REVERSAL of D5.5 (2026-09-02), taken on the built
                     screen rather than on a plan, and the help article had been carrying the owner's
                     reason all along before D5.5 briefly contradicted it: *the empty Budget figure is
-                    the whole answer*. THREE signals were saying one thing — a tinted row, a dash
-                    where a number goes, and a word — and the tint was reading as GROUPING rather
-                    than status precisely because the word beside it carried the meaning. The tint
-                    stays and keeps the row honest at a glance; the dash states it exactly.
-                    ⚠ THE SENTENCE STAYS FOR A SCREEN READER, because a tint and a dash are not
-                    readable — the same reason the category header carries one. */}
+                    the whole answer*.
+                    ⚠⚠ AND THE ROW TINT THAT REPLACED IT IS NOW GONE TOO (owner ruling 2026-09-05).
+                    The 09-04 note argued the tint "keeps the row honest at a glance" while
+                    conceding in the same breath that it had started reading as GROUPING rather than
+                    status. On one white surface it has nothing left to be confused with, so the
+                    fact sits on the figure that states it: the Budget cell's dash, in amber.
+                    ⚠ THE SENTENCE STAYS FOR A SCREEN READER, because a dash and an ink are not
+                    readable — the same reason the category row carries one. */}
                 {!item.inPlan && (
                   <span className={styles.srOnly}> — not planned</span>
                 )}
-              </span>
+              </th>
               {/* ⚠ BOTH FIGURES ARE THE SAME CONTROL. They differ only in which list they open, so
                   a coach meeting them has one habit to learn rather than two. */}
-              <span className={`${shared.ledgerNum} ${item.inPlan ? '' : shared.ledgerNumMuted}`}>
+              <td className={item.inPlan ? '' : styles.unplannedDash}>
                 {item.inPlan && planBehind ? (
                   <button
                     type="button"
@@ -832,8 +847,8 @@ function ItemRows({
                     {fmt(item.budgeted)}
                   </button>
                 ) : item.inPlan ? fmt(item.budgeted) : '—'}
-              </span>
-              <span className={shared.ledgerNum}>
+              </td>
+              <td>
                 {actualBehind ? (
                   <button
                     type="button"
@@ -844,48 +859,119 @@ function ItemRows({
                     {fmtCell(item.actual)}
                   </button>
                 ) : fmtCell(item.actual)}
-              </span>
-              <span className={shared.ledgerNum} style={{ color: varianceInk(item.variance, item.direction, item.actual) }}>
+              </td>
+              <td style={{ color: varianceInk(item.variance, item.direction, item.actual) }}>
                 {varianceText(item.variance, item.direction, item.actual)}
-              </span>
-            </div>
+              </td>
+            </tr>
 
-            {open && canExpand && (
-              <div className={shared.ledgerSubRows}>
-                {item.periods.map((p, pi) => {
-                  const moved = Math.abs(p.actual) > 0.005;
-                  const variance = item.direction === 'in' ? p.actual - p.amount : p.amount - p.actual;
-                  return (
-                    <div key={pi} className={`${shared.ledgerSubRow} ${styles.periodRow}`}>
-                      <span className={`${shared.ledgerSubLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
-                      <span className={shared.ledgerSubMeta}>
-                        {p.date ? formatStoredDate(p.date) : ''}
-                      </span>
-                      <span className={shared.ledgerNum}>{fmt(p.amount)}</span>
-                      <span
-                        className={`${shared.ledgerNum} ${moved ? '' : shared.ledgerNumMuted}`}
-                        style={moved && p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
-                      >
-                        {moved ? fmtCell(p.actual) : '—'}
-                      </span>
-                      <span
-                        className={`${shared.ledgerNum} ${moved ? '' : shared.ledgerNumMuted}`}
-                        style={moved ? { color: varianceInk(variance, item.direction, p.actual) } : undefined}
-                      >
-                        {/* The same negative guard as the row above: the September period of a
-                            refunded item has a negative actual, and "under" would be wrong there
-                            for exactly the same reason. */}
-                        {moved ? varianceText(variance, item.direction, p.actual) : '—'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {open && canExpand && item.periods.map((p, pi) => {
+              const moved = Math.abs(p.actual) > 0.005;
+              const variance = item.direction === 'in' ? p.actual - p.amount : p.amount - p.actual;
+              return (
+                <tr key={pi} className={styles.periodRow}>
+                  {/* ⚠ THE DATE RIDES IN THE NAME CELL. The outline gave it a fifth track, which
+                      meant the sub-rows laid out on different columns from the rows above them —
+                      something a table cannot do, and does not want to: a period's date is meta
+                      about that period, so it reads as meta beside its name. */}
+                  <th scope="row" className={styles.lead}>
+                    {p.label}
+                    {p.date && <span className={styles.periodDate}>{formatStoredDate(p.date)}</span>}
+                  </th>
+                  <td>{fmt(p.amount)}</td>
+                  <td
+                    className={moved ? '' : shared.moneyGridNumMuted}
+                    style={moved && p.actual > 0 ? { color: 'var(--success-light)' } : undefined}
+                  >
+                    {moved ? fmtCell(p.actual) : '—'}
+                  </td>
+                  <td
+                    className={moved ? '' : shared.moneyGridNumMuted}
+                    style={moved ? { color: varianceInk(variance, item.direction, p.actual) } : undefined}
+                  >
+                    {/* The same negative guard as the row above: the September period of a
+                        refunded item has a negative actual, and "under" would be wrong there
+                        for exactly the same reason. */}
+                    {moved ? varianceText(variance, item.direction, p.actual) : '—'}
+                  </td>
+                </tr>
+              );
+            })}
           </Fragment>
         );
       })}
     </>
+  );
+}
+
+/**
+ * THE FOLDABLE CATEGORY ROW — the tinted bar that names a category and totals it, shared by BOTH
+ * shapes (owner ruling 2026-09-06).
+ *
+ * ⚠⚠ IT IS SHARED FOR THE SAME REASON `ItemRows` IS: the statement and the by-activity lens must
+ * not be able to render one row two different ways. By activity had no fold at all until this date
+ * — an inert heading with a blank chevron-width gap where a control was not — so one report had two
+ * grammars for one object, and the gesture a coach learned on the statement died on the next tab.
+ *
+ * ⚠ THE THREE FIGURE CELLS ARE THE CALLER'S, and that is not laziness. A category's Budgeted is
+ * always positive (the direction carries the sign) and takes `fmt` plus the unplanned dash; an
+ * activity's is a NET that can go negative and takes `fmtCell`'s brackets. Passing the cells in
+ * keeps one row drawing without pretending two different figures are one.
+ *
+ * ⚠ THE ROW IS A ROW; THE BUTTON IS INSIDE ITS FIRST CELL. The outline made the whole category bar
+ * a <button>, which a table cannot do — a <button> is not valid inside <tr>, and wrapping the row
+ * would break the pinned first column out of the table's own layout. The month grid already solved
+ * this the same way (`.moneyGridToggle`): the name cell holds a real control that carries
+ * `aria-expanded`, and the figures sit beside it as data.
+ *
+ * ⚠ THE ROW IS THE POINTER/TOUCH SHORTCUT, the button is the SEMANTIC control — the same split the
+ * item rows use, and what the outline's full-width category bar gave for free. Converting that bar
+ * to a button-inside-a-cell shrank the target from the whole row to the width of the name; the
+ * tap-floor gate measures HEIGHT, so nothing caught it.
+ * ⚠ THE INNER BUTTON MUST stopPropagation, or a click on it runs both handlers and toggles twice —
+ * which reads as a row that ignores you.
+ */
+function CatFoldRow({
+  name, open, onToggle, noteId, note, children,
+}: {
+  name: string;
+  open: boolean;
+  onToggle: () => void;
+  /** Set together with `note` when the row needs a screen-reader explanation for its dash. */
+  noteId?: string;
+  note?: string;
+  /** The three figure cells — Budgeted, Actual, Variance. */
+  children: ReactNode;
+}) {
+  return (
+    <tr
+      className={`${shared.moneyGridCat} ${shared.rowTappable}`}
+      // Selecting text to copy a figure must not fold the row — a click that ends a selection is
+      // a copy gesture, not a tap (the same guard every other row on this report carries).
+      onClick={() => { if (window.getSelection()?.toString()) return; onToggle(); }}
+    >
+      <th scope="row" className={styles.lead}>
+        <button
+          type="button"
+          className={shared.moneyGridToggle}
+          aria-expanded={open}
+          aria-describedby={noteId}
+          onClick={e => { e.stopPropagation(); onToggle(); }}
+        >
+          {open ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
+          <span>{name}</span>
+        </button>
+        {/* No visible "not planned" word here either — see the item rows' note. The dash in the
+            Budget cell says it, and this sentence says it for a screen reader.
+            ⚠⚠ OUTSIDE THE BUTTON, AND THAT IS NOT COSMETIC. A button's accessible NAME comes from
+            its contents, so a description nested inside it is read as part of the name — the
+            rendered sweep caught the control announcing itself as
+            "TournamentsNothing in Tournaments was bu…". `aria-describedby` can point anywhere in
+            the document; it does not have to be a child. */}
+        {noteId && <span id={noteId} className={styles.srOnly}>{note}</span>}
+      </th>
+      {children}
+    </tr>
   );
 }
 
@@ -907,42 +993,94 @@ function CategoryGroup({
      a screen reader meeting a bare em-dash would otherwise get no explanation, because the flag is
      a visual one (/review, 2026-08-15). */
   const noteId = cat.inPlan ? undefined : `bva-cat-note-${catKey.replace(/\W+/g, '-')}`;
+  const open = expandedCats.has(catKey);
   return (
-    <div className={shared.ledgerGroup}>
-      <button
-        className={`${shared.ledgerGroupHead} ${shared.ledgerGroupHeadBtn} ${styles.categoryHeader} ${cat.inPlan ? '' : styles.unplannedRow}`}
-        aria-expanded={expandedCats.has(catKey)}
-        aria-describedby={noteId}
-        onClick={() => toggleCat(catKey)}
+    <>
+      <CatFoldRow
+        name={cat.categoryName}
+        open={open}
+        onToggle={() => toggleCat(catKey)}
+        noteId={noteId}
+        note={`Nothing in ${cat.categoryName} was budgeted for this season.`}
       >
-        <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-          <span className={styles.expandIcon}>
-            {expandedCats.has(catKey) ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
-          </span>
-          <span className={shared.ledgerName}>{cat.categoryName}</span>
-          {/* No visible "not planned" word here either — see the item rows' note. The header
-              already carries the sentence for a screen reader through `aria-describedby` below,
-              which is why this one needed no replacement. */}
-        </span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${cat.inPlan ? '' : shared.ledgerNumMuted}`}>
+        <td className={cat.inPlan ? '' : styles.unplannedDash}>
           {cat.inPlan ? fmt(cat.budgeted) : '—'}
-        </span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmtCell(cat.actual)}</span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`} style={{ color: varianceInk(cat.variance, cat.direction, cat.actual) }}>
+        </td>
+        <td>{fmtCell(cat.actual)}</td>
+        <td style={{ color: varianceInk(cat.variance, cat.direction, cat.actual) }}>
           {varianceText(cat.variance, cat.direction, cat.actual)}
-        </span>
-      </button>
-      {noteId && (
-        <p id={noteId} className={styles.srOnly}>
-          Nothing in {cat.categoryName} was budgeted for this season.
-        </p>
+        </td>
+      </CatFoldRow>
+      {open && (
+        <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
       )}
-      {expandedCats.has(catKey) && (
-        <div>
-          <ItemRows cat={cat} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
-        </div>
+    </>
+  );
+}
+
+/**
+ * AN ACTIVITY: its collapsible header carrying the block's own net, then both halves.
+ *
+ * ⚠⚠ AN ACTIVITY IS A CATEGORY ROW THAT CARRIES ITS OWN NET (owner ruling 2026-09-05). It used to
+ * be a BAND, then its two halves, then a closing "Tournaments netted" subtotal — a band, two inner
+ * bands and a total, so a block cost three rows before its first figure and the report ran off the
+ * screen inside its third activity. The figures state `block.net`, the same three the subtotal
+ * stated, in the same order; what moved is WHERE, onto the grammar the Statement and Months already
+ * use — a category names itself and totals itself on one row.
+ *
+ * ⚠ THE LABEL LOST ITS "netted" / "cost" SUFFIX WITH THE ROW. It read "Tournaments netted" because
+ * it sat BELOW the lines and had to say what it was summing; above them, on a tinted category row
+ * that every other shape already reads as a total, the category's own name is the whole label. The
+ * cost-only case still nets NEGATIVE and still says so in brackets — that is the honest reading of
+ * a category that earned nothing, and it is the figure, not the label, that carries it.
+ *
+ * ⚠⚠ AND SINCE 2026-09-06 IT FOLDS (owner ruling, on sight: *"why aren't the items grouped in the
+ * categories? the categories are just headers"*). He was right on both halves — the arithmetic
+ * grouped (the row states its own halves' net) and the drawing did not: no chevron, no fold, no
+ * click, every item of every category on screen at once, and a blank chevron-width gap that read as
+ * a control gone missing. Nothing about the figures moved; the rows underneath now live behind the
+ * same fold the statement has always had, closed by default, so this view opens as the short list
+ * of bottom lines the question it exists for actually wants ("did each activity pay for itself?").
+ *
+ * ⚠ NO `inPlan` NOTE HERE. That sentence explains an em-dash in the Budgeted cell, and an activity's
+ * Budgeted is a net that prints a figure either way — `fmtCell` never emits a dash.
+ */
+function ActivityGroup({
+  block, expandedCats, toggleCat, expandedLines, toggleLine, openBehind,
+}: {
+  block: ActivityBlock;
+  expandedCats: Set<string>;
+  toggleCat: (id: string) => void;
+  expandedLines: Set<string>;
+  toggleLine: (id: string) => void;
+  openBehind: (item: ItemResult, side: BehindSide) => void;
+}) {
+  const key = activityKeyOf(block);
+  const open = expandedCats.has(key);
+  return (
+    <>
+      <CatFoldRow name={block.categoryName} open={open} onToggle={() => toggleCat(key)}>
+        <td>{fmtCell(block.net.budgeted)}</td>
+        <td>{fmtCell(block.net.actual)}</td>
+        <td style={{ color: varianceInk(block.net.variance, 'in', block.net.actual) }}>
+          {varianceText(block.net.variance, 'in', block.net.actual)}
+        </td>
+      </CatFoldRow>
+      {open && block.revenue && (
+        <>
+          {/* The inner Revenue/Costs labels appear only when the block has BOTH — on a one-sided
+              category they would be a heading distinguishing nothing from nothing. */}
+          {block.costs && <SubLabelRow label="Revenue" />}
+          <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
+        </>
       )}
-    </div>
+      {open && block.costs && (
+        <>
+          {block.revenue && <SubLabelRow label="Costs" />}
+          <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
+        </>
+      )}
+    </>
   );
 }
 
@@ -1197,29 +1335,60 @@ function HeadroomBridge({ data, lens }: { data: BvaData; lens: MoneyLens }) {
   );
 }
 
-function SectionBand({ label, inner }: { label: string; inner?: boolean }) {
+/**
+ * A band heading — "Revenue" / "Expenses" on the statement, an activity's own name on the other
+ * shape. It names the half of the report the rows under it belong to and carries no figures.
+ *
+ * ⚠ THREE REAL EMPTY CELLS, NEVER A `colSpan`. The first column is pinned inside
+ * <CoachScrollX sticky>; a row that spans the table has nothing for that pin to hold, so the
+ * heading scrolls out from under a table whose whole point is that its first column does not.
+ * The month grid's band learned this first — same rule, same reason.
+ */
+function SectionBand({ label }: { label: string }) {
   return (
-    <div className={`${styles.sectionBand} ${inner ? styles.sectionBandInner : ''}`}>
-      <span className={shared.scrollXStickyCell}>{label}</span>
-      <span /><span /><span />
-    </div>
+    <tr className={shared.moneyGridBand}>
+      <th scope="row" className={styles.lead}>{label}</th>
+      <td /><td /><td />
+    </tr>
   );
 }
 
+/**
+ * The quiet inner label of an activity block — "Revenue" or "Costs".
+ *
+ * ⚠ NOT A BAND, and the difference is the whole reason By activity got shorter. As a band each of
+ * these was a full-height tinted bar, so a block cost three rows before its first figure. It is a
+ * sub-label now: no ground, no rule, smaller than the line it introduces.
+ */
+function SubLabelRow({ label }: { label: string }) {
+  return (
+    <tr className={styles.subRow}>
+      {/* ⚠ NO `.subLead` HERE — it does not exist. The sub-label's whole treatment lives on
+          `.reportTable tbody tr.subRow th.lead` (0,2,3), because a bare class lost to the shared
+          row-heading reset; the class name stayed in the markup after that fix and resolved to
+          `undefined`, which React writes into the attribute as the literal word. Harmless, and
+          exactly the "markup with no rule" trap this file warns about one screen over. */}
+      <th scope="row" className={styles.lead}>{label}</th>
+      <td /><td /><td />
+    </tr>
+  );
+}
+
+/** A band's closing total — "Total revenue", "Total expenses". */
 function SubtotalRow({
   label, budgeted, actual, variance, direction,
 }: {
   label: string; budgeted: number; actual: number; variance: number; direction: 'in' | 'out';
 }) {
   return (
-    <div className={styles.sectionSubtotal}>
-      <span className={shared.scrollXStickyCell}>{label}</span>
-      <span className={shared.ledgerNum}>{fmtCell(budgeted)}</span>
-      <span className={shared.ledgerNum}>{fmtCell(actual)}</span>
-      <span className={shared.ledgerNum} style={{ color: varianceInk(variance, direction, actual) }}>
+    <tr className={shared.moneyGridTotal}>
+      <th scope="row" className={styles.lead}>{label}</th>
+      <td>{fmtCell(budgeted)}</td>
+      <td>{fmtCell(actual)}</td>
+      <td style={{ color: varianceInk(variance, direction, actual) }}>
         {varianceText(variance, direction, actual)}
-      </span>
-    </div>
+      </td>
+    </tr>
   );
 }
 
@@ -1244,18 +1413,33 @@ function DuesRow({ cat, dues, base, canWrite }: {
   const isSet = dues.billed !== null;
   const duesHref = moneySectionHref(base, 'dues');
   return (
-    <div className={`${shared.ledgerGroup} ${styles.duesRow}`}>
-      <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
-        <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-          {/* The width of the chevron its neighbours carry, so one row without a control does not
-              sit a quarter-inch left of every other name in the band. */}
-          <span className={styles.duesIndent} aria-hidden />
-          <span className={styles.duesNameStack}>
-          <span className={shared.ledgerName}>{cat.categoryName}</span>
+    /* ⚠ AN ORDINARY CATEGORY ROW SINCE 2026-09-05. It had a card of its own in the outline, which
+       made the row holding one figure the tallest object in the revenue band. It takes the
+       category treatment now and keeps only what is genuinely different: the caption, and the
+       chevron spacer that lines its name up with the rows that do open. */
+    <tr className={`${shared.moneyGridCat}${isSet ? '' : ` ${styles.catTwoLine}`}`}>
+      <th scope="row" className={styles.lead}>
+        <span className={shared.moneyGridChevronSpacer} aria-hidden />
+        <span>{cat.categoryName}</span>
+        {/* ⚠⚠ NOTHING IS SAID HERE ONCE DUES ARE SET (owner ruling 2026-09-06, QA §146). The row
+            used to caption itself "N families · set on Player Dues" — the ONLY category on the
+            report carrying a message, and owner: *"the user at the point of running this report
+            would know that."* He is right on both halves: the family COUNT is not a money fact and
+            appears on no other row, and naming the screen the schedule was set on tells a coach who
+            just opened the Money hub something they already did. What it cost was real — the row ran
+            52px against every other category's 36px, so the quietest fact on the report was also the
+            tallest row in the revenue band.
+            ⚠ THE DUES SENTENCE UNDER THE TABLE ALREADY CARRIES THIS GROUND — what dues bill, whether
+            they cover the plan, and on what basis (lib/coach-money-report-notes.ts). The caption was
+            a second author on one screen, which is the thing that file exists to stop.
+
+            ⚠ THE NOT-SET STATE STAYS, and the difference is not squeamishness. "Not set yet" is a
+            fact a coach may NOT know — it is the reason the Plan cell shows a dash — and the row is
+            where they are looking when they wonder. The footnote says it too, but a footnote under
+            thirty rows is not where a new team finds the one thing it has to do first. */}
+        {!isSet && (
           <span className={styles.duesCaption}>
-            {isSet ? (
-              `${dues.familyCount} ${dues.familyCount === 1 ? 'family' : 'families'} · set on Player Dues`
-            ) : canWrite ? (
+            {canWrite ? (
               <>
                 Not set yet · <Link href={duesHref} className={styles.duesLink}>Set player dues</Link>
               </>
@@ -1266,22 +1450,18 @@ function DuesRow({ cat, dues, base, canWrite }: {
               'Not set yet'
             )}
           </span>
-          </span>
-        </span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong} ${isSet ? '' : shared.ledgerNumMuted}`}>
-          {isSet ? fmt(cat.budgeted) : '—'}
-        </span>
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>
-          {Math.abs(cat.actual) > 0.005 ? fmtCell(cat.actual) : '—'}
-        </span>
-        {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
-            so "−$0.00" would be arithmetic on an absence. */}
-        <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}
-              style={{ color: isSet ? varianceColor(cat.variance) : undefined }}>
-          {isSet ? varianceText(cat.variance, 'in') : '—'}
-        </span>
-      </div>
-    </div>
+        )}
+      </th>
+      <td className={isSet ? '' : shared.moneyGridNumMuted}>
+        {isSet ? fmt(cat.budgeted) : '—'}
+      </td>
+      <td>{Math.abs(cat.actual) > 0.005 ? fmtCell(cat.actual) : '—'}</td>
+      {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
+          so "−$0.00" would be arithmetic on an absence. */}
+      <td style={{ color: isSet ? varianceColor(cat.variance) : undefined }}>
+        {isSet ? varianceText(cat.variance, 'in') : '—'}
+      </td>
+    </tr>
   );
 }
 
@@ -1912,27 +2092,56 @@ export function BudgetVsActualPanel({
      had a toggle per category and no way to say "all of them" (owner, §133 walk 2026-09-04). The
      Budget tab's List has carried this control since its P3; this is the same verb in the same
      place on the bar, so the two tabs cannot drift into two vocabularies for one gesture.
-     ⚠ STATEMENT ONLY, and that is not an omission: By activity renders its items with no category
-     fold at all, so a control there would have nothing to act on. (Months keeps its folds inside
-     the grid component and is not wired to this yet.)
+     ⚠ BOTH LIST SHAPES SINCE 2026-09-06. It was statement-only while By activity had no fold at
+     all; now that an activity IS a fold (see `ActivityGroup`), a control that vanished when the
+     coach switched tabs would be the same missing-gesture defect one layer up.
+     (Months keeps its folds inside the grid component and is not wired to this yet.)
      ⚠ The dues row is excluded because it is not a foldable group — counting it would make "all
      open" unreachable and leave the button stuck on one word. */
   function toggleLine(id: string)  { setExpandedLines(prev => toggleKey(prev, id)); }
 
-  const statementCatKeys = data
+  /* ⚠ THESE READ `report`, THE RE-CUT ONE — the rule stated over the memo above, which the first
+     version of this list broke and the fold's version then copied (/review, correctness lens).
+     It is currently harmless ONLY because `rebaseReport` is 1:1: it maps every section and block
+     through untouched but for their figures, so a key set cut from `data.report` happens to match.
+     That is an invariant of a function whose own docstring never promises it — the day a to-date
+     cut drops a category with nothing in it, `Expand all` would count rows that are not on screen
+     and stick on one word. Reading the same object every other render site reads costs nothing and
+     removes the dependency. */
+  const statementCatKeys = report
     ? [
-        ...data.report.revenue.categories.filter(c => !isDuesCategory(c.categoryId)),
-        ...data.report.expenses.categories,
+        ...report.revenue.categories.filter(c => !isDuesCategory(c.categoryId)),
+        ...report.expenses.categories,
       ].map(catKeyOf)
     : [];
-  const allCatsOpen = statementCatKeys.length > 0 && statementCatKeys.every(k => expandedCats.has(k));
+  const activityCatKeys = report
+    ? report.activities.filter(b => !isDuesCategory(b.categoryId)).map(activityKeyOf)
+    : [];
+  /** The folds this control can actually reach — whichever shape is on screen. */
+  const foldableCatKeys = view === 'activity' ? activityCatKeys : statementCatKeys;
+  const allCatsOpen = foldableCatKeys.length > 0 && foldableCatKeys.every(k => expandedCats.has(k));
   function toggleAllCats() {
-    setExpandedCats(allCatsOpen ? new Set() : new Set(statementCatKeys));
+    /* ⚠⚠ IT ACTS ON THIS VIEW'S KEYS ONLY, never on the whole set. Collapse all used to clear
+       `expandedCats` outright, which was harmless while one shape folded and is not now: on By
+       activity it would silently shut every row a coach had opened on the statement. The two
+       shapes' keys live in disjoint namespaces (see `activityKeyOf`) precisely so this add/remove
+       can be exact. */
+    /* ⚠ THE DIRECTION IS DERIVED FROM `prev`, NOT FROM THE RENDER'S `allCatsOpen`. Reading the
+       closure is unreachable as a bug today — one button, one click event, a re-render between any
+       two — but it makes the updater's answer depend on when it happens to run, which is the shape
+       of a bug rather than a bug. `prev` is the same set the render derived `allCatsOpen` from, so
+       the visible label and the action can never disagree. */
+    setExpandedCats(prev => {
+      const openNow = foldableCatKeys.length > 0 && foldableCatKeys.every(k => prev.has(k));
+      const next = new Set(prev);
+      for (const k of foldableCatKeys) { if (openNow) next.delete(k); else next.add(k); }
+      return next;
+    });
     /* ⚠ IT DOES NOT TOUCH THE ITEM FOLDS, and the first version did (/review). `expandedLines` is
-       shared with By activity, which renders its item rows with NO category fold above them — so
-       "Collapse all" on the statement was quietly shutting rows a coach had opened on the other
-       view. Leaving them be also means their place survives a collapse-and-expand here, which is
-       the better behaviour anyway. */
+       shared by both shapes — an item's key is its category+item, whichever view drew it — so
+       "Collapse all" here was quietly shutting rows a coach had opened on the other view. Leaving
+       them be also means their place survives a collapse-and-expand, which is the better
+       behaviour anyway. */
   }
 
   if (ctxLoading) return <CoachLoading label="Loading the report…" />;
@@ -2197,8 +2406,8 @@ export function BudgetVsActualPanel({
             )}
 
             {/* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager follows one block
-                up. See `toggleAllCats` for why that is the statement alone. */}
-            {view === 'statement' && statementCatKeys.length > 0 && (
+                up. That is both list shapes now and not Months; see `toggleAllCats`. */}
+            {view !== 'months' && foldableCatKeys.length > 0 && (
               <button
                 type="button"
                 className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
@@ -2261,19 +2470,17 @@ export function BudgetVsActualPanel({
                only money dated on or before today. It is also why the excluded figure in the
                sentence below the table can never reach zero on a team that sets an estimate. */
             const bufferRow = basis === 'season' && data.buffer > 0 ? (
-              <div className={shared.ledgerGroup}>
-                <div className={`${shared.ledgerGroupHead} ${styles.categoryHeader}`}>
-                  <span className={`${shared.ledgerCell} ${shared.scrollXStickyCell}`}>
-                    <span className={styles.expandIcon} />
-                    {/* "Estimate not yet broken out" (owner D5.11) — the old "Not itemized yet"
-                        collided with "Not itemized", a different concept on this same table. */}
-                    <span className={shared.ledgerName}>Estimate not yet broken out</span>
-                  </span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumStrong}`}>{fmt(data.buffer)}</span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                  <span className={`${shared.ledgerNum} ${shared.ledgerNumMuted}`}>—</span>
-                </div>
-              </div>
+              <tr className={shared.moneyGridCat}>
+                <th scope="row" className={styles.lead}>
+                  <span className={shared.moneyGridChevronSpacer} aria-hidden />
+                  {/* "Estimate not yet broken out" (owner D5.11) — the old "Not itemized yet"
+                      collided with "Not itemized", a different concept on this same table. */}
+                  <span>Estimate not yet broken out</span>
+                </th>
+                <td>{fmt(data.buffer)}</td>
+                <td className={shared.moneyGridNumMuted}>—</td>
+                <td className={shared.moneyGridNumMuted}>—</td>
+              </tr>
             ) : null;
 
             const groupProps = { expandedCats, toggleCat, expandedLines, toggleLine, openBehind };
@@ -2284,20 +2491,41 @@ export function BudgetVsActualPanel({
             <div className={styles.section} data-sandbox-tour="budget-variance">
              {/* Budgeted / Actual / Variance side by side IS the report — card-stacking it
                  would remove the sideways scroll and the comparison with it (Chunk A D1). So
-                 the grid keeps its shape, scrolls inside its own frame, pins the line name,
-                 and says out loud that it scrolls. Frameless: the category cards already have
-                 borders, and on a desktop this never overflows at all. */}
-             <CoachScrollX sticky frame={false} hint="Swipe the table to see Actual and Variance">
-              <div className={styles.gridInner}>
-              <div className={`${shared.ledgerHead} ${styles.tableHeader}`}>
-                <span className={shared.scrollXStickyCell}>Category / Line Item</span>
-                {/* ⚠ THE HEADING MOVES WITH THE BASIS, so a reader who has scrolled past the
-                    control can still tell which span these figures cover. "Budgeted" alone over a
-                    to-date column is how one report ends up meaning two things. */}
-                <span className={shared.thNum}>{planColumnLabel(basis)}</span>
-                <span className={shared.thNum}>Actual</span>
-                <span className={shared.thNum}>Variance</span>
-              </div>
+                 the table keeps its shape, scrolls inside the frame, pins the line name, and
+                 says out loud that it scrolls.
+                 ⚠ THE FRAME IS ON NOW, and that is part of the one-surface change: the report is
+                 a single white table, so the scroller's own border IS the table's edge. It was
+                 off because every category used to carry a card border of its own. */}
+             <CoachScrollX sticky hint="Swipe the table to see Actual and Variance">
+              <table
+                className={`${shared.moneyGrid} ${styles.reportTable}`}
+                /* Opts the category toggles and line expanders into the 44px floor through the
+                   641–768 touch band. ⚠ NOT OPTIONAL HERE: the outline's category bar cleared the
+                   floor from its own row padding, so this screen never had to ask; a toggle inside
+                   a cell is 24px, which the rendered sweep caught at 768 the moment it changed. */
+                data-touch-floor
+              >
+              {/* The money columns are fixed so all three land in one right-aligned stack whatever
+                  the names do, and the name column takes the remainder. Variance is the widest
+                  because it carries a WORD ("$900.00 under"), not just a figure. */}
+              <colgroup>
+                <col />
+                <col style={{ width: 150 }} />
+                <col style={{ width: 150 }} />
+                <col style={{ width: 170 }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col" className={styles.lead}>Category / Line Item</th>
+                  {/* ⚠ THE HEADING MOVES WITH THE BASIS, so a reader who has scrolled past the
+                      control can still tell which span these figures cover. "Budgeted" alone over a
+                      to-date column is how one report ends up meaning two things. */}
+                  <th scope="col">{planColumnLabel(basis)}</th>
+                  <th scope="col">Actual</th>
+                  <th scope="col">Variance</th>
+                </tr>
+              </thead>
+              <tbody>
 
               {view === 'statement' ? (
                 /* ── Shape A: the statement ────────────────────────────────────────────────
@@ -2308,7 +2536,6 @@ export function BudgetVsActualPanel({
                   {report!.revenue.categories.length > 0 && (
                     <>
                       <SectionBand label="Revenue" />
-                      <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
                         {/* ⚠ THE DUES ROW IS RECOGNISED BY ITS KEY, the same sentinel pattern
                             `isPayoutCategory` established for the payouts band — the route injects a
                             synthetic category carrying the id the Months band already uses for its
@@ -2320,7 +2547,6 @@ export function BudgetVsActualPanel({
                             ? <DuesRow key={catKeyOf(cat)} cat={cat} dues={data.dues} base={base} canWrite={moneyCanWrite} />
                             : <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
                         ))}
-                      </div>
                       <SubtotalRow
                         label="Total revenue"
                         budgeted={report!.revenue.budgeted}
@@ -2332,12 +2558,10 @@ export function BudgetVsActualPanel({
                   )}
 
                   <SectionBand label="Expenses" />
-                  <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                    {report!.expenses.categories.map(cat => (
-                      <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
-                    ))}
-                    {bufferRow}
-                  </div>
+                  {report!.expenses.categories.map(cat => (
+                    <CategoryGroup key={catKeyOf(cat)} cat={cat} {...groupProps} />
+                  ))}
+                  {bufferRow}
                   {/* ⚠ THE SEASON TOTAL IS `effectiveBudget` — the categories PLUS the estimate
                       buffer, which is what makes the rows a reader can see add up to this figure.
                       Under To date the buffer is gone (see `bufferRow`), so the total has to come
@@ -2374,64 +2598,40 @@ export function BudgetVsActualPanel({
                       <DuesRow key="dues" cat={block.revenue} dues={data.dues} base={base} canWrite={moneyCanWrite} />
                     )
                   ))}
+                  {/* One foldable block per activity — the row states its own net, the fold holds
+                      both halves. The whole argument, and why the fold arrived a day after the row
+                      did, lives on `ActivityGroup`. */}
                   {report!.activities.filter(b => !isDuesCategory(b.categoryId)).map(block => (
-                    <Fragment key={`${block.categoryId ?? 'none'}|${block.categoryName}`}>
-                      <SectionBand label={block.categoryName} />
-                      {block.revenue && (
-                        <>
-                          {/* The inner Revenue/Costs bands appear only when the block has BOTH —
-                              on a one-sided category they would be a heading distinguishing
-                              nothing from nothing. */}
-                          {block.costs && <SectionBand label="Revenue" inner />}
-                          <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                            <ItemRows cat={block.revenue} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
-                          </div>
-                        </>
-                      )}
-                      {block.costs && (
-                        <>
-                          {block.revenue && <SectionBand label="Costs" inner />}
-                          <div className={`${shared.ledgerList} ${styles.linesContainer}`}>
-                            <ItemRows cat={block.costs} expandedLines={expandedLines} toggleLine={toggleLine} openBehind={openBehind} />
-                          </div>
-                        </>
-                      )}
-                      {/* ⚠ A COST-ONLY BLOCK NETS NEGATIVE, and it says so in brackets rather than
-                          being hidden or flipped: that is the honest reading of a category that
-                          earned nothing. The label follows suit — "netted" only where something
-                          came in. */}
-                      <SubtotalRow
-                        label={block.revenue ? `${block.categoryName} netted` : `${block.categoryName} cost`}
-                        budgeted={block.net.budgeted}
-                        actual={block.net.actual}
-                        variance={block.net.variance}
-                        direction="in"
-                      />
-                    </Fragment>
+                    <ActivityGroup
+                      key={activityKeyOf(block)}
+                      block={block}
+                      expandedCats={expandedCats}
+                      toggleCat={toggleCat}
+                      expandedLines={expandedLines}
+                      toggleLine={toggleLine}
+                      openBehind={openBehind}
+                    />
                   ))}
-                  {bufferRow && (
-                    <>
-                      <SectionBand label="Estimate not yet broken out" />
-                      <div className={`${shared.ledgerList} ${styles.linesContainer}`}>{bufferRow}</div>
-                    </>
-                  )}
+                  {/* ⚠ NO BAND OVER THE BUFFER ANY MORE. It was a band plus a row saying the same
+                      four words; on one surface the row states itself. */}
+                  {bufferRow}
                 </>
               )}
 
               {/* Where both shapes end. */}
-              <div className={styles.netRow}>
+              <tr className={styles.netRow}>
                 {/* ⚠⚠ RENAMED UNDER To date, BY RULING (owner 2026-09-04) — see `netRowLabel`.
                     Under that basis this figure is a CASH-TIMING statement wearing a PROFITABILITY
                     name: a team whose costs run early and whose dues start in October reads deeply
                     under water while its bank balance is fine, and dating every budget line cannot
                     move it. One row, two bases, two honest names. */}
-                <span className={shared.scrollXStickyCell}>{netRowLabel(basis)}</span>
-                <span className={shared.ledgerTotalNum}>{fmtCell(netBudget)}</span>
-                <span className={shared.ledgerTotalNum}>{fmtCell(netActual)}</span>
-                <span className={shared.ledgerTotalNum} style={{ color: varianceColor(netVariance) }}>
+                <th scope="row" className={styles.lead}>{netRowLabel(basis)}</th>
+                <td>{fmtCell(netBudget)}</td>
+                <td>{fmtCell(netActual)}</td>
+                <td style={{ color: varianceColor(netVariance) }}>
                   {varianceText(netVariance, 'in')}
-                </span>
-              </div>
+                </td>
+              </tr>
 
               {/* ⚠⚠ "FUNDED BY PLAYERS" STOOD HERE AND IS DELETED (owner ruling 2026-09-04). The table
                   now ends where a statement ends: Total expenses, Season net, done.
@@ -2446,7 +2646,8 @@ export function BudgetVsActualPanel({
                   ships as Season net itself, named by the sentence in the stack below, which is
                   where an explanation belongs rather than in a money column. Do not restore this
                   row; if a figure here seems missing, it is one of the two directly above it. */}
-              </div>
+              </tbody>
+              </table>
              </CoachScrollX>
              {/* THE FOOTNOTE STACK — the variance key, what the bottom line means, and what could
                  not be compared, in the order the owner ruled (2026-09-04).

@@ -110,31 +110,155 @@
    "load-bearing" when they were already dead. The real importers are the coach budget panel,
    `GenerateInstallmentsModal.tsx` and `DateField.tsx` — grep those three, and only those three,
    before deciding anything here is unused. */
-.linesContainer {
-  /* The plan's tracks: line name · amount · row actions. The trailing `auto` collapses to nothing
-     for a read-only money coach, so the same three tracks serve both.
+/* ══ THE PLAN IS A TABLE ═══════════════════════════════════════════════════════════════════
+   ⚠⚠ THIS LIST LEFT THE SHARED LEDGER OUTLINE ON 2026-09-05 (owner ruling, mockup artifact
+   `dde45c3f-7faf-4d5c-869f-627c0c52fb8b`) with Budget vs. Actual's two shapes. It drew every
+   category as a bordered, rounded card on the paper ground; it is one white table now, on the
+   same `.moneyGrid` recipe as the By-period view one toggle away — which is the pair this
+   screen's own history shows drifting apart twice in a single day.
 
-     ⚠ `minmax(0, 1fr)`, NOT `1fr`. A bare `1fr` track floors at `min-content`, so a long line name
-     refuses to shrink and pushes the row wider than the page — and unlike Budget vs. Actual, this
-     list has NO horizontal scroller to own the overflow, so it spills the document. Caught by the
-     rendered sweep at 361px the moment the fixture had budget lines in it: "Spring classic entry"
-     spilled 39px with `overflow-x: visible` and nothing owning it. The name ellipses (and wraps
-     below 640) instead. */
-  /* FOUR tracks since P3 (2026-09-02): name · Schedule · amount · actions. The Schedule track is
-     `auto` — it sizes to the widest phasing label and vanishes when every row's sched cell is
-     display:none (the ≤640 rule below removes the CELLS, and the 3-track template there matches). */
-  --ledger-cols: minmax(0, 1fr) auto 130px auto;
-  margin-bottom: 1.75rem;
+   ⚰ `.linesContainer`, `.linesCanWrite` AND BOTH `--ledger-cols` TEMPLATES WENT WITH IT. Their
+   job — reserve the pencil's width on every row for a write coach so the money column holds
+   still, and collapse it uniformly for a read-only one — is now a <colgroup> in the markup,
+   which is where a table states its column widths. `.lineInfo` and `.fundingGroup` went too:
+   a flex-child sizer and a card border have nothing to do on a table row.
+
+   ⚠ WHAT THE RETIRED RULES KNEW, so it is not re-learned: the name track was `minmax(0, 1fr)`
+   and never a bare `1fr`, because a bare `1fr` floors at `min-content` — a long line name then
+   refuses to shrink and pushes the row past the page. The rendered sweep caught exactly that at
+   361px ("Spring classic entry", 39px of document overflow, nothing owning it). A table has the
+   same failure mode through a different door, so this screen now has what Budget vs. Actual
+   always had and it did not: a real horizontal scroller (<CoachScrollX sticky>) owning the
+   overflow, with the line name pinned. */
+
+/* The name column — the pinned one inside the scroller, so its opaque ground comes from the
+   shared primitive. ⚠ THE CAP GOES ON THE CONTENT, NOT THE CELL: auto table layout treats a
+   cell's `max-width` as a suggestion and hands the column its longest label's full width anyway
+   (measured on the month grid at 261px against a 208px cap). Capping a real block inside the
+   cell is what actually binds. */
+/* ⚠⚠ COMPOUNDED (0,2,1), NOT A BARE `.lead` (0,1,0). The shared `.moneyGrid th, .moneyGrid td`
+   sets `white-space: nowrap` AND a `padding` shorthand at (0,1,1), so the bare version lost both:
+   the name would neither wrap nor keep its gutter. Found by adversarial review 2026-09-05 — and it
+   is the SAME no-op the month grid's own stylesheet documents at length, one file away. */
+.planTable th.lead,
+.planTable td.lead {
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  padding-left: 0.9rem;
+}
+.planTable { width: 100%; }
+
+/* ⚠⚠ THE HEADING ROW DOES NOT STICK ON THESE TWO REPORTS, AND THAT IS A CORRECTION, NOT AN
+   OMISSION (rendered sweep, 2026-09-05). The shared `.moneyGrid thead th` declares
+   `position: sticky; top: 0`, which is right for a grid the PAGE scrolls. Both report tables live
+   inside <CoachScrollX>, and a box with `overflow-x: auto` computes `overflow-y` to `auto` as
+   well — so the scroller is the sticky element's containing block, and its height is its content's
+   height. There is no vertical travel inside it, so the heading sticks to a box that scrolls away
+   with the page: an inert rule, not a working one. The sweep states it exactly — "runs 1135px past
+   a 1024px viewport yet has no vertical travel (1133≤1133)".
+
+   ⚠ IT CANNOT BE FIXED BY ASKING FOR IT HARDER. `overflow-x: auto` with `overflow-y: visible` is
+   not expressible in CSS; the y axis is forced to `auto`. A sticky heading on these tables needs
+   the SCROLLER to go, which would take the horizontal scroll and the pinned first column with it —
+   the comparison this report exists to show. So the rule is cancelled where it cannot work rather
+   than left declared and inert.
+
+   ⚠ THE MONTH GRID CARRIES THE SAME INERT DECLARATION for the same reason and is deliberately NOT
+   touched here — it is the reference screen this pass was measured against, the rule costs nothing
+   where it sits, and changing it belongs to whoever fixes the sticky properly for all three. */
+/* ⚠⚠ `top: auto`, NOT `position: static`, AND THE CLASS IS DOUBLED. Two traps, both measured:
+   · `position: static` also kills the LEFT pin. The first heading cell takes `position: sticky;
+     left: 0` from `.scrollXSticky th:first-child` — the pinned line-name column, which is the
+     whole point of the scroller. Cancelling the position cancelled both axes; the sweep then
+     reported the other cells fixed and this one still stuck, which is what exposed it.
+   · A single class TIES with `.moneyGrid thead th` at (0,1,1) and the winner is decided by which
+     stylesheet the bundler emitted last — a build detail deciding whether a heading pins. The
+     doubled class reaches (0,2,1) and settles it here, deliberately. This file's own history has
+     the same failure twice over; see `memory/reference_cascade_collisions_coach_budget.md`. */
+.planTable.planTable thead th { top: auto; }
+/* ⚠ AND THE CELLS THAT ARE NOT THE PIN GO BACK TO `static` OUTRIGHT. Left sticky with every
+   offset auto, they are a position that can never engage — which the sweep reports in its own
+   words. Only the FIRST heading cell stays sticky, because that is the line-name pin. */
+.planTable.planTable thead th:not(:first-child) { position: static; }
+.planTable th.lead > * { max-width: 44ch; }
+
+/* A second line under a row's name — the note a coach typed, or what a standing row explains
+   about itself. Never a column of its own. */
+.planTable .rowNote {
+  display: block;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-/* Round 4 (owner 2026-08-13, mockup artifact d37d62e3): ONE money column. The trailing track is
-   `auto`, and each row is its own grid — so header/total rows (empty actions cell) collapsed it
-   to 0 while line rows held buttons, and the amount column stepped left and right down the page.
-   For a WRITE coach the track is FIXED at the pencil's width, reserved on every row, so every
-   figure — line, category bar, section bar, closing row — lands in one right-aligned column.
-   Read-only never gets this class: no row has a button, `auto` collapses uniformly, and the
-   money sits at the edge — aligned either way, no dead gutter. */
-.linesCanWrite { --ledger-cols: minmax(0, 1fr) auto 130px 40px; }
+/* A line's expanded payment periods, one step deeper than the line and in quieter ink. The
+   period's DATE rides inside the name cell — the outline gave sub-rows a track the rows above
+   them did not have, which a table cannot do. */
+/* ⚠ (0,3,3): `.moneyGrid tbody th` (0,1,2) sets size, weight and colour on a row heading, so
+   `.periodRow th` (0,1,1) lost all three and a period label rendered at full strength beside its
+   own muted date.
+   ⚠⚠ AND THE VALUE CELLS TAKE NO BLANKET COLOUR. A `.periodRow td { color }` at (0,1,1) would beat
+   the shared muted-nil class (0,1,0) that a “nothing happened” dash carries — quietly undoing the
+   one thing that class exists for. Only the LABEL is quietened. */
+.planTable tbody tr.periodRow th.lead {
+  font-size: var(--money-line-size);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ⚠⚠ 4.45rem IS MEASURED, NOT CHOSEN — and the number it replaced put a period ABOVE its own line
+   in the tree. Owner-found, QA §146: *"shouldn't the date rows be indented more than their
+   preceding item rows?"* They were not. Rendered at 1440, the label positions were:
+
+       band heading   14px        Revenue / Expenses
+       category       35px        Facilities
+       line           53px        Dome Time
+       period         48px   ←    January — FIVE PIXELS SHALLOWER THAN ITS PARENT
+
+   The comment above has said "one step deeper than the line" since the outline, and it was true
+   THERE: a period was a nested block inside its line's card, so the indent was structural and 3rem
+   was measured against a different left edge. In a flat table every row starts at the same place
+   and the indent is the ONLY thing saying who belongs to whom — so the number had to be re-measured
+   against the line's real text position, which is 1.55rem of cell padding PLUS a 20px chevron PLUS
+   the 0.5rem gap = 53px. One family step (18px, the same gap category→line) lands at 71px.
+
+   ⚠ THE PHONE KEEPS 3rem, because below 640 the line's name does not sit beside its chevron at all
+   — the 44px tap floor pushes it onto its own line at the cell's padding (17.6px), so 48px is
+   already a clear step deeper there and 71px would eat a third of a 138px name column.
+
+   ⚠ IF THE CHEVRON'S WIDTH OR THE LEAD PADDING EVER MOVES, THIS MOVES WITH IT. It is derived from
+   both. Re-measure rather than nudge: the defect this replaces was invisible for exactly as long as
+   nobody put a ruler on two adjacent rows. */
+.planTable tbody tr.periodRow th.lead { padding-left: 4.45rem; }
+@media (max-width: 640px) {
+  .planTable tbody tr.periodRow th.lead { padding-left: 3rem; }
+}
+.periodDate {
+  margin-left: 0.5rem;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+/* The closing row — the loudest thing on the plan, a 2px cap over the category rows' hairline.
+   ⚠ THE TOKENS, NOT LITERALS: this is the same money-total treatment the report's own closing row
+   and the month grid's take, and hand-typing it is how the three drifted before. */
+/* ⚠ (0,2,3), because `.moneyGrid tbody th` (0,1,2) sets font-size and font-weight on the label:
+   a bare `.closeRow th` lost them, so the plan's closing row — the loudest thing on the screen by
+   design — rendered at ordinary line size. */
+.planTable tbody tr.closeRow th,
+.planTable tbody tr.closeRow td {
+  box-shadow: inset 0 2px 0 var(--home-line-strong, var(--border-2));
+  font-size: var(--money-cat-size);
+  font-weight: var(--money-cat-weight);
+  color: var(--text-primary);
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
 
 /* ── P3: thirty lines on a screen ─────────────────────────────────────────────
    The Schedule cell — each line's phasing at a glance ("Jan–Mar · 3 chunks"), the idle middle
@@ -271,18 +395,14 @@
   .collapseAllBtn { min-height: var(--tap-min, 44px); }
 }
 
-/* Density (owner-approved mockup): rows tighten ~a fifth on a DESKTOP, where the 4-screen scroll
-   lives. Via the shared ledger's padding variables — a budget-scoped override, never an edit to
-   the classes BvA also wears. ⚠ The category bars deliberately do NOT tighten below the 44px tap
-   floor: they are buttons, the floor is build-enforced at every width (the .ledgerGroupHead
-   comment carries the 43px incident), so the saving comes from the line and sub rows — which are
-   most of the 32. Phones keep the shipped metrics: tap room outranks row count there. */
-@media (min-width: 641px) {
-  .linesContainer {
-    --ledger-row-pad-y: 0.42rem;
-    --ledger-sub-pad-y: 0.32rem;
-  }
-}
+/* ⚰ THE DESKTOP DENSITY OVERRIDE IS GONE, AND ITS GOAL IS MET BY THE MOVE (2026-09-05). It
+   tightened this list's rows by about a fifth through the shared ledger's padding variables,
+   because the plan is a four-screen scroll. The grid recipe this list now uses is TIGHTER STILL
+   at every width, unconditionally, so there is nothing left to override — and the tightening now
+   applies on a phone too, where the outline deliberately kept its roomier metrics.
+   ⚠ The category rows still clear the 44px tap floor through the shared `[data-touch-floor]`
+   rule, which the table opts into exactly as the list did. That was the constraint the old
+   override had to work around; it is unchanged. */
 
 @media (max-width: 640px) {
   /* No room for a fourth column on a phone — the cells leave the grid entirely (display:none,
@@ -304,7 +424,18 @@
 
 /* The leading cell's stacked name + note. Everything else a line row used to need — its own
    frame, chevron, amount and action rail — now comes from the shared ledger. */
-.lineInfo { flex: 1; min-width: 0; }
+/* The line name and whatever it says about itself — a coach's note, and on a phone the When
+   chip, which has no column down there. A block inside the name cell, so the two stack rather
+   than sitting side by side. (⚰ Was `.lineInfo`, a flex sizer for the div row; a table cell needs
+   no sizer, only a stacking context.) */
+/* ⚠ THE STACK SITS BESIDE THE CHEVRON, and a block will not — the shared recipe re-levels it to
+   `inline-block` (`.moneyGrid th.moneyGridLead > .moneyGridExpand + *` in coaches.module.css),
+   which is what keeps the name on the chevron's line and the note under the name. QA §146. */
+.lineStack { display: block; min-width: 0; }
+/* The line name itself. A real block, because `overflow-wrap` does nothing on an inline box —
+   the lesson `.ledgerDesc` carried before it (a long name ran on and pushed the row 39px past the
+   page at 361px, with nothing owning the overflow). */
+.lineName { display: block; overflow-wrap: break-word; }
 
 /* Deleting a line moved INTO the edit modal (owner 2026-08-13): a quiet danger link in the
    footer, opposite Save, in front of the same confirm dialog as before. One control per row
@@ -338,10 +469,25 @@
    raises specificity to 0-2-0 so the accent wins deterministically. This is the exact failure
    mode recorded in `memory/reference_cascade_collisions_coach_budget.md`: the class is present,
    is outranked, and silently does nothing. Assert the COMPUTED colour, never the class list. */
-.fundingGroup.fundingGroup {
-  border-color: rgba(var(--success-rgb), 0.28);
-}
+/* ⚰ `.fundingGroup` PAINTED A GREEN CARD BORDER and went with the cards (2026-09-05). Money in
+   is marked by its FIGURE now, which is where the meaning was already carried — the label says
+   the direction and the amount is green, with no minus sign (owner 2026-08-13: a minus made
+   readers re-check the arithmetic). `.fundingRow` is kept as the row's hook so a future
+   treatment has somewhere to land without re-deriving which rows are money in. */
+/* ⚰ `.fundingRow th` and `.installmentsRow th` were removed (review, 2026-09-05): both sat at
+   (0,1,1), fully outranked by the shared category treatment at (0,2,3), and both set the value that
+   treatment already sets. Not a defect — just two rules doing nothing. `.fundingRow` survives as the
+   row hook the money-in colour below needs. */
+/* ⚠ THE DOUBLED CLASS IS LOAD-BEARING, and more so than before. `.moneyGrid tbody tr.moneyGridCat td`
+   sets `color` at (0,2,3); a single `.fundingAmount` at (0,1,0) would lose on every category-level
+   funding row, silently, leaving the section total in ordinary ink while its lines stayed green.
+   Doubling reaches (0,2,0) — still short. It needs the row too. */
+.fundingRow td.fundingAmount.fundingAmount { color: var(--success-light); }
 .fundingAmount.fundingAmount { color: var(--success-light); }
+
+/* The Player installments row is a standing fact, not a section a coach can open — it takes the
+   category ground so it reads as a peer of the sections above it, and nothing else. */
+
 
 /* ⚰ `.kindChoice` / `.kindOption` LEFT THIS FILE on 2026-09-04. "This line is" was a row of four
    radio-cards; the owner ruled it a dropdown, and it now renders through the shared
@@ -1710,8 +1856,12 @@
      a column, so dropping the amount under its own line name would put the figure a coach is
      scanning for in a different place on every row. What gives instead is the money track,
      narrowed to what a five-figure amount actually needs so the line name keeps the rest. */
-  .linesContainer,
-  .linesCanWrite { --ledger-cols: minmax(0, 1fr) 88px auto; }
+  /* ⚰ THE PHONE TRACK OVERRIDE WENT WITH THE TRACKS (2026-09-05). Its ruling SURVIVES and is now
+     structural rather than declared: the plan does NOT stack into cards on a phone — it is a
+     hierarchy read down a column, and dropping each amount under its own line name would put the
+     figure a coach scans for in a different place on every row. A <table> cannot stack unless
+     something tells it to, and nothing does; what gives instead is the horizontal scroller, which
+     keeps the line name pinned while the money columns move. Same answer, one fewer mechanism. */
 
   /* ⚠ `.editBtn` LIVES IN coaches.module.css NOW as `.rowEditBtnClip` (2026-08-15) — the ruling it
      encodes is unchanged and still this screen's: at ≤640 the ROW is the edit door, the pencil

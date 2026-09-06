@@ -122,38 +122,17 @@
    sit at weight 600 under a 1px rule, which made the closing figure QUIETER than the rows it
    summed while Budget Plan's equivalent was the loudest thing on its screen: the same hierarchy,
    inverted on two tabs of one hub.) */
-/* ── the two bands (Option D, owner ruling 2026-08-23) ────────────────────────
-   REVENUE and EXPENSES are HEADINGS, not rows of money: they name the half of the statement the
-   rows under them belong to and carry no figures at all.
+/* ⚰ THE TWO BANDS (`.bandRow` / `.bandLead`) MOVED TO THE SHARED `.moneyGridBand`
+   (coaches.module.css), one-surface pass 2026-09-05 — the three list reports draw the same band and
+   a second copy is how these two files forked twice before.
 
-   ⚠ AN OPAQUE GROUND WITH THE TINT PAINTED ON IT — never a translucent `background`. The first
-   cell of this row is the PINNED column and the last is the pinned Total; a translucent pin lets
-   the scrolled money columns read straight through (the Chunk A D3 lesson, which has shipped as a
-   real defect in BOTH money grids once already — see the note beside `.moneyGridCat`).
-
-   ⚠ SELECTOR SPECIFICITY IS DELIBERATE. `.lead` and `.totalCol` each set their own opaque ground
-   at (0,1,0); this is (0,2,3), so the band tint wins on every cell of the row including both pins,
-   exactly as the shared category rule does. Written against the LOCAL `.grid` rather than the
-   shared `.moneyGrid` because a CSS module cannot select another module's class. */
-.grid tbody tr.bandRow th,
-.grid tbody tr.bandRow td {
-  background-color: var(--card-bg);
-  background-image: linear-gradient(rgba(var(--primary-rgb), 0.10), rgba(var(--primary-rgb), 0.10));
-  border-bottom: 1px solid var(--border-2);
-  /* ⚠ THE GUTTER IS THE SEPARATOR, NOT MORE COLOUR (design pass 2026-08-24). A band heading and a
-     category row were both tinted rows, told apart only by small uppercase type — so the heading
-     read as one more category. The table had no breathing room anywhere, which made space the
-     cheapest and clearest thing available: a band now opens with a gap above it, and the two
-     tinted row kinds stop competing. */
-  padding-top: 1.05rem;
-}
-.bandLead {
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--primary-light);
-}
+   ⚠⚠ THE LOCAL `.bandLead` WAS INERT AND HAD BEEN SINCE 2026-08-13: it carried the whole text
+   treatment at (0,1,0) while the shared `.moneyGrid tbody th` reset sets font-size, weight, colour,
+   letter-spacing and text-transform at (0,1,1). Every declaration lost, so this grid rendered
+   "Revenue" and "Expenses" as ordinary dark sentence-case row headings for three weeks. The tint
+   always worked, because THAT rule was written on the row at (0,2,3) — which is exactly where the
+   shared replacement now puts the text treatment too. Do not reintroduce a leading-cell class for
+   this; it will lose the same way. */
 
 /* ⚠ `.rowHint` RETIRED with the aside it styled (2026-08-24). It put "from today's $2,862.69"
    beside the Running balance label — inside the narrowest column in the table, competing for the
