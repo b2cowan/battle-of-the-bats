@@ -17643,7 +17643,7 @@ some money in; the mockup drew PLEDGED on that state, which reads wrong once $25
 arrived. **Known deviation to confirm:** Delete at the room's foot is pressable and answers (owner
 ruling 2026-08-30), not the dead-button-plus-sentence the build prompt restated.
 
-## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, committed `e046df39` · the confirmation + the courtesy committed `885e56a1` 2026-09-05 · awaiting QA · walk artifact `b5bbcd8d`
+## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — ✅ PASSED 2026-09-06 (26/26, all seven parts, zero defects) · committed `e046df39` 2026-09-03 + `885e56a1` 2026-09-05 · walk artifact `b5bbcd8d`
 
 **Owner instruction (the whole brief):** *"let's remove this 'remind all 8' banner, we already have
 a 'send dues reminders' button and automatic reminders, this is not a good use of real estate on the
@@ -17688,6 +17688,29 @@ footer as if it were universal — it is not (see above), and the sentences now 
 each view. Touched: the "How do I see who hasn't paid anything and remind them?" article and its
 search text, the Fees overview's Premium-adds sentence, and the **Dues reminder emails** explainer
 (the *See an example* window), which had told coaches to press a button that no longer exists.
+
+### Verdict — ✅ PASSED 2026-09-06, 26/26, zero defects
+
+All seven parts clean on the first pass: the card and its whole-team button are gone and the server
+refuses the fan-out; a family's row reads across; the confirmation asks before it sends and names
+which of the two letters is going; the facts the deleted card carried are readable on a phone; the
+other two chase doors still state their scope; the help matches the screen; **and the optional Part G
+was walked for real** — a live send, the "Last reminded" line it earns, and the second press held by
+the seven-day courtesy. **That last part matters most: it is the only step that exercises the
+2026-09-05 ruling end to end, and it is the one the seeded fixture cannot reach on its own.**
+
+⚠ **The walk covered the POST-REVIEW code**, not the first cut — Parts C, D and G exercise the six
+fixes the funnel found, including the two that were wrong in the reasoning rather than the code.
+
+ⓘ **Fixture note.** Part G was tidied up correctly (no guardian address and no reminder stamp left
+behind), but **Part D's late family was not restored** — Devon Test's first bill was still dated a
+week back. Put right 2026-09-06. Left alone it would have quietly changed what every later dues walk
+sees: a Past due tile on a team §137's notes describe as having nobody late, and "Behind · 1" where
+the fixture is documented as zero.
+
+⚖ **Still open from this section, by decision, not oversight:** the concurrent-send race (two tabs,
+same moment, both letters go). It is older than this change and shared with the bulk-send door, so it
+wants its own session — see the /review block above.
 
 **Walkthrough artifact (checkable, per-part verdicts + paste-back):**
 `https://claude.ai/code/artifact/b5bbcd8d-8979-4127-a46b-dab6c7cf2b7b`
