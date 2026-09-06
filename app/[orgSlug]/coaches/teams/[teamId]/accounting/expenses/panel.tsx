@@ -21,6 +21,7 @@ import type { RoomTile } from '@/components/coaches/RoomShell';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import { toKnownCategories } from '@/lib/coach-budget-import';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -7936,7 +7937,7 @@ function MoneyRecordsPanel({
         <BudgetImportSheet
           orgSlug={orgSlug}
           teamId={teamId}
-          categories={categories.map(c => ({ id: c.id, name: c.name, items: c.items.map(i => ({ id: i.id, name: i.name })) }))}
+          categories={toKnownCategories(categories)}
           existingLines={[]}
           existingPayableDescriptions={expenses.map(e => e.description)}
           seasonYear={seasonYear}

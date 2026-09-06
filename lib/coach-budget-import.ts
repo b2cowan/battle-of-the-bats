@@ -62,6 +62,19 @@ export interface DraftPayableRow {
   balanceDueDate: string;
 }
 
+/**
+ * A one-tap correction offered beside a warning — "Use “Entry Fees”".
+ *
+ * Exactly one of `lineName` / `categoryName` is set: the fix is either "you meant this word" or
+ * "this word lives under that heading". `label` is the name the button says, so the UI never has
+ * to work out which field the suggestion is about.
+ */
+export interface RowSuggestion {
+  lineName?: string;
+  categoryName?: string;
+  label: string;
+}
+
 export interface RowVerdict {
   outcome: RowOutcome;
   /** Why it is blocked, or what an update will change — always in the coach's language. */
@@ -70,6 +83,8 @@ export interface RowVerdict {
   matchedLineId?: string;
   /** Worth a look, never blocking. */
   warning?: string;
+  /** Offered with a warning, never on its own. */
+  suggestion?: RowSuggestion;
 }
 
 export type ReviewedBudgetRow = DraftBudgetRow & RowVerdict & { total: number };
@@ -365,10 +380,60 @@ export function rowsFromPayables(file: ParsedImportFile): DraftPayableRow[] {
 
 // ── review ───────────────────────────────────────────────────────────────────
 
+/** Where a word came from, for the template's Reference sheet. */
+export type BudgetWordSource = 'standard' | 'club' | 'team';
+
+export interface KnownItem {
+  id: string;
+  name: string;
+  /** Only the template needs this; the readers and the writer never look at it. */
+  source?: BudgetWordSource;
+}
+
+/**
+ * The vocabulary an import may match against.
+ *
+ * ⚠ COST WORDS ONLY. Every caller filters `direction` to `out` before building this, because the
+ * importer writes cost lines and nothing else. Migration 248 made a word's SIDE part of what
+ * identifies it — "Grant" the income and "Grant" the application fee are two different words, and
+ * the coach's own picker shows one side at a time — so an unfiltered list lets a cost row attach
+ * itself to an income word the coach was never offered.
+ */
 export interface KnownCategory {
   id: string;
   name: string;
-  items: Array<{ id: string; name: string }>;
+  items: KnownItem[];
+}
+
+/**
+ * The one place a budget taxonomy becomes an import vocabulary.
+ *
+ * Structurally typed rather than importing `BudgetCategoryWithItems`, so this module stays free of
+ * `lib/types` and can be pulled into a client bundle unchanged.
+ *
+ * ⚠ THE DIRECTION FILTER IS THE POINT OF HAVING THIS FUNCTION AT ALL. Three screens mount the
+ * import sheet and each used to write the mapping out by hand; the day one of them needed a filter,
+ * all three needed it, and nothing would have said so.
+ */
+export function toKnownCategories(
+  categories: Array<{
+    id: string;
+    name: string;
+    items: Array<{ id: string; name: string; orgId: string | null; teamId: string | null; direction: string }>;
+  }>,
+): KnownCategory[] {
+  return categories.map(c => ({
+    id: c.id,
+    name: c.name,
+    items: c.items
+      .filter(i => i.direction === 'out')
+      .map(i => ({
+        id: i.id,
+        name: i.name,
+        // The three tiers migration 240 built, said in words a coach reads.
+        source: (i.orgId === null ? 'standard' : i.teamId === null ? 'club' : 'team') as BudgetWordSource,
+      })),
+  }));
 }
 
 export interface ExistingBudgetLine {
@@ -380,6 +445,158 @@ export interface ExistingBudgetLine {
 
 function key(value: string): string {
   return value.trim().toLowerCase();
+}
+
+// ── the coach's spelling vs. the library's ───────────────────────────────────
+
+/**
+ * A word reduced to the letters and digits that carry its meaning.
+ *
+ * ⚠ WHY THIS EXISTS. Matching used to be `trim().toLowerCase()` and nothing else, so `Entry Fees`,
+ * `Entry  Fees`, `Entry-Fees` and `Entry Fees.` were four different words. The first one matched
+ * the library; the other three each MINTED A NEW BUDGET ITEM for the team, silently, and the
+ * coach's Budget vs. Actual then split one cost across two rows for the rest of the season. A
+ * coach typing a heading into a spreadsheet is not choosing between a hyphen and a space.
+ *
+ * Apostrophes are removed rather than spaced, so `Coach's Gear` and `Coachs Gear` agree.
+ */
+export function normalizeWord(value: string): string {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/['‘’ʼ´`]/g, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Levenshtein distance, abandoned as soon as it cannot come in under `limit`.
+ *
+ * The bound is the point: this runs over every library word for every imported row, and the only
+ * answer anyone wants is "closer than two edits or not".
+ */
+function editDistance(a: string, b: string, limit: number): number {
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const value = Math.min(row[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+      row.push(value);
+      if (value < best) best = value;
+    }
+    if (best > limit) return limit + 1;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** How wrong a name may be and still be worth offering a correction for. */
+function nearnessLimit(normalized: string): number {
+  return normalized.length <= 8 ? 1 : 2;
+}
+
+/** Is `typed` close enough to `known` that a coach probably meant `known`? */
+function isNearMatch(typed: string, known: string): boolean {
+  if (!typed || !known) return false;
+  // A shortened or extended form of the same word — "Entry" for "Entry Fees", "Tournament Entry
+  // Fees" for "Entry Fees" — which edit distance alone would score as miles apart.
+  if (typed.length >= 4 && known.length >= 4 && (known.startsWith(typed) || typed.startsWith(known))) return true;
+  return editDistance(typed, known, nearnessLimit(typed)) <= nearnessLimit(typed);
+}
+
+/**
+ * The one library entry a typed name reduces to, or null when the answer is not one.
+ *
+ * ⚠ AMBIGUITY SNAPS NOTHING. Migration 248 keys item uniqueness on `lower(name)`, so a team can
+ * genuinely hold both `Entry Fees` and `Entry-Fees`; picking one of those for the coach would be
+ * a guess dressed as a correction. Two candidates means we leave the word alone and let the
+ * review step ask.
+ */
+function soleMatch(typed: string, names: string[]): string | null {
+  const wanted = normalizeWord(typed);
+  if (!wanted) return null;
+  const hits = names.filter(n => normalizeWord(n) === wanted);
+  return hits.length === 1 ? hits[0] : null;
+}
+
+/**
+ * Rewrite category and cost names to the library's own spelling wherever the difference is only
+ * punctuation, spacing or case.
+ *
+ * ⚠ THIS RUNS ON THE DRAFT THE COACH IS ABOUT TO LOOK AT, never on the way to the database. The
+ * corrected spelling lands in the preview's own cells, so the coach sees what we did and can type
+ * it back before anything is written. That is the difference between a correction and a liberty.
+ *
+ * The cost name is only snapped once the CATEGORY is known — an item's name means nothing without
+ * the heading it sits under, and two categories can hold the same word.
+ */
+export function snapBudgetRowsToLibrary(rows: DraftBudgetRow[], categories: KnownCategory[]): DraftBudgetRow[] {
+  const categoryNames = categories.map(c => c.name);
+  return rows.map(row => {
+    const categoryName = soleMatch(row.categoryName, categoryNames) ?? row.categoryName;
+    const category = categories.find(c => key(c.name) === key(categoryName));
+    const lineName = category
+      ? soleMatch(row.lineName, category.items.map(i => i.name)) ?? row.lineName
+      : row.lineName;
+    return categoryName === row.categoryName && lineName === row.lineName
+      ? row
+      : { ...row, categoryName, lineName };
+  });
+}
+
+/** The same courtesy for a bills sheet, which carries a category but no cost name. */
+export function snapPayableRowsToLibrary(rows: DraftPayableRow[], categories: KnownCategory[]): DraftPayableRow[] {
+  const categoryNames = categories.map(c => c.name);
+  return rows.map(row => {
+    const categoryName = soleMatch(row.categoryName, categoryNames) ?? row.categoryName;
+    return categoryName === row.categoryName ? row : { ...row, categoryName };
+  });
+}
+
+/**
+ * What to say about a cost name the library does not hold — and, where we can see it, what the
+ * coach probably meant.
+ *
+ * ⚠ NEVER BLOCKING. A coach must be able to name a cost we have never heard of; the importer
+ * creates the word for them precisely so the line is not left nameless and invisible to Budget vs.
+ * Actual. What was missing was being TOLD, which is all this adds.
+ */
+function newWordVerdict(
+  lineName: string,
+  category: KnownCategory,
+  categories: KnownCategory[],
+): { warning: string; suggestion?: RowSuggestion } | null {
+  const typed = normalizeWord(lineName);
+  if (!typed) return null;
+  if (category.items.some(i => normalizeWord(i.name) === typed)) return null;
+
+  // The exact word, under a different heading. A stronger signal than any fuzzy match here, so it
+  // is tested first: the coach knows the word, they have filed it in the wrong place.
+  const elsewhere = categories.find(
+    c => c.id !== category.id && c.items.some(i => normalizeWord(i.name) === typed),
+  );
+  if (elsewhere) {
+    return {
+      warning: `“${lineName}” is already under ${elsewhere.name} — this adds a second one under ${category.name}.`,
+      suggestion: { categoryName: elsewhere.name, label: elsewhere.name },
+    };
+  }
+
+  const near = category.items.filter(i => isNearMatch(typed, normalizeWord(i.name)));
+  // One candidate or none. Two words this close to the typed one means we cannot tell which was
+  // meant, and a coin-toss suggestion is worse than none.
+  if (near.length === 1) {
+    return {
+      warning: `New name — did you mean “${near[0].name}”?`,
+      suggestion: { lineName: near[0].name, label: near[0].name },
+    };
+  }
+
+  return { warning: `New name — adds “${lineName}” to your ${category.name} list.` };
 }
 
 /**
@@ -449,7 +666,14 @@ export function reviewBudgetRows(
           : `Updates “${match.description}” — same total, new dates`,
       };
     }
-    return { ...base, outcome: 'add' as const };
+    /* ⚠ ADDS ONLY, DELIBERATELY. An `update` matched an existing budget LINE, so its name is
+       already whatever the plan calls it and the coach is editing, not inventing — and `Verdict`
+       renders `reason ?? warning`, so a warning there would be invisible anyway. The word this
+       warning is about gets created on the ADD path, which is the one a coach can still change
+       their mind about. */
+    const category = categoryByName.get(key(row.categoryName))!;
+    const verdict = newWordVerdict(row.lineName, category, categories);
+    return { ...base, outcome: 'add' as const, ...verdict };
   });
 }
 
@@ -555,6 +779,81 @@ export function templateExampleRows(
     }
   }
   return rows;
+}
+
+// ── the template's own vocabulary sheets ─────────────────────────────────────
+
+/**
+ * ⚠ THE FILL-IN SHEET IS CALLED `Data`, AND THAT NAME IS LOAD-BEARING. `parseXLSX` resolves the
+ * sheet to read as `getWorksheet('Data')` first, then the first sheet not named instructions or
+ * reference, then sheet one. Naming it `Data` means the two vocabulary sheets below can never be
+ * mistaken for the grid, whatever order they end up in. (A template downloaded before this change
+ * is called `Template` and still parses through the second rule — nothing on disk is invalidated.)
+ */
+export const TEMPLATE_DATA_SHEET = 'Data';
+/** Human-readable. Skipped by the parser BY NAME. */
+export const TEMPLATE_REFERENCE_SHEET = 'Reference';
+/** Hidden. Feeds the dropdowns, and is never read back. */
+export const TEMPLATE_LISTS_SHEET = 'Lists';
+
+export const REFERENCE_SHEET_HEADERS = ['Category', 'Cost name', 'Where it comes from'] as const;
+
+const SOURCE_LABELS: Record<BudgetWordSource, string> = {
+  standard: 'Standard',
+  club: 'Your club',
+  team: 'This team',
+};
+
+/**
+ * Every category and every cost name this team may use, one row each.
+ *
+ * ⚠ NO AMOUNT COLUMN, AND THERE NEVER WILL BE (D-G1). This sheet answers *what can we budget
+ * for*; the coach answers *how much*. A category with no cost names still gets a row, so a coach
+ * can see the heading exists rather than concluding we do not have one.
+ */
+export function referenceSheetRows(categories: KnownCategory[]): string[][] {
+  const rows: string[][] = [];
+  for (const category of categories) {
+    if (category.items.length === 0) {
+      rows.push([category.name, '', '']);
+      continue;
+    }
+    for (const item of category.items) {
+      rows.push([category.name, item.name, item.source ? SOURCE_LABELS[item.source] : '']);
+    }
+  }
+  return rows;
+}
+
+/**
+ * The de-duplicated columns the Excel dropdowns point at.
+ *
+ * Categories keep the library's own order, because that is the order the coach's picker shows
+ * them in. Cost names are sorted, because the list is FLAT — one dropdown holding every word,
+ * rather than one that changes with the category chosen in that row.
+ *
+ * ⚠ FLAT IS A DECISION, NOT A SHORTCUT. A dependent list needs `INDIRECT()` over one defined name
+ * per category, and an Excel defined name cannot contain a space or an `&` — "League & Fees" and
+ * "Team Gear" both break it, two sanitised names can collide, and none of it survives a trip
+ * through Google Sheets. A flat list kills the typo, which is the whole point; a name paired with
+ * the wrong heading is then caught in the review step, which can say something more useful than a
+ * greyed-out cell ("Entry Fees is already under Tournaments").
+ */
+export function templateChoiceLists(categories: KnownCategory[]): { categories: string[]; items: string[] } {
+  const seen = new Set<string>();
+  const items: string[] = [];
+  for (const category of categories) {
+    for (const item of category.items) {
+      const k = key(item.name);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      items.push(item.name);
+    }
+  }
+  return {
+    categories: categories.map(c => c.name),
+    items: items.sort((a, b) => a.localeCompare(b, 'en-CA')),
+  };
 }
 
 /** A month range for a template when the team has no dated money yet: a year from this month. */

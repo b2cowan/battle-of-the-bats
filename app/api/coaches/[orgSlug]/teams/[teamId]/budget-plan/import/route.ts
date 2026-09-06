@@ -17,6 +17,7 @@ import {
 } from '@/lib/coach-budget-items';
 import {
   reviewBudgetRows, reviewPayableRows, moneyValue,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   MAX_IMPORT_ROWS,
   type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type ExistingBudgetLine,
 } from '@/lib/coach-budget-import';
@@ -135,7 +136,7 @@ export const POST = withObservability(async (req: Request,
   // The taxonomy this org may link to: platform defaults + its own custom entries.
   const { data: categoryRows } = await supabaseAdmin
     .from('budget_categories')
-    .select('id, name, org_id, team_id, budget_items(id, name, org_id, team_id)')
+    .select('id, name, org_id, team_id, budget_items(id, name, org_id, team_id, direction)')
     .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
     // Team-visible categories only â the same filter the coach's own picker applies, so an
     // imported sheet can never link a team budget to an org-admin-only category.
@@ -156,6 +157,12 @@ export const POST = withObservability(async (req: Request,
       // budget under vocabulary its own picker will not even show.
       items: ((c.budget_items ?? []) as Array<Record<string, unknown>>)
         .filter(i => itemVisibleToTeam(i as OwnedBudgetItem, ctx!.org.id, team.id))
+        /* ⚠ AND COST WORDS ONLY (mig 248). A word's SIDE is part of what identifies it — a team may
+           hold "Grant" as income (the cheque) and "Grant" as an expense (the application fee) — and
+           the coach's own picker shows one side at a time. This importer writes cost lines and
+           nothing else, so an unfiltered list let a spending row attach itself to an income word
+           the coach was never offered, on a screen where they could not see it happen. */
+        .filter(i => (i.direction as string) === 'out')
         .map(i => ({ id: i.id as string, name: i.name as string })),
     }));
   const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
@@ -173,7 +180,7 @@ export const POST = withObservability(async (req: Request,
       .eq('program_year_id', programYear.id);
 
     const reviewed = reviewPayableRows(
-      incoming.map(toPayableDraft),
+      snapPayableRowsToLibrary(incoming.map(toPayableDraft), categories),
       categories,
       (existingRows ?? []).map((e: { description: string }) => e.description),
     );
@@ -259,7 +266,10 @@ export const POST = withObservability(async (req: Request,
       (max: number, l: Record<string, unknown>) => Math.max(max, (l.sort_order as number) ?? 0), -1,
     ) + 1;
 
-    const reviewed = reviewBudgetRows(incoming.map(toBudgetDraft), categories, existing);
+    /* The client already snapped these against the same library before showing the coach the
+       preview. Doing it again here is the same belt-and-braces as reviewing again: this route
+       never trusts that the payload came from our own screen. */
+    const reviewed = reviewBudgetRows(snapBudgetRowsToLibrary(incoming.map(toBudgetDraft), categories), categories, existing);
 
     for (const row of reviewed) {
       const label = row.lineName || `Row ${row.rowNumber}`;
@@ -308,10 +318,15 @@ export const POST = withObservability(async (req: Request,
              tab, or a coach using "+ Add custom item" mid-import. Swallowing this left `item`
              undefined and wrote the line with NO item, reported as a clean import: the row lands
              under "Not itemized" and neither coach is told. Take the winner instead. */
+          /* ⚠ `direction` IS PART OF THE KEY THIS RECOVERY IS RECOVERING FROM (mig 248). Without
+             it, a team already holding this name on the INCOME side matches two rows and
+             `maybeSingle()` fails — turning a race we know how to survive into "Could not add this
+             to your item list", which tells the coach nothing they can act on. */
           const { data: winner } = await supabaseAdmin
             .from('budget_items')
             .select('id, name')
             .eq('category_id', category.id).eq('org_id', ctx!.org.id).eq('team_id', team.id)
+            .eq('direction', 'out')
             .ilike('name', name)
             .maybeSingle();
           if (winner) {

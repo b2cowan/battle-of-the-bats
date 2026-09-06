@@ -10,10 +10,14 @@ import type { ParsedImportFile } from '@/lib/import/types';
 import {
   rowsFromMonthGrid, rowsFromList, rowsFromPayables,
   reviewBudgetRows, reviewPayableRows, committable,
+  snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
+  referenceSheetRows, templateChoiceLists,
+  TEMPLATE_DATA_SHEET, TEMPLATE_REFERENCE_SHEET, TEMPLATE_LISTS_SHEET, REFERENCE_SHEET_HEADERS,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS, MAX_IMPORT_ROWS,
   type BudgetImportShape, type DraftBudgetRow, type DraftPayableRow,
   type ReviewedBudgetRow, type ReviewedPayableRow, type KnownCategory, type ExistingBudgetLine,
+  type RowSuggestion,
 } from '@/lib/coach-budget-import';
 import { formatMonthLabel, type MonthKey } from '@/lib/coach-budget-months';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -136,8 +140,42 @@ export default function BudgetImportSheet({
     // Category and line NAMES from the coach's own taxonomy; every amount cell blank (D-G1).
     const rows = templateExampleRows(categories, headers.length);
     const name = `budget-${shape}-template`;
-    if (format === 'csv') downloadCSVBlob(`${name}.csv`, generateCSV(headers, rows));
-    else await downloadXLSX(`${name}.xlsx`, headers, rows, 'Template');
+
+    /* ⚠ THE CSV KEEPS THE HEADINGS AND THE SIX EXAMPLES, AND THAT IS THE WHOLE OF IT. A CSV file
+       cannot carry a second tab or a dropdown — there is nowhere to put the vocabulary. Coaches
+       who take this format are covered by the review step's new-name warning instead, which is
+       the half that works whatever the sheet came from. */
+    if (format === 'csv') { downloadCSVBlob(`${name}.csv`, generateCSV(headers, rows)); return; }
+
+    /* The Excel file carries the team's whole vocabulary: a readable Reference tab, and a hidden
+       Lists tab the dropdowns point at. Neither ever holds an amount (D-G1) — they say what a
+       team can budget FOR, never how much. */
+    const choices = templateChoiceLists(categories);
+    const columnChoices: (string | undefined)[] = headers.map(() => undefined);
+    const categoryColumn = headers.indexOf('Category');
+    // The bills sheet has no Line column — a payable's description is genuinely free text.
+    const lineColumn = headers.indexOf('Line');
+    if (categoryColumn >= 0 && choices.categories.length > 0) {
+      columnChoices[categoryColumn] = `${TEMPLATE_LISTS_SHEET}!$A$2:$A$${choices.categories.length + 1}`;
+    }
+    if (lineColumn >= 0 && choices.items.length > 0) {
+      columnChoices[lineColumn] = `${TEMPLATE_LISTS_SHEET}!$B$2:$B$${choices.items.length + 1}`;
+    }
+
+    const listRows: string[][] = [];
+    for (let i = 0; i < Math.max(choices.categories.length, choices.items.length); i += 1) {
+      listRows.push([choices.categories[i] ?? '', choices.items[i] ?? '']);
+    }
+
+    await downloadXLSX(`${name}.xlsx`, headers, rows, TEMPLATE_DATA_SHEET, {
+      columnChoices,
+      // Every row a coach could fill in, not just the six examples we ship.
+      choiceRowCount: MAX_IMPORT_ROWS,
+      extraSheets: [
+        { name: TEMPLATE_REFERENCE_SHEET, headers: [...REFERENCE_SHEET_HEADERS], rows: referenceSheetRows(categories) },
+        { name: TEMPLATE_LISTS_SHEET, headers: ['Categories', 'Cost names'], rows: listRows, hidden: true },
+      ],
+    });
   }
 
   // ── input ──────────────────────────────────────────────────────────────────
@@ -164,11 +202,11 @@ export default function BudgetImportSheet({
     if (shape === 'payables') {
       const rows = rowsFromPayables(parsed);
       if (rows.length === 0) { setError('No rows we could read. Check the header row, or start from the template.'); return; }
-      setPayableDraft(rows);
+      setPayableDraft(snapPayableRowsToLibrary(rows, categories));
     } else {
       const rows = shape === 'list' ? rowsFromList(parsed) : rowsFromMonthGrid(parsed, seasonYear);
       if (rows.length === 0) { setError('No rows we could read. Check the header row, or start from the template.'); return; }
-      setBudgetDraft(rows);
+      setBudgetDraft(snapBudgetRowsToLibrary(rows, categories));
     }
     setStep('review');
   }
@@ -182,8 +220,10 @@ export default function BudgetImportSheet({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/import/preview`, { method: 'POST', body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'That file could not be read.');
-      if (shape === 'payables') setPayableDraft((data.rows ?? []) as DraftPayableRow[]);
-      else setBudgetDraft((data.rows ?? []) as DraftBudgetRow[]);
+      // Snapped HERE rather than in the preview route, so an uploaded file and a pasted block go
+      // through the identical correction against the identical library — one place, one behaviour.
+      if (shape === 'payables') setPayableDraft(snapPayableRowsToLibrary((data.rows ?? []) as DraftPayableRow[], categories));
+      else setBudgetDraft(snapBudgetRowsToLibrary((data.rows ?? []) as DraftBudgetRow[], categories));
       setStep('review');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'That file could not be read.');
@@ -255,6 +295,12 @@ export default function BudgetImportSheet({
 
   const categoryOptions = categories.map(c => c.name);
 
+  /** The type-ahead list for a row, keyed off whichever category that row currently names. */
+  function itemListId(categoryName: string): string | undefined {
+    const index = categories.findIndex(c => c.name.trim().toLowerCase() === categoryName.trim().toLowerCase());
+    return index >= 0 ? `budget-import-items-${index}` : undefined;
+  }
+
   return (
     <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
       <div className={`${shared.modal} ${shared.modalFlushFooter} ${styles.panel}`} onClick={e => e.stopPropagation()}>
@@ -308,8 +354,10 @@ export default function BudgetImportSheet({
               </span>
             </div>
             <p className={styles.templateNote}>
-              The template has the column headings and some standard cost names — the amounts are
-              left blank for you to fill in. We never put a figure in your budget.
+              The Excel template lists every category and cost name your team can use on its own
+              tab, and the Category{shape === 'payables' ? '' : ' and Line'} columns are dropdowns,
+              so nothing has to be typed from memory. The CSV has the headings only. Amounts are
+              left blank either way — we never put a figure in your budget.
             </p>
 
             <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="group" aria-label="How to bring your rows in">
@@ -380,6 +428,14 @@ export default function BudgetImportSheet({
               it will be skipped.
             </p>
 
+            {/* One list per category, mounted once and pointed at by whichever rows name that
+                category. Rendered for the budget shapes only; a bill's description is free text. */}
+            {!isPayables && categories.map((c, index) => (
+              <datalist key={c.id} id={`budget-import-items-${index}`}>
+                {c.items.map(item => <option key={item.id} value={item.name} />)}
+              </datalist>
+            ))}
+
             <div className={styles.reviewWrap}>
               {isPayables ? (
                 <table className={styles.reviewTable}>
@@ -447,9 +503,13 @@ export default function BudgetImportSheet({
                           </select>
                         </td>
                         <td>
+                          {/* Type-ahead over the cost names this category already holds — still a
+                              free-text field, because a coach must be able to name a cost we have
+                              never heard of. A closed <select> here would forbid that. */}
                           <input
                             className={styles.cellInput}
                             value={row.lineName}
+                            list={itemListId(row.categoryName)}
                             aria-label={`Line, row ${row.rowNumber}`}
                             onChange={e => updateBudgetRow(i, { lineName: e.target.value })}
                           />
@@ -474,7 +534,12 @@ export default function BudgetImportSheet({
                             ? row.periods.map(p => formatMonthLabel(p.month)).join(' · ')
                             : <span className={styles.cellMeta}>no dates</span>}
                         </td>
-                        <td><Verdict row={row} /></td>
+                        <td>
+                          <Verdict row={row} onApply={s => updateBudgetRow(i, {
+                            ...(s.lineName ? { lineName: s.lineName } : {}),
+                            ...(s.categoryName ? { categoryName: s.categoryName } : {}),
+                          })} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -511,13 +576,27 @@ export default function BudgetImportSheet({
 }
 
 /** The per-row verdict chip — the thing that makes this preview-first rather than hopeful. */
-function Verdict({ row }: { row: { outcome: string; reason?: string; warning?: string } }) {
+function Verdict({ row, onApply }: {
+  row: { outcome: string; reason?: string; warning?: string; suggestion?: RowSuggestion };
+  onApply?: (suggestion: RowSuggestion) => void;
+}) {
   const cls = row.outcome === 'add' ? styles.chipAdd : row.outcome === 'update' ? styles.chipUpdate : styles.chipBlocked;
   const label = row.outcome === 'add' ? 'Adds' : row.outcome === 'update' ? 'Updates' : 'Can’t import';
   return (
     <>
       <span className={`${styles.chip} ${cls}`}>{label}</span>
       {(row.reason || row.warning) && <span className={styles.why}>{row.reason ?? row.warning}</span>}
+      {/* Offered only where the row also carries the warning it answers — `reason` outranks
+          `warning` above, and a fix button beside a sentence the coach cannot see is a puzzle. */}
+      {!row.reason && row.suggestion && onApply && (
+        <button
+          type="button"
+          className={styles.suggestBtn}
+          onClick={() => onApply(row.suggestion!)}
+        >
+          Use “{row.suggestion.label}”
+        </button>
+      )}
     </>
   );
 }

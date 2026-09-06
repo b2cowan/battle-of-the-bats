@@ -64,6 +64,23 @@ export type XlsxFooterMark = {
   logoDataUrl?: string;
 };
 
+/**
+ * A second (or third) worksheet alongside the data one — a reference list, a legend, a lookup
+ * source for dropdowns.
+ *
+ * ⚠ MIND WHAT `parseXLSX` DOES WITH THESE on a file the product re-imports. It resolves the sheet
+ * to read as `getWorksheet('Data')` first, then the first sheet NOT named instructions/reference,
+ * then sheet one. So on a re-importable file: name the data sheet `Data`, and name an extra sheet
+ * `Reference` (or hide it) unless you want it to become a candidate.
+ */
+export type XlsxExtraSheet = {
+  name: string;
+  headers: string[];
+  rows: (string | number | null | undefined)[][];
+  /** Hidden from the tab strip. A hidden sheet still works as a dropdown source. */
+  hidden?: boolean;
+};
+
 export type XlsxRowStyle = {
   /** Bold the whole row — section headings, category rows, totals. */
   bold?: boolean;
@@ -89,9 +106,8 @@ export type XlsxRowStyle = {
 };
 
 /**
- * Build an xlsx workbook from headers + data rows and trigger a browser download.
+ * Column and row options shared by the builder and the download wrapper.
  *
- * @param filename  - Full filename including .xlsx extension
  * @param headers   - Column header labels (first row)
  * @param rows      - Data rows (2D array of strings/numbers)
  * @param sheetName - Worksheet tab name. Default: 'Data'
@@ -122,12 +138,7 @@ function parseDataUrl(url: string): { base64: string; extension: 'png' | 'jpeg' 
   return { base64: match[2].replace(/\s/g, ''), extension: ext };
 }
 
-export async function downloadXLSX(
-  filename: string,
-  headers: string[],
-  rows: (string | number | null | undefined)[][],
-  sheetName = 'Data',
-  opts?: {
+export type XlsxOptions = {
     columnNumFmts?: (string | undefined)[];
     rowStyles?: (XlsxRowStyle | undefined)[];
     columnHeaderDates?: (Date | undefined)[];
@@ -138,8 +149,43 @@ export async function downloadXLSX(
     masthead?: XlsxMasthead;
     /** Our own mark, under the notes. Governed by the club's branding switch at the call site. */
     footer?: XlsxFooterMark;
-  },
-): Promise<void> {
+    /** Extra worksheets after the data one. See `XlsxExtraSheet` for the re-import caveat. */
+    extraSheets?: XlsxExtraSheet[];
+    /**
+     * Excel dropdowns on a column's data cells, index-aligned with `headers`. Each entry is a
+     * RANGE REFERENCE into the workbook — `Lists!$A$2:$A$40` — not a list of values.
+     *
+     * ⚠ A RANGE, NEVER AN INLINE LIST. Excel caps an inline validation formula at 255 characters
+     * total, which forty short names blow straight through; the failure is a dropdown that simply
+     * does not appear, with no error anywhere.
+     *
+     * ⚠ THE DROPDOWN OFFERS, IT NEVER REFUSES — `showErrorMessage` is off and blanks are allowed,
+     * so a value that is not on the list still types in. Every list this repo puts in front of a
+     * coach is a convenience over a field that must still accept a word we have never heard of.
+     */
+    columnChoices?: (string | undefined)[];
+    /**
+     * How many rows below the header the dropdowns cover. Defaults to the data rows actually
+     * written, which is almost never what a template wants — a template's whole point is the empty
+     * rows underneath.
+     */
+    choiceRowCount?: number;
+};
+
+/**
+ * Build the workbook, without touching the DOM.
+ *
+ * ⚠ SPLIT OUT FROM `downloadXLSX` SO A TEST CAN READ WHAT WE ACTUALLY WROTE. A template that
+ * carries dropdowns and extra sheets makes claims no static check can see — that the validation
+ * landed, that the hidden sheet is hidden, that our own importer still reads the file back — and
+ * every one of those is only provable by reloading the bytes.
+ */
+export function buildXLSXWorkbook(
+  headers: string[],
+  rows: (string | number | null | undefined)[][],
+  sheetName = 'Data',
+  opts?: XlsxOptions,
+): ExcelJS.Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'FieldLogicHQ';
   workbook.created = new Date();
@@ -345,6 +391,63 @@ export async function downloadXLSX(
      that does not need to stay on screen. */
   ws.views = [{ state: 'frozen', ySplit: headerRow.number }];
 
+  /* ── Dropdowns ─────────────────────────────────────────────────────────────────────────────
+     Written per CELL rather than per column: ExcelJS models validation on the cell, and a column
+     object's style does not carry it. `getRow` past the last written row creates it on demand,
+     which is exactly what a template wants — the empty rows are the ones a coach fills in. */
+  if (opts?.columnChoices?.some(Boolean)) {
+    const lastRow = headerRow.number + Math.max(opts.choiceRowCount ?? rows.length, 1);
+    opts.columnChoices.forEach((source, colIndex) => {
+      if (!source) return;
+      for (let r = headerRow.number + 1; r <= lastRow; r += 1) {
+        ws.getRow(r).getCell(colIndex + 1).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [source],
+          showErrorMessage: false,
+        };
+      }
+    });
+  }
+
+  /* ── Extra sheets ──────────────────────────────────────────────────────────────────────────
+     Added last so the data sheet stays first in the tab strip and stays the one a reader lands on.
+     Deliberately plain: a bold header row and auto-sized columns, no masthead, no notes, no
+     number formats — these are reference material, not a report. */
+  for (const extra of opts?.extraSheets ?? []) {
+    const sheet = workbook.addWorksheet(extra.name);
+    const head = sheet.addRow(extra.headers);
+    head.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+    extra.rows.forEach(row => sheet.addRow(row.map(cell => (cell === null || cell === undefined ? '' : cell))));
+    sheet.columns.forEach((column, i) => {
+      let widest = (extra.headers[i] ?? '').length;
+      extra.rows.forEach(row => { widest = Math.max(widest, String(row[i] ?? '').length); });
+      column.width = Math.min(widest + 2, 60);
+    });
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    // ⚠ 'veryHidden' would put it beyond the sheet-unhide menu. A coach who finds this tab and
+    // wonders what it is should be able to look at it, not be locked out of their own file.
+    if (extra.hidden) sheet.state = 'hidden';
+  }
+
+  return workbook;
+}
+
+/**
+ * Build an xlsx workbook from headers + data rows and trigger a browser download.
+ *
+ * @param filename  - Full filename including .xlsx extension
+ * Everything else is `buildXLSXWorkbook`'s, documented there and on `XlsxOptions`.
+ */
+export async function downloadXLSX(
+  filename: string,
+  headers: string[],
+  rows: (string | number | null | undefined)[][],
+  sheetName = 'Data',
+  opts?: XlsxOptions,
+): Promise<void> {
+  const workbook = buildXLSXWorkbook(headers, rows, sheetName, opts);
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -6,7 +6,9 @@ import {
   reviewBudgetRows, reviewPayableRows, committable,
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS,
-  type KnownCategory, type ExistingBudgetLine,
+  normalizeWord, snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
+  referenceSheetRows, templateChoiceLists, toKnownCategories,
+  type KnownCategory, type ExistingBudgetLine, type DraftBudgetRow,
 } from '../../lib/coach-budget-import.ts';
 import type { ParsedImportFile } from '../../lib/import/types.ts';
 
@@ -321,5 +323,196 @@ describe('templates (D-G1: structure, never amounts)', () => {
     assert.deepEqual(templateMonths(['2026-03'], '2026-01'), ['2026-03']);
     const fresh = templateMonths([], '2026-11', 3);
     assert.deepEqual(fresh, ['2026-11', '2026-12', '2027-01']);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   THE COACH'S SPELLING VS. THE LIBRARY'S (owner-approved 2026-09-06)
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+function draft(over: Partial<DraftBudgetRow> = {}): DraftBudgetRow {
+  return { rowNumber: 1, categoryName: 'Tournaments', lineName: 'Entry Fees', amount: '100', notes: '', periods: [], ...over };
+}
+
+describe('normalizeWord', () => {
+  it('forgives punctuation, spacing and case — the four spellings that used to be four words', () => {
+    for (const spelling of ['Entry Fees', 'entry fees', 'Entry  Fees', 'Entry-Fees', 'Entry Fees.', '  ENTRY   FEES  ']) {
+      assert.equal(normalizeWord(spelling), 'entry fees');
+    }
+  });
+
+  it('folds an apostrophe out rather than into a space', () => {
+    assert.equal(normalizeWord("Coach's Gear"), 'coachs gear');
+    assert.equal(normalizeWord('Coachs Gear'), 'coachs gear');
+    assert.equal(normalizeWord('Coach’s Gear'), 'coachs gear');
+  });
+
+  it('reads & as the word, so "League & Fees" and "League and Fees" agree', () => {
+    assert.equal(normalizeWord('League & Fees'), normalizeWord('League and Fees'));
+  });
+
+  it('does NOT reach across a real difference', () => {
+    assert.notEqual(normalizeWord('Entry Fee'), normalizeWord('Entry Fees'));
+    assert.notEqual(normalizeWord('Tourney Fees'), normalizeWord('Entry Fees'));
+  });
+});
+
+describe('snapping a sheet to the library’s own spelling', () => {
+  it('rewrites a trivially-different cost name — the whole point of the feature', () => {
+    for (const typed of ['entry fees', 'Entry  Fees', 'Entry-Fees', 'Entry Fees.']) {
+      const [row] = snapBudgetRowsToLibrary([draft({ lineName: typed })], CATEGORIES);
+      assert.equal(row.lineName, 'Entry Fees', `${typed} should snap`);
+    }
+  });
+
+  it('rewrites the category too, which un-blocks a row a full stop used to refuse', () => {
+    const [row] = snapBudgetRowsToLibrary([draft({ categoryName: 'tournaments.' })], CATEGORIES);
+    assert.equal(row.categoryName, 'Tournaments');
+    assert.equal(reviewBudgetRows([row], CATEGORIES, [])[0].outcome, 'add');
+  });
+
+  it('leaves a genuinely different name alone', () => {
+    const [row] = snapBudgetRowsToLibrary([draft({ lineName: 'Entry Fee' })], CATEGORIES);
+    assert.equal(row.lineName, 'Entry Fee');
+    const [other] = snapBudgetRowsToLibrary([draft({ lineName: 'Tourney Fees' })], CATEGORIES);
+    assert.equal(other.lineName, 'Tourney Fees');
+  });
+
+  it('snaps NOTHING when two library words normalise the same — mig 248 keys on lower(name), so both can exist', () => {
+    const ambiguous: KnownCategory[] = [{
+      id: 'c1', name: 'Tournaments',
+      items: [{ id: 'i1', name: 'Entry Fees' }, { id: 'i9', name: 'Entry-Fees' }],
+    }];
+    const [row] = snapBudgetRowsToLibrary([draft({ lineName: 'entry fees' })], ambiguous);
+    assert.equal(row.lineName, 'entry fees');
+  });
+
+  it('will not snap a cost name under a category it cannot place', () => {
+    const [row] = snapBudgetRowsToLibrary([draft({ categoryName: 'Nowhere', lineName: 'entry fees' })], CATEGORIES);
+    assert.equal(row.lineName, 'entry fees');
+  });
+
+  it('does the same for a bills sheet, which carries a category and no cost name', () => {
+    const [row] = snapPayableRowsToLibrary([{
+      rowNumber: 1, payee: 'Provincial Body', description: 'Registration', categoryName: 'officials',
+      amount: '400', depositAmount: '', depositDueDate: '', balanceAmount: '', balanceDueDate: '',
+    }], CATEGORIES);
+    assert.equal(row.categoryName, 'Officials');
+  });
+});
+
+describe('telling the coach when a row would mint a new cost name', () => {
+  it('says nothing about a name the library already holds', () => {
+    const [row] = reviewBudgetRows([draft()], CATEGORIES, []);
+    assert.equal(row.outcome, 'add');
+    assert.equal(row.warning, undefined);
+    assert.equal(row.suggestion, undefined);
+  });
+
+  it('offers the near miss — "Entry Fee" almost certainly means "Entry Fees"', () => {
+    const [row] = reviewBudgetRows([draft({ lineName: 'Entry Fee' })], CATEGORIES, []);
+    assert.equal(row.outcome, 'add', 'a warning must never block');
+    assert.match(row.warning ?? '', /did you mean/i);
+    assert.equal(row.suggestion?.lineName, 'Entry Fees');
+    assert.equal(row.suggestion?.label, 'Entry Fees');
+  });
+
+  it('points at the heading a known word already lives under, rather than guessing a spelling', () => {
+    const [row] = reviewBudgetRows([draft({ categoryName: 'Officials', lineName: 'Entry Fees' })], CATEGORIES, []);
+    assert.equal(row.outcome, 'add');
+    assert.match(row.warning ?? '', /already under Tournaments/);
+    assert.equal(row.suggestion?.categoryName, 'Tournaments');
+    assert.equal(row.suggestion?.lineName, undefined);
+  });
+
+  it('still lets a genuinely new cost through, and says so plainly with no suggestion', () => {
+    const [row] = reviewBudgetRows([draft({ lineName: 'Charter Bus' })], CATEGORIES, []);
+    assert.equal(row.outcome, 'add');
+    assert.match(row.warning ?? '', /New name — adds “Charter Bus” to your Tournaments list\./);
+    assert.equal(row.suggestion, undefined);
+  });
+
+  it('suggests nothing when two library words are equally close — a coin-toss fix is worse than none', () => {
+    const twins: KnownCategory[] = [{
+      id: 'c1', name: 'Tournaments',
+      items: [{ id: 'i1', name: 'Bat' }, { id: 'i2', name: 'Hat' }],
+    }];
+    const [row] = reviewBudgetRows([draft({ lineName: 'Cat' })], twins, []);
+    assert.equal(row.suggestion, undefined);
+    assert.match(row.warning ?? '', /New name — adds/);
+  });
+
+  it('leaves an UPDATE alone — it matched an existing line, so it is not inventing anything', () => {
+    const existing: ExistingBudgetLine[] = [
+      { id: 'l1', description: 'Entry Fee', categoryName: 'Tournaments', totalAmount: 100 },
+    ];
+    const [row] = reviewBudgetRows([draft({ lineName: 'Entry Fee' })], CATEGORIES, existing);
+    assert.equal(row.outcome, 'update');
+    assert.equal(row.warning, undefined);
+  });
+});
+
+describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
+  it('lists every category and cost name, with where each came from — and no amount anywhere', () => {
+    const cats: KnownCategory[] = [
+      { id: 'c1', name: 'Tournaments', items: [
+        { id: 'i1', name: 'Entry Fees', source: 'standard' },
+        { id: 'i2', name: 'Charter Bus', source: 'team' },
+      ] },
+      { id: 'c2', name: 'Officials', items: [{ id: 'i3', name: 'Umpire Fees', source: 'club' }] },
+      { id: 'c3', name: 'Empty', items: [] },
+    ];
+    assert.deepEqual(referenceSheetRows(cats), [
+      ['Tournaments', 'Entry Fees', 'Standard'],
+      ['Tournaments', 'Charter Bus', 'This team'],
+      ['Officials', 'Umpire Fees', 'Your club'],
+      // A heading with no cost names still gets a row: a coach must be able to see it exists.
+      ['Empty', '', ''],
+    ]);
+    // Three columns, and not one of them can hold a figure the product proposed.
+    for (const row of referenceSheetRows(cats)) assert.equal(row.length, 3);
+  });
+
+  it('builds dropdown sources that are de-duplicated, with cost names sorted for a flat list', () => {
+    const cats: KnownCategory[] = [
+      { id: 'c1', name: 'Tournaments', items: [{ id: 'i1', name: 'Uniforms' }, { id: 'i2', name: 'Entry Fees' }] },
+      // 'uniforms' again, under another heading — one dropdown entry, not two.
+      { id: 'c2', name: 'Team Gear', items: [{ id: 'i3', name: 'uniforms' }, { id: 'i4', name: 'Bats' }] },
+    ];
+    const lists = templateChoiceLists(cats);
+    assert.deepEqual(lists.categories, ['Tournaments', 'Team Gear'], 'categories keep the library’s order');
+    assert.deepEqual(lists.items, ['Bats', 'Entry Fees', 'Uniforms']);
+  });
+});
+
+describe('toKnownCategories — one mapping for all three screens that mount the importer', () => {
+  const raw = [{
+    id: 'c1', name: 'Fundraising', items: [
+      { id: 'i1', name: 'Grant', orgId: null, teamId: null, direction: 'out' },
+      // The same WORD on the income side. Mig 248 made the side part of its identity and the
+      // coach's picker shows one at a time — a cost import must never be able to match this.
+      { id: 'i2', name: 'Grant', orgId: 'org1', teamId: null, direction: 'in' },
+      { id: 'i3', name: 'Raffle Licence', orgId: 'org1', teamId: 't1', direction: 'out' },
+    ],
+  }];
+
+  it('keeps cost words only', () => {
+    const [category] = toKnownCategories(raw);
+    assert.deepEqual(category.items.map(i => i.id), ['i1', 'i3']);
+  });
+
+  it('names each word’s tier in words a coach reads', () => {
+    const [category] = toKnownCategories(raw);
+    assert.deepEqual(category.items.map(i => i.source), ['standard', 'team']);
+  });
+
+  it('so an income word is never matched, suggested, or offered in a dropdown', () => {
+    const categories = toKnownCategories(raw);
+    const [row] = reviewBudgetRows(
+      [draft({ categoryName: 'Fundraising', lineName: 'Grant' })], categories, [],
+    );
+    // Matched the COST "Grant" (i1) — the only one left standing — so no new-word warning.
+    assert.equal(row.warning, undefined);
+    assert.deepEqual(templateChoiceLists(categories).items, ['Grant', 'Raffle Licence']);
   });
 });

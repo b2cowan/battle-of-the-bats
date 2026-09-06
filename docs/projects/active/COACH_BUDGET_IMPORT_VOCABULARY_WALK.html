@@ -1,0 +1,675 @@
+<title>The Words in the Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#F1F4F2; --card:#FFFFFF; --sunk:#E5EAE6;
+  --ink:#131A16; --ink-soft:#38423C; --dim:#6A756E;
+  --rule:rgba(19,26,22,.14); --rule-2:rgba(19,26,22,.30); --fill:rgba(19,26,22,.035);
+  --pine:#1F6F4A; --pine-soft:rgba(31,111,74,.10);
+  --amber:#8A5A08; --amber-soft:rgba(138,90,8,.11);
+  --brick:#A33422; --brick-soft:rgba(163,52,34,.10);
+  --shadow:0 1px 1px rgba(19,26,22,.05), 0 12px 28px -20px rgba(19,26,22,.45);
+  --r:12px; --r-sm:7px;
+  --disp:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --mono:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#0F1512; --card:#181F1A; --sunk:#131A16;
+  --ink:#E9EFE9; --ink-soft:#C8D3CA; --dim:#8F9D94;
+  --rule:rgba(220,235,224,.16); --rule-2:rgba(220,235,224,.32); --fill:rgba(220,235,224,.045);
+  --pine:#6FCB94; --pine-soft:rgba(111,203,148,.14);
+  --amber:#E0A44A; --amber-soft:rgba(224,164,74,.14);
+  --brick:#F0907A; --brick-soft:rgba(240,144,122,.13);
+  --shadow:0 1px 1px rgba(0,0,0,.5), 0 12px 28px -20px rgba(0,0,0,.9);
+}}
+:root[data-theme="dark"]{
+  --paper:#0F1512; --card:#181F1A; --sunk:#131A16;
+  --ink:#E9EFE9; --ink-soft:#C8D3CA; --dim:#8F9D94;
+  --rule:rgba(220,235,224,.16); --rule-2:rgba(220,235,224,.32); --fill:rgba(220,235,224,.045);
+  --pine:#6FCB94; --pine-soft:rgba(111,203,148,.14);
+  --amber:#E0A44A; --amber-soft:rgba(224,164,74,.14);
+  --brick:#F0907A; --brick-soft:rgba(240,144,122,.13);
+  --shadow:0 1px 1px rgba(0,0,0,.5), 0 12px 28px -20px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.page{max-width:880px;margin:0 auto;padding:40px 20px 96px}
+p{margin:0}
+strong,b{font-weight:600}
+code{font-family:var(--mono);font-size:.86em}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(34px,5.6vw,52px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:17px;line-height:1.6;color:var(--ink-soft);max-width:64ch;margin-top:15px}
+
+/* ── the bar ── */
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);
+  margin:26px 0 0;padding:10px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.track{flex:1 1 160px;height:6px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:120px}
+.fillbar{height:100%;width:0%;background:var(--pine);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+.count b{color:var(--ink);font-weight:600}
+.btn{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 13px;border-radius:99px;border:1px solid var(--rule-2);background:var(--card);color:var(--ink-soft);min-height:34px}
+.btn:hover{border-color:var(--pine);color:var(--pine)}
+.btn.solid{background:var(--pine);border-color:var(--pine);color:var(--paper)}
+
+/* ── sign-in ── */
+.signin{margin-top:26px;background:var(--sunk);border:1px solid var(--rule);border-left:3px solid var(--pine);
+  border-radius:0 var(--r) var(--r) 0;padding:15px 18px;display:flex;flex-direction:column;gap:7px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.02em;margin:0}
+.signin dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px;align-items:baseline}
+.signin dt{color:var(--dim)}
+.signin dd{margin:0;color:var(--ink);word-break:break-all}
+.signin p{font-size:14px;color:var(--ink-soft)}
+
+/* ── the pinned word ── */
+.pin{margin-top:16px;border:1px dashed var(--rule-2);border-radius:var(--r);padding:15px 18px;background:var(--card);
+  display:flex;flex-direction:column;gap:9px}
+.pin h2{font-family:var(--disp);font-weight:700;font-size:16px;margin:0}
+.pin p{font-size:14.5px;color:var(--ink-soft)}
+.pinrow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;font-family:var(--mono);font-size:12.5px}
+.pinrow label{color:var(--dim)}
+.pinrow input{font:inherit;font-family:var(--mono);padding:7px 9px;min-height:38px;border:1px solid var(--rule-2);
+  border-radius:var(--r-sm);background:var(--sunk);color:var(--ink);min-width:190px}
+
+/* ── parts ── */
+.part{margin-top:48px;border-top:2px solid var(--ink);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.part .eyebrow{color:var(--pine)}
+.part h2{font-family:var(--disp);font-weight:700;font-size:27px;line-height:1.08;margin:0;text-wrap:balance}
+.part p{font-size:15px;color:var(--ink-soft);max-width:68ch;margin-top:3px}
+
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--dim);padding-top:4px;min-width:3.2ch;font-variant-numeric:tabular-nums}
+.step.pass .num{color:var(--pine)}
+.step.flag .num{color:var(--brick)}
+.step-t{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:19px;line-height:1.16;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 8px;border-radius:99px;border:1px solid var(--rule-2);color:var(--dim);white-space:nowrap}
+.tag.key{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.tag.reg{border-color:var(--pine);color:var(--pine);background:var(--pine-soft)}
+.step-body{padding:14px 16px 15px;display:flex;flex-direction:column;gap:12px}
+.why{font-size:15px;line-height:1.58;color:var(--ink-soft);max-width:70ch}
+.why b{color:var(--ink)}
+.why + .why{margin-top:-4px}
+
+/* ── the spreadsheet strip: this subject's own object ── */
+.cells{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;font-family:var(--mono);font-size:12.5px}
+.cell{display:flex;align-items:stretch;border:1px solid var(--rule-2);border-radius:var(--r-sm);overflow:hidden;background:var(--sunk)}
+.cell .col{display:flex;align-items:center;padding:6px 8px;background:var(--fill);border-right:1px solid var(--rule);
+  color:var(--dim);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.cell .val{display:flex;align-items:center;padding:6px 10px;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.cell.want{background:var(--pine-soft);border-color:var(--pine)}
+.cell.want .val{color:var(--pine);font-weight:500}
+.cell.bad{background:var(--brick-soft);border-color:var(--brick)}
+.cell.bad .val{color:var(--brick)}
+.becomes{display:flex;align-items:center;color:var(--dim);font-size:14px;padding:0 2px}
+
+.note{border-left:3px solid var(--pine);background:var(--pine-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;
+  font-size:14.5px;line-height:1.55;max-width:72ch}
+.warnbox{border-left:3px solid var(--amber);background:var(--amber-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;
+  font-size:14.5px;line-height:1.55;max-width:72ch}
+.note b,.warnbox b{color:var(--ink)}
+
+/* ── the answer row ── */
+.answer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:2px}
+.verdict{display:flex;gap:0;border:1px solid var(--rule-2);border-radius:99px;overflow:hidden}
+.verdict button{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:0 15px;min-height:38px;border:0;background:transparent;color:var(--dim)}
+.verdict button + button{border-left:1px solid var(--rule-2)}
+.verdict button[aria-pressed="true"].ok{background:var(--pine);color:var(--paper)}
+.verdict button[aria-pressed="true"].no{background:var(--brick);color:var(--paper)}
+.notes{width:100%;font-family:var(--body);font-size:14.5px;padding:9px 11px;min-height:40px;resize:vertical;
+  border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--sunk);color:var(--ink)}
+.notes::placeholder{color:var(--dim)}
+
+.questions{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.q{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:14px 17px;display:flex;flex-direction:column;gap:9px}
+.q h3{font-family:var(--disp);font-weight:700;font-size:18px;line-height:1.18;margin:0}
+.q p{font-size:14.5px;color:var(--ink-soft);max-width:70ch}
+
+footer{margin-top:52px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:5px 22px;
+  font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.toastwrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:12.5px;
+  letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA §147 · coach money · built 2026-09-06 on dev</p>
+  <h1>The words in the template</h1>
+  <p class="lede">A budget import used to accept <code>Tourney&nbsp;Fees</code> without a word and quietly
+    mint a second cost name beside <code>Entry&nbsp;Fees</code> — for the rest of the season. The Excel
+    template now carries your whole vocabulary and offers it as dropdowns, and the preview stops a
+    duplicate before it exists. Six parts. Everything you tick is saved in this browser;
+    <b>Copy findings</b> at the top hands the lot back to a chat.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b>/<b id="ctotal">0</b> answered</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn solid" id="copy">Copy findings</button>
+  <button class="btn" id="reset">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Where to stand</h2>
+  <dl>
+    <dt>Sign in</dt><dd>uat-coach@uat-test-org.local / UATPassword2026!</dd>
+    <dt>Where</dt><dd>localhost:3000 → org <code>uat-test-org</code> → UAT Test Team → Money</dd>
+    <dt>The door</dt><dd><code>Import ▾</code> at the top of Money → <b>Budget lines</b></dd>
+  </dl>
+  <p>A shared stylesheet and a shared spreadsheet writer both moved. <b>Restart the dev server before
+    you start</b> — a half-warm cache is the one thing that would make this walk lie to you.</p>
+</div>
+
+<div class="pin">
+  <h2>Pin your two words first</h2>
+  <p>This walk is <em>about</em> vocabulary, so it must not assume yours. Open the template's
+    <b>Reference</b> tab in Part A, pick any category with at least two cost names under it, and write
+    them here. Everywhere below, <b>KNOWN</b> is that first cost name and <b>HEADING</b> is its category
+    — the examples in each step show <code>Entry Fees</code> / <code>Tournaments</code> only as an
+    illustration.</p>
+  <div class="pinrow">
+    <label for="pinword">KNOWN =</label>
+    <input id="pinword" type="text" placeholder="e.g. Entry Fees" autocomplete="off">
+    <label for="pincat">HEADING =</label>
+    <input id="pincat" type="text" placeholder="e.g. Tournaments" autocomplete="off">
+  </div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part A</p>
+  <h2>The file itself</h2>
+  <p>Download the <b>month grid</b> template in <b>Excel</b>. Everything here is about the file on your
+    disk — no importing yet.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-id="a1">
+  <div class="step-head"><span class="num">A1</span>
+    <div class="step-t"><h3>Three tabs, and the one you fill in is first</h3>
+      <div class="tags"><span class="tag">excel</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Open the file. Along the bottom you should find <b>Data</b> (the grid you fill in) and
+      <b>Reference</b> (the list). The third tab, <b>Lists</b>, is deliberately hidden — it feeds the
+      dropdowns. Data should be the tab the file opens on.</p>
+    <p class="why">If you're curious, right-click a tab → Unhide will show Lists. It's hidden, not
+      locked away, on purpose: a coach who finds it should be able to look at it.</p>
+  </div>
+</article>
+
+<article class="step" data-id="a2">
+  <div class="step-head"><span class="num">A2</span>
+    <div class="step-t"><h3>Reference lists every word your team can use</h3>
+      <div class="tags"><span class="tag key">the ask</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Three columns: <b>Category</b>, <b>Cost name</b>, <b>Where it comes from</b>. That last
+      one should read <code>Standard</code>, <code>Your club</code> or <code>This team</code>.</p>
+    <p class="why">The question this step exists to answer: <b>is anything missing?</b> Compare it against
+      the item picker on a budget line. Every word the picker offers on the <em>expense</em> side should
+      be here — and nothing from the income side, because an imported row is always a cost.</p>
+    <div class="warnbox"><b>A category with no cost names still gets a row</b>, with the name column blank.
+      That's intended — you should be able to see the heading exists.</div>
+  </div>
+</article>
+
+<article class="step" data-id="a3">
+  <div class="step-head"><span class="num">A3</span>
+    <div class="step-t"><h3>Not one dollar figure anywhere in the file</h3>
+      <div class="tags"><span class="tag reg">standing rule</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Every amount cell blank, on every tab. The template says <em>what</em> to budget for;
+      you say how much. A figure in a downloadable file is a figure the product proposed.</p>
+    <p class="why">The month columns should be your season's own months where the team already has dated
+      money, and a year from this month where it doesn't.</p>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part B</p>
+  <h2>The dropdowns</h2>
+  <p>The half you asked for by name. Do this <b>twice</b> — once in Excel, once after uploading the same
+    file to Google Sheets — because the second one is where this kind of thing usually breaks.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-id="b1">
+  <div class="step-head"><span class="num">B1</span>
+    <div class="step-t"><h3>Category and Line both offer a list</h3>
+      <div class="tags"><span class="tag key">the ask</span><span class="tag">excel + sheets</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Click any empty cell in column <b>A</b> or <b>B</b> — including a long way down, say row
+      200. A caret should appear, and opening it should list your categories in A and every cost name in B.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">A · 200</span><span class="val">▾ your categories</span></span>
+      <span class="cell"><span class="col">B · 200</span><span class="val">▾ every cost name</span></span>
+    </div>
+    <div class="note"><b>Column B is deliberately flat</b> — it lists every cost name, not just the ones
+      under whatever you picked in A. Making it follow column A needs Excel formula tricks that break on a
+      category containing an <code>&amp;</code> and break again in Google Sheets. Pairing a name with the
+      wrong heading is caught in the preview instead — that's step D2.</div>
+  </div>
+</article>
+
+<article class="step" data-id="b2">
+  <div class="step-head"><span class="num">B2</span>
+    <div class="step-t"><h3>It offers — it never refuses</h3>
+      <div class="tags"><span class="tag key">must not regress</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Type something that is <em>not</em> on the list into column B — <code>Charter Bus</code>
+      will do. Excel must accept it with <b>no error popup</b>.</p>
+    <p class="why">This is load-bearing, not a nicety. A coach with a cost we have no word for has to be
+      able to name it; that's the whole reason the importer creates one. A dropdown that refuses would make
+      the feature worse than what it replaced.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">B · typed</span><span class="val">Charter Bus</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">excel</span><span class="val">accepted, no warning</span></span>
+    </div>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part C</p>
+  <h2>The spelling that used to cost you a word</h2>
+  <p>Fill the Data tab by hand for these — the dropdowns would defeat the purpose. Put <b>HEADING</b> in
+    column A, the spelling under test in column B, and any amount in a month column. Then
+    <b>Import ▾ → Budget lines → Upload a file</b>, and read the preview.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-id="c1">
+  <div class="step-head"><span class="num">C1</span>
+    <div class="step-t"><h3>A hyphen no longer invents a second word</h3>
+      <div class="tags"><span class="tag key">the whole point</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Type <b>KNOWN</b> with a hyphen in place of its space — <code>Entry-Fees</code> for
+      <code>Entry Fees</code>. Before today this created a permanent new cost name.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">you type</span><span class="val">Entry-Fees</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">preview shows</span><span class="val">Entry Fees</span></span>
+    </div>
+    <div class="warnbox"><b>Read the Line cell in the preview, not just the verdict.</b> The correction has
+      to be <em>visible to you before you import</em>. If the preview still says <code>Entry-Fees</code> but
+      the import quietly files it under the old word, that's a liberty rather than a correction — and it's
+      the one thing in this build I'd most want you to catch.</div>
+    <p class="why">Try the same with a double space, a trailing full stop, and all-lowercase. All four
+      should land on your library's own spelling.</p>
+  </div>
+</article>
+
+<article class="step" data-id="c2">
+  <div class="step-head"><span class="num">C2</span>
+    <div class="step-t"><h3>It imports onto the word you already had</h3>
+      <div class="tags"><span class="tag reg">no new item</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Import that row. Then open any budget line's item picker and confirm there is
+      <b>still only one</b> of <b>KNOWN</b> in the list — no hyphenated twin.</p>
+    <p class="why">Then check the line on the Budget plan: it should read as <b>KNOWN</b> under
+      <b>HEADING</b>, and Budget vs. Actual should show its spend on the existing row rather than a new one
+      beneath it.</p>
+  </div>
+</article>
+
+<article class="step" data-id="c3">
+  <div class="step-head"><span class="num">C3</span>
+    <div class="step-t"><h3>A category typo stops blocking the row</h3>
+      <div class="tags"><span class="tag">side effect, welcome</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Put <b>HEADING</b> in column A with a trailing full stop — <code>Tournaments.</code> —
+      and a valid cost name in B. That row used to be refused outright with <em>"No category called…"</em>.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">A · you type</span><span class="val">Tournaments.</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">preview</span><span class="val">Tournaments · Adds</span></span>
+    </div>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part D</p>
+  <h2>Words we've never heard of</h2>
+  <p>Three different situations, three different sentences. None of them blocks the row — a genuinely new
+    cost still has to import in one pass.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-id="d1">
+  <div class="step-head"><span class="num">D1</span>
+    <div class="step-t"><h3>"Did you mean…", with a one-tap fix</h3>
+      <div class="tags"><span class="tag key">the ask</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Type <b>KNOWN</b> missing its last letter, or one letter wrong — <code>Entry Fee</code>
+      for <code>Entry Fees</code>. Close, but genuinely a different word, so it is <em>offered</em>, never
+      applied for you.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">you type</span><span class="val">Entry Fee</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">verdict</span><span class="val">Adds · New name — did you mean “Entry Fees”?</span></span>
+    </div>
+    <p class="why">Tap <b>Use “Entry Fees”</b>. The Line cell should change and the warning should disappear
+      as you watch. Then check the reverse: leave it alone, import, and confirm <code>Entry Fee</code>
+      really does become a new word — because sometimes it genuinely is one.</p>
+  </div>
+</article>
+
+<article class="step" data-id="d2">
+  <div class="step-head"><span class="num">D2</span>
+    <div class="step-t"><h3>The right word under the wrong heading</h3>
+      <div class="tags"><span class="tag">catches B1's flat list</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Put <b>KNOWN</b> in column B but a <em>different</em> category in column A. This is what
+      the flat dropdown makes easy, so it's the case the preview has to handle well.</p>
+    <div class="cells">
+      <span class="cell bad"><span class="col">A</span><span class="val">Officials</span></span>
+      <span class="cell"><span class="col">B</span><span class="val">Entry Fees</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">verdict</span><span class="val">“Entry Fees” is already under Tournaments — this adds a second one under Officials.</span></span>
+    </div>
+    <p class="why">The fix button here should offer the <b>heading</b>, not a spelling. Tap it and the
+      Category dropdown should move.</p>
+  </div>
+</article>
+
+<article class="step" data-id="d3">
+  <div class="step-head"><span class="num">D3</span>
+    <div class="step-t"><h3>Something genuinely new says so, plainly</h3>
+      <div class="tags"><span class="tag reg">must still work</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Type a cost nothing in your list resembles — <code>Charter Bus</code>, <code>Ferry
+      Crossing</code>. No suggestion should be offered, because a guess here would be worse than silence.</p>
+    <div class="cells">
+      <span class="cell"><span class="col">you type</span><span class="val">Charter Bus</span></span>
+      <span class="becomes">→</span>
+      <span class="cell want"><span class="col">verdict</span><span class="val">Adds · New name — adds “Charter Bus” to your Tournaments list.</span></span>
+    </div>
+    <p class="why">Import it, then confirm it <b>is</b> in the item picker afterwards. That path was always
+      there and must stay — the change is that you were told.</p>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part E</p>
+  <h2>Nothing else moved</h2>
+  <p>The regressions. E1 is the one that would cost the most if it broke, and it is invisible from inside
+    the app.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-id="e1">
+  <div class="step-head"><span class="num">E1</span>
+    <div class="step-t"><h3>A template you downloaded last week still imports</h3>
+      <div class="tags"><span class="tag key">silent if broken</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The fill-in sheet was renamed from <code>Template</code> to <code>Data</code> so the two
+      new tabs can never be mistaken for the grid. Files already on people's machines still say
+      <code>Template</code>.</p>
+    <p class="why">If you have an older download, import it. If not, take the new file, delete the Reference
+      and Lists tabs, rename Data to <code>Template</code>, and import that. It must behave exactly as
+      before.</p>
+  </div>
+</article>
+
+<article class="step" data-id="e2">
+  <div class="step-head"><span class="num">E2</span>
+    <div class="step-t"><h3>CSV still downloads, and still imports</h3>
+      <div class="tags"><span class="tag">accepted tradeoff</span></div></div></div>
+  <div class="step-body">
+    <p class="why">A CSV can't carry a tab or a dropdown, so it is unchanged: headings and a few example
+      rows. The note above the buttons should say so rather than leaving you to discover it.</p>
+    <p class="why">Fill one in and import it. Everything in Parts C and D should behave identically —
+      that's the half that protects a coach whatever their sheet came from.</p>
+  </div>
+</article>
+
+<article class="step" data-id="e3">
+  <div class="step-head"><span class="num">E3</span>
+    <div class="step-t"><h3>Bills, paste, and the export round trip</h3>
+      <div class="tags"><span class="tag reg">untouched, allegedly</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Three quick ones:</p>
+    <p class="why"><b>Bills schedule</b> — its template should have a Category dropdown but <em>no</em> Line
+      dropdown, because a bill's description is genuinely free text. <b>Paste</b> — paste rows straight into
+      the box instead of uploading; Parts C and D should read the same. <b>Round trip</b> — export the
+      Budget plan, change an amount, import it back.</p>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="part">
+  <p class="eyebrow">Part F</p>
+  <h2>Three I'm not sure about</h2>
+  <p>Not checks. Answer them in the notes and they'll come back with your findings.</p>
+</div>
+<div class="questions">
+
+<div class="q" data-id="f1">
+  <h3>Is a corrected spelling enough of a telling?</h3>
+  <p>When <code>Entry-Fees</code> becomes <code>Entry Fees</code>, the only signal is that the cell now
+    reads differently. There's no sentence saying <em>"matched to your existing wording"</em>. I left it
+    silent because a warning on something we're confident about is noise — but a coach who typed the
+    hyphen deliberately might not notice we overruled them.</p>
+</div>
+
+<div class="q" data-id="f2">
+  <h3>Is a flat list of sixty cost names actually useful?</h3>
+  <p>Column B offers every word your team has, regardless of the category in column A. It kills the typo,
+    which was the ask. But sixty entries in one dropdown may be worse to scan than typing — and it invites
+    exactly the mismatch D2 exists to catch. The alternative is no dropdown on that column at all, leaving
+    the Reference tab to do the teaching.</p>
+</div>
+
+<div class="q" data-id="f3">
+  <h3>Does the CSV need something after all?</h3>
+  <p>CSV users get the preview's protection but none of the vocabulary. The only way to give a CSV the list
+    is to write every category and cost name into it as blank rows — which reads as the product proposing a
+    sixty-line budget, and fills the preview with skipped rows. I chose not to. Say if that's wrong.</p>
+</div>
+</div>
+
+<footer>
+  <span>Owner QA §147</span>
+  <span>Built 2026-09-06 on dev · no migration</span>
+  <span>COACH_BUDGET_IMPORT_VOCABULARY_PLAN.md</span>
+</footer>
+
+</div>
+<div class="toastwrap" id="toastwrap"></div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'fl-qa-147';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private window — the page still works */ }
+  }
+
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var questions = Array.prototype.slice.call(document.querySelectorAll('.q'));
+
+  // ── the pinned words, substituted into every step that names them ──────────
+  var pinWord = document.getElementById('pinword');
+  var pinCat = document.getElementById('pincat');
+  pinWord.value = state._word || '';
+  pinCat.value = state._cat || '';
+  pinWord.addEventListener('input', function () { state._word = pinWord.value; save(); });
+  pinCat.addEventListener('input', function () { state._cat = pinCat.value; save(); });
+
+  // ── build the answer row for every step ───────────────────────────────────
+  steps.forEach(function (step) {
+    var id = step.getAttribute('data-id');
+    var body = step.querySelector('.step-body');
+
+    var row = document.createElement('div');
+    row.className = 'answer';
+
+    var verdict = document.createElement('div');
+    verdict.className = 'verdict';
+    var ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'ok'; ok.textContent = 'Right';
+    ok.setAttribute('aria-label', 'Step ' + id.toUpperCase() + ' is right');
+    var no = document.createElement('button');
+    no.type = 'button'; no.className = 'no'; no.textContent = 'Not right';
+    no.setAttribute('aria-label', 'Step ' + id.toUpperCase() + ' is not right');
+    verdict.appendChild(ok); verdict.appendChild(no);
+    row.appendChild(verdict);
+
+    var notes = document.createElement('textarea');
+    notes.className = 'notes';
+    notes.rows = 1;
+    notes.placeholder = 'What you saw (optional unless it is not right)';
+    notes.setAttribute('aria-label', 'Notes for step ' + id.toUpperCase());
+
+    body.appendChild(row);
+    body.appendChild(notes);
+
+    var entry = state[id] || {};
+    notes.value = entry.notes || '';
+
+    function paint() {
+      var v = (state[id] || {}).verdict || '';
+      ok.setAttribute('aria-pressed', String(v === 'ok'));
+      no.setAttribute('aria-pressed', String(v === 'no'));
+      step.classList.toggle('pass', v === 'ok');
+      step.classList.toggle('flag', v === 'no');
+    }
+    function set(v) {
+      state[id] = state[id] || {};
+      state[id].verdict = state[id].verdict === v ? '' : v;
+      save(); paint(); tally();
+    }
+    ok.addEventListener('click', function () { set('ok'); });
+    no.addEventListener('click', function () { set('no'); });
+    notes.addEventListener('input', function () {
+      state[id] = state[id] || {};
+      state[id].notes = notes.value;
+      save();
+    });
+    paint();
+  });
+
+  // ── the three questions take notes only ───────────────────────────────────
+  questions.forEach(function (q) {
+    var id = q.getAttribute('data-id');
+    var notes = document.createElement('textarea');
+    notes.className = 'notes';
+    notes.rows = 2;
+    notes.placeholder = 'Your answer';
+    notes.setAttribute('aria-label', 'Answer for question ' + id.toUpperCase());
+    notes.value = (state[id] || {}).notes || '';
+    notes.addEventListener('input', function () {
+      state[id] = state[id] || {};
+      state[id].notes = notes.value;
+      save();
+    });
+    q.appendChild(notes);
+  });
+
+  var cdone = document.getElementById('cdone');
+  var ctotal = document.getElementById('ctotal');
+  var fillbar = document.getElementById('fillbar');
+  ctotal.textContent = String(steps.length);
+
+  function tally() {
+    var done = steps.filter(function (s) {
+      var e = state[s.getAttribute('data-id')];
+      return e && e.verdict;
+    }).length;
+    cdone.textContent = String(done);
+    fillbar.style.width = (steps.length ? (done / steps.length) * 100 : 0) + '%';
+  }
+  tally();
+
+  // ── paste-back ────────────────────────────────────────────────────────────
+  function toast(text) {
+    var wrap = document.getElementById('toastwrap');
+    wrap.innerHTML = '';
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = text;
+    wrap.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 2200);
+  }
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var lines = ['Owner QA §147 — the words in the template', ''];
+    if (state._word || state._cat) {
+      lines.push('Pinned: KNOWN = ' + (state._word || '—') + ' · HEADING = ' + (state._cat || '—'), '');
+    }
+    var flagged = [];
+    steps.forEach(function (s) {
+      var id = s.getAttribute('data-id');
+      var e = state[id] || {};
+      var title = s.querySelector('h3').textContent.trim();
+      var mark = e.verdict === 'ok' ? 'RIGHT' : e.verdict === 'no' ? 'NOT RIGHT' : 'not walked';
+      lines.push(id.toUpperCase() + ' · ' + mark + ' — ' + title);
+      if (e.notes) lines.push('    ' + e.notes.replace(/\n/g, '\n    '));
+      if (e.verdict === 'no') flagged.push(id.toUpperCase());
+    });
+    lines.push('');
+    questions.forEach(function (q) {
+      var id = q.getAttribute('data-id');
+      var e = state[id] || {};
+      lines.push(id.toUpperCase() + ' · ' + q.querySelector('h3').textContent.trim());
+      lines.push('    ' + (e.notes ? e.notes.replace(/\n/g, '\n    ') : '(no answer)'));
+    });
+    lines.push('');
+    lines.push(flagged.length
+      ? 'To fix: ' + flagged.join(', ')
+      : 'Nothing flagged.');
+
+    var text = lines.join('\n');
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); toast('Findings copied'); }
+      catch (e) { toast('Copy failed — select the page'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Findings copied'); }, fallback);
+    } else { fallback(); }
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every verdict and note on this walk?')) return;
+    state = {};
+    save();
+    window.location.reload();
+  });
+})();
+</script>

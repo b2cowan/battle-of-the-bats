@@ -9,6 +9,7 @@ import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import { toKnownCategories } from '@/lib/coach-budget-import';
 import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
 import RowEditButton from '@/components/coaches/RowEditButton';
 import { monthKeyOf, monthYearBands, periodRangeLabel, MONTH_WINDOW } from '@/lib/coach-budget-months';
@@ -3431,7 +3432,7 @@ export function BudgetPlanPanel({
         <BudgetImportSheet
           orgSlug={orgSlug}
           teamId={teamId}
-          categories={categories.map(c => ({ id: c.id, name: c.name, items: c.items.map(i => ({ id: i.id, name: i.name })) }))}
+          categories={toKnownCategories(categories)}
           // COST lines only — the same rule the import's write path enforces. A sheet row has no
           // kind, so it is always a cost; offering an expected-funding line as a match target
           // would let "Fundraising" in a spreadsheet overwrite the money the team plans to raise.

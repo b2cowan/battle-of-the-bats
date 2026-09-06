@@ -5,6 +5,7 @@ import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 import type { BudgetCategoryWithItems, RepBudgetPlan, RepTeamExpense, RepTeamImportEvent } from '@/lib/types';
 import type { MonthKey } from '@/lib/coach-budget-months';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import { toKnownCategories } from '@/lib/coach-budget-import';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { isFundingKind } from '@/lib/coach-budget-totals';
@@ -212,9 +213,7 @@ export default function MoneyImportMenu({
         <BudgetImportSheet
           orgSlug={orgSlug}
           teamId={teamId}
-          categories={importPrep.categories.map(c => ({
-            id: c.id, name: c.name, items: c.items.map(i => ({ id: i.id, name: i.name })),
-          }))}
+          categories={toKnownCategories(importPrep.categories)}
           // COST lines only, matching what the import's write path enforces: a sheet row has no
           // kind, so offering a funding line as a match target would let "Fundraising" in a
           // spreadsheet overwrite the money the team plans to RAISE.

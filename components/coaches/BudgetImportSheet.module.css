@@ -190,6 +190,24 @@
   max-width: 34ch;
 }
 
+/* The one-tap correction beside a "did you mean" warning. Quiet — it is an offer, not the
+   recommended action, and the row imports perfectly well without it. */
+.suggestBtn {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--primary-light);
+  background: rgba(var(--primary-rgb), 0.10);
+  border: 1px solid var(--primary-light);
+  border-radius: 999px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.suggestBtn:hover { background: rgba(var(--primary-rgb), 0.18); }
+
 .blockedNote {
   display: flex;
   align-items: flex-start;
@@ -200,6 +218,14 @@
   color: var(--text-secondary);
 }
 .blockedNote svg { color: var(--warning); flex-shrink: 0; margin-top: 0.15rem; }
+
+/* ⚠ THE TAP FLOOR IS A TOUCH RULE, so the height it needs is bought at touch widths only
+   (`check:layout` runs it to 768px). A 44px pill in every desktop row would add a third of the
+   review table's height to buy nothing a mouse can use — and this table's existing controls are
+   already carrying touch debt, which is a reason not to ADD to it, not a licence to. */
+@media (max-width: 768px) {
+  .suggestBtn { min-height: 44px; padding-inline: 0.7rem; }
+}
 
 /* ── the content breakpoint ──────────────────────────────────────────────── */
 @media (max-width: 640px) {

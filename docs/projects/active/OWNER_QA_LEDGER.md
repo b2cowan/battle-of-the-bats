@@ -18658,3 +18658,98 @@ periods**, the split-line When-cell fold, and the report's footnote sentences tr
 Excel (merged/wrapped cells under the table) and PDF (prose, flowing to a new page) exports while
 CSV deliberately carries none. In-app help search for "split across periods" and "when does this
 money move" both resolve to the rewritten article.
+## §147 · The budget template teaches its own vocabulary — a Reference tab, real dropdowns, and a review step that stops minting duplicate cost words — BUILT 2026-09-06 on dev, awaiting QA · walk artifact `854b93f7`
+
+**The ask, from the owner (2026-09-06).** *"An accounting user who wants to import a budget file may
+not know exactly the names available for the standard category/items — when we export a template,
+can we include all options so they don't mistype something and create a new item simply for some
+slightly different characters?"* Then: *"the dropdowns sound like a great idea as well."*
+
+**What was actually wrong, and it was worse than the ask.** The template shipped **six** example
+rows out of a vocabulary of forty to seventy words, and the two halves of a row were policed
+completely differently:
+
+- a **category** we did not hold **blocked** the row — the coach had to fix it;
+- a **cost name** we did not hold sailed through as a clean `add`, and the commit route then
+  **created a new budget item for the team**, silently.
+
+Matching was `trim().toLowerCase()` and nothing else, so `Entry  Fees`, `Entry-Fees`,
+`Entry Fees.` and `Entry Fee` each minted a permanent second word beside `Entry Fees` — splitting
+one cost across two rows on Budget vs. Actual for the rest of the season, with the only remedy
+being the item-merge door after the fact.
+
+**Four parts shipped.**
+
+1. **The Excel template is now three sheets.** `Data` (the fill-in grid), `Reference` (every
+   category and cost name the team may use, with *Standard / Your club / This team* beside each),
+   and a hidden `Lists` sheet feeding the dropdowns. The fill-in sheet was renamed `Template` →
+   `Data` so `parseXLSX`'s first resolution rule wins outright and the vocabulary sheets can never
+   be mistaken for the grid. **A template downloaded before this change still imports** — it falls
+   through the parser's second rule, and a test pins that.
+2. **Dropdowns on Category and Line**, rows 2–301 (matching `MAX_IMPORT_ROWS`). `allowBlank`, and
+   **`showErrorMessage` off** — the dropdown offers, it never refuses, because a coach must still
+   be able to name a cost we have no word for.
+3. **The review step stops the duplicate.** Trivial spelling differences (punctuation, spacing,
+   case, `&`/`and`, apostrophes) **snap to the library's own spelling before review** — and only
+   when exactly one library word normalises to it, because mig 248 keys uniqueness on `lower(name)`
+   and a team can genuinely hold both `Entry Fees` and `Entry-Fees`. Anything still unmatched
+   **warns** and, where there is one good candidate, offers a one-tap **Use "Entry Fees"**. The
+   Line cell also gained a `<datalist>` of that category's words.
+4. **Cost words only (mig 248), which was a live defect.** The importer read items with **no
+   direction filter**, so a spending row could match an income word like "Grant" that the coach's
+   own picker never shows on that side. Fixed at all three mounts through one new
+   `toKnownCategories` helper (they were each writing the mapping by hand), and the `23505`
+   create-race recovery gained the same predicate — without it, a team holding that name on both
+   sides matched two rows and `maybeSingle()` failed, reporting *"Could not add this to your item
+   list"* for a race the code knows how to survive.
+
+**Decisions taken, do not re-open.**
+- **The Line dropdown is FLAT, not dependent on the row's category.** A dependent list needs
+  `INDIRECT()` over one Excel defined name per category; a defined name cannot hold a space or an
+  `&`, so "League & Fees" and "Team Gear" both break it, two sanitised names can collide, and none
+  of it survives Google Sheets. A mismatched pair is caught by part 3 instead, which says something
+  more useful than a greyed-out cell: *"Entry Fees is already under Tournaments."*
+- **The dropdown source is a RANGE, never an inline list.** Excel caps an inline validation formula
+  at 255 characters and then silently drops the dropdown — forty short names blow through it.
+- **The CSV template is unchanged.** It cannot carry a tab or a dropdown. Those coaches are covered
+  by part 3, which works whatever the sheet came from. Stated in the UI copy and the help article.
+- **Warnings never block, and near-matches are never auto-applied.** `Entry Fee` and `Entry Fees`
+  may be two real things.
+- **Adds only.** An `update` matched an existing budget *line*, so the coach is editing rather than
+  inventing — and `Verdict` renders `reason ?? warning`, so a warning there would be invisible.
+
+**Verification.** typecheck clean · **3,044 unit tests green** · full `verify:changed` exit 0
+(spelling, CSS purity, dead selectors, contrast, dictionary, export registry, demos all ✓) ·
+**a new round-trip test** (`coach-budget-template-workbook.test.ts`) writes the workbook, reloads
+the bytes, and proves the three sheets, the hidden one, the validation on rows 2 / 7 / 301, and
+that **our own importer reads the `Data` sheet and ignores both vocabulary sheets**. Template size
+measured at **10 KB vs 7 KB** without dropdowns, so the 600 validation entries cost nothing worth
+tuning.
+
+⚠ **`showErrorMessage` reads back as `undefined`, not `false`, and that is the correct file** —
+OOXML defaults the attribute to off when absent, so ExcelJS drops it on write. The test asserts the
+behaviour (`notEqual(…, true)`), not the serialisation.
+
+**Not verified here:** the rendered layout sweep (needs a dev server + seeded fixture). The one new
+control is the suggestion pill; it takes a **44px min-height at ≤768px** so it does not add to this
+table's existing touch debt, but that is argued rather than measured.
+
+**Help + demos, same unit of work.** The coach help article gained the Reference tab, the dropdowns,
+the CSV caveat and the "did you mean" behaviour, plus search terms. **The demo narration mentions
+neither the import door nor the template** — checked, not assumed — so nothing there went stale, and
+a demo moment was judged wrong for this: a prospect has no file to upload, and the door is a
+workflow rather than a screen state.
+
+**Plan:** `COACH_BUDGET_IMPORT_VOCABULARY_PLAN.md` + `_PM_BRIEF.md`.
+
+### The walk
+
+To be run against a team with a real taxonomy. The parts that matter most:
+
+- **Part A** — the Excel file itself, opened in **both Excel and Google Sheets**: three tabs, the
+  Reference list complete, **no amount anywhere**, and the dropdowns present and non-refusing.
+- **Part C step 2** is the one to be honest about: type `Entry-Fees` and confirm the preview shows
+  you `Entry Fees` **before** you import. If that correction is invisible, the feature is taking a
+  liberty rather than offering one.
+- **Part E** is the regression that costs the most if it broke: a template downloaded **before**
+  today must still import.
