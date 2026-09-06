@@ -97,6 +97,89 @@ export type XlsxExtraSheet = {
   hidden?: boolean;
 };
 
+/**
+ * Where one dropdown's values come from: a fixed range for the whole column, or — for a list that
+ * narrows with a neighbouring cell — a function handed the sheet row, returning that row's formula.
+ *
+ * ⚠ NO LEADING `=`. OOXML stores a validation formula without one; ExcelJS writes the string
+ * through verbatim, so an `=` here produces `==IF(...)` and Excel drops the dropdown silently.
+ *
+ * ⚠ 255 CHARACTERS, formula included. Past that Excel does not complain — the dropdown simply
+ * never appears, which looks exactly like a dropdown nobody opened.
+ */
+export type XlsxColumnChoice = string | ((sheetRow: number) => string);
+
+/**
+ * A conditional tint on one column's fill-in cells — Excel paints the cell when the formula is
+ * TRUE, and repaints it the moment the coach changes anything it depends on.
+ *
+ * ⚠ WRITE THE FORMULA FOR THE FIRST FILL-IN ROW. Unlike a validation formula (one per cell), a
+ * conditional rule is one rule over the whole range, and Excel shifts its relative references down
+ * for you — so `$A2` on a range starting at row 2 means "this row's column A" all the way down.
+ * Anchoring the row (`$A$2`) instead would paint every row according to row 2, which looks like
+ * the feature working right up until the first coach fills in row 3.
+ *
+ * ⚠ A TINT IS NOT A REFUSAL, and the colour has to carry that. It marks a cell the product will
+ * ACCEPT and act on — a name it is about to create, a category it is about to reject — so it earns
+ * a legend somewhere the coach can read, or it is just an unexplained colour on their spreadsheet.
+ */
+export type XlsxColumnFlag = {
+  /**
+   * A function is handed the sheet's ACTUAL first fill-in row and returns the formula for it.
+   *
+   * ⚠ PREFER THE FUNCTION. A literal string has to hard-code that row, which is only ever right
+   * because no re-importable file carries a masthead — and the day one does, the dropdowns keep
+   * working (the writer derives their row from the live sheet) while these tints silently paint
+   * the wrong rows. The function ties the two together.
+   */
+  formula: string | ((firstDataRow: number) => string);
+  fillArgb: string;
+  fontArgb?: string;
+};
+
+/** One line of a guide sheet. `as` decides how it reads; a fill makes it wear a colour it explains. */
+export type XlsxGuideLine = {
+  text?: string;
+  as?: 'title' | 'heading' | 'bullet' | 'body';
+  /** Paint this line's own cell — a legend entry rendered IN the colour it is describing. */
+  fillArgb?: string;
+  fontArgb?: string;
+};
+
+/**
+ * A page of prose in front of the data sheet — what this file is and how to fill it in.
+ *
+ * ⚠ COLUMN A ONLY, AND THAT IS A HARD RULE, NOT A LAYOUT PREFERENCE. `parseXLSX` reads a sheet
+ * named `Instructions` as key/value METADATA, taking column A as the key and column B as the
+ * value (that is how the tournament importers carry settings). Put anything in column B here and
+ * this guide starts feeding the parser made-up settings from its own sentences.
+ *
+ * ⚠ The name must stay one the parser skips — `Instructions` or `Reference` — because this sheet
+ * sits FIRST in the tab strip, which is exactly where the "first sheet that is not instructions or
+ * reference" fallback would otherwise land.
+ */
+export type XlsxGuideSheet = {
+  name: string;
+  lines: XlsxGuideLine[];
+  /** Width of the single column, in characters. Defaults to a comfortable reading measure. */
+  width?: number;
+};
+
+/**
+ * `0 → 'A'`. Deliberately a second copy of the helper in `coach-budget-import.ts` rather than a
+ * shared import: that module is pulled into a server route that has no business bundling ExcelJS,
+ * and one exported function from here would drag the whole library across.
+ */
+function colLetter(index: number): string {
+  let n = index;
+  let out = '';
+  do {
+    out = String.fromCharCode(65 + (n % 26)) + out;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return out;
+}
+
 export type XlsxRowStyle = {
   /** Bold the whole row — section headings, category rows, totals. */
   bold?: boolean;
@@ -178,8 +261,16 @@ export type XlsxOptions = {
      * ⚠ THE DROPDOWN OFFERS, IT NEVER REFUSES — `showErrorMessage` is off and blanks are allowed,
      * so a value that is not on the list still types in. Every list this repo puts in front of a
      * coach is a convenience over a field that must still accept a word we have never heard of.
+     * That is doubly true of a DEPENDENT list: narrowing what is offered must never narrow what is
+     * accepted, or the narrowing becomes a refusal the coach cannot argue with.
+     *
+     * ⚠ A FUNCTION MAKES THE LIST DEPEND ON THE ROW. A plain string is one range for the whole
+     * column. A function is handed the sheet row and returns that row's own source, which is what a
+     * list keyed to a neighbouring cell needs — the formula has to name `$A5` on row 5. Excel reads
+     * a validation formula relative to the cell it is attached to, and this writer attaches one per
+     * cell, so the row the function is given is the row the formula must name.
      */
-    columnChoices?: (string | undefined)[];
+    columnChoices?: (XlsxColumnChoice | undefined)[];
     /**
      * The message Excel pops beside a cell the moment it is SELECTED, index-aligned with `headers`.
      * Only meaningful where `columnChoices` also has an entry — it rides the same validation object.
@@ -193,6 +284,16 @@ export type XlsxOptions = {
      * rejected, it is silently cut, so keep both short enough to read whole.
      */
     columnChoicePrompts?: ({ title: string; body: string } | undefined)[];
+    /**
+     * Conditional tints on the fill-in cells, index-aligned with `headers`. Applied over the same
+     * row span the dropdowns cover, so `choiceRowCount` governs both.
+     */
+    columnFlags?: (XlsxColumnFlag | undefined)[];
+    /**
+     * A prose sheet placed FIRST and opened first. See `XlsxGuideSheet` for the two rules that keep
+     * it from being mistaken for data.
+     */
+    guideSheet?: XlsxGuideSheet;
     /**
      * How many rows below the header the dropdowns cover. Defaults to the data rows actually
      * written, which is almost never what a template wants — a template's whole point is the empty
@@ -218,6 +319,37 @@ export function buildXLSXWorkbook(
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'FieldLogicHQ';
   workbook.created = new Date();
+
+  /* ── The guide, BEFORE the data sheet ──────────────────────────────────────────────────────
+     ⚠ CREATED FIRST BECAUSE THAT IS THE ONLY WAY TO ORDER IT. ExcelJS fixes a sheet's position at
+     `addWorksheet`, so a page meant to be read before the grid cannot be appended with the other
+     extra sheets — it has to exist before the grid does.
+     ⚠ Ordering does NOT change what the importer reads: `parseXLSX` resolves `Data` by name first,
+     and only falls back to tab order when there is no sheet by that name. */
+  if (opts?.guideSheet) {
+    const guide = workbook.addWorksheet(opts.guideSheet.name);
+    guide.getColumn(1).width = opts.guideSheet.width ?? 96;
+    for (const line of opts.guideSheet.lines) {
+      const row = guide.addRow([]);
+      if (!line.text) { row.height = 6; continue; } // a spacer, not a sentence
+      const cell = row.getCell(1);
+      cell.value = line.as === 'bullet' ? `•   ${line.text}` : line.text;
+      cell.font = {
+        bold: line.as === 'title' || line.as === 'heading',
+        size: line.as === 'title' ? 14 : 10.5,
+        color: { argb: line.fontArgb ?? (line.as === 'heading' ? 'FF1E293B' : 'FF3A3730') },
+      };
+      cell.alignment = { wrapText: true, vertical: 'middle', indent: line.as === 'bullet' ? 1 : 0 };
+      if (line.fillArgb) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: line.fillArgb } };
+      }
+      // A wrapped cell is auto-fitted by Excel only when it is NOT merged; these are not, so one
+      // line's worth of height is enough until the text outgrows the column.
+      // The `+ 4` cushion is the one the report notes already use — a wrapped line that lands one
+      // character over an estimate reads as a clipped sentence, and costs only whitespace to avoid.
+      row.height = Math.max(line.as === 'title' ? 22 : 15, Math.ceil(cell.value.toString().length / 90) * 14 + 4);
+    }
+  }
 
   const ws = workbook.addWorksheet(sheetName);
 
@@ -424,16 +556,45 @@ export function buildXLSXWorkbook(
      Written per CELL rather than per column: ExcelJS models validation on the cell, and a column
      object's style does not carry it. `getRow` past the last written row creates it on demand,
      which is exactly what a template wants — the empty rows are the ones a coach fills in. */
+  const flagLastRow = headerRow.number + Math.max(opts?.choiceRowCount ?? rows.length, 1);
+
+  /* ── Conditional tints ─────────────────────────────────────────────────────────────────────
+     ONE rule per column over the whole fill-in span, not one per cell: Excel shifts a conditional
+     formula's relative references down the range itself, which is both far smaller in the file and
+     the only way the rule keeps working after a coach inserts a row. */
+  if (opts?.columnFlags?.some(Boolean)) {
+    opts.columnFlags.forEach((flag, colIndex) => {
+      if (!flag) return;
+      const letter = colLetter(colIndex);
+      ws.addConditionalFormatting({
+        ref: `${letter}${headerRow.number + 1}:${letter}${flagLastRow}`,
+        rules: [{
+          type: 'expression',
+          priority: colIndex + 1,
+          formulae: [
+            typeof flag.formula === 'function' ? flag.formula(headerRow.number + 1) : flag.formula,
+          ],
+          style: {
+            fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: flag.fillArgb } },
+            ...(flag.fontArgb ? { font: { color: { argb: flag.fontArgb } } } : {}),
+          },
+        }],
+      });
+    });
+  }
+
   if (opts?.columnChoices?.some(Boolean)) {
-    const lastRow = headerRow.number + Math.max(opts.choiceRowCount ?? rows.length, 1);
+    const lastRow = flagLastRow;
     opts.columnChoices.forEach((source, colIndex) => {
       if (!source) return;
       const hint = opts.columnChoicePrompts?.[colIndex];
       for (let r = headerRow.number + 1; r <= lastRow; r += 1) {
+        // A fixed range is the same string on every row; a dependent list is asked for this row's.
+        const formula = typeof source === 'function' ? source(r) : source;
         ws.getRow(r).getCell(colIndex + 1).dataValidation = {
           type: 'list',
           allowBlank: true,
-          formulae: [source],
+          formulae: [formula],
           showErrorMessage: false,
           // Excel's own limits, enforced here so a long sentence is caught in review rather than
           // arriving on a coach's screen with its last clause missing.
@@ -482,6 +643,14 @@ export function buildXLSXWorkbook(
     // ⚠ 'veryHidden' would put it beyond the sheet-unhide menu. A coach who finds this tab and
     // wonders what it is should be able to look at it, not be locked out of their own file.
     if (extra.hidden) sheet.state = 'hidden';
+  }
+
+  /* Open ON the guide. Being sheet one is not enough — Excel restores whichever tab was active
+     when the file was last saved, and a freshly written file has no such record to restore. */
+  if (opts?.guideSheet) {
+    workbook.views = [{
+      x: 0, y: 0, width: 20000, height: 20000, firstSheet: 0, activeTab: 0, visibility: 'visible',
+    }];
   }
 
   return workbook;

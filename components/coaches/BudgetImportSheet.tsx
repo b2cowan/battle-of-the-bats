@@ -151,7 +151,7 @@ export default function BudgetImportSheet({
     /* The Excel file carries the team's whole vocabulary: a readable Reference tab, a hidden Lists
        tab the dropdowns point at, and the sentence each dropdown says when a coach lands on it.
        None of it ever holds an amount (D-G1) — it says what a team can budget FOR, never how much. */
-    const { rows, options } = budgetTemplateWorkbook(headers, categories);
+    const { rows, options } = budgetTemplateWorkbook(headers, categories, shape);
     await downloadXLSX(`${name}.xlsx`, headers, rows, TEMPLATE_DATA_SHEET, options);
   }
 

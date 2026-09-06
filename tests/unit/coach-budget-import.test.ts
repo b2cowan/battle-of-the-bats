@@ -7,7 +7,7 @@ import {
   monthGridTemplateHeaders, templateExampleRows, templateMonths,
   LIST_TEMPLATE_HEADERS, PAYABLES_TEMPLATE_HEADERS,
   normalizeWord, snapBudgetRowsToLibrary, snapPayableRowsToLibrary,
-  referenceSheetRows, templateChoiceLists, toKnownCategories,
+  referenceSheetRows, templateChoiceLists, toKnownCategories, lineChoiceFormula,
   type KnownCategory, type ExistingBudgetLine, type DraftBudgetRow,
 } from '../../lib/coach-budget-import.ts';
 import type { ParsedImportFile } from '../../lib/import/types.ts';
@@ -493,15 +493,42 @@ describe('the template’s vocabulary sheets (D-G1 holds here too)', () => {
     ]);
   });
 
-  it('builds dropdown sources that are de-duplicated, with cost names sorted for a flat list', () => {
+  it('builds dropdown sources: a de-duplicated fallback list, and a GROUPED pair block', () => {
     const cats: KnownCategory[] = [
       { id: 'c1', name: 'Tournaments', items: [{ id: 'i1', name: 'Uniforms' }, { id: 'i2', name: 'Entry Fees' }] },
-      // 'uniforms' again, under another heading — one dropdown entry, not two.
+      // 'uniforms' again, under another category — one entry in the flat fallback, not two…
       { id: 'c2', name: 'Team Gear', items: [{ id: 'i3', name: 'uniforms' }, { id: 'i4', name: 'Bats' }] },
     ];
     const lists = templateChoiceLists(cats);
     assert.deepEqual(lists.categories, ['Tournaments', 'Team Gear'], 'categories keep the library’s order');
     assert.deepEqual(lists.items, ['Bats', 'Entry Fees', 'Uniforms']);
+    /* …but BOTH copies survive in the pair block, because that is the point: a word can genuinely
+       live under two categories, and the dependent dropdown has to offer it under each. Sorted
+       WITHIN a category, never across — the grouping is what MATCH + COUNTIF read. */
+    assert.deepEqual(lists.pairs, [
+      ['Tournaments', 'Entry Fees'],
+      ['Tournaments', 'Uniforms'],
+      ['Team Gear', 'Bats'],
+      ['Team Gear', 'uniforms'],
+    ]);
+  });
+
+  it('the Line dropdown’s formula names the row’s own category cell, and stays inside Excel’s cap', () => {
+    // Column 0 is Category on both budget shapes; a four-digit row is the longest it ever gets.
+    const first = lineChoiceFormula(2, 0, 40, 60);
+    assert.ok(first.includes('$A2'), first);
+    assert.ok(!first.includes('$A3'), 'row 2’s formula must not reach another row');
+    assert.ok(!first.startsWith('='), 'OOXML stores a validation formula without a leading =');
+    // The ranges must end where the Lists sheet's data ends — header row, then n rows.
+    assert.ok(first.includes('$C$2:$C$61'), `pair block should end at row 61: ${first}`);
+    assert.ok(first.includes('$B$2:$B$41'), `fallback list should end at row 41: ${first}`);
+    assert.ok(lineChoiceFormula(9999, 0, 300, 300).length <= 255, 'formula outgrew Excel’s 255-char cap');
+  });
+
+  it('the formula follows the Category column when it is not the first one', () => {
+    // Nothing ships this shape today, but the payables sheet already proves Category moves.
+    assert.ok(lineChoiceFormula(5, 2, 10, 10).includes('$C5'));
+    assert.ok(lineChoiceFormula(5, 26, 10, 10).includes('$AA5'), 'column letters past Z');
   });
 });
 
