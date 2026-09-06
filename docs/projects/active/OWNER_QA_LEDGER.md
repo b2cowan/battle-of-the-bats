@@ -17643,7 +17643,7 @@ some money in; the mockup drew PLEDGED on that state, which reads wrong once $25
 arrived. **Known deviation to confirm:** Delete at the room's foot is pressable and answers (owner
 ruling 2026-08-30), not the dead-button-plus-sentence the build prompt restated.
 
-## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, committed `e046df39`, awaiting QA · walk artifact `b5bbcd8d`
+## §136 · The Player Dues chase card is GONE, and the whole-team nudge with it — BUILT 2026-09-03, committed `e046df39` · the confirmation + the courtesy committed `885e56a1` 2026-09-05 · awaiting QA · walk artifact `b5bbcd8d`
 
 **Owner instruction (the whole brief):** *"let's remove this 'remind all 8' banner, we already have
 a 'send dues reminders' button and automatic reminders, this is not a good use of real estate on the
@@ -17718,7 +17718,7 @@ overview's Premium-adds sentence, trued up by this very commit, still names the 
 §140 renamed it **Remind this family**. One control, two spellings, which is the one-spelling
 ruling's own failure mode. Raised as a call in the artifact's Part F.
 
-**⚠⚠ THE SURVIVING NUDGE NOW ASKS FIRST, AND HONOURS THE COURTESY (owner ruling 2026-09-05, built same day).**
+**⚠⚠ THE SURVIVING NUDGE NOW ASKS FIRST, AND HONOURS THE COURTESY (owner ruling 2026-09-05, committed `885e56a1` 2026-09-05, review fixes included).**
 Owner: *"for 'remind this family', should we have a confirmation modal since it triggers an email to a
 parent?"* Answering it surfaced the real gap, which was not the missing dialog: **one button reached
 two letters with two different protections.** A late or nearly-due family got the installment notice
