@@ -78,9 +78,39 @@ export interface ExportCatalogEntry {
   omittedReason?: string;
   /**
    * Implementation phase. Present on entries that are planned but not yet built.
-   * Remove when the ExportMenu is live.
+   *
+   * ⚠ IT MEANS THE WHOLE SURFACE, NOT ONE FORMAT. Two entries used it to mean "a PDF is coming
+   * later" while the screen exported happily in three other formats — and to anything reading the
+   * schema (this registry's gate, the operator page, the help table) that says the export does not
+   * exist at all. `formats` already records which formats are live. Remove this when the export
+   * ships; never use it to park a format.
    */
   plannedPhase?: string;
+  /**
+   * CAN THE PRODUCT READ THIS FILE BACK? The path of the importer that does, or absent for a
+   * one-way export.
+   *
+   * ⚠⚠ THIS IS LOAD-BEARING IN TWO DIRECTIONS, which is why it is recorded rather than remembered.
+   *
+   * Outward, it is a real capability a club asks about before buying — *can we get our data out,
+   * and can we fix it in Excel and put it back?* — and until now nothing in the product recorded
+   * the answer.
+   *
+   * Inward, it decides whether the file may carry a MASTHEAD. A round-trip file has to start on
+   * its column row, because the importer reads the first non-empty row as the headings. On
+   * 2026-09-05 two separate changes nearly put a title block on one — the second was
+   * **Coaches → Team Schedule**, whose importer is written to read the export's own column
+   * spellings while nothing on that screen says so. It looks exactly like a harmless dataset.
+   * `tests/unit/export-masthead-guard.test.ts` refuses it now; this field is how a human finds
+   * out before the build does.
+   */
+  roundTrip?: string;
+  /**
+   * A file whose columns happen to match an importer's aliases without being designed to — a
+   * coach could reasonably try it and get a wrong result. Recorded so the answer to "can I
+   * re-upload this?" is never a shrug.
+   */
+  roundTripCaveat?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,24 +141,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
       // Found while writing the Working-sheets prompt; fixed in passing 2026-08-24.
       'Export the registered team list with coach names, emails, division, payment status, and slot assignments. The PDF prints a division-grouped register of the registered teams.',
   },
-  {
-    id: 'tournament-registrations-legacy',
-    label: 'Tournament Registrations (legacy /admin route)',
-    module: 'tournaments',
-    page: 'Teams (legacy)',
-    file: 'app/admin/teams/page.tsx',
-    formats: ['xlsx', 'csv'],
-    defaultFormat: 'xlsx',
-    audiences: ['org_admin'],
-    includesSensitiveFields: true,
-    sensitiveFieldPolicy: 'excluded_by_default',
-    respectsCurrentFilters: true,
-    serverSide: false,
-    helpSummary: 'Legacy route — mirrors the canonical registrations export.',
-    omittedReason:
-      'Legacy /admin route. Confirm with owner whether still user-visible; if deprecated, canonical route only. See Open Decision #1 in MERGED_EXPORTS_IMPLEMENTATION_PLAN.md.',
-    plannedPhase: 'Phase C',
-  },
+  /* ⚰ THE THREE `*-legacy` ENTRIES ARE GONE (2026-09-06). They described the old top-level
+     `/admin/teams`, `/admin/schedule` and `/admin/results` routes, which were deleted at some
+     point without their entries — so the registry went on listing three exports nobody could
+     reach, each carrying an "Open Decision" note asking whether the route was still user-visible.
+     The answer had been no for long enough that the files were gone. An entry describing a page
+     that does not exist is not a record, it is a rumour, and `check:export-catalog` now refuses
+     one. */
 
   // ── Tournament: Schedule ─────────────────────────────────────────────────
   {
@@ -147,23 +166,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     serverSide: false,
     helpSummary:
       'Export the game schedule with date, time, division, teams, venue, and status. iCal format adds games directly to Google Calendar, Apple Calendar, or Outlook. The PDF is a wall copy — one section per day, so a parent can find one game at a glance.',
-  },
-  {
-    id: 'tournament-schedule-legacy',
-    label: 'Tournament Schedule (legacy /admin route)',
-    module: 'tournaments',
-    page: 'Schedule (legacy)',
-    file: 'app/admin/schedule/page.tsx',
-    formats: ['xlsx', 'csv'],
-    defaultFormat: 'xlsx',
-    audiences: ['org_admin'],
-    includesSensitiveFields: false,
-    respectsCurrentFilters: true,
-    serverSide: false,
-    helpSummary: 'Legacy route — mirrors the canonical schedule export.',
-    omittedReason:
-      'Legacy /admin route. Confirm with owner whether still user-visible; if deprecated, canonical route only. See Open Decision #1 in MERGED_EXPORTS_IMPLEMENTATION_PLAN.md.',
-    plannedPhase: 'Phase C',
   },
 
   // ── Tournament: Results ──────────────────────────────────────────────────
@@ -184,24 +186,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary:
       'Export game results with scores, division, and status. The PDF is the printed register — one section per division, landscape. It deliberately OMITS the three score-audit columns (submitted by / at / source), which are working data and stay in xlsx and csv.',
   },
-  {
-    id: 'tournament-results-legacy',
-    label: 'Tournament Results (legacy /admin route)',
-    module: 'tournaments',
-    page: 'Results (legacy)',
-    file: 'app/admin/results/page.tsx',
-    formats: ['xlsx', 'csv'],
-    defaultFormat: 'xlsx',
-    audiences: ['org_admin'],
-    includesSensitiveFields: false,
-    respectsCurrentFilters: true,
-    serverSide: false,
-    helpSummary: 'Legacy route — mirrors the canonical results export.',
-    omittedReason:
-      'Legacy /admin route. Confirm with owner whether still user-visible; if deprecated, canonical route only. See Open Decision #1 in MERGED_EXPORTS_IMPLEMENTATION_PLAN.md.',
-    plannedPhase: 'Phase C',
-  },
-
   // ── Accounting: Ledger ───────────────────────────────────────────────────
   {
     id: 'accounting-ledger',
@@ -227,7 +211,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Early Access Leads',
     module: 'platform_admin',
     page: 'Early Access',
-    file: 'app/api/platform-admin/early-access/export/route.ts',
+    file: 'app/platform-admin/early-access/EarlyAccessClient.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['platform_admin'],
@@ -338,6 +322,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'coaches-roster',
+    roundTripCaveat: 'Several columns alias-match the bulk-add importer (#, first/last name, position, DOB, guardian email/phone, notes), so a coach may reasonably try to re-upload this. It is NOT a round trip: the combined "Guardian Name" column has no matching alias, Status and Secondary Position are not read, and the importer is add-only — re-uploading duplicates every player rather than updating them.',
     label: 'Coaches Portal — Team Roster',
     module: 'coaches',
     page: 'Team Roster',
@@ -376,7 +361,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Coaches Portal — Player Dues',
     module: 'coaches',
     page: 'Player Dues',
-    file: 'app/[orgSlug]/coaches/teams/[id]/accounting/dues/panel.tsx',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
@@ -393,7 +378,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Coaches Portal — Family Dues Statement',
     module: 'coaches',
     page: 'Player Dues',
-    file: 'app/[orgSlug]/coaches/teams/[id]/accounting/dues/panel.tsx',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
     formats: ['pdf'],
     defaultFormat: 'pdf',
     minPlan: 'club',
@@ -439,10 +424,11 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
        month/quarter columns from the By-period view, BvA's own date-header format), with a PDF
        added — the flat one-row-per-line dataset it described is gone. */
     id: 'coaches-budget-lines',
+    roundTrip: 'lib/coach-budget-import.ts',
     label: 'Coaches Portal — Budget plan',
     module: 'coaches',
     page: 'Money → Export ▾',
-    file: 'lib/coach-money-exports.ts',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
@@ -470,10 +456,11 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
        out — `income` and `refund` — each finally mean what their heading says. `register` is the
        whole book, balance column and all. */
     id: 'coaches-expenses-payables',
+    roundTripCaveat: 'The Payment Schedule view shares Due date / What / Amount with the bills importer by alias coincidence only; Payee, Category, Deposit and Balance would come back empty. Not a designed round trip.',
     label: 'Coaches Portal — Transactions & payables',
     module: 'coaches',
     page: 'Money → Export ▾',
-    file: 'lib/coach-money-exports.ts',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
@@ -495,7 +482,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Coaches Portal — Fundraisers',
     module: 'coaches',
     page: 'Money → Export ▾',
-    file: 'lib/coach-money-exports.ts',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
@@ -513,10 +500,11 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   // ── Planned: Phase D2 (P1 new table exports) ────────────────────────────
   {
     id: 'coaches-schedule',
+    roundTrip: 'lib/coach-schedule-import.ts',
     label: 'Coaches Portal — Team Schedule',
     module: 'coaches',
     page: 'Team Schedule',
-    file: 'app/[orgSlug]/coaches/teams/[id]/schedule/page.tsx',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx',
     formats: ['xlsx', 'csv', 'ics'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
@@ -532,14 +520,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     // the owner agreed (2026-08-25, Schedules pass checkpoint 1) that it gets one in its OWN pass:
     // it is a new document with its own column decisions, not a variant of the tournament schedule.
     // See PDF_EXPORT_QUALITY_PLAN.md §4.
-    plannedPhase: 'PDF: Phase 2, its own pass',
   },
   {
     id: 'house-league-season-schedule',
     label: 'House League Season Schedule',
     module: 'house_league',
     page: 'Season Schedule',
-    file: 'app/[orgSlug]/admin/house-league/seasons/[id]/schedule/page.tsx',
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
     formats: ['xlsx', 'csv', 'ics'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
@@ -551,14 +538,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Export season schedule with date, time, teams, venue, status and score.',
     // A PDF is owed here too, behind the coach one — a league season is pinned in a clubhouse
     // rather than on a fridge (owner, 2026-08-25).
-    plannedPhase: 'PDF: Phase 2, after the coach schedule',
   },
   {
     id: 'house-league-season-standings',
     label: 'House League Season Standings',
     module: 'house_league',
     page: 'Season Standings',
-    file: 'app/[orgSlug]/admin/house-league/seasons/[id]/standings/page.tsx',
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
@@ -568,15 +554,13 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary: 'Export season standings by team with W, L, T, points, GF, and GA.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
   },
   {
     id: 'house-league-season-teams',
     label: 'House League Season Teams',
     module: 'house_league',
     page: 'Season Teams',
-    file: 'app/[orgSlug]/admin/house-league/seasons/[id]/teams/page.tsx',
+    file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
@@ -586,8 +570,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary: 'Export season team list with team name, division, and player count.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
   },
   {
     id: 'accounting-budget-plan',
@@ -604,8 +586,6 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary: 'Export budget plan by category and line with total, allocated, and collected amounts.',
-    omittedReason: 'Not yet implemented — planned Phase D2.',
-    plannedPhase: 'Phase D2',
   },
   {
     // Catalog true-up 2026-08-22 (PDF Export Quality Phase 1): the xlsx/csv exports have been
@@ -681,7 +661,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Platform Admin — Organizations',
     module: 'platform_admin',
     page: 'Organizations',
-    file: 'app/platform-admin/orgs/page.tsx',
+    file: 'app/platform-admin/orgs/OrgsClient.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['platform_admin'],
@@ -695,7 +675,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Platform Admin — Customer Users',
     module: 'platform_admin',
     page: 'Customer Users',
-    file: 'app/platform-admin/customer-users/page.tsx',
+    file: 'app/platform-admin/customer-users/CustomerUsersClient.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['platform_admin'],
@@ -712,7 +692,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Platform Admin — Audit Log',
     module: 'platform_admin',
     page: 'Audit Log',
-    file: 'app/platform-admin/audit/page.tsx',
+    file: 'app/platform-admin/audit/AuditExportClient.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['platform_admin'],
@@ -720,6 +700,102 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: true,
     helpSummary: 'Server-side export of filtered platform audit log entries via the API route. Supports xlsx and csv format parameters.',
+  },
+
+  /* ── Surfaces that were exporting without an entry (added 2026-09-06) ──────────────────────
+     Five screens shipped an export and never joined the registry. None of them was hidden — they
+     are on live nav — so the registry was simply not kept. That is what `check:export-catalog`
+     now prevents: a screen cannot gain an Export button without gaining a row here. */
+
+  // ── Coaches: Budget vs. Actual ───────────────────────────────────────────
+  {
+    id: 'coaches-budget-vs-actual',
+    label: 'Coach Budget vs. Actual',
+    module: 'coaches',
+    page: 'Money → Budget vs. Actual',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx',
+    formats: ['xlsx', 'csv', 'pdf'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'coach_money',
+    audiences: ['coach'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary:
+      'Export the team\'s budget against what actually happened, in whichever shape is on screen — the Statement, By activity, or a column per month. The file opens on a header naming the team, the season, the reading it was cut on and the day it was true, and closes with the notes explaining what the figures mean.',
+  },
+
+  // ── Coaches: Club money ──────────────────────────────────────────────────
+  {
+    id: 'coaches-club-money',
+    label: 'Club Money (allocations & requests)',
+    module: 'coaches',
+    page: 'Money → Club',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'coach_money',
+    audiences: ['coach'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary: 'Export what the club has billed the team and what the team has asked the club to cover, with each item\'s status.',
+  },
+
+  // ── Tournaments: Venues ──────────────────────────────────────────────────
+  {
+    id: 'tournament-venues',
+    label: 'Tournament Venues',
+    module: 'tournaments',
+    page: 'Venues & Facilities',
+    file: 'app/[orgSlug]/admin/tournaments/venues/page.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'tournament',
+    audiences: ['org_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary: 'Export the venue and facility list with addresses and field names.',
+  },
+
+  // ── Platform: Feedback queue ─────────────────────────────────────────────
+  {
+    id: 'platform-admin-feedback',
+    label: 'Feedback Queue',
+    module: 'platform_admin',
+    page: 'Support & Diagnostics → Feedback',
+    file: 'app/platform-admin/feedback/FeedbackExportClient.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    audiences: ['platform_admin'],
+    /* In-app feedback carries whatever a customer typed and the account it came from. Internal
+       surface, platform staff only — but it is customer content, so it is marked as such. */
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification:
+      'Platform admin only, never reachable by a customer. Triage requires the submitter and the message together — an anonymised feedback queue cannot be answered or followed up.',
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary: 'Export the in-app feedback queue for triage. Platform staff only.',
+  },
+
+  // ── Platform: Observability issues ───────────────────────────────────────
+  {
+    id: 'platform-admin-observability-issues',
+    label: 'Observability Issues',
+    module: 'platform_admin',
+    page: 'Support & Diagnostics → Observability',
+    file: 'app/platform-admin/observability/IssuesExportClient.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary: 'Export the error and issue list for a period, to work through outside the console. Platform staff only.',
   },
 ];
 
