@@ -124,6 +124,37 @@ or screen-reader support of any kind** — no Escape, no focus trap, no dialog r
 was survivable, over a panel it meant Escape closed the record underneath it. And the History fold
 could not open itself after the fact, so a coach recording a payment saw nothing happen.
 
+## The bill room's running order, built 2026-09-06 (Owner QA ✅ PASSED 2026-09-06)
+
+**Raised by the owner reading a live bill:** *"installments then the general details and then payment
+history — it reads weird."* He was right, and the reason is worth stating: the room told three
+stories in a row — what is **owed**, what the bill **is**, and what money actually **moved** — and
+the two that are one conversation had the least-visited block sitting between them.
+
+**What a coach sees differently.** Opening a bill now reads: the four figures, the schedule, then
+**Payments** — and *then* the bill's filing, payee, tags, method and note at the foot. The schedule
+says "$540.00 still owing" and the payment that explains it is on the next line rather than five form
+rows and a fold away. The history fold, which opens itself the moment a payment is recorded, now
+opens where the coach is already looking instead of below the cut of a laptop screen.
+
+The band above the schedule also stops being half empty: it now carries the bill's identity in one
+line (*Facilities · Diamond Permits · test · E-Transfer*), so "what is this bill?" is answered at a
+glance up top, while changing it happens in the block at the foot. Details stays fully open with
+every row drawn — collapsing it was considered and rejected, because it would put a door back on
+fields we deliberately made editable in place.
+
+**A bug fixed in the same pass, on the Record money form.** Entering a $17 payment against a bill
+with $540 owing, the summary chip read "still owing ▼ $523.00" — which a coach reads as *"the
+balance drops by $523"*. The figure was right; the arrow was the lie. Every other chip on that strip
+reports a change, and this one reports where the bill ends up. It now reads **"still owing →
+$523.00"**: same figure, a mark that says "this is a balance, not a movement". The wording does not
+change — *still owing* is the product's settled phrase and it stays.
+
+**What was deliberately not done.** Payments were not nested inside the installments they settled.
+A payment isn't owned by one piece — it lands on one and spills into the next, so one $600 payment
+can partly settle two. Nesting it would mean inventing a row the coach never entered, or filing it
+under one piece and being wrong about where the money went.
+
 ## Success criteria
 
 - A coach can describe how to open any money record in one sentence.
@@ -133,4 +164,5 @@ could not open itself after the fact, so a coach recording a payment saw nothing
 - Demo tours and help articles describe the new screens in the same release that ships them.
 
 **Priority:** high (owner-initiated). **Plan:** `COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md`.
-**Mockups:** artifact `11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc`.
+**Mockups:** artifact `11607f0a-e0c1-4bb4-bbd5-b6f81d834fbc` (the ruling); artifact
+`6c24f0e6-5e42-4858-ac86-1cb2df790adf` (the bill room's running order + the consequence chip, 2026-09-06).

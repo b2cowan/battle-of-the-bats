@@ -5319,7 +5319,17 @@ function MoneyRecordsPanel({
       <>
         {moves.length > 0 && (
           <div className={`${styles.moveStrip} ${styles.formGridFull}`} aria-label="What this changes">
-            {moves.map(m => (
+            {moves.map(m => {
+              /* ⚠ THE MARK IS DECORATION AND THE WORD IS THE ANSWER. A chip that leant on a mark
+                 alone would say the same thing to a screen reader for "spent more" and "received
+                 more" — the two facts the quantity exists to separate.
+                 ⚠⚠ `reads` IS ASKED FIRST, AND THAT ORDER IS THE FIX (owner, 2026-09-06). A result
+                 chip carries a BALANCE, not a change: reading its mark off `direction` drew
+                 "still owing ▼ $523.00" on a $17 payment — the figure a coach came for, dressed as
+                 the size of the drop. See `reads` in coach-money-consequences.ts. */
+              const mark = m.reads === 'result' ? '→'
+                : m.direction === 'up' ? '▲' : m.direction === 'down' ? '▼' : null;
+              return (
               <span key={`${m.label}-${m.quantity ?? ''}`} className={styles.moveChip}>
                 <span className={styles.moveChipLabel}>
                   {m.label}{m.quantity ? <span className={styles.moveChipQty}> · {m.quantity}</span> : null}
@@ -5331,14 +5341,12 @@ function MoneyRecordsPanel({
                   m.tone !== 'cash' ? styles.moveNeutral
                     : m.direction === 'up' ? styles.moveUp
                       : m.direction === 'down' ? styles.moveDown : styles.moveFlat}`}>
-                  {/* ⚠ THE ARROW IS DECORATION AND THE WORD IS THE ANSWER. A chip that leant on an
-                      arrow alone would say the same thing to a screen reader for "spent more" and
-                      "received more" — the two facts the quantity exists to separate. */}
-                  {m.direction === 'up' ? <span aria-hidden>▲ </span> : m.direction === 'down' ? <span aria-hidden>▼ </span> : null}
+                  {mark && <span aria-hidden>{mark} </span>}
                   {m.amount !== null ? fmt(m.amount) : m.words}
                 </span>
               </span>
-            ))}
+              );
+            })}
           </div>
         )}
         {body}

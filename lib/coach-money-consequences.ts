@@ -67,6 +67,31 @@ export interface ConsequenceMove {
    * other chip keeps ordinary ink and lets its arrow say the direction.
    */
   tone?: 'cash';
+  /**
+   * ⚠⚠ **IS THIS FIGURE A CHANGE, OR WHERE SOMETHING ENDS UP?** (owner, 2026-09-06.) Every chip on
+   * a strip is read as a CHANGE — cash goes down *by* $17, a budget line goes up *by* what was
+   * spent, a family is owed *more by* what they fronted — and the arrow is what says so. One chip
+   * is not a change: a bill's `still owing` is the balance the payment LEAVES BEHIND. Wearing the
+   * same ▼ it read "still owing drops by $523.00" on a $17 payment, which is the whole bill's
+   * balance dressed as a decrease.
+   *
+   * ⚖ THE NUMBER WAS RIGHT AND THE ARROW WAS THE LIE, which is why the fix is a mark and not a
+   * figure. A `result` chip renders `→` instead of ▲/▼: same slot, same label, same words, visibly
+   * a different kind of claim. Two alternatives were rejected on the owner's mockup —
+   *   · make it a delta too ("still owing ▼ $17.00"): consistent, and useless — the strip would
+   *     then say the payment amount three times and never show the balance the coach came for;
+   *   · drop the arrow and leave a bare figure: an absent mark reads as an oversight, and this
+   *     strip's whole design is that a missing mark must be a HOLE YOU CAN SEE.
+   *
+   * ⚠ `direction` STILL TELLS THE TRUTH ON A RESULT CHIP (the balance did fall), and the renderer
+   * ignores it — the mark is chosen from this field FIRST. Do not re-derive the arrow from
+   * `direction` without checking this, or the defect comes straight back.
+   *
+   * ⚠ A screen reader was never wrong here: the mark is decorative in both grammars, so what is
+   * announced is "Spring classic entry, still owing, $523.00" either way. Only the sighted reading
+   * was broken, and only the sighted reading changes.
+   */
+  reads?: 'move' | 'result';
 }
 
 export type ConsequenceKind = 'cost' | 'income' | 'refund' | 'commitment' | 'billPayment';
@@ -165,8 +190,13 @@ export function consequenceMoves(input: ConsequenceInput): ConsequenceMove[] {
       const moves: ConsequenceMove[] = [cash(paidByFamily ? 'flat' : 'down', amount)];
       if (input.billName) {
         const left = input.billRemainingAfter ?? 0;
+        /* ⚠⚠ THE ONE RESULT CHIP IN THE PRODUCT — see `reads` above. `still owing` is where the
+           bill ENDS UP, not what the payment moved, and it must not wear a delta's arrow.
+           ⚖ The cleared case was already right and is the shape this copies: it states a standing
+           ("fully paid") in words, with no arrow and no figure. This makes the part-paid case
+           behave like its own other half. */
         moves.push(left > 0.005
-          ? { label: input.billName, quantity: 'still owing', direction: 'down', amount: left }
+          ? { label: input.billName, quantity: 'still owing', direction: 'down', amount: left, reads: 'result' }
           : { label: input.billName, direction: 'flat', amount: null, words: 'fully paid' });
       }
       if (paidByFamily) moves.push({ label: paidByFamily, quantity: 'owed', direction: 'up', amount });

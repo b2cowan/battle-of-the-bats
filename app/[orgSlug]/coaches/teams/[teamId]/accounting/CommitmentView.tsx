@@ -128,7 +128,7 @@ interface Props {
    * field and its foot holds this component's Delete and save strip. One of the two had to own the
    * shell; the one holding the draft is the one that cannot be split.
    */
-  room: Omit<RoomShellProps, 'open' | 'ariaLabel' | 'title' | 'children' | 'footer' | 'sentinel' | 'recordKey' | 'facts' | 'factsTitle' | 'width'>;
+  room: Omit<RoomShellProps, 'open' | 'ariaLabel' | 'title' | 'children' | 'footer' | 'fields' | 'sentinel' | 'recordKey' | 'facts' | 'factsTitle' | 'width'>;
   /**
    * A question raised by a control in the room's BODY — removing a recorded payment.
    *
@@ -184,6 +184,13 @@ function seedFiling(expense: RepTeamExpense, categories: BudgetCategoryWithItems
     itemId: expense.budgetItemId,
     itemName: (category?.items ?? []).find(i => i.id === expense.budgetItemId)?.name ?? '',
   };
+}
+
+/** "Category · Item" — ONE spelling of a filing's label, read by the room's identity line and by
+ *  the value a read-only coach sees in Details. Two hand-rolled joins of the same two fields is
+ *  how the separator drifts between the top of a room and the bottom of it (`/simplify`). */
+function filingLabel(filing: Filing): string {
+  return filing ? [filing.categoryName, filing.itemName].filter(Boolean).join(' · ') : '';
 }
 
 function seedPayee(expense: RepTeamExpense): PayeeSelection | null {
@@ -471,6 +478,32 @@ export default function CommitmentView({
   const reversal = ledgerReversalPreview(standing, expense.paidByPlayerId);
   const money = (n: number) => `$${n.toFixed(2)}`;
 
+  /**
+   * ⚖⚖ THE BILL'S IDENTITY, ON THE DOORS' ROW (owner, 2026-09-06, ruled with the running order).
+   *
+   * The shell reserves the left of that row for a record's quiet facts — a sponsor's note, a
+   * drive's participation fraction — and a bill was the one room that never filled it, so the band
+   * above its schedule held a single right-aligned button and a lot of nothing. It matters more now
+   * that `fields` sits at the FOOT of the room: without this line, opening a bill shows its name,
+   * four figures and a schedule, and says nothing about what the bill actually is until the coach
+   * scrolls past the History fold. A glance is answered here; a change is still made down there.
+   *
+   * ⚠⚠ BUILT FROM THE DRAFT, NEVER FROM THE PROP. These three facts are live controls forty rows
+   * below, and the panel's copy of the bill is only re-read ~1.2s after a save lands — sourcing the
+   * summary from `expense` would leave the top of the room stating an old payee while the coach
+   * looks at the new one they just typed. The title field is already drawn from the draft for the
+   * same reason.
+   *
+   * ⚠ NOTHING IS INVENTED FOR AN EMPTY BILL. A brand-new bill with no filing, payee or method
+   * summarises to nothing and the row keeps its old shape — a summary of nothing is noise, and the
+   * "every row is drawn" rule below is about the FIELDS block, which still draws all five.
+   */
+  const identity = [
+    filingLabel(filing),
+    payee?.displayName ?? '',
+    method,
+  ].map(part => part.trim()).filter(Boolean).join(' · ');
+
   return (
     <>
       {/* ⚠ THE GUARD FOLLOWS THE VISIBLE TAB. A room under a hidden tab must not intercept clicks
@@ -494,6 +527,10 @@ export default function CommitmentView({
         /* ⚠ NOT REMOUNTED BY THE WALK (see the docblock) — so the floor needs telling when the
            record changes, or focus stays on a control that went with the last bill. */
         recordKey={expense.id}
+        /* The one-line summary of the fields at the foot of the room — see `identity` above. The
+           shell clamps it to a line and owes the full text to whoever wrote it, hence the title. */
+        facts={identity || undefined}
+        factsTitle={identity || undefined}
         ariaLabel={`${expense.description || 'Untitled bill'} — bill`}
         title={canWrite ? (
           /* ⚠⚠ IT HAS TO LOOK LIKE A FIELD (owner, §114 walk 2026-08-27: *"why can't we edit the
@@ -603,15 +640,10 @@ export default function CommitmentView({
             </>
           ) : undefined)
         }
-      >
-      {/* ⚖⚖ THE SCHEDULE COMES FIRST, AND THE FIELDS FOLLOW IT (Phase C, the mockup's R3 and the
-          owner's own 2026-08-26 order restored). On the PAGE the fields sat on top, because the
-          page's scroll was reserved for the schedule and the short fixed things belonged above it.
-          A room answers "where does this stand?" in its TILES, so the reason that put a form above
-          the schedule is gone with the figure it was protecting: the schedule is what the room is
-          FOR, and Details is what the bill IS. */}
-      {children}
-
+        /* ⚖⚖ WHAT THE BILL IS, BELOW WHAT ACTUALLY HAPPENED (the running-order ruling, owner
+           2026-09-06). This block used to sit in the room's BODY, between the schedule and the
+           History fold — see the note beside `{children}` below, and RoomShell's anatomy. */
+        fields={<>
       {/* ── What the bill IS ──────────────────────────────────────────────────────────────────
           ⚠⚠ EVERY ROW IS DRAWN, SET OR NOT, and that is a fix rather than a layout preference. An
           unset field used to be omitted entirely, so a coach could not tell a bill HAS no note from
@@ -620,9 +652,11 @@ export default function CommitmentView({
           product an assistant can read a bill's payee or its tags; the values stay, the editors do
           not appear.
           ⚠ IT WEARS THE SCHEDULE'S OWN SECTION LABEL (Phase C, the mockup's two `seclab`s). On the
-          page a header and a standing figure separated these blocks; in the room the schedule ends
-          and the fields begin with nothing between them, so the block that has a name gets a
-          matching one rather than a rule of its own. */}
+          page a header and a standing figure separated these blocks; in the room nothing but a
+          section name separates one block from the next, so the block that has a name gets a
+          matching one rather than a rule of its own. ⚠ The clause this used to carry — "the
+          schedule ends and the fields begin with nothing between them" — stopped being true on
+          2026-09-06: the History fold sits between them now (see `fields` on the shell above). */}
       <p className={styles.payDrawerLabel}>Details</p>
       <dl className={styles.commitFields}>
         <dt>Filing</dt>
@@ -650,7 +684,7 @@ export default function CommitmentView({
               })}
             />
           ) : (
-            <span>{[filing?.categoryName, filing?.itemName].filter(Boolean).join(' · ') || <span className={styles.commitEmpty}>Not filed</span>}</span>
+            <span>{filingLabel(filing) || <span className={styles.commitEmpty}>Not filed</span>}</span>
           )}
         </dd>
 
@@ -733,6 +767,16 @@ export default function CommitmentView({
           )}
         </dd>
       </dl>
+        </>}
+      >
+      {/* ⚖⚖ THE SCHEDULE IS THE ROOM'S BODY, AND NOW THE WHOLE OF IT (the running-order ruling,
+          owner 2026-09-06 — see `fields` above and RoomShell's anatomy note). Phase C had already
+          moved the fields off the top of the page and under the schedule; what it could not do was
+          get them past HISTORY, which the shell pins after the body. So the room read plan →
+          identity → actual, with the least-visited block in it standing between the two that are
+          one conversation: the schedule says "$540.00 still owing" on a $1,000 piece, and the
+          payment that explains it was five form rows and a fold away. */}
+      {children}
       </RoomShell>
     </>
   );

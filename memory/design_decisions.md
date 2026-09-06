@@ -2,6 +2,62 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-06 — A room reads plan → actual → identity; and a chip that reports a balance may not wear a delta's mark
+
+**Decision (owner, 2026-09-06, from a live bill and a true-size mockup — artifact
+`6c24f0e6-5e42-4858-ac86-1cb2df790adf`).** Raised as *"installments then the general details and then
+payment history — it reads weird."* **⚖ RATIFIED — Owner QA PASSED 2026-09-06**, confirmed by the owner on the built screen in the same session (no ledger § assigned). Settled, not provisional.
+
+**1. ⚠⚠ A ROOM TELLS THREE STORIES AND TWO OF THEM ARE ONE CONVERSATION.** What is **owed** (the
+record's own table), what money actually **moved** (History), and what the record **is** (its
+fields). The first two answer each other — a schedule reading *"$540.00 still owing"* on a $1,000
+piece is explained by a payment in the fold — so **the fields go LAST**, and `RoomShell` grew a
+`fields` slot below the History fold to allow it. ⚠ **This EXTENDS the 2026-09-04 ruling ("in a room
+the schedule leads and Details follows"), it does not reverse it**: Details still follows the
+schedule, and now also follows History, which the shell pins after the body and which the earlier
+ruling had no way to get past.
+
+**⚠ The general form: order a record's blocks by how often they are READ, not by how permanent they
+are.** A block set once at creation and corrected rarely is reference material — it belongs where a
+reader goes on purpose, never on the path between two blocks that explain each other. The
+supporting evidence was the fold's own behaviour: History opens itself when a payment lands, and
+below five form rows that self-opening happened off-screen.
+
+**2. A SUMMARY EARNS THE ROW ITS DETAIL VACATED.** With the fields at the foot, the band above the
+table carries the record's identity in one line (*Facilities · Diamond Permits · test · E-Transfer*)
+— a glance is answered at the top, a change is made at the bottom. ⚠⚠ **Built from the DRAFT, never
+from the saved record**: those facts are live autosaving controls further down and the list behind
+is re-read on a delay, so a summary sourced from the record states an old value while the coach
+looks at the new one. **Nothing is invented for an empty record** — an unset record summarises to
+nothing and the row keeps its old shape.
+
+**3. ⚠⚠ A CHIP THAT REPORTS A BALANCE MAY NOT WEAR A DELTA'S MARK.** A $17.00 payment against a bill
+owing $540.00 drew **"still owing ▼ $523.00"** — the balance the payment leaves behind, dressed as
+the size of the drop. **The number was right and the arrow was the lie**, which is why the fix is a
+MARK and not a figure: ▲/▼ means *a change of this size*, **→** means *this is where it ends up*.
+Every other chip on a consequence strip is a change (cash down *by*, a line up *by*, a family owed
+more *by*), and one row of figures that quietly mixes two units is a reading defect, not a wording
+one.
+
+⚠ **The distinguishing mark must be VISIBLE.** Dropping the arrow and leaving a bare figure was
+rejected: an absent mark reads as an oversight, and the whole design of that strip is that a missing
+mark is a hole you can see. Making the balance a delta instead was rejected too — the strip would
+then state the payment amount three times and never show the balance the coach came for. ⚠ The
+cleared case was already right ("fully paid", in words, no arrow, no figure) and is the shape the
+part-paid case now copies. **A screen reader was never wrong here** — the mark is decorative in both
+grammars — which is worth remembering: an accessible reading is not evidence that the sighted one is
+sound.
+
+**4. Rejected: one merged timeline** with each payment nested under the installment it settled. A
+payment is not owned by an installment — it lands on one and **spills forward** into the next — so
+nesting forces either a split row the coach never entered, or filing it under one piece and lying
+about where the money went. **Two adjacent lists tell the truth with no invented rows.**
+
+**5. Rejected: collapsing the fields into a second fold.** It would shorten the room and put a door
+back onto fields that were deliberately made editable in place. Reference material goes last; it
+does not go behind a click.
+
+
 ### 2026-09-06 — A panel whose only exits are its own rows dead-ends for a read-only reader; and a door is named for the tab it opens
 
 **Decision (owner, QA §143 + §144, walked together 7/7 with zero flags).** Ratified on the built

@@ -168,9 +168,25 @@ test.describe('the team bill’s room', () => {
     await expect(bill.locator('[class*="tileLabel"]')).toHaveText(['Total', 'Paid', 'Left', 'Next due']);
     // The chip counts PIECES: the fixture's bill has one settled piece of two.
     await expect(bill.getByText(/1 of 2 paid/i)).toBeVisible();
-    // The schedule leads the body; Details follows it.
     await expect(bill.getByText(/^Scheduled/)).toBeVisible();
     await expect(bill.getByText('Details', { exact: true })).toBeVisible();
+
+    /* ⚖⚖ THE RUNNING ORDER IS ITSELF THE CLAIM (owner, 2026-09-06): the PLAN, then what actually
+       MOVED, then what the bill IS. Asserted as an order rather than three presence checks,
+       because the defect it guards against is a block MOVING, not a block vanishing — Details sat
+       between the schedule and History for a phase, which put the answer to "why is $540 still
+       owing?" five form rows and a fold below the question. */
+    /* ⚠⚠ LOWER-CASED, AND THAT IS NOT DEFENSIVE TYPING — `innerText` returns RENDERED text, so it
+       carries `text-transform` with it. Both section labels are uppercased in CSS, so the room
+       reads "SCHEDULED — 2 INSTALLMENTS" and "DETAILS" here while the source says "Scheduled" and
+       "Details" — and the assertion failed on its first run for exactly that reason. (The
+       `getByText('Details')` check above passes either way: Playwright matches DOM text content,
+       which is NOT transformed. Two matchers, two different strings, same element.) */
+    const reading = (await bill.innerText()).toLowerCase();
+    const at = (mark: string) => reading.indexOf(mark);
+    expect(at('scheduled'), 'the schedule leads the room').toBeGreaterThan(-1);
+    expect(at('history'), 'what actually moved follows the plan').toBeGreaterThan(at('scheduled'));
+    expect(at('details'), 'what the bill IS is the room’s footer').toBeGreaterThan(at('history'));
 
     // ── The walk: named destinations, a position count, and it actually moves. ──
     const walk = bill.getByRole('navigation', { name: 'Other bills' });

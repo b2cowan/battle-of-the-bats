@@ -14,9 +14,22 @@ import s from './RoomShell.module.css';
  * 2026-09-02; plan `docs/projects/active/COACH_MONEY_LIST_ROOM_QUESTION_PLAN.md`).
  *
  * Anatomy, in order: header (name + status chip) · tiles · the action row · the record's own
- * table (children) · History fold · a pinned foot with the once-in-a-record doors and the named
- * Prev / Next. Desktop: a centered overlay at the dues drawer's width. Phone: the shared
- * `.modalOverlay` rule makes it a full-screen sheet with a back arrow, no opt-in.
+ * table (children) · History fold · the record's reference fields (`fields`) · a pinned foot with
+ * the once-in-a-record doors and the named Prev / Next. Desktop: a centered overlay at the dues
+ * drawer's width. Phone: the shared `.modalOverlay` rule makes it a full-screen sheet with a back
+ * arrow, no opt-in.
+ *
+ * ⚖⚖ **PLAN, THEN ACTUAL, THEN IDENTITY — and `fields` is the slot that ordering needed** (owner,
+ * 2026-09-06). A room tells three stories in a row: what is OWED (the record's own table), what
+ * money actually MOVED (History), and what the record IS (its fields). The first two are one
+ * conversation and belong adjacent — a bill's schedule says "$540.00 still owing" on a $1,000
+ * piece, and the answer to *why* is a payment in the History fold. Until this slot existed the
+ * fields could only sit inside `children`, which put the least-visited block in the room on the
+ * most-travelled path between those two, and pushed the fold below the cut of an ordinary laptop
+ * screen — where it also opens itself the moment a payment lands, off-screen.
+ *
+ * ⚠ ONE ROOM USES IT TODAY (the team bill's). Sponsor and drive rooms have no reference block, so
+ * they are unaffected; a room that gains one puts it HERE rather than at the end of its body.
  *
  * ⚠ THE ACCESSIBILITY FLOOR SHIPS HERE, NOT PER SURFACE (D7): dialog role, a label naming the
  * record, Escape closes, Tab is trapped, focus lands on the room and returns to the opener —
@@ -88,6 +101,15 @@ export interface RoomShellProps {
   /** The record's own table and body. */
   children: ReactNode;
   history?: RoomHistory;
+  /**
+   * What the record IS — its filing, who it is paid to, its tags, its note. Rendered BELOW the
+   * History fold, because it is reference material: set once when the record is created, corrected
+   * rarely, and read on purpose rather than passed through. See the anatomy note above.
+   *
+   * ⚠ NOT A SECOND `children`. Anything that answers "where does this stand" or "what happened"
+   * belongs above the fold, in the record's own table.
+   */
+  fields?: ReactNode;
   /** Once-in-a-record doors for the foot — the guarded Delete. */
   footer?: ReactNode;
   nav?: RoomNav;
@@ -114,6 +136,7 @@ export default function RoomShell({
   factsTitle,
   children,
   history,
+  fields,
   footer,
   nav,
   busy = false,
@@ -208,6 +231,8 @@ export default function RoomShell({
               </CoachCollapseSection>
             </div>
           )}
+          {/* What the record IS — last, and read on purpose. See `fields` and the anatomy note. */}
+          {fields}
         </div>
 
         {hasFoot && (

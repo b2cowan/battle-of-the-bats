@@ -141,6 +141,35 @@ describe('what moves when a coach saves', () => {
       assert.equal(b?.amount, 100, 'the balance AFTER, never the payment amount again');
       assert.equal(b?.direction, 'down');
     });
+
+    /* ⚠⚠ THE DEFECT THIS PAIR EXISTS FOR (owner, 2026-09-06). Reported as: a $17 payment against a
+       $540 bill drew "still owing ▼ $523.00", which reads as a $523 DROP. The figure was right and
+       the arrow was the lie — every other chip on the strip is a change, and this one is a standing.
+       The renderer picks its mark from `reads` BEFORE `direction`, so this is the assertion that
+       stops the arrow coming back. */
+    test('the balance is a RESULT, not a change — it may not wear a delta arrow', () => {
+      const b = of({ ...bill, billRemainingAfter: 523 }).find(m => m.label === 'Diamond permits');
+      assert.equal(b?.reads, 'result', 'the one figure on a strip that is a standing, not a move');
+    });
+
+    test('every other chip is a change, on every kind', () => {
+      const every: ConsequenceInput[] = [
+        base,
+        { ...base, paidByFamily: 'The Doyle family' },
+        { ...base, kind: 'income' },
+        { ...base, kind: 'refund' },
+        { ...base, ...bill, billRemainingAfter: 523 },
+        { ...base, ...bill, billRemainingAfter: 523, paidByFamily: 'The Doyle family' },
+        { ...base, ...bill, billRemainingAfter: 0 },
+      ];
+      for (const input of every) {
+        for (const m of consequenceMoves(input)) {
+          const isBillBalance = m.label === 'Diamond permits' && m.quantity === 'still owing';
+          assert.equal(m.reads === 'result', isBillBalance,
+            `${m.label}${m.quantity ? ' · ' + m.quantity : ''}: only a bill's balance is a result`);
+        }
+      }
+    });
     test('a payment that clears it says so in words, with no figure', () => {
       const b = of({ ...bill, billRemainingAfter: 0 }).find(m => m.label === 'Diamond permits');
       assert.equal(b?.words, 'fully paid');

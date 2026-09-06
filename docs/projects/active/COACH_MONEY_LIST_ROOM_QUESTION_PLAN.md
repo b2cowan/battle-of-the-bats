@@ -466,3 +466,98 @@ was a reasonable ask and the reason for the different answer should outlive the 
 **Verified in Chromium at 1100×620** (a viewport short enough to reproduce the original): the
 confirmation renders fully on screen without scrolling, Keep it returns to the live form, and Escape
 leaves the window rather than stranding the coach.
+
+---
+
+## 11. The room's running order, and the chip that lied (owner, 2026-09-06)
+
+**Mockup:** `claude.ai/code/artifact/6c24f0e6-5e42-4858-ac86-1cb2df790adf` (both frames at the room's
+true 1040px width). Raised by the owner reading a live bill: *"installments then the general details
+and then payment history — it reads weird."*
+
+### 11.1 The diagnosis — three tenses, and the middle one is the least visited
+
+A room tells three stories in a row: what is **owed** (the schedule), what the record **is** (its
+fields), and what money actually **moved** (History). The first and third are one conversation. The
+schedule says *"4 days overdue · $540.00 still owing"* on a $1,000 piece, and the answer to *why $540
+and not $1,000* is a payment in the fold — which sat five form rows below, behind a fold, past the
+cut of an ordinary laptop screen. **History also opens itself the moment a payment lands**, so the
+one confirmation a coach wants was arriving off-screen.
+
+**Direction of travel already agreed:** Phase C had moved the fields off the TOP of the page and
+under the schedule (§4). What it could not do was get them past History, which `RoomShell` pins
+after the body. This is that same move, one step further.
+
+### 11.2 Built — the running order: plan → actual → identity
+
+- **`RoomShell` gains `fields`**, rendered BELOW the History fold. Anatomy is now: header · tiles ·
+  action row · the record's own table (`children`) · History · `fields` · foot. ⚠ One room uses it
+  (the bill's); sponsor and drive rooms have no reference block and are untouched. A room that
+  gains one puts it here rather than at the end of its body.
+- **`CommitmentView` moves its Details block into that slot.** Details stays FULLY OPEN and every
+  row still draws, set or not — collapsing it was considered and rejected: it would re-introduce a
+  door onto fields Part B deliberately made editable in place.
+- **The bill's identity joins the doors' row** (`facts`) — `Facilities · Diamond Permits · test ·
+  E-Transfer`. That slot was reserved for a record's quiet facts and a bill was the one room that
+  never filled it, so the band above the schedule held one right-aligned button and nothing else.
+  It matters more now that the fields sit at the foot: without it, opening a bill says nothing about
+  what the bill IS until the coach scrolls past History. ⚠⚠ **Built from the DRAFT, never from the
+  prop** — those three facts are live controls forty rows below and the panel's copy is re-read
+  ~1.2s after a save, so sourcing the summary from `expense` would state an old payee while the
+  coach looks at the new one. Empty bill → empty summary; nothing is invented.
+- **UAT asserts the ORDER**, not three presence checks (`coach-bill-room.spec.ts`): the defect this
+  guards against is a block MOVING, not a block vanishing.
+
+**Rejected: merging payments into the schedule as a nested timeline.** A payment is not owned by an
+installment — it lands on one and spills forward (`lib/payable-standing.ts`), so a $600 payment can
+partly settle two pieces. Nesting would force either a split row the coach never entered, or filing
+it under one piece and lying about where the money went. Two adjacent lists tell the truth with no
+invented rows.
+
+### 11.3 Built — the consequence strip learns a second grammar
+
+**Reported:** recording **$17.00** against a bill with $540.00 owing drew
+`Spring classic entry · still owing ▼ $523.00` — which reads as a $523 drop.
+
+**The number was right and the arrow was the lie.** Every other chip on a strip reports a CHANGE
+(cash down *by* $17, a line up *by* what was spent, a family owed *more by* what they fronted); this
+one reports the balance the payment LEAVES BEHIND, wearing a change's mark.
+
+- `ConsequenceMove` gains **`reads: 'move' | 'result'`**; the bill balance is the product's one
+  `result` chip and renders **`→`** instead of ▲/▼. ⚠ The renderer asks `reads` FIRST — re-deriving
+  the mark from `direction` brings the defect straight back, and there is now a unit test saying so.
+- **The cleared case was already right** and is the shape this copies: it states a standing
+  ("fully paid") in words, with no arrow and no figure. This makes the part-paid case behave like
+  its own other half.
+- **A screen reader was never wrong here** — the mark is decorative in both grammars, so what is
+  announced is "Spring classic entry, still owing, $523.00" either way. Only the sighted reading
+  was broken, and only the sighted reading changes.
+- **Rejected:** making it a delta too (the strip would say the payment amount three times and never
+  show the balance the coach came for); dropping the arrow for a bare figure (an absent mark reads
+  as an oversight, and this strip's design is that a missing mark must be a hole you can see).
+
+### 11.4 Status
+
+- **Owner QA ✅ PASSED 2026-09-06** — the room's new order, the identity line and the chip, confirmed
+  by the owner on the built screen in the same session. Walked in-session, so **no ledger § was
+  assigned**; if this needs a numbered entry in `OWNER_QA_LEDGER.md`, it has to be added deliberately
+  rather than inferred from this line.
+- **Layout sweep baseline** for `coach-commitment` may move with the reorder; reseed before reading
+  it as a regression. ⚠ The sweep opens no folds, so it cannot see History's contents either way.
+- **Help synced in the same unit of work** (`/docs`, 2026-09-06). The coach money guide described the
+  bill panel in its OLD order — fields, then History — so the two paragraphs were reordered to follow
+  the screen, the identity line beside **Record** was written up, and the consequence strip gained
+  the sentence that distinguishes a change from a standing ("Paying a bill adds one figure that isn't
+  a change… it carries a **→**", with the $17 / $540 / $523 example). Sixteen search terms added for
+  the questions this change invites ("where are the bill details", "what does the arrow mean",
+  "still owing went down by more than i paid").
+- **Demo narration checked and NOT stale** (the CLAUDE.md reflex). Neither the moments dock nor the
+  guided-tour steps say anything about the bill panel's layout or the consequence chips, so there is
+  nothing to true up; and a running order is a refinement rather than a capability a prospect needs
+  pointed at, so no new moment is earned. `check:demos` reports both worlds presentable.
+- ⚠ **PRE-EXISTING DEBT, NOT INTRODUCED HERE, BUT NOW MEASURED:** `npm run measure:help` puts "The
+  Ledger: one book, three views" at **2,411 words** — a sub-topic seven times the 350-word standard,
+  and one of two unconverted long topics in the coaches guide. This session's sync added ~150 of
+  those words. Converting it is not a paragraph edit: a sub-topic cannot hold sub-topics, so it means
+  promoting the Ledger to a section of its own and re-homing every anchor that points into it. Owed,
+  scoped, and deliberately not done on the way past.
