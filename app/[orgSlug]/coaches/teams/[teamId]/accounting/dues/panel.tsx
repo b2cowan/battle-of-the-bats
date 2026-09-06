@@ -22,7 +22,7 @@ import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
 import InstallmentBreakdown, { balanceColor, type GridViewport, type InstallmentGridHandle } from './InstallmentBreakdown';
 import CollectionSchedule from './CollectionSchedule';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
-import { installmentToSend, buildInstallmentColumns, focusInstallmentColumn, familiesOwingOn, chaseableInstallment } from '@/lib/dues-installment-view';
+import { installmentToSend, buildInstallmentColumns, focusInstallmentColumn, familiesOwingOn, chaseableInstallment, chaseableInstallments } from '@/lib/dues-installment-view';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../../coaches.module.css';
@@ -211,7 +211,10 @@ const SHOW_EMPTY: Record<DuesShow, string> = {
 
 /** When a family was last reminded, and by whom (owner E2, 2026-09-04). The three stamps live on
  *  the installments: `reminderSentAt` is the coach's own send (the page button or the family's
- *  own Remind), the 30/7 stamps are the automatic waves. The never-paid nudge stamps nothing. */
+ *  own Remind), the 30/7 stamps are the automatic waves.
+ *  ⚠ The never-paid nudge USED to stamp nothing, which is why it could be sent over and over with
+ *  no record — since the 2026-09-05 ruling it stamps the family's NEXT unpaid bill, so this line
+ *  answers for both letters and names a bill the family really was chased about. */
 function lastReminderFor(p: PlayerWithDues): { at: string; installmentNumber: number; kind: 'auto' | 'manual' } | null {
   let best: { at: string; installmentNumber: number; kind: 'auto' | 'manual' } | null = null;
   for (const i of p.installments) {
@@ -223,6 +226,44 @@ function lastReminderFor(p: PlayerWithDues): { at: string; installmentNumber: nu
     }
   }
   return best;
+}
+
+/**
+ * Has this family already heard from the coach this week — so that pressing Send would do nothing?
+ *
+ * ⚠⚠ THE TWO LETTERS HAVE TWO DIFFERENT COURTESY RULES, AND MIRRORING THE WRONG ONE BLOCKS A REAL
+ * SEND (/review 2026-09-05, two lenses). The first version of this scanned EVERY installment on the
+ * schedule, paid ones included. A bill paid last week still carries the stamp that chased it, so a
+ * family with instalment 1 paid-and-reminded and instalment 2 newly due was told *"Reminded <date>
+ * — nothing sends again until seven days have passed"* and had the button greyed out, while the
+ * server would happily have sent. That is the forbidden direction wearing a disguise: not a stale
+ * page, a wrong rule.
+ *
+ *   · **The installment letter** goes out if ANY chaseable bill is still un-reminded, because the
+ *     server evaluates the courtesy per candidate bill. So it is held only when EVERY bill it
+ *     would chase carries a fresh stamp.
+ *   · **The "nothing paid yet" note** is one letter about the whole balance, and the route holds it
+ *     when ANY unpaid bill carries a fresh stamp. So that is what is mirrored here.
+ *
+ * ⚠ IT MAY STILL ONLY EVER UNDER-PROMISE. The server decides on a fresh read; this is the page's
+ * copy. Both branches above are shaped so a hold predicted here is a hold the server would also
+ * take — and the page re-reads itself after every send, so the confirmation cannot contradict the
+ * answer it just gave.
+ *
+ * Reads the coach's own stamp only, as both routes do — the 30/7 automatic waves keep their own
+ * columns and deliberately never suppress a deliberate send.
+ */
+function remindedWithinCourtesy(p: PlayerWithDues, today: string): string | null {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const fresh = (at: string | null) => !!at && new Date(at).getTime() >= cutoff;
+  const chaseable = chaseableInstallments(p, today);
+  const bills = chaseable.length > 0 ? chaseable : p.installments.filter(i => !i.paidAt);
+  if (!bills.length) return null;
+  // The installment letter needs every candidate held; the whole-balance note needs only one.
+  const held = chaseable.length > 0 ? bills.every(i => fresh(i.reminderSentAt)) : bills.some(i => fresh(i.reminderSentAt));
+  if (!held) return null;
+  return bills.reduce<string | null>(
+    (best, i) => (fresh(i.reminderSentAt) && (!best || i.reminderSentAt! > best) ? i.reminderSentAt! : best), null);
 }
 
 function statusLabel(p: PlayerWithDues) {
@@ -525,6 +566,18 @@ export function PlayerDuesPanel({
   // a player's own panel is the whole surface now, so unpaidFor keys the outcome to the player
   // it was sent for — opening the next family must not show them the last family's receipt.
   const [remindingId, setRemindingId] = useState<string | null>(null);
+  /**
+   * ⚠ THE ONE DOOR THAT EMAILS A PARENT NOW ASKS FIRST (owner ruling 2026-09-05). Pressing Remind
+   * used to send on the spot, while the bulk send beside it confirmed, counted and offered the
+   * letter — one product, two answers to "am I about to email a family?". It confirms IN PLACE
+   * rather than in a window: this button already lives inside an open drawer, and a dialog stacked
+   * on a drawer is the shape that produced the bill room's walk-suspension defects. Keyed to the
+   * player so it cannot survive into the next family's panel, like every other transient here.
+   *
+   * ⚠ The confirmation earns its tap by saying something the coach could not otherwise know: WHICH
+   * of the two letters this press sends. That is invisible on the button, and they read differently.
+   */
+  const [confirmRemindFor, setConfirmRemindFor] = useState<string | null>(null);
   const [unpaidFor, setUnpaidFor] = useState<string | null>(null);
   const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersMissingEmail: number; skippedRecent?: boolean } | null>(null);
   const [unpaidError, setUnpaidError] = useState('');
@@ -1133,6 +1186,12 @@ export function PlayerDuesPanel({
   }
 
   function openEdit(p: PlayerWithDues) {
+    // ⚠ AN UNANSWERED QUESTION DOES NOT WAIT BEHIND THE EDITOR (/review 2026-09-05). The schedule
+    // editor swaps out the drawer's whole body, which UNMOUNTS the reminder confirmation without
+    // clearing it — so leaving the editor brought "Send the email?" back, live, for a coach who had
+    // moved on minutes earlier and one click from emailing a parent. This is the same class
+    // `closeMoneySheets` closes for a player switch; the editor round trip does not go through it.
+    setConfirmRemindFor(null);
     const nextForm = { notes: p.schedule?.notes ?? '' };
     const nextRows: InstallmentRow[] = p.installments.length
       ? p.installments.map(i => ({
@@ -1355,6 +1414,9 @@ export function PlayerDuesPanel({
     setUnpaidFor(null);
     setUnpaidResult(null);
     setUnpaidError('');
+    // ⚠ And so is the un-answered question. A confirm left standing would greet the next family
+    // opened with "send this?" about a letter the coach never asked for.
+    setConfirmRemindFor(null);
   }
 
   // ── The discard guards (owner Q21, QA §123 Phase F4) ─────────────────────────────────────────
@@ -1558,6 +1620,12 @@ export function PlayerDuesPanel({
         playersMissingEmail: data.missingEmail ? 1 : 0,
         skippedRecent: !!data.skippedRecent,
       });
+      // ⚠ RE-READ ON OUR OWN WRITE, like every other money act on this panel (/review 2026-09-05).
+      // A send stamps the bill it chased; without this the page keeps its pre-send snapshot, so
+      // re-opening the confirmation offers "Send the email" for a family the server will now
+      // refuse — the confirmation contradicting the answer it gave a moment ago. It also brings
+      // back the "Last reminded" line the send just earned.
+      await load();
     } catch (e: unknown) {
       setUnpaidError(e instanceof Error ? e.message : 'Failed to send the reminder.');
     } finally {
@@ -1565,9 +1633,10 @@ export function PlayerDuesPanel({
     }
   }
 
-  /** Nudge ONE family who has recorded no payment at all. The route still accepts a whole-team
-   *  send; nothing in the portal asks for one any more (owner call 2026-09-03), so this takes a
-   *  player and always names them. */
+  /** Nudge ONE family who has recorded no payment at all. ⚠ The route REFUSES a whole-team send —
+   *  a missing player id is a 400, not a fan-out (owner ruling 2026-09-03) — so this always names
+   *  its player. Since 2026-09-05 the route also honours the seven-day courtesy and stamps what it
+   *  chased, so a second press inside the week answers `skippedRecent` instead of re-dunning. */
   async function remindUnpaid(playerId: string) {
     setRemindingId(playerId);
     setUnpaidFor(playerId);
@@ -1582,6 +1651,7 @@ export function PlayerDuesPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to send reminder');
       setUnpaidResult(data);
+      await load(); // the same re-read, for the same reason — see the note in remindFamily.
     } catch (e: unknown) {
       setUnpaidError(e instanceof Error ? e.message : 'Failed to send reminder.');
     } finally {
@@ -1616,6 +1686,12 @@ export function PlayerDuesPanel({
   const editingReceipt = selected && editingPaymentId
     ? selected.payments.find(p => p.id === editingPaymentId)
     : undefined;
+
+  /* The confirmation's two facts, derived from the SAME predicate the send itself branches on
+     (`chaseableInstallment`) so the strip can never name one letter while the route posts the
+     other — the whole reason the confirmation exists. */
+  const remindIsDueLetter = selected ? chaseableInstallment(selected, tournamentToday()) : false;
+  const remindHeldSince = selected ? remindedWithinCourtesy(selected, tournamentToday()) : null;
 
   /* ⚖ The over-ceiling sentence went with `savePayout` — the conversation states its own, from
      the same figure, and the server owns the refusal either way. */  /** One rendering of the payout error — beside the payout receipts, where Remove can fail. */
@@ -3003,12 +3079,18 @@ export function PlayerDuesPanel({
                       {moneyCanWrite && (isNeverPaidPlayer(selected) || chaseableInstallment(selected, tournamentToday())) && (
                         <button
                           className={styles.btnSecondary}
-                          onClick={() => { void remindFamily(selected); }}
+                          /* ⚠ ASKS, RATHER THAN SENDS (owner ruling 2026-09-05). The old outcome is
+                             cleared with the question, so the strip below never shows last press's
+                             receipt underneath this press's confirmation. */
+                          onClick={() => {
+                            setConfirmRemindFor(selected.player.id);
+                            setUnpaidFor(null); setUnpaidResult(null); setUnpaidError('');
+                          }}
                           /* ⚠ AND while the page-wide send is in flight (/review 2026-09-04): both
                              doors reach the same read-then-write route, and a family in both
                              selections would be emailed twice in one minute. */
-                          disabled={!!remindingId || sendingReminders}
-                          style={{ fontSize: '0.78rem', opacity: remindingId ? 0.6 : 1 }}
+                          disabled={!!remindingId || sendingReminders || confirmRemindFor === selected.player.id}
+                          style={{ fontSize: '0.78rem', opacity: remindingId || confirmRemindFor === selected.player.id ? 0.6 : 1 }}
                         >
                           <Bell size={13} aria-hidden /> {remindingId === selected.player.id ? 'Sending…' : 'Remind this family'}
                         </button>
@@ -3055,6 +3137,70 @@ export function PlayerDuesPanel({
                         </button>
                       )}
                     </div>
+                    {/* ── The reminder's one question (owner ruling 2026-09-05) ─────────────────
+                        Sits directly under the button that raised it, not in a window over the
+                        drawer. It says the thing the button cannot: WHICH letter goes, to whom,
+                        and — when the page already knows — that nothing will go at all. */}
+                    {confirmRemindFor === selected.player.id && (
+                      <div
+                        role="group"
+                        aria-label="Confirm this reminder"
+                        style={{
+                          padding: '0.7rem 0.85rem', marginBottom: '0.75rem', borderRadius: 8,
+                          background: 'var(--home-card, rgba(255,255,255,0.03))',
+                          border: '1px solid var(--home-line, rgba(255,255,255,0.12))',
+                        }}
+                      >
+                        <p style={{ margin: '0 0 0.3rem', fontSize: '0.82rem', fontWeight: 600, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
+                          {remindIsDueLetter ? 'Send the installment reminder?' : 'Send the “nothing paid yet” note?'}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+                          {/* ⚠ IT MUST NOT ASSERT DELIVERY IT CANNOT SEE (/review 2026-09-05). The
+                              address is blank in two different situations a coach cannot tell apart
+                              from here — redacted (they lack the roster's PII grant, and the email
+                              WILL arrive) or genuinely absent (nothing will be sent) — and the first
+                              wording promised delivery in both. Where the address is known it is
+                              named; where it is not, the sentence says what happens either way
+                              rather than picking the optimistic one. */}
+                          {selected.player.guardianEmail
+                            ? <>It goes to <strong>{selected.player.guardianEmail}</strong></>
+                            : <>It goes to the guardian email on file for this family — if there isn’t one, nothing sends and you’ll be told</>}
+                          {remindIsDueLetter
+                            ? <> and asks only for what is due now.</>
+                            : <> and asks for the <strong>{fmt(selected.leftToSend)}</strong> still to send.</>}
+                        </p>
+                        {remindHeldSince && (
+                          <p style={{ margin: '0.35rem 0 0', fontSize: '0.78rem', color: 'var(--warning-light)' }}>
+                            Reminded {fmtDate(remindHeldSince)} — nothing sends again until seven days have passed.
+                          </p>
+                        )}
+                        {/* ⚠ THE 44px FLOOR IS DECLARED HERE, NOT INHERITED. The drawer's other
+                            secondary buttons render 29px tall and are grandfathered in the layout
+                            baseline; the rendered sweep never opens this drawer, so a new control
+                            born under the floor would never be caught by a gate — measured in a
+                            browser at 1440/768 instead. It is also the wrong place to be stingy:
+                            this is the tap that emails somebody's parent. */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.6rem' }}>
+                          <button
+                            className={styles.btnGhost}
+                            onClick={() => setConfirmRemindFor(null)}
+                            style={{ fontSize: '0.78rem', minHeight: 44 }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className={styles.btnPrimary}
+                            onClick={() => { setConfirmRemindFor(null); void remindFamily(selected); }}
+                            /* Disabled on a hold the page can already see, with the reason above —
+                               the same idiom as Send due reminders' "Send 0 emails". */
+                            disabled={!!remindHeldSince || !!remindingId || sendingReminders}
+                            style={{ fontSize: '0.78rem', minHeight: 44, opacity: remindHeldSince ? 0.6 : 1 }}
+                          >
+                            {remindHeldSince ? 'Nothing to send' : 'Send the email'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {statementError && (
                       <p className={styles.errorText} role="status" style={{ marginBottom: '0.75rem', textAlign: 'right' }}>
                         {statementError}

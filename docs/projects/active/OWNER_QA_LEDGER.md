@@ -17718,6 +17718,132 @@ overview's Premium-adds sentence, trued up by this very commit, still names the 
 §140 renamed it **Remind this family**. One control, two spellings, which is the one-spelling
 ruling's own failure mode. Raised as a call in the artifact's Part F.
 
+**⚠⚠ THE SURVIVING NUDGE NOW ASKS FIRST, AND HONOURS THE COURTESY (owner ruling 2026-09-05, built same day).**
+Owner: *"for 'remind this family', should we have a confirmation modal since it triggers an email to a
+parent?"* Answering it surfaced the real gap, which was not the missing dialog: **one button reached
+two letters with two different protections.** A late or nearly-due family got the installment notice
+through `send-reminders`, which has honoured a seven-day courtesy and stamped `reminder_sent_at`
+since it was built. A never-paid family got `remind-unpaid`, which honoured **nothing** and stamped
+**nothing** — so pressing Remind three times emailed that parent three times and left no record, and
+the coach could not tell which of the two letters a press would send.
+
+**Built, both halves:**
+1. **The courtesy reaches the never-paid nudge.** Same column, same seven-day window, one rule.
+   `getUnpaidDuesReminderTargets` returns `recentlyReminded` and `unpaidInstallmentIds`; the route
+   refuses with `skippedRecent: true` (the panel already had that sentence) and, on a real send,
+   stamps **every unpaid bill of every family that got a letter** — the letter asks for the whole
+   outstanding balance, so all of them were chased. ⚠ A family with **no address on file is never
+   stamped**: a letter that never went must not read back as "Last reminded" nor hold the next send.
+   This **closes the call §140 left open as Part I2** ("the never-paid nudge leaves no Last
+   reminded") in the *stamp it* direction — that step on the §140 walk is now answered, not open.
+2. **An in-place confirmation, deliberately NOT a modal.** The strip opens under the button inside
+   the drawer, names which letter is going and to whom, and offers Cancel / **Send the email**. Where
+   the page can already see a hold it says so in warning ink and the button reads **Nothing to send**,
+   disabled — the same idiom as *Send due reminders*' "Send 0 emails". ⚖ **Rejected: a dialog over the
+   drawer.** The bulk door earns a window because it has four figures and a letter to show; this one
+   has one family and one sentence, and a dialog stacked on a drawer is the shape that produced the
+   bill room's walk-suspension defects. Consistency with the bulk door was the argument for it and was
+   put to the owner; the in-place form was chosen.
+
+**⚠ The client hint may only ever UNDER-promise.** `remindedWithinCourtesy` predicts a hold from the
+page's own copy of the stamps, which can only be older than the server's. A stamp can arrive after
+page load but never leave, so a hold predicted here is always still a hold when the press lands —
+predicting the opposite would promise a send the server refuses, which is the stale-preview failure
+§140's review already closed once.
+
+**⚠ A defect this change introduced, caught only by measuring.** The two confirm buttons inherited the
+drawer's secondary style and rendered **29px** against the 44px floor. `check:layout` **cannot** see
+it — the rendered sweep never opens this drawer — and §136 itself retired six grandfathered tap-floor
+entries for exactly this reason. The floor is now declared on those two buttons and **measured in a
+browser at 1440 / 768 / 390 / 361: 44px at every width, zero page overflow.** ⓘ Not fixed, flagged: the
+**"Remind this family" button itself is 31px**, as are the drawer's other secondaries (Record, Edit
+schedule, Family statement) — a house-wide drawer decision, not this change's to take alone.
+
+**Verified by execution, not reading** (dev, UAT team, Devon Test): a first press with an address on
+file → `emailsSent: 1` and **10/10 unpaid bills stamped**; a second press → `skippedRecent: true`,
+nothing sent; the panel then reads *"Last reminded Sep 5, 2026 · Installment 1 · from this page"*,
+which it never did for a never-paid family before; with **no** address → `playersMissingEmail: 1` and
+**0/10 stamped**; the whole-team send still answers **400**. The confirmation was read at 1440 / 768 /
+390 / 361 and flips to *"Send the installment reminder?"* the moment the family is made late. The
+fixture was restored to its seeded state afterwards.
+
+**🔬 /review (high-risk tier, five lenses) — SEVEN findings, six fixed, one reported and left.** The
+funnel earned its keep twice over here: two of the six were in the *reasoning* I had written down and
+defended, not in code I had rushed.
+
+1. **⚠⚠ Stamping every unpaid bill reached far past the letter — the design call was wrong, and the
+   comment justifying it was the tell.** The note only goes to a family whose next bill is more than
+   three days out, so marking all their bills silenced the ordinary due-date reminder for a bill
+   falling due four to nine days later: that family got the nudge, then **no** courtesy notice before
+   their bill was due, and next heard from us once already late. The stated reasoning — *"stamp what
+   you actually chased; the letter asks for the whole balance"* — reads well and mistakes what the
+   column IS. `reminder_sent_at` is not a record of what a letter mentioned; **every reader treats it
+   as a CLOCK that suppresses the next send.** Now stamps the family's NEXT unpaid bill alone.
+   ⓘ This also retires a second finding — the panel's "Last reminded · Installment N" was reporting an
+   arbitrary bill (all ten carried an identical timestamp, so it always printed the first); with one
+   bill stamped it names a bill the family really was chased about.
+2. **⚠ The client-side courtesy hint mirrored the wrong rule and blocked real sends.** It scanned
+   EVERY installment including PAID ones — and a paid bill keeps the stamp that chased it — so a
+   family with instalment 1 paid-and-reminded and instalment 2 newly due was told *"Reminded <date>"*
+   with the button greyed out, while the server would have sent. The forbidden direction wearing a
+   disguise: not a stale page, a wrong rule. **The two letters have two different courtesy rules** —
+   the installment notice is judged per candidate bill (held only if every one is stamped), the
+   whole-balance note by any unpaid bill — and the hint now mirrors each. `chaseableInstallments()`
+   was added beside `chaseableInstallment()` so no caller has to re-derive the candidate set by hand
+   again, which is exactly how this went wrong.
+3. **⚠ The page did not re-read after its own send, so the confirmation contradicted itself.** Every
+   other money act on this panel re-reads; these two did not. Press → send → re-open the question and
+   it offered **Send the email** for a family the server would now refuse. Both paths reload now,
+   which also brings back the "Last reminded" line the send just earned.
+4. **⚠ A schedule with a total but NO bills could be emailed without limit.** The season rollover
+   creates the header and skips the bills when the season it copied had none, and `isNeverPaidPlayer`
+   counts that family on `outstanding` alone — so there was nothing to stamp, the courtesy read
+   "not recently reminded" every time, and the ruling was defeated for exactly that family. Such a
+   family is unreachable by the bulk send too (it works from bills), so the route now declines them;
+   the repair is to give the schedule its bills. ⓘ **A judgment call, reversible:** it withholds a
+   rare legitimate email rather than send one it cannot record.
+5. **The confirmation could survive the schedule editor and come back live.** Open the question →
+   Edit schedule → leave the editor, and *"Send the email?"* returned for a coach who had moved on,
+   one click from emailing a parent. The editor round trip does not pass through `closeMoneySheets`.
+6. **The confirmation asserted delivery it could not see.** A blank address means two different
+   things a coach cannot tell apart from there — redacted (the email WILL arrive) or genuinely absent
+   (nothing sends) — and the wording promised delivery in both. It now names the address where it
+   knows it, and otherwise says what happens either way. ⓘ Also corrected a help sentence that put the
+   never-paid boundary at "weeks away" when it is three days.
+
+**⚖ REPORTED AND DELIBERATELY NOT FIXED — a real race, older than this change.** Two requests for the
+same family in the same moment (two tabs) both read "not recently reminded" and both send: the stamp
+is written after the send loop, with no reservation or conditional update. **The sibling bulk-send
+door has had the identical shape since it was built**, so closing it properly means reserving before
+sending on BOTH doors, which changes what happens when a send then fails. That is a design decision,
+not a review fix, and widening this change to take it would be the scope creep this ledger keeps
+warning about. In practice the confirmation now costs two deliberate presses and the button disables
+in flight. **Worth its own item.**
+
+**Cleared by the funnel, worth recording so they are not re-raised:** org/team scoping (the ids the
+write uses are all server-derived from a team-scoped read — no client id reaches the mutation);
+capability gating (the permission check runs before anything that could reveal a family's reminder
+state); **the PII question** — the guardian's address is redacted upstream at the data-fetch boundary,
+so an assistant without the roster grant sees "the guardian email on file" and never an address; the
+automatic 30/7 waves (separate columns, untouched); `UnpaidDuesReminderTarget` has exactly one
+producer and one consumer; no sibling's balance can fold into another's ask.
+
+**Re-proved by execution after the fixes, not re-read:** one send stamps **one** bill (was ten); a
+second press answers `skippedRecent`; the confirmation shows the hold on re-open **with no page
+refresh**; a family with a paid-and-stamped bill and a different bill now due is **offered** the send
+rather than blocked; the schedule-editor round trip leaves **no** strip; and three presses against a
+deliberately broken zero-bill schedule sent **zero** emails (the rows were backed up and restored).
+Gates re-run green: typecheck · eslint 0 errors · `check:spelling` · **3005/3005** · rendered
+`check:layout` on the three dues screens, no new findings. Fixture restored to its seeded state.
+
+**Copy trued up with it.** The dues reminder article now says the door asks before it sends, names the
+two letters, and states the courtesy; its search text follows. The Fees overview's **Remind** →
+**Remind this family** (the drift this walk's preparation found — one control, two spellings).
+
+**Gates:** typecheck 0 · eslint 0 errors · `check:spelling` ✓ · unit suite **3005/3005** ·
+`verify:changed` clean on these files (its one failure is a dead CSS class in another session's
+in-flight Budget-vs-Actual work, untouched here).
+
 **The original bullets, kept as the record of what was claimed on 2026-09-03 — walk the artifact, not this list:**
 
 **Walk it (~5 min), on a team with dues set and at least one family who has paid nothing:**

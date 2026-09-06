@@ -5,6 +5,7 @@ import {
   getCoachingAssignmentsForUser,
   getActiveRepProgramYear,
   getUnpaidDuesReminderTargets,
+  markInstallmentsReminderSent,
   type UnpaidDuesReminderTarget,
 } from '@/lib/db';
 import { sendEmail, escapeHtml as esc } from '@/lib/email';
@@ -78,6 +79,18 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ emailsSent: 0, playersReminded: 0, playersMissingEmail: 0 });
   }
 
+  /**
+   * ⚠ THE COURTESY IS NOT THE OTHER ROUTE'S ALONE (owner ruling 2026-09-05, closing the call §140
+   * left open as Part I2). One button — "Remind this family" — reaches two letters: a late family
+   * gets the installment notice through `/dues/send-reminders`, which has honoured a seven-day
+   * courtesy since it was built; a never-paid family gets THIS one, which honoured nothing. So the
+   * same button, pressed twice on a Tuesday, was safe for one family and emailed the other's parent
+   * twice — with no stamp left behind to show it had happened. Same column, same window, one rule.
+   */
+  if (targets.some(t => t.recentlyReminded)) {
+    return NextResponse.json({ emailsSent: 0, playersReminded: 0, playersMissingEmail: 0, skippedRecent: true });
+  }
+
   const withEmail = targets.filter(t => t.guardianEmail);
   const playersMissingEmail = targets.length - withEmail.length;
 
@@ -128,6 +141,13 @@ export const POST = withObservability(async (req: Request,
     emailsSent++;
     playersReminded += items.length;
   }
+
+  // ⚠ ONE CLOCK, ON THE BILL THE FAMILY IS ACTUALLY ABOUT TO BE CHASED FOR — see the field's own
+  // note in lib/db.ts for why this is NOT every unpaid bill. Nothing is stamped for a family with
+  // no address on file: a letter that never went must never read back as "Last reminded" in their
+  // panel, nor hold the next send back for a week.
+  await markInstallmentsReminderSent(
+    withEmail.map(t => t.nextUnpaidInstallmentId).filter((id): id is string => !!id));
 
   return NextResponse.json({ emailsSent, playersReminded, playersMissingEmail });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/dues/remind-unpaid' });

@@ -266,13 +266,31 @@ export function dueNextForPlayer(
  */
 export const DUE_REMINDER_DAYS_AHEAD = 3;
 
-/** Would the on-demand reminder have anything to say to this family today? The same rule the
- *  send-reminders route applies: an installment past due or due within the window, with money
- *  still to send. */
-export function chaseableInstallment(p: PlayerScheduleLike, today: string): boolean {
+/**
+ * WHICH installments the on-demand reminder would actually chase today: past due or due within
+ * the window, with money still to send. The same rule the send-reminders route's candidate query
+ * applies, minus the seven-day courtesy — which the server owns, because only it can read a stamp
+ * that landed since this page loaded.
+ *
+ * ⚠ THE LIST, NOT JUST THE ANSWER (/review 2026-09-05). The boolean below used to be the only
+ * export, so a caller that needed to reason about the courtesy had to re-derive the candidate set
+ * by hand — and the dues panel's first attempt did, over the WHOLE schedule including PAID
+ * installments. A bill paid last week still carries the reminder stamp that chased it, so that
+ * caller greyed out a legitimate send for a DIFFERENT bill that had since come due, and told the
+ * coach a specific, false reason. One definition, handed out, so it cannot happen again.
+ */
+export function chaseableInstallments<T extends ViewableInstallment>(
+  p: { installments: T[]; coverage: InstallmentCoverage[] },
+  today: string,
+): T[] {
   const cutoff = addCalendarDays(today, DUE_REMINDER_DAYS_AHEAD);
-  return p.installments.some(i =>
+  return p.installments.filter(i =>
     !i.paidAt && i.dueDate <= cutoff && installmentToSend(i, p.coverage.find(c => c.installmentId === i.id)) > 0.005);
+}
+
+/** Would the on-demand reminder have anything to say to this family today? */
+export function chaseableInstallment(p: PlayerScheduleLike, today: string): boolean {
+  return chaseableInstallments(p, today).length > 0;
 }
 
 /**
