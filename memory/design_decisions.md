@@ -2,6 +2,34 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-06 — A panel whose only exits are its own rows dead-ends for a read-only reader; and a door is named for the tab it opens
+
+**Decision (owner, QA §143 + §144, walked together 7/7 with zero flags).** Ratified on the built
+screen, so both halves are settled rather than provisional.
+
+**1. ⚠⚠ WHEN A PANEL’S EXITS ARE ITS ROWS, IT HAS NO EXIT FOR ANYONE WHO CANNOT WRITE.** The month
+grid’s plan panel made every budget line a link that lands on the line itself — better than any
+button, and the reason the owner declined to add one “for consistency” with its twin. But the links
+are drawn only for a coach who can write, so a view-only money coach met a panel with no links and
+no buttons: the one panel in the set that went nowhere, beside a twin whose doors were never gated
+on write access at all. **The rule: a door appears exactly when the rows are not links** — one
+button, in the same corner its siblings put theirs, invisible to anyone who already has the better
+affordance. ⚠ **General form: when a surface hands its navigation to its content, audit that surface
+for every reader whose content is inert.** The write gate that removes the links is the same gate
+that removes the way out, and nothing on screen says so.
+
+**2. A DOOR TAKES THE NAME OF THE PLACE IT OPENS.** The mockup drew *Open the budget*; the shipped
+label is **Open Budget Plan**, matching the tab’s own name and its sibling doors’ idiom (*Open Player
+Dues*, *Open the Ledger*). Put to the owner as the walk’s one open question and returned without a
+note — the deviation is ratified. Re-openable, not pending.
+
+**3. ⚠ Carried from §143, because it is a design rule and not only a bug fix: a guard that watches
+clicks does not protect state a deep link writes.** Reaching a form by address is a write onto that
+form, and the browser’s Back button is not a click. Where an overlay covers the way out, Back
+becomes the only exit from a dirty form — which is exactly where unsaved work disappears without a
+word. Reuse the discard dialog the surface already owns; declining drops the arrival rather than
+nagging. See [[reference_one_shot_deeplink_mounted_panel]].
+
 ### 2026-09-04 (later) — A figure a reader cannot inspect is not an answer; a status must not be said three ways; a table has ONE opening gesture
 
 **Decision (owner, QA §132 round three, Budget vs Actual — after the walk had already passed

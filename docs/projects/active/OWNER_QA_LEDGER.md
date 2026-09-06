@@ -18196,7 +18196,22 @@ the pager's cached column positions follow a content-only resize; "today" is rea
    never-paid nudge leaving no "Last reminded"; a sample letter rather than the real recipient list.
 
 
-## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — BUILT 2026-09-04, committed `52c2637e` 2026-09-04, awaiting QA
+## §141 · List · Room · Question, Phase C — the team bill's page dissolves into a room over the Ledger — ✅ PASSED 2026-09-06 (36/36, all six parts, zero defects) · committed `52c2637e` 2026-09-04 · walk artifact `02702286`
+
+**✅ WALKED AND PASSED 2026-09-06 — 36/36 steps, all six parts, ZERO defects and no rulings taken.**
+Reported on the gate sheet `10d66c81`. Part A · The Ledger stays where you left it — 6/6 · Part B ·
+Four figures, and what they say — 6/6 · Part C · The fields save themselves, and leaving writes —
+6/6 · Part D · A payment lands, and comes back — 7/7 · Part E · One question at a time — 6/6 ·
+Part F · The phone, and the coach who may only read — 5/5.
+
+**What that closes.** The bill room was the last money-area exception to the List · Room · Question
+grammar, so **Phases 0, A, B and C are now all built AND walked** (§134 33/33 · §135 36/36 · this).
+Every money surface a coach opens — Club, Fundraising and the Ledger — now reads as a list over
+which a room stands and inside which a question asks. The nine `/review` fixes, the three shell
+defects and the seven named deviations all held up in front of the owner; nothing on the walk
+reversed a build ruling, so **D-C1 (Record beside the chevron) is ratified on the screen** rather
+than only argued for. **Phase D (dues) is the only piece of this plan still open, and it still needs
+RE-PLANNING before anything is built** — plan §5 pre-dates the 09-03/04 dues rebuild.
 
 **The ruling this executes (owner, 2026-09-02, D4 re-ruled on review):** the team bill was the last
 money-area exception to the List · Room · Question grammar. Its page shape had been justified by a
@@ -18390,7 +18405,15 @@ case out loud; item ids were left untouched so ticks already earned survived the
 in to show it** — otherwise a passing product reads as a defect, and the walk spends the owner's
 attention proving the walk wrong.
 
-## §143 · The month grid's plan panel lands ON the line, every time — the one-shot deep link re-arms — BUILT 2026-09-04, committed `d14a4c8c` 2026-09-04, awaiting QA · walk artifact `f552d112`
+## §143 · The month grid's plan panel lands ON the line, every time — the one-shot deep link re-arms — ✅ PASSED 2026-09-06 (walked with §144: 7/7 checks, zero flags, no notes) · committed `d14a4c8c` 2026-09-04 · walk artifact `f552d112`
+
+**✅ WALKED AND PASSED 2026-09-06 — one sitting covering §143 AND §144, 7/7 checked, 0 flagged, no
+notes.** The four §143 steps (the deep link on a poisoned tab, the same line a second time, the
+split arriving clean, and the Back-button unsaved-work guard), the two §144 steps (no redundant door
+for a writer, a real door for a read-only coach) and the one wording question all came back clean.
+⚠ **The re-arm fix is therefore confirmed on the path that hid it** — a previously-visited Budget
+tab, which is the only place the original defect ever lived and the reason it survived every test
+done from a fresh page load.
 
 **Found by the owner during §142's walk.** Tapping a budget line inside the month grid's "what makes
 up this plan figure?" panel already carried an instruction to open that exact line's edit drawer with
@@ -18412,6 +18435,7 @@ surface that gets rebuilt, and **nothing in the Money hub does**. The `?starter=
 already carried that warning in its own comment; this one did not, and the comment it carries now
 says so.
 
+⚰ **SUPERSEDED — this call was taken and BUILT as §144, walked clean 2026-09-06.** Original text:
 ⚖ **ONE CALL OPEN, not built:** on that same panel a **read-only** coach gets no way out at all —
 the lines are only tappable if you can edit — while the spending-side panel's doors ("Open the
 Ledger", "Open Sponsors") are ungated and an assistant does get them. The consistency fix is a
@@ -18471,7 +18495,14 @@ door, and the wording call on that door's label. Two personas: the head coach an
    first line's work vanished silently, because a deep link writes the form without a click and
    neither guard on this screen watches anything but clicks.
 
-## §144 · The plan panel stops dead-ending for a coach who can only read — BUILT 2026-09-04, committed `36124583`, awaiting QA · walk artifact `f552d112`
+## §144 · The plan panel stops dead-ending for a coach who can only read — ✅ PASSED 2026-09-06 (walked with §143: 7/7, zero flags) · committed `36124583` · walk artifact `f552d112`
+
+**✅ WALKED AND PASSED 2026-09-06, with §143, in one sitting.** Both steps clean: a head coach still
+sees no redundant button, and the view-only money coach now leaves the panel by a real door.
+**⚖ THE WORDING DEVIATION IS RATIFIED BY SILENCE — 'Open Budget Plan' STANDS.** The walk put the
+label in front of the owner as its one open question (the mockup drew *Open the budget*); it came
+back checked with no note, so the tab-name idiom that matches its sibling doors is the shipped word.
+Re-openable, but no longer a pending decision.
 
 **The asymmetry the owner found while asking a different question.** He asked whether the planned
 figure's panel should carry buttons "for consistency" with the spent figure's. For him: no — his

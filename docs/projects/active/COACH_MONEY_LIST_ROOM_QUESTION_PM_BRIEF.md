@@ -76,7 +76,7 @@ Delete door at the room's foot is pressable and answers with the reason, per the
 ruling, rather than a permanently dead button with a sentence. "Part received" is a new third word
 for a half-kept pledge — an owner wording call at the walk.
 
-## Phase C — the Ledger's bill room, built 2026-09-04 (Owner QA §141 owed)
+## Phase C — the Ledger's bill room, built 2026-09-04 (Owner QA §141 ✅ PASSED 2026-09-06, 36/36, zero defects)
 
 **What a coach sees differently.** Tapping a bill on the Ledger used to **replace the whole tab** —
 the list, its filters, its toolbar and the coach's scroll position all disappeared, and a hardcoded

@@ -1,11 +1,14 @@
 # List · Room · Question — one grammar for every money surface
 
 **Status:** owner-ruled 2026-09-02 (D1–D7, all stamped). **Phase 0 (the room shell) + Phase A (the
-Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 owed**
+Club tab) BUILT, /simplify + /review run, committed `246bff21` 2026-09-02 — Owner QA §134 ✅ PASSED
+2026-09-03 (33/33, five parts), its remediation committed `cab938e8`**
 (walk artifact `4bce9d5d`). **Phase B (Fundraising) BUILT 2026-09-02 on dev, committed `e34af83a` 2026-09-03 — see §3.1 for what
 shipped and the nine mockup deviations; Owner QA §135 ✅ PASSED 36/36**, eight walk rulings built the
 same day (`dc1756d6`) and a ninth on read-back (`4a9d25a5`). **Phase C (the Ledger's bill room)
-BUILT 2026-09-04 on dev — see §4.1 for what shipped and its seven deviations; Owner QA §141 owed.**
+BUILT 2026-09-04 on dev, committed `52c2637e` — see §4.1 for what shipped and its seven deviations;
+Owner QA §141 ✅ PASSED 2026-09-06 (36/36, all six parts, zero defects, no walk rulings), which
+ratifies deviation D-C1 on the screen.**
 **Phase D (dues) needs RE-PLANNING before anything is built** — §5's four items pre-date the
 2026-09-03/04 dues rebuild (§136, §137, and the "set once, chase weekly" stream), so some are done,
 moot or contradicted. The layout reseed + sweep of `coach-club` / `coach-club-bill` is owed (needs a
@@ -205,7 +208,7 @@ sub-view whose styles are named "drawer" — this is a re-home, not a rebuild):
   - the required-but-unmarked Name gets a decided treatment at build (title-slot exemption or a
     plain `*`).
 
-### 4.1 — BUILT (2026-09-04, on dev; Owner QA §141 owed)
+### 4.1 — BUILT (2026-09-04, committed `52c2637e`; Owner QA §141 ✅ PASSED 2026-09-06, 36/36, all six parts, zero defects)
 
 **The bill's page is gone and its room is over the Ledger.** `CommitmentView` now renders `RoomShell`
 (`sentinel="bill"`), and the panel's `{!focusBillId && …}` gate — *"the list and its chrome do not
