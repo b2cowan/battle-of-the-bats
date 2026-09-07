@@ -3,7 +3,7 @@ import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
-import { isFoundingSeasonActive, FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { isFoundingSeasonSignupOpen, FOUNDING_SEASON_END } from '@/lib/plan-config';
 import {
   buildTeamCheckoutMetadata,
   normalizeTeamCheckoutRequest,
@@ -116,11 +116,12 @@ export const POST = withObservability(async (req: Request) => {
     }), { status: 409, headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Founding Season: the Premium Coaches Portal is comped ($0). Provision the full workspace WITHOUT
-  // Stripe (platform_override billing mode + null subscription, comp period = FOUNDING_SEASON_END).
-  // This is the launch path for the promo and takes precedence over BOTH the dev mock and real Stripe
-  // checkout — no card is ever collected or charged while the promo is active.
-  if (isFoundingSeasonActive()) {
+  // Founding Season: the Premium Coaches Portal is comped ($0) for every coach who joins while the
+  // SIGNUP window is open. Provision the full workspace WITHOUT Stripe (platform_override billing
+  // mode + null subscription, comp period = FOUNDING_SEASON_END). This is the launch path for the
+  // promo and takes precedence over BOTH the dev mock and real Stripe checkout — no card is ever
+  // collected or charged while the window is open. After the close, the list-price checkout runs.
+  if (isFoundingSeasonSignupOpen()) {
     try {
       const metadata = buildTeamCheckoutMetadata({
         ownerUserId: user.id,

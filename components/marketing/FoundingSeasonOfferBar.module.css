@@ -1,0 +1,64 @@
+/* Founding Season offer bar — variant A (dark bar, lime type), owner-approved 2026-09-07.
+   Fixed to the top of the viewport on marketing pages; the marketing Navbar sits beneath it via
+   `--offer-bar-h` (see the component header). Above the nav's z-index (100) so the frosted nav
+   never paints over it. */
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  background: var(--hud-surface);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.bar:hover { background: var(--structural-slate); }
+.bar:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+
+.eyebrow {
+  color: var(--logic-lime);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* The "·" separators are decorative, but they still have to clear AA on the HUD ground — the
+   data-label token does (≈6.5:1); a 40% white did not (3.81:1, rendered check 2026-09-07). */
+.sep { color: var(--data-gray); }
+.promise { color: var(--fl-text); }
+.link { color: var(--logic-lime); font-weight: 700; }
+.deadlineShort { display: none; }
+
+/* Touch widths (the 641–900 tablet band included): the whole strip is the tap target, so it keeps
+   the 44px floor, and the single line is allowed to wrap — a nowrap flex row cannot shrink below
+   its own text, so between 641 and ~900px the sentence would otherwise clip (rendered check +
+   /review 2026-09-07). */
+@media (max-width: 900px) {
+  .bar {
+    height: auto;
+    min-height: var(--tap-min, 44px);
+    padding: 0.4rem 0.75rem;
+    gap: 0.4rem;
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+/* Phone: the year and the words "See the offer" fold away (the year is on the page it opens). */
+@media (max-width: 640px) {
+  .bar { font-size: 0.69rem; }
+  .deadlineFull, .sepWide, .linkWords { display: none; }
+  .deadlineShort { display: inline; }
+}

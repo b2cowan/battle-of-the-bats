@@ -150,8 +150,13 @@ export default function Navbar() {
   if (isMarketingPath(pathname)) {
     return (
       <>
+        {/* `top` lives in the module (.marketingNav), not in a `top-0` utility: the Founding Season
+            offer bar publishes --offer-bar-h while it is mounted and this bar must sit beneath it
+            (the rendered layout check caught every nav link hidden under the bar when the utility
+            pinned it to 0 — /review 2026-09-07). */}
         <nav className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+          styles.marketingNav,
+          'fixed left-0 right-0 z-50 transition-all duration-300',
           'border-b border-blueprint-blue/30',
           scrolled && 'border-blueprint-blue/80 bg-pitch-black/85 backdrop-blur-md',
           !scrolled && 'bg-transparent'

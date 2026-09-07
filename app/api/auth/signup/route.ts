@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
+import { FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { isDemoOrgSlug } from '@/lib/demo-org';
@@ -336,16 +336,16 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
-    // Founding Season: auto-assign comp_period override
-    // Tournament Plus is free through December 31, 2026 for all founding organizations.
-    // This is non-fatal — org creation continues even if this insert fails.
-    if (isFoundingSeasonActive()) {
+    // Founding Season: auto-assign comp_period override while the SIGNUP window is open
+    // (Tournament Plus free through FOUNDING_SEASON_END for every organization that joins by the
+    // signup close). This is non-fatal — org creation continues even if this insert fails.
+    if (isFoundingSeasonSignupOpen()) {
       const { error: compErr } = await supabaseAdmin.from('org_overrides').insert({
         org_id: org.id,
         type: 'comp_period',
         value: null,
         expires_at: FOUNDING_SEASON_END,
-        reason: 'Founding Season — Tournament Plus free through December 31, 2026',
+        reason: `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`,
         created_by: 'system',
       });
       if (compErr) {

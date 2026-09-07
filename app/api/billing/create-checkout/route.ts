@@ -2,7 +2,7 @@ import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth'
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
-import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonActive, FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { ensureFoundingSeasonCompPeriod } from '@/lib/founding-season';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
@@ -176,12 +176,13 @@ export const POST = withObservability(async (req: Request) => {
     );
   }
 
-  // Founding season: Tournament plan owners get Tournament Plus without Stripe.
+  // Founding Season: Tournament plan owners get Tournament Plus without Stripe — while the SIGNUP
+  // window is open (a free org upgrading after the close pays the list price through Stripe).
   const isFoundingSeasonTournamentUpgrade =
     !shouldApplyDirectly &&
     planKey === 'tournament_plus' &&
     auth.org.planId === 'tournament' &&
-    isFoundingSeasonActive();
+    isFoundingSeasonSignupOpen();
 
   if (isFoundingSeasonTournamentUpgrade) {
     const { error: orgError } = await supabaseAdmin
@@ -218,7 +219,7 @@ export const POST = withObservability(async (req: Request) => {
           emailKey: 'tournament_plus_welcome',
           orgId: auth.org.id,
           toEmail: auth.user.email,
-          subject: "You're on Tournament Plus — free through Dec 31",
+          subject: `You're on Tournament Plus — free through ${FOUNDING_SEASON_END_LABEL}`,
           html: tournamentPlusWelcomeHtml({
             orgName: auth.org.name,
             firstName: auth.user.user_metadata?.first_name as string | undefined,

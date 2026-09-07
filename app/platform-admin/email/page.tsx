@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
 import { getMarketingAudienceCounts, MARKETING_EMAIL_AUDIENCE } from '@/lib/email-sender';
 import EmailDashboardClient from './EmailDashboardClient';
@@ -31,7 +31,8 @@ async function getInitialData() {
       .from('org_overrides')
       .select('org_id')
       .eq('type', 'comp_period')
-      .eq('expires_at', FOUNDING_SEASON_END),
+      .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+      .is('revoked_at', null),
 
     // Editable planned dates + current subject/custom status for each marketing campaign.
     supabaseAdmin

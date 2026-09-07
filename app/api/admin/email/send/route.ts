@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
 import type { EmailVars } from '@/lib/email-markup';
@@ -46,7 +46,8 @@ async function getFoundingSeasonRecipients(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END);
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null);
 
   if (ovErr || !overrides?.length) return [];
 
@@ -105,7 +106,8 @@ async function getFoundingSeasonRecipientsNotOnClub(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END);
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null);
 
   if (!overrides?.length) return [];
   const orgIds = overrides.map(o => o.org_id as string);
@@ -154,7 +156,8 @@ async function getCoachRecipients(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END);
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null);
 
   if (!overrides?.length) return [];
   const orgIds = overrides.map(o => o.org_id as string);

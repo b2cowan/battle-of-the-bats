@@ -28,6 +28,7 @@
  * NO PRICES ARE WRITTEN HERE. Labels name plans and actions only; every price on this page comes
  * from `lib/plan-config.ts` via PricingSection, per the single-source pricing rule.
  */
+import { useEffect, useState } from 'react';
 import PricingSection, { RENDERED_PLAN_KEYS } from '@/components/PricingSection';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummaryState } from '@/lib/use-role-summary';
@@ -46,6 +47,26 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
   const currentPlan = billingHref && roles?.orgPlan && RENDERED_PLAN_KEYS.includes(roles.orgPlan as OrgPlan)
     ? (roles.orgPlan as OrgPlan)
     : undefined;
+  // Founding Season 2027 (/review 2026-09-07): whether the operator's OWN current plan is a running
+  // comp is a per-account fact, not the signup window — after the window closes, an organization
+  // that joined in time is still free through the end of the season and its "Current plan" card
+  // must keep saying so. Read from the same status endpoint the billing screen uses (the slug is
+  // the billing href's first segment — the same org by construction). Operators only, and only
+  // for the one rendered plan an org can hold on the promo; prospects never fire it, so the
+  // anonymous-public invariant above holds. `undefined` until answered → the card falls back to
+  // the window, the only state a brand-new account can be in.
+  const [currentPlanComped, setCurrentPlanComped] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    if (!billingHref || currentPlan !== 'tournament_plus') return;
+    const orgSlug = billingHref.split('/')[1];
+    if (!orgSlug) return;
+    let cancelled = false;
+    fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(orgSlug)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { if (!cancelled && data) setCurrentPlanComped(!!data.isFoundingSeason); })
+      .catch(() => { /* stay undefined — the window decides */ });
+    return () => { cancelled = true; };
+  }, [billingHref, currentPlan]);
 
   // ⚠ THE WINDOW MATTERS. Until the role summary lands we cannot tell an operator from a fan, and
   // the prospect markup's CTA is a LIVE link into `/auth/signup?plan=…`. Rendering it during that
@@ -73,6 +94,7 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
       gatingMap={gatingMap}
       marketingLayout={marketingLayout}
       currentPlan={currentPlan}
+      currentPlanComped={currentPlanComped}
       // Same destination for every card: the billing screen is where plan changes are made, and
       // sending "choose Club" somewhere else would fork one decision across two surfaces.
       ctaHrefFor={() => billingHref}

@@ -2,7 +2,11 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, foundingSeasonOfferCore,
+  FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
+  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+} from '@/lib/plan-config';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
@@ -85,6 +89,10 @@ export default async function ForTournamentOrganizersPage() {
   // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
   const showSandboxDoor = sandboxDoorsVisible();
   const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  // The Founding Season copy on this page used to be HAND-WRITTEN with no gate at all (it would
+  // have kept advertising a closed offer forever). Every offer sentence now keys off the signup
+  // window and falls back to the list-price words the day it closes.
+  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -98,8 +106,15 @@ export default async function ForTournamentOrganizersPage() {
             <span className={styles.heroAccent}>to final standings.</span>
           </h1>
           <p className={styles.heroSub}>
-            Register teams, build your schedule, run the bracket, and post live scores — all in one place.
-            Free to start, no credit card required.
+            Register teams, build your schedule, run the bracket, and post live scores — all in one place.{' '}
+            {tpPromoActive ? (
+              <>
+                <span className={styles.heroNoteAccent}>Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
+                {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
+              </>
+            ) : (
+              <>Free to start, no credit card required.</>
+            )}
           </p>
           <div className={styles.heroActions}>
             {/* "Start free", matching /for-coaches word for word (owner-directed 2026-08-07): the
@@ -134,7 +149,10 @@ export default async function ForTournamentOrganizersPage() {
             <p className={styles.seeItLiveNote}>No sign-up, no email. Walk into a tournament that&apos;s running right now.</p>
           )}
           <div className={styles.trustRow}>
-            {['Free plan — no time limit', 'No credit card required', 'Billed in CAD'].map(s => (
+            {(tpPromoActive
+              ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month`, 'No credit card required']
+              : ['Free plan — no time limit', 'No credit card required', 'Billed in CAD']
+            ).map(s => (
               <div key={s} className={styles.trustItem}>
                 <span className={styles.trustDot} />
                 <span>{s}</span>
@@ -229,11 +247,26 @@ export default async function ForTournamentOrganizersPage() {
             <div className={`${styles.planCard} ${styles.planCardFeatured}`}>
               <div>
                 <p className={styles.planName}>Tournament Plus</p>
-                <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
-                  <span className={styles.planPeriod}>/month</span>
-                </div>
-                <p className={styles.planNote}>Free through Dec 31, 2026 — Founding Season · {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year from Jan 2027</p>
+                {tpPromoActive ? (
+                  <>
+                    {/* "$0 through …", not "Free": the free Tournament card beside it already says
+                        "Free" with no end date, and the permanent and the promotional must stay
+                        distinguishable at a glance (owner choice 3 of 3, 2026-09-07). */}
+                    <div className={styles.planPrice}>
+                      <span className={styles.planAmount}>$0</span>
+                      <span className={styles.planPeriod}>through {FOUNDING_SEASON_END_LABEL}</span>
+                    </div>
+                    <p className={styles.planNote}>Founding Season · normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year</p>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.planPrice}>
+                      <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
+                      <span className={styles.planPeriod}>/month</span>
+                    </div>
+                    <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
+                  </>
+                )}
               </div>
               <p className={styles.planTagline}>
                 For organizers running more than one event a year, or who need custom registration, exports, and archives.
@@ -266,28 +299,40 @@ export default async function ForTournamentOrganizersPage() {
       </section>
 
       {/* ── Founding Season ──────────────────────────────────────────────── */}
-      <section className={styles.section}>
-        <div className="container">
-          <div className={styles.foundingSeasonCard}>
-            <div className={styles.foundingSeasonEyebrow}>Running your first tournament this year?</div>
-            <h2 className={styles.foundingSeasonTitle}>
-              Tournament Plus is free for founding organizations through December 31, 2026.
-            </h2>
-            <p className={styles.foundingSeasonBody}>
-              Auto-scheduling, brackets, communications, and archives — at no cost while we build
-              our first season together. Normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card required.
-            </p>
-            <div className={styles.foundingSeasonActions}>
-              <Link
-                href="/auth/signup"
-                className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-              >
-                Start free — no credit card required
-              </Link>
+      {/* Re-aimed 2026-09-07: the eyebrow addressed first-timers, who are served by the free plan;
+          Tournament Plus is for organizations running two or more events. The consequence line is
+          the sentence that removes "what's the catch", and it is TRUE for this product — an
+          organization that stops moves to the free Tournament plan with everything it built. The
+          whole section is a promo artifact: gone the day the signup window closes. */}
+      {tpPromoActive && (
+        <section className={styles.section}>
+          <div className="container">
+            <div className={styles.foundingSeasonCard}>
+              <div className={styles.foundingSeasonEyebrow}>Running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</div>
+              <h2 className={styles.foundingSeasonTitle}>
+                Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season.
+              </h2>
+              <p className={styles.foundingSeasonBody}>
+                Auto-scheduling, brackets, communications, and archives for every event you run
+                through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
+                Sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. No credit card.
+              </p>
+              <p className={styles.foundingSeasonConsequence}>
+                In {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
+                If you don&apos;t continue, your organization moves to the free Tournament plan and keeps everything it built.
+              </p>
+              <div className={styles.foundingSeasonActions}>
+                <Link
+                  href="/auth/signup"
+                  className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+                >
+                  Start free
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={styles.crossSellSection}>
@@ -338,7 +383,9 @@ export default async function ForTournamentOrganizersPage() {
             <span className={styles.ctaAccent}>starts here.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Free to start. No credit card required. Tournament Plus is free through December 31, 2026 for founding organizations.
+            {tpPromoActive
+              ? `${foundingSeasonOfferCore('tournament_plus')} — normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card.`
+              : 'Free to start. No credit card required.'}
           </p>
           <div className={styles.ctaActions}>
             <Link

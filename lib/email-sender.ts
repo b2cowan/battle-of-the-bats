@@ -19,7 +19,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
-import { FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { isDemoOrgId } from '@/lib/demo-org-server';
 
 const RESEND_API = 'https://api.resend.com/emails';
@@ -506,11 +506,14 @@ export const MARKETING_EMAIL_AUDIENCE: Record<string, MarketingAudience> = {
 };
 
 async function foundingOrgIds(): Promise<string[]> {
+  // Current OR legacy comp instant (see FOUNDING_SEASON_COMP_EXPIRIES), and never a revoked comp —
+  // a revoked organization is no longer in the Founding Season and must not be mailed as one.
   const { data } = await supabaseAdmin
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END);
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null);
   return (data ?? []).map(o => o.org_id as string);
 }
 

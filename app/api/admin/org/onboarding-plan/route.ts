@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
-import { PLAN_CONFIG, isFoundingSeasonActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentPlusUpsellHtml, SITE_URL } from '@/lib/email';
 import { sendMarketingEmail } from '@/lib/email-sender';
@@ -100,8 +100,9 @@ export const POST = withObservability(async (req: Request) => {
   // first-run free-Tournament selection (guarded above), so it targets exactly the
   // users we want to nudge. Marketing email — respects opt-out, unsubscribe footer
   // auto-injected. Non-fatal: never block plan selection on an email failure.
-  // Only worth sending while the founding-season free offer is still active.
-  if (isFoundingSeasonActive() && ctx.user.email) {
+  // Only worth sending while the Founding Season SIGNUP window is open — the $0 upgrade it
+  // promotes is granted only to organizations that join by the signup close.
+  if (isFoundingSeasonSignupOpen() && ctx.user.email) {
     try {
       const scheduledAt = new Date(Date.now() + UPSELL_DELAY_DAYS * 86_400_000).toISOString();
       await sendMarketingEmail({

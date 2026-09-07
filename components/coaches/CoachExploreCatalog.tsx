@@ -7,7 +7,7 @@ import { Check, ArrowUpRight, Loader2 } from 'lucide-react';
 import type { ActivatableFeature } from '@/lib/basic-coach-teams';
 import { activateCoachTeamFeature } from '@/lib/coach-feature-activation';
 import { COACH_TEAM_TOOLS, coachTeamToolPath } from '@/lib/coach-team-tools';
-import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './CoachExploreCatalog.module.css';
 
 /** Explore's own catalog blurb per tool — this page's voice. The tool's NAME, icon and path come
@@ -158,7 +158,7 @@ export default function CoachExploreCatalog({
             <span className={styles.premiumReassure}>Everything above stays free.</span>
             {promoActive ? (
               <span className={styles.premiumPrice}>
-                Free until Jan 1, 2027<span className={styles.premiumPriceUnit}> · then $29/mo per team</span>
+                Free through {FOUNDING_SEASON_END_LABEL}<span className={styles.premiumPriceUnit}> · normally $29/month per team</span>
               </span>
             ) : (
               <span className={styles.premiumPrice}>

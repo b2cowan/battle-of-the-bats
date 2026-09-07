@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, Fragment } from 'react';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const COMPARISON_CATEGORIES = [
+// A builder, not a module-level constant: the Founding Season row reads the signup window at
+// RENDER time, so a long-lived server process cannot freeze the offer's state at boot.
+const buildComparisonCategories = () => [
   {
     label: 'Tournaments & Scheduling',
     defaultOpen: true,
@@ -108,8 +111,8 @@ const COMPARISON_CATEGORIES = [
     defaultOpen: false,
     rows: [
       { feature: 'Self-serve signup',          tournament: 'Available now', plus: 'Available now',              league: 'Coming soon',      club: 'Coming soon' },
-      { feature: 'Founding Season offer',      tournament: '—',             plus: 'Free through Dec 31, 2026', league: 'Express interest', club: 'Express interest' },
-      { feature: 'Payment details at signup',  tournament: '—',             plus: 'No (Founding Season)',      league: 'Not yet',          club: 'Not yet' },
+      { feature: 'Founding Season offer',      tournament: '—',             plus: isFoundingSeasonPromoActive('tournament_plus') ? `Free through ${FOUNDING_SEASON_END_LABEL} · sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}` : '—', league: 'Express interest', club: 'Express interest' },
+      { feature: 'Payment details at signup',  tournament: '—',             plus: isFoundingSeasonPromoActive('tournament_plus') ? 'No (Founding Season)' : 'Card at checkout', league: 'Not yet',          club: 'Not yet' },
     ],
   },
 ];
@@ -117,6 +120,7 @@ const COMPARISON_CATEGORIES = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ComparisonTable() {
+  const COMPARISON_CATEGORIES = buildComparisonCategories();
   const [openSet, setOpenSet] = useState<Set<string>>(
     () => new Set(COMPARISON_CATEGORIES.filter(c => c.defaultOpen).map(c => c.label))
   );

@@ -2,7 +2,11 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
+  FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
+  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+} from '@/lib/plan-config';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
@@ -42,12 +46,26 @@ export default async function ForCoachesPage() {
             Manage your team.<br />
             <span className={styles.heroAccent}>Not your inbox.</span>
           </h1>
-          <p className={styles.heroSub}>
-            Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
-            tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
-            operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
-            No org account needed, and your workspace carries over if your organization joins later.
-          </p>
+          {/* While the signup window is open the hero sells ONE thing (owner-approved 2026-09-07):
+              the two-tier explanation made a coach sort out Basic vs Premium before reaching the
+              line that matters. The free companion's reassurance moves to the plan grid below,
+              where it is true; the two-family framing returns here the day the window closes. */}
+          {checkoutOpen && promoActive ? (
+            <p className={styles.heroSub}>
+              The Premium Coaches Portal is your team&apos;s operations HQ — roster, lineups, budget,
+              schedule, and documents for the whole season.{' '}
+              <span className={styles.heroNoteAccent}>It&apos;s free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
+              {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month.
+              No organization account needed, and your workspace carries over if your organization joins later.
+            </p>
+          ) : (
+            <p className={styles.heroSub}>
+              Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
+              tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
+              operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
+              No org account needed, and your workspace carries over if your organization joins later.
+            </p>
+          )}
           <div className={styles.heroActions}>
             {checkoutOpen ? (
               <Link
@@ -86,8 +104,8 @@ export default async function ForCoachesPage() {
             {checkoutOpen ? (
               promoActive ? (
                 <>
-                  <span className={styles.heroNoteAccent}>Free until Jan 1, 2027</span>
-                  {' '}— then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month. No credit card required to start.
+                  <span className={styles.heroNoteAccent}>Free through {FOUNDING_SEASON_END_LABEL}</span>
+                  {' '}— normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month. No credit card required.
                 </>
               ) : (
                 <>Start free — no credit card required.</>
@@ -101,7 +119,7 @@ export default async function ForCoachesPage() {
           </p>
           <div className={styles.trustRow}>
             {(checkoutOpen && promoActive
-              ? ['Free until Jan 1, 2027', `then ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`, 'No org account needed']
+              ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`, 'No org account needed']
               : [`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`, `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed']
             ).map(s => (
               <div key={s} className={styles.trustItem}>
@@ -163,7 +181,7 @@ export default async function ForCoachesPage() {
           <p className={styles.sectionEyebrow}>The plan</p>
           <h2 className={styles.sectionTitle}>Coaches Portal — your team, your workspace.</h2>
           <p className={styles.sectionSub}>
-            Your free portal follows your tournaments. Premium is the operations HQ for the whole
+            Your free portal follows your tournaments{checkoutOpen && promoActive ? ' — free with no end date' : ''}. Premium is the operations HQ for the whole
             season — roster, lineups, budget, schedule, and documents in one place. Standalone,
             or included with Club when your org joins.
           </p>
@@ -177,9 +195,13 @@ export default async function ForCoachesPage() {
                   <>
                     <div className={styles.planPrice}>
                       <span className={styles.planAmount}>Free</span>
-                      <span className={styles.planPeriod}>until Jan 1, 2027</span>
+                      <span className={styles.planPeriod}>through {FOUNDING_SEASON_END_LABEL}</span>
                     </div>
-                    <p className={styles.planNote}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month · no credit card required · Standalone, no org required</p>
+                    <p className={styles.planNote}>Normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year · no credit card · standalone, no org required</p>
+                    {/* The coach consequence line — the FALLBACK wording until the read-only window
+                        after cancellation is built (ratified in principle 2026-09-07). Do not
+                        promise "your season stays readable" before that window exists. */}
+                    <p className={styles.planNote}>In {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season. Nothing is charged before then.</p>
                   </>
                 ) : (
                   <>
@@ -310,7 +332,7 @@ export default async function ForCoachesPage() {
           <p className={styles.ctaSub}>
             {checkoutOpen
               ? (promoActive
-                ? 'Start your Premium Coaches Portal free — $0 until January 1, 2027, then $29/month. No credit card required.'
+                ? `Start your Premium Coaches Portal free — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month. No credit card.`
                 : 'Start your Coaches Portal — no credit card required.')
               : 'Express interest in the Coaches Portal to be notified when it opens. No commitment required.'}
           </p>

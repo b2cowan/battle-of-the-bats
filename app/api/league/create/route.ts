@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
+import { FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL, isFoundingSeasonSignupOpen } from '@/lib/plan-config';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
@@ -188,13 +188,13 @@ export const POST = withObservability(async (req: Request) => {
 
     // Founding Season comp parity with /api/org/create. Harmless for the floor: comp_period is
     // billing-only and grants no modules, so it can't widen the free-floor scope.
-    if (isFoundingSeasonActive()) {
+    if (isFoundingSeasonSignupOpen()) {
       const { error: compErr } = await supabaseAdmin.from('org_overrides').insert({
         org_id: org.id,
         type: 'comp_period',
         value: null,
         expires_at: FOUNDING_SEASON_END,
-        reason: 'Founding Season — Tournament Plus free through December 31, 2026',
+        reason: `Founding Season — Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`,
         created_by: 'system',
       });
       if (compErr) console.error('[league/create] Founding season comp_period insert error:', compErr);

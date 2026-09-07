@@ -8,6 +8,39 @@
 
 ---
 
+### 2026-09-07 — FOUNDING SEASON 2027: the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026; the two dates separate; no second promotion; the September ask is a 2028 plan choice, annual first; the offer goes front and centre
+**Status:** Decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **BUILT on `dev` 2026-09-07** (uncommitted at time of writing; migration 279 applied to dev, PROD-OWED). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
+
+**Decision:** Seven parts.
+1. **The free period ends September 30, 2027** (was December 31, 2026) for Tournament Plus and the Premium Coaches Portal. Not August 31: the product's own season model says settlement, awards, documents and next year's tryout all happen after the last game, and ball tryouts run August into September — the conversion moment must coincide with "I have next year's team".
+2. **The signup window closes December 31, 2026.** For the first time this is a SEPARATE date from the free-period end; before today they were the same instant. Every offer surface and every comp-granting path keys off the signup window; billing-state surfaces key off the free-period end. Runtime: `FOUNDING_SEASON_SIGNUP_CLOSE` / `FOUNDING_SEASON_END` in `lib/plan-config.ts`, both pinned to the end of the named day in Eastern time; customer labels derived from them and pinned by test.
+3. **No second promotion after the window.** From January 1, 2027 the pages read as the list price with the free floors (Tournament; Basic Coaches Portal). A second offer would make the first deadline a lie. The post-window state is written now (pricing FAQ "Can I still get the Founding Season offer?"). ⚠ **Consequence: the Stripe production smoke test keeps its December 31, 2026 deadline** — after the window closes a free organization upgrading meets the live checkout.
+4. **The end-of-season ask is a plan choice for the 2028 season, annual first, monthly available, made with the card.** A seasonal buyer charged monthly on October 1 has nothing to use until spring and cancels. Activates the June 2026 "annual lock-in" proposal, whose two preconditions (a real cohort, a firm date) now exist. The card ask opens **June 1, 2027** (`FOUNDING_SEASON_CARD_WINDOW_OPEN`), never during the signup window.
+5. **Turn-off semantics stand as ruled:** a Tournament Plus organization that does not continue moves to the free Tournament plan with its data; a Premium Coaches Portal is cancel-only (2026-06-25). **The read-only window after cancellation (Proposed 2026-08-06) is ratified in principle for this cohort** — its length is the existing 90-day retention period — and must be built before the coach consequence line may promise it; until then the copy uses the fallback sentence.
+6. **The homepage badge rule (2026-08-07) stands**, and the offer still goes front and centre: a site-wide offer bar above the navigation on every marketing page, an offer panel under the hero sub-headline (the promise at headline weight, the one offer sentence, the two prices being waived, the after line), the persona cards unchanged as the doors. The three mockup choices: **bar variant A** (dark, lime type), **panel product lines as text** (the cards are the only doors), **pricing cards show "$0 through September 30, 2027"** with the list price beneath (not "Free" — the free Tournament card beside them says "Free" with no end date, and the permanent and the promotional must stay distinguishable).
+7. **Platform-admin desk in winter, automation decided by May 2027.** One list of every comped organization and coach workspace showing free-period end, card on file, last activity and events run; reminder sends targeted at "no card yet"; card saving for coach workspaces; a summer reminder calendar (open June, nudge August, final notice mid-September, turn-off October 1). The 2026-07-20 hand-run-under-fifty rule stands until cohort size says otherwise.
+
+**Rationale:** The January 1 cliff was wrong for the sport calendar — a ball organization signing up in October 2026 for its 2027 season would have hit the paywall before it ran a game, and nobody converts on a product they have not used for a real season. The live cohort is three accounts, so extending them costs nothing and the whole decision is about the next cohort. The verified state of the product decided the build order: nothing turned a comp off by itself, no list showed who had a card, the January runbook was never written, and the billing page was about to ask for a card on October 1, 2026 with copy promising nothing before January — so the date split and the copy sweep ship first, the admin desk in winter.
+
+**Affects:** Promotions (PLAN_PRICING_FACTS.md — both Founding Season bullets rewritten), every offer surface (homepage, `/for-tournament-organizers`, `/for-coaches`, `/pricing` incl. the comparison table and FAQ, `/start`, the coach signup + welcome screens, the org onboarding and billing pages, the four in-portal Premium notes), the transactional welcome/upsell emails, the ten campaign emails (rewritten in the winter pass against the summer calendar — the Club/League spotlights retire), the 2026-07-20 D3 January runbook (superseded — the runbook is now a September 2027 runbook). **No list price, plan name, capacity band or SKU moved.**
+
+**Handoff:**
+```
+HANDOFF → /plan       — done: FOUNDING_SEASON_2027_PLAN.md + PM brief (Phases 0–3).
+HANDOFF → /marketing  — done for the pages (copy canon, approved on the mockup sheet); OWED: the
+                        ten campaign emails + welcome-email polish against the summer-2027 calendar.
+HANDOFF → /design     — done: design_decisions.md 2026-09-07 entry (bar, panel, price block).
+HANDOFF → /billing    — Phase 2: card-save for coach workspaces; the 2028 plan-choice checkout
+                        (annual first); Stripe production smoke test by December 31, 2026 (HARD).
+HANDOFF → /release    — migration 279 (DATA-ONLY, invisible to check:migrations) must be applied
+                        to prod in the same promote as this code; record it in the release history.
+HANDOFF → owner       — decide the read-only window's build slot before the coach consequence line
+                        may promise it.
+```
+**Supersedes:** the January 2027 conversion mechanics of the 2026-07-20 entry (D3 — manual January runbook, Oct–Dec card window). **Activates:** the 2026-06-22 "September annual lock-in" proposal. **Relates to:** 2026-08-07 homepage badge rule (stands), 2026-08-06 cancellation ruling + its Proposed read-only window (ratified in principle here), 2026-06-25 cancel-only exit (stands).
+
+---
+
 ### 2026-08-28 — The demo tour becomes DOORS, not narration: the deck carries the story in a conversation, the demo carries it for a stranger
 
 **Status:** Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/active/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.

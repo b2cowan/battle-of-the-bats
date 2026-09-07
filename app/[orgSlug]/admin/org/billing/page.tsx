@@ -7,7 +7,11 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
-import { PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, isFoundingSeasonPromoActive, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, isFoundingSeasonPromoActive, isFoundingSeasonCardWindowOpen,
+  formatPriceAmount, formatAnnualSavings,
+  FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+} from '@/lib/plan-config';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
@@ -162,10 +166,10 @@ export default function BillingPage() {
     if (searchParams.get('card_saved') === '1') {
       return {
         title: 'Card saved',
-        // The founding-season promise only while the promo is live — the same
-        // card-save flow keeps working after Jan 1 with generic copy.
+        // The Founding Season promise only while the comp is still RUNNING — the same
+        // card-save flow keeps working after the free season ends, with generic copy.
         msg: isFoundingSeasonActive()
-          ? 'Your payment method is on file. Nothing will be charged before January 1, 2027 — your founding season stays free through December 31, 2026.'
+          ? `Your payment method is on file. Nothing will be charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL} — your Founding Season stays free through ${FOUNDING_SEASON_END_LABEL}.`
           : 'Your payment method is on file for future invoices.',
       };
     }
@@ -427,10 +431,22 @@ export default function BillingPage() {
   const currentPlan    = PLAN_CONFIG[currentPlanKey];
   const status         = currentOrg.subscriptionStatus;
 
-  // Founding season banner: show pre-October "no payment ask yet" state
+  // Founding Season banner: before the summer card window it states that no payment action is
+  // needed; inside the window it carries the "add a payment method" ask. The window's dates live
+  // in lib/plan-config.ts beside the two Founding Season dates — never a literal here again (the
+  // old hardcoded 2026-10-01 would have asked for a card eleven months early once the free season
+  // was extended).
   const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
   const isFoundingSeason = foundingSeasonStatus?.isFoundingSeason ?? false;
-  const isBeforeOctober  = new Date() < new Date('2026-10-01T00:00:00.000Z');
+  const cardWindowOpen   = isFoundingSeasonCardWindowOpen();
+  // Whether THIS account's current plan is a running Founding Season comp — the per-account
+  // status, never the signup window: after the window closes, an account that joined in time is
+  // still free through the end of the season, and its own price card must keep saying so
+  // (/review 2026-09-07). Until the status answers, fall back to the window (the only state a
+  // brand-new account can be in).
+  const currentPlanComped = foundingSeasonStatus === null
+    ? isFoundingSeasonPromoActive(currentPlanKey)
+    : isFoundingSeason && (currentPlanKey === 'tournament_plus' || currentPlanKey === 'team');
   // The founding-season banner copy is Tournament-Plus-specific (plan name, $39 price, and the
   // org-only "add a payment method to keep Tournament Plus running" card-on-file ask — none of which
   // is built for coach workspaces), so it stays suppressed for team-workspace billing. A comped coach
@@ -458,7 +474,7 @@ export default function BillingPage() {
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Coming soon';
-    if (isFoundingSeasonPromoActive(planKey)) return 'Free through Dec 31, 2026';
+    if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     if (billingCycle === 'annual') return `${formatPriceAmount(plan.annualPrice)} CAD / year`;
@@ -466,7 +482,7 @@ export default function BillingPage() {
   }
 
   function getShelfPrice(planKey: OrgPlan): string {
-    if (isFoundingSeasonPromoActive(planKey)) return 'Free until Jan 1, 2027';
+    if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     return `from ${formatPriceAmount(plan.monthlyPrice)} CAD / month`;
@@ -481,7 +497,7 @@ export default function BillingPage() {
 
   function getTrialNote(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
-    if (isFoundingSeasonPromoActive(planKey)) return 'No credit card required until Jan 1, 2027';
+    if (isFoundingSeasonPromoActive(planKey)) return `No credit card — nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}`;
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
@@ -658,18 +674,18 @@ export default function BillingPage() {
             <div className={styles.planName}>{currentPlan.label} Plan</div>
             <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
             <div className={styles.planPrice}>
-              {isFoundingSeasonPromoActive(currentPlanKey)
-                ? 'Free until Jan 1, 2027'
+              {currentPlanComped
+                ? `Free through ${FOUNDING_SEASON_END_LABEL}`
                 : currentPlan.monthlyPrice === 0
                   ? 'Free forever'
                   : currentOrg.subscriptionPeriod === 'annual'
                     ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
                     : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
             </div>
-            {isFoundingSeasonPromoActive(currentPlanKey) && (
-              <div className={styles.planBillingCycle}>then {formatPriceAmount(currentPlan.monthlyPrice)}/mo after the founding season</div>
+            {currentPlanComped && (
+              <div className={styles.planBillingCycle}>normally {formatPriceAmount(currentPlan.monthlyPrice)}/month · in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for {FOUNDING_SEASON_NEXT_YEAR_LABEL}</div>
             )}
-            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !isFoundingSeasonPromoActive(currentPlanKey) && (
+            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !currentPlanComped && (
               <div className={styles.planBillingCycle}>
                 Billed {currentOrg.subscriptionPeriod === 'annual' ? 'annually' : 'monthly'}
               </div>
@@ -691,17 +707,17 @@ export default function BillingPage() {
           <div className={styles.foundingSeasonIcon}><Star size={16} /></div>
           <div className={styles.foundingSeasonBody}>
             <p className={styles.foundingSeasonEyebrow}>
-              {isBeforeOctober ? 'Founding Season Active' : 'Founding Season Active · Ends December 31'}
+              {cardWindowOpen ? `Founding Season · ends ${FOUNDING_SEASON_END_LABEL}` : 'Founding Season'}
             </p>
             <h2 className={styles.foundingSeasonTitle}>
-              {isBeforeOctober
-                ? 'Tournament Plus is free through December 31, 2026.'
-                : 'Your founding season ends December 31.'}
+              {cardWindowOpen
+                ? `Your Founding Season ends ${FOUNDING_SEASON_END_LABEL}.`
+                : `Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL}.`}
             </h2>
             <p className={styles.foundingSeasonCopy}>
-              {isBeforeOctober
-                ? `You're running Tournament Plus free through December 31, 2026 as a founding organization. Tournament Plus is normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month — your plan renews on January 1, 2027. No credit card required until then.`
-                : 'Your founding season includes Tournament Plus free through December 31, 2026. Add a payment method now to continue without interruption on January 1.'}
+              {cardWindowOpen
+                ? `Choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season and add a payment method to keep Tournament Plus running from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. Nothing is charged before then.`
+                : `You're running Tournament Plus free through ${FOUNDING_SEASON_END_LABEL} as a founding organization — normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card. In ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.`}
             </p>
           </div>
         </div>
@@ -794,7 +810,7 @@ export default function BillingPage() {
                   <h2 className={styles.sectionTitle}>Get more from your tournaments</h2>
                   <p className={styles.upgradeIntro}>Tournament Plus adds registration control, custom branding, exports, and scheduling automation — everything you need to run repeat events without the spreadsheet.</p>
                 </div>
-                {!isFoundingSeasonActive() && (
+                {!isFoundingSeasonPromoActive('tournament_plus') && (
                   <div className={styles.billingToggle}>
                     <button
                       className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
@@ -988,14 +1004,14 @@ export default function BillingPage() {
           <div>
             <h2 className={styles.sectionTitle}>Billing</h2>
             <p className={styles.manageHint}>
-              {isBeforeOctober
-                ? "No billing action needed — your founding season runs free through December 31, 2026. We'll remind you when it's time to add a payment method."
-                : 'Your founding season ends December 31. Add a payment method now to keep Tournament Plus running without interruption from January 1, 2027.'}
+              {cardWindowOpen
+                ? `Your Founding Season ends ${FOUNDING_SEASON_END_LABEL}. Add a payment method now to keep Tournament Plus running without interruption from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`
+                : `No billing action needed — your Founding Season runs free through ${FOUNDING_SEASON_END_LABEL}. We'll remind you during the summer when it's time to choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}.`}
             </p>
           </div>
-          {!isBeforeOctober && canManageBilling && (
+          {cardWindowOpen && canManageBilling && (
             /* mode='setup' card-on-file save — NOT the subscription checkout (which
-               starts a 14-day trial and would bill before Jan 1). */
+               starts a 14-day trial and would bill before the free season ends). */
             <button
               className="btn btn-outline"
               onClick={handleAddCard}

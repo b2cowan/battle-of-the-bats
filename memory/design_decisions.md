@@ -2,6 +2,20 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-07 — FOUNDING SEASON 2027 on the marketing pages: a site-wide offer bar, an offer panel in the hero, the offer INSIDE the price block — and the persona-card badge rule stands (owner-approved on mockup artifact `61a78f09`, "looks good, go for it")
+
+**Decision (owner, approving the sheet as drawn with the recommended option on each of its three choices):**
+1. **Site-wide offer bar — variant A.** One line above the marketing Navbar on every marketing page (homepage, `/pricing`, the four persona pages, `/demos`, `/changelog`): `--hud-surface` ground, 1px lime-35% bottom hairline, lime eyebrow "Founding Season", `--fl-text` promise, lime link; 40px desktop, **44px tap floor on phones** where the whole strip is the target and the year + "See the offer" fold away. **Rejected: variant B (lime fill)** — two lime fills in the first viewport once the hero button is in view, so the bar out-shouts the ask. Geometry reuses the sandbox banner's mechanism exactly (fixed, self-measured, `--offer-bar-h` + `data-offer-bar` on `<html>`, body padding, Navbar `top` adds the var). **Marketing paths only** — never a customer's public pages, never the sandbox, never the consumer/warm/operator shells.
+2. **Homepage offer panel** directly under the hero sub-headline, above the persona cards: the lime-bordered box recipe the tournament persona page already used (`rgba(lime,.45)` border on a `.04` wash), eyebrow → display-face headline "Your 2027 season, free." → the one offer sentence in the data face → the after line in `--data-gray`; a 1.45fr/1fr grid with the two product lines (plan name lime, "normally $X/month" grey) as **TEXT, not doors** — the persona cards beneath are the doors. **Measured on the render:** at 1440×900 the cards start ≈610px and end ≈815px, the roadmap strip ends ≈887px — nothing the screen exists for crosses the fold. On a 390×844 phone the panel pushes the first card down ≈210px; its question and body stay above the fold, its action link lands ≈40px below. Accepted as the honest cost. The 12px uppercase eyebrow row above the headline is **removed**; the plans-section callout box becomes **one line** under the section sub-heading.
+3. **The offer goes INSIDE the price block on `/pricing` and the tournament persona card: "$0" in the amount slot + "through September 30, 2027" as the period + "Normally $39/month · $390/year" as the note**, with the header carrying only a "Founding Season" chip in the existing `.statusBadge` recipe. The badge-above-the-tagline pattern (10px, while $39 stayed the biggest number on the card) is **retired and its three CSS classes deleted**. **"$0", not "Free"** — the free Tournament card beside it says "Free" with no end date; the permanent and the promotional must stay distinguishable at a glance. The coaches persona card, with no permanent-free sibling, keeps "Free / through September 30, 2027".
+4. **The persona-card badge rule (2026-08-07) stands** — cards state availability and the absence of a payment barrier, never the promo calendar; the panel above them carries the calendar so they never have to.
+5. **The `/start` chooser** keeps its S1-1 shape; the two offer doors' pills say "2027 season free" in the same ink-on-lime pill, and the Basic companion's door becomes a quiet centred olive-link line under the cards (`.basicLine`) while the coach card opens Premium.
+6. **Every one of these surfaces keys off the SIGNUP window** (closes December 31, 2026), not the free-period end, so they vanish together on January 1, 2027 and the pages read as list price — no post-window residue to design.
+
+**Rationale:** The offer was on every page as a footnote — the smallest type on the homepage, a badge that contradicted the card's own $39, a hero that led with the permanent free floor, a chooser whose "Free" pill did not say which free. "Front and centre" here meant weight and placement, not new layouts: every element reuses a recipe the marketing pages already had (the sandbox banner's fixed-bar mechanism, the lime-box, `.statusBadge`, the warm pill), so nothing new was added to the design system.
+
+**Applies to:** `components/marketing/FoundingSeasonOfferBar.*`, `components/marketing/FoundingSeasonPanel.*`, `app/page.tsx`, `app/pricing/page.tsx` + `ComparisonTable.tsx`, `components/PricingSection.*`, `app/for-tournament-organizers/*`, `app/for-coaches/page.tsx`, `app/(consumer)/start/*`, `components/Navbar.module.css` (`top` term), `app/globals.css` (`--offer-bar-h` body padding + `--chrome-top-h` term). Mockup source kept at `docs/projects/active/FOUNDING_SEASON_2027_OFFER_MOCKUP.html`.
+
 ### 2026-09-06 — ONE TABLE STANDARD, ONE EXCEPTION REGISTER, and the rule that one axis of difference does not license the others (owner-approved from rendered evidence + true-size mockups; seven rulings)
 
 **Decision (owner, approving `docs/agents/design/TABLE_AND_LIST_STANDARD.md`, the register
@@ -341,7 +355,7 @@ By-installment grid: *"the fact that 'installment #' is the primary header is st
 date might be a better primary"*, *"I can't scroll sideways"*, *"there could be a highlighted column
 for the current next installment (look at how the monthly report functions in budget vs. actual)"*.
 Twelve decisions on mockup artifact `6bd4c6d9` ("Set Once, Chase Weekly"), all on the recommended
-path. Plan: `docs/projects/active/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
+path. Plan: `docs/projects/archive/COACH_DUES_SET_ONCE_CHASE_WEEKLY_PLAN.md`.
 
 **⚠ NO LOCK ON DUES — the 2026-08-14 ruling is reaffirmed, and the question was re-framed.** The
 owner asked the lock question a second time; the answer is unchanged (re-running mid-season is
@@ -419,6 +433,17 @@ at the pinned block. Both fixed the way the heading tint already was: the opaque
 longhand, the tint arrives as a background-IMAGE layer on top. **Verified by reading composited
 pixels in a browser, not by reasoning about the cascade** — a hover state is invisible to the
 rendered sweep.
+
+**Walked and ratified — Owner QA §140 ✅ PASSED 2026-09-06, 37/37, all nine parts, zero defects.**
+Everything above stands as built; nothing was found to change. The three calls the walk carried for
+the owner are now **settled, do not re-open**: (1) **"Showing" keeps its two jobs** — it names a
+filter on Player Dues and a lens on Budget vs. Actual, and one word doing both is accepted;
+(2) **the preview keeps showing a sample letter**, not the real recipient list; (3) the never-paid
+nudge's missing "Last reminded" was already closed in the *stamp it* direction by the 2026-09-05
+confirm-first ruling (`885e56a1`, QA §136), and this walk confirms it live. ⚠ One assertion in the
+walk rests on the code path rather than a signed-in look: the UAT fixture has **no read-only money
+account**, so "the set-once door is withheld from a coach who cannot write money" is enforced
+server-side but not observed. A read-only fixture coach would close it.
 
 ---
 

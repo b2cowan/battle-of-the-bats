@@ -54,14 +54,6 @@ const AA_NORMAL = 4.5;
 const ALLOWED = [
   {
     file: 'app/page.tsx',
-    cls: 'text-data-gray/40',
-    reason:
-      'The "·" separators in the two Founding Season strips. Decorative punctuation carrying no ' +
-      'information — the facts either side are full-strength — and marked aria-hidden so a screen ' +
-      'reader does not announce them either. WCAG 1.4.3 does not reach them.',
-  },
-  {
-    file: 'app/page.tsx',
     cls: 'text-blueprint-blue/20',
     reason:
       'The oversized step numeral watermarked behind each "how it works" card (absolute, ' +

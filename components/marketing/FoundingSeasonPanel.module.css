@@ -1,0 +1,110 @@
+/* Founding Season offer panel — the lime-bordered box recipe the tournament persona page already
+   uses for its Founding Season card (rgba lime .45 border on a .04 lime wash), lifted to the hero. */
+.panel {
+  position: relative;
+  z-index: 1;
+  /* The site-wide offer bar links to #founding-season on /pricing: a fragment jump must land the
+     panel BELOW the fixed chrome (the bar + the marketing Navbar), not underneath it
+     (/review 2026-09-07). */
+  scroll-margin-top: calc(var(--offer-bar-h, 0px) + var(--marketing-bar-h) + 1rem);
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 1.75rem 2.5rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  padding: 1.625rem 2rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+/* Pricing placement: no product column, so the lead takes the whole width. */
+.panel:has(.lead:only-child) { grid-template-columns: 1fr; }
+
+.lead { min-width: 0; }
+
+.eyebrow {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin: 0 0 0.5rem;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--fl-text);
+  margin: 0 0 0.75rem;
+}
+
+.offerLine {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--fl-text);
+  margin: 0 0 0.625rem;
+}
+
+.afterLine {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--data-gray);
+  margin: 0;
+}
+
+.products {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  padding: 0 0 0 1.75rem;
+  border-left: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+}
+
+.product {
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--white-05);
+}
+.product:last-child { border-bottom: 0; }
+
+.productName {
+  font-family: var(--font-data);
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin: 0 0 0.2rem;
+}
+
+.productPrice {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  margin: 0;
+}
+
+/* Phone: one column; the two product lines sit side by side under a hairline. */
+@media (max-width: 640px) {
+  .panel {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    padding: 1.125rem;
+    margin-bottom: 1.125rem;
+  }
+  .headline { font-size: 1.875rem; }
+  .offerLine { font-size: 0.78rem; }
+  .afterLine { display: none; }
+  .products {
+    flex-direction: row;
+    gap: 1.125rem;
+    padding: 0.75rem 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  }
+  .product { flex: 1; padding: 0; border-bottom: 0; }
+}

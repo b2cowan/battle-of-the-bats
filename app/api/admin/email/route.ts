@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { withObservability } from '@/lib/observability';
 
 // ── Founding season audience query ────────────────────────────────────────────
@@ -26,7 +26,8 @@ async function getFoundingSeasonRecipientCount(): Promise<number> {
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END);
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null);
 
   if (ovErr || !overrides?.length) return 0;
   const orgIds = overrides.map(o => o.org_id as string);

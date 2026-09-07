@@ -1,4 +1,9 @@
-import { FOUNDING_SEASON_END } from './plan-config';
+import {
+  FOUNDING_SEASON_END,
+  FOUNDING_SEASON_END_LABEL,
+  FOUNDING_SEASON_COMP_EXPIRIES,
+  isFoundingSeasonCurrentExpiry,
+} from './plan-config';
 import { supabaseAdmin } from './supabase-admin';
 
 /**
@@ -14,20 +19,34 @@ import { supabaseAdmin } from './supabase-admin';
 export async function ensureFoundingSeasonCompPeriod(
   orgId: string,
   createdBy: string | null | undefined,
-  reason = 'Founding Season - Tournament Plus free through December 31, 2026',
+  reason = `Founding Season - Tournament Plus free through ${FOUNDING_SEASON_END_LABEL}`,
 ): Promise<void> {
+  // Tolerant of the legacy instant (see FOUNDING_SEASON_COMP_EXPIRIES): a row written before the
+  // 2026-09-07 date move is the SAME comp, so it is recognised rather than duplicated — and healed
+  // to the current instant in passing, so the exact-match audience queries see it even if the
+  // bulk backfill (migration 279) has not reached this row yet.
   const { data, error } = await supabaseAdmin
     .from('org_overrides')
-    .select('id')
+    .select('id, expires_at')
     .eq('org_id', orgId)
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END)
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
     .is('revoked_at', null)
+    .order('expires_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) throw error;
-  if (data) return;
+  if (data) {
+    if (!isFoundingSeasonCurrentExpiry(data.expires_at as string)) {
+      const { error: healError } = await supabaseAdmin
+        .from('org_overrides')
+        .update({ expires_at: FOUNDING_SEASON_END })
+        .eq('id', data.id);
+      if (healError) throw healError;
+    }
+    return;
+  }
 
   const { error: insertError } = await supabaseAdmin
     .from('org_overrides')

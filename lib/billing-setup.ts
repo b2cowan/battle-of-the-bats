@@ -47,7 +47,8 @@ export async function ensureStripeCustomer(
  * Create a Checkout session in mode='setup' — saves a card on file, charges
  * nothing, and starts no subscription or trial. The webhook's setup-mode branch
  * promotes the saved card to the customer's default payment method so the
- * January 2027 conversion (manual runbook) can charge it — never before.
+ * end-of-Founding-Season conversion (the September 2027 runbook — FOUNDING_SEASON_2027_PLAN.md) can
+ * charge it — never before.
  * Success bounces back to the billing page with ?card_saved=1.
  */
 export async function createCardSetupSession(

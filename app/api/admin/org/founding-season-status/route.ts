@@ -8,7 +8,8 @@ import { withObservability } from '@/lib/observability';
  * GET /api/admin/org/founding-season-status
  *
  * Returns whether this org has an active founding season comp_period override.
- * Founding season = comp_period expires_at = 2027-01-01 (auto-assigned at signup through Dec 31, 2026).
+ * Founding Season = a comp_period whose expires_at falls on FOUNDING_SEASON_END's calendar date
+ * (auto-assigned at signup while the signup window is open — see lib/plan-config.ts).
  */
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;

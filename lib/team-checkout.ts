@@ -1,4 +1,4 @@
-import { normalizeBillingCycle, type BillingCycle } from './plan-config';
+import { normalizeBillingCycle, FOUNDING_SEASON_END_LABEL, type BillingCycle } from './plan-config';
 import { ensureFoundingSeasonCompPeriod } from './founding-season';
 import { DEFAULT_SPORT } from './sports';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
@@ -686,7 +686,7 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
 
 /** Founding Season comp reason for the workspace org's comp_period override (free text; cohort/status
  * queries key on type + expires_at, not this string — see ensureFoundingSeasonCompPeriod). */
-const TEAM_COMP_REASON = 'Founding Season - Premium Coaches Portal free through December 31, 2026';
+const TEAM_COMP_REASON = `Founding Season - Premium Coaches Portal free through ${FOUNDING_SEASON_END_LABEL}`;
 
 /**
  * Comp-reactivate a previously-canceled Coaches Portal workspace during Founding Season — the no-Stripe
@@ -809,7 +809,7 @@ async function reactivateCompTeamWorkspace(
 
 /**
  * Founding Season comp provisioning for the Premium Coaches Portal — the Stripe-free path used while
- * `isFoundingSeasonActive()`. Provisions (or comp-reactivates) the full workspace with billing_mode
+ * `isFoundingSeasonSignupOpen()`. Provisions (or comp-reactivates) the full workspace with billing_mode
  * `platform_override` + NULL stripe_subscription_id + current_period_end = compPeriodEnd, then writes
  * the workspace org's founding-season comp_period override so status + January-cohort queries
  * recognize it. Covers new premium signups AND Basic-team upgrades (the free team back-links + Phase-4

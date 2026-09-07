@@ -103,33 +103,9 @@
 .planHeader {}
 .planPriceBlock {}
 
-/* Founding Season badge — Tournament Plus card only */
-.foundingSeasonBadge {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.4rem 0.55rem;
-  margin-bottom: 0.6rem;
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-}
-
-.foundingSeasonBadgeLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  line-height: 1.3;
-}
-
-.foundingSeasonBadgeSub {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-  letter-spacing: 0.04em;
-}
+/* The Founding Season badge that sat above the tagline was retired 2026-09-07: the offer now
+   lives in the price block ("$0 through …"), and the header carries only a "Founding Season"
+   chip in the same .statusBadge recipe as "Coming soon". */
 
 .planHeaderTop {
   display: flex;
@@ -175,9 +151,22 @@
 
 .planPrice {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.2rem;
   margin-bottom: 0.3rem;
+}
+
+/* The LEADING "$" of the Founding Season "$0 through …" price block. Distinct from .planCurrency,
+   whose flex-start nudge was tuned for a TRAILING "CAD" suffix and reads as a sinking dollar sign
+   when reused in front of the amount (/review 2026-09-07). */
+.planPromoCurrency {
+  font-family: var(--font-data);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--data-gray);
+  align-self: flex-start;
+  padding-top: 0.2rem;
 }
 
 .planAmount {

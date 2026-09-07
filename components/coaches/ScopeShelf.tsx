@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './ScopeShelf.module.css';
 
 /**
@@ -99,7 +99,7 @@ export default async function ScopeShelf({
         )}
         {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
         {' '}Your free tools stay free. {promoActive
-          ? 'Premium is free until Jan 1, 2027 — then $29/month per team.'
+          ? `Premium is free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month per team.`
           : 'Premium is $29/month per team.'}
       </p>
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>

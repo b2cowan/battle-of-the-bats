@@ -77,7 +77,7 @@ export const POST = withObservability(async (req: Request) => {
 
       // Founding Season card-on-file (mode='setup'): no subscription exists — the
       // session only saved a payment method. Promote it to the customer's default
-      // so the January 2027 conversion can charge it, and defensively persist
+      // so the end-of-Founding-Season conversion (September 2027) can charge it, and defensively persist
       // stripe_customer_id on the org. Nothing is billed here. The Stripe chain and
       // the org update are independent — run them concurrently.
       if (session.mode === 'setup') {

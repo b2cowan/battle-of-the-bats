@@ -3,7 +3,12 @@ import ViewerAwarePlans from './ViewerAwarePlans';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import ComparisonTable from './ComparisonTable';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import {
+  PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
+  FOUNDING_SEASON_AFTER_LINE, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
+  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+} from '@/lib/plan-config';
+import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import styles from './page.module.css';
 
 export const metadata = {
@@ -132,7 +137,7 @@ const FAQS = [
   },
   {
     q: 'What happens after the Founding Season offer ends?',
-    a: 'Tournament Plus is free through December 31, 2026 for organizations that sign up during the founding season — no credit card required. Starting January 2027, the standard rate of $39/month applies. We\'ll send a reminder before the offer closes. Your data and settings stay in place regardless of what you choose at renewal.',
+    a: `Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} for everyone who signs up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card. We'll remind you during the summer, and in ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season: monthly or annual, at the standard rates (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year for Tournament Plus; ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year for the Premium Coaches Portal). If you don't continue, an organization moves to the free Tournament plan and keeps everything it built.`,
   },
   {
     q: 'Can I change plans later?',
@@ -140,7 +145,7 @@ const FAQS = [
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: 'No. Tournament is free — no credit card, no time limit. During the Founding Season (through December 31, 2026), Tournament Plus is also free with no payment details required. Starting January 2027, paid plans use secure Stripe Checkout.',
+    a: `No. Tournament is free — no credit card, no time limit. Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} with no payment details either. When you choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, payment is by card through Stripe.`,
   },
   {
     q: 'What if we get stuck?',
@@ -191,17 +196,33 @@ export default async function PricingPage() {
         if (faq.q === 'What if I only manage one competitive team?') {
           return {
             ...faq,
-            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record, schedule, and team chat in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? 'During the Founding Season it\'s free until January 1, 2027, then $29/month.' : 'It\'s $29/month, cancel anytime.'} If your organization joins FieldLogicHQ later, your workspace carries over automatically.`,
+            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record, schedule, and team chat in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month.` : 'It\'s $29/month, cancel anytime.'} If your organization joins FieldLogicHQ later, your workspace carries over automatically.`,
           };
         }
         if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
           return {
             ...faq,
-            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ' — free until January 1, 2027 during the Founding Season, then $29/month' : ' at $29/month'}. League Plus and Club aren't self-serve yet — they're shown as coming-soon previews so organizations can plan ahead and express interest while those workflows are finished.`,
+            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally $29/month` : ' at $29/month'}. League Plus and Club aren't self-serve yet — they're shown as coming-soon previews so organizations can plan ahead and express interest while those workflows are finished.`,
           };
         }
         return faq;
       });
+
+  // Post-window state, written NOW so the page never asserts an expired date and never hedges
+  // about a second offer (there is none): from the day the signup window closes, the Founding
+  // Season question becomes "can I still get it?" with the list prices as the answer.
+  const faqsForWindow = tpPromoActive
+    ? faqs
+    : faqs.map(faq =>
+        faq.q === 'What happens after the Founding Season offer ends?'
+          ? {
+              q: 'Can I still get the Founding Season offer?',
+              a: `The Founding Season closed on ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. Tournament is free with no time limit, and Tournament Plus is ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year. The Basic Coaches Portal is free with no time limit, and the Premium Coaches Portal is ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year. No contract; cancel anytime.`,
+            }
+          : faq.q === 'Do I need a credit card to get started?'
+            ? { ...faq, a: 'No. Tournament is free — no credit card, no time limit. The Basic Coaches Portal is free with no time limit too. Paid plans use secure Stripe Checkout.' }
+            : faq,
+      );
 
   return (
     <main>
@@ -301,19 +322,17 @@ export default async function PricingPage() {
               marketingLayout (2026-08-08): live plans as full cards — including the Premium
               Coaches Portal, which replaced the old callout strip here — and gated plans
               compressed into the coming-soon strip below the grid. */}
+          {/* The Founding Season offer strip (owner-approved 2026-09-07) — where the site-wide bar
+              lands, so the page answers in the same words at the top instead of in a footnote. No
+              product lines: the cards beneath carry the prices. A promo artifact: gone the day the
+              signup window closes, rather than asserting an expired date (/review 2026-08-08). */}
+          {tpPromoActive && <FoundingSeasonPanel id="founding-season" product={teamCheckoutOpen && teamPromoActive ? undefined : 'tournament_plus'} />}
+
           <ViewerAwarePlans gatingMap={gatingMap} marketingLayout />
 
-          {/* Founding Season note — a promo artifact: gone the day the promo ends, rather than
-              asserting an expired date (/review 2026-08-08). */}
           {tpPromoActive && (
             <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
-              {teamCheckoutOpen && teamPromoActive
-                ? <>Tournament Plus and the Premium Coaches Portal are free through December 31, 2026 for founding organizations and coaches.
-                  Starting January 2027, the standard rates ({formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month and {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month) apply.
-                  No contract. Cancel anytime.</>
-                : <>Tournament Plus is free through December 31, 2026 for founding organizations.
-                  Starting January 2027, the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies.
-                  No contract. Cancel anytime.</>}
+              {FOUNDING_SEASON_AFTER_LINE}
             </p>
           )}
         </div>
@@ -441,7 +460,7 @@ export default async function PricingPage() {
           </p>
 
           <div className={styles.faqList}>
-            {faqs.map(faq => (
+            {faqsForWindow.map(faq => (
               <details key={faq.q} className={`${styles.faqItem} ${faq.featured ? styles.faqFeatured : ''}`}>
                 <summary className={styles.faqQuestion}>
                   {faq.featured && <span className={styles.faqBadge}>Volunteer orgs</span>}
@@ -464,10 +483,10 @@ export default async function PricingPage() {
           </h2>
           <p className={styles.ctaSub}>
             {teamCheckoutOpen
-              ? <>Start free with Tournament. Tournament Plus and the Premium Coaches Portal are free through December 31, 2026 — no credit card required.
-                League Plus and Club are coming soon — express interest to be notified.</>
-              : <>Start free with Tournament. Tournament Plus is free through December 31, 2026 — no credit card required.
-                League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.</>}
+              ? <>Start free with Tournament.{tpPromoActive && teamPromoActive ? ` Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
+                {' '}League Plus and Club are coming soon — express interest to be notified.</>
+              : <>Start free with Tournament.{tpPromoActive ? ` Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
+                {' '}League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.</>}
           </p>
           <div className={styles.ctaActions}>
             <Link

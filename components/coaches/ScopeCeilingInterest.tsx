@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Send } from 'lucide-react';
 import type { BasicCoachInterestOption } from '@/lib/basic-coach-interest';
-import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './ScopeCeilingInterest.module.css';
 
 type Props = {
@@ -86,7 +86,7 @@ export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false
           {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
           <p>Season history across every event, playing time, attendance and team awards — plus
             lineups, dues automation, documents and a season budget. {promoActive
-            ? 'Free until Jan 1, 2027 — then $29/month per team. No credit card required.'
+            ? `Free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month per team. No credit card required.`
             : '$29/month per team, cancel anytime.'}</p>
         </div>
         <Link

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Check } from 'lucide-react';
-import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
 import { safeNextPath } from '@/lib/safe-redirect';
 import styles from './welcome.module.css';
 
@@ -40,11 +40,11 @@ export default async function CoachesWelcomePage({
         <h1 className={styles.title}>Premium is on{team ? ` for ${team}` : ''}</h1>
         <p className={styles.sub}>
           {founding
-            ? 'Free through the founding season — no credit card required until January 1, 2027.'
+            ? `Free through your Founding Season — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`
             : 'Your Premium Coaches Portal is ready.'}
         </p>
         {founding && (
-          <span className={styles.promoPill}>⬡ Founding Season · free until Jan 1, 2027</span>
+          <span className={styles.promoPill}>Founding Season · free through {FOUNDING_SEASON_END_LABEL} · in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for {FOUNDING_SEASON_NEXT_YEAR_LABEL}</span>
         )}
         <Link href={next} className={styles.cta}>Open your season workspace →</Link>
         <p className={styles.fine}>Opens your portal — the toolkit you&apos;ll run the season from.</p>

@@ -11,6 +11,7 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
+import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL } from '@/lib/plan-config';
 import styles from './start.module.css';
 
 export const metadata: Metadata = {
@@ -28,17 +29,22 @@ type StartOption = {
   tag?: { text: string; tone?: 'free' | 'soon' };
 };
 
-const OPTIONS: StartOption[] = [
-  {
+// Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the pill on
+// the two offer doors says WHICH free this is, and the body names the season. The day the window
+// closes, today's "Free" card returns on its own.
+function tournamentOption(promoActive: boolean): StartOption {
+  return {
     href: '/start/tournament',
     icon: Trophy,
     accent: 'free',
     label: 'Organizer',
     title: 'Run a tournament',
-    body: 'Create a tournament free — registration, schedule, brackets, and a public site. No credit card.',
-    tag: { text: 'Free', tone: 'free' },
-  },
-];
+    body: promoActive
+      ? `Create a tournament free — registration, schedule, brackets, and a public site. Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL}. No credit card.`
+      : 'Create a tournament free — registration, schedule, brackets, and a public site. No credit card.',
+    tag: { text: promoActive ? `${FOUNDING_SEASON_YEAR_LABEL} season free` : 'Free', tone: 'free' },
+  };
+}
 
 /**
  * The invitation aside — NOT a card (owner-directed 2026-08-07).
@@ -71,7 +77,23 @@ const INVITE_ASIDE = {
 // (door + $0 Premium comp path + copy) turns on together per environment when the gate reopens —
 // never a "Free" door landing on a gated dead end. Open → the live free team setup; gated → the
 // express-interest explainer.
-function coachOption(checkoutOpen: boolean): StartOption {
+function coachOption(checkoutOpen: boolean, promoActive: boolean): StartOption {
+  // Founding Season 2027 (owner-approved 2026-09-07): while the signup window is open the coach
+  // door opens the PREMIUM Coaches Portal — the product every "Start free" advertises — instead
+  // of the free Basic team (which kept the homepage's own offer button from delivering the offer).
+  // The Basic door survives as the quiet line beneath the cards. Post-window, today's Basic door
+  // and "Free" pill return on their own.
+  if (checkoutOpen && promoActive) {
+    return {
+      href: '/coaches/start?source=start',
+      icon: Users,
+      accent: 'coach',
+      label: 'Premium Coaches Portal',
+      title: 'Coach a team',
+      body: `Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through ${FOUNDING_SEASON_END_LABEL}, no organization needed.`,
+      tag: { text: `${FOUNDING_SEASON_YEAR_LABEL} season free`, tone: 'free' },
+    };
+  }
   return checkoutOpen
     ? {
         href: '/start/team',
@@ -118,10 +140,15 @@ export default async function StartPage() {
   // League Starter is an unlisted capped beta: the card only exists while the flag is
   // on (S1-1 rider — nothing not-yet-live is promoted on this surface).
   const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
-  const coach = coachOption(await isCoachesPortalPurchasable());
+  const checkoutOpen = await isCoachesPortalPurchasable();
+  // The Premium promo drives the coach card; the Tournament Plus promo drives the organizer card.
+  const coachPromo = isFoundingSeasonPromoActive('team');
+  const tournamentPromo = isFoundingSeasonPromoActive('tournament_plus');
+  const coach = coachOption(checkoutOpen, coachPromo);
+  const showBasicLine = checkoutOpen && coachPromo;
   const options: StartOption[] = leagueStarterLive
-    ? [...OPTIONS, coach, LEAGUE_OPTION]
-    : [...OPTIONS, coach];
+    ? [tournamentOption(tournamentPromo), coach, LEAGUE_OPTION]
+    : [tournamentOption(tournamentPromo), coach];
 
   return (
     <div className={styles.page}>
@@ -157,6 +184,17 @@ export default async function StartPage() {
             );
           })}
         </div>
+
+        {/* The Basic companion's door while the coach card opens Premium (Founding Season 2027):
+            a quiet line, not a card — it is the "and it stays free after" reassurance for the coach
+            who only enters tournaments, and the honest answer to "does coaching with us end in
+            September?" (BUSINESS_DECISIONS 2026-08-07 warned against overstating that cost). */}
+        {showBasicLine && (
+          <p className={styles.basicLine}>
+            Just entering tournaments?{' '}
+            <Link href="/start/team" className={styles.basicLineLink}>The Basic Coaches Portal is free with no end date →</Link>
+          </p>
+        )}
 
         {/* Two quiet lines, deliberately separated from the cards and from each other: the first is
             for someone who was invited, the second for someone who has already been here. Neither

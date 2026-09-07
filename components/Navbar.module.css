@@ -5,7 +5,9 @@
   /* --sandbox-chrome-h is published ONLY inside the "See it live" sandbox, where a demo banner
      owns the top of the viewport (app/globals.css). Unset everywhere else → 0px → today's exact
      geometry. Every public bar that pins to the viewport top carries the same term. */
-  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  /* --offer-bar-h is published ONLY by the Founding Season offer bar on marketing pages while the
+     signup window is open (components/marketing/FoundingSeasonOfferBar); unset elsewhere → 0px. */
+  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--offer-bar-h, 0px));
   left: 0;
   right: 0;
   z-index: 100;
@@ -28,6 +30,14 @@
 /* Solid fallback where the browser can't frost — keep the bar opaque/legible. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .nav.scrolled { background: var(--bg); }
+}
+
+/* The MARKETING bar's vertical pin. Its other geometry is Tailwind utilities in Navbar.tsx; `top`
+   alone lives here so it can ride --offer-bar-h, published by the Founding Season offer bar while
+   the signup window is open (components/marketing/FoundingSeasonOfferBar). Unset → 0px → today's
+   exact geometry. */
+.marketingNav {
+  top: var(--offer-bar-h, 0px);
 }
 
 .inner {

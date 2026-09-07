@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './PlanArticlePanel.module.css';
 
 type PlanKey = 'tournament_plus' | 'league' | 'club' | 'team';
@@ -49,7 +49,7 @@ export default function PlanArticlePanel({
   const promoActive = isFoundingSeasonPromoActive(planKey);
   const price   =
     promoActive
-      ? 'Free until Jan 1, 2027'
+      ? `Free through ${FOUNDING_SEASON_END_LABEL}`
       : config.monthlyPrice === 0
         ? 'Free'
         : billingCycle === 'annual'

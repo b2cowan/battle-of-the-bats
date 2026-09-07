@@ -7,6 +7,23 @@
 
 ---
 
+### 🆕 FOUNDING SEASON 2027 — offer copy APPROVED 2026-09-07 (owner, on mockup sheet `61a78f09`; built on `dev` 2026-09-07)
+
+**Every Founding Season sentence on the pages now comes from ONE canon and is single-sourced in
+code.** The canon is `docs/projects/active/FOUNDING_SEASON_2027_OFFER_COPY.md` (the surface-by-surface
+Current/Proposed record, with the flags raised); the words themselves are DERIVED from the two date
+constants in `lib/plan-config.ts` (`FOUNDING_SEASON_SIGNUP_CLOSE`, `FOUNDING_SEASON_END`) through the
+labels and helpers there (`FOUNDING_SEASON_END_LABEL`, `foundingSeasonOfferLine()`,
+`FOUNDING_SEASON_AFTER_LINE`, …) and pinned by `tests/unit/founding-season-dates.test.ts`. **Do not
+hand-type a Founding Season date or the offer sentence again** — that is how two dozen "Jan 1, 2027"s
+came to exist. The rules that govern the words (§1 of the canon): the headline is the promise
+("Your 2027 season, free."), "Founding Season" is the eyebrow; one offer sentence verbatim; always
+"normally $X/month"; always the after line; dates in full, one way; sport-neutral (never "summer");
+never "trial" / "limited time" / exclamation marks. Every Founding Season line and FAQ in the body
+sections below that names December 31, 2026 or January 2027 is **superseded on the dates** by the
+canon; the mechanics they describe are unchanged. The **post-window state** (from January 1, 2027) is
+also written in the canon (§9) and in code — nothing to write on the day.
+
 ### 🆕 Homepage persona cards + entry-point copy — APPROVED 2026-08-07 (built on `dev`, owner QA pending)
 
 Ruling behind it: `BUSINESS_DECISIONS.md` 2026-08-07 — **the homepage states availability and the

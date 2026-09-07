@@ -217,6 +217,26 @@
   text-align: center;
 }
 
+/* The Basic companion's door while the coach card opens Premium (Founding Season 2027) — a quiet
+   centred line under the cards, olive link (raw lime never renders as text on warm), tap floor kept
+   by the link's own padding. */
+.basicLine {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--home-dim);
+  text-align: center;
+}
+.basicLineLink {
+  display: inline-block;
+  padding: 0.35rem 0;
+  font-weight: 700;
+  color: var(--home-olive);
+  text-decoration: none;
+}
+.basicLineLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+
 .inviteQuestion {
   font-size: 0.9rem;
   font-weight: 650;

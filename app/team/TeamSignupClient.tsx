@@ -19,7 +19,7 @@ import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
 } from '@/lib/coaches-portal-routes';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -150,7 +150,7 @@ export default function TeamSignupClient({
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
   const foundingPromoActive = isFoundingSeasonPromoActive('team');
   const planPrice = foundingPromoActive
-    ? 'Free until Jan 1, 2027'
+    ? `Free through ${FOUNDING_SEASON_END_LABEL}`
     : billingCycle === 'annual'
       ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
       : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
@@ -384,12 +384,12 @@ export default function TeamSignupClient({
           <div className={styles.pricePanel}>
             <div>
               {foundingPromoActive && (
-                <span className={styles.promoPill}>⬡ Founding Season</span>
+                <span className={styles.promoPill}>Founding Season</span>
               )}
               <p className={styles.priceLabel}>Premium Coaches Portal</p>
               <p className={styles.price}>{planPrice}</p>
               {foundingPromoActive && (
-                <p className={styles.priceSub}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo · no credit card required</p>
+                <p className={styles.priceSub}>normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month · no credit card</p>
               )}
             </div>
             <div className={styles.priceMeta}>
@@ -520,7 +520,7 @@ export default function TeamSignupClient({
             </div>
             {foundingPromoActive && (
               <p className={styles.billingNote}>
-                Free until Jan 1, 2027 — no card required. Pick the plan you&apos;ll move to after; change it any time before then.
+                Free through {FOUNDING_SEASON_END_LABEL} — no card required. Pick the plan you&apos;ll move to after; change it any time before then.
               </p>
             )}
             <div className={styles.segmented} role="group" aria-label="Billing cycle">
@@ -652,7 +652,7 @@ export default function TeamSignupClient({
 
           <div className={styles.footerRow}>
             {foundingPromoActive
-              ? <span className={styles.footerNote}><CalendarDays size={14} /> Free until Jan 1, 2027</span>
+              ? <span className={styles.footerNote}><CalendarDays size={14} /> Free through {FOUNDING_SEASON_END_LABEL}</span>
               : <span><CalendarDays size={14} /> {seasonName}</span>}
             {isWarmUpgrade
               ? <span className={styles.footerNote}>Cancel anytime</span>

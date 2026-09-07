@@ -1,4 +1,10 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import {
+  FOUNDING_SEASON_END_LABEL,
+  FOUNDING_SEASON_FIRST_CHARGE_LABEL,
+  FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
+  FOUNDING_SEASON_NEXT_YEAR_LABEL,
+} from '@/lib/plan-config';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -498,7 +504,7 @@ export function teamWorkspaceWelcomeHtml(p: {
 }) {
   const coachName = p.coachName?.trim() || 'Coach';
   const closingLine = p.comp
-    ? `<p style="color:rgba(241,245,249,0.62);font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong style="color:rgba(241,245,249,0.82);">free through the founding season</strong> — no credit card required until January 1, 2027. We'll email you before then so you can decide whether to continue.</p>`
+    ? `<p style="color:rgba(241,245,249,0.62);font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong style="color:rgba(241,245,249,0.82);">free through ${FOUNDING_SEASON_END_LABEL}</strong> — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. We'll email you during the summer so you can choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.</p>`
     : `<p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
@@ -1196,7 +1202,8 @@ export function tournamentPlusWelcomeHtml(p: {
     <p style="margin:0 0 1rem;">${greeting}</p>
     <p style="margin:0 0 1.25rem;line-height:1.7;">
       <strong>${p.orgName}</strong> is now running <strong>Tournament Plus</strong>, free as a
-      founding organization through <strong>December 31, 2026</strong>. No credit card required.
+      founding organization through <strong>${FOUNDING_SEASON_END_LABEL}</strong>. No credit card required,
+      and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
     </p>
 
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
@@ -1225,7 +1232,7 @@ export function tournamentPlusWelcomeHtml(p: {
  * plan during onboarding. Marketing email (respects opt-out); the unsubscribe footer
  * is auto-injected by email-sender.ts, so none is included inline here.
  *
- * Promotes that Tournament Plus is free through Dec 31 and highlights what the free
+ * Promotes that Tournament Plus is free through the Founding Season and highlights what the free
  * Tournament tier is missing. CTA → upgrade.
  */
 export function tournamentPlusUpsellHtml(p: {
@@ -1243,7 +1250,7 @@ export function tournamentPlusUpsellHtml(p: {
     <p style="margin:0 0 1.25rem;line-height:1.7;">
       <strong>${p.orgName}</strong> is on the free Tournament plan — that's a great place to start.
       But as a founding organization you can run <strong>Tournament Plus free through
-      December 31, 2026</strong> ($39/month after), and it unlocks the tools that save the most time.
+      ${FOUNDING_SEASON_END_LABEL}</strong> (normally $39/month), and it unlocks the tools that save the most time.
     </p>
 
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
@@ -1260,7 +1267,7 @@ export function tournamentPlusUpsellHtml(p: {
     <a href="${p.upgradeUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Switch to Tournament Plus — free →</a>
 
     <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
-      Staying on the free plan is totally fine too — you can upgrade anytime before January 1.
+      Staying on the free plan is totally fine too — the free season is yours if you upgrade by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
     </p>
     <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
   `);

@@ -559,7 +559,7 @@ export default function EmailDashboardClient({
         Founding season organizations with active marketing email consent. Counts exclude opted-out orgs.
       </p>
       <div className={styles.statsRow}>
-        <div className={styles.statCard} title="All organizations on a founding-season comp period (expiring Jan 1, 2027), including opted-out.">
+        <div className={styles.statCard} title="All organizations on a Founding Season comp period (free through September 30, 2027), including opted-out.">
           <div className={styles.statValue}>{recipientCount + optOutCount}</div>
           <div className={styles.statLabel}>Founding Season Orgs</div>
         </div>

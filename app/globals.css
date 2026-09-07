@@ -319,7 +319,7 @@
      body padding cannot move) but deliberately NOT in --chrome-top-static-h, whose consumers are
      page PADDING — the sandbox rule below already pads the document, and adding it twice would
      open a gap. Unset outside a demo org, so both resolve to today's exact geometry. */
-  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--offer-bar-h, 0px));
   --chrome-top-static-h: calc(var(--nav-event-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
 
   /* Opacity-alpha text tokens used by some component CSS */
@@ -442,6 +442,15 @@ body {
    and this rule never matches. */
 html[data-sandbox-chrome='true'] body {
   padding-top: var(--sandbox-chrome-h, 0px);
+}
+
+/* The Founding Season offer bar (components/marketing/FoundingSeasonOfferBar) uses the SAME
+   mechanism on marketing pages while the signup window is open: it pins to the viewport top,
+   measures itself, publishes --offer-bar-h + this attribute, and the document makes room. The
+   marketing Navbar adds the var to its own `top`. Never set together with the sandbox chrome
+   (the bar is marketing-only; the sandbox is an org), so the two paddings never stack. */
+html[data-offer-bar='true'] body {
+  padding-top: var(--offer-bar-h, 0px);
 }
 
 /* Full-bleed app route (the coach-portal chat) — the chat owns the dynamic viewport and

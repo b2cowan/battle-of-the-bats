@@ -6,7 +6,8 @@ import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL } from '@/lib/plan-config';
+import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -308,24 +309,9 @@ export default async function HomePage({
         <div className={styles.heroGrid} />
         <div className="container">
           <div className={styles.heroHeader}>
-            {tpPromoActive && (
-              <div className="flex items-center gap-3 mb-8 justify-center flex-wrap">
-                <span className="font-mono text-xs text-logic-lime uppercase tracking-widest font-bold">
-                  Founding Season
-                </span>
-                <span className="font-mono text-xs text-data-gray/40" aria-hidden="true">·</span>
-                <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                  {bothPromosLive
-                    ? 'Tournament Plus & Premium Coaches Portal free through Dec 31, 2026'
-                    : 'Tournament Plus free through Dec 31, 2026'}
-                </span>
-                <span className="font-mono text-xs text-data-gray/40" aria-hidden="true">·</span>
-                <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                  No credit card required
-                </span>
-              </div>
-            )}
-
+            {/* The Founding Season eyebrow row that sat here (12px uppercase above the headline)
+                was removed 2026-09-07: the site-wide offer bar above the nav and the offer panel
+                below the sub-headline carry the offer at the weight it deserves. */}
             <h1 className={styles.heroTitle}>
               Less admin.{' '}
               <span className={styles.heroAccent}>More sport.</span>
@@ -337,6 +323,13 @@ export default async function HomePage({
             </p>
           </div>
 
+          {/* The Founding Season offer panel (owner-approved 2026-09-07): the promise at headline
+              weight, the one offer sentence, the two prices being waived, and the after line —
+              BEFORE the visitor chooses a door. The persona cards below stay the doors and keep
+              their availability-only badges (BUSINESS_DECISIONS 2026-08-07): the panel carries the
+              calendar so they never have to. A promo artifact: gone the day the signup window
+              closes. */}
+          {tpPromoActive && <FoundingSeasonPanel showProducts product={bothPromosLive ? undefined : 'tournament_plus'} />}
           <AnimateIn>
             <div className={styles.heroPersonaGrid}>
               {livePersonas.map((p) => {
@@ -546,45 +539,15 @@ export default async function HomePage({
             </div>
           </AnimateIn>
 
-          {/* Founding Season callout — a promo artifact that renders only while the promo runs,
-              and speaks for BOTH promos while both are running (Tournament Plus-only otherwise). */}
+          {/* Founding Season — one line, not a second box (owner-approved 2026-09-07): the hero
+              panel already made the pitch three screens up. Speaks for BOTH promos while both are
+              running (Tournament Plus-only otherwise); a promo artifact, gone when the signup
+              window closes. */}
           {tpPromoActive && (
-            <div className="mb-6 border border-logic-lime/40 p-6 flex flex-col gap-4" style={{ background: 'rgba(var(--logic-lime-rgb, 163 230 53) / 0.04)' }}>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime">
-                  Founding Season
-                </span>
-                <span className="font-mono text-[0.6rem] text-data-gray/40" aria-hidden="true">·</span>
-                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray">
-                  Free through December 31, 2026
-                </span>
-              </div>
-              <p className="font-mono text-sm font-bold text-fl-text leading-snug">
-                {bothPromosLive
-                  ? `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) and the Premium Coaches Portal (${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month) are free for organizations and coaches that sign up before the end of 2026.`
-                  : `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) is free for organizations that sign up before the end of 2026.`}
-              </p>
-              <p className="font-mono text-xs text-data-gray leading-relaxed">
-                We&apos;re in our founding season — we want real tournaments and real teams on the
-                platform, not demos. Sign up today and run your season at no cost through December 31.
-              </p>
-              <div className="flex items-center gap-6 flex-wrap">
-                <Link
-                  href="/start"
-                  className="tap-target font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
-                >
-                  Start your organization →
-                </Link>
-                {teamOpen && (
-                  <Link
-                    href="/coaches/start?source=home"
-                    className="tap-target font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
-                  >
-                    Start your coaches portal →
-                  </Link>
-                )}
-              </div>
-            </div>
+            <p className="font-mono text-xs text-data-gray text-center leading-relaxed max-w-2xl mx-auto -mt-2 mb-8">
+              <span className="font-bold text-logic-lime">Founding Season:</span>{' '}
+              {bothPromosLive ? 'Tournament Plus and the Premium Coaches Portal are' : 'Tournament Plus is'} free through {FOUNDING_SEASON_END_LABEL} when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}.
+            </p>
           )}
 
           <PricingSection gatingMap={gatingMap} marketingLayout />

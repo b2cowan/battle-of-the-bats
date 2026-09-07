@@ -12,7 +12,8 @@ import { withObservability } from '@/lib/observability';
  * real subscription session with a 14-day trial — i.e. a November click would have
  * billed in November, contradicting the "no card required until Jan 1" banner.
  * Session mechanics live in lib/billing-setup.ts (shared with the portal route's
- * no-billing-account fallback); the January 2027 conversion is the manual runbook in
+ * no-billing-account fallback); the end-of-Founding-Season conversion (September 2027 — see
+ * FOUNDING_SEASON_2027_PLAN.md, which superseded the January runbook) is the manual runbook in
  * FOUNDING_SEASON_COACHES_FREE_PLAN.md Phase 4.
  */
 export const POST = withObservability(async (req: Request) => {

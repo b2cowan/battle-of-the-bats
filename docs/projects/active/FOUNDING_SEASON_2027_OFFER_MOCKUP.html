@@ -1,0 +1,617 @@
+<title>Founding Season 2027 Mockups</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ───────────────────────── Review-sheet chrome (theme-aware) ───────────────────────── */
+:root{
+  --c-ground:#EEF0F4; --c-surface:#FFFFFF; --c-ink:#171A21; --c-muted:#5B6270; --c-line:rgba(23,26,33,.12);
+  --c-accent:#3B4A9E; --c-accent-soft:rgba(59,74,158,.10);
+  --t-new:#0E7C66; --t-new-bg:rgba(14,124,102,.12);
+  --t-restyled:#9A5B00; --t-restyled-bg:rgba(154,91,0,.12);
+  --t-unchanged:#6B7280; --t-unchanged-bg:rgba(107,114,128,.14);
+  --t-removed:#B3261E; --t-removed-bg:rgba(179,38,30,.12);
+  --c-rec:#0E7C66;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --c-ground:#171A21; --c-surface:#20242E; --c-ink:#E8EAF0; --c-muted:#9AA3B2; --c-line:rgba(232,234,240,.14);
+    --c-accent:#9DB0FF; --c-accent-soft:rgba(157,176,255,.14);
+    --t-new:#5CD6BC; --t-new-bg:rgba(92,214,188,.14);
+    --t-restyled:#F2B65A; --t-restyled-bg:rgba(242,182,90,.14);
+    --t-unchanged:#A7AFBD; --t-unchanged-bg:rgba(167,175,189,.16);
+    --t-removed:#FF8A80; --t-removed-bg:rgba(255,138,128,.14);
+    --c-rec:#5CD6BC;
+  }
+}
+:root[data-theme="dark"]{
+  --c-ground:#171A21; --c-surface:#20242E; --c-ink:#E8EAF0; --c-muted:#9AA3B2; --c-line:rgba(232,234,240,.14);
+  --c-accent:#9DB0FF; --c-accent-soft:rgba(157,176,255,.14);
+  --t-new:#5CD6BC; --t-new-bg:rgba(92,214,188,.14);
+  --t-restyled:#F2B65A; --t-restyled-bg:rgba(242,182,90,.14);
+  --t-unchanged:#A7AFBD; --t-unchanged-bg:rgba(167,175,189,.16);
+  --t-removed:#FF8A80; --t-removed-bg:rgba(255,138,128,.14);
+  --c-rec:#5CD6BC;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--c-ground);color:var(--c-ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--c-accent)}
+.c-wrap{max-width:1500px;margin:0 auto;padding:32px 24px 96px}
+.c-read{max-width:72ch}
+.c-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--c-muted);margin:0 0 8px}
+h1.c-title{font-size:30px;line-height:1.15;margin:0 0 10px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2.c-h{font-size:22px;line-height:1.2;margin:56px 0 6px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h3.c-h3{font-size:15px;margin:22px 0 6px;font-weight:600}
+p.c-p{margin:0 0 10px;color:var(--c-ink)}
+p.c-note{margin:6px 0 0;color:var(--c-muted);font-size:13.5px}
+.c-lead{font-size:16.5px;color:var(--c-ink);margin:0 0 14px}
+ul.c-list{margin:6px 0 12px 18px;padding:0}
+ul.c-list li{margin:0 0 6px}
+.c-legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:14px 0 0;font-size:13px;color:var(--c-muted)}
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;font-weight:700;vertical-align:middle}
+.tag.new{color:var(--t-new);background:var(--t-new-bg)}
+.tag.re{color:var(--t-restyled);background:var(--t-restyled-bg)}
+.tag.un{color:var(--t-unchanged);background:var(--t-unchanged-bg)}
+.tag.rm{color:var(--t-removed);background:var(--t-removed-bg)}
+.tag.rec{color:var(--c-rec);background:var(--t-new-bg);border:1px solid currentColor}
+.c-cap{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--c-muted);margin:8px 0 14px}
+.c-cap b{color:var(--c-ink);font-weight:600}
+.c-rail{overflow-x:auto;padding:0 0 10px;margin:0 -24px;padding-left:24px;padding-right:24px}
+.c-rail::-webkit-scrollbar{height:10px}
+.c-row{display:flex;gap:24px;align-items:flex-start}
+.c-spec{flex:0 0 auto}
+.c-spec-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-muted);margin:0 0 6px;display:flex;gap:10px;align-items:center}
+.c-spec-label .size{color:var(--c-ink);font-weight:700}
+.c-frameShadow{box-shadow:0 1px 0 var(--c-line),0 12px 32px rgba(0,0,0,.18);border:1px solid var(--c-line)}
+.c-choices{border:1px solid var(--c-line);background:var(--c-surface);padding:18px 20px;margin:18px 0 0;max-width:72ch}
+.c-choices h3{margin:0 0 8px;font-size:15px}
+.c-choices ol{margin:0 0 0 18px;padding:0}
+.c-choices li{margin:0 0 8px}
+table.c-table{border-collapse:collapse;font-size:13.5px;margin:8px 0 0;max-width:72ch}
+table.c-table th,table.c-table td{text-align:left;padding:7px 12px 7px 0;border-bottom:1px solid var(--c-line);vertical-align:top}
+table.c-table th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-muted);font-weight:600}
+.c-fold{position:absolute;left:0;right:0;border-top:2px dashed rgba(255,255,255,.35);pointer-events:none}
+.c-fold span{position:absolute;right:12px;top:-20px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);background:rgba(0,0,0,.55);padding:2px 6px}
+.c-pin{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#171A21;background:#F2B65A;padding:2px 7px;border-radius:3px;font-weight:700;pointer-events:none;z-index:5}
+@media (max-width:700px){ h1.c-title{font-size:24px} .c-wrap{padding:20px 14px 72px} .c-rail{margin:0 -14px;padding-left:14px;padding-right:14px} }
+
+/* ───────────────────────── FieldLogicHQ marketing specimen (dark, fixed tokens) ───────────────────────── */
+.fl{--bg:#0A0A0A;--text:#F1F5F9;--gray:#94A3B8;--lime:#D9F99D;--lime-rgb:217,249,157;--blue-rgb:30,58,138;--hud:#111827;--w60:rgba(255,255,255,.6);--w40:rgba(255,255,255,.4);--ink:#0f1123;
+  background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden;line-height:1.6;text-align:left}
+.fl *{box-sizing:border-box}
+.fl .mono{font-family:'IBM Plex Mono',monospace}
+.fl .disp{font-family:'Barlow Condensed',sans-serif}
+.fl.frame{width:1440px;height:900px}
+.fl.frame.auto{height:auto}
+.fl.phone{width:390px;height:844px}
+.fl .container{max-width:1200px;margin:0 auto;padding:0 24px}
+.fl.phone .container{padding:0 20px}
+/* marketing nav (identity row, 64px) */
+.fl .nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid rgba(255,255,255,.06)}
+.fl.phone .nav{padding:0 20px}
+.fl .logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em;color:var(--text)}
+.fl .logo b{color:var(--lime);font-weight:800}
+.fl .navLinks{display:flex;gap:24px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray)}
+.fl .navLinks .cta{color:var(--lime);border:1px solid rgba(var(--lime-rgb),.4);padding:8px 14px}
+.fl.phone .navLinks{gap:14px}
+/* offer bar (NEW) */
+.fl .offerBar{height:40px;display:flex;align-items:center;justify-content:center;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.06em;padding:0 16px;white-space:nowrap}
+.fl .offerBar.a{background:var(--hud);border-bottom:1px solid rgba(var(--lime-rgb),.35);color:var(--text)}
+.fl .offerBar.a .eb{color:var(--lime);font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.fl .offerBar.a .dl{color:var(--gray)}
+.fl .offerBar.a .lk{color:var(--lime);font-weight:700}
+.fl .offerBar.b{background:var(--lime);color:var(--ink)}
+.fl .offerBar.b .eb{font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.fl .offerBar.b .lk{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.fl .offerBar .sep{opacity:.35}
+.fl.phone .offerBar{height:44px;font-size:11px;white-space:normal;text-align:center;line-height:1.25;gap:6px}
+/* homepage hero */
+.fl .hero{padding:32px 0 48px;position:relative}
+.fl .heroHeader{text-align:center;max-width:820px;margin:0 auto 40px}
+.fl .eyebrowRow{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:32px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray)}
+.fl .eyebrowRow .lm{color:var(--lime);font-weight:700}
+.fl .eyebrowRow .dot{color:var(--w40)}
+.fl .h1{font-family:'Barlow Condensed',sans-serif;font-size:88px;font-weight:900;line-height:1.0;letter-spacing:-.01em;margin:0 0 24px;color:var(--text)}
+.fl.phone .h1{font-size:44px}
+.fl .h1 .ac{color:var(--lime)}
+.fl .sub{font-size:19.2px;color:var(--w60);max-width:540px;margin:0 auto 40px;line-height:1.65}
+.fl.phone .sub{font-size:17px;margin-bottom:28px}
+/* offer panel (NEW) */
+.fl .offerPanel{border:1px solid rgba(var(--lime-rgb),.45);background:rgba(var(--lime-rgb),.04);padding:26px 32px;display:grid;grid-template-columns:1.45fr 1fr;gap:28px 40px;margin:0 0 24px;text-align:left}
+.fl.phone .offerPanel{grid-template-columns:1fr;padding:18px 18px;gap:14px;margin-bottom:18px}
+.fl .opEb{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin:0 0 8px}
+.fl .opH{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;line-height:1;margin:0 0 12px;color:var(--text)}
+.fl.phone .opH{font-size:30px}
+.fl .opLine{font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.55;color:var(--text);margin:0 0 10px}
+.fl.phone .opLine{font-size:12.5px}
+.fl .opAfter{font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.55;color:var(--gray);margin:0}
+.fl .opProducts{display:flex;flex-direction:column;justify-content:center;gap:0;border-left:1px solid rgba(var(--lime-rgb),.25);padding-left:28px}
+.fl.phone .opProducts{border-left:0;padding-left:0;border-top:1px solid rgba(var(--lime-rgb),.25);padding-top:12px;flex-direction:row;gap:18px}
+.fl .opProd{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.fl .opProd:last-child{border-bottom:0}
+.fl.phone .opProd{padding:0;border:0;flex:1}
+.fl .opName{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin:0 0 3px}
+.fl .opPrice{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gray);margin:0}
+.fl .opLink{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin:8px 0 0}
+/* persona grid */
+.fl .pGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.fl.phone .pGrid{grid-template-columns:1fr;gap:12px}
+.fl .pCard{border:1px solid rgba(var(--blue-rgb),.3);padding:24px;display:flex;flex-direction:column;gap:12px;font-family:'IBM Plex Mono',monospace}
+.fl .pTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.fl .pLabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--lime)}
+.fl .pBadge{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);text-align:right;line-height:1.6}
+.fl .pQ{font-size:14px;font-weight:700;color:var(--text);line-height:1.35}
+.fl .pBody{font-size:12px;color:var(--gray);line-height:1.6;flex:1}
+.fl .pCta{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
+.fl .pDoor{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);display:inline-flex;gap:8px;align-items:center}
+.fl .ldot{width:6px;height:6px;border-radius:50%;background:var(--lime);display:inline-block}
+.fl .roadmap{border:1px solid rgba(var(--blue-rgb),.18);padding:14px 24px;display:flex;flex-wrap:wrap;gap:8px 32px;align-items:baseline;font-family:'IBM Plex Mono',monospace}
+.fl .rmL{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--gray);opacity:.5}
+.fl .rmQ{font-size:11.5px;color:var(--gray)}
+.fl .rmC{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);opacity:.6;margin-left:12px}
+/* plans section (homepage, below the fold) */
+.fl .secHead{text-align:center;max-width:760px;margin:0 auto 24px}
+.fl .secTitle{font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;margin:0 0 10px;line-height:1.05}
+.fl .secSub{font-size:16.8px;color:var(--w60);max-width:520px;margin:0 auto;line-height:1.6}
+.fl .secLine{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gray);margin:14px auto 0;max-width:640px}
+.fl .secLine .lm{color:var(--lime);font-weight:700}
+.fl .callout{border:1px solid rgba(var(--lime-rgb),.4);background:rgba(var(--lime-rgb),.04);padding:24px;display:flex;flex-direction:column;gap:14px;font-family:'IBM Plex Mono',monospace;margin:24px 0}
+.fl .coEb{display:flex;gap:12px;font-size:9.6px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray)}
+.fl .coEb .lm{color:var(--lime);font-weight:700}
+.fl .coH{font-size:14px;font-weight:700;color:var(--text);line-height:1.35}
+.fl .coB{font-size:12px;color:var(--gray);line-height:1.6}
+.fl .coLk{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
+/* persona page hero */
+.fl .phero{padding:32px 0 56px;border-bottom:1px solid rgba(var(--blue-rgb),.2)}
+.fl .pEb{font-family:'IBM Plex Mono',monospace;font-size:10.4px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin:0 0 16px}
+.fl .pH1{font-family:'Barlow Condensed',sans-serif;font-size:72px;font-weight:900;line-height:1.05;letter-spacing:-.01em;margin:0 0 24px;color:var(--text)}
+.fl .pH1 .ac{color:var(--lime)}
+.fl .pSub{font-family:'IBM Plex Mono',monospace;font-size:15.2px;color:var(--gray);max-width:52ch;line-height:1.7;margin:0 0 40px}
+.fl .pSub .lm{color:var(--lime)}
+.fl .acts{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 20px}
+.fl .btnLime{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;background:var(--lime);color:var(--ink);padding:16px 32px;display:inline-block}
+.fl .btnOut{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);border:1px solid rgba(var(--blue-rgb),.4);padding:16px 32px;display:inline-block}
+.fl .btnDoor{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(var(--lime-rgb),.45);padding:16px 24px;display:inline-flex;gap:8px;align-items:center}
+.fl .liveNote{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--gray);margin:0 0 20px}
+.fl .heroNote{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--gray);margin:0 0 32px}
+.fl .heroNote .lm{color:var(--lime)}
+.fl .trust{display:flex;flex-wrap:wrap;gap:16px 40px;font-family:'IBM Plex Mono',monospace;font-size:11.2px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray)}
+.fl .trust span{display:inline-flex;gap:8px;align-items:center}
+.fl .trust i{width:5px;height:5px;border-radius:50%;background:var(--lime);display:inline-block}
+/* founding season card (tournament page) */
+.fl .fsCard{border:1px solid rgba(var(--lime-rgb),.45);background:rgba(var(--lime-rgb),.04);padding:40px 32px;display:flex;flex-direction:column;gap:16px;font-family:'IBM Plex Mono',monospace;max-width:760px}
+.fl .fsEb{font-size:9.6px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
+.fl .fsT{font-size:21.6px;font-weight:800;color:var(--text);line-height:1.2;text-transform:uppercase;letter-spacing:-.01em}
+.fl .fsB{font-size:13.1px;color:var(--gray);line-height:1.6;max-width:56ch;margin:0}
+.fl .fsC{font-size:12px;color:var(--text);line-height:1.6;max-width:56ch;margin:0}
+/* coaches plan card */
+.fl .planCard{border:1px solid rgba(var(--lime-rgb),.4);background:rgba(var(--lime-rgb),.02);padding:32px;display:flex;flex-direction:column;gap:20px;font-family:'IBM Plex Mono',monospace;width:520px}
+.fl .plName{font-size:10.4px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin:0 0 6px}
+.fl .plPrice{display:flex;align-items:baseline;gap:6px;margin:0 0 4px}
+.fl .plAmt{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:900;color:var(--text);line-height:1}
+.fl .plPer{font-size:12.8px;color:var(--gray)}
+.fl .plNote{font-size:11.5px;color:var(--gray)}
+/* pricing (shared PricingSection) */
+.fl .prStrip{border:1px solid rgba(var(--lime-rgb),.45);background:rgba(var(--lime-rgb),.04);padding:22px 28px;display:grid;grid-template-columns:auto 1fr;gap:6px 36px;align-items:center;margin:0 0 20px;font-family:'IBM Plex Mono',monospace}
+.fl .prStrip .opH{font-size:34px;margin:0}
+.fl .prStrip .opEb{margin:0 0 4px}
+.fl .prStrip .opLine{margin:0 0 6px}
+.fl .prGrid{display:flex;gap:16px;align-items:stretch}
+.fl .prCard{background:var(--hud);border:1px solid rgba(var(--blue-rgb),.4);padding:22px;width:300px;font-family:'IBM Plex Mono',monospace;display:flex;flex-direction:column;gap:10px}
+.fl .prCard.feat{border-color:rgba(var(--lime-rgb),.55);box-shadow:inset 0 0 0 1px rgba(var(--lime-rgb),.3)}
+.fl .prName{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#A5B4FC;margin:0}
+.fl .prNameRow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fl .prChip{font-size:9.6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(var(--lime-rgb),.35);background:rgba(var(--lime-rgb),.08);padding:2px 7px}
+.fl .prBadge{display:flex;flex-direction:column;gap:2px;padding:6px 9px;background:rgba(var(--lime-rgb),.07);border-left:2px solid var(--lime)}
+.fl .prBadge b{font-size:9.6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lime)}
+.fl .prBadge span{font-size:9.6px;color:var(--gray);letter-spacing:.04em}
+.fl .prTag{font-size:11.2px;color:var(--gray);line-height:1.5;margin:0}
+.fl .prPrice{display:flex;align-items:baseline;gap:4px;margin:6px 0 0}
+.fl .prCur{font-size:13.6px;font-weight:700;letter-spacing:.06em;color:var(--gray);align-self:flex-start;padding-top:6px}
+.fl .prAmt{font-size:44px;font-weight:700;line-height:1;color:var(--text)}
+.fl .prPer{font-size:12.8px;color:var(--gray)}
+.fl .prAnn{font-size:11.2px;color:var(--gray);margin:0}
+.fl .prAnn.strike s{color:var(--gray)}
+.fl .prBtn{margin-top:auto;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;background:var(--lime);color:var(--ink);padding:12px 16px;text-align:center}
+.fl .prFoot{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--w60);text-align:center;margin:14px auto 0;max-width:720px;line-height:1.6}
+
+/* ───────────────────────── /start chooser specimen (warm paper, fixed tokens) ───────────────────────── */
+.warm{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--dim:#615A54;--line:rgba(70,55,30,.12);--olive:#57651E;--olive-soft:rgba(87,101,30,.10);--lime:#D9F99D;--blue:#1E3A8A;
+  background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;width:390px;height:844px;overflow:hidden;position:relative;line-height:1.5;text-align:left}
+.warm *{box-sizing:border-box}
+.warm .wnav{height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--line);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px}
+.warm .wnav b{color:var(--olive)}
+.warm .wbar{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.3;background:var(--ink);color:var(--paper)}
+.warm .wbar u{color:var(--lime);text-decoration:none;font-weight:700;margin-left:6px}
+.warm .wbody{padding:22px 16px}
+.warm .wTitle{font-size:22.4px;font-weight:800;letter-spacing:-.02em;line-height:1.12;margin:0 0 6px}
+.warm .wSub{font-size:13.5px;color:var(--dim);margin:0 0 16px}
+.warm .wGrid{display:flex;flex-direction:column;gap:10px}
+.warm .wCard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;min-height:72px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(70,55,30,.06)}
+.warm .wIcon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(70,55,30,.06);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700}
+.warm .wIcon.on{background:var(--olive-soft);color:var(--olive)}
+.warm .wTop{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
+.warm .wLabel{font-family:'IBM Plex Mono',monospace;font-size:9.3px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.warm .wTag{font-family:'IBM Plex Mono',monospace;font-size:8.8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:2.5px 8px;color:var(--ink);background:var(--lime);white-space:nowrap}
+.warm .wTag.soon{color:var(--blue);background:rgba(30,58,138,.12)}
+.warm .wT{font-size:15.2px;font-weight:700;letter-spacing:-.01em}
+.warm .wB{margin-top:3px;font-size:11.5px;line-height:1.4;color:var(--dim)}
+.warm .wArr{width:34px;height:34px;border-radius:999px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:14px}
+.warm .wAside{margin:16px 0 0;padding:14px 4px 0;border-top:1px solid var(--line);text-align:center}
+.warm .wAq{font-size:14.4px;font-weight:650;margin:0 0 4px}
+.warm .wAb{font-size:12.8px;line-height:1.55;color:var(--dim);margin:0 auto 6px;max-width:44ch}
+.warm .wAl{font-size:12.8px;font-weight:700;color:var(--olive)}
+.warm .wBasic{margin:12px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);text-align:center;line-height:1.5}
+.warm .wBasic b{color:var(--olive);font-weight:700}
+</style>
+
+<div class="c-wrap">
+  <p class="c-eyebrow">Marketing review · Founding Season 2027 · round 1</p>
+  <h1 class="c-title">Your 2027 season, free — the offer, front and centre</h1>
+  <div class="c-read">
+    <p class="c-lead">Every specimen below is drawn at true size in the product's own type and colour tokens, with the words from the marketing pass. Desktop frames are 1440 px wide; phone frames are 390 px. <b>Open this page on your phone for the phone frames</b> — a laptop zoom answers the wrong question about size.</p>
+    <p class="c-p">Written against the six decisions you took this morning: free through <b>September 30, 2027</b>; sign up by <b>December 31, 2026</b>; no second promotion after; the September ask is a 2028 plan choice, annual first; coaches who stop keep a read-only window; the homepage persona-card badge rule stands.</p>
+    <div class="c-legend">
+      <span>Every element is tagged:</span>
+      <span class="tag new">New</span><span class="tag re">Restyled</span><span class="tag un">Unchanged</span><span class="tag rm">Removed</span>
+      <span>· <span class="tag rec">Recommended</span> marks the option I'd pick where two are drawn.</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ 1. OFFER BAR ══════════════════════ -->
+  <h2 class="c-h">1 · The site-wide offer bar</h2>
+  <div class="c-read">
+    <p class="c-p">One line at the very top of every marketing page, above the navigation — the demo pages and the changelog included. It exists while the signup window is open and disappears on January 1 by itself. Two treatments drawn; the words are identical.</p>
+  </div>
+
+  <div class="c-cap"><span class="tag new">New</span> <b>Variant A — dark bar, lime type.</b> <span class="tag rec">Recommended</span> Awareness without competing with the lime "Start free" button below it; the same recipe the demo banner uses to own the top of the viewport.</div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop</p>
+      <div class="fl frame auto c-frameShadow" style="width:1440px">
+        <div class="offerBar a"><span class="eb">Founding Season</span><span class="sep">·</span><span>Your 2027 season, free — sign up by December 31, 2026</span><span class="sep">·</span><span class="lk">See the offer →</span></div>
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      </div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 px</span> phone · 44 px tap floor</p>
+      <div class="fl phone c-frameShadow" style="height:auto">
+        <div class="offerBar a"><span><span class="eb">Founding Season</span> · Your 2027 season, free — sign up by December 31 <span class="lk">→</span></span></div>
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="c-cap"><span class="tag new">New</span> <b>Variant B — lime fill.</b> Unmissable, and the one place a full-width lime fill would be on-brand (lime is the brand accent on marketing). The cost: two lime fills in the first viewport once the hero button is in view, so the bar out-shouts the ask.</div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop</p>
+      <div class="fl frame auto c-frameShadow" style="width:1440px">
+        <div class="offerBar b"><span class="eb">Founding Season</span><span class="sep">·</span><span>Your 2027 season, free — sign up by December 31, 2026</span><span class="sep">·</span><span class="lk">See the offer →</span></div>
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      </div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 px</span> phone</p>
+      <div class="fl phone c-frameShadow" style="height:auto">
+        <div class="offerBar b"><span><span class="eb">Founding Season</span> · Your 2027 season, free — sign up by December 31 <span class="lk">→</span></span></div>
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ══════════════════════ 2. HOMEPAGE WHOLE SCREEN ══════════════════════ -->
+  <h2 class="c-h">2 · Homepage — the whole first screen, before and after</h2>
+  <div class="c-read">
+    <p class="c-p">The judgement this specimen exists for: does putting the offer at headline weight push the persona cards — the homepage's actual job — below the fold? The dashed line is the fold on a 1440 × 900 laptop. <b>After, measured on this render:</b> the cards start at about 610 px and finish at about 815 px; the roadmap strip finishes at about 887 px, just above the line. Nothing the screen exists for moves below the fold.</p>
+  </div>
+
+  <div class="c-cap"><b>Before — today.</b> <span class="tag un">Unchanged</span> nav, headline, cards. The offer is the 12 px uppercase line above the headline.</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 × 900</span> desktop · before</p>
+    <div class="fl frame c-frameShadow">
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="hero"><div class="container">
+        <div class="heroHeader">
+          <div class="eyebrowRow"><span class="lm">Founding Season</span><span class="dot">·</span><span>Tournament Plus &amp; Premium Coaches Portal free through Dec 31, 2026</span><span class="dot">·</span><span>No credit card required</span></div>
+          <div class="h1">Less admin. <span class="ac">More sport.</span></div>
+          <p class="sub">Purpose-built for the people running community sports organizations on evenings and weekends — from your first tournament to a full club program.</p>
+        </div>
+        <div class="pGrid">
+          <div class="pCard"><div class="pTop"><span class="pLabel">Tournament</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Running a tournament?</div><div class="pBody">From team registration to final standings — brackets, schedule, live scores, all in one place.</div><div class="pCta">I'm a tournament organizer →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+          <div class="pCard"><div class="pTop"><span class="pLabel">Coaches Portal</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Coaching a single team?</div><div class="pBody">Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.</div><div class="pCta">I'm a coach →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+        </div>
+        <div class="roadmap"><span class="rmL">On the roadmap</span><span><span class="rmQ">Managing a house league season?</span><span class="rmC">I run a house league →</span></span><span><span class="rmQ">Running a club with rep teams?</span><span class="rmC">I run a club →</span></span></div>
+      </div></div>
+      <div class="c-fold" style="top:899px"><span>Fold · 900 px</span></div>
+    </div>
+  </div></div></div>
+
+  <div class="c-cap"><b>After.</b> <span class="tag new">New</span> offer bar and offer panel · <span class="tag rm">Removed</span> the eyebrow line · <span class="tag un">Unchanged</span> headline, sub-headline, persona cards and their badges, roadmap strip.</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 × 900</span> desktop · after</p>
+    <div class="fl frame c-frameShadow">
+      <div class="offerBar a"><span class="eb">Founding Season</span><span class="sep">·</span><span>Your 2027 season, free — sign up by December 31, 2026</span><span class="sep">·</span><span class="lk">See the offer →</span></div>
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="hero"><div class="container">
+        <div class="heroHeader" style="margin-bottom:28px">
+          <div class="h1">Less admin. <span class="ac">More sport.</span></div>
+          <p class="sub" style="margin-bottom:0">Purpose-built for the people running community sports organizations on evenings and weekends — from your first tournament to a full club program.</p>
+        </div>
+        <div class="offerPanel">
+          <div>
+            <p class="opEb">Founding Season</p>
+            <p class="opH">Your 2027 season, free.</p>
+            <p class="opLine">Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.</p>
+            <p class="opAfter">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>
+          </div>
+          <div class="opProducts">
+            <div class="opProd"><p class="opName">Tournament Plus</p><p class="opPrice">normally $39/month</p></div>
+            <div class="opProd"><p class="opName">Premium Coaches Portal</p><p class="opPrice">normally $29/month</p></div>
+          </div>
+        </div>
+        <div class="pGrid">
+          <div class="pCard"><div class="pTop"><span class="pLabel">Tournament</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Running a tournament?</div><div class="pBody">From team registration to final standings — brackets, schedule, live scores, all in one place.</div><div class="pCta">I'm a tournament organizer →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+          <div class="pCard"><div class="pTop"><span class="pLabel">Coaches Portal</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Coaching a single team?</div><div class="pBody">Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.</div><div class="pCta">I'm a coach →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+        </div>
+        <div class="roadmap"><span class="rmL">On the roadmap</span><span><span class="rmQ">Managing a house league season?</span><span class="rmC">I run a house league →</span></span><span><span class="rmQ">Running a club with rep teams?</span><span class="rmC">I run a club →</span></span></div>
+      </div></div>
+      <div class="c-fold" style="top:899px"><span>Fold · 900 px</span></div>
+    </div>
+  </div></div></div>
+
+  <div class="c-read">
+    <h3 class="c-h3">The same screen on a phone</h3>
+    <p class="c-p">Honest cost, measured on this render: on a 390 × 844 phone the panel pushes the first persona card down by about 210 px (from about 450 px to about 660 px). Its question and body sit above the fold; its action link lands about 40 px below it. What fills the space is the offer itself. The panel collapses to one column with the two product lines side by side.</p>
+  </div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 × 844</span> phone · before</p>
+      <div class="fl phone c-frameShadow">
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Pricing</span><span class="cta">Sign In</span></div></div>
+        <div class="hero" style="padding-top:24px"><div class="container">
+          <div class="heroHeader" style="margin-bottom:24px">
+            <div class="eyebrowRow" style="font-size:10.5px;margin-bottom:20px"><span class="lm">Founding Season</span><span class="dot">·</span><span>Tournament Plus &amp; Premium Coaches Portal free through Dec 31, 2026</span><span class="dot">·</span><span>No credit card required</span></div>
+            <div class="h1">Less admin. <span class="ac">More sport.</span></div>
+            <p class="sub" style="margin-bottom:0">Purpose-built for the people running community sports organizations on evenings and weekends — from your first tournament to a full club program.</p>
+          </div>
+          <div class="pGrid">
+            <div class="pCard"><div class="pTop"><span class="pLabel">Tournament</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Running a tournament?</div><div class="pBody">From team registration to final standings — brackets, schedule, live scores, all in one place.</div><div class="pCta">I'm a tournament organizer →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+            <div class="pCard"><div class="pTop"><span class="pLabel">Coaches Portal</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Coaching a single team?</div><div class="pBody">Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.</div><div class="pCta">I'm a coach →</div></div>
+          </div>
+        </div></div>
+        <div class="c-fold" style="top:843px"><span>Fold · 844 px</span></div>
+      </div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 × 844</span> phone · after</p>
+      <div class="fl phone c-frameShadow">
+        <div class="offerBar a"><span><span class="eb">Founding Season</span> · Your 2027 season, free — sign up by December 31 <span class="lk">→</span></span></div>
+        <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Pricing</span><span class="cta">Sign In</span></div></div>
+        <div class="hero" style="padding-top:24px"><div class="container">
+          <div class="heroHeader" style="margin-bottom:18px">
+            <div class="h1">Less admin. <span class="ac">More sport.</span></div>
+            <p class="sub" style="margin-bottom:0">Purpose-built for the people running community sports organizations on evenings and weekends — from your first tournament to a full club program.</p>
+          </div>
+          <div class="offerPanel">
+            <div>
+              <p class="opEb">Founding Season</p>
+              <p class="opH">Your 2027 season, free.</p>
+              <p class="opLine" style="margin-bottom:0">Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.</p>
+            </div>
+            <div class="opProducts">
+              <div class="opProd"><p class="opName">Tournament Plus</p><p class="opPrice">normally $39/month</p></div>
+              <div class="opProd"><p class="opName">Premium Coaches Portal</p><p class="opPrice">normally $29/month</p></div>
+            </div>
+          </div>
+          <div class="pGrid">
+            <div class="pCard"><div class="pTop"><span class="pLabel">Tournament</span><span class="pBadge">Free to start · no credit card</span></div><div class="pQ">Running a tournament?</div><div class="pBody">From team registration to final standings — brackets, schedule, live scores, all in one place.</div><div class="pCta">I'm a tournament organizer →</div><div class="pDoor"><i class="ldot"></i>See it live — no sign-up →</div></div>
+          </div>
+        </div></div>
+        <div class="c-fold" style="top:843px"><span>Fold · 844 px</span></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="c-read">
+    <h3 class="c-h3">Further down the homepage — the plans section</h3>
+    <p class="c-p">Today a second lime box repeats the offer three screens later in a different voice. With the panel in the hero it becomes one line under the section heading, and its button goes — that button opened the get-started chooser, whose coach door does not deliver the advertised product (fixed in specimen 6).</p>
+  </div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label"><span class="size">1200 px</span> · before <span class="tag rm">Removed</span></p>
+      <div class="fl frame auto c-frameShadow" style="width:1200px;padding:40px 0"><div class="container">
+        <div class="secHead"><p class="secTitle">Plans built for how you operate.</p><p class="secSub">Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early-access interest while those workflows are refined.</p></div>
+        <div class="callout"><div class="coEb"><span class="lm">Founding Season</span><span>·</span><span>Free through December 31, 2026</span></div><div class="coH">Tournament Plus ($39/month) and the Premium Coaches Portal ($29/month) are free for organizations and coaches that sign up before the end of 2026.</div><div class="coB">We're in our founding season — we want real tournaments and real teams on the platform, not demos. Sign up today and run your season at no cost through December 31.</div><div class="coLk">Start free →</div></div>
+      </div></div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label"><span class="size">1200 px</span> · after <span class="tag re">Restyled</span></p>
+      <div class="fl frame auto c-frameShadow" style="width:1200px;padding:40px 0"><div class="container">
+        <div class="secHead"><p class="secTitle">Plans built for how you operate.</p><p class="secSub">Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early-access interest while those workflows are refined.</p><p class="secLine"><span class="lm">Founding Season:</span> Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026.</p></div>
+      </div></div>
+    </div>
+  </div></div>
+
+  <!-- ══════════════════════ 3. TOURNAMENT ORGANIZERS ══════════════════════ -->
+  <h2 class="c-h">3 · For tournament organizers — the hero leads with the season, not the floor</h2>
+  <div class="c-read">
+    <p class="c-p">No layout change at all on this page. The sub-headline and the three trust facts swap to the offer while the window is open, and return to today's words on January 1. The free plan's "no time limit" stays on the plan card, where it is true.</p>
+  </div>
+  <div class="c-cap"><b>Before.</b> <span class="tag un">Unchanged</span> everything except the words marked in the "after".</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop · before</p>
+    <div class="fl frame auto c-frameShadow">
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="phero"><div class="container">
+        <p class="pEb">For tournament organizers</p>
+        <div class="pH1">From first registration<br><span class="ac">to final standings.</span></div>
+        <p class="pSub">Register teams, build your schedule, run the bracket, and post live scores — all in one place. Free to start, no credit card required.</p>
+        <div class="acts"><span class="btnLime">Start free</span><span class="btnDoor"><i class="ldot"></i>See it live →</span><span class="btnOut">See all plans →</span></div>
+        <p class="liveNote">No sign-up, no email. Walk into a tournament that's running right now.</p>
+        <div class="trust"><span><i></i>Free plan — no time limit</span><span><i></i>No credit card required</span><span><i></i>Billed in CAD</span></div>
+      </div></div>
+    </div>
+  </div></div></div>
+  <div class="c-cap"><b>After.</b> <span class="tag new">New</span> offer bar · <span class="tag re">Restyled</span> sub-headline words and trust row words · <span class="tag un">Unchanged</span> headline, buttons, demo door.</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop · after</p>
+    <div class="fl frame auto c-frameShadow">
+      <div class="offerBar a"><span class="eb">Founding Season</span><span class="sep">·</span><span>Your 2027 season, free — sign up by December 31, 2026</span><span class="sep">·</span><span class="lk">See the offer →</span></div>
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="phero"><div class="container">
+        <p class="pEb">For tournament organizers</p>
+        <div class="pH1">From first registration<br><span class="ac">to final standings.</span></div>
+        <p class="pSub">Register teams, build your schedule, run the bracket, and post live scores — all in one place. <span class="lm">Tournament Plus is free for your whole 2027 season</span> when you sign up by December 31, 2026 — normally $39/month.</p>
+        <div class="acts"><span class="btnLime">Start free</span><span class="btnDoor"><i class="ldot"></i>See it live →</span><span class="btnOut">See all plans →</span></div>
+        <p class="liveNote">No sign-up, no email. Walk into a tournament that's running right now.</p>
+        <div class="trust"><span><i></i>Free through September 30, 2027</span><span><i></i>Normally $39/month</span><span><i></i>No credit card required</span></div>
+      </div></div>
+    </div>
+  </div></div></div>
+
+  <div class="c-read">
+    <h3 class="c-h3">The Founding Season card lower on the page — re-aimed</h3>
+    <p class="c-p">Same box, same place below the plan grid. The eyebrow stops addressing first-timers, the title states the season, and it gains the one sentence that removes "what's the catch" — true for this product because an organization that stops simply moves to the free Tournament plan with everything it built.</p>
+  </div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label">before</p>
+      <div class="fl frame auto c-frameShadow" style="width:820px;padding:28px"><div class="fsCard"><div class="fsEb">Running your first tournament this year?</div><div class="fsT">Tournament Plus is free for founding organizations through December 31, 2026.</div><p class="fsB">Auto-scheduling, brackets, communications, and archives — at no cost while we build our first season together. Normally $39/month. No credit card required.</p><div><span class="btnLime">Start free — no credit card required</span></div></div></div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label">after <span class="tag re">Restyled</span> words · <span class="tag new">New</span> consequence line</p>
+      <div class="fl frame auto c-frameShadow" style="width:820px;padding:28px"><div class="fsCard"><div class="fsEb">Running more than one event in 2027?</div><div class="fsT">Tournament Plus is free for your whole 2027 season.</div><p class="fsB">Auto-scheduling, brackets, communications, and archives for every event you run through September 30, 2027 — normally $39/month. Sign up by December 31, 2026. No credit card.</p><p class="fsC">In September 2027 you'll choose a plan for your 2028 season. If you don't continue, your organization moves to the free Tournament plan and keeps everything it built.</p><div><span class="btnLime">Start free</span></div></div></div>
+    </div>
+  </div></div>
+
+  <!-- ══════════════════════ 4. COACHES ══════════════════════ -->
+  <h2 class="c-h">4 · For coaches — one offer in the hero, the free companion moves to the plan card</h2>
+  <div class="c-read">
+    <p class="c-p">Today's hero makes a coach sort out two tiers before reaching the line that matters. While the window is open the hero sells one thing; the Basic companion's "free with no end date" reassurance moves to its own card in the plan grid, which is where it is true.</p>
+  </div>
+  <div class="c-cap"><b>Before.</b></div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop · before</p>
+    <div class="fl frame auto c-frameShadow">
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="phero"><div class="container">
+        <p class="pEb">For coaches</p>
+        <div class="pH1">Manage your team.<br><span class="ac">Not your inbox.</span></div>
+        <p class="pSub">Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the tournaments you enter. The Premium Coaches Portal turns it into your team's operations HQ: roster, lineups, budget, schedule, and documents for the whole season. No org account needed, and your workspace carries over if your organization joins later.</p>
+        <div class="acts"><span class="btnLime">Start free</span><span class="btnDoor"><i class="ldot"></i>See it live →</span><span class="btnOut">See all plans →</span></div>
+        <p class="liveNote">No sign-up, no email. Walk a full season — tryout day to season's end.</p>
+        <p class="heroNote"><span class="lm">Free until Jan 1, 2027</span> — then $29/month. No credit card required to start.</p>
+        <div class="trust"><span><i></i>Free until Jan 1, 2027</span><span><i></i>then $29/month</span><span><i></i>No org account needed</span></div>
+      </div></div>
+    </div>
+  </div></div></div>
+  <div class="c-cap"><b>After.</b> <span class="tag new">New</span> offer bar · <span class="tag re">Restyled</span> sub-headline, note and trust row words · <span class="tag un">Unchanged</span> headline, buttons, demo door.</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1440 px</span> desktop · after</p>
+    <div class="fl frame auto c-frameShadow">
+      <div class="offerBar a"><span class="eb">Founding Season</span><span class="sep">·</span><span>Your 2027 season, free — sign up by December 31, 2026</span><span class="sep">·</span><span class="lk">See the offer →</span></div>
+      <div class="nav"><div class="logo">FieldLogic<b>HQ</b></div><div class="navLinks"><span>Discover</span><span>Pricing</span><span class="cta">Sign In</span></div></div>
+      <div class="phero"><div class="container">
+        <p class="pEb">For coaches</p>
+        <div class="pH1">Manage your team.<br><span class="ac">Not your inbox.</span></div>
+        <p class="pSub">The Premium Coaches Portal is your team's operations HQ — roster, lineups, budget, schedule, and documents for the whole season. <span class="lm">It's free for your whole 2027 season</span> when you sign up by December 31, 2026 — normally $29/month. No organization account needed, and your workspace carries over if your organization joins later.</p>
+        <div class="acts"><span class="btnLime">Start free</span><span class="btnDoor"><i class="ldot"></i>See it live →</span><span class="btnOut">See all plans →</span></div>
+        <p class="liveNote">No sign-up, no email. Walk a full season — tryout day to season's end.</p>
+        <p class="heroNote"><span class="lm">Free through September 30, 2027</span> — normally $29/month. No credit card required.</p>
+        <div class="trust"><span><i></i>Free through September 30, 2027</span><span><i></i>Normally $29/month</span><span><i></i>No org account needed</span></div>
+      </div></div>
+    </div>
+  </div></div></div>
+
+  <div class="c-read"><h3 class="c-h3">The Premium plan card on the same page</h3></div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label">before</p>
+      <div class="fl frame auto c-frameShadow" style="width:600px;padding:28px"><div class="planCard"><div><p class="plName">Premium Coaches Portal</p><div class="plPrice"><span class="plAmt">Free</span><span class="plPer">until Jan 1, 2027</span></div><p class="plNote">then $29/month · no credit card required · Standalone, no org required</p></div><div class="btnLime" style="align-self:flex-start">Start free →</div></div></div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label">after <span class="tag re">Restyled</span> words only</p>
+      <div class="fl frame auto c-frameShadow" style="width:600px;padding:28px"><div class="planCard"><div><p class="plName">Premium Coaches Portal</p><div class="plPrice"><span class="plAmt">Free</span><span class="plPer">through September 30, 2027</span></div><p class="plNote">Normally $29/month or $290/year · no credit card · standalone, no org required</p></div><div class="btnLime" style="align-self:flex-start">Start free →</div></div></div>
+    </div>
+  </div></div>
+
+  <!-- ══════════════════════ 5. PRICING ══════════════════════ -->
+  <h2 class="c-h">5 · Pricing — the offer goes into the price, not a badge above it</h2>
+  <div class="c-read">
+    <p class="c-p">Today the strongest number on the Tournament Plus card is $39, with a 10 px badge above the tagline saying it is free. The eye reads the price first and the badge second, and they disagree. After: the offer strip lands at the top of the page (the site bar links here), and the price block itself shows $0 with the list price kept beside it, as the rule that every touchpoint names the price waived requires.</p>
+  </div>
+  <div class="c-cap"><span class="tag new">New</span> <b>Offer strip above the plan cards.</b> Same recipe as the homepage panel — one component, two placements — without the product lines, since the cards below carry them.</div>
+  <div class="c-rail"><div class="c-row"><div class="c-spec"><p class="c-spec-label"><span class="size">1200 px</span> · after</p>
+    <div class="fl frame auto c-frameShadow" style="width:1200px;padding:32px 0"><div class="container">
+      <div class="prStrip"><div><p class="opEb">Founding Season</p><p class="opH">Your 2027 season, free.</p></div><div><p class="opLine">Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.</p><p class="opAfter">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p></div></div>
+      <div class="prGrid">
+        <div class="prCard"><p class="prName">Tournament</p><p class="prTag">Run one tournament, start to finish. No credit card, no time limit.</p><div class="prPrice"><span class="prAmt">Free</span></div><p class="prAnn">1 tournament · 3 staff seats</p><div class="prBtn">Start free</div></div>
+        <div class="prCard feat"><div class="prNameRow"><p class="prName">Tournament Plus</p><span class="prChip">Founding Season</span></div><p class="prTag">Run multiple tournaments, automate your schedule, and keep your organization's history organized.</p><div class="prPrice"><span class="prCur">$</span><span class="prAmt">0</span><span class="prPer">through September 30, 2027</span></div><p class="prAnn">Normally $39/month · $390/year</p><div class="prBtn">Start free</div></div>
+        <div class="prCard feat"><div class="prNameRow"><p class="prName">Premium Coaches Portal</p><span class="prChip">Founding Season</span></div><p class="prTag">Your team's operations HQ — roster, lineups, budget, schedule, and documents. One team, no organization required.</p><div class="prPrice"><span class="prCur">$</span><span class="prAmt">0</span><span class="prPer">through September 30, 2027</span></div><p class="prAnn">Normally $29/month · $290/year</p><div class="prBtn">Start free</div></div>
+      </div>
+      <p class="prFoot">In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.</p>
+    </div></div>
+  </div></div></div>
+  <div class="c-cap"><b>The Tournament Plus card, close up.</b> <span class="tag re">Restyled</span> price block · <span class="tag re">Restyled</span> badge shrinks to a chip on the name row.</div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label">before</p>
+      <div class="fl frame auto c-frameShadow" style="width:360px;padding:28px"><div class="prCard feat" style="width:300px"><p class="prName">Tournament Plus</p><div class="prBadge"><b>⬡ Founding Season — Free until Jan 1, 2027</b><span>Normally $39/month</span></div><p class="prTag">Run multiple tournaments, automate your schedule, and keep your organization's history organized.</p><div class="prPrice"><span class="prCur">$</span><span class="prAmt">39</span><span class="prPer">/month</span></div><p class="prAnn">$390/year — save two months</p><div class="prBtn">Start free — no credit card</div></div></div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label">after · option 1 <span class="tag rec">Recommended</span></p>
+      <div class="fl frame auto c-frameShadow" style="width:360px;padding:28px"><div class="prCard feat" style="width:300px"><div class="prNameRow"><p class="prName">Tournament Plus</p><span class="prChip">Founding Season</span></div><p class="prTag">Run multiple tournaments, automate your schedule, and keep your organization's history organized.</p><div class="prPrice"><span class="prCur">$</span><span class="prAmt">0</span><span class="prPer">through September 30, 2027</span></div><p class="prAnn">Normally $39/month · $390/year</p><div class="prBtn">Start free</div></div></div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label">after · option 2 — "Free" as the amount</p>
+      <div class="fl frame auto c-frameShadow" style="width:360px;padding:28px"><div class="prCard feat" style="width:300px"><div class="prNameRow"><p class="prName">Tournament Plus</p><span class="prChip">Founding Season</span></div><p class="prTag">Run multiple tournaments, automate your schedule, and keep your organization's history organized.</p><div class="prPrice"><span class="prAmt">Free</span><span class="prPer">through September 30, 2027</span></div><p class="prAnn">Normally $39/month · $390/year</p><div class="prBtn">Start free</div></div></div>
+    </div>
+  </div></div>
+  <div class="c-read"><p class="c-note">Why option 1: the free Tournament card beside it already says "Free" as its amount with no end date. Two cards both reading "Free" in the same type at the same size would make the permanent and the promotional look identical; "$0 through September 30, 2027" keeps them distinguishable at a glance.</p></div>
+
+  <!-- ══════════════════════ 6. /START CHOOSER ══════════════════════ -->
+  <h2 class="c-h">6 · The get-started chooser — the offer on the two doors it applies to</h2>
+  <div class="c-read">
+    <p class="c-p">The warm paper screen every "Start free" lands on. Two changes: the pill on the two offer doors says which free this is, and the coach door opens the Premium Coaches Portal while the window is open (today it creates the free Basic team, so the homepage's own offer button did not deliver the advertised product). The Basic companion keeps a quiet line beneath the cards.</p>
+  </div>
+  <div class="c-rail"><div class="c-row">
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 × 844</span> phone · before</p>
+      <div class="warm c-frameShadow">
+        <div class="wnav">FieldLogic<b>HQ</b></div>
+        <div class="wbody">
+          <p class="wTitle">What do you want to do?</p>
+          <p class="wSub">Tell us your job and start free.</p>
+          <div class="wGrid">
+            <div class="wCard"><div class="wIcon on">T</div><div><div class="wTop"><span class="wLabel">Tournament</span><span class="wTag">Free</span></div><div class="wT">Run a tournament</div><div class="wB">Create a tournament free — registration, schedule, brackets, and a public site. No credit card.</div></div><div class="wArr">→</div></div>
+            <div class="wCard"><div class="wIcon on">C</div><div><div class="wTop"><span class="wLabel">Coaches Portal</span><span class="wTag">Free</span></div><div class="wT">Coach a team</div><div class="wB">A free team home for your season — no organization needed. Track your registrations and team.</div></div><div class="wArr">→</div></div>
+            <div class="wCard"><div class="wIcon">L</div><div><div class="wTop"><span class="wLabel">League</span><span class="wTag soon">Coming soon</span></div><div class="wT">Start a league season</div><div class="wB">Run a house-league season — registration, draft, scheduling, standings, and parent comms.</div></div><div class="wArr">→</div></div>
+          </div>
+          <div class="wAside"><p class="wAq">Joining a club or team you were invited to?</p><p class="wAb">Create an account with the email address the invitation was sent to — it'll be waiting for you.</p><p class="wAl">Accept an invitation →</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="c-spec"><p class="c-spec-label"><span class="size">390 × 844</span> phone · after</p>
+      <div class="warm c-frameShadow">
+        <div class="wbar">Founding Season · Your 2027 season, free — sign up by December 31 <u>→</u></div>
+        <div class="wnav">FieldLogic<b>HQ</b></div>
+        <div class="wbody">
+          <p class="wTitle">What do you want to do?</p>
+          <p class="wSub">Tell us your job and start free.</p>
+          <div class="wGrid">
+            <div class="wCard"><div class="wIcon on">T</div><div><div class="wTop"><span class="wLabel">Tournament</span><span class="wTag">2027 season free</span></div><div class="wT">Run a tournament</div><div class="wB">Create a tournament free — registration, schedule, brackets, and a public site. Tournament Plus is free through September 30, 2027. No credit card.</div></div><div class="wArr">→</div></div>
+            <div class="wCard"><div class="wIcon on">C</div><div><div class="wTop"><span class="wLabel">Premium Coaches Portal</span><span class="wTag">2027 season free</span></div><div class="wT">Coach a team</div><div class="wB">Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through September 30, 2027, no organization needed.</div></div><div class="wArr">→</div></div>
+            <div class="wCard"><div class="wIcon">L</div><div><div class="wTop"><span class="wLabel">League</span><span class="wTag soon">Coming soon</span></div><div class="wT">Start a league season</div><div class="wB">Run a house-league season — registration, draft, scheduling, standings, and parent comms.</div></div><div class="wArr">→</div></div>
+          </div>
+          <p class="wBasic">Just entering tournaments? <b>The Basic Coaches Portal is free with no end date →</b></p>
+          <div class="wAside"><p class="wAq">Joining a club or team you were invited to?</p><p class="wAb">Create an account with the email address the invitation was sent to — it'll be waiting for you.</p><p class="wAl">Accept an invitation →</p></div>
+        </div>
+        <span class="c-pin" style="left:14px;top:236px">door → Premium</span>
+        <span class="c-pin" style="left:14px;top:478px">new</span>
+      </div>
+    </div>
+  </div></div>
+  <div class="c-read"><p class="c-note">Tags: pill words <span class="tag re">Restyled</span> · card bodies <span class="tag re">Restyled</span> · coach door target <span class="tag re">Restyled</span> · Basic line <span class="tag new">New</span> · offer bar <span class="tag new">New</span> (ink-on-paper here, because a lime fill never renders as a bar on the warm skin) · invitation aside <span class="tag un">Unchanged</span>.</p></div>
+
+  <!-- ══════════════════════ 7. POST-WINDOW ══════════════════════ -->
+  <h2 class="c-h">7 · What every surface shows from January 1, 2027</h2>
+  <div class="c-read">
+    <p class="c-p">All of the new elements key off the signup window, not the free-period end, so the day the window closes they vanish and the pages read as the list price with the free floors. Nothing new is drawn for this state because it is today's non-promo copy, already written behind the promo toggle.</p>
+    <table class="c-table">
+      <tr><th>Surface</th><th>From January 1, 2027</th></tr>
+      <tr><td>Offer bar · homepage panel · pricing strip · plans-section line</td><td>Gone</td></tr>
+      <tr><td>Persona-page sub-headlines, notes and trust rows</td><td>Today's list-price words return ("Free to start, no credit card required" / "$29 CAD / month")</td></tr>
+      <tr><td>Plan cards</td><td>List price, no chip</td></tr>
+      <tr><td>Get-started chooser</td><td>"Free" pills and today's bodies return; the coach door opens the Basic team again</td></tr>
+      <tr><td>Pricing FAQ</td><td>"Can I still get the Founding Season offer?" — closed December 31, 2026; list prices; no second offer</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════ CHOICES ══════════════════════ -->
+  <div class="c-choices">
+    <h3>Three choices on this sheet</h3>
+    <ol>
+      <li><b>Offer bar:</b> Variant A (dark, lime type — recommended) or Variant B (lime fill).</li>
+      <li><b>Homepage panel product lines:</b> plain text as drawn (the persona cards stay the only doors — recommended), or make each product line a link to its persona page.</li>
+      <li><b>Pricing card amount:</b> "$0 through September 30, 2027" (option 1 — recommended) or "Free through September 30, 2027" (option 2).</li>
+    </ol>
+    <p class="c-note">Everything else on the sheet is one proposal. Approving the sheet approves the words as drawn; the marketing pass can still polish a sentence without changing what a surface says.</p>
+  </div>
+</div>

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
@@ -1692,7 +1692,7 @@ export default function OnboardingPage() {
         { value: '2-3', label: '2–3', sub: 'A few each season' },
         { value: '4+', label: '4 or more', sub: 'Running a full tournament program' },
       ];
-      const isFoundingSeasonWindow = isFoundingSeasonActive();
+      const isFoundingSeasonWindow = isFoundingSeasonSignupOpen();
       return renderModalFrame(
         'One quick question',
         'How many tournaments does your organization run per year? This helps us tailor the setup for you.',
@@ -1701,10 +1701,10 @@ export default function OnboardingPage() {
             {isFoundingSeasonWindow && (
               <div className={styles.foundingSeasonWelcome}>
                 <p className={styles.foundingSeasonWelcomeEyebrow}>Founding Season</p>
-                <p className={styles.foundingSeasonWelcomeTitle}>Welcome to your founding season.</p>
+                <p className={styles.foundingSeasonWelcomeTitle}>Welcome to your Founding Season.</p>
                 <p className={styles.foundingSeasonWelcomeCopy}>
-                  Tournament Plus is free through December 31, 2026. No credit card required.
-                  You&apos;ll receive a reminder before the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies in January 2027.
+                  Tournament Plus is free through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card.
+                  We&apos;ll remind you during the summer, and in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
                 </p>
               </div>
             )}
@@ -2559,13 +2559,13 @@ export default function OnboardingPage() {
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
 
-      {isFoundingSeasonActive() && (
+      {isFoundingSeasonSignupOpen() && (
         <div className={styles.foundingSeasonBanner}>
           <p className={styles.foundingSeasonBannerEyebrow}>Founding Season</p>
-          <p className={styles.foundingSeasonBannerTitle}>Welcome to your founding season.</p>
+          <p className={styles.foundingSeasonBannerTitle}>Welcome to your Founding Season.</p>
           <p className={styles.foundingSeasonBannerCopy}>
-            Your plan is free through December 31, 2026. No credit card required.
-            You&apos;ll receive a reminder before standard rates apply in January 2027.
+            Your plan is free through {FOUNDING_SEASON_END_LABEL}. No credit card.
+            We&apos;ll remind you during the summer, and in {FOUNDING_SEASON_DECISION_MONTH_LABEL} you&apos;ll choose a plan for your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season.
           </p>
         </div>
       )}

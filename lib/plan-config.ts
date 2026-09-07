@@ -211,35 +211,150 @@ export function normalizeBillingCycle(value: unknown): BillingCycle {
 }
 
 // ─── Founding season campaign ─────────────────────────────────────────────────
+//
+// TWO dates, separate for the first time (BUSINESS_DECISIONS 2026-09-07 — "Founding Season 2027"):
+//
+//   • FOUNDING_SEASON_SIGNUP_CLOSE — the last instant an account can JOIN the Founding Season
+//     ("sign up by December 31, 2026"). Every OFFER surface (site bar, homepage panel, persona-page
+//     copy, pricing strip, chooser tags) and every COMP-GRANTING path keys off this one, through
+//     isFoundingSeasonSignupOpen() / isFoundingSeasonPromoActive(). On the day it passes the offer
+//     surfaces vanish and the list price shows — there is no second promotion.
+//   • FOUNDING_SEASON_END — the last instant the comp RUNS ("free through September 30, 2027").
+//     Billing-state surfaces (the org billing banner, the card-saved note) and the comp rows key off
+//     this one, through isFoundingSeasonActive().
+//
+// Before 2026-09-07 these were the same instant (2027-01-01), which is why one helper served both
+// jobs. Reading the wrong one now is the drift to guard against: an offer surface on the END date
+// would keep advertising a closed offer for nine months; a comp path on the END date would keep
+// granting free seasons after the window shut.
+//
+// Both are ISO instants pinned to the END of the named day in Eastern time (the customer sentence
+// never states a clock): 2026-12-31 23:59:59 EST = 2027-01-01T05:00Z; 2027-09-30 23:59:59 EDT =
+// 2027-10-01T04:00Z. The customer-facing LABELS below are derived from the instants in
+// America/Toronto, so the wording can never drift from the date it describes — pinned by
+// tests/unit/founding-season-dates.test.ts.
+//
+// Each is overridable via an env var (set in Amplify) so a date can move without a code PR.
+// ⚠ Operational caveat (2026-07-20, still true): comp_period rows are WRITTEN with
+// FOUNDING_SEASON_END at signup/org-create, and the founding-season status + email-audience queries
+// MATCH on it. Moving the END date therefore silently drops rows written under the old date from
+// founding-season recognition and marketing audiences — backfill existing comp_period.expires_at
+// (and the comped workspaces' / orgs' current_period_end) in the same change, as migration 279 did
+// for the 2027-01-01 → 2027-10-01 move.
+
+export const FOUNDING_SEASON_SIGNUP_CLOSE =
+  process.env.NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE ?? '2027-01-01T05:00:00.000Z';
+export const FOUNDING_SEASON_END =
+  process.env.NEXT_PUBLIC_FOUNDING_SEASON_END ?? '2027-10-01T04:00:00.000Z';
+/**
+ * When the "add a payment method" ask opens on the org billing page — the summer card window
+ * (plan: open June 1, nudge in August, final notice mid-September). Before this instant the billing
+ * page states that no action is needed; nothing ever asks for a card during the signup window.
+ */
+export const FOUNDING_SEASON_CARD_WINDOW_OPEN =
+  process.env.NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN ?? '2027-06-01T04:00:00.000Z';
+
+const FOUNDING_SEASON_SIGNUP_CLOSE_MS = new Date(FOUNDING_SEASON_SIGNUP_CLOSE).getTime();
+const FOUNDING_SEASON_END_MS = new Date(FOUNDING_SEASON_END).getTime();
+const FOUNDING_SEASON_CARD_WINDOW_OPEN_MS = new Date(FOUNDING_SEASON_CARD_WINDOW_OPEN).getTime();
 
 /**
- * ISO end timestamp for the founding-season free Tournament Plus promotion.
- * Overridable via the NEXT_PUBLIC_FOUNDING_SEASON_END env var (set in Amplify) so the
- * date can change without a code PR. A platform-admin-editable setting is the eventual home.
- *
- * ⚠ Operational caveat (2026-07-20): comp_period rows are WRITTEN with this value at
- * signup/org-create, and the founding-season status + email-audience queries MATCH on it.
- * Changing the override mid-promotion therefore silently drops rows written under the old
- * date from founding-season recognition and marketing audiences — if the date ever moves,
- * backfill existing comp_period.expires_at rows in the same change.
+ * The named day an instant "ends on", in Eastern time — the instants above are pinned to the end
+ * of a day, so the day the customer reads is the calendar day BEFORE the instant's UTC date.
  */
-export const FOUNDING_SEASON_END =
-  process.env.NEXT_PUBLIC_FOUNDING_SEASON_END ?? '2027-01-01T00:00:00.000Z';
-const FOUNDING_SEASON_END_MS = new Date(FOUNDING_SEASON_END).getTime();
+function endOfDayLabel(iso: string): string {
+  return new Date(new Date(iso).getTime() - 1).toLocaleDateString('en-CA', {
+    timeZone: 'America/Toronto', month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
+/** The day the instant begins, in Eastern time ("nothing is charged before …"). */
+function startOfDayLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', {
+    timeZone: 'America/Toronto', month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
 
-/** Returns true while the global founding-season promotion is still active. */
+/** "December 31, 2026" — the sign-up deadline as the customer reads it. */
+export const FOUNDING_SEASON_SIGNUP_CLOSE_LABEL = endOfDayLabel(FOUNDING_SEASON_SIGNUP_CLOSE);
+/** "September 30, 2027" — the last free day as the customer reads it. */
+export const FOUNDING_SEASON_END_LABEL = endOfDayLabel(FOUNDING_SEASON_END);
+/** "October 1, 2027" — the first day anything could be charged. */
+export const FOUNDING_SEASON_FIRST_CHARGE_LABEL = startOfDayLabel(FOUNDING_SEASON_END);
+/** "2027" — the season the offer is named after (the year the comp ends in). */
+export const FOUNDING_SEASON_YEAR_LABEL = FOUNDING_SEASON_END_LABEL.slice(-4);
+/** "2028" — the season the customer chooses a plan for at the end. */
+export const FOUNDING_SEASON_NEXT_YEAR_LABEL = String(Number(FOUNDING_SEASON_YEAR_LABEL) + 1);
+/** "September 2027" — the month the plan choice happens (the comp's last month). */
+export const FOUNDING_SEASON_DECISION_MONTH_LABEL = new Date(new Date(FOUNDING_SEASON_END).getTime() - 1)
+  .toLocaleDateString('en-CA', { timeZone: 'America/Toronto', month: 'long', year: 'numeric' });
+
+/**
+ * The one sentence every offer surface repeats, verbatim (copy canon §1 rule 2,
+ * FOUNDING_SEASON_2027_OFFER_COPY.md). `product` narrows it to one plan where a surface speaks for
+ * one product only; every other word is kept.
+ */
+export function foundingSeasonOfferLine(product?: 'tournament_plus' | 'team'): string {
+  return `${foundingSeasonOfferCore(product)}. No credit card.`;
+}
+/**
+ * The offer sentence without its closing "No credit card." — for a surface that continues the
+ * sentence itself ("… by December 31, 2026 — normally $39/month. No credit card.").
+ */
+export function foundingSeasonOfferCore(product?: 'tournament_plus' | 'team'): string {
+  const who = product === 'tournament_plus'
+    ? 'Tournament Plus is'
+    : product === 'team'
+      ? 'The Premium Coaches Portal is'
+      : 'Tournament Plus and the Premium Coaches Portal are';
+  return `${who} free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}`;
+}
+/** The "after line" — what happens when the free season ends, stated once per surface. */
+export const FOUNDING_SEASON_AFTER_LINE =
+  `In ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season. Nothing is charged before then, and there is nothing to cancel.`;
+
+/** True while an account can still join the Founding Season (the OFFER window). */
+export function isFoundingSeasonSignupOpen(): boolean {
+  return Date.now() < FOUNDING_SEASON_SIGNUP_CLOSE_MS;
+}
+
+/** True while the Founding Season comp is still RUNNING (billing-state surfaces, not offers). */
 export function isFoundingSeasonActive(): boolean {
   return Date.now() < FOUNDING_SEASON_END_MS;
 }
 
+/** True during the summer card window: the comp is running and the "add a payment method" ask is open. */
+export function isFoundingSeasonCardWindowOpen(): boolean {
+  const now = Date.now();
+  return now >= FOUNDING_SEASON_CARD_WINDOW_OPEN_MS && now < FOUNDING_SEASON_END_MS;
+}
+
 /**
- * True when a comp_period override expiry marks a founding-season comp.
+ * The instant every Founding Season comp was written with BEFORE 2026-09-07 (the 2026 cohort's
+ * original end). Migration 279 moves those rows to FOUNDING_SEASON_END, but it is data-only — no
+ * drift gate can prove it ran on production — so recognition stays TOLERANT of the legacy instant:
+ * a cohort account is a cohort account whether or not the backfill has reached its row yet. Without
+ * this, the window between a code deploy and the backfill would drop every existing founding
+ * organization out of its billing banner and every marketing audience (/review 2026-09-07).
+ */
+export const FOUNDING_SEASON_LEGACY_END = '2027-01-01T00:00:00.000Z';
+/** Every expires_at instant that marks a Founding Season comp row — match with `.in()`. */
+export const FOUNDING_SEASON_COMP_EXPIRIES: readonly string[] =
+  FOUNDING_SEASON_END === FOUNDING_SEASON_LEGACY_END
+    ? [FOUNDING_SEASON_END]
+    : [FOUNDING_SEASON_END, FOUNDING_SEASON_LEGACY_END];
+
+/**
+ * True when a comp_period override expiry marks a founding-season comp — current OR legacy instant.
  * Compares the calendar date only: Postgres timestamptz formatting
- * ('2027-01-01 00:00:00+00') differs from the ISO constant, so full-string
+ * ('2027-10-01 04:00:00+00') differs from the ISO constant, so full-string
  * equality would silently fail. Lives here so that fragility is documented
  * once, next to the constant it guards.
  */
 export function isFoundingSeasonCompExpiry(expiresAt: string): boolean {
+  return FOUNDING_SEASON_COMP_EXPIRIES.some(iso => expiresAt.startsWith(iso.slice(0, 10)));
+}
+/** True only for the CURRENT instant — a legacy row that still needs healing returns false. */
+export function isFoundingSeasonCurrentExpiry(expiresAt: string): boolean {
   return expiresAt.startsWith(FOUNDING_SEASON_END.slice(0, 10));
 }
 
@@ -251,12 +366,13 @@ export function isFoundingSeasonCompExpiry(expiresAt: string): boolean {
 const FOUNDING_SEASON_PLAN_KEYS: readonly OrgPlan[] = ['tournament_plus', 'team'];
 
 /**
- * True when `planKey` is on the Founding Season promo AND the promo window is still open. Replaces
- * the scattered `planKey === 'tournament_plus' && isFoundingSeasonActive()` checks so the promo
- * uniformly covers the Premium Coaches Portal (`team`) too.
+ * True when `planKey` is on the Founding Season promo AND the SIGNUP window is still open — the
+ * gate every offer surface and every comp-granting path reads. Replaces the scattered
+ * `planKey === 'tournament_plus' && isFoundingSeasonActive()` checks so the promo uniformly covers
+ * the Premium Coaches Portal (`team`) too.
  */
 export function isFoundingSeasonPromoActive(planKey: string): boolean {
-  return isFoundingSeasonActive() && (FOUNDING_SEASON_PLAN_KEYS as readonly string[]).includes(planKey);
+  return isFoundingSeasonSignupOpen() && (FOUNDING_SEASON_PLAN_KEYS as readonly string[]).includes(planKey);
 }
 
 // ─── Price display helpers ────────────────────────────────────────────────────

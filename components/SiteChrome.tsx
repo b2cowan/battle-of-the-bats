@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 import { isConsumerShellPath, isWarmJourneyPath, isOrgOperatorShellPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
+import FoundingSeasonOfferBar from './marketing/FoundingSeasonOfferBar';
 
 export default function SiteChrome() {
   const pathname = usePathname();
@@ -36,5 +37,12 @@ export default function SiteChrome() {
     // top bar + bottom nav — the marketing Navbar would double up.
     isConsumerShellPath(pathname)
   ) return null;
-  return <Navbar />;
+  // The Founding Season offer bar decides for itself whether this is a marketing path and whether
+  // the signup window is open; everywhere else it renders nothing and publishes no geometry.
+  return (
+    <>
+      <FoundingSeasonOfferBar />
+      <Navbar />
+    </>
+  );
 }

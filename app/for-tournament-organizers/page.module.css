@@ -615,3 +615,20 @@
     min-height: var(--tap-min, 44px);
   }
 }
+
+/* Lime run inside the hero sub-line — the Founding Season promise while the signup window is open
+   (same role as the coaches page's .heroNoteAccent). */
+.heroNoteAccent {
+  color: var(--logic-lime);
+}
+
+/* The Founding Season card's consequence line — what happens in September, in the customer's
+   words. Reads at body weight (it is the sentence that removes "what's the catch"), not as a note. */
+.foundingSeasonConsequence {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--fl-text);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 56ch;
+}
