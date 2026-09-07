@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Receipt, Plus, AlertTriangle, Upload, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { creditKindSentence } from '@/lib/dues-credits';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox';
@@ -747,6 +748,9 @@ const BLANK_CONV = {
   drivePlayerId: '',
   clubInstallmentId: '',   // `${splitId}:${installmentId}`
   payoutPlayerId: '',
+  /* Which debts this payback settles (owner ruling R5, 2026-09-07). The AMOUNT is derived from
+     these, never typed — see the sheet. */
+  payoutCreditIds: [] as string[],
   payoutMethod: 'etransfer' as DuesPaymentMethod,
   /* The sponsor branch records the sponsor INLINE through the same creation POST the Fundraising
      door uses (owner UX ruling 2026-08-23, §80 walk — the original hand-off navigated tabs and
@@ -779,7 +783,28 @@ const BLANK_CONV = {
   spendInstallmentId: '',
 };
 
-interface ConvDuesPlayer { id: string; name: string; outstanding: number; payableNow: number }
+/**
+ * One debt a family is owed — a row on the Pay out sheet's tick-list (owner ruling R5, 2026-09-07).
+ *
+ * ⚠ THE SUB-LINE IS THE PRODUCT'S OWN WORDS FOR THAT KIND OF MONEY, not a database token. A coach
+ * who does not recognise a line will not tick it, and three months on "Socks" and "Mercer" say
+ * nothing about which is money they raised and which is money they are owed.
+ */
+interface ConvDebt {
+  id: string;
+  /** What the coach typed when the credit was created. */
+  description: string;
+  /** 'fundraiser' | 'reimbursement' | … — decides the sub-line. */
+  creditType: string;
+  creditDate: string;
+  /** What is still standing on it — what a payback would settle. Whole debts only (R5). */
+  standing: number;
+}
+interface ConvDuesPlayer {
+  id: string; name: string; outstanding: number; payableNow: number;
+  /** Every debt still standing, newest first. Empty for a family owed nothing. */
+  debts: ConvDebt[];
+}
 interface ConvDrive { id: string; name: string }
 interface ConvDriveDetail {
   rebatePercent: number;
@@ -1941,11 +1966,28 @@ function MoneyRecordsPanel({
       if (!res.ok) throw new Error(data.error ?? 'Could not load the dues book');
       setDuesBook(((data.players ?? []) as Array<{
         player: RepRosterPlayer; outstanding: number; payableNow: number;
+        credits?: Array<{
+          id: string; description: string | null; creditType: string;
+          creditDate: string; amount: number; paidBack?: number;
+        }>;
       }>).map(row => ({
         id: row.player.id,
         name: formatPlayerLastFirst(row.player),
         outstanding: row.outstanding,
         payableNow: row.payableNow,
+        /* ⚠ FORGIVENESS IS NOT ON THE LIST, and the server says so too. A forgiven balance is debt
+           relief the team GAVE, never money it holds — offering it here would be a button the save
+           refuses. Two doors, one rule (`selectPayback`, `payoutCeiling`). */
+        debts: (row.credits ?? [])
+          .filter(c => c.creditType !== 'forgiven')
+          .map(c => ({
+            id: c.id,
+            description: (c.description ?? '').trim() || 'Credit',
+            creditType: c.creditType,
+            creditDate: c.creditDate,
+            standing: Math.round((c.amount - (c.paidBack ?? 0)) * 100) / 100,
+          }))
+          .filter(d => d.standing > 0.005),
       })));
     } catch (e: any) {
       if (gen === convLoadGen.current) setDuesBookError(e.message);
@@ -2452,14 +2494,17 @@ function MoneyRecordsPanel({
       }
     } else if (convBranch === 'payout') {
       if (!conv.payoutPlayerId) throw new Error('Pick which family to pay back.');
-      if (isNaN(amount) || amount <= 0) throw new Error('Enter a valid amount');
+      if (conv.payoutCreditIds.length === 0) throw new Error('Pick what you are paying back.');
       if (!form.paidDate) throw new Error('Enter the day the money left.');
       const res = await fetch(
         `/api/coaches/${orgSlug}/teams/${teamId}/players/${conv.payoutPlayerId}/dues-payouts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          /* ⚠ NO AMOUNT SENT. The server sums the ticked debts itself (owner ruling R5) — a
+             number from here could only ever disagree with what it computes, and it refuses a
+             disagreement rather than reconciling it. */
           body: JSON.stringify({
-            amount,
+            creditIds: conv.payoutCreditIds,
             paidDate: form.paidDate,
             method: conv.payoutMethod,
             note: form.notes.trim() || null,
@@ -5058,7 +5103,23 @@ function MoneyRecordsPanel({
     if (convBranch === 'payout') {
       const inCredit = (duesBook ?? []).filter(p => p.payableNow > 0.005);
       const sel = inCredit.find(p => p.id === conv.payoutPlayerId) ?? null;
-      const overCeiling = sel && amount > sel.payableNow + 0.005;
+      /* ⚠⚠ THE SUM IS DERIVED FROM THE TICKS, NEVER TYPED (owner ruling R5, 2026-09-07). The server
+         computes it again from the same selection and refuses a disagreement rather than
+         reconciling one, so this figure is a preview of the save and not an input to it. */
+      const ticked = new Set(conv.payoutCreditIds);
+      const payoutTotal = (sel?.debts ?? [])
+        .filter(d => ticked.has(d.id))
+        .reduce((s, d) => Math.round((s + d.standing) * 100) / 100, 0);
+      /* ⚠⚠ EVERY FIGURE ON THIS BRANCH READS `payoutTotal`, NEVER `amount` (found by review,
+         2026-09-07). When the amount FIELD went, two readers of it stayed — this ceiling test and
+         the consequence sentence below — and `amount` is still pre-filled with the family's WHOLE
+         payable figure by the dues screen's own Record button, which opens this conversation locked
+         to one family. So a coach arriving that way read "Paying back $0.00" in the tick-list and
+         "$250.00 leaves cash on hand · drops to $0.00" underneath it: a confident, fully-formed
+         sentence about money nobody had selected. **A consequence line exists to say what the save
+         is about to do; one computed from a field the coach can no longer set says it about a
+         different save.** */
+      const overCeiling = sel !== null && payoutTotal > sel.payableNow + 0.005;
       return (
         <>
           {convPickerField({
@@ -5074,10 +5135,10 @@ function MoneyRecordsPanel({
                 value={conv.payoutPlayerId}
                 onChange={e => {
                   const id = e.target.value;
-                  setConv(c => ({ ...c, payoutPlayerId: id }));
-                  // The common case is handing back everything held — pre-fill it, editable.
-                  const picked = inCredit.find(p => p.id === id);
-                  if (picked) setForm(f => ({ ...f, amount: String(picked.payableNow) }));
+                  /* ⚠ CHANGING FAMILY CLEARS THE TICKS. Debt ids belong to one family; carrying a
+                     selection across would send the server ids it will (correctly) refuse. */
+                  setConv(c => ({ ...c, payoutPlayerId: id, payoutCreditIds: [] }));
+                  setForm(f => ({ ...f, amount: '' }));
                 }}
               >
                 <option value="">Choose…</option>
@@ -5087,12 +5148,60 @@ function MoneyRecordsPanel({
               </select>
             ),
           })}
-          {convAmountField('Amount *', overCeiling && (
-            <p className={styles.formHint}>
-              That&apos;s more than the {fmt(sel!.payableNow)} the team is holding for them —
-              the save will be refused.
-            </p>
-          ))}
+          {/* ⚠⚠ THE AMOUNT BOX IS GONE (owner ruling R5, 2026-09-07). A coach typed a number and
+              nothing recorded WHAT the money was for, so the report had to guess which pot it came
+              out of — and the product held two different guesses, which put $37.50 of one family's
+              cash on the wrong line of a panel a coach can open. Ticking whole debts makes the link
+              a fact they asserted. It also removes a guard: a coach can no longer hand back more
+              than a family is owed, because there is nothing left to type. */}
+          {sel && (
+            <div className={styles.field}>
+              <label className={styles.label}>What are you paying back? *</label>
+              {sel.debts.length === 0 ? (
+                /* The family-level ceiling says they are owed something, but no single credit is
+                   standing — a pre-281 payout settled part of one and said nothing about which.
+                   Say so rather than showing an empty box. */
+                <p className={styles.formHint}>
+                  Nothing itemised is outstanding for this family. This can happen on a season that
+                  recorded paybacks before they named what they settled.
+                </p>
+              ) : (
+                <>
+                  <div className={styles.debtList}>
+                    {sel.debts.map(d => {
+                      const on = ticked.has(d.id);
+                      return (
+                        <label key={d.id} className={`${styles.debtRow}${on ? ` ${styles.debtRowOn}` : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            onChange={() => setConv(c => ({
+                              ...c,
+                              payoutCreditIds: on
+                                ? c.payoutCreditIds.filter(x => x !== d.id)
+                                : [...c.payoutCreditIds, d.id],
+                            }))}
+                          />
+                          <span className={styles.debtWhat}>
+                            <b>{d.description}</b>
+                            <span>{creditKindSentence(d.creditType)} · {formatStoredDate(d.creditDate)}</span>
+                          </span>
+                          <span className={styles.debtAmt}>{fmt(d.standing)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className={styles.debtTotal}>
+                    <span>Paying back</span>
+                    <span>{fmt(payoutTotal)}</span>
+                  </div>
+                  <p className={styles.formHint}>
+                    Whole debts only. Tick as many as one payment covers.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
           <div className={styles.field}>
             <label className={styles.label}>Date paid *</label>
             <input
@@ -5103,10 +5212,10 @@ function MoneyRecordsPanel({
           </div>
           {convMethodField('payoutMethod')}
           {convNoteField('Optional')}
-          {sel && amount > 0 && !overCeiling && consequence(<>
-            <strong>{fmt(amount)} leaves cash on hand</strong> · the credit the team holds for{' '}
+          {sel && payoutTotal > 0 && !overCeiling && consequence(<>
+            <strong>{fmt(payoutTotal)} leaves cash on hand</strong> · the credit the team holds for{' '}
             {sel.name.split(', ').reverse().join(' ')}&apos;s family drops to{' '}
-            {fmt(Math.max(0, r2c(sel.payableNow - amount)))}.
+            {fmt(Math.max(0, r2c(sel.payableNow - payoutTotal)))}.
           </>)}
         </>
       );

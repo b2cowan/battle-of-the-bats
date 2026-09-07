@@ -25,7 +25,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  duesActual, seasonDuesActual, seasonDuesParts, creditIsRevenue, allocatePayouts,
+  duesActual, seasonDuesActual, seasonDuesParts, creditIsRevenue, allocatePayouts, buildFamilyDuesInputs,
   type FamilyDuesActualInput, type DuesCreditInput,
 } from '../../lib/coach-dues-actual.ts';
 
@@ -241,6 +241,112 @@ describe('a payback lands on the family\'s OWN money first', () => {
   it('never hands back more than a credit holds', () => {
     const credits = allocatePayouts([{ kind: 'fundraiser', amount: 40, traced: true }], 999);
     assert.equal(credits[0].handedBack, 40);
+  });
+});
+
+describe('a recorded link beats the assumption (mig 281)', () => {
+  const family = (credits: Parameters<typeof buildFamilyDuesInputs>[0]['credits']) =>
+    buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 1000 }],
+      payments: [], payouts: [{ playerId: 'p', amount: 100 }],
+      credits,
+    }).get('p')!;
+
+  it('⚠ a credit that SAYS what was paid back is not re-guessed', () => {
+    /* Casey's shape, but with the payback recorded. Own-money-first would take the $100 off the
+       overpayment; the record says it came off the rebate, and the record wins. */
+    const f = family([
+      { playerId: 'p', kind: 'fundraiser', amount: 150, traced: true, paidBack: 100 },
+      { playerId: 'p', kind: 'overpayment', amount: 300, traced: false },
+    ]);
+    assert.equal(f.credits[0].handedBack, 100, 'the rebate carries what the record says');
+    assert.equal(f.credits[1].handedBack, 0, 'the overpayment is untouched');
+  });
+
+  it('⚠⚠ the same dollars are not taken twice — only UNNAMED payback money is assumed', () => {
+    /* The family-level payout total is $100 and a credit already accounts for all of it. Handing
+       the whole $100 to the assumption as well would settle $200 of credits against $100 of cash. */
+    const f = family([
+      { playerId: 'p', kind: 'fundraiser', amount: 150, traced: true, paidBack: 100 },
+      { playerId: 'p', kind: 'reimbursement', amount: 80, traced: true },
+    ]);
+    assert.equal(f.credits[0].handedBack, 100);
+    assert.equal(f.credits[1].handedBack, 0, 'nothing is left for the assumption to place');
+  });
+
+  it('a legacy payout with nothing recorded still falls to the assumption', () => {
+    const f = family([
+      { playerId: 'p', kind: 'fundraiser', amount: 150, traced: true },
+      { playerId: 'p', kind: 'overpayment', amount: 300, traced: false },
+    ]);
+    // Own money first — the shipped dues screen's rule.
+    assert.equal(f.credits[0].handedBack, 0);
+    assert.equal(f.credits[1].handedBack, 100);
+  });
+
+  it('a mix: what the record does not explain is placed by the assumption', () => {
+    const f = buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 1000 }],
+      payments: [], payouts: [{ playerId: 'p', amount: 250 }],
+      credits: [
+        { playerId: 'p', kind: 'fundraiser', amount: 150, traced: true, paidBack: 100 },
+        { playerId: 'p', kind: 'overpayment', amount: 300, traced: false },
+      ],
+    }).get('p')!;
+    assert.equal(f.credits[0].handedBack, 100, 'the recorded part');
+    assert.equal(f.credits[1].handedBack, 150, 'the remaining $150 the record does not explain');
+  });
+
+  it('⚠ the credits come back in the caller’s order, not the allocator’s', () => {
+    // The allocator walks own-money first; the per-kind figures behind the dues figure are summed
+    // off these rows, and every other reader is promised oldest-first.
+    const f = family([
+      { playerId: 'p', kind: 'fundraiser', amount: 150, traced: true },
+      { playerId: 'p', kind: 'overpayment', amount: 300, traced: false },
+    ]);
+    assert.equal(f.credits[0].kind, 'fundraiser');
+    assert.equal(f.credits[1].kind, 'overpayment');
+  });
+});
+
+describe('review findings, 2026-09-07 — the two ways the door stopped adding up', () => {
+  it('⚠⚠ a recorded payback larger than its own credit is CLAMPED, or parts stop tying to actual', () => {
+    /* FOUND BY REVIEW, not by these tests. `duesActual` sums the panel's three parts from PER-CREDIT
+       standing amounts but derives `actual` from a FAMILY-level clamp — they agree only while no
+       single credit has more handed back than it holds. `allocatePayouts` guarantees that; the
+       recorded-fact path took `paidBack` straight through and bypassed it. The panel then reported
+       $110.00 behind a figure of $80.00.
+       ⚠ Reachable without a bug elsewhere: nothing caps the cumulative linked amount per credit,
+       and a credit can be edited down after a payback already pointed at it. */
+    const f = buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 100 }],
+      payments: [{ playerId: 'p', amount: 50 }],
+      payouts: [],
+      credits: [
+        { playerId: 'p', kind: 'fundraiser', amount: 20, traced: true, paidBack: 50 },
+        { playerId: 'p', kind: 'fundraiser', amount: 60, traced: true },
+      ],
+    }).get('p')!;
+    assert.equal(f.credits[0].handedBack, 20, 'clamped to the credit it points at');
+    const r = assertTiesToBalance(f, 'over-recorded payback');
+    assert.equal(r.actual, 110);
+  });
+
+  it('⚠ the same credit object twice keeps its allocation — pairing is positional, not by identity', () => {
+    /* A Map keyed on the credit object collapsed two occurrences of one reference and kept only the
+       last write, so a real $40.00 payout vanished from the model entirely. Today's only caller
+       builds fresh objects and could not fire it — but a pure function must not depend on its
+       caller's allocation habits. */
+    const dup = { playerId: 'p', kind: 'fundraiser' as const, amount: 50, traced: true };
+    const f = buildFamilyDuesInputs({
+      schedules: [{ playerId: 'p', total: 200 }],
+      payments: [], payouts: [{ playerId: 'p', amount: 40 }],
+      credits: [dup, { playerId: 'p', kind: 'reimbursement', amount: 30, traced: true }, dup],
+    }).get('p')!;
+    assert.equal(
+      f.credits.reduce((s, c) => s + c.handedBack, 0), 40,
+      'the payout must survive the duplicate reference',
+    );
   });
 });
 

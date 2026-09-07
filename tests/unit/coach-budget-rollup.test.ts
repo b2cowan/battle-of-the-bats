@@ -726,3 +726,41 @@ describe('rollupMoneyReport — a revenue row wears the words the coach typed, w
     assert.equal(items[0].actual, 500);
   });
 });
+
+/* ── Two unplanned pools must not become one row (review finding, 2026-09-07) ──────────────── */
+
+describe('a row with no item id may be named, and two such rows stay apart', () => {
+  const spend = (id: string, itemId: string | null, itemName: string, amount: number) => ({
+    id, description: id, categoryId: null, categoryName: 'Not in the plan',
+    itemId, itemName, amount, paidDate: null, direction: 'in' as const,
+  });
+
+  it('⚠⚠ sponsor money is NOT absorbed under a fundraiser label', () => {
+    /* FOUND BY REVIEW, reproduced before it shipped. The item bucket keys on `itemId ?? NO_ITEM`,
+       so two unplanned derived pools sharing a null id landed in ONE entry — and once a supplied
+       name could win, whichever source ran first named it. A team that budgeted neither drives nor
+       sponsors read a single row: "Fundraising money · $1,300.00", with $800.00 of SPONSOR money
+       inside it. **The total was right, so the arithmetic guard could not see it** — only the row's
+       identity was a lie, which is precisely what the naming change existed to fix. */
+    const r = rollupMoneyReport({ lines: [], spend: [
+      spend('a', 'unplanned:fundraiser', 'Fundraising money', 500),
+      spend('b', 'unplanned:sponsor', 'Sponsor money', 800),
+    ] });
+    const cat = r.revenue.categories.find(c => c.categoryName === 'Not in the plan')!;
+    assert.equal(cat.actual, 1300);
+    assert.deepEqual(
+      cat.items.map(i => [i.itemName, i.actual]).sort(),
+      [['Fundraising money', 500], ['Sponsor money', 800]],
+    );
+  });
+
+  it('a COST with no item and no name still reads "Not itemized" — unchanged', () => {
+    // The fallback only yields to a SUPPLIED name; every cost path passes null and must not move.
+    const r = rollupMoneyReport({ lines: [], spend: [{
+      id: 'c', description: 'A cost', categoryId: null, categoryName: null,
+      itemId: null, itemName: null, amount: 40, paidDate: null,
+    }] });
+    const cat = r.expenses.categories[0];
+    assert.equal(cat.items[0].itemName, NO_ITEM_LABEL);
+  });
+});

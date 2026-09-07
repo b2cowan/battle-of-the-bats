@@ -74,7 +74,7 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
-  const { amount, description, creditType = 'contribution', creditDate, notes = null } = body;
+  const { amount, description, creditType = 'other', creditDate, notes = null } = body;
 
   if (typeof amount !== 'number' || amount <= 0) {
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });

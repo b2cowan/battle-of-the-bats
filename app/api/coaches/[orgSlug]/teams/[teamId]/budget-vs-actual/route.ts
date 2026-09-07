@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   getRepDuesPaymentsByProgramYear, getRepDuesPayoutsByProgramYear,
   getRepDuesCreditsByProgramYear,
+  getRepDuesPaidBackByCredit,
   getSeasonFundraiserEntries, getRepTeamMoneyIn, getDerivedIncomeClaims,
   getRepAllocationSplitsForTeam, getCommitmentStandings, getSeasonName,
 } from '@/lib/db';
@@ -424,13 +425,14 @@ export const GET = withObservability(async (req: Request,
      dollar it is. ⚠ GATED EXACTLY AS THE PLAYER DUES TAB IS AND NO WIDER: this whole route already
      refuses a coach without `canViewMoney` above, which is the same key that opens Dues. Nothing
      here widens who can read a family name. */
-  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, rosterRes] = await Promise.all([
+  const [moneyInRecords, derivedClaims, allEntries, duesPayments, duesPayouts, duesCredits, paidBackByCredit, rosterRes] = await Promise.all([
     getRepTeamMoneyIn(programYear.id),
     getDerivedIncomeClaims(programYear.id),
     getSeasonFundraiserEntries(programYear.id),
     getRepDuesPaymentsByProgramYear(programYear.id),
     getRepDuesPayoutsByProgramYear(programYear.id),
     getRepDuesCreditsByProgramYear(programYear.id),
+    getRepDuesPaidBackByCredit(programYear.id),
     supabaseAdmin
       .from('rep_roster_players')
       .select('id, player_first_name, player_last_name')
@@ -543,6 +545,17 @@ export const GET = withObservability(async (req: Request,
       const unplanned = at.categoryId === null && at.itemId === null;
       const categoryName = unplanned ? UNPLANNED_DERIVED_CATEGORY : at.categoryName;
       const itemName = unplanned ? unplannedDerivedItemName(source) : at.itemName;
+      /* ⚠⚠ A SYNTHETIC ITEM KEY PER SOURCE, OR THE TWO POOLS MERGE INTO ONE ROW (found by review,
+         2026-09-07 — reproduced, not theorised). The rollup buckets items by `itemId ?? NO_ITEM`, so
+         two unplanned pools sharing a null id landed in ONE entry — and since a supplied name now
+         wins, whichever source ran first named it. A team that budgeted neither drives nor sponsors
+         read a single row: "Not in the plan → Fundraising money → $1,300.00", with $800.00 of
+         SPONSOR money absorbed under a fundraiser label. The total was right, so the arithmetic
+         guard could not see it; only the row's identity was a lie, which is the exact defect this
+         naming change was written to remove.
+         ⚠ It is a BUCKET KEY, never a budget item id — nothing resolves it against `budget_items`,
+         and it exists only so two different kinds of money cannot share a row. */
+      const itemKey = unplanned ? `unplanned:${source}` : at.itemId;
 
       /* ⚠⚠ ONE ROW PER DRIVE OR SPONSOR, NOT ONE POOLED ROW (owner ruling 2026-09-07). This pushed a
          single spend described "From your fundraisers", so opening the figure showed the same number
@@ -571,7 +584,7 @@ export const GET = withObservability(async (req: Request,
             ? `${row.name} — ${fmtMoney(row.kept)} of ${fmtMoney(row.raised)}, ${fmtMoney(row.toFamilies)} to families`
             : row.name,
           categoryId: at.categoryId, categoryName,
-          itemId: at.itemId, itemName,
+          itemId: itemKey, itemName,
           amount: Math.round(row.kept * 100) / 100,
           paidDate: null,
           direction: 'in' as const,
@@ -1402,6 +1415,11 @@ export const GET = withObservability(async (req: Request,
       /* ⚠ TRACED = a record made this credit. A coach can type one that CLAIMS money without any
          money existing (R6/R7), and an assertion may not become revenue. */
       traced: c.fundraiserEntryId !== null || c.expenseId !== null,
+      /* ⚠ THE RECORDED FACT, WHERE THERE IS ONE (mig 281). A payback now names the debts it
+         settled, so a credit carrying this is never re-guessed. A credit nothing points at is
+         left undefined and falls to the documented assumption — which is every credit a
+         pre-281 payout touched. */
+      paidBack: paidBackByCredit.has(c.id) ? paidBackByCredit.get(c.id) : undefined,
     })),
   }).values()]);
 

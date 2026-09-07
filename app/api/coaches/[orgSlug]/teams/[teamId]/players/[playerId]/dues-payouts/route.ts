@@ -5,12 +5,15 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   recordRepDuesPayout,
+  getRepDuesCreditsForPlayer,
+  getRepDuesPaidBackByCredit,
   PayoutExceedsOwedError,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { selectPayback } from '@/lib/dues-payback-selection';
 import { DUES_PAYMENT_METHODS } from '@/lib/types';
 
 // ⚠ ACTIVE YEAR ONLY, deliberately (plan §10): this resolves the team's live season and cannot
@@ -58,12 +61,45 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
-  const { amount, paidDate = tournamentToday(), method = 'etransfer', note = null } = body;
+  const { amount, paidDate = tournamentToday(), method = 'etransfer', note = null, creditIds = null } = body;
 
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+  /* ⚠⚠ THE COACH SELECTS, THE SERVER SUMS (owner ruling R5, 2026-09-07; mig 281). When the sheet
+     sends a tick-list, the AMOUNT is computed from it here and the client's figure is only ever a
+     check — see `selectPayback`. The old free-amount shape is still accepted so the season
+     settlement and any un-migrated caller keep working; what it cannot do any more is come from the
+     Pay out sheet, which always sends the list. */
+  let links: Array<{ creditId: string; amount: number }> | undefined;
+  let payoutAmount = amount;
+
+  if (creditIds !== null) {
+    if (!Array.isArray(creditIds) || creditIds.some(id => typeof id !== 'string')) {
+      return NextResponse.json({ error: 'creditIds must be an array of credit ids' }, { status: 400 });
+    }
+    const [credits, paidBack] = await Promise.all([
+      getRepDuesCreditsForPlayer(programYear.id, playerId),
+      getRepDuesPaidBackByCredit(programYear.id),
+    ]);
+    const chosen = selectPayback(
+      credits.map(c => ({
+        id: c.id,
+        amount: c.amount,
+        creditType: c.creditType,
+        alreadyPaidBack: paidBack.get(c.id) ?? 0,
+      })),
+      creditIds,
+      typeof amount === 'number' ? amount : undefined,
+    );
+    if ('refused' in chosen) {
+      return NextResponse.json({ error: chosen.refused.message, code: chosen.refused.code }, { status: 409 });
+    }
+    links = chosen.ok.links;
+    payoutAmount = chosen.ok.amount;
+  }
+
+  if (typeof payoutAmount !== 'number' || !Number.isFinite(payoutAmount) || payoutAmount <= 0) {
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
   }
-  if (amount > 999999.99) {
+  if (payoutAmount > 999999.99) {
     return NextResponse.json({ error: 'amount is too large' }, { status: 400 });
   }
   if (typeof paidDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(paidDate)) {
@@ -90,7 +126,8 @@ export const POST = withObservability(async (req: Request,
       programYearId: programYear.id,
       playerId,
       playerName,
-      amount,
+      amount: payoutAmount,
+      creditLinks: links,
       paidDate,
       method,
       note: typeof note === 'string' ? note : null,

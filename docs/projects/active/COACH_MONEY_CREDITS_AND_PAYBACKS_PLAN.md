@@ -1,6 +1,8 @@
 # What a credit is, and what happens when you hand it back
 
-**Status:** R1–R4 **BUILT + MEASURED** 2026-09-07 (uncommitted) · R5/R6/R7 awaiting the mockup gate
+**Status:** R1–R4, R6, R7 (report side) **committed `ce3fb8ab` 2026-09-07** · R5 in build · owner QA owed
+⚠ Do not re-word this as "uncommitted"/"not on prod" — a perishable negative goes stale the moment
+another session ships. Deployment state lives in the release history and the Owner QA Ledger.
 **Build mockup:** https://claude.ai/code/artifact/3ac033cd-e589-4220-a7b6-951e947e6dc2 · **PM brief:** `COACH_MONEY_CREDITS_AND_PAYBACKS_PM_BRIEF.md`
 **Raised:** fell out of the dues-by-family project's step 2 — see §9 for what it does to that plan.
 **Decision mockup (round 2):** https://claude.ai/code/artifact/0f08e331-7dda-456a-9836-c608f8a72eae

@@ -10041,6 +10041,20 @@ export interface RepDuesPayoutWrite {
   method: DuesPaymentMethod;
   note?: string | null;
   createdBy: string;
+  /**
+   * WHICH DEBTS THIS PAYBACK SETTLES (mig 281, owner ruling R5, 2026-09-07).
+   *
+   * ⚠⚠ THE PAY OUT SHEET ALWAYS SENDS THESE; THE SEASON SETTLEMENT NEVER DOES, and that asymmetry
+   * is the ruling rather than an oversight. A settlement cheque covers a family's owed-back money
+   * **and their share of the surplus, and a share is not a credit** — the settlement route says so
+   * itself, so there would be nothing to point at.
+   *
+   * ⚠ OMITTED MEANS "NOT SAID", NEVER "NOTHING". A payout with no links reads back through the
+   * documented assumption in `lib/coach-dues-actual.ts` (own money first, then oldest) — the same
+   * fallback that carries the six pre-281 dev fixtures. Production had ZERO payouts when 281
+   * shipped, which is why it shipped then.
+   */
+  creditLinks?: Array<{ creditId: string; amount: number }>;
   source?: 'recorded' | 'season_settlement';
 }
 
@@ -10094,6 +10108,27 @@ export async function writeRepDuesPayout(opts: RepDuesPayoutWrite): Promise<RepD
   return mapRepDuesPayout(data);
 }
 
+/**
+ * How much of each credit earlier paybacks have already settled (mig 281).
+ *
+ * ⚠ SEASON-SCOPED, KEYED BY CREDIT. Returns only credits something points at — a credit missing
+ * from the map has had nothing linked to it, which is NOT the same as having had nothing paid back:
+ * a pre-281 payout settled something and says nothing about what. Readers that care about the
+ * difference must ask `rep_dues_payouts` too.
+ */
+export async function getRepDuesPaidBackByCredit(programYearId: string): Promise<Map<string, number>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_dues_payout_credits')
+    .select('credit_id, amount, rep_dues_payouts!inner(program_year_id)')
+    .eq('rep_dues_payouts.program_year_id', programYearId);
+  if (error) throw error;
+  const out = new Map<string, number>();
+  for (const r of (data ?? []) as Array<{ credit_id: string; amount: number }>) {
+    out.set(r.credit_id, Math.round(((out.get(r.credit_id) ?? 0) + Number(r.amount)) * 100) / 100);
+  }
+  return out;
+}
+
 export async function recordRepDuesPayout(opts: RepDuesPayoutWrite): Promise<{ payout: RepDuesPayout }> {
   const [credits, existingPayouts] = await Promise.all([
     getRepDuesCreditsForPlayer(opts.programYearId, opts.playerId),
@@ -10108,6 +10143,30 @@ export async function recordRepDuesPayout(opts: RepDuesPayoutWrite): Promise<{ p
   }
 
   const payout = await writeRepDuesPayout(opts);
+
+  /* ⚠⚠ THE LINKS GO IN BEFORE THE RE-CHECK, DELIBERATELY (mig 281). The re-check below can decide
+     this payout lost a race and undo itself — and `rep_dues_payout_credits.payout_id` cascades, so
+     writing the links first means the undo takes them with it. Writing them AFTER would leave a
+     window where a payout that is about to be deleted has no links, and a reader in that window
+     would fall back to the pre-281 assumption for a row that does say what it settled. */
+  if (opts.creditLinks?.length) {
+    const { error: linkErr } = await supabaseAdmin
+      .from('rep_dues_payout_credits')
+      .insert(opts.creditLinks.map(l => ({
+        payout_id: payout.id,
+        credit_id: l.creditId,
+        amount: l.amount,
+        org_id: opts.team.orgId,
+        team_id: opts.team.id,
+      })));
+    /* ⚠ A FAILED LINK UNDOES THE CASH. A payout whose links did not land is exactly the state
+       migration 281 exists to abolish — it would read back through the assumption while the coach
+       believes they recorded a fact. Undo and refuse rather than keep the money movement. */
+    if (linkErr) {
+      await removeRepDuesPayout(payout, opts.team);
+      throw linkErr;
+    }
+  }
 
   // ⚠ RE-CHECK AGAINST THE TRUE POST-WRITE STATE — the ceiling above was read before this insert,
   // and two concurrent Pay out clicks would each have passed it against the same stale snapshot,

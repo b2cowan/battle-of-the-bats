@@ -23,6 +23,10 @@ import {
   sortCreditsForApplication,
   payoutCeiling,
   deriveDuesPosition,
+  MANUAL_CREDIT_TYPES,
+  CREDIT_TYPE_LABELS,
+  CREDIT_KIND_SENTENCE,
+  creditKindSentence,
   type ApplicableCredit,
 } from '../../lib/dues-credits';
 
@@ -402,5 +406,43 @@ describe('the three-state identity — issued = applied + paidOut + owedBack', (
         cents(pos.leftToSend),
       );
     }
+  });
+});
+
+/* ── What a coach may TYPE, and what things are CALLED (owner rulings R6/R7, 2026-09-07) ────── */
+
+describe('every credit traces back to the act that made it', () => {
+  it('⚠ ONE manual kind is left, and it is the one with no money behind it', () => {
+    // R6: a contribution is CASH ARRIVING — record it as a payment. R7: a fundraiser share comes
+    // from the drive. Both moved to their own door; an adjustment is an assertion by nature and no
+    // record could back it, so it stays.
+    assert.deepEqual([...MANUAL_CREDIT_TYPES], ['other']);
+  });
+
+  it('the kinds a coach can no longer create are still NAMED', () => {
+    // Existing rows keep displaying and open for edit reading what they actually are — the same
+    // treatment `forgiven` and `reimbursement` have always had. A retired kind losing its name
+    // would relabel history.
+    for (const kind of ['contribution', 'fundraiser', 'overpayment', 'forgiven', 'reimbursement'] as const) {
+      assert.ok(CREDIT_TYPE_LABELS[kind], `${kind} must still have a label`);
+    }
+  });
+
+  it('"Other" is called Adjustment — it says no money changed hands', () => {
+    assert.equal(CREDIT_TYPE_LABELS.other, 'Adjustment');
+  });
+
+  it('⚠ the two maps name the SAME set of kinds — they drifted apart once before', () => {
+    // The short label and the longer sentence live in one file precisely so a kind added to one is
+    // added to both. A kind in neither map renders blank on a row a coach is ticking.
+    assert.deepEqual(
+      Object.keys(CREDIT_TYPE_LABELS).sort(),
+      Object.keys(CREDIT_KIND_SENTENCE).sort(),
+    );
+  });
+
+  it('the sentence falls back to the stored word, so a new kind is never blank', () => {
+    assert.equal(creditKindSentence('something-new'), 'something-new');
+    assert.equal(creditKindSentence('reimbursement'), 'A cost they paid for the team');
   });
 });

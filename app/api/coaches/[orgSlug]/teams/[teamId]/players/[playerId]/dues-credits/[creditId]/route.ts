@@ -6,11 +6,12 @@ import {
   getActiveRepProgramYear,
   getRepDuesCreditsForPlayer,
   getRepDuesPayoutsForPlayer,
+  getRepDuesPaidBackByCredit,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
+import { payoutFloorViolation, payoutFloorMessage, creditIsPaidBack, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
 import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION, CREDIT_FOLLOWS_SCHEDULE, RESERVED_CREDIT_DESCRIPTION_REFUSAL } from '@/lib/dues-payments';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -231,6 +232,21 @@ export const DELETE = withObservability(async (_req: Request,
         error: 'This credit follows the schedule and can’t be deleted — it would only reappear at the next change. Hand it back from the player’s record, or raise the dues total.',
         code: CREDIT_FOLLOWS_SCHEDULE,
       },
+      { status: 409 },
+    );
+  }
+
+  /* ⚠⚠ HAS THIS CREDIT ITSELF BEEN PAID BACK? (mig 281; found by review before it shipped.) The
+     aggregate rule below is a FAMILY-LEVEL sum and cannot see WHICH credit a payback settled — so a
+     family holding a paid-back $50 credit AND an untouched $50 one passes it, and the database then
+     refuses the delete on the link, handing the coach a raw constraint error where the migration
+     promised them a sentence. Deterministic, no race needed. Asked FIRST because it is the more
+     specific truth: that exact money has already gone back. */
+  const paidBackByCredit = await getRepDuesPaidBackByCredit(programYear.id);
+  const alreadyBack = creditIsPaidBack(paidBackByCredit.get(creditId));
+  if (alreadyBack) {
+    return NextResponse.json(
+      { error: payoutFloorMessage(alreadyBack.paidOut, 'removing this credit'), code: CREDIT_HAS_PAYOUT },
       { status: 409 },
     );
   }

@@ -310,8 +310,15 @@ export interface SeasonDuesRecords {
   /**
    * Every credit issued this season, **OLDEST FIRST** — see `allocatePayouts` for why
    * the order is load-bearing rather than cosmetic.
+   *
+   * ⚠ `paidBack` IS THE RECORDED FACT (mig 281) — what this credit's own paybacks say they settled.
+   * Omit it and the credit falls to the assumption; supply it and the assumption never runs for
+   * that credit.
    */
-  credits: Array<{ playerId: string; kind: DuesCreditKind; amount: number; traced: boolean }>;
+  credits: Array<{
+    playerId: string; kind: DuesCreditKind; amount: number; traced: boolean;
+    paidBack?: number;
+  }>;
 }
 
 /**
@@ -384,10 +391,58 @@ export function buildFamilyDuesInputs(records: SeasonDuesRecords): Map<string, F
   const out = new Map<string, FamilyDuesActualInput>();
   for (const [playerId, dues] of duesBy) {
     const mine = records.credits.filter(c => c.playerId === playerId);
+
+    /* ⚠⚠ THE RECORDED FACT BEATS THE ASSUMPTION, PER CREDIT (mig 281). A payback now says which
+       debts it settled, so where a credit carries `paidBack` there is nothing to infer. What is
+       left for the assumption is only the money that pre-281 paybacks took and never named.
+
+       ⚠ THE REMAINDER IS WHAT THE ASSUMPTION GETS, NOT THE WHOLE PAYOUT TOTAL. Subtracting every
+       payout again over credits that already carry their own links would take the same dollars
+       twice — the double-count this module's header exists to warn about, rebuilt inside the fix.
+       A season with no legacy payouts leaves this at zero and `allocatePayouts` does nothing. */
+    /* ⚠⚠ THE RECORDED FACT IS CLAMPED TO ITS OWN CREDIT (found by review, 2026-09-07). `duesActual`
+       sums the panel's three parts from PER-CREDIT standing amounts while deriving `actual` from a
+       FAMILY-level clamp, so the two agree only while no single credit has more handed back than it
+       holds. `allocatePayouts` guarantees that and this module's own header says to use it — and
+       then this path took `paidBack` straight through, bypassing the very allocator the warning
+       names. With `paidBack > amount` on one credit the door stopped adding up to the figure that
+       opened it, which is the failure that header calls "worse than no door".
+
+       ⚠ AND IT IS REACHABLE WITHOUT A BUG ELSEWHERE: nothing caps the CUMULATIVE linked amount per
+       credit (mig 281's unique key is per payout, not per credit), and a credit's amount can be
+       edited down after a payback already pointed at it. Clamping here is the belt; do not remove
+       it on the grounds that the writers "should" prevent it. */
+    const recordedFor = (c: { amount: number; paidBack?: number }) =>
+      Math.min(toCents(c.paidBack ?? 0), toCents(c.amount));
+
+    const recordedC = mine.reduce((s, c) => s + recordedFor(c), 0);
+    const unexplainedC = Math.max(0, toCents(outBy.get(playerId) ?? 0) - recordedC);
+
+    /* Only credits with NO recorded settlement are offered to the assumption; one that already
+       says what it settled must not be reached for again. */
+    const unnamed = mine.filter(c => c.paidBack === undefined);
+    const allocated = allocatePayouts(unnamed, toDollars(unexplainedC));
+
     out.set(playerId, {
       dues,
       cappedPaid: Math.min(paidBy.get(playerId) ?? 0, dues),
-      credits: allocatePayouts(mine, outBy.get(playerId) ?? 0),
+      /* ⚠ THE ORDER IS REBUILT FROM `mine`, not concatenated. `allocatePayouts` walks own-money
+         first, so its output is NOT in the caller's date order — and the per-kind figures behind
+         the dues figure are summed off these rows. Restoring the original sequence keeps the
+         season's oldest-first contract intact for every other reader.
+         ⚠ PAIRED BY POSITION, NOT BY OBJECT IDENTITY (found by review, 2026-09-07). A Map keyed on
+         the credit object collapsed two occurrences of the SAME object reference into one entry and
+         kept only the last write, silently losing a real payout. Today's only caller builds fresh
+         objects so it could not fire, but a pure function must not depend on its caller's
+         allocation habits. */
+      credits: (() => {
+        let next = 0;
+        return mine.map(c => (
+          c.paidBack !== undefined
+            ? { kind: c.kind, amount: c.amount, traced: c.traced, handedBack: toDollars(recordedFor(c)) }
+            : allocated[next++]
+        ));
+      })(),
     });
   }
   return out;

@@ -67,6 +67,27 @@ export function payoutFloorViolation(
 }
 
 /**
+ * ⚠⚠ THE SEVENTH THING A DOOR MUST ASK, SINCE MIGRATION 281 — has THIS credit been paid back?
+ *
+ * The guard above is a FAMILY-LEVEL sum, and that was enough while nothing recorded which credit a
+ * payback settled. It is not enough now, and a review caught the gap before it shipped: a family
+ * holding credit A ($50, paid back and LINKED) and credit B ($50, untouched) passes the aggregate
+ * test when A is deleted — B still covers the $50 that went out — and then the database refuses the
+ * delete outright, because a link still points at A. The coach got a raw constraint error where the
+ * migration's own comment promised them a sentence.
+ *
+ * ⚠ IT IS DETERMINISTIC, NOT A RACE. Any family with a linked credit that is not their "last
+ * dollar" reproduces it.
+ *
+ * ⚠ ASK THIS *AND* THE AGGREGATE GUARD. They refuse different things: this one says "that specific
+ * money has already gone back", the other says "the family would be left holding cash the books no
+ * longer owe them". Neither implies the other.
+ */
+export function creditIsPaidBack(paidBackAmount: number | undefined): { paidOut: number } | null {
+  return paidBackAmount !== undefined && paidBackAmount > 0.005 ? { paidOut: paidBackAmount } : null;
+}
+
+/**
  * How much of ONE credit is already spoken for by payouts — the dollars that would be stranded
  * if it vanished. 0 when the family's OTHER credits alone still cover everything paid out.
  * Feeds the screens that warn before the guard refuses (the sponsor sheet's pledge-flip hint).

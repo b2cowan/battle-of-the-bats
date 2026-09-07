@@ -77,9 +77,37 @@ export const CREDIT_APPLICATION_MODES: readonly CreditApplicationMode[] =
  * same treatment `forgiven` and `reimbursement` have always had. A coach who wants a credit for
  * some other reason has `other`; a family who sent too much has the payment, and the credit
  * appears on its own.
+ *
+ * ⚠⚠ `contribution` AND `fundraiser` LEFT ON 2026-09-07 TOO (owner rulings R6/R7), and with them
+ * the LIST BECAME ONE — so the picker itself comes off the form. Read this before adding a kind
+ * back, because the rule is now complete rather than partial:
+ *
+ *   **Every credit either traces to money that arrived, or it is an adjustment.** A kind that
+ *   claims money must come from the record that made it — a drive entry, a sponsor arrival, an
+ *   out-of-pocket expense, a payment. A coach may still type an ADJUSTMENT, because an adjustment
+ *   is an assertion by nature and no record could back it.
+ *
+ * ⚠ WHY EACH ONE MOVED, since the answer differs:
+ *   · `contribution` — someone handing the coach money toward a family's dues is CASH ARRIVING.
+ *     Recorded as a payment it is traceable, it counts as dues actual, the family's balance is
+ *     right, and it shows in Cash where it belongs. As a credit it was an assertion the records
+ *     could not check.
+ *   · `fundraiser` — a share of a drive comes FROM THE DRIVE. Measured 2026-09-07 across both
+ *     databases: of 33 fundraiser credits on dev exactly ONE was hand-typed, and on production all
+ *     five traced. The door strands nothing.
+ *
+ * ⚠⚠ AND THE REPORTING CONSEQUENCE IS THE POINT, NOT A SIDE EFFECT. A credit with no money behind
+ * it reduces a family's bill while sitting in no revenue figure anywhere — $217.00 of the UAT
+ * fixture did exactly that. With every money-backed kind now coming through its own door, the
+ * report can finally tell them apart: money-backed credits count as dues coming in, and an
+ * adjustment counts as nothing, because a coach who writes off part of a bill did not receive
+ * anything and the season really does collect less. See `lib/coach-dues-actual.ts`.
+ *
+ * ⚠ EXISTING ROWS OF EVERY RETIRED KIND KEEP DISPLAYING, KEEP COUNTING, and open for edit with
+ * their kind as a fixed label — the same treatment `forgiven` and `reimbursement` have always had.
+ * Nothing is migrated; a door is closed.
  */
-export const MANUAL_CREDIT_TYPES: readonly DuesCreditType[] =
-  ['contribution', 'fundraiser', 'other'];
+export const MANUAL_CREDIT_TYPES: readonly DuesCreditType[] = ['other'];
 
 /**
  * The three sentences the product says about credit application, in ONE place.
@@ -90,6 +118,65 @@ export const MANUAL_CREDIT_TYPES: readonly DuesCreditType[] =
  * that spoke; a second copy is how a picker and the sentence beside it start disagreeing
  * about what the team actually chose.
  */
+/**
+ * What a credit's KIND is called wherever one is listed — the short label.
+ *
+ * ⚠ MOVED HERE FROM THE DUES PANEL 2026-09-07, and the move is the point rather than tidying. Two
+ * maps had begun naming the same six kinds — this one and `CREDIT_KIND_SENTENCE` below — and this
+ * file's own header records what happened last time a credit list lived in two places: the picker
+ * offered kinds the write route refused, and the comment beside them asserted otherwise. One file
+ * owns both namings now, so a kind renamed in one is renamed in both.
+ *
+ * ⚠ IT STAYS WHOLE ON PURPOSE. Every kind needs a name wherever a credit is listed, including the
+ * kinds a coach can no longer create — a forgiveness, a reimbursement, an overpayment and now a
+ * contribution or a fundraiser share all still have to be named on the rows that already exist.
+ * `MANUAL_CREDIT_TYPES` decides what may be CREATED; this decides what things are CALLED.
+ */
+export const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
+  /* ⚠ "Adjustment", not "Other" (owner ruling R7, 2026-09-07). With every money-backed kind coming
+     through its own door, the one kind a coach may still type is an assertion with no record
+     behind it — and "Other" said nothing about that. "Adjustment" says what it is and hints that
+     no money changed hands, which is exactly what the report now does with it: it counts as no
+     revenue at all. */
+  other:         'Adjustment',
+  contribution:  'Contribution',
+  fundraiser:    'Fundraiser',
+  overpayment:   'Overpayment',
+  forgiven:      'Forgiven',
+  reimbursement: 'Reimbursement',
+};
+
+/**
+ * What KIND of money a debt is, in a sentence a coach recognises (owner ruling R5, 2026-09-07).
+ *
+ * ⚠⚠ NOT `CREDIT_TYPE_LABELS`, AND THE DIFFERENCE IS THE POINT. That map names a credit in a
+ * column — one word, beside a heading that already gives it context. This names it in a LIST a
+ * coach is ticking, where the only other thing on the row is a description they typed months ago.
+ * "Socks" and "Mercer" are real descriptions; three months on, neither says which is money the
+ * family raised and which is money they are owed. A coach who does not recognise a line will not
+ * tick it, and the payback is the one place that costs real cash.
+ *
+ * ⚠ ONE SPELLING EVERYWHERE — these words are customer-visible, so they live here rather than
+ * inline at the one screen that reads them today.
+ */
+export const CREDIT_KIND_SENTENCE: Record<string, string> = {
+  /* ⚠ A SPONSOR CREDIT IS STORED AS `fundraiser` AND HAS NO KIND OF ITS OWN — the ladder says so
+     too. An earlier draft of this map carried a `sponsorship` key; it could never match a row, and
+     the test holding these two maps equal is what found it. Do not add one back without adding the
+     credit type first. */
+  fundraiser:    'Fundraising share',
+  reimbursement: 'A cost they paid for the team',
+  contribution:  'Contribution toward their dues',
+  overpayment:   'They sent more than billed',
+  forgiven:      'Forgiven balance',
+  other:         'Adjustment',
+};
+
+/** The sentence for a kind, falling back to the stored word so a new kind is never blank. */
+export function creditKindSentence(creditType: string): string {
+  return CREDIT_KIND_SENTENCE[creditType] ?? creditType;
+}
+
 export const CREDIT_MODE_LABELS: Record<CreditApplicationMode, string> = {
   last_first:    'The last payment first',
   next_first:    'The next payment first',

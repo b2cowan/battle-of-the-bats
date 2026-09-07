@@ -12942,3 +12942,63 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 /* An untouched future instalment shows its figure in quiet ink — a plan, not a problem. The mark
    still carries the meaning where there is one (part paid, late); this cell has none. */
 .duesCell[data-tone='up'] .duesCellAmt { color: var(--text-tertiary); font-weight: 500; }
+
+/* ── The Pay out sheet's tick-list (owner ruling R5, 2026-09-07) ──────────────────────────────
+   A coach picks the DEBTS a payback settles rather than typing an amount, so the report knows
+   which pot the money came out of instead of assuming. Whole debts only: the row is the unit, and
+   the whole row is the target — a 44px floor with the checkbox as one part of it, not the target.
+   ⚠ TOKENS ONLY. Every colour here is a portal token; a literal would fail the token ratchet and,
+   more to the point, would not follow the warm theme the coach actually reads this in. */
+.debtList {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.debtRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  min-height: 44px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+.debtRow:last-child { border-bottom: 0; }
+.debtRowOn { background: var(--bg-inset); }
+.debtRow input { margin-top: 0.2rem; flex: 0 0 auto; width: 18px; height: 18px; }
+.debtWhat { flex: 1; min-width: 0; }
+.debtWhat b { display: block; font-weight: 600; color: var(--text-primary); }
+/* The kind and the date — what a description alone does not say three months later. */
+.debtWhat span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.debtAmt {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+/* The sum of what is ticked — a PREVIEW of what the server will compute, never an input. */
+.debtTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.6rem 0.7rem;
+  margin-top: 0.35rem;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.debtTotal span:last-child { font-variant-numeric: tabular-nums; }
+
+/* A field whose value is STATED rather than chosen (owner rulings R6/R7, 2026-09-07 — the credit
+   form's Type). A select with one option is a control that cannot be operated, and a disabled
+   select still reads as something the coach failed to earn. This reads as a fact.
+   ⚠ It sits where the input would, so it takes the input's vertical rhythm — not its border. */
+.readonlyValue {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+}

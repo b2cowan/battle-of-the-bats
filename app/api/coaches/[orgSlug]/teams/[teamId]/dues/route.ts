@@ -17,6 +17,7 @@ import {
   syncDuesPaidProjection,
   reconcileOverpaymentCredits,
 } from '@/lib/db';
+import { getRepDuesPaidBackByCredit } from '@/lib/db';
 import { payoutFloorViolation, payoutFloorMessage, projectScheduleTotalChange, CREDIT_HAS_PAYOUT } from '@/lib/dues-credit-guards';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -112,6 +113,13 @@ export const GET = withObservability(async (_req: Request,
     creditsMap.get(pid)!.push(c);
   }
 
+  /* ⚠ WHAT EACH CREDIT HAS ALREADY HAD PAID BACK (mig 281). The Pay out sheet ticks whole debts, so
+     it needs to know which ones are still standing — and a credit part-settled by a PRE-281 payout
+     shows only what is left. A credit missing from this map has had nothing LINKED to it, which is
+     not the same as nothing paid back: a legacy payout settled something and says nothing about
+     what. `payableNow` remains the family-level ceiling and is unchanged. */
+  const paidBackByCredit = await getRepDuesPaidBackByCredit(programYear.id);
+
   const playersWithDues = await Promise.all(
     rosterPlayers.map(async p => {
       const schedule = scheduleMap.get(p.id) ?? null;
@@ -147,6 +155,10 @@ export const GET = withObservability(async (_req: Request,
         fundraiserEntryId: c.fundraiser_entry_id ?? null,
         expenseId:   c.expense_id ?? null,
         createdAt:   c.created_at,
+        /* What earlier paybacks have already settled off THIS credit (mig 281). Drives the Pay out
+           sheet's tick-list; 0 for every credit nothing points at, which includes every credit a
+           pre-281 payout touched. */
+        paidBack:    paidBackByCredit.get(c.id as string) ?? 0,
       }));
       // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.
       const creditsIssuedTotal = creditsTotal(credits.map(c => ({ amount: c.amount as number })));

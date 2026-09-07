@@ -115,6 +115,7 @@ import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage, type DuesLadder } from '@/lib/dues-payments';
 import {
   creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
+  CREDIT_TYPE_LABELS,
   type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
@@ -328,18 +329,9 @@ function statusLabel(p: PlayerWithDues) {
   return { label, color: DUES_STATUS_COLOR[label] };
 }
 
-const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
-  contribution:  'Contribution',
-  fundraiser:    'Fundraiser',
-  overpayment:   'Overpayment',
-  other:         'Other',
-  // New kinds (mig 233). Neither is offered by the manual Add-credit picker — see
-  // MANUAL_CREDIT_TYPES below, which is what actually enforces that. They stay in THIS map because
-  // it is also the DISPLAY map: a forgiveness or a reimbursement credit still has to be named
-  // wherever it is listed.
-  forgiven:      'Forgiven',
-  reimbursement: 'Reimbursement',
-};
+/* ⚠ THE LABEL MAP MOVED TO lib/dues-credits.ts (2026-09-07) — it sat here while a SECOND map
+   naming the same kinds grew up beside it in that file, which is the drift its own header warns
+   about. One file owns both the short label and the longer sentence now. */
 
 /* ⚠ WHICH KINDS THE PICKER OFFERS IS NOT DECIDED HERE — `MANUAL_CREDIT_TYPES` in
    lib/dues-credits.ts is the one list, shared with the write route that would otherwise refuse
@@ -494,7 +486,9 @@ const BLANK_SCHEDULE_FORM = { notes: '' };
 const blankCreditForm = () => ({
   amount:     '',
   description:'',
-  creditType: 'contribution' as DuesCreditType,
+  /* ⚠ 'other' SINCE 2026-09-07 (owner rulings R6/R7). It was 'contribution', which the write route
+     now refuses — a blank form would have opened on a kind it could not save. */
+  creditType: 'other' as DuesCreditType,
   creditDate: tournamentToday(),
   notes:      '',
 });
@@ -3370,7 +3364,14 @@ export function PlayerDuesPanel({
                                 detail: `Holding ${fmt(selected.payableNow)} of their money · opened from their record`,
                               },
                               ids: { payoutPlayerId: selected.player.id },
-                              amount: String(selected.payableNow),
+                              /* ⚠ NO AMOUNT (owner ruling R5, 2026-09-07). This handed the payout
+                                 conversation the family's WHOLE payable figure to pre-fill, back
+                                 when a coach typed the amount. They now tick the DEBTS and the sum
+                                 is derived from those, so a suggested number can only disagree with
+                                 what is selected — and it did: a review found the consequence line
+                                 still reading it, telling a coach "$250.00 leaves cash on hand"
+                                 under a tick-list reading $0.00. The lock's own detail line still
+                                 says what the team is holding, which is the useful half. */
                             })}
                           >
                             Record
@@ -3971,32 +3972,31 @@ export function PlayerDuesPanel({
                           <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
                               <label className={styles.label}>Type</label>
-                              {/* ⚠ FIXED ONCE SET. The type is PROVENANCE — where this money came
-                                  from — and the server ignores it on a correction for that reason.
-                                  A contribution that becomes a fundraiser rebate by retyping is a
-                                  credit whose story matches no record anywhere. Wrong type ⇒
-                                  remove it and add the right one, which is one extra step and
-                                  leaves the books honest. Disabled rather than hidden, so the
-                                  coach can still SEE what kind of credit they are correcting. */}
-                              <select
-                                className={styles.input}
-                                value={creditForm.creditType}
-                                disabled={!!editingCreditId}
-                                title={editingCreditId ? 'The kind of credit cannot be changed — remove it and add the right kind' : undefined}
-                                onChange={e => setCreditForm(f => ({ ...f, creditType: e.target.value as DuesCreditType }))}
-                              >
-                                {/* ⚠ THE CURRENT TYPE IS ALWAYS AN OPTION, even when it is not a
-                                    manual kind. The select is disabled while editing, but a
-                                    `<select>` whose value matches no option renders the FIRST one
-                                    — so a forgiveness credit opened for a note correction would
-                                    have sat there calling itself a Contribution. */}
-                                {(editingCreditId && !MANUAL_CREDIT_TYPES.includes(creditForm.creditType)
-                                  ? [creditForm.creditType, ...MANUAL_CREDIT_TYPES]
-                                  : MANUAL_CREDIT_TYPES
-                                ).map(v => (
-                                  <option key={v} value={v}>{CREDIT_TYPE_LABELS[v]}</option>
-                                ))}
-                              </select>
+                              {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7,
+                                  2026-09-07). With contributions recorded as PAYMENTS and
+                                  fundraiser shares coming from the DRIVE, one kind is left that a
+                                  coach may type — and a select with one option is a control that
+                                  cannot be operated. What remains is a statement of what this
+                                  credit is.
+
+                                  ⚠ AN EXISTING CREDIT OF A RETIRED KIND STILL SAYS ITS OWN NAME.
+                                  A forgiveness, a reimbursement, an overpayment — and now a
+                                  contribution or a fundraiser share — opens for a note correction
+                                  reading what it actually is, never relabelled. The type was
+                                  already fixed once set (it is PROVENANCE, and the server ignores
+                                  it on a correction), so nothing is lost by showing it as text. */}
+                              <p className={styles.readonlyValue}>
+                                {CREDIT_TYPE_LABELS[creditForm.creditType]}
+                              </p>
+                              {!editingCreditId && (
+                                <p className={styles.formHint}>
+                                  Money that <strong>arrived</strong> is recorded where it arrived —
+                                  a fundraiser share on the drive, someone paying toward a family&apos;s
+                                  dues as a payment, a bill a family paid on the expense. An
+                                  adjustment is the one credit with no money behind it, so it counts
+                                  as no revenue.
+                                </p>
+                              )}
                             </div>
                             <div>
                               <label className={styles.label}>Notes</label>
