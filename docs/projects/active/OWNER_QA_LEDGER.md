@@ -19259,7 +19259,7 @@ Insights, Club, Statement) · F Insights and development history headings · G t
 (Orgs, Users, Change requests; cards at 390) · H tournament admin Teams / Notifications / Manage,
 public Standings and Pricing · I the dark skin · J A-08.
 
-## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review`, awaiting QA · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
+## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review`, awaiting QA · **walk artifact https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f** (source `FOUNDING_SEASON_2027_WALK.html`; Parts A–N, verdict + notes per step, Copy findings) · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
 
 **What to pin, not "check the shape":** every Founding Season sentence must read **"free through September 30, 2027"** and **"sign up by December 31, 2026"** — in full, never "Sept 30" or "Dec 31" — and the word "January" must appear nowhere on a customer surface except the pricing FAQ's *post-window* answer (which does not render yet). "Normally $39/month" / "normally $29/month" beside every free claim. No exclamation marks; never "trial", "summer".
 

@@ -1,0 +1,741 @@
+<title>The Offer, Front and Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.review{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.quote{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 12px;color:var(--ink);overflow-wrap:anywhere}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+.vbtn[aria-pressed="true"][data-v="call"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §150 · marketing pages, sign-up, billing</p>
+  <h1>The offer, front and centre</h1>
+  <p class="lede">Tournament Plus and the Premium Coaches Portal are free <b>through September 30,
+    2027</b> for everyone who <b>signs up by December 31, 2026</b> — and every surface now says so in
+    the same words. This walk pins the sentences, not figures: <b>full dates, never "Sept 30"</b>,
+    <b>"normally $39/month"</b> beside every free claim, and the word <b>January</b> nowhere a customer
+    can read it. Parts K–N are what <code>/review</code> found and fixed; M is the rehearsal of the
+    trap it caught.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000 — dev server up (it was restarted for you 2026-09-07)</dd>
+    <dt>Parts A–E · K · L</dt><dd><b>nobody</b> — the marketing pages are public. Walk them signed out, on a laptop AND on your phone.</dd>
+    <dt>Part F</dt><dd>a <b>brand-new organization</b> you create in the walk, with an inbox you can open</dd>
+    <dt>Parts G · I</dt><dd>a <b>brand-new coach</b> you create in the walk, with a second inbox you can open</dd>
+    <dt>Part H · M</dt><dd><b>b2cowan@outlook.com</b> (your own dev account — an admin of <b>Dev Test Org</b>, <code>dev-test-org</code>, which is on the Founding Season comp)</dd>
+    <dt>Part J</dt><dd>uat-platform@fieldlogichq.ca · UATPassword2026! — keep it private; dev only</dd>
+  </dl>
+  <p class="route"><b>Routes:</b> <code>/</code> · <code>/pricing</code> · <code>/for-tournament-organizers</code> ·
+    <code>/for-coaches</code> · <code>/start</code> · <code>/demos</code> · <code>/changelog</code>; then the
+    sign-up flows; then <b>Dev Test Org → Admin → Organization → Billing</b>; then <b>Platform admin → Email</b>.</p>
+  <div class="warn"><b>What to pin.</b> Every Founding Season sentence reads <b>"free through September 30,
+    2027"</b> and <b>"sign up by December 31, 2026"</b>, in full. If you see <i>Sept</i>, <i>Dec</i>,
+    <i>Jan 1</i>, <i>January 2027</i>, <i>trial</i> or <i>summer</i> anywhere a customer reads it, that is a
+    defect — flag the step and say where.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The site-wide offer bar</h2>
+  <p>One line above the navigation on every marketing page. Open each of the seven pages; then do the same on your phone.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>It is on all seven pages, and reads the same on each</h3></div></div>
+  <div class="step-body">
+    <p class="why">Homepage, <code>/pricing</code>, <code>/for-tournament-organizers</code>, <code>/for-coaches</code>,
+      <code>/for-leagues</code>, <code>/for-clubs</code>, <code>/demos</code>, <code>/changelog</code>. A dark strip
+      ABOVE the nav, lime "Founding Season", white promise, lime link.</p>
+    <div class="quote">FOUNDING SEASON · Your 2027 season, free — sign up by December 31, 2026 · See the offer →</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">The bar reads exactly as above on every one of the eight pages</label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">The navigation sits BENEATH the bar — the logo, the nav links, Sign In and Get Started are all tappable and nothing hides under the strip<span class="hintline">The rendered check found every nav link under the bar on the first build; this is the fix.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">The bar is ABSENT on: <code>/start</code>, <code>/coaches/start</code>, the sign-in page, <code>/home</code>, any public tournament or org page, and inside the demo (See it live)</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>On your phone it folds, stays tappable, and does not clip</h3>
+    <div class="tags"><span class="tag phone">phone</span></div></div></div>
+  <div class="step-body">
+    <div class="quote">FOUNDING SEASON · Your 2027 season, free — sign up by December 31 →</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">Phone: the year and the words "See the offer" fold away; the bar wraps to at most two lines; nothing is cut off at the right edge</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">Phone: the whole strip is the tap target and is comfortably tall — at least the height of the Sign In button</label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">Tablet-ish width (turn the phone sideways, or narrow the laptop window to ~800px): the sentence wraps rather than clipping, and the bar is still at least 44px tall</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The homepage</h2>
+  <p>Signed out, laptop first. The offer is a panel under the headline now, not a whisper above it.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>No eyebrow line above "Less admin. More sport."</h3></div></div>
+  <div class="step-body">
+    <p class="why">The small uppercase "FOUNDING SEASON · … free through Dec 31, 2026" line that sat above the
+      headline is gone. The headline and its sub-line are unchanged.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Nothing between the offer bar / nav and the headline except air</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">Headline still <b>Less admin. More sport.</b> with the same sub-line beneath</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>The offer panel, word for word</h3></div></div>
+  <div class="step-body">
+    <p class="why">Directly under the sub-line, before the two persona cards: a lime-bordered panel.</p>
+    <div class="quote">FOUNDING SEASON<br>Your 2027 season, free.<br>Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026. No credit card.<br>In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.<br><br>TOURNAMENT PLUS · normally $39/month<br>PREMIUM COACHES PORTAL · normally $29/month</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Every sentence reads exactly as above</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">The two product lines on the right are plain text — hovering them does nothing, they are not links<span class="hintline">The persona cards beneath are the doors (your choice 2 of 3).</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c">The two persona cards still say <b>Free to start · no credit card</b> — no price, no date on a card</label></div>
+      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d">Laptop: both persona cards finish above the fold at a normal window height, without scrolling</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B2…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><div class="step-t"><h3>On your phone the panel collapses honestly</h3>
+    <div class="tags"><span class="tag phone">phone</span><span class="tag think">say what you think</span></div></div></div>
+  <div class="step-body">
+    <p class="why">One column; the two product lines sit side by side under a hairline; the "after" line is
+      dropped on phones. The measured cost: the first persona card starts about 210px lower than
+      before, and its action link lands about 40px below the first screen.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b3a"><label for="b3a">Phone: panel is one column, product lines side by side, nothing clipped</label></div>
+      <div class="chk"><input type="checkbox" id="b3b"><label for="b3b">Phone: the first persona card's question and body are visible without scrolling; its "I'm a tournament organizer →" link needs one flick</label></div>
+    </div>
+    <textarea placeholder="Is the first door far enough up the phone screen for you? Say so either way."></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button><button class="vbtn" data-v="call">Needs a call</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span><div class="step-t"><h3>Further down: one line, no second box</h3></div></div>
+  <div class="step-body">
+    <p class="why">In the "Plans built for how you operate." section there used to be a lime box repeating the
+      offer with two links. Now it is one line under the section's sub-heading.</p>
+    <div class="quote">Founding Season: Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b4a"><label for="b4a">The line reads as above and there is NO boxed callout</label></div>
+      <div class="chk"><input type="checkbox" id="b4b"><label for="b4b">The plan cards beneath it show Tournament Plus and Premium Coaches Portal as <b>$0 / through September 30, 2027</b> (Part E checks them closely)</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B4…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>For tournament organizers</h2>
+  <p><code>/for-tournament-organizers</code>, signed out. The hero leads with the season, not the permanent free plan.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Hero sub-line and trust row</h3></div></div>
+  <div class="step-body">
+    <div class="quote">Register teams, build your schedule, run the bracket, and post live scores — all in one place. Tournament Plus is free for your whole 2027 season when you sign up by December 31, 2026 — normally $39/month.<br><br>FREE THROUGH SEPTEMBER 30, 2027 · NORMALLY $39/MONTH · NO CREDIT CARD REQUIRED</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">Sub-line reads as above; the run "Tournament Plus is free for your whole 2027 season" is in lime</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">Trust row is the three items above, in that order</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">Buttons unchanged: <b>Start free</b> · <b>See it live</b> · <b>See all plans</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>The two plan cards</h3></div></div>
+  <div class="step-body">
+    <p class="why">The free Tournament card still says <b>Free</b> with "No credit card. No time limit." The Tournament Plus card
+      says <b>$0</b>, not "Free" — because the permanent and the promotional must stay distinguishable side by side (your choice 3 of 3).</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">Tournament card: <b>Free</b> · <b>No credit card. No time limit.</b></label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">Tournament Plus card: <b>$0</b> · <b>through September 30, 2027</b> · note <b>Founding Season · normally $39/month or $390/year</b></label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">Both cards' buttons read <b>Start free →</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C2…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>The Founding Season box, re-aimed, with the honest line</h3>
+    <div class="tags"><span class="tag think">read the last sentence aloud</span></div></div></div>
+  <div class="step-body">
+    <div class="quote">RUNNING MORE THAN ONE EVENT IN 2027?<br>TOURNAMENT PLUS IS FREE FOR YOUR WHOLE 2027 SEASON.<br>Auto-scheduling, brackets, communications, and archives for every event you run through September 30, 2027 — normally $39/month. Sign up by December 31, 2026. No credit card.<br>In September 2027 you'll choose a plan for your 2028 season. If you don't continue, your organization moves to the free Tournament plan and keeps everything it built.<br>[ Start free ]</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">Eyebrow, title, body and the consequence line read as above; the button says only <b>Start free</b></label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b">The bottom CTA sub-line names BOTH dates: "…free through September 30, 2027 when you sign up by December 31, 2026 — normally $39/month. No credit card."</label></div>
+    </div>
+    <textarea placeholder="Read the consequence line as an organizer. Does it remove 'what's the catch'?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>For coaches</h2>
+  <p><code>/for-coaches</code>, signed out. The hero sells ONE thing while the window is open.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Hero, note and trust row</h3></div></div>
+  <div class="step-body">
+    <div class="quote">The Premium Coaches Portal is your team's operations HQ — roster, lineups, budget, schedule, and documents for the whole season. It's free for your whole 2027 season when you sign up by December 31, 2026 — normally $29/month. No organization account needed, and your workspace carries over if your organization joins later.<br><br>Free through September 30, 2027 — normally $29/month. No credit card required.<br>FREE THROUGH SEPTEMBER 30, 2027 · NORMALLY $29/MONTH · NO ORG ACCOUNT NEEDED</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">The sub-line reads as above — there is NO "Every coach on FieldLogicHQ starts with the free Coaches Portal…" sentence in the hero</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">The lime run is "It's free for your whole 2027 season"; the note and trust row read as above</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>The plan card, and where the free companion went</h3></div></div>
+  <div class="step-body">
+    <p class="why">The reassurance that free coaching with us never ends moved off the hero to the plan grid's intro, where it is true.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">Plan-grid intro begins <b>Your free portal follows your tournaments — free with no end date.</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">Premium card: <b>Free</b> · <b>through September 30, 2027</b> · <b>Normally $29/month or $290/year · no credit card · standalone, no org required</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">Under it, the fallback consequence line: <b>In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then.</b> — and NOT "your season stays readable" (that window is not built)</label></div>
+      <div class="chk"><input type="checkbox" id="d2d"><label for="d2d">Bottom CTA sub-line: "Start your Premium Coaches Portal free — free through September 30, 2027 when you sign up by December 31, 2026, normally $29/month. No credit card."</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>Pricing</h2>
+  <p><code>/pricing</code>, signed out. The offer is in the price, not a badge above it.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>The strip at the top, and the cards</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">Above the plan cards: the same panel as the homepage (headline, offer sentence, after line) with NO product lines</label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Tournament card: <b>Free</b>. Tournament Plus and Premium Coaches Portal cards: chip <b>Founding Season</b> on the name row, price <b>$0</b> / <b>through September 30, 2027</b>, note <b>Normally $39/month · $390/year</b> and <b>Normally $29/month · $290/year</b></label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">The leading "$" sits neatly at the top of the "0", not sunk below it; the price row does not overflow its card</label></div>
+      <div class="chk"><input type="checkbox" id="e1d"><label for="e1d">Flip the monthly/annual toggle: the two promo cards STILL read $0 through September 30, 2027</label></div>
+      <div class="chk"><input type="checkbox" id="e1e"><label for="e1e">Footnote under the grid = the after line ("In September 2027 you'll choose a plan for your 2028 season. …")</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>Comparison table and FAQ</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">Comparison table → Availability → <b>Founding Season offer</b> reads <b>Free through September 30, 2027 · sign up by December 31, 2026</b>; <b>Payment details at signup</b> reads <b>No (Founding Season)</b></label></div>
+      <div class="chk"><input type="checkbox" id="e2b"><label for="e2b">FAQ "What happens after the Founding Season offer ends?" names September 2027, the 2028 season, all four prices ($39/$390, $29/$290) and the organization's fallback to the free Tournament plan</label></div>
+      <div class="chk"><input type="checkbox" id="e2c"><label for="e2c">FAQ "Do I need a credit card to get started?" names December 31, 2026 and September 30, 2027</label></div>
+      <div class="chk"><input type="checkbox" id="e2d"><label for="e2d">The page's bottom CTA names both dates</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>A new organization joins</h2>
+  <p>Signed out. <code>/start</code> → <b>Run a tournament</b>. Create a new organization with an inbox you can open; keep the welcome email.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>The chooser's organizer card</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">Pill reads <b>2027 SEASON FREE</b>; the body ends <b>Tournament Plus is free through September 30, 2027. No credit card.</b></label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">No offer bar on <code>/start</code> (it is not a marketing page)</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on F1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>Onboarding, then the billing page, then the email</h3></div></div>
+  <div class="step-body">
+    <div class="quote">Welcome to your Founding Season. Your plan is free through September 30, 2027. No credit card. We'll remind you during the summer, and in September 2027 you'll choose a plan for your 2028 season.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f2a"><label for="f2a">The onboarding welcome banner reads as above; the "how many tournaments" step's box says the same with <b>normally $39/month</b></label></div>
+      <div class="chk"><input type="checkbox" id="f2b"><label for="f2b">Choose Tournament Plus in onboarding: it applies with NO card and NO Stripe screen</label></div>
+      <div class="chk"><input type="checkbox" id="f2c"><label for="f2c">Admin → Organization → Billing: the current-plan card says <b>Free through September 30, 2027</b> and <b>normally $39/month · in September 2027 you'll choose a plan for 2028</b></label></div>
+      <div class="chk"><input type="checkbox" id="f2d"><label for="f2d">The Founding Season banner says <b>Tournament Plus is free through September 30, 2027.</b>; the Billing block says <b>No billing action needed — your Founding Season runs free through September 30, 2027 …</b> and there is <b>NO "Add payment method" button</b></label></div>
+      <div class="chk"><input type="checkbox" id="f2e"><label for="f2e">The welcome email says "free as a founding organization through <b>September 30, 2027</b> … nothing is charged before <b>October 1, 2027</b>"<span class="hintline">The email is scheduled a few days out on the Plus path; the org-created welcome is immediate. Check whichever arrives.</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on F2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>A new coach joins</h2>
+  <p>Sign out. <code>/start</code> → <b>Coach a team</b>. Use a second inbox you can open. Part I hangs off this account too.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>The coach door now opens the Premium portal</h3>
+    <div class="tags"><span class="tag review">was the mis-route</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Before today "Coach a team" created the free Basic team while every "Start free" advertised the Premium portal. Now the card opens Premium, and the Basic companion has a quiet line beneath.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">Card label <b>PREMIUM COACHES PORTAL</b>, pill <b>2027 SEASON FREE</b>, body "Your team's operations HQ — roster, lineups, budget, schedule, and documents. Free through September 30, 2027, no organization needed."</label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b">Tapping it lands on the <b>Premium</b> sign-up (<code>/coaches/start</code>), NOT a free-team form</label></div>
+      <div class="chk"><input type="checkbox" id="g1c"><label for="g1c">Beneath the cards: <b>Just entering tournaments? The Basic Coaches Portal is free with no end date →</b> — and that link opens the free Basic team form</label></div>
+      <div class="chk"><input type="checkbox" id="g1d"><label for="g1d">The "Joining a club or team you were invited to?" aside is unchanged</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on G1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="G2">
+  <div class="step-head"><span class="num">G2</span><div class="step-t"><h3>The Premium sign-up, the welcome screen, the email</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g2a"><label for="g2a">Sign-up page: pill <b>Founding Season</b>, price <b>Free through September 30, 2027</b>, sub <b>normally $29/month · no credit card</b>, billing note "Free through September 30, 2027 — no card required. Pick the plan you'll move to after…", footer <b>Free through September 30, 2027</b></label></div>
+      <div class="chk"><input type="checkbox" id="g2b"><label for="g2b">Create the team: NO card, NO Stripe screen</label></div>
+      <div class="chk"><input type="checkbox" id="g2c"><label for="g2c">Welcome screen sub-line: "Free through your Founding Season — no credit card, and nothing is charged before October 1, 2027."; pill <b>Founding Season · free through September 30, 2027 · in September you'll choose a plan for 2028</b></label></div>
+      <div class="chk"><input type="checkbox" id="g2d"><label for="g2d">The comp welcome email names <b>September 30, 2027</b> and <b>October 1, 2027</b> and says you'll be emailed during the summer to choose a plan for 2028</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on G2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>An account that was already free before today</h2>
+  <p>Sign in as <b>b2cowan@outlook.com</b> → <b>Dev Test Org</b> → Admin → Organization → Billing. This org's comp row was moved by the backfill.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>The billing page reads the September state, not January</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">Current-plan card: <b>Free through September 30, 2027</b> · <b>normally $39/month · in September 2027 you'll choose a plan for 2028</b></label></div>
+      <div class="chk"><input type="checkbox" id="h1b"><label for="h1b">Founding Season banner + Billing block as in F2d; no "Add payment method" button; NO "Payment method &amp; invoices" portal button either</label></div>
+      <div class="chk"><input type="checkbox" id="h1c"><label for="h1c">The word "January" appears nowhere on the page</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on H1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART I ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part I</p>
+  <h2>The Premium notes inside a free portal</h2>
+  <p>With the Part G coach account, open the Basic team you can create from the "Just entering tournaments?" line (or any free Basic team you have on dev), then look at the four places Premium is pitched.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="I1">
+  <div class="step-head"><span class="num">I1</span><div class="step-t"><h3>Four notes, one date</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i1a"><label for="i1a">Explore catalog: <b>Free through September 30, 2027 · normally $29/month per team</b></label></div>
+      <div class="chk"><input type="checkbox" id="i1b"><label for="i1b">A section's Premium footer: <b>Premium is free through September 30, 2027 — normally $29/month per team.</b> with the link <b>Upgrade to Premium — free →</b></label></div>
+      <div class="chk"><input type="checkbox" id="i1c"><label for="i1c">The post-event "Keep the season" panel (if you have a finished event): <b>Free through September 30, 2027 — normally $29/month per team. No credit card required.</b></label></div>
+      <div class="chk"><input type="checkbox" id="i1d"><label for="i1d">A plan article panel (open a plan's details from any billing/plan surface): price line <b>Free through September 30, 2027</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on I1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART J ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part J</p>
+  <h2>Platform admin</h2>
+  <p>Sign in as the platform admin → Email.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="J1">
+  <div class="step-head"><span class="num">J1</span><div class="step-t"><h3>The audience tile, and a warning you should read</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="j1a"><label for="j1a">Hover the <b>Founding Season Orgs</b> tile: the tooltip says "free through September 30, 2027"</label></div>
+      <div class="chk"><input type="checkbox" id="j1b"><label for="j1b">The count includes Dev Test Org (comped) — a revoked comp would not be counted</label></div>
+    </div>
+    <div class="warn"><b>Do not send the renewal or final-reminder campaigns this autumn.</b> The ten campaign templates still describe the January cliff; they are rewritten in the autumn phase against the summer-2027 calendar. They only go out by hand, so nothing fires on its own.</div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on J1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART K ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part K</p>
+  <h2>The bar over the navigation</h2>
+  <p>What the rendered check caught on the first build: every nav link sat underneath the bar. Already covered by A1b on every page — this is the phone-and-tablet half.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="K1">
+  <div class="step-head"><span class="num">K1</span><div class="step-t"><h3>Nothing hides under the strip, at any width</h3>
+    <div class="tags"><span class="tag phone">phone</span><span class="tag review">/review</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="k1a"><label for="k1a">Phone, homepage: tap the logo, Sign In and Get Started — each responds; none is covered by the bar</label></div>
+      <div class="chk"><input type="checkbox" id="k1b"><label for="k1b">Phone sideways / narrow laptop: the same three, plus the nav links</label></div>
+      <div class="chk"><input type="checkbox" id="k1c"><label for="k1c">The "·" separators in the bar are legible against the dark strip (not faint grey)</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on K1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART L ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part L</p>
+  <h2>The bar's own link lands where it promises</h2>
+</div>
+<div class="steps">
+
+<article class="step" data-step="L1">
+  <div class="step-head"><span class="num">L1</span><div class="step-t"><h3>See the offer → arrives ON the offer</h3>
+    <div class="tags"><span class="tag review">/review</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="l1a"><label for="l1a">From the homepage, tap <b>See the offer →</b>: <code>/pricing</code> opens scrolled to the offer strip, and the strip's headline "Your 2027 season, free." is fully visible BELOW the bar and the nav — not hidden behind them</label></div>
+      <div class="chk"><input type="checkbox" id="l1b"><label for="l1b">Same on the phone</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on L1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART M ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part M</p>
+  <h2>Rehearsal: the window closed, my account is still free</h2>
+  <p>This is the trap <code>/review</code> caught. It needs the dev server restarted twice. Optional but worth it — it is the one state nobody can see for real until January.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="M1">
+  <div class="step-head"><span class="num">M1</span><div class="step-t"><h3>Close the window, keep the comp</h3>
+    <div class="tags"><span class="tag review">/review</span><span class="tag think">dev only</span></div></div></div>
+  <div class="step-body">
+    <p class="why">In <code>.env.local</code> add <code>NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE=2026-01-01T05:00:00.000Z</code> (a past instant; leave the end date alone), restart <code>npm run dev</code>, then:</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="m1a"><label for="m1a">Signed out: the offer bar, the homepage panel, the pricing strip and the plans-section line are ALL gone; persona pages read list prices ("Free to start, no credit card required" / "$29 CAD / month"); the pricing FAQ shows <b>Can I still get the Founding Season offer?</b> with the list prices; <code>/start</code>'s cards wear plain <b>FREE</b> pills and the coach card opens the free Basic team again</label></div>
+      <div class="chk"><input type="checkbox" id="m1b"><label for="m1b">Sign in as <b>b2cowan@outlook.com</b> → Dev Test Org → Billing: the current-plan card STILL reads <b>Free through September 30, 2027</b> — the account's own comp decides, not the window<span class="hintline">This is the line that would have read "$39 CAD / month · Billed monthly" before the review.</span></label></div>
+      <div class="chk"><input type="checkbox" id="m1c"><label for="m1c">Still signed in, open <code>/pricing</code>: the Tournament Plus card marked <b>Current plan</b> reads <b>$0 / through September 30, 2027</b>; the other cards read list prices</label></div>
+      <div class="chk"><input type="checkbox" id="m1d"><label for="m1d">Remove the override line and restart. Everything from Part A is back.</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on M1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART N ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part N</p>
+  <h2>An account comped under the old date is still recognised</h2>
+  <p>No dev row remains at the old instant (the backfill moved them all), so the proof is the test, not a screen.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="N1">
+  <div class="step-head"><span class="num">N1</span><div class="step-t"><h3>Accept the test as the proof, or ask for a hand-reverted row</h3>
+    <div class="tags"><span class="tag review">/review</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Four unit tests pin it: a row on the old instant is recognised as a Founding Season comp, is not "current", and is healed to the new instant the next time the comp writer touches it — so nothing depends on whether the production backfill has run.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="n1a"><label for="n1a">Accepted on the test (run <code>npm test</code> if you want to see the four pass), OR flag and I will hand-revert one dev row for a live check</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button><button class="vbtn" data-v="call">Needs a call</button></div>
+    <textarea placeholder="Notes on N1…"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Press <b>Copy findings</b> at the top, or copy from here, and paste it back into the
+    chat. Everything you typed and every verdict comes with it.</p>
+  <textarea class="out" id="outbox" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §150</span><span>Founding Season 2027 — the offer front and centre</span>
+  <span>Committed 2f02a949 + 0b399e74 on dev 2026-09-07</span><span>Run order B9 · artifact 5ef0163e</span>
+</footer>
+</div>
+
+<div class="toastwrap" hidden id="toastwrap"><div class="toast" id="toast">Copied</div></div>
+
+<script>
+(function(){
+  var KEY='founding-season-2027-walk-150';
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('textarea:not(#outbox)'));
+  var out=document.getElementById('outbox');
+
+  function load(){
+    var s={};
+    try{ s=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ s={}; }
+    return s&&typeof s==='object'?s:{};
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v) st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §150 — Founding Season 2027: the offer front and centre','Committed 2f02a949 + 0b399e74 on dev 2026-09-07 · run order B9',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var txt=lab.textContent.split('\n')[0].trim();
+        var hint=lab.querySelector('.hintline');
+        if(hint) txt=txt.replace(hint.textContent.trim(),'').trim();
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt);
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    var calls=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='call';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    if(calls.length) lines.push('NEEDS A CALL: '+calls.join(', '));
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every box, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>
