@@ -517,7 +517,7 @@ function family(over: Partial<FamilyDuesStatementRender> & { receiptLabel: strin
   return {
     label: `the ${over.receiptLabel.replace(' family', '')}s`,
     childrenLine: 'Isla and Emmett',
-    stats: { billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', leftToSend: '$1,075.00' },
+    stats: { billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', handedBack: '—', leftToSend: '$1,075.00' },
     next: ['The last payment falls due Oct 1, 2026.'],
     schedules: [{ label: 'Isla', rows: [['1 of 3', 'Jun 1, 2026', '$500.00', '$500.00', '-', '-', 'Paid May 28']] }],
     payments: [['May 28, 2026', 'Isla', '$500.00', 'E-Transfer', '']],

@@ -215,6 +215,98 @@ export function splitFamilyOwnMoney(input: {
 }
 
 
+/**
+ * THE DUES LADDER (owner ruling 2026-09-07, out of the QA §148 walk) — one family's season as five
+ * figures that read left to right and land on the balance they already had:
+ *
+ *     Dues − Fundraising − Other credits − Paid + Handed back = Balance
+ *
+ * It replaces `Total dues · After fundraising · Paid · Left to send`, whose second figure answered a
+ * question about a BILL while appearing to answer one about fundraising: Avery raised $198.15 and
+ * her "After fundraising" read $700.00 against a $700.00 bill, because her cash had already settled
+ * every instalment and there was no bill left for the fundraising to reduce. Correct, and a lie. It
+ * hit every family who pays promptly, not just the overpaid ones.
+ *
+ * ⚠⚠ EVERY FIGURE HERE IS GROSS, AND THAT IS THE POINT. The product nets payouts away silently
+ * inside `Credits` and `Paid` — invisible while one column holds everything, and a lie the moment
+ * the columns are named:
+ *   · Blake raised $150.00 on the Bottle Drive and took $100.00 back. A column headed FUNDRAISING
+ *     would say $50.00 while the fundraiser screen says $150.00.
+ *   · Casey sent $1,200.00 and the screen says `Paid $900.00` — contradicting §148's own ruling that
+ *     Paid shows what the family actually sent.
+ * Which credit a payout consumes is arbitrary too (oldest-first, so Blake's landed on the rebate
+ * purely by date). Gross figures plus a `handedBack` of its own remove the guesswork from every
+ * number a coach reads.
+ *
+ * ⚠⚠ THE BALANCE IS NOT RECOMPUTED FROM THESE — it stays exactly what it is today, and the ladder
+ * equals it BY CONSTRUCTION. Same discipline as `splitFamilyOwnMoney` above: a RE-SPLIT of one
+ * total, never a re-derivation. Coaches have chased families on those balances; a redesign that
+ * quietly moved one would be a different and much worse change. The identity, for the record:
+ *
+ *     dues − F − (issued − F − own) − gross + paidOut
+ *   = dues − issued + own − gross + paidOut          [own = gross − capped, the engine's invariant]
+ *   = dues − (issued − paidOut) − capped
+ *   = dues − netCredits − cappedPaid                  ← today's balance, unchanged
+ */
+/** The five figures the table and drawer read left to right, plus the own-money amount that
+ *  explains why `otherCredits` is smaller than the credits a family holds. ONE shape, imported by
+ *  every producer and reader — three inline copies of it drifted within a day of each other. */
+export interface DuesLadder {
+  dues: number;
+  fundraising: number;
+  otherCredits: number;
+  paid: number;
+  handedBack: number;
+  /** Overpayment-credit dollars the family's own payments stand behind — folded INTO `paid`, and
+   *  therefore the dollars the drawer must NOT print under its credit sections. An AMOUNT, never a
+   *  row predicate: see the drawer's `hiddenOwnMoneyIds` for why that distinction cost a defect. */
+  ownMoney: number;
+}
+
+export function splitDuesLadder(input: {
+  /** The schedule total — what this family was billed. */
+  dues: number;
+  /** Every payment RECORD, summed. Not capped, not netted: what the family sent. */
+  grossPayments: number;
+  /** `Paid` as the surfaces computed it before the ladder — payments capped at the schedule. */
+  cappedPaid: number;
+  /** Every credit ISSUED this season, summed — gross, before any payout. */
+  creditsIssued: number;
+  /** Credits issued of type `fundraiser`. Sponsorships are stored as this type and belong here. */
+  fundraiserIssued: number;
+  /** Credits issued of type `overpayment` — ALL of them, however born. ⚠ NOT a narrowed set: the
+   *  clamp below is what decides how many of these dollars are the family's own, and it decides by
+   *  ARITHMETIC (does the excess of payments over the bill stand behind them?), never by whether a
+   *  row carries a link. Umar's $50 overpayment credit has no payment link — it predates linking —
+   *  and his family really did send $50 over; a link-based rule filed it as coach-typed and the
+   *  ladder came out $50 wrong. Pass everything; let the clamp choose. */
+  overpaymentIssued: number;
+  /** Everything handed back to this family in cash — `rep_dues_payouts`. */
+  paidOut: number;
+}): DuesLadder {
+  const grossC = toCents(input.grossPayments);
+  /* ⚠ CLAMPED, NOT JUST `overpaymentIssued`, AND THE CLAMP IS LOAD-BEARING. A coach can add a credit
+     by hand and pick `Overpayment` as its kind (see MANUAL_CREDIT_TYPES) — that credit has no
+     payment behind it, so subtracting the raw overpayment total would push the ladder's balance
+     ABOVE the real one by its amount. Clamping to the excess the payments actually carry drops the
+     hand-typed remainder into `otherCredits`, which is honest: it is a credit a coach asserted, not
+     money the family sent. Both cases tie. */
+  const ownC = Math.min(
+    toCents(input.overpaymentIssued),
+    Math.max(0, grossC - toCents(input.cappedPaid)),
+  );
+  const fundraisingC = toCents(input.fundraiserIssued);
+  return {
+    dues: toDollars(toCents(input.dues)),
+    fundraising: toDollars(fundraisingC),
+    // ≥ 0 by construction: `own` can never exceed the overpayment credits inside `creditsIssued`.
+    otherCredits: toDollars(toCents(input.creditsIssued) - fundraisingC - ownC),
+    paid: toDollars(grossC),
+    handedBack: toDollars(toCents(input.paidOut)),
+    ownMoney: toDollars(ownC),
+  };
+}
+
 /** How much of a NEW payment lands beyond everything left on the schedule — the amount that
  *  becomes an overpayment credit automatically (owner ruling 2026-08-13, no prompt). */
 export function overpaymentExcess(
@@ -282,9 +374,13 @@ export interface OverpaymentReconcilePlan {
    *  player-season — a later lower tops THIS row up rather than appending a sibling (four
    *  identical "Overpayment (dues changed) · Sep 1" rows read as a bug, and were one fact).
    *  Set only on the schedule-change path, and only onto a row the ENGINE created — a
-   *  coach-typed overpayment credit is counted but never written into. */
+   *  coach-typed overpayment credit is counted but never written into.
+   *  ⚠ ALSO SET WITH `create: 0` (QA §148, 2026-09-06): every pass folds leftover engine rows,
+   *  not just the ones that create a credit, so `topUp` alone is real work. Whenever it is set
+   *  it states the row's WHOLE new amount and subsumes `trim`. */
   topUp: { id: string; newAmount: number } | null;
-  /** Credit ids the reduction swallows whole, in the order to delete them (newest first). */
+  /** Credit ids to delete, in order (newest first) — the ones a reduction swallows whole, plus
+   *  any engine rows a fold has emptied into `topUp`'s host. */
   remove: string[];
   /** The one credit the reduction only partly reaches, with its corrected amount. */
   trim: { id: string; amount: number } | null;
@@ -341,6 +437,39 @@ export function planOverpaymentReconcile(
       leftC = 0;
     }
   }
+
+  /* ⚠⚠ THE MERGE IS NOT THE GROW PATH'S PRIVILEGE (owner, QA §148 walk 2026-09-06). Consolidation
+     used to run only where a NEW credit was created, which made repair ONE-DIRECTIONAL: a family
+     already carrying two engine rows kept them through every reduction and every no-op, and only a
+     RISE in their overpayment ever collapsed the pair. Avery carried $58.33 + $491.67 for nine days
+     — two meaningless halves of one true $550.00, neither of which tied to any figure on any
+     screen, while the sum tied exactly to payments minus schedule on the SAME screen. Every pass
+     now leaves exactly one engine row, so the one-row rule holds going forward AND heals the rows
+     written before it existed. `reduced` is untouched: a fold moves dollars between rows, it never
+     removes any. */
+  const survivors = opts?.consolidate
+    ? overpayment.filter(c => c.consolidatable && !remove.includes(c.id))
+    : [];
+  if (survivors.length > 1) {
+    // ⚠ The TRIMMED row folds at its NEW amount. Folding the stale figure would hand back the
+    // dollars the reduction has just taken off it — the double-count this whole engine exists to
+    // prevent, re-created by the repair.
+    const survivingC = survivors.reduce(
+      (s, c) => s + (trim && trim.id === c.id ? toCents(trim.amount) : toCents(c.amount)), 0,
+    );
+    for (const c of survivors.slice(1)) remove.push(c.id);
+    /* ⚠⚠ THE TRIM IS SUBSUMED ONLY WHEN IT LANDED ON A SURVIVOR (review 2026-09-07, Critical). The
+       first cut nulled it unconditionally. But the shrink walks NEWEST first, and the newest
+       overpayment row can be a coach-typed one — not consolidatable, so never a survivor. Trim
+       that row, then fold two older engine rows beneath it, and the trim vanished: nothing in
+       `remove`, nothing in `topUp`, so the executor never wrote it. The row kept its stale amount,
+       the family's credits stayed overstated by exactly that trim, and `reduced` reported a
+       reduction that never happened. A trim on the host IS folded into `survivingC` above and must
+       not be written twice; a trim on any other row is a separate write and stays. */
+    const trimOnHost = trim !== null && survivors.some(c => c.id === trim!.id);
+    return { create: 0, topUp: { id: survivors[0].id, newAmount: toDollars(survivingC) }, remove, trim: trimOnHost ? null : trim, reduced };
+  }
+
   return { create: 0, topUp: null, remove, trim, reduced };
 }
 

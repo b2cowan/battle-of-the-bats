@@ -845,9 +845,25 @@ export default function PlayerDetailPage({
           <>
             <div className={styles.statBoxRow}>
               <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Assessed</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalPaid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
-              {dues.totalCredits > 0 && (
-                <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalCredits)}</span><span className={styles.statBoxLabel}>Credits</span></div>
+              {/* ⚠⚠ THE LADDER'S FIGURES, SO THIS PAGE AND THE DUES TABLE CANNOT DISAGREE (dues
+                  ladder, 2026-09-07). `Credits` used to be one box holding fundraising, costs the
+                  family fronted and anything else; `Paid` was net of any refund, so a family who
+                  sent $1,200 and was handed $300 back read $900 here while the dues table now reads
+                  $1,200. Same five figures, same order, both screens.
+                  ⚠ The BOX LABELS on this page are its own (`Assessed`, not `Dues`) and were left
+                  alone — that wording question was not in the approved mockup. The NUMBERS are what
+                  had to match; a label difference is a design call, a figure difference is a bug. */}
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.paid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
+              {/* Each self-hides at zero, the way the single Credits box always did — a family who
+                  raised nothing should not read three $0.00 boxes to learn it. */}
+              {dues.ladder.fundraising > 0 && (
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.fundraising)}</span><span className={styles.statBoxLabel}>Fundraising</span></div>
+              )}
+              {dues.ladder.otherCredits > 0 && (
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.otherCredits)}</span><span className={styles.statBoxLabel}>Other credits</span></div>
+              )}
+              {dues.ladder.handedBack > 0 && (
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.ladder.handedBack)}</span><span className={styles.statBoxLabel}>Handed back</span></div>
               )}
               <div className={styles.statBox}>
                 <span className={styles.statBoxValue} data-tone={dues.balance > 0 ? 'danger' : 'good'}>{money(dues.balance)}</span>

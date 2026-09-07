@@ -11758,7 +11758,7 @@ rulings you already made, so they should read as repairs, not as changes.
       Confirm the page **never scrolls sideways** at 361px.
 - [x] **Every export it offered before is still offered.** Tap it: same documents, same file types,
       same plan and contacts gating. Nothing about picking changed.
-- [x] **One hint above the list, not two.** Only *"11 without a position — open a player���"* leads
+- [x] **One hint above the list, not two.** Only *"11 without a position — open a player…"* leads
       the list. The reorder tip now sits **below** the players — confirm it reads as a footnote to
       the arrows rather than a rule you must read first.
 - [x] **Desktop is untouched.** Widen to a full window: the bar's right-hand side is back with
@@ -18960,7 +18960,7 @@ To be run against a team with a real taxonomy. The parts that matter most:
 - **Part E** is the regression that costs the most if it broke: a template downloaded **before**
   today must still import.
 
-## §148 · A family's own money leaves the Credits column — Player Dues says what a family actually sent — committed `1d9b627b` 2026-09-06, awaiting QA · walk artifact `027b0322`
+## §148 · A family's own money leaves the Credits column — Player Dues says what a family actually sent — ✅ PASSED 2026-09-07, 28/28, zero defects · two rulings taken (help + demo at the END of the dues project · one `/review` at the end, and it must be told where to look) · body committed `1d9b627b` 2026-09-06; the two in-walk fixes stay in the working copy by owner instruction · walk artifact `027b0322`
 
 **Plan:** `docs/projects/active/COACH_DUES_BY_PLAYER_PLAN.md` §6 (D6) · **Mockup, owner-approved
 round 3:** https://claude.ai/code/artifact/73f68f92-603f-47eb-8c1d-d12dc5bd1496
@@ -19004,9 +19004,13 @@ the typecheck nor the new unit test could see it: the helper's invariant is abou
 and that line was quietly using a different pair. Fixed, with the reasoning written at the line.
 
 **Verified by MEASUREMENT.** All twelve rows read off the rendered page and compared to their
-pre-change values — **every balance identical**. The season-totals band still ties (Collected
-$2,225 → $2,775, credits $2,899.63 → $2,349.63, sum unchanged). The roster player panel agrees with
-the dues table to the cent.
+pre-change values — **every balance identical**. ⚠ The band sentence here first read "Collected
+$2,225 → $2,775, sum unchanged" — that describes the FIRST build, which review finding 1 below
+then reversed, and it stood for a day while the walk step written from it (B2) asked the owner to
+check a figure the screen never showed (found on the §148 walk, 2026-09-06; both corrected).
+**Collected stays $2,225.00** — capped, a cash word, and deliberately the same figure as the Money
+hub. What moved is its CAPTION: credits $2,899.63 → $2,349.63, with "$550.00 more sent than billed"
+naming the difference. The roster player panel agrees with the dues table to the cent.
 
 **Gates:** typecheck clean · **3,058 unit tests** (13 new, pinning the invariant across the awkward
 cases including the refunded-overpayment one) · full `verify:changed` · rendered layout sweep at
@@ -19070,6 +19074,108 @@ piece of layout debt no longer reproduces.
 **⚠ Observed, not caused by this change:** Devon Test read *Up to date* earlier the same day and
 reads *Past due* now. The changed branch is unreachable for a family with money still to send, so
 this is fixture data moving underneath a shared working copy — noted so a walker does not chase it.
+
+### §148 walk finding — the overpayment credit healed in one direction only (fixed in-walk 2026-09-06)
+
+**What the owner saw.** Avery's commitment room listed **two** engine credits — *Overpayment (dues
+changed)* **($58.33)** and *Overpayment (dues changed)* **($491.67)**, both reading *Follows the
+schedule*. His read was right on both counts: neither figure ties to anything on that screen or any
+other, and only the current state matters. His instinct — aggregate them on screen — was the right
+answer to the wrong layer.
+
+**They DO reconcile, as a sum, on that same screen.** Payments $1,250.00 − schedule ($250 + $250 +
+$200 = $700) = **$550.00**, and 58.33 + 491.67 = 550.00 exactly. The pair was correct; the split was
+meaningless.
+
+**Why an on-screen aggregate was the wrong fix.** ⚠ **The owner already ruled this on 2026-09-01:
+ONE overpayment row per player-season**, because four identical rows read as a bug and were one
+fact. The engine enforces it on write, which is why that row carries no date and no bin — it is a
+running total, not an event. A second aggregator in the drawer would have given a settled rule a
+quieter second home and permanently hidden the failure. It only looked safe because the sum happened
+to be right; a stale fragment would have rendered as a plausible total with no screen able to show
+the pieces.
+
+**The actual defect: repair ran in ONE direction.** Verified by executing the planner, not by
+reading it. The fold lived *inside* the grow branch, so:
+- overpayment **grows** → every engine row folds into one ✅
+- overpayment **shrinks** → deletes/trims only what it must, survivors stay separate ✗
+- overpayment **unchanged** → nothing happens at all ✗
+
+So a family who once carried two rows kept two forever unless their overpayment happened to rise
+again. **Not a race:** the $491.67 was written 2026-08-28 21:23 UTC and the $58.33 on 2026-09-01
+13:46 UTC — both *before* consolidation shipped that evening in `74a89da9` (18:09 ET). The engine is
+not double-inserting today; it simply never revisited what it inherited.
+
+**Fixed.** The fold now runs on every pass, so the one-row rule holds going forward **and** heals
+rows written before it existed. Two traps handled: a trimmed row folds at its **new** amount (the
+old one would hand back the dollars the reduction just took, re-creating the double-count through
+the repair), and a coach-typed overpayment credit is still counted but never swallowed. The drawer
+is unchanged — it just starts showing one line. **Avery's dev fixture repaired to a single $550.00
+row; total credits still $1,128.15, balance untouched.**
+
+**Gates:** typecheck clean · **3,089 unit tests** (5 new — the no-change fold, the shrink-then-fold
+with its trimmed host, the single-row no-op, the record-time path that must never fold, and the
+coach-typed row a fold may not touch).
+
+### §148 walk finding — step B2 described a screen that no longer exists (fixed in-walk 2026-09-06)
+
+Two errors, one root cause: **B2 was written from this entry's own stale sentence**, before review
+finding 1 reversed the Collected figure.
+
+1. **"Scroll to the season totals band"** — there is no band under the table. The table foot was
+   retired 2026-09-03 (D4) and its figures became the **four tiles above** the table. Nothing was
+   broken; the step was three days behind the screen.
+2. **"Collected $2,775.00"** — the screen reads **$2,225.00**, and correctly so. Review finding 1
+   restored the cap precisely so this tile cannot disagree with the Money hub's Collections tile.
+   The step asked the owner to verify a number the product deliberately does not show, with a
+   "both totals add to $5,124.63" hint that stopped being true at the same moment.
+3. **"$1,165.65 owed back to 2 families"** as a standalone item — it exists, but as the **caption
+   under Balance owing**, not as a figure of its own.
+
+B2 rewritten to the shipped screen: Collected **unchanged** at $2,225.00 (with a flag-it hint if it
+ever reads $2,775.00), its caption checked as its own item, the owed-back figure folded into Balance
+owing where it lives, and **Past due $97.09 · 1 family** added as the fourth tile the step never
+mentioned. ⚠ **The lesson is the direction of the copy:** a walk step written from a ledger sentence
+inherits that sentence's staleness, and neither gate nor test can see it — only a human reading the
+real screen. The ledger sentence is corrected above.
+
+### §148 walked — 28/28, zero defects, and the three rulings it produced (2026-09-07)
+
+Every step passed. The two in-walk findings above were found and fixed *during* the walk, so the
+scorecard is a clean read of the corrected screen rather than a pass over a defect.
+
+**What the owner confirmed, in his own reading.** C2 asked him to read Kai's row out loud and write
+down what it says — the deliberately awkward case, a family whose dues are almost entirely covered
+by money they did not send. His answer: *"its true."* That is the step this change existed for; the
+other twenty-seven verify that nothing else moved.
+
+**Ruling 1 — the help and the demo wait for the END of the dues project, not this change.**
+*"We can update help and demo once the current dues project finishes."* §148 is step 1 of six; the
+vocabulary a coach reads (`Paid`, `Credits`, `Overpaid`, and shortly a netted `Player dues` plan
+figure) is still moving. Writing the guide against step 1 would mean rewriting it at step 2.
+⚠ This is a **deferral with a named end, not a skip** — build order §7.7 is the place it comes due,
+and the coach demo's money narration has now gone stale across three consecutive releases, so it is
+the one item in this project that must not be allowed to fall off.
+
+**Ruling 2 — one `/review`, at the end, after the column work.** *"I will run review after that as
+well, before committing."*
+
+⚠⚠ **AND IT MUST BE TOLD WHERE TO LOOK — THIS IS THE TRAP.** `/review` reviews **uncommitted**
+changes: its first act is `git status` + `git diff`, and that is its whole surface. §148's body is
+already committed as `1d9b627b`. A bare `/review` at the end of the project would therefore review
+steps 2–6 **and the two in-walk fixes**, and would silently skip the shipped change this walk just
+passed. The review must be pointed at the range explicitly — *"include commit `1d9b627b` in the
+review surface, not just the working tree"* — or the diff must be handed to it directly. Nothing in
+the command warns about this; the agent would report a clean, complete-looking review of a
+deliberately narrower surface.
+
+**Ruling 3 — step 2 proceeds as planned, and the whole project lands in one commit at the end.**
+*"Happy for step 2 (the netting) to proceed as planned… I will commit at the end of review after the
+column adjustments are all done."* So the working copy now deliberately accumulates: the two §148
+in-walk fixes (the consolidation fold in `lib/dues-payments.ts` + `lib/db.ts`, and its five tests)
+plus everything steps 2–6 add. ⚠ **The fold is a data-mutating repair** — it rewrites inherited
+credit rows on every pass — so when the review runs, it is the hunk that most needs a reviewer's
+attention, and it is the easiest one to lose inside a large report-figures diff.
 
 ## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — BUILT 2026-09-06, committed `07321b4a` 2026-09-07, awaiting QA · walk artifact `3d981219`
 
@@ -19152,3 +19258,22 @@ By period at 768 — figures and expanders you can tap · E hover only where a r
 Insights, Club, Statement) · F Insights and development history headings · G the platform console
 (Orgs, Users, Change requests; cards at 390) · H tournament admin Teams / Notifications / Manage,
 public Standings and Pricing · I the dark skin · J A-08.
+
+## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — BUILT on dev 2026-09-07, uncommitted, awaiting QA · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
+
+**What to pin, not "check the shape":** every Founding Season sentence must read **"free through September 30, 2027"** and **"sign up by December 31, 2026"** — in full, never "Sept 30" or "Dec 31" — and the word "January" must appear nowhere on a customer surface except the pricing FAQ's *post-window* answer (which does not render yet). "Normally $39/month" / "normally $29/month" beside every free claim. No exclamation marks; never "trial", "summer".
+
+**Sign in as:** nobody for A–E (marketing pages are public); a brand-new organization owner for F; a brand-new coach for G; the Milton org owner for H; a free Basic coach for I; platform admin for J.
+
+- [ ] **A · Site-wide offer bar** — homepage, `/pricing`, `/for-tournament-organizers`, `/for-coaches`, `/for-leagues`, `/for-clubs`, `/demos`, `/changelog`: one dark bar ABOVE the nav reading `FOUNDING SEASON · Your 2027 season, free — sign up by December 31, 2026 · See the offer →`; the nav sits beneath it, nothing overlaps the headline; the bar opens `/pricing#founding-season` and lands ON the offer strip. **On a phone** the bar wraps to at most two lines, reads `… sign up by December 31 →` (no year, no "See the offer"), and is at least 44px tall. **Absent** on a customer's public org/tournament page, inside the demo sandbox (`/see-it-live`), on `/start`, `/auth/*`, `/coaches/start`, `/home`, and every operator/coach shell.
+- [ ] **B · Homepage** — NO uppercase eyebrow line above "Less admin. More sport."; directly under the sub-headline the offer panel: eyebrow `FOUNDING SEASON`, headline `Your 2027 season, free.`, the offer sentence, the after line (`In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then, and there is nothing to cancel.`), and on the right `TOURNAMENT PLUS · normally $39/month` + `PREMIUM COACHES PORTAL · normally $29/month` as plain text (not links). The two persona cards beneath still say `Free to start · no credit card` (no price, no date). At 1440×900 the cards finish above the fold. In the Plans section: ONE line `Founding Season: Tournament Plus and the Premium Coaches Portal are free through September 30, 2027 when you sign up by December 31, 2026.` and NO boxed callout. Phone: the panel collapses to one column with the two product lines side by side.
+- [ ] **C · `/for-tournament-organizers`** — hero sub-line ends `Tournament Plus is free for your whole 2027 season when you sign up by December 31, 2026 — normally $39/month.` (the lime run is "Tournament Plus is free for your whole 2027 season"); trust row `FREE THROUGH SEPTEMBER 30, 2027 · NORMALLY $39/MONTH · NO CREDIT CARD REQUIRED`; the Tournament card still says `Free` / `No credit card. No time limit.`; the Tournament Plus card says **`$0` / `through September 30, 2027`** and `Founding Season · normally $39/month or $390/year`; the Founding Season box reads eyebrow `Running more than one event in 2027?`, title `Tournament Plus is free for your whole 2027 season.`, body ending `Sign up by December 31, 2026. No credit card.`, then the consequence line `In September 2027 you'll choose a plan for your 2028 season. If you don't continue, your organization moves to the free Tournament plan and keeps everything it built.`, button `Start free`; bottom CTA sub-line names both dates.
+- [ ] **D · `/for-coaches`** — hero sub-line sells ONE thing (no "Every coach starts with the free Coaches Portal" sentence) and carries the lime run `It's free for your whole 2027 season`; note `Free through September 30, 2027 — normally $29/month. No credit card required.`; trust row `FREE THROUGH SEPTEMBER 30, 2027 · NORMALLY $29/MONTH · NO ORG ACCOUNT NEEDED`; plan-grid intro says `Your free portal follows your tournaments — free with no end date.`; the Premium card says `Free` / `through September 30, 2027`, `Normally $29/month or $290/year · no credit card · standalone, no org required`, and the fallback consequence line `In September 2027 you'll choose a plan for your 2028 season. Nothing is charged before then.` (NOT "your season stays readable" — that promise is not built); bottom CTA sub-line names both dates.
+- [ ] **E · `/pricing`** — offer strip at the top of the plans section (`#founding-season`) with headline, offer sentence and after line, NO product lines; Tournament card `Free`; Tournament Plus and Premium Coaches Portal cards: chip `Founding Season` on the name row, price **`$0` / `through September 30, 2027`**, note `Normally $39/month · $390/year` / `Normally $29/month · $290/year`; the annual/monthly toggle does not change the $0; footnote under the grid = the after line; comparison table → Availability → `Founding Season offer` reads `Free through September 30, 2027 · sign up by December 31, 2026`; FAQ "What happens after the Founding Season offer ends?" names September 2027, the 2028 season, all four list prices, and the org fallback to free Tournament; FAQ "Do I need a credit card to get started?" names December 31, 2026 and September 30, 2027; bottom CTA names both dates.
+- [ ] **F · New organization (signed-out, `/start` → Run a tournament)** — the chooser's organizer card wears the pill `2027 SEASON FREE` and its body ends `Tournament Plus is free through September 30, 2027. No credit card.`; after signup the onboarding welcome banner reads `Welcome to your Founding Season. Your plan is free through September 30, 2027. No credit card. We'll remind you during the summer, and in September 2027 you'll choose a plan for your 2028 season.`; the "how many tournaments" step's box reads the same with `normally $39/month`; the org's billing page current-plan card says `Free through September 30, 2027` + `normally $39/month · in September 2027 you'll choose a plan for 2028`; the Founding Season banner says `Tournament Plus is free through September 30, 2027.` and the Billing block says `No billing action needed — your Founding Season runs free through September 30, 2027 …` with **NO "Add payment method" button**; the welcome email says `free as a founding organization through September 30, 2027 … nothing is charged before October 1, 2027`.
+- [ ] **G · New coach (signed-out, `/start` → Coach a team)** — the coach card's label reads `PREMIUM COACHES PORTAL`, pill `2027 SEASON FREE`, body `Your team's operations HQ … Free through September 30, 2027, no organization needed.`, and it opens the **Premium** signup (`/coaches/start`), NOT the free Basic team; beneath the cards the line `Just entering tournaments? The Basic Coaches Portal is free with no end date →` opens the Basic door; the invitation aside is unchanged. On the Premium signup: pill `Founding Season`, price `Free through September 30, 2027`, sub `normally $29/month · no credit card`, billing note `Free through September 30, 2027 — no card required. …`, footer `Free through September 30, 2027`; the welcome screen pill reads `Founding Season · free through September 30, 2027 · in September you'll choose a plan for 2028`; the comp welcome email names September 30, 2027 and October 1, 2027.
+- [ ] **H · Existing comped account (Milton, dev)** — its comp row now expires 2027-10-01 (migration 279) and the billing page shows the September 30, 2027 state above, not January.
+- [ ] **I · In-portal Premium notes (a free Basic coach on dev)** — Explore catalog `Free through September 30, 2027 · normally $29/month per team`; the section footer `Premium is free through September 30, 2027 — normally $29/month per team.`; the post-event panel `Free through September 30, 2027 — normally $29/month per team. No credit card required.`; the plan article panel price `Free through September 30, 2027`.
+- [ ] **J · Platform admin → Email** — the "Founding Season Orgs" tile tooltip says `free through September 30, 2027`. (The ten campaign templates still say January — Phase 1; do not send `founding_renewal` / `founding_final` this autumn.)
+
+**Post-window rehearsal (dev only, optional):** set `NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE` to a past instant, restart, and confirm every element in A–E is gone, the persona pages read list price, the pricing FAQ shows `Can I still get the Founding Season offer?`, the chooser's coach card opens the Basic team again with a `FREE` pill, and a new organization gets NO comp row. Unset it afterwards.

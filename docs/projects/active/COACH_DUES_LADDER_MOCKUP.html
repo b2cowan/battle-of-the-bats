@@ -1,0 +1,750 @@
+<title>The Dues Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ── The DOCUMENT's own palette (themed — this is my memo, not the product) ─────────────── */
+:root{
+  --doc-paper:#F3EFE6; --doc-card:#FFFFFF; --doc-sunk:#EAE4D6;
+  --doc-ink:#1F1A12; --doc-ink-soft:#443C2F; --doc-dim:#6B6153;
+  --doc-rule:rgba(58,46,22,.16); --doc-rule-hard:rgba(58,46,22,.34);
+  --doc-mark:#5C6B1E; --doc-mark-soft:rgba(92,107,30,.12);
+  --doc-warn:#8E3A1C; --doc-warn-soft:rgba(142,58,28,.10);
+  --doc-shadow:0 1px 2px rgba(58,46,22,.06), 0 14px 30px -20px rgba(58,46,22,.45);
+
+  /* ── The PRODUCT's palette, pinned (a mockup shows the product's colours, not the reader's).
+        Lifted verbatim from the warm coach portal tokens. ─────────────────────────────────── */
+  --p-paper:#F8F4ED; --p-card:#FFFFFF;
+  --p-ink:#241E15; --p-ink-soft:#4A4235; --p-dim:#615A54;
+  --p-line:rgba(70,55,30,.12); --p-line-hard:rgba(70,55,30,.20);
+  --p-olive:#57651E; --p-win:#34662A; --p-flag:#B03A22;
+  --p-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+
+  --doc-disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --doc-sans:'Inter',system-ui,-apple-system,sans-serif;
+  --doc-mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --doc-paper:#141109; --doc-card:#1F1B12; --doc-sunk:#191509;
+  --doc-ink:#F4EEE1; --doc-ink-soft:#D6CCB9; --doc-dim:#A69C8B;
+  --doc-rule:rgba(228,215,190,.18); --doc-rule-hard:rgba(228,215,190,.36);
+  --doc-mark:#B6CE5E; --doc-mark-soft:rgba(182,206,94,.14);
+  --doc-warn:#E5947A; --doc-warn-soft:rgba(229,148,122,.13);
+  --doc-shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -20px rgba(0,0,0,.9);
+}}
+:root[data-theme="dark"]{
+  --doc-paper:#141109; --doc-card:#1F1B12; --doc-sunk:#191509;
+  --doc-ink:#F4EEE1; --doc-ink-soft:#D6CCB9; --doc-dim:#A69C8B;
+  --doc-rule:rgba(228,215,190,.18); --doc-rule-hard:rgba(228,215,190,.36);
+  --doc-mark:#B6CE5E; --doc-mark-soft:rgba(182,206,94,.14);
+  --doc-warn:#E5947A; --doc-warn-soft:rgba(229,148,122,.13);
+  --doc-shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 30px -20px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{background:var(--doc-paper);color:var(--doc-ink);font-family:var(--doc-sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:1160px;margin:0 auto;padding:44px 22px 96px}
+p{margin:0}
+b,strong{font-weight:650}
+code{font-family:var(--doc-mono);font-size:.86em;background:var(--doc-sunk);padding:1px 5px;border-radius:4px}
+
+.eyebrow{font-family:var(--doc-disp);font-weight:600;font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--doc-dim);margin:0}
+h1{font-family:var(--doc-disp);font-weight:700;font-size:clamp(40px,6.5vw,62px);line-height:.94;letter-spacing:-.015em;margin:10px 0 0;max-width:14ch;text-wrap:balance}
+.lede{font-size:16.5px;line-height:1.58;color:var(--doc-ink-soft);max-width:66ch;margin-top:16px}
+
+.sec{margin-top:56px;border-top:2px solid var(--doc-ink);padding-top:14px}
+.sec > h2{font-family:var(--doc-disp);font-weight:700;font-size:31px;line-height:1.04;margin:6px 0 0;text-wrap:balance}
+.sec > .sub{font-size:14.5px;color:var(--doc-ink-soft);max-width:74ch;margin-top:7px}
+.body{font-size:14.5px;line-height:1.6;color:var(--doc-ink-soft);max-width:74ch;margin-top:12px}
+
+.note{border-left:3px solid var(--doc-mark);background:var(--doc-mark-soft);padding:11px 15px;border-radius:0 7px 7px 0;font-size:14px;line-height:1.55;max-width:78ch;margin-top:14px}
+.flagbox{border-left:3px solid var(--doc-warn);background:var(--doc-warn-soft);padding:11px 15px;border-radius:0 7px 7px 0;font-size:14px;line-height:1.55;max-width:78ch;margin-top:14px}
+.note b,.flagbox b{color:var(--doc-ink)}
+
+.scrollx{overflow-x:auto;margin-top:16px;padding-bottom:2px}
+table.chk{border-collapse:collapse;font-family:var(--doc-mono);font-size:12.5px;min-width:560px;width:100%}
+table.chk th,table.chk td{padding:6px 11px;border-bottom:1px solid var(--doc-rule);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.chk th{font-family:var(--doc-disp);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--doc-dim);font-weight:700;border-bottom:1px solid var(--doc-rule-hard)}
+table.chk td:first-child,table.chk th:first-child{text-align:left;font-family:var(--doc-sans);font-size:13.5px}
+table.chk td.warn{color:var(--doc-warn);font-weight:600}
+table.chk td.ok{color:var(--doc-mark)}
+table.chk td.say{text-align:left;font-family:var(--doc-sans);font-size:13.5px;white-space:normal;color:var(--doc-ink-soft)}
+
+/* ── Frames holding a true-size product surface ───────────────────────────────────────────── */
+.frame{margin-top:20px}
+.frame-cap{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-family:var(--doc-disp);font-weight:600;font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--doc-dim);margin-bottom:8px}
+.frame-cap .who{color:var(--doc-ink);letter-spacing:.06em}
+.frame-cap .px{font-family:var(--doc-mono);font-size:11px;letter-spacing:0;text-transform:none;color:var(--doc-dim)}
+.stage{overflow-x:auto;background:var(--doc-sunk);border:1px solid var(--doc-rule);border-radius:10px;padding:20px}
+
+.surface{width:992px;font-family:var(--p-sans);color:var(--p-ink);background:var(--p-paper);padding:14px;border-radius:10px}
+.surface.phone{width:390px}
+.surface.page1200{width:1200px}
+
+.tilecard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;padding:.85rem 1rem}
+.ladder{display:flex;align-items:stretch;gap:18px}
+.tile{flex:1 1 0;min-width:0}
+.tile .lab{display:block;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--p-dim);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .val{display:block;font-size:17px;font-weight:700;color:var(--p-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile .val.cash{color:var(--p-win)}
+.tile .val.amber{color:#8A5A12}
+.tile .val.nil{color:var(--p-dim);font-weight:600}
+.tile .sub{display:block;font-size:11px;color:var(--p-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.answer{border-left:1px solid var(--p-line-hard);padding-left:18px}
+.tile.answer .lab{color:var(--p-ink-soft)}
+.tile.answer .val{font-size:19px}
+.tile.answer .val.owed{color:var(--p-win)}
+
+.oldrow{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+
+.strip{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.6rem .85rem;margin-top:10px;border-radius:7px;background:color-mix(in srgb, var(--p-win) 8%, transparent);border:1px solid color-mix(in srgb, var(--p-win) 22%, transparent);font-size:13px;color:var(--p-win)}
+.strip .s-txt{flex:1;min-width:200px}
+.strip .s-btn{background:var(--p-card);border:1px solid var(--p-line-hard);border-radius:6px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--p-ink);font-family:inherit}
+
+/* ── Collapsed variant (desktop) ──────────────────────────────────────────────────────────── */
+.foldcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.foldhead{display:flex;align-items:center;gap:14px;width:100%;padding:12px 16px;background:none;border:0;font-family:inherit;text-align:left;min-height:52px}
+.foldhead .fgrow{flex:1;min-width:0}
+.foldhead .flab{display:block;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--p-dim)}
+.foldhead .fval{display:block;font-size:21px;font-weight:700;color:var(--p-ink);font-variant-numeric:tabular-nums;line-height:1.2}
+.foldhead .fval.owed{color:var(--p-win)}
+.foldhead .fcue{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--p-olive)}
+.chev{width:20px;height:20px;transition:transform .18s ease}
+.foldcard.open .chev{transform:rotate(180deg)}
+.foldbody{border-top:1px solid var(--p-line);padding:14px 16px}
+.foldcard:not(.open) .foldbody{display:none}
+
+/* ── Phone receipt ────────────────────────────────────────────────────────────────────────── */
+.pcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.psum{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;background:none;border:0;text-align:left;font-family:inherit;min-height:52px}
+.psum .plab{display:block;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--p-dim)}
+.psum .pval{display:block;font-size:22px;font-weight:700;color:var(--p-ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.psum .pval.owed{color:var(--p-win)}
+.psum .pgrow{flex:1;min-width:0}
+.psum .phint{display:block;font-size:11.5px;color:var(--p-dim);margin-top:2px}
+.psum .chev{flex:0 0 auto;width:24px;height:24px;color:var(--p-dim)}
+.pcard.open .chev{transform:rotate(180deg)}
+.pbody{border-top:1px solid var(--p-line);padding:4px 14px 12px}
+.pcard:not(.open) .pbody{display:none}
+.prow{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--p-line)}
+.prow:last-child{border-bottom:0}
+.prow .pname{flex:1;min-width:0;font-size:13.5px;color:var(--p-ink-soft)}
+.prow .pnum{font-size:14px;font-weight:600;color:var(--p-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.prow.total{border-top:1px solid var(--p-line-hard);margin-top:4px;padding-top:10px;border-bottom:0}
+.prow.total .pname{color:var(--p-ink);font-weight:650;font-size:14px}
+.prow.total .pnum{font-size:16px;font-weight:700}
+.prow.total .pnum.owed{color:var(--p-win)}
+.psrc{display:block;font-size:11.5px;color:var(--p-dim);margin-top:1px}
+
+/* ── The main dues table, product-true ────────────────────────────────────────────────────── */
+table.dues{width:100%;border-collapse:collapse;background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden;font-size:15px}
+table.dues th{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--p-ink-soft);padding:11px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--p-line-hard);background:var(--p-card)}
+table.dues th:first-child{text-align:left}
+table.dues .amber{color:#8A5A12;font-weight:600}
+table.dues td{padding:11px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--p-line);font-variant-numeric:tabular-nums;color:var(--p-ink)}
+table.dues td:first-child{text-align:left;font-variant-numeric:normal}
+table.dues tr:last-child td{border-bottom:0}
+table.dues .nm{font-weight:500}
+table.dues .sub{display:block;font-size:12px;color:var(--p-dim);margin-top:1px}
+table.dues .green{color:var(--p-win)}
+table.dues .bal{font-weight:700;color:var(--p-olive)}
+table.dues .bal.owed{color:var(--p-win)}
+table.dues .nil{color:var(--p-dim)}
+table.dues .st{font-size:14px}
+table.dues .st.due{color:var(--p-flag);font-weight:600}
+table.dues .st.good{color:var(--p-ink-soft)}
+table.dues .st.cr{color:var(--p-win)}
+table.dues .ch{color:var(--p-dim);width:26px}
+table.dues col.spot{background:rgba(87,101,30,.055)}
+
+/* ── Drawer list sections ─────────────────────────────────────────────────────────────────── */
+.sect{margin-bottom:20px}
+.sect:last-child{margin-bottom:0}
+.sect-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--p-dim);margin-bottom:9px}
+.sect-h .addlink{font-size:12.5px;font-weight:600;color:var(--p-olive);text-transform:none;letter-spacing:0;white-space:nowrap}
+.sect-h .cap{color:var(--p-ink-soft)}
+.rows{display:flex;flex-direction:column;gap:5px}
+.crow{display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:7px;font-size:13.3px;background:rgba(70,55,30,.035);border:1px solid var(--p-line)}
+.crow.receipt{background:var(--p-card)}
+.crow .amt{font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--p-win)}
+.crow .amt.plain{color:var(--p-ink-soft)}
+.crow .desc{flex:1;min-width:0;color:var(--p-ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow .meta{color:var(--p-dim);font-size:12px;flex-shrink:0}
+.crow .btns{display:flex;gap:5px;flex-shrink:0}
+.crow .ib{width:26px;height:26px;border-radius:6px;border:1px solid var(--p-line-hard);background:var(--p-card);color:var(--p-dim);font-size:12px;display:flex;align-items:center;justify-content:center}
+
+table.map{border-collapse:collapse;font-size:14px;margin-top:14px;width:100%;max-width:640px}
+table.map td{padding:7px 12px;border-bottom:1px solid var(--doc-rule);vertical-align:top}
+table.map td:first-child{font-family:var(--doc-disp);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--doc-ink);white-space:nowrap}
+table.map td:last-child{color:var(--doc-ink-soft);font-family:var(--doc-mono);font-size:12.5px}
+table.map tr:last-child td{border-bottom:0}
+
+.pair{display:grid;gap:20px;grid-template-columns:1fr}
+@media (min-width:980px){ .pair.two{grid-template-columns:1fr 1fr} }
+
+.dec{counter-reset:d;display:flex;flex-direction:column;gap:2px;margin-top:18px;background:var(--doc-rule);border:1px solid var(--doc-rule);border-radius:9px;overflow:hidden;padding:0}
+.dec > li{counter-increment:d;list-style:none;background:var(--doc-card);padding:13px 16px 14px 46px;position:relative;font-size:14.5px;line-height:1.55;color:var(--doc-ink-soft)}
+.dec > li::before{content:counter(d);position:absolute;left:16px;top:13px;font-family:var(--doc-disp);font-weight:700;font-size:16px;color:var(--doc-mark)}
+.dec > li b{color:var(--doc-ink)}
+.settled{display:inline-block;margin-left:6px;font-family:var(--doc-disp);font-weight:600;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--doc-mark);border:1px solid var(--doc-mark);border-radius:99px;padding:1px 8px;vertical-align:1px}
+.settled.open{color:var(--doc-warn);border-color:var(--doc-warn)}
+
+footer{margin-top:60px;border-top:1px solid var(--doc-rule);padding-top:15px;display:flex;flex-wrap:wrap;gap:6px 24px;font-family:var(--doc-mono);font-size:11.5px;color:var(--doc-dim)}
+:focus-visible{outline:2px solid var(--doc-mark);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} .stage{padding:12px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Mockup, round 2 · Coaches portal → Money → Player Dues</p>
+  <h1>The dues ladder</h1>
+  <p class="lede">Five figures that read left to right, in the drawer <em>and</em> on the table
+    behind it. No operators between them — the order and the rule before Balance carry it.
+    Everything below is true size, on all twelve real families off the fixture.</p>
+</header>
+
+<!-- ═══════════════ THE CORRECTION ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-warn)">Read this first</p>
+  <h2>Your screenshot corrected me, and it makes the case sharper</h2>
+
+  <p class="body">I told you three families "break" without a Handed back term. That came from raw
+    stored figures, <b>not from the screen</b> — and the screen already ties. Your Player Dues table
+    proves it: Blake reads <code>$970.83 − $176.98 − $625.00 = $168.85</code>, and it balances. The
+    product is already netting payouts away, quietly, inside the columns you can see.</p>
+
+  <p class="body">So the sixth column isn't needed to make the arithmetic work. <b>It's needed to stop
+    two columns lying once we name them.</b> Here is what the netting is actually doing:</p>
+
+  <div class="scrollx"><table class="chk">
+    <thead><tr><th>Family</th><th>What happened</th><th>Screen says</th><th>Truth</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Blake</td>
+        <td class="say">Raised <b>$150.00</b> on the Bottle Drive, took <b>$100.00</b> of it back in cash</td>
+        <td class="warn">Credits ($176.98)</td>
+        <td class="say">$50.00 of that rebate is still working. A column headed <b>Fundraising</b> would say <b>$50.00</b> while the fundraiser screen says he raised $150.00</td>
+      </tr>
+      <tr>
+        <td>Logan</td>
+        <td class="say">Sponsorship of <b>$300.00</b>, took <b>$200.00</b> back</td>
+        <td class="warn">Credits ($100.00)</td>
+        <td class="say">Same shape — <b>Fundraising</b> would read $100.00 against a $300.00 sponsorship</td>
+      </tr>
+      <tr>
+        <td>Casey</td>
+        <td class="say">Sent <b>$1,200.00</b>, was handed <b>$300.00</b> back</td>
+        <td class="warn">Paid $900.00</td>
+        <td class="say">§148 ruled that <b>Paid shows what the family actually sent</b>. Casey sent $1,200.00. This column already contradicts its own definition</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b>So going gross doesn't break anything — it repairs something.</b> Show what
+    each family raised and sent, put the money handed back in its own column, and every figure means
+    what its heading says. All twelve rows still tie, and <b>not one balance moves</b>.</div>
+
+  <p class="body">Which credit a payout eats is arbitrary, too: it consumes them oldest-first, so
+    Blake's payout landed on the Bottle Drive rebate purely because that rebate happened to be dated
+    before his other two credits. Splitting Credits in two is what makes that arbitrariness
+    <em>visible</em> — today it's buried in one number nobody reconciles.</p>
+</section>
+
+<!-- ═══════════════ THE TABLE ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">Player Dues · Season totals · 1200px</p>
+  <h2>The breakdown on the main table</h2>
+  <p class="sub">Credits splits into <b>Fundraising</b> and <b>Other credits</b>; <b>Handed back</b>
+    joins them, and the whole column disappears when nobody on the roster has been paid out. Read
+    left to right, every row lands on its balance.</p>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Today</span> <span class="px">4 money columns</span></p>
+    <div class="stage"><div class="surface page1200">
+      <table class="dues">
+        <thead><tr><th>Player</th><th>Total dues</th><th>Credits</th><th>Paid</th><th>Balance</th><th style="text-align:left">Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="nm">Avery Test</span><span class="sub">sent $550.00 more than billed</span></td><td>$700.00</td><td class="green">($578.15)</td><td class="green">$1,250.00</td><td class="bal owed">($1,128.15)</td><td class="st cr" style="text-align:left">Overpaid</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Blake Test</td><td>$970.83</td><td class="green">($176.98)</td><td class="green">$625.00</td><td class="bal">$168.85</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Casey Test</td><td>$900.00</td><td class="green">($37.50)</td><td class="green">$900.00</td><td class="bal owed">($37.50)</td><td class="st cr" style="text-align:left">In credit</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Logan Test</td><td>$970.83</td><td class="green">($100.00)</td><td class="nil">$0.00</td><td class="bal">$870.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--p-dim);margin-top:8px">The four families the change touches. The other eight have no payout and no overpayment — their rows are identical either way.</p>
+    </div></div>
+    <div class="flagbox"><b>Three numbers here are not what their headings say.</b> Blake's Credits
+      hides $100 of Bottle Drive money he already took home. Logan's hides $200. Casey's Paid says
+      $900 when Casey sent $1,200.</div>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="px">6 money columns · Handed back only renders because Blake, Casey and Logan have payouts</span></p>
+    <div class="stage"><div class="surface page1200">
+      <table class="dues">
+        <colgroup><col><col><col class="spot"><col class="spot"><col><col class="spot"><col><col><col></colgroup>
+        <thead><tr><th>Player</th><th>Dues</th><th>Fundraising</th><th>Other credits</th><th>Paid</th><th>Handed back</th><th>Balance</th><th style="text-align:left">Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="nm">Avery Test</span></td><td>$700.00</td><td class="green">$198.15</td><td class="green">$380.00</td><td class="green">$1,250.00</td><td class="nil">—</td><td class="bal owed">($1,128.15)</td><td class="st cr" style="text-align:left">Overpaid</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Blake Test</td><td>$970.83</td><td class="green">$150.00</td><td class="green">$126.98</td><td class="green">$625.00</td><td class="amber">$100.00</td><td class="bal">$168.85</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Casey Test</td><td>$900.00</td><td class="green">$37.50</td><td class="nil">—</td><td class="green">$1,200.00</td><td class="amber">$300.00</td><td class="bal owed">($37.50)</td><td class="st cr" style="text-align:left">In credit</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Devon Test</td><td>$970.83</td><td class="green">$27.00</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$943.83</td><td class="st due" style="text-align:left">⚠ Past due</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Emerson Test</td><td>$970.83</td><td class="nil">—</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$970.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Frankie Test</td><td>$970.83</td><td class="green">$40.00</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$930.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Gray Test</td><td>$970.83</td><td class="green">$125.00</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$845.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Harper Test</td><td>$970.83</td><td class="nil">—</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$970.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Indigo Test</td><td>$970.83</td><td class="nil">—</td><td class="green">$240.00</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$730.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Jules Test</td><td>$970.83</td><td class="green">$125.00</td><td class="nil">—</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$845.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Kai Test</td><td>$970.83</td><td class="green">$200.00</td><td class="green">$700.00</td><td class="nil">$0.00</td><td class="nil">—</td><td class="bal">$70.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+          <tr><td class="nm">Logan Test</td><td>$970.83</td><td class="green">$300.00</td><td class="nil">—</td><td class="nil">$0.00</td><td class="amber">$200.00</td><td class="bal">$870.83</td><td class="st good" style="text-align:left">Up to date</td><td class="ch">›</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--p-dim);margin-top:8px">Highlight is mine, marking the three new columns — it is not part of the design.</p>
+    </div></div>
+  </div>
+
+  <p class="body"><b>Balances are untouched — all twelve.</b> That is the one promise this cannot
+    break, and it holds because nothing is being re-derived: one column is being split into three and
+    two are being un-netted. Statuses are untouched too. Jules, Kai and Logan sit below the fold in
+    your screenshot, so their status is inferred from their balance; every figure is live.</p>
+
+  <div class="note"><b>Nine columns fit 1200px with room.</b> The widest row is Avery's, and the
+    money columns need about 100px each. On the 641–768 tablet band and below, the table already
+    becomes cards — the phone treatment further down is what those cards would carry.</div>
+
+  <div class="flagbox"><b>The one thing I don't love, and you should decide it:</b> with no
+    <code>+</code> in front of it, <b>Handed back</b> looks like another deduction when it is the one
+    figure that pushes a balance <em>up</em>. On Blake's row it reads as though $100 came off. Two
+    fixes that don't reintroduce operators: keep it immediately left of Balance so it reads as the
+    last adjustment (done above), or draw it in the amber the portal uses for money owed rather than
+    the green used for money in. I'd do the second.</div>
+</section>
+
+<!-- ═══════════════ THE DRAWER ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">The player drawer · 992px</p>
+  <h2>The same five figures, one family deep</h2>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Today</span> <span class="who">Avery Test</span></p>
+    <div class="stage"><div class="surface">
+      <div class="tilecard">
+        <div class="oldrow">
+          <div class="tile"><span class="lab">Total dues</span><span class="val">$700.00</span></div>
+          <div class="tile"><span class="lab">After fundraising</span><span class="val">$700.00</span></div>
+          <div class="tile"><span class="lab">Paid</span><span class="val cash">$1,250.00</span></div>
+          <div class="tile"><span class="lab">Left to send</span><span class="val">$0.00</span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="body"><b>$700 → $700.</b> The step that should carry her fundraising says nothing
+      happened. $198.15 happened; it landed in what the team owes her, because her cash had already
+      settled every instalment.</p>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="who">Avery Test</span> <span class="px">5 tiles · no payout, so no Handed back</span></p>
+    <div class="stage"><div class="surface">
+      <div class="tilecard">
+        <div class="ladder">
+          <div class="tile"><span class="lab">Dues</span><span class="val">$700.00</span></div>
+          <div class="tile"><span class="lab">Fundraising</span><span class="val cash">$198.15</span></div>
+          <div class="tile"><span class="lab">Other credits</span><span class="val cash">$380.00</span></div>
+          <div class="tile"><span class="lab">Paid</span><span class="val cash">$1,250.00</span></div>
+          <div class="tile answer"><span class="lab">Balance</span><span class="val owed">($1,128.15)</span></div>
+        </div>
+      </div>
+      <div class="strip">
+        <span class="s-txt">The team is holding $1,128.15 for this family — $550.00 of it their own, the rest from credits.</span>
+        <button class="s-btn" type="button">Record</button>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="who">Blake Test</span> <span class="px">6 tiles · the payout case</span></p>
+    <div class="stage"><div class="surface">
+      <div class="tilecard">
+        <div class="ladder">
+          <div class="tile"><span class="lab">Dues</span><span class="val">$970.83</span></div>
+          <div class="tile"><span class="lab">Fundraising</span><span class="val cash">$150.00</span></div>
+          <div class="tile"><span class="lab">Other credits</span><span class="val cash">$126.98</span></div>
+          <div class="tile"><span class="lab">Paid</span><span class="val cash">$625.00</span></div>
+          <div class="tile"><span class="lab">Handed back</span><span class="val amber">$100.00</span></div>
+          <div class="tile answer"><span class="lab">Balance</span><span class="val">$168.85</span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="body">Six tiles, one line each, all the same height. <b>Handed back is amber</b> — the
+      only figure in the row that pushes the balance up, and the only one not drawn in the green the
+      portal uses for money coming in.</p>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="who">Emerson Test</span> <span class="px">nothing raised, nothing sent — zeros kept, your call</span></p>
+    <div class="stage"><div class="surface">
+      <div class="tilecard">
+        <div class="ladder">
+          <div class="tile"><span class="lab">Dues</span><span class="val">$970.83</span></div>
+          <div class="tile"><span class="lab">Fundraising</span><span class="val nil">$0.00</span></div>
+          <div class="tile"><span class="lab">Other credits</span><span class="val nil">$0.00</span></div>
+          <div class="tile"><span class="lab">Paid</span><span class="val nil">$0.00</span></div>
+          <div class="tile answer"><span class="lab">Balance</span><span class="val">$970.83</span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="body">Zeros drawn in the quiet ink rather than the full black, so a family who has done
+      nothing yet reads as three blanks and a bill rather than four competing figures.</p>
+  </div>
+</section>
+
+<!-- ═══════════════ THE LISTS ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">Your idea · the drawer's lists · 992px</p>
+  <h2>One section per tile, each with its total</h2>
+
+  <p class="body">Yes — and the pattern is already two-thirds built, which is the argument for
+    finishing it. <b>Payments</b> already reads <em>"— $1,250.00 received"</em>. <b>Paid out</b>
+    already reads <em>"— $100.00 handed back"</em>. <b>Credits is the only section with a bare
+    header</b>, and it is also the only one holding three unrelated things. Splitting it fixes both
+    at once.</p>
+
+  <p class="body">What that buys is bigger than a total: <b>the tile row becomes a table of contents
+    for the drawer.</b> Every figure at the top has exactly one section beneath it, with the same
+    number in its header, and the records that produced it inside.</p>
+
+  <table class="map">
+    <tr><td>Dues</td><td>the instalment table</td></tr>
+    <tr><td>Fundraising</td><td>Fundraising — $198.15 raised</td></tr>
+    <tr><td>Other credits</td><td>Other credits — $380.00</td></tr>
+    <tr><td>Paid</td><td>Payments — $1,250.00 received</td></tr>
+    <tr><td>Handed back</td><td>Paid out — $100.00 handed back</td></tr>
+  </table>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Today</span> <span class="who">Avery Test</span> <span class="px">one list, six rows, no total</span></p>
+    <div class="stage"><div class="surface">
+      <div class="sect">
+        <div class="sect-h"><span>Payments — $1,250.00 received</span></div>
+        <div class="rows">
+          <div class="crow receipt"><span class="amt">$625.00</span><span class="desc">Other · Migrated from installment #1 marked paid</span><span class="meta">Aug 13, 2026</span><span class="btns"><span class="ib">✎</span><span class="ib">🗑</span></span></div>
+          <div class="crow receipt"><span class="amt">$625.00</span><span class="desc">Other · Migrated from installment #2 marked paid</span><span class="meta">Aug 13, 2026</span><span class="btns"><span class="ib">✎</span><span class="ib">🗑</span></span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Credits</span><span class="addlink">+ Add a credit</span></div>
+        <div class="rows">
+          <div class="crow"><span class="amt">($550.00)</span><span class="desc">Overpayment (dues changed)</span><span class="meta">Follows the schedule</span></div>
+          <div class="crow"><span class="amt">($72.90)</span><span class="desc">Fundraiser credit — Chocolate sale</span><span class="meta">Fundraiser · Aug 31, 2026</span></div>
+          <div class="crow"><span class="amt">($180.00)</span><span class="desc">Paid out of pocket — Umpire fees — a parent paid the association direct</span><span class="meta">Reimbursement · Aug 20, 2026</span></div>
+          <div class="crow"><span class="amt">($50.00)</span><span class="desc">Sponsorship — Northside Physio</span><span class="meta">Fundraiser · Jun 14, 2026</span></div>
+          <div class="crow"><span class="amt">($200.00)</span><span class="desc">Paid out of pocket — Summer showcase entry — a parent fronted the deposit</span><span class="meta">Reimbursement · May 14, 2026</span></div>
+          <div class="crow"><span class="amt">($75.25)</span><span class="desc">Sponsorship — Northside Physio</span><span class="meta">Fundraiser · May 10, 2026</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="flagbox"><b>Six rows, one heading, three unrelated things — and no total anywhere.</b>
+      A coach adding this list up gets $1,128.15, a figure that appears in no tile on the screen,
+      because $550 of it is the family's own money that lives inside Paid.</div>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="who">Avery Test</span> <span class="px">sections in ladder order</span></p>
+    <div class="stage"><div class="surface">
+      <div class="sect">
+        <div class="sect-h"><span>Fundraising — $198.15 raised</span></div>
+        <div class="rows">
+          <div class="crow"><span class="amt">($72.90)</span><span class="desc">Fundraiser credit — Chocolate sale</span><span class="meta">Aug 31, 2026</span></div>
+          <div class="crow"><span class="amt">($50.00)</span><span class="desc">Sponsorship — Northside Physio</span><span class="meta">Jun 14, 2026</span></div>
+          <div class="crow"><span class="amt">($75.25)</span><span class="desc">Sponsorship — Northside Physio</span><span class="meta">May 10, 2026</span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Other credits — $380.00</span><span class="addlink">+ Add a credit</span></div>
+        <div class="rows">
+          <div class="crow"><span class="amt">($180.00)</span><span class="desc">Paid out of pocket — Umpire fees — a parent paid the association direct</span><span class="meta">Reimbursement · Aug 20, 2026</span></div>
+          <div class="crow"><span class="amt">($200.00)</span><span class="desc">Paid out of pocket — Summer showcase entry — a parent fronted the deposit</span><span class="meta">Reimbursement · May 14, 2026</span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Payments — $1,250.00 received <span class="cap">· $550.00 more than billed</span></span></div>
+        <div class="rows">
+          <div class="crow receipt"><span class="amt">$625.00</span><span class="desc">Other · Migrated from installment #1 marked paid</span><span class="meta">Aug 13, 2026</span><span class="btns"><span class="ib">✎</span><span class="ib">🗑</span></span></div>
+          <div class="crow receipt"><span class="amt">$625.00</span><span class="desc">Other · Migrated from installment #2 marked paid</span><span class="meta">Aug 13, 2026</span><span class="btns"><span class="ib">✎</span><span class="ib">🗑</span></span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="body">Three things happened there. The <b>Fundraiser ·</b> prefix left every row in the
+      Fundraising section — the heading says it now, so repeating it on each line was the same word
+      twice. The <b>Reimbursement ·</b> prefix stayed in Other credits, because that section really
+      is mixed. And <b>the $550 overpayment row is gone</b> — see below.</p>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Proposed</span> <span class="who">Blake Test</span> <span class="px">the payout case — four sections</span></p>
+    <div class="stage"><div class="surface">
+      <div class="sect">
+        <div class="sect-h"><span>Fundraising — $150.00 raised</span></div>
+        <div class="rows">
+          <div class="crow"><span class="amt">($150.00)</span><span class="desc">Fundraiser rebate — Bottle Drive</span><span class="meta">Aug 14, 2026</span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Other credits — $126.98</span><span class="addlink">+ Add a credit</span></div>
+        <div class="rows">
+          <div class="crow"><span class="amt">($67.00)</span><span class="desc">bat</span><span class="meta">Contribution · Sep 30, 2026</span></div>
+          <div class="crow"><span class="amt">($59.98)</span><span class="desc">Paid out of pocket — Socks</span><span class="meta">Reimbursement · Sep 2, 2026</span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Payments — $625.00 received</span></div>
+        <div class="rows">
+          <div class="crow receipt"><span class="amt">$625.00</span><span class="desc">E-transfer</span><span class="meta">Aug 13, 2026</span><span class="btns"><span class="ib">✎</span><span class="ib">🗑</span></span></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-h"><span>Paid out — $100.00 handed back</span></div>
+        <div class="rows">
+          <div class="crow receipt"><span class="amt plain">($100.00)</span><span class="desc">E-transfer</span><span class="meta">Aug 23, 2026</span><span class="btns"><span class="ib">🗑</span></span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="body">Four sections, four totals, and each one is a tile at the top of the drawer. Note
+      the last section already exists and already says <b>"handed back"</b> — the word I proposed for
+      the tile is the product's own, which is one less piece of vocabulary to invent.</p>
+  </div>
+
+  <h2 style="font-size:22px;margin-top:34px">The overpayment row becomes a caption</h2>
+  <p class="body">Avery's <b>($550.00) Overpayment (dues changed)</b> row has no date, no pencil, no
+    bin and no link to anything — it is derived from the schedule and the payments, which is why it
+    says <em>"Follows the schedule"</em> instead of a day. <b>It is a caption wearing a row's
+    costume.</b> Under the ladder there is no tile for it, because that money is inside Paid — so
+    giving it a section would break the one-section-per-tile rule on its first day.</p>
+  <p class="body">So it moves into the Payments heading: <b>Payments — $1,250.00 received · $550.00
+    more than billed</b>. Same fact, in the section where the money actually is, and the CREDITS list
+    stops containing the family's own money — which is the last unfinished corner of §148.</p>
+  <div class="note"><b>What we'd want to keep:</b> hovering that row today explains <em>"change the
+    dues total to change it"</em>. The caption needs to carry that too, or a coach loses the only
+    place the screen says how to move the figure.</div>
+
+  <div class="flagbox"><b>An edge case this turned up, and it needs deciding.</b> A coach can add a
+    credit by hand and pick <em>Overpayment</em> as its kind. That row is not a payment record, so
+    under a strict reading it would belong to no tile and no section — it would vanish from the
+    screen while still moving the balance. Fix: <b>Other credits holds everything that isn't
+    fundraising and isn't the engine's own schedule credit</b>, so a hand-typed overpayment lands
+    there. Honest, too — it is a credit a coach asserted, not money the family sent.</div>
+</section>
+
+<!-- ═══════════════ THE FOLD YOU ASKED TO SEE ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">You asked to see this · 992px</p>
+  <h2>The collapsed desktop version</h2>
+  <p class="sub">Balance first, working behind a chevron — the phone pattern moved onto a desktop.
+    <b>Both cards are live; click them.</b> You said you lean towards not hiding, and having built
+    it, I agree — here is why.</p>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Shut</span> <span class="who">Avery Test</span></p>
+    <div class="stage"><div class="surface">
+      <div class="foldcard" id="fc1">
+        <button class="foldhead" type="button" aria-expanded="false" aria-controls="fb1" data-toggle="fc1">
+          <span class="fgrow"><span class="flab">Balance</span><span class="fval owed">($1,128.15)</span></span>
+          <span class="fcue">Show the working
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </button>
+        <div class="foldbody" id="fb1">
+          <div class="ladder">
+            <div class="tile"><span class="lab">Dues</span><span class="val">$700.00</span></div>
+            <div class="tile"><span class="lab">Fundraising</span><span class="val cash">$198.15</span></div>
+            <div class="tile"><span class="lab">Other credits</span><span class="val cash">$380.00</span></div>
+            <div class="tile"><span class="lab">Paid</span><span class="val cash">$1,250.00</span></div>
+            <div class="tile answer"><span class="lab">Balance</span><span class="val owed">($1,128.15)</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="frame">
+    <p class="frame-cap"><span>Open</span> <span class="who">Blake Test</span></p>
+    <div class="stage"><div class="surface">
+      <div class="foldcard open" id="fc2">
+        <button class="foldhead" type="button" aria-expanded="true" aria-controls="fb2" data-toggle="fc2">
+          <span class="fgrow"><span class="flab">Balance</span><span class="fval">$168.85</span></span>
+          <span class="fcue">Show the working
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </button>
+        <div class="foldbody" id="fb2">
+          <div class="ladder">
+            <div class="tile"><span class="lab">Dues</span><span class="val">$970.83</span></div>
+            <div class="tile"><span class="lab">Fundraising</span><span class="val cash">$150.00</span></div>
+            <div class="tile"><span class="lab">Other credits</span><span class="val cash">$126.98</span></div>
+            <div class="tile"><span class="lab">Paid</span><span class="val cash">$625.00</span></div>
+            <div class="tile"><span class="lab">Handed back</span><span class="val amber">$100.00</span></div>
+            <div class="tile answer"><span class="lab">Balance</span><span class="val">$168.85</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="flagbox"><b>Three reasons I'd not ship this on desktop.</b> Shut, it is a worse version
+    of the table row the coach just clicked — they opened the drawer <em>to</em> see the breakdown,
+    and it makes them click again. It costs 52px of vertical space to say one number that is already
+    on the row behind it. And it puts the drawer's most useful content behind a control the layout
+    sweep can't see inside, which is the fold trap this portal has hit before. On a phone it earns
+    its keep because there is no room; on a 992px drawer there is.</div>
+</section>
+
+<!-- ═══════════════ PHONE ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">Phone · 390px</p>
+  <h2>The balance, and the working behind it</h2>
+  <p class="sub">Operators gone here too — the figures stack, each names its source, and the rule
+    above Balance does the work the <code>=</code> was doing. <b>Both cards are live.</b></p>
+
+  <div class="pair two">
+    <div class="frame">
+      <p class="frame-cap"><span>Shut</span> <span class="who">Avery — owed money back</span></p>
+      <div class="stage"><div class="surface phone">
+        <div class="pcard" id="pc1">
+          <button class="psum" type="button" aria-expanded="false" aria-controls="pb1" data-toggle="pc1">
+            <span class="pgrow">
+              <span class="plab">Balance</span>
+              <span class="pval owed">($1,128.15)</span>
+              <span class="phint">Owed back to this family</span>
+            </span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="pbody" id="pb1">
+            <div class="prow"><span class="pname">Dues</span><span class="pnum">$700.00</span></div>
+            <div class="prow"><span class="pname">Fundraising<span class="psrc">Chocolate sale · 2 sponsorships</span></span><span class="pnum">$198.15</span></div>
+            <div class="prow"><span class="pname">Other credits<span class="psrc">Umpire fees · showcase deposit</span></span><span class="pnum">$380.00</span></div>
+            <div class="prow"><span class="pname">Paid<span class="psrc">2 payments received</span></span><span class="pnum">$1,250.00</span></div>
+            <div class="prow total"><span class="pname">Balance</span><span class="pnum owed">($1,128.15)</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="frame">
+      <p class="frame-cap"><span>Open</span> <span class="who">Blake — with a payout</span></p>
+      <div class="stage"><div class="surface phone">
+        <div class="pcard open" id="pc2">
+          <button class="psum" type="button" aria-expanded="true" aria-controls="pb2" data-toggle="pc2">
+            <span class="pgrow">
+              <span class="plab">Balance</span>
+              <span class="pval">$168.85</span>
+              <span class="phint">Still to send</span>
+            </span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="pbody" id="pb2">
+            <div class="prow"><span class="pname">Dues</span><span class="pnum">$970.83</span></div>
+            <div class="prow"><span class="pname">Fundraising<span class="psrc">Bottle Drive rebate</span></span><span class="pnum">$150.00</span></div>
+            <div class="prow"><span class="pname">Other credits<span class="psrc">Contribution · socks paid out of pocket</span></span><span class="pnum">$126.98</span></div>
+            <div class="prow"><span class="pname">Paid<span class="psrc">1 payment received</span></span><span class="pnum">$625.00</span></div>
+            <div class="prow"><span class="pname">Handed back<span class="psrc">Paid out in cash, 23 Aug</span></span><span class="pnum">$100.00</span></div>
+            <div class="prow total"><span class="pname">Balance</span><span class="pnum">$168.85</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ WHAT COMES OUT ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">Two things this lets us delete</p>
+  <h2>The explanations stop earning their place</h2>
+
+  <h2 style="font-size:22px;margin-top:22px">The row's sub-line goes</h2>
+  <p class="body"><b>"sent $550.00 more than billed"</b> was the right fix for a four-column table
+    and it is redundant in a six-column one. On the new row, <b>Paid $1,250.00</b> sits on the same
+    line as <b>Dues $700.00</b> and the Status column already reads <b>Overpaid</b> — the sentence
+    was saying out loud what two figures now say by sitting next to each other.</p>
+  <p class="body">There is a better reason than redundancy, though. <b>The sentence and its figure
+    disagree for a family who has been paid out.</b> It says <em>sent</em>, but the number behind it
+    is what the team is <em>still holding</em>. Casey sent $300 more than billed and got every dollar
+    back, so the line correctly stays away — while saying "sent" about a figure that means
+    "held". With the columns, Casey simply reads <b>Paid $1,200.00 · Handed back $300.00</b> and no
+    prose has to thread that needle.</p>
+  <div class="note"><b>Worth recording rather than just doing.</b> That sub-line is one of §148's two
+    visible deliverables and it shipped three days ago. This supersedes it rather than reverses it —
+    the columns do the job the sentence was invented to do — but the ledger should say so, or it
+    reads as drift later.</div>
+
+  <h2 style="font-size:22px;margin-top:30px">The tile captions go</h2>
+  <p class="body">"Bottle Drive rebate", "Contribution · socks", "1 payment", "Paid out in cash" —
+    each is a lossy summary of a section sitting a few centimetres below it, which now carries the
+    same total in its heading and every record in full. Avery's Fundraising has three sources; a
+    caption could only ever say "3 sources" or truncate to one of them.</p>
+  <p class="body">It also fixes something visible in the row itself: <b>tiles with a caption are
+    taller than tiles without</b>, so Dues and Balance sat short while the middle four sat tall. One
+    line each, all the same height.</p>
+
+  <div class="flagbox"><b>One place I'd keep them, and you should overrule me if you disagree.</b>
+    The <b>phone</b> receipt. On a desktop the sections are a glance away; on a phone they are a full
+    screen of scrolling below, and that receipt is the only place the whole picture fits at once.
+    Different distance, different answer — not an inconsistency.</div>
+</section>
+
+<!-- ═══════════════ WHERE WE ARE ═══════════════ -->
+<section class="sec">
+  <p class="eyebrow" style="color:var(--doc-mark)">Where we are</p>
+  <h2>Settled, and the three left</h2>
+
+  <ol class="dec">
+    <li><b>Six terms, Handed back hiding at zero</b><span class="settled">settled</span><br>
+      On the table it hides as a whole column when nobody on the roster has a payout; in the drawer
+      it hides per family.</li>
+    <li><b>"Other credits" for the third figure</b><span class="settled">settled</span></li>
+    <li><b>Zero terms stay visible</b><span class="settled">settled</span><br>
+      Drawn in the quiet ink so an empty family doesn't shout.</li>
+    <li><b>Desktop stays expanded, no chevron</b><span class="settled">settled</span><br>
+      Built it above, and it made the case against itself.</li>
+    <li><b>No operators between the figures</b><span class="settled">settled</span></li>
+    <li><b>Handed back drawn in amber, not green</b><span class="settled">settled</span><br>
+      Colour carries the direction, so no operator has to.</li>
+    <li><b>Paid goes gross — Casey reads $1,200.00, not $900.00</b><span class="settled">settled</span><br>
+      The only figure on a shipped screen that changes value. It is a correction to §148's own
+      definition, and no balance moves.</li>
+    <li><b>The drawer breaks into one section per tile, each with its total</b><span class="settled">settled</span><br>
+      Fundraising, Other credits, Payments, Paid out. The overpayment row becomes a caption on
+      Payments; a hand-typed overpayment credit falls into Other credits.</li>
+    <li><b>Sections mirror the ladder — Payments sits below the two credit sections</b><span class="settled">settled</span></li>
+    <li><b>The Payments caption carries the "change the dues total to change it" hover</b><span class="settled">settled</span></li>
+    <li><b>The row's "sent $550.00 more than billed" sub-line is removed</b><span class="settled">settled</span></li>
+    <li><b>The drawer's tile captions are removed — desktop only</b><span class="settled">settled</span><br>
+      The phone receipt keeps its per-line sources, because there the sections are a screen away.</li>
+  </ol>
+
+  <div class="note"><b>Nothing here moves a balance.</b> Twelve families, checked against the twelve
+    on your screen. That is the invariant §148 was built around and it survives this intact. The one
+    figure that changes value anywhere is Casey's <b>Paid</b>, from $900.00 to the $1,200.00 they
+    actually sent.</div>
+</section>
+
+<footer>
+  <span>Mockup round 2 · dues ladder</span><span>All figures live off dev · UAT Test Team</span>
+  <span>Table 1200px · drawer 992px · phone 390px</span><span>2026-09-06</span>
+</footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('[data-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var card = document.getElementById(btn.dataset.toggle);
+      var open = card.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var cue = btn.querySelector('.fcue');
+      if (cue) cue.childNodes[0].nodeValue = open ? 'Hide the working ' : 'Show the working ';
+    });
+  });
+})();
+</script>

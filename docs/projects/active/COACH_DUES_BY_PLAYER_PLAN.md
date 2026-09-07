@@ -172,10 +172,10 @@ said in the note, never shown as a negative plan.
 | **D3** | Does "Expand all" open it? | **YES — owner overruled the recommendation.** *"Clicking expand all and keeping anything closed deviates from what that button means."* Still collapsed by default. |
 | **D4** | Credits: note, or netted? | **Netted into the planned figure, AND a note** — external credits only, net of payouts (§5.3). |
 | **D5** | Who may open it? | **Anyone with money access.** Owner: *"anyone with money access can see every money screen."* No new permission concept; the fold inherits money access like every other money surface. |
-| **D6** | Two screens, one family, two numbers | **BUILT on dev 2026-09-06.** See below. |
+| **D6** | Two screens, one family, two numbers | **✅ BUILT + WALKED 28/28 (ledger §148).** See below. |
 | **D7** | The Credits column vs the records | **CLOSED — not a bug.** See below. |
 
-### D6 — split the family's own money out of "Credits" *(BUILT on dev 2026-09-06, uncommitted)*
+### D6 — split the family's own money out of "Credits" *(✅ SHIPPED + QA PASSED 28/28, 2026-09-07 — ledger §148)*
 
 The round-2 recommendation ("the Dues tab should stop capping") is **withdrawn**. The cap is
 deliberate: an overpayment is auto-converted to a credit, and the cap stops it being counted as both
@@ -224,7 +224,7 @@ two families would have been chased for money they do not owe.**
 
 ## 7. Build order
 
-1. **Split the family's own money out of "Credits" on the Dues tab (D6, pending yes).** The two
+1. ✅ **DONE — split the family's own money out of "Credits" on the Dues tab (D6).** Walked 28/28, zero defects, 2026-09-07 (ledger §148). The two
    screens must agree on what a family sent before either starts showing it per family.
 2. **Net external credits into the dues row on the report — on its own, shipped as its own change.**
    Total revenue moves by $2,349.63; that must be visible as one thing rather than buried inside a

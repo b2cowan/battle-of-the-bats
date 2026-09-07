@@ -2121,24 +2121,20 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    ten rows that have nothing to add stay silent — this renders only when there is something to
    say. If it ever earns a colour, that is a different element and a different ruling. */
 /* ⚠ THE MARKER FOR "THIS ROW HOLDS A SECOND LINE" — table standard §3.1, owner A-01. Every caption
-   class that renders a second line inside a list cell composes it (`.rowSubNote`, `.listRowSub`,
+   class that renders a second line inside a list cell composes it (`.listRowSub`,
    `.guardianStack`, `.payBillMeta`, `.payPieceMeta`), and the density rule beside `.td` reads
    ONLY this marker. A sixth caption composes it and is comfortable without anyone touching the
    rule; a caption that forgets is the one visible mistake. The declaration is a no-op that every
    caption already holds — CSS Modules needs the class to exist. */
 .rowCaption { min-width: 0; }
-.rowSubNote {
-  composes: rowCaption;
-  display: block;
-  margin-top: 0.12rem;
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--text-tertiary);
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: normal;
-  line-height: 1.35;
-}
+/* ⚰ `.rowSubNote` LIVED HERE UNTIL 2026-09-07. Its only consumer was the dues table's
+   "sent $550.00 more than billed" line, which the dues ladder retired — six money columns say it
+   without prose — so the class became dead and check:css-selectors is right to refuse it.
+   ⚠ THE APP-WIDE TABLE CONSISTENCY PLAN NAMES IT in a `.tr:has(.rowSubNote)` density rule that is
+   planned but NOT YET BUILT. Re-declare it here (composing `.rowCaption`, like its four siblings)
+   the moment a surface renders a second line in a list cell again; the shape above was:
+   display:block · margin-top .12rem · --type-support · weight 400 · --text-tertiary ·
+   letter-spacing 0 · text-transform none · white-space normal · line-height 1.35. */
 .insightsSeasonStatLbl { font-size: var(--type-support); color: var(--text-tertiary); }
 /* Overview safety-tier bridge line (the one finding that crosses dashboards). */
 .insightsBridge { display: flex; align-items: baseline; gap: 0.4rem; font-size: var(--type-body); color: var(--text-tertiary); margin: 0.6rem 0 0; }

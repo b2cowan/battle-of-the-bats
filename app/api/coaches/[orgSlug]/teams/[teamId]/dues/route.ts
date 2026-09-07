@@ -22,7 +22,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { outstandingForSchedule } from '@/lib/dues-status';
-import { duesPaidAmount, splitFamilyOwnMoney } from '@/lib/dues-payments';
+import { duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
@@ -197,6 +197,35 @@ export const GET = withObservability(async (_req: Request,
          from. Casey on the QA fixture is exactly that case. */
       const ownMoneyHeld = own.ownMoneyHeld;
 
+      /* ⚠⚠ THE DUES LADDER (owner ruling 2026-09-07, out of the QA §148 walk) — the five figures the
+         table and the drawer now read left to right. GROSS on purpose: `netCredits` and `cappedPaid`
+         above quietly absorb payouts, which is invisible while one column holds everything and a lie
+         the moment the columns are named (Blake's $150 Bottle Drive rebate would read $50; Casey's
+         $1,200 reads $900). The full story, and the proof that these still sum to `rollingBalance`
+         untouched, lives on `splitDuesLadder`. Read it before changing any of the five. */
+      const ladder = splitDuesLadder({
+        dues: schedule?.totalAmount ?? 0,
+        grossPayments: amountsTotal(payments),
+        cappedPaid,
+        creditsIssued: creditsIssuedTotal,
+        fundraiserIssued: creditsTotal(
+          credits.filter(c => c.creditType === 'fundraiser').map(c => ({ amount: c.amount as number })),
+        ),
+        /* ⚠⚠ EVERY OVERPAYMENT CREDIT, NOT A NARROWED SET — the first cut narrowed this to the
+           engine's schedule row plus receipt-linked rows and was wrong within the hour: Umar holds
+           a $50 overpayment credit with no payment link (it predates linking) and his family really
+           did send $50 over, so the link test filed his own money under Other credits and the ladder
+           came out $50 wrong. How many of these dollars are the family's own is ARITHMETIC — the
+           clamp in `splitDuesLadder` — and the drawer hides rows by that amount (`hiddenOwnMoneyIds`),
+           so the tile and the rows beneath it agree by construction rather than by two predicates
+           happening to match. A coach-typed overpayment with no payment behind it still lands under
+           Other credits, counted, because the clamp leaves it there. */
+        overpaymentIssued: creditsTotal(
+          credits.filter(c => c.creditType === 'overpayment').map(c => ({ amount: c.amount as number })),
+        ),
+        paidOut: position.paidOut,
+      });
+
       /* ⚠⚠ THE BALANCE SUBTRACTS `netCredits`, NOT THE NARROWED `totalCredits`, AND THAT DISTINCTION
          IS THE WHOLE RE-SPLIT. `outstanding` is built from `cappedPaid`, so pairing it with the
          narrowed credit figure double-counts the money that just moved into `paidAmount`.
@@ -245,6 +274,8 @@ export const GET = withObservability(async (_req: Request,
         credits,
         totalCredits: Math.round(totalCredits * 100) / 100,
         ownMoneyHeld,
+        // The ladder the table and drawer read left to right (see splitDuesLadder).
+        ladder,
         rollingBalance,
         // The three-state position (owner model 2026-08-14): what credits did, per player.
         leftToSend: position.leftToSend,

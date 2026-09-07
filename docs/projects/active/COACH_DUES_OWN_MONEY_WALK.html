@@ -230,16 +230,20 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
 </article>
 
 <article class="step" data-step="B2">
-  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>The band at the bottom still ties</h3></div></div>
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>The band at the top still ties</h3></div></div>
   <div class="step-body">
-    <p class="why">Scroll to the season totals band. <b>Collected</b> should have gone <em>up</em> by
-      $550 and the credits figure beside it <em>down</em> by the same — the money moved buckets, it
-      did not appear or vanish. Everything else holds.</p>
+    <p class="why">The season totals are the <b>four tiles above the table</b> — there is no footer
+      under it any more (the table foot was retired on 2026-09-03 and its figures became the tiles).
+      <b>Collected should NOT have moved.</b> It is a cash word on every Money tab and it agrees with
+      the Money hub's Collections tile deliberately. What changed is the line <em>underneath</em> it:
+      the credits figure drops by $550 — Avery's own overpayment is no longer counted as somebody
+      else's money — and a new phrase names that $550 in its place. Everything else holds.</p>
     <div class="checks">
-      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a"><b>Collected $2,775.00</b>, with <b>+ $2,349.63 from credits</b> beside it<span class="hintline">Was $2,225.00 and $2,899.63. Both totals add to $5,124.63 either way</span></label></div>
-      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b"><b>Assessed $11,308.30</b> — untouched</label></div>
-      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c"><b>Balance owing $7,349.32</b> — untouched</label></div>
-      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d"><b>$1,165.65 owed back to 2 families</b> — untouched</label></div>
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a"><b>Collected $2,225.00</b> — <b>unchanged</b><span class="hintline">If this reads $2,775.00 the tile has gone uncapped and now disagrees with the Money hub — flag it</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">Beneath it: <b>+ $2,349.63 from credits · $550.00 more sent than billed</b><span class="hintline">The credits figure was $2,899.63. The $550 did not move into Collected — it is named here instead, because Collected answers &ldquo;how much of what we billed is settled&rdquo;, not &ldquo;how much did families send&rdquo;</span></label></div>
+      <div class="chk"><input type="checkbox" id="b2c"><label for="b2c"><b>Assessed $11,308.30</b> — untouched</label></div>
+      <div class="chk"><input type="checkbox" id="b2d"><label for="b2d"><b>Balance owing $7,349.32</b> — untouched, reading <b>excludes $1,165.65 owed back to 2 families</b> beneath it</label></div>
+      <div class="chk"><input type="checkbox" id="b2e"><label for="b2e"><b>Past due $97.09 · 1 family</b> — untouched</label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
     <textarea placeholder="Notes on B2…"></textarea>
@@ -329,12 +333,13 @@ footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display
     <div class="tags"><span class="tag phone">phone</span></div></div></div>
   <div class="step-body">
     <p class="why">Back on Player Dues, tap Avery's row to open the drawer — its <b>Paid</b> stat
-      reads the same figure. Then narrow to about 390px and confirm the table still behaves: the note
+      reads the same figure, and its <b>Credits</b> list now carries one overpayment row rather than two. Then narrow to about 390px and confirm the table still behaves: the note
       under the name wraps rather than being cut off, and nothing runs off the right edge.</p>
     <div class="checks">
       <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">The drawer's <b>Paid</b> stat says $1,250.00</label></div>
       <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">On a phone the note wraps under the name and reads cleanly</label></div>
       <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">Nothing is cut off at the right edge</label></div>
+      <div class="chk"><input type="checkbox" id="d2d"><label for="d2d">Scroll the drawer to <b>Credits</b>: <b>one</b> row reading <b>($550.00) Overpayment (dues changed)</b><span class="hintline">Fixed after you flagged it. It listed ($58.33) and ($491.67) — two halves of one number, left behind by two dues changes. Neither half tied to anything; the sum ties exactly to $1,250.00 paid − $700.00 billed on the same screen</span></label></div>
     </div>
     <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
     <textarea placeholder="Notes on D2…"></textarea>

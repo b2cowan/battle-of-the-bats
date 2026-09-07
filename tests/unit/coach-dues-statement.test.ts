@@ -165,7 +165,7 @@ describe('the figures are the dues screen’s own arithmetic', () => {
   it('headline stats: billed / received / credits / left to send, as the household’s totals', () => {
     const out = buildFamilyDuesStatements({ players: marchands(), todayISO: TODAY });
     assert.deepEqual(out[0].stats, {
-      billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', leftToSend: '$1,075.00',
+      billed: '$2,900.00', received: '$1,700.00', credits: '$125.00', handedBack: '—', leftToSend: '$1,075.00',
     });
   });
 
@@ -217,6 +217,31 @@ describe('what’s next, in sentences', () => {
     assert.equal(out[0].payouts[0][2], '$75.00');
     const none = buildFamilyDuesStatements({ players: [chen()], todayISO: TODAY });
     assert.equal(none[0].payouts.length, 0);
+  });
+
+  /* ⚠ THE BAND READS THE LADDER — GROSS — SO THE PARENT'S DOCUMENT AGREES WITH THE COACH'S TABLE
+     (review 2026-09-07). Casey is the case: sent $1,200 against a $900 bill, handed $300 back. The
+     old pair printed "received $900.00" while Player Dues prints $1,200.00. */
+  it('a refunded household reads what it SENT and what came back, not the netted figure', () => {
+    const casey = { ...chen(),
+      payments: [{ amount: 1200, receivedDate: '2026-08-01', method: 'etransfer' as const, note: null }],
+      payouts: [{ amount: 300, paidDate: '2026-08-20', method: 'etransfer' as const, note: null }],
+      paidAmount: 900, totalCredits: 37.5,
+      ladder: { dues: 900, fundraising: 37.5, otherCredits: 0, paid: 1200, handedBack: 300, ownMoney: 300 },
+    };
+    const out = buildFamilyDuesStatements({ players: [casey], todayISO: TODAY });
+    assert.equal(out[0].stats.received, '$1,200.00', 'what they sent — the coach’s Paid column');
+    assert.equal(out[0].stats.credits, '$37.50');
+    assert.equal(out[0].stats.handedBack, '$300.00');
+  });
+
+  it('a household never refunded keeps the four-tile band it always had, ladder or not', () => {
+    const withLadder = { ...chen(), paidAmount: 500, totalCredits: 40,
+      ladder: { dues: 1450, fundraising: 40, otherCredits: 0, paid: 500, handedBack: 0, ownMoney: 0 } };
+    const a = buildFamilyDuesStatements({ players: [withLadder], todayISO: TODAY })[0].stats;
+    const b = buildFamilyDuesStatements({ players: [{ ...chen(), paidAmount: 500, totalCredits: 40 }], todayISO: TODAY })[0].stats;
+    assert.deepEqual(a, b, 'gross and net are one figure where nothing was handed back');
+    assert.equal(a.handedBack, '—');
   });
 
   it('two siblings sharing a first name keep their surnames apart', () => {

@@ -21,6 +21,7 @@
  * seam handles that automatically because redacted surnames simply never arrive here).
  */
 import { computeFamilyDues, type FamilyDuesPlayer } from './coach-family-dues';
+import type { DuesLadder } from './dues-payments';
 import { formatMoneyCell as money } from './coach-money-exports';
 import { formatStoredDate } from './timezone';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
@@ -62,6 +63,14 @@ export interface StatementPlayerInput {
   totalCredits: number;
   /** The family's own money the team is holding. Optional so an older caller still builds. */
   ownMoneyHeld?: number;
+  /** ⚠⚠ THE SAME FIVE FIGURES THE COACH'S DUES TABLE PRINTS (the dues ladder, review 2026-09-07).
+   *  Without it the band read the §148 pair — `paidAmount` net of refunds, `totalCredits` net of
+   *  payouts — and a parent's document disagreed with the coach's screen for every refunded
+   *  household: Casey's statement said "$900.00 received" while Player Dues said $1,200.00, and
+   *  Blake's band said credits $176.98 over a credits TABLE on the same page whose rows sum to
+   *  $276.98. Gross is the correction. Optional so an older caller still builds; absent, the band
+   *  falls back to the pair it always read. */
+  ladder?: DuesLadder;
   leftToSend: number;
   creditApplied: number;
   owedBack: number;
@@ -85,7 +94,9 @@ export interface FamilyDuesStatement {
   labelledByPlayer: boolean;
   paidUp: boolean;
   /** The headline band, pre-formatted. Credits read "—" when none. */
-  stats: { billed: string; received: string; credits: string; leftToSend: string };
+  /** `handedBack` reads "—" when nothing was, so a household that was never refunded keeps its
+   *  four-tile band unchanged. */
+  stats: { billed: string; received: string; credits: string; handedBack: string; leftToSend: string };
   /** "What's next" — sentences, in reading order. Never empty. */
   next: string[];
   /** One section per billed child: label + [Payment, Due date, Amount, Received, Credit,
@@ -154,8 +165,13 @@ export function buildFamilyDuesStatements(input: {
         : p.playerFirstName;
 
     const billed = members.reduce((s, p) => s + (p.schedule?.totalAmount ?? 0), 0);
-    const received = members.reduce((s, p) => s + p.paidAmount, 0);
-    const credits = members.reduce((s, p) => s + p.totalCredits, 0);
+    /* ⚠ GROSS, like the coach's table: what the family SENT and what others COVERED, with the money
+       handed back stated on its own tile rather than silently netted out of both. A household with
+       no payout reads exactly the figures it always did — gross and net are the same number there
+       — so the only documents that change are the ones that were contradicting the screen. */
+    const received = members.reduce((s, p) => s + (p.ladder ? p.ladder.paid : p.paidAmount), 0);
+    const credits = members.reduce((s, p) => s + (p.ladder ? p.ladder.fundraising + p.ladder.otherCredits : p.totalCredits), 0);
+    const handedBack = members.reduce((s, p) => s + p.payouts.reduce((t, po) => t + po.amount, 0), 0);
     const creditApplied = members.reduce((s, p) => s + p.creditApplied, 0);
     const owedBack = members.reduce((s, p) => s + p.owedBack, 0);
     const leftToSend = group.outstanding;
@@ -275,6 +291,7 @@ export function buildFamilyDuesStatements(input: {
         billed: money(billed),
         received: money(received),
         credits: credits > CENT ? money(credits) : '—',
+        handedBack: handedBack > CENT ? money(handedBack) : '—',
         leftToSend: money(Math.max(leftToSend, 0)),
       },
       next,

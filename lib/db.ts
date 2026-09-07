@@ -5578,6 +5578,13 @@ export interface RepPlayerDuesSummary {
   totalCredits: number;
   /** The family's own money the team is still holding. */
   ownMoneyHeld: number;
+  /** ⚠⚠ THE SAME FIVE FIGURES THE DUES TABLE READS (dues ladder, 2026-09-07) — and the reason they
+   *  are here rather than derived on the page is that THIS FUNCTION AND THE DUES ROUTE ARE THE TWO
+   *  PRODUCERS OF ONE FAMILY'S MONEY, and §148 exists because they had drifted. Casey is the proof:
+   *  the ladder shows what a family SENT ($1,200.00), while `totalPaid` above shows what survived a
+   *  refund ($900.00). Both are true and they answer different questions — but a player page
+   *  printing one beside a dues table printing the other is the defect, not the arithmetic. */
+  ladder: DuesLadder;
   balance: number;        // assessed − paid − credits (can be negative if over-credited)
   overdue: boolean;
   nextDueDate: string | null;
@@ -5637,6 +5644,26 @@ export async function getRepPlayerDuesSummary(
   });
   const totalPaid = own.paid;
   const totalCredits = own.credits;
+  /* The ladder, from the same rows the split above used. `overpaymentIssued` is EVERY overpayment
+     credit — the clamp inside decides how much of it is the family's own money (see the dues route
+     and the Umar note on `splitDuesLadder`). One rule, both producers. */
+  const ladder = splitDuesLadder({
+    dues: totalAssessed,
+    grossPayments: paymentsTotal,
+    cappedPaid,
+    creditsIssued,
+    fundraiserIssued: creditsTotal(
+      (creditRows ?? [])
+        .filter((c: any) => c.credit_type === 'fundraiser')
+        .map((c: any) => ({ amount: Number(c.amount) })),
+    ),
+    overpaymentIssued: creditsTotal(
+      (creditRows ?? [])
+        .filter((c: any) => c.credit_type === 'overpayment')
+        .map((c: any) => ({ amount: Number(c.amount) })),
+    ),
+    paidOut,
+  });
   const today = tournamentToday();
   return {
     hasSchedule: !!schedule,
@@ -5644,6 +5671,7 @@ export async function getRepPlayerDuesSummary(
     totalPaid: round2(totalPaid),
     totalCredits: round2(totalCredits),
     ownMoneyHeld: round2(own.ownMoneyHeld),
+    ladder,
     balance: round2(totalAssessed - totalPaid - totalCredits),
     overdue: installments.some(i => !i.paidAt && i.dueDate < today),
     nextDueDate: installments
@@ -9346,7 +9374,7 @@ export async function markRepPlayerDuesInstallmentPaid(
 // Player Dues Payments (mig 232 — the receipt book; installments are the plan)
 
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
-import { allocateDuesPayments, duesPaidAmount, splitFamilyOwnMoney, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
+import { allocateDuesPayments, duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION, type DuesLadder } from './dues-payments';
 import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {
@@ -10193,22 +10221,25 @@ export async function reconcileOverpaymentCredits(opts: {
     { consolidate: !opts.paymentId },
   );
 
+  /* ⚠ HOISTED so BOTH write branches can reach it (review 2026-09-07): the fold branch below
+     needs the same zero-rows-matched recovery the grow branch has always had. */
+  const insertCredit = async (amount: number) => {
+    const { error: cErr } = await supabaseAdmin
+      .from('rep_dues_credits')
+      .insert({
+        program_year_id: opts.programYearId,
+        player_id: opts.playerId,
+        amount,
+        description: opts.paymentId ? 'Overpayment' : SCHEDULE_CHANGE_CREDIT_DESCRIPTION,
+        credit_type: 'overpayment',
+        credit_date: opts.creditDate,
+        payment_id: opts.paymentId ?? null,
+        created_by: opts.createdBy,
+      });
+    if (cErr) throw cErr;
+  };
+
   if (plan.create > 0.005) {
-    const insertCredit = async (amount: number) => {
-      const { error: cErr } = await supabaseAdmin
-        .from('rep_dues_credits')
-        .insert({
-          program_year_id: opts.programYearId,
-          player_id: opts.playerId,
-          amount,
-          description: opts.paymentId ? 'Overpayment' : SCHEDULE_CHANGE_CREDIT_DESCRIPTION,
-          credit_type: 'overpayment',
-          credit_date: opts.creditDate,
-          payment_id: opts.paymentId ?? null,
-          created_by: opts.createdBy,
-        });
-      if (cErr) throw cErr;
-    };
     // The grow path is also the MERGE path: duplicate engine rows (a race, or history) fold
     // into the host, so the one-row rule is enforced here rather than assumed (review 2026-09-01).
     for (const id of plan.remove) {
@@ -10238,11 +10269,42 @@ export async function reconcileOverpaymentCredits(opts: {
     return { created: plan.create, reduced: 0 };
   }
 
-  if (plan.reduced > 0.005) {
+  /* ⚠⚠ A PLAN WITH NO DOLLARS IN IT STILL HAS WORK (QA §148, 2026-09-06). This branch used to be
+     gated on `reduced` alone, so the only pass that ever consolidated a player's engine rows was
+     the one that CREATED a credit. A family already carrying two rows therefore kept them through
+     every reduction and every no-op — Avery's $58.33 + $491.67 survived nine days and every
+     reconcile in them. The fold now runs on its own, which is what heals rows written before the
+     one-row rule existed. */
+  if (plan.reduced > 0.005 || plan.topUp || plan.remove.length > 0 || plan.trim) {
     for (const id of plan.remove) {
       const { error: dErr } = await supabaseAdmin.from('rep_dues_credits').delete().eq('id', id);
       if (dErr) throw dErr;
     }
+    if (plan.topUp) {
+      /* The fold: the survivors' dollars land on the newest engine row, scoped to player + season
+         like every other coach-money write (check-then-act). ⚠ `credit_date` is deliberately NOT
+         restamped here, unlike the grow path above: no dollars entered or left the season, so a
+         repair has no day of its own to claim. The drawer shows this row as "Follows the schedule"
+         with no date either way; the host is already the newest, so ordering does not move. */
+      /* ⚠⚠ ZERO ROWS MATCHED IS SUCCESS TO POSTGREST, AND HERE IT WOULD LOSE MONEY (review
+         2026-09-07, High). The siblings were just deleted above; if a concurrent reconcile removed
+         the host between our read and this write, an unchecked update lands on nothing and the
+         family's whole overpayment credit is gone until some later pass recreates it — the books
+         understate what they are owed in the meantime, and a payout-floor check in that window
+         reads a credit that no longer exists. Same recovery the grow branch has carried since
+         2026-09-01: read back what matched, and if nothing did, insert the folded total. */
+      const { data: folded, error: uErr } = await supabaseAdmin
+        .from('rep_dues_credits')
+        .update({ amount: plan.topUp.newAmount })
+        .eq('id', plan.topUp.id)
+        .eq('player_id', opts.playerId)
+        .eq('program_year_id', opts.programYearId)
+        .select('id');
+      if (uErr) throw uErr;
+      if (!folded || folded.length === 0) await insertCredit(plan.topUp.newAmount);
+    }
+    /* ⚠ NOT `else` (review 2026-09-07): a plan can carry a fold AND a trim on a different row —
+       a coach-typed overpayment credit trimmed above two legacy engine rows. Both are writes. */
     if (plan.trim) {
       const { error: uErr } = await supabaseAdmin
         .from('rep_dues_credits')

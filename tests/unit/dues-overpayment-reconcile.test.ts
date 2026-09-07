@@ -16,7 +16,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { planOverpaymentReconcile } from '../../lib/dues-payments.ts';
+import { planOverpaymentReconcile, splitDuesLadder } from '../../lib/dues-payments.ts';
 import { projectScheduleTotalChange, payoutFloorViolation } from '../../lib/dues-credit-guards.ts';
 
 /** Newest first, like the executor's `order('created_at', { ascending: false })`. */
@@ -131,6 +131,74 @@ describe('consolidation — the schedule-change credit is ONE row per season (ow
     assert.deepEqual(up.topUp, { id: 'c3', newAmount: 750 });
     assert.deepEqual(up.remove, ['c1']);
   });
+
+  /* ⚠⚠ THE FOLD RUNS ON EVERY PASS, NOT ONLY THE ONE THAT CREATES (owner, QA §148 walk 2026-09-06).
+     Consolidation used to live inside the grow branch, so repair was one-directional: rows written
+     before the 2026-09-01 rule — Avery's $58.33 + $491.67 — survived every reduction and every
+     no-op reconcile, because neither branch ever looked at them. Two halves of one true $550.00,
+     and only the SUM tied to anything on the screen. */
+  it('a no-change pass FOLDS leftover engine rows — the pair heals without any dollars moving', () => {
+    const p = planOverpaymentReconcile(
+      [engineRow('newer', 58.33), engineRow('older', 491.67)], 1250, 700, { consolidate: true },
+    );
+    assert.equal(p.create, 0);
+    assert.equal(p.reduced, 0, 'a fold moves dollars between rows — it never removes any');
+    assert.deepEqual(p.topUp, { id: 'newer', newAmount: 550 });
+    assert.deepEqual(p.remove, ['older']);
+    assert.equal(p.trim, null);
+  });
+
+  it('a SHRINK folds what survives it, and the trimmed row folds at its NEW amount', () => {
+    // carried 700, trueExcess 550 → 150 comes off: 'a' (100) goes whole, 'b' trims 491.67 → 441.67.
+    // What survives — the trimmed 'b' and the untouched 'c' — then folds into one row.
+    const p = planOverpaymentReconcile(
+      [engineRow('a', 100), engineRow('b', 491.67), engineRow('c', 108.33)], 1250, 700, { consolidate: true },
+    );
+    assert.equal(p.reduced, 150);
+    // ⚠ 441.67 + 108.33, NOT 491.67 + 108.33 — folding the stale figure would hand back the very
+    // dollars the reduction just took off, re-creating the double-count through the repair.
+    assert.deepEqual(p.topUp, { id: 'b', newAmount: 550 });
+    assert.deepEqual(p.remove, ['a', 'c']);
+    assert.equal(p.trim, null, 'the top-up states the whole figure, so it subsumes the trim');
+  });
+
+  it('one engine row is left alone — a fold with nothing to fold writes nothing', () => {
+    const p = planOverpaymentReconcile([engineRow('only', 550)], 1250, 700, { consolidate: true });
+    assert.deepEqual(p, { create: 0, topUp: null, remove: [], trim: null, reduced: 0 });
+  });
+
+  it('the record-time path still never folds — a receipt’s credit rides its payment', () => {
+    const p = planOverpaymentReconcile(
+      [engineRow('newer', 58.33), engineRow('older', 491.67)], 1250, 700, { consolidate: false },
+    );
+    assert.deepEqual(p, { create: 0, topUp: null, remove: [], trim: null, reduced: 0 });
+  });
+
+  /* ⚠ FOUND BY REVIEW (2026-09-07, Critical): the newest overpayment row is coach-typed, so the
+     shrink trims IT, and the two engine rows beneath it still fold. The first cut nulled the trim
+     whenever a fold happened, so that row was never written — stale amount, overstated credits. */
+  it('a shrink that trims a coach-typed row ABOVE two engine rows keeps the trim and still folds the pair', () => {
+    // carried 100 + 300 + 200 = 600 against a true excess of 550 → $50 comes off the newest (coach) row.
+    const p = planOverpaymentReconcile(
+      [{ id: 'coach', amount: 100, creditType: 'overpayment' }, engineRow('e1', 300), engineRow('e2', 200)],
+      1250, 700, { consolidate: true },
+    );
+    assert.equal(p.reduced, 50);
+    assert.deepEqual(p.trim, { id: 'coach', amount: 50 }, 'the trim is on a row the fold does not touch — it must survive');
+    assert.deepEqual(p.topUp, { id: 'e1', newAmount: 500 }, 'the two engine rows fold at their own amounts');
+    assert.deepEqual(p.remove, ['e2']);
+    // What stands afterwards: 50 + 500 = 550 = the true excess.
+  });
+
+  it('a fold never swallows a coach-typed overpayment credit', () => {
+    const p = planOverpaymentReconcile(
+      [engineRow('newer', 58.33), { id: 'manual', amount: 150, creditType: 'overpayment' }, engineRow('older', 341.67)],
+      1250, 700, { consolidate: true },
+    );
+    // The manual row is COUNTED (400 + 150 = 550) but stays its own row with its own date and bin.
+    assert.deepEqual(p.topUp, { id: 'newer', newAmount: 400 });
+    assert.deepEqual(p.remove, ['older']);
+  });
 });
 
 describe('projectScheduleTotalChange — the schedule doors ask the payout floor pre-flight (Phase A2)', () => {
@@ -179,5 +247,111 @@ describe('projectScheduleTotalChange — the schedule doors ask the payout floor
       newScheduleTotal: 600,
     });
     assert.equal(payoutFloorViolation(projected, payouts), null);
+  });
+});
+
+/* ⚠⚠ THE LADDER'S ONE PROMISE: it equals the balance the screen ALREADY SHOWED. Every case below
+   asserts that, not a hand-typed expected figure — a test that restates the implementation proves
+   nothing about the invariant §148 was built around and this change must not break. The twelve
+   families are the QA fixture, read off the rendered dues table on 2026-09-07. */
+describe('splitDuesLadder — the ladder lands on the balance the screen already had (2026-09-07)', () => {
+  /** The balance every dues surface computes today: dues − (credits issued − paid out) − capped paid. */
+  const todaysBalance = (f: {
+    dues: number; creditsIssued: number; paidOut: number; grossPayments: number;
+  }) => Math.round((f.dues - (f.creditsIssued - f.paidOut) - Math.min(f.grossPayments, f.dues)) * 100) / 100;
+
+  const ladderOf = (f: {
+    dues: number; creditsIssued: number; fundraiserIssued: number; overpaymentIssued: number;
+    paidOut: number; grossPayments: number;
+  }) => splitDuesLadder({ ...f, cappedPaid: Math.min(f.grossPayments, f.dues) });
+
+  const sums = (l: ReturnType<typeof splitDuesLadder>) =>
+    Math.round((l.dues - l.fundraising - l.otherCredits - l.paid + l.handedBack) * 100) / 100;
+
+  /** name, dues, fundraiser, other-kinds, overpayment, gross payments, payouts */
+  const FIXTURE: Array<[string, number, number, number, number, number, number]> = [
+    // Overpaid, no payout: $550 of her own money sits inside Paid, not Credits.
+    ['Avery',    700.00, 198.15, 380.00, 550.00, 1250.00,   0],
+    // The payout case that started this: $150 raised, $100 handed back.
+    ['Blake',    970.83, 150.00, 126.98,      0,  625.00, 100],
+    // Overpaid AND fully refunded — the row whose Paid reads $900 today against $1,200 sent.
+    ['Casey',    900.00,  37.50,      0, 300.00, 1200.00, 300],
+    ['Devon',    970.83,  27.00,      0,      0,       0,   0],
+    ['Emerson',  970.83,      0,      0,      0,       0,   0],
+    ['Frankie',  970.83,  40.00,      0,      0,       0,   0],
+    ['Gray',     970.83, 125.00,      0,      0,       0,   0],
+    ['Harper',   970.83,      0,      0,      0,       0,   0],
+    ['Indigo',   970.83,      0, 240.00,      0,       0,   0],
+    ['Jules',    970.83, 125.00,      0,      0,       0,   0],
+    // Mostly a bat the family fronted — Other credits, not fundraising.
+    ['Kai',      970.83, 200.00, 700.00,      0,       0,   0],
+    ['Logan',    970.83, 300.00,      0,      0,       0, 200],
+  ];
+
+  for (const [name, dues, fundraiserIssued, otherKinds, overpaymentIssued, grossPayments, paidOut] of FIXTURE) {
+    it(`${name}: the five figures land on the balance the screen showed`, () => {
+      const creditsIssued = Math.round((fundraiserIssued + otherKinds + overpaymentIssued) * 100) / 100;
+      const f = { dues, creditsIssued, fundraiserIssued, overpaymentIssued, paidOut, grossPayments };
+      assert.equal(sums(ladderOf(f)), todaysBalance(f));
+    });
+  }
+
+  it('GROSS, not netted — the two figures the old columns were hiding', () => {
+    // Blake: the whole reason the ladder exists. `Credits ($176.98)` concealed a $150 rebate with
+    // $100 already taken home; `Fundraising` must say what he RAISED, with the refund beside it.
+    const blake = ladderOf({ dues: 970.83, creditsIssued: 276.98, fundraiserIssued: 150, overpaymentIssued: 0, paidOut: 100, grossPayments: 625 });
+    assert.equal(blake.fundraising, 150, 'raised, not what survives the refund');
+    assert.equal(blake.handedBack, 100);
+    // Casey sent $1,200. §148 ruled Paid shows what the family actually sent; today it reads $900.
+    const casey = ladderOf({ dues: 900, creditsIssued: 337.5, fundraiserIssued: 37.5, overpaymentIssued: 300, paidOut: 300, grossPayments: 1200 });
+    assert.equal(casey.paid, 1200, 'what they sent, not what survives the refund');
+    assert.equal(casey.handedBack, 300);
+    assert.equal(casey.otherCredits, 0, 'their own $300 is inside Paid, never a credit');
+  });
+
+  it('the family’s own money never appears as a credit — Avery’s $550 is inside Paid', () => {
+    const l = ladderOf({ dues: 700, creditsIssued: 1128.15, fundraiserIssued: 198.15, overpaymentIssued: 550, paidOut: 0, grossPayments: 1250 });
+    assert.equal(l.paid, 1250);
+    assert.equal(l.fundraising, 198.15);
+    assert.equal(l.otherCredits, 380, 'the two costs her family fronted, and nothing else');
+    assert.equal(sums(l), -1128.15);
+  });
+
+  /* ⚠ THE CLAMP, WHICH IS THE ONE PIECE OF THIS THAT IS NOT OBVIOUS. A coach can hand-add a credit
+     and pick `Overpayment` as its kind, and no payment stands behind it. Subtracting the raw
+     overpayment total would push the ladder's balance ABOVE the real one by that amount. */
+  it('a coach-typed overpayment credit falls into Other credits and the ladder still ties', () => {
+    // Avery's real state plus a $60 credit a coach typed and marked as an overpayment.
+    const f = { dues: 700, creditsIssued: 1188.15, fundraiserIssued: 198.15, overpaymentIssued: 610, paidOut: 0, grossPayments: 1250 };
+    const l = ladderOf(f);
+    assert.equal(l.paid, 1250, 'still only what the payments say');
+    assert.equal(l.otherCredits, 440, 'the $380 fronted costs plus the $60 a coach asserted');
+    assert.equal(l.ownMoney, 550, 'only what the payments stand behind — never the $60');
+    assert.equal(sums(l), todaysBalance(f));
+  });
+
+  /* ⚠ THE CASE THAT BROKE THE FIRST CUT. An overpayment credit with NO payment link — Umar's, which
+     predates linking — on a family who really did send $50 over. A rule that decided own money by
+     the link filed it as coach-typed and the ladder came out $50 wrong. Own money is the CLAMP. */
+  it('Umar: an unlinked overpayment credit the payments stand behind is still the family’s own money', () => {
+    const f = { dues: 600, creditsIssued: 50, fundraiserIssued: 0, overpaymentIssued: 50, paidOut: 0, grossPayments: 650 };
+    const l = ladderOf(f);
+    assert.equal(l.ownMoney, 50, 'the excess stands behind it, link or no link');
+    assert.equal(l.otherCredits, 0, 'so it is not a credit somebody else gave them');
+    assert.equal(l.paid, 650);
+    assert.equal(sums(l), todaysBalance(f));
+    assert.equal(sums(l), -50);
+  });
+
+  it('no schedule, no money: five zeros rather than a NaN', () => {
+    const l = splitDuesLadder({ dues: 0, grossPayments: 0, cappedPaid: 0, creditsIssued: 0, fundraiserIssued: 0, overpaymentIssued: 0, paidOut: 0 });
+    assert.deepEqual(l, { dues: 0, fundraising: 0, otherCredits: 0, paid: 0, handedBack: 0, ownMoney: 0 });
+  });
+
+  it('cents survive the split — thirds of a bill do not leak a fractional cent', () => {
+    const f = { dues: 970.83, creditsIssued: 126.98, fundraiserIssued: 0, overpaymentIssued: 0, paidOut: 0, grossPayments: 323.61 };
+    const l = ladderOf(f);
+    assert.equal(l.otherCredits, 126.98);
+    assert.equal(sums(l), todaysBalance(f));
   });
 });

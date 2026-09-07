@@ -22,6 +22,7 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, BRANDING_TEXT, loadBrandMark, type OrgPdfSettings,
 } from './export';
 import { duesStatusLabel } from './dues-status';
+import type { DuesLadder } from './dues-payments';
 import {
   LINE_KIND_SECTION, FUNDING_LINE_KINDS, isFundingKind, normalizeBudgetLineKind,
 } from './coach-budget-totals';
@@ -335,14 +336,49 @@ export function budgetPeriodGridRows(
 
 // ── Player dues ─────────────────────────────────────────────────────────────────────────────
 
+/* ⚠⚠ AN EXPORT'S SHAPE IS ITS SCREEN'S SHAPE (QA §146 F2), so these are the dues table's columns
+   and they move when it moves. The dues ladder (owner ruling 2026-09-07) split `Credits` into
+   `Fundraising` + `Other credits` and added `Handed back`, so a file that kept the old three would
+   answer a treasurer's question differently from the screen they exported it from.
+
+   ⚖ THIS IS AN OUTWARD-FACING BREAK, TAKEN DELIBERATELY. A coach's saved spreadsheet addresses our
+   columns by POSITION — same reasoning as the payables column retirement above. It happens in the
+   release that makes the old headings wrong rather than a release later, because `Credits` was
+   already netting payouts away silently: Blake's $150 Bottle Drive rebate exported as part of a
+   $176.98 lump with $100 of it already handed back, and `Paid` read $900 for a family who sent
+   $1,200. Two columns that could not be reconciled to anything.
+
+   ⚠ `Handed back` IS ALWAYS A COLUMN HERE, unlike on the screen, which hides it when no family has
+   one. A file whose column COUNT depends on its data cannot be appended to last month's, and a
+   spreadsheet reader has no chevron to ask why a heading vanished. Zeroes are cheap in a file and
+   expensive on a screen — that difference is the reason the two rules differ. */
 export const DUES_EXPORT_COLUMNS: ExportColumnDef[] = [
-  { label: 'Player',     key: 'player',    format: 'text' },
-  { label: 'Total Dues', key: 'totalDues', format: 'currency' },
-  { label: 'Credits',    key: 'credits',   format: 'currency' },
-  { label: 'Paid',       key: 'paid',      format: 'currency' },
-  { label: 'Balance',    key: 'balance',   format: 'currency' },
-  { label: 'Status',     key: 'status',    format: 'text' },
+  { label: 'Player',        key: 'player',        format: 'text' },
+  { label: 'Dues',          key: 'totalDues',     format: 'currency' },
+  { label: 'Fundraising',   key: 'fundraising',   format: 'currency' },
+  { label: 'Other credits', key: 'otherCredits',  format: 'currency' },
+  { label: 'Paid',          key: 'paid',          format: 'currency' },
+  { label: 'Handed back',   key: 'handedBack',    format: 'currency' },
+  { label: 'Balance',       key: 'balance',       format: 'currency' },
+  { label: 'Status',        key: 'status',        format: 'text' },
 ];
+
+/* ⚠⚠ A REPORT'S SHAPE IS PART OF ITS COLUMN CONTRACT, DECLARED BESIDE THE COLUMNS (review
+   2026-09-07). The dues sheet went from six columns to eight and the pre-commit PDF check refused
+   it: on a portrait page the fit contract gave up Balance and Status — the two columns a treasurer
+   opened the file for — and printed an apology for them. The fit contract's own text says a
+   fixed-column report should never reach that line; the answer for a fixed eight is the one the
+   tournament results sheet already gives at eight — landscape is the report's OWN shape, not an
+   org preference, and at that width every column clears the legible floor.
+   ⚠ KEYED ON THE COLUMNS CONSTANT ITSELF, NOT ON THE DATASET NAME. The first cut keyed it on
+   `spec.dataset` — and this one sheet has THREE names: the coach's button says `player-dues`, the
+   exhibit harness says `coach-player-dues`, the export registry says `coaches-player-dues`. The
+   coach got landscape; the gate that refused the commit stayed on portrait and kept refusing.
+   Both call sites already pass this module's own `DUES_EXPORT_COLUMNS`, so identity on that array
+   is the one key they cannot disagree about — the shape is part of the column contract, literally. */
+const REPORT_SHAPES = new Map<readonly ExportColumnDef[], { orientation: 'landscape' | 'portrait' }>([
+  [DUES_EXPORT_COLUMNS, { orientation: 'landscape' }],
+]);
 
 export type DuesExportPlayer = {
   player: { playerFirstName: string; playerLastName: string | null };
@@ -367,14 +403,25 @@ export type DuesExportPlayer = {
    *  optional deliberately: the label takes it optionally, so a builder that assembled this shape
    *  field-by-field would drop the word in silence and nothing would catch it. */
   ownMoneyHeld: number;
+  /** The five figures the table reads left to right — see `splitDuesLadder`. ⚠ REQUIRED, not
+   *  optional: a builder assembling this shape field-by-field would otherwise export three empty
+   *  money columns in silence, which is the failure mode the two fields above were made required
+   *  to prevent. */
+  ladder: DuesLadder;
 };
 
 export function duesExportRows(players: DuesExportPlayer[]): ExportRow[] {
   return players.map(p => ({
     player: [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' '),
     totalDues: p.schedule?.totalAmount ?? '',
-    credits: p.totalCredits || '',
-    paid: p.schedule ? p.paidAmount : '',
+    /* ⚠ THE LADDER'S FIGURES, NOT THE SCREEN'S OLD PAIR. A blank means "no schedule"; a real ZERO
+       is written as zero rather than blanked, because a spreadsheet column that empties itself
+       cannot be summed and a treasurer reading `Fundraising` wants to see that a family raised
+       nothing, not an empty cell they have to interpret. */
+    fundraising: p.schedule ? p.ladder.fundraising : '',
+    otherCredits: p.schedule ? p.ladder.otherCredits : '',
+    paid: p.schedule ? p.ladder.paid : '',
+    handedBack: p.schedule ? p.ladder.handedBack : '',
     balance: p.schedule ? p.rollingBalance : '',
     // ⚠ The shared word list, so the table and the file cannot call one player two things.
     status: duesStatusLabel(p),
@@ -386,8 +433,10 @@ export function duesPdfRows(rows: ExportRow[]): (string | number)[][] {
   return rows.map(r => [
     String(r.player),
     r.totalDues !== '' ? money(Number(r.totalDues)) : '—',
-    r.credits !== '' ? money(Number(r.credits)) : '—',
+    r.fundraising !== '' ? money(Number(r.fundraising)) : '—',
+    r.otherCredits !== '' ? money(Number(r.otherCredits)) : '—',
     r.paid !== '' ? money(Number(r.paid)) : '—',
+    r.handedBack !== '' ? money(Number(r.handedBack)) : '—',
     r.balance !== '' ? money(Number(r.balance)) : '—',
     String(r.status),
   ]);
@@ -1321,6 +1370,7 @@ export async function downloadMoneyExport(format: MoneyExportFormat, spec: Money
       settings,
       {
         identity: spec.teamName,
+        ...(REPORT_SHAPES.has(spec.columns) ? { shape: REPORT_SHAPES.get(spec.columns) } : {}),
         // Flattened to plain sentences here — the PDF engine has no rich text inside a wrapped
         // paragraph, and the screen-only clauses are already gone.
         ...(spec.notes?.length

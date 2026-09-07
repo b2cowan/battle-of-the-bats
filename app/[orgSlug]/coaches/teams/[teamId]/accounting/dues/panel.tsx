@@ -49,6 +49,55 @@ import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
  *  standalone too, and keeps its own date, pencil and story. */
 const isScheduleCredit = (c: { paymentId?: unknown; fundraiserEntryId?: unknown; expenseId?: unknown; description?: unknown }) =>
   !c.paymentId && !c.fundraiserEntryId && !c.expenseId && c.description === SCHEDULE_CHANGE_CREDIT_DESCRIPTION;
+
+/** ⚠⚠ THE FAMILY'S OWN MONEY IS AN AMOUNT, NOT A ROW PREDICATE — and the first cut of this got it
+  * wrong. `ladder.ownMoney` is how many overpayment-credit dollars the family's own payments stand
+  * behind (the clamp in `splitDuesLadder`); those dollars are inside `Paid` and must not print
+  * under the credit sections, or one screen counts them twice. WHICH ROWS carry them is decided
+  * here, by walking the overpayment credits in the order the engine writes them — the schedule row,
+  * then receipt-linked rows, then anything else newest first — and hiding whole rows while the
+  * running total stays inside `ownMoney`.
+  *
+  * Umar is why this is an amount: a $50 overpayment credit with NO payment link (it predates
+  * linking) on a family who really did send $50 over. The predicate that stood here filed it as
+  * coach-typed and printed it under Other credits, while the tile above had folded the same $50
+  * into Paid — a section header that no longer equalled its rows, the one fault this drawer was
+  * rebuilt to remove. Any overpayment row the amount does NOT reach is a credit a coach asserted
+  * with no payment behind it; it shows under Other credits, counted, exactly as the tile counts it. */
+const hiddenOwnMoneyIds = (credits: readonly DuesCredit[], ownMoney: number): Set<string> => {
+  const rank = (c: DuesCredit) => (isScheduleCredit(c) ? 0 : c.paymentId ? 1 : 2);
+  const rows = credits
+    .filter(c => c.creditType === 'overpayment')
+    .sort((a, b) => rank(a) - rank(b) || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  const hidden = new Set<string>();
+  let leftC = Math.round(ownMoney * 100);
+  for (const c of rows) {
+    const amtC = Math.round(c.amount * 100);
+    // A row the amount cannot swallow whole stays visible; a smaller one after it may still fit.
+    if (amtC > leftC) continue;
+    hidden.add(c.id);
+    leftC -= amtC;
+  }
+  return hidden;
+};
+
+/** Fundraising is a SECTION now, so the rows inside it drop the `Fundraiser ·` prefix the heading
+  * already states. Sponsorships are stored as this type and belong here — a sponsorship IS money
+  * raised for the team. */
+const isFundraisingCredit = (c: { creditType?: unknown }) => c.creditType === 'fundraiser';
+
+/** ⚠ ONE SHELL FOR ALL FOUR LADDER SECTIONS (owner, on the built screen 2026-09-07). The drawer
+  * used to be two lists — receipts, then credits — and each carried its own spacing: the credits
+  * block had a rule above and nothing below because it was LAST, the receipt blocks had space below
+  * and no rule because they were FIRST. Reordering them into the ladder kept every one of those
+  * one-off choices, so Other credits ran straight into Payments with no gap and half the sections
+  * had a rule the other half lacked. Four sibling sections, one recipe: a rule above, the same air
+  * on both sides. A fifth section would take this and nothing else. */
+const LADDER_SECTION: React.CSSProperties = {
+  borderTop: '1px solid var(--home-line, rgba(255,255,255,0.07))',
+  paddingTop: '1rem',
+  marginBottom: '1.25rem',
+};
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
 import { fmt } from '@/lib/coach-money-summary';
@@ -63,7 +112,7 @@ import { useRecordMoneySignal } from '@/lib/coach-record-money';
    which a bare filter(Boolean).join(' ') does not. */
 import { playerName } from '@/lib/coach-roster-name';
 import { moneySectionHref } from '@/lib/coach-money-links';
-import { overpaymentExcess, type InstallmentCoverage } from '@/lib/dues-payments';
+import { overpaymentExcess, type InstallmentCoverage, type DuesLadder } from '@/lib/dues-payments';
 import {
   creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
   type CreditApplicationMode,
@@ -127,6 +176,8 @@ interface PlayerWithDues {
   totalCredits: number;
   /** The family's own money the team is holding — see `splitFamilyOwnMoney`. */
   ownMoneyHeld: number;
+  /** The five figures the table and drawer read left to right — see `splitDuesLadder`. */
+  ladder: DuesLadder;
   rollingBalance: number;
   /** The three-state position (owner model 2026-08-14): dues − cash − credits applied. */
   leftToSend: number;
@@ -985,6 +1036,7 @@ export function PlayerDuesPanel({
       })),
       paidAmount: p.paidAmount,
       ownMoneyHeld: p.ownMoneyHeld,
+      ladder: p.ladder,
       outstanding: p.outstanding,
       totalCredits: p.totalCredits,
       leftToSend: p.leftToSend,
@@ -1796,6 +1848,125 @@ export function PlayerDuesPanel({
     void saveRowChoice(playerId, 'fixed', amount);
   }
 
+  /* ⚠ THE HANDED-BACK COLUMN IS A ROSTER-LEVEL DECISION, NOT A ROW ONE (dues ladder, 2026-09-07).
+     A column that is empty for every family is worse than no column, and a column that appears and
+     disappears as a coach changes the Showing filter is worse still — so it asks the WHOLE roster,
+     not `shownPlayers`. Most teams never hand money back and never see it; the three families on
+     the QA fixture who have are why it exists. Same self-hiding rule as the Past due tile. */
+  const anyHandedBack = players.some(p => p.ladder.handedBack > 0.005);
+
+  /* The open player's credits, split the way the tiles above them are split. ⚠ These two lists and
+     the `Fundraising` / `Other credits` tiles are the SAME partition of the same rows — that is what
+     lets each section heading print its tile's figure and have it equal the rows underneath. The
+     family's own money appears in neither: it is inside `Paid`, and the Payments heading names it. */
+  const fundraisingRows = selected ? selected.credits.filter(isFundraisingCredit) : [];
+  /* ⚠ ONE ROW RENDERER FOR BOTH CREDIT SECTIONS (dues ladder, 2026-09-07). Fundraising and Other
+     credits print the same record with the same affordances — a coach can hand-add a `fundraiser`
+     credit, so even that section needs the pencil and the bin. Two copies of this markup is how
+     the two sections start disagreeing about which credits may be edited. */
+  const creditRow = (c: PlayerWithDues['credits'][number], hideType: boolean) => (
+      <div key={c.id} style={{
+        display: 'flex', alignItems: 'center', gap: '0.6rem',
+        padding: '0.5rem 0.65rem', borderRadius: 7,
+        /* ⚠ THE SAME CARD AS A RECEIPT ROW (owner, 2026-09-07). Credits wore a faint green wash
+           from the days this drawer was two lists and the tint was how you told a credit from a
+           payment. The ladder made them four sibling sections whose HEADINGS say what kind of
+           money each holds, and the bracketed green figure already says "in their favour" — so
+           the wash had stopped carrying information and started reading as an inconsistency. */
+        background: 'var(--home-card, rgba(255,255,255,0.03))',
+        border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+        fontSize: '0.83rem',
+      }}>
+        {/* A credit reduces the bill, so it reads negative — and the FORMATTER
+            draws that. This hand-wrote a dash in front of a positive number,
+            which was consistent until brackets arrived (2026-08-14) and left
+            one credit line saying "-$50.00" two rows from another saying
+            "($50.00)". */}
+        <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+          {fmt(-(c.amount as number))}
+        </span>
+        <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {c.description}
+        </span>
+        {/* One meta format for every credit: "Type · date" (owner, QA §118
+            walk 08-28 — a separate "from fundraiser" tag beside "Fundraiser"
+            said the same thing twice). A sourced credit is told apart by
+            having no edit/delete buttons; the hover text says where it is
+            corrected instead. */}
+        <span
+          style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}
+          title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there'
+            : c.expenseId ? 'Set by the out-of-pocket expense that created it — change it there'
+            : isScheduleCredit(c) ? 'Follows the schedule — change the dues total to change it'
+            : undefined}
+        >
+          {/* ⚠ THE ENGINE'S ROW HAS NO DATE (owner, 2026-09-01): it is a
+              RUNNING total across however many schedule changes produced
+              it, and a calendar day on it would claim a single arrival
+              that never happened. Every other credit is one event on one
+              day and keeps its date. */}
+        {/* ⚠ THE TYPE PREFIX IS DROPPED INSIDE THE FUNDRAISING SECTION (dues ladder, 2026-09-07):
+            its heading already says Fundraising, so `Fundraiser · Aug 31` printed the same word
+            twice on every row. Other credits keeps it, because that section really is mixed. */}
+        {isScheduleCredit(c) ? 'Follows the schedule'
+          : hideType ? fmtDate(c.creditDate as string)
+          : <>{CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}</>}
+        </span>
+        {/* ⚠ EDIT ONLY WHAT THE COACH AUTHORED. A credit carrying a
+            fundraiser entry, a payment or an expense was CREATED BY that
+            record, and that record states its amount — a rebate is raised ×
+            rate, an overpayment is the payment's excess, a reimbursement is
+            the out-of-pocket cost. Typing over any of them here would leave
+            two disagreeing numbers with no way to tell which is true, and
+            the next reconcile would quietly overwrite the coach's fix. Those
+            are corrected where they are born; the meta text says so instead. */}
+        {/* The engine's consolidated row gets no pencil either (same
+            reasoning as the sourced credits): since the reconcile counts
+            every overpayment credit, a hand edit here would be quietly
+            overwritten by the next schedule or payment change. The trash
+            stays — a standalone credit is manually deletable by design. */}
+        {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && !isScheduleCredit(c) && (
+          <button
+            className={styles.rowIconBtn}
+            style={{ flexShrink: 0 }}
+            disabled={creditSaving || deletingCreditId === c.id}
+            onClick={() => openEditCredit(c)}
+            title={`Edit this ${fmt(c.amount as number)} credit`}
+            aria-label={`Edit the ${fmt(c.amount as number)} credit, ${c.description}`}
+          >
+            <Pencil size={13} aria-hidden />
+          </button>
+        )}
+        {/* An auto-created overpayment credit rides its payment (DB
+            CASCADE) — deleting it alone would un-balance the books, so
+            the delete lives on the payment row instead. And a credit born
+            of a fundraiser/sponsor or an expense gets NO delete either
+            (SP-4): the server refuses it (CREDIT_HAS_SOURCE — its amount
+            is that record's to state), so offering the button was a click
+            that silently did nothing. The meta text's hover hint says where
+            the record is corrected. */}
+        {c.paymentId ? (
+          <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
+            auto
+          </span>
+        ) : (c.fundraiserEntryId || c.expenseId) || !moneyCanWrite || isScheduleCredit(c) ? null : (
+          <button
+            className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
+            disabled={deletingCreditId === c.id}
+            onClick={() => deleteCredit({ id: c.id as string, amount: c.amount as number, description: (c.description as string | null) ?? null })}
+            title="Remove credit"
+            aria-label={`Remove the ${fmt(c.amount)} credit, ${c.description}`}
+          >
+            {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
+          </button>
+        )}
+      </div>
+  );
+  const ownMoneyIds = selected ? hiddenOwnMoneyIds(selected.credits, selected.ladder.ownMoney) : new Set<string>();
+  const otherCreditRows = selected
+    ? selected.credits.filter(c => !isFundraisingCredit(c) && !ownMoneyIds.has(c.id))
+    : [];
+
   // ── Season totals (owner ruling 2026-08-13, mockup artifact `c19d8500`) ────────────────────
   // Every figure is summed from `players`, which this page already has — nothing new is computed
   // or fetched. These used to live in a 300px reference rail beside the table (Option C rails,
@@ -2312,9 +2483,11 @@ export function PlayerDuesPanel({
               <thead>
                 <tr>
                   <th className={styles.th}>Player</th>
-                  <th className={`${styles.th} ${styles.thNum}`}>Total Dues</th>
-                  <th className={`${styles.th} ${styles.thNum}`}>Credits</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Dues</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Fundraising</th>
+                  <th className={`${styles.th} ${styles.thNum}`}>Other credits</th>
                   <th className={`${styles.th} ${styles.thNum}`}>Paid</th>
+                  {anyHandedBack && <th className={`${styles.th} ${styles.thNum}`}>Handed back</th>}
                   <th className={`${styles.th} ${styles.thNum}`}>Balance</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th}></th>
@@ -2323,7 +2496,7 @@ export function PlayerDuesPanel({
               <tbody>
                 {shownPlayers.length === 0 && emptyShowMessage && (
                   <tr>
-                    <td className={styles.td} colSpan={7}><span className={styles.mutedInline}>{emptyShowMessage}</span></td>
+                    <td className={styles.td} colSpan={anyHandedBack ? 9 : 8}><span className={styles.mutedInline}>{emptyShowMessage}</span></td>
                   </tr>
                 )}
                 {shownPlayers.map(p => {
@@ -2336,37 +2509,51 @@ export function PlayerDuesPanel({
                     >
                       <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
-                        {/* ⚠ THE ONE FACT THIS SCREEN COULD NOT SAY (owner ruling 2026-09-06, QA
-                            §146 · D6). A family that sends more than their bill has the excess
-                            auto-converted to a credit, so the row used to read "Paid $700.00"
-                            for a family that had sent $1,250.00 and file the other $550.00 under
-                            a "Credits" total that also held sponsor money and out-of-pocket
-                            reimbursements. Both columns are honest now; this line answers the
-                            question a parent actually asks — how much of MY money are you
-                            holding? Rendered only when there is some, so eleven quiet rows stay
-                            quiet. */}
-                        {p.ownMoneyHeld > 0.005 && (
-                          <span className={styles.rowSubNote}>
-                            sent {fmt(p.ownMoneyHeld)} more than billed
-                          </span>
-                        )}
+                        {/* ⚰ "sent $X more than billed" LIVED HERE FOR ONE DAY — added by §148
+                            2026-09-06, retired by the dues ladder 2026-09-07. SUPERSEDED, NOT
+                            REVERSED, and the distinction matters to whoever reads this next.
+                            It was the right fix for a FOUR-column table: `Paid` was capped at the
+                            bill, so nothing on the row could show a family had sent more. The
+                            ladder puts `Paid $1,250.00` on the same row as `Dues $700.00`, and
+                            Status already reads Overpaid — the sentence now says out loud what two
+                            figures say by sitting next to each other.
+                            ⚠ It also carried a flaw worth remembering: it said *sent* about a
+                            figure that meant *still held*. Casey sent $300 more than billed and got
+                            every dollar back, so the line correctly stayed away while using the
+                            wrong verb for the number behind it. Columns need no such care. */}
                       </td>
-                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Total Dues">
+                      {/* ⚠⚠ THE LADDER, LEFT TO RIGHT (owner ruling 2026-09-07): Dues −
+                          Fundraising − Other credits − Paid + Handed back = Balance. NO OPERATOR
+                          GLYPHS — the column order carries it, and Handed back wears amber where
+                          the rest of the row is green, because it is the only figure that pushes a
+                          balance UP. Every figure is GROSS; `splitDuesLadder` carries the reason
+                          and the proof that they still land on the untouched Balance beside them.
+                          ⚠ CREDITS USED TO BE ONE COLUMN HERE and it hid two lies: Blake raised
+                          $150.00 and took $100.00 back, so a column headed Fundraising would have
+                          read $50.00; and `Paid` was net of payouts, so Casey read $900.00 against
+                          the $1,200.00 they sent. Gross figures plus a column of their own for the
+                          money handed back is what makes every heading true. */}
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Dues">
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
                       </td>
-                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
-                        {/* Credits reduce the bill, so they read as a negative — and since the
-                            brackets ruling (2026-08-14) the FORMATTER draws that, not a
-                            hand-written dash in front of a positive number.
-                            ⚠ THIS IS OTHER PEOPLE'S MONEY ONLY (D6, 2026-09-06) — fundraising,
-                            sponsorship, reimbursement, contribution. The family's own
-                            overpayment moved into Paid, where it belongs. The Balance beside it
-                            did not move: the two columns are a RE-SPLIT of one total. */}
-                        {p.totalCredits > 0 ? fmt(-p.totalCredits) : '—'}
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Fundraising" style={{ color: p.ladder.fundraising > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
+                        {p.ladder.fundraising > 0.005 ? fmt(p.ladder.fundraising) : '—'}
                       </td>
-                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.paidAmount > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
-                        {p.schedule ? fmt(p.paidAmount) : '—'}
+                      {/* Everything covered that is neither fundraising nor the family's own money:
+                          reimbursements for costs they fronted, contributions, forgiven balances.
+                          Mixed by nature — which is why the rows inside its drawer section keep a
+                          type prefix while the Fundraising ones drop theirs. */}
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Other credits" style={{ color: p.ladder.otherCredits > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
+                        {p.ladder.otherCredits > 0.005 ? fmt(p.ladder.otherCredits) : '—'}
                       </td>
+                      <td className={`${styles.td} ${styles.tdNum}`} data-label="Paid" style={{ color: p.ladder.paid > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.35))' }}>
+                        {p.schedule ? fmt(p.ladder.paid) : '—'}
+                      </td>
+                      {anyHandedBack && (
+                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Handed back" style={{ color: p.ladder.handedBack > 0.005 ? 'var(--warning)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
+                          {p.ladder.handedBack > 0.005 ? fmt(p.ladder.handedBack) : '—'}
+                        </td>
+                      )}
                       <td className={`${styles.td} ${styles.tdNum}`} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontWeight: 600 }}>
                         {p.schedule ? fmt(p.rollingBalance) : '—'}
                       </td>
@@ -3002,45 +3189,78 @@ export function PlayerDuesPanel({
                   <>
                     {/* Rolling balance summary */}
                     <div style={{
-                      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem',
+                      /* The ladder is 5 or 6 wide, and the last tile is the ANSWER — separated by a
+                         rule rather than by an `=`. Flex rather than a fixed grid so the count can
+                         change with Handed back without a second template. */
+                      display: 'flex', alignItems: 'stretch', gap: '1.1rem',
                       padding: '0.85rem 1rem', marginBottom: '1rem',
                       background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
                       border: '1px solid var(--home-line, rgba(255,255,255,0.06))',
                     }}>
-                      {/* "Left to send" replaced Balance here (binding mockup §1, 2026-08-14):
-                          dues − cash − credits applied — the number a family can actually act
-                          on. The in-credit strip below still reports a negative balance.
+                      {/* ⚠⚠ THE DUES LADDER (owner ruling 2026-09-07, out of the QA §148 walk):
+                          Dues − Fundraising − Other credits − Paid + Handed back = Balance. Read
+                          left to right, no operator glyphs — the order carries it and the rule
+                          before Balance closes it. Every section of the drawer BELOW is one of
+                          these tiles, carrying the same total in its heading, so this row doubles
+                          as the drawer’s table of contents.
 
-                          ⚠ THESE FOUR TILES ARE THE FOUR COLUMNS OF THE TABLE BELOW, TOTALLED
-                          (owner-approved mockup `e73e9842`, 2026-08-14) — and that is why the
-                          table carries NO totals row: it would be these same four figures a
-                          second time, forty millimetres down.
+                          ⚰ IT REPLACED `Total dues · After fundraising · Paid · Left to send`.
+                          Two headstones worth keeping:
 
-                          ⚠ CREDITS BECAME "AFTER FUNDRAISING", stating the RESULT rather than the
-                          deduction. A negative in a row of positives was the one tile a treasurer
-                          had to stop and decode; as a result, every neighbouring pair relates
-                          — $800 → $550 → $400 → $150, each step readable left to right. The credit
-                          itself is not lost: the strip directly below names it and offers the
-                          payout. */}
+                          ⚠ "After fundraising" answered a question about a BILL while appearing to
+                          answer one about FUNDRAISING. Avery raised $198.15 and it read $700.00
+                          against a $700.00 bill, because her cash had already settled every
+                          instalment and there was no bill left for the fundraising to reduce.
+                          Correct, and a lie — and it hit every family who pays PROMPTLY, not just
+                          the overpaid ones.
+
+                          ⚠ "Left to send" was chosen in 2026-08-14 because a negative here was the
+                          one tile a treasurer had to decode. Balance supersedes it on evidence: for
+                          every family who OWES money the two are the same figure, and they diverge
+                          only when the family is owed — where Left to send says $0.00 and stops.
+
+                          ⚠ HANDED BACK WEARS AMBER and hides at zero. With no `+` glyph it is the
+                          only cue that this figure pushes a balance UP rather than down; every
+                          other money tile here is green. */}
                       {[
-                        { label: 'Total dues', value: fmt(selected.schedule.totalAmount), color: undefined },
+                        { label: 'Dues', value: fmt(selected.ladder.dues), color: undefined },
                         {
-                          label: 'After fundraising',
-                          value: fmt(Math.max(selected.schedule.totalAmount - selected.creditApplied, 0)),
-                          color: selected.creditApplied > 0.005 ? 'var(--success-light)' : undefined,
+                          label: 'Fundraising',
+                          value: fmt(selected.ladder.fundraising),
+                          color: selected.ladder.fundraising > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))',
                         },
-                        { label: 'Paid', value: fmt(selected.paidAmount), color: 'var(--success-light)' },
-                        { label: 'Left to send', value: fmt(selected.leftToSend), color: balanceColor(selected.leftToSend) },
-                      ].map(stat => (
-                        <div key={stat.label}>
-                          <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--home-dim, rgba(255,255,255,0.35))', marginBottom: '0.15rem' }}>
+                        {
+                          label: 'Other credits',
+                          value: fmt(selected.ladder.otherCredits),
+                          color: selected.ladder.otherCredits > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))',
+                        },
+                        {
+                          label: 'Paid',
+                          value: fmt(selected.ladder.paid),
+                          color: selected.ladder.paid > 0.005 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.4))',
+                        },
+                        ...(selected.ladder.handedBack > 0.005
+                          ? [{ label: 'Handed back', value: fmt(selected.ladder.handedBack), color: 'var(--warning)' }]
+                          : []),
+                        { label: 'Balance', value: fmt(selected.rollingBalance), color: balanceColor(selected.rollingBalance) },
+                      ].map((stat, i, all) => {
+                        /* The ANSWER, set apart by a rule instead of an `=`. It is always last, so
+                           the test is positional rather than a flag on the row above. */
+                        const isAnswer = i === all.length - 1;
+                        return (
+                        <div key={stat.label} style={{
+                          flex: 1, minWidth: 0,
+                          ...(isAnswer ? { borderLeft: '1px solid var(--home-line-strong, rgba(255,255,255,0.14))', paddingLeft: '1.1rem' } : null),
+                        }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: isAnswer ? 'var(--home-ink-soft, rgba(255,255,255,0.7))' : 'var(--home-dim, rgba(255,255,255,0.35))', marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {stat.label}
                           </span>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: stat.color ?? 'var(--home-ink, rgba(255,255,255,0.85))', fontVariantNumeric: 'tabular-nums' }}>
+                          <span style={{ fontSize: isAnswer ? '1.05rem' : '0.95rem', fontWeight: 700, color: stat.color ?? 'var(--home-ink, rgba(255,255,255,0.85))', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                             {stat.value}
                           </span>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Owed-back, not rolling balance (owner model 2026-08-14): the strip states
@@ -3596,128 +3816,39 @@ export function PlayerDuesPanel({
                       </div>
                     )}
 
-                    {/* Payments — the receipt book (mig 232). Each row is a FACT with its own
-                        date, method and ledger line; removing one voids that ledger entry and
-                        takes any auto-created overpayment credit with it. */}
-                    {selected.payments.length > 0 && (
-                      <div style={{ marginBottom: '1.25rem' }}>
+                    {/* ⚠⚠ SECTIONS NOW MIRROR THE TILES ABOVE THEM, IN THE SAME ORDER (dues
+                        ladder, owner ruling 2026-09-07): Fundraising, Other credits, Payments,
+                        Paid out. Each heading prints its tile's figure, so the tile row is this
+                        drawer's table of contents and nothing on the screen is unaccounted for.
+                        Payments moved BELOW the two credit sections to hold that order — cheap,
+                        because recording a payment runs off the buttons at the top of the drawer
+                        rather than this list.
+
+                        Fundraising is money raised FOR this family — a drive rebate or a
+                        sponsorship, which the product stores as the same kind because a
+                        sponsorship is money raised for the team. */}
+                    {fundraisingRows.length > 0 && (
+                      <div style={LADDER_SECTION}>
                         <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
-                          Payments — {fmt(selected.payments.reduce((s, p) => s + p.amount, 0))} received
+                          Fundraising — {fmt(selected.ladder.fundraising)} raised
                         </span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {selected.payments.map(pm => (
-                            <div key={pm.id} style={{
-                              display: 'flex', alignItems: 'center', gap: '0.6rem',
-                              padding: '0.5rem 0.65rem', borderRadius: 7,
-                              background: 'var(--home-card, rgba(255,255,255,0.03))',
-                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-                              fontSize: '0.83rem',
-                            }}>
-                              <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                {fmt(pm.amount)}
-                              </span>
-                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {PAYMENT_METHOD_LABELS[pm.method]}{pm.note ? ` · ${pm.note}` : ''}
-                              </span>
-                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
-                                {fmtDate(pm.receivedDate)}
-                              </span>
-                              {/* ⚠ EDIT BEFORE DELETE, and it is the reason this row stopped being
-                                  a dead end. Until now the ONLY correction was Delete, so fixing a
-                                  typo'd amount meant destroying a receipt and re-typing all four
-                                  fields — a coach one slip away from losing the note and the real
-                                  arrival date. What the server does is still a void-and-re-post
-                                  (a posted entry is never rewritten); what the coach does is fix
-                                  the number. */}
-                              {moneyCanWrite && (
-                                <button
-                                  className={styles.rowIconBtn}
-                                  style={{ flexShrink: 0 }}
-                                  disabled={deletingPaymentId === pm.id || paySaving}
-                                  onClick={() => openEditPayment(pm)}
-                                  title={`Edit this ${fmt(pm.amount)} payment`}
-                                  aria-label={`Edit the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)}`}
-                                >
-                                  <Pencil size={13} aria-hidden />
-                                </button>
-                              )}
-                              {moneyCanWrite && (
-                                <button
-                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
-                                  disabled={deletingPaymentId === pm.id}
-                                  onClick={() => deletePayment(pm)}
-                                  title="Remove payment (voids its ledger entry)"
-                                  // An icon-only button has no visible name, so this IS its name.
-                                  aria-label={`Remove the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} — this voids its ledger entry`}
-                                >
-                                  {deletingPaymentId === pm.id ? '…' : <Trash2 size={13} />}
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                          {fundraisingRows.map(c => creditRow(c, true))}
                         </div>
                       </div>
                     )}
 
-                    {/* ⚠ THE PAYOUT ERROR CHANNEL LIVES HERE NOW (P2, 2026-08-23). It used to be
-                        rendered beside the credit strip, under the Pay-out sheet that has moved
-                        into the conversation — leaving the REMOVE button below with a failure
-                        nothing on screen would have shown. A delete that silently does nothing is
-                        the worst shape for a control that voids a ledger entry. */}
-                    {payoutErrorNote}
-
-                    {/* Paid out — the outbox's receipts (mig 234), the mirror of Payments above.
-                        Removing one voids its books entry and the money goes back to being owed. */}
-                    {selected.payouts.length > 0 && (
-                      <div style={{ marginBottom: '1.25rem' }}>
-                        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
-                          Paid out — {fmt(selected.paidOut)} handed back
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {selected.payouts.map(po => (
-                            <div key={po.id} style={{
-                              display: 'flex', alignItems: 'center', gap: '0.6rem',
-                              padding: '0.5rem 0.65rem', borderRadius: 7,
-                              background: 'var(--home-card, rgba(255,255,255,0.03))',
-                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
-                              fontSize: '0.83rem',
-                            }}>
-                              {/* Money OUT — the brackets are the arithmetic, not an alarm. */}
-                              <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                {fmt(-po.amount)}
-                              </span>
-                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {PAYMENT_METHOD_LABELS[po.method]}{po.note ? ` · ${po.note}` : ''}
-                              </span>
-                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
-                                {fmtDate(po.paidDate)}
-                              </span>
-                              {moneyCanWrite && (
-                                <button
-                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
-                                  disabled={deletingPayoutId === po.id}
-                                  onClick={() => deletePayout(po.id)}
-                                  title="Remove payout (voids its ledger entry; the money goes back to being owed)"
-                                  aria-label={`Remove the ${fmt(po.amount)} payout paid ${fmtDate(po.paidDate)} — the money goes back to being owed`}
-                                >
-                                  {deletingPayoutId === po.id ? '…' : <Trash2 size={13} />}
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Credits section */}
-                    <div style={{
-                      borderTop: '1px solid var(--home-line, rgba(255,255,255,0.07))',
-                      paddingTop: '1rem',
-                      marginTop: selected.installments.length > 0 || selected.payments.length > 0 ? 0 : '0.5rem',
-                    }}>
+                    {/* Other credits — the second of the four sections, in tile order. */}
+                    <div style={LADDER_SECTION}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                        {/* ⚠ EVERY SECTION IN THIS DRAWER CARRIES ITS TOTAL, and this was the last
+                            one that did not. `Payments — $1,250.00 received` and `Paid out —
+                            $100.00 handed back` already read this way; `Credits` was a bare heading
+                            over three unrelated things. It is now one section per tile above, with
+                            the tile's figure in its heading, so the tile row doubles as this
+                            drawer's table of contents. */}
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-                          Credits
+                          Other credits — {fmt(selected.ladder.otherCredits)}
                         </span>
                         {/* moneyCanWrite, like every write control in this drawer (Phase B) —
                             the whole credit cluster rendered for read-only assistants. */}
@@ -3870,106 +4001,169 @@ export function PlayerDuesPanel({
                         <p className={styles.errorText} role="alert" style={{ marginBottom: '0.4rem' }}>{creditError}</p>
                       )}
 
-                      {/* Credits list */}
-                      {selected.credits.length > 0 ? (
+                      {/* Credits list — everything that is neither fundraising nor the family's own
+                          money. Mixed by nature (reimbursements, contributions, forgiven balances),
+                          which is why these rows KEEP their type prefix while the Fundraising ones
+                          drop theirs: there the heading says it, here it does not. */}
+                      {otherCreditRows.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {selected.credits.map(c => (
-                            <div key={c.id} style={{
+                          {otherCreditRows.map(c => creditRow(c, false))}
+                        </div>
+                      ) : (
+                        !addingCredit && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))', margin: 0 }}>
+                            No other credits for this player.
+                          </p>
+                        )
+                      )}
+                    </div>
+
+                    {/* Payments — the receipt book (mig 232). Each row is a FACT with its own
+                        date, method and ledger line; removing one voids that ledger entry and
+                        takes any auto-created overpayment credit with it. */}
+                    {selected.payments.length > 0 && (
+                      <div style={LADDER_SECTION}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
+                          Payments — {fmt(selected.ladder.paid)} received
+                          {/* ⚰ THE ENGINE'S OVERPAYMENT ROW RETIRED INTO THIS CAPTION (dues ladder,
+                              2026-09-07). `($550.00) Overpayment (dues changed) · Follows the
+                              schedule` had no date, no pencil, no bin and no link to anything — a
+                              caption wearing a row's costume — and under the ladder it has no tile
+                              of its own, because that money is inside Paid. Printing it under
+                              Credits was also the last corner of §148 still counting a family's own
+                              money as somebody else's.
+                              ⚠ THE TITLE IS THE ROW'S OWN HOVER TEXT, KEPT DELIBERATELY: this is
+                              the only place the screen says how to move the figure. */}
+                          {/* ⚠ `ladder.ownMoney`, NOT `ownMoneyHeld`: this caption names the dollars
+                              hidden from the credit sections above, so the drawer still accounts for
+                              every credit the family holds (rows shown + this caption = credits
+                              issued). `ownMoneyHeld` is net of refunds and drives the Overpaid word;
+                              a family refunded in full still SENT the excess, and Paid out below
+                              says where it went. */}
+                          {selected.ladder.ownMoney > 0.005 && (
+                            <span
+                              style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontWeight: 600 }}
+                              title="Follows the schedule — change the dues total to change it"
+                            >
+                              {' · '}{fmt(selected.ladder.ownMoney)} more than billed
+                              {/* ⚠ THE BRIDGE TO THE STRIP ABOVE (review 2026-09-07, Medium). This
+                                  caption is GROSS — what the family sent over the bill — while the
+                                  strip's "$X of it their own" is what the team still HOLDS. On a partial
+                                  refund they differ by exactly the own money already handed back, and
+                                  with nothing saying so a coach reads $500 here against $300 there as
+                                  the screen contradicting itself. The difference is the §148 helper's
+                                  own figure (a refund drains the family's money first), so it is
+                                  stated rather than re-derived. */}
+                              {selected.ladder.ownMoney - selected.ownMoneyHeld > 0.005 && (
+                                <> · {fmt(Math.round((selected.ladder.ownMoney - selected.ownMoneyHeld) * 100) / 100)} of it since handed back</>
+                              )}
+                            </span>
+                          )}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {selected.payments.map(pm => (
+                            <div key={pm.id} style={{
                               display: 'flex', alignItems: 'center', gap: '0.6rem',
                               padding: '0.5rem 0.65rem', borderRadius: 7,
-                              background: 'color-mix(in srgb, var(--success-light) 5%, transparent)',
-                              border: '1px solid color-mix(in srgb, var(--success-light) 12%, transparent)',
+                              background: 'var(--home-card, rgba(255,255,255,0.03))',
+                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                               fontSize: '0.83rem',
                             }}>
-                              {/* A credit reduces the bill, so it reads negative — and the FORMATTER
-                                  draws that. This hand-wrote a dash in front of a positive number,
-                                  which was consistent until brackets arrived (2026-08-14) and left
-                                  one credit line saying "-$50.00" two rows from another saying
-                                  "($50.00)". */}
                               <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                                {fmt(-(c.amount as number))}
+                                {fmt(pm.amount)}
                               </span>
                               <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {c.description}
+                                {PAYMENT_METHOD_LABELS[pm.method]}{pm.note ? ` · ${pm.note}` : ''}
                               </span>
-                              {/* One meta format for every credit: "Type · date" (owner, QA §118
-                                  walk 08-28 — a separate "from fundraiser" tag beside "Fundraiser"
-                                  said the same thing twice). A sourced credit is told apart by
-                                  having no edit/delete buttons; the hover text says where it is
-                                  corrected instead. */}
-                              <span
-                                style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}
-                                title={c.fundraiserEntryId ? 'Set by the fundraiser that earned it — change it there'
-                                  : c.expenseId ? 'Set by the out-of-pocket expense that created it — change it there'
-                                  : isScheduleCredit(c) ? 'Follows the schedule — change the dues total to change it'
-                                  : undefined}
-                              >
-                                {/* ⚠ THE ENGINE'S ROW HAS NO DATE (owner, 2026-09-01): it is a
-                                    RUNNING total across however many schedule changes produced
-                                    it, and a calendar day on it would claim a single arrival
-                                    that never happened. Every other credit is one event on one
-                                    day and keeps its date. */}
-                                {isScheduleCredit(c) ? 'Follows the schedule' : <>{CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}</>}
+                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
+                                {fmtDate(pm.receivedDate)}
                               </span>
-                              {/* ⚠ EDIT ONLY WHAT THE COACH AUTHORED. A credit carrying a
-                                  fundraiser entry, a payment or an expense was CREATED BY that
-                                  record, and that record states its amount — a rebate is raised ×
-                                  rate, an overpayment is the payment's excess, a reimbursement is
-                                  the out-of-pocket cost. Typing over any of them here would leave
-                                  two disagreeing numbers with no way to tell which is true, and
-                                  the next reconcile would quietly overwrite the coach's fix. Those
-                                  are corrected where they are born; the meta text says so instead. */}
-                              {/* The engine's consolidated row gets no pencil either (same
-                                  reasoning as the sourced credits): since the reconcile counts
-                                  every overpayment credit, a hand edit here would be quietly
-                                  overwritten by the next schedule or payment change. The trash
-                                  stays — a standalone credit is manually deletable by design. */}
-                              {moneyCanWrite && !(c.fundraiserEntryId || c.expenseId) && !c.paymentId && !isScheduleCredit(c) && (
+                              {/* ⚠ EDIT BEFORE DELETE, and it is the reason this row stopped being
+                                  a dead end. Until now the ONLY correction was Delete, so fixing a
+                                  typo'd amount meant destroying a receipt and re-typing all four
+                                  fields — a coach one slip away from losing the note and the real
+                                  arrival date. What the server does is still a void-and-re-post
+                                  (a posted entry is never rewritten); what the coach does is fix
+                                  the number. */}
+                              {moneyCanWrite && (
                                 <button
                                   className={styles.rowIconBtn}
                                   style={{ flexShrink: 0 }}
-                                  disabled={creditSaving || deletingCreditId === c.id}
-                                  onClick={() => openEditCredit(c)}
-                                  title={`Edit this ${fmt(c.amount as number)} credit`}
-                                  aria-label={`Edit the ${fmt(c.amount as number)} credit, ${c.description}`}
+                                  disabled={deletingPaymentId === pm.id || paySaving}
+                                  onClick={() => openEditPayment(pm)}
+                                  title={`Edit this ${fmt(pm.amount)} payment`}
+                                  aria-label={`Edit the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)}`}
                                 >
                                   <Pencil size={13} aria-hidden />
                                 </button>
                               )}
-                              {/* An auto-created overpayment credit rides its payment (DB
-                                  CASCADE) — deleting it alone would un-balance the books, so
-                                  the delete lives on the payment row instead. And a credit born
-                                  of a fundraiser/sponsor or an expense gets NO delete either
-                                  (SP-4): the server refuses it (CREDIT_HAS_SOURCE — its amount
-                                  is that record's to state), so offering the button was a click
-                                  that silently did nothing. The meta text's hover hint says where
-                                  the record is corrected. */}
-                              {c.paymentId ? (
-                                <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.7rem', flexShrink: 0 }} title="Created by an overpayment — remove that payment to remove it">
-                                  auto
-                                </span>
-                              ) : (c.fundraiserEntryId || c.expenseId) || !moneyCanWrite || isScheduleCredit(c) ? null : (
+                              {moneyCanWrite && (
                                 <button
                                   className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
-                                  disabled={deletingCreditId === c.id}
-                                  onClick={() => deleteCredit({ id: c.id as string, amount: c.amount as number, description: (c.description as string | null) ?? null })}
-                                  title="Remove credit"
-                                  aria-label={`Remove the ${fmt(c.amount)} credit, ${c.description}`}
+                                  disabled={deletingPaymentId === pm.id}
+                                  onClick={() => deletePayment(pm)}
+                                  title="Remove payment (voids its ledger entry)"
+                                  // An icon-only button has no visible name, so this IS its name.
+                                  aria-label={`Remove the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} — this voids its ledger entry`}
                                 >
-                                  {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
+                                  {deletingPaymentId === pm.id ? '…' : <Trash2 size={13} />}
                                 </button>
                               )}
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        !addingCredit && (
-                          <p style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))', margin: 0 }}>
-                            No credits applied to this player.
-                          </p>
-                        )
-                      )}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* ⚠ THE PAYOUT ERROR CHANNEL LIVES HERE NOW (P2, 2026-08-23). It used to be
+                        rendered beside the credit strip, under the Pay-out sheet that has moved
+                        into the conversation — leaving the REMOVE button below with a failure
+                        nothing on screen would have shown. A delete that silently does nothing is
+                        the worst shape for a control that voids a ledger entry. */}
+                    {payoutErrorNote}
+
+                    {/* Paid out — the outbox's receipts (mig 234), the mirror of Payments above.
+                        Removing one voids its books entry and the money goes back to being owed. */}
+                    {selected.payouts.length > 0 && (
+                      <div style={LADDER_SECTION}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '0.65rem' }}>
+                          Paid out — {fmt(selected.paidOut)} handed back
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {selected.payouts.map(po => (
+                            <div key={po.id} style={{
+                              display: 'flex', alignItems: 'center', gap: '0.6rem',
+                              padding: '0.5rem 0.65rem', borderRadius: 7,
+                              background: 'var(--home-card, rgba(255,255,255,0.03))',
+                              border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
+                              fontSize: '0.83rem',
+                            }}>
+                              {/* Money OUT — the brackets are the arithmetic, not an alarm. */}
+                              <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                                {fmt(-po.amount)}
+                              </span>
+                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {PAYMENT_METHOD_LABELS[po.method]}{po.note ? ` · ${po.note}` : ''}
+                              </span>
+                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
+                                {fmtDate(po.paidDate)}
+                              </span>
+                              {moneyCanWrite && (
+                                <button
+                                  className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
+                                  disabled={deletingPayoutId === po.id}
+                                  onClick={() => deletePayout(po.id)}
+                                  title="Remove payout (voids its ledger entry; the money goes back to being owed)"
+                                  aria-label={`Remove the ${fmt(po.amount)} payout paid ${fmtDate(po.paidDate)} — the money goes back to being owed`}
+                                >
+                                  {deletingPayoutId === po.id ? '…' : <Trash2 size={13} />}
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>

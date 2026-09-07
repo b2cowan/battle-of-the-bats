@@ -1849,7 +1849,7 @@ export interface FamilyDuesStatementRender {
   /** When the label IS the children ("Isla and Emmett's family"), the addressee line skips
    *  naming them a second time. */
   labelledByPlayer?: boolean;
-  stats: { billed: string; received: string; credits: string; leftToSend: string };
+  stats: { billed: string; received: string; credits: string; handedBack: string; leftToSend: string };
   next: string[];
   schedules: { label: string; rows: string[][] }[];
   payments: string[][];
@@ -2000,6 +2000,9 @@ export function buildFamilyDuesStatementsDoc(jsPDFClass: any, autoTable: any, op
       // and a family that has must be.
       { n: family.stats.received, label: family.stats.received === '$0.00' ? 'received' : 'received — thank you' },
       { n: family.stats.credits, label: 'credits' },
+      // Only a household that was actually refunded gets the fifth tile — everyone else keeps the
+      // four-tile band they compare against last month's copy (dues ladder, review 2026-09-07).
+      ...(family.stats.handedBack !== '—' ? [{ n: family.stats.handedBack, label: 'handed back' }] : []),
       { n: family.stats.leftToSend, label: 'left to send' },
     ];
     const colW = contentWidth / stats.length;
