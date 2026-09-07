@@ -252,3 +252,24 @@ undefined ladder (route passes the whole summary; page imports the type).
 findings** — the `--changed` widening to all 73 screens aborted at the memory floor on a server the
 walk had exhausted, and was deliberately not re-run: the only shared-stylesheet change is the
 deletion of a class with no consumer, which cannot alter a rendered pixel.
+
+### 7.9 Follow-up, same day (owner: "go ahead with those 3 items")
+
+- **Assessed → Dues.** One concept had two words on three surfaces. The season band's first tile and
+  the roster player page's first box now say **Dues**, matching the column, the drawer tile, the
+  tab and the Statement row. *Billed* was the alternative (it pairs with Collected and the drawer
+  already says "more than billed"); the walk's Part I asks whether Dues reads on the band.
+- **`overpayment` left the manual credit picker.** It names a derived fact the engine owns and
+  reconciles every pass; a hand-typed one contradicted the receipts and was silently eaten. The
+  picker offers Contribution · Fundraiser · Other. Existing rows of the kind still display, count,
+  and open for edit with a fixed label — the treatment `forgiven` and `reimbursement` always had.
+  The one UAT scenario that posts an overpayment by hand already expects a refusal, so it holds.
+- **⚠ THE PHONE SHAPE HAD NOT BEEN BUILT.** §3.4 promised it, the mockup drew it, the owner approved
+  it — and the first commit shipped only the desktop tile row, which spills six tiles across 390px.
+  The rendered gate passed because it cannot see inside an open drawer. Built now: the balance leads
+  on a native `<details>`, the working folds out as a receipt with each line naming its source,
+  Handed back in amber, the summary a 52px tap target. The desktop card's `display` moved into its
+  class so the phone rule can win — an inline display beats any stylesheet.
+- **Owner QA §151** — walk artifact `COACH_DUES_LADDER_WALK.html`, nine parts. Part F is the phone,
+  walked by hand because nothing else can; Part I carries the two open calls (the Add-a-credit
+  placement, Dues vs Billed).

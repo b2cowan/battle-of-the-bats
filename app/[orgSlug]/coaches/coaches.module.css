@@ -11143,6 +11143,23 @@ button.gdChip[aria-pressed='true'] {
   .duesDesktopOnly { display: none; }
 }
 
+/* The dues ladder's two shapes (owner mockup round 4, 2026-09-07 — plan §3.4). Six tiles across a
+   992px drawer; on a phone the balance leads and the working folds out beneath it. Same
+   breakpoint as the table's card switch above, so the drawer and the table change shape together.
+   ⚠ The desktop card sets no inline `display` — it is here, so the phone rule can win. */
+.duesLadderDesktop { display: flex; }
+.duesLadderPhone { display: none; }
+.duesLadderPhone > summary::-webkit-details-marker { display: none; }
+.duesLadderChev { transition: transform .18s ease; }
+.duesLadderPhone[open] > summary .duesLadderChev { transform: rotate(180deg); }
+@media (max-width: 640px) {
+  .duesLadderDesktop { display: none; }
+  .duesLadderPhone { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .duesLadderChev { transition: none; }
+}
+
 /* ── The matrix's horizontal scroller (CoachScrollX sticky) ─────────────────────────────────
    ⚠ The primitive's table pin (`.scrollXSticky th/td:first-child`) is UNGATED — always sticky,
    always an opaque card ground. Correct for Budget vs. Actual, whose 12 month columns overflow

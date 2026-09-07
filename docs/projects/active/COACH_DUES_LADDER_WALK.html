@@ -1,0 +1,603 @@
+<title>Six Figures, One Balance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.rowtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:2px 0}
+.rowtable th,.rowtable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rowtable th{font-family:var(--disp);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.rowtable td:first-child,.rowtable th:first-child{text-align:left}
+.scrollx{overflow-x:auto}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §151 · Coaches portal → Money → Player Dues</p>
+  <h1>Six figures, one balance</h1>
+  <p class="lede">Player Dues now reads left to right — <b>Dues − Fundraising − Other credits −
+    Paid + Handed back = Balance</b> — on the table, in a player's record, on a phone, in the export
+    and on the statement a parent keeps. Every figure below is a real one off the fixture. The
+    promise underneath all of it is the same one §148 made: <b>no balance moves</b>.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Player Dues</b>, <b>Season
+    totals</b>. Parts E and H also visit <b>Roster → Avery Test</b> and the statement download.</p>
+  <div class="warn"><b>Restart the dev server first.</b> Shared modules and the shared coach
+    stylesheet both moved. And <b>another session shares this working copy</b> — if a figure below
+    is off, check whether the whole row moved under us before recording a defect.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The table adds up</h2>
+  <p>Player Dues → Season totals. Read the column headings first, then one row.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>Nine columns, in this order, no symbols between them</h3></div></div>
+  <div class="step-body">
+    <p class="why">The headings should read <b>Player · Dues · Fundraising · Other credits · Paid ·
+      Handed back · Balance · Status</b>, then the chevron. <b>Handed back</b> is there only because
+      three families on this roster have been paid out; on a team with none the column does not
+      exist at all.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">Headings in that order; no <code>+</code> / <code>−</code> anywhere in the row</label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b"><b>Handed back</b> reads in <b>amber</b> for Blake $100.00 · Casey $300.00 · Logan $200.00, and an em-dash for everyone else<span class="hintline">Amber is the only cue that this figure pushes a balance UP — every other money figure on the row is green</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">Avery's row has <b>no</b> "sent $550.00 more than billed" line under the name any more<span class="hintline">Paid $1,250.00 beside Dues $700.00 says it; Status already says Overpaid</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>Read Blake's row out loud</h3>
+    <div class="tags"><span class="tag think">say it in your own words</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Blake is the row that justifies the sixth column. He raised <b>$150.00</b> on the
+      Bottle Drive and took <b>$100.00</b> of it back in cash. Under the old single Credits column that
+      read <b>($176.98)</b> — a number that tied to nothing.</p>
+    <div class="scrollx"><table class="rowtable">
+      <thead><tr><th>Player</th><th>Dues</th><th>Fundraising</th><th>Other credits</th><th>Paid</th><th>Handed back</th><th>Balance</th><th>Status</th></tr></thead>
+      <tbody><tr><td>Blake Test</td><td>$970.83</td><td>$150.00</td><td>$126.98</td><td>$625.00</td><td>$100.00</td><td>$168.85</td><td>Up to date</td></tr></tbody>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">The row reads exactly as above</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">Say it aloud: does it add up left to right without a calculator?<span class="hintline">970.83 − 150.00 − 126.98 − 625.00 + 100.00 = 168.85. If you needed the hint, flag it — the order is supposed to carry it</span></label></div>
+    </div>
+    <textarea placeholder="What is Blake's row telling you? Is it true?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>The one figure that changed value</h3></div></div>
+  <div class="step-body">
+    <p class="why">Casey sent <b>$1,200.00</b> and was handed <b>$300.00</b> back. The old screen said
+      <b>Paid $900.00</b> — it had quietly netted the refund out. This is the only figure on the whole
+      screen whose <i>value</i> is different today, and it is a correction: §148's own rule says Paid
+      shows what the family sent.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">Casey: <b>Paid $1,200.00</b> · <b>Handed back $300.00</b> · Balance <b>($37.50)</b> · <b>In credit</b></label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">Logan: Fundraising <b>$300.00</b> · Handed back <b>$200.00</b> · Balance <b>$870.83</b><span class="hintline">The old Credits column showed ($100.00) — the sponsorship with the refund already taken out of it</span></label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">Kai: Fundraising <b>$200.00</b> · Other credits <b>$700.00</b> · Balance <b>$70.83</b><span class="hintline">The $700 is a bat Kai's family bought for the team — that is why it is Other credits, not Fundraising</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A3…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Prove no balance moved</h2>
+  <p>The same instrument as §148's Part B. Every one of these was read off the screen before this change.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Twelve balances, identical</h3>
+    <div class="tags"><span class="tag think">check the arithmetic</span></div></div></div>
+  <div class="step-body">
+    <div class="scrollx"><table class="rowtable">
+      <thead><tr><th>Player</th><th>Balance</th><th>Player</th><th>Balance</th></tr></thead>
+      <tbody>
+        <tr><td>Avery</td><td>($1,128.15)</td><td>Harper</td><td>$970.83</td></tr>
+        <tr><td>Blake</td><td>$168.85</td><td>Indigo</td><td>$730.83</td></tr>
+        <tr><td>Casey</td><td>($37.50)</td><td>Jules</td><td>$845.83</td></tr>
+        <tr><td>Devon</td><td>$943.83</td><td>Kai</td><td>$70.83</td></tr>
+        <tr><td>Emerson</td><td>$970.83</td><td>Logan</td><td>$870.83</td></tr>
+        <tr><td>Frankie</td><td>$930.83</td><td colspan="2"></td></tr>
+        <tr><td>Gray</td><td>$845.83</td><td colspan="2"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">All twelve balances match the list above</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">The season band at the top: <b>Dues $11,308.30 · 12 players</b> — the first tile now says <b>Dues</b>, not Assessed<span class="hintline">Collected $2,225.00, Balance owing $7,349.32 and Past due are untouched</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>Inside a player's record — the tiles</h2>
+  <p>Tap Avery's row. The four tiles you knew are gone; five stand in their place.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Avery: five tiles, one line each</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a"><b>Dues $700.00 · Fundraising $198.15 · Other credits $380.00 · Paid $1,250.00 · Balance ($1,128.15)</b></label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">No <b>After fundraising</b> and no <b>Left to send</b> tile anywhere</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">No small caption under any tile — every tile is the same height, and Balance is set apart by a thin rule, not an <code>=</code></label></div>
+      <div class="chk"><input type="checkbox" id="c1d"><label for="c1d">The strip beneath still says <b>The team is holding $1,128.15 for this family — $550.00 of it their own, the rest from credits</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>Blake: six tiles, the sixth in amber</h3></div></div>
+  <div class="step-body">
+    <p class="why">Close Avery, open Blake.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a"><b>Dues $970.83 · Fundraising $150.00 · Other credits $126.98 · Paid $625.00 · Handed back $100.00 · Balance $168.85</b></label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b"><b>Handed back</b> is amber; Fundraising, Other credits and Paid are green</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>Inside a player's record — the sections</h2>
+  <p>Scroll down. Every tile above has exactly one section below it, carrying the same number in its heading.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Avery: three sections in ladder order, each with its total</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a"><b>Fundraising — $198.15 raised</b>: three rows — Chocolate sale $72.90, Northside Physio $50.00, Northside Physio $75.25 — each showing a <b>date only</b>, no "Fundraiser ·" in front of it</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b"><b>Other credits — $380.00</b> with <b>+ Add a credit</b> in its heading: Umpire fees $180.00 and Summer showcase $200.00, each still saying <b>Reimbursement ·</b> before its date</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c"><b>Payments — $1,250.00 received · $550.00 more than billed</b>, two $625.00 receipts beneath it<span class="hintline">Hover the "$550.00 more than billed": it says <i>Follows the schedule — change the dues total to change it</i></span></label></div>
+      <div class="chk"><input type="checkbox" id="d1d"><label for="d1d">There is <b>no</b> "($550.00) Overpayment (dues changed)" row anywhere any more</label></div>
+      <div class="chk"><input type="checkbox" id="d1e"><label for="d1e">Every row sits on the same plain white card, a rule runs above every section, and the gap above each section is the same<span class="hintline">This was your finding on the first build — credit rows on a green wash, no gap above Payments</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>Casey: the refund, said in two places that agree</h3>
+    <div class="tags"><span class="tag think">the step to argue with</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Open Casey. Their family sent $300 over the bill and got all of it back, so two
+      different figures are both true at once — what they <i>sent</i> and what the team still
+      <i>holds</i>. The screen has to say both without contradicting itself.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a"><b>Payments — $1,200.00 received · $300.00 more than billed · $300.00 of it since handed back</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b"><b>Paid out — $300.00 handed back</b>, one E-transfer row beneath it, <b>below</b> Payments</label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">The strip above the sections says the team is holding <b>$37.50</b> — <b>all of it from credits</b>, none of it Casey's own</label></div>
+    </div>
+    <div class="ask"><b>Tell me if those three lines read as one story or as three numbers.</b> The
+      "of it since handed back" phrase exists only to bridge $300 sent to $0 held; if it reads as
+      noise, say so.</div>
+    <textarea placeholder="Does Casey's record tell one story?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><div class="step-t"><h3>The credit picker lost a kind</h3></div></div>
+  <div class="step-body">
+    <p class="why">Still in Casey's record, press <b>+ Add a credit</b> and open the <b>Kind</b>
+      dropdown.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d3a"><label for="d3a">The kinds offered are <b>Contribution · Fundraiser · Other</b> — and <b>not</b> Overpayment<span class="hintline">An overpayment is something the product works out from the payments; a coach asserting one by hand created a figure the receipts contradicted, and the next reconcile quietly ate it</span></label></div>
+      <div class="chk"><input type="checkbox" id="d3b"><label for="d3b">Cancel the form. Nothing was added.</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D3…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>The other screen that shows the same family</h2>
+  <p>Roster → Avery Test, then Casey Test. Same five figures, or it's the drift §148 was written about.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Avery's player page reads the ladder</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The money boxes read <b>Dues $700.00 · Paid $1,250.00 · Fundraising $198.15 · Other credits $380.00 · Balance</b> — the first box says <b>Dues</b>, not Assessed<span class="hintline">This page prints a negative balance its own older way, <code>$-1128.15</code>; that spelling is older than this change and outside it</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Casey's page shows a <b>Handed back $300.00</b> box and <b>Paid $1,200.00</b> — matching the dues table, not the old $900.00</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Emerson's page shows just <b>Dues · Paid · Balance</b> — the credit boxes hide themselves when there is nothing in them</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>On a phone</h2>
+  <p>Narrow the window to about 390px, or use a phone. <b>The rendered sweep cannot see inside an open record</b>, so this part has never been measured by a machine — only by you.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>The balance leads; the working folds out</h3>
+    <div class="tags"><span class="tag phone">phone</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Open Avery's record at phone width. Instead of a row of tiles you should see one
+      card: <b>Balance ($1,128.15)</b> large, <i>Owed back to this family · tap for the working</i>
+      beneath it, and a chevron on the right.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">The card, shut, is the whole width and nothing spills past the right edge</label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">Tap it: the working lists <b>Dues $700.00 · Fundraising $198.15 · Other credits $380.00 · Paid $1,250.00</b>, then a rule, then <b>Balance ($1,128.15)</b></label></div>
+      <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Each line names its source underneath — Fundraising says <i>Chocolate sale · Sponsorship — Northside Physio · Sponsorship — Northside Physio</i>; Paid says <i>2 payments received</i></label></div>
+      <div class="chk"><input type="checkbox" id="f1d"><label for="f1d">Open Blake instead: a <b>Handed back $100.00</b> line in amber with <i>1 payout paid out</i> under it</label></div>
+      <div class="chk"><input type="checkbox" id="f1e"><label for="f1e">The whole summary row is the tap target and it is comfortably a thumb tall</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on F1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="F2">
+  <div class="step-head"><span class="num">F2</span><div class="step-t"><h3>The table as cards</h3>
+    <div class="tags"><span class="tag phone">phone</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f2a"><label for="f2a">Blake's card labels its figures <b>Dues · Fundraising · Other credits · Paid · Handed back · Balance</b> — the new words, not "Total Dues" and "Credits"</label></div>
+      <div class="chk"><input type="checkbox" id="f2b"><label for="f2b">Nothing is cut off at the right edge</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on F2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>The file a treasurer takes away</h2>
+  <p>Back at desktop width. Export → Player Dues, once as a spreadsheet and once as a PDF.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>Eight columns, the same words as the screen</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">The spreadsheet's headings are <b>Player · Dues · Fundraising · Other credits · Paid · Handed back · Balance · Status</b></label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b"><b>Handed back</b> is a column even for the nine families without one — it reads <b>$0.00</b> there, not blank<span class="hintline">Unlike the screen, the file always has the column: a spreadsheet whose column count changes with its data cannot be appended to last month's</span></label></div>
+      <div class="chk"><input type="checkbox" id="g1c"><label for="g1c">The PDF is <b>landscape</b>, and every one of the eight columns is on the page — no line at the bottom apologising for a column that did not fit</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on G1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>The statement a parent keeps</h2>
+  <p>Open Casey's record and download this family's statement; then Avery's.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>Casey's statement agrees with the coach's screen</h3></div></div>
+  <div class="step-body">
+    <p class="why">Before this change the band said <i>received $900.00</i> while the table said
+      $1,200.00 — the parent's document and the coach's screen disagreed about what the family sent.
+      Now it carries a fifth tile that only a refunded household gets.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">The band reads <b>$900.00 billed · $1,200.00 received — thank you · $37.50 credits · $300.00 handed back · $0.00 left to send</b></label></div>
+      <div class="chk"><input type="checkbox" id="h1b"><label for="h1b">Further down, a <b>Money handed back</b> section lists the $300.00</label></div>
+      <div class="chk"><input type="checkbox" id="h1c"><label for="h1c">Avery's statement has the <b>four</b> tiles it always had — no "handed back" tile — reading $700.00 · $1,250.00 · $578.15 · $0.00</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on H1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART I ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part I</p>
+  <h2>Two things I want your eye on</h2>
+  <p>Not checks — questions. Answer in the boxes; they come back with your findings.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="I1">
+  <div class="step-head"><span class="num">I1</span><div class="step-t"><h3>"+ Add a credit" lives under Other credits</h3>
+    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-body">
+    <p class="why">You approved that placement. The review pointed out a wrinkle: pick <b>Fundraiser</b>
+      as the kind from there and the row you just added appears in the <b>Fundraising</b> section
+      <i>above</i> the form, not where you were looking. If Other credits was empty you are left
+      staring at "No other credits for this player" right after saving.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i1a"><label for="i1a">I tried it, and it did / did not bother me (say which)</label></div>
+    </div>
+    <textarea placeholder="Leave it, move the button, or something else?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="I2">
+  <div class="step-head"><span class="num">I2</span><div class="step-t"><h3>"Dues", everywhere — still the right word?</h3>
+    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Assessed became Dues on the season band and the player page, so one figure has one
+      name on every surface. The alternative was <b>Billed</b> — it pairs with Collected on the band
+      and is the word the drawer already uses ("more than billed"). Having seen Dues on the band for
+      real, does it read, or is "Dues $11,308.30" on a tab called Player Dues one Dues too many?</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="i2a"><label for="i2a">Ruled: Dues stays, or Billed everywhere</label></div>
+    </div>
+    <textarea placeholder="Dues or Billed?"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Press <b>Copy findings</b> at the top, or copy from here, and paste it back into the
+    chat. Everything you typed and every verdict comes with it.</p>
+  <textarea class="out" id="outbox" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §151</span><span>Coach Money — the dues ladder</span>
+  <span>Built on dev 2026-09-07 · committed 3545b64e + follow-up</span><span>Fixture: UAT Test Team</span>
+</footer>
+</div>
+
+<div class="toastwrap" hidden id="toastwrap"><div class="toast" id="toast">Copied</div></div>
+
+<script>
+(function(){
+  var KEY='coach-dues-ladder-walk-151';
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('textarea:not(#outbox)'));
+  var out=document.getElementById('outbox');
+
+  function load(){
+    var s={};
+    try{ s=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ s={}; }
+    return s&&typeof s==='object'?s:{};
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v) st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §151 — Coach Money: the dues ladder','Fixture: UAT Test Team · built on dev 2026-09-07',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var txt=lab.textContent.split('\n')[0].trim();
+        var hint=lab.querySelector('.hintline');
+        if(hint) txt=txt.replace(hint.textContent.trim(),'').trim();
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt);
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

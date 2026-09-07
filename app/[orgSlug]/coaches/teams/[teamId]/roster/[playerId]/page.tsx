@@ -844,7 +844,7 @@ export default function PlayerDetailPage({
         ) : (
           <>
             <div className={styles.statBoxRow}>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Assessed</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Dues</span></div>
               {/* ⚠⚠ THE LADDER'S FIGURES, SO THIS PAGE AND THE DUES TABLE CANNOT DISAGREE (dues
                   ladder, 2026-09-07). `Credits` used to be one box holding fundraising, costs the
                   family fronted and anything else; `Paid` was net of any refund, so a family who

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 /* (ChevronDown went with the settlement accordion's twist — it had no other caller here.) */
-import { X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, Bell, ArrowLeft, DollarSign, Banknote, Pencil } from 'lucide-react';
+import { ChevronDown, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, Bell, ArrowLeft, DollarSign, Banknote, Pencil } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { DUES_EXPORT_COLUMNS, duesExportRows, duesPdfRows } from '@/lib/coach-money-exports';
@@ -2057,7 +2057,10 @@ export function PlayerDuesPanel({
   const duesTiles: MoneyTile[] = [
     {
       key: 'assessed',
-      label: 'Assessed',
+      /* One word for one concept (owner, 2026-09-07): the column says Dues, the drawer tile says
+         Dues, the tab is Player Dues, the Statement row is Player dues — this tile and the roster
+         player page were the only two surfaces still saying Assessed for the same figure. */
+      label: 'Dues',
       figure: fmt(seasonTotals.assessed),
       caption: `${players.length} player${players.length === 1 ? '' : 's'}`,
     },
@@ -3187,12 +3190,14 @@ export function PlayerDuesPanel({
               <>
                 {selected.schedule ? (
                   <>
-                    {/* Rolling balance summary */}
-                    <div style={{
+                    {/* Rolling balance summary — the DESKTOP shape; the phone shape follows it. */}
+                    <div className={styles.duesLadderDesktop} style={{
                       /* The ladder is 5 or 6 wide, and the last tile is the ANSWER — separated by a
                          rule rather than by an `=`. Flex rather than a fixed grid so the count can
                          change with Handed back without a second template. */
-                      display: 'flex', alignItems: 'stretch', gap: '1.1rem',
+                      /* ⚠ NO `display` HERE — it lives in the class, so the phone rule can win. An
+                         inline display beats any stylesheet and the card would never hide. */
+                      alignItems: 'stretch', gap: '1.1rem',
                       padding: '0.85rem 1rem', marginBottom: '1rem',
                       background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
                       border: '1px solid var(--home-line, rgba(255,255,255,0.06))',
@@ -3262,6 +3267,53 @@ export function PlayerDuesPanel({
                         );
                       })}
                     </div>
+
+                    {/* ⚠ THE PHONE SHAPE (owner mockup round 4, plan §3.4). Six tiles do not fit
+                        across 390px, so the balance leads — the treasurer's one number — and the
+                        working folds out beneath it as a receipt, each line naming its source. A
+                        native <details>: nothing to lose on re-render, keyboard-reachable, and the
+                        summary is the tap target at 52px, clear of the 44px floor. ⚠ The rendered
+                        sweep cannot see inside an open drawer, so this shape is walked by hand
+                        (Owner QA §151, part F). */}
+                    <details className={styles.duesLadderPhone} style={{
+                      marginBottom: '1rem',
+                      background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
+                      border: '1px solid var(--home-line, rgba(255,255,255,0.06))',
+                    }}>
+                      <summary style={{ listStyle: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.8rem 0.9rem', minHeight: 52, cursor: 'pointer' }}>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>Balance</span>
+                          <span style={{ display: 'block', fontSize: '1.35rem', fontWeight: 700, color: balanceColor(selected.rollingBalance), fontVariantNumeric: 'tabular-nums', lineHeight: 1.15 }}>{fmt(selected.rollingBalance)}</span>
+                          <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', marginTop: 2 }}>
+                            {selected.rollingBalance < -0.005 ? 'Owed back to this family' : selected.rollingBalance > 0.005 ? 'Still to send' : 'Settled'} · tap for the working
+                          </span>
+                        </span>
+                        <ChevronDown size={20} className={styles.duesLadderChev} aria-hidden style={{ flexShrink: 0, color: 'var(--home-dim, rgba(255,255,255,0.35))' }} />
+                      </summary>
+                      <div style={{ borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))', padding: '0.2rem 0.9rem 0.7rem' }}>
+                        {[
+                          { label: 'Dues', amount: selected.ladder.dues, source: null as string | null },
+                          { label: 'Fundraising', amount: selected.ladder.fundraising, source: fundraisingRows.map(c => c.description).join(' · ') || null },
+                          { label: 'Other credits', amount: selected.ladder.otherCredits, source: otherCreditRows.map(c => c.description).join(' · ') || null },
+                          { label: 'Paid', amount: selected.ladder.paid, source: selected.payments.length ? `${pluralize(selected.payments.length, 'payment', 'payments')} received` : null },
+                          ...(selected.ladder.handedBack > 0.005
+                            ? [{ label: 'Handed back', amount: selected.ladder.handedBack, source: `${pluralize(selected.payouts.length, 'payout', 'payouts')} paid out` }]
+                            : []),
+                        ].map(r => (
+                          <div key={r.label} style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
+                            <span style={{ flex: 1, minWidth: 0, fontSize: '0.85rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.75))' }}>
+                              {r.label}
+                              {r.source && <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', marginTop: 1 }}>{r.source}</span>}
+                            </span>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: r.label === 'Handed back' ? 'var(--warning)' : 'var(--home-ink, rgba(255,255,255,0.85))' }}>{fmt(r.amount)}</span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', padding: '0.6rem 0 0.2rem', borderTop: '1px solid var(--home-line-strong, rgba(255,255,255,0.14))', marginTop: 2 }}>
+                          <span style={{ flex: 1, fontSize: '0.88rem', fontWeight: 650, color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>Balance</span>
+                          <span style={{ fontSize: '1rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: balanceColor(selected.rollingBalance) }}>{fmt(selected.rollingBalance)}</span>
+                        </div>
+                      </div>
+                    </details>
 
                     {/* Owed-back, not rolling balance (owner model 2026-08-14): the strip states
                         the model's own fact — the team is holding this family's money — and is

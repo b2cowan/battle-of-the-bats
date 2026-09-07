@@ -67,9 +67,19 @@ export const CREDIT_APPLICATION_MODES: readonly CreditApplicationMode[] =
  *
  * ⚠ NOT the display map. Every kind still needs a NAME wherever a credit is listed — that map is
  * the dues panel's `CREDIT_TYPE_LABELS`, and it stays whole on purpose.
+ *
+ * ⚠ `overpayment` LEFT THIS LIST 2026-09-07 (owner ruling, out of the dues-ladder review). An
+ * overpayment is a DERIVED fact — this family sent more than we billed — and the product writes
+ * that credit itself the moment a payment overshoots, then reconciles every overpayment credit to
+ * exactly that excess on every pass. A coach asserting one by hand created a figure the payments
+ * list contradicted, and the next reconcile shrank or removed it in silence. Existing rows of the
+ * kind keep displaying, keep counting, and open for edit with their kind as a fixed label — the
+ * same treatment `forgiven` and `reimbursement` have always had. A coach who wants a credit for
+ * some other reason has `other`; a family who sent too much has the payment, and the credit
+ * appears on its own.
  */
 export const MANUAL_CREDIT_TYPES: readonly DuesCreditType[] =
-  ['contribution', 'fundraiser', 'overpayment', 'other'];
+  ['contribution', 'fundraiser', 'other'];
 
 /**
  * The three sentences the product says about credit application, in ONE place.
