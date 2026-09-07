@@ -2104,9 +2104,24 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+/* ⚠ THE TRACK IS TRANSPARENT ON PURPOSE, AND THE THUMB CARRIES ITS OWN INK (2026-09-07).
+   Until then the track painted `var(--bg)` and the thumb `var(--surface-2)`. Both are PAGE-level
+   tokens, and in the warm portal they land wrong the moment a scroller is a CARD rather than the
+   page: --bg is the cream paper and --surface-2 remaps to the SAME WHITE as the card. So every
+   scrolling card, drawer and modal drew a cream column down its own white inside — and the
+   card's border-radius then sliced that square column across the two right-hand corners, which is
+   the "weird corner" — while the handle, white on white, was invisible. A scroller showing a
+   track and no thumb reads as a rendering fault, not a scrollbar.
+   A transparent track shows whatever surface it sits over (page ground OR card), so it can never
+   be wrong about one of them. The thumb follows the palette's stronger hairline, which is declared
+   in BOTH the warm and the dark coach blocks and falls back to a translucent white on the dark
+   admin/public grounds, where no --home-* token is in scope. */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+/* The square where a vertical and a horizontal bar meet — same reasoning, and it sits in the
+   BOTTOM-RIGHT corner, so an opaque one is the most visible instance of the bug. */
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--home-line-strong, rgba(255,255,255,0.18)); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
