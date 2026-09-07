@@ -1,7 +1,7 @@
 # Founding Season 2027 — Offer Copy Canon
 
 **Status:** ✅ **APPROVED 2026-09-07** (owner, on mockup sheet `61a78f09`: "looks good, go for it")
-and **BUILT on `dev` 2026-09-07** — every sentence below is live behind the signup-window gate, and
+and **committed `2f02a949` on `dev` 2026-09-07** — every sentence below is live behind the signup-window gate, and
 the dates in it are derived in code from `lib/plan-config.ts` (see `PRICING_PAGE_COPY.md`'s
 2026-09-07 amendment). Copy appendix of `FOUNDING_SEASON_2027_PLAN.md`. Two deviations from the
 draft, both flagged in §10: the coach consequence line ships in its FALLBACK form until the

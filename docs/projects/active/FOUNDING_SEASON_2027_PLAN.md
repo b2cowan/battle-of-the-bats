@@ -1,6 +1,6 @@
 # Founding Season 2027 — the free season runs through September 30, 2027; the offer goes front and centre
 
-**Status:** Phase 0 ✅ **BUILT on `dev` 2026-09-07** (uncommitted at time of writing; owner QA §150 owed;
+**Status:** Phase 0 ✅ **committed `2f02a949` on `dev` 2026-09-07** after `/review` (§3b; owner QA §150 owed, listed as B9 on the owner's run-order artifact `5ef0163e`;
 **migration 279 applied to dev, PROD-OWED and invisible to `check:migrations` — it is data-only**).
 Phases 1–3 planned. Ruling: `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-07. Design:
 `memory/design_decisions.md` 2026-09-07. Copy: `FOUNDING_SEASON_2027_OFFER_COPY.md` (approved canon).
