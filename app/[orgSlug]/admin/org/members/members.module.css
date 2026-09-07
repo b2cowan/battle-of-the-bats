@@ -355,15 +355,10 @@
   margin-bottom: 0.875rem;
 }
 
+/* Heading type, ink and rule are the baseline's (table standard, register F-07); the matrix keeps
+   its tighter horizontal padding. */
 .roleMatrix th {
-  text-align: left;
-  padding: 0.4rem 0.5rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--white-30, rgba(255,255,255,0.3));
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  padding: var(--table-pad-compact) 0.5rem;
 }
 
 .roleMatrix th:not(:first-child) { text-align: center; }

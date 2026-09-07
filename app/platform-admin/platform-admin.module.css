@@ -4,6 +4,19 @@
   background: var(--pitch-black);
 }
 
+/* ⚠ ONE TABLE RECIPE FOR THE CONSOLE (app-wide table standard, owner-approved 2026-09-06;
+   register K-10 / F-05 / F-06). Fourteen modules each restated a copy of one recipe — headings at
+   0.55rem (8.8px, the smallest text in the product), padding drifting from 0.45 to 0.85rem, four
+   hover tints, and body sizes that were never applied because the global cell rule beat them.
+   The global baseline now owns size, tracking, case, ink, rule and density; the console keeps
+   exactly one thing of its own, its data face (K-10 — shell identity, decided with `btn-data` on
+   2026-05-24), stated once here. Hover belongs to a row that opens (`.clickableRow`, `.rowLink`),
+   never to every row. */
+.shell table { font-family: var(--font-data); }
+/* The one hover tint for a console row that OPENS (`.clickableRow`, `.rowLink`, the plan rows).
+   A token, not a literal in five modules — that is how the console reached four hover tints. */
+.shell { --pa-row-hover: rgba(var(--logic-lime-rgb), 0.06); }
+
 .sidebar {
   width: 220px;
   flex-shrink: 0;

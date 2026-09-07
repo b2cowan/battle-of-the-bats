@@ -249,35 +249,21 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
 }
-
 .table th {
-  text-align: left;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.2);
   white-space: nowrap;
 }
-
 .table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
   vertical-align: top;
 }
 
-.table tr:hover td,
+/* Selection is a state and keeps its tint; hover on a row that opens nothing does not (table
+   standard, register F-03). */
 .selectedRow td {
-  background: rgba(var(--logic-lime-rgb), 0.035);
+  background: var(--pa-row-hover);
 }
 
 .emptyCell {

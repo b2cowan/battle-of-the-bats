@@ -424,15 +424,17 @@
 .rdBarFill[data-dir="pos"] { left: 50%; background: var(--success); }
 .rdBarFill[data-dir="neg"] { right: 50%; background: var(--danger); }
 
+/* Heading type, ink, ground and rule from the table standard (owner A-05, 2026-09-06): the fan
+   table keeps its 16px row padding as a documented exception (register K-16) and its centred
+   figures (K-11); everything else follows the baseline. */
 .standingsTable th {
   text-align: left;
   padding: 1rem 1.5rem;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--data-gray);
-  background: var(--white-03);
-  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-2);
 }
 
 /* Stat-column headers center over their centered data — the base rule above
@@ -443,10 +445,10 @@
 }
 
 .standingsTable td {
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem; /* table-exception: K-16 */
   border-bottom: 1px solid var(--border-2);
-  font-size: 0.95rem;
-  color: var(--white-80);
+  font-size: var(--type-body);
+  color: var(--text-primary);
 }
 
 .standingsTable tr:last-child td { border-bottom: none; }
@@ -844,10 +846,10 @@
     padding: 0.58rem 0.55rem;
   }
   .standingsTable th {
-    font-size: 0.68rem;
+    font-size: var(--type-label);
     letter-spacing: 0.03em;
   }
-  .standingsTable td { font-size: 0.9rem; }
+  .standingsTable td { font-size: var(--type-body); }
   .summaryHeader { padding: 0.75rem 0.85rem; }
   /* (No mobile font-size override — the D9 mono card-header size is universal;
      the old 1rem override would now ENLARGE the title past its 0.82rem base.) */

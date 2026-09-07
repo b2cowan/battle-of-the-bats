@@ -2503,7 +2503,6 @@ export function BudgetVsActualPanel({
                    641–768 touch band. ⚠ NOT OPTIONAL HERE: the outline's category bar cleared the
                    floor from its own row padding, so this screen never had to ask; a toggle inside
                    a cell is 24px, which the rendered sweep caught at 768 the moment it changed. */
-                data-touch-floor
               >
               {/* The money columns are fixed so all three land in one right-aligned stack whatever
                   the names do, and the name column takes the remainder. Variance is the widest

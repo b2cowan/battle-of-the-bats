@@ -270,19 +270,21 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
 }
 
+/* Sizes from the type ladder (table standard, owner A-05 / register F-20); the comparison keeps
+   its data face and its lime category bands (structure). */
 .table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-data);
-  font-size: 0.75rem;
+  font-size: var(--type-body);
 }
 
 .thFeature {
   text-align: left;
   padding: 0.85rem 1.25rem;
-  font-size: 0.6rem;
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--data-gray);
   background: rgba(var(--blueprint-blue-rgb), 0.08);
@@ -293,9 +295,9 @@
 .th {
   text-align: center;
   padding: 0.85rem 1rem;
-  font-size: 0.6rem;
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--data-gray);
   background: rgba(var(--blueprint-blue-rgb), 0.08);

@@ -19,18 +19,17 @@
   border-collapse: collapse;
 }
 
-/* The global table reset in globals.css paints the header on the <tr> and <th>, not the
-   <thead>: `thead tr { background: var(--surface-2) }` (dark navy) and `th { border-bottom:
-   var(--border) }`. So warm the header at the row + cell level (a `.table thead` background
-   would just sit occluded behind the opaque row). */
+/* The heading row sits on paper by its own choice. (Until 2026-09-06 globals.css also painted
+   every `thead tr` navy and this rule existed to occlude it; the global ground is gone with the
+   table standard — a heading sits on its card — and this stays for the row's own identity.) */
 .table thead tr { background: var(--home-paper); }
 
 .table th {
   padding: 0.6rem 1rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--home-dim);
   border-bottom: 1px solid var(--home-line);

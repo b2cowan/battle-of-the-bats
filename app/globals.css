@@ -289,6 +289,21 @@
      shell's compact-density system shares. */
   --tap-min: 44px;
 
+  /* ── Table density — chosen by what a ROW HOLDS, never by which screen it is on ──────────
+     (App-wide table & list standard, owner-approved 2026-09-06 —
+     docs/agents/design/TABLE_AND_LIST_STANDARD.md §3.1.) A row holding one line of figures takes
+     COMPACT; a row holding two lines (a name and its caption) or a worded control takes
+     COMFORTABLE; REGISTER is an exception a surface must claim in the register (K-01: the Ledger's
+     Timeline today, nothing else). The three values are the ones the product already shipped —
+     the money grid's, the list recipe's and the register's — named so a recipe cannot mint a
+     fourth. Vertical padding only; horizontal padding stays with the recipe.
+     ⚠ DELIBERATELY INDEPENDENT of the admin shell's `[data-density]` preference (`--admin-row-*`,
+     above): that is a USER toggle for the shell's flex-row lists; this is decided by what a row
+     HOLDS, per the owner's A-01 ruling, and does not move with the toggle. */
+  --table-pad-compact:     0.42rem;
+  --table-pad-comfortable: 0.7rem;
+  --table-pad-register:    0.28rem;
+
   /* ── Composed top-chrome heights (public tournament pages) ──
      ONE var per job so no consumer has to hand-compose nav + ticker again
      (the consumer-shell precedent: --consumer-top-h).
@@ -382,11 +397,6 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] select { color-scheme: li
 [data-color-mode="light"] select option {
   background: #FFFFFF;
   color: #0F1123;
-}
-
-/* Light-mode: table */
-[data-color-mode="light"] thead tr {
-  background: var(--surface-2);
 }
 
 /* Light-mode: badges */
@@ -723,6 +733,14 @@ body:has([data-chat-fullbleed]) {
   --border-2: var(--dk-border-2);
   --data-gray: var(--dk-data-gray);
   --fl-text: var(--dk-fl-text);
+  /* ⚠ The three ink ALIASES too, not only the base ramp. The global table baseline (2026-09-06)
+     keys th/td ink off `--text-primary` / `--text-secondary`; inside the warm coach shell those
+     aliases are frozen to the warm ink (`--home-ink`), and this surface forces a dark ground — a
+     bare <table> in the guide would have painted near-black text on near-black (found by /review
+     before any such table existed). Re-anchoring the aliases here keeps them with the ramp. */
+  --text-primary: var(--white-90);
+  --text-secondary: var(--white-70);
+  --text-tertiary: var(--data-gray);
   --hud-surface: var(--dk-hud-surface);
   --info: var(--dk-info);
   --logic-lime: var(--dk-logic-lime);
@@ -1809,31 +1827,108 @@ select optgroup {
 /* ─── Table ─────────────────────────────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
 
+/* ⚠⚠ THE BASELINE IS THE STANDARD — not a recipe by accident (app-wide table & list standard,
+   owner-approved 2026-09-06; docs/agents/design/TABLE_AND_LIST_STANDARD.md).
+
+   Until 2026-09-06 this block set `td { font-size: 0.9375rem }` and `th { font-size: 0.8rem }` on
+   the ELEMENT — and an element rule on the cell beats any size a table sets on itself and leaves
+   to inherit. Measured across 319 renders: 109 desktop tables rendered a cell size different from
+   the one their own stylesheet declared. The coach list recipe said 14px and rendered 15; ten
+   platform tables said 12 and rendered 15; the pricing comparison said 12 and rendered 15. The
+   coach type ladder never reached a single list cell. 15px was the app's commonest body size, and
+   no stylesheet asked for it.
+
+   So the baseline now states the standard in the ladder's own tokens, and a recipe overrides only
+   the axis it has registered an exception on (TABLE_EXCEPTION_REGISTER.md). What this block owns:
+   · column heading — `--type-support`, the display face (owner A-06), uppercase, 0.05em,
+     `--text-secondary`, on the card ground (2026-08-15: a heading's ground is the card, never a
+     tint), a `--home-line` rule under it;
+   · cell — `--type-body`, `--text-primary`, a `--home-line` rule, COMPACT density;
+   · NO hover. `tbody tr:hover { background: var(--white-10) }` tinted every row in the product,
+     target or not — on the opaque-celled money grids it fired and painted nothing, on the insights
+     tables it lit rows that open nothing. Hover belongs to the recipe that makes a row open
+     (`.rowTappable`, `.clickableRow`), never to the element.
+   The line tokens carry fallbacks because `--home-line` is only defined on warm coach surfaces
+   and the help surface; every other shell resolves the fallback. */
 table { width: 100%; border-collapse: collapse; }
 
-thead tr { background: var(--surface-2); }
-
 th {
-  padding: 0.875rem 1rem;
+  padding: var(--table-pad-compact) 1rem;
   text-align: left;
   font-family: var(--font-display, sans-serif);
-  font-size: 0.8rem;
+  font-size: var(--type-support);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-60);
-  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
 }
 
 td {
-  padding: 0.875rem 1rem;
-  font-size: 0.9375rem;
-  border-bottom: 1px solid var(--border-2);
-  color: var(--white-90);
+  padding: var(--table-pad-compact) 1rem;
+  font-size: var(--type-body);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+  color: var(--text-primary);
 }
 
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: var(--white-10); }
+
+/* ── .table-cards — a LIST becomes cards at ≤640 (table standard §3.8, register F-12) ──────────
+   The coach portal's `.tableAsCards` recipe, published as a global class so a shell with no
+   module of its own (the platform console today) gets the same phone shape: the heading row
+   hides, each row becomes a bordered card, and every cell with a `data-label` draws its heading
+   as a label beside its value. A cell without a label renders value-only — use that for the lead
+   cell when its value is a name (the card's title takes no label, 2026-09-03) and for the
+   trailing action cell. A COMPARISON never takes this class: it keeps its columns and scrolls.
+   Add it to the table's WRAPPER, beside whatever scroll class the wrapper already carries. */
+@media (max-width: 640px) {
+  .table-cards { border: none; overflow: visible; }
+  .table-cards table,
+  .table-cards tbody,
+  .table-cards tfoot,
+  .table-cards tr,
+  .table-cards td { display: block; width: auto; }
+  .table-cards thead { display: none; }
+  .table-cards tr {
+    border: 1px solid var(--home-line, var(--border-2));
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.65rem;
+    background: var(--card-bg, var(--surface));
+  }
+  .table-cards tbody tr:last-child td,
+  .table-cards td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.28rem 0;
+    border-bottom: none;
+    text-align: right;
+  }
+  .table-cards td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: var(--type-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+  }
+  .table-cards td:empty { display: none; }
+  .table-cards td.table-cards-title { text-align: left; justify-content: flex-start; font-weight: 600; }
+  /* A card's controls are real touch targets (standard §3.6): the console's View / Reset / Remove
+     controls measured 22–25px tall inside a card (found by /review 2026-09-06). Interactive
+     elements only — a badge is not a target. */
+  .table-cards td a,
+  .table-cards td button,
+  .table-cards td select {
+    min-height: var(--tap-min, 44px);
+    display: inline-flex;
+    align-items: center;
+  }
+}
 
 /* ─── Modal ──────────────────────────────────────────────────────────────────── */
 .modal-overlay {

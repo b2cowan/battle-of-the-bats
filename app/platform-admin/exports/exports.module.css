@@ -137,23 +137,11 @@
   border-collapse: collapse;
   width: 100%;
   min-width: 820px;
-  font-size: 0.82rem;
 }
 .table thead th {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 0.68rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  text-align: left;
-  padding: 0.65rem 0.85rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.13);
   white-space: nowrap;
 }
 .table td {
-  padding: 0.6rem 0.85rem;
-  border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.07));
   vertical-align: top;
 }
 .table tbody tr:last-child td { border-bottom: 0; }
@@ -161,7 +149,7 @@
 .modRow td {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: var(--type-label);
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--logic-lime);
@@ -219,7 +207,7 @@
 
 .caveatRow td {
   color: var(--warning);
-  font-size: 0.74rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   background: rgba(var(--warning-rgb), 0.05);
   padding-top: 0.3rem;

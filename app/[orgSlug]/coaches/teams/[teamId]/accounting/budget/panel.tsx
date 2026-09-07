@@ -2457,7 +2457,6 @@ export function BudgetPlanPanel({
               /* Opts the category toggles and line expanders into the 44px floor through the
                  641–768 touch band — see the rule in coaches.module.css for why it is opt-in
                  rather than raised for every money table. */
-              data-touch-floor
             >
               {/* The column headings the plan never had — "Planned" names the column rather than
                   hovering over it, which is how Budget vs. Actual next door already reads.

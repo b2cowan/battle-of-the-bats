@@ -532,8 +532,7 @@ const InstallmentBreakdown = forwardRef<InstallmentGridHandle, {
               return (
                 <tr
                   key={p.player.id}
-                  className={styles.tr}
-                  style={{ cursor: 'pointer' }}
+                  className={`${styles.tr} ${styles.rowTappable}`}
                   onClick={() => onOpenPlayer(p.player.id)}
                 >
                   <td className={`${styles.td} ${styles.duesPlayerCell}`}>{playerName(p)}</td>

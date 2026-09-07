@@ -325,7 +325,10 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
+        {/* `table-cards` (global, app/globals.css): a LIST becomes cards at ≤640 — the console had no
+            phone shape at all and this table scrolled sideways with rows wrapping to 121px (table
+            standard, register F-12). The name is the card's title and takes no label. */}
+        <div className={`${styles.tableWrap} table-cards`}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -346,22 +349,22 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               )}
               {filteredOrgs.map(org => (
                 <tr key={org.id}>
-                  <td>
+                  <td className="table-cards-title">
                     <span className={styles.orgName}>{org.name}</span>
                     {org.internalNotes && (
                       <span className={styles.noteIndicator} title="Has internal note">note</span>
                     )}
                   </td>
-                  <td><span className={styles.slug}>{org.slug}</span></td>
-                  <td>
+                  <td data-label="Slug"><span className={styles.slug}>{org.slug}</span></td>
+                  <td data-label="Plan">
                     <span className={styles.planLabel}>{PLAN_LABELS[org.planId] ?? org.planId}</span>
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
                       {org.subscriptionStatus}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Cohort">
                     {org.isFreeFloor && (
                       <span className={styles.foundingBadge} title="Free League Starter floor (plan_id stays 'tournament')">
                         League Starter
@@ -376,7 +379,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                       </span>
                     )}
                   </td>
-                  <td className={styles.dateCell}>{fmtDate(org.createdAt)}</td>
+                  <td className={styles.dateCell} data-label="Created">{fmtDate(org.createdAt)}</td>
                   <td className={styles.actionsCell}>
                     <div className={styles.actionGroup}>
                       <Link href={`/platform-admin/orgs/${org.id}`} className={styles.viewLink}>

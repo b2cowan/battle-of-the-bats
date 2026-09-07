@@ -143,22 +143,22 @@
   border-collapse: collapse;
 }
 
+/* Heading from the table standard (owner A-05); row padding kept as register K-16. */
 .standingsTable th {
   text-align: left;
   padding: 1rem 1.5rem;
-  font-size: 0.75rem;
+  font-size: var(--type-support);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--data-gray);
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-2);
 }
 
 .standingsTable td {
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem; /* table-exception: K-16 */
   border-bottom: 1px solid var(--border-2);
-  font-size: 0.95rem;
-  color: var(--white-80);
+  font-size: var(--type-body);
+  color: var(--text-primary);
 }
 
 .standingsTable tr:last-child td { border-bottom: none; }

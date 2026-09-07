@@ -91,6 +91,28 @@
   text-decoration: none;
 }
 .cellLink:hover { border-bottom-style: solid; }
+/* ⚠ A FIGURE THAT OPENS IS A CONTROL, AND ON A TOUCH SCREEN IT CLEARS THE FLOOR BOTH WAYS. The
+   Statement's figure doors already do; these measured 44 × 26px at 390 (table inventory
+   2026-09-06, register F-08) because the layout sweep never addresses the Months view and nothing
+   had ever measured it. The touch band runs to 768 (owner 2026-08-27). The row grows to hold the
+   control — a row that carries a control is at least the floor tall at touch widths (standard
+   §3.1) — which is the same thing the Statement's rows already do. */
+@media (max-width: 768px) {
+  .cellLink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+    margin: 0;
+    /* The dashed line stays UNDER THE FIGURE, not at the foot of a 44px box — a border-bottom on
+       the grown control would sit ~14px below the digits (found by /review 2026-09-06). */
+    border-bottom: 0;
+    text-decoration: underline dashed var(--border-2);
+    text-underline-offset: 3px;
+  }
+  .cellLink:hover { text-decoration-style: solid; }
+}
 .cellLink:focus-visible {
   outline: 2px solid var(--primary-light);
   outline-offset: 1px;

@@ -35,35 +35,16 @@
 }
 
 .tableWrap { overflow-x: auto; }
-
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
 }
-
 .table th {
-  text-align: left;
-  padding: 0.5rem 0.55rem;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.2);
   white-space: nowrap;
 }
-
 .table td {
-  padding: 0.6rem 0.7rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
   white-space: nowrap;
-}
-
-.table tr:hover td {
-  background: rgba(var(--logic-lime-rgb), 0.02);
 }
 
 .emailCell {

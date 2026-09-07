@@ -19070,3 +19070,85 @@ piece of layout debt no longer reproduces.
 **⚠ Observed, not caused by this change:** Devon Test read *Up to date* earlier the same day and
 reads *Past due* now. The changed branch is unreachable for a family with money still to send, so
 this is fixture data moving underneath a shared working copy — noted so a walker does not chase it.
+
+## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — BUILT 2026-09-06 on dev, awaiting QA · walk artifact `3d981219`
+
+**Walk:** https://claude.ai/code/artifact/3d981219-72f7-4c66-aea6-eb52f97bb1ff
+**Plan:** `docs/projects/active/APP_WIDE_TABLE_CONSISTENCY_PLAN.md` (+ `_PM_BRIEF.md`) · **Standard:**
+`docs/agents/design/TABLE_AND_LIST_STANDARD.md` · **Register:** `TABLE_EXCEPTION_REGISTER.md` ·
+**Evidence:** `TABLE_INVENTORY_2026-09-06.md` · **Mockups + the seven decisions, owner-approved:**
+https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
+**Post-build passes (2026-09-06):** `/simplify` · `/review` (high-risk tier — the new stylesheet guard had a
+mid-line blind spot and missed two cell classes, both fixed; hover parity, a phone-card control floor and
+the help surface’s ink aliases fixed with it) · `/docs` (no help drift). 49 pre-existing touch-floor misses
+surfaced on eight non-money screens were left RED and named in the register changelog, not baselined.
+
+**Where this came from.** §146 part F3: the owner declined to rule on money-tab row heights alone
+and widened it — *"not just heights but font, color, etc consistency as well. we may have exceptions
+for certain things but they should be documented so the non-exceptions still follow the same
+rules."* A review rendered 319 tables across 74 surfaces (390/1440, warm and dark) and found 37 row
+heights, 16 body sizes and 10 heading sizes on desktop; the owner approved the standard, the
+true-size frames and all seven recommendations the same day (*"proceed with your recommended
+updates"*), and the fix work was built.
+
+**The rule, which is the reusable part:** *one axis of difference does not license the others.* A
+surface may differ on a named axis, for a stated reason, in the register — and on no other. A
+difference is in the register or it is a bug.
+
+**⚠⚠ THE FINDING UNDERNEATH.** 15px was the app's commonest body size and no stylesheet asked for it:
+a global `td { font-size }` ELEMENT rule beat every table-level size that was left to inherit, so
+the coach type ladder had never reached a single list cell and ten platform tables declared 12px
+and rendered 15. The row rule under every coach list was PAPER on a white card in the warm skin.
+The register's zebra named a token defined nowhere and had never painted — a plan had recorded it
+as an earned exception, from the stylesheet. One global hover rule tinted every row in the product.
+
+**What shipped.** The global th/td baseline IS the standard (ladder sizes on the cell, three-tier
+ink, the line token under every row, compact density; no global hover). The coach list family:
+neutral frame, visible row rule in both skins, **density by content** (a row with a caption keeps
+the comfortable height; a one-line row takes the compact one — Player Dues rows 47 → 37px, Avery's
+two-line row 64), hover only on rows that open, the register's zebra deleted (A-03), insights and
+development-history headings on the baseline. The platform console: one recipe in its data face,
+headings 8.8 → 12px, fourteen module copies stripped, phone cards on Orgs and Users. Tournament
+admin's five heading treatments → one. The Months view's figure doors 44 × 44 on a phone (from
+44 × 26); two touch floors gated at 640 moved to 768. Public standings, results and pricing on the
+ladder with their 16px padding kept (K-16).
+
+**Rulings (register A-01–A-07, all as recommended):** density by content · platform body 14px in
+the data face · delete the phantom zebra · worklists remember, reports open on their totals (the
+guide now says so) · public tables keep 16px padding · column headings keep the display face ·
+the money grids' private ladder stays (K-02). **⚠ A-08 OPEN — the walk's Part J:** the admin
+shell's comfortable control height is 38px by its own 2026-06-02 ruling; the standard's touch floor
+inside a table says 44. Recommendation: keep 38 and record it (K-18).
+
+**Enforcement.** `tests/unit/table-recipe-guard.test.ts` — every table part sizes from `--type-*`
+or carries a register id, and **every token a table rule names must exist** (it caught a second
+undefined token, `--white-15`, on its first run). `check:layout` gains `control-width` (an
+icon-only control clears the floor sideways too) and `type-ladder` (every cell on a rung —
+membership, never pixels), and a `storage` hook that finally sweeps the report views the URL never
+shows (By activity, Months, By period).
+
+**Verification.** typecheck · 3,099 unit tests · css-selectors · css-purity · contrast ·
+text-contrast · spelling · public tokens · root · lint (0 errors) · rendered sweep of 19 coach
+screens at 361/390/768/1440 (`type-ladder` reports nothing; the money grids' toggles and expanders
+clear the floor to 768) · the review's own measurement re-run on the changed surfaces and read back
+against the standard. The 129 findings the two new rules surfaced on pre-existing portal chrome
+are in the baseline with reasons (register F-21 / F-22 / F-23).
+
+**⚠ Not built, with reasons:** F-16 → A-08 (a shell ruling, not drift) · F-17 the coach portal's
+div-based row lists (own session, own frames) · F-18 the club-side admin tables (no fixture can
+render them; pinned in the guard) · F-12 beyond Orgs and Users (twelve tables, one file each).
+**Coverage gap the owner can close:** grant the UAT owner membership on `qa-families-fixture`, or
+seed the club fixture org, and Families / Members / Rep teams / Accounting / House League can be
+measured and brought to the standard.
+
+**⚠ Uncommitted, in a working copy that also carries §146 and §148.** The build's edits are in
+named rule blocks so the commit can be split by hunk. Restart the dev server before the walk —
+the global stylesheet and the shared coach stylesheet both moved.
+
+**The walk (Parts A–J, 34 steps).** A the Club tab — one line under every row, one frame, one
+chevron column, read one row · B Player Dues — density by content, Avery's row · C the Ledger's
+Timeline — density kept, the line back, no banding (and there never was) · D Months at 390 and
+By period at 768 — figures and expanders you can tap · E hover only where a row opens (Roster,
+Insights, Club, Statement) · F Insights and development history headings · G the platform console
+(Orgs, Users, Change requests; cards at 390) · H tournament admin Teams / Notifications / Manage,
+public Standings and Pricing · I the dark skin · J A-08.

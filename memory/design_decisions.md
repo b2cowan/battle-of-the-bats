@@ -2,6 +2,60 @@
 
 Newest entries first. All decisions here are binding in future sessions unless explicitly overridden.
 
+### 2026-09-06 — ONE TABLE STANDARD, ONE EXCEPTION REGISTER, and the rule that one axis of difference does not license the others (owner-approved from rendered evidence + true-size mockups; seven rulings)
+
+**Decision (owner, approving `docs/agents/design/TABLE_AND_LIST_STANDARD.md`, the register
+`TABLE_EXCEPTION_REGISTER.md` and the mockup artifact `0aa319dd` in full — "proceed with your
+recommended updates").** Every table and row list in the product follows one standard, written in
+tokens and relationships; a surface may differ on a **named axis, for a stated reason, recorded in
+the register — and on no other axis.** A difference is in the register or it is a bug; there is
+no third category. The standard is derived from the coach money grid, the only recipe ever
+consolidated under owner QA (§146), with its private type ladder kept as the one documented
+exception (K-02).
+
+**⚠⚠ THE FINDING UNDERNEATH, which is why this is a design ruling and not a tidy-up:** 319 renders
+of 74 surfaces (390/1440, both skins) showed 37 row heights, 16 body sizes and 10 heading sizes
+on desktop — and **15px was the app's commonest body size while no stylesheet asked for it.** A
+global `td { font-size }` ELEMENT rule beat every table-level size that was left to inherit, so
+the coach type ladder had never reached a single list cell, and ten platform tables declared 12px
+and rendered 15. The row rule under every coach list was PAPER on a white card in the warm skin
+(`--white-05` remaps to the page ground). The register's zebra named a token defined nowhere and
+had never painted — recorded in a plan as an earned exception, from the stylesheet. One global
+`tbody tr:hover` tinted every row in the product, target or not. **A size on the table is not a
+size on the cell; an undefined token is a silent nothing; a theme remap can invert a token's job.**
+
+**The seven rulings (register A-01–A-07), all the recommendation:**
+1. **Density by content** — a one-line row takes the compact height, a two-line row (a caption)
+   the comfortable one; never by which screen it is on. Expressed with `:has()` on the four caption
+   classes the portal actually renders, so a row that gains a caption is comfortable without anyone
+   remembering a class.
+2. **Platform admin body is the ladder's 14px in the data face** (its sheets said 12; it rendered 15).
+3. **The register's zebra is deleted**, not defined.
+4. **Worklists remember what you closed; reports open on their totals** — and the guide says which.
+5. **Public tables adopt the heading, hairline and hover tokens and keep their 16px padding** (K-16).
+6. **Column headings keep the condensed display face** — today's de-facto rule, now written down.
+7. **The money grids' private ladder stays** as K-02.
+
+**⚠ Exceptions are a register row, not a comment.** KEEP rows name the axis and the citation; FIX
+rows name the mechanism that let it drift; ASK rows carry a recommendation first. New in the
+build: **A-08** — the admin shell's comfortable control height is 38px by its own 2026-06-02
+ruling, and the standard's 44px touch floor inside a table would overrule it by accident; put to
+the owner rather than changed.
+
+**Enforcement, so the standard is a gate and not a document:** a stylesheet guard
+(`tests/unit/table-recipe-guard.test.ts`) asserts that every table part sizes from `--type-*` (or
+carries a register id) and that **every token a table rule names is defined somewhere** — it
+caught a second undefined token (`--white-15`) on its first run; the rendered sweep gains
+`control-width` (an icon-only control clears the floor sideways too — the money grid's category
+toggle was as wide as its name) and `type-ladder` (every cell on a ladder rung, asserted as
+membership, never pixels); and a screen entry may carry `storage` so the report views the URL never
+shows are finally swept — which is how the Months view's 26px figure doors were found.
+
+**Rationale:** drift here is invisible per screen and obvious across two, the product is mostly
+tables, and every gate the repo had read source text; none of them could see a rule that never
+applied. **Applies to:** every `<table>` and row list, every shell; the global th/td baseline in
+`app/globals.css` now IS the standard.
+
 ### 2026-09-06 — A room reads plan → actual → identity; and a chip that reports a balance may not wear a delta's mark
 
 **Decision (owner, 2026-09-06, from a live bill and a true-size mockup — artifact

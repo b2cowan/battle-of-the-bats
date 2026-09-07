@@ -2331,8 +2331,7 @@ export function PlayerDuesPanel({
                   return (
                     <tr
                       key={p.player.id}
-                      className={styles.tr}
-                      style={{ cursor: 'pointer' }}
+                      className={`${styles.tr} ${styles.rowTappable}`}
                       onClick={() => { setSelected(p); setEditingSchedule(false); setSaveError(''); closeMoneySheets(); }}
                     >
                       <td className={styles.td} data-label="Player">

@@ -430,11 +430,77 @@ function probeInPage(opts) {
   // ── R2 · every control clears the tap floor ────────────────────────────────
   // tapFloor arrives as 0 at pointer widths - the caller decides, so the reasoning lives in one
   // place next to TAP_FLOOR_MAX_WIDTH rather than being re-derived inside the browser.
-  if (wanted('tap-floor') && tapFloor > 0) {
+  //
+  // ── R2c · …and an ICON-ONLY control clears it sideways too (same pass, same rect) ──
+  //
+  // The tap floor reads HEIGHT only, so a control that shrank horizontally passed it in silence.
+  // Not hypothetical (app-wide table review, 2026-09-06): the money grid's category toggle was as
+  // wide as the category's name — "Gear" exposed a far smaller target than "Tournament entry
+  // fees" on the same table — and a 44px-tall, 25px-wide chevron button is still a miss for a
+  // thumb. A control with VISIBLE text sizes its width to the word and is judged by its height;
+  // an icon-only control has nothing to size it but this rule. ⚠ "Visible" is measured, not read
+  // from textContent: this codebase labels icon buttons with an `.srOnly` span, whose text is
+  // real and rendered 1px wide — a textContent test would have exempted exactly the well-labelled
+  // icon button the rule exists for. Fields are excluded: a select or an input is as wide as its
+  // column. Same width band as the tap floor, for the same reason.
+  if ((wanted('tap-floor') || wanted('control-width')) && tapFloor > 0) {
+    const hasVisibleText = (el) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (!node.textContent.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const b = range.getBoundingClientRect();
+        if (b.width > 2 && b.height > 2) return true;
+      }
+      return false;
+    };
     for (const el of Array.from(root.querySelectorAll(CONTROL_SEL))) {
       if (!visible(el) || isExempt(el)) continue;
       const r = el.getBoundingClientRect();
-      if (r.height < tapFloor - 0.5) add('tap-floor', sigOf(el), `${Math.round(r.height)}px tall (floor ${tapFloor})`);
+      if (wanted('tap-floor') && r.height < tapFloor - 0.5) add('tap-floor', sigOf(el), `${Math.round(r.height)}px tall (floor ${tapFloor})`);
+      if (wanted('control-width') && !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName) && r.width < tapFloor - 0.5 && !hasVisibleText(el)) {
+        add('control-width', sigOf(el), `${Math.round(r.width)}px wide (floor ${tapFloor}) — icon-only control`);
+      }
+    }
+  }
+
+  // ── R8 · every table cell reads at a size on the type ladder ───────────────
+  //
+  // The app-wide table standard (docs/agents/design/TABLE_AND_LIST_STANDARD.md §3.2): a cell
+  // decides its own size from the eight `--type-*` tokens, or from the money grid's registered
+  // K-02 ladder. Asserted as MEMBERSHIP — a rendered size is on the ladder or it is not — never
+  // as a pixel snapshot, so a legitimate move between rungs is not a finding. This is the rule
+  // that catches the 2026-09-06 defect at its root: 109 tables rendering 15px because a global
+  // element rule beat every table-level size, which no stylesheet-reading gate could see.
+  // One finding per TABLE (the offending sizes listed), so the baseline holds a decision, not a
+  // thousand cells.
+  //
+  // ⚠ THE LADDER IS READ FROM THE PAGE, NEVER RESTATED HERE. The eight `--type-*` tokens live on
+  // `:root` and the money grid's three `--money-*-size` tokens on the coaches shell; resolving them
+  // on the TABLE itself gives each table the ladder its own ancestry actually publishes (the money
+  // sizes only resolve inside the shell). A typed copy of the values would be a second source that
+  // goes stale on its own — the exact trap the stylesheet guard's header warns about.
+  if (wanted('type-ladder')) {
+    const rootFs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const toPx = (v) => { v = (v || '').trim(); if (!v) return null; if (v.endsWith('rem')) return parseFloat(v) * rootFs; if (v.endsWith('px')) return parseFloat(v); return null; };
+    const LADDER_TOKENS = ['--type-display', '--type-figure', '--type-title', '--type-heading', '--type-body', '--type-support', '--type-label', '--type-token', '--money-cat-size', '--money-line-size', '--money-catnum-size'];
+    for (const table of Array.from(root.querySelectorAll('table'))) {
+      if (!visible(table) || isExempt(table)) continue;
+      const tcs = getComputedStyle(table);
+      const ladder = LADDER_TOKENS.map((t) => toPx(tcs.getPropertyValue(t))).filter((v) => v != null);
+      if (!ladder.length) continue; // a surface with no ladder published cannot be held to one
+      const off = new Set();
+      for (const cell of Array.from(table.querySelectorAll('th, td'))) {
+        if (!visible(cell)) continue;
+        const fs = parseFloat(getComputedStyle(cell).fontSize);
+        if (!ladder.some((v) => Math.abs(v - fs) < 0.35)) off.add(fs.toFixed(2));
+      }
+      if (off.size) {
+        const head = table.querySelector('th');
+        add('type-ladder', `table·${(head && nameOf(head)) || nameOf(table)}`, `cells at ${[...off].join('px, ')}px — not on the type ladder (a cell sets its own size from --type-*, or registers an exception)`);
+      }
     }
   }
 
@@ -837,6 +903,14 @@ for (const session of neededSessions) {
       // Checked before the page is opened, not after: the goal is to not take the next bite.
       aborted = memory.check(label);
       if (aborted) break;
+      // See the `storage` note below the goto: seeded device memory is handed back on EVERY exit
+      // from this iteration — a failed render or a wrong landing included — or the next entry on
+      // this page (and the next width) would open the seeded view instead of the product's default.
+      const seededKv = screen.storage ? screen.storage(ctx) : null;
+      const unseed = async () => {
+        if (!seededKv) return;
+        await page.evaluate((ks) => { try { for (const k of ks) localStorage.removeItem(k); } catch { /* private mode */ } }, Object.keys(seededKv)).catch(() => {});
+      };
       try {
         // ⚠ Generous on purpose. The dev server compiles each route on first visit, and the help
         // hub — which renders the whole guide catalogue — exceeded a 60s ceiling on a cold cache
@@ -844,9 +918,25 @@ for (const session of neededSessions) {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 150_000 });
         await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
         await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+        // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
+        // its view (Statement / By activity / Months) in device memory, not the URL, so every
+        // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
+        // the Months view's figure doors sat at 26px on a phone, unmeasured, until the 2026-09-06
+        // table review seeded the preference and looked. A screen entry may carry `storage`:
+        // the keys it returns are written to localStorage on the page's own origin, the page is
+        // reloaded so the panel reads them on mount, and they are removed again after the probe
+        // so the next entry (and the next width) opens the product's real default.
+        if (seededKv) {
+          await page.evaluate((kv2) => { try { for (const [k, v] of Object.entries(kv2)) localStorage.setItem(k, v); } catch { /* private mode */ } }, seededKv);
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: 150_000 });
+          await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
+          await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+          await page.waitForTimeout(600);
+        }
       } catch (e) {
         navFailures.push({ label, url, why: String(e.message || e).split('\n')[0] });
         console.log(`  ✗ ${label} — did not render`);
+        await unseed();
         continue;
       }
 
@@ -857,6 +947,7 @@ for (const session of neededSessions) {
       if (landed) {
         landingFailures.push({ label, url, saw: landed });
         console.log(`  ✗ ${label} — landed on "${landed}"`);
+        await unseed();
         continue;
       }
 
@@ -866,6 +957,7 @@ for (const session of neededSessions) {
       const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
       const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: null };
       let found = await page.evaluate(probeInPage, opts);
+      await unseed();
 
       // The classic defect — the last row trapped under the bottom bar — only exists once the
       // page is scrolled to its end, so that rule is asked a second time down there.
@@ -1003,7 +1095,9 @@ if (mode === 'report') {
   md += `| \`content-overflow\` | Wide content scrolls inside its own box. |\n`;
   md += `| \`sticky-no-travel\` | Anything sticky can actually stick. |\n`;
   md += `| \`contrast\` | Text is readable against what is painted behind it. |\n`;
-  md += `| \`hidden-behind-chrome\` | Nothing usable hides under a fixed bar. |\n\n`;
+  md += `| \`hidden-behind-chrome\` | Nothing usable hides under a fixed bar. |\n`;
+  md += `| \`control-width\` | An icon-only control is ${TAP_FLOOR}px wide as well as tall — at touch widths only. |\n`;
+  md += `| \`type-ladder\` | Every table cell reads at a size on the type ladder (membership, not pixels). |\n\n`;
   for (const [rule, list] of Object.entries(byRule).sort((a, b) => b[1].length - a[1].length)) {
     md += `## \`${rule}\` — ${list.length}\n\n`;
     for (const f of list) md += `- **${f.screen}** @${f.width} · ${f.signature}\n  - ${f.detail}\n`;

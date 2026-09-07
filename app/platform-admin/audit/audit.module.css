@@ -34,38 +34,18 @@
 }
 
 .tableWrap { overflow-x: auto; }
-
 .table {
   /* Size to content, don't stretch to 100% of the container — stretching dumped the extra width
      into the text columns (huge Superuser/Org gaps) and pushed the table off-screen. The
      .tableWrap scrolls if the content is genuinely wider than the viewport. */
   width: max-content;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
 }
-
 .table th {
-  text-align: left;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.2);
   white-space: nowrap;
 }
-
 .table td {
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
-  color: var(--fl-text);
-}
-
-.table tr:hover td {
-  background: rgba(var(--logic-lime-rgb), 0.02);
 }
 
 .tsCell {

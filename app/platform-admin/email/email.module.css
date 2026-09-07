@@ -113,39 +113,19 @@
 .tableScroll .table {
   min-width: 760px;
 }
-
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
 }
-
 .table th {
-  text-align: left;
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.5);
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
   white-space: nowrap;
 }
-
 .table td {
-  padding: 0.65rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  color: var(--fl-text);
   vertical-align: middle;
 }
 
 .table tr:last-child td {
   border-bottom: none;
-}
-
-.table tr:hover td {
-  background: rgba(var(--logic-lime-rgb), 0.03);
 }
 
 .emailKey {
@@ -327,14 +307,13 @@
 .subTable {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
+  font-size: var(--type-support);
 }
 
 .subTable th {
-  font-size: 0.5rem;
+  font-size: var(--type-label);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: rgba(var(--logic-lime-rgb), 0.4);
   padding: 0.35rem 1rem;

@@ -16,6 +16,10 @@
  *   skip     optional array of rule ids this screen is genuinely exempt from — each needs a reason
  *   widths   optional names of `optIn` WIDTHS this screen is ALSO swept at, on top of the
  *            universal ones — never a replacement for them. See WIDTHS at the foot of this file.
+ *   storage  optional (ctx) => { localStorageKey: value } — device memory the screen must hold
+ *            to show the VIEW this entry measures (a report view, a grid arrangement). The runner
+ *            seeds it on the page's origin, reloads, measures, then removes it. Use it for any
+ *            state the URL does not carry; without it the entry measures the default view only.
  *   note     why anything unusual above is true
  *
  * ⚠ SESSION MATTERS. The coach portal resolves org context before coaching assignments, so opening
@@ -168,6 +172,21 @@ export const SCREENS = [
   { id: 'coach-accounting',        session: 'coach', path: (c) => `${team(c)}/accounting`,                              ready: 'h1' },
   { id: 'coach-budget',            session: 'coach', path: (c) => `${team(c)}/accounting?section=budget`,           ready: 'h1' },
   { id: 'coach-budget-vs-actual',  session: 'coach', path: (c) => `${team(c)}/accounting?section=budget-vs-actual`, ready: 'h1' },
+  /* ⚠⚠ THE REPORT'S OTHER TWO VIEWS, AND THE BUDGET TAB'S BY-PERIOD GRID, LIVE IN DEVICE MEMORY —
+     NOT THE URL. So the entry above has only ever measured the Statement, and `coach-budget`
+     only the List: By activity, Months and By period had never been rendered by this sweep. The
+     2026-09-06 table review seeded the stored preference and looked, and found the Months view's
+     figure doors at 44 × 26px on a phone — under the floor the Statement's doors clear — with
+     nothing to catch it. `storage` returns the keys the panel reads on mount (the same keys the
+     product writes; see `prefsKey` in the BvA panel and `viewPrefsKey` in the Budget panel); the
+     runner seeds them, reloads, measures, and removes them again. Three entries, because each is
+     a different table with its own controls. */
+  { id: 'coach-bva-activity', session: 'coach', path: (c) => `${team(c)}/accounting?section=budget-vs-actual`, ready: 'h1',
+    storage: (c) => ({ [`flhq-coach-bva-view:${c.teamId}:${c.programYearId}`]: JSON.stringify({ view: 'activity' }) }) },
+  { id: 'coach-bva-months',   session: 'coach', path: (c) => `${team(c)}/accounting?section=budget-vs-actual`, ready: 'h1',
+    storage: (c) => ({ [`flhq-coach-bva-view:${c.teamId}:${c.programYearId}`]: JSON.stringify({ view: 'months' }) }) },
+  { id: 'coach-budget-period', session: 'coach', path: (c) => `${team(c)}/accounting?section=budget`, ready: 'h1',
+    storage: (c) => ({ [`flhq-coach-budget-view:${c.teamId}:${c.programYearId}`]: JSON.stringify({ view: 'period' }) }) },
   /* ⚠ ONE SCREEN BECAME TWO (Money split P1, 2026-08-16) — a DELIBERATE baseline edit, not drift.
      `coach-expenses` measured a screen holding four sub-tabs; Transactions and Payables are now
      separate tabs with two sub-views each, and each has to be addressed on its own or half of what

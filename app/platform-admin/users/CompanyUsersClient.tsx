@@ -199,7 +199,8 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
         </div>
       )}
 
-      <div className={styles.tableWrap}>
+      {/* `table-cards` (global): the list becomes cards at ≤640 — table standard, register F-12. */}
+      <div className={`${styles.tableWrap} table-cards`}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -218,12 +219,12 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
             )}
             {users.map(u => (
               <tr key={u.id}>
-                <td className={styles.nameCell}>{u.displayName || '—'}</td>
-                <td className={styles.emailCell}>
+                <td className={`${styles.nameCell} table-cards-title`}>{u.displayName || '—'}</td>
+                <td className={styles.emailCell} data-label="Email">
                   {u.email}
                   {isBootstrap(u.email) && <span className={styles.bootstrapBadge}>bootstrap</span>}
                 </td>
-                <td>
+                <td data-label="Role">
                   {isBootstrap(u.email) || !canManageUsers ? (
                     <span className={styles.roleBadge}>{roleLabel(u.role)}</span>
                   ) : (
@@ -239,13 +240,13 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
                     </select>
                   )}
                 </td>
-                <td>
+                <td data-label="Status">
                   <span className={u.isActive ? styles.badgeActive : styles.badgeInactive}>
                     {u.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className={styles.dateCell}>{fmtDate(u.createdAt)}</td>
-                <td className={styles.invitedByCell}>
+                <td className={styles.dateCell} data-label="Added">{fmtDate(u.createdAt)}</td>
+                <td className={styles.invitedByCell} data-label="Invited by">
                   <span className={styles.invitedByValue} title={u.invitedBy || undefined}>{u.invitedBy || '—'}</span>
                 </td>
                 <td className={styles.actionsCell}>

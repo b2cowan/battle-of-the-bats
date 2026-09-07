@@ -148,30 +148,15 @@
 .tableWrap {
   overflow-x: visible;
 }
-
 .table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
 }
-
 .table th {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  color: var(--data-gray);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
 }
-
 .table td {
-  padding: 0.85rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: top;
   overflow-wrap: anywhere;
 }
@@ -188,7 +173,7 @@
 }
 
 .clickableRow:hover td {
-  background: rgba(var(--logic-lime-rgb), 0.035);
+  background: var(--pa-row-hover);
 }
 
 .requestCell {
@@ -637,9 +622,9 @@
     content: attr(data-label);
     color: var(--data-gray);
     font-family: var(--font-data);
-    font-size: 0.52rem;
+    font-size: var(--type-label);
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 

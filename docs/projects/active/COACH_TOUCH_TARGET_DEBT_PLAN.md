@@ -124,3 +124,26 @@ it is never re-initialised.
 `node scripts/check-layout-invariants.mjs` (dev server up, `node scripts/seed-uat-coach-fixture.mjs`
 run first). ⚠ A green sweep over an empty or unchanged screen is not evidence — that trap has bitten
 this portal twice. Confirm the screens under test actually rendered their content.
+
+## Surfaced 2026-09-06 by the app-wide table standard's rendered sweep — NOT baselined, left red
+
+The table standard (`docs/agents/design/TABLE_AND_LIST_STANDARD.md`) swept the 25 coach screens
+it did not otherwise touch, at 361 / 390 / 768 / 1440. None of these is a table; none is new
+(25–37px controls that had never been measured in this fixture state). They are recorded here
+because this plan is their home; the layout gate stays **red** on these screens until each is fixed
+or accepted by its owner with a reason — a null-reason baseline entry is not an option.
+
+| Screen | Width(s) | Control | Rule |
+|---|---|---|---|
+| Coaching staff | 361 · 390 · 768 | the eight row buttons — Remove, Hidden, Hide, View, View + edit, Manage, Sensitive access, Make assistant coach | tap-floor |
+| Season's End + the three closed-season shelves (results, roster, money book) | 361 · 390 · 768 | **Share your season** | tap-floor |
+| Season's End + the three closed-season shelves | 1440 | **Switch team** select spills the viewport | content-overflow |
+| Opponent scouting | 361 · 390 · 768 | **Tag this observation** select | tap-floor |
+| Club bill room | 361 · 390 · 768 | the item picker input (`Category and item`, `BudgetItemPicker`) | tap-floor |
+| Schedule | 768 | one list item (`Sep 5 · 1:23 p.m. UAT probe practice` — a date-bearing signature, rots with the calendar) | tap-floor |
+| Lineups | 768 | **Tournament** filter button | tap-floor |
+| Practice plans | 768 | **Needs a plan** chip | tap-floor |
+
+Shared portal chrome at 768 (the help "?", Export) and the icon-only controls the new
+`control-width` rule measures (tab-bar arrows, the month pager, the drag grip) were accepted into
+`scripts/.layout-baseline.json` under one written reason each — register row F-21 points here.

@@ -248,20 +248,9 @@
   border-collapse: collapse;
 }
 
-.table thead {
-  background: var(--surface-2);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-}
-
+/* Heading type, ink, ground and rule are the baseline's (table standard, register F-07). */
 .table th {
   padding: 0.6rem 1rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-family: var(--font-data);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-  text-align: left;
 }
 
 .thEvent {

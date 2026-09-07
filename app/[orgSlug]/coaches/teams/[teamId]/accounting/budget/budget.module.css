@@ -334,7 +334,9 @@
    was silently inert: `.ledgerExpand` and `.ledgerGroupHeadBtn` belong to that module, so their
    real class names are hashed and a `:global(.ledgerExpand)` written from this file matches
    nothing at all. It compiled, passed purity, and changed zero pixels — the sweep is the only
-   reason it was caught. The hook is `[data-touch-floor]` on this list; see the rule there. */
+   reason it was caught. (The `[data-touch-floor]` opt-in this list once carried was retired on
+   2026-09-06 by the table standard: every money table now takes the 768 floor unconditionally,
+   from the `@media (max-width: 768px)` block under the shared money grid recipe.) */
 
 /* ── "What still has no date?" ────────────────────────────────────────────
    A worklist bar, not a warning. It sits ABOVE the list because it is about the list, and it
@@ -400,9 +402,10 @@
    because the plan is a four-screen scroll. The grid recipe this list now uses is TIGHTER STILL
    at every width, unconditionally, so there is nothing left to override — and the tightening now
    applies on a phone too, where the outline deliberately kept its roomier metrics.
-   ⚠ The category rows still clear the 44px tap floor through the shared `[data-touch-floor]`
-   rule, which the table opts into exactly as the list did. That was the constraint the old
-   override had to work around; it is unchanged. */
+   ⚠ The category rows still clear the 44px tap floor — since 2026-09-06 through the shared
+   money grid's unconditional `@media (max-width: 768px)` block rather than the retired
+   `[data-touch-floor]` opt-in. That was the constraint the old override had to work around; it
+   is unchanged in effect. */
 
 @media (max-width: 640px) {
   /* No room for a fourth column on a phone — the cells leave the grid entirely (display:none,

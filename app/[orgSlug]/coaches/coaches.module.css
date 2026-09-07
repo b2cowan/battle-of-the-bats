@@ -2020,14 +2020,16 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 .insightsTagSummaryRec { font-weight: 800; font-size: var(--type-heading); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .insightsTagSummaryRuns { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .insightsTableWrap { overflow-x: auto; }
-.insightsTable { width: 100%; border-collapse: collapse; font-size: var(--type-body); }
+/* Figures in an insights table line up on the digit (standard §3.4, register F-09); the cell size
+   comes from the baseline now that the global cell rule is the ladder's body step. */
+.insightsTable { font-variant-numeric: tabular-nums; }
 /* ⚠ ONE COLUMN-HEADING RECIPE FOR THE PORTAL (2026-08-15) — 0.78rem / 700 / 0.05em / --white-70,
    the values `.th` and `.moneyGrid thead th` carry. This heading had drifted furthest of the four:
    0.65rem at --white-35, i.e. the faintest text in the portal labelling columns of --white-90 data.
    Padding stays tight and the wrapper still scrolls, so the wider heading costs no page overflow. */
-.insightsTable th { font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
-.insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--text-primary); }
-.insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.insightsTable th { font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); background: var(--card-bg); text-align: left; padding: var(--table-pad-compact) 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
+.insightsTable td { padding: var(--table-pad-compact) 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--text-primary); }
+.insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 .insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
 .insightsFieldBar i { display: block; height: 100%; background: rgba(var(--blueprint-blue-rgb), 0.75); }
 .insightsFlagWarn { color: var(--warning); font-size: var(--type-support); font-weight: 700; }
@@ -2118,7 +2120,15 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    ⚠ NOT A STATUS CHIP. It carries a FIGURE a coach may act on, in the quietest ink on the table, so
    ten rows that have nothing to add stay silent — this renders only when there is something to
    say. If it ever earns a colour, that is a different element and a different ruling. */
+/* ⚠ THE MARKER FOR "THIS ROW HOLDS A SECOND LINE" — table standard §3.1, owner A-01. Every caption
+   class that renders a second line inside a list cell composes it (`.rowSubNote`, `.listRowSub`,
+   `.guardianStack`, `.payBillMeta`, `.payPieceMeta`), and the density rule beside `.td` reads
+   ONLY this marker. A sixth caption composes it and is comfortable without anyone touching the
+   rule; a caption that forgets is the one visible mistake. The declaration is a no-op that every
+   caption already holds — CSS Modules needs the class to exist. */
+.rowCaption { min-width: 0; }
 .rowSubNote {
+  composes: rowCaption;
   display: block;
   margin-top: 0.12rem;
   font-size: var(--type-support);
@@ -3035,9 +3045,13 @@ a.oneChip:hover { border-color: currentColor; }
    `.emptyStateTitle` / `.emptyStateSub` trio above is for text-only empties only. */
 
 /* ── Table ──────────────────────────────────────────────────────────────── */
+/* ⚠ THE FRAME IS THE NEUTRAL LINE, the same one every report card wears (table standard §3.3,
+   owner-approved 2026-09-06, register F-10). It was an accent tint — blueprint at 15%, olive in
+   warm — while the money grids two tabs over drew `--home-line`; the one-surface plan §9.2 noted
+   the mismatch and this closes it. */
 .tableWrap {
   overflow-x: auto;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  border: 1px solid var(--home-line, var(--border-2));
   border-radius: 8px;
 }
 
@@ -3077,7 +3091,7 @@ a.oneChip:hover { border-color: currentColor; }
    token is overloaded, change the RECIPE that consumes it, never the token. */
 .th {
   text-align: left;
-  padding: 0.6rem 1rem;
+  padding: var(--table-pad-compact) 1rem;
   font-size: var(--type-support);
   font-weight: 700;
   text-transform: uppercase;
@@ -3088,15 +3102,36 @@ a.oneChip:hover { border-color: currentColor; }
   white-space: nowrap;
 }
 
+/* ⚠⚠ THE ROW RULE WAS PAPER ON WHITE. `--white-05` is a 5% white hairline in the dark skin and
+   remaps to `--home-paper` (#F8F4ED) in warm — so on a white card the line under every list row
+   was a 2% difference, invisible, on all four money tabs, for as long as the warm skin has existed.
+   Measured 2026-09-06 (table inventory, 22 renders). It is the line token now, in both skins,
+   the same line the money grids draw (register F-02).
+
+   ⚠ DENSITY BY WHAT A ROW HOLDS, never by which screen it is on (owner ruling A-01, 2026-09-06;
+   standard §3.1). A row of one line — a name and its figures — takes the compact height; a row
+   that carries a second line takes the comfortable one. "Carries a second line" is ONE marker,
+   `.rowCaption`, which every caption class composes (see the rule beside `.rowSubNote`) — so the
+   rule reads the marker, never a list of screens' class names, and a sixth caption is comfortable
+   the moment it composes the marker. `:has()` is what makes the rule content-based rather than
+   screen-based; a per-row class in thirteen files would drift the first time a caption arrived
+   without it. Card mode (`.tableAsCards td`, !important) is untouched. */
 .td {
-  padding: 0.7rem 1rem;
+  padding: var(--table-pad-compact) 1rem;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--white-05);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
   vertical-align: middle;
 }
+.tr:has(.rowCaption) .td {
+  padding-top: var(--table-pad-comfortable);
+  padding-bottom: var(--table-pad-comfortable);
+}
 
+/* ⚠ HOVER ONLY ON A ROW THAT OPENS (standard §3.3, register F-03). `.tr:hover` used to tint every
+   list row — the roster, documents, attendance — rows that do nothing when clicked. The tint now
+   rides with `.rowTappable`, which is the class that makes a row a target in the first place. */
 .tr { transition: background 0.1s; }
-.tr:hover .td { background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
+.tr.rowTappable:hover .td { background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
 .tr:last-child .td { border-bottom: none; }
 
 /* ── The number column (Money-hub table consistency 2026-08-13, plan §3.1) ──────────────────
@@ -3438,8 +3473,10 @@ a.oneChip:hover { border-color: currentColor; }
 .moneyGridExpand:hover { color: var(--text-secondary); }
 
 /* ⚠ THE DESKTOP HIT AREA, GROWN WITHOUT MOVING ANYTHING (owner ruling 2026-09-05). Through the
-   touch band this control already takes the 44px floor (the `[data-touch-floor]` rule below), so
-   the small target was only ever a POINTER problem: a 20px square is a fussy thing to hit with a
+   touch band this control already takes the 44px floor (the unconditional `@media (max-width:
+   768px)` block under the money grid recipe — the opt-in `[data-touch-floor]` hook it once rode
+   on was retired 2026-09-06), so the small target was only ever a POINTER problem: a 20px square
+   is a fussy thing to hit with a
    mouse, and it is the reason the row had to carry the job in the first place.
 
    ⚠ A PSEUDO-ELEMENT, NOT PADDING. Padding would grow the box that sets the row's height — every
@@ -3524,25 +3561,12 @@ a.oneChip:hover { border-color: currentColor; }
    it failed to render rather than like it has nothing to say. */
 .moneyGridNumMuted { color: var(--text-tertiary); }
 
-/* ⚠ THE TABLET BAND, OPT-IN — a table marks itself `data-touch-floor` and its expanders and
-   category toggles take the portal's 44px floor from 641 up to 768 as well as below 640, where
-   they already have it.
-
-   ⚠ OPT-IN RATHER THAN RAISED FOR EVERYONE, and the restraint is the point. ≤768 IS a touch band by
-   ruling (owner 2026-08-27) and every money table is arguably owed this — but lifting the bare
-   class here moves the tablet layout of seven money screens in one commit, which belongs to the
-   tablet-band programme and not to whatever build happens to trip the sweep first. Adding the
-   attribute to another table is a one-word change when that programme comes.
-
-   ⚠ WRITTEN HERE BECAUSE THE CLASSES LIVE HERE. A page stylesheet cannot reach them: CSS Modules
-   hashes them per file, so a `:global(.moneyGridExpand)` written from the budget module matches
-   nothing, compiles clean, and silently changes no pixels. */
-@media (max-width: 768px) {
-  [data-touch-floor] .moneyGridExpand,
-  [data-touch-floor] .moneyGridToggle {
-    min-height: var(--tap-min, 44px);
-  }
-}
+/* ⚰ THE OPT-IN TABLET FLOOR (`[data-touch-floor]`) IS RETIRED — 2026-09-06, app-wide table
+   standard. It gave a table that asked its expanders' and toggles' 44px floor from 641 to 768;
+   the restraint ("moves seven money screens in one commit, belongs to the tablet-band programme")
+   was right for the build that wrote it and wrong once the standard ruled every money table takes
+   the floor to 768 (K-12). The unconditional rule now lives in the `@media (max-width: 768px)`
+   block under the money grid recipe; the attribute may still sit on a table and does nothing. */
 
 
 /* ── The money grid (Money-hub table consistency 2026-08-13, "job three") ────────────────────
@@ -3768,8 +3792,18 @@ a.oneChip:hover { border-color: currentColor; }
 /* The chevron that opens a category. ⚠ It appears ONLY where the category actually collapses — an
    affordance for a behaviour, never decoration. Owner ruling 2026-08-13: every hierarchy in a
    table IS collapsible, so in practice both money grids carry one. */
+/* ⚠ THE HIT BOX IS THE WHOLE LEAD CELL, NOT THE CATEGORY'S NAME (table standard §3.6, register
+   F-19). As an inline-flex control sized to its content, a category called "Gear" exposed a far
+   smaller keyboard/AT target than "Tournament entry fees" on the same table — and the tap-floor
+   gate reads height only, so nothing saw it. Flex at full width keeps the chevron and the name
+   where they were and makes the target the cell. The only sibling in the cell is an sr-only
+   description, which takes no layout. */
 .moneyGridToggle {
-  display: inline-flex;
+  display: flex;
+  /* 100% of the cell PLUS the two negative margins below, so the box is not over-constrained
+     (a plain 100% made the browser discard the right margin and the target fell 3px short of the
+     cell's right edge — /review 2026-09-06). */
+  width: calc(100% + 0.4rem);
   align-items: center;
   gap: 0.4rem;
   background: none;
@@ -3796,9 +3830,9 @@ a.oneChip:hover { border-color: currentColor; }
    `.pos`/`.neg` and the plan grid's funding-row rule. A shared pair was declared here and never
    wired to either, so it is not restated. */
 
+/* The toggle's touch floor lives with the expanders' and the row actions' in ONE 768 block further
+   down (the touch band runs to 768, K-12). Only NARROW rules live here. */
 @media (max-width: 640px) {
-  /* The toggle is the row's own control and must clear the tap floor like every other. */
-  .moneyGridToggle { min-height: var(--tap-min, 44px); }
   /* A grid does NOT reflow on a phone — it is a comparison, so it keeps its columns and scrolls.
      It only gets tighter, so more months fit inside one swipe. Lives here rather than in either
      grid's own stylesheet: as a page-local rule it tied with the shared unconditional one across
@@ -3823,7 +3857,14 @@ a.oneChip:hover { border-color: currentColor; }
    heights, which are a grandfathered portal-wide decision this pass does not reopen.
    ⚠ Width as well as height: these are icon-only controls, so a 44px-tall 25px-wide button is
    still a miss for a thumb. */
-@media (max-width: 640px) {
+/* ⚠ THE TOUCH BAND RUNS TO 768, NOT 640 (owner 2026-08-27, K-12) — and this is the ONE block that
+   says so for the money grid's own controls. These floors were gated at 640, so an iPad got 23px
+   category toggles and 20px expanders on every money grid, found by the sweep the moment the
+   Months and By-period views joined it (2026-09-06). The opt-in `[data-touch-floor]` block that
+   used to carry the tablet half for a table that asked was retired with it: every money table
+   takes the floor now, and a rule that only some tables opted into was the drift. */
+@media (max-width: 768px) {
+  .moneyGridToggle { min-height: var(--tap-min, 44px); }
   .ledgerActions button,
   .ledgerActions a,
   .moneyGridExpand {
@@ -4047,7 +4088,7 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 /* Merged guardian contact cell (email over phone) */
-.guardianStack { display: inline-flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.guardianStack { composes: rowCaption; display: inline-flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .guardianEmail { color: var(--blueprint-light); text-decoration: none; }
 .guardianEmail:hover { text-decoration: underline; }
 .guardianPhone { color: var(--text-tertiary); font-size: var(--type-support); }
@@ -8124,7 +8165,8 @@ a.oneChip:hover { border-color: currentColor; }
    book is bracketed the way a bank statement is, without making a coach do arithmetic from a
    count and a net. Neither renders during the Overdue audit view, which isn't a date-range slice. */
 .registerBalanceRow td {
-  background: var(--white-4);
+  /* `--home-fill`, not `--white-4`: the latter was never defined and painted nothing (2026-09-06). */
+  background: var(--home-fill, rgba(255, 255, 255, 0.05));
   border-top: 1px solid var(--border-2);
   border-bottom: 1px solid var(--border-2);
   font-weight: 700;
@@ -8157,9 +8199,13 @@ a.oneChip:hover { border-color: currentColor; }
    line-height are both set explicitly — line-height inherited from the page was doing more of
    the unwanted height than the padding was. Scoped to `.registerRowCompact` only; every other
    table in the portal keeps the shared row height untouched. */
+/* ⚠ REGISTER DENSITY IS A REGISTERED EXCEPTION (TABLE_EXCEPTION_REGISTER.md K-01): the Ledger's
+   Timeline may be tighter than every other table, and on this axis only — its ink, hairline,
+   heading, hover and chrome follow the standard. The value is the density token so nobody can
+   mint a fourth height. */
 .registerRowCompact.tr td {
-  padding-top: 0.28rem;
-  padding-bottom: 0.28rem;
+  padding-top: var(--table-pad-register); /* table-exception: K-01 */
+  padding-bottom: var(--table-pad-register);
   padding-left: 0.6rem;
   padding-right: 0.6rem;
   font-size: var(--type-support);
@@ -8234,17 +8280,14 @@ a.oneChip:hover { border-color: currentColor; }
   z-index: 45;
 }
 
-/* ⚠⚠ ZEBRA STRIPING, SCOPED TO ORDINARY DATA ROWS — `:not(.registerBalanceRow)` keeps the
-   Starting/Ending balance lines on their own distinct tint rather than being swallowed into
-   whichever stripe their position happens to land on. A season's worth of rows at ledger density
-   is exactly the case zebra striping earns its keep for: tracking one row across eight columns
-   without losing it is the whole argument for QuickBooks/Excel-style banding. */
-.registerTable tbody tr.registerRowCompact:not(.registerBalanceRow):nth-child(even) td {
-  background: var(--white-4);
-}
-.registerTable tbody tr.registerRowCompact:not(.registerBalanceRow):nth-child(even):hover td {
-  background: var(--home-olive-soft, rgba(255,255,255,0.06));
-}
+/* ⚰ ZEBRA STRIPING — DELETED 2026-09-06 (owner ruling A-03, table standard). Two rules banded
+   the register's even rows with `var(--white-4)`, a token that is defined NOWHERE in the app; an
+   undefined token resolves to `initial`, so the band has never painted, on any skin, since the
+   day it was written. The one-surface plan §9.3 recorded it as an "earned exception" from the
+   stylesheet; the rendered inventory found no zebra anywhere in the product. The owner chose to
+   delete rather than define it — three weeks of shipping without banding and nobody noticed.
+   ⚠ A hairline under every row is the standard's answer to "track one row across eight columns";
+   the table-recipe guard now fails the build on any table rule that names an undefined token. */
 
 /* ⚠ A FIXED COLUMN, NOT A RAGGED EDGE — "Club →", "Player Dues →" and "Fundraising →" are all
    different lengths, which left the table's right edge jumping around row to row. A real
@@ -8357,19 +8400,17 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* Team board — desktop data-face table; phones reflow to per-player cards. */
 .devBoardTable { width: 100%; border-collapse: collapse; }
+/* The column heading is the baseline's — display face, `--type-support`, secondary ink, the line
+   token (table standard §3.2, register F-15). It was 11px mono in tertiary ink, the only heading
+   in the portal set that way, on three screens. */
 .devBoardTable th {
   text-align: left;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 0.45rem 0.6rem;
-  border-bottom: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  padding: var(--table-pad-compact) 0.6rem;
+  border-bottom: 1px solid var(--home-line, var(--border-2));
 }
 .devBoardTable td {
-  padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  padding: var(--table-pad-compact) 0.6rem;
+  border-bottom: 1px solid var(--home-line, var(--border-2));
   vertical-align: top;
 }
 .devBoardVal { font-family: var(--font-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -11453,6 +11494,7 @@ button.gdChip[aria-pressed='true'] {
 
 /* The second line inside a row's first cell — a bill's totals. */
 .listRowSub {
+  composes: rowCaption;
   display: block;
   margin-top: 0.15rem;
   font-size: var(--type-support);
@@ -11834,6 +11876,7 @@ button.gdChip[aria-pressed='true'] {
 }
 .payBillName { display: block; font-weight: 700; color: var(--text-primary); }
 .payBillMeta {
+  composes: rowCaption;
   display: block; margin-top: 0.1rem;
   font-size: var(--type-label); letter-spacing: 0.05em; text-transform: uppercase;
   color: var(--text-tertiary);
@@ -11851,7 +11894,7 @@ button.gdChip[aria-pressed='true'] {
 /* A piece belongs to the header above it, and the rule in the gutter says so without a word. */
 .payPieceRow > .payDueCell { border-left: 2px solid var(--pay-rule); padding-left: 1.5rem; }
 .payPieceName { display: block; color: var(--text-primary); font-weight: 550; }
-.payPieceMeta { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.payPieceMeta { composes: rowCaption; display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 /* A settled piece steps back — it is history sitting among things still to do, and only appears
    at all once the coach ticks Paid. */
 .payPieceSettled > .td { opacity: 0.72; }

@@ -546,16 +546,10 @@
   border-collapse: collapse;
 }
 
+/* Heading type, ink and ground are the baseline's (table standard, register F-07). */
 .previewTableWrap th {
-  background: var(--bg-2);
   text-align: left;
-  padding: 0.45rem 0.65rem;
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-40);
+  padding: var(--table-pad-compact) 0.65rem;
 }
 
 .previewTableWrap td {
@@ -1032,15 +1026,10 @@
   white-space: nowrap;
 }
 
+/* Heading type is the baseline's (table standard, register F-07): size, weight, ink and ground
+   are inherited from the global `th`; only what is this table's stays. */
 .healthTeamTable th {
   border-top: 0;
-  background: var(--white-5);
-  color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .healthTeamTable td {

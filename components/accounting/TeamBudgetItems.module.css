@@ -79,7 +79,7 @@
   text-transform: uppercase;
   /* ⚠ Not the faintest text in its own table — the heading ruling of 2026-08-15. */
   color: var(--white-70);
-  border-bottom: 1px solid var(--white-15);
+  border-bottom: 1px solid var(--home-line, var(--border-2)) /* was --white-15, a token defined nowhere — it painted nothing (table guard, 2026-09-06) */;
 }
 
 .thNum, .tdNum {
