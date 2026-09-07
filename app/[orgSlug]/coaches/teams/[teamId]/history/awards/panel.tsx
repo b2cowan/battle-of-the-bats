@@ -321,14 +321,14 @@ export function AwardsPanel({
                 {deleteError && <p className={styles.errorText}>{deleteError}</p>}
                 <div className={styles.insightsTableWrap}>
                   <table className={styles.insightsTable}>
-                    <thead><tr><th>Player</th><th>Award</th><th>For</th><th>Date</th><th>Note</th><th aria-hidden /></tr></thead>
+                    <thead><tr><th>Player</th><th>Award</th><th>For</th><th className={styles.tdShrink}>Date</th><th>Note</th><th aria-hidden /></tr></thead>
                     <tbody>
                       {visibleAwards.map(a => (
                         <tr key={a.id}>
                           <td>{a.playerName}</td>
                           <td>{a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? '—'}</td>
                           <td className={styles.mutedInline}>{a.eventOpponent ? `vs ${a.eventOpponent}` : (a.tournamentLabel || 'General')}</td>
-                          <td className={styles.insightsNum}>{new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
+                          <td className={styles.tdShrink}>{new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                           <td className={styles.mutedInline}>{a.note || '—'}</td>
                           <td>
                             {/* Two clicks from the history the coach already keeps (3.4). */}

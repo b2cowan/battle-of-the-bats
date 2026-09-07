@@ -198,10 +198,14 @@ export function PlayingTimePanel({
               <thead>
                 <tr>
                   <th>Player</th>
-                  <th>On field</th>
-                  <th>Bench</th>
-                  <th>Back-to-back sits</th>
+                  <th className={styles.insightsNumHead}>On field</th>
+                  <th className={styles.insightsNumHead}>Bench</th>
+                  <th className={styles.insightsNumHead}>Back-to-back sits</th>
                   <th>Positions played</th>
+                  {/* ⚠ Pitching is NOT a figure column and takes no right-aligned heading: the cell
+                      is a figure plus qualifying words whose length changes per row ("· cap 2/g",
+                      "⚠ over cap ×3"), so right-aligning would line up the end of the sentence and
+                      move the innings figure sideways on every row. */}
                   <th>Pitching</th>
                 </tr>
               </thead>
@@ -212,14 +216,17 @@ export function PlayingTimePanel({
                   return (
                     <tr key={r.playerId}>
                       <td>{r.name}</td>
+                      {/* Bar first, figure last: the cell is right-aligned, so a trailing bar would
+                          own the column's right edge and leave the digits floating under a heading
+                          that no longer pointed at them. */}
                       <td className={styles.insightsNum}>
-                        {r.fieldInnings}
                         <span className={styles.insightsFieldBar} aria-hidden><i style={{ width: `${pct}%` }} /></span>
+                        {r.fieldInnings}
                       </td>
                       <td className={styles.insightsNum}>{r.benchInnings}</td>
                       <td className={styles.insightsNum}>{r.backToBackGames > 0 ? r.backToBackGames : '—'}</td>
                       <td>{r.positions.length ? r.positions.join(', ') : '—'}</td>
-                      <td className={styles.insightsNum}>
+                      <td>
                         {r.inningsPitched != null && r.inningsPitched > 0 ? (
                           <>
                             {r.inningsPitched} {sportPack.periodLabel === 'Inning' ? 'IP' : periods}
@@ -347,11 +354,11 @@ export function PlayingTimePanel({
                       return (
                         <tr key={c.playerId}>
                           <td>{c.name}</td>
-                          <td className={styles.insightsNum}>
+                          <td>
                             {c.inningsPitched} {periods}
                             <span className={styles.mutedInline}> · {c.gamesPitched} game{c.gamesPitched === 1 ? '' : 's'}</span>
                           </td>
-                          <td className={styles.insightsNum}>
+                          <td>
                             {rest ? (
                               <>
                                 {daysWord(rest.daysSince)}{rest.daysSince > 0 ? ' ago' : ''}
@@ -359,7 +366,7 @@ export function PlayingTimePanel({
                               </>
                             ) : '—'}
                           </td>
-                          <td className={styles.insightsNum}>
+                          <td>
                             {c.perGameCap != null ? (
                               <>
                                 {c.perGameCap}/game
@@ -396,7 +403,7 @@ export function PlayingTimePanel({
               <>
                 <div className={styles.insightsTableWrap}>
                   <table className={styles.insightsTable}>
-                    <thead><tr><th>Batting order</th><th>Record</th><th>Times used</th></tr></thead>
+                    <thead><tr><th>Batting order</th><th className={styles.insightsNumHead}>Record</th><th className={styles.insightsNumHead}>Times used</th></tr></thead>
                     <tbody>
                       {analytics.reusedLineups.map((r, i) => (
                         <tr key={i}>

@@ -1,7 +1,7 @@
 # App-wide table & list consistency — the build plan
 
 **Status:** owner approved the standard, the mockups and all seven recommendations on
-2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); owner QA §149 owed; A-08 open; committed `07321b4a` 2026-09-07.
+2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); owner QA §149 in progress — first finding fixed, see §6.1; A-08 open; committed `07321b4a` 2026-09-07.
 **Standard:** `docs/agents/design/TABLE_AND_LIST_STANDARD.md` · **Register:**
 `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` · **Evidence:**
 `docs/agents/design/TABLE_INVENTORY_2026-09-06.md` · **Mockups + decisions:**
@@ -135,7 +135,7 @@ new rules surfaced on pre-existing chrome are in the baseline with reasons (F-21
 |---|---|
 | F-12 phone cards: change requests, early access, email, email templates, exports, feedback, observability, audit, bulk operations, plans & pricing, retention, org detail | recipe built in P3 (`.table-cards`, global); each table needs `data-label` on its cells |
 | F-06 tail: cell-level literals inside platform cells (`.tsCell`, `.emptyCell`, `.rowError`…) and the tournament settings notifications table's 0.85rem cell padding | judged by the rendered `type-ladder` rule when those screens join the sweep; one file each |
-| F-09 alignment on insights tables whose panels do not mark numeric cells (playing time) | tabular-nums applied table-wide; right-alignment per cell once a class marks it |
+| F-09 alignment on insights tables whose panels do not mark numeric cells (playing time) | **DONE 2026-09-07** — `.insightsNumHead` pairs with `.insightsNum`, six figure columns headed right and six figure-plus-words columns returned to left (§6.1) |
 | F-17 coach row lists | own session, own mockups |
 | F-18 club admin tables | blocked on fixture; measure before touching; pinned in the guard's KNOWN_DEBT |
 | F-21 · F-22 · F-23 portal chrome and inline links under the touch floor | surfaced by the new rules; in the baseline with reasons; COACH_TOUCH_TARGET_DEBT_PLAN |
@@ -151,3 +151,49 @@ new rules surfaced on pre-existing chrome are in the baseline with reasons (F-21
 - **`:has()`** is used for density by content. It is supported by every browser the product
   targets in 2026; the alternative (a row class in thirteen files) drifts the first time a row gains
   a caption without the class.
+
+## 6. QA §149 findings, fixed as they are found
+
+### 6.1 The Insights tables were headed left over right-aligned figures (2026-09-07)
+
+**What the owner saw.** On Insights → Playing Time, every figure column's heading sat hard left
+while its figures sat hard right — the widest gap being "BACK-TO-BACK SITS" with its dash 170px
+away from the start of its own heading.
+
+**What it actually was — a regression from this plan's own commit.** Before `07321b4a`,
+`.insightsNum` was `tabular-nums` + `nowrap` and set **no** `text-align`, so figures inherited
+left and matched their left headings. P2 gave the cells `text-align: right` (correctly — that is
+F-09) and gave the headings nothing. Half a fix reads worse than none: the columns had been
+consistent, and the pass made them inconsistent.
+
+**And the class had been applied to six columns that are not figure columns.** Reading the columns
+rather than the class turned up a second, quieter half: `.insightsNum` had also been right-aligning
+two **date** columns (standard §3.4 says dates left; on Results it is the *first* column, so the
+date was pushed rightward into the game name) and four **figure-plus-words** columns — Pitching
+("3 IP · cap 1/g ⚠ over cap ×2"), Arm care's Season, Last outing and Your per-game cap. Those
+suffixes vary per row, so right alignment lines up the end of a sentence and puts the leading
+figure at a different x on every row.
+
+**Fixed:**
+
+| | Columns | Treatment |
+|---|---|---|
+| Headings moved right to meet their figures | Playing Time · On field, Bench, Back-to-back sits · Which lineup wins · Record, Times used · Results · Score | new `.insightsNumHead`, written `.insightsTable th.insightsNumHead` so it out-specifies `.insightsTable th` (0-1-1) rather than relying on source order the way `.thNum` must |
+| Returned to left | Playing Time · Pitching · Arm care · Season, Last outing, Your per-game cap | `.insightsNum` dropped; tabular figures still come from `.insightsTable` itself |
+| Returned to left, shrink-to-fit | Results · Date · Awards · Date | `.tdShrink` (existing utility — nowrap, and the slack goes to the name column beside it) |
+
+**One shape change.** "On field" carries a 64px share bar. It used to trail the number, which made
+the **bar's** edge the column's right edge — so a right-aligned heading would have sat over the bar
+with the digits still floating, the half-fix that leaves the original complaint standing. The bar
+now **leads** its figure (its margin moved left → right), so On field and Bench read as the pair a
+coach compares them as.
+
+**Also:** `.ptMatrixHead` dropped its `!important`. It only ever needed the specificity the new
+pair now establishes, and the position-recency matrix had been solving this same problem alone.
+
+**New rule, recorded in the standard §3.4:** a column earns right alignment only if every row ends
+at the same semantic place. A figure followed by varying qualifying words is a text column that
+begins with a number.
+
+**Gates:** `check:css-selectors`, `check-css-module-purity` and focused ESLint on the three panels
+all clean. No copy, terminology or flow changed, so no help-docs or demo-narration follow-up.

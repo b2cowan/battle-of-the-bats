@@ -136,6 +136,20 @@ is for badges and, in the admin shells, for figures (K-10).
 
 - Text left; **figures right, tabular** (`font-variant-numeric: tabular-nums`, body face, not the
   data face — 2026-08-13); dates left; a status badge left in its own column.
+- ⚠ **A COLUMN'S HEADING GOES WHERE ITS FIGURES GO.** Right-aligning cells and leaving the heading
+  left is not half a fix, it is a new defect: the columns were at least consistent before. Every
+  numeric cell class ships with a heading twin — `.thNum`/`.tdNum` in the money tables,
+  `.insightsNumHead`/`.insightsNum` in the reports. (QA §149, 2026-09-07 — the table-consistency
+  pass itself shipped the cell half alone.)
+- ⚠ **A COLUMN EARNS RIGHT ALIGNMENT ONLY IF EVERY ROW ENDS AT THE SAME SEMANTIC PLACE.** A cell
+  that is a figure followed by *varying* qualifying words — "3 IP · cap 1/g ⚠ over cap ×2",
+  "4 innings · 2 games" — is a **text column that begins with a number**: right-aligning it lines
+  up the end of a sentence and puts the leading digit at a different x on every row. Those stay
+  left and take their tabular figures from the table. A fallback that replaces the whole cell
+  ("—", "no scores yet") does not disqualify a column; a varying *suffix* does.
+- ⚠ **A bar, chip or glyph drawn beside a figure owns the edge it sits on.** In a right-aligned
+  column it must LEAD the figure, or the column's right edge belongs to the decoration and the
+  heading no longer points at the number (the "On field" share bar, 2026-09-07).
 - The **last column is the action column and is right-aligned**, with **one shape on every row** —
   the chevron — and nothing conditional beside it (K-08).
 - A fixed-width column is allowed only for a control column or a date; a name column is elastic and

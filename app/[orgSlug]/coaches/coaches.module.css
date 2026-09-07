@@ -2028,9 +2028,33 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    0.65rem at --white-35, i.e. the faintest text in the portal labelling columns of --white-90 data.
    Padding stays tight and the wrapper still scrolls, so the wider heading costs no page overflow. */
 .insightsTable th { font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); background: var(--card-bg); text-align: left; padding: var(--table-pad-compact) 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
+/* The HEADING half of `.insightsNum`, and the reason the pair exists at all: the
+   table-consistency pass (`07321b4a`) gave `.insightsNum` its `text-align: right` and gave the
+   column headings nothing, so on Playing Time, Results and Which-lineup-wins every figure column
+   was headed hard left over hard-right figures (owner QA §149, 2026-09-07). Same defect, and the
+   same answer, as `.thNum` / `.tdNum` next door in the money tables.
+
+   ⚠ IT MUST OUT-SPECIFY `.insightsTable th` (0-1-1). A bare `.insightsNumHead` is 0-1-0 and would
+   silently lose the one declaration it exists to make — the cascade trap this file carries warnings
+   about in three other places. Written as `th.insightsNumHead` INSIDE the table so it wins on
+   SPECIFICITY, not on source order alone (which is all `.thNum` has, and why that rule needs its
+   "must stay below" note that a later tidy-up could break).
+
+   ⚠ A column earns this only if EVERY row ends at the same semantic place. A cell that is a figure
+   followed by varying qualifying words ("3 IP · cap 1/g ⚠ over cap ×2") is a TEXT column that
+   begins with a number: right-aligning it lines up the end of a sentence and puts the leading digit
+   at a different x on every row. Those columns stay left, and still take tabular figures from
+   `.insightsTable` above. */
+.insightsTable th.insightsNumHead { text-align: right; }
 .insightsTable td { padding: var(--table-pad-compact) 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--text-primary); }
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
+/* ⚠ THE BAR LEADS ITS NUMBER, and the margin is on the RIGHT for that reason (2026-09-07).
+   It used to trail, which made the right edge of the "On field" cell the BAR's edge — so a
+   right-aligned heading would have sat over the bar while the digits floated somewhere in the
+   middle, the half-fix that would have left QA §149's complaint standing. Bar first puts the figure
+   hard right, under its own heading and in one column with Bench beside it — the two numbers a
+   coach reads as a pair. */
+.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-right: 0.5rem; overflow: hidden; }
 .insightsFieldBar i { display: block; height: 100%; background: rgba(var(--blueprint-blue-rgb), 0.75); }
 .insightsFlagWarn { color: var(--warning); font-size: var(--type-support); font-weight: 700; }
 .insightsRecGood { color: var(--success); }
@@ -2053,7 +2077,7 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 /* Position CODES across the top, with the full label on hover/title. Codes because a row of
    full labels ("Shortstop", "Right Field") is 9 columns of wrapped text on a phone; the
    sport pack supplies both, so nothing is invented here. */
-.ptMatrixHead { text-align: center !important; }
+.insightsTable th.ptMatrixHead { text-align: center; }
 .ptMatrixCell,
 .ptMatrixNever {
   text-align: center;

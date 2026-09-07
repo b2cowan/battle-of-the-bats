@@ -54,7 +54,7 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 | **F-06** | Platform admin, 16 modules | Density · hairline · hover | 16 copies of one recipe: cell padding 0.45–0.85rem, hairline white 0.04 / 0.045 / 0.08, hover lime 0.02 / 0.035 / white 0.02 / white 0.1, exports on a different face | one shared recipe, one density by content, `--home-line` (dark alias `--border-2`) | copy-paste per page; no shared class exists in that shell |
 | **F-07** | Tournament admin | Heading type | five treatments: `.tableHeader` 9.3px mono · health table 9.9px mono · role matrix 10.4px display 30% ink · notifications 11.2px mono · manage/dashboard 12.8px display 60% ink (the global rule) | one: `--type-support` display, secondary ink | local recipes per page |
 | **F-08** | Budget vs. Actual → **Months** at 390 | Interaction (tap size) | the figure doors are **44 × 26px** — under the floor; the Statement's are 44 × 44 | `--tap-min` both ways | the month grid's `cellValue` button never took the phone floor the shared toggle has; the layout sweep never addresses the Months view so it has never been measured |
-| **F-09** | Playing-time and results insights tables; devBoard tables | Alignment | figures start/centre-aligned; devBoard figures right but not tabular | right + tabular | the insights recipe sets no number treatment (the same gap `.tdNum` closed for the money lists in August) |
+| **F-09** | Playing-time and results insights tables; devBoard tables | Alignment | figures start/centre-aligned; devBoard figures right but not tabular | right + tabular | the insights recipe sets no number treatment (the same gap `.tdNum` closed for the money lists in August) — **CLOSED 2026-09-07**, see below |
 | **F-10** | Coach list tables | Frame | accent-tinted frame (`rgba(--blueprint-blue-rgb,.15)` → olive in warm) vs the grids' neutral `--home-line` | `--home-line` | noted in the one-surface plan §9.2 |
 | **F-11** | Admin dashboard registration table; tournament admin Manage; Manage's team list | All | the raw **global** recipe: 12.8px `--white-60` headings, 15px cells, 14px padding (87px two-line rows, 56px one-line) | shell recipe | no class on the table at all — the global rule *is* the recipe |
 | **F-12** | Platform admin at 390 | Responsive | no card shape; sideways scroll with rows wrapping to **121–392px** (orgs, email templates, customer users) | cards for a list, scroll for a comparison; A-02 asks whether the phone matters here | the shell has no `tableAsCards` equivalent |
@@ -155,3 +155,21 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
     The demo dock lines and tour narration name no table furniture.
   - **Landed:** `07321b4a` on `dev`, 2026-09-07 — 50 files; the ledger and the decisions log were staged by
     hunk so no other session's work rode along.
+- 2026-09-07 — **F-09 CLOSED, and it took a regression from the commit above to close it** (owner
+  QA §149; plan §6.1). P2 gave `.insightsNum` its `text-align: right` and gave the column headings
+  nothing, so every figure column on Playing Time, Results and Which-lineup-wins was headed hard
+  left over hard-right figures — columns that had at least been *consistently* left before the pass.
+  Fixed with `.insightsNumHead`, the heading twin `.thNum`/`.tdNum` has had since August, written
+  `.insightsTable th.insightsNumHead` so it wins on specificity rather than source order.
+  - The same reading found `.insightsNum` applied to six columns that are **not figure columns**:
+    the Results and Awards **Date** columns (standard §3.4 says dates left — and on Results it is
+    the first column, so the date was shunted rightward into the game name), and four
+    figure-plus-words columns (Playing Time's Pitching; Arm care's Season, Last outing, Your
+    per-game cap). All six returned to left; the dates take the existing `.tdShrink`.
+  - "On field"'s 64px share bar now **leads** its figure — trailing, it owned the column's right
+    edge, so a right-aligned heading would have pointed at the bar and left the digits floating.
+  - `.ptMatrixHead` dropped its `!important`; it only ever needed the specificity the new pair
+    establishes.
+  - **Three rules generalised into the standard §3.4:** a column's heading goes where its figures
+    go; a column earns right alignment only if every row ends at the same semantic place; and a
+    bar/chip/glyph beside a figure must lead it in a right-aligned column.

@@ -283,11 +283,11 @@ export function ResultsPanel({
 
               <div className={styles.insightsTableWrap}>
                 <table className={styles.insightsTable}>
-                  <thead><tr><th>Date</th><th>Game</th><th>Type</th><th>Result</th><th>Score</th>{tagChips.length > 0 && <th>Tags</th>}</tr></thead>
+                  <thead><tr><th className={styles.tdShrink}>Date</th><th>Game</th><th>Type</th><th>Result</th><th className={styles.insightsNumHead}>Score</th>{tagChips.length > 0 && <th>Tags</th>}</tr></thead>
                   <tbody>
                     {visibleGames.map(e => (
                       <tr key={e.id}>
-                        <td className={styles.insightsNum}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
+                        <td className={styles.tdShrink}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                         <td>{gameTitle(e)}</td>
                         <td className={styles.mutedInline}>{TYPE_LABEL[e.eventType]}</td>
                         <td><span className={styles.wltPip} data-r={e.result ?? undefined}>{e.result === 'win' ? 'W' : e.result === 'loss' ? 'L' : 'T'}</span></td>
