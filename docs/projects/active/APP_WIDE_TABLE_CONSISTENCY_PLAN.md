@@ -1,7 +1,7 @@
 # App-wide table & list consistency — the build plan
 
 **Status:** owner approved the standard, the mockups and all seven recommendations on
-2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); owner QA §149 owed; A-08 open; commit awaits the owner.
+2026-09-06 (*"proceed with your recommended updates"*). Built the same day on `dev`; `/simplify`, `/review` and `/docs` passed 2026-09-06 (see the register changelog); owner QA §149 owed; A-08 open; committed `07321b4a` 2026-09-07.
 **Standard:** `docs/agents/design/TABLE_AND_LIST_STANDARD.md` · **Register:**
 `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` · **Evidence:**
 `docs/agents/design/TABLE_INVENTORY_2026-09-06.md` · **Mockups + decisions:**

@@ -1,6 +1,6 @@
 # App-wide table & list consistency — PM brief
 
-**Status:** built on dev 2026-09-06; `/simplify`, `/review` and `/docs` passed 2026-09-06; owner QA §149 owed; A-08 open; commit awaits the owner. Plan: `APP_WIDE_TABLE_CONSISTENCY_PLAN.md`.
+**Status:** built on dev 2026-09-06; `/simplify`, `/review` and `/docs` passed 2026-09-06; owner QA §149 owed; A-08 open; committed `07321b4a` 2026-09-07. Plan: `APP_WIDE_TABLE_CONSISTENCY_PLAN.md`.
 Mockups the owner approved: https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
 
 ## What changes for a person using the product

@@ -11758,7 +11758,7 @@ rulings you already made, so they should read as repairs, not as changes.
       Confirm the page **never scrolls sideways** at 361px.
 - [x] **Every export it offered before is still offered.** Tap it: same documents, same file types,
       same plan and contacts gating. Nothing about picking changed.
-- [x] **One hint above the list, not two.** Only *"11 without a position — open a player…"* leads
+- [x] **One hint above the list, not two.** Only *"11 without a position — open a player���"* leads
       the list. The reorder tip now sits **below** the players — confirm it reads as a footnote to
       the arrows rather than a rule you must read first.
 - [x] **Desktop is untouched.** Widen to a full window: the bar's right-hand side is back with
@@ -19071,7 +19071,7 @@ piece of layout debt no longer reproduces.
 reads *Past due* now. The changed branch is unreachable for a family with money still to send, so
 this is fixture data moving underneath a shared working copy — noted so a walker does not chase it.
 
-## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — BUILT 2026-09-06 on dev, awaiting QA · walk artifact `3d981219`
+## §149 · One table standard, one exception register — every table in the product on the ladder, and the places allowed to differ written down — BUILT 2026-09-06, committed `07321b4a` 2026-09-07, awaiting QA · walk artifact `3d981219`
 
 **Walk:** https://claude.ai/code/artifact/3d981219-72f7-4c66-aea6-eb52f97bb1ff
 **Plan:** `docs/projects/active/APP_WIDE_TABLE_CONSISTENCY_PLAN.md` (+ `_PM_BRIEF.md`) · **Standard:**

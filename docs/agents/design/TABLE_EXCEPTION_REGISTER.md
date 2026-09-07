@@ -153,3 +153,5 @@ https://claude.ai/code/artifact/0aa319dd-a6eb-4fff-b09b-df8591475fe1
   - `/docs`: no help sentence describes a table the product no longer draws (the money guide's own
     keywords already say "shaded row means a heading"); the A-04 sentence gained its search terms.
     The demo dock lines and tour narration name no table furniture.
+  - **Landed:** `07321b4a` on `dev`, 2026-09-07 — 50 files; the ledger and the decisions log were staged by
+    hunk so no other session's work rode along.
