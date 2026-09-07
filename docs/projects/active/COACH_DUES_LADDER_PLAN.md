@@ -253,7 +253,7 @@ findings** — the `--changed` widening to all 73 screens aborted at the memory 
 walk had exhausted, and was deliberately not re-run: the only shared-stylesheet change is the
 deletion of a class with no consumer, which cannot alter a rendered pixel.
 
-### 7.9 Follow-up, same day (owner: "go ahead with those 3 items")
+### 7.9 Follow-up, same day (owner: "go ahead with those 3 items") — committed `e160f76b`
 
 - **Assessed → Dues.** One concept had two words on three surfaces. The season band's first tile and
   the roster player page's first box now say **Dues**, matching the column, the drawer tile, the

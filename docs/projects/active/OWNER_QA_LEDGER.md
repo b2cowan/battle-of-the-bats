@@ -19288,5 +19288,55 @@ public Standings and Pricing · I the dark skin · J A-08.
 **Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
 a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium
 fixed before the commit; the pre-commit PDF gate then refused the eight-column sheet in portrait
-until landscape became the sheet's own shape). The ladder's own owner QA is owed — a fresh § when
-walked.
+until landscape became the sheet's own shape). The ladder's own owner QA is **§151**, below.
+
+## §151 · The dues ladder — Player Dues adds up left to right — committed `3545b64e` 2026-09-07, follow-up (Dues · the picker · the phone shape) `e160f76b` same day, awaiting QA · walk artifact `e148d490`
+
+**Plan:** `docs/projects/active/COACH_DUES_LADDER_PLAN.md` · **PM brief:** `_PM_BRIEF.md` ·
+**Owner-approved mockup (round 4):** https://claude.ai/code/artifact/5df27ea9-8210-45de-a569-26c6c74894dc ·
+**Walk:** https://claude.ai/code/artifact/e148d490-9980-4704-9e8c-54d4b2329f2e
+
+**Where it came from.** The §148 walk: the owner asked why Avery's *After fundraising* read $700.00
+when she had raised $198.15. It did, correctly — her cash had already settled every instalment, so
+there was no bill left for the fundraising to reduce — and that is the defect: a tile answering a
+question about a bill while appearing to answer one about fundraising, and it hit every family who
+pays promptly, not just the overpaid ones.
+
+**What shipped.** `Dues − Fundraising − Other credits − Paid + Handed back = Balance`, on the table
+and in the drawer, no operator glyphs; Handed back in amber and hidden at zero (a whole column on
+the table when nobody on the roster has one). **Every figure is gross** — the product had been
+netting payouts away silently inside two columns, so Blake's $150 Bottle Drive rebate would have
+read $50 under a heading saying Fundraising, and Casey read Paid $900 against the $1,200 they sent
+(§148's own rule says Paid shows what the family sent). **No balance moves** — pinned by unit test
+against *today's* figure for all twelve fixture families. The drawer becomes one section per tile,
+each carrying its total (Fundraising · Other credits · Payments · Paid out, in that order, one
+shell); the engine's overpayment row retires into the Payments heading with its hover text; the
+roster player page, the dues export (landscape, always eight columns) and the family statement PDF
+read the same five figures. §148's "sent $X more than billed" sub-line is **superseded**, not
+reversed. Same-day follow-up: *Assessed* → *Dues* on the season band and the player page;
+*Overpayment* removed from the manual credit picker; the drawer's **phone shape built** — the first
+commit shipped only the desktop row, which spills six tiles across 390px, and the rendered gate
+cannot see inside an open drawer.
+
+**⚠⚠ `/review` FOUND A CRITICAL BEFORE THE COMMIT** (four lenses, high-risk tier, plan §7.8): the
+fold dropped a trim that was not on the host, so a coach-typed overpayment row trimmed above two
+legacy engine rows was never written. Also fixed pre-commit: the fold's host update lacked the grow
+branch's zero-rows recovery; the family statement PDF read the netted pair (Casey "received $900"
+on the parent's document vs $1,200 on the coach's screen; Blake's band $176.98 over rows summing
+$276.98); the gross caption beside the net strip on a partial refund. The pre-commit PDF gate then
+refused the eight-column sheet in portrait — it had given up Balance and Status — until landscape
+became the sheet's own shape, keyed on its columns constant because the one sheet answers to three
+dataset names.
+
+**What the walk asks.** Nine parts. Part A reads Blake's row aloud (the row that justifies the sixth
+column); Part B re-proves all twelve balances; C and D are the drawer's tiles and sections, with
+Casey's refund said in two places that must agree; E the roster page; **F the phone, walked by hand
+because no gate can**; G the export; H the statement a parent keeps; I two calls — the
+Add-a-credit placement the review flagged, and Dues vs Billed on the band.
+
+**Gates:** typecheck · **3,135 unit tests** (17 new across three files) · full `verify:changed` ·
+`check:pdf` (every document keeps its promises) · `check:layout --only=coach-dues,coach-player` at
+361/390/768/1440, no new findings. **Not measured by a machine:** the drawer's phone shape.
+
+**Deferred by owner ruling (taken on the §148 walk):** in-app help and the coach demo's money
+narration wait for the end of the dues project.
