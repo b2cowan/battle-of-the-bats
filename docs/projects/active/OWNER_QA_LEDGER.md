@@ -19259,7 +19259,7 @@ Insights, Club, Statement) · F Insights and development history headings · G t
 (Orgs, Users, Change requests; cards at 390) · H tournament admin Teams / Notifications / Manage,
 public Standings and Pricing · I the dark skin · J A-08.
 
-## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review`, awaiting QA · **walk artifact https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f** (source `FOUNDING_SEASON_2027_WALK.html`; Parts A–N, verdict + notes per step, Copy findings) · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
+## §150 · Founding Season 2027 — the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026, and the offer goes front and centre — committed `2f02a949` 2026-09-07 after `/review` · **✅ PASSED 73/73, zero defects, 2026-09-07 — one question, logged as Proposed** · **walk artifact https://claude.ai/code/artifact/7ebf82c3-d404-4dc9-896b-ff267a517e3f** (source `FOUNDING_SEASON_2027_WALK.html`; Parts A–N, verdict + notes per step, Copy findings) · run-order B9 on artifact `5ef0163e` · mockup artifact `61a78f09` · plan `FOUNDING_SEASON_2027_PLAN.md` · copy canon `FOUNDING_SEASON_2027_OFFER_COPY.md`
 
 **What to pin, not "check the shape":** every Founding Season sentence must read **"free through September 30, 2027"** and **"sign up by December 31, 2026"** — in full, never "Sept 30" or "Dec 31" — and the word "January" must appear nowhere on a customer surface except the pricing FAQ's *post-window* answer (which does not render yet). "Normally $39/month" / "normally $29/month" beside every free claim. No exclamation marks; never "trial", "summer".
 
@@ -19284,6 +19284,17 @@ public Standings and Pricing · I the dark skin · J A-08.
 **Post-window rehearsal (dev only, optional):** set `NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE` to a past instant, restart, and confirm every element in A–E is gone, the persona pages read list price, the pricing FAQ shows `Can I still get the Founding Season offer?`, the chooser's coach card opens the Basic team again with a `FREE` pill, and a new organization gets NO comp row. Unset it afterwards.
 
 **`/review` 2026-09-07 (high-risk tier, five lenses) — seven confirmed findings fixed before this walk, recorded in `FOUNDING_SEASON_2027_PLAN.md` §3b.** The two that matter to a customer: the billing page's current-plan card would have shown a still-free organization its list price after December 31 (K/M above), and the whole 2026 cohort would have dropped out of recognition between a code deploy and the data backfill (now tolerant of both dates, N above).
+
+### §150 walked — ✅ PASSED 73/73, zero defects, one question (2026-09-07)
+
+The owner walked every part, A through N, on a laptop and a phone, including the closed-window rehearsal (M) with the env override and the platform-admin tile (J): **73 of 73 checked, every step Pass, no steps flagged.** §150 is closed as built at `2f02a949` + `0b399e74`.
+
+**The one note, on E2, is a question, not a defect of this build — and it is a fair one:** *"why doesn't our comparison table have the coaches portal when that is only 1 of the 3 live plans along with tournaments and tournament plus?"* The pricing page's comparison table has four columns — Tournament, Tournament Plus, League Plus, Club — so it compares two live plans against two parked ones and omits the third live product. The honest reason it was never added: the table's rows are organization plumbing (tournament slots, staff seats, house league, accounting, public site) and almost none of them apply to a coach's single-team portal, so a fifth column would read as a stripe of dashes. But the 2026-08-08 ruling says live products LEAD on every marketing surface, and the coach question this table never answers — *what does Premium add over the free Basic portal?* — is the most-asked one. **Recommendation, logged as Proposed in `BUSINESS_DECISIONS.md` 2026-09-07:** give the Coaches Portal its own short two-column comparison, **Basic vs Premium**, under the organization table — the same free-floor → paid-tier pairing the page already teaches for Tournament → Tournament Plus — rather than forcing a coach product into an organization grid. Owner ruling owed; nothing built.
+
+**Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
+a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium
+fixed before the commit; the pre-commit PDF gate then refused the eight-column sheet in portrait
+until landscape became the sheet's own shape). The ladder's own owner QA is **§151**, below.
 
 **Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
 a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium

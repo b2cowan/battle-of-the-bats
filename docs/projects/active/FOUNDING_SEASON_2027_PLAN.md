@@ -1,6 +1,6 @@
 # Founding Season 2027 — the free season runs through September 30, 2027; the offer goes front and centre
 
-**Status:** Phase 0 ✅ **committed `2f02a949` on `dev` 2026-09-07** after `/review` (§3b; owner QA §150 owed, listed as B9 on the owner's run-order artifact `5ef0163e`;
+**Status:** Phase 0 ✅ **committed `2f02a949` on `dev` 2026-09-07** after `/review` (§3b; owner QA §150 ✅ **PASSED 73/73, zero defects, 2026-09-07** — B9 on the owner's run-order artifact `5ef0163e`; one question raised, the pricing comparison table has no Coaches Portal column, logged as Proposed in `BUSINESS_DECISIONS.md` 2026-09-07;
 **migration 279 applied to dev, PROD-OWED and invisible to `check:migrations` — it is data-only**).
 Phases 1–3 planned. Ruling: `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-09-07. Design:
 `memory/design_decisions.md` 2026-09-07. Copy: `FOUNDING_SEASON_2027_OFFER_COPY.md` (approved canon).

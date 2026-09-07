@@ -8,6 +8,16 @@
 
 ---
 
+### 2026-09-07 — PROPOSED: the pricing comparison table shows the live Coaches Portal (Basic vs Premium) rather than leaving one of the three live products out
+**Status:** Proposed — raised by the owner during the §150 walk (2026-09-07): *"why doesn't our comparison table have the coaches portal when that is only 1 of the 3 live plans along with tournaments and tournament plus?"* Nothing built; owner ruling owed.
+
+**The gap:** `/pricing`'s comparison table (`app/pricing/ComparisonTable.tsx`) has four columns — Tournament, Tournament Plus, League, Club — so it compares two live plans against two parked ones and omits the third live product, the Premium Coaches Portal, which has its own card in the grid above it. That cuts against the 2026-08-08 ruling that live products lead on every marketing surface. It was never added because the rows are organization plumbing (tournament slots, registration, staff seats, house league, accounting, public site) and almost none of them apply to a coach's single-team portal — a fifth column would read as a stripe of dashes and tell a coach the product is thin.
+
+**Recommendation:** a separate two-column comparison, **Basic Coaches Portal vs Premium Coaches Portal**, under the organization table — the same free-floor → paid-tier pairing the page already teaches for Tournament → Tournament Plus — with rows drawn from the Premium inclusions in `PLAN_PRICING_FACTS.md` (roster and players, lineups and game day, dues and budget, documents, families, exports, coaching staff). Not recommended: a fifth column in the organization grid (dashes down most rows), or dropping the parked columns (the 2026-08-20 ruling keeps League visible).
+
+**Follow-through if accepted:** `/marketing` writes the row labels and the block's one-line intro; `/design` reviews the second table's weight against the first (it must read as the same table standard, not a second style); the build lands in `ComparisonTable.tsx` with a §-walk on the owner's run order. Pricing facts do not change.
+
+
 ### 2026-09-07 — FOUNDING SEASON 2027: the free season runs through September 30, 2027 for everyone who signs up by December 31, 2026; the two dates separate; no second promotion; the September ask is a 2028 plan choice, annual first; the offer goes front and centre
 **Status:** Decided (owner, 2026-09-07 — *"I agree with all of your recommendations"* on the six decisions, then *"looks good, go for it"* on the mockup sheet `61a78f09` with the recommended option on each of its three choices). **Committed `2f02a949` on `dev` 2026-09-07** after `/review` (seven findings fixed; migration 279 applied to dev, PROD-OWED). Plan: `docs/projects/active/FOUNDING_SEASON_2027_PLAN.md` (+ PM brief); copy canon: `FOUNDING_SEASON_2027_OFFER_COPY.md`.
 
