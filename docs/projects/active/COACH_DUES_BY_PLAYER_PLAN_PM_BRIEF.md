@@ -1,6 +1,6 @@
 # PM brief — Player dues opens into the players
 
-**Plan:** `COACH_DUES_BY_PLAYER_PLAN.md` · **Raised:** owner, QA §146, 2026-09-06 · **Status:** planned
+**Plan:** `COACH_DUES_BY_PLAYER_PLAN.md` · **Raised:** owner, QA §146, 2026-09-06 · **Status:** step 1 shipped + walked 28/28 · **step 2 DELETED 2026-09-07** — superseded by the credits-and-paybacks project (see below)
 
 ## What a coach can do that they cannot do today
 
@@ -78,3 +78,33 @@ the money surfaces are fresh and all three reports share one recipe.
 - The rows inside the fold **add up to the dues row above them**, on every basis and every view.
 - The report is no harder to read for a coach who never opens the fold.
 - Nobody sees a family's dues detail who cannot already see it on the Dues tab.
+
+## Where this stands, 2026-09-07 — step 1 shipped, step 2 has been deleted
+
+**Step 1 shipped and passed its walk 28/28.** On Player Dues, a family's own money now sits in
+**Paid** and **Credits** means money from someone else. The dues ladder followed it, so the screen
+reads left to right: **Dues · Fundraising · Other credits · Paid · Handed back**.
+
+**Step 2 — netting outside money off each family's planned dues — is not being built.**
+
+It was meant to fix a real complaint: a family whose dues are mostly covered by other people's money
+reads as badly behind. Kai is billed $970.83, owes $70.83, and the report showed the full $970.83
+against them with nothing arriving.
+
+Two things came out of working through it. First, netting the plan would have moved the season's
+headline figure by $2,349.63 — from ($341.70) to ($2,691.33) — with nothing having happened in the
+real world. Second, and more important, **a live reporting defect turned up underneath it**: when a
+family pays a team bill out of their own pocket, the report counts the cost and forgets that the
+family just settled part of their dues. The season reads $1,379.98 worse than it is.
+
+Fixing that defect fixes Kai's row too — from the *actual* side, with every budget figure left
+alone. So there is nothing left to net, and step 2 disappears rather than being built and argued
+about. That work is now its own project:
+`COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` + `_PM_BRIEF.md`.
+
+**The fold itself is unaffected and still wanted.** Opening Player dues into one row per family is
+the whole point of this project and none of the above touches it — it just needs to open onto
+figures that are already right, so it follows the credits work rather than leading it.
+
+**Decision mockup, with the math on the real fixture:**
+https://claude.ai/code/artifact/0f08e331-7dda-456a-9836-c608f8a72eae

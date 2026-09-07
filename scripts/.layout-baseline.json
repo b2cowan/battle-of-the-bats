@@ -4072,6 +4072,10 @@
     "coach-development-board|768|tap-floor|button·Help: Team board": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
       "detail": "34px tall (floor 44)"
+    },
+    "coach-accounting|361|control-width|button·Scroll tabs right": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
     }
   }
 }

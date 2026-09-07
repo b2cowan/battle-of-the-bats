@@ -114,6 +114,13 @@ team adds 20. Mitigated by shipping it **collapsed by default** — but see D3.
 
 ### 5.3 The columns inside the fold, and the credit rule
 
+> ⚠⚠ **THE CREDIT RULE IN THIS SECTION IS DEAD — DO NOT BUILD FROM IT.** Nothing is netted off the
+> planned dues figure, on the row or in the fold. Owner rulings 2026-09-07 (D8, and
+> `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md`) make each family's row read honestly from the
+> **actual** side with the budget untouched. **The ROWS below are still the right rows and the
+> per-family arithmetic is still the right arithmetic** — what changed is which column carries it.
+> Read that plan before touching this fold.
+
 Same four columns as the row above, and **the planned figure is net of credits from anyone other
 than the family, less anything already handed back** (owner ruling 2026-09-06, D4 + D7):
 
@@ -163,7 +170,7 @@ actual dues receipts* — by counting cash that never arrived.
 With overpayment excluded, Avery's plan is a real $121.85. If a floor ever does bite, the residue is
 said in the note, never shown as a negative plan.
 
-## 6. Decisions — settled 2026-09-06, one open
+## 6. Decisions — D1–D7 settled 2026-09-06 · D8 RULED 2026-09-07 and spun out, taking step 2 with it
 
 | # | Question | Answer |
 |---|---|---|
@@ -174,6 +181,9 @@ said in the note, never shown as a negative plan.
 | **D5** | Who may open it? | **Anyone with money access.** Owner: *"anyone with money access can see every money screen."* No new permission concept; the fold inherits money access like every other money surface. |
 | **D6** | Two screens, one family, two numbers | **✅ BUILT + WALKED 28/28 (ledger §148).** See below. |
 | **D7** | The Credits column vs the records | **CLOSED — not a bug.** See below. |
+| **D8** | A family-paid cost is counted once — should the credit that settled it count as dues coming in? | **✅ RULED YES, 2026-09-07 — AND IT SPUN OUT.** Owner: *"the same as a parent paid their dues and the team paid for the item."* Now `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md`, which **removes step 2**. |
+| **D9** | One reconciling line, or split by kind? | **MOOT — there is no reconciling line.** D8 makes the family rows read right from the ACTUAL side, so nothing is netted. Kept below as the reasoning. |
+| **D10** | Net the funding, keep reimbursements whole? | **RULED OUT** — it fails on Kai, the row this started with. Superseded entirely by D8. |
 
 ### D6 — split the family's own money out of "Credits" *(✅ SHIPPED + QA PASSED 28/28, 2026-09-07 — ledger §148)*
 
@@ -222,13 +232,91 @@ and documented — a credit refunded in cash must stop reducing what that family
 the fold total moves to $8,958.67 and Total revenue to $10,908.67. **Built on the earlier numbers,
 two families would have been chased for money they do not owe.**
 
+### D8 — ⚠⚠ THE STATEMENT COUNTS A FAMILY-PAID COST ONCE *(CONFIRMED + RULED 2026-09-07 — spun out, and it DELETES step 2)*
+
+**→ The rulings and the build now live in `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md`.** Owner ruled
+that a family-paid cost and the dues credit that settled it are one event the report counts on both
+sides — plus three more: a fundraiser rebate moves from Fundraising to dues, own money handed back
+comes off dues, and a payback must select the whole debts it settles. The budget never moves.
+The record below is why it was raised.
+
+**Found by chasing step 2's effect on the bottom line; confirmed against the records and the
+report's own stated rules.** It is a live defect **today**, independent of this project.
+
+When a family pays a team bill directly, two things happen and the report counts one of them:
+
+| | |
+|---|---|
+| The cost | counted in **Expenses** — the query's own comment: *"The report counts a family-paid cost as spending (the season spent it); cash must not."* |
+| The dues credit that settled it | counted **nowhere** — dues ACTUAL is cash payments only |
+
+**It ties to the cent on the UAT fixture, which is the proof.** Family-paid spending the Statement
+counts: **$1,179.98** (four expenses carrying `paid_by_player_id`) + **$200.00** (one PAYMENT-level
+flag — the money-centralization P4 case where a parent fronted part of a $600 team bill and the team
+paid the other $400) = **$1,379.98**. Reimbursement credits issued: **$1,379.98**. Every dollar on
+one side has a match on the other.
+
+⚠ **THE CASH READING IS CORRECT AND MUST NOT BE "FIXED".** No team money moved; the register marks
+these `movesCash: false`. This is the Statement / Season-spending reading only.
+
+⚠⚠ **AND IT POINTS THE OPPOSITE WAY FROM D4's NETTING.** If the cost counts as spending, the credit
+that settled the dues obligation should count as dues coming **IN**. Step 2 proposes to subtract the
+same money from the dues **PLAN**. Those are opposite moves on opposite columns and only one can be
+right — so **$1,379.98 of step 2's $2,349.63 cannot be netted until this is ruled on.**
+
+**Not yet read off the rendered page.** That step is owed before anything is built on it. Everything
+above comes from the records plus the code's stated rules.
+
+**If the owner rules to fix it, this spins into its own plan** — it is a report-correctness change
+with no dues-by-family content, and burying it inside a feature is how a $1,379.98 figure moves with
+nobody able to point at the change that moved it.
+
+### D9 — the reconciling line splits BY KIND, and the figures go GROSS *(2026-09-07, from a second review)*
+
+The first mockup carried one reconciling line captioned *"arrived in Fundraising"*. **That is wrong
+for $1,446.98 of the $2,349.63** — reimbursements arrived in **Expenses**, and the $67 contribution
+arrived nowhere at all. The money is three kinds, already sitting in three different places:
+
+| Kind | Amount | Where it already is |
+|---|---|---|
+| Fundraising rebates | $1,202.65 | On the report, in **Fundraising** |
+| Costs families paid | $1,379.98 | On the report, in **Expenses** (D8) |
+| A contribution | $67.00 | **Nowhere on the report** |
+| Handed back | −$600.00 | Stops reducing what a family owes |
+
+⚠⚠ **THE PAYOUT ALLOCATION IS ARBITRARY, AND EVERY NETTED FIGURE INHERITS IT.** Which credit a
+refund lands on is decided by **date order, oldest first, and nothing else**. Blake's $100 came off
+their fundraising; Casey's $300 came off an overpayment and so touches no external credit at all —
+which is why fundraising still standing is **$902.65**, not $1,202.65. This is the strongest single
+argument for leaving the Player dues row gross: the moment a figure is netted it rests on an
+allocation nothing in the product means.
+
+**Match the ladder's buckets, not a third vocabulary.** Player Dues now reads
+**Dues · Fundraising · Other credits · Paid · Handed back** (shipped `3545b64e`). A report fold that
+splits four ways while the screen splits two is the same drift D6 just closed, wearing a politer
+face. If the finer split is wanted, it belongs on **both** surfaces.
+
+### D10 — "net the funding, keep reimbursements whole" is RULED OUT *(2026-09-07)*
+
+It looked like the safe middle and it fails on the row this project started with: **$700.00 of Kai's
+coverage is a family-paid cost**, so under this rule Kai would plan for **$770.83**, not $70.83. It
+also still moves Season net, by roughly $900, for the half of the problem hardest to defend. Do not
+re-propose it.
+
 ## 7. Build order
 
 1. ✅ **DONE — split the family's own money out of "Credits" on the Dues tab (D6).** Walked 28/28, zero defects, 2026-09-07 (ledger §148). The two
    screens must agree on what a family sent before either starts showing it per family.
-2. **Net external credits into the dues row on the report — on its own, shipped as its own change.**
-   Total revenue moves by $2,349.63; that must be visible as one thing rather than buried inside a
-   new feature. Replace the 2026-09-04 "budgeted dues = the instalments" note in the same commit.
+2. ❌ **REMOVED — netting external credits off the planned dues figure is NOT being built.**
+   ⚠⚠ **D8's rulings delete this step rather than change it.** It existed so each family's row would
+   read honestly; under R1–R4 in `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` the rows read honestly
+   from the **actual** side with the budget untouched — so there is nothing to net, no reconciling
+   line, no Season-net movement, and none of the arbitrary payout allocation netting would have
+   inherited. The 2026-09-04 "budgeted dues = the instalments" note **stands**; it was only ever at
+   risk from this step. ⚠ **Do not re-propose netting the dues row.** It moves Total revenue to
+   $10,908.67 and Season net from ($341.70) to ($2,691.33) for reasons that did not happen in the
+   real world, and it double-counts the $1,379.98 of family-paid costs that D8 rules the other way.
+   Decision mockup: https://claude.ai/code/artifact/0f08e331-7dda-456a-9836-c608f8a72eae
 3. Statement + By activity fold.
 4. Months fold.
 5. Budget tab `Player installments` fold (plan only).

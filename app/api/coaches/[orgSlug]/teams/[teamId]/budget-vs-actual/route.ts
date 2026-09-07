@@ -30,9 +30,12 @@ import {
 import {
   buildDuesCategory, duesRowRenders, type DuesRevenue,
 } from '@/lib/coach-dues-revenue';
+import {
+  seasonDuesParts, buildFamilyDuesInputs, type DuesCreditKind,
+} from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip } from '@/lib/coach-cash-strip';
-import { placeDerivedActual } from '@/lib/coach-money-derived';
+import { placeDerivedActual, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 
@@ -523,24 +526,57 @@ export const GET = withObservability(async (req: Request,
      ⚠ SPLIT BY SOURCE. Drives and sponsors are two totals against two sets of lines; placing one
      with the other's category would look precise and be wrong. */
   const derivedSpend: RollupSpend[] = [];
-  if (fundingLines.length > 0) {
+  {
     for (const source of ['fundraiser', 'sponsor'] as const) {
-      const total = realisedEntries
-        .filter(e => e.kind === source)
-        .reduce((s, e) => s + (e.amountRaised - e.rebateAmount), 0);
+      const mine = realisedEntries.filter(e => e.kind === source);
+      const total = mine.reduce((s, e) => s + (e.amountRaised - e.rebateAmount), 0);
       if (Math.abs(total) < 0.005) continue;
       const at = placeDerivedActual(derivedClaims.filter(c => c.source === source));
-      derivedSpend.push({
-        id: `derived-${source}`,
-        // Named so the drill-in says where the figure came from — a coach who cannot find the
-        // record behind a number has to be told there isn't one to find.
-        description: source === 'fundraiser' ? 'From your fundraisers' : 'From your sponsors',
-        categoryId: at.categoryId, categoryName: at.categoryName,
-        itemId: at.itemId, itemName: at.itemName,
-        amount: Math.round(total * 100) / 100,
-        paidDate: null,
-        direction: 'in' as const,
-      });
+
+      /* ⚠⚠ NAMED WHEN NOTHING IN THE PLAN CLAIMS IT (owner ruling 2026-09-07). With no claiming
+         line `placeDerivedActual` honestly refuses to guess a category — but the rollup's fallbacks
+         then rendered the season's second-largest revenue line as "No category → Not itemized".
+         Those labels are right for a COST with no item (it still opens into real records); here they
+         describe money the report knows the source of perfectly well. So the pool names itself
+         instead of falling into a bucket meant for something else.
+         ⚠ THE PLACEMENT RULE IS UNTOUCHED — this only supplies WORDS where it returned none. */
+      const unplanned = at.categoryId === null && at.itemId === null;
+      const categoryName = unplanned ? UNPLANNED_DERIVED_CATEGORY : at.categoryName;
+      const itemName = unplanned ? unplannedDerivedItemName(source) : at.itemName;
+
+      /* ⚠⚠ ONE ROW PER DRIVE OR SPONSOR, NOT ONE POOLED ROW (owner ruling 2026-09-07). This pushed a
+         single spend described "From your fundraisers", so opening the figure showed the same number
+         with a vague phrase — the code's own words: *"a derived pool is a name with no record behind
+         it at all."* True of the POOL, never true of the money: each drive and sponsor is a record
+         with its own room. Every expense figure on this report opens into named records and the
+         revenue side did not, which is the asymmetry the owner found.
+         ⚠ THE TOTAL AND THE PLACEMENT ARE IDENTICAL — these rows carry the same category+item and
+         sum to the same figure. Only what a coach finds behind it changes. */
+      const byParent = new Map<string, { name: string; kept: number; raised: number; toFamilies: number }>();
+      for (const e of mine) {
+        const row = byParent.get(e.fundraiserId)
+          ?? { name: e.fundraiserName, kept: 0, raised: 0, toFamilies: 0 };
+        row.kept += e.amountRaised - e.rebateAmount;
+        row.raised += e.amountRaised;
+        row.toFamilies += e.rebateAmount;
+        byParent.set(e.fundraiserId, row);
+      }
+      for (const [id, row] of byParent) {
+        if (Math.abs(row.kept) < 0.005) continue;
+        derivedSpend.push({
+          id: `derived-${source}-${id}`,
+          /* The drive or sponsor's own name, and what it kept out of what it took — the figure a
+             coach reconciles against the Fundraising tab's own "Team keeps". */
+          description: row.toFamilies > 0.005
+            ? `${row.name} — ${fmtMoney(row.kept)} of ${fmtMoney(row.raised)}, ${fmtMoney(row.toFamilies)} to families`
+            : row.name,
+          categoryId: at.categoryId, categoryName,
+          itemId: at.itemId, itemName,
+          amount: Math.round(row.kept * 100) / 100,
+          paidDate: null,
+          direction: 'in' as const,
+        });
+      }
     }
   }
 
@@ -1338,6 +1374,37 @@ export const GET = withObservability(async (req: Request,
      say it. `computeBudgetTotals` floors at zero — correct for "what must dues cover", wrong as an
      input to the identity the sentence claims. See `duesSentenceRenders`. */
   const planNeedsRaw = Math.round((budgetTotals.totalPlanned - budgetTotals.expectedFunding) * 100) / 100;
+
+  /* ⚠⚠ WHAT FAMILIES CONTRIBUTED, NOT WHAT THEY SENT IN CASH (owner rulings R2–R4, 2026-09-07).
+     The Statement's dues actual was the cash strip's dues arrivals, which made the report count a
+     family-paid cost as SPENDING while counting the credit that settled their dues as revenue
+     NOWHERE. Measured on the UAT fixture: $1,379.98 of family-paid spending against $1,379.98 of
+     reimbursement credits — every dollar on one side matched on the other, and the report counting
+     one side.
+
+     ⚠ THE CASH FEED IS UNTOUCHED AND MUST STAY THAT WAY. `revenueActuals` still builds the Months
+     dues band, which is CASH — gross both directions, team-cash only — and it is already right.
+     The two views now differ on dues ACTUAL by design, exactly as they already differ on expenses;
+     the two-truths note under the Months view says so. Only the Statement reads this.
+
+     ⚠ AND THE BUDGET IS UNTOUCHED (R1). `billed` below is still the instalments. */
+  const duesContributed = seasonDuesParts([...buildFamilyDuesInputs({
+    schedules: ((schedules ?? []) as Array<{ player_id: string; total_amount: number | null }>)
+      .map(s => ({ playerId: s.player_id, total: Number(s.total_amount ?? 0) })),
+    payments: duesPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    payouts: duesPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
+    /* Oldest first — `getRepDuesCreditsByProgramYear` orders by credit date then creation, which is
+       the order the payout allocation assumes. See `allocatePayoutsOldestFirst`. */
+    credits: duesCredits.map(c => ({
+      playerId: c.playerId,
+      kind: c.creditType as DuesCreditKind,
+      amount: c.amount,
+      /* ⚠ TRACED = a record made this credit. A coach can type one that CLAIMS money without any
+         money existing (R6/R7), and an assertion may not become revenue. */
+      traced: c.fundraiserEntryId !== null || c.expenseId !== null,
+    })),
+  }).values()]);
+
   const dues: DuesRevenue = {
     /* ⚠ NULL, NEVER ZERO. "No schedule has been set up" and "a schedule of nothing" are different
        facts and a coach acts on them differently — the row shows an em-dash and a door for the
@@ -1355,7 +1422,16 @@ export const GET = withObservability(async (req: Request,
     billedToDate: duesInstallments.length > 0
       ? duesGroupTotal(revenueBudgets.filter(e => e.date !== null && e.date <= tournamentToday()))
       : null,
-    actual: duesGroupTotal(revenueActuals),
+    /* Built above, so the figure and the three lines behind it come from one pass. */
+    actual: duesContributed.actual,
+    /* ⚠ THE THREE LINES BEHIND THE FIGURE, summed in the SAME pass that produced it — the panel a
+       coach opens must add up to the number that opened it, and totalling each part separately is
+       how a door stops doing that. */
+    actualParts: {
+      cashKept: duesContributed.cashKept,
+      familyPaidCosts: duesContributed.familyPaidCosts,
+      fundraisingCredited: duesContributed.fundraisingCredited,
+    },
     planNeeds: budgetTotals.fundedByPlayers,
     planNeedsFloored: planNeedsRaw < -0.005,
     familyCount: new Set(duesInstallments

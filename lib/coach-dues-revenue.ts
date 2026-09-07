@@ -89,8 +89,29 @@ export interface DuesRevenue {
    * schedule exists at all.
    */
   billedToDate: number | null;
-  /** Dues money that has arrived — the Months band's own dues actual. */
+  /**
+   * What families have CONTRIBUTED to their dues (owner rulings R2–R4, 2026-09-07).
+   *
+   * ⚠⚠ NO LONGER THE MONTHS BAND'S DUES ACTUAL, AND THE DIVERGENCE IS THE POINT. This was the cash
+   * strip's dues arrivals, which made the Statement count a family-paid cost as SPENDING while
+   * counting the credit that settled their dues as revenue NOWHERE — $1,379.98 on the UAT fixture,
+   * tying to the cent against the reimbursement credits issued. Cash is untouched and still right:
+   * it answers what arrived in the account, which is a different and equally true number. The
+   * two-truths note under the Months view now says so on both halves.
+   */
   actual: number;
+  /**
+   * The three things `actual` is made of, for the panel behind the figure.
+   *
+   * ⚠ THEY SUM TO `actual`, AND A COACH CAN SEE THAT THEY DO. Money handed back is in none of them
+   * — it is not a fourth line to subtract, it is simply absent, which is what lets three lines
+   * reach the total instead of four lines nearly reaching it. See `lib/coach-dues-actual.ts`.
+   */
+  actualParts: {
+    cashKept: number;
+    familyPaidCosts: number;
+    fundraisingCredited: number;
+  };
   /**
    * What the plan needs from families: the effective plan less expected funding, **floored at
    * zero** — the shared derivation (`computeBudgetTotals().fundedByPlayers`) the Budget plan page

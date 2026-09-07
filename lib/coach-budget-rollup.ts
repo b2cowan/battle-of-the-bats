@@ -380,12 +380,19 @@ export function rollupMoneyReport({ lines, spend, refunds = [] }: MoneyReportInp
     if (!entry) {
       entry = {
         itemId,
-        itemName: itemId ? ((itemName ?? '').trim() || NO_ITEM_LABEL) : NO_ITEM_LABEL,
+        /* ⚠ A ROW WITH NO ITEM MAY STILL KNOW WHAT IT IS (owner ruling 2026-09-07). "Not itemized"
+           is right for a COST filed under no item — the name is a prompt to go and plan one, and the
+           figure still opens into real records. It was wrong for the derived revenue pool, which has
+           no budget item by construction and yet knows perfectly well that it is sponsor money: the
+           season's second-largest revenue line read "Not itemized" while the panel behind it already
+           said "From your sponsors". A supplied name now wins; `null` still falls back, so every
+           cost behaves exactly as before. */
+        itemName: (itemName ?? '').trim() || NO_ITEM_LABEL,
         lines: [], costs: [], refunds: [],
       };
       side.set(key, entry);
     }
-    if (entry.itemId && itemName && entry.itemName === NO_ITEM_LABEL) entry.itemName = itemName.trim();
+    if (itemName && entry.itemName === NO_ITEM_LABEL) entry.itemName = itemName.trim();
     return entry;
   };
 

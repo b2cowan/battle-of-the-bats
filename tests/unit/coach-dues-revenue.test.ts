@@ -35,7 +35,12 @@ function dues(over: Partial<DuesRevenue> = {}): DuesRevenue {
   return {
     billed: 11308.30,
     billedToDate: 0,
-    actual: 3075,
+    /* ⚠ WHAT FAMILIES CONTRIBUTED, not the cash that arrived (owner rulings R2–R4, 2026-09-07) —
+       $2,775.00 of cash they sent and kept, $1,379.98 of team bills they paid themselves, $852.65
+       of fundraising credited against their dues. The cash figure ($3,075.00) is still what the
+       Months band shows; these two are meant to differ now. */
+    actual: 5007.63,
+    actualParts: { cashKept: 2775, familyPaidCosts: 1379.98, fundraisingCredited: 852.65 },
     planNeeds: 11650,
     planNeedsFloored: false,
     familyCount: 12,
@@ -182,9 +187,10 @@ describe('the synthetic category the report is handed', () => {
     const cat = buildDuesCategory(dues());
     assert.equal(cat.direction, 'in');
     assert.equal(cat.budgeted, 11308.30);
-    assert.equal(cat.actual, 3075);
+    // ⚠ WHAT FAMILIES CONTRIBUTED, not the $3,075.00 of cash — see the fixture's own note.
+    assert.equal(cat.actual, 5007.63);
     // actual − budgeted: raising LESS than planned must read as the unfavourable number.
-    assert.equal(cat.variance, -8233.30);
+    assert.equal(cat.variance, -6300.67);
   });
 
   it('carries NO items, so the export prints one row rather than the same figures twice', () => {

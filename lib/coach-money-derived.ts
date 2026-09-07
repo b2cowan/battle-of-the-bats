@@ -69,6 +69,26 @@ export function taxonomyKey(categoryId: string | null, itemId: string | null): s
  * would place a fundraising figure using a sponsorship line's category — the answer would look
  * precise and be wrong.
  */
+/**
+ * What a derived pool calls itself when NOTHING IN THE PLAN CLAIMS IT (owner ruling 2026-09-07).
+ *
+ * ⚠⚠ THE ROLLUP'S FALLBACKS WERE WRITTEN FOR A DIFFERENT FACT. A cost with no item reads "No
+ * category → Not itemized", and that is right: it still opens into real records, and the blank name
+ * is a prompt to go and plan one. Applied to a derived pool it said nothing twice — the season's
+ * second-largest revenue line on the UAT fixture read "No category · Not itemized · $2,085.75" while
+ * the panel behind it already knew to call the money "From your sponsors". **The row did not use the
+ * name its own door knew.**
+ *
+ * ⚠ THIS SUPPLIES WORDS, IT DOES NOT MOVE MONEY. `placeDerivedActual` still refuses to guess a
+ * category — that refusal is the visible gap a coach closes by planning a line, and it stays.
+ */
+export const UNPLANNED_DERIVED_CATEGORY = 'Not in the plan';
+
+/** The item name for an unclaimed pool — what the money IS, in the words the panel already used. */
+export function unplannedDerivedItemName(source: DerivedSource): string {
+  return source === 'sponsor' ? 'Sponsor money' : 'Fundraising money';
+}
+
 export function placeDerivedActual(claims: DerivedClaim[]): Omit<DerivedClaim, 'source'> {
   const none = { categoryId: null, categoryName: null, itemId: null, itemName: null };
   if (claims.length === 0) return none;

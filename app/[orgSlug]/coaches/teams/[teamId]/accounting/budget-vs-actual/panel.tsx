@@ -1407,11 +1407,68 @@ function SubtotalRow({
  * not set a schedule is "not set yet", and every team is in that state on day one. The download
  * already writes a blank rather than a 0 for the same reason.
  */
+/**
+ * What the dues ACTUAL is made of (owner rulings R2–R4, 2026-09-07).
+ *
+ * ⚠⚠ ITS THREE LINES ADD UP TO THE FIGURE THAT OPENED IT, and that is the whole reason it exists.
+ * A coach who knows what arrived in cash now reads a larger number on the Statement — because a team
+ * bill a family paid themselves, and fundraising credited against their dues, are both money that
+ * family put toward what they owed. A door whose lines did not reach the number would be worse than
+ * no door; the sum is asserted on every case in `tests/unit/coach-dues-actual.test.ts`.
+ *
+ * ⚠ MONEY HANDED BACK IS IN NONE OF THEM, on purpose. It is not a fourth line to subtract — a credit
+ * that has been repaid is simply not money anyone put toward this family's dues any more. That is
+ * what lets three lines reach the total instead of four lines nearly reaching it, and it is why the
+ * cash line reads what families sent AND KEPT.
+ *
+ * ⚠ IT IS A `QuestionShell`, like every other figure's panel — see `RecordsBehind`'s header for the
+ * accessibility floor a hand-rolled overlay does not stand on.
+ */
+function DuesBehind({ dues, onClose }: { dues: DuesRevenue; onClose: () => void }) {
+  const p = dues.actualParts;
+  const rows: Array<{ label: string; sub: string; amount: number }> = [
+    { label: 'Cash families sent', sub: 'and have not had back', amount: p.cashKept },
+    { label: 'Team bills families paid', sub: 'paid to the vendor directly', amount: p.familyPaidCosts },
+    { label: 'Fundraising credited to dues', sub: 'money the team raised, put against a bill', amount: p.fundraisingCredited },
+  ].filter(r => Math.abs(r.amount) > 0.005);
+  return (
+    <QuestionShell open onClose={onClose} ariaLabel="What families contributed" title="What families contributed" scroll>
+      <>
+        <p className={styles.linesBehindSub}><strong>{fmt(dues.actual)}</strong> contributed</p>
+        <ul className={styles.linesBehindList}>
+          {rows.map(r => (
+            <li key={r.label}>
+              <span className={styles.linesBehindRow}>
+                <span className={styles.linesBehindWho}>
+                  {r.label}
+                  <span className={styles.linesBehindNote}>{r.sub}</span>
+                </span>
+                <span className={styles.linesBehindAmt}>{fmt(r.amount)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className={styles.linesBehindFoot}>
+          Money you have handed back to a family is in none of these — see <strong>Cash</strong> for
+          what your account did.
+        </p>
+      </>
+    </QuestionShell>
+  );
+}
+
 function DuesRow({ cat, dues, base, canWrite }: {
   cat: CategoryResult; dues: DuesRevenue; base: string; canWrite: boolean;
 }) {
   const isSet = dues.billed !== null;
   const duesHref = moneySectionHref(base, 'dues');
+  const [behindOpen, setBehindOpen] = useState(false);
+  /* ⚠ ONLY WHEN THERE IS SOMETHING TO EXPLAIN. On a season where every dollar arrived as cash the
+     figure needs no caption and the door has one line — both would be noise. The predicate is the
+     two non-cash parts, never `actual > 0`. */
+  const hasNonCash =
+    Math.abs(dues.actualParts.familyPaidCosts) > 0.005
+    || Math.abs(dues.actualParts.fundraisingCredited) > 0.005;
   return (
     /* ⚠ AN ORDINARY CATEGORY ROW SINCE 2026-09-05. It had a card of its own in the outline, which
        made the row holding one figure the tallest object in the revenue band. It takes the
@@ -1451,11 +1508,45 @@ function DuesRow({ cat, dues, base, canWrite }: {
             )}
           </span>
         )}
+        {/* ⚠⚠ THIS CAPTION PARTLY REVERSES THE §146 RULING THAT THE SET ROW SAYS NOTHING, and it is
+            deliberate rather than forgotten. That ruling killed a caption reading "N families · set
+            on Player Dues" — the owner's objection was that a family COUNT is not a money fact and
+            that naming the screen told a coach something they had just done. Both true of THAT
+            sentence. What is said here is a money fact, about a figure that has just stopped meaning
+            what a coach expects: the actual now counts a team bill a family paid and fundraising put
+            against their dues, so it reads higher than the cash they know arrived.
+            ⚠ IT QUOTES NO FIGURE, so it can never go stale against one — the same discipline as the
+            "sent $550.00 more than billed" note on the dues screen. The amounts are one tap away in
+            `DuesBehind`, where they add up. */}
+        {isSet && hasNonCash && (
+          <span className={styles.duesCaption}>
+            Includes team bills families paid and fundraising credited to dues, less money handed back.
+          </span>
+        )}
       </th>
       <td className={isSet ? '' : shared.moneyGridNumMuted}>
         {isSet ? fmt(cat.budgeted) : '—'}
       </td>
-      <td>{Math.abs(cat.actual) > 0.005 ? fmtCell(cat.actual) : '—'}</td>
+      <td>
+        {/* ⚠ THE ONE FIGURE ON THIS ROW WITH RECORDS BEHIND IT. The row carries no items by design
+            (see `buildDuesCategory`), which is why it renders itself — but the ACTUAL now has three
+            things behind it that a coach cannot otherwise reach, so it opens like every other figure
+            on the report. The BUDGETED side still has nothing to open: it is the instalment
+            schedule, which is a door on Player Dues rather than a list here. */}
+        {Math.abs(cat.actual) > 0.005 ? (
+          hasNonCash ? (
+            <button
+              type="button"
+              className={styles.figureBtn}
+              onClick={e => { e.stopPropagation(); setBehindOpen(true); }}
+              title="See what families contributed"
+            >
+              {fmtCell(cat.actual)}
+            </button>
+          ) : fmtCell(cat.actual)
+        ) : '—'}
+        {behindOpen && <DuesBehind dues={dues} onClose={() => setBehindOpen(false)} />}
+      </td>
       {/* ⚠ NO VARIANCE WITHOUT A PLAN TO VARY FROM. With no schedule there is no budgeted figure,
           so "−$0.00" would be arithmetic on an absence. */}
       <td style={{ color: isSet ? varianceColor(cat.variance) : undefined }}>

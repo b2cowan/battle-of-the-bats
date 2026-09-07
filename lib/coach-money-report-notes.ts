@@ -294,13 +294,27 @@ export function monthGridNotes(input: MonthGridNoteInput): ReportNote[] {
      cause that no longer exists is worse than no note, because a treasurer reconciling by hand
      will look for an adjustment that isn't there. Two causes now, and the band is named as the
      third thing the reader can see rather than as an adjustment. */
+  /* ⚠⚠ AND SINCE 2026-09-07 THE TWO VIEWS DIFFER ON REVENUE TOO (owner rulings R2–R4). The
+     Statement counts what a family CONTRIBUTED — cash they sent, plus a team bill they paid
+     themselves, plus fundraising credited against their dues — because the cost of that bill is
+     already counted as the season's spending and counting one side without the other reported the
+     season as worse off every time a parent helped. Cash counts what arrived in the account, which
+     is a different and equally true number.
+     ⚠ THE SENTENCE HAD TO GROW WITH THE CHANGE OR BECOME THE DEFECT ABOVE. It named the expense
+     gap only; after R2–R4 a coach can see a dues gap it does not mention, and a footnote that
+     explains half of what is on screen sends a treasurer looking for an adjustment that is not
+     there — which is exactly how the 2026-09-02 failure happened. */
   if (lens === 'actual') {
     out.push(note('two-truths', [
-      { text: 'Total expenses here can differ from the ' },
+      { text: 'These totals can differ from the ' },
       { text: 'Statement', bold: true },
       { text: '’s and ' },
       { text: 'Season spending', bold: true },
-      { text: '’s: this view leaves out costs a family paid a vendor directly, and shows money back as revenue instead of subtracting it from the cost it repaid. Money you return to families is in its own band — counted in your balance, never in Total expenses.' },
+      { text: '’s, and both are right. On ' },
+      { text: 'expenses', bold: true },
+      { text: ', this view leaves out costs a family paid a vendor directly, and shows money back as revenue instead of subtracting it from the cost it repaid. Money you return to families is in its own band — counted in your balance, never in Total expenses. On ' },
+      { text: 'player dues', bold: true },
+      { text: ', this view counts the cash families sent; the Statement counts what they contributed, which also includes a team bill a family paid themselves and fundraising credited against their dues.' },
     ]));
   }
 
