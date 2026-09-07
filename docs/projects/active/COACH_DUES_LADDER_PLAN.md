@@ -1,6 +1,6 @@
 # Coach Money — The Dues Ladder
 
-**Status:** approved from mockup, in build (2026-09-07)
+**Status:** committed `3545b64e` 2026-09-07 (after /review, §7.8) — owner QA owed
 **Owner-approved mockup (round 4):** https://claude.ai/code/artifact/5df27ea9-8210-45de-a569-26c6c74894dc
 **PM brief:** `COACH_DUES_LADDER_PM_BRIEF.md`
 **Came out of:** the §148 walk. The owner asked why Avery's *After fundraising* read $700.00 when

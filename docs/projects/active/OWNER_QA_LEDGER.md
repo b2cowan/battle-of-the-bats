@@ -18960,7 +18960,7 @@ To be run against a team with a real taxonomy. The parts that matter most:
 - **Part E** is the regression that costs the most if it broke: a template downloaded **before**
   today must still import.
 
-## §148 · A family's own money leaves the Credits column — Player Dues says what a family actually sent — ✅ PASSED 2026-09-07, 28/28, zero defects · two rulings taken (help + demo at the END of the dues project · one `/review` at the end, and it must be told where to look) · body committed `1d9b627b` 2026-09-06; the two in-walk fixes stay in the working copy by owner instruction · walk artifact `027b0322`
+## §148 · A family's own money leaves the Credits column — Player Dues says what a family actually sent — ✅ PASSED 2026-09-07, 28/28, zero defects · two rulings taken (help + demo at the END of the dues project · one `/review` at the end, and it must be told where to look) · body committed `1d9b627b` 2026-09-06; the two in-walk fixes committed `3545b64e` 2026-09-07 with the dues ladder · walk artifact `027b0322`
 
 **Plan:** `docs/projects/active/COACH_DUES_BY_PLAYER_PLAN.md` §6 (D6) · **Mockup, owner-approved
 round 3:** https://claude.ai/code/artifact/73f68f92-603f-47eb-8c1d-d12dc5bd1496
@@ -19277,3 +19277,9 @@ public Standings and Pricing · I the dark skin · J A-08.
 - [ ] **J · Platform admin → Email** — the "Founding Season Orgs" tile tooltip says `free through September 30, 2027`. (The ten campaign templates still say January — Phase 1; do not send `founding_renewal` / `founding_final` this autumn.)
 
 **Post-window rehearsal (dev only, optional):** set `NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE` to a past instant, restart, and confirm every element in A–E is gone, the persona pages read list price, the pricing FAQ shows `Can I still get the Founding Season offer?`, the chooser's coach card opens the Basic team again with a `FREE` pill, and a new organization gets NO comp row. Unset it afterwards.
+
+**Both walk findings above, and the dues ladder they led to, committed `3545b64e` 2026-09-07** after
+a four-lens `/review` (plan `COACH_DUES_LADDER_PLAN.md` §7.8: one Critical, two High and one Medium
+fixed before the commit; the pre-commit PDF gate then refused the eight-column sheet in portrait
+until landscape became the sheet's own shape). The ladder's own owner QA is owed — a fresh § when
+walked.
