@@ -70,33 +70,16 @@ export function normalizeBudgetLineKind(raw: string | null | undefined): BudgetL
   return raw === 'funding' || raw === 'sponsorship' || raw === 'other_income' ? raw : 'cost';
 }
 
-/** Coach-facing names. `funding` is deliberately "expected FUNDRAISING", never "income" and no
- *  longer "funding" (owner ruling 2026-08-13: player dues are also funding, so the generic word
- *  made the section read as if dues belonged in it). It USED to cover sponsors and grants too —
- *  which is exactly why `sponsorship` was split out on 2026-08-15: a plan that folded them
- *  together could not answer "did our sponsorship hit the number?", because sponsorship money was
- *  in every budget invisibly. Both stay "expected": nothing has arrived, and Budget vs. Actual is
- *  where expectation meets what was really raised. */
-/* ⚠ `cost` READS "Expense", NOT "A cost" (owner ruling 2026-08-16, Money form P2). One word, one
-   meaning: the money form's pill and the Budget Plan's line kind were naming the same thing two
-   different ways, so a coach met "A cost" on the plan and "Expense" on the record of the very same
-   spending. The SECTION heading below stays "Costs" — that names a group of lines, not the choice,
-   and it reads on four surfaces the rename was not asked to touch. */
-export const LINE_KIND_LABEL: Record<BudgetLineKind, string> = {
-  cost:         'Expense',
-  funding:      'Expected fundraising',
-  sponsorship:  'Expected sponsorship',
-  // "Other income", not just "income" — the same reasoning as the funding rename above: dues are
-  // also income, and a bare "income" would read as the place they belong (mig 274, owner Q5).
-  other_income: 'Expected other income',
-};
+/* ⚰ `LINE_KIND_LABEL` AND `LINE_KIND_HINT` ARE DELETED (mig 280, plan §3.4).
+   They were the four answers to "This line is…" — Expense / Expected fundraising / Expected
+   sponsorship / Expected other income — and the one-line hint under each. That question is gone:
+   the form asks which way the money goes and the ITEM decides the rest, so nothing renders a
+   per-kind label a coach CHOOSES any more.
 
-export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
-  cost:         'Money the team spends',
-  funding:      'Money the team raises',
-  sponsorship:  'A sponsor or grant, given directly',
-  other_income: 'Interest, a rebate, a plain donation',
-};
+   ⚠ THE WORDS THEMSELVES SURVIVE, IN `LINE_KIND_SECTION` BELOW. They are still what the plan list,
+   the summary ladder, the period grid, Budget vs. Actual and the exports CALL those shelves — they
+   simply stopped being something a coach picks. Do not reinstate a second copy here: four hardcoded
+   spellings of "Expected fundraising" is exactly what the section record exists to prevent. */
 
 /**
  * Where a line's ACTUAL comes from (mig 243).
@@ -110,7 +93,7 @@ export const LINE_KIND_HINT: Record<BudgetLineKind, string> = {
  * report their own realised figures and player rebates are computed from them, so a typed record
  * on the same row would count the same dollar twice. See lib/coach-money-derived.ts.
  */
-export const LINE_KIND_ACTUAL_SOURCE: Record<BudgetLineKind, 'typed' | 'fundraiser' | 'sponsor'> = {
+export const LINE_KIND_ACTUAL_SOURCE: Record<BudgetLineKind, BudgetItemActualSource> = {
   cost:         'typed',
   funding:      'fundraiser',
   sponsorship:  'sponsor',
@@ -118,6 +101,73 @@ export const LINE_KIND_ACTUAL_SOURCE: Record<BudgetLineKind, 'typed' | 'fundrais
   // like a cost's actuals (mig 274). The one money-in kind on the typed path.
   other_income: 'typed',
 };
+
+/**
+ * WHERE A BUDGET ITEM'S ACTUAL COMES FROM — the same three answers, declared on the WORD (mig 280).
+ *
+ * ⚠ DECLARED HERE, NOT IN `lib/types.ts`, and the reason is an import edge: `types.ts` imports
+ * `BudgetLineKind` FROM this module, so a type this module needs cannot live over there without
+ * making a cycle. `BudgetItem.actualSource` takes it from here, exactly as `RepBudgetLine.lineKind`
+ * already does.
+ */
+export type BudgetItemActualSource = 'typed' | 'fundraiser' | 'sponsor';
+
+/**
+ * ⚠⚠ THE INVERSE OF `LINE_KIND_ACTUAL_SOURCE`, RESTRICTED TO THE MONEY-IN KINDS — and the two are
+ * pinned in step by the unit suite rather than by anybody remembering.
+ *
+ * This is what lets the add-a-line form ask ONE question (mig 280, plan §3.1). The coach says which
+ * way the money goes; the ITEM they pick says who reports its actual; the stored kind falls out of
+ * the two. The impossible pairing the old two-question form allowed — *Expected sponsorship* with
+ * *Tournaments → Concession revenue*, a row whose actual is sought in sponsor cheques that will
+ * never contain concession money — cannot be expressed any more, because there is nothing left for
+ * the second answer to contradict.
+ *
+ * ⚠ WRITTEN OUT RATHER THAN COMPUTED, deliberately. `Object.fromEntries(FUNDING_LINE_KINDS.map(…))`
+ * would build it in one line and SILENTLY DROP one of any two kinds that declared the same source —
+ * a fifth money-in kind on the typed path would take `other_income`'s place and every "you record
+ * it" line would quietly start storing the wrong kind. Named and exhaustive, a new source is a
+ * compile error and a colliding kind is a test failure.
+ */
+export const MONEY_IN_KIND_BY_ACTUAL_SOURCE: Record<BudgetItemActualSource, BudgetLineKind> = {
+  typed:      'other_income',
+  fundraiser: 'funding',
+  sponsor:    'sponsorship',
+};
+
+/**
+ * The kind a budget line gets, FROM THE WORD IT IS FILED AGAINST. THE one derivation: the form, the
+ * create door and the edit door all go through it, so no two of them can disagree about a row.
+ *
+ * ⚠ THE DIRECTION IS ASKED FIRST AND WINS. A money-out word is always a cost, whatever its source
+ * says — which makes the database's `direction = 'in' or actual_source = 'typed'` constraint a belt
+ * rather than a load-bearing part, and means no stale row can ever derive a money-in kind onto a
+ * spending line.
+ *
+ * ⚠ `direction` IS TYPED INLINE rather than as `BudgetItemDirection` for the import-edge reason
+ * above — the union is identical, and `types.ts` cannot be imported from here.
+ */
+export function budgetLineKindForItem(
+  item: { direction: 'in' | 'out'; actualSource: BudgetItemActualSource },
+): BudgetLineKind {
+  if (item.direction !== 'in') return 'cost';
+  const kind = MONEY_IN_KIND_BY_ACTUAL_SOURCE[item.actualSource];
+  /* ⚠⚠ IT THROWS RATHER THAN RETURNING `undefined`, and the difference is a family's dues
+     (`/review`, correctness lens, 2026-09-07). A source this map has never heard of — a fifth value
+     added to the database CHECK without a matching entry here — indexes to `undefined`, which
+     `JSON.stringify` DROPS from the write payload; Postgres then substitutes the column's own
+     default and the row is stored as a COST. Money coming in, filed as spending, silently, with
+     every family asked for that much more. A loud failure on a developer's own mistake is the
+     cheaper of the two. */
+  if (!kind) {
+    throw new Error(
+      `budgetLineKindForItem: no line kind is declared for actual_source "${item.actualSource}". `
+      + 'Add it to MONEY_IN_KIND_BY_ACTUAL_SOURCE — a money-in word with no kind would be stored '
+      + 'as a cost and inflate what every family is asked to pay.',
+    );
+  }
+  return kind;
+}
 
 /**
  * The money-in kinds whose actuals are DERIVED — the lines that CLOSE a row to typed income

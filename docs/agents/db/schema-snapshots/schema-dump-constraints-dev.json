@@ -3430,6 +3430,76 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_credit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "credit_id",
+    "foreign_table": "rep_dues_credits",
+    "foreign_column": "id",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_payout_id_credit_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "payout_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_payout_id_credit_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "credit_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_payout_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "payout_id",
+    "foreign_table": "rep_dues_payouts",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_dues_payout_credits",
+    "constraint_name": "rep_dues_payout_credits_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "rep_dues_payouts",
     "constraint_name": "rep_dues_payouts_accounting_entry_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3965,7 +4035,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3975,16 +4045,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "current_roster_id",
-    "foreign_table": "rep_roster_players",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
@@ -4003,7 +4063,7 @@
     "table_name": "rep_player_continuity_links",
     "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
+    "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
@@ -4016,6 +4076,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4095,7 +4165,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4105,17 +4175,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4126,6 +4186,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "team_id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4475,7 +4545,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -4485,7 +4555,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },

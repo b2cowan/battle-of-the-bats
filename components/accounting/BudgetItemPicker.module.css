@@ -166,6 +166,33 @@
   color: var(--warning);
 }
 
+/* ── The caller's own trailing note on a row (`rowTag`) ──────────────────────────────────────
+   ⚠ PLAIN TEXT, NOT A PILL, and that is the point. The tier chip beside it IS a pill, and two
+   pills on one row read as two of the same kind of fact when they are not — one says who owns the
+   word, the other is whatever the caller had to say about it. Shape carries the difference so
+   colour does not have to, which also keeps this off the three tier colours: a lime note sitting
+   beside a lime "Our own" chip would be a new ambiguity in the control that exists to remove one.
+   ⚠ TWO WEIGHTS, NAMED AFTER WEIGHT AND NOT AFTER MEANING. The stylesheet of a control the Budget
+   Plan, the Club tab and the Org Budget all render must not carry class names keyed to one
+   caller's domain values — the same reason `.optMetaOwing` is a TONE rather than a money state.
+   ⚠ It takes the `margin-left: auto` when it is present, and `.optTier` then gets a plain gap —
+   two auto margins in one flex row split the space between them and the trailing labels drift
+   apart mid-list (see the tier note below, which this mirrors). `.optOffside` keeps its own auto
+   margin for the rare row that has one and no note. */
+.optSource {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: var(--type-label);
+  color: var(--white-40, rgba(255,255,255,0.4));
+  white-space: nowrap;
+}
+.optSourceStrong {
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-weight: 600;
+}
+.optSource + .optOffside,
+.optSource + .optTier { margin-left: 0.4rem; }
+
 /* ── Where a word came from: Standard · Club · Our own ─────────────────────
    ⚠⚠ THIS CHIP IS WHAT PAYS FOR PUBLISHING STOPPING ITS DELETE. Two words with one name are
    legitimate now (a club's "Grant" beside a team's own), and the merge that used to remove the

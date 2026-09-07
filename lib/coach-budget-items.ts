@@ -28,6 +28,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import { normalizeSportId } from './sports';
 import type { BudgetItem, BudgetItemDirection } from './types';
+import type { BudgetItemActualSource } from './coach-budget-totals';
 
 /* ⚠⚠ THE TIER RULES MOVED TO `coach-budget-item-tiers.ts` (2026-08-17) AND ARE RE-EXPORTED HERE, so
    every existing server caller keeps one door. The split is not tidying: THIS module imports
@@ -300,6 +301,10 @@ export function mapBudgetItem(row: Record<string, unknown>): BudgetItem {
     isDefault:       row.is_default as boolean,
     isMisc:          row.is_misc as boolean,
     direction:       row.direction as BudgetItemDirection,
+    /* ⚠ NEVER DEFAULTED HERE (mig 280). The column is NOT NULL with a database default of 'typed',
+       so a row always carries one; coalescing in the mapper would hide a select that forgot to ask
+       for it behind a plausible answer, and the budget form derives a line's KIND from this. */
+    actualSource:    row.actual_source as BudgetItemActualSource,
     createdAt:       row.created_at as string,
   };
 }
@@ -333,12 +338,30 @@ export interface ResolvedBudgetItem {
   name: string;
   /** The category's name, for the free-text `category` column every legacy reader still uses. */
   categoryName: string | null;
+  /**
+   * ⚠ THE TWO HALVES A BUDGET LINE'S KIND IS DERIVED FROM (mig 280). Carried on the RESOLVED item
+   * rather than read back separately by each door, because the resolve is already the one place
+   * that authorises the word — and the kind must be worked out from the row the server fetched,
+   * never from anything the request said about it. See `budgetLineKindForItem`.
+   */
+  direction: BudgetItemDirection;
+  actualSource: BudgetItemActualSource;
 }
 
-export type BudgetItemResult =
-  /** `item: null` = none chosen. The caller keeps whatever category it was given. */
-  | { ok: true; item: ResolvedBudgetItem | null }
+/**
+ * What a resolver hands back: the authorised item, `null` for "none chosen" (the caller keeps
+ * whatever category it was given), or the coach-facing refusal.
+ *
+ * ⚠ ONE WRAPPER, TWO ALIASES — the same anti-drift reasoning `ResolvedOrgBudgetItem`'s `Pick` is
+ * under, one level out. Mig 280 widened the coach-side item shape and left the club side narrower,
+ * which spelled this union twice; a shared generic means a third door cannot invent a third spelling
+ * of "ok, item or nothing, else a sentence".
+ */
+export type ItemResolveResult<T> =
+  | { ok: true; item: T | null }
   | { ok: false; error: string };
+
+export type BudgetItemResult = ItemResolveResult<ResolvedBudgetItem>;
 
 /**
  * Resolve (and authorise) an incoming item id, for any door that writes one.
@@ -362,7 +385,7 @@ export async function resolveBudgetItem(
 
   const { data } = await supabaseAdmin
     .from('budget_items')
-    .select('id, category_id, org_id, team_id, sports, name, budget_categories(name, sports)')
+    .select('id, category_id, org_id, team_id, sports, name, direction, actual_source, budget_categories(name, sports)')
     .eq('id', itemId)
     .maybeSingle();
 
@@ -386,6 +409,8 @@ export async function resolveBudgetItem(
       categoryId: row.category_id as string,
       name: row.name as string,
       categoryName: ((row.budget_categories as { name?: string } | null)?.name) ?? null,
+      direction: row.direction as BudgetItemDirection,
+      actualSource: row.actual_source as BudgetItemActualSource,
     },
   };
 }
@@ -409,10 +434,18 @@ export async function resolveBudgetItem(
  * plan is not written from one team's vocabulary, and the club taxonomy endpoint does not filter by
  * sport either. Adding one here would refuse a word the club's own list had just offered.
  */
+/* ⚠ A NARROWER RESULT THAN THE COACH'S (mig 280). `resolveBudgetItem` now also carries the two
+   fields a TEAM budget line's kind is derived from; a CLUB line's kind is a question the club
+   answers for itself (mig 271), so this door has no use for them and does not read them. Stated as
+   a `Pick` of the same shape rather than a second interface, so the two cannot drift into being
+   different ideas of "a resolved item". */
+export type ResolvedOrgBudgetItem = Pick<ResolvedBudgetItem, 'id' | 'categoryId' | 'name' | 'categoryName'>;
+export type OrgBudgetItemResult = ItemResolveResult<ResolvedOrgBudgetItem>;
+
 export async function resolveOrgBudgetItem(
   itemId: unknown,
   orgId: string,
-): Promise<BudgetItemResult> {
+): Promise<OrgBudgetItemResult> {
   if (itemId === null || itemId === undefined || itemId === '') return { ok: true, item: null };
   if (typeof itemId !== 'string') {
     return { ok: false, error: 'itemId must be a budget item id, or null' };

@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-06 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-07 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-06
+# DB Schema Reference — 2026-09-07
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -151,6 +151,10 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, amount (numeric) NOT NULL, received_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
 - Indexes: idx_rep_dues_payments_year_player, rep_dues_payments_accounting_entry_id_idx, rep_dues_payments_org_id_idx, rep_dues_payments_player_id_idx, rep_dues_payments_team_id_idx
 
+### rep_dues_payout_credits
+id (uuid), payout_id (uuid) → rep_dues_payouts.id NOT NULL, credit_id (uuid) → rep_dues_credits.id NOT NULL, amount (numeric) NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, created_at
+- Indexes: idx_dues_payout_credits_credit, idx_dues_payout_credits_org_team, idx_dues_payout_credits_payout, rep_dues_payout_credits_payout_id_credit_id_key
+
 ### rep_dues_payouts
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, amount (numeric) NOT NULL, paid_date NOT NULL, method, note, accounting_entry_id (uuid) → accounting_entries.id, source, created_by (uuid), created_at
 - Indexes: idx_rep_dues_payouts_year_player, rep_dues_payouts_accounting_entry_id_idx, rep_dues_payouts_org_id_idx, rep_dues_payouts_player_id_idx, rep_dues_payouts_team_id_idx
@@ -180,7 +184,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.team_id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -200,7 +204,7 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: rep_player_dues_schedules_budget_line_id_idx, rep_player_dues_schedules_org_id_idx, rep_player_dues_schedules_player_id_idx, rep_player_dues_schedules_program_year_id_player_id_key, rep_player_dues_schedules_team_id_idx
 
 ### rep_player_measurables
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.team_id
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_entry_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_player_tryout_baselines
@@ -416,7 +420,7 @@ id (uuid), org_id (uuid) → organizations.id, name NOT NULL, scope, sort_order 
 - Indexes: budget_categories_org_idx, budget_categories_team_idx
 
 ### budget_items
-id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) → organizations.id, name NOT NULL, suggested_amount (numeric), sort_order (integer), is_default (boolean), is_misc (boolean), created_at, team_id (uuid) → rep_teams.id, sports, direction NOT NULL
+id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) → organizations.id, name NOT NULL, suggested_amount (numeric), sort_order (integer), is_default (boolean), is_misc (boolean), created_at, team_id (uuid) → rep_teams.id, sports, direction NOT NULL, actual_source
 - Indexes: budget_items_category_idx, budget_items_org_idx, budget_items_team_idx, budget_items_unique_default_name, budget_items_unique_scope_side_name
 
 ### org_budget_lines
@@ -724,11 +728,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **174 tables** across 10 modules.
+Total: **175 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 62 tables
+- Rep Teams: 63 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

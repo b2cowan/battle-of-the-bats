@@ -577,8 +577,9 @@ type CostTiming = 'paid' | 'payable';
  * examples line, the stated-fact sentence on an edit, the delete-confirm title and the save button
  * each spelled the same four-way fork out for themselves — so a fifth kind, or a reworded example,
  * meant finding all six and getting all six right. A `Record` keyed by the resolved tag makes a
- * missing case a compile error, which is the same lesson `LINE_KIND_LABEL` and friends already
- * encode one module over.
+ * missing case a compile error, which is the same lesson `LINE_KIND_SECTION` and
+ * `LINE_KIND_ACTUAL_SOURCE` already encode one module over. (It used to cite `LINE_KIND_LABEL`,
+ * which mig 280 deleted along with the question it answered — the lesson outlived the example.)
  *
  * ⚠ Keyed by the RESOLVED tag (payable split out of cost), because that is what the copy varies
  * by — `entryKind` alone cannot tell an expense from a payable.

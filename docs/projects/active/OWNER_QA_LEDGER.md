@@ -19340,3 +19340,124 @@ Add-a-credit placement the review flagged, and Dues vs Billed on the band.
 
 **Deferred by owner ruling (taken on the §148 walk):** in-app help and the coach demo's money
 narration wait for the end of the dues project.
+
+---
+
+## §152 · A budget line asks one question, not two — the item decides what the line is — BUILT 2026-09-07 on dev, migration 280 applied to dev, awaiting QA · walk artifact `a31b0e6c`
+
+**Plan + PM brief (archived on completion):** `docs/projects/archive/COACH_BUDGET_LINE_ONE_QUESTION_PLAN.md` + `_PM_BRIEF.md` ·
+**Owner-approved mockup:** https://claude.ai/code/artifact/3913e207-d697-402b-b6eb-0468d38fd3cb ·
+**Walk:** https://claude.ai/code/artifact/a31b0e6c-c822-43cd-a086-a8cbdd9f1677 · run-order **B11** on artifact `5ef0163e`
+
+**Where it came from.** The owner, reading the add-a-line form: *"when selecting a budget for
+sponsorship, why are we offering all of these other items? does selecting sponsorship and then
+selecting concession revenue make sense? … does the line item just need to be split into expense and
+revenue at the top and then based on what the user picks as the category item we bucket
+appropriately?"*
+
+**What was broken.** The form asked TWO questions — *This line is: Expense / Expected fundraising /
+Expected sponsorship / Expected other income*, then *Category & Item* — and the picker filters by
+DIRECTION, never by the kind just chosen. So *Expected sponsorship* + *Tournaments → Concession
+revenue* was offerable. That is a trap rather than untidiness: the kind decides where the row's
+ACTUAL comes from, a sponsorship line takes its actual from sponsor arrivals and REFUSES a typed
+income record, so the coach owned a budget line they could never record their takings against, with
+nothing on screen saying why. **And the second question had never carried information** — measured
+across every money-in line on dev AND prod, all of them already used the obvious pairing.
+
+**What shipped.** ONE question — *Money the team spends* / *Money coming in* — and the WORD carries
+who reports its actual (**mig 280**: `budget_items.actual_source`, NOT NULL default `typed`, CHECK
+`typed|fundraiser|sponsor`, plus a CHECK that a money-out word is always typed). Each money-in option
+in the picker wears a tag — *From a drive* · *From a sponsor* · *You record it* — so a coach sees
+before saving whether the row fills itself in. The kind is **derived server-side from the resolved
+item on both write doors, and neither accepts a `lineKind` any more**, so the pairing is
+unexpressible rather than merely refused. **Grant became sponsor-sourced** while KEEPING its
+Fundraising category — moving the category is deliberately its own question. The stored enum is
+untouched; the section words (*Expected fundraising* and friends) survive as what the plan and report
+CALL those shelves and stop being something a coach picks.
+
+**Owner rulings taken before building (2026-09-07).** The question is a **dropdown**, not the
+mockup's two radio rows (the 2026-08-22 convention: a line's direction is correctable forever, so it
+does not qualify for radio rows). The item rows carry the **tag alone**, without the mockup's
+duplicate sub-line (the 2026-09-04 no-filler-captions ruling; real rows also carry the ownership chip
+the mockup omitted). The source lives as a **column on the word**, not a name-keyed lookup — it
+survives a rename, and mig 248 deliberately lets two words share a name.
+
+**⚠ NO FIGURE MOVED, measured not assumed.** On dev AND prod every money-in budget line points at a
+PLATFORM word and already used the obvious pairing; all 48 dev lines derive exactly the kind they
+store; there are no club- or coach-created money-in words anywhere. Proven again after re-running all
+three seeders: **zero disagreements across all three seeded worlds**.
+
+**⚠ ONE ACCEPTED NARROWING, ruled rather than discovered.** A word a coach invents is born *typed*,
+so they can no longer point the fundraiser machinery at their own invented income word and use the
+standard *Fundraising drive* instead. Nothing in either database used that.
+
+**⚠⚠ `/simplify` FOUND TWO REAL THINGS AND A THIRD CAME OUT OF THE SAME READING.** (1) The shared item
+picker was being taught a MONEY VOCABULARY — a boolean flag plus the tags' English and CSS keyed to
+money values, inside a control the Budget Plan, the Club tab and the Org Budget all render, and
+directly against that component's own written rule (*"THE CONTROL LEARNS A GROUP, NOT A DOMAIN"*,
+which already records a near-miss on the identical mistake one prop earlier). It now takes a
+domain-blind row-tag hook and the Budget Plan owns the words. (2) **Three seed scripts could still
+write a kind that disagreed with its word**, including the one that builds the PUBLIC DEMO — every
+pairing happened to be right, but nothing enforced it, and **mig 246 made exactly this point about
+`direction` and named the demo seed among the insert paths it updated in the same unit of work**. All
+three now derive; the owner-QA fixture hard-stops on a disagreement. (3) The budget IMPORTER's guard
+against overwriting a money-in line named only two of the three money-in kinds — its own comment
+claimed "both kinds" while a third had existed since 2026-09-02, so an `other_income` line was open
+to being overwritten with a cost row's word and amount. Built from the shared list now.
+
+**⚠⚠ `/review` (high-risk tier, five lenses) FOUND A REAL DEFECT ON A DOOR THE REDESIGN NEVER LOOKED
+AT.** *What am I forgetting?* — the checklist of standard words under the plan list — is not filtered
+by direction, and correctly so: forgetting to budget your sponsorship is a real thing to forget. But
+its chips handed the form only a category and an item, so a money-IN word (Grant, Team sponsorship,
+Merchandise sales) opened the form on the SPENDING side, with that word already chosen underneath —
+the exact self-contradicting screen this project exists to remove. ⚠ **It was worse before this
+project, which is why it survived:** the server then trusted the client's kind, so tapping *+ Grant*
+and saving stored the line as a COST — money coming in filed as spending, ADDING its amount to what
+families are asked for instead of subtracting it. Fixed: the chip carries its word's own side.
+Also fixed from the review: the derivation now **throws** on a source it has never heard of (it
+returned `undefined`, which `JSON.stringify` drops, so Postgres substituted the column default and
+the row would have been stored as a cost — silently); the demo seed's line-kind lookup **stops**
+instead of falling back to 'cost'; and the fixture's own guard no longer disarms itself when its
+query fails.
+
+**⚠⚠⚠ RELEASE ORDER — THIS CODE CANNOT REACH PRODUCTION AHEAD OF MIGRATION 274.** Production's
+`rep_budget_lines_line_kind_check` still admits only `('cost','funding','sponsorship')`;
+`other_income` arrived in mig 274 and is prod-owed with 280. And `other_income` is what a TYPED
+money-in word derives — which is now the ORDINARY case, not a rare one: every word a coach invents is
+born typed, and so are Tournaments' three revenue words and the whole Other Income library. On a
+database missing 274 a coach meets a raw constraint error on one of the commonest money actions there
+is, and because the edit door re-derives on every save, an ordinary amount or notes edit to an
+existing money-in line fails the same way. The dependency pre-dates this change; what this change
+does is turn it from a rarely-chosen answer into the default path. **Add 274 and 280 to the same
+promote (run order D1).**
+
+**⚠ TWO CONSEQUENCES RECORDED RATHER THAN CHANGED.** (1) Because the kind follows the word on every
+save, a FUTURE reclassification of a platform word re-files every line already on it the next time a
+coach saves that line for any reason. That is the design — a line permanently disagreeing with its
+word is the defect being removed — and only a migration can trigger it, but it makes a future
+reclassification a decision about other people's plans rather than a tidy-up. (2) A team budgeting
+BOTH *Sponsorship → Team sponsorship* and *Fundraising → Grant* now has two sponsor claims in two
+CATEGORIES, so the sponsor pool places with no category at all rather than against either line. That
+was already reachable (a coach could file a grant as sponsorship); what changed is that it is now the
+only way a grant can be filed — **which is the strongest argument yet for moving Grant to the
+Sponsorship category**, and is put to the owner as Part H1 of the walk. No team is affected today:
+there are no Grant lines on either database.
+
+**What the walk asks.** Eight parts. A: the form offers exactly two answers, and the deleted words
+are still on the plan behind you. B: the tag on all eleven money-in words, reading the Grant row
+aloud, no tags on the spending side, and **B4 the checklist defect the review found**. C: try to
+build the broken row, build the honest one, then record money against it — and confirm a fundraising
+row still refuses, because that refusal is what stops a dollar being counted twice. D: prove no
+figure moved — the ladder, existing lines re-saved unchanged, both report shapes. E: invent a word
+and record against it. F: the phone. G: put the fixture back. H: two calls — Grant's category, and
+whether *Manage our words* should show who reports each one.
+
+**Gates:** typecheck · **3,172 unit tests** (16 new across a new file, plus the whole-source-tree
+kind guard untouched) · full `verify:changed` green except `check:schema-parity`, which correctly
+reports 280 as dev-only · `check:layout --only=coach-budget` at 361/390/768/1440, **no new findings**
+· all three seeders re-run and **zero kind/word disagreements** in any seeded world · `check:demos`
+both worlds presentable. **Not measured by a machine:** the picker's open dropdown at phone width —
+no rendered gate can see inside it, which is Part F.
+
+**Help:** the *"Can fundraising lower what families pay?"* answer was rewritten — it had been stale
+since mig 243 and would have been actively wrong after this. A full `/docs` sweep is still owed.

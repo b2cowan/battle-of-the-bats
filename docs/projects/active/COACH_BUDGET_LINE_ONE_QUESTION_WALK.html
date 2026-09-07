@@ -1,0 +1,658 @@
+<title>One Question, Not Two</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink-soft)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.rowtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:2px 0}
+.rowtable th,.rowtable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+.rowtable th{font-family:var(--disp);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.rowtable td:first-child,.rowtable th:first-child{text-align:left}
+.rowtable td:nth-child(2),.rowtable th:nth-child(2){text-align:left}
+.scrollx{overflow-x:auto}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:26px;margin:0}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §152 · Coaches portal → Money → Budget plan</p>
+  <h1>One question, not two</h1>
+  <p class="lede">Adding a budget line used to ask <b>what kind of line it is</b> and then <b>what it
+    is</b>. The two answers could disagree, the form allowed it, and the disagreement quietly
+    produced a row the coach could never report against. There is now <b>one</b> question — is this
+    money going out, or coming in — and the item you pick decides the rest. The promise underneath
+    all of it: <b>no figure moves anywhere</b>.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Money</b> → <b>Budget plan</b> → <b>Add Line</b>.
+    Parts C and E also visit <b>Money → Transactions</b> to record money coming in; Part D visits
+    <b>Budget vs. Actual</b>.</p>
+  <div class="warn"><b>Restart the dev server first.</b> Shared modules moved. And <b>another
+    session shares this working copy</b> — if a figure below is off, check whether the whole plan
+    moved under us before recording a defect.</div>
+  <div class="tip"><b>You will add three lines and invent one word during this walk.</b> Part G
+    takes them all back out again, so the fixture is where you found it. Do Part G even if you
+    stop early.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>One question, two answers</h2>
+  <p>Budget plan → <b>Add Line</b>. Read the top of the form before you touch anything.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>The first field offers exactly two answers</h3></div></div>
+  <div class="step-body">
+    <p class="why">It used to offer four — <b>Expense</b>, <b>Expected fundraising</b>, <b>Expected
+      sponsorship</b>, <b>Expected other income</b>. Three of those were really one question asked
+      twice, because the item you picked underneath already knew the answer.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a"><b>This line is</b> is a dropdown, opening on <b>Money the team spends</b> / <i>Costs and bills</i><span class="hintline">It keeps its default rather than opening on "Choose…" — nearly every line is a cost</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">Open it: exactly <b>two</b> answers. The second is <b>Money coming in</b> / <i>Fundraising, sponsors, anything else</i></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">The words <b>Expected fundraising</b>, <b>Expected sponsorship</b> and <b>Expected other income</b> appear <b>nowhere</b> in this form any more</label></div>
+      <div class="chk"><input type="checkbox" id="a1d"><label for="a1d">Everything below it is unchanged: <b>Category &amp; Item</b>, <b>Amount</b>, <b>When does this money move?</b>, Notes</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>Those words are still on the plan behind you</h3></div></div>
+  <div class="step-body">
+    <p class="why">This is the distinction the change rests on. <b>Expected fundraising</b> and its
+      siblings stopped being something you <i>pick</i>; they are still what the plan and the report
+      <b>call</b> those shelves. Close the form and look at the plan.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a">The plan still has an <b>Expected fundraising</b> section holding <b>Chocolate sale</b> ($1,800.00)</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">…and an <b>Expected other income</b> section holding <b>Season interest</b> ($150.00)</label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">The summary ladder reads <b>Line items $25,221.00</b> and <b>Expected funding $1,950.00</b><span class="hintline">Write these two down — Part D asks you to prove they did not move</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on A2…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>The tag says who reports the money</h2>
+  <p>Add Line → <b>Money coming in</b> → open <b>Category &amp; Item</b>. This is the half that
+    replaces the deleted question.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>Eleven words, four groups, a tag on every one</h3></div></div>
+  <div class="step-body">
+    <p class="why">The tag answers "will this row fill itself in, or am I recording it myself?" — the
+      question the old form let you answer <i>wrongly</i>, invisibly, and then never mentioned again.</p>
+    <div class="scrollx"><table class="rowtable">
+      <thead><tr><th>Group</th><th>Word</th><th>Tag</th></tr></thead>
+      <tbody>
+        <tr><td>Tournaments</td><td>Registration revenue</td><td>You record it</td></tr>
+        <tr><td>Tournaments</td><td>Concession revenue</td><td>You record it</td></tr>
+        <tr><td>Tournaments</td><td>Gate / admission</td><td>You record it</td></tr>
+        <tr><td>Fundraising</td><td>Fundraising drive</td><td>From a drive</td></tr>
+        <tr><td>Fundraising</td><td>Merchandise sales</td><td>From a drive</td></tr>
+        <tr><td>Fundraising</td><td>Grant</td><td>From a sponsor</td></tr>
+        <tr><td>Sponsorship</td><td>Team sponsorship</td><td>From a sponsor</td></tr>
+        <tr><td>Other Income</td><td>Interest · Rebate · Donation · Other income</td><td>You record it</td></tr>
+      </tbody>
+    </table></div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">Every one of the eleven carries the tag above, in that group</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">The tag sits <b>before</b> the Standard / Club / Our own chip, and reads as plain text rather than a second pill<span class="hintline">Deliberate: two pills on one row would read as two of the same kind of fact. One says who owns the word, the other who fills in its money</span></label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">Nothing is cut off or wrapped oddly at the right-hand end of a row</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B2">
+  <div class="step-head"><span class="num">B2</span><div class="step-t"><h3>Read the Grant row and say what it tells you</h3>
+    <div class="tags"><span class="tag think">say it in your own words</span></div></div></div>
+  <div class="step-body">
+    <p class="why"><b>Grant</b> sits under <b>Fundraising</b> and is tagged <b>From a sponsor</b>.
+      That looks like a contradiction and is the resolution of one: the product's own sponsorship
+      help text has always read <i>"a business sponsor, a grant, anything given directly rather than
+      raised by selling"</i>, while the library filed it with the bottle drives. Before today a coach
+      budgeting a grant had to choose which way to be wrong.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b2a"><label for="b2a">Grant reads <b>From a sponsor</b>, under the <b>Fundraising</b> group</label></div>
+      <div class="chk"><input type="checkbox" id="b2b"><label for="b2b">Say it aloud: does the pairing read as deliberate, or as a mistake?<span class="hintline">If it reads as a mistake, that is H1 — the category is the report's shelf, and moving it is a separate call I have deliberately not taken</span></label></div>
+    </div>
+    <textarea placeholder="What does the Grant row tell you? Is it honest?"></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="B3">
+  <div class="step-head"><span class="num">B3</span><div class="step-t"><h3>The spending side has no tags at all</h3></div></div>
+  <div class="step-body">
+    <p class="why">Every cost's actual is recorded by the coach, so a tag on each of them would say
+      nothing — and teach you to stop reading the end of the row, which is exactly where the
+      ownership chip's signal is.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b3a"><label for="b3a">Switch <b>This line is</b> back to <b>Money the team spends</b> and open the picker: <b>no</b> "You record it" tags anywhere</label></div>
+      <div class="chk"><input type="checkbox" id="b3b"><label for="b3b">Switching sides <b>clears</b> the category and item you had picked, and leaves the amount and notes alone<span class="hintline">It must clear: the two sides offer different words, so a kept pick would be one the list will not show you</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B3…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="B4">
+  <div class="step-head"><span class="num">B4</span><div class="step-t"><h3>“What am I forgetting?” opens on the word’s own side</h3>
+    <div class="tags"><span class="tag think">a defect the review found</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Under the plan list, <b>What am I forgetting?</b> offers standard words this team
+      has not budgeted — and it legitimately includes money-IN ones, because forgetting to budget
+      your sponsorship is a real thing to forget. <b>Every one of those chips used to open the form
+      on the spending side</b>, with a money-in word already chosen underneath: the screen
+      contradicting itself, which is the exact thing this change exists to make impossible.</p>
+    <div class="warn"><b>It was worse before this project, which is why nobody caught it.</b> The
+      server then trusted whatever the form said, so tapping <b>+ Grant</b> and saving stored the
+      line as a <i>cost</i> — money coming in, filed as spending, <b>adding</b> its amount to what
+      families are asked for instead of subtracting it. The server now works it out from the word
+      whatever the form says, so what was left was a form that lied and a line landing in a section
+      you did not choose. Both are closed.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b4a"><label for="b4a">Expand <b>What am I forgetting?</b> and find a money-in chip — <b>Grant</b>, <b>Team sponsorship</b> or <b>Merchandise sales</b><span class="hintline">If none is offered, this team has already budgeted them all — say so and skip the rest of this step</span></label></div>
+      <div class="chk"><input type="checkbox" id="b4b"><label for="b4b">Tap it. The form opens on <b>Money coming in</b>, with that word already chosen and its tag showing</label></div>
+      <div class="chk"><input type="checkbox" id="b4c"><label for="b4c">Tap a <b>cost</b> chip instead. That one opens on <b>Money the team spends</b>, as it always did</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on B4…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>The row that used to break</h2>
+  <p>This is the whole point of the change. Three steps: the thing you can no longer build, the row
+    you build instead, and proof that you can report against it.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>Try to make the broken row</h3>
+    <div class="tags"><span class="tag think">try it, then say so</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Yesterday you could pick <b>Expected sponsorship</b> and then <b>Tournaments →
+      Concession revenue</b>. Nothing stopped you. That line took its actual from sponsor cheques —
+      which will never contain concession money — and <b>refused</b> a figure you typed, so you owned
+      a budget line you could never record your takings against, with nothing on screen saying why.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a">There is <b>no control anywhere in the form</b> that would let you build that pairing<span class="hintline">Not "it warns you" — there is nothing left to express it with</span></label></div>
+    </div>
+    <textarea placeholder="Did you find any way to express it? Say how you tried."></textarea>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>Build the honest version and see where it lands</h3></div></div>
+  <div class="step-body">
+    <p class="why">Add Line → <b>Money coming in</b> → <b>Tournaments → Concession revenue</b> →
+      Amount <b>600.00</b> → <b>No date yet</b> → Save.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a">After picking the item, a paragraph appears under the picker explaining what this kind of money is<span class="hintline">It used to sit under the deleted question, explaining the answer you had just given. It now explains what your word means for this line</span></label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">It saves, and lands under <b>Expected other income</b> on the plan — beside Season interest</label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">Reopen it. It comes back as <b>Money coming in</b> with the same word, amount and answer</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C2…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>Now record the takings against it — the payoff</h3></div></div>
+  <div class="step-body">
+    <p class="why">Money → <b>Transactions</b> → record money coming in, filed under <b>Tournaments →
+      Concession revenue</b>, any amount. This is the step the old broken row made impossible.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">It is <b>accepted</b>. No refusal, no double-count warning</label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b">Now try the same thing filed under <b>Fundraising → Fundraising drive</b> — it <b>is</b> refused, saying its actual already comes from your fundraisers<span class="hintline">The distinction is load-bearing and must survive: a drive reports its own money, so typing it again would count it twice — and player credits are computed from those figures</span></label></div>
+    </div>
+    <div class="warn"><b>If C3b is NOT refused, stop and flag it.</b> That refusal is what keeps a
+      dollar from being counted twice, and it reaches a family's dues rather than just a report.</div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on C3…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>Prove no figure moved</h2>
+  <p>This change is about a question, not an amount. Everything below should be exactly what it was,
+    plus the $600.00 you just added and nothing else.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>The ladder moved by exactly what you added</h3>
+    <div class="tags"><span class="tag think">check the arithmetic</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a"><b>Line items $25,221.00</b> — unchanged. Your line was money coming in, so it must not touch this</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b"><b>Expected funding $2,550.00</b> — the $1,950.00 you wrote down in A2 plus your $600.00, to the cent</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Per player came <b>down</b>, not up<span class="hintline">If it went up, the line was filed as a COST and every family is being asked for $600 too much — the exact failure this whole area exists to prevent</span></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>Existing lines open and save unchanged</h3></div></div>
+  <div class="step-body">
+    <p class="why">The kind is now worked out from the word when you save. Every line already on the
+      plan uses the obvious pairing, so re-saving one must leave it exactly where it was. This is the
+      step that would catch it if it did not.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">Open <b>Chocolate sale</b>. It opens as <b>Money coming in</b> · Fundraising → Fundraising drive · $1,800.00</label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">Change nothing, press Save. It is still under <b>Expected fundraising</b> at <b>$1,800.00</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2c"><label for="d2c">Open <b>Season interest</b>, save unchanged. Still under <b>Expected other income</b> at <b>$150.00</b></label></div>
+      <div class="chk"><input type="checkbox" id="d2d"><label for="d2d">Open any <b>cost</b> line — say Winter dome block — save unchanged. Still a cost, still its amount</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D2…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><div class="step-t"><h3>The report says the same thing it did</h3></div></div>
+  <div class="step-body">
+    <p class="why">Money → <b>Budget vs. Actual</b>. Both shapes, and the month grid.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d3a"><label for="d3a"><b>Statement</b>: the revenue band still carries its Fundraising, Other Income and Player dues rows, and now a Tournaments row for your $600.00</label></div>
+      <div class="chk"><input type="checkbox" id="d3b"><label for="d3b"><b>By activity</b>: Tournaments now has revenue beside its costs, and every other activity's figures are untouched</label></div>
+      <div class="chk"><input type="checkbox" id="d3c"><label for="d3c"><b>Months</b>: your line is undated, so it sits in the season total and in no month — and says so</label></div>
+      <div class="chk"><input type="checkbox" id="d3d"><label for="d3d">Export the Budget plan and Budget vs. Actual: the same section names as the screen, no new ones</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on D3…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART E ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part E</p>
+  <h2>A word you invent is yours to record against</h2>
+  <p>This team has never invented a word of its own, so you are making the first one.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="E1">
+  <div class="step-head"><span class="num">E1</span><div class="step-t"><h3>Invent one, and watch what it is born as</h3></div></div>
+  <div class="step-body">
+    <p class="why">Add Line → <b>Money coming in</b> → in the search box type <b>Bottle drive</b> →
+      <b>+ Add "Bottle drive" to your list</b> → category <b>Fundraising</b> → save the word.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e1a"><label for="e1a">The new word is tagged <b>You record it</b>, and its ownership chip says <b>Our own</b><span class="hintline">There is no machinery behind a name somebody just typed. Anything else would close the row to the only way its money can be recorded</span></label></div>
+      <div class="chk"><input type="checkbox" id="e1b"><label for="e1b">Give it $400.00 and <b>No date yet</b>, save. It lands under <b>Expected other income</b> — not Expected fundraising</label></div>
+      <div class="chk"><input type="checkbox" id="e1c"><label for="e1c">Money → Transactions: record money coming in against <b>Fundraising → Bottle drive</b>. It is <b>accepted</b></label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on E1…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="E2">
+  <div class="step-head"><span class="num">E2</span><div class="step-t"><h3>The thing this takes away</h3>
+    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Because your invented word is "you record it", a coach can no longer point the
+      <b>fundraiser machinery</b> at a word they made up — they use the standard <b>Fundraising
+      drive</b> instead. Yesterday they could. <b>Nothing in either database was using it</b>, and I
+      think the default is right, but it is a real capability the change removes and you should
+      decide rather than discover it.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="e2a"><label for="e2a">I understand the trade and it is / is not acceptable (say which)</label></div>
+    </div>
+    <textarea placeholder="Leave the default as it is, or should a coach be able to say who reports their own word?"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART F ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part F</p>
+  <h2>On a phone</h2>
+  <p>390px wide. The form and the picker's list are the two things worth a thumb.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="F1">
+  <div class="step-head"><span class="num">F1</span><div class="step-t"><h3>The question is a dropdown, and the tags fit</h3>
+    <div class="tags"><span class="tag phone">phone width</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The approved drawing showed two radio rows; it ships as the shared dropdown,
+      because your 2026-08-22 rule says a field picking one value is a dropdown and radio rows are
+      reserved for a choice that cannot be changed later. On a phone that is also about 90px of the
+      form back.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="f1a"><label for="f1a">The question is one dropdown row, not a stack of cards</label></div>
+      <div class="chk"><input type="checkbox" id="f1b"><label for="f1b">Open the item list: the word, its tag and its ownership chip all fit on one row without spilling off the right edge<span class="hintline">No gate can see inside an open dropdown — this measurement is yours alone</span></label></div>
+      <div class="chk"><input type="checkbox" id="f1c"><label for="f1c">Every row is comfortably tappable with a thumb</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on F1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART G ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part G</p>
+  <h2>Put the fixture back</h2>
+  <p>Do this even if you stopped early — the next walk reads these figures.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="G1">
+  <div class="step-head"><span class="num">G1</span><div class="step-t"><h3>Take out what you added</h3></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="g1a"><label for="g1a">Delete the two income records you made in C3 and E1</label></div>
+      <div class="chk"><input type="checkbox" id="g1b"><label for="g1b">Delete the <b>Concession revenue</b> ($600.00) and <b>Bottle drive</b> ($400.00) budget lines</label></div>
+      <div class="chk"><input type="checkbox" id="g1c"><label for="g1c">Budget plan → <b>Manage our words</b> → remove <b>Bottle drive</b></label></div>
+      <div class="chk"><input type="checkbox" id="g1d"><label for="g1d">The ladder reads <b>Line items $25,221.00 · Expected funding $1,950.00</b> again</label></div>
+    </div>
+    <div class="verdict"><span>Verdict</span><button class="vbtn" data-v="pass">Pass</button><button class="vbtn" data-v="flag">Flag</button></div>
+    <textarea placeholder="Notes on G1…"></textarea>
+  </div>
+</article>
+</div>
+
+<!-- ══════════════ PART H ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part H</p>
+  <h2>Calls I need from you</h2>
+  <p>Not checks — questions. Answer in the boxes; they come back with your findings.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="H1">
+  <div class="step-head"><span class="num">H1</span><div class="step-t"><h3>Does Grant belong on the Fundraising shelf?</h3>
+    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-body">
+    <p class="why">Its money now comes from sponsors, but it still <b>reports</b> under Fundraising.
+      That was left open on purpose: the category is the report's shelf, a club may reasonably want
+      grants shelved with its fundraising, and moving an item renames rows a treasurer has already
+      read and exported. Having seen it on the real screen — leave it, or move it to Sponsorship?</p>
+    <div class="ask"><b>The review handed this question a real argument it did not have before.</b>
+      When sponsor money arrives, the product places the total as deep in your plan as your lines
+      agree — on one line if only one claims it, on the category if several do, and <b>nowhere at
+      all</b> if the claiming lines sit in different categories. A team that budgets <i>both</i> a
+      <b>Team sponsorship</b> line and a <b>Grant</b> line now has exactly that: two sponsor lines in
+      two different categories. Their sponsor money would report as an unplaced lump rather than
+      against either line. <b>Moving Grant to Sponsorship would fix it</b> — both would share one
+      category. Nothing is affected today (no team anywhere has a Grant line), so this is a decision
+      about the shape you want, not a repair.</div>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h1a"><label for="h1a">Ruled: Grant stays under Fundraising, or moves to Sponsorship</label></div>
+    </div>
+    <textarea placeholder="Stay or move?"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="H2">
+  <div class="step-head"><span class="num">H2</span><div class="step-t"><h3>Should "Manage our words" say who reports each one?</h3>
+    <div class="tags"><span class="tag think">your call</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The tag appears in the picker, where the choice is made. It does <b>not</b> appear
+      in the word list a coach manages, and it is not editable anywhere — every word a coach or club
+      invents is "you record it", full stop. Is showing it there worth it, or is it a fact that only
+      matters at the moment of choosing?</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="h2a"><label for="h2a">Ruled: show it in Manage our words, or leave it to the picker</label></div>
+    </div>
+    <textarea placeholder="Show it, or leave it?"></textarea>
+  </div>
+</article>
+</div>
+
+<div class="foot">
+  <h2>Findings</h2>
+  <p class="why">Press <b>Copy findings</b> at the top, or copy from here, and paste it back into the
+    chat. Everything you typed and every verdict comes with it.</p>
+  <textarea class="out" id="outbox" readonly></textarea>
+</div>
+
+<footer>
+  <span>Owner QA §152</span><span>Coach Money — a budget line asks one question</span>
+  <span>Built on dev 2026-09-07 · migration 280</span><span>Fixture: UAT Test Team</span>
+</footer>
+</div>
+
+<div class="toastwrap" hidden id="toastwrap"><div class="toast" id="toast">Copied</div></div>
+
+<script>
+(function(){
+  var KEY='coach-budget-one-question-walk-152';
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('textarea:not(#outbox)'));
+  var out=document.getElementById('outbox');
+
+  function load(){
+    var s={};
+    try{ s=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ s={}; }
+    return s&&typeof s==='object'?s:{};
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v) st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §152 — Coach Money: a budget line asks one question, not two','Fixture: UAT Test Team · built on dev 2026-09-07 · migration 280',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var txt=lab.textContent.split('\n')[0].trim();
+        var hint=lab.querySelector('.hintline');
+        if(hint) txt=txt.replace(hint.textContent.trim(),'').trim();
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt);
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

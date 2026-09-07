@@ -1,5 +1,5 @@
 import type { CoachCapabilities } from './coach-capabilities';
-import type { BudgetLineKind } from './coach-budget-totals';
+import type { BudgetLineKind, BudgetItemActualSource } from './coach-budget-totals';
 import type { PeriodSplitMode } from './coach-budget-period-modes';
 
 export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club' | 'club_large';
@@ -2534,6 +2534,24 @@ export interface BudgetItem {
    * against it, which is why moving an item to the other side re-files nothing and moves no money.
    */
   direction: BudgetItemDirection;
+  /**
+   * Who reports this word's actual figure (mig 280): `typed` = the coach records each arrival
+   * themselves, `fundraiser` = the team's drives report it, `sponsor` = the team's sponsors do.
+   *
+   * ⚠⚠ THIS IS WHAT A BUDGET LINE'S KIND IS DERIVED FROM, which is why the add-a-line form asks ONE
+   * question instead of two. It used to be a question the coach answered — "This line is: Expense /
+   * Expected fundraising / Expected sponsorship / Expected other income" — and it could contradict
+   * the item picked underneath it, silently, producing a row whose actual was sought in the wrong
+   * place forever. See `budgetLineKindForItem` in lib/coach-budget-totals.ts.
+   *
+   * ⚠ NOT NULL, default `typed`, and NO WRITE PATH ACCEPTS IT — a word a coach or a club invents
+   * has no machinery behind it, so it is born typed and stays typed. Only the platform library
+   * carries the other two.
+   *
+   * ⚠ A money-OUT word is always `typed` (database CHECK). Every cost's actual is recorded by the
+   * coach; nothing reports one.
+   */
+  actualSource: BudgetItemActualSource;
   createdAt: string;
 }
 

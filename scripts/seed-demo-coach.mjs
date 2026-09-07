@@ -53,6 +53,16 @@ import {
   resolveOffSeasonState, resolveSeasonStartState,
   demoGuardianEmail, orgDateWithOffset, demoExpensePlan,
 } from '../lib/demo-coach.ts';
+/* ⚠⚠ A SEEDED LINE'S KIND COMES FROM ITS WORD (mig 280).
+   The add-a-line form stopped asking "is this a cost / expected fundraising / expected sponsorship /
+   expected other income?" because the answer could contradict the item picked under it — a
+   sponsorship line on a concession word takes its actual from sponsor cheques and refuses the figure
+   the coach types. Both API doors now derive the kind from the word. A SEED that hand-types one is
+   the remaining way to express that contradiction, and THIS seed builds the public demo: it would
+   put a budget line a prospect can see, whose actual is sought in the wrong place, in the shop
+   window. Migration 246 made the same point about `direction` and named this file among the insert
+   paths it updated in the same unit of work. */
+import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
 
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
 const allowProd = process.argv.includes('--allow-prod');
@@ -591,8 +601,9 @@ async function budgetItemIds(teamId, pairs) {
     pairs.map(p => [`${p.category.toLowerCase()}|${p.item.toLowerCase()}`, p]),
   ).values()];
   const categoryIds = [...new Set(wanted.map(p => budgetCategoryIds.get(p.category.toLowerCase())))];
+  // `direction` and `actual_source` ride along because a line's KIND is derived from them (mig 280).
   const { data: existingRows } = await db.from('budget_items')
-    .select('id, name, category_id, org_id, team_id')
+    .select('id, name, category_id, org_id, team_id, direction, actual_source')
     .in('category_id', categoryIds);
   const known = existingRows ?? [];
 
@@ -604,9 +615,9 @@ async function budgetItemIds(teamId, pairs) {
       i.category_id === categoryId
       && String(i.name).trim().toLowerCase() === pair.item.trim().toLowerCase()
       && (!i.org_id || (i.org_id === org.id && (!i.team_id || i.team_id === teamId))));
-    let itemId = hit?.id;
-    if (!itemId) {
-      itemId = randomUUID();
+    let word = hit;
+    if (!word) {
+      const itemId = randomUUID();
       /* ⚠ EVERY WORD POINTS ONE WAY NOW (mig 246) — the column is NOT NULL and the coach picker
          FILTERS by it, so a seeded item without one would fail the write, and one on the wrong side
          would be a word the demo's own form cannot offer. Callers tag their money-IN pairs; a cost
@@ -615,18 +626,64 @@ async function budgetItemIds(teamId, pairs) {
         id: itemId, category_id: categoryId, org_id: org.id, team_id: teamId,
         name: pair.item, is_default: false, is_misc: false,
         direction: pair.direction ?? 'out',
+        /* `actual_source` is left to the column's own default of 'typed' (mig 280) — a word this
+           seed invents has no drive or sponsor behind it, exactly as a coach's own word does not. */
       })).error);
-      known.push({ id: itemId, name: pair.item, category_id: categoryId, org_id: org.id, team_id: teamId });
+      word = {
+        id: itemId, name: pair.item, category_id: categoryId, org_id: org.id, team_id: teamId,
+        direction: pair.direction ?? 'out', actual_source: 'typed',
+      };
+      known.push(word);
     }
-    index.set(`${pair.category.toLowerCase()}|${pair.item.toLowerCase()}`,
-      { budget_item_id: itemId, budget_category_id: categoryId });
+    index.set(wordKey(pair.category, pair.item),
+      {
+        budget_item_id: word.id,
+        budget_category_id: categoryId,
+        /* What the line filed against this word must be stored as — worked out here, once, rather
+           than hand-typed at each insert. See the note beside this file's imports. */
+        line_kind: budgetLineKindForItem({
+          direction: word.direction, actualSource: word.actual_source,
+        }),
+      });
   }
   return index;
 }
 
-/** The two ids a demo row carries, looked up by the pair the world names. */
+const wordKey = (category, item) =>
+  `${String(category ?? '').toLowerCase()}|${String(item ?? '').toLowerCase()}`;
+
+/**
+ * The two ids a demo row carries, looked up by the pair the world names.
+ *
+ * ⚠⚠ IT RETURNS COLUMNS AND NOTHING ELSE, and that is load-bearing because every caller SPREADS it
+ * into an insert. The index also holds the line kind derived for that word (mig 280); leaving it in
+ * here put a `line_kind` on expense and money-in rows, whose tables have no such column, and the
+ * seed died at the first spend. Anything added to the index that is not a column on every row this
+ * is spread into must be dropped here and read through its own accessor.
+ */
 function itemRef(index, category, item) {
-  return index.get(`${String(category ?? '').toLowerCase()}|${String(item ?? '').toLowerCase()}`) ?? {};
+  const { line_kind: _kind, ...columns } = index.get(wordKey(category, item)) ?? {};
+  return columns;
+}
+
+/**
+ * What a budget line filed against this word must be stored as (mig 280) — see `budgetItemIds`.
+ *
+ * ⚠ A MISS IS FATAL, NOT 'cost' (`/review`, correctness lens, 2026-09-07). The first cut fell back
+ * to 'cost', which is the very failure the call sites' own comments say they exist to prevent: a
+ * money-in pair added to one of these lists whose word did not resolve would have been seeded
+ * straight into the public demo as SPENDING, with nothing said. The two sibling seeds already stop
+ * on this; so does this one now.
+ */
+function lineKindRef(index, category, item) {
+  const kind = index.get(wordKey(category, item))?.line_kind;
+  if (!kind) {
+    die('budget line kind', {
+      message: `"${category} / ${item}" resolved no word, so its line kind cannot be derived — `
+        + 'the pair is missing from the list handed to budgetItemIds(), or the library moved.',
+    });
+  }
+  return kind;
 }
 
 /**
@@ -925,7 +982,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
       category_id: budgetCategoryIds.get(line.category.toLowerCase()),
       item_id: itemRef(offSeasonItems, line.category, line.item).budget_item_id,
-      description: line.description, total_amount: line.total, line_kind: 'cost', sort_order: i,
+      description: line.description, total_amount: line.total, sort_order: i,
+      line_kind: lineKindRef(offSeasonItems, line.category, line.item),
     })),
     /* Money coming IN — stored positive, the KIND carries the sign, and since mig 243 it carries
        the same category + item a cost does. Filed under Fundraising ALONGSIDE the raffle's own
@@ -934,7 +992,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
       category_id: budgetCategoryIds.get(line.category.toLowerCase()),
       item_id: itemRef(offSeasonItems, line.category, line.item).budget_item_id,
-      description: line.description, total_amount: line.total, line_kind: 'funding',
+      description: line.description, total_amount: line.total,
+      line_kind: lineKindRef(offSeasonItems, line.category, line.item),
       sort_order: OFFSEASON_BUDGET_LINES.length + i,
     })),
   ];
@@ -1047,6 +1106,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     item_id: itemRef(seasonStartItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
+    /* From the word, not typed here (mig 280). These three worlds are cost-only today, so this
+       reads 'cost' — stated rather than left to the column default, so a money-in row added to one
+       of these lists lands correctly instead of silently as spending. */
+    line_kind: lineKindRef(seasonStartItems, line.category, line.item),
   }));
   await insertAll('rep_budget_lines', seasonStartLineRows);
   /* Dated from the season's opening month — a coach who has just built a plan has answered when
@@ -1277,6 +1340,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     item_id: itemRef(midSeasonItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
+    /* From the word, not typed here (mig 280). These three worlds are cost-only today, so this
+       reads 'cost' — stated rather than left to the column default, so a money-in row added to one
+       of these lists lands correctly instead of silently as spending. */
+    line_kind: lineKindRef(midSeasonItems, line.category, line.item),
   }));
   await insertAll('rep_budget_lines', budgetRows);
   await datePlanLines(budgetRows, state.year, 3);
@@ -1422,6 +1489,10 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     item_id: itemRef(seasonsEndItems, line.category, line.item).budget_item_id,
     description: line.description, total_amount: line.total, sort_order: i,
+    /* From the word, not typed here (mig 280). These three worlds are cost-only today, so this
+       reads 'cost' — stated rather than left to the column default, so a money-in row added to one
+       of these lists lands correctly instead of silently as spending. */
+    line_kind: lineKindRef(seasonsEndItems, line.category, line.item),
   }));
   await insertAll('rep_budget_lines', seasonsEndLineRows);
   /* A finished season's plan is entirely in the past, so every line is dated and nothing here

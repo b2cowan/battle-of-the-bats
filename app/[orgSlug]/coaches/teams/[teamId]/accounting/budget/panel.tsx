@@ -27,9 +27,9 @@ import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import { fmtCompact } from '@/lib/coach-money-summary';
 import { toggleKey } from '@/lib/toggle-key';
 import {
-  computeBudgetTotals, LINE_KIND_LABEL, LINE_KIND_HINT, LINE_KIND_SECTION, BUDGET_LINE_KINDS,
+  computeBudgetTotals, LINE_KIND_SECTION, budgetLineKindForItem,
   isFundingKind, normalizeBudgetLineKind, FUNDING_LINE_KINDS,
-  type BudgetLineKind,
+  type BudgetLineKind, type BudgetItemActualSource,
 } from '@/lib/coach-budget-totals';
 import {
   buildPeriodView, whenSummary, GRANULARITY_LABEL, PERIOD_GRANULARITIES, UNSCHEDULED,
@@ -48,6 +48,7 @@ import type {
   RepBudgetPlan,
   RepBudgetLineWithPeriods,
   BudgetCategoryWithItems,
+  BudgetItemDirection,
 } from '@/lib/types';
 import DateField from '../DateField';
 import GenerateInstallmentsModal from '../GenerateInstallmentsModal';
@@ -63,13 +64,75 @@ import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { tournamentToday } from '@/lib/timezone';
 
 /**
- * The paragraph under the kind picker, for the kind the coach has chosen.
+ * WHO REPORTS A WORD'S ACTUAL, in the coach's words (mig 280) — the tag on each money-in option.
+ *
+ * ⚠ IT LIVES HERE, NOT IN THE PICKER. The shared control renders on the Budget Plan, the Club tab
+ * and the Org Budget, and its own header forbids it learning a domain: it takes a `rowTag` hook and
+ * lays out whatever words it is handed. This screen is the one place where the answer decides
+ * something — the word chosen here IS the line's kind — so this screen owns the sentence.
+ *
+ * ⚠ AN EXHAUSTIVE NAMED RECORD, not a ternary — the same rule `LINE_KIND_ACTUAL_SOURCE` is under
+ * one module over: a fourth source becomes a compile error here instead of falling silently into an
+ * else branch and telling a coach the wrong thing about where their money comes from.
+ *
+ * ⚠ NEVER COLOUR ALONE, and never an icon — each tag carries its words, because this list renders
+ * in a warm theme and a dark one and beside the three ownership chips. The two DERIVED answers are
+ * a shade stronger because they are the ones that change what a coach must do afterwards; "you
+ * record it" is quiet because it is the common case and the absence of news.
+ */
+const ACTUAL_SOURCE_TAG: Record<BudgetItemActualSource, { text: string; tone: 'quiet' | 'strong' }> = {
+  typed:      { text: 'You record it',  tone: 'quiet'  },
+  fundraiser: { text: 'From a drive',   tone: 'strong' },
+  sponsor:    { text: 'From a sponsor', tone: 'strong' },
+};
+
+/**
+ * ⚠⚠ THE FORM ASKS ONE QUESTION NOW, NOT TWO (mig 280, owner-approved mockup 3913e207).
+ *
+ * It used to ask "This line is: Expense / Expected fundraising / Expected sponsorship / Expected
+ * other income" and THEN "Category & Item". The item picker filters by DIRECTION and never by the
+ * kind just chosen, so the two answers could contradict each other and the form allowed it —
+ * *Expected sponsorship* with *Tournaments → Concession revenue* is offerable today. That is a
+ * trap, not untidiness: the kind decides where the row's ACTUAL comes from, a sponsorship line
+ * takes its actual from sponsor arrivals and refuses a typed income record (deliberately, so the
+ * same dollar is never counted twice), and the coach ends up with a budget line they can never
+ * record their concession takings against, with nothing on screen explaining why.
+ *
+ * Measured across every money-in budget line on dev AND prod on 2026-09-07: all of them already
+ * used the obvious pairing. The second question never carried information; it only ever carried
+ * the chance to get it wrong.
+ *
+ * ⚠ THE THREE SOURCES ARE NOT REMOVED, only moved. "A drive reports it", "a sponsor reports it"
+ * and "the coach types it" stay three different things — player rebates and the derived pools
+ * depend on it (owner ruling 2026-08-16) — and the stored `line_kind` is still written on every
+ * row. What changed is WHERE the answer is declared: it is now a property of the word the coach
+ * picks, so it cannot disagree with itself. See `budgetLineKindForItem`.
+ *
+ * ⚠ A DROPDOWN, NOT TWO RADIO ROWS (owner ruling 2026-09-07, confirming 2026-08-22). The approved
+ * mockup drew radios; the standing convention is that a field picking one value is a dropdown, and
+ * radio-rows-with-sub-lines are reserved for a choice that CANNOT be changed afterwards. A budget
+ * line's direction is correctable forever, so it does not qualify — and two radio rows cost ~90px
+ * above every other field on a phone.
+ */
+const DIRECTION_ANSWERS: { value: BudgetItemDirection; name: string; sub: string }[] = [
+  { value: 'out', name: 'Money the team spends', sub: 'Costs and bills' },
+  { value: 'in',  name: 'Money coming in',       sub: 'Fundraising, sponsors, anything else' },
+];
+
+/**
+ * The paragraph under the picker, for the kind the coach's chosen ITEM works out to.
  *
  * ⚠ A RECORD, NOT A TERNARY — and that is the difference between a copy gap and a compile error.
  * This was `lineKind === 'sponsorship' ? … : …`, the exact shape that let a third kind ship while
  * nineteen readers silently filed it as a cost. Keyed exhaustively, a FOURTH kind cannot be added
- * without someone writing its sentence. (The short label and one-line hint live in
- * `lib/coach-budget-totals`; these are JSX and belong beside the form that draws them.)
+ * without someone writing its sentence.
+ *
+ * ⚠ IT IS NOW A CONSEQUENCE, NOT A CAPTION (mig 280). It used to sit under the kind DROPDOWN,
+ * explaining the answer the coach had just given. It now sits under the ITEM, and appears once one
+ * is chosen — so it reads as "here is what this word means for this line", which is the one thing
+ * the old form could never say at the moment it mattered. (Its short sibling `LINE_KIND_LABEL` and
+ * the one-line `LINE_KIND_HINT` were deleted with the question: see the headstone in
+ * `lib/coach-budget-totals`.)
  */
 const KIND_HINT_LONG: Record<BudgetLineKind, React.ReactNode> = {
   cost: null,  // the cost form explains itself — the category picker below it is the explanation
@@ -144,9 +207,24 @@ interface LineForm {
   categoryName: string;
   itemName: string;
   totalAmount: string;
-  /** Is this money the team spends, or money it expects to bring in? Chosen first in the form,
-   *  because it changes what every field below it means. */
-  lineKind: BudgetLineKind;
+  /**
+   * Is this money the team spends, or money it expects to bring in? Asked first, because it
+   * changes what every field below it means — and since mig 280 it is the ONLY thing asked about
+   * what the line is. The stored kind is worked out from the ITEM (see `formLineKind`).
+   */
+  direction: BudgetItemDirection;
+  /**
+   * Who reports the chosen item's actual — carried so the form can show the coach what their word
+   * means before they save, and so the derived kind is available without a second lookup.
+   *
+   * ⚠ NULL IS A REAL STATE, not a missing value: no item chosen yet, or an item the picker's list
+   * does not hold (one whose word was deleted, or one belonging to a sport this team no longer
+   * plays). The form simply says nothing then; the SERVER derives the stored kind from the row it
+   * fetches, so a blank here can never write a wrong kind.
+   * ⚠ Deliberately out of `sameLineForm`: it is a property of `itemId`, which is already compared,
+   * and a dirty-guard that could fire on a derived field would nag about work nobody did.
+   */
+  itemActualSource: BudgetItemActualSource | null;
   notes: string;
   /**
    * ⚠⚠ "WHEN DOES THIS MONEY MOVE?" — REQUIRED, AND `null` MEANS UNANSWERED (owner ruling
@@ -184,7 +262,8 @@ const BLANK_FORM: LineForm = {
   categoryName: '',
   itemName:     '',
   totalAmount:  '',
-  lineKind:     'cost',
+  direction:    'out',
+  itemActualSource: null,
   notes:        '',
   whenAnswer:   null,
   periodMode:   'amount',
@@ -656,8 +735,18 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
 /** The saved line as form state. ONE mapping, shared by "open the edit modal" and by the
  *  discard guard's dirty baseline — two copies would drift and the guard would either nag
  *  on an untouched form or miss a real edit. */
+/**
+ * ⚠ THE DIRECTION IS READ BACK FROM THE STORED KIND (mig 280), never re-derived from the item —
+ * this has to reopen the line as it IS, including a pre-280 row whose item was later moved to the
+ * other side. The kind the SAVE stores is derived (server-side) from the item; the kind the form
+ * OPENS on is the one on the row.
+ *
+ * `actualSource` is handed in rather than looked up here because that lookup needs the picker's
+ * category list, which lives in the component. Null when the word is not in it — see the field.
+ */
 function formFromLine(
   line: RepBudgetLineWithPeriods, seasonYear: number, fallbackMode: PeriodSplitMode,
+  actualSource: BudgetItemActualSource | null,
 ): LineForm {
   const periods: PeriodRow[] = line.periods.map(p => ({
     label: p.periodLabel, date: p.periodDate ?? '', amount: String(p.amount),
@@ -675,7 +764,8 @@ function formFromLine(
     categoryName: line.categoryName ?? '',
     itemName:     line.itemName    ?? line.description,
     totalAmount:  String(line.totalAmount),
-    lineKind:     normalizeBudgetLineKind(line.lineKind),
+    direction:    isFundingKind(line.lineKind) ? 'in' : 'out',
+    itemActualSource: actualSource,
     notes:        line.notes ?? '',
     whenAnswer:   whenAnswerFor(periods, splitMode),
     periodMode:   'amount', // stored periods are always dollars
@@ -696,7 +786,7 @@ function sameLineForm(a: LineForm, b: LineForm): boolean {
     || a.categoryId !== b.categoryId
     || a.itemId !== b.itemId
     || a.totalAmount !== b.totalAmount
-    || a.lineKind !== b.lineKind
+    || a.direction !== b.direction
     || a.notes !== b.notes
     || a.whenAnswer !== b.whenAnswer
     || a.periods.length !== b.periods.length
@@ -778,6 +868,24 @@ export function BudgetPlanPanel({
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
+
+  /**
+   * Who reports a word's actual, from the picker's own list (mig 280).
+   *
+   * ⚠ NULL RATHER THAN A GUESS when the word is not in the list. That happens for real: an item
+   * whose word was deleted, or one tagged for a sport this team no longer plays. Defaulting it to
+   * 'typed' would put a confident wrong sentence under a money-in line — and it is not needed,
+   * because the SERVER derives the stored kind from the row it fetches, never from this.
+   */
+  function sourceOfItem(itemId: string | null): BudgetItemActualSource | null {
+    if (!itemId) return null;
+    for (const c of categories) {
+      const hit = c.items.find(i => i.id === itemId);
+      if (hit) return hit.actualSource;
+    }
+    return null;
+  }
+
   /** "Manage our words" — the one door to a team's own vocabulary (mig 246). See `addLineButton`. */
   const [itemManagerOpen, setItemManagerOpen] = useState(false);
 
@@ -1069,14 +1177,26 @@ export function BudgetPlanPanel({
         .filter((s): s is string => !!s)
         .map(s => s.toLowerCase()),
     );
-    const out: Array<{ id: string; name: string; categoryId: string; categoryName: string }> = [];
+    /* ⚠⚠ THE CHIP CARRIES WHICH SIDE ITS WORD IS ON (`/review`, correctness lens, 2026-09-07).
+       This list is NOT filtered by direction and should not be — "what am I forgetting?" legitimately
+       includes the sponsorship you have not budgeted yet, and migration 243 seeds Fundraising and
+       Sponsorship as default categories with default money-IN words under them. What was missing is
+       that the chip handed the form only a category and an item, so the form opened on its own
+       default side and a money-in word arrived on the SPENDING side. See `openAddFromChecklist`. */
+    const out: Array<{
+      id: string; name: string; categoryId: string; categoryName: string;
+      direction: BudgetItemDirection; actualSource: BudgetItemActualSource;
+    }> = [];
     for (const c of categories) {
       if (!c.isDefault) continue;
       for (const it of c.items) {
         if (!it.isDefault || it.isMisc) continue;
         if (linkedIds.has(it.id) || usedNames.has(it.name.toLowerCase())) continue;
         if (dismissedChecklist.includes(it.id)) continue;
-        out.push({ id: it.id, name: it.name, categoryId: c.id, categoryName: c.name });
+        out.push({
+          id: it.id, name: it.name, categoryId: c.id, categoryName: c.name,
+          direction: it.direction, actualSource: it.actualSource,
+        });
       }
     }
     return out;
@@ -1201,7 +1321,7 @@ export function BudgetPlanPanel({
        re-evaluates when the newer plan lands. */
     if (!line) return;
     deepLinkHandled.current = deepLinkLine;
-    const opened = formFromLine(line, seasonYear, lastSplitMode);
+    const opened = formFromLine(line, seasonYear, lastSplitMode, sourceOfItem(line.itemId));
     // ?periods=1 arrives from a month cell, where the coach was looking at dates — so the period
     // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
     // opening the split is not the coach's work, so an untouched form must still close silently.
@@ -1303,14 +1423,32 @@ export function BudgetPlanPanel({
 
   /** A checklist chip opens the normal Add Line modal with the category + item filled
    *  in and the amount EMPTY — the coach types the number (D-G1). The prefill is also
-   *  the dirty baseline, so closing an untouched prefilled form stays silent. */
-  function openAddFromChecklist(item: { id: string; name: string; categoryId: string; categoryName: string }) {
+   *  the dirty baseline, so closing an untouched prefilled form stays silent.
+   *
+   *  ⚠⚠ IT OPENS ON THE WORD'S OWN SIDE (`/review`, correctness lens, 2026-09-07). This took only
+   *  the category and the item and let the form keep its default of "Money the team spends" — so
+   *  tapping "+ Grant" or "+ Team sponsorship" (both standard, both money-IN, both legitimately on
+   *  this list) opened a form whose first field contradicted the word already chosen underneath it.
+   *  That is precisely the contradiction migration 280 exists to remove, arriving through a door the
+   *  redesign did not look at. ⚠ It was WORSE before that migration, which is why it went unnoticed:
+   *  the server then trusted the client's kind, so the line was STORED as a cost — a money-in word
+   *  filed as spending, inflating what every family is asked to pay by its amount. The server now
+   *  derives correctly whatever this form says, so the residue was a screen disagreeing with itself
+   *  and a line landing in a section the coach did not expect. Both are closed here.
+   *  ⚠ The direction comes from the ITEM, never from a guess: it is the same field the picker
+   *  filters by, so the prefilled word is one the reopened list actually offers. */
+  function openAddFromChecklist(item: {
+    id: string; name: string; categoryId: string; categoryName: string;
+    direction: BudgetItemDirection; actualSource: BudgetItemActualSource;
+  }) {
     const prefilled: LineForm = {
       ...blankLineForm(seasonYear, lastSplitMode),
+      direction:    item.direction,
       categoryId:   item.categoryId,
       categoryName: item.categoryName,
       itemId:       item.id,
       itemName:     item.name,
+      itemActualSource: item.actualSource,
     };
     setEditingLine(null);
     setForm(prefilled);
@@ -1320,7 +1458,7 @@ export function BudgetPlanPanel({
   }
 
   function openEdit(line: RepBudgetLineWithPeriods) {
-    const loaded = formFromLine(line, seasonYear, lastSplitMode);
+    const loaded = formFromLine(line, seasonYear, lastSplitMode, sourceOfItem(line.itemId));
     setEditingLine(line);
     setForm(loaded);
     setFormBaseline(loaded);
@@ -1690,6 +1828,18 @@ export function BudgetPlanPanel({
     return Number.isFinite(n) && n > 0 ? n : 0;
   })();
 
+  /**
+   * WHAT THIS LINE WILL BE STORED AS — worked out from the coach's one answer and the word they
+   * picked (mig 280). Null until a word is picked, or when its source could not be read back.
+   *
+   * ⚠ FOR THE SCREEN ONLY. The kind that is actually stored is derived on the SERVER, from the row
+   * it fetches and authorises — a client-computed kind travelling in the request body would be the
+   * second question again, wearing a different hat.
+   */
+  const formLineKind: BudgetLineKind | null = form.itemId && form.itemActualSource
+    ? budgetLineKindForItem({ direction: form.direction, actualSource: form.itemActualSource })
+    : null;
+
   const problems = modalOpen ? collectProblems() : [];
   const problemIds = new Set(problems.map(p => p.id));
   /** Nothing is drawn as at fault until Save has actually been pressed. */
@@ -1741,7 +1891,7 @@ export function BudgetPlanPanel({
        money-in line keeps whatever the coach typed and does NOT fall back to the item's name,
        because "Fundraising drive" is a worse row label than "Chocolate sale". A cost line does
        fall back, because there its item IS the row's name. */
-    const description = isFundingKind(form.lineKind)
+    const description = form.direction === 'in'
       ? form.description.trim()
       : form.description.trim() || form.itemName.trim();
     const totalAmount = parseFloat(form.totalAmount);
@@ -1794,7 +1944,9 @@ export function BudgetPlanPanel({
           categoryId:  form.categoryId || null,
           itemId:      form.itemId,
           totalAmount,
-          lineKind:    form.lineKind,
+          /* ⚠ NO `lineKind` (mig 280). The server derives it from the item this line is filed
+             against, so the impossible pairing is not merely refused — there is nothing left to
+             express it with. Sending one would be ignored; sending none says so honestly. */
           notes:       form.notes.trim() || null,
           // HOW the split was built (mig 274) — remembered, so it reopens as it was made.
           splitMode:   periodsPayload.length > 0 ? form.splitMode : null,
@@ -2802,22 +2954,21 @@ export function BudgetPlanPanel({
 
             <p className={styles.formHint}>* Required</p>
 
-            {/* What KIND of line — asked first, because it changes what every field under it
-                means. Amounts stay positive either way; the kind carries the sign.
-                ⚠⚠ A DROPDOWN, NOT FOUR TILES (owner ruling 2026-09-04). It was a row of
-                radio-cards until then, which is the shape the 2026-08-22 ruling reserves for a
-                choice that CANNOT be changed afterwards — the Fundraiser/Sponsor precedent. A
-                budget line's kind is correctable forever (the edit form flips it and deliberately
-                keeps everything typed), so it never qualified; the screen simply predated the
-                ruling. Four tiles also cost ~130px above every other field on desktop and closer
-                to 300px on a phone, where they stack.
-                ⚠ THE SHARED CONTROL, not a fifth hand-rolled listbox — the same one the Club tab
-                uses and the same CSS the Record conversation's "What happened?" is drawn in, which
-                is what keeps them reading as one control rather than four cousins.
-                ⚠ IT KEEPS ITS DEFAULT rather than opening on "Choose…" like the Record
-                conversation does (owner, same ruling). That form's eight answers are genuinely
-                equal; nearly every budget line is an Expense, and making a coach answer a question
-                they almost always answer identically is a step, not a safeguard. */}
+            {/* WHICH WAY THE MONEY GOES — the ONE question this form asks about what a line is
+                (mig 280). Amounts stay positive either way; the stored kind carries the sign, and
+                the stored kind is worked out from the ITEM below rather than asked here.
+                ⚠⚠ THERE USED TO BE A SECOND QUESTION AND IT WAS A TRAP. This offered four answers —
+                Expense / Expected fundraising / Expected sponsorship / Expected other income — and
+                the picker under it filtered by DIRECTION only, so *Expected sponsorship* with
+                *Tournaments → Concession revenue* was offerable. The first answer quietly decided
+                where the row's actual came from, so that pairing produced a budget line the coach
+                could never record their concession takings against, silently. Read the block above
+                `DIRECTION_ANSWERS` before reinstating anything here.
+                ⚠ THE SHARED CONTROL, not a hand-rolled listbox — the same one the Club tab uses and
+                the same CSS the Record conversation's "What happened?" is drawn in.
+                ⚠ IT KEEPS ITS DEFAULT rather than opening on "Choose…" (owner ruling 2026-09-04).
+                Nearly every budget line is money the team spends, and making a coach answer a
+                question they almost always answer identically is a step, not a safeguard. */}
             <div className={styles.field}>
               {/* ⚠ THE VISIBLE LABEL IS THE CALLER'S. SublinedChoice's `label` prop is the
                   ACCESSIBLE name only — it renders no text — so a caller that passes it and stops
@@ -2826,26 +2977,23 @@ export function BudgetPlanPanel({
               <SublinedChoice
                 id="budget-line-kind"
                 label="This line is"
-                options={BUDGET_LINE_KINDS.map(kind => ({
-                  value: kind,
-                  name: LINE_KIND_LABEL[kind],
-                  sub: LINE_KIND_HINT[kind],
+                options={DIRECTION_ANSWERS}
+                value={form.direction}
+                /* ⚠ SWITCHING SIDES CLEARS THE WORD, and this is the one place mig 280 makes the
+                   old behaviour wrong. Flipping the KIND used to keep the category and item on
+                   purpose (mig 243) — every kind drew from the same money-in list, so the pick
+                   stayed valid. Direction is different: the picker FILTERS by it (mig 246), so a
+                   word kept across a flip is one the list will not offer and the coach cannot see
+                   — and it would now decide the line's kind from the WRONG SIDE of the books.
+                   ⚠ Everything else the coach has typed survives, the same promise the money form
+                   makes one screen over. */
+                onChange={dir => setForm(f => (f.direction === dir ? f : {
+                  ...f,
+                  direction: dir,
+                  categoryId: '', categoryName: '', itemId: null, itemName: '',
+                  itemActualSource: null,
                 }))}
-                value={form.lineKind}
-                /* ⚠ FLIPPING THE KIND KEEPS THE CATEGORY AND ITEM (mig 243). It used to clear
-                   them, correctly, while money-in lines carried no taxonomy and the picker was
-                   cost-only — a stale "Tournaments" pick would have ridden along to the save.
-                   Both halves of that reasoning are now false: every line names an item, and
-                   the item is REQUIRED on every kind. Left as it was, flipping a line to
-                   Sponsorship silently emptied the picker and blocked Save on "Pick a category
-                   and item" — the change fighting its own new rule (/review, regression lens).
-                   ⚠ Switching keeps what has been typed, the same promise the money form makes
-                   one screen over. */
-                onChange={kind => setForm(f => (f.lineKind === kind ? f : { ...f, lineKind: kind }))}
               />
-              {isFundingKind(form.lineKind) && (
-                <p className={styles.kindHint}>{KIND_HINT_LONG[form.lineKind]}</p>
-              )}
             </div>
 
             {/* ⚠ THE PICKER SERVES BOTH DIRECTIONS AGAIN (mig 243), and the objection that closed
@@ -2881,6 +3029,14 @@ export function BudgetPlanPanel({
                   categoryName: v.categoryName,
                   itemId:       v.itemId,
                   itemName:     v.itemName,
+                  /* ⚠ TAKEN FROM THE CONTROL, never looked up in `categories` (mig 280). A word
+                     the coach just invented in the picker's own create panel does not exist in this
+                     screen's list until the next load, so a lookup would say nothing about the one
+                     word they most need the consequence line for — the control hands back what it
+                     actually chose. Only `?? null` here: the field is optional on the shared type
+                     for callers that build a selection from stored columns, and every path that
+                     reaches THIS handler sets it. */
+                  itemActualSource: v.actualSource ?? null,
                   totalAmount:  f.totalAmount || (v.suggestedAmount ? String(v.suggestedAmount) : f.totalAmount),
                 }))}
                 createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
@@ -2890,18 +3046,42 @@ export function BudgetPlanPanel({
                    the `onChange` above pre-fills the line's total with it — one of the two surfaces
                    that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
                 suggestAmount
-                /* ⚠ THE LINE'S OWN KIND DECIDES WHICH WORDS IT MAY CHOOSE FROM (mig 246). The
-                   question is already answered one field up — "This line is: Expense / Expected
-                   fundraising / Expected sponsorship" — so the picker takes the answer rather than
-                   asking a second time in different words. Through `isFundingKind`, never a
-                   literal: the whole-tree guard, and the reason a fourth kind reaches this for
-                   free. */
-                direction={isFundingKind(form.lineKind) ? 'in' : 'out'}
+                /* ⚠ THE ONE QUESTION DECIDES WHICH WORDS THIS LINE MAY CHOOSE FROM (mig 246,
+                   simplified by mig 280). It is answered one field up — money out, or money in —
+                   and passed straight through. It used to be `isFundingKind(form.lineKind)`,
+                   translating a four-answer question into a two-sided one; there is nothing left
+                   to translate, which is the point. */
+                direction={form.direction}
+                /* ⚠ THE TAG IS WHAT MAKES ONE QUESTION HONEST (mig 280). The word chosen here
+                   DECIDES this line's kind, and therefore where its actual is looked for — so a
+                   coach has to be able to see, before saving, whether the row will fill itself in
+                   from their drives and sponsors or wait for them to record it. This is the only
+                   caller that passes a row tag; the recording conversation deliberately does not,
+                   because there the refusal depends on what the budget LINES claim rather than on
+                   the word alone, so a tag would promise something that may not apply.
+                   ⚠ MONEY-OUT ROWS GET NOTHING. Every cost's actual is typed, so a tag on each of
+                   them says nothing and teaches a coach to stop reading the end of the row — which
+                   is exactly where the ownership chip's signal is. `form.direction` is checked as
+                   well as the row's own, because the list keeps an already-chosen off-side word
+                   visible and that row is a money-out one. */
+                rowTag={item => (
+                  form.direction === 'in' && item.direction === 'in'
+                    ? ACTUAL_SOURCE_TAG[item.actualSource]
+                    : null
+                )}
                 manageHint="Rename or remove it later from Manage our words — but it stays on this side."
               />
               <p className={styles.kindHint}>
                 These name this line everywhere. Anything else worth saying goes in Notes.
               </p>
+              {/* ⚠ THE CONSEQUENCE OF THE WORD, once there is one (mig 280). It sat under the KIND
+                  dropdown until that question was deleted, where it explained the answer the coach
+                  had just given; here it explains what their word MEANS for this line — which is
+                  the sentence the old two-question form could never say at the moment it mattered.
+                  Costs say nothing: the picker above them is its own explanation. */}
+              {formLineKind && KIND_HINT_LONG[formLineKind] && (
+                <p className={styles.kindHint}>{KIND_HINT_LONG[formLineKind]}</p>
+              )}
             </div>
 
             {/* ⚠ THE TYPED DESCRIPTION IS GONE FROM BOTH DIRECTIONS (mig 243), and its removal from

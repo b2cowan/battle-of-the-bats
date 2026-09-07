@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-06",
-  "total": 7,
+  "generated": "2026-09-07",
+  "total": 30,
   "counts": {
-    "tables": 0,
-    "columns": 3,
-    "indexes": 1,
-    "constraints": 1,
-    "rls": 2
+    "tables": 1,
+    "columns": 11,
+    "indexes": 6,
+    "constraints": 7,
+    "rls": 5
   },
   "items": [
     {
@@ -14,11 +14,27 @@
       "sig": "(line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text, 'other_income'::text])) :: (line_kind = ANY (ARRAY['cost'::text, 'funding'::text, 'sponsorship'::text]))"
     },
     {
+      "key": "check:only-dev:budget_items.budget_items_actual_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:budget_items.budget_items_out_is_typed_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:rep_budget_lines.rep_budget_lines_split_mode_check",
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_amount_check",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:budget_categories.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:budget_items.actual_source",
       "sig": ""
     },
     {
@@ -30,11 +46,87 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_dues_payout_credits.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.credit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.payout_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_payout_credits.team_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:budget_categories.budget_categories_team_id_fkey",
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_credit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_payout_id_credit_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_payout_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_team_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:budget_categories_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_dues_payout_credits_credit",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_dues_payout_credits_org_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_dues_payout_credits_payout",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payout_credits_payout_id_credit_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payout_credits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_dues_payout_credits",
       "sig": ""
     }
   ]

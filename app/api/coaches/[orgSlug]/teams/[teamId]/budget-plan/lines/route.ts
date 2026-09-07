@@ -4,7 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
-import { BUDGET_LINE_KINDS, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { budgetLineKindForItem } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { readPeriodsPayload, type PeriodPayloadRow } from '@/lib/coach-budget-periods-payload';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
@@ -48,9 +48,21 @@ export const POST = withObservability(async (req: Request,
   const totalAmount: number = Number(body.totalAmount);
   const itemId:     string | null = body.itemId     || null;
   const notes:      string | null = body.notes?.trim() || null;
-  // Absent = cost, which is what every line was before migration 230. Only the two known kinds
-  // are accepted; the DB CHECK would reject anything else, but a 400 explains it.
-  const lineKind: string = body.lineKind === undefined ? 'cost' : String(body.lineKind);
+
+  /* ⚠⚠ THE KIND IS NOT ACCEPTED FROM THE REQUEST ANY MORE (mig 280). It is DERIVED from the item
+     this line is filed against — below, once that item has been resolved and authorised.
+
+     This route used to read `body.lineKind` and validate it against the four known values, which
+     is exactly the second question the form used to ask; and the pairing it allowed was a trap.
+     *Expected sponsorship* with *Tournaments → Concession revenue* stores a row whose actual is
+     taken from sponsor arrivals and which REFUSES a typed income record, so the coach can never
+     record their concession takings against it and nothing on screen says why. A validated-but-
+     unrelated value is not a guard: the only way the pairing becomes UNEXPRESSIBLE is for the
+     server to work the kind out from the word itself.
+
+     ⚠ A stale client still sending `lineKind` is IGNORED, not refused. Its line lands correctly
+     filed; 400-ing a save the coach has every right to make would be a worse answer than one that
+     simply works. */
 
   /* ⚠ EVERY LINE IS NAMED BY ITS ITEM NOW, IN BOTH DIRECTIONS (mig 243, plan §3.2).
      Until this release a money-in line carried no category and no item — the 2026-08-13 ruling
@@ -73,10 +85,6 @@ export const POST = withObservability(async (req: Request,
     // the sign lives in one place (the kind) and never in the data.
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
   }
-  if (!BUDGET_LINE_KINDS.includes(lineKind as BudgetLineKind)) {
-    return NextResponse.json({ error: `lineKind must be one of: ${BUDGET_LINE_KINDS.join(', ')}` }, { status: 400 });
-  }
-
   // HOW a split was entered (mig 274) — remembered so the editor reopens in the coach's own mode.
   // Anything unrecognised stores null (the inferSplitMode fallback), never a value the CHECK
   // would refuse.
@@ -123,7 +131,9 @@ export const POST = withObservability(async (req: Request,
       // stored so anything reading the column raw still shows something true.
       description:     description || itemName || '',
       total_amount:    totalAmount,
-      line_kind:       lineKind,
+      /* Derived from the word, never from the request — see the note above. `linked.item` is
+         non-null here: the branch above returns 400 when no item was chosen. */
+      line_kind:       budgetLineKindForItem(linked.item!),
       split_mode:      periodRows && periodRows.length > 0 ? splitMode : null,
       notes,
     })

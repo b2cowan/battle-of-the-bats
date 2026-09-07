@@ -99,12 +99,18 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
      The "stale exception" half of this guard is what caught the entry, which is exactly its job. */
   {
     path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/route.ts',
-    reason: 'Creates a line and is where the kind is CHOSEN — it validates the value it writes.',
+    reason: 'Creates a line and is where the kind is DECIDED — since mig 280 by DERIVING it from '
+      + 'the item the line is filed against (budgetLineKindForItem), never by accepting one from '
+      + 'the request. It WRITES the kind rather than reading it, so there is nothing here for a '
+      + 'fourth kind to be filtered out of: the shared derivation is the single place that learns '
+      + 'one. budget-line-kind-from-item.test.ts holds that rule over both write doors.',
   },
   {
     path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]/route.ts',
-    reason: 'Edits/deletes ONE line addressed by id. It never sums anything, and it is the one '
-      + 'place a coach reclassifies a line, so it must accept both kinds.',
+    reason: 'Edits/deletes ONE line addressed by id. It never sums anything. It is still where a '
+      + 'coach re-files a line, but since mig 280 that is done by changing the ITEM and the kind '
+      + 'follows it (budgetLineKindForItem) — the route no longer accepts a kind at all, so it '
+      + 'cannot store one that disagrees with the word the line is filed against.',
   },
   {
     path: 'app/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]/periods/route.ts',

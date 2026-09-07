@@ -43,6 +43,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
+/* ⚠⚠ A SEEDED LINE'S KIND IS DERIVED FROM ITS WORD, NEVER TYPED BESIDE IT (mig 280).
+   The form stopped asking "is this a cost / expected fundraising / expected sponsorship / expected
+   other income?" because the answer could contradict the item picked under it — a sponsorship line
+   on a concession word takes its actual from sponsor cheques and refuses the figure the coach
+   types. Both API doors now work the kind out from the word. A SEED that hand-types one is the
+   remaining way to express the contradiction, and it would land in a fixture an owner reads or a
+   demo a prospect sees. Migration 246 made exactly this point about `direction` — "every insert
+   path is updated in the same unit of work" — and named the demo seed among them. */
+import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -944,9 +953,11 @@ async function seedMoneyLab() {
 
   // ── categories/items, looked up by name so the fixture never invents its own taxonomy ─────
   const { data: cats } = await db.from('budget_categories').select('id, name');
-  const { data: items } = await db.from('budget_items').select('id, name, category_id');
+  // `direction` and `actual_source` ride along because a line's KIND is derived from them (mig 280).
+  const { data: items } = await db.from('budget_items').select('id, name, category_id, direction, actual_source');
   const catBy = Object.fromEntries((cats ?? []).map(c => [c.name, c.id]));
-  const itemBy = (catName, itemName) => (items ?? []).find(i => i.category_id === catBy[catName] && i.name === itemName)?.id ?? null;
+  const wordBy = (catName, itemName) => (items ?? []).find(i => i.category_id === catBy[catName] && i.name === itemName) ?? null;
+  const itemBy = (catName, itemName) => wordBy(catName, itemName)?.id ?? null;
 
   async function makeTeam(name, slug, division) {
     let team = (await db.from('rep_teams').select('id, name').eq('org_id', org.id).eq('slug', slug).maybeSingle()).data;
@@ -1069,15 +1080,23 @@ async function seedMoneyLab() {
     const byDesc = new Map((existing ?? []).map(l => [l.description, l]));
     let added = 0, repaired = 0;
     for (const [i, l] of LINES.entries()) {
-      const itemId = itemBy(l.cat, l.item);
-      if (!itemId) die('budget item lookup', { message: `"${l.cat} / ${l.item}" is not in the starting library — the library moved and this fixture has to follow it` });
+      const word = wordBy(l.cat, l.item);
+      if (!word) die('budget item lookup', { message: `"${l.cat} / ${l.item}" is not in the starting library — the library moved and this fixture has to follow it` });
+      const itemId = word.id;
+      /* ⚠ DERIVED, AND THE HAND-WRITTEN `kind` IS NOW AN ASSERTION (mig 280). The rows above still
+         say what they intend to be, and a disagreement stops the seed rather than quietly writing a
+         line whose actual is sought in the wrong place. See the note beside this file's imports. */
+      const kind = budgetLineKindForItem({ direction: word.direction, actualSource: word.actual_source });
+      if (kind !== l.kind) {
+        die('budget line kind', { message: `"${l.desc}" says line_kind "${l.kind}" but "${l.cat} / ${l.item}" derives "${kind}" — the library moved under this fixture, or the intent is wrong` });
+      }
       const shape = {
         category_id: catBy[l.cat] ?? null, item_id: itemId,
-        description: l.desc, total_amount: l.total, line_kind: l.kind, sort_order: i,
+        description: l.desc, total_amount: l.total, line_kind: kind, sort_order: i,
       };
       const have = byDesc.get(l.desc);
       if (have) {
-        if (have.category_id !== shape.category_id || have.item_id !== itemId || have.line_kind !== l.kind) {
+        if (have.category_id !== shape.category_id || have.item_id !== itemId || have.line_kind !== kind) {
           die('budget line repair', (await db.from('rep_budget_lines').update(shape).eq('id', have.id)).error);
           repaired++;
         }

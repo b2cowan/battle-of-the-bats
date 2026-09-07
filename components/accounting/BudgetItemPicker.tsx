@@ -53,6 +53,22 @@ export interface BudgetItemSelection {
   itemId: string | null;    // null when "Misc" or a free-text custom description is used
   itemName: string;
   suggestedAmount: number | null;
+  /**
+   * The chosen word's `actualSource`, handed straight back so a caller that DERIVES something from
+   * it does not have to look the word up again — including a word the coach just invented in this
+   * control's own create panel, which the caller's `categories` prop cannot know about yet.
+   *
+   * ⚠ TYPED THROUGH `BudgetItem`, NOT FROM THE MONEY MODULE. This control renders on the Budget
+   * Plan, the Club tab and the Org Budget; it passes the field through and never reads or interprets
+   * it, so it must not import a money-domain type to name it. Same rule as `leadGroup.metaTone`
+   * above — see the header note on learning a GROUP, not a DOMAIN.
+   *
+   * ⚠ OPTIONAL, AND THAT IS DELIBERATE. Exactly one caller reads it, and every caller builds a
+   * `value` object from what it has stored, where this is not among the columns. Requiring it would
+   * make four surfaces carry a field they never look at, which is how `suggestedAmount` ended up
+   * being collected in five places and read in two.
+   */
+  actualSource?: BudgetItem['actualSource'];
 }
 
 /**
@@ -133,6 +149,27 @@ interface Props {
   suggestAmount?: boolean;
   /** Lets a caller point its "you must pick one" message at the search box. */
   selectId?: string;
+  /**
+   * A trailing note on a row, decided BY THE CALLER — return null for a row that gets none.
+   *
+   * ⚠⚠ A HOOK, NOT A FLAG, AND THAT IS THE HEADER'S RULE APPLIED (see "THE CONTROL LEARNS A GROUP,
+   * NOT A DOMAIN"). The first cut of this was `showActualSource`, a boolean that made this control
+   * import a money-domain enum, hold its English ("From a drive", "You record it") and key CSS
+   * classes off its values — inside a component the Budget Plan, the Club tab and the Org Budget
+   * all render. That is precisely the shape `leadGroup.metaTone` was kept generic to avoid, one
+   * prop earlier and for the same reason. The caller hands over the words; the control lays them
+   * out and knows nothing about what they mean.
+   *
+   * ⚠ `tone` IS A WEIGHT, NOT A MEANING — 'quiet' for the ordinary case, 'strong' for the rows a
+   * reader must not skim past. Naming it after a domain state is how the generic prop stops being
+   * generic.
+   *
+   * ⚠ WHY IT IS A HOOK RATHER THAN A FIELD ON THE ITEM: the same word can warrant a note on one
+   * surface and none on another. The Budget Plan turns it on because the word chosen there decides
+   * the line's kind; the recording conversation deliberately does not, because there the refusal
+   * depends on what the team's budget LINES claim rather than on the word alone.
+   */
+  rowTag?: (item: BudgetItem) => { text: string; tone?: 'quiet' | 'strong' } | null;
   /** Draw the control as at fault — the picker is a required field since mig 240. */
   invalid?: boolean;
   disabled?: boolean;
@@ -207,6 +244,7 @@ export default function BudgetItemPicker({
   teamId,
   allowCreateCategory = false,
   suggestAmount = false,
+  rowTag,
   selectId,
   invalid = false,
   disabled = false,
@@ -389,6 +427,7 @@ export default function BudgetItemPicker({
       itemId:          row.item.id,
       itemName:        row.item.name,
       suggestedAmount: row.item.suggestedAmount,
+      actualSource:    row.item.actualSource,
     });
     setQuery('');
     setActiveIdx(-1);
@@ -496,6 +535,11 @@ export default function BudgetItemPicker({
         itemId:          newItem.id,
         itemName:        newItem.name,
         suggestedAmount: newItem.suggestedAmount,
+        /* ⚠ THE SERVER'S ANSWER, NOT AN ASSUMED ONE (mig 280). A word a coach invents is born
+           'typed' — there is no machinery behind a name someone just typed — but the value comes
+           back off the created row rather than being hardcoded here, so this cannot drift from what
+           the database actually stored. */
+        actualSource:    newItem.actualSource,
       });
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : 'Failed to create item');
@@ -580,6 +624,17 @@ export default function BudgetItemPicker({
           onClick={() => choose(row)}
         >
           <span>{row.item.name}</span>
+          {/* The caller's own trailing note, if it wants one on this row — see `rowTag`. The
+              control renders it and knows nothing about what it says. */}
+          {(() => {
+            const tag = rowTag?.(row.item);
+            if (!tag) return null;
+            return (
+              <span className={`${styles.optSource} ${tag.tone === 'strong' ? styles.optSourceStrong : ''}`}>
+                {tag.text}
+              </span>
+            );
+          })()}
           {/* The one word that can be off-side is the one already chosen — say so rather than
               letting it look like the filter is leaking. */}
           {row.item.direction !== direction && (

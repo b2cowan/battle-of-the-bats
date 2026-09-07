@@ -10,7 +10,7 @@ import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
 import { composeTwoPieceInstallments } from '@/lib/payable-plan';
 import { formatMonthLabel } from '@/lib/coach-budget-months';
-import { isFundingKind } from '@/lib/coach-budget-totals';
+import { isFundingKind, FUNDING_LINE_KINDS } from '@/lib/coach-budget-totals';
 import {
   itemVisibleToTeam, categoryVisibleToTeam,
   type OwnedBudgetItem, type OwnedBudgetCategory,
@@ -365,11 +365,18 @@ export const POST = withObservability(async (req: Request,
           })
           .eq('id', lineId)
           .eq('program_year_id', programYear.id)
-          // Belt and braces with the cost-only read above: the matched id came from a payload the
-          // client sends back, so the write refuses a MONEY-IN line of either kind even if that
-          // payload is stale or crafted. ⚠ Both kinds are named â this guard listed only
-          // 'funding' until 2026-08-15, so its own comment had stopped being true for sponsorship.
-          .not('line_kind', 'in', '(funding,sponsorship)');
+          /* Belt and braces with the cost-only read above: the matched id came from a payload the
+             client sends back, so the write refuses a MONEY-IN line even if that payload is stale
+             or crafted.
+             ⚠⚠ THE HAND-WRITTEN LIST WENT STALE TWICE, so it is gone. It named only 'funding'
+             until 2026-08-15 — and its replacement comment then claimed "both kinds" while
+             migration 274 was about to add a THIRD money-in kind (2026-09-02), which nobody came
+             back for. So an `other_income` line has been open to being overwritten with a COST
+             row's word and amount: the exact "the kind disagrees with its item" state migration
+             280 exists to make unexpressible, arriving through the one write door that does not
+             go through the derivation. Built from the shared list now, so a fifth kind is covered
+             by nothing more than being declared. */
+          .not('line_kind', 'in', `(${FUNDING_LINE_KINDS.join(',')})`);
         if (error) { failed.push({ rowNumber: row.rowNumber, name: label, error: error.message }); continue; }
         updated.push({ rowNumber: row.rowNumber, name: label });
       } else {

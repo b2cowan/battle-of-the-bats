@@ -4,7 +4,7 @@ import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } fr
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
-import { BUDGET_LINE_KINDS, isFundingKind, type BudgetLineKind } from '@/lib/coach-budget-totals';
+import { budgetLineKindForItem, isFundingKind } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { readPeriodsPayload, type PeriodPayloadRow } from '@/lib/coach-budget-periods-payload';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
@@ -79,15 +79,16 @@ export const PATCH = withObservability(async (req: Request,
     updates.notes = body.notes?.trim() || null;
   }
 
-  if ('lineKind' in body) {
-    if (!BUDGET_LINE_KINDS.includes(body.lineKind as BudgetLineKind)) {
-      return NextResponse.json({ error: 'lineKind must be one of: cost, funding, sponsorship' }, { status: 400 });
-    }
-    // Switching kind is deliberately allowed and needs no other change: the amount is positive
-    // either way and any period split still reconciles to it. A coach who filed sponsorship as a
-    // cost fixes it in the same form they made it in.
-    updates.line_kind = body.lineKind;
-  }
+  /* ⚰ `lineKind` IS NO LONGER ACCEPTED HERE (mig 280). This branch used to take the kind
+     straight from the request — "switching kind is deliberately allowed and needs no other change"
+     — which was true while the coach was ASKED for it. They are not: the form asks which way the
+     money goes, and the kind is derived from the word the line is filed against, in the item block
+     below. Re-filing a line is still one edit in the same form; it is now done by changing the
+     WORD, which is the only answer that can never contradict itself.
+     ⚠ Do not reinstate it as a fallback "for the API". A door that accepts a kind is a door that
+     accepts a kind disagreeing with its item, which is the whole defect this change closes — and
+     an edit door that skipped the rule would be the way around it (the same lesson
+     `whyIncomeIsRefused` records one screen over). */
 
   /* ⚠ THE ITEM RENAMES THE ROW, so this is no longer a link edit — it is a rename (mig 240). It
      must belong to the taxonomy THIS TEAM can see (platform, club-published, or its own), and the
@@ -106,7 +107,10 @@ export const PATCH = withObservability(async (req: Request,
        nameless cost line sitting under "Not itemized" — reachable from a stale tab or a replayed
        request, which is this route's stated threat model. The kind about to be stored is what
        matters: a request that flips the line to money-in in the same breath legitimately clears it. */
-    const kindAfter = ('lineKind' in body ? body.lineKind : existing.line_kind) as string | null;
+    /* ⚠ THE KIND THIS PATCH IS ABOUT TO STORE, not the one on the row. With an item chosen it
+       comes from that item (mig 280); with the item cleared there is nothing to derive from, so the
+       stored kind stands and this reads exactly as it did before. */
+    const kindAfter = (resolved.item ? budgetLineKindForItem(resolved.item) : existing.line_kind) as string | null;
     if (!resolved.item && !isFundingKind(kindAfter)) {
       return NextResponse.json(
         { error: 'An expense line needs a category and item — they are what name it on your plan and your report.' },
@@ -115,6 +119,13 @@ export const PATCH = withObservability(async (req: Request,
     }
     updates.item_id     = resolved.item?.id ?? null;
     updates.category_id = resolved.item?.categoryId ?? null;
+    /* ⚠⚠ THE WORD RE-FILES THE LINE (mig 280). The kind follows the item on every save, which is
+       what makes the impossible pairing unexpressible from this door as well as from the create
+       one — and what lets a coach correct a mis-filed line by changing its word rather than by
+       answering a second question about it.
+       ⚠ Left alone when the item is CLEARED: there is nothing to derive a kind from, and blanking
+       or guessing one would re-file a row nobody asked to move. */
+    if (resolved.item) updates.line_kind = budgetLineKindForItem(resolved.item);
     // The NOT NULL text column follows the item, so anything reading it raw shows something true.
     if (resolved.item && typeof body.description !== 'string') updates.description = resolved.item.name;
   }

@@ -46,6 +46,15 @@ import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
+/* ⚠⚠ A SEEDED LINE'S KIND MUST AGREE WITH ITS WORD (mig 280).
+   The add-a-line form stopped asking "is this a cost / expected fundraising / expected sponsorship /
+   expected other income?" because the answer could contradict the item picked under it — a
+   sponsorship line on a concession word takes its actual from sponsor cheques and refuses the figure
+   the coach types. Both API doors now derive the kind from the word. A SEED that hand-types one is
+   the remaining way to express that contradiction, and this fixture is what the owner walks and what
+   the rendered layout sweep self-heals with. Migration 246 made the same point about `direction` —
+   "every insert path is updated in the same unit of work". */
+import { budgetLineKindForItem } from '../lib/coach-budget-totals.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -854,6 +863,44 @@ const taxonomyFor = (desc) => {
   return { category_id: categoryId, item_id: itemFor(categoryId, want?.item) };
 };
 
+/**
+ * The kind a seeded line MUST carry, from the word it is filed against (mig 280) — and a hard stop
+ * when the hand-written intent disagrees.
+ *
+ * ⚠ IT REFUSES RATHER THAN CORRECTING. A silent correction would let the library move under this
+ * fixture and change what the owner walks without anybody noticing; a stop says which row and which
+ * word stopped agreeing. A line with no item at all (the pre-243 shape) has nothing to derive from
+ * and keeps what it was given.
+ */
+const kindCache = new Map();
+async function seededKind(label, itemId, intended) {
+  if (!itemId) return intended;
+  if (!kindCache.has(itemId)) {
+    /* ⚠ THE ERROR IS READ, NOT DISCARDED (`/review`, data lens, 2026-09-07). Dropping it meant a
+       failed lookup — including running against a database where migration 280 has not landed, so
+       the column does not exist — produced `data: null`, fell through to "keep what you were
+       given", and reported success. A guard that disarms itself precisely when the infrastructure
+       is wrong is worse than no guard: it would seed the owner's QA walk with a kind nobody
+       checked. */
+    const { data, error } = await db.from('budget_items')
+      .select('direction, actual_source').eq('id', itemId).maybeSingle();
+    if (error) {
+      console.error(`✗ could not read the word behind "${label}" to derive its line kind: ${error.message}`);
+      process.exit(1);
+    }
+    kindCache.set(itemId, data
+      ? budgetLineKindForItem({ direction: data.direction, actualSource: data.actual_source })
+      : null);
+  }
+  const derived = kindCache.get(itemId);
+  if (derived && derived !== intended) {
+    console.error(`✗ "${label}" says line_kind "${intended}" but its word derives "${derived}". `
+      + 'The library moved under this fixture, or the intent is wrong — fix one of them (mig 280).');
+    process.exit(1);
+  }
+  return derived ?? intended;
+}
+
 const { data: existingLines } = await db.from('rep_budget_lines')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id).limit(1);
 
@@ -868,6 +915,9 @@ if (!existingLines?.length) {
     { description: 'Spring classic entry', total_amount: 1600, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
     { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
   ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
+
+  // Every row's kind, re-derived from the word it names (mig 280) — see `seededKind`.
+  for (const r of lineRows) r.line_kind = await seededKind(r.description, r.item_id, r.line_kind);
 
   const ins = await db.from('rep_budget_lines').insert(lineRows).select('id, description');
   if (ins.error) { console.error('✗ budget lines insert', ins.error.message); process.exit(1); }
@@ -1164,10 +1214,12 @@ const { data: existingSecondLine } = await db.from('rep_budget_lines')
   .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
   .eq('description', SECOND_LINE_DESC).limit(1);
 if (!existingSecondLine?.length) {
+  const secondLineTaxonomy = taxonomyFor(SECOND_LINE_DESC);
   const sl = await db.from('rep_budget_lines').insert({
     org_id: org.id, team_id: team.id, program_year_id: py.id,
     description: SECOND_LINE_DESC, total_amount: 900, notes: 'Second line on the same item',
-    line_kind: 'cost', ...taxonomyFor(SECOND_LINE_DESC), sort_order: 5,
+    line_kind: await seededKind(SECOND_LINE_DESC, secondLineTaxonomy.item_id, 'cost'),
+    ...secondLineTaxonomy, sort_order: 5,
   });
   if (sl.error) console.log(`  ! second line on one item skipped (${sl.error.message})`);
   else ok('a SECOND budget line on the "Entry Fees" item — the SUM ruling, and the grid\'s line chooser');
@@ -1296,6 +1348,8 @@ for (const shape of REVAMP_SHAPES) {
     .select('id').eq('team_id', team.id).eq('program_year_id', py.id)
     .eq('description', shape.line.description).limit(1);
   if (existing?.length) { ok(`${shape.line.description} already present`); continue; }
+  // Same rule as the rows above: the word decides the kind (mig 280).
+  shape.line.line_kind = await seededKind(shape.line.description, shape.line.item_id, shape.line.line_kind);
   const ins = await db.from('rep_budget_lines').insert({
     ...shape.line, org_id: org.id, team_id: team.id, program_year_id: py.id,
   }).select('id').single();
