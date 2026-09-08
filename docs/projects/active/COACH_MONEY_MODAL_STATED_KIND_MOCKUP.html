@@ -1,0 +1,417 @@
+<title>Adjustment Band & Payback List</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  /* ── Document chrome (NOT the product) ─────────────────────────────────────────
+     Cool slate ground so the warm product frames read as specimens sitting on a desk. */
+  :root {
+    --ground: #EEF0F4;
+    --paper: #F7F8FA;
+    --ink: #1B2030;
+    --muted: #5B6474;
+    --rule: rgba(27, 32, 48, 0.14);
+    --acc: #2F4BA6;
+    --acc-soft: rgba(47, 75, 166, 0.10);
+    --amber: #7A4E00;
+    --amber-bg: #F5E6C4;
+    --grey-bg: #E1E4EA;
+    --warn: #A33A2A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14171D;
+      --paper: #1B1F27;
+      --ink: #E6E9EF;
+      --muted: #9AA3B2;
+      --rule: rgba(230, 233, 239, 0.16);
+      --acc: #8FA8F0;
+      --acc-soft: rgba(143, 168, 240, 0.14);
+      --amber: #F0C875;
+      --amber-bg: rgba(240, 200, 117, 0.16);
+      --grey-bg: rgba(154, 163, 178, 0.18);
+      --warn: #F09A8C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14171D;
+    --paper: #1B1F27;
+    --ink: #E6E9EF;
+    --muted: #9AA3B2;
+    --rule: rgba(230, 233, 239, 0.16);
+    --acc: #8FA8F0;
+    --acc-soft: rgba(143, 168, 240, 0.14);
+    --amber: #F0C875;
+    --amber-bg: rgba(240, 200, 117, 0.16);
+    --grey-bg: rgba(154, 163, 178, 0.18);
+    --warn: #F09A8C;
+  }
+
+  body { background: var(--ground); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 15px; line-height: 1.55; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 44px 28px 96px; }
+  h1, h2, h3 { font-family: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  h1 { font-size: 40px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; }
+  h2 { font-size: 26px; font-weight: 700; line-height: 1.15; }
+  h3 { font-size: 17px; font-weight: 700; }
+  p { margin: 0; max-width: 68ch; }
+  .lede { font-size: 17px; color: var(--muted); max-width: 64ch; margin-top: 14px; }
+  .eyebrow { font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--acc); }
+  .meta { font: 400 12px/1.5 "IBM Plex Mono", monospace; color: var(--muted); margin-top: 18px; }
+
+  section { margin-top: 64px; display: flex; flex-direction: column; gap: 18px; }
+  section > header { display: flex; flex-direction: column; gap: 8px; }
+  .thesis { background: var(--paper); border-left: 3px solid var(--acc); padding: 16px 20px; max-width: 76ch; }
+  .thesis p { max-width: none; }
+
+  /* Specimen rail — fixed-width frames, never reflow with the window. */
+  .rail { display: flex; gap: 28px; overflow-x: auto; padding: 4px 4px 12px; }
+  .spec { flex: 0 0 auto; width: 560px; display: flex; flex-direction: column; gap: 12px; }
+  .spec.single { width: 560px; }
+  .cap { display: flex; flex-direction: column; gap: 8px; }
+  .cap-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cap h3 { font-size: 16px; }
+  .cap p { font-size: 14px; color: var(--muted); max-width: none; }
+  .tag { font: 600 10.5px/1 "IBM Plex Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 7px; border-radius: 3px; }
+  .tag.new { background: var(--acc); color: #fff; }
+  .tag.re { background: var(--amber-bg); color: var(--amber); }
+  .tag.un { background: var(--grey-bg); color: var(--muted); }
+  .tag.no { background: transparent; color: var(--warn); border: 1px solid var(--warn); }
+  .measure { font: 600 12px/1 "IBM Plex Mono", monospace; color: var(--ink); background: var(--grey-bg); padding: 5px 7px; border-radius: 3px; }
+
+  /* Notes keyed to pins */
+  .notes { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px 28px; max-width: 1100px; }
+  .notes li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 14px; }
+  .notes li p { max-width: none; }
+  .notes b { color: var(--ink); }
+  .pin { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: var(--acc); color: #fff; font: 600 11px/20px "IBM Plex Mono", monospace; justify-content: center; align-items: center; vertical-align: middle; flex: 0 0 auto; }
+  .pin.warn { background: var(--warn); }
+  /* Pins inside a product frame float over the content so they never reflow it. */
+  .fl .pin { position: absolute; z-index: 2; box-shadow: 0 0 0 2px #fff; }
+
+  .decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; max-width: 1100px; }
+  .dec { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .dec .eyebrow { color: var(--muted); }
+  .dec h3 { font-size: 16px; }
+  .dec p { font-size: 14px; max-width: none; }
+  .dec .rec { color: var(--acc); font-weight: 600; }
+  .quiet { color: var(--muted); font-size: 14px; }
+
+  /* ── Product frames: the coach portal's WARM light modal, drawn with its real values ───────
+     paper #F8F4ED · card #FFFFFF · ink #241E15 · dim #615A54 · olive #57651E · lime #D9F99D
+     Frames are one theme on purpose — they are specimens of the warm portal, not of this page. */
+  .stage { background: #B9B4AC; padding: 20px; display: flex; justify-content: center; }
+  .fl { position: relative; width: 520px; box-sizing: border-box; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 12px; padding: 24px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #241E15; font-size: 16px; line-height: 1.6; box-shadow: 0 12px 40px rgba(36,30,21,0.22); }
+  .fl * { box-sizing: border-box; }
+  .fl-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .fl-title { font-size: 16px; font-weight: 700; margin: 0; line-height: 1.6; }
+  .fl-sub { margin: 2px 0 0; font-size: 12px; color: #615A54; line-height: 1.4; }
+  .fl-x { color: #615A54; font-size: 22px; line-height: 1; margin-top: 2px; }
+  .fl-stack { display: flex; flex-direction: column; gap: 10px; }
+  .fl-hint { margin: 0; font-size: 12px; color: #615A54; line-height: 1.4; }
+  .fl-hint b { color: #241E15; }
+  .fl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fl-grid.tight { gap: 10px; }
+  .fl-full { grid-column: 1 / -1; }
+  .fl-field { display: flex; flex-direction: column; gap: 5px; }
+  .fl-label { font-size: 12px; font-weight: 600; color: #615A54; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.6; }
+  .fl-input { background: #F8F4ED; border: 1px solid rgba(70,55,30,0.20); border-radius: 6px; padding: 8px 12px; font-size: 14px; color: #241E15; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; line-height: 1.6; }
+  .fl-input.ph { color: #8A837B; }
+  .fl-input .glyph { color: #615A54; font-size: 13px; }
+  .fl-band { display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border-radius: 7px; border: 1px solid #57651E; background: rgba(87,101,30,0.09); }
+  .fl-band-line { font-size: 14px; font-weight: 700; color: #241E15; line-height: 1.6; }
+  .fl-band-detail { font-size: 12px; color: #4A433A; line-height: 1.5; }
+  .fl-ro { margin: 0; min-height: 44px; display: flex; align-items: center; font-weight: 600; font-size: 16px; }
+  .fl-list { border: 1px solid rgba(70,55,30,0.12); border-radius: 4px; overflow: hidden; background: #FFFFFF; }
+  .fl-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 11px; min-height: 44px; border-bottom: 1px solid rgba(70,55,30,0.12); }
+  .fl-row:last-child { border-bottom: 0; }
+  .fl-row.on { background: rgba(87,101,30,0.10); }
+  .fl-cb { width: 18px; height: 18px; border: 1.5px solid #8A837B; border-radius: 3px; flex: 0 0 auto; margin-top: 3px; background: #FFFFFF; position: relative; }
+  .fl-cb.on { background: #57651E; border-color: #57651E; }
+  .fl-cb.on::after { content: ""; position: absolute; left: 5px; top: 1.5px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .fl-what { flex: 1; min-width: 0; }
+  .fl-what b { display: block; font-weight: 600; color: #241E15; }
+  .fl-what span { display: block; font-size: 12px; color: #615A54; }
+  .fl-amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; color: #241E15; }
+  .before .fl-what b, .before .fl-amt { font-size: 16px; line-height: 1.6; }
+  .after .fl-what b, .after .fl-amt { font-size: 14px; line-height: 1.5; }
+  .after .fl-row { padding: 8px 11px; align-items: center; }
+  .after .fl-cb { margin-top: 0; }
+  .fl-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 11px; margin-top: 5px; border-top: 1px solid rgba(70,55,30,0.12); font-weight: 700; font-size: 16px; }
+  .fl-total span:last-child { font-variant-numeric: tabular-nums; }
+  .after .fl-total { margin: 0; border-top: 1px solid rgba(70,55,30,0.20); background: #F8F4ED; font-size: 14px; padding: 9px 11px; }
+  .fl-cons { margin: 0; font-size: 12px; color: #615A54; line-height: 1.5; }
+  .fl-cons b { color: #241E15; }
+  .fl-foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 20px -24px -24px; padding: 16px 24px; border-top: 1px solid rgba(70,55,30,0.12); background: #FFFFFF; border-radius: 0 0 12px 12px; }
+  .fl-ghost { color: #615A54; font-size: 14px; padding: 5px 8px; }
+  .fl-primary { background: #D9F99D; color: #0A0A0A; border-radius: 6px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 30px; }
+    .wrap { padding: 28px 16px 72px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Design review · Coaches Portal · Money</div>
+  <h1 style="margin-top:12px">Adjustment Band &amp; Payback List</h1>
+  <p class="lede">Two write modals a coach opens from a family's dues record, drawn at the modal's true width of 520px. The left frame of each pair is what ships today; the right is the proposal. Pins key to the notes beneath.</p>
+  <p class="meta">Round 1 · 2026-09-08 · frames use the warm portal's own colours, type sizes and spacing · open on a laptop for true size</p>
+
+  <section>
+    <div class="thesis">
+      <p><b>Both defects have one cause.</b> Two pieces of text were placed inside these modals without a size from the portal's type ladder, so each inherited the browser's default 16px. The stated kind in <i>Add a credit</i> and the debt titles in <i>We paid a family back</i> are the only two things in either form that do not sit on the ladder, which is why they read as headings beside 14px inputs. The fix is the same in both places: put the text on the ladder, and give it the room the form already has.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════ SPECIMEN · ADD A CREDIT ══════════════════════════════════ -->
+  <section>
+    <header>
+      <div class="eyebrow">Specimen · Add a credit</div>
+      <h2>The kind becomes a stated band, and it moves to the top</h2>
+      <p class="quiet">Opened from the "Add a credit" button on a family's dues record. Only one kind can be typed by hand now, so the picker is gone and what remains is a statement. Today it is a bare word; the proposal gives it the band the Record money form already uses when a door has answered the first question.</p>
+    </header>
+
+    <div class="rail">
+      <!-- BEFORE -->
+      <div class="spec">
+        <div class="stage"><div class="fl before">
+          <div class="fl-head"><div><h3 class="fl-title">Add a credit</h3><p class="fl-sub">Avery Test</p></div><span class="fl-x">×</span></div>
+          <div class="fl-stack">
+            <p class="fl-hint">* Required</p>
+            <div class="fl-grid tight">
+              <div class="fl-field"><span class="fl-label">Amount *</span><div class="fl-input ph">e.g. 300</div></div>
+              <div class="fl-field"><span class="fl-label">Date *</span><div class="fl-input"><span>2026-09-08</span><span class="glyph">▦</span></div></div>
+            </div>
+            <div class="fl-field"><span class="fl-label">Description *</span><div class="fl-input">adfasf</div></div>
+            <div class="fl-grid tight">
+              <div>
+                <span class="fl-label">Type</span>
+                <p class="fl-ro">Adjustment <span class="pin" style="position:static;margin-left:8px">A</span></p>
+                <p class="fl-hint">Money that <b>arrived</b> is recorded where it arrived — a fundraiser share on the drive, someone paying toward a family's dues as a payment, a bill a family paid on the expense. An adjustment is the one credit with no money behind it, so it counts as no revenue. <span class="pin" style="position:static;margin-left:4px">C</span></p>
+              </div>
+              <div class="fl-field"><span class="fl-label">Notes</span><div class="fl-input ph">Optional notes</div></div>
+            </div>
+          </div>
+          <span class="pin" style="left:-10px;top:196px">B</span>
+          <div class="fl-foot"><span class="fl-ghost">Cancel</span><span class="fl-primary">Save credit</span></div>
+        </div></div>
+        <div class="cap">
+          <div class="cap-row"><h3>Today</h3><span class="tag un">As shipped</span><span class="measure">kind 16px · inputs 14px</span></div>
+          <p>Drawn from the screenshot: amount empty, a throwaway description, the explainer running five lines down one column.</p>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="spec">
+        <div class="stage"><div class="fl after">
+          <div class="fl-head"><div><h3 class="fl-title">Add a credit</h3><p class="fl-sub">Avery Test</p></div><span class="fl-x">×</span></div>
+          <div class="fl-stack">
+            <div class="fl-band">
+              <span class="fl-band-line">Adjustment</span>
+              <span class="fl-band-detail">A credit with no money behind it — it counts as no revenue.</span>
+            </div>
+            <span class="pin" style="right:-10px;top:78px">D</span>
+            <p class="fl-hint">Money that <b>arrived</b> is recorded where it arrived — a fundraiser share on the drive, a payment toward a family's dues, a bill a family paid on the expense.</p>
+            <span class="pin" style="right:-10px;top:142px">E</span>
+            <p class="fl-hint">* Required</p>
+            <div class="fl-grid tight">
+              <div class="fl-field"><span class="fl-label">Amount *</span><div class="fl-input">25.00</div></div>
+              <div class="fl-field"><span class="fl-label">Date *</span><div class="fl-input"><span>2026-09-08</span><span class="glyph">▦</span></div></div>
+            </div>
+            <div class="fl-field"><span class="fl-label">Description *</span><div class="fl-input">Late fee waived</div></div>
+            <div class="fl-field"><span class="fl-label">Notes</span><div class="fl-input ph">Optional notes</div></div>
+            <span class="pin" style="right:-10px;top:378px">F</span>
+            <p class="fl-cons"><b>When you save:</b> nothing changes hands — Avery's family owes $25.00 less, taken off their next payment first.</p>
+          </div>
+          <div class="fl-foot"><span class="fl-ghost">Cancel</span><span class="fl-primary">Save credit</span></div>
+        </div></div>
+        <div class="cap">
+          <div class="cap-row"><h3>Proposed</h3><span class="tag re">Restyled</span><span class="measure">kind 14px · on the ladder</span></div>
+          <p>Drawn with an amount typed so the saving line shows its place. The band reads the credit's own kind when an older credit is edited — Overpayment, Forgiven, Reimbursement — exactly as the Type word does today.</p>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><span class="pin">A</span><p><b>The word is off the ladder.</b> "Adjustment" never took a type size, so it inherited 16px semibold and sits taller than the inputs either side of it. It reads as a section heading, not a value.</p></li>
+      <li><span class="pin">B</span><p><b>The kind comes after the amount it frames.</b> Type is the last question on the form, but it is the one fact that decides what the amount means. A coach types a figure and only then learns that no money is behind it.</p></li>
+      <li><span class="pin">C</span><p><b>The explainer lengthens one column.</b> Five lines under Type against a one-line Notes field opposite, so the row's two halves end at different heights and the form looks unfinished.</p></li>
+      <li><span class="pin">D</span><p><b>The stated band, in the position Record money gives it.</b> Same olive edge, same two-line shape, no TYPE label above it because the band names itself. A coach who has recorded money already knows this band means "the question is answered".</p></li>
+      <li><span class="pin">E</span><p><b>The teaching sentence drops to one quiet line, full width.</b> It exists for the coach who opened the wrong door, so it points at the three other doors and nothing more. The definition of an adjustment moved up into the band's second line.</p></li>
+      <li><span class="pin">F</span><p><b>Notes takes the whole row.</b> With Type gone from the grid, Notes no longer has a partner; a lone half-width field beside empty space would be the same imbalance from the other side.</p></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════ ALTERNATIVE · BAND IN PLACE ══════════════════════════ -->
+  <section>
+    <header>
+      <div class="eyebrow">Alternative considered · not recommended</div>
+      <h2>The band where the Type word sits today</h2>
+      <p class="quiet">The smallest possible change: keep the grid, swap the bare word for the band. Drawn so the two positions can be judged side by side rather than argued.</p>
+    </header>
+    <div class="rail">
+      <div class="spec">
+        <div class="stage"><div class="fl after">
+          <div class="fl-head"><div><h3 class="fl-title">Add a credit</h3><p class="fl-sub">Avery Test</p></div><span class="fl-x">×</span></div>
+          <div class="fl-stack">
+            <p class="fl-hint">* Required</p>
+            <div class="fl-grid tight">
+              <div class="fl-field"><span class="fl-label">Amount *</span><div class="fl-input">25.00</div></div>
+              <div class="fl-field"><span class="fl-label">Date *</span><div class="fl-input"><span>2026-09-08</span><span class="glyph">▦</span></div></div>
+            </div>
+            <div class="fl-field"><span class="fl-label">Description *</span><div class="fl-input">Late fee waived</div></div>
+            <div class="fl-grid tight">
+              <div class="fl-field">
+                <span class="fl-label">Type</span>
+                <div class="fl-band">
+                  <span class="fl-band-line">Adjustment</span>
+                  <span class="fl-band-detail">A credit with no money behind it — it counts as no revenue.</span>
+                </div>
+                <p class="fl-hint">Money that <b>arrived</b> is recorded where it arrived — a fundraiser share on the drive, a payment toward a family's dues, a bill a family paid on the expense.</p>
+              </div>
+              <div class="fl-field"><span class="fl-label">Notes</span><div class="fl-input ph">Optional notes</div></div>
+            </div>
+            <span class="pin warn" style="right:-10px;top:306px">G</span>
+            <p class="fl-cons"><b>When you save:</b> nothing changes hands — Avery's family owes $25.00 less, taken off their next payment first.</p>
+          </div>
+          <div class="fl-foot"><span class="fl-ghost">Cancel</span><span class="fl-primary">Save credit</span></div>
+        </div></div>
+        <div class="cap">
+          <div class="cap-row"><h3>Band in place</h3><span class="tag no">Not recommended</span></div>
+          <p>The band looks right on its own and wrong in the row.</p>
+        </div>
+      </div>
+      <div class="spec" style="width:420px">
+        <ul class="notes" style="grid-template-columns:1fr">
+          <li><span class="pin warn">G</span><p><b>A band beside an input reads as a second input.</b> Its olive edge is the same height as the Notes box next to it, so the eye pairs them as two fields and the band loses the "answered" meaning it carries when it stands alone at the top. The explainer still lengthens the left column, so finding C survives. Everything in Record money that is stated sits above everything that is asked; this form should follow that order rather than invent a second one.</p></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ SPECIMEN · WE PAID A FAMILY BACK ═══════════════════════ -->
+  <section>
+    <header>
+      <div class="eyebrow">Specimen · Record money · We paid a family back</div>
+      <h2>The debt list takes the whole row, and its type comes down a size</h2>
+      <p class="quiet">Opened from the same family's record with the "Record" button, which locks the form to that family. The coach ticks the debts one payment settles; the sum is worked out for them. The list field never claimed the full row, so the grid gave half of it to the date.</p>
+    </header>
+
+    <div class="rail">
+      <!-- BEFORE -->
+      <div class="spec">
+        <div class="stage"><div class="fl before">
+          <div class="fl-head"><div><h3 class="fl-title">Record money</h3><p class="fl-sub">We paid a family back</p></div><span class="fl-x">×</span></div>
+          <div class="fl-grid">
+            <div class="fl-full fl-band">
+              <span class="fl-band-line">We paid a family back — Avery Test</span>
+              <span class="fl-band-detail">Holding $1,145.15 of their money · opened from their record</span>
+            </div>
+            <div class="fl-field">
+              <span class="fl-label">What are you paying back? *</span>
+              <div class="fl-list">
+                <div class="fl-row"><span class="fl-cb"></span><span class="fl-what"><b>test</b><span>Adjustment · Sep 8, 2026</span></span><span class="fl-amt">$17.00</span></div>
+                <div class="fl-row"><span class="fl-cb"></span><span class="fl-what"><b>Overpayment (dues changed)</b><span>They sent more than billed · Sep 1, 2026</span></span><span class="fl-amt">$550.00</span></div>
+                <div class="fl-row"><span class="fl-cb"></span><span class="fl-what"><b>Fundraiser credit — Chocolate sale</b><span>Fundraising share · Aug 31, 2026</span></span><span class="fl-amt">$72.90</span></div>
+              </div>
+              <div class="fl-total"><span>Paying back</span><span>$0.00</span></div>
+              <p class="fl-hint">Whole debts only. Tick as many as one payment covers.</p>
+            </div>
+            <div class="fl-field"><span class="fl-label">Date paid *</span><div class="fl-input"><span>2026-09-08</span><span class="glyph">▦</span></div></div>
+            <div class="fl-field"><span class="fl-label">How</span><div class="fl-input"><span>E-transfer</span><span class="glyph">▾</span></div></div>
+            <div class="fl-field fl-full"><span class="fl-label">Note</span><div class="fl-input ph">Optional</div></div>
+          </div>
+          <span class="pin" style="left:-10px;top:150px">A</span>
+          <span class="pin" style="left:222px;top:262px">B</span>
+          <span class="pin" style="right:-10px;top:150px">C</span>
+          <div class="fl-foot"><span class="fl-ghost">Cancel</span><span class="fl-primary">Save</span></div>
+        </div></div>
+        <div class="cap">
+          <div class="cap-row"><h3>Today</h3><span class="tag un">As shipped</span><span class="measure">list 229px of 472px · titles 16px</span></div>
+          <p>Drawn at full height; in the product this scrolls inside the modal, and the "Paying back" total, How and Note all sit below the fold.</p>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="spec">
+        <div class="stage"><div class="fl after">
+          <div class="fl-head"><div><h3 class="fl-title">Record money</h3><p class="fl-sub">We paid a family back</p></div><span class="fl-x">×</span></div>
+          <div class="fl-grid">
+            <div class="fl-full fl-band">
+              <span class="fl-band-line">We paid a family back — Avery Test</span>
+              <span class="fl-band-detail">Holding $1,145.15 of their money · opened from their record</span>
+            </div>
+            <div class="fl-field fl-full">
+              <span class="fl-label">What are you paying back? *</span>
+              <div class="fl-list">
+                <div class="fl-row"><span class="fl-cb"></span><span class="fl-what"><b>test</b><span>Adjustment · Sep 8, 2026</span></span><span class="fl-amt">$17.00</span></div>
+                <div class="fl-row on"><span class="fl-cb on"></span><span class="fl-what"><b>Overpayment (dues changed)</b><span>They sent more than billed · Sep 1, 2026</span></span><span class="fl-amt">$550.00</span></div>
+                <div class="fl-row"><span class="fl-cb"></span><span class="fl-what"><b>Fundraiser credit — Chocolate sale</b><span>Fundraising share · Aug 31, 2026</span></span><span class="fl-amt">$72.90</span></div>
+                <div class="fl-total"><span>Paying back</span><span>$550.00</span></div>
+              </div>
+              <p class="fl-hint">Whole debts only. Tick as many as one payment covers.</p>
+            </div>
+            <div class="fl-field"><span class="fl-label">Date paid *</span><div class="fl-input"><span>2026-09-08</span><span class="glyph">▦</span></div></div>
+            <div class="fl-field"><span class="fl-label">How</span><div class="fl-input"><span>E-transfer</span><span class="glyph">▾</span></div></div>
+            <div class="fl-field fl-full"><span class="fl-label">Note</span><div class="fl-input ph">Optional</div></div>
+            <p class="fl-cons fl-full"><b>$550.00 leaves cash on hand</b> · the credit the team holds for Avery Test's family drops to $595.15.</p>
+          </div>
+          <span class="pin" style="right:-10px;top:150px">D</span>
+          <span class="pin" style="right:-10px;top:214px">E</span>
+          <span class="pin" style="right:-10px;top:322px">F</span>
+          <span class="pin" style="right:-10px;top:400px">G</span>
+          <div class="fl-foot"><span class="fl-ghost">Cancel</span><span class="fl-primary">Save</span></div>
+        </div></div>
+        <div class="cap">
+          <div class="cap-row"><h3>Proposed</h3><span class="tag re">Restyled</span><span class="measure">list 472px · titles 14px · rows keep the 44px floor</span></div>
+          <p>Drawn with one debt ticked so the total and the saving line have something to say. The band, the date, the method, the note and the buttons are unchanged.</p>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><span class="pin">A</span><p><b>The list has half the room.</b> It sits in one column of a two-column grid, 229px of the 472px the form has, so every title wraps and three debts run to nine lines.</p></li>
+      <li><span class="pin">B</span><p><b>The titles are off the ladder.</b> Same cause as the credit modal: 16px bold, inherited, taller than the 14px value in every input around it. The amounts are the same size, so the column reads loud twice.</p></li>
+      <li><span class="pin">C</span><p><b>The date is alone in the other column</b> with dead space under it the height of the whole list, and the How field lands beneath the list on the left instead of beside its partner.</p></li>
+      <li><span class="pin">D</span><p><b>One row per debt, full width.</b> Title on the left, amount flush right in tabular figures, checkbox and text on one centre line. Nothing wraps, so the row's 44px floor is the row's real height.</p></li>
+      <li><span class="pin">E</span><p><b>Title 14px, kind and date 12px, amount 14px.</b> The three sizes the form already uses for a value, a caption and a figure. A ticked row keeps its olive tint.</p></li>
+      <li><span class="pin">F</span><p><b>"Paying back" becomes the list's own footer row.</b> Today it hangs beneath the box as a separate bordered line; inside the box, on the paper ground, it reads as the sum of what is above it, the way a table's total does.</p></li>
+      <li><span class="pin">G</span><p><b>Date paid and How share a row.</b> They are the two short answers on this form and the grid was built for exactly this pairing. Note stays full width beneath, and the saving line keeps its place above the buttons.</p></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════ DECISIONS ═══════════════════════════════ -->
+  <section>
+    <header>
+      <div class="eyebrow">For the owner</div>
+      <h2>Three calls, recommendation first</h2>
+    </header>
+    <div class="decisions">
+      <div class="dec">
+        <span class="eyebrow">D1 · Add a credit</span>
+        <h3>Where the band sits</h3>
+        <p class="rec">Recommended: at the top of the form, above every field, with no TYPE label.</p>
+        <p>That is where Record money places its stated band and what a coach already reads it as. The alternative, the band in the Type slot beside Notes, is drawn above; it keeps the grid but makes the band read as a second input.</p>
+      </div>
+      <div class="dec">
+        <span class="eyebrow">D2 · Add a credit</span>
+        <h3>The teaching sentence</h3>
+        <p class="rec">Recommended: keep it, one quiet line under the band, full width.</p>
+        <p>It exists only for the coach who opened this door meaning another one, so it names the three other doors and stops. The definition of an adjustment moves up into the band's second line. Cutting the sentence entirely is a fair call too; the band would still say what this credit is.</p>
+      </div>
+      <div class="dec">
+        <span class="eyebrow">D3 · We paid a family back</span>
+        <h3>The "Paying back" total</h3>
+        <p class="rec">Recommended: fold it into the list as its footer row.</p>
+        <p>A total under a list of amounts reads as their sum when it shares their box and their right edge. Keeping it as the separate line it is today is the smaller change and loses nothing else in this proposal.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <div class="eyebrow">What this does not change</div>
+      <h2>Phones, and the rest of both forms</h2>
+    </header>
+    <p class="quiet" style="max-width:76ch">On a phone both modals already run one column, so the debt list has always had the full width there; the half-width defect is a desktop-only shape, which is the reverse of the usual miss and part of why no sweep caught it. The stated band's phone shape is the Record money band's phone shape, already in the product. Inputs, dates, the method dropdown, the footer buttons, the dismiss guard and every sentence the forms speak are unchanged.</p>
+  </section>
+</div>

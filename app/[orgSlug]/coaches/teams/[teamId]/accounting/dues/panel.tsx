@@ -116,7 +116,7 @@ import { moneySectionHref } from '@/lib/coach-money-links';
 import { overpaymentExcess, type InstallmentCoverage, type DuesLadder } from '@/lib/dues-payments';
 import {
   creditsTotal, amountsTotal, normalizeCreditApplicationMode, CREDIT_MODE_SENTENCES, MANUAL_CREDIT_TYPES,
-  CREDIT_TYPE_LABELS,
+  CREDIT_TYPE_LABELS, creditKindSentence,
   type CreditApplicationMode,
 } from '@/lib/dues-credits';
 import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-accounting-settings';
@@ -4434,6 +4434,44 @@ export function PlayerDuesPanel({
           busy={creditSaving}
         >
           <form onSubmit={e => { e.preventDefault(); void saveCredit(); }}>
+            {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7, 2026-09-07). With
+                contributions recorded as PAYMENTS and fundraiser shares coming from the DRIVE,
+                one kind is left that a coach may type — and a select with one option is a
+                control that cannot be operated. What remains is a statement of what this
+                credit is.
+
+                ⚠ IT IS THE SAME STATED BAND RECORD MONEY WEARS WHEN A DOOR HAS ANSWERED ITS
+                FIRST QUESTION, AND IT SITS WHERE THAT ONE SITS — ABOVE EVERY FIELD (owner, design
+                review 2026-09-08, mockup `COACH_MONEY_MODAL_STATED_KIND_MOCKUP.html`). The first
+                cut printed the kind as a bare word in the Type slot beside Notes, in the
+                browser's 16px because it took no ladder token, and AFTER the amount it frames.
+                A coach who has recorded money already reads this band as "answered"; a band
+                beside an input reads as a second input, which is why it is not in the grid.
+
+                ⚠ AN EXISTING CREDIT OF A RETIRED KIND STILL SAYS ITS OWN NAME. A forgiveness,
+                a reimbursement, an overpayment — and now a contribution or a fundraiser
+                share — opens for a note correction reading what it actually is, never
+                relabelled. The type was already fixed once set (it is PROVENANCE, and the
+                server ignores it on a correction), so nothing is lost by showing it as text.
+                Its second line is the kind's own sentence from the Pay-out tick-list; the
+                adjustment's is the one fact that separates it from every other kind. */}
+            <div className={styles.convLockBand} style={{ marginBottom: '0.6rem' }}>
+              <span className={styles.convLockLine}>{CREDIT_TYPE_LABELS[creditForm.creditType]}</span>
+              <span className={styles.convLockDetail}>
+                {creditForm.creditType === 'other'
+                  ? 'A credit with no money behind it — it counts as no revenue.'
+                  : creditKindSentence(creditForm.creditType)}
+              </span>
+            </div>
+            {/* One quiet line for the coach who opened this door meaning another one: it names
+                the three other doors and stops. The definition moved up into the band. */}
+            {!editingCreditId && (
+              <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
+                Money that <strong>arrived</strong> is recorded where it arrived — a fundraiser
+                share on the drive, a payment toward a family&apos;s dues, a bill a family paid
+                on the expense.
+              </p>
+            )}
             <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
               * Required
             </p>
@@ -4472,43 +4510,17 @@ export function PlayerDuesPanel({
                 onChange={e => setCreditForm(f => ({ ...f, description: e.target.value }))}
               />
             </div>
-            <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
-              <div>
-                <label className={styles.label}>Type</label>
-                {/* ⚠⚠ THE PICKER IS GONE, NOT SHRUNK (owner rulings R6/R7, 2026-09-07). With
-                    contributions recorded as PAYMENTS and fundraiser shares coming from the DRIVE,
-                    one kind is left that a coach may type — and a select with one option is a
-                    control that cannot be operated. What remains is a statement of what this
-                    credit is.
-
-                    ⚠ AN EXISTING CREDIT OF A RETIRED KIND STILL SAYS ITS OWN NAME. A forgiveness,
-                    a reimbursement, an overpayment — and now a contribution or a fundraiser
-                    share — opens for a note correction reading what it actually is, never
-                    relabelled. The type was already fixed once set (it is PROVENANCE, and the
-                    server ignores it on a correction), so nothing is lost by showing it as text. */}
-                <p className={styles.readonlyValue}>
-                  {CREDIT_TYPE_LABELS[creditForm.creditType]}
-                </p>
-                {!editingCreditId && (
-                  <p className={styles.formHint}>
-                    Money that <strong>arrived</strong> is recorded where it arrived —
-                    a fundraiser share on the drive, someone paying toward a family&apos;s
-                    dues as a payment, a bill a family paid on the expense. An
-                    adjustment is the one credit with no money behind it, so it counts
-                    as no revenue.
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className={styles.label} htmlFor="credit-notes">Notes</label>
-                <input
-                  id="credit-notes"
-                  className={styles.input}
-                  placeholder="Optional notes"
-                  value={creditForm.notes}
-                  onChange={e => setCreditForm(f => ({ ...f, notes: e.target.value }))}
-                />
-              </div>
+            {/* Notes takes the whole row: with Type gone from the grid it has no partner, and a
+                lone half-width field beside empty space is the old imbalance from the other side. */}
+            <div style={{ marginBottom: '0.6rem' }}>
+              <label className={styles.label} htmlFor="credit-notes">Notes</label>
+              <input
+                id="credit-notes"
+                className={styles.input}
+                placeholder="Optional notes"
+                value={creditForm.notes}
+                onChange={e => setCreditForm(f => ({ ...f, notes: e.target.value }))}
+              />
             </div>
             {/* The landing sentence (owner Q4, QA §123 Phase E) — what saving does, quoting the
                 team's own credits-reduce setting. No sums of its own: the amount is the coach's,

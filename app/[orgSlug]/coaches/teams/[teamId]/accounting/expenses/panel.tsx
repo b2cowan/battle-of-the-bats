@@ -5155,7 +5155,12 @@ function MoneyRecordsPanel({
               a fact they asserted. It also removes a guard: a coach can no longer hand back more
               than a family is owed, because there is nothing left to type. */}
           {sel && (
-            <div className={styles.field}>
+            /* ⚠ THE WHOLE ROW (design review 2026-09-08). Without `formGridFull` this field took ONE
+               column of the two-column grid — 229px of the 472px the form has — and the date sat
+               alone opposite it with dead space the height of the list; every title wrapped and three
+               debts ran to nine lines. On a phone the grid is already one column, so the defect was
+               desktop-only, the reverse of the usual miss. */
+            <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>What are you paying back? *</label>
               {sel.debts.length === 0 ? (
                 /* The family-level ceiling says they are owed something, but no single credit is
@@ -5190,10 +5195,12 @@ function MoneyRecordsPanel({
                         </label>
                       );
                     })}
-                  </div>
-                  <div className={styles.debtTotal}>
-                    <span>Paying back</span>
-                    <span>{fmt(payoutTotal)}</span>
+                    {/* The list's own footer row — a total under a column of amounts reads as their
+                        sum when it shares their box and their right edge. */}
+                    <div className={styles.debtTotal}>
+                      <span>Paying back</span>
+                      <span>{fmt(payoutTotal)}</span>
+                    </div>
                   </div>
                   <p className={styles.formHint}>
                     Whole debts only. Tick as many as one payment covers.

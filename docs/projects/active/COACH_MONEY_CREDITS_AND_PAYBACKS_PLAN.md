@@ -307,6 +307,18 @@ and the door were approved on the build mockup and shipped together.
 contribution becomes a payment), and R7 (a fundraiser credit may not be typed by hand, and `other`
 becomes **Adjustment** — a sweep across every surface a customer reads it on, not a one-line change).
 
+## 6e. ✅ BUILT 2026-09-08 — the two modals' shape (design review; owner: "i agree with your mockups, go ahead and build")
+
+Mockup `COACH_MONEY_MODAL_STATED_KIND_MOCKUP.html` (artifact
+https://claude.ai/code/artifact/4fe1a703-5661-4cc8-9111-5b847367bf44). **Add a credit:** the kind is
+the stated band Record money wears under a locked door, at the top of the form with no label; its
+second line is the kind's sentence; the hint that points at the three other doors is one quiet line
+beneath; Notes takes the whole row. **We paid a family back:** the tick-list takes the full row (it
+had 229px of 472px, Date paid alone opposite), titles and amounts sit on the ladder at `--type-body`,
+and "Paying back" is the list's own footer row; Date paid and How pair on one row. Both defects had
+one cause — text placed in a modal with no type token inherited the browser's 16px. Logged in
+`memory/design_decisions.md` 2026-09-08. Uses the shared band classes; `.readonlyValue` is retired.
+
 ## 7. Gates
 
 - **Twelve of twelve** — each family's variance equals their dues Balance, asserted in a unit test

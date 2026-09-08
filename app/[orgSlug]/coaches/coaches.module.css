@@ -4414,7 +4414,16 @@ a.oneChip:hover { border-color: currentColor; }
    lands exactly on the clip line at max scroll, which reads as "tucked under the action bar" even
    though the footer is static and nothing overlaps — and it shaves the focus ring off the last
    input. A scroll container needs a visible end, not just a reachable one. */
-.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
+/* ⚠ THE SCROLLBAR SITS ON THE MODAL'S EDGE, NOT INSIDE ITS PADDING (owner, 2026-09-08: "the
+   scroll bar isn't pinned to the right like the drawer behind it, I like the version behind").
+   The scroll box is the body, which lives INSIDE the modal's 1.5rem padding, so its bar drew a
+   24px inset stripe while the drawer behind it ran its bar down its own edge. Each scrolling body
+   below bleeds through that padding and hands it back as its own, so every child lines up exactly
+   where it did and the bar reaches the border. Side effect worth having: the padding now sits
+   INSIDE the scroll box, so a control flush with either edge keeps its focus ring — the room's
+   `.body` learned the same lesson with 4px (§135). ⚠ The pair is load-bearing: delete the margin
+   and the body shifts 1.5rem inward; delete the padding and the fields touch the bar. */
+.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
 /* ⚠⚠ A READING BODY IS A BODY TOO — the third time this primitive has been extended for a shape
    that is not `.formGrid`, and the first where the casualty was a RECORD rather than a field.
    The bill drawer's body is `.payDrawer`, so it matched none of the rules above: the modal kept
@@ -4438,7 +4447,10 @@ a.oneChip:hover { border-color: currentColor; }
    Naming shapes one at a time is exactly what let it. If a FIFTH appears, generalise this selector
    instead of adding to the list. */
 .modalScrollBody > .payDrawer,
-.modalScrollBody > .ppDrillWrite { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
+.modalScrollBody > .ppDrillWrite { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
+/* The drill editor carries 0.9rem of its own inset; the bleed hands back the modal’s 1.5rem on top
+   of it, so its rows sit exactly where they did before the bar moved to the edge. */
+.modalScrollBody > .ppDrillWrite { padding-inline: 2.4rem; }
 .modalScrollBody > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 /* ⚠ A MODAL MAY KEEP ITS <form>, and until 2026-08-15 this primitive silently did not cover that
    shape. The rules above are direct-child selectors, so a modal whose fields sit inside a
@@ -4459,7 +4471,7 @@ a.oneChip:hover { border-color: currentColor; }
    scroll belongs to `.formGrid` below, never to this wrapper; `min-height: 0` is what lets it
    shrink so that scroll actually engages. */
 .modalScrollBody > form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
-.modalScrollBody > form > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; }
+.modalScrollBody > form > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
 
 /* ⚠ NO FADE CUE HERE, AND THAT WAS A DELIBERATE REVERSAL. A mask fading the scroller's last few
    pixels was added to make a clipped field read as "more below" rather than as damage — then
@@ -11020,7 +11032,7 @@ button.gdChip[aria-pressed='true'] {
    and scrolls exactly one child — that child is named here, the way `.formGrid` is named for the
    forms. Without it the whole panel scrolls and the footer rides over the table, which is what
    the first cut shipped. */
-.modalScrollBody > .settlementScroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.modalScrollBody > .settlementScroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; margin-inline: -1.5rem; padding-inline: 1.5rem; }
 
 /* ⚠ STACKED, NOT SIDE BY SIDE — and this is arithmetic, not taste. The approved mockup put the
    money summary beside the payout table, and its table was narrower than the real one. Measured
@@ -12966,48 +12978,50 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 }
 .debtRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.6rem;
-  padding: 0.6rem 0.7rem;
+  padding: 0.5rem 0.7rem;
   min-height: 44px;
   border-bottom: 1px solid var(--border-subtle);
   cursor: pointer;
 }
-.debtRow:last-child { border-bottom: 0; }
+/* The rows are <label>s and the footer beneath them is a <div>: the last ROW drops its rule and the
+   footer draws its own, so there is one line between them and never two. */
+.debtRow:last-of-type { border-bottom: 0; }
 .debtRowOn { background: var(--bg-inset); }
-.debtRow input { margin-top: 0.2rem; flex: 0 0 auto; width: 18px; height: 18px; }
+.debtRow input { flex: 0 0 auto; width: 18px; height: 18px; }
 .debtWhat { flex: 1; min-width: 0; }
-.debtWhat b { display: block; font-weight: 600; color: var(--text-primary); }
+/* ⚠ ON THE LADDER (design review 2026-09-08). The title and the amount took no type token in the
+   first cut and inherited the browser's 16px — the only text in the form off the ladder, and it read
+   as a heading beside 14px inputs. A value is `--type-body`; the caption under it stays support. */
+.debtWhat b { display: block; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 /* The kind and the date — what a description alone does not say three months later. */
 .debtWhat span { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .debtAmt {
+  font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;
   color: var(--text-primary);
 }
-/* The sum of what is ticked — a PREVIEW of what the server will compute, never an input. */
+/* The sum of what is ticked — a PREVIEW of what the server will compute, never an input. It is the
+   list's own FOOTER ROW (design review 2026-09-08): a total under a column of amounts reads as their
+   sum when it shares their box and their right edge; hanging beneath the box as a separate bordered
+   line, it read as one more field. */
 .debtTotal {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 0.6rem 0.7rem;
-  margin-top: 0.35rem;
+  padding: 0.55rem 0.7rem;
   border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-size: var(--type-body);
   font-weight: 700;
   color: var(--text-primary);
 }
 .debtTotal span:last-child { font-variant-numeric: tabular-nums; }
 
-/* A field whose value is STATED rather than chosen (owner rulings R6/R7, 2026-09-07 — the credit
-   form's Type). A select with one option is a control that cannot be operated, and a disabled
-   select still reads as something the coach failed to earn. This reads as a fact.
-   ⚠ It sits where the input would, so it takes the input's vertical rhythm — not its border. */
-.readonlyValue {
-  margin: 0;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  color: var(--text-primary);
-}
+/* ⚖ `.readonlyValue` IS GONE (design review 2026-09-08). It printed the credit form's one-answer
+   Type as a bare 16px word in the Type slot. A field whose kind question has exactly one answer is
+   STATED in `.convLockBand` at the top of the form, the way Record money states an answered door —
+   do not rebuild a read-only value style for the next one-answer field. */
