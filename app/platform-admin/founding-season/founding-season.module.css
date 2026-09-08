@@ -1,0 +1,293 @@
+/* The Founding Season desk.
+ *
+ * ⚠ THE CONSOLE'S TABLE BASELINE OWNS THE TABLE (app-wide table standard, owner-approved
+ * 2026-09-06; register K-10 / F-05 / F-06). The global `th`/`td` rules in app/globals.css set the
+ * heading type, ink, case, hairline and compact density; `.shell table` sets the console's data
+ * face. Nothing here restates any of that — this file holds only what is specific to this desk.
+ *
+ * ⚠ K-18 applies to every control below: the admin shell keeps its own 38px control height inside a
+ * table at touch widths rather than the standard's 44px `--tap-min` (owner A-08, 2026-09-07). The
+ * WIDTH rule is NOT excepted — an icon-only control still clears `--tap-min` sideways, and there
+ * are none here.
+ *
+ * The phone shape comes from the global `.table-cards` recipe on the wrapper: nine columns is a
+ * record you read, not two figures you compare, so the list becomes cards and the headings become
+ * labels. No platform-admin screen is in the layout sweep, so that shape is measured by hand.
+ */
+
+.page { max-width: 1600px; }
+
+.header {
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.title {
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--fl-text);
+  margin: 0;
+}
+
+.count {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  margin-left: auto;
+}
+
+/* ── The four figures the desk exists to give ──────────────────────────────── */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.metric {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  background: rgba(255, 255, 255, 0.025);
+  padding: 0.85rem;
+}
+
+.metricHighlight {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.metricHighlight strong { color: var(--logic-lime); }
+
+/* Amber means "somebody still has to do something about this" — the standard's rule that status
+   colour appears only where the news is genuinely actionable. */
+.metricWarn {
+  border-color: rgba(251, 191, 36, 0.38);
+  background: rgba(251, 191, 36, 0.055);
+}
+
+.metricWarn strong { color: var(--warning); }
+
+.metricLabel {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  margin-bottom: 0.45rem;
+}
+
+.metric strong {
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.metricSub {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+  margin-left: 0.45rem;
+}
+
+/* ── Toolbar: filters left, export pinned right (table standard §3.9) ──────── */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 1.25rem 0;
+}
+
+.filterInput {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.4rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--white-10);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+}
+
+.filterInput::placeholder { color: var(--data-gray); }
+
+.filterSelect {
+  padding: 0.4rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--white-10);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+}
+
+.filterBtn {
+  padding: 0.4rem 0.9rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* A pressed filter is filled, not merely brighter — the state has to survive a glance. */
+.filterBtnOn {
+  background: var(--logic-lime);
+  border-color: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.filterClear {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── The table ─────────────────────────────────────────────────────────────── */
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--white-10);
+}
+
+.table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.table th { white-space: nowrap; }
+.table td { vertical-align: middle; white-space: nowrap; }
+
+/* The account's name is the link — never a row-level click (table standard §3.6). */
+.acct {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.acctLink {
+  color: var(--fl-text);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.acctLink:hover,
+.acctLink:focus-visible {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+
+.acctSlug {
+  font-size: 0.65rem;
+  color: var(--data-gray);
+}
+
+.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stacked b { font-weight: 400; }
+.stacked span { font-size: 0.65rem; color: var(--data-gray); }
+
+.dim { color: var(--data-gray); font-size: 0.75rem; }
+.dash { color: var(--data-gray); }
+.yes { color: var(--logic-lime); }
+
+.chip {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid;
+  border-radius: 2px;
+}
+
+.chipOrg { color: var(--data-gray); border-color: rgba(148, 163, 184, 0.4); }
+.chipCoach { color: var(--blueprint-blue); border-color: rgba(var(--blueprint-blue-rgb), 0.45); }
+
+/* The backfill has not reached this row. Amber because somebody may want to act on it — it is the
+   one state on this desk that is about OUR data rather than the customer's behaviour. */
+.chipLegacy {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  border-radius: 2px;
+  color: var(--warning);
+}
+
+.footnote {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  margin-top: 0.75rem;
+  line-height: 1.6;
+}
+
+/* ⚠ THE TOUCH BAND IS 641–768 TOO (register K-12), so the control floor is set at 768, not 640.
+   38px, not the standard's 44px `--tap-min`: the admin shell and platform console keep their own
+   control height inside a table (owner A-08 2026-09-07, recorded as K-18) — raising it here alone
+   would put two control heights on one console screen. The exception is HEIGHT ONLY; every control
+   here is worded, so none of them is near the width floor. */
+@media (max-width: 768px) {
+  .filterBtn,
+  .filterClear,
+  .filterInput,
+  .filterSelect { min-height: 38px; }
+
+  /* The account name is the row's control (the row itself is never the click target), so it takes
+     the same floor as every other control here. Measured 23px before this rule. */
+  .acctLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+  }
+}
+
+/* In card mode the cells stack, so the nowrap that keeps desktop columns tidy must go — a billing
+   address is long and must wrap rather than push the card sideways. */
+@media (max-width: 640px) {
+  .table td { white-space: normal; }
+  .filterBtn,
+  .filterInput,
+  .filterSelect { flex: 1 1 100%; }
+}

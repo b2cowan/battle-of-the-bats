@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-07",
-  "total": 30,
+  "generated": "2026-09-08",
+  "total": 48,
   "counts": {
-    "tables": 1,
-    "columns": 11,
-    "indexes": 6,
-    "constraints": 7,
-    "rls": 5
+    "tables": 2,
+    "columns": 21,
+    "indexes": 9,
+    "constraints": 9,
+    "rls": 7
   },
   "items": [
     {
@@ -19,6 +19,14 @@
     },
     {
       "key": "check:only-dev:budget_items.budget_items_out_is_typed_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_billing_facts.organization_billing_facts_next_season_billing_cycle_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_billing_facts.organization_billing_facts_next_season_plan_id_check",
       "sig": ""
     },
     {
@@ -39,6 +47,46 @@
     },
     {
       "key": "column:only-dev:notifications.cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.card_on_file_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.card_on_file_brand",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.card_on_file_last4",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.next_season_billing_cycle",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.next_season_chosen_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.next_season_plan_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.next_season_subscription_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_billing_facts.updated_at",
       "sig": ""
     },
     {
@@ -78,15 +126,23 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:organization_billing_facts.organization_billing_facts_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:organization_billing_facts.organization_billing_facts_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_credit_id_fkey",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_org_id_fkey",
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_credit_id_key",
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_payout_id_credit_id_key",
+      "key": "constraint:only-dev:rep_dues_payout_credits.rep_dues_payout_credits_org_id_fkey",
       "sig": ""
     },
     {
@@ -118,11 +174,27 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:rep_dues_payout_credits_payout_id_credit_id_key",
+      "key": "index:only-dev:idx_org_billing_facts_no_card",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_org_billing_facts_no_next_season_choice",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:organization_billing_facts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_dues_payout_credits_credit_id_key",
       "sig": ""
     },
     {
       "key": "index:only-dev:rep_dues_payout_credits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:organization_billing_facts",
       "sig": ""
     },
     {

@@ -27,6 +27,7 @@ export type PlatformArea =
   | 'change_requests'
   | 'plans_pricing'
   | 'bulk_operations'
+  | 'founding_season'
   | 'platform_users'
   | 'audit'
   | 'observability'
@@ -51,6 +52,14 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   // Billing domain
   retention:       { viewRoles: ['super_admin', 'billing', 'support'], writeRoles: ['super_admin', 'billing'] },
   bulk_operations: { viewRoles: ['super_admin', 'billing', 'product'], writeRoles: ['super_admin', 'billing', 'product'] },
+  /* Every account on a free Founding Season, and what it has done about the season ending.
+     ⚠ NO WRITES, DELIBERATELY (owner-approved 2026-09-07). Every action this desk implies —
+     change a plan, cancel, send the reminder — already lives in Bulk Operations, the org detail
+     page and Email Campaigns, and it links to them. A read-only desk cannot convert the wrong
+     account by accident, and how the October 2027 turn-off actually runs is a Phase 3 decision
+     due May 2027. PRODUCT can see it because "did they choose a plan?" is a roadmap question
+     before it is a billing one. */
+  founding_season: { viewRoles: ['super_admin', 'billing', 'product'], writeRoles: [] },
 
   // Product domain
   plans_pricing:   { viewRoles: ['super_admin', 'product', 'billing'], writeRoles: ['super_admin', 'product'] },

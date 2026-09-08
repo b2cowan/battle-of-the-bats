@@ -12,6 +12,8 @@ import {
   formatPriceAmount, formatAnnualSavings,
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
+import { formatCardOnFile } from '@/lib/billing-format';
+import { nextSeasonPlanOptions } from '@/lib/next-season-choice';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
@@ -173,6 +175,13 @@ export default function BillingPage() {
           : 'Your payment method is on file for future invoices.',
       };
     }
+    if (searchParams.get('next_season') === '1') {
+      return {
+        title: 'Your next season is set',
+        // The one promise this whole flow exists to keep, restated at the moment of purchase.
+        msg: `Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. Your Founding Season stays free through ${FOUNDING_SEASON_END_LABEL}, and you can change your choice until then.`,
+      };
+    }
     if (searchParams.get('success') === '1') {
       return {
         title: 'Subscription activated!',
@@ -185,7 +194,11 @@ export default function BillingPage() {
   // Strip the one-shot return flags so a refresh doesn't re-open the modal forever
   // (pre-existing quirk with ?success=1; fixed for both now).
   useEffect(() => {
-    if (searchParams.get('card_saved') === '1' || searchParams.get('success') === '1') {
+    if (
+      searchParams.get('card_saved') === '1' ||
+      searchParams.get('success') === '1' ||
+      searchParams.get('next_season') === '1'
+    ) {
       router.replace(window.location.pathname, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -203,8 +216,15 @@ export default function BillingPage() {
     billed: number; officials: number; limit: number; officialsFree: boolean;
   } | null>(null);
   const [foundingSeasonStatus, setFoundingSeasonStatus] = useState<{
-    isFoundingSeason: boolean; compUntil: string | null;
+    isFoundingSeason: boolean;
+    compUntil: string | null;
+    card?: { savedAt: string; brand: string | null; last4: string | null } | null;
+    nextSeason?: { planKey: string; billingCycle: string; chosenAt: string | null } | null;
   } | null>(null);
+  // The summer ask: which cycle the chooser has selected. Annual leads (owner decision D3,
+  // 2026-09-07) — a seasonal buyer charged monthly from October has nothing to use until spring.
+  const [nextSeasonCycle, setNextSeasonCycle] = useState<'annual' | 'monthly'>('annual');
+  const [nextSeasonLoading, setNextSeasonLoading] = useState(false);
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -257,7 +277,8 @@ export default function BillingPage() {
       if (data.applied) {
         await refreshBillingState();
         if (data.foundingSeason) {
-          setFoundingSeasonStatus({ isFoundingSeason: true, compUntil: data.compUntil ?? null });
+          // Merge: replacing the object would drop `card`/`nextSeason` already loaded.
+          setFoundingSeasonStatus(prev => ({ ...prev, isFoundingSeason: true, compUntil: data.compUntil ?? null }));
         }
         const remainingCopy = data.remainingRetainedCount
           ? ` ${data.remainingRetainedCount} retained tournament${data.remainingRetainedCount === 1 ? '' : 's'} still exceed this plan limit and remain in retention.`
@@ -308,6 +329,40 @@ export default function BillingPage() {
     redirectToBillingUrl('/api/billing/portal', setPortalLoading, 'Portal did not return a destination.');
   const handleAddCard = () =>
     redirectToBillingUrl('/api/billing/setup-payment-method', setAddCardLoading, 'Card setup did not return a destination.');
+
+  /** The summer ask: choose the plan for the season after the Founding Season. */
+  async function handleChooseNextSeason(planKey: string) {
+    if (!currentOrg) return;
+    setNextSeasonLoading(true);
+    try {
+      const res = await fetch('/api/billing/choose-next-season', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgSlug: currentOrg.slug, planKey, billingCycle: nextSeasonCycle }),
+      });
+      const data = await res.json() as { url?: string; error?: string; applied?: boolean };
+      if (!res.ok) throw new Error(data.error ?? 'The plan choice did not go through.');
+      // Dev-mock path applies the choice directly (the sandbox Stripe environment has no prices),
+      // so re-read the status rather than bouncing through a checkout that does not exist.
+      if (data.applied) {
+        const refreshed = await fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
+          .then(r => r.ok ? r.json() : null).catch(() => null);
+        if (refreshed) setFoundingSeasonStatus(refreshed);
+        setSuccess({
+          title: 'Your next season is set',
+          msg: `Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. Your Founding Season stays free through ${FOUNDING_SEASON_END_LABEL}.`,
+        });
+        setNextSeasonLoading(false);
+        return;
+      }
+      if (!data.url) throw new Error('The plan choice did not return a destination.');
+      window.location.assign(data.url);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setErrorOpen(true);
+      setNextSeasonLoading(false);
+    }
+  }
 
   async function openDowngradeReview(planKey: OrgPlan) {
     setDowngradePreflight(null);
@@ -447,12 +502,21 @@ export default function BillingPage() {
   const currentPlanComped = foundingSeasonStatus === null
     ? isFoundingSeasonPromoActive(currentPlanKey)
     : isFoundingSeason && (currentPlanKey === 'tournament_plus' || currentPlanKey === 'team');
-  // The founding-season banner copy is Tournament-Plus-specific (plan name, $39 price, and the
-  // org-only "add a payment method to keep Tournament Plus running" card-on-file ask — none of which
-  // is built for coach workspaces), so it stays suppressed for team-workspace billing. A comped coach
-  // still sees the honest $0 founding state via the promo-aware current-plan price card below
-  // (isFoundingSeasonPromoActive). Phase 3 P4 intent is met without the wrong-plan banner copy.
-  const showFoundingSeasonBanner = isFoundingSeason && !isTeamWorkspaceBilling;
+  // ⚠ THE BANNER SPEAKS FOR WHICHEVER PRODUCT THE ACCOUNT IS ON (2026-09-07, Phase 2).
+  // It used to be suppressed entirely for coach workspaces because its copy was
+  // Tournament-Plus-specific — which left a comped Coaches Portal with NO Founding Season message at
+  // all, while still rendering the ordinary "Billing tools" block whose "Payment method & invoices"
+  // button opens a card-save session in January, unlabelled and ungated. Every plan-specific word
+  // now derives from the account's own plan, so one block serves both kinds and the coach's card
+  // door is gated to the same summer window the organization's is.
+  const foundingProductLabel = currentPlan?.label ?? 'your plan';
+  // Which plans this account may choose for next season — its own plan, in either cycle. An account
+  // comped onto a FREE plan has nothing to renew and gets no chooser (it simply stays free).
+  const nextSeasonOptions = nextSeasonPlanOptions(currentPlanKey);
+  const nextSeasonPlanKey = nextSeasonOptions[0] ?? null;
+  const nextSeasonChoice = foundingSeasonStatus?.nextSeason ?? null;
+  const cardOnFile = foundingSeasonStatus?.card ?? null;
+  const cardLabel = formatCardOnFile(cardOnFile);
   const usageCount     = tournaments.filter(t => t.status !== 'archived').length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
@@ -464,6 +528,22 @@ export default function BillingPage() {
   const showSubscriptionOptions = primaryUpgradePlans.length > 0 || productShelfPlans.length > 0;
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
+  // ⚠ `?next_season=1` means the customer has just come back from Checkout. The webhook that
+  // records the choice is asynchronous and routinely loses the race with that redirect, so the
+  // status endpoint still says "no choice" for a second or two. Showing the chooser on top of the
+  // success message invites the customer to choose AGAIN — which is how you get two live
+  // subscriptions and two charges on the same day.
+  const justChose = searchParams.get('next_season') === '1';
+  const showNextSeasonChooser =
+    isFoundingSeason && cardWindowOpen && canManageBilling && !!nextSeasonPlanKey
+    && !nextSeasonChoice && !justChose;
+  const showNextSeasonChosen = isFoundingSeason && !!nextSeasonChoice;
+  // Resolved once. Read three times inside the confirmation card, the three lookups had drifted to
+  // three different fallbacks (the label fell back to the raw key, the prices to zero) — which is
+  // how a confirmation ends up naming a plan and quoting $0 for it.
+  const chosenPlan = nextSeasonChoice ? PLAN_CONFIG[nextSeasonChoice.planKey as OrgPlan] : null;
+  const chosenIsAnnual = nextSeasonChoice?.billingCycle === 'annual';
+  const chosenPrice = chosenPlan ? (chosenIsAnnual ? chosenPlan.annualPrice : chosenPlan.monthlyPrice) : null;
   const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
   const subscriptionSub = isTeamWorkspaceBilling
     ? 'Manage Premium Coaches Portal billing and reactivation'
@@ -702,7 +782,7 @@ export default function BillingPage() {
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
 
-      {showFoundingSeasonBanner && (
+      {isFoundingSeason && (
         <div className={styles.foundingSeasonBanner}>
           <div className={styles.foundingSeasonIcon}><Star size={16} /></div>
           <div className={styles.foundingSeasonBody}>
@@ -712,14 +792,130 @@ export default function BillingPage() {
             <h2 className={styles.foundingSeasonTitle}>
               {cardWindowOpen
                 ? `Your Founding Season ends ${FOUNDING_SEASON_END_LABEL}.`
-                : `Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL}.`}
+                : `${foundingProductLabel} is free through ${FOUNDING_SEASON_END_LABEL}.`}
             </h2>
             <p className={styles.foundingSeasonCopy}>
               {cardWindowOpen
-                ? `Choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season and add a payment method to keep Tournament Plus running from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. Nothing is charged before then.`
-                : `You're running Tournament Plus free through ${FOUNDING_SEASON_END_LABEL} as a founding organization — normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card. In ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.`}
+                ? `Choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season below. Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}, and you can change your mind until then.`
+                : `You're running ${foundingProductLabel} free through ${FOUNDING_SEASON_END_LABEL} as a founding ${isTeamWorkspaceBilling ? 'coach' : 'organization'} — normally ${formatPriceAmount(currentPlan?.monthlyPrice ?? 0)}/month. No credit card. In ${FOUNDING_SEASON_DECISION_MONTH_LABEL} you'll choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.`}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── The summer ask: choose next season's plan ──────────────────────────────────────────
+          Replaces "add a payment method" as the thing a Founding Season account is asked to do.
+          Annual leads (a seasonal buyer charged monthly from October has nothing to use until
+          spring); monthly is one tap away. Every product name and price derives from the account's
+          own plan, so this markup serves an organization and a coach workspace identically. */}
+      {showNextSeasonChooser && nextSeasonPlanKey && (
+        <div className={styles.nextSeasonCard}>
+          <h2 className={styles.foundingSeasonTitle}>
+            Choose your {FOUNDING_SEASON_NEXT_YEAR_LABEL} plan
+          </h2>
+          <p className={styles.foundingSeasonCopy}>
+            You&rsquo;re on {foundingProductLabel} today. Keep it for {FOUNDING_SEASON_NEXT_YEAR_LABEL},
+            or {isTeamWorkspaceBilling
+              ? `let it end on ${FOUNDING_SEASON_END_LABEL} and keep your free Basic team records.`
+              : `move to the free ${PLAN_CONFIG.tournament.label} plan when the season ends.`}
+          </p>
+
+          <div className={styles.nextSeasonPlans}>
+            {(['annual', 'monthly'] as const).map(cycle => {
+              const plan = PLAN_CONFIG[nextSeasonPlanKey];
+              const amount = cycle === 'annual' ? plan.annualPrice : plan.monthlyPrice;
+              const savings = cycle === 'annual' ? formatAnnualSavings(nextSeasonPlanKey) : null;
+              const selected = nextSeasonCycle === cycle;
+              return (
+                <label
+                  key={cycle}
+                  className={`${styles.nextSeasonPlan} ${selected ? styles.nextSeasonPlanActive : ''}`}
+                >
+                  <span className={styles.nextSeasonPlanLabel}>
+                    <input
+                      type="radio"
+                      name="next-season-cycle"
+                      value={cycle}
+                      checked={selected}
+                      onChange={() => setNextSeasonCycle(cycle)}
+                    />
+                    {plan.label} · {cycle === 'annual' ? 'annual' : 'monthly'}
+                  </span>
+                  <span className={styles.nextSeasonPrice}>
+                    {formatPriceAmount(amount)}
+                    <span className={styles.nextSeasonPriceUnit}>
+                      {cycle === 'annual' ? ' / year' : ' / month'}
+                    </span>
+                  </span>
+                  {savings && <span className={styles.nextSeasonSave}>{savings}</span>}
+                </label>
+              );
+            })}
+          </div>
+
+          <div className={styles.nextSeasonActions}>
+            <p className={styles.nextSeasonGuarantee}>
+              First charge {FOUNDING_SEASON_FIRST_CHARGE_LABEL} · nothing before then
+            </p>
+            <button
+              className="btn btn-lime btn-data"
+              onClick={() => handleChooseNextSeason(nextSeasonPlanKey)}
+              disabled={nextSeasonLoading}
+              id="billing-choose-next-season"
+            >
+              {nextSeasonLoading
+                ? 'Redirecting…'
+                : `Choose ${PLAN_CONFIG[nextSeasonPlanKey].label} · ${nextSeasonCycle}`}
+              {!nextSeasonLoading && <ArrowRight size={14} />}
+            </button>
+          </div>
+
+          <p className={styles.nextSeasonFootnote}>
+            Prefer to decide later?{' '}
+            <button className={styles.nextSeasonSecondary} onClick={handleAddCard} disabled={addCardLoading}>
+              {addCardLoading ? 'Redirecting…' : 'Save a card without choosing'}
+            </button>
+          </p>
+        </div>
+      )}
+
+      {showNextSeasonChosen && nextSeasonChoice && (
+        <div className={styles.nextSeasonChosen}>
+          <p className={styles.nextSeasonChosenEyebrow}>
+            Your {FOUNDING_SEASON_NEXT_YEAR_LABEL} season is set
+          </p>
+          <h2 className={styles.foundingSeasonTitle}>
+            {chosenPlan?.label ?? nextSeasonChoice.planKey}, billed{' '}
+            {chosenIsAnnual ? 'annually' : 'monthly'} from {FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
+          </h2>
+          <p className={styles.foundingSeasonCopy}>
+            {chosenPrice === null ? 'Your plan' : formatPriceAmount(chosenPrice)}{' '}
+            will be charged{cardLabel ? ` to ${cardLabel}` : ''} on {FOUNDING_SEASON_FIRST_CHARGE_LABEL} — your first
+            charge, and nothing before it. Your Founding Season runs free until then.
+          </p>
+          {cardWindowOpen && canManageBilling && (
+            <p className={styles.nextSeasonFootnote}>
+              You can change this until {FOUNDING_SEASON_END_LABEL}.{' '}
+              <button className={styles.nextSeasonSecondary} onClick={handlePortal} disabled={portalLoading}>
+                {portalLoading ? 'Redirecting…' : 'Change plan or card'}
+              </button>
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ⚠ WHAT HAPPENS IF THEY CHOOSE NOTHING — and for a coach this may promise ONLY what the
+          product already does (owner ruling D1, 2026-09-07). The read-only window for a lapsed
+          Coaches Portal is ratified in principle and NOT built; until it exists this line stays on
+          the honest fallback and describes no read-only season. */}
+      {isFoundingSeason && cardWindowOpen && !nextSeasonChoice && !justChose && (
+        <div className={styles.nextSeasonConsequence}>
+          <h2 className={styles.nextSeasonConsequenceTitle}>If you choose nothing</h2>
+          <p className={styles.foundingSeasonCopy}>
+            {isTeamWorkspaceBilling
+              ? `Your Premium portal ends on ${FOUNDING_SEASON_END_LABEL}. Your team's Basic tournament records stay available, and your season's work is kept.`
+              : `Your organization moves to the free ${PLAN_CONFIG.tournament.label} plan on ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. Your tournaments and records stay.`}
+          </p>
         </div>
       )}
 
@@ -977,7 +1173,7 @@ export default function BillingPage() {
       )}
 
       {/* Billing portal (paid plans, non-founding-season) */}
-      {hasPaidPlan && !showFoundingSeasonBanner && (
+      {hasPaidPlan && !isFoundingSeason && (
         <div className={styles.billingTools}>
           <div>
             <h2 className={styles.sectionTitle}>Billing tools</h2>
@@ -998,33 +1194,41 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Founding season billing — no Stripe subscription exists yet */}
-      {showFoundingSeasonBanner && (
+      {/* Founding season billing — no Stripe subscription exists yet.
+          ⚠ THE ASK MOVED. Inside the summer window the plan chooser above IS the ask; this block
+          drops back to stating the card on file, so the page never asks for the same thing twice.
+          Outside the window it says the one true thing: no action is needed yet.
+          ⚠ It is also GATED to the window for coach workspaces now — a comped Coaches Portal used
+          to fall through to the generic "Payment method & invoices" block, whose button opens a
+          card-save session in January, unlabelled and with no Founding Season copy anywhere. */}
+      {isFoundingSeason && (
         <div className={styles.billingTools}>
           <div>
             <h2 className={styles.sectionTitle}>Billing</h2>
             <p className={styles.manageHint}>
-              {cardWindowOpen
-                ? `Your Founding Season ends ${FOUNDING_SEASON_END_LABEL}. Add a payment method now to keep Tournament Plus running without interruption from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`
-                : `No billing action needed — your Founding Season runs free through ${FOUNDING_SEASON_END_LABEL}. We'll remind you during the summer when it's time to choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}.`}
+              {!cardWindowOpen
+                ? `No billing action needed — your Founding Season runs free through ${FOUNDING_SEASON_END_LABEL}. We'll remind you during the summer when it's time to choose a plan for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}.`
+                : cardLabel
+                  ? `${cardLabel} is on file. Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`
+                  : `No payment method on file yet. Nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.`}
             </p>
           </div>
           {cardWindowOpen && canManageBilling && (
             /* mode='setup' card-on-file save — NOT the subscription checkout (which
-               starts a 14-day trial and would bill before the free season ends). */
+               starts a trial and would bill before the free season ends). */
             <button
               className="btn btn-outline"
               onClick={handleAddCard}
               disabled={addCardLoading}
             >
-              {addCardLoading ? 'Redirecting…' : 'Add payment method'}
+              {addCardLoading ? 'Redirecting…' : cardLabel ? 'Update payment method' : 'Add payment method'}
               {!addCardLoading && <ArrowRight size={14} />}
             </button>
           )}
         </div>
       )}
 
-      {hasPaidPlan && canManageBilling && !showFoundingSeasonBanner && (
+      {hasPaidPlan && canManageBilling && !isFoundingSeason && (
         <div className={styles.retentionCard}>
           <h2 className={styles.sectionTitle}>{isTeamWorkspaceBilling ? 'Cancel Premium access' : 'Reduce or cancel plan'}</h2>
           <p className={styles.retentionCopy}>

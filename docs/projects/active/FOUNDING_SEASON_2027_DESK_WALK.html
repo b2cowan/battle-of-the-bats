@@ -1,0 +1,874 @@
+<title>Founding Season Desk Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+:root {
+  --paper:      #F1F3EF;
+  --paper-2:    #E7EBE3;
+  --ink:        #171A16;
+  --ink-2:      #4E564A;
+  --ink-3:      #767E70;
+  --rule:       #D5DBCF;
+  --rule-2:     #C0C8B8;
+  --accent:     #3D5A2B;
+  --accent-bg:  rgba(61, 90, 43, 0.08);
+  --pass:       #2F6B4F;
+  --pass-bg:    rgba(47, 107, 79, 0.10);
+  --flag:       #9A3E1E;
+  --flag-bg:    rgba(154, 62, 30, 0.10);
+  --warn:       #8A5A00;
+  --warn-bg:    rgba(138, 90, 0, 0.09);
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --f-data:    'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --paper: #12150F; --paper-2: #1A1E15; --ink: #E7EBE0; --ink-2: #A9B29E; --ink-3: #848C7B;
+    --rule: #272C20; --rule-2: #363D2C; --accent: #B3D488; --accent-bg: rgba(179,212,136,.10);
+    --pass: #7FC5A1; --pass-bg: rgba(127,197,161,.12);
+    --flag: #E58B62; --flag-bg: rgba(229,139,98,.12);
+    --warn: #E0AE5A; --warn-bg: rgba(224,174,90,.10);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #12150F; --paper-2: #1A1E15; --ink: #E7EBE0; --ink-2: #A9B29E; --ink-3: #848C7B;
+  --rule: #272C20; --rule-2: #363D2C; --accent: #B3D488; --accent-bg: rgba(179,212,136,.10);
+  --pass: #7FC5A1; --pass-bg: rgba(127,197,161,.12);
+  --flag: #E58B62; --flag-bg: rgba(229,139,98,.12);
+  --warn: #E0AE5A; --warn-bg: rgba(224,174,90,.10);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 120px; }
+
+.mast { padding: 48px 0 24px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font-family: var(--f-data); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4.6vw, 44px); line-height: 1.06; letter-spacing: -.025em; margin: 0 0 14px; text-wrap: balance; }
+.standfirst { font-size: 18px; color: var(--ink-2); max-width: 62ch; margin: 0 0 20px; }
+.mast-meta { display: flex; flex-wrap: wrap; gap: 6px 26px; font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3); }
+.mast-meta b { color: var(--ink-2); font-weight: 600; }
+
+.bar { position: sticky; top: 0; z-index: 50; background: var(--paper); border-bottom: 1px solid var(--rule); padding: 11px 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.progress { font-family: var(--f-data); font-size: 12px; color: var(--ink-2); letter-spacing: .04em; }
+.progress b { color: var(--accent); }
+.bar button { font-family: var(--f-data); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; padding: 8px 13px; min-height: 36px; background: var(--accent); color: var(--paper); border: 0; cursor: pointer; }
+.bar button.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--rule-2); }
+.bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar .spacer { margin-left: auto; }
+
+.card { border: 1px solid var(--rule-2); background: var(--paper-2); padding: 18px 20px; margin: 22px 0; }
+.card h2 { font-family: var(--f-display); font-size: 18px; margin: 0 0 10px; letter-spacing: -.01em; }
+.card p { margin: 0 0 10px; color: var(--ink-2); font-size: 15px; }
+.card p:last-child { margin-bottom: 0; }
+.creds { display: grid; gap: 10px; margin-top: 12px; }
+@media (min-width: 700px) { .creds { grid-template-columns: repeat(3, 1fr); } }
+.cred { border: 1px solid var(--rule); background: var(--paper); padding: 11px 13px; }
+.cred .who { font-family: var(--f-data); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+.cred code { display: block; font-family: var(--f-data); font-size: 12.5px; color: var(--ink); word-break: break-all; }
+.cred .pw { color: var(--ink-2); }
+pre.cmd { font-family: var(--f-data); font-size: 12.5px; background: var(--paper); border: 1px solid var(--rule); padding: 11px 13px; overflow-x: auto; margin: 10px 0 0; color: var(--ink); }
+
+section { padding-top: 40px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 4px; }
+.sec-mark { font-family: var(--f-data); font-weight: 700; font-size: 13px; letter-spacing: .14em; color: var(--accent); }
+h2.sec { font-family: var(--f-display); font-weight: 700; font-size: 24px; letter-spacing: -.018em; margin: 0; text-wrap: balance; }
+.sec-note { color: var(--ink-2); font-size: 15px; margin: 10px 0 0; max-width: 70ch; }
+
+.step { border-top: 1px solid var(--rule); padding: 18px 0 16px; }
+.step:first-of-type { border-top: 0; }
+.step-top { display: flex; gap: 12px; align-items: flex-start; }
+.step input[type="checkbox"] { width: 21px; height: 21px; margin: 3px 0 0; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+.step-id { font-family: var(--f-data); font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--accent); flex-shrink: 0; padding-top: 4px; min-width: 34px; }
+.step-body { flex: 1; min-width: 0; }
+.step-title { font-weight: 600; font-size: 16.5px; margin: 0 0 5px; color: var(--ink); }
+.step-do { margin: 0 0 8px; color: var(--ink-2); font-size: 15px; }
+.step-expect { margin: 0; font-size: 15px; color: var(--ink); border-left: 3px solid var(--accent); background: var(--accent-bg); padding: 9px 13px; }
+.step-expect b { font-weight: 600; }
+.step-why { margin: 8px 0 0; font-size: 14px; color: var(--ink-3); font-style: italic; }
+.verdicts { display: flex; gap: 6px; margin-top: 11px; flex-wrap: wrap; align-items: center; }
+.verdicts label { font-family: var(--f-data); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--rule-2); padding: 7px 11px; min-height: 34px; display: inline-flex; align-items: center; cursor: pointer; color: var(--ink-2); }
+.verdicts input { position: absolute; opacity: 0; width: 0; height: 0; }
+.verdicts label:has(input:checked) { font-weight: 700; }
+.verdicts label.v-pass:has(input:checked) { background: var(--pass-bg); border-color: var(--pass); color: var(--pass); }
+.verdicts label.v-flag:has(input:checked) { background: var(--flag-bg); border-color: var(--flag); color: var(--flag); }
+.verdicts label.v-na:has(input:checked)   { background: var(--paper-2); border-color: var(--ink-3); color: var(--ink-2); }
+.verdicts label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note-in { width: 100%; margin-top: 9px; font-family: var(--f-body); font-size: 14.5px; padding: 9px 11px; border: 1px solid var(--rule-2); background: var(--paper); color: var(--ink); resize: vertical; min-height: 42px; }
+.note-in:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.step.done { opacity: .62; }
+.step.flagged { opacity: 1; }
+
+.callout { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 14px 17px; margin: 18px 0; font-size: 15px; color: var(--ink-2); }
+.callout.hard { border-left-color: var(--flag); background: var(--flag-bg); }
+.callout strong { color: var(--ink); }
+.callout p { margin: 0; }
+.callout p + p { margin-top: 9px; }
+
+.out { margin-top: 44px; border-top: 2px solid var(--ink); padding-top: 20px; }
+.out h2 { font-family: var(--f-display); font-size: 22px; margin: 0 0 10px; }
+#findings { width: 100%; min-height: 190px; font-family: var(--f-data); font-size: 12.5px; padding: 12px; border: 1px solid var(--rule-2); background: var(--paper-2); color: var(--ink); }
+.colophon { margin-top: 40px; font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3); }
+code.inline { font-family: var(--f-data); font-size: 13px; background: var(--paper-2); padding: 1px 5px; border: 1px solid var(--rule); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Owner QA §154 · Founding Season 2027 · Phase 2</p>
+  <h1>Walking the Founding Season desk</h1>
+  <p class="standfirst">
+    Every free account in one list, card-on-file recorded in the app, the coach's card door gated and
+    explained, and a 2028 plan choice that cannot charge before October 1, 2027. Thirty-three checks
+    across nine parts.
+  </p>
+  <div class="mast-meta">
+    <span><b>Built</b> 2026-09-07 on dev</span>
+    <span><b>Plan</b> FOUNDING_SEASON_2027_DESK_PLAN.md</span>
+    <span><b>Mockups</b> artifact 587fbd15</span>
+    <span><b>Migration</b> 283 (dev; prod-owed)</span>
+  </div>
+</header>
+
+<div class="bar">
+  <span class="progress" id="progress">0 of 33 checked · <b>0 flagged</b></span>
+  <span class="spacer"></span>
+  <button type="button" id="copy">Copy findings</button>
+  <button type="button" class="ghost" id="reset">Reset walk</button>
+</div>
+
+<div class="card">
+  <h2>Before you start — three commands</h2>
+  <p>
+    The desk reads real data, so the dev database needs the four account states worth looking at.
+    The summer ask only renders inside the card window, which is env-overridable precisely so it can
+    be walked nine months early. And the dev Stripe sandbox has <b>no configured prices at all</b>,
+    so the billing flows run through the mock.
+  </p>
+  <pre class="cmd">node scripts/seed-founding-season-fixture.mjs
+
+# stop the dev server, then start it with the card window open and billing mocked:
+NEXT_PUBLIC_FOUNDING_SEASON_CARD_WINDOW_OPEN=2026-01-01T05:00:00.000Z ENABLE_BILLING_MOCK_PORTAL=true npm run dev</pre>
+  <p style="margin-top:12px">
+    The seeder is dev-only and refuses <code class="inline">--prod</code>. It is idempotent — run it
+    again any time to put the five accounts back.
+  </p>
+</div>
+
+<div class="card">
+  <h2>Sign in as</h2>
+  <p>Dev accounts only. None of these exists in production.</p>
+  <div class="creds">
+    <div class="cred">
+      <div class="who">Platform admin</div>
+      <code>uat-platform@fieldlogichq.ca</code>
+      <code class="pw">UATPassword2026!</code>
+    </div>
+    <div class="cred">
+      <div class="who">Founding org owner</div>
+      <code>uat-owner@uat-test-org.local</code>
+      <code class="pw">UATPassword2026!</code>
+    </div>
+    <div class="cred">
+      <div class="who">Founding coach owner</div>
+      <code>coach@dev.local</code>
+      <code class="pw">UATPassword2026!</code>
+    </div>
+  </div>
+</div>
+
+<div class="callout">
+  <p><strong>Three things this walk deliberately does not prove, and why.</strong></p>
+  <p><b>1. Card-on-file recorded at the webhook.</b> It needs a real Stripe event, and dev's sandbox
+  has no configured prices — every checkout falls to the mock, which never calls Stripe and so never
+  fires a webhook. The desk's card column is proven against a seeded card instead; the webhook arms
+  themselves are covered by code review. <b>The first real proof is a card saved on production.</b></p>
+  <p><b>2. The October 2027 charge.</b> Nothing here can advance a year. The no-early-charge design is
+  proven by eleven unit tests that fail if any path could bill sooner.</p>
+  <p><b>3. The "no card yet" email audience.</b> It was not built — see Part I.</p>
+  <p><b>4. Withdrawing a choice.</b> Cancelling a 2028 choice happens in Stripe's own portal, which
+  dev cannot reach. The review found that this used to suspend the whole account; the fix is covered
+  by tests and by F6 below, which checks the state it leaves behind.</p>
+</div>
+
+<!-- ═══════════ A ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">A</span><h2 class="sec">The desk exists, and it holds both kinds of account</h2></div>
+  <p class="sec-note">Sign in as the <b>platform admin</b>. The nav's <b>Billing &amp; Product</b> group has a new <b>Founding Season</b> entry.</p>
+
+  <div class="step" data-id="A1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">A1</span>
+      <div class="step-body">
+        <p class="step-title">The nav entry is where a billing question would look for it</p>
+        <p class="step-do">Open <code class="inline">/platform-admin</code>. Find <b>Founding Season</b> in the sidebar.</p>
+        <p class="step-expect">It sits in <b>Billing &amp; Product</b>, above Approval Queue — not in Growth. <b>Expect:</b> clicking it opens the desk.</p>
+        <p class="step-why">It is read on the day money is decided, not on the day someone is sold to.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="A2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">A2</span>
+      <div class="step-body">
+        <p class="step-title">Five accounts, both kinds, one list</p>
+        <p class="step-do">Read the table.</p>
+        <p class="step-expect"><b>Expect exactly these five rows</b>, sorted by name: <b>Dev Standalone Team</b> (Coaches Portal), <b>Dev Test Org</b>, <b>Dev Tournament+ Org</b>, <b>Test Minor Softball</b>, <b>UAT Plus Org</b> (all Organization). One list — not a section per kind.</p>
+        <p class="step-why">A comped Coaches Portal is already an organization record underneath, which is why one query answers for both.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="A3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">A3</span>
+      <div class="step-body">
+        <p class="step-title">Each row answers who, what and how to reach them</p>
+        <p class="step-do">Read <b>Dev Standalone Team</b>'s row across.</p>
+        <p class="step-expect"><b>Expect:</b> kind <b>Coaches Portal</b>, plan <b>Premium Coaches Portal</b>, free through <b>Sep 30, 2027</b>, card <b>—</b>, choice <b>—</b>, a "Used it for" reading in <b>players</b> (not tournaments), and <b>coach@dev.local</b> as the billing contact.</p>
+        <p class="step-why">A coach's usage is a roster; an organization's is events. Same column, different question.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="A4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">A4</span>
+      <div class="step-body">
+        <p class="step-title">The account name is the link — the row is not</p>
+        <p class="step-do">Click the account name on any row. Then click a blank part of another row.</p>
+        <p class="step-expect"><b>Expect:</b> the name opens that org's platform-admin page on its billing tab. Clicking elsewhere on a row does nothing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ B ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">B</span><h2 class="sec">The four figures, and the one amber chip</h2></div>
+
+  <div class="step" data-id="B1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">B1</span>
+      <div class="step-body">
+        <p class="step-title">The figures agree with the rows below them</p>
+        <p class="step-do">Read the four tiles, then count the rows.</p>
+        <p class="step-expect"><b>Expect:</b> <b>5</b> founding accounts (<b>4 orgs · 1 portal</b>), <b>4</b> with no card, <b>5</b> with no 2028 choice, and "Free season ends <b>September 30, 2027</b>" with a days-left figure beside it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="B2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">B2</span>
+      <div class="step-body">
+        <p class="step-title">Amber means somebody still has to do something</p>
+        <p class="step-do">Look at which tiles are amber.</p>
+        <p class="step-expect"><b>Expect:</b> "No card yet" and "No 2028 choice yet" are amber; "Founding accounts" is lime; "Free season ends" is plain. <b>Nothing else on the page is coloured.</b></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="B3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">B3</span>
+      <div class="step-body">
+        <p class="step-title">The Legacy chip — a row our own backfill never reached</p>
+        <p class="step-do">Find <b>Dev Tournament+ Org</b>'s "Free through" cell. Hover the amber chip.</p>
+        <p class="step-expect"><b>Expect:</b> it reads <b>Dec 31, 2026</b> with an amber <b>Legacy</b> chip, and the tooltip says the backfill has not reached this row and the account is still recognised as founding. Every other row reads <b>Sep 30, 2027</b> with no chip.</p>
+        <p class="step-why">Migration 279 moved every free-season record to the new date, but it is data-only — no automated check can prove it ran. This desk is the only place a missed row would ever be visible.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="B4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">B4</span>
+      <div class="step-body">
+        <p class="step-title">A card reads as a card, not as a tick</p>
+        <p class="step-do">Read <b>Dev Tournament+ Org</b>'s "Card on file" cell.</p>
+        <p class="step-expect"><b>Expect:</b> <b>Visa ••4242</b> in lime with <b>Jun 3, 2027</b> beneath it. Every other row shows a quiet em dash.</p>
+        <p class="step-why">Support needs to tell one card from another on the phone; "yes" cannot do that.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="B5">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">B5</span>
+      <div class="step-body">
+        <p class="step-title">"Owner last seen" is named for the fact we actually hold</p>
+        <p class="step-do">Read the column heading and its values.</p>
+        <p class="step-expect"><b>Expect:</b> the heading says <b>Owner last seen</b> — not "last activity". Values read as a relative age ("3d ago") when recent, an absolute date when older, and <b>Never</b> for an owner who has never signed in.</p>
+        <p class="step-why">The product keeps no activity metric. Calling it one would be a claim we cannot support.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ C ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">C</span><h2 class="sec">The two questions the October turn-off runs on</h2></div>
+
+  <div class="step" data-id="C1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">C1</span>
+      <div class="step-body">
+        <p class="step-title">"No card yet" gives the chase list</p>
+        <p class="step-do">Click <b>No card yet</b>.</p>
+        <p class="step-expect"><b>Expect:</b> the button fills solid, the count line reads <b>4 of 5 accounts</b>, and <b>Dev Tournament+ Org disappears</b> — it is the only one with a card. A <b>Clear filters</b> link appears.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="C2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">C2</span>
+      <div class="step-body">
+        <p class="step-title">The footnote says what the filtered list is for</p>
+        <p class="step-do">With the filter on, read the line under the table.</p>
+        <p class="step-expect"><b>Expect:</b> it says these are the same accounts the "no card yet" reminder would reach, minus anyone opted out.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="C3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">C3</span>
+      <div class="step-body">
+        <p class="step-title">Kind and search narrow it further</p>
+        <p class="step-do">Clear filters. Set the kind dropdown to <b>Coaches Portals</b>. Then clear, and type <code class="inline">uat</code> into the search box.</p>
+        <p class="step-expect"><b>Expect:</b> Coaches Portals leaves <b>Dev Standalone Team</b> alone; the search leaves <b>UAT Plus Org</b> alone. Search matches the name, the slug and the billing contact.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="C4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">C4</span>
+      <div class="step-body">
+        <p class="step-title">The export is what you were looking at</p>
+        <p class="step-do">Turn on <b>No card yet</b>, then Export → Excel. Open the file.</p>
+        <p class="step-expect"><b>Expect:</b> <b>4 rows</b>, not 5 — the export honours the filter. Columns match the screen in the same order, plus the slug, and "Free through" carries <b>(legacy)</b> where the chip appears.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="C5">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">C5</span>
+      <div class="step-body">
+        <p class="step-title">The desk cannot act, on purpose</p>
+        <p class="step-do">Look for any control that changes an account: a plan dropdown, a cancel button, a "send reminder" action.</p>
+        <p class="step-expect"><b>Expect: there are none.</b> The only controls are search, two filters, a kind dropdown, Export, and the account links.</p>
+        <p class="step-why">Converting and cancelling already live in Bulk Operations and on each org's page. A read-only desk cannot convert the wrong account by accident.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ D ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">D</span><h2 class="sec">The phone shape — hand-measured, because no gate measures it</h2></div>
+  <p class="sec-note">No platform-admin screen is in the automated layout sweep, so this part is the only thing standing between the desk and a phone defect. Use the browser's device toolbar.</p>
+
+  <div class="step" data-id="D1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">D1</span>
+      <div class="step-body">
+        <p class="step-title">At 390px the list becomes cards</p>
+        <p class="step-do">Set the viewport to <b>390 × 844</b>.</p>
+        <p class="step-expect"><b>Expect:</b> the column heading row is gone; each account is a bordered card with its name as the title and every other value labelled beside it. <b>The page does not scroll sideways.</b></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="D2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">D2</span>
+      <div class="step-body">
+        <p class="step-title">At 361px nothing is clipped</p>
+        <p class="step-do">Set the viewport to <b>361px</b> wide — the narrowest band the product supports.</p>
+        <p class="step-expect"><b>Expect:</b> still no sideways page scroll; a long billing address wraps inside its card rather than pushing it wide; the filter controls stack to full width.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="D3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">D3</span>
+      <div class="step-body">
+        <p class="step-title">At 768px the columns come back and scroll inside their own frame</p>
+        <p class="step-do">Set the viewport to <b>768px</b>. Swipe the table sideways.</p>
+        <p class="step-expect"><b>Expect:</b> the heading row is back and the table scrolls <b>inside its bordered frame</b> — the page itself still does not move sideways. Every filter control and every account link is comfortably tappable.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="D4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">D4</span>
+      <div class="step-body">
+        <p class="step-title">The two known shared-chrome misses</p>
+        <p class="step-do">At 390px, look at the <b>Export</b> control and the sidebar's <b>Sign out</b>.</p>
+        <p class="step-expect"><b>Expect them to be slightly short of the touch floor</b> — they are shared console furniture used on ~34 screens, not this desk's own. Flag only if either is <b>hard to hit</b>, not merely small.</p>
+        <p class="step-why">Fixing them changes every admin export surface at once and does not belong in a billing change. Recorded rather than smuggled in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ E ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">E</span><h2 class="sec">An organization's summer ask</h2></div>
+  <p class="sec-note">Sign out. Sign in as <b>uat-owner@uat-test-org.local</b> and open <code class="inline">/uat-plus-org/admin/org/billing</code>.</p>
+
+  <div class="step" data-id="E1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E1</span>
+      <div class="step-body">
+        <p class="step-title">The banner names the date, not the ask</p>
+        <p class="step-do">Read the lime Founding Season banner.</p>
+        <p class="step-expect"><b>Expect:</b> "Your Founding Season ends <b>September 30, 2027</b>." and copy that says to choose a plan for your <b>2028</b> season below, that <b>nothing is charged before October 1, 2027</b>, and that you can change your mind until then.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="E2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E2</span>
+      <div class="step-body">
+        <p class="step-title">Annual leads; monthly is one tap away</p>
+        <p class="step-do">Read the "Choose your 2028 plan" card.</p>
+        <p class="step-expect"><b>Expect:</b> two options as <b>real radio buttons</b> — <b>Tournament Plus · annual $390/year</b> selected by default with "Save $78 — 2 months free", and <b>Tournament Plus · monthly $39/month</b>. Selecting monthly moves the highlight and changes the button's label.</p>
+        <p class="step-why">A seasonal buyer charged monthly from October has nothing to use until spring.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="E3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E3</span>
+      <div class="step-body">
+        <p class="step-title">The promise is printed beside the button</p>
+        <p class="step-do">Read the line to the left of the choose button.</p>
+        <p class="step-expect"><b>Expect:</b> "<b>First charge October 1, 2027 · nothing before then</b>".</p>
+        <p class="step-why">That date is not marketing copy — it is the single value the checkout is built on, printed where a customer can hold us to it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="E4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E4</span>
+      <div class="step-body">
+        <p class="step-title">The card-save door survives as the quiet second option</p>
+        <p class="step-do">Read the footnote under the chooser.</p>
+        <p class="step-expect"><b>Expect:</b> "Prefer to decide later?" with <b>Save a card without choosing</b> as an underlined link — not a button competing with the choice.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="E5">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E5</span>
+      <div class="step-body">
+        <p class="step-title">What happens if they do nothing is on the page, not only in an email</p>
+        <p class="step-do">Read the "If you choose nothing" card below.</p>
+        <p class="step-expect"><b>Expect:</b> the organization moves to the free <b>Tournament</b> plan on <b>October 1, 2027</b>, and its tournaments and records stay.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="E6">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">E6</span>
+      <div class="step-body">
+        <p class="step-title">The page never asks for the same thing twice</p>
+        <p class="step-do">Scroll to the "Billing" block further down.</p>
+        <p class="step-expect"><b>Expect:</b> it states the card position ("No payment method on file yet. Nothing is charged before October 1, 2027.") with an <b>Add payment method</b> button — it does <b>not</b> repeat the plan ask the chooser above already makes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ F ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">F</span><h2 class="sec">Making the choice, and reading it back</h2></div>
+  <p class="sec-note">Billing is mocked, so choosing writes the choice directly instead of opening Stripe. That is the only path dev has.</p>
+
+  <div class="step" data-id="F1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F1</span>
+      <div class="step-body">
+        <p class="step-title">Choosing confirms the promise, not just the plan</p>
+        <p class="step-do">Leave <b>annual</b> selected and click <b>Choose Tournament Plus · annual</b>.</p>
+        <p class="step-expect"><b>Expect:</b> a success dialog titled "Your next season is set", saying nothing is charged before <b>October 1, 2027</b>, that the Founding Season stays free through <b>September 30, 2027</b>, and that the choice can be changed until then.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F2</span>
+      <div class="step-body">
+        <p class="step-title">The confirmed state names the amount, the card and the date</p>
+        <p class="step-do">Close the dialog and read the green card that replaced the chooser.</p>
+        <p class="step-expect"><b>Expect:</b> "Your 2028 season is set", "<b>Tournament Plus, billed annually from October 1, 2027</b>", and a sentence saying <b>$390</b> will be charged on <b>October 1, 2027</b> — "your first charge, and nothing before it". <b>The chooser and the "If you choose nothing" card are both gone.</b></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F3</span>
+      <div class="step-body">
+        <p class="step-title">⚠ The plan has NOT changed</p>
+        <p class="step-do">Look at the plan card at the top of the page.</p>
+        <p class="step-expect"><b>Expect:</b> it still reads <b>Tournament Plus · free through September 30, 2027 · no credit card</b>. Choosing did not start anything, did not change the plan, and did not end the free season.</p>
+        <p class="step-why">Your ruling: the plan moves at the first charge, not when the choice is made — so the free season is worth the same to every account.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F4</span>
+      <div class="step-body">
+        <p class="step-title">The desk reads the choice back</p>
+        <p class="step-do">Sign back in as the platform admin and reopen the desk.</p>
+        <p class="step-expect"><b>Expect:</b> <b>UAT Plus Org</b>'s "2028 choice" now reads <b>Tournament Plus</b> with <b>annual · today's date</b> beneath it, "No 2028 choice yet" has dropped to <b>4</b>, and the <b>No 2028 choice</b> filter no longer returns that row.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F6">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F6</span>
+      <div class="step-body">
+        <p class="step-title">Choosing again replaces the choice — it does not add a second one</p>
+        <p class="step-do">On the confirmed card, use <b>Change plan or card</b> (or re-run the choice from the desk fixture) and pick the other cycle.</p>
+        <p class="step-expect"><b>Expect:</b> the confirmed card now shows the new cycle and price, and there is still exactly <b>one</b> choice on the desk row — not two.</p>
+        <p class="step-why">The review found that a second choice used to create a second live subscription with the same first-charge date, and both would have charged on October 1. The old one is now cancelled before the new one is made.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F7">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F7</span>
+      <div class="step-body">
+        <p class="step-title">The success message never appears beside the chooser</p>
+        <p class="step-do">Immediately after choosing, look at the page behind the dialog. Then reload it once.</p>
+        <p class="step-expect"><b>Expect:</b> no "Choose your 2028 plan" card is visible at the same time as the success message. Flag it if you can see both — that is an invitation to choose twice.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="F5">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">F5</span>
+      <div class="step-body">
+        <p class="step-title">An account with nothing to renew is not asked to choose</p>
+        <p class="step-do">On the desk, note <b>Test Minor Softball</b> is on the free <b>Tournament</b> plan.</p>
+        <p class="step-expect"><b>Expect:</b> it appears in the list as a founding account, but it is a free plan — there is nothing for it to renew, and the billing page offers it no chooser. Flag if the desk implies otherwise.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ G ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">G</span><h2 class="sec">A coach's summer ask — the correction</h2></div>
+  <p class="sec-note">
+    This is the part that changed most. Sign in as <b>coach@dev.local</b> and open
+    <code class="inline">/dev-standalone-team/admin/org/billing</code> (from the portal:
+    sidebar → <b>Admin</b> → Billing).
+  </p>
+
+  <div class="callout hard">
+    <p><strong>What this looked like before.</strong> A comped Coaches Portal saw <em>no Founding
+    Season message at all</em> — the whole block was suppressed because its wording only ever spoke
+    about Tournament Plus. What it did see was a generic "Billing tools" card with a button called
+    <b>Payment method &amp; invoices</b> — which quietly opened a card-save session, in January, with
+    nothing on the page explaining why anyone would use it.</p>
+  </div>
+
+  <div class="step" data-id="G1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G1</span>
+      <div class="step-body">
+        <p class="step-title">The page now speaks for the coach's product</p>
+        <p class="step-do">Read the banner.</p>
+        <p class="step-expect"><b>Expect:</b> the same Founding Season banner an organization gets, with the same dates. Nothing on this page says "Tournament Plus".</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="G2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G2</span>
+      <div class="step-body">
+        <p class="step-title">The coach's chooser is their own product at their own prices</p>
+        <p class="step-do">Read the "Choose your 2028 plan" card.</p>
+        <p class="step-expect"><b>Expect:</b> <b>Premium Coaches Portal · annual $290/year</b> (with "Save $58 — 2 months free") and <b>· monthly $29/month</b>. Same shape as the organization's, different product and price.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="G3">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G3</span>
+      <div class="step-body">
+        <p class="step-title">The unexplained year-round card door is gone</p>
+        <p class="step-do">Look for a card called <b>Billing tools</b> with a "Payment method &amp; invoices" button.</p>
+        <p class="step-expect"><b>Expect: it is not there.</b> The only card ask is the Founding Season "Billing" block, gated to the summer window, saying what it is for.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="G4">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G4</span>
+      <div class="step-body">
+        <p class="step-title">"If you choose nothing" promises only what the product does today</p>
+        <p class="step-do">Read the "If you choose nothing" card.</p>
+        <p class="step-expect"><b>Expect:</b> the Premium portal ends on <b>September 30, 2027</b>, the team's <b>Basic</b> tournament records stay available, and the season's work is kept. <b>It must not promise a read-only season.</b></p>
+        <p class="step-why">Your D1 ruling: the read-only window is built in the spring with Phase 3. Until it exists this copy may not describe it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="G5">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G5</span>
+      <div class="step-body">
+        <p class="step-title">⚠ "Cancel Premium access" is also gone — deliberately</p>
+        <p class="step-do">Look for a cancellation card.</p>
+        <p class="step-expect"><b>Expect: it is not shown during the free season.</b> This now matches how a comped organization has always behaved, and it agrees with the offer's own words: there is nothing to cancel.</p>
+        <p class="step-why">Called out because it is a real behaviour change riding along with the fix. Say so if you disagree with it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="G6">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">G6</span>
+      <div class="step-body">
+        <p class="step-title">A coach can choose, and the desk sees it</p>
+        <p class="step-do">Choose <b>Premium Coaches Portal · monthly</b>. Then sign back in as the platform admin and reopen the desk.</p>
+        <p class="step-expect"><b>Expect:</b> the coach's confirmed card says <b>$29 will be charged on October 1, 2027</b>, and <b>Dev Standalone Team</b>'s desk row reads <b>Premium Coaches Portal · monthly</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ H ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">H</span><h2 class="sec">Before the window opens</h2></div>
+  <p class="sec-note">
+    Restart the dev server <b>without</b> the card-window override
+    (<code class="inline">ENABLE_BILLING_MOCK_PORTAL=true npm run dev</code>) — this is what every
+    founding account sees today, and will see until June 1, 2027.
+  </p>
+
+  <div class="step" data-id="H1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">H1</span>
+      <div class="step-body">
+        <p class="step-title">Nobody is asked for anything yet</p>
+        <p class="step-do">Open the billing page as the founding org owner.</p>
+        <p class="step-expect"><b>Expect:</b> the banner says the plan is <b>free through September 30, 2027</b> and that a plan for <b>2028</b> is chosen in <b>September 2027</b>. <b>No chooser, no card button, no "if you choose nothing" card.</b> The Billing block says no action is needed.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="H2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">H2</span>
+      <div class="step-body">
+        <p class="step-title">The desk says the ask has not opened</p>
+        <p class="step-do">Open the desk as the platform admin.</p>
+        <p class="step-expect"><b>Expect:</b> a note at the top saying the summer ask has not opened yet and that the two columns fill in over the summer. The list, the figures and the export all still work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ I ═══════════ -->
+<section>
+  <div class="sec-head"><span class="sec-mark">I</span><h2 class="sec">What is not built, and what to do about it</h2></div>
+
+  <div class="step" data-id="I1">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">I1</span>
+      <div class="step-body">
+        <p class="step-title">The "no card yet" email audience was stopped, not forced</p>
+        <p class="step-do">Open <code class="inline">/platform-admin/email</code> and look for a card-reminder campaign.</p>
+        <p class="step-expect"><b>Expect: there is none.</b> The Phase 1 chat moved the email-audience registry into a file this phase is forbidden to touch and has uncommitted edits in both email screens, so wiring the audience meant editing their work mid-flight.</p>
+        <p class="step-why">The operator can still get the exact list — that is the desk's "No card yet" filter and its export, the same rule. What is missing is only the batch-email wiring, and nothing was going to send this autumn.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-id="I2">
+    <div class="step-top">
+      <input type="checkbox"><span class="step-id">I2</span>
+      <div class="step-body">
+        <p class="step-title">Decide how it gets finished</p>
+        <p class="step-do">Choose one: the Phase 1 chat adds the audience (this phase supplies the query), or the two are merged in one session after Phase 1 commits.</p>
+        <p class="step-expect">Record your call in the notes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="out">
+  <h2>Findings</h2>
+  <p style="color:var(--ink-2);margin-top:0">
+    Anything flagged, plus any notes, collected here. <b>Copy findings</b> puts it on the clipboard.
+    Your ticks, verdicts and notes are saved in this browser, so you can stop and come back.
+  </p>
+  <textarea id="findings" readonly aria-label="Collected findings"></textarea>
+</div>
+
+<p class="colophon">
+  Owner QA §154 · Founding Season 2027 Phase 2 · walk written 2026-09-07 · 33 checks · plan
+  FOUNDING_SEASON_2027_DESK_PLAN.md · mockups artifact 587fbd15 · fixture
+  scripts/seed-founding-season-fixture.mjs
+</p>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'fs2027-desk-walk-v1';
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+
+  // Build the verdict + notes controls for every step, so the markup above stays readable.
+  steps.forEach(function (step) {
+    var id = step.dataset.id;
+    var body = step.querySelector('.step-body');
+
+    var verdicts = document.createElement('div');
+    verdicts.className = 'verdicts';
+    [['pass', 'As expected'], ['flag', 'Not right'], ['na', "Couldn't check"]].forEach(function (pair) {
+      var label = document.createElement('label');
+      label.className = 'v-' + pair[0];
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'v-' + id;
+      input.value = pair[0];
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(pair[1]));
+      verdicts.appendChild(label);
+    });
+    body.appendChild(verdicts);
+
+    var note = document.createElement('textarea');
+    note.className = 'note-in';
+    note.rows = 1;
+    note.placeholder = 'Notes for ' + id + ' (what you saw, what you would change)';
+    note.setAttribute('aria-label', 'Notes for step ' + id);
+    body.appendChild(note);
+  });
+
+  function read() {
+    var state = { checked: {}, verdict: {}, note: {} };
+    steps.forEach(function (step) {
+      var id = step.dataset.id;
+      state.checked[id] = step.querySelector('input[type="checkbox"]').checked;
+      var chosen = step.querySelector('input[type="radio"]:checked');
+      state.verdict[id] = chosen ? chosen.value : '';
+      state.note[id] = step.querySelector('.note-in').value;
+    });
+    return state;
+  }
+
+  function paint() {
+    var state = read();
+    var total = steps.length, done = 0, flagged = 0;
+    steps.forEach(function (step) {
+      var id = step.dataset.id;
+      if (state.checked[id]) done++;
+      var isFlag = state.verdict[id] === 'flag';
+      if (isFlag) flagged++;
+      step.classList.toggle('done', !!state.checked[id] && !isFlag);
+      step.classList.toggle('flagged', isFlag);
+    });
+    document.getElementById('progress').innerHTML =
+      done + ' of ' + total + ' checked · <b>' + flagged + ' flagged</b>';
+
+    var lines = ['Founding Season 2027 Phase 2 — Owner QA §154',
+                 done + ' of ' + total + ' checked, ' + flagged + ' flagged', ''];
+    steps.forEach(function (step) {
+      var id = step.dataset.id;
+      var v = state.verdict[id], n = (state.note[id] || '').trim();
+      if (v !== 'flag' && v !== 'na' && !n) return;
+      var title = step.querySelector('.step-title').textContent.trim();
+      var mark = v === 'flag' ? 'FLAG' : v === 'na' ? 'NOT CHECKED' : 'NOTE';
+      lines.push('[' + mark + '] ' + id + ' — ' + title);
+      if (n) lines.push('    ' + n.replace(/\n/g, '\n    '));
+    });
+    if (lines.length === 3) lines.push('No flags, no notes.');
+    document.getElementById('findings').value = lines.join('\n');
+
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function restore() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) {}
+    if (!raw) return;
+    var state;
+    try { state = JSON.parse(raw); } catch (e) { return; }
+    steps.forEach(function (step) {
+      var id = step.dataset.id;
+      if (state.checked && state.checked[id]) step.querySelector('input[type="checkbox"]').checked = true;
+      if (state.verdict && state.verdict[id]) {
+        var r = step.querySelector('input[value="' + state.verdict[id] + '"]');
+        if (r) r.checked = true;
+      }
+      if (state.note && state.note[id]) step.querySelector('.note-in').value = state.note[id];
+    });
+  }
+
+  document.addEventListener('change', paint);
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.classList.contains('note-in')) paint();
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var ta = document.getElementById('findings');
+    ta.removeAttribute('readonly');
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(function () {});
+    ta.setAttribute('readonly', 'readonly');
+    var btn = document.getElementById('copy');
+    var was = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = was; }, 1400);
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick, verdict and note on this walk?')) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    steps.forEach(function (step) {
+      step.querySelector('input[type="checkbox"]').checked = false;
+      var r = step.querySelector('input[type="radio"]:checked');
+      if (r) r.checked = false;
+      step.querySelector('.note-in').value = '';
+    });
+    paint();
+  });
+
+  restore();
+  paint();
+})();
+</script>

@@ -1,14 +1,25 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
 
+/**
+ * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
+ *
+ * This used to match `expires_at >= '2026-12-31'`, which is not what a Founding Season comp is —
+ * it is what a comp expiring at ANY point after 2026 is. A support comp granted into 2028, or a
+ * platform-admin extension, was badged "Founding" here and dropped into the Founding filter, while
+ * every other surface in the product (the status endpoint, the email audiences, the desk) used
+ * `FOUNDING_SEASON_COMP_EXPIRIES` and disagreed. Same rule everywhere now: the current instant OR
+ * the legacy pre-2026-09-07 one, and never a revoked comp.
+ */
 async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
   const { data } = await supabaseAdmin
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
     .is('revoked_at', null)
-    .gte('expires_at', '2026-12-31');
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES]);
   return new Set((data ?? []).map(r => r.org_id as string));
 }
 

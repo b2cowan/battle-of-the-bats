@@ -375,6 +375,19 @@ export function isFoundingSeasonPromoActive(planKey: string): boolean {
   return isFoundingSeasonSignupOpen() && (FOUNDING_SEASON_PLAN_KEYS as readonly string[]).includes(planKey);
 }
 
+/**
+ * Is this plan ON the Founding Season promo, regardless of whether the window is still open?
+ *
+ * ⚠ The window half of `isFoundingSeasonPromoActive` is wrong for anything read AFTER the signup
+ * window closes but while the comp still runs — which is the whole of 2027, and therefore the whole
+ * of the summer ask. The next-season choice uses this to re-assert that an account is choosing a
+ * plan the promo actually covers, so an account whose `plan_id` has drifted away from its comp
+ * cannot widen its own menu.
+ */
+export function isFoundingSeasonPromoPlan(planKey: string): boolean {
+  return (FOUNDING_SEASON_PLAN_KEYS as readonly string[]).includes(planKey);
+}
+
 // ─── Price display helpers ────────────────────────────────────────────────────
 
 function commaSeparate(n: number): string {

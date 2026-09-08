@@ -1,0 +1,1491 @@
+<title>Founding Season Desk Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+/* ───────────────────────────────────────────────────────────────────────────
+   SHEET TOKENS — the review chrome. Deliberately quiet and cool-neutral so the
+   console specimens (which are always near-black + lime, never themed) read as
+   the product and everything around them reads as the review.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --paper:      #F1F3EF;
+  --paper-2:    #E7EBE3;
+  --ink:        #171A16;
+  --ink-2:      #4E564A;
+  --ink-3:      #767E70;
+  --rule:       #D5DBCF;
+  --rule-2:     #C0C8B8;
+  --accent:     #3D5A2B;
+  --accent-bg:  rgba(61, 90, 43, 0.08);
+  --flag:       #8A5A00;
+  --flag-bg:    rgba(138, 90, 0, 0.09);
+  --good:       #2F6B4F;
+  --shadow:     0 1px 2px rgba(23, 26, 22, .06), 0 8px 24px rgba(23, 26, 22, .07);
+
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --f-data:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --paper:     #12150F;
+    --paper-2:   #1A1E15;
+    --ink:       #E7EBE0;
+    --ink-2:     #A9B29E;
+    --ink-3:     #848C7B;
+    --rule:      #272C20;
+    --rule-2:    #363D2C;
+    --accent:    #B3D488;
+    --accent-bg: rgba(179, 212, 136, 0.10);
+    --flag:      #E0AE5A;
+    --flag-bg:   rgba(224, 174, 90, 0.10);
+    --good:      #7FC5A1;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"] {
+  --paper:     #12150F;
+  --paper-2:   #1A1E15;
+  --ink:       #E7EBE0;
+  --ink-2:     #A9B29E;
+  --ink-3:     #848C7B;
+  --rule:      #272C20;
+  --rule-2:    #363D2C;
+  --accent:    #B3D488;
+  --accent-bg: rgba(179, 212, 136, 0.10);
+  --flag:      #E0AE5A;
+  --flag-bg:   rgba(224, 174, 90, 0.10);
+  --good:      #7FC5A1;
+  --shadow:    0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 96px; }
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+.mast { padding: 56px 0 28px; border-bottom: 2px solid var(--ink); }
+.eyebrow {
+  font-family: var(--f-data); font-size: 11px; font-weight: 600;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 14px;
+}
+h1 {
+  font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px);
+  line-height: 1.04; letter-spacing: -.025em; margin: 0 0 16px; text-wrap: balance;
+}
+.standfirst {
+  font-size: 19px; line-height: 1.55; color: var(--ink-2); max-width: 62ch; margin: 0 0 24px;
+}
+.mast-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 28px;
+  font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3);
+  letter-spacing: .04em;
+}
+.mast-meta b { color: var(--ink-2); font-weight: 600; }
+
+/* ── controls ─────────────────────────────────────────────────────────── */
+.controls {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+  padding: 12px 0; margin-bottom: 8px;
+  background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+.ctrl-label {
+  font-family: var(--f-data); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.seg { display: inline-flex; border: 1px solid var(--rule-2); border-radius: 2px; overflow: hidden; }
+.seg button {
+  font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 7px 13px; min-height: 32px; background: transparent; color: var(--ink-2);
+  border: 0; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--rule-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--paper); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.jump { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--f-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-2); text-decoration: none; padding: 6px 9px; border: 1px solid transparent;
+}
+.jump a:hover, .jump a:focus-visible { border-color: var(--rule-2); color: var(--ink); }
+
+/* ── sections ─────────────────────────────────────────────────────────── */
+section { padding-top: 52px; }
+.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+.sec-mark {
+  font-family: var(--f-data); font-weight: 700; font-size: 12px; letter-spacing: .16em;
+  color: var(--accent); padding-top: 6px;
+}
+h2 {
+  font-family: var(--f-display); font-weight: 700; font-size: 27px; letter-spacing: -.018em;
+  margin: 0; line-height: 1.2; text-wrap: balance;
+}
+.sec-note { color: var(--ink-2); max-width: 68ch; margin: 8px 0 0; }
+.sec-note + .sec-note { margin-top: 10px; }
+h3 {
+  font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em;
+  margin: 34px 0 4px;
+}
+
+/* ── specimen frame ───────────────────────────────────────────────────── */
+.spec { margin-top: 18px; }
+.spec-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-3); padding-bottom: 7px;
+}
+.spec-bar .w { color: var(--accent); font-weight: 600; }
+.spec-bar .state { color: var(--ink-2); }
+.spec-bar .tag {
+  border: 1px solid var(--rule-2); padding: 2px 7px; letter-spacing: .1em; color: var(--ink-2);
+}
+.spec-bar .tag.now  { border-color: var(--rule-2); }
+.spec-bar .tag.new  { border-color: var(--accent); color: var(--accent); }
+.viewport {
+  border: 1px solid var(--rule-2); background: #0A0A0A;
+  overflow-x: auto; overflow-y: hidden; box-shadow: var(--shadow);
+}
+body.fit .viewport > .screen { zoom: .62; }
+.caption {
+  font-size: 14.5px; color: var(--ink-2); margin: 10px 0 0; max-width: 74ch;
+}
+.caption b { color: var(--ink); font-weight: 600; }
+
+/* ── callouts ─────────────────────────────────────────────────────────── */
+.note {
+  border-left: 3px solid var(--accent); background: var(--accent-bg);
+  padding: 14px 18px; margin: 20px 0 0; font-size: 15px; color: var(--ink-2);
+}
+.note.flag { border-left-color: var(--flag); background: var(--flag-bg); }
+.note strong { color: var(--ink); }
+.note p { margin: 0; }
+.note p + p { margin-top: 9px; }
+
+/* ── decisions ────────────────────────────────────────────────────────── */
+.dec { border-top: 1px solid var(--rule); padding: 24px 0 4px; }
+.dec:last-of-type { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.dec-id {
+  font-family: var(--f-data); font-size: 11px; font-weight: 700; letter-spacing: .16em;
+  color: var(--accent); text-transform: uppercase;
+}
+.dec h3 { margin: 4px 0 10px; font-size: 20px; }
+.dec p { margin: 0 0 10px; color: var(--ink-2); max-width: 72ch; }
+.dec .opts { display: grid; gap: 10px; margin-top: 14px; }
+@media (min-width: 720px) { .dec .opts { grid-template-columns: 1fr 1fr; } }
+.opt { border: 1px solid var(--rule-2); padding: 13px 15px; background: var(--paper-2); }
+.opt.rec { border-color: var(--accent); border-width: 1px 1px 1px 3px; }
+.opt-h {
+  font-family: var(--f-data); font-size: 10.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px;
+}
+.opt.rec .opt-h { color: var(--accent); }
+.opt p { margin: 0; font-size: 14.5px; }
+
+/* ── plain tables in the sheet ────────────────────────────────────────── */
+.sheet-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--rule); }
+table.sheet { border-collapse: collapse; width: 100%; min-width: 560px; background: var(--paper-2); }
+table.sheet th {
+  font-family: var(--f-data); font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-2); text-align: left;
+  padding: 9px 14px; border-bottom: 1px solid var(--rule-2); white-space: nowrap;
+}
+table.sheet td {
+  padding: 9px 14px; font-size: 14.5px; color: var(--ink); border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.sheet tr:last-child td { border-bottom: 0; }
+table.sheet code, .mono { font-family: var(--f-data); font-size: 12.5px; }
+
+ul.plain { margin: 12px 0 0; padding-left: 20px; color: var(--ink-2); }
+ul.plain li { margin-bottom: 7px; }
+ul.plain b { color: var(--ink); font-weight: 600; }
+
+.colophon {
+  margin-top: 64px; padding-top: 20px; border-top: 2px solid var(--ink);
+  font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3); letter-spacing: .04em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONSOLE SPECIMEN — a faithful copy of the platform-admin shell's own
+   values, read out of app/globals.css + platform-admin.module.css +
+   audit.module.css on 2026-09-07. Prefixed `pa-` so nothing leaks into the
+   sheet chrome above. Never themed: the console is always near-black.
+   ═══════════════════════════════════════════════════════════════════════ */
+.screen {
+  --lime: #D9F99D;
+  --lime-rgb: 217, 249, 157;
+  --black: #0A0A0A;
+  --gray: #94A3B8;
+  --w90: rgba(255,255,255,.9);
+  --w70: rgba(255,255,255,.7);
+  --w10: rgba(255,255,255,.1);
+  --card: #111827;
+  --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-ui: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-ui);
+  color: var(--w90);
+  background: var(--black);
+  display: flex;
+  min-height: 720px;
+}
+.screen.phone { display: block; min-height: 760px; }
+
+.pa-side {
+  width: 220px; flex-shrink: 0; background: rgba(5,10,5,.6);
+  border-right: 1px solid rgba(var(--lime-rgb), .25); padding-bottom: 16px;
+}
+.pa-side-h { padding: 24px 20px 20px; border-bottom: 1px solid rgba(var(--lime-rgb), .15); }
+.pa-badge {
+  font-family: var(--font-data); font-size: 9.6px; font-weight: 700; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--lime);
+}
+.pa-sub { font-family: var(--font-data); font-size: 11.2px; color: var(--gray); margin-top: 4px; }
+.pa-nav { padding: 16px 12px; display: flex; flex-direction: column; gap: 13.6px; }
+.pa-group { display: flex; flex-direction: column; gap: 2.4px; }
+.pa-group-l {
+  font-family: var(--font-data); font-size: 7.7px; font-weight: 700; letter-spacing: .16em;
+  text-transform: uppercase; color: rgba(var(--lime-rgb), .45); padding: 0 12px 3px;
+}
+.pa-link {
+  display: flex; align-items: center; gap: 9.6px; padding: 8px 12px;
+  font-family: var(--font-data); font-size: 11.2px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--gray); border: 1px solid transparent;
+}
+.pa-link.on {
+  color: var(--lime); border-color: rgba(var(--lime-rgb), .4);
+  background: rgba(var(--lime-rgb), .08);
+}
+.pa-dot { width: 13px; height: 13px; border: 1.4px solid currentColor; border-radius: 2px; flex-shrink: 0; }
+.pa-dot.round { border-radius: 50%; }
+
+.pa-main {
+  flex: 1; min-width: 0; padding: 32px; background: var(--black);
+  background-image:
+    linear-gradient(to right, rgba(var(--lime-rgb), .03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--lime-rgb), .03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.pa-head {
+  display: flex; align-items: baseline; gap: 16px;
+  border-bottom: 1px solid rgba(var(--lime-rgb), .3); padding-bottom: 16px; margin-bottom: 24px;
+}
+.pa-head-l {
+  font-family: var(--font-data); font-size: 9.6px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--lime);
+}
+.pa-title {
+  font-family: var(--font-ui); font-weight: 800; font-size: 24px; text-transform: uppercase;
+  letter-spacing: -.02em; color: var(--w90); margin: 0;
+}
+.pa-count { font-family: var(--font-data); font-size: 10.4px; color: var(--gray); margin-left: auto; }
+
+.pa-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.pa-metric { border: 1px solid rgba(var(--lime-rgb), .18); background: rgba(255,255,255,.025); padding: 13.6px; }
+.pa-metric.hi { border-color: rgba(var(--lime-rgb), .5); background: rgba(var(--lime-rgb), .06); }
+.pa-metric.warn { border-color: rgba(251,191,36,.38); background: rgba(251,191,36,.055); }
+.pa-metric-l {
+  display: block; font-family: var(--font-data); font-size: 8.8px; font-weight: 700;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--gray); margin-bottom: 7px;
+}
+.pa-metric strong { font-family: var(--font-data); font-size: 21.6px; line-height: 1; color: var(--w90); }
+.pa-metric.hi strong { color: var(--lime); }
+.pa-metric.warn strong { color: #FBBF24; }
+.pa-metric-s { font-family: var(--font-data); font-size: 9.6px; color: var(--gray); margin-left: 7px; }
+
+.pa-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 20px; }
+.pa-input {
+  flex: 1; min-width: 180px; padding: 6.4px 10.4px; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.12); color: var(--w90);
+  font-family: var(--font-data); font-size: 11.2px; min-height: 38px;
+}
+.pa-input::placeholder { color: var(--gray); }
+.pa-btn {
+  padding: 6.4px 14.4px; min-height: 38px; background: rgba(var(--lime-rgb), .1);
+  border: 1px solid rgba(var(--lime-rgb), .35); color: var(--lime);
+  font-family: var(--font-data); font-size: 11.2px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; display: inline-flex; align-items: center; gap: 7px;
+}
+.pa-btn.ghost { background: transparent; border-color: rgba(255,255,255,.15); color: var(--gray); }
+.pa-btn.on { background: var(--lime); border-color: var(--lime); color: #0A0A0A; }
+.pa-select {
+  padding: 6.4px 10.4px; min-height: 38px; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.12); color: var(--w90);
+  font-family: var(--font-data); font-size: 11.2px;
+}
+.pa-clear { font-family: var(--font-data); font-size: 10.4px; color: var(--gray); text-decoration: underline; }
+
+.pa-tablewrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.08); }
+table.pa-table { width: max-content; min-width: 100%; border-collapse: collapse; font-family: var(--font-data); }
+table.pa-table th {
+  padding: 6.72px 16px; text-align: left; font-family: var(--font-ui); font-size: 12px;
+  font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--w70);
+  border-bottom: 1px solid var(--w10); white-space: nowrap;
+}
+table.pa-table td {
+  padding: 6.72px 16px; font-size: 14px; color: var(--w90);
+  border-bottom: 1px solid var(--w10); vertical-align: middle; white-space: nowrap;
+}
+table.pa-table tbody tr:last-child td { border-bottom: none; }
+.pa-acct { display: flex; flex-direction: column; gap: 1px; }
+.pa-acct a { color: var(--w90); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.15); font-size: 13px; }
+.pa-acct span { font-size: 10.4px; color: var(--gray); }
+.pa-chip {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; padding: 2px 6px; border: 1px solid; border-radius: 2px;
+}
+.pa-chip.org   { color: var(--gray); border-color: rgba(148,163,184,.4); }
+.pa-chip.coach { color: #7DD3FC; border-color: rgba(125,211,252,.4); }
+.pa-chip.legacy{ color: #FBBF24; border-color: rgba(251,191,36,.5); margin-left: 6px; }
+.pa-dim  { color: var(--gray); font-size: 12px; }
+.pa-dash { color: var(--gray); }
+.pa-yes  { color: var(--lime); }
+.pa-two  { display: flex; flex-direction: column; gap: 1px; }
+.pa-two b { font-weight: 400; font-size: 13px; }
+.pa-two span { font-size: 10.4px; color: var(--gray); }
+.pa-foot { font-family: var(--font-data); font-size: 10.4px; color: var(--gray); margin-top: 12px; }
+
+/* phone card recipe (globals .table-cards at <= 640) */
+.pa-cards { padding: 0; }
+.pa-card {
+  border: 1px solid var(--w10); border-radius: 10px; padding: 10.4px 13.6px;
+  margin-bottom: 10.4px; background: var(--card); font-family: var(--font-data);
+}
+.pa-card .t { font-size: 14px; color: var(--w90); margin-bottom: 6px; border-bottom: 1px solid var(--w10); padding-bottom: 6px; }
+.pa-card .r { display: flex; justify-content: space-between; gap: 12px; padding: 4.5px 0; font-size: 13px; }
+.pa-card .r::before {
+  content: attr(data-label); font-family: var(--font-ui); font-size: 11px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--w70); flex-shrink: 0;
+}
+.pa-card .r > span { text-align: right; color: var(--w90); }
+.pa-topbar {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-bottom: 1px solid rgba(var(--lime-rgb), .25); background: rgba(5,10,5,.6);
+}
+.pa-burger { width: 20px; height: 14px; border-top: 2px solid var(--lime); border-bottom: 2px solid var(--lime); position: relative; }
+.pa-burger::after { content: ""; position: absolute; top: 5px; left: 0; right: 0; border-top: 2px solid var(--lime); }
+
+/* ═══════ ORG / COACH BILLING SPECIMEN (the admin shell, not the console) ═══ */
+.screen.app {
+  --lime: #D9F99D; --lime-rgb: 217,249,157;
+  background: #0F172A; display: block; min-height: auto; padding: 0;
+}
+.ap-shell { display: flex; min-height: 700px; }
+.ap-side {
+  width: 220px; flex-shrink: 0; background: #0B1120;
+  border-right: 1px solid rgba(255,255,255,.07); padding: 20px 12px;
+}
+.ap-org {
+  font-family: var(--font-ui); font-weight: 700; font-size: 14px; color: #E2E8F0;
+  padding: 0 10px 14px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 14px;
+}
+.ap-org span { display: block; font-family: var(--font-data); font-size: 10px; color: #64748B; font-weight: 400; margin-top: 3px; letter-spacing: .06em; }
+.ap-link {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 13px;
+  color: #94A3B8; border-radius: 4px;
+}
+.ap-link.on { background: rgba(var(--lime-rgb), .1); color: var(--lime); }
+.ap-main { flex: 1; min-width: 0; padding: 28px 32px 40px; }
+.ap-page-h { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.ap-page-h h1 { font-family: var(--font-ui); font-size: 22px; font-weight: 700; margin: 0; color: #F1F5F9; }
+.ap-badge {
+  font-family: var(--font-data); font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 3px;
+  background: rgba(34,197,94,.14); color: #4ADE80; border: 1px solid rgba(34,197,94,.3);
+}
+.ap-card {
+  border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.02);
+  border-radius: 8px; padding: 18px 20px; margin-bottom: 14px;
+}
+.ap-card.founding { border-color: rgba(var(--lime-rgb), .35); background: rgba(var(--lime-rgb), .05); display: flex; gap: 14px; }
+.ap-card.choice { border-color: rgba(var(--lime-rgb), .45); background: rgba(var(--lime-rgb), .06); }
+.ap-card.chosen { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.05); }
+.ap-star {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+  background: rgba(var(--lime-rgb), .16); color: var(--lime);
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.ap-eyebrow {
+  font-family: var(--font-data); font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--lime); margin: 0 0 6px;
+}
+.ap-h2 { font-family: var(--font-ui); font-size: 17px; font-weight: 700; color: #F1F5F9; margin: 0 0 8px; }
+.ap-h3 { font-family: var(--font-ui); font-size: 14px; font-weight: 700; color: #F1F5F9; margin: 0 0 6px; }
+.ap-copy { font-size: 13.5px; line-height: 1.6; color: #CBD5E1; margin: 0; }
+.ap-copy.dim { color: #94A3B8; font-size: 13px; }
+.ap-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.ap-btn {
+  font-family: var(--font-data); font-size: 12px; font-weight: 700; letter-spacing: .06em;
+  padding: 10px 16px; min-height: 40px; border-radius: 4px; display: inline-flex;
+  align-items: center; gap: 8px; white-space: nowrap;
+}
+.ap-btn.primary { background: var(--lime); color: #0A0A0A; border: 1px solid var(--lime); }
+.ap-btn.outline { background: transparent; color: #E2E8F0; border: 1px solid rgba(255,255,255,.22); }
+.ap-btn.quiet { background: transparent; color: #94A3B8; border: 1px solid transparent; text-decoration: underline; padding-left: 0; }
+.ap-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 16px; }
+.ap-plan { border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: 14px 16px; background: rgba(255,255,255,.02); }
+.ap-plan.pick { border-color: var(--lime); background: rgba(var(--lime-rgb), .09); }
+.ap-plan-l { font-family: var(--font-data); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #94A3B8; }
+.ap-plan.pick .ap-plan-l { color: var(--lime); }
+.ap-price { font-family: var(--font-ui); font-size: 26px; font-weight: 800; color: #F1F5F9; margin: 6px 0 2px; letter-spacing: -.02em; }
+.ap-price small { font-size: 13px; font-weight: 500; color: #94A3B8; letter-spacing: 0; }
+.ap-save { font-family: var(--font-data); font-size: 10.5px; color: var(--lime); letter-spacing: .04em; }
+.ap-radio { width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); display: inline-block; vertical-align: -2px; margin-right: 8px; }
+.ap-plan.pick .ap-radio { border-color: var(--lime); background: radial-gradient(circle, var(--lime) 0 38%, transparent 40%); }
+.ap-guard {
+  font-family: var(--font-data); font-size: 11.5px; color: var(--lime); letter-spacing: .03em;
+  border-top: 1px solid rgba(var(--lime-rgb), .2); padding-top: 12px; margin-top: 4px;
+}
+.ap-meter { border: 1px solid rgba(255,255,255,.09); border-radius: 8px; padding: 13px 16px; margin-bottom: 10px; }
+.ap-meter-h { display: flex; justify-content: space-between; font-size: 12.5px; color: #94A3B8; }
+.ap-meter-h b { color: #E2E8F0; font-family: var(--font-data); font-weight: 500; }
+.ap-planhead {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  border: 1px solid rgba(255,255,255,.09); border-radius: 8px; padding: 16px 20px; margin-bottom: 14px;
+}
+.ap-planhead .p { font-family: var(--font-ui); font-size: 19px; font-weight: 700; color: #F1F5F9; }
+.ap-planhead .s { font-family: var(--font-data); font-size: 11.5px; color: #94A3B8; margin-top: 3px; }
+.ap-nothing {
+  border: 1px dashed rgba(255,255,255,.16); border-radius: 8px; padding: 22px 20px;
+  text-align: center; font-family: var(--font-data); font-size: 12px; color: #64748B;
+  letter-spacing: .04em; margin-bottom: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Founding Season 2027 · Phase 2 · Mockups for approval</p>
+    <h1>The desk, the card, and the 2028 choice</h1>
+    <p class="standfirst">
+      Four surfaces, drawn at true size before any of them is built. One of them — the platform-admin
+      desk — is live the day it ships. The other three sleep until June 1, 2027, when the card window
+      opens and the Founding Season starts asking accounts what they want to do next.
+    </p>
+    <div class="mast-meta">
+      <span><b>Drawn</b> 2026-09-07</span>
+      <span><b>Plan</b> FOUNDING_SEASON_2027_DESK_PLAN.md</span>
+      <span><b>Ruling</b> BUSINESS_DECISIONS.md 2026-09-07</span>
+      <span><b>Gate</b> nothing is built until this sheet is approved</span>
+    </div>
+  </header>
+
+  <div class="controls">
+    <span class="ctrl-label">Specimen scale</span>
+    <div class="seg" role="group" aria-label="Specimen scale">
+      <button type="button" id="btn-true" aria-pressed="true">True size 1:1</button>
+      <button type="button" id="btn-fit" aria-pressed="false">Fit to window</button>
+    </div>
+    <nav class="jump" aria-label="Sections">
+      <a href="#desk">The desk</a>
+      <a href="#org">Org billing</a>
+      <a href="#coach">Coach billing</a>
+      <a href="#choice">2028 choice</a>
+      <a href="#decisions">Decisions</a>
+    </nav>
+  </div>
+
+  <!-- ══════════════════ A · THE DESK ══════════════════ -->
+  <section id="desk">
+    <div class="sec-head"><span class="sec-mark">A</span><h2>The Founding Season desk</h2></div>
+    <p class="sec-note">
+      One list, both account kinds. A comped Coaches Portal already carries the same free-season record
+      an organization does — the workspace provisioning writes it — so this is one query over accounts,
+      not two lists stitched together. The desk <b>reads only</b>: every action it implies (change a
+      plan, cancel, send) already lives in Bulk Operations, the org page, or Email Campaigns, and the
+      desk links to them. A read-only desk cannot convert the wrong account by accident.
+    </p>
+    <p class="sec-note">
+      Drawn with an example cohort as it would read on <b>July 7, 2027</b>, mid-window. Today the real
+      list holds three accounts.
+    </p>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span class="w">1440 × 720</span><span>·</span>
+        <span class="state">Default view, no filters</span>
+        <span class="tag new">New screen</span>
+      </div>
+      <div class="viewport">
+        <div class="screen" style="width:1440px">
+
+          <aside class="pa-side">
+            <div class="pa-side-h">
+              <div class="pa-badge">Platform Admin</div>
+              <div class="pa-sub">FieldLogicHQ</div>
+            </div>
+            <nav class="pa-nav">
+              <div class="pa-group">
+                <div class="pa-group-l">Command Center</div>
+                <div class="pa-link"><i class="pa-dot"></i>Overview</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Customers</div>
+                <div class="pa-link"><i class="pa-dot"></i>Organizations</div>
+                <div class="pa-link"><i class="pa-dot round"></i>Customer Users</div>
+                <div class="pa-link"><i class="pa-dot"></i>Retention</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Growth</div>
+                <div class="pa-link"><i class="pa-dot"></i>Early Access</div>
+                <div class="pa-link"><i class="pa-dot"></i>Email Campaigns</div>
+                <div class="pa-link"><i class="pa-dot"></i>Pitch Deck Studio</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Billing &amp; Product</div>
+                <div class="pa-link on"><i class="pa-dot round"></i>Founding Season</div>
+                <div class="pa-link"><i class="pa-dot"></i>Approval Queue</div>
+                <div class="pa-link"><i class="pa-dot"></i>Plans &amp; Pricing</div>
+                <div class="pa-link"><i class="pa-dot"></i>Bulk Operations</div>
+                <div class="pa-link"><i class="pa-dot"></i>Email Templates</div>
+                <div class="pa-link"><i class="pa-dot"></i>Export Registry</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Governance</div>
+                <div class="pa-link"><i class="pa-dot"></i>Platform Users</div>
+                <div class="pa-link"><i class="pa-dot"></i>Audit Log</div>
+              </div>
+            </nav>
+          </aside>
+
+          <main class="pa-main">
+            <div class="pa-head">
+              <div class="pa-head-l">Billing &amp; Product</div>
+              <h1 class="pa-title">Founding Season</h1>
+              <div class="pa-count">8 accounts · free through Sep 30, 2027</div>
+            </div>
+
+            <div class="pa-metrics">
+              <div class="pa-metric hi">
+                <span class="pa-metric-l">Founding accounts</span>
+                <strong>8</strong><span class="pa-metric-s">6 orgs · 2 portals</span>
+              </div>
+              <div class="pa-metric warn">
+                <span class="pa-metric-l">No card yet</span>
+                <strong>4</strong><span class="pa-metric-s">50%</span>
+              </div>
+              <div class="pa-metric warn">
+                <span class="pa-metric-l">No 2028 choice yet</span>
+                <strong>6</strong><span class="pa-metric-s">75%</span>
+              </div>
+              <div class="pa-metric">
+                <span class="pa-metric-l">Free season ends</span>
+                <strong>Sep 30</strong><span class="pa-metric-s">85d left</span>
+              </div>
+            </div>
+
+            <div class="pa-filters">
+              <input class="pa-input" placeholder="Search account or billing contact…" aria-label="Search">
+              <select class="pa-select" aria-label="Account kind">
+                <option>All kinds</option><option>Organizations</option><option>Coaches Portals</option>
+              </select>
+              <button class="pa-btn ghost" type="button">No card yet</button>
+              <button class="pa-btn ghost" type="button">No 2028 choice</button>
+              <button class="pa-btn" type="button">Export</button>
+            </div>
+
+            <div class="pa-tablewrap">
+              <table class="pa-table">
+                <thead>
+                  <tr>
+                    <th>Account</th><th>Kind</th><th>Plan</th><th>Free through</th>
+                    <th>Card on file</th><th>2028 choice</th><th>Owner last seen</th>
+                    <th>Used it for</th><th>Billing contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Milton Softball Association</a><span>milton-softball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Sep 30, 2027</td>
+                    <td><span class="pa-two"><b class="pa-yes">Visa ••4242</b><span>Jun 3, 2027</span></span></td>
+                    <td><span class="pa-two"><b>Tournament Plus</b><span>Annual · Jun 3, 2027</span></span></td>
+                    <td class="pa-dim">2d ago</td>
+                    <td class="pa-dim">4 tournaments</td>
+                    <td class="pa-dim">kim.arsenault@miltonsoftball.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Grand River Ringette</a><span>grand-river-ringette</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Sep 30, 2027</td>
+                    <td><span class="pa-two"><b class="pa-yes">Mastercard ••8801</b><span>Jun 14, 2027</span></span></td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">6d ago</td>
+                    <td class="pa-dim">2 tournaments</td>
+                    <td class="pa-dim">treasurer@grandriverringette.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Riverdale Ridge U15 AA</a><span>riverdale-ridge-u15-coaches-portal</span></span></td>
+                    <td><span class="pa-chip coach">Coaches Portal</span></td>
+                    <td class="pa-dim">Premium Coaches Portal</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">5d ago</td>
+                    <td class="pa-dim">17 players</td>
+                    <td class="pa-dim">d.okafor@riverdaleridge.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Bay Street Ball Hockey</a><span>bay-street-ball-hockey</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Dec 31, 2026 <span class="pa-chip legacy">Legacy</span></td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">Apr 2, 2027</td>
+                    <td class="pa-dim">1 tournament</td>
+                    <td class="pa-dim">admin@baystreetbh.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Northumberland Minor Baseball</a><span>northumberland-minor-baseball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">Jan 18, 2027</td>
+                    <td class="pa-dim">No tournaments yet</td>
+                    <td class="pa-dim">rlefebvre@nmbaseball.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Sault Thunder U13</a><span>sault-thunder-u13-coaches-portal</span></span></td>
+                    <td><span class="pa-chip coach">Coaches Portal</span></td>
+                    <td class="pa-dim">Premium Coaches Portal</td>
+                    <td>Sep 30, 2027</td>
+                    <td><span class="pa-two"><b class="pa-yes">Visa ••1017</b><span>Jun 2, 2027</span></span></td>
+                    <td><span class="pa-two"><b>Premium Coaches Portal</b><span>Monthly · Jul 1, 2027</span></span></td>
+                    <td class="pa-dim">1d ago</td>
+                    <td class="pa-dim">14 players</td>
+                    <td class="pa-dim">coach.tran@saultthunder.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Peel Region Softball League</a><span>peel-region-softball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">3d ago</td>
+                    <td class="pa-dim">6 tournaments</td>
+                    <td class="pa-dim">ops@peelsoftball.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Kawartha Lakes Fastball</a><span>kawartha-lakes-fastball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Sep 30, 2027</td>
+                    <td><span class="pa-two"><b class="pa-yes">Amex ••3009</b><span>Jul 2, 2027</span></span></td>
+                    <td class="pa-dash">—</td>
+                    <td class="pa-dim">4d ago</td>
+                    <td class="pa-dim">3 tournaments</td>
+                    <td class="pa-dim">info@klfastball.ca</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="pa-foot">
+              Card on file is recorded in the app when Stripe confirms it — the desk never calls Stripe to draw this list.
+            </p>
+          </main>
+        </div>
+      </div>
+      <p class="caption">
+        <b>The two columns the October turn-off actually runs on</b> are Card on file and 2028 choice.
+        Everything else on the row exists to answer "is this account worth chasing?" — what they run,
+        when their owner last showed up, and who to write to.
+      </p>
+    </div>
+
+    <div class="note flag">
+      <p><strong>The amber "Legacy" chip is a real state, not decoration.</strong> Migration 279 moved
+      every free-season record from the old January instant to the new September one, but it is a
+      data-only migration that no drift check can see. A row it never reached still reads
+      <span class="mono">Dec 31, 2026</span>. Recognition tolerates it — the account is still in the
+      cohort — but the desk is the only place anyone would ever notice, so it says so.</p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span class="w">1440 × 720</span><span>·</span>
+        <span class="state">"No card yet" filter on</span>
+        <span class="tag new">New screen</span>
+      </div>
+      <div class="viewport">
+        <div class="screen" style="width:1440px">
+          <aside class="pa-side">
+            <div class="pa-side-h">
+              <div class="pa-badge">Platform Admin</div>
+              <div class="pa-sub">FieldLogicHQ</div>
+            </div>
+            <nav class="pa-nav">
+              <div class="pa-group">
+                <div class="pa-group-l">Command Center</div>
+                <div class="pa-link"><i class="pa-dot"></i>Overview</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Customers</div>
+                <div class="pa-link"><i class="pa-dot"></i>Organizations</div>
+                <div class="pa-link"><i class="pa-dot round"></i>Customer Users</div>
+                <div class="pa-link"><i class="pa-dot"></i>Retention</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Growth</div>
+                <div class="pa-link"><i class="pa-dot"></i>Early Access</div>
+                <div class="pa-link"><i class="pa-dot"></i>Email Campaigns</div>
+                <div class="pa-link"><i class="pa-dot"></i>Pitch Deck Studio</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Billing &amp; Product</div>
+                <div class="pa-link on"><i class="pa-dot round"></i>Founding Season</div>
+                <div class="pa-link"><i class="pa-dot"></i>Approval Queue</div>
+                <div class="pa-link"><i class="pa-dot"></i>Plans &amp; Pricing</div>
+                <div class="pa-link"><i class="pa-dot"></i>Bulk Operations</div>
+                <div class="pa-link"><i class="pa-dot"></i>Email Templates</div>
+                <div class="pa-link"><i class="pa-dot"></i>Export Registry</div>
+              </div>
+              <div class="pa-group">
+                <div class="pa-group-l">Governance</div>
+                <div class="pa-link"><i class="pa-dot"></i>Platform Users</div>
+                <div class="pa-link"><i class="pa-dot"></i>Audit Log</div>
+              </div>
+            </nav>
+          </aside>
+
+          <main class="pa-main">
+            <div class="pa-head">
+              <div class="pa-head-l">Billing &amp; Product</div>
+              <h1 class="pa-title">Founding Season</h1>
+              <div class="pa-count">4 of 8 accounts · no card yet</div>
+            </div>
+
+            <div class="pa-metrics">
+              <div class="pa-metric hi">
+                <span class="pa-metric-l">Founding accounts</span>
+                <strong>8</strong><span class="pa-metric-s">6 orgs · 2 portals</span>
+              </div>
+              <div class="pa-metric warn">
+                <span class="pa-metric-l">No card yet</span>
+                <strong>4</strong><span class="pa-metric-s">50%</span>
+              </div>
+              <div class="pa-metric warn">
+                <span class="pa-metric-l">No 2028 choice yet</span>
+                <strong>6</strong><span class="pa-metric-s">75%</span>
+              </div>
+              <div class="pa-metric">
+                <span class="pa-metric-l">Free season ends</span>
+                <strong>Sep 30</strong><span class="pa-metric-s">85d left</span>
+              </div>
+            </div>
+
+            <div class="pa-filters">
+              <input class="pa-input" placeholder="Search account or billing contact…" aria-label="Search">
+              <select class="pa-select" aria-label="Account kind">
+                <option>All kinds</option><option>Organizations</option><option>Coaches Portals</option>
+              </select>
+              <button class="pa-btn on" type="button">No card yet</button>
+              <button class="pa-btn ghost" type="button">No 2028 choice</button>
+              <button class="pa-btn" type="button">Export 4 rows</button>
+              <a class="pa-clear" href="#desk">Clear filters</a>
+            </div>
+
+            <div class="pa-tablewrap">
+              <table class="pa-table">
+                <thead>
+                  <tr>
+                    <th>Account</th><th>Kind</th><th>Plan</th><th>Free through</th>
+                    <th>Card on file</th><th>2028 choice</th><th>Owner last seen</th>
+                    <th>Used it for</th><th>Billing contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Riverdale Ridge U15 AA</a><span>riverdale-ridge-u15-coaches-portal</span></span></td>
+                    <td><span class="pa-chip coach">Coaches Portal</span></td>
+                    <td class="pa-dim">Premium Coaches Portal</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td><td class="pa-dash">—</td>
+                    <td class="pa-dim">5d ago</td>
+                    <td class="pa-dim">17 players</td>
+                    <td class="pa-dim">d.okafor@riverdaleridge.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Bay Street Ball Hockey</a><span>bay-street-ball-hockey</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Dec 31, 2026 <span class="pa-chip legacy">Legacy</span></td>
+                    <td class="pa-dash">—</td><td class="pa-dash">—</td>
+                    <td class="pa-dim">Apr 2, 2027</td>
+                    <td class="pa-dim">1 tournament</td>
+                    <td class="pa-dim">admin@baystreetbh.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Northumberland Minor Baseball</a><span>northumberland-minor-baseball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td><td class="pa-dash">—</td>
+                    <td class="pa-dim">Jan 18, 2027</td>
+                    <td class="pa-dim">No tournaments yet</td>
+                    <td class="pa-dim">rlefebvre@nmbaseball.ca</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pa-acct"><a href="#desk">Peel Region Softball League</a><span>peel-region-softball</span></span></td>
+                    <td><span class="pa-chip org">Org</span></td>
+                    <td class="pa-dim">Tournament Plus</td>
+                    <td>Sep 30, 2027</td>
+                    <td class="pa-dash">—</td><td class="pa-dash">—</td>
+                    <td class="pa-dim">3d ago</td>
+                    <td class="pa-dim">6 tournaments</td>
+                    <td class="pa-dim">ops@peelsoftball.ca</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="pa-foot">
+              These 4 accounts are exactly the "no card yet" email audience — the same rule, read the same way.
+            </p>
+          </main>
+        </div>
+      </div>
+      <p class="caption">
+        The filter and the reminder audience are <b>one rule</b>, not two that must be kept in step.
+        What the operator sees here is who the send would reach, minus anyone who has opted out —
+        and the count on the Email Campaigns card matches.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span class="w">390 × 760</span><span>·</span>
+        <span class="state">Phone — the list becomes cards</span>
+        <span class="tag new">New screen</span>
+      </div>
+      <div class="viewport">
+        <div class="screen phone" style="width:390px">
+          <div class="pa-topbar">
+            <span class="pa-burger" aria-hidden="true"></span>
+            <span class="pa-badge">Platform Admin</span>
+          </div>
+          <div class="pa-main" style="padding:16px">
+            <div class="pa-head" style="flex-wrap:wrap;gap:6px 12px">
+              <div class="pa-head-l">Billing &amp; Product</div>
+              <h1 class="pa-title" style="font-size:20px">Founding Season</h1>
+              <div class="pa-count" style="margin-left:0;width:100%">8 accounts · 4 with no card</div>
+            </div>
+            <div class="pa-metrics" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+              <div class="pa-metric hi"><span class="pa-metric-l">Accounts</span><strong>8</strong></div>
+              <div class="pa-metric warn"><span class="pa-metric-l">No card yet</span><strong>4</strong></div>
+            </div>
+            <div class="pa-filters" style="margin-bottom:14px">
+              <input class="pa-input" placeholder="Search…" aria-label="Search">
+              <button class="pa-btn ghost" type="button" style="width:100%;justify-content:center">No card yet</button>
+            </div>
+            <div class="pa-cards">
+              <div class="pa-card">
+                <div class="t">Milton Softball Association</div>
+                <div class="r" data-label="Kind"><span>Organization</span></div>
+                <div class="r" data-label="Free through"><span>Sep 30, 2027</span></div>
+                <div class="r" data-label="Card"><span style="color:#D9F99D">Visa ••4242</span></div>
+                <div class="r" data-label="2028"><span>Tournament Plus · annual</span></div>
+                <div class="r" data-label="Last seen"><span>2d ago</span></div>
+              </div>
+              <div class="pa-card">
+                <div class="t">Riverdale Ridge U15 AA</div>
+                <div class="r" data-label="Kind"><span>Coaches Portal</span></div>
+                <div class="r" data-label="Free through"><span>Sep 30, 2027</span></div>
+                <div class="r" data-label="Card"><span style="color:#94A3B8">—</span></div>
+                <div class="r" data-label="2028"><span style="color:#94A3B8">—</span></div>
+                <div class="r" data-label="Last seen"><span>5d ago</span></div>
+              </div>
+              <div class="pa-card">
+                <div class="t">Bay Street Ball Hockey</div>
+                <div class="r" data-label="Kind"><span>Organization</span></div>
+                <div class="r" data-label="Free through"><span>Dec 31, 2026 · legacy</span></div>
+                <div class="r" data-label="Card"><span style="color:#94A3B8">—</span></div>
+                <div class="r" data-label="2028"><span style="color:#94A3B8">—</span></div>
+                <div class="r" data-label="Last seen"><span>Apr 2, 2027</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Nine columns is a record you read, not two figures you compare — so on a phone the list becomes
+        cards and the headings become labels, using the recipe the console already publishes.
+        <b>No platform-admin screen is in the automated layout sweep</b>, so this shape is measured by
+        hand at 361, 390 and 768 before the walk.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ B · ORG BILLING ══════════════════ -->
+  <section id="org">
+    <div class="sec-head"><span class="sec-mark">B</span><h2>An organization's billing page, in the summer window</h2></div>
+    <p class="sec-note">
+      Both drawn as they read on <b>July 7, 2027</b> — inside the card window, before the account has
+      done anything. The "before" is what ships today; only the second half of the page changes.
+    </p>
+
+    <div class="spec">
+      <div class="spec-bar"><span class="w">1440</span><span>·</span><span class="state">Before — what ships today</span><span class="tag now">Live now</span></div>
+      <div class="viewport">
+        <div class="screen app" style="width:1440px">
+          <div class="ap-shell">
+            <aside class="ap-side">
+              <div class="ap-org">Milton Softball Association<span>Tournament Plus</span></div>
+              <div class="ap-link"><i class="pa-dot" style="border-color:currentColor"></i>Dashboard</div>
+              <div class="ap-link"><i class="pa-dot"></i>Tournaments</div>
+              <div class="ap-link"><i class="pa-dot"></i>Members</div>
+              <div class="ap-link on"><i class="pa-dot round"></i>Billing</div>
+              <div class="ap-link"><i class="pa-dot"></i>Settings</div>
+            </aside>
+            <main class="ap-main">
+              <div class="ap-page-h"><h1>Billing</h1><span class="ap-badge">Active</span></div>
+
+              <div class="ap-planhead">
+                <div>
+                  <div class="p">Tournament Plus</div>
+                  <div class="s">Free through September 30, 2027 · no credit card</div>
+                </div>
+                <span class="ap-badge">Founding Season</span>
+              </div>
+
+              <div class="ap-card founding">
+                <div class="ap-star">★</div>
+                <div>
+                  <p class="ap-eyebrow">Founding Season · ends September 30, 2027</p>
+                  <h2 class="ap-h2">Your Founding Season ends September 30, 2027.</h2>
+                  <p class="ap-copy">Choose a plan for your 2028 season and add a payment method to keep
+                  Tournament Plus running from October 1, 2027. Nothing is charged before then.</p>
+                </div>
+              </div>
+
+              <div class="ap-meter">
+                <div class="ap-meter-h"><span>Non-archived tournament slots used</span><b>4 / Unlimited</b></div>
+              </div>
+              <div class="ap-meter">
+                <div class="ap-meter-h"><span>Staff seats</span><b>6 / Unlimited</b></div>
+              </div>
+
+              <div class="ap-card">
+                <div class="ap-row">
+                  <div>
+                    <h2 class="ap-h2">Billing</h2>
+                    <p class="ap-copy dim">Your Founding Season ends September 30, 2027. Add a payment
+                    method now to keep Tournament Plus running without interruption from October 1, 2027.</p>
+                  </div>
+                  <span class="ap-btn outline">Add payment method →</span>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        The banner already says "choose a plan for your 2028 season" — but <b>there is nowhere to choose
+        one.</b> The only control is a card save, so the page asks for two things and offers one.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar"><span class="w">1440</span><span>·</span><span class="state">After — the choice is the ask</span><span class="tag new">Proposed</span></div>
+      <div class="viewport">
+        <div class="screen app" style="width:1440px">
+          <div class="ap-shell">
+            <aside class="ap-side">
+              <div class="ap-org">Milton Softball Association<span>Tournament Plus</span></div>
+              <div class="ap-link"><i class="pa-dot"></i>Dashboard</div>
+              <div class="ap-link"><i class="pa-dot"></i>Tournaments</div>
+              <div class="ap-link"><i class="pa-dot"></i>Members</div>
+              <div class="ap-link on"><i class="pa-dot round"></i>Billing</div>
+              <div class="ap-link"><i class="pa-dot"></i>Settings</div>
+            </aside>
+            <main class="ap-main">
+              <div class="ap-page-h"><h1>Billing</h1><span class="ap-badge">Active</span></div>
+
+              <div class="ap-planhead">
+                <div>
+                  <div class="p">Tournament Plus</div>
+                  <div class="s">Free through September 30, 2027 · no credit card</div>
+                </div>
+                <span class="ap-badge">Founding Season</span>
+              </div>
+
+              <div class="ap-card founding">
+                <div class="ap-star">★</div>
+                <div>
+                  <p class="ap-eyebrow">Founding Season · ends September 30, 2027</p>
+                  <h2 class="ap-h2">Your Founding Season ends September 30, 2027.</h2>
+                  <p class="ap-copy">Choose a plan for your 2028 season below. Nothing is charged before
+                  October 1, 2027, and you can change your mind until then.</p>
+                </div>
+              </div>
+
+              <div class="ap-card choice">
+                <h2 class="ap-h2">Choose your 2028 plan</h2>
+                <p class="ap-copy dim">You're on Tournament Plus today. Keep it for 2028, or move to the
+                free Tournament plan when the season ends.</p>
+                <div class="ap-plans">
+                  <div class="ap-plan pick">
+                    <div class="ap-plan-l"><i class="ap-radio"></i>Tournament Plus · annual</div>
+                    <div class="ap-price">$390<small> / year</small></div>
+                    <div class="ap-save">Save $78 — 2 months free</div>
+                  </div>
+                  <div class="ap-plan">
+                    <div class="ap-plan-l"><i class="ap-radio"></i>Tournament Plus · monthly</div>
+                    <div class="ap-price">$39<small> / month</small></div>
+                  </div>
+                </div>
+                <div class="ap-row">
+                  <p class="ap-guard" style="margin:0;border:0;padding:0">
+                    First charge October 1, 2027 · nothing before then
+                  </p>
+                  <span class="ap-btn primary">Choose Tournament Plus · annual</span>
+                </div>
+                <p class="ap-copy dim" style="margin-top:14px">
+                  Prefer to decide later? <span class="ap-btn quiet">Save a card without choosing</span>
+                  — or do nothing, and your organization moves to the free Tournament plan on October 1, 2027.
+                  Your tournaments and records stay.
+                </p>
+              </div>
+
+              <div class="ap-meter">
+                <div class="ap-meter-h"><span>Non-archived tournament slots used</span><b>4 / Unlimited</b></div>
+              </div>
+              <div class="ap-meter">
+                <div class="ap-meter-h"><span>Staff seats</span><b>6 / Unlimited</b></div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Annual leads, monthly is one tap away, and the consequence of doing nothing is stated on the
+        same card as the choice. <b>"First charge October 1, 2027"</b> is not marketing copy — it is
+        the one constant the checkout is built on, printed where the customer can hold us to it.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar"><span class="w">1440</span><span>·</span><span class="state">After — once a choice is made</span><span class="tag new">Proposed</span></div>
+      <div class="viewport">
+        <div class="screen app" style="width:1440px">
+          <div class="ap-shell">
+            <aside class="ap-side">
+              <div class="ap-org">Milton Softball Association<span>Tournament Plus</span></div>
+              <div class="ap-link"><i class="pa-dot"></i>Dashboard</div>
+              <div class="ap-link"><i class="pa-dot"></i>Tournaments</div>
+              <div class="ap-link"><i class="pa-dot"></i>Members</div>
+              <div class="ap-link on"><i class="pa-dot round"></i>Billing</div>
+              <div class="ap-link"><i class="pa-dot"></i>Settings</div>
+            </aside>
+            <main class="ap-main">
+              <div class="ap-page-h"><h1>Billing</h1><span class="ap-badge">Active</span></div>
+              <div class="ap-planhead">
+                <div>
+                  <div class="p">Tournament Plus</div>
+                  <div class="s">Free through September 30, 2027 · no credit card</div>
+                </div>
+                <span class="ap-badge">Founding Season</span>
+              </div>
+              <div class="ap-card chosen">
+                <p class="ap-eyebrow" style="color:#4ADE80">Your 2028 season is set</p>
+                <h2 class="ap-h2">Tournament Plus, billed annually from October 1, 2027.</h2>
+                <p class="ap-copy">$390 will be charged to Visa ••4242 on October 1, 2027 — your first
+                charge, and nothing before it. Your Founding Season runs free until then.</p>
+                <div class="ap-row" style="margin-top:14px">
+                  <p class="ap-copy dim" style="margin:0">Chosen June 3, 2027 · you can change this until September 30, 2027.</p>
+                  <span class="ap-btn outline">Change plan or card</span>
+                </div>
+              </div>
+              <div class="ap-meter">
+                <div class="ap-meter-h"><span>Non-archived tournament slots used</span><b>4 / Unlimited</b></div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        The confirmation names <b>the amount, the card and the date</b> in one sentence. This is the
+        state the desk reads back as "Tournament Plus · Annual · Jun 3, 2027".
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ C · COACH BILLING ══════════════════ -->
+  <section id="coach">
+    <div class="sec-head"><span class="sec-mark">C</span><h2>A coach's billing page — the correction</h2></div>
+    <p class="sec-note">
+      The brief says coach workspaces need a card door built. <b>Reading the code, the door already
+      exists — and that is the problem.</b> A comped Coaches Portal is a paid plan as far as the page
+      is concerned, so it renders the ordinary "Billing tools" block with a button called "Payment
+      method &amp; invoices". That button opens a card-save session. It is unlabelled as such,
+      available all year rather than only in the summer window, and the page never mentions the
+      Founding Season at all — because the whole Founding Season block is suppressed for coach
+      accounts.
+    </p>
+    <p class="sec-note">
+      So item 3 is not "build a door". It is <b>gate it, name it, and let the page speak to the product
+      the account is actually on.</b>
+    </p>
+
+    <div class="spec">
+      <div class="spec-bar"><span class="w">1440</span><span>·</span><span class="state">Before — what a comped coach sees today</span><span class="tag now">Live now</span></div>
+      <div class="viewport">
+        <div class="screen app" style="width:1440px">
+          <div class="ap-shell">
+            <aside class="ap-side">
+              <div class="ap-org">Riverdale Ridge U15 AA<span>Coaches Portal</span></div>
+              <div class="ap-link"><i class="pa-dot"></i>Dashboard</div>
+              <div class="ap-link"><i class="pa-dot"></i>Members</div>
+              <div class="ap-link on"><i class="pa-dot round"></i>Billing</div>
+              <div class="ap-link"><i class="pa-dot"></i>Settings</div>
+            </aside>
+            <main class="ap-main">
+              <div class="ap-page-h"><h1>Coaches Portal billing</h1><span class="ap-badge">Active</span></div>
+
+              <div class="ap-planhead">
+                <div>
+                  <div class="p">Premium Coaches Portal</div>
+                  <div class="s">Free through September 30, 2027</div>
+                </div>
+              </div>
+
+              <div class="ap-nothing">No Founding Season message · no card window · no 2028 ask</div>
+
+              <div class="ap-card">
+                <div class="ap-row">
+                  <div>
+                    <h2 class="ap-h2">Part of a club or association?</h2>
+                    <p class="ap-copy dim">Add a Basic visibility link so the organization can see your team.</p>
+                  </div>
+                  <span class="ap-btn primary">Link Parent Org →</span>
+                </div>
+              </div>
+
+              <div class="ap-card">
+                <div class="ap-row">
+                  <div>
+                    <h2 class="ap-h2">Billing tools</h2>
+                    <p class="ap-copy dim">Open the secure billing portal for payment methods, invoices, and billing details.</p>
+                  </div>
+                  <span class="ap-btn outline">Payment method &amp; invoices</span>
+                </div>
+              </div>
+
+              <div class="ap-card">
+                <h2 class="ap-h2">Cancel Premium access</h2>
+                <p class="ap-copy dim">Cancellation turns off Premium tools and keeps Basic tournament records available.</p>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        <b>"Payment method &amp; invoices" on an account with no Stripe customer opens a card-save
+        session</b> — in January, in March, at any point in the free season. Nothing on the page says
+        the season is free, when it ends, or why anyone would add a card.
+      </p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar"><span class="w">1440</span><span>·</span><span class="state">After — in the card window, July 2027</span><span class="tag new">Proposed</span></div>
+      <div class="viewport">
+        <div class="screen app" style="width:1440px">
+          <div class="ap-shell">
+            <aside class="ap-side">
+              <div class="ap-org">Riverdale Ridge U15 AA<span>Coaches Portal</span></div>
+              <div class="ap-link"><i class="pa-dot"></i>Dashboard</div>
+              <div class="ap-link"><i class="pa-dot"></i>Members</div>
+              <div class="ap-link on"><i class="pa-dot round"></i>Billing</div>
+              <div class="ap-link"><i class="pa-dot"></i>Settings</div>
+            </aside>
+            <main class="ap-main">
+              <div class="ap-page-h"><h1>Coaches Portal billing</h1><span class="ap-badge">Active</span></div>
+
+              <div class="ap-planhead">
+                <div>
+                  <div class="p">Premium Coaches Portal</div>
+                  <div class="s">Free through September 30, 2027 · no credit card</div>
+                </div>
+                <span class="ap-badge">Founding Season</span>
+              </div>
+
+              <div class="ap-card founding">
+                <div class="ap-star">★</div>
+                <div>
+                  <p class="ap-eyebrow">Founding Season · ends September 30, 2027</p>
+                  <h2 class="ap-h2">Your Founding Season ends September 30, 2027.</h2>
+                  <p class="ap-copy">Choose a plan for your 2028 season below. Nothing is charged before
+                  October 1, 2027, and you can change your mind until then.</p>
+                </div>
+              </div>
+
+              <div class="ap-card choice">
+                <h2 class="ap-h2">Choose your 2028 plan</h2>
+                <p class="ap-copy dim">Keep the Premium Coaches Portal for your 2028 season, or let it end
+                on September 30 and keep your free Basic team records.</p>
+                <div class="ap-plans">
+                  <div class="ap-plan pick">
+                    <div class="ap-plan-l"><i class="ap-radio"></i>Premium Coaches Portal · annual</div>
+                    <div class="ap-price">$290<small> / year</small></div>
+                    <div class="ap-save">Save $58 — 2 months free</div>
+                  </div>
+                  <div class="ap-plan">
+                    <div class="ap-plan-l"><i class="ap-radio"></i>Premium Coaches Portal · monthly</div>
+                    <div class="ap-price">$29<small> / month</small></div>
+                  </div>
+                </div>
+                <div class="ap-row">
+                  <p class="ap-guard" style="margin:0;border:0;padding:0">
+                    First charge October 1, 2027 · nothing before then
+                  </p>
+                  <span class="ap-btn primary">Choose Premium · annual</span>
+                </div>
+                <p class="ap-copy dim" style="margin-top:14px">
+                  Prefer to decide later? <span class="ap-btn quiet">Save a card without choosing</span>
+                </p>
+              </div>
+
+              <div class="ap-card">
+                <div class="ap-row">
+                  <div>
+                    <h2 class="ap-h3">If you choose nothing</h2>
+                    <p class="ap-copy dim" id="d1-copy">Your Premium portal ends on September 30, 2027.
+                    Your team's Basic tournament records stay available, and your season's work is kept.</p>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Same shape as the organization, different product name and price — both derived from one
+        config, never typed twice. <b>The last card is decision D1</b>: what a coach who chooses
+        nothing actually keeps depends on whether the read-only window gets built.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ D · THE CHOICE MECHANICS ══════════════════ -->
+  <section id="choice">
+    <div class="sec-head"><span class="sec-mark">D</span><h2>What happens behind the choice button</h2></div>
+    <p class="sec-note">
+      The one thing that must be true: <b>no path can take money before October 1, 2027.</b> Three ways
+      to build it, and the recommendation makes Stripe itself responsible for the date rather than a
+      reminder in someone's calendar.
+    </p>
+
+    <div class="sheet-table-wrap">
+      <table class="sheet">
+        <thead>
+          <tr><th>Approach</th><th>What it is</th><th>Why it wins or loses</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>A · A subscription whose first charge is pinned to the season's end</b><br><span class="mono" style="color:var(--accent)">Recommended</span></td>
+            <td>The customer's choice creates the 2028 subscription immediately, with its first charge set to October 1, 2027 and no charge before it.</td>
+            <td><b>Wins.</b> Stripe holds the date, not us. The choice is confirmed to the customer the moment they make it, the desk reads it back through a real event, and an account that has chosen needs <b>no action at all</b> in October — which is the entire point of the desk.</td>
+          </tr>
+          <tr>
+            <td>B · A schedule that starts in October</td>
+            <td>Nothing exists until October 1, then a subscription begins.</td>
+            <td>Loses. There is no subscription to read, so the desk cannot show the choice back from Stripe; a second kind of object to handle; and the October date still has to be right.</td>
+          </tr>
+          <tr>
+            <td>C · Record the choice here, create everything in October</td>
+            <td>No Stripe object before the turn-off day.</td>
+            <td>The safest against an early charge — but it moves the entire risk onto one manual day, and whether that day is hand-run is not decided until May 2027. The customer also gets no confirmation that anything happened.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><strong>Three rails on option A, and a test that fails if any of them slips.</strong>
+      The first-charge date is the one Founding Season constant and nothing else — no arithmetic, no
+      "days from now". No proration and no billing anchor, so no invoice can be raised at the moment
+      of choosing. And the checkout <strong>refuses to build at all</strong> if the season's end date
+      is already in the past, which is the one mistake that would charge someone immediately.</p>
+    </div>
+
+    <div class="note flag">
+      <p><strong>This is being built nine months before it can be used, and I think that is worth
+      saying out loud.</strong> The choice cannot open until June 1, 2027 and cannot charge until
+      October 1. Code that never runs rots quietly, and this repo has already been bitten once by
+      Stripe moving a field. The plan books a <strong>re-verification pass in May 2027</strong> —
+      re-check the Stripe version, run the no-early-charge test, rehearse one sandbox choice, confirm
+      no environment override has moved the dates — as part of the deliverable, not as a hope.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ E · DECISIONS ══════════════════ -->
+  <section id="decisions">
+    <div class="sec-head"><span class="sec-mark">E</span><h2>Four decisions I am not taking for you</h2></div>
+    <p class="sec-note">
+      Each has a recommendation. None of them is built until you rule.
+    </p>
+
+    <div class="dec">
+      <div class="dec-id">D1 · The coach read-only window</div>
+      <h3>What does a coach who chooses nothing actually keep?</h3>
+      <p>
+        An organization that lets its free season end drops to the free Tournament plan and keeps its
+        data. A coach has no equivalent floor: the ruling says a Coaches Portal is cancelled. A
+        read-only window was ratified in principle and has never been built — so until it exists, the
+        copy on that last card can only promise what the product already does, which is keep Basic
+        tournament records and retain the premium data for the restore window.
+      </p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="opt-h">Recommended — build it in the spring, alongside Phase 3</div>
+          <p>The turn-off mechanism and the read-only window are the same conversation, and both are
+          decided by the same cohort-size question in May 2027. Until then the coach copy stays on its
+          honest fallback line and promises nothing extra.</p>
+        </div>
+        <div class="opt">
+          <div class="opt-h">Alternative — build it now, in this phase</div>
+          <p>Lets the summer copy promise a real read-only season. Costs a screen-by-screen ruling on
+          what a lapsed coach can still open, which is a design conversation of its own — and it would
+          be built nine months before anyone lapses.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-id">D2 · When a choice takes effect</div>
+      <h3>If someone chooses in June, do they get the new plan in June — or on October 1?</h3>
+      <p>
+        For almost everyone this is invisible: the realistic choice is the plan they are already on,
+        because League and Club are not open for self-serve checkout. But if the menu ever widens, a
+        June choice would hand over the bigger plan's features for free for four months, because the
+        product flips the plan the moment the subscription exists.
+      </p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="opt-h">Recommended — the plan changes on October 1, the choice is recorded in June</div>
+          <p>"Free season, then the plan you chose" is one sentence a customer can hold. It also keeps
+          the free season identical for everyone, which matters if you ever have to explain it.</p>
+        </div>
+        <div class="opt">
+          <div class="opt-h">Alternative — the plan changes the moment they choose</div>
+          <p>A generous, simple story: choose early, get it early. But it makes the free season worth
+          different amounts to different accounts, and it is a real entitlement change we would be
+          giving away without deciding to.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-id">D3 · The opt-out question</div>
+      <h3>Does a "your free season is ending" notice honour the marketing opt-out?</h3>
+      <p>
+        Today the batch tool checks the marketing opt-out on every campaign and appends an unsubscribe
+        footer; only transactional messages — welcome, billing, cancellation — skip that check. A
+        founding account that unsubscribed from marketing in February 2027 would, under today's rules,
+        never be told its free season was ending.
+      </p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="opt-h">Recommended — send it as a service message, not a campaign</div>
+          <p>It is about the account's own billing state and has a deadline attached — the same
+          category as a trial-ending notice, which already bypasses the opt-out. The customer opted
+          out of being sold to, not out of being told what happens to their account. It should look
+          like an account notice, not a campaign: no offer, no marketing footer, one fact and one link.</p>
+        </div>
+        <div class="opt">
+          <div class="opt-h">Alternative — honour the opt-out</div>
+          <p>Cleanest possible consent story, and no argument is ever possible. The cost is real: some
+          accounts lose their season and never hear about it, which produces exactly the support
+          conversation nobody wants.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dec">
+      <div class="dec-id">D4 · The no-early-charge guarantee</div>
+      <h3>Do you accept "nothing can charge before October 1, 2027" as designed?</h3>
+      <p>
+        The answer proposed is yes, on option A with its three rails and the test that enforces them.
+        One thing sits outside that promise and should be said plainly: <b>a founding account that
+        deliberately buys a bigger plan during the free season is charged for it</b>, on the ordinary
+        checkout, as it is today. That is a purchase they chose to make, not the Founding Season
+        turning over — but it happens on the same page, so it is worth ruling rather than assuming.
+      </p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="opt-h">Recommended — accept, and leave the voluntary upgrade path alone</div>
+          <p>The promise is about the free season converting, not about blocking someone who wants to
+          buy more. Nothing about that path changes in this phase.</p>
+        </div>
+        <div class="opt">
+          <div class="opt-h">Alternative — no charge of any kind before October 1</div>
+          <p>Absolute, easy to explain, and it would mean turning off in-season upgrades for founding
+          accounts — refusing money from someone asking to pay us.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ F · SCOPE EDGES ══════════════════ -->
+  <section id="edges">
+    <div class="sec-head"><span class="sec-mark">F</span><h2>What is deliberately not here</h2></div>
+    <ul class="plain">
+      <li><b>The desk cannot act.</b> No plan changes, no cancellations, no sends from this page. Those
+      controls exist elsewhere and the desk links to them. The October turn-off mechanism is Phase 3's
+      decision, due May 2027.</li>
+      <li><b>Nothing sends this autumn.</b> The "no card yet" audience is built and counted; the words
+      behind it are the parallel Phase 1 chat's work, and the reminder campaigns are hand-sent.</li>
+      <li><b>Only one new audience.</b> "No 2028 choice yet" is a filter on the desk, not a second
+      email audience — there is no copy for it and no decision about who it is for.</li>
+      <li><b>"Owner last seen", not "last activity".</b> The product keeps no activity metric. The
+      column is named for the fact we actually hold rather than implying one we do not.</li>
+      <li><b>The production backfill is presented, never run.</b> Reading which existing accounts
+      already have a card in Stripe is a read-only pass with a dry run, and its output comes to you
+      before anything writes.</li>
+    </ul>
+    <p class="caption" style="margin-top:20px">
+      One fix rides along because it is drift in a surface this phase owns: the Organizations page
+      badges any account whose comp expires after 2026 as "Founding", using a hand-typed date instead
+      of the shared rule. A support comp granted into 2028 shows up in the founding cohort today.
+    </p>
+  </section>
+
+  <div class="colophon">
+    Founding Season 2027 · Phase 2 mockups · drawn 2026-09-07 · specimens copy the console and admin
+    shell values read from the working tree the same day · example data throughout
+  </div>
+</div>
+
+<script>
+(function () {
+  var body = document.body;
+  var bTrue = document.getElementById('btn-true');
+  var bFit  = document.getElementById('btn-fit');
+  function set(fit) {
+    body.classList.toggle('fit', fit);
+    bTrue.setAttribute('aria-pressed', String(!fit));
+    bFit.setAttribute('aria-pressed', String(fit));
+    try { localStorage.setItem('fs2027-desk-scale', fit ? 'fit' : 'true'); } catch (e) {}
+  }
+  bTrue.addEventListener('click', function () { set(false); });
+  bFit.addEventListener('click', function () { set(true); });
+  try { if (localStorage.getItem('fs2027-desk-scale') === 'fit') set(true); } catch (e) {}
+})();
+</script>

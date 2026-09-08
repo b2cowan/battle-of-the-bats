@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Table2, Eye, AlertTriangle, MessageSquare, Presentation } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText, Table2, Eye, AlertTriangle, MessageSquare, Presentation, Sparkles } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { canViewPlatformArea, isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
@@ -38,6 +38,9 @@ const BASE_NAV_GROUPS: NavGroup[] = [
   {
     label: 'Billing & Product',
     items: [
+      // The free cohort and what it has done about the season ending. Sits with Billing rather
+      // than Growth: it is read on the day money is decided, not on the day someone is sold to.
+      { href: '/platform-admin/founding-season', label: 'Founding Season', Icon: Sparkles, area: 'founding_season' },
       { href: '/platform-admin/change-requests', label: 'Approval Queue', Icon: ClipboardCheck, area: 'change_requests' },
       { href: '/platform-admin/plans-pricing', label: 'Plans & Pricing', Icon: SlidersHorizontal, area: 'plans_pricing' },
       { href: '/platform-admin/bulk-operations', label: 'Bulk Operations', Icon: ListChecks, area: 'bulk_operations' },

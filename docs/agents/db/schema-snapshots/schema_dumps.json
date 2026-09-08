@@ -7022,6 +7022,96 @@
         "column_default": "now()"
       },
       {
+        "table_name": "organization_billing_facts",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 2,
+        "column_name": "card_on_file_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 3,
+        "column_name": "card_on_file_brand",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 4,
+        "column_name": "card_on_file_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 5,
+        "column_name": "next_season_plan_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 6,
+        "column_name": "next_season_billing_cycle",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 7,
+        "column_name": "next_season_chosen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 8,
+        "column_name": "next_season_subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_billing_facts",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "organization_members",
         "pos": 1,
         "column_name": "id",
@@ -19329,6 +19419,13 @@
         "constraint_name": "org_venues_org_id_fkey"
       },
       {
+        "table_name": "organization_billing_facts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "organization_billing_facts_org_id_fkey"
+      },
+      {
         "table_name": "organization_members",
         "column_name": "organization_id",
         "foreign_table": "organizations",
@@ -19969,21 +20066,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -19995,16 +20085,23 @@
       },
       {
         "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -20053,14 +20150,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -20081,14 +20178,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -20270,14 +20367,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -23172,6 +23269,21 @@
         "indexdef": "CREATE UNIQUE INDEX org_venues_pkey ON public.org_venues USING btree (id)"
       },
       {
+        "tablename": "organization_billing_facts",
+        "indexname": "idx_org_billing_facts_no_card",
+        "indexdef": "CREATE INDEX idx_org_billing_facts_no_card ON public.organization_billing_facts USING btree (org_id) WHERE (card_on_file_at IS NULL)"
+      },
+      {
+        "tablename": "organization_billing_facts",
+        "indexname": "idx_org_billing_facts_no_next_season_choice",
+        "indexdef": "CREATE INDEX idx_org_billing_facts_no_next_season_choice ON public.organization_billing_facts USING btree (org_id) WHERE (next_season_plan_id IS NULL)"
+      },
+      {
+        "tablename": "organization_billing_facts",
+        "indexname": "organization_billing_facts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX organization_billing_facts_pkey ON public.organization_billing_facts USING btree (org_id)"
+      },
+      {
         "tablename": "organization_members",
         "indexname": "organization_members_invited_email_idx",
         "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
@@ -23703,8 +23815,8 @@
       },
       {
         "tablename": "rep_dues_payout_credits",
-        "indexname": "rep_dues_payout_credits_payout_id_credit_id_key",
-        "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_payout_id_credit_id_key ON public.rep_dues_payout_credits USING btree (payout_id, credit_id)"
+        "indexname": "rep_dues_payout_credits_credit_id_key",
+        "indexdef": "CREATE UNIQUE INDEX rep_dues_payout_credits_credit_id_key ON public.rep_dues_payout_credits USING btree (credit_id)"
       },
       {
         "tablename": "rep_dues_payout_credits",
@@ -26359,6 +26471,24 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "organization_billing_facts",
+        "detail": "organization_billing_facts_next_season_billing_cycle_check",
+        "check_clause": "(next_season_billing_cycle = ANY (ARRAY['annual'::text, 'monthly'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_billing_facts",
+        "detail": "organization_billing_facts_next_season_plan_id_check",
+        "check_clause": "((next_season_plan_id IS NULL) OR (length(next_season_plan_id) > 0))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "organization_billing_facts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "organization_members",
         "detail": "org_members_title_length",
         "check_clause": "(char_length(title) <= 80)"
@@ -26816,7 +26946,7 @@
       {
         "kind": "RLS",
         "table_name": "rep_dues_payout_credits",
-        "detail": "DISABLED",
+        "detail": "ENABLED",
         "check_clause": null
       },
       {

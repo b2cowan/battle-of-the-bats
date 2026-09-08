@@ -671,6 +671,26 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Export filtered org list with name, slug, plan, subscription status, and created date.',
   },
   {
+    id: 'platform-admin-founding-season',
+    label: 'Platform Admin — Founding Season',
+    module: 'platform_admin',
+    page: 'Founding Season',
+    file: 'app/platform-admin/founding-season/FoundingSeasonDeskClient.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    audiences: ['platform_admin'],
+    // The billing contact is the account owner's email — the same data the Organizations and
+    // Customer Users exports already carry for the same reason: the September 2027 conversion is a
+    // sequence of conversations with named people, and a list without their address is not a list.
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification:
+      'The billing contact is the whole point of the export: it is the list the operator works through when a free season ends. Platform-admin only, internal tooling, never exposed to customers.',
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary: 'Export the founding cohort — account, kind, plan, free-period end, card on file, next-season plan choice, owner last sign-in, usage and billing contact — honouring the on-screen filters.',
+  },
+  {
     id: 'platform-admin-customer-users',
     label: 'Platform Admin — Customer Users',
     module: 'platform_admin',

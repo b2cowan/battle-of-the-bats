@@ -915,3 +915,169 @@
   line-height: 1.55;
 }
 
+
+/* ── The next-season choice — the summer ask (Founding Season 2027 Phase 2) ─────────────────────
+   Sits directly under the Founding Season banner and replaces "add a payment method" as the thing
+   the account is asked to do. Annual leads; monthly is one tap away, never hidden. The card-save
+   door survives as the quiet secondary for an account that wants to save a card without choosing.
+   Shared by organizations and coach workspaces — every plan-specific word comes from the account's
+   own plan, so this stylesheet holds no product name and no price. */
+.nextSeasonCard {
+  padding: 1.1rem 1.25rem;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  margin-bottom: 1rem;
+}
+
+.nextSeasonPlans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin: 0.9rem 0 1rem;
+}
+
+/* A real radio in a real label: the cycle is a choice, not a pair of buttons that look like one.
+   Keyboard and screen-reader behaviour come free, and the whole card is the hit target. */
+.nextSeasonPlan {
+  display: block;
+  padding: 0.85rem 1rem;
+  border-radius: 2px;
+  border: 1px solid var(--white-10);
+  background: var(--white-03);
+  cursor: pointer;
+}
+
+.nextSeasonPlanActive {
+  border-color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.09);
+}
+
+.nextSeasonPlan:focus-within {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+.nextSeasonPlanLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-55);
+}
+
+.nextSeasonPlanActive .nextSeasonPlanLabel { color: var(--logic-lime); }
+
+.nextSeasonPrice {
+  font-family: var(--font-data);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--white-90);
+  margin: 0.45rem 0 0.1rem;
+  letter-spacing: -0.02em;
+}
+
+.nextSeasonPriceUnit {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--white-40);
+  letter-spacing: 0;
+}
+
+.nextSeasonSave {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--logic-lime);
+  letter-spacing: 0.03em;
+}
+
+.nextSeasonActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* The promise, printed where the customer can hold us to it — and derived from the same constant
+   the checkout builder pins its first-charge instant to. Never a literal date in this file. */
+.nextSeasonGuarantee {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--logic-lime);
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+.nextSeasonFootnote {
+  margin: 0.9rem 0 0;
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+/* The card-save door, demoted to a link: it is no longer the ask, but it must not disappear for an
+   account that wants to save a card without deciding. */
+.nextSeasonSecondary {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--white-55);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nextSeasonSecondary:hover { color: var(--logic-lime); }
+
+/* The confirmed state — the amount, the card and the date in one sentence. */
+.nextSeasonChosen {
+  padding: 1.1rem 1.25rem;
+  border-radius: 2px;
+  background: rgba(var(--success-rgb), 0.05);
+  border: 1px solid rgba(var(--success-rgb), 0.35);
+  margin-bottom: 1rem;
+}
+
+.nextSeasonChosenEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--success);
+  margin: 0 0 0.3rem;
+}
+
+/* "If you choose nothing" — the consequence, stated on the page rather than only in an email.
+   ⚠ For a coach this line may promise ONLY what the product already does (owner ruling D1,
+   2026-09-07): the read-only window is ratified in principle and NOT built, so nothing here may
+   describe a read-only season until it exists. */
+.nextSeasonConsequence {
+  padding: 0.9rem 1.25rem;
+  border-radius: 2px;
+  background: var(--white-03);
+  border: 1px solid var(--white-10);
+  margin-bottom: 1rem;
+}
+
+.nextSeasonConsequenceTitle {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-70);
+  margin: 0 0 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .nextSeasonActions { align-items: stretch; }
+  .nextSeasonActions > button { width: 100%; justify-content: center; }
+}

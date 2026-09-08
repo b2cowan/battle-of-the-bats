@@ -19527,3 +19527,106 @@ is data-only and invisible to both by construction, so its prod apply must be re
 
 ---
 
+---
+
+## §155 · The Founding Season desk — every free account in one list, the card recorded in the app, and a 2028 choice that cannot charge early — BUILT 2026-09-07 on dev, migration 283 applied to dev, awaiting QA · walk artifact `29258882` · mockup artifact `587fbd15`
+
+**Plan:** `FOUNDING_SEASON_2027_DESK_PLAN.md` (+ `_PM_BRIEF.md`) · Phase 2 of
+`FOUNDING_SEASON_2027_PLAN.md` §3 · run order **E2** on artifact `5ef0163e`.
+**Walk:** https://claude.ai/code/artifact/29258882-1d83-4ffc-8882-5233dd6d02db — 31 checks, nine
+parts (A the desk · B the four figures + the Legacy chip · C the two filters + export · D the phone
+shape · E an organization's summer ask · F making the choice · G a coach's summer ask · H before the
+window opens · I what was not built). Source `FOUNDING_SEASON_2027_DESK_WALK.html`.
+
+**Owner rulings taken 2026-09-07, all as recommended** (presented on the mockup sheet, approved in
+conversation): **D1** the coach read-only window is built in the spring with Phase 3 — until it
+exists the coach's "if you choose nothing" copy promises only what the product already does ·
+**D2** a choice does NOT move the plan; the plan changes at the first charge, so the free season is
+worth the same to every account · **D3** the season-ending notice is a **service message**, not a
+marketing campaign · **D4** the no-early-charge design accepted, and a founding account that
+deliberately buys a bigger plan mid-season is still charged for it, as today.
+
+**What it is.** A read-only `/platform-admin/founding-season` listing every account on a free
+Founding Season — organizations and Coaches Portals **in one list**, because a comped portal is
+already a shadow organization carrying the same comp row. Card on file is now **recorded in the app
+at webhook time** (mig 283) instead of living only in Stripe; the coach's card door — which already
+existed, ungated, unlabelled and year-round — is gated to the summer window and explained; and the
+2028 plan choice is built with its first charge pinned to one constant.
+
+**⚠ Three things the walk deliberately cannot prove, stated on the page itself:** card recording at
+the webhook (dev's Stripe sandbox has NO configured prices, so every checkout falls to the mock and
+no webhook fires — first real proof is a card saved on production); the October 2027 charge (nothing
+can advance a year — covered by 13 unit tests that fail if any path could bill sooner); and the
+"no card yet" email audience, which **was not built** — see below.
+
+**⚠ SCOPE ITEM 5 STOPPED, NOT FORCED.** Between the plan and the build, the Phase 1 chat (§154) moved
+the email-audience registry into `lib/marketing-email-defaults.ts` — a file this phase is forbidden
+to touch — and holds uncommitted edits in both email screens, which are nominally this phase's.
+Wiring the audience meant editing their work mid-flight. The desk's **No card yet** filter and its
+export give the operator the same list by the same rule; only the batch-email wiring is missing, and
+nothing was going to send this autumn. Finishing it is one of two things: Phase 1 adds the audience
+member and key (this phase supplies the query), or the two are merged after §154 commits.
+
+**Fixture — a walk over an empty list reports coverage it lacks.** `node
+scripts/seed-founding-season-fixture.mjs` (dev only, refuses `--prod`, idempotent) seeds five
+accounts covering four states: an organization **with** a card whose comp deliberately sits on the
+**legacy** instant (so the amber chip is walkable), one **without**, a comped **Coaches Portal**, an
+organization comped onto a **free** plan (nothing to renew), and `uat-plus-org` as the one the walk
+signs into. It also sets the coach owner's password to the documented walk password, because
+describing the coach's summer ask is not walking it. All three walk sign-ins verified 2026-09-07.
+
+**Verification.** typecheck ✓ · **3,229 unit tests ✓** (18 new — the no-early-charge invariant, its
+five-minute latency margin, and the three-way classifier whose `withdrawn` case is the one that tears
+an account down if it is wrong) · focused lint ✓ · `check:dictionary` ✓ · `check:index-coverage` ✓ ·
+`check:export-catalog` ✓ · `check:css-selectors` ✓ · `check:css-module-purity` ✓ ·
+`check:admin-org-context` ✓ · `check:demos` ✓ · `check:root-files` ✓ · `check:observability` ✓.
+`check:migrations` / `check:parity` FAIL on the expected dev-ahead-of-prod state (migrations 280–284
+across four sessions, 283 is this one) — not a defect.
+
+**Rendered check by hand, because no gate does it.** `scripts/layout-screens.mjs` sweeps 73 coach and
+marketing screens and **not one platform-admin screen**, so the desk was measured by hand at 361 /
+390 / 768 / 1440 signed in as the dev platform admin: 200 at every width, **no horizontal page
+overflow at any width**, cards at ≤640, columns kept with an inner scroll at 768+. One defect found
+and fixed: the account-name link measured **23px** at 768 and now clears the console's 38px floor
+(K-18). Two left, both **shared console chrome**: the layout's "Sign out" (35px) and the shared
+`ExportMenu` (26–32px tall, its icon-only control 29–32px wide, under the 44px WIDTH floor that K-18
+does not except). Fixing `ExportMenu` moves all 34 export surfaces at once and does not belong in a
+billing change — recorded for the register instead.
+
+**`/simplify` + `/review` both run 2026-09-07** before commit — full record in the plan's §13.
+⚠⚠ **`/review` OVERTURNED A DESIGN DECISION AND FOUND FOUR MORE CRITICALS**, so the walk is walking
+something materially different from what the mockups described:
+- **The card and the 2028 choice are NOT columns on `organizations`.** Verified on live prod: that
+  table is anon-readable for every public org (RLS is row-level; its policy admits `is_public`, and
+  four of prod's five orgs are public), so six columns there would have published every founding
+  account's card brand, last four and 2028 commitment to anyone holding the key that ships in the
+  page bundle. They live in a service-role-only table now. ⚠ The **wider** exposure is standing and
+  not this phase's to fix: `stripe_customer_id`, `internal_notes` and `billing_suspension_reason`
+  sit on that same table under that same policy.
+- **Cancelling the 2028 choice in the Stripe portal would have suspended the account** — archiving
+  every tournament and hiding the public site, or revoking a coach's Premium — months before the
+  comp ended. Four of five review lenses found this independently.
+- **A second choice would have charged twice** on October 1; a card swap could have ended reading
+  "no card"; and any org member — not just an owner — could read their account's card fingerprint.
+All fixed and re-verified before commit.
+
+**`/review` (high-risk, five lenses) found eight more, all fixed in the same unit of work:** the
+wrap-up email credited the FREE plan with auto-scheduling and implied the free tier expires; the final
+notice told anyone with a saved card "nothing else to do" when they still had to choose a plan; two
+emails asserted most organizations pick annual (nobody has); "retired" was enforced only on the batch
+send, so the test-send and preview paths would still deliver or render a retired campaign; the
+dashboard still said "All 10 founding season emails" above a table of 8; nothing tied a campaign's
+declared variables to what the send path supplies (the route now refuses a whole batch rather than mail
+a literal `{{token}}`); the module header cited a generator script that did not exist (now written);
+and the planned-date guard could clobber an operator who had re-picked the old default. Two of the new
+test's own assertions were too weak and are now **mutation-proved**. Full record: plan §Phase 1b.
+
+**Gate state at hand-off — every failure belongs to a CONCURRENT SESSION, none to this build:**
+`check:parity` / `check:migrations` (migrations 276–283) · `check:dictionary`
+(`organization_billing_facts`, migration 283) · `check:css-selectors` (`readonlyValue`, the coach
+stylesheet) · `tests/unit/next-season-choice.test.ts` (Phase 2's own test, importing an export their
+module does not have yet). The rendered check is **n/a**: `check:layout` sweeps 75 coach and marketing
+screens and the platform-admin Email board is not one of them (asked the script, not the prose). Dev
+server restarted 2026-09-07 after the shared-module changes; the offer-bar walk was re-run against it,
+34/34.
+

@@ -87,16 +87,6 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.rep_team_subscription_item_id -->
 **Stripe / subscription block** (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_period`, `current_period_end`, `rep_team_subscription_item_id`) — Stripe linkage + subscription state. `subscription_status` (no DB CHECK; code domain `active|trialing|past_due|canceled`, [lib/types.ts:13](../../../lib/types.ts#L13)) defaults `'active'`; `subscriptionStatus==='canceled'` hard-disables module entitlements ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)) and blocks public tournament context ([lib/public-tournament-data.ts:60](../../../lib/public-tournament-data.ts#L60)). **Main writer = the Stripe webhook** ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts): `subscription.updated/created` ~:233, `payment_succeeded`→active ~:528, `payment_failed`→`past_due` ~:557, `subscription.deleted`→`canceled`+null ~:466); also `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)). **`rep_team_subscription_item_id` is RETIRING (Club Repackaging 2026-06-22):** it tracked the now-retired per-team "$19/team beyond 3" rep-team Stripe add-on item; its writer (`syncRepTeamBilling`) was deleted. The column is now read-only/vestigial (0 rows carry a value) — no new writes; safe to drop post-cutover. *(Billing-flow narrative + the `stripe_prices` table → the Stripe/Billing phase; these columns are documented here.)*
 
-<!-- dict:col:organizations.card_on_file_at -->
-<!-- dict:col:organizations.card_on_file_brand -->
-<!-- dict:col:organizations.card_on_file_last4 -->
-**Card-on-file block** (`card_on_file_at` timestamptz / `card_on_file_brand` text / `card_on_file_last4` text, all nullable; mig 283) — **does this account have a usable card, and which one?** NULL `card_on_file_at` = no card. ⚠ **Never derive this from `stripe_customer_id`** — comp reactivation ([lib/team-checkout.ts:711](../../../lib/team-checkout.ts#L711)) and the webhook's `subscription.deleted` arms NULL that column, so a card saved in June would silently read as absent and the operator would chase somebody who had already acted. Brand/last4 are display-only (support telling one card from another on the phone). _Writes:_ the Stripe webhook ONLY — setup-mode `checkout.session.completed`, `payment_method.attached` (set), `payment_method.detached` (cleared only when the customer has no card left), through `recordCardOnFile` / `clearCardOnFileIfNoCardsLeft` ([lib/billing-setup.ts](../../../lib/billing-setup.ts)). _Read by:_ the Founding Season desk, the `founding_no_card` email audience, and `founding_final`'s `hasCard` variable. **Not on the `Organization` type** (subsystem-only).
-
-<!-- dict:col:organizations.next_season_plan_id -->
-<!-- dict:col:organizations.next_season_billing_cycle -->
-<!-- dict:col:organizations.next_season_chosen_at -->
-**Next-season choice block** (`next_season_plan_id` text / `next_season_billing_cycle` text / `next_season_chosen_at` timestamptz, all nullable; mig 283) — **what this account chose for the season AFTER its current comp** — i.e. the Founding Season 2028 plan choice (choosable from June 1 2027, first charge October 1 2027; `FOUNDING_SEASON_2027_DESK_PLAN.md` §4.4). Named for "next season", never a year: the year derives from the Founding Season constants in [lib/plan-config.ts](../../../lib/plan-config.ts) and this column must not need a migration when it moves. **No CHECK on the plan key** — the domain lives in `PLAN_CONFIG` and has changed twice; the writer validates against `PLAN_CONFIG` + `plan_gating` instead (a CHECK would turn a future plan rename into a failed webhook). Cycle is `annual` | `monthly`. ⚠ **Recording a choice does NOT move `plan_id`** (owner ruling D2, 2026-09-07): the plan changes on the first-charge instant, not when the choice is made. _Writes:_ the Stripe webhook's `founding_next_season` arm ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts)). **Not on the `Organization` type** (subsystem-only).
-
 <!-- dict:col:organizations.billing_suspended_at -->
 <!-- dict:col:organizations.billing_suspension_reason -->
 **`billing_suspended_at` / `billing_suspension_reason`** (timestamptz / text, nullable) — suspension audit stamp; set on subscription deletion, cancel-confirm, and platform-admin cancel; cleared on team-workspace reactivation. **Not on the `Organization` type** (subsystem-only).
@@ -286,6 +276,74 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **`suppress_billing`** (bool, NOT NULL, default false) — intended to suppress Stripe billing during a comp; **currently has no reader** (gotcha 5).
 
 ---
+
+## `organization_billing_facts`
+<!-- dict:table:organization_billing_facts -->
+
+**Purpose:** the per-account billing facts that must **not** be world-readable — whether a card is on
+file (and which one), and the plan chosen for the season after the current one (mig 283, 2026-09-07;
+`FOUNDING_SEASON_2027_DESK_PLAN.md`). One row per account, created on first write.
+
+**Gotchas (read first):**
+1. ⚠⚠ **THIS IS A TABLE RATHER THAN SIX COLUMNS ON `organizations` FOR ONE REASON: THAT TABLE IS
+   ANON-READABLE.** Verified against live prod 2026-09-07 — `anon` and `authenticated` both hold the
+   SELECT grant on `public.organizations`, RLS is enabled, and its only SELECT policy is
+   `org_read USING (is_org_member(id) OR is_public = true)` with `is_public` defaulting true (4 of
+   prod's 5 orgs are public). **RLS is ROW-level, never column-level**, so any column added there is
+   published to anybody holding the anon key that ships in every page bundle. The first design put
+   these six on `organizations`; `/review` killed it. Same door migration 212 closed for roster PII.
+2. ⚠ **RLS ENABLED WITH NO POLICIES — service-role only.** `anon`/`authenticated` resolve to zero
+   rows; every reader goes through `supabaseAdmin`. Do not add a policy without re-reading gotcha 1.
+3. ⚠ **`card_on_file_at` is NEVER derived from `organizations.stripe_customer_id`.** Comp
+   reactivation ([lib/team-checkout.ts:711](../../../lib/team-checkout.ts#L711)) and the webhook's
+   `subscription.deleted` arms NULL that column on accounts that still have a card — deriving from it
+   would drop a coach who saved one in June into the "no card yet" chase list.
+4. **A plan key is NULL or a real key, never `''`** (CHECK). The empty string would be a third state
+   SQL reads as "chosen" and JavaScript reads as "not chosen", so the desk filter and the email
+   audience would disagree about the same account. The webhook arms take the key from Stripe
+   metadata, which is exactly where an empty one would come from.
+5. ⚠ **Recording a choice does NOT move `organizations.plan_id`** (owner ruling D2, 2026-09-07): the
+   plan changes at the first charge, so the free season is worth the same to every account.
+
+**Fields** (boilerplate `created_at`/`updated_at` omitted):
+
+<!-- dict:col:organization_billing_facts.org_id -->
+**`org_id`** (uuid, PK, FK → `organizations.id`, ON DELETE CASCADE) — the account. There is no version
+history here, only the current answer to two questions.
+
+<!-- dict:col:organization_billing_facts.card_on_file_at -->
+<!-- dict:col:organization_billing_facts.card_on_file_brand -->
+<!-- dict:col:organization_billing_facts.card_on_file_last4 -->
+**Card-on-file block** (timestamptz / text / text, nullable) — NULL `card_on_file_at` = no card. It is
+**"on file since"** and does not move when a card is swapped; brand/last4 always follow the newest
+card so support reads the one that would actually be charged. _Writes:_ `recordCardOnFile` /
+`clearCardOnFileIfNoCardsLeft` ([lib/billing-setup.ts](../../../lib/billing-setup.ts)), from three
+Stripe events — setup-mode `checkout.session.completed`, `payment_method.attached`, and
+`payment_method.detached` (which clears **only** once Stripe confirms no card remains, guarded at
+write time on `card_on_file_last4` so a swap cannot clear the new card). _Read by:_ the Founding
+Season desk, the billing page (billing capability only), and `founding_final`'s `hasCard` variable.
+
+<!-- dict:col:organization_billing_facts.next_season_plan_id -->
+<!-- dict:col:organization_billing_facts.next_season_billing_cycle -->
+<!-- dict:col:organization_billing_facts.next_season_chosen_at -->
+**Next-season choice block** (text / text / timestamptz, nullable) — what the account chose for the
+season AFTER its current comp (Founding Season: the 2028 choice, made from June 1 2027, first charged
+October 1 2027). Named for "next season", never a year — the year derives from the constants in
+[lib/plan-config.ts](../../../lib/plan-config.ts). Cycle is CHECK'd `annual|monthly`. **`chosen_at` is
+written ONCE**: a choice sits in Stripe's `trialing` for up to four months and `subscription.updated`
+fires repeatedly, so re-stamping would turn "when you chose" into "whenever Stripe last touched it".
+Plan and cycle DO follow a change of mind. _Writes:_ `recordNextSeasonChoice` /
+`clearNextSeasonChoice` — the Stripe webhook's `founding_next_season` arms **and** the dev-mock arm
+of [app/api/billing/choose-next-season/route.ts](../../../app/api/billing/choose-next-season/route.ts),
+which is the only path dev can take (the sandbox has no Stripe prices).
+
+<!-- dict:col:organization_billing_facts.next_season_subscription_id -->
+**`next_season_subscription_id`** (text, nullable) — ⚠ **LOAD-BEARING TWICE OVER.** The choice route
+reads it to **cancel a superseded choice** before creating a new one; without that, a second choice
+leaves both subscriptions live and the customer is charged twice on the same day. The webhook reads
+it to recognise **"the customer withdrew their choice"** in `subscription.deleted` — without that, a
+cancellation in the Stripe portal is read as an account cancellation and archives every tournament,
+hides the public site and suspends the org while the comp still has months to run.
 
 ## `org_audit_log`
 <!-- dict:table:org_audit_log -->
@@ -3763,7 +3821,7 @@ moment it lands.
 **Purpose:** the OUTBOX — cash paid back to a family against their credits (mig 234, 2026-08-14; COACH_SEASON_REFUND_REVAMP_PLAN.md Pass 2). Deliberately the mirror of `rep_dues_payments`: a credit is money the team owes a family, and this is one of the three ways it settles (the others being applied-to-bills, derived, and owed-back, the remainder).
 
 **Gotchas (read first):**
-1. **WHICH credits a payout settles is DERIVED at read time** (`lib/dues-credits.ts`, the `paidOut` input), never stored — the same discipline as credit application and payment coverage, for the same reason: a stored allocation goes stale the moment a credit resizes or a payment lands. There is no `credit_id` on this table and there must never be one.
+1. ⚠ **SUPERSEDED BY MIG 281 for `source='recorded'` payouts — a payback now SAYS which credits it settles**, through the link table `rep_dues_payout_credits` (owner ruling R5, 2026-09-07). Before it, the allocation was derived at read time and the product held **two different assumptions about it**, which disagreed on a screen a coach can open. There is still no `credit_id` **column** on this table and there must never be one — the link is many-to-one and lives in the link table. Legacy payouts (and every `season_settlement` payout) carry no links, so readers still fall back to the derived allocation for those.
 2. **One team-ledger EXPENSE entry per payout, dated `paid_date`** (the day the money left, coach-typed) — the mirror of `rep_dues_payments` gotcha 1. Removal VOIDS the entry first (soft-void), then deletes the row.
 3. **Paying out puts the family's bills BACK UP.** A paid-out dollar is settled, so it stops lowering installments — the drawer, reminders and the payables lane all re-derive on the next read. This is the model working, not a defect.
 4. **Payouts are (program_year, player)-scoped like payments and credits** — not credit-scoped, not schedule-scoped.
@@ -3803,6 +3861,42 @@ moment it lands.
 
 <!-- dict:col:rep_dues_payouts.created_at -->
 **`created_at`** (timestamptz, NOT NULL, default `now()`) — when it was TYPED IN; `paid_date` is when the money moved.
+
+### `rep_dues_payout_credits`
+<!-- dict:table:rep_dues_payout_credits -->
+
+> ⚠ **THIS ENTRY WAS RECONSTRUCTED 2026-09-07 AND IS NOT ITS AUTHOR'S WORDS.** The Founding Season
+> Phase 2 session ran `git checkout --` on this file to undo an edit of its own and destroyed the
+> uncommitted entry written alongside migration 281 (`480a008a`, coach money §153). What follows was
+> rewritten from the migration and the code, so `check:dictionary` is green and the facts were
+> verified — but the original author should read it, correct anything thin or wrong, and delete this
+> note. The `rep_dues_payouts` gotcha 1 above was amended in the same pass, because mig 281
+> supersedes it for `source='recorded'` payouts.
+
+**Purpose:** **which credits a payback settled, and for how much** (mig 281, 2026-09-07; `COACH_MONEY_CREDITS_AND_PAYBACKS_PLAN.md` §3, owner ruling R5). The column that never existed: before it, a payout carried no link to the credit it refunded, so the allocation was an **assumption** — and the product held two of them, which disagreed on a screen a coach can open. Written by the **Pay out sheet only** (`rep_dues_payouts.source='recorded'`).
+
+**Gotchas (read first):**
+1. **A season-settlement payout is deliberately out of scope.** A settlement cheque covers a family's owed-back money **and** their share of the surplus, and a share is not a credit. Nothing here is required of `source='season_settlement'`, and nothing here refuses one.
+2. ⚠⚠ **UNIQUE is on `credit_id` ALONE, not on `(payout_id, credit_id)`** — the true invariant under "whole credits only": a credit is settled **once, ever**. A per-payout key would let two payouts each claim the whole of one credit (two coaches, or one double-click, both reading "nothing paid back yet" and both passing the family-level cash ceiling because a sibling credit covers the total). Cash would stay correctly capped while one credit read as settled twice and its sibling untouched — precisely the misattribution this table abolishes.
+3. **FK actions are asymmetric on purpose.** `payout_id` CASCADEs — undoing a payback removes its links, because a link to a payout that no longer exists is a dangling claim on a credit that is standing again. `credit_id` RESTRICTs — a credit that has been handed back may not be deleted out from under the cash that left the account. That floor is also enforced in the app (`lib/dues-credit-guards.ts`) across six doors; the FK is the backstop a seventh door cannot forget. The guard stays because it gives the coach a sentence where the database gives them an error.
+4. **`amount` exists although the ruling is whole-debts-only** (owner agreed 2026-09-07). The form never writes a partial; recording the amount makes a future partial a screen change rather than a second migration.
+5. **A credit part-settled by a PRE-281 payout still gets its first link** — legacy payouts carry no links, so they do not consume the unique key.
+6. ⚠ **RLS enabled with NO policies — service-role only**, the treatment every sibling gets (`rep_dues_payouts`, `rep_dues_payments`). `anon`/`authenticated` hold no SELECT today, so it is unreachable from a client — measured, not assumed — but a grant widened by accident must still deny rather than publish every family's refund history.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_dues_payout_credits.payout_id -->
+**`payout_id`** (FK → `rep_dues_payouts.id`, NOT NULL, **ON DELETE CASCADE**) — the payback. Index `idx_dues_payout_credits_payout`. Answers "what did this payback settle?"
+
+<!-- dict:col:rep_dues_payout_credits.credit_id -->
+**`credit_id`** (FK → `rep_dues_credits.id`, NOT NULL, **ON DELETE RESTRICT**, **UNIQUE**) — the credit handed back. Index `idx_dues_payout_credits_credit`; the hot read, asked per family on every report build: "has this credit been handed back?"
+
+<!-- dict:col:rep_dues_payout_credits.amount -->
+**`amount`** (numeric(12,2), NOT NULL, CHECK `> 0`) — what this payback took off this credit. A payback that settles nothing is not a row.
+
+<!-- dict:col:rep_dues_payout_credits.org_id -->
+<!-- dict:col:rep_dues_payout_credits.team_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) — carried for the **tenant rail**, not for convenience: every coach-money read re-asserts org and team in its own WHERE rather than trusting a join. Index `idx_dues_payout_credits_org_team`.
 
 ### `rep_fundraisers`
 <!-- dict:table:rep_fundraisers -->

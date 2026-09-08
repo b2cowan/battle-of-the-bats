@@ -9,6 +9,11 @@ import {
   syncTeamWorkspaceSubscription,
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
+import {
+  recordCardOnFile, clearCardOnFileIfNoCardsLeft, recordNextSeasonChoice,
+  clearNextSeasonChoice, orgIdForNextSeasonSubscription,
+} from '@/lib/billing-setup';
+import { NEXT_SEASON_CHOICE_KIND, classifyNextSeasonSubscription } from '@/lib/next-season-choice';
 import { PLAN_RANK } from '@/lib/plan-features';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -86,13 +91,30 @@ export const POST = withObservability(async (req: Request) => {
         await Promise.all([
           (async () => {
             if (!setupIntentId) return;
-            const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+            // Expanded, so the card's brand and last4 arrive with the SetupIntent — otherwise
+            // recording the card below would fetch back the payment method we already have.
+            const setupIntent = await stripe.setupIntents.retrieve(setupIntentId, {
+              expand: ['payment_method'],
+            });
+            const paymentMethod = typeof setupIntent.payment_method === 'object'
+              ? setupIntent.payment_method
+              : null;
             const paymentMethodId = stripeId(setupIntent.payment_method);
             if (paymentMethodId) {
               await stripe.customers.update(customerId, {
                 invoice_settings: { default_payment_method: paymentMethodId },
               });
             }
+            // ⚠ Record the card as a FACT ON THE ACCOUNT (mig 283). Until now this lived only in
+            // Stripe, so "who still has no card?" — the question the September 2027 conversion runs
+            // on — could not be asked of the database at all. Never derived from stripe_customer_id:
+            // comp reactivation and subscription deletion both NULL that column.
+            await recordCardOnFile({
+              customerId,
+              paymentMethod,
+              paymentMethodId,
+              fallbackOrgId: setupOrgId ?? null,
+            });
           })(),
           setupOrgId
             ? supabaseAdmin
@@ -102,6 +124,21 @@ export const POST = withObservability(async (req: Request) => {
                 .is('stripe_customer_id', null)
             : Promise.resolve(),
         ]);
+        break;
+      }
+
+      // The next-season plan choice (Founding Season: the 2028 choice). Recorded from the SESSION as
+      // well as from the subscription event, because the two arrive independently and the desk must
+      // never show "no choice yet" for an account that has just made one.
+      if (session.metadata?.choiceKind === NEXT_SEASON_CHOICE_KIND && session.metadata.orgId) {
+        await recordNextSeasonChoice({
+          orgId: session.metadata.orgId,
+          planKey: session.metadata.planKey ?? '',
+          billingCycle: session.metadata.billingCycle ?? 'annual',
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionIdFromSession(session),
+          teamWorkspaceId: session.metadata.teamWorkspaceId ?? null,
+        });
         break;
       }
 
@@ -162,10 +199,71 @@ export const POST = withObservability(async (req: Request) => {
       break;
     }
 
+    // ── A card arrived or left, by a door the setup session never sees ──────────
+    // A founding org's billing portal ("Payment method & invoices") can attach a card without any
+    // checkout session at all, so the setup arm alone would miss it.
+    case 'payment_method.attached': {
+      const pm = event.data.object as Stripe.PaymentMethod;
+      if (pm.type === 'card') {
+        // The event delivers the whole payment method — passing it saves a Stripe round trip
+        // inside a webhook handler, which is the one place latency has a consequence (Stripe
+        // retries a slow endpoint).
+        await recordCardOnFile({ customerId, paymentMethod: pm });
+      }
+      break;
+    }
+
+    // ⚠ A SWAP IS NOT A REMOVAL. Replacing a card fires `detached` for the old one, frequently AFTER
+    // the new one has attached — clearing unconditionally would drop the account into the "no card
+    // yet" reminder audience and chase somebody who had just updated their card. The writer asks
+    // Stripe whether any card remains, and fails CLOSED if it cannot ask.
+    case 'payment_method.detached': {
+      const pm = event.data.object as Stripe.PaymentMethod;
+      if (pm.type === 'card') {
+        await clearCardOnFileIfNoCardsLeft(customerId, pm);
+      }
+      break;
+    }
+
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
       const priceId: string = sub.items?.data?.[0]?.price?.id ?? '';
+
+      // ── The next-season plan choice ───────────────────────────────────────────
+      // The subscription exists from the moment the customer chooses, but its first charge is the
+      // Founding Season's end instant and it sits in `trialing` until then.
+      //
+      // ⚠⚠ THE PLAN DOES NOT MOVE WHILE IT IS TRIALING (owner ruling D2, 2026-09-07). Falling
+      // through to the arm below would write `plan_id` from the price the moment somebody chose in
+      // June — handing a bigger plan over free for four months and making the free season worth
+      // different amounts to different accounts. Once the trial ends and Stripe reports a real
+      // status, the same event DOES fall through and the plan applies exactly as any other
+      // subscription's would.
+      if (sub.metadata?.choiceKind === NEXT_SEASON_CHOICE_KIND && sub.metadata.orgId) {
+        const state = classifyNextSeasonSubscription(sub.status);
+
+        // ⚠⚠ WITHDRAWN IS NOT A CANCELLATION OF THE ACCOUNT. Falling through here with a dead
+        // subscription would write `subscription_status: 'canceled'` from it and suspend an account
+        // whose Founding Season comp still has months to run. Clear the choice; touch nothing else.
+        if (state === 'withdrawn') {
+          await clearNextSeasonChoice(sub.metadata.orgId);
+          break;
+        }
+
+        await recordNextSeasonChoice({
+          orgId: sub.metadata.orgId,
+          planKey: sub.metadata.planKey ?? '',
+          billingCycle: sub.metadata.billingCycle ?? 'annual',
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: sub.id,
+          teamWorkspaceId: sub.metadata.teamWorkspaceId ?? null,
+        });
+        // Still before the first charge — the plan does not move (ruling D2). Once it converts,
+        // this falls through and the plan applies exactly as any other subscription's would.
+        if (state === 'pending') break;
+      }
+
       const matchedPlan = await getPlanFromPriceId(priceId);
       if (matchedPlan) {
         // RETIRING (Club Repackaging 2026-06-22): org_team_addon is retired; kept only to
@@ -356,6 +454,28 @@ export const POST = withObservability(async (req: Request) => {
 
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription;
+
+      // ⚠⚠ A WITHDRAWN NEXT-SEASON CHOICE IS NOT AN ACCOUNT CANCELLATION, AND EVERYTHING BELOW
+      // ASSUMES IT IS. The 2028 choice creates a real Stripe subscription months before it charges,
+      // and the billing page hands the customer a portal link — where the obvious thing to do with
+      // a choice you have changed your mind about is cancel it. Falling through would run the
+      // Stripe-initiated-deletion path: archive every tournament, hide the public site, stamp
+      // `billing_suspended_at`, and 402 the org out of the product — or, for a coach workspace,
+      // revoke Premium entitlements and email them a cancellation notice — all while the account's
+      // Founding Season comp still has months to run.
+      //
+      // Recognised by the subscription's own metadata AND by the id we recorded at choice time, so
+      // a stripped-metadata event (a Dashboard action, an old event replayed) still lands here.
+      const choiceOrgId = sub.metadata?.choiceKind === NEXT_SEASON_CHOICE_KIND && sub.metadata.orgId
+        ? sub.metadata.orgId
+        : await orgIdForNextSeasonSubscription(sub.id);
+      if (choiceOrgId) {
+        await clearNextSeasonChoice(choiceOrgId);
+        // The chooser reappears on the billing page and the desk counts the account as "no choice
+        // yet" again — which is exactly what it now is.
+        break;
+      }
+
       const syncedTeamWorkspace = await syncTeamWorkspaceSubscription({
         stripeCustomerId: customerId,
         stripeSubscriptionId: sub.id,

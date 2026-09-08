@@ -37,6 +37,7 @@ const ALLOWED_SUSPENDED_ORG_FILES: Record<string, string> = {
   // ── The comeback path. Without these a cancelled org can never pay us again. ──────────────
   'app/api/billing/cancel/confirm/route.ts': 'billing — comeback path',
   'app/api/billing/cancel/preflight/route.ts': 'billing — comeback path',
+  'app/api/billing/choose-next-season/route.ts': 'billing — the summer plan choice IS a comeback path (it commits the customer to paying us for next season); the route separately refuses any account that is not on a live Founding Season comp',
   'app/api/billing/create-checkout/route.ts': 'billing — THE resubscribe call',
   'app/api/billing/downgrade/confirm/route.ts': 'billing — comeback path',
   'app/api/billing/downgrade/preflight/route.ts': 'billing — comeback path',
